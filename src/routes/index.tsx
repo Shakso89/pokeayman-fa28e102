@@ -40,7 +40,7 @@ async function profileName(): Promise<string> {
   const u = data.user;
   if (!u) return "Teacher";
   const { data: p } = await supabase.from("profiles").select("display_name").eq("id", u.id).maybeSingle();
-  return p?.display_name || (u.user_metadata?.display_name as string) || (u.user_metadata?.full_name as string) || u.email?.split("@")[0] || "Teacher";
+  return p?.display_name || (u.user_metadata?.["display_name"] as string) || (u.user_metadata?.["full_name"] as string) || u.email?.split("@")[0] || "Teacher";
 }
 
 function Index() {
