@@ -39,6 +39,9 @@ async function profileName(): Promise<string> {
   const { data } = await supabase.auth.getUser();
   const u = data.user;
   if (!u) return "Teacher";
+  // Cloud admins enter as the built-in "Ayman" Admin identity, inheriting all its permissions.
+  const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.id);
+  if (roles?.some((r) => r.role === "admin")) return "Ayman";
   const { data: p } = await supabase.from("profiles").select("display_name").eq("id", u.id).maybeSingle();
   return p?.display_name || (u.user_metadata?.["display_name"] as string) || (u.user_metadata?.["full_name"] as string) || u.email?.split("@")[0] || "Teacher";
 }
