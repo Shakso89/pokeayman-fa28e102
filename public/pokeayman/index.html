@@ -2434,6 +2434,27 @@
   
   
   <script>
+  // Pexels photo search through the app's backend (keeps the API key private).
+  window.pexelsFetch = async function(path, opts){
+    opts = opts || {};
+    const plain = { cache: 'no-store', signal: opts.signal };
+    const bases = ['', 'https://project--af78e400-d2aa-4584-8316-ae12b8d0c19c-dev.lovable.app', 'https://project--af78e400-d2aa-4584-8316-ae12b8d0c19c.lovable.app'];
+    let last;
+    for (const base of bases) {
+      try {
+        const res = await fetch(base + path, plain);
+        if (res.ok) return res;
+        last = res;
+      } catch (e) {
+        if (e && e.name === 'AbortError') throw e;
+        last = e;
+      }
+    }
+    if (last instanceof Response) return last;
+    throw last || new Error('Photo search failed');
+  };
+  </script>
+  <script>
     // Set modal background images dynamically based on rarity
       const commonBg = document.querySelector('[data-template-id="modal-card-background-common"]');
       const uncommonBg = document.querySelector('[data-template-id="modal-card-background-uncommon"]');
@@ -9263,7 +9284,7 @@ function openQuizEditor(quizId) {
     const searchButton = modal.querySelector('#edit-quiz-image-search-btn');
     searchButton.disabled = true; searchButton.textContent = 'Searching...';
     try {
-      const response = await fetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=12`, { headers: { 'Authorization': '' } });
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=12`, { headers: { 'Authorization': '' } });
       const data = await response.json();
       editImageResults.classList.remove('hidden');
       editImageResults.innerHTML = data.photos?.length ? data.photos.map(photo => `<button type="button" class="relative rounded-lg overflow-hidden group cursor-pointer hover:shadow-lg transition"><img src="${photo.src.medium}" class="w-full h-24 object-cover" alt="${photo.photographer}"><span class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white font-semibold text-sm">Select</span></button>`).join('') : '<p class="col-span-3 text-center text-sm text-gray-400">No images found.</p>';
@@ -10780,7 +10801,7 @@ const loadQuizImagePage = async reset => {
   quizImageLoading = true; quizImageLoadMore.disabled = true; quizImageLoadMore.textContent = 'Loading photos...';
   if (quizImageStatus) quizImageStatus.textContent = `${quizImagePhotos.length} of 100 photos loaded · Loading...`;
   try {
-    const response = await fetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=12&page=${quizImagePage}`, { headers: { 'Authorization': '' } });
+    const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=12&page=${quizImagePage}`, { headers: { 'Authorization': '' } });
     if (!response.ok) throw new Error('Photo search failed');
     const data = await response.json();
     const seen = new Set(quizImagePhotos.map(photo => String(photo.id || photo.src?.large || '')));
@@ -15068,7 +15089,7 @@ function openVocabCoverPicker(listId, listName) {
   document.body.appendChild(modal); let selectedId=String(list.vocab_cover_image_id||''); let selectedUrl=String(list.vocab_cover_image_url||''); const results=modal.querySelector('#vocab-cover-results'), preview=modal.querySelector('#vocab-cover-preview'), status=modal.querySelector('#vocab-cover-status');
   const showPreview=()=>{ preview.innerHTML=selectedUrl?`<img src="${selectedUrl}" alt="Selected cover preview" class="w-full h-full object-cover">`:'No cover selected'; };
   showPreview(); const close=()=>modal.remove(); modal.querySelectorAll('[data-cover-close],#vocab-cover-cancel').forEach(btn=>btn.addEventListener('click',close)); modal.addEventListener('click',e=>{if(e.target===modal)close()});
-  let coverQuery=''; let coverPage=1; let coverPhotos=[]; let coverHasMore=false; let coverLoading=false; let coverRequest=0; const loadMore=modal.querySelector('#vocab-cover-load-more'); const renderCoverPhotos=()=>{results.innerHTML=coverPhotos.map((photo,index)=>`<button type="button" class="vocab-cover-result ${String(selectedId)===String(photo.id||'')?'is-selected':''}" data-photo-index="${index}" aria-label="Select stock photo by ${photo.photographer}"><img src="${photo.src.medium}" alt="Stock photo by ${photo.photographer}" loading="lazy"></button>`).join('');results.querySelectorAll('.vocab-cover-result').forEach(card=>card.addEventListener('click',()=>{const photo=coverPhotos[Number(card.dataset.photoIndex)];selectedId=String(photo.id||photo.src.large||'');selectedUrl=String(photo.src.large||photo.src.original||photo.src.medium||'');results.querySelectorAll('.vocab-cover-result').forEach(item=>item.classList.remove('is-selected'));card.classList.add('is-selected');showPreview()}));loadMore.disabled=coverLoading||!coverHasMore||coverPhotos.length>=100;loadMore.textContent=coverLoading?'Loading photos…':'Load more photos';}; const fetchCoverPhotos=async(reset=false)=>{if(coverLoading)return;const query=modal.querySelector('#vocab-cover-search').value.trim().replace(/\s+/g,' ');if(!query){status.textContent='Enter a keyword to search.';return;}if(reset){coverQuery=query.toLocaleLowerCase();coverPage=1;coverPhotos=[];coverHasMore=true;coverRequest+=1;results.replaceChildren();}if(query.toLocaleLowerCase()!==coverQuery||!coverHasMore||coverPhotos.length>=100)return;const request=coverRequest;coverLoading=true;renderCoverPhotos();status.textContent=coverPhotos.length?`${coverPhotos.length} photos loaded · Loading…`:'Loading licensed stock photos…';try{const response=await fetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}&per_page=12&page=${coverPage}`,{headers:{'Authorization': ''}});if(!response.ok)throw new Error('search');const data=await response.json();if(request!==coverRequest||coverQuery!==query.toLocaleLowerCase())return;const seen=new Set(coverPhotos.map(photo=>String(photo.id||photo.src?.large||photo.src?.original||'')));const additions=(Array.isArray(data.photos)?data.photos:[]).filter(photo=>{const key=String(photo.id||photo.src?.large||photo.src?.original||'');if(!key||seen.has(key))return false;seen.add(key);return true;}).slice(0,100-coverPhotos.length);coverPhotos.push(...additions);coverPage+=1;coverHasMore=Boolean(data.next_page)&&coverPhotos.length<100;status.textContent=coverPhotos.length?`${coverPhotos.length} photos found.`:'No photos found. Try another keyword.';renderCoverPhotos();}catch(error){if(request===coverRequest){coverHasMore=true;status.textContent=`${coverPhotos.length?coverPhotos.length+' photos loaded · ':''}Photo search failed. Try again.`;}}finally{if(request===coverRequest){coverLoading=false;renderCoverPhotos();}}};modal.querySelector('#vocab-cover-search-btn').addEventListener('click',()=>fetchCoverPhotos(true));loadMore.addEventListener('click',()=>fetchCoverPhotos(false));
+  let coverQuery=''; let coverPage=1; let coverPhotos=[]; let coverHasMore=false; let coverLoading=false; let coverRequest=0; const loadMore=modal.querySelector('#vocab-cover-load-more'); const renderCoverPhotos=()=>{results.innerHTML=coverPhotos.map((photo,index)=>`<button type="button" class="vocab-cover-result ${String(selectedId)===String(photo.id||'')?'is-selected':''}" data-photo-index="${index}" aria-label="Select stock photo by ${photo.photographer}"><img src="${photo.src.medium}" alt="Stock photo by ${photo.photographer}" loading="lazy"></button>`).join('');results.querySelectorAll('.vocab-cover-result').forEach(card=>card.addEventListener('click',()=>{const photo=coverPhotos[Number(card.dataset.photoIndex)];selectedId=String(photo.id||photo.src.large||'');selectedUrl=String(photo.src.large||photo.src.original||photo.src.medium||'');results.querySelectorAll('.vocab-cover-result').forEach(item=>item.classList.remove('is-selected'));card.classList.add('is-selected');showPreview()}));loadMore.disabled=coverLoading||!coverHasMore||coverPhotos.length>=100;loadMore.textContent=coverLoading?'Loading photos…':'Load more photos';}; const fetchCoverPhotos=async(reset=false)=>{if(coverLoading)return;const query=modal.querySelector('#vocab-cover-search').value.trim().replace(/\s+/g,' ');if(!query){status.textContent='Enter a keyword to search.';return;}if(reset){coverQuery=query.toLocaleLowerCase();coverPage=1;coverPhotos=[];coverHasMore=true;coverRequest+=1;results.replaceChildren();}if(query.toLocaleLowerCase()!==coverQuery||!coverHasMore||coverPhotos.length>=100)return;const request=coverRequest;coverLoading=true;renderCoverPhotos();status.textContent=coverPhotos.length?`${coverPhotos.length} photos loaded · Loading…`:'Loading licensed stock photos…';try{const response=await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}&per_page=12&page=${coverPage}`,{headers:{'Authorization': ''}});if(!response.ok)throw new Error('search');const data=await response.json();if(request!==coverRequest||coverQuery!==query.toLocaleLowerCase())return;const seen=new Set(coverPhotos.map(photo=>String(photo.id||photo.src?.large||photo.src?.original||'')));const additions=(Array.isArray(data.photos)?data.photos:[]).filter(photo=>{const key=String(photo.id||photo.src?.large||photo.src?.original||'');if(!key||seen.has(key))return false;seen.add(key);return true;}).slice(0,100-coverPhotos.length);coverPhotos.push(...additions);coverPage+=1;coverHasMore=Boolean(data.next_page)&&coverPhotos.length<100;status.textContent=coverPhotos.length?`${coverPhotos.length} photos found.`:'No photos found. Try another keyword.';renderCoverPhotos();}catch(error){if(request===coverRequest){coverHasMore=true;status.textContent=`${coverPhotos.length?coverPhotos.length+' photos loaded · ':''}Photo search failed. Try again.`;}}finally{if(request===coverRequest){coverLoading=false;renderCoverPhotos();}}};modal.querySelector('#vocab-cover-search-btn').addEventListener('click',()=>fetchCoverPhotos(true));loadMore.addEventListener('click',()=>fetchCoverPhotos(false));
   modal.querySelector('#vocab-cover-remove').addEventListener('click',()=>{selectedId='';selectedUrl='';showPreview()}); modal.querySelector('#vocab-cover-apply').addEventListener('click',async()=>{const current=getVocabLists().find(item=>item.__backendId===listId);if(!current){status.textContent='This list is no longer available.';return;}const result=await window.dataSdk.update({...current,vocab_cover_image_id:selectedId,vocab_cover_image_url:selectedUrl});if(!result?.isOk){status.textContent='Could not save the cover. Try again.';return;}close();toast(selectedUrl?'List cover saved.':'List cover removed.');}); modal.querySelector('#vocab-cover-search').focus();
 }
 function renderVocabLists() {
@@ -15332,7 +15353,7 @@ function openVocabListEditor(listId, listName) {
       const remaining = 100 - vocabPhotoItems.length;
       const requestQuery = String(query || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
       vocabPhotoAbortController = new AbortController();
-      const response = await fetch(`/api/public/pexels?query=${encodeURIComponent(requestQuery)}&per_page=${Math.min(20, remaining)}&page=${vocabPhotoPage}&_=${Date.now()}`, { cache: 'no-store', signal: vocabPhotoAbortController.signal, headers: { 'Authorization': '', 'Cache-Control': 'no-cache' } });
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(requestQuery)}&per_page=${Math.min(20, remaining)}&page=${vocabPhotoPage}&_=${Date.now()}`, { cache: 'no-store', signal: vocabPhotoAbortController.signal, headers: { 'Authorization': '', 'Cache-Control': 'no-cache' } });
       if (!response.ok) throw new Error('Photo search failed');
       const data = await response.json();
       if (requestId !== vocabPhotoSearchRequestId || query !== vocabPhotoQuery) return;
@@ -15470,7 +15491,7 @@ function editVocabWord(wordId, currentWord, currentImage) {
     searchBtn.disabled = true;
     searchBtn.textContent = 'Searching...';
     try {
-      const response = await fetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=15`, {
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=15`, {
         headers: { 'Authorization': '' }
       });
       const data = await response.json();
