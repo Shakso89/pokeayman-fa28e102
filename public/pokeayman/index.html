@@ -6406,10 +6406,24 @@ document.getElementById('student-login-toggle').addEventListener('click', () => 
 });
 
 // Enter the teacher dashboard for a signed-in Cloud teacher account.
-window.pokeaymanEnterTeacher = function (name) {
+window.pokeaymanEnterTeacher = async function (name) {
   const clean = String(name || 'Teacher').trim();
+  const cloudId = (window.parent && window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.userId) || '';
   // "Ayman" is only passed for backend-verified admins; it maps to the built-in Admin with no sheet row.
-  const rec = clean === ADMIN_TEACHER.name ? null : getTeachers().find(t => String(t.teacher_name || '').trim().toLocaleLowerCase() === clean.toLocaleLowerCase());
+  let rec = null;
+  if (clean !== ADMIN_TEACHER.name) {
+    rec = (cloudId && getTeachers().find(t => t.cloud_user_id === cloudId))
+      || getTeachers().find(t => !t.cloud_user_id && String(t.teacher_name || '').trim().toLocaleLowerCase() === clean.toLocaleLowerCase());
+    // Register Cloud teacher accounts so they appear in the Admin dashboard's teacher inventory.
+    if (!rec && cloudId) {
+      try {
+        await window.dataSdk.create({ type: 'teacher', teacher_name: clean, teacher_pin: '', teacher_role: 'teacher', teacher_credits: 100, avatar_pokemon_id: 0, cloud_user_id: cloudId, archived: false, created_at: new Date().toISOString() });
+        rec = getTeachers().find(t => t.cloud_user_id === cloudId) || null;
+      } catch (e) { console.warn('Teacher registration failed', e); }
+    } else if (rec && cloudId && !rec.cloud_user_id) {
+      try { await window.dataSdk.update({ ...rec, cloud_user_id: cloudId }); } catch (_) {}
+    }
+  }
   currentRole = 'teacher';
   currentTeacher = rec ? String(rec.teacher_name).trim() : clean;
   currentTeacherRecordId = rec ? (rec.__backendId || '') : '';
