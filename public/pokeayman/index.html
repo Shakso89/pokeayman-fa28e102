@@ -3708,11 +3708,11 @@
 })();
 </script>
 <script>
-// Teacher login requires a real Cloud account; students stay PIN-only.
-document.addEventListener('submit', function (e) {
-  const f = e.target; if (!f || !/^teacher-login-form/.test(f.id || '')) return;
+// In-app teacher "Log out" also signs the teacher out of their Cloud account.
+document.addEventListener('click', function (e) {
+  const b = e.target && e.target.closest && e.target.closest('#logout-btn');
   const auth = window.parent && window.parent.pokeaymanAuth;
-  if (auth && !auth.userId) { e.preventDefault(); e.stopImmediatePropagation(); if (confirm('Teachers must sign in with their teacher account first. Go to sign in?')) window.parent.location.href = '/auth'; }
+  if (b && auth && auth.userId) auth.signOut();
 }, true);
 </script>
 </head>
