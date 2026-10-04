@@ -19,18 +19,45 @@ export type Database = {
           created_at: string
           data: Json
           id: string
+          owner_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           data?: Json
           id: string
+          owner_id?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           data?: Json
           id?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          school: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          school?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          school?: string | null
           updated_at?: string
         }
         Relationships: []
