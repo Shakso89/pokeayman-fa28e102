@@ -1,0 +1,11 @@
+ALTER TABLE public.app_records ALTER COLUMN owner_id DROP NOT NULL;
+DROP POLICY IF EXISTS "Own records read" ON public.app_records;
+DROP POLICY IF EXISTS "Own records insert" ON public.app_records;
+DROP POLICY IF EXISTS "Own records update" ON public.app_records;
+DROP POLICY IF EXISTS "Own records delete" ON public.app_records;
+GRANT SELECT, INSERT, UPDATE ON public.app_records TO anon;
+CREATE POLICY "Anyone reads classroom records" ON public.app_records FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Anyone adds classroom records" ON public.app_records FOR INSERT TO anon, authenticated WITH CHECK (owner_id IS NULL OR owner_id = auth.uid());
+CREATE POLICY "Students update unowned records" ON public.app_records FOR UPDATE TO anon USING (owner_id IS NULL) WITH CHECK (owner_id IS NULL);
+CREATE POLICY "Teachers update records" ON public.app_records FOR UPDATE TO authenticated USING (owner_id IS NULL OR owner_id = auth.uid()) WITH CHECK (owner_id IS NULL OR owner_id = auth.uid());
+CREATE POLICY "Teachers delete records" ON public.app_records FOR DELETE TO authenticated USING (owner_id IS NULL OR owner_id = auth.uid());
