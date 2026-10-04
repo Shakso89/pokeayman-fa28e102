@@ -6380,44 +6380,125 @@ document.getElementById('student-login-toggle').addEventListener('click', () => 
   modal.addEventListener('click', e => { if (false && e.target === modal) modal.remove(); });
 });
 
-document.getElementById('teacher-login-toggle').addEventListener('click', () => {
+// Enter the teacher dashboard for a signed-in Cloud teacher account.
+window.pokeaymanEnterTeacher = function (name) {
+  const clean = String(name || 'Teacher').trim();
+  const rec = getTeachers().find(t => String(t.teacher_name || '').trim().toLocaleLowerCase() === clean.toLocaleLowerCase());
+  currentRole = 'teacher';
+  currentTeacher = rec ? String(rec.teacher_name).trim() : clean;
+  currentTeacherRecordId = rec ? (rec.__backendId || '') : '';
+  try { sessionStorage.removeItem('pokeayman-enter-teacher'); } catch (_) {}
+  enterApp();
+};
+window.addEventListener('load', () => {
+  let want = false; try { want = sessionStorage.getItem('pokeayman-enter-teacher') === '1'; } catch (_) {}
+  const auth = window.parent && window.parent.pokeaymanAuth;
+  if (!want || !auth || !auth.userId) return;
+  setTimeout(async () => { const p = await auth.getProfile(); window.pokeaymanEnterTeacher(p.name); }, 1200);
+});
+
+document.getElementById('teacher-login-toggle').addEventListener('click', async () => {
+  const auth = window.parent && window.parent.pokeaymanAuth;
+  if (auth && auth.userId) { const p = await auth.getProfile(); window.pokeaymanEnterTeacher(p.name); return; }
+  const inputCls = 'w-full min-h-11 border-2 border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition';
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="teacher-login-modal-card bg-white rounded-xl shadow-lg w-full max-w-lg sm:max-w-xl max-h-[calc(100 * min(var(--vh, 1vh), 1vh) - 2rem)] overflow-y-auto">
+  modal.innerHTML = `<div class="teacher-login-modal-card bg-white rounded-xl shadow-lg w-full max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto">
     <div class="bg-gradient-to-r from-purple-500 to-indigo-600 px-5 sm:px-7 py-4 rounded-t-xl">
-      <h2 class="heading-font text-xl font-bold text-white">🎓 Teacher Login</h2>
+      <h2 class="heading-font text-xl font-bold text-white">🎓 Teacher Account</h2>
+      <p class="text-white/80 text-xs mt-1">Sign in or create your teacher account to save your classes.</p>
     </div>
-    <form id="teacher-login-form-modal" class="p-5 sm:p-7 space-y-3">
-      <input id="teacher-name-modal" type="text" placeholder="Teacher name" class="w-full min-h-11 border-2 border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition" required>
-      <input id="teacher-pin-modal" type="password" placeholder="Enter PIN (6 digits)" maxlength="6" class="w-full min-h-11 border-2 border-gray-300 rounded-lg px-4 py-2.5 text-sm tracking-widest focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition" required>
-      <p id="teacher-error-modal" class="text-red-600 text-xs sm:text-sm text-center font-semibold leading-snug hidden">Invalid credentials. Try again.</p>
-      <div class="flex flex-col sm:flex-row gap-2 pt-2">
-        <button type="submit" class="flex-1 min-h-11 btn-secondary">Go</button>
-        <button type="button" id="teacher-cancel-btn-modal" class="flex-1 min-h-11 btn-outline">Cancel</button>
+    <div class="flex gap-2 px-5 sm:px-7 pt-4">
+      <button type="button" data-tab="signin" class="ta-tab flex-1 min-h-10 rounded-lg text-sm font-bold">Sign in</button>
+      <button type="button" data-tab="signup" class="ta-tab flex-1 min-h-10 rounded-lg text-sm font-bold">Sign up</button>
+    </div>
+    <form id="teacher-account-form" class="p-5 sm:p-7 space-y-3">
+      <div id="ta-signup-fields" class="space-y-3 hidden">
+        <input id="ta-name" type="text" placeholder="Your name (e.g. Mr. Ayman)" maxlength="80" class="${inputCls}">
+        <input id="ta-school" type="text" placeholder="School (optional)" maxlength="120" class="${inputCls}">
       </div>
+      <input id="ta-email" type="email" placeholder="Email" maxlength="255" required class="${inputCls}">
+      <input id="ta-password" type="password" placeholder="Password (min 6 characters)" minlength="6" required class="${inputCls}">
+      <p id="ta-msg" class="text-xs sm:text-sm text-center font-semibold leading-snug hidden"></p>
+      <button type="submit" id="ta-submit" class="w-full min-h-11 btn-secondary">Sign in</button>
+      <div class="flex items-center gap-2 text-xs text-gray-400"><span class="flex-1 h-px bg-gray-200"></span>or<span class="flex-1 h-px bg-gray-200"></span></div>
+      <button type="button" id="ta-google" class="w-full min-h-11 rounded-lg border-2 border-gray-300 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50">Continue with Google</button>
+      <div class="flex justify-between text-xs pt-1">
+        <button type="button" id="ta-forgot" class="text-purple-600 font-semibold hover:underline">Forgot password?</button>
+        <button type="button" id="ta-admin" class="text-gray-500 hover:underline">Admin PIN login</button>
+      </div>
+      <button type="button" id="teacher-cancel-btn-modal" class="w-full min-h-11 btn-outline">Cancel</button>
+    </form>
+    <form id="teacher-login-form-modal" class="p-5 sm:p-7 space-y-3 hidden">
+      <input id="teacher-name-modal" type="text" placeholder="Admin name" class="${inputCls}" required>
+      <input id="teacher-pin-modal" type="password" placeholder="Enter PIN (6 digits)" maxlength="6" class="${inputCls} tracking-widest" required>
+      <p id="teacher-error-modal" class="text-red-600 text-xs sm:text-sm text-center font-semibold hidden">Invalid credentials. Try again.</p>
+      <div class="flex gap-2"><button type="submit" class="flex-1 min-h-11 btn-secondary">Go</button><button type="button" id="ta-back" class="flex-1 min-h-11 btn-outline">Back</button></div>
     </form>
   </div>`;
   document.body.appendChild(modal);
-  
-  modal.querySelector('#teacher-login-form-modal').addEventListener('submit', e => {
-    e.preventDefault();
-    const name = modal.querySelector('#teacher-name-modal').value.trim();
-    const pin = modal.querySelector('#teacher-pin-modal').value;
-    const result = authenticateTeacher(name, pin);
+  const $ = s => modal.querySelector(s);
+  let mode = 'signin';
+  const msg = (text, ok) => { const m = $('#ta-msg'); m.textContent = text; m.className = 'text-xs sm:text-sm text-center font-semibold leading-snug ' + (ok ? 'text-green-600' : 'text-red-600'); };
+  const setMode = m => {
+    mode = m;
+    modal.querySelectorAll('.ta-tab').forEach(b => { const on = b.dataset.tab === m; b.className = 'ta-tab flex-1 min-h-10 rounded-lg text-sm font-bold ' + (on ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600'); });
+    $('#ta-signup-fields').classList.toggle('hidden', m !== 'signup');
+    $('#ta-name').required = m === 'signup';
+    $('#ta-submit').textContent = m === 'signup' ? 'Create teacher account' : 'Sign in';
+    $('#ta-msg').classList.add('hidden');
+  };
+  setMode('signin');
+  modal.querySelectorAll('.ta-tab').forEach(b => b.addEventListener('click', () => setMode(b.dataset.tab)));
+  if (!auth) { msg('Sign-in is unavailable here.', false); }
+
+  $('#teacher-account-form').addEventListener('submit', async e => {
+    e.preventDefault(); if (!auth) return;
+    const email = $('#ta-email').value.trim(), password = $('#ta-password').value;
+    const btn = $('#ta-submit'); btn.disabled = true;
+    try {
+      if (mode === 'signup') {
+        const name = $('#ta-name').value.trim();
+        if (!name) { msg('Please enter your name.', false); return; }
+        const r = await auth.signUp(email, password, name, $('#ta-school').value.trim());
+        if (r.error) { msg(r.error, false); return; }
+        if (r.signedIn) { modal.remove(); window.pokeaymanEnterTeacher(name); return; }
+        msg('Account created! Check your email and click the link to confirm, then sign in.', true);
+        setMode('signin'); $('#ta-msg').classList.remove('hidden');
+      } else {
+        const r = await auth.signIn(email, password);
+        if (r.error) { msg(r.error, false); return; }
+        modal.remove(); window.pokeaymanEnterTeacher(r.name);
+      }
+    } finally { btn.disabled = false; }
+  });
+  $('#ta-google').addEventListener('click', async () => {
+    if (!auth) return;
+    try { sessionStorage.setItem('pokeayman-enter-teacher', '1'); } catch (_) {}
+    const r = await auth.signInWithGoogle();
+    if (r.error) { msg(r.error, false); return; }
+    if (r.name) { modal.remove(); window.pokeaymanEnterTeacher(r.name); }
+  });
+  $('#ta-forgot').addEventListener('click', async () => {
+    const email = $('#ta-email').value.trim();
+    if (!email) { msg('Type your email first, then click "Forgot password?".', false); return; }
+    const r = await auth.resetPassword(email);
+    msg(r.error || 'Password reset email sent. Check your inbox.', !r.error);
+  });
+  $('#ta-admin').addEventListener('click', () => { $('#teacher-account-form').classList.add('hidden'); $('#teacher-login-form-modal').classList.remove('hidden'); });
+  $('#ta-back').addEventListener('click', () => { $('#teacher-login-form-modal').classList.add('hidden'); $('#teacher-account-form').classList.remove('hidden'); });
+
+  $('#teacher-login-form-modal').addEventListener('submit', e => {
+    e.preventDefault(); e.stopImmediatePropagation();
+    const result = authenticateTeacher($('#teacher-name-modal').value.trim(), $('#teacher-pin-modal').value);
     if (result.success) {
-      currentRole = result.role;
-      currentTeacher = result.teacherName;
-      currentTeacherRecordId = result.teacherRecordId;
-      modal.querySelector('#teacher-error-modal').classList.add('hidden');
-      modal.remove();
-      enterApp();
-      return;
+      currentRole = result.role; currentTeacher = result.teacherName; currentTeacherRecordId = result.teacherRecordId;
+      modal.remove(); enterApp(); return;
     }
-    modal.querySelector('#teacher-error-modal').classList.remove('hidden');
+    $('#teacher-error-modal').classList.remove('hidden');
   });
   
-  modal.querySelector('#teacher-cancel-btn-modal').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (false && e.target === modal) modal.remove(); });
+  $('#teacher-cancel-btn-modal').addEventListener('click', () => modal.remove());
 });
 
 document.getElementById('contact-pricing-btn').addEventListener('click', () => {
