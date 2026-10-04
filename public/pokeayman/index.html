@@ -5811,7 +5811,11 @@ function verifiedTeacherIdentity() {
   const normalizedName = normalizeStudentIdentity(currentTeacher);
   // The built-in Admin is authenticated to the canonical Ayman name and has no Sheet row.
   if (!String(currentTeacherRecordId || '').trim() && currentTeacher === ADMIN_TEACHER.name) return 'ayman';
-  if (!String(currentTeacherRecordId || '').trim()) return '';
+  if (!String(currentTeacherRecordId || '').trim()) {
+    // Teachers signed in with a Cloud account are verified by their account ID.
+    let cloudId = ''; try { cloudId = (window.parent && window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.userId) || ''; } catch (_) {}
+    return cloudId ? `cloud:${cloudId}` : '';
+  }
   const record = getTeachers().find(t => String(t.__backendId || '').trim() === String(currentTeacherRecordId).trim());
   // The authenticated stable ID remains authoritative across an incomplete refresh snapshot.
   if (!record) return String(currentTeacherRecordId).trim();
