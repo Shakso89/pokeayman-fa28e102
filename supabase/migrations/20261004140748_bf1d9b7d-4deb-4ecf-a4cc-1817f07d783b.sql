@@ -1,0 +1,3 @@
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
+CREATE POLICY "Admins update any record" ON public.app_records FOR UPDATE TO authenticated USING (public.has_role(auth.uid(), 'admin')) WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins delete any record" ON public.app_records FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
