@@ -3651,16 +3651,57 @@
  <script>
 (function () {
   const key = 'pokeayman-local-preview-v1';
+  const URL_ = 'https://lbmdlligjjrkmjmdtwsq.supabase.co/rest/v1/app_records';
+  const KEY = 'sb_publishable_s_aLtLB6z1AL3tI1bRyMMA_YEkOrrHI';
+  const H = {apikey: KEY, 'Content-Type': 'application/json'};
   let listener = null;
   let records = [];
   try { records = JSON.parse(localStorage.getItem(key) || '[]'); if (!Array.isArray(records)) records = []; } catch (_) { records = []; }
+  function cache() { try { localStorage.setItem(key, JSON.stringify(records)); } catch (_) {} }
   function notify() { if (listener && typeof listener.onDataChanged === 'function') listener.onDataChanged(records.map(row => ({...row}))); }
-  function save() { try { localStorage.setItem(key, JSON.stringify(records)); } catch (e) { console.warn('Local preview storage unavailable', e); } notify(); }
+  async function api(method, qs, body) {
+    const r = await fetch(URL_ + (qs || ''), {method, headers: {...H, Prefer: 'resolution=merge-duplicates,return=minimal'}, body: body ? JSON.stringify(body) : undefined});
+    if (!r.ok) throw new Error(await r.text());
+    return method === 'GET' ? r.json() : null;
+  }
+  let lastSig = '';
+  async function pull() {
+    try {
+      const rows = await api('GET', '?select=id,data&order=created_at.asc&limit=10000');
+      const next = rows.map(r => ({...r.data, __backendId: r.id}));
+      const sig = JSON.stringify(next);
+      if (sig !== lastSig) { lastSig = sig; records = next; cache(); notify(); }
+    } catch (e) { console.warn('Backend unavailable, using local copy', e); }
+  }
+  let migrated = false;
+  async function firstLoad() {
+    try {
+      const rows = await api('GET', '?select=id&limit=1');
+      if (!rows.length && records.length && !migrated) {
+        migrated = true;
+        await api('POST', '', records.map(r => ({id: r.__backendId, data: r})));
+      }
+    } catch (_) {}
+    await pull();
+  }
   window.dataSdk = {
-    async init(handler) { listener = handler; notify(); return {isOk:true}; },
-    async create(value) { const row = {...value, __backendId: value.__backendId || crypto.randomUUID()}; records.push(row); save(); return {isOk:true, data:row}; },
-    async update(value) { const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false}; records[i] = {...records[i], ...value}; save(); return {isOk:true, data:records[i]}; },
-    async delete(value) { const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false}; records.splice(i, 1); save(); return {isOk:true}; }
+    async init(handler) { listener = handler; notify(); await firstLoad(); setInterval(pull, 5000); return {isOk:true}; },
+    async create(value) {
+      const row = {...value, __backendId: value.__backendId || crypto.randomUUID()};
+      try { await api('POST', '', {id: row.__backendId, data: row}); } catch (e) { console.error(e); return {isOk:false, error:e}; }
+      records.push(row); cache(); lastSig = ''; notify(); return {isOk:true, data:row};
+    },
+    async update(value) {
+      const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
+      const row = {...records[i], ...value};
+      try { await api('PATCH', '?id=eq.' + encodeURIComponent(row.__backendId), {data: row}); } catch (e) { console.error(e); return {isOk:false, error:e}; }
+      records[i] = row; cache(); lastSig = ''; notify(); return {isOk:true, data:row};
+    },
+    async delete(value) {
+      const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
+      try { await api('DELETE', '?id=eq.' + encodeURIComponent(value.__backendId)); } catch (e) { console.error(e); return {isOk:false, error:e}; }
+      records.splice(i, 1); cache(); lastSig = ''; notify(); return {isOk:true};
+    }
   };
 })();
 </script>

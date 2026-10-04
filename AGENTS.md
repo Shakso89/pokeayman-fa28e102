@@ -10,4 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Preserve the uploaded PokéAyman HTML under `public/pokeayman/index.html` and display it from the index route in an iframe; this keeps its large original DOM and scripts isolated from TanStack's React hydration.
-- The imported Canva data interface is a browser-local preview adapter, not shared account storage; Canva's private sheet and image assets are not included in an HTML export.
+- PokéAyman data saves to the shared Cloud table `app_records` (id + jsonb data) via a dataSdk shim in the iframe HTML; localStorage is only an offline cache. Why: keeps the original Canva code unchanged.
