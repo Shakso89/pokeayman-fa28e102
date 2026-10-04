@@ -6387,7 +6387,8 @@ document.getElementById('student-login-toggle').addEventListener('click', () => 
 // Enter the teacher dashboard for a signed-in Cloud teacher account.
 window.pokeaymanEnterTeacher = function (name) {
   const clean = String(name || 'Teacher').trim();
-  const rec = getTeachers().find(t => String(t.teacher_name || '').trim().toLocaleLowerCase() === clean.toLocaleLowerCase());
+  // "Ayman" is only passed for backend-verified admins; it maps to the built-in Admin with no sheet row.
+  const rec = clean === ADMIN_TEACHER.name ? null : getTeachers().find(t => String(t.teacher_name || '').trim().toLocaleLowerCase() === clean.toLocaleLowerCase());
   currentRole = 'teacher';
   currentTeacher = rec ? String(rec.teacher_name).trim() : clean;
   currentTeacherRecordId = rec ? (rec.__backendId || '') : '';
