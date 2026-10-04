@@ -3660,7 +3660,9 @@
   function cache() { try { localStorage.setItem(key, JSON.stringify(records)); } catch (_) {} }
   function notify() { if (listener && typeof listener.onDataChanged === 'function') listener.onDataChanged(records.map(row => ({...row}))); }
   async function api(method, qs, body) {
-    const r = await fetch(URL_ + (qs || ''), {method, headers: {...H, Prefer: 'resolution=merge-duplicates,return=minimal'}, body: body ? JSON.stringify(body) : undefined});
+    const auth = window.parent && window.parent.pokeaymanAuth;
+    const token = auth ? await auth.getToken() : null;
+    const r = await fetch(URL_ + (qs || ''), {method, headers: {...H, ...(token ? {Authorization: 'Bearer ' + token} : {}), Prefer: 'resolution=merge-duplicates,return=minimal'}, body: body ? JSON.stringify(body) : undefined});
     if (!r.ok) throw new Error(await r.text());
     return method === 'GET' ? r.json() : null;
   }
@@ -3677,7 +3679,7 @@
   async function firstLoad() {
     try {
       const rows = await api('GET', '?select=id&limit=1');
-      if (!rows.length && records.length && !migrated) {
+      if (false) {
         migrated = true;
         await api('POST', '', records.map(r => ({id: r.__backendId, data: r})));
       }
@@ -3704,6 +3706,14 @@
     }
   };
 })();
+</script>
+<script>
+// Teacher login requires a real Cloud account; students stay PIN-only.
+document.addEventListener('submit', function (e) {
+  const f = e.target; if (!f || !/^teacher-login-form/.test(f.id || '')) return;
+  const auth = window.parent && window.parent.pokeaymanAuth;
+  if (auth && !auth.userId) { e.preventDefault(); e.stopImmediatePropagation(); if (confirm('Teachers must sign in with their teacher account first. Go to sign in?')) window.parent.location.href = '/auth'; }
+}, true);
 </script>
 </head>
  <body data-template-id="__page-root" class="min-h-screen">
