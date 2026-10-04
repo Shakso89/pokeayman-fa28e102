@@ -19,21 +19,21 @@ export type Database = {
           created_at: string
           data: Json
           id: string
-          owner_id: string
+          owner_id: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           data?: Json
           id: string
-          owner_id?: string
+          owner_id?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           data?: Json
           id?: string
-          owner_id?: string
+          owner_id?: string | null
           updated_at?: string
         }
         Relationships: []
