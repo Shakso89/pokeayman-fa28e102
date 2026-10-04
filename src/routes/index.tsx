@@ -1,12 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { LogOut } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
+
+type Result = { error?: string; name?: string; signedIn?: boolean };
 
 declare global {
   interface Window {
-    pokeaymanAuth?: { getToken: () => Promise<string | null>; userId: string | null; signIn: () => void };
+    pokeaymanAuth?: {
+      userId: string | null;
+      getToken: () => Promise<string | null>;
+      getProfile: () => Promise<{ name: string }>;
+      signIn: (email: string, password: string) => Promise<Result>;
+      signUp: (email: string, password: string, name: string, school: string) => Promise<Result>;
+      signInWithGoogle: () => Promise<Result>;
+      resetPassword: (email: string) => Promise<Result>;
+      signOut: () => Promise<void>;
+    };
   }
 }
 
@@ -24,40 +35,61 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+async function profileName(): Promise<string> {
+  const { data } = await supabase.auth.getUser();
+  const u = data.user;
+  if (!u) return "Teacher";
+  const { data: p } = await supabase.from("profiles").select("display_name").eq("id", u.id).maybeSingle();
+  return p?.display_name || (u.user_metadata?.display_name as string) || (u.user_metadata?.full_name as string) || u.email?.split("@")[0] || "Teacher";
+}
+
 function Index() {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
+  const [frameKey, setFrameKey] = useState(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user ?? null); setReady(true); });
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") setUser(session?.user ?? null);
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") setUser(session?.user ?? null);
+      if (event === "SIGNED_OUT") { setUser(null); setFrameKey((k) => k + 1); }
     });
     return () => data.subscription.unsubscribe();
   }, []);
 
-  // The same-origin PokéAyman iframe reads this to attach the teacher's token to saves.
+  // Bridge read by the same-origin PokéAyman iframe for teacher accounts and saves.
   if (typeof window !== "undefined") {
     window.pokeaymanAuth = {
       userId: user?.id ?? null,
       getToken: async () => (await supabase.auth.getSession()).data.session?.access_token ?? null,
-      signIn: () => { window.location.href = "/auth"; },
+      getProfile: async () => ({ name: await profileName() }),
+      signIn: async (email, password) => {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return { error: error.message.includes("confirm") ? "Please confirm your email first (check your inbox)." : "Wrong email or password." };
+        return { name: await profileName() };
+      },
+      signUp: async (email, password, name, school) => {
+        const { data, error } = await supabase.auth.signUp({
+          email, password,
+          options: { emailRedirectTo: window.location.origin, data: { display_name: name, school } },
+        });
+        if (error) return { error: error.message };
+        return { signedIn: !!data.session };
+      },
+      signInWithGoogle: async () => {
+        const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+        if (r.error) return { error: "Google sign-in failed. Please try again." };
+        if (r.redirected) return {};
+        return { name: await profileName() };
+      },
+      resetPassword: async (email) => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+        return error ? { error: error.message } : {};
+      },
+      signOut: async () => { await supabase.auth.signOut(); },
     };
   }
 
   if (!ready) return null;
-  return (
-    <>
-      <iframe key={user?.id ?? "guest"} className="imported-app" title="PokéAyman" src="/pokeayman/index.html" />
-      {user && (
-        <button
-          onClick={() => supabase.auth.signOut()}
-          title={`Sign out (${user.email ?? "teacher"})`}
-          className="fixed bottom-3 left-3 z-50 inline-flex items-center gap-1.5 rounded-full border border-border bg-background/90 px-3 py-1.5 text-xs font-semibold text-foreground shadow-md backdrop-blur hover:bg-accent"
-        >
-          <LogOut className="h-3.5 w-3.5" /> Teacher sign out
-        </button>
-      )}
-    </>
-  );
+  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html" />;
 }
