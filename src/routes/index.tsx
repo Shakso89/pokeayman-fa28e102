@@ -64,8 +64,9 @@ function Index() {
       getToken: async () => (await supabase.auth.getSession()).data.session?.access_token ?? null,
       getProfile: async () => ({ name: await profileName() }),
       signIn: async (email, password) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) return { error: error.message.includes("confirm") ? "Please confirm your email first (check your inbox)." : "Wrong email or password." };
+        if (window.pokeaymanAuth) window.pokeaymanAuth.userId = data.user?.id ?? null;
         return { name: await profileName() };
       },
       signUp: async (email, password, name, school) => {
