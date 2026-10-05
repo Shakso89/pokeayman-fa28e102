@@ -16,3 +16,8 @@
 - [x] Apply Mythic cards to student, profile and view-only collections, preserving HP and actions.
 - [x] Fix student background gaps, empty teacher badge, header spacing and navigation layout.
 - [x] Verify real student sign-in, collection details, study, games and logout; check desktop and narrow layouts with no card clipping.
+
+# Collection correction and Pokémon details
+- [ ] Fix the missed teacher-facing collection so every collection matches the shop.
+- [ ] Redesign detailed cards by tier with type backgrounds and remove sound controls.
+- [ ] Verify actual collection navigation and detail cards at full and narrow widths.

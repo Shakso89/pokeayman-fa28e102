@@ -17030,20 +17030,7 @@ function openStudentClassmateProfile(studentName, canonicalStudentId = '', canon
     empty.classList.remove('hidden');
   } else {
     empty.classList.add('hidden');
-    const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary' };
-    grid.innerHTML = pokemons.map(p => {
-      const maxHP = getMaxHP(p);
-      const currentHP = getHealedHP(p);
-      const canonicalRarity = getSafePokemonRarity(p);
-      const cardClass = cardClasses[canonicalRarity] || cardClasses.common;
-      return `<div class="rounded-xl p-4 ${cardClass} text-center" data-rarity="${canonicalRarity}" data-tier-label="${canonicalRarity}">
-        <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png" class="w-20 h-20 mx-auto mb-2 object-contain" alt="${p.pokemon_name}">
-        <p class="font-bold text-sm truncate">${p.pokemon_name}</p>
-        <p class="text-purple-600 text-xs font-bold">PWR ${p.pokemon_power}</p>
-        <div class="w-full bg-gray-400 rounded-full h-2 mt-2 mb-1"><div class="bg-green-500 h-2 rounded-full" style="width:${(currentHP/maxHP)*100}%"></div></div>
-        <p class="text-green-600 text-xs font-semibold">${currentHP}/${maxHP} HP</p>
-      </div>`;
-    }).join('');
+    grid.innerHTML = pokemons.map(p => renderCollectionPokemonCard(p, studentName)).join('');
   }
   
   modal.querySelector('#profile-close').addEventListener('click', () => modal.remove());
