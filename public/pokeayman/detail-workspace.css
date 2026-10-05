@@ -25,7 +25,7 @@ html body #pokemon-modal#pokemon-modal #modal-close { flex: 0 0 36px; width: 36p
 html body #pokemon-modal#pokemon-modal #modal-close:hover { background: var(--shop-red) !important; }
 html body #pokemon-modal#pokemon-modal #modal-classification-row { display: flex !important; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 html body #pokemon-modal#pokemon-modal #modal-classification-row > * { font: 700 11px Figtree, sans-serif !important; border-radius: 5px !important; padding: 4px 9px !important; }
-html body #pokemon-modal#pokemon-modal #modal-classification-row .pokemon-tier-badge { background: var(--shop-surface) !important; color: var(--detail-accent) !important; border: 1px solid var(--detail-accent) !important; }
+html body #pokemon-modal#pokemon-modal #modal-classification-row .pokemon-classification-badge:first-child { background: var(--shop-surface) !important; color: var(--detail-accent) !important; border: 1px solid var(--detail-accent) !important; }
 html body #pokemon-modal#pokemon-modal #modal-card#modal-card .modal-card-body { padding: 0 17px 17px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; display: flex; flex-direction: column; gap: 13px; }
 html body #pokemon-modal#pokemon-modal .modal-card-body > * { margin: 0 !important; }
 html body #pokemon-modal#pokemon-modal #modal-card#modal-card #modal-img-container {
