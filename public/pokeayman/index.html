@@ -9358,6 +9358,7 @@ function debounceShop(fn, ms = 200) { let t; return () => { clearTimeout(t); t =
 function shopStairGo(key, index) {
   const st = shopPager[key]; if (!st) return;
   const n = st.count || 0;
+  if (!n) return;
   const next = Math.min(Math.max(index, 0), n - 1);
   if (next === (st.active || 0)) return;
   st.active = next;
@@ -9370,7 +9371,14 @@ function shopStairGo(key, index) {
     slide.classList.toggle('is-active', i === next);
     slide.setAttribute('aria-current', i === next ? 'true' : 'false');
   });
-  root.querySelectorAll('.stc-dot').forEach((dot, i) => dot.classList.toggle('is-active', i === next));
+  root.querySelectorAll('.stc-dot').forEach((dot, i) => {
+    dot.classList.toggle('is-active', i === next);
+    dot.setAttribute('aria-pressed', String(i === next));
+  });
+  const previousButton = root.querySelector('[aria-label="Previous Pokémon"]');
+  const nextButton = root.querySelector('[aria-label="Next Pokémon"]');
+  if (previousButton) previousButton.disabled = next === 0;
+  if (nextButton) nextButton.disabled = next >= n - 1;
   const label = root.querySelector('.stc-current-name');
   if (label) label.textContent = st.names[next] || '';
 }
@@ -9384,14 +9392,14 @@ function renderShopStaircase(key, container, items, ownIdx) {
     const s = i < active ? -1 : i > active ? 1 : 0;
     return `<div class="stc-slide${i === active ? ' is-active' : ''}" aria-current="${i === active}" style="transform:translateY(${s * 55}%) scale(${s === 0 ? 1 : 0.72})" onclick="if(!this.classList.contains('is-active')){event.stopPropagation();shopStairGo('${key}',${i});}">${renderShopPokemonCard(p, ownIdx.get(p.id))}</div>`;
   }).join('');
-  const dots = items.map((p, i) => `<button type="button" class="stc-dot${i === active ? ' is-active' : ''}" aria-label="Show ${String(p.name).replace(/"/g, '&quot;')}" onclick="shopStairGo('${key}',${i})"></button>`).join('');
+  const dots = items.map((p, i) => `<button type="button" class="stc-dot${i === active ? ' is-active' : ''}" aria-pressed="${i === active}" aria-label="Show ${String(p.name).replace(/"/g, '&quot;')}" onclick="shopStairGo('${key}',${i})"></button>`).join('');
   container.innerHTML = `<div class="shop-staircase" data-shop-key="${key}" style="--stc-w:210px">
     <p class="stc-current-name">${items[active] ? String(items[active].name).replace(/</g, '&lt;') : ''}</p>
     <div class="stc-viewport"><div class="stc-strip" style="transform:translateX(calc(${-active - 0.5} * var(--stc-w)))">${slides}</div></div>
     <div class="stc-controls">
-      <button type="button" class="stc-btn" aria-label="Previous Pokémon" ${active === 0 ? 'disabled' : ''} onclick="shopStairGo('${key}',${active - 1})">‹</button>
+      <button type="button" class="stc-btn" aria-label="Previous Pokémon" ${active === 0 ? 'disabled' : ''} onclick="shopStairGo('${key}',shopPager['${key}'].active - 1)">‹</button>
       <div class="stc-dots">${dots}</div>
-      <button type="button" class="stc-btn" aria-label="Next Pokémon" ${active >= items.length - 1 ? 'disabled' : ''} onclick="shopStairGo('${key}',${active + 1})">›</button>
+      <button type="button" class="stc-btn" aria-label="Next Pokémon" ${active >= items.length - 1 ? 'disabled' : ''} onclick="shopStairGo('${key}',shopPager['${key}'].active + 1)">›</button>
     </div>
   </div>`;
   const prev = container.querySelector('.stc-btn[aria-label="Previous Pokémon"]');

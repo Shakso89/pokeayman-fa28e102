@@ -14,6 +14,8 @@
   --kid-sky-300: #7DD3FC;
   --kid-ink: #0C4A6E;
   --kid-slate: #475569;
+  --kid-paper: #ffffff;
+  --kid-control-shadow: 0 3px 0 var(--kid-sky-100);
 }
 html body:has(#student-dashboard:not(.hidden)) {
   background: var(--student-veil), var(--student-landscape) center / cover fixed no-repeat !important;
@@ -329,3 +331,56 @@ html body #student-dashboard#student-dashboard #student-tab-games > .glass-conta
   background: #ffffff !important; border: 4px solid var(--kid-sky-100) !important;
   box-shadow: 0 16px 36px rgba(12, 74, 110, .12) !important;
 }
+
+/* Student shop controls inherit the sunny dashboard, not the teacher navy. */
+html body #student-dashboard#student-dashboard #student-tab-shop .shop-toolbar :is(input, select) {
+  background: var(--kid-paper) !important; color: var(--kid-ink) !important;
+  border: 2px solid var(--kid-sky-100) !important; border-radius: 16px !important;
+  height: 48px !important; box-shadow: var(--kid-control-shadow) !important;
+  font-family: Figtree, sans-serif !important;
+}
+html body #student-dashboard#student-dashboard #student-tab-shop .shop-toolbar input::placeholder { color: var(--kid-slate); opacity: 1; }
+html body #student-dashboard#student-dashboard #student-tab-shop .shop-search-field svg { color: var(--kid-ink); top: 15px; }
+html body #student-dashboard#student-dashboard #student-tab-shop .shop-rarity-segments {
+  background: var(--kid-sky-50) !important; border: 2px solid var(--kid-sky-100) !important;
+  border-radius: 18px !important; gap: 5px; padding: 6px;
+}
+html body #student-dashboard#student-dashboard #student-tab-shop .shop-rarity-segments button {
+  background: var(--kid-paper) !important; color: var(--kid-ink) !important;
+  border-radius: 12px !important; min-height: 38px !important;
+  font-family: Figtree, sans-serif !important; box-shadow: none !important;
+}
+html body #student-dashboard#student-dashboard #student-tab-shop .shop-rarity-segments button.active {
+  background: var(--kid-yellow) !important; color: var(--kid-ink) !important;
+  box-shadow: 0 3px 0 var(--kid-yellow-dark) !important;
+}
+html body #student-dashboard#student-dashboard #student-tab-shop .shop-rarity-segments button:hover:not(.active) { background: var(--kid-sky-100) !important; }
+html body #student-dashboard#student-dashboard #student-tab-shop .stc-controls { gap: 12px; padding: 12px 0; }
+html body #student-dashboard#student-dashboard #student-tab-shop .stc-btn {
+  display: flex !important; align-items: center; justify-content: center;
+  width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important;
+  padding: 0 !important; flex: 0 0 40px; border-radius: 50% !important;
+  background: var(--kid-yellow) !important; color: var(--kid-ink) !important;
+  border: 2px solid var(--kid-yellow-dark) !important; box-shadow: 0 3px 0 var(--kid-yellow-dark) !important;
+  font: 700 28px Figtree, sans-serif !important; line-height: 1 !important;
+}
+html body #student-dashboard#student-dashboard #student-tab-shop .stc-btn:disabled { background: var(--kid-sky-100) !important; border-color: var(--kid-sky-100) !important; box-shadow: none !important; opacity: .5; }
+html body #student-dashboard#student-dashboard #student-tab-shop .stc-dots { gap: 2px; }
+html body #student-dashboard#student-dashboard #student-tab-shop .stc-dot {
+  position: relative; width: 18px !important; height: 32px !important;
+  min-width: 18px !important; min-height: 32px !important; padding: 0 !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+  border-radius: 0 !important; opacity: 1 !important; transform: none !important; flex: 0 0 18px;
+}
+html body #student-dashboard#student-dashboard #student-tab-shop .stc-dot::before {
+  content: ''; position: absolute; width: 8px; height: 8px; top: 12px; left: 5px;
+  border-radius: 50%; background: var(--kid-sky-300);
+}
+html body #student-dashboard#student-dashboard #student-tab-shop .stc-dot.is-active::before { background: var(--kid-yellow-dark); width: 12px; height: 12px; top: 10px; left: 3px; }
+html body #student-dashboard#student-dashboard #student-tab-shop :is(.stc-btn, .stc-dot, .shop-pager-btn):focus-visible { outline: 3px solid var(--kid-ink); outline-offset: 2px; }
+html body #student-dashboard#student-dashboard #student-tab-shop .shop-pager-btn {
+  background: var(--kid-paper) !important; color: var(--kid-ink) !important;
+  border: 2px solid var(--kid-sky-100) !important; box-shadow: var(--kid-control-shadow) !important;
+}
+html body #student-dashboard#student-dashboard #student-tab-shop .shop-pager-btn.active { background: var(--kid-yellow) !important; border-color: var(--kid-yellow-dark) !important; }
+html body #student-dashboard#student-dashboard #student-tab-shop :is(.shop-pager-info, .shop-pager-gap) { color: var(--kid-ink) !important; }
