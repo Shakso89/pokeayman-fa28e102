@@ -42,5 +42,5 @@
 - [x] Verify all three shared class medal cards with live records and student flows; authenticated teacher navigation unavailable because preview sign-in could not be established.
 
 # Natural vocabulary reading
-- [ ] Replace device speech in both flashcard views with one natural voice for words and sentences.
-- [ ] Verify real vocabulary playback, repeat playback caching, and clear failure messages.
+- [x] Replace device speech in both flashcard views with one natural voice for words and sentences.
+- [x] Verify real student word/sentence audio streams, cached replay and clear failure messages; teacher buttons use the same reader, but authenticated teacher navigation and subjective audible quality remain unverified.
