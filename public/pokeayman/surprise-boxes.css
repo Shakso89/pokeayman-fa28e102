@@ -128,3 +128,4 @@
 .baam-stage-portal #baam-picture img { max-height: min(220px, 34vh) !important; object-fit: contain; }
 .baam-stage-float { top: 42% !important; font-size: clamp(3rem, 9vw, 5.5rem) !important; z-index: 10 !important; }
 .game-player-card { position: relative; }
+.game-player-card { overflow: visible !important; }
