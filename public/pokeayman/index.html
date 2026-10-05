@@ -3920,7 +3920,7 @@ document.addEventListener('click', function (e) {
    <header class="bg-transparent shadow-none" style="padding-top: 0.75rem;">
     <div class="w-full max-w-5xl mx-auto px-3 sm:px-6 py-0" style="min-height: 112px;">
      <div class="relative bg-transparent grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-6 w-full" style="min-height: 112px;">
-      <div class="flex items-center min-w-0"><button id="teacher-header-showcase" type="button" class="ths hidden" title="Open your Trainer Card"><span class="ths-ring"><span class="ths-avatar"></span></span><span class="ths-info"><span class="ths-role">Teacher</span><span class="ths-name"></span><span class="ths-credits"></span></span></button></div>
+      <div class="flex items-center min-w-0"><button id="teacher-header-showcase" type="button" class="ths hidden" title="Open your profile"><span class="ths-ring"><span class="ths-avatar"></span></span><span class="ths-info"><span class="ths-role">Teacher</span><span class="ths-name"></span><span class="ths-credits"></span></span></button></div>
       <div class="flex items-center justify-center min-w-0"><img data-template-id="app-logo-header" class="canva-image h-12 sm:h-20 max-w-full object-contain" src="/__l5e/assets-v1/a19396e6-c59f-4ea9-b29d-d02f46fdf0c3/pokeayman-logo.png" alt="PokéAyman logo">
       </div>
       <div class="flex items-center justify-end min-w-0"><button id="global-leaderboard-trigger" type="button" aria-label="View global top 10 students" title="Global Top 10 Students"><img data-template-id="global-leaderboard-trophy" class="canva-image" loading="lazy" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22150%22%20height%3D%22150%22%20viewBox%3D%220%200%20150%20150%22%3E%3Ccircle%20cx%3D%2275%22%20cy%3D%2275%22%20r%3D%2263%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%231e293b%22%20stroke-width%3D%229%22/%3E%3Cpath%20d%3D%22M16%2074a59%2059%200%200%201%20118%200Z%22%20fill%3D%22%23ef4444%22/%3E%3Cpath%20d%3D%22M16%2075h118%22%20stroke%3D%22%231e293b%22%20stroke-width%3D%2210%22/%3E%3Ccircle%20cx%3D%2275%22%20cy%3D%2275%22%20r%3D%2219%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%231e293b%22%20stroke-width%3D%229%22/%3E%3C/svg%3E" alt="Golden trophy with Poké Ball for the global leaderboard"></button>
@@ -3930,7 +3930,7 @@ document.addEventListener('click', function (e) {
    </header>
    <nav class="bg-transparent sticky top-0 z-10">
     <div class="max-w-5xl mx-auto px-3 sm:px-4 py-2 flex gap-2 flex-wrap items-center justify-between">
-     <div class="flex gap-1 sm:gap-2 flex-wrap"><button class="tab-btn tab-active px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition" data-tab="dashboard" id="dashboard-tab-btn" style="display: none;">Dashboard</button> <button class="tab-btn tab-inactive px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition hidden" data-tab="teacher-zone" id="teacher-zone-nav-btn" aria-hidden="true" tabindex="-1" style="display: none;">Teacher Zone</button> <button class="tab-btn tab-inactive px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition" data-tab="trainer" id="trainer-tab-btn">🎴 Trainer Card</button> <button id="admin-tab-btn" class="tab-btn tab-inactive px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition hidden" data-tab="admin" aria-hidden="true" tabindex="-1" style="display: none;">⚙️ Admin</button>
+     <div class="flex gap-1 sm:gap-2 flex-wrap"><button class="tab-btn tab-active px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition" data-tab="dashboard" id="dashboard-tab-btn" style="display: none;">Dashboard</button> <button class="tab-btn tab-inactive px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition hidden" data-tab="teacher-zone" id="teacher-zone-nav-btn" aria-hidden="true" tabindex="-1" style="display: none;">Teacher Zone</button> <button id="admin-tab-btn" class="tab-btn tab-inactive px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition hidden" data-tab="admin" aria-hidden="true" tabindex="-1" style="display: none;">⚙️ Admin</button>
      </div>
      <div class="flex items-center gap-2 ml-auto">
       <div class="flex items-center gap-2">
@@ -3942,7 +3942,6 @@ document.addEventListener('click', function (e) {
    </nav>
    <main class="max-w-5xl mx-auto px-4 py-6">
     <!-- DASHBOARD -->
-    <section id="tab-trainer" class="tab-content fade-in hidden"></section>
     <section id="tab-dashboard" class="tab-content fade-in">
      <!-- Teacher Dashboard -->
      <div id="teacher-dashboard" class="hidden">
@@ -4238,8 +4237,9 @@ document.addEventListener('click', function (e) {
     </div>
     <div id="admin-subtab-teacher-zone" class="admin-subtab-content hidden">
      <div class="flex gap-2 mb-4" role="tablist" aria-label="Teacher Zone sections">
-      <button id="teacher-zone-schedule-tab" type="button" class="teacher-zone-tab btn-primary text-sm" role="tab" aria-selected="true" aria-controls="teacher-zone-schedule-panel">Schedule</button><button id="teacher-zone-financial-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-financial-panel">Financial</button><button id="teacher-zone-history-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-history-panel">History</button><button id="teacher-zone-vb-lists-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-vb-lists-panel">My VB lists</button>
+      <button id="teacher-zone-schedule-tab" type="button" class="teacher-zone-tab btn-primary text-sm" role="tab" aria-selected="true" aria-controls="teacher-zone-schedule-panel">Schedule</button><button id="teacher-zone-financial-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-financial-panel">Financial</button><button id="teacher-zone-history-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-history-panel">History</button><button id="teacher-zone-vb-lists-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-vb-lists-panel">My VB lists</button><button id="teacher-zone-profile-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-profile-panel">Profile</button>
      </div>
+     <section id="teacher-zone-profile-panel" class="hidden" role="tabpanel" aria-labelledby="teacher-zone-profile-tab"><div id="tab-trainer"></div></section>
      <div id="teacher-zone-schedule-panel" role="tabpanel" aria-labelledby="teacher-zone-schedule-tab">
       <section id="teacher-hours-summary" class="glass-container teacher-hours-summary rounded-xl p-4 mb-5" aria-label="Teaching-hours summary">
        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -6033,6 +6033,11 @@ function isAymanTeacher() {
 function canAccessAdmin() { return isAymanTeacher(); }
 function canAccessTeacherZone() {
   if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return false;
+  return true;
+}
+// Admin "hide" setting only hides the Financial and History sub-tabs.
+function canSeeTeacherFinance() {
+  if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return false;
   if (isAymanTeacher()) return true;
   const cloudId = window.parent.pokeaymanAuth?.userId;
   const teacher = getTeachers().find(row => (cloudId && row.cloud_user_id === cloudId) ||
@@ -6990,7 +6995,6 @@ function renderTrainerTab() {
   const teacherShopCatalog = pokemonCatalog.slice();
   modal.className = 'trainer-page';
   modal.innerHTML = `<div class="trainer-hub" role="dialog" aria-modal="true" aria-labelledby="account-settings-title">
-<button type="button" class="th-close" id="th-close" aria-label="Back to dashboard">← Dashboard</button>
 <header class="th-card">
  <div class="th-card-shine" aria-hidden="true"></div>
  <div class="th-avatar-ring"><div id="th-avatar" class="th-avatar"></div></div>
@@ -6998,14 +7002,14 @@ function renderTrainerTab() {
   <span class="th-kicker">Trainer ID · ${isAymanTeacher() ? 'Admin' : 'Teacher'}</span>
   <h2 id="account-settings-title" class="th-name"></h2>
   <p id="tp-email" class="th-email"></p>
-  <div class="th-chips"><span class="th-chip th-chip-gold">💎 <b id="th-credits"></b></span><span class="th-chip">🎨 <b id="th-owned"></b> avatars</span></div>
+  <div class="th-chips"><span class="th-chip th-chip-gold">Credits <b id="th-credits"></b></span><span class="th-chip"><b id="th-owned"></b> avatars</span></div>
  </div>
  <div class="th-ball" aria-hidden="true"></div>
 </header>
 <nav class="th-tabs" role="tablist">
- <button type="button" class="th-tab is-active" data-th="wardrobe" role="tab">🎨 Avatar wardrobe</button>
- <button type="button" class="th-tab" data-th="profile" role="tab">👤 Profile</button>
- <button type="button" class="th-tab" data-th="security" role="tab">🔒 Security</button>
+ <button type="button" class="th-tab is-active" data-th="wardrobe" role="tab">Avatar wardrobe</button>
+ <button type="button" class="th-tab" data-th="profile" role="tab">Profile</button>
+ <button type="button" class="th-tab" data-th="security" role="tab">Security</button>
 </nav>
 <section class="th-panel" data-th-panel="wardrobe">
  <div class="th-progress"><div class="th-progress-head"><span>Unlock progress</span><span id="th-progress-label"></span></div><div class="th-bar"><div id="th-progress-fill" class="th-bar-fill"></div></div><p id="teacher-avatar-progress" class="th-hint"></p></div>
@@ -7031,7 +7035,6 @@ function renderTrainerTab() {
   const host = document.getElementById('tab-trainer'); host.innerHTML = ''; host.appendChild(modal);
   modal.remove = () => showMainTab('dashboard');
   modal.querySelector('#account-settings-title').textContent = currentTeacher;
-  modal.querySelector('#th-close').addEventListener('click', () => modal.remove());
   modal.querySelectorAll('.th-tab').forEach(t => t.addEventListener('click', () => {
     modal.querySelectorAll('.th-tab').forEach(x => x.classList.toggle('is-active', x === t));
     modal.querySelectorAll('[data-th-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.thPanel !== t.dataset.th));
@@ -7066,12 +7069,12 @@ function renderTrainerTab() {
       modal.querySelector('#th-owned').textContent = admin ? TEACHER_AVATARS.length : unlocked.size;
       modal.querySelector('#th-credits').textContent = admin ? 'Unlimited' : (rec?.teacher_credits === -1 ? '∞' : (rec?.teacher_credits || 0));
       const src = teacherAvatarSrc(selectedTeacherAvatar);
-      modal.querySelector('#th-avatar').innerHTML = src ? `<img src="${src}" alt="Equipped avatar">` : '<span>🎓</span>'; }
+      modal.querySelector('#th-avatar').innerHTML = src ? `<img src="${src}" alt="Equipped avatar">` : '<span>TR</span>'; }
     avatarOptions.innerHTML = TEACHER_AVATARS.map(item => {
       const isUnlocked = admin || unlocked.has(item.id);
       const isSel = selectedTeacherAvatar === 'sticker:' + item.id;
       const canUnlock = !isUnlocked && left > 0;
-      const label = isSel ? '<span class="block text-[9px] text-emerald-200">Equipped</span>' : isUnlocked ? '<span class="block text-[9px] text-cyan-200">Use</span>' : canUnlock ? '<span class="block text-[9px] text-amber-200">Unlock</span>' : '<span class="block text-[9px] text-slate-400">🔒 Locked</span>';
+      const label = isSel ? '<span class="block text-[9px] text-emerald-200">Equipped</span>' : isUnlocked ? '<span class="block text-[9px] text-cyan-200">Use</span>' : canUnlock ? '<span class="block text-[9px] text-amber-200">Unlock</span>' : '<span class="block text-[9px] text-slate-400">Locked</span>';
       return `<button type="button" class="teacher-avatar-option rounded-lg border-2 p-1.5 ${isSel ? 'border-emerald-300 bg-emerald-900/40' : 'border-slate-700 bg-slate-800/70'} ${!isUnlocked && !canUnlock ? 'opacity-50 cursor-not-allowed' : ''}" data-avatar="${item.id}" data-state="${isUnlocked ? 'unlocked' : canUnlock ? 'unlockable' : 'locked'}" role="radio" aria-checked="${isSel}"><img src="${item.url}" class="w-14 h-14 mx-auto object-contain ${!isUnlocked ? 'grayscale' : ''}" alt="${item.name}" loading="lazy"><span class="block truncate text-[10px] font-bold">${item.name}</span>${label}</button>`;
     }).join('');
     avatarOptions.querySelectorAll('.teacher-avatar-option').forEach(btn => btn.addEventListener('click', handleTeacherAvatarChoice));
@@ -7369,6 +7372,7 @@ function updateTeacherCreditBalance() {
 function showMainTab(tabName) {
   const allowed = ['dashboard', 'teacher-zone', 'admin', 'leaderboard', 'trainer'];
   if (!allowed.includes(tabName)) return;
+  if (tabName === 'trainer') { showMainTab('teacher-zone'); setTeacherZonePanel('teacher-zone-profile-panel','teacher-zone-profile-tab'); renderTrainerTab(); return; }
   if (tabName === 'teacher-zone' && !canAccessTeacherZone()) return;
   if (tabName === 'admin' && !canAccessAdmin()) return;
   if (currentRole !== 'teacher' && tabName !== 'dashboard' && tabName !== 'leaderboard') return;
@@ -7642,7 +7646,13 @@ function openScheduleRowEditor(slot = '', isNew = false) {
   modal.querySelector('#row-label').focus();
 }
 
+function applyTeacherFinanceVisibility() {
+  const ok = canSeeTeacherFinance();
+  ['teacher-zone-financial-tab','teacher-zone-history-tab'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = ok ? '' : 'none'; });
+  if (!ok && ['teacher-zone-financial-panel','teacher-zone-history-panel'].includes(teacherZoneInternalTab)) setTeacherZonePanel('teacher-zone-schedule-panel','teacher-zone-schedule-tab');
+}
 function renderTeacherZone() {
+  applyTeacherFinanceVisibility();
   const scope = currentTeacherZoneOwnerScope();
   if (!scope || !teacherWorkspaceKey || teacherZoneOwnerScope !== scope || teacherWorkspaceKey !== teacherStorageKey(scope)) {
     ['schedule-grid-body','sub-hours-list','teacher-zone-history-list','teacher-vb-lists-grid'].forEach(id => document.getElementById(id)?.replaceChildren());
@@ -7986,9 +7996,10 @@ function setTeacherZonePanel(panelId, tabId) {
   const scope = currentTeacherZoneOwnerScope();
   if (!scope || scope !== teacherZoneOwnerScope) return;
   teacherZoneInternalTab = panelId;
-  ['teacher-zone-schedule-panel','teacher-zone-financial-panel','teacher-zone-history-panel','teacher-zone-vb-lists-panel'].forEach(id => document.getElementById(id)?.classList.toggle('hidden', id !== panelId));
-  ['teacher-zone-schedule-tab','teacher-zone-financial-tab','teacher-zone-history-tab','teacher-zone-vb-lists-tab'].forEach(id => { const el=document.getElementById(id); if(el) { const active=id===tabId; el.className=`teacher-zone-tab ${active?'btn-primary':'btn-outline'} text-sm`; el.setAttribute('aria-selected',String(active)); } });
+  ['teacher-zone-schedule-panel','teacher-zone-financial-panel','teacher-zone-history-panel','teacher-zone-vb-lists-panel','teacher-zone-profile-panel'].forEach(id => document.getElementById(id)?.classList.toggle('hidden', id !== panelId));
+  ['teacher-zone-schedule-tab','teacher-zone-financial-tab','teacher-zone-history-tab','teacher-zone-vb-lists-tab','teacher-zone-profile-tab'].forEach(id => { const el=document.getElementById(id); if(el) { const active=id===tabId; el.className=`teacher-zone-tab ${active?'btn-primary':'btn-outline'} text-sm`; el.setAttribute('aria-selected',String(active)); } });
 }
+document.getElementById('teacher-zone-profile-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-profile-panel','teacher-zone-profile-tab'); renderTrainerTab(); });
 document.getElementById('teacher-zone-vb-lists-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-vb-lists-panel','teacher-zone-vb-lists-tab'); renderTeacherOwnedVocabLists(); });
 // Admin sub-tabs
 document.querySelectorAll('.admin-sub-tab').forEach(btn => {
@@ -11172,11 +11183,11 @@ function openEditTeacherModal(teacherId) {
   
   const modal = document.createElement('div'); 
   modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="bg-white rounded-xl shadow-lg w-96 max-h-[90vh] overflow-y-auto"><div class="sticky top-0 bg-blue-500 text-white p-6 rounded-t-xl"><h2 class="heading-font text-lg font-bold">Edit Teacher</h2></div><form class="p-6 space-y-4"><div><label class="text-xs font-semibold text-gray-600 block mb-2">Teacher Name</label><input type="text" id="et-name" value="${teacher.teacher_name}" class="w-full border rounded-lg px-3 py-2 text-sm" ${teacher.teacher_name === 'Ayman' ? 'disabled' : ''} required></div><div><label class="text-xs font-semibold text-gray-600 block mb-2">Sign-in account</label><div class="w-full border rounded-lg px-3 py-2 text-sm bg-gray-50 text-teal-950">${teacher.teacher_email || (teacher.cloud_user_id ? 'Linked account (email shows after next sign-in)' : 'Not linked yet')}</div>${teacher.teacher_email ? '<button type="button" id="et-reset" class="mt-2 text-xs font-semibold text-purple-600 hover:underline">Send password reset email</button>' : ''}</div><div><label class="text-xs font-semibold text-gray-600 block mb-2">Credits</label><input type="number" id="et-credits" value="${teacher.teacher_credits||0}" class="w-full border rounded-lg px-3 py-2 text-sm"></div>${teacher.teacher_name !== 'Ayman' ? `<div><label class="text-xs font-semibold text-gray-600 block mb-3">Assign Schools</label><div class="space-y-2 max-h-32 overflow-y-auto border rounded-lg p-3 bg-gray-50">${allSchools.length > 0 ? allSchools.map(school => `<label class="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded transition"><input type="checkbox" class="et-school-checkbox" data-school-name="${school.school_name}" ${assignedSchoolNames.has(school.school_name) ? 'checked' : ''}><span class="text-sm text-teal-950">${school.school_name}</span></label>`).join('') : '<p class="text-xs text-gray-500">No schools available</p>'}</div></div><div><label class="text-xs font-semibold text-gray-600 block mb-3">Assign Classes</label><div class="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50">${allClasses.length > 0 ? allClasses.map(cls => `<label class="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded transition"><input type="checkbox" class="et-class-checkbox" data-class-id="${cls.__backendId}" data-school-name="${cls.school_name}" data-class-name="${cls.class_name}" ${assignedClassKeys.has(`${cls.school_name}||${cls.class_name}`) ? 'checked' : ''}><span class="text-sm text-teal-950">${cls.school_name} - ${cls.class_name}</span></label>`).join('') : '<p class="text-xs text-gray-500">No classes available</p>'}</div></div>` : ''}<div class="teacher-zone-access-setting"><label class="teacher-zone-access-label" for="et-zone-access"><span class="teacher-zone-access-copy"><strong>Teacher Zone</strong><small>Schedule, finances, history and vocabulary lists</small></span><span class="teacher-zone-switch"><input type="checkbox" id="et-zone-access" ${teacher.teacher_zone_access !== 'hide' ? 'checked' : ''}><span aria-hidden="true"></span></span></label><p id="et-zone-status" class="teacher-zone-access-status"></p></div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 btn-primary">Save</button><button type="button" class="flex-1 btn-outline" id="et-cancel">Cancel</button></div></form></div>`;
+  modal.innerHTML = `<div class="bg-white rounded-xl shadow-lg w-96 max-h-[90vh] overflow-y-auto"><div class="sticky top-0 bg-blue-500 text-white p-6 rounded-t-xl"><h2 class="heading-font text-lg font-bold">Edit Teacher</h2></div><form class="p-6 space-y-4"><div><label class="text-xs font-semibold text-gray-600 block mb-2">Teacher Name</label><input type="text" id="et-name" value="${teacher.teacher_name}" class="w-full border rounded-lg px-3 py-2 text-sm" ${teacher.teacher_name === 'Ayman' ? 'disabled' : ''} required></div><div><label class="text-xs font-semibold text-gray-600 block mb-2">Sign-in account</label><div class="w-full border rounded-lg px-3 py-2 text-sm bg-gray-50 text-teal-950">${teacher.teacher_email || (teacher.cloud_user_id ? 'Linked account (email shows after next sign-in)' : 'Not linked yet')}</div>${teacher.teacher_email ? '<button type="button" id="et-reset" class="mt-2 text-xs font-semibold text-purple-600 hover:underline">Send password reset email</button>' : ''}</div><div><label class="text-xs font-semibold text-gray-600 block mb-2">Credits</label><input type="number" id="et-credits" value="${teacher.teacher_credits||0}" class="w-full border rounded-lg px-3 py-2 text-sm"></div>${teacher.teacher_name !== 'Ayman' ? `<div><label class="text-xs font-semibold text-gray-600 block mb-3">Assign Schools</label><div class="space-y-2 max-h-32 overflow-y-auto border rounded-lg p-3 bg-gray-50">${allSchools.length > 0 ? allSchools.map(school => `<label class="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded transition"><input type="checkbox" class="et-school-checkbox" data-school-name="${school.school_name}" ${assignedSchoolNames.has(school.school_name) ? 'checked' : ''}><span class="text-sm text-teal-950">${school.school_name}</span></label>`).join('') : '<p class="text-xs text-gray-500">No schools available</p>'}</div></div><div><label class="text-xs font-semibold text-gray-600 block mb-3">Assign Classes</label><div class="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50">${allClasses.length > 0 ? allClasses.map(cls => `<label class="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded transition"><input type="checkbox" class="et-class-checkbox" data-class-id="${cls.__backendId}" data-school-name="${cls.school_name}" data-class-name="${cls.class_name}" ${assignedClassKeys.has(`${cls.school_name}||${cls.class_name}`) ? 'checked' : ''}><span class="text-sm text-teal-950">${cls.school_name} - ${cls.class_name}</span></label>`).join('') : '<p class="text-xs text-gray-500">No classes available</p>'}</div></div>` : ''}<div class="teacher-zone-access-setting"><label class="teacher-zone-access-label" for="et-zone-access"><span class="teacher-zone-access-copy"><strong>Financial &amp; History</strong><small>Financial and History tabs in Teacher Zone</small></span><span class="teacher-zone-switch"><input type="checkbox" id="et-zone-access" ${teacher.teacher_zone_access !== 'hide' ? 'checked' : ''}><span aria-hidden="true"></span></span></label><p id="et-zone-status" class="teacher-zone-access-status"></p></div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 btn-primary">Save</button><button type="button" class="flex-1 btn-outline" id="et-cancel">Cancel</button></div></form></div>`;
   document.body.appendChild(modal);
   const zoneToggle = modal.querySelector('#et-zone-access');
   const zoneStatus = modal.querySelector('#et-zone-status');
-  const updateZoneStatus = () => { zoneStatus.textContent = zoneToggle.checked ? 'Teacher Zone is visible to this teacher.' : 'Teacher Zone is hidden from this teacher.'; };
+  const updateZoneStatus = () => { zoneStatus.textContent = zoneToggle.checked ? 'Financial and History are visible to this teacher.' : 'Financial and History are hidden from this teacher.'; };
   zoneToggle.addEventListener('change', updateZoneStatus);
   updateZoneStatus();
   
