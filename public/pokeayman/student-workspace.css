@@ -257,3 +257,10 @@ html body #student-dashboard#student-dashboard :is(#student-tab-vocabulary, #stu
   border: 2px solid #FDE68A !important; box-shadow: 0 3px 0 var(--kid-yellow-dark) !important;
   text-shadow: none !important;
 }
+
+/* ---- Active group button keeps muted class too ---- */
+html body #student-dashboard#student-dashboard #student-navigation-groups#student-navigation-groups .student-nav-group-button.student-nav-group-button-muted.student-dashboard-tab-active {
+  background: var(--kid-yellow) !important; color: #422006 !important;
+  border: none !important; border-bottom: 6px solid var(--kid-yellow-dark) !important;
+  box-shadow: 0 10px 22px rgba(255, 210, 63, .45) !important;
+}
