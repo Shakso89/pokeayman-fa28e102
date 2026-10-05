@@ -309,3 +309,23 @@ html body #student-dashboard#student-dashboard .student-class-filter-tab.is-acti
 html body #student-dashboard#student-dashboard .student-class-filter-tab:hover {
   border-color: var(--kid-yellow) !important; transform: translateY(-1px) !important;
 }
+
+/* ---- Games list cards + panel frame (kid theme) ---- */
+html body #student-dashboard#student-dashboard .game-vocab-list-card {
+  background: #ffffff !important; border: 3px solid var(--kid-sky-100) !important;
+  border-radius: 1.5rem !important; box-shadow: 0 10px 22px rgba(12, 74, 110, .10) !important;
+}
+html body #student-dashboard#student-dashboard .game-vocab-list-card:hover {
+  border-color: var(--kid-yellow) !important; transform: translateY(-3px) !important;
+  box-shadow: 0 16px 30px rgba(255, 210, 63, .28) !important;
+}
+html body #student-dashboard#student-dashboard .game-vocab-list-card h4 { color: var(--kid-ink) !important; }
+html body #student-dashboard#student-dashboard .game-vocab-list-card p { color: var(--kid-slate) !important; }
+html body #student-dashboard#student-dashboard #student-tab-games .glass-container,
+html body #student-dashboard#student-dashboard #student-tab-games {
+  background: transparent !important;
+}
+html body #student-dashboard#student-dashboard #student-tab-games > .glass-container {
+  background: #ffffff !important; border: 4px solid var(--kid-sky-100) !important;
+  box-shadow: 0 16px 36px rgba(12, 74, 110, .12) !important;
+}
