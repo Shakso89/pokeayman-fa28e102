@@ -5,6 +5,13 @@
   <title>PokéAyman</title>
   <style>
     :root { --home-bg-image: none; }
+    .shop-pager { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:.4rem; margin:1.25rem 0 .5rem; }
+    .shop-pager-btn { min-width:2.4rem; padding:.45rem .8rem; border-radius:999px; font-weight:800; font-size:.85rem; color:#f0fffd; background:rgba(15,118,110,.55); border:1px solid rgba(153,246,228,.45); transition:transform .15s, background .15s; }
+    .shop-pager-btn:hover:not([disabled]) { transform:translateY(-2px); background:rgba(20,184,166,.75); }
+    .shop-pager-btn.active { background:linear-gradient(135deg,#fbbf24,#f59e0b); color:#3b2300; border-color:#fde68a; }
+    .shop-pager-btn[disabled] { opacity:.35; cursor:not-allowed; }
+    .shop-pager-gap { color:#ccfbf1; font-weight:800; padding:0 .2rem; }
+    .shop-pager-info { width:100%; text-align:center; color:#ccfbf1; font-size:.78rem; font-weight:700; margin-top:.2rem; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;family=Fraunces:wght@700;900&amp;display=swap" rel="stylesheet">
@@ -8628,7 +8635,7 @@ function renderStudentDashboard() {
       const canonicalRarity = getSafePokemonRarity(p);
       const cardClass = `${cardClasses[canonicalRarity]} ${pokemonTypeCardClass(p)}`;
       const imageUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png`;
-      return `<div class="rounded-xl p-4 ${cardClass} text-center cursor-pointer relative" style="${getPokemonAvatarCardStyle(p)}" data-rarity="${canonicalRarity}" data-tier-label="${canonicalRarity}" tabindex="0" role="button" aria-label="${p.pokemon_name}, ${canonicalRarity}, power ${p.pokemon_power}, ${Number.isFinite(currentHP) ? currentHP : 0} of ${Number.isFinite(maxHP) ? currentHP : 0} HP" onclick="openPokemonModal({id:${p.pokemon_id},name:'${p.pokemon_name}',rarity:'${p.pokemon_rarity}',price:${p.pokemon_price},power:${p.pokemon_power},hp:${maxHP}},true,'${currentStudent}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${imageUrl}" class="w-20 h-20 mx-auto mb-2 object-contain" loading="lazy" onerror="this.src='https://via.placeholder.com/80?text=${p.pokemon_id}'; this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='0.25rem';" alt="${p.pokemon_name}"><p class="font-bold text-sm capitalize">${p.pokemon_name}</p>${getPokemonTypeLabel(p) ? `<span class="pokemon-type-badge" aria-label="Type: ${getPokemonTypeLabel(p)}">${getPokemonTypeLabel(p)}</span>` : ''}<p class="text-purple-600 text-xs font-bold mt-1">PWR ${p.pokemon_power}</p><div class="w-full bg-gray-400 rounded-full h-2 mt-2 mb-1"><div class="bg-green-500 h-2 rounded-full" style="width:${Number.isFinite(currentHP) && Number.isFinite(maxHP) && maxHP > 0 ? Math.max(0, Math.min(100, (currentHP / maxHP) * 100)) : 0}%"></div></div><p class="text-green-600 text-xs font-semibold">${Number.isFinite(currentHP) ? currentHP : 0}/${Number.isFinite(maxHP) && maxHP > 0 ? maxHP : 0} HP</p>${recoveryDisplay}</div>`;
+      return `<div class="rounded-xl p-4 ${cardClass} text-center cursor-pointer relative" style="${getPokemonAvatarCardStyle(p)}" data-rarity="${canonicalRarity}" data-tier-label="${canonicalRarity}" tabindex="0" role="button" aria-label="${p.pokemon_name}, ${canonicalRarity}, power ${p.pokemon_power}, ${Number.isFinite(currentHP) ? currentHP : 0} of ${Number.isFinite(maxHP) ? currentHP : 0} HP" onclick="openPokemonModal({id:${p.pokemon_id},name:'${p.pokemon_name}',rarity:'${p.pokemon_rarity}',price:${p.pokemon_price},power:${p.pokemon_power},hp:${maxHP}},true,'${currentStudent}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${imageUrl}" class="w-20 h-20 mx-auto mb-2 object-contain" loading="lazy" decoding="async" onerror="this.src='https://via.placeholder.com/80?text=${p.pokemon_id}'; this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='0.25rem';" alt="${p.pokemon_name}"><p class="font-bold text-sm capitalize">${p.pokemon_name}</p>${getPokemonTypeLabel(p) ? `<span class="pokemon-type-badge" aria-label="Type: ${getPokemonTypeLabel(p)}">${getPokemonTypeLabel(p)}</span>` : ''}<p class="text-purple-600 text-xs font-bold mt-1">PWR ${p.pokemon_power}</p><div class="w-full bg-gray-400 rounded-full h-2 mt-2 mb-1"><div class="bg-green-500 h-2 rounded-full" style="width:${Number.isFinite(currentHP) && Number.isFinite(maxHP) && maxHP > 0 ? Math.max(0, Math.min(100, (currentHP / maxHP) * 100)) : 0}%"></div></div><p class="text-green-600 text-xs font-semibold">${Number.isFinite(currentHP) ? currentHP : 0}/${Number.isFinite(maxHP) && maxHP > 0 ? maxHP : 0} HP</p>${recoveryDisplay}</div>`;
     }).join('');
   }
   renderStudentShop();
@@ -9262,18 +9269,54 @@ function getStudentTotalValue(student) {
   return value;
 }
 
+const SHOP_PAGE_SIZE = 24;
+const shopPager = {};
+function shopOwnerIndex() {
+  const m = new Map();
+  for (const r of getPokemons()) if (!m.has(r.pokemon_id)) m.set(r.pokemon_id, r);
+  return m;
+}
+function shopPageSlice(key, list) {
+  const st = shopPager[key] || (shopPager[key] = { page: 0, list: null });
+  if (st.list !== list) { st.list = list; st.page = 0; }
+  const pages = Math.max(1, Math.ceil(list.length / SHOP_PAGE_SIZE));
+  st.page = Math.min(Math.max(0, st.page), pages - 1);
+  return { items: list.slice(st.page * SHOP_PAGE_SIZE, (st.page + 1) * SHOP_PAGE_SIZE), page: st.page, pages, total: list.length };
+}
+function shopGoPage(key, page) {
+  shopPager[key].page = page;
+  if (key === 'my') renderShopPage(); else renderProfileShopPage();
+  const g = document.getElementById(key === 'my' ? 'my-shop-grid' : 'profile-shop-grid');
+  if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function renderShopPager(key, gridId, info) {
+  const grid = document.getElementById(gridId); if (!grid) return;
+  let bar = document.getElementById(gridId + '-pager');
+  if (!bar) { bar = document.createElement('div'); bar.id = gridId + '-pager'; bar.className = 'shop-pager'; grid.insertAdjacentElement('afterend', bar); }
+  if (info.pages <= 1) { bar.innerHTML = info.total ? `<span class="shop-pager-info">Showing all ${info.total}</span>` : ''; return; }
+  const { page, pages } = info; const nums = [];
+  for (let i = 0; i < pages; i++) if (i === 0 || i === pages - 1 || Math.abs(i - page) <= 1) nums.push(i); else if (nums[nums.length - 1] !== '…') nums.push('…');
+  const btn = (label, target, dis, act) => `<button type="button" class="shop-pager-btn${act ? ' active' : ''}" ${dis ? 'disabled' : ''} onclick="shopGoPage('${key}',${target})">${label}</button>`;
+  bar.innerHTML = btn('‹ Prev', page - 1, page === 0) + nums.map(n => n === '…' ? '<span class="shop-pager-gap">…</span>' : btn(n + 1, n, false, n === page)).join('') + btn('Next ›', page + 1, page === pages - 1) +
+    `<span class="shop-pager-info">${page * SHOP_PAGE_SIZE + 1}–${Math.min((page + 1) * SHOP_PAGE_SIZE, info.total)} of ${info.total}</span>`;
+}
+function debounceShop(fn, ms = 200) { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; }
+
 function renderShopPage() {
   const container = document.getElementById('my-shop-grid');
   const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary' };
   
-  container.innerHTML = shopState.filtered.map(p => {
-    const ownerRecord = getPokemons().find(pok => pok.pokemon_id === p.id);
+  const ownIdx = shopOwnerIndex();
+  const info = shopPageSlice('my', shopState.filtered);
+  renderShopPager('my', 'my-shop-grid', info);
+  container.innerHTML = info.items.map(p => {
+    const ownerRecord = ownIdx.get(p.id);
     const owner = ownerRecord ? (ownerRecord.owner_display_name || ownerRecord.displayName || ownerRecord.username || ownerRecord.owner || '') : '';
     const cardClass = `${cardClasses[p.rarity] || cardClasses.common} ${pokemonTypeCardClass(p)}`;
     const dimmed = owner ? 'opacity-50' : '';
     const shopTypeStyle = getPokemonAvatarCardStyle(p);
     const imageUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png`;
-    return `<div class="rounded-xl p-4 ${cardClass} text-center cursor-pointer relative ${dimmed}" style="${shopTypeStyle}" onclick="openPokemonModal({id:${p.id},name:'${p.name}',rarity:'${p.rarity}',price:${p.price},power:${p.power},hp:${p.hp}},${!!owner},'${owner||''}')"><img src="${imageUrl}" class="w-20 h-20 mx-auto mb-2 object-contain" loading="lazy" alt="${p.name}" onerror="this.src='https://via.placeholder.com/80?text=${p.id}'; this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='0.25rem';"><p class="font-bold text-sm capitalize">${p.name}</p><p class="shop-tier-label">PWR ${p.power}</p><p class="text-amber-600 font-bold text-sm mt-1">${p.price} 🪙</p>${owner ? `<p class="text-red-500 text-xs font-semibold mt-1">Owned by ${owner}</p>` : ''}</div>`;
+    return `<div class="rounded-xl p-4 ${cardClass} text-center cursor-pointer relative ${dimmed}" style="${shopTypeStyle}" onclick="openPokemonModal({id:${p.id},name:'${p.name}',rarity:'${p.rarity}',price:${p.price},power:${p.power},hp:${p.hp}},${!!owner},'${owner||''}')"><img src="${imageUrl}" class="w-20 h-20 mx-auto mb-2 object-contain" loading="lazy" decoding="async" alt="${p.name}" onerror="this.src='https://via.placeholder.com/80?text=${p.id}'; this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='0.25rem';"><p class="font-bold text-sm capitalize">${p.name}</p><p class="shop-tier-label">PWR ${p.power}</p><p class="text-amber-600 font-bold text-sm mt-1">${p.price} 🪙</p>${owner ? `<p class="text-red-500 text-xs font-semibold mt-1">Owned by ${owner}</p>` : ''}</div>`;
   }).join('');
 }
 
@@ -9285,8 +9328,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const profileSortButtons = document.querySelectorAll('.profile-shop-sort-btn');
   const profileSearchInput = document.getElementById('profile-shop-search');
   
-  if (searchInput) searchInput.addEventListener('input', () => { applyShopFilters(); renderShopPage(); });
-  if (profileSearchInput) profileSearchInput.addEventListener('input', () => { applyProfileShopFilters(); renderProfileShopPage(); });
+  if (searchInput) searchInput.addEventListener('input', debounceShop(() => { applyShopFilters(); renderShopPage(); }));
+  if (profileSearchInput) profileSearchInput.addEventListener('input', debounceShop(() => { applyProfileShopFilters(); renderProfileShopPage(); }));
   
   // Student shop rarity buttons
   rarityButtons.forEach(btn => {
@@ -11739,13 +11782,16 @@ function renderProfileShopPage() {
   const container = document.getElementById('profile-shop-grid');
   const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary' };
   
-  container.innerHTML = profileShopState.filtered.map(p => {
-    const owner = getPokemons().find(pok => pok.pokemon_id === p.id)?.owner;
+  const ownIdx = shopOwnerIndex();
+  const info = shopPageSlice('profile', profileShopState.filtered);
+  renderShopPager('profile', 'profile-shop-grid', info);
+  container.innerHTML = info.items.map(p => {
+    const owner = ownIdx.get(p.id)?.owner;
     const cardClass = `${cardClasses[p.rarity] || cardClasses.common} ${pokemonTypeCardClass(p)}`;
     const dimmed = owner ? 'opacity-50' : '';
     const shopTypeStyle = getPokemonAvatarCardStyle(p);
     const imageUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png`;
-    return `<div class="rounded-xl p-4 ${cardClass} text-center cursor-pointer relative ${dimmed}" style="${shopTypeStyle}" onclick="openPokemonModal({id:${p.id},name:'${p.name}',rarity:'${p.rarity}',price:${p.price},power:${p.power},hp:${p.hp}},${!!owner},'${owner||''}')"><img src="${imageUrl}" class="w-20 h-20 mx-auto mb-2 object-contain" loading="lazy" alt="${p.name}" onerror="this.src='https://via.placeholder.com/80?text=${p.id}'; this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='0.25rem';"><p class="font-bold text-sm capitalize">${p.name}</p><p class="shop-tier-label">PWR ${p.power}</p><p class="text-amber-600 font-bold text-sm mt-1">${p.price} 🪙</p>${owner ? `<p class="text-red-500 text-xs font-semibold mt-1">Owned by ${owner}</p>` : ''}</div>`;
+    return `<div class="rounded-xl p-4 ${cardClass} text-center cursor-pointer relative ${dimmed}" style="${shopTypeStyle}" onclick="openPokemonModal({id:${p.id},name:'${p.name}',rarity:'${p.rarity}',price:${p.price},power:${p.power},hp:${p.hp}},${!!owner},'${owner||''}')"><img src="${imageUrl}" class="w-20 h-20 mx-auto mb-2 object-contain" loading="lazy" decoding="async" alt="${p.name}" onerror="this.src='https://via.placeholder.com/80?text=${p.id}'; this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='0.25rem';"><p class="font-bold text-sm capitalize">${p.name}</p><p class="shop-tier-label">PWR ${p.power}</p><p class="text-amber-600 font-bold text-sm mt-1">${p.price} 🪙</p>${owner ? `<p class="text-red-500 text-xs font-semibold mt-1">Owned by ${owner}</p>` : ''}</div>`;
   }).join('');
 }
 
