@@ -3755,6 +3755,22 @@ document.addEventListener('click', function (e) {
 }, true);
 </script>
 <style>
+.trainer-page .trainer-hub{max-width:none;max-height:none;overflow:visible}
+.trainer-page .th-close{width:auto;padding:0 .9rem;font-size:.8rem}
+.ths{display:flex;align-items:center;gap:.75rem;padding:.35rem 1.1rem .35rem .35rem;border-radius:999px;background:linear-gradient(135deg,rgba(13,148,136,.92),rgba(8,47,55,.92));border:2px solid rgba(94,234,212,.6);box-shadow:0 10px 26px rgba(0,0,0,.35);color:#ecfeff;text-align:left;max-width:100%;transition:transform .2s}
+.ths:hover{transform:translateY(-2px) scale(1.02)}
+.ths.is-admin{border-color:#fbbf24;background:linear-gradient(135deg,rgba(180,83,9,.92),rgba(8,47,55,.92))}
+.ths-ring{flex:none;padding:3px;border-radius:999px;background:conic-gradient(#5eead4,#fff,#22d3ee,#5eead4);animation:thsSpin 6s linear infinite}
+.ths.is-admin .ths-ring{background:conic-gradient(#fbbf24,#fff,#f59e0b,#fbbf24)}
+@keyframes thsSpin{to{filter:hue-rotate(40deg)}}
+.ths-avatar{width:68px;height:68px;border-radius:999px;background:#ecfeff;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:2rem}
+.ths-avatar img{width:100%;height:100%;object-fit:contain}
+.ths-info{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.ths-role{font-size:.6rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#fde68a}
+.ths-name{font-size:1.05rem;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ths-credits{font-size:.72rem;font-weight:700;opacity:.9}
+@media (max-width:640px){.ths{padding-right:.4rem}.ths-info{display:none}.ths-avatar{width:52px;height:52px}}
+#logged-in-name-container{display:none !important}
 .trainer-hub-backdrop{background:radial-gradient(circle at 50% 30%,rgba(13,148,136,.35),rgba(2,10,20,.82));backdrop-filter:blur(6px);padding:1rem}
 .trainer-hub{position:relative;width:100%;max-width:46rem;max-height:92vh;overflow-y:auto;border-radius:1.6rem;padding:1.25rem;color:#ecfeff;background:linear-gradient(160deg,rgba(8,47,55,.94),rgba(6,24,38,.96));border:1px solid rgba(153,246,228,.28);box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08);animation:thIn .28s ease-out}
 @keyframes thIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
@@ -3856,7 +3872,7 @@ document.addEventListener('click', function (e) {
     <!-- Top Center: PokéAyman Logo --> <img data-template-id="app-logo-header" class="canva-image h-12 sm:h-20 w-auto max-w-[42vw] object-contain" src="/__l5e/assets-v1/a19396e6-c59f-4ea9-b29d-d02f46fdf0c3/pokeayman-logo.png" alt="PokéAyman logo"> <!-- Top Right: Header controls -->
     <div class="flex items-center justify-end gap-2 sm:gap-3">
      <button id="login-toggle" type="button" aria-label="Open login options" aria-haspopup="dialog" aria-expanded="false" class="login-popover-trigger">Log in</button><button id="contact-pricing-btn" type="button" class="home-header-contact px-3 sm:px-5 py-2 sm:py-3 rounded-lg font-semibold text-xs sm:text-sm bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transition-all">📞 Contact us</button>
-     <div id="login-choice-popover" class="login-choice-popover hidden" role="dialog" aria-modal="true" aria-labelledby="login-choice-title">
+     <div id="login-choice-popover" class="login-choice-popover hidden" aria-labelledby="login-choice-title">
       <div class="flex items-center justify-between gap-3 mb-3">
        <h2 id="login-choice-title" class="text-sm font-bold text-white">Choose login</h2><button id="login-choice-close" type="button" class="login-choice-close" aria-label="Close login options">×</button>
       </div>
@@ -3897,7 +3913,7 @@ document.addEventListener('click', function (e) {
    <header class="bg-transparent shadow-none" style="padding-top: 0.75rem;">
     <div class="w-full max-w-5xl mx-auto px-3 sm:px-6 py-0" style="min-height: 112px;">
      <div class="relative bg-transparent grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-6 w-full" style="min-height: 112px;">
-      <div aria-hidden="true"></div>
+      <div class="flex items-center min-w-0"><button id="teacher-header-showcase" type="button" class="ths hidden" title="Open your Trainer Card"><span class="ths-ring"><span class="ths-avatar"></span></span><span class="ths-info"><span class="ths-role">Teacher</span><span class="ths-name"></span><span class="ths-credits"></span></span></button></div>
       <div class="flex items-center justify-center min-w-0"><img data-template-id="app-logo-header" class="canva-image h-12 sm:h-20 max-w-full object-contain" src="/__l5e/assets-v1/a19396e6-c59f-4ea9-b29d-d02f46fdf0c3/pokeayman-logo.png" alt="PokéAyman logo">
       </div>
       <div class="flex items-center justify-end min-w-0"><button id="global-leaderboard-trigger" type="button" aria-label="View global top 10 students" title="Global Top 10 Students"><img data-template-id="global-leaderboard-trophy" class="canva-image" loading="lazy" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22150%22%20height%3D%22150%22%20viewBox%3D%220%200%20150%20150%22%3E%3Ccircle%20cx%3D%2275%22%20cy%3D%2275%22%20r%3D%2263%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%231e293b%22%20stroke-width%3D%229%22/%3E%3Cpath%20d%3D%22M16%2074a59%2059%200%200%201%20118%200Z%22%20fill%3D%22%23ef4444%22/%3E%3Cpath%20d%3D%22M16%2075h118%22%20stroke%3D%22%231e293b%22%20stroke-width%3D%2210%22/%3E%3Ccircle%20cx%3D%2275%22%20cy%3D%2275%22%20r%3D%2219%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%231e293b%22%20stroke-width%3D%229%22/%3E%3C/svg%3E" alt="Golden trophy with Poké Ball for the global leaderboard"></button>
@@ -3907,7 +3923,7 @@ document.addEventListener('click', function (e) {
    </header>
    <nav class="bg-transparent sticky top-0 z-10">
     <div class="max-w-5xl mx-auto px-3 sm:px-4 py-2 flex gap-2 flex-wrap items-center justify-between">
-     <div class="flex gap-1 sm:gap-2 flex-wrap"><button class="tab-btn tab-active px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition" data-tab="dashboard" id="dashboard-tab-btn" style="display: none;">Dashboard</button> <button class="tab-btn tab-inactive px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition hidden" data-tab="teacher-zone" id="teacher-zone-nav-btn" aria-hidden="true" tabindex="-1" style="display: none;">Teacher Zone</button> <button id="admin-tab-btn" class="tab-btn tab-inactive px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition hidden" data-tab="admin" aria-hidden="true" tabindex="-1" style="display: none;">⚙️ Admin</button>
+     <div class="flex gap-1 sm:gap-2 flex-wrap"><button class="tab-btn tab-active px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition" data-tab="dashboard" id="dashboard-tab-btn" style="display: none;">Dashboard</button> <button class="tab-btn tab-inactive px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition hidden" data-tab="teacher-zone" id="teacher-zone-nav-btn" aria-hidden="true" tabindex="-1" style="display: none;">Teacher Zone</button> <button class="tab-btn tab-inactive px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition" data-tab="trainer" id="trainer-tab-btn">🎴 Trainer Card</button> <button id="admin-tab-btn" class="tab-btn tab-inactive px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition hidden" data-tab="admin" aria-hidden="true" tabindex="-1" style="display: none;">⚙️ Admin</button>
      </div>
      <div class="flex items-center gap-2 ml-auto">
       <div class="flex items-center gap-2">
@@ -3919,6 +3935,7 @@ document.addEventListener('click', function (e) {
    </nav>
    <main class="max-w-5xl mx-auto px-4 py-6">
     <!-- DASHBOARD -->
+    <section id="tab-trainer" class="tab-content fade-in hidden"></section>
     <section id="tab-dashboard" class="tab-content fade-in">
      <!-- Teacher Dashboard -->
      <div id="teacher-dashboard" class="hidden">
@@ -5995,6 +6012,13 @@ function saveTeacherWorkspace() {
   }).catch(() => { const errorStatus = document.getElementById('schedule-save-status'); if (errorStatus) errorStatus.textContent = 'Sync failed — retry'; });
 }
 
+function findMyTeacherRecord() {
+  const t = getTeachers();
+  const cloudId = window.parent?.pokeaymanAuth?.userId;
+  return (currentTeacherRecordId && t.find(r => r.__backendId === currentTeacherRecordId))
+    || (cloudId && t.find(r => r.cloud_user_id === cloudId))
+    || t.find(r => normalizeStudentIdentity(r.teacher_name) === normalizeStudentIdentity(currentTeacher)) || null;
+}
 // Admin access fails closed and accepts only the normalized Ayman identity.
 function isAymanTeacher() {
   return currentRole === 'teacher' && verifiedTeacherIdentity() === 'ayman';
@@ -6494,7 +6518,9 @@ window.pokeaymanEnterTeacher = async function (name) {
   const cloudId = (window.parent && window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.userId) || '';
   // "Ayman" is only passed for backend-verified admins; it maps to the built-in Admin with no sheet row.
   let rec = null;
-  if (clean !== ADMIN_TEACHER.name) {
+  if (clean === ADMIN_TEACHER.name) {
+    rec = (cloudId && getTeachers().find(t => t.cloud_user_id === cloudId)) || null;
+  } else {
     rec = (cloudId && getTeachers().find(t => t.cloud_user_id === cloudId))
       || getTeachers().find(t => !t.cloud_user_id && String(t.teacher_name || '').trim().toLocaleLowerCase() === clean.toLocaleLowerCase());
     // Register Cloud teacher accounts so they appear in the Admin dashboard's teacher inventory.
@@ -6508,7 +6534,7 @@ window.pokeaymanEnterTeacher = async function (name) {
     }
   }
   currentRole = 'teacher';
-  currentTeacher = rec ? String(rec.teacher_name).trim() : clean;
+  currentTeacher = (rec && clean !== ADMIN_TEACHER.name) ? String(rec.teacher_name).trim() : clean;
   currentTeacherRecordId = rec ? (rec.__backendId || '') : '';
   try { sessionStorage.removeItem('pokeayman-enter-teacher'); } catch (_) {}
   enterApp();
@@ -6947,17 +6973,17 @@ function getVerifiedTeacherOwnedPokemonIds() {
   return ownedIds;
 }
 
-document.getElementById('logged-in-name-container').addEventListener('click', () => {
+function renderTrainerTab() {
   if (currentRole !== 'teacher') return;
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
-  const teacherRecord = getTeachers().find(record => record.teacher_name === currentTeacher) || null;
+  const teacherRecord = findMyTeacherRecord();
   const savedTeacherAvatar = Number(teacherRecord?.teacher_avatar || 0);
   const ownedTeacherPokemon = getPokemons().filter(record => record.type === 'pokemon' && record.owner === currentTeacher);
   const teacherShopCatalog = pokemonCatalog.slice();
-  modal.className = 'fixed inset-0 flex items-center justify-center z-50 trainer-hub-backdrop';
+  modal.className = 'trainer-page';
   modal.innerHTML = `<div class="trainer-hub" role="dialog" aria-modal="true" aria-labelledby="account-settings-title">
-<button type="button" class="th-close" id="th-close" aria-label="Close">✕</button>
+<button type="button" class="th-close" id="th-close" aria-label="Back to dashboard">← Dashboard</button>
 <header class="th-card">
  <div class="th-card-shine" aria-hidden="true"></div>
  <div class="th-avatar-ring"><div id="th-avatar" class="th-avatar"></div></div>
@@ -6995,7 +7021,8 @@ document.getElementById('logged-in-name-container').addEventListener('click', ()
  </form>
 </section>
 </div>`;
-  document.body.appendChild(modal);
+  const host = document.getElementById('tab-trainer'); host.innerHTML = ''; host.appendChild(modal);
+  modal.remove = () => showMainTab('dashboard');
   modal.querySelector('#account-settings-title').textContent = currentTeacher;
   modal.querySelector('#th-close').addEventListener('click', () => modal.remove());
   modal.querySelectorAll('.th-tab').forEach(t => t.addEventListener('click', () => {
@@ -7015,7 +7042,7 @@ document.getElementById('logged-in-name-container').addEventListener('click', ()
   };
   const avatarOptions = modal.querySelector('#teacher-avatar-options');
   const avatarProgress = modal.querySelector('#teacher-avatar-progress');
-  const myTeacherRec = () => getTeachers().find(record => normalizeStudentIdentity(record.teacher_name) === normalizeStudentIdentity(currentTeacher)) || null;
+  const myTeacherRec = () => findMyTeacherRecord();
   let selectedTeacherAvatar = String(teacherRecord?.teacher_avatar || '');
   const applyHeaderAvatar = value => { const el = document.getElementById('teacher-account-avatar'); const src = teacherAvatarSrc(value); if (el) el.innerHTML = src ? `<img src="${src}" class="w-10 h-10 object-contain rounded-full" alt="Teacher avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>'; };
   const renderTeacherAvatarOptions = () => {
@@ -7043,13 +7070,23 @@ document.getElementById('logged-in-name-container').addEventListener('click', ()
     avatarOptions.querySelectorAll('.teacher-avatar-option').forEach(btn => btn.addEventListener('click', handleTeacherAvatarChoice));
   };
   const saveTeacherAvatar = async (value, extra) => {
-    const rec = myTeacherRec();
-    if (!rec || !rec.__backendId || currentRole !== 'teacher') { toast('Could not find your teacher account.'); return false; }
+    let rec = myTeacherRec();
+    if (currentRole !== 'teacher') { toast('Please sign in as a teacher.'); return false; }
+    if (!rec || !rec.__backendId) {
+      const auth = window.parent?.pokeaymanAuth;
+      try {
+        await window.dataSdk.create({ type: 'teacher', teacher_name: isAymanTeacher() ? 'Ayman Soliman' : currentTeacher, teacher_pin: '', teacher_role: isAymanTeacher() ? 'admin' : 'teacher', teacher_credits: isAymanTeacher() ? -1 : 100, avatar_pokemon_id: 0, cloud_user_id: auth?.userId || '', teacher_email: auth?.email || '', archived: false, created_at: new Date().toISOString() });
+        await window.dataSdk.refresh?.();
+      } catch (e) { console.warn(e); }
+      rec = myTeacherRec();
+      if (rec?.__backendId) currentTeacherRecordId = rec.__backendId;
+    }
+    if (!rec || !rec.__backendId) { toast('Could not save your avatar. Please sign in again.'); return false; }
     const patch = { teacher_avatar: value, ...(extra || {}) };
     const result = await window.dataSdk.update({ ...rec, ...patch, __backendId: rec.__backendId });
     if (!result?.isOk) { toast('Could not save teacher avatar. Please try again.'); return false; }
     allData = allData.map(r => r.__backendId === rec.__backendId ? { ...r, ...patch } : r);
-    selectedTeacherAvatar = value; applyHeaderAvatar(value); renderTeacherAvatarOptions();
+    selectedTeacherAvatar = value; applyHeaderAvatar(value); renderTeacherAvatarOptions(); updateHeaderShowcase();
     return true;
   };
   const handleTeacherAvatarChoice = async event => {
@@ -7086,8 +7123,23 @@ document.getElementById('logged-in-name-container').addEventListener('click', ()
   modal.querySelector('#pin-cancel-btn').addEventListener('click', () => modal.remove());
   (async () => { const auth = window.parent.pokeaymanAuth; const acc = auth?.getAccount ? await auth.getAccount() : null; if (!acc) { modal.querySelector('#teacher-profile-form')?.classList.add('hidden'); modal.querySelector('#change-pin-form')?.classList.add('hidden'); modal.querySelectorAll('[data-th-panel="profile"],[data-th-panel="security"]').forEach(p => p.insertAdjacentHTML('beforeend', '<p class="th-hint" style="text-align:center;padding:1.5rem">Sign in with your teacher email to edit this.</p>')); return; } modal.querySelector('#tp-email').textContent = acc.email; modal.querySelector('#tp-name').value = acc.displayName || ''; modal.querySelector('#tp-school').value = acc.school || ''; })();
   modal.querySelector('#teacher-profile-form').addEventListener('submit', async e => { e.preventDefault(); const name = modal.querySelector('#tp-name').value.trim(); const school = modal.querySelector('#tp-school').value.trim(); if (!name) return; const r = await window.parent.pokeaymanAuth?.updateProfile(name, school); if (!r || r.error) { toast('Could not save profile.'); return; } const latest = getTeachers().find(t => t.__backendId === currentTeacherRecordId); if (latest && currentTeacher !== 'Ayman') { await window.dataSdk.update({ ...latest, teacher_name: name }); currentTeacher = name; } toast('Profile saved!'); });
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
-});
+}
+document.getElementById('logged-in-name-container').addEventListener('click', () => showMainTab('trainer'));
+document.getElementById('teacher-header-showcase').addEventListener('click', () => showMainTab('trainer'));
+function updateHeaderShowcase() {
+  const box = document.getElementById('teacher-header-showcase');
+  if (!box) return;
+  if (currentRole !== 'teacher') { box.classList.add('hidden'); return; }
+  const admin = isAymanTeacher();
+  const rec = findMyTeacherRecord();
+  const src = teacherAvatarSrc(rec?.teacher_avatar);
+  box.classList.remove('hidden');
+  box.classList.toggle('is-admin', admin);
+  box.querySelector('.ths-avatar').innerHTML = src ? `<img src="${src}" alt="Teacher avatar">` : '<span>🎓</span>';
+  box.querySelector('.ths-role').textContent = admin ? 'Admin' : 'Teacher';
+  box.querySelector('.ths-name').textContent = 'TR. ' + currentTeacher;
+  box.querySelector('.ths-credits').textContent = admin ? '∞ Unlimited' : '🪙 ' + (rec ? (rec.teacher_credits === -1 ? '∞' : (rec.teacher_credits || 0)) : 0) + ' credits';
+}
 
 document.getElementById('student-logout-btn')?.addEventListener('click', () => {
   // Complete logout cleanup — remove ALL open modals first
@@ -7192,10 +7244,11 @@ function enterApp() {
     document.getElementById('credit-balance-nav')?.classList.toggle('account-credit-admin', isAymanTeacher());
     document.getElementById('logged-in-name-nav').textContent = currentTeacher;
     const teacherAvatar = document.getElementById('teacher-account-avatar');
-    if (teacherAvatar) { const teacher = getTeachers().find(record => record.teacher_name === currentTeacher); const avatarSrc = teacherAvatarSrc(teacher?.teacher_avatar); teacherAvatar.innerHTML = avatarSrc ? `<img src="${avatarSrc}" class="w-10 h-10 object-contain rounded-full" alt="Teacher avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>'; }
+    if (teacherAvatar) { const teacher = findMyTeacherRecord(); const avatarSrc = teacherAvatarSrc(teacher?.teacher_avatar); teacherAvatar.innerHTML = avatarSrc ? `<img src="${avatarSrc}" class="w-10 h-10 object-contain rounded-full" alt="Teacher avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>'; }
     document.getElementById('teacher-info-bar').classList.add('hidden');
     document.getElementById('teacher-info-name').textContent = '👨‍🏫 ' + currentTeacher;
     updateTeacherCreditBalance();
+    updateHeaderShowcase();
     // Activate Dashboard tab for teachers on login
     const dashboardBtn = document.getElementById('dashboard-tab-btn');
     if (dashboardBtn) {
@@ -7299,7 +7352,7 @@ function updateTeacherCreditBalance() {
     creditEl.classList.add('account-credit-admin');
     return;
   }
-  const rec = getTeachers().find(t => normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(currentTeacher));
+  const rec = findMyTeacherRecord();
   const credits = rec ? (rec.teacher_credits === -1 ? '∞' : (rec.teacher_credits || 0)) : 0;
   creditEl.textContent = String(credits);
   creditEl.classList.remove('hidden', 'account-credit-admin');
@@ -7307,7 +7360,7 @@ function updateTeacherCreditBalance() {
 
 // Main destination is the sole source of truth for dashboard, Teacher Zone, and Admin visibility.
 function showMainTab(tabName) {
-  const allowed = ['dashboard', 'teacher-zone', 'admin', 'leaderboard'];
+  const allowed = ['dashboard', 'teacher-zone', 'admin', 'leaderboard', 'trainer'];
   if (!allowed.includes(tabName)) return;
   if (tabName === 'teacher-zone' && !canAccessTeacherZone()) return;
   if (tabName === 'admin' && !canAccessAdmin()) return;
@@ -7335,7 +7388,11 @@ function showMainTab(tabName) {
   adminView?.classList.remove('teacher-zone-standalone');
   adminView?.querySelector('h2')?.classList.remove('hidden');
   adminView?.querySelector('.mb-6.flex.gap-2.flex-wrap')?.classList.remove('hidden');
-  if (tabName === 'admin') {
+  if (tabName === 'trainer') {
+    document.getElementById('tab-trainer')?.classList.remove('hidden');
+    renderTrainerTab();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else if (tabName === 'admin') {
     adminView?.classList.remove('hidden');
     document.getElementById('admin-subtab-users')?.classList.remove('hidden');
     selectUsersSubtab('teachers');
