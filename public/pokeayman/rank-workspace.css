@@ -84,3 +84,4 @@ html body #student-dashboard#student-dashboard#student-dashboard #student-classe
 @media (prefers-reduced-motion: reduce) { html body .global-rank-card::after { animation: none !important; } }
 
 html body #classmate-profile-modal .global-profile-card.global-rank-card { border-radius: 16px 16px 0 0 !important; }
+html body #classmate-profile-modal#classmate-profile-modal#classmate-profile-modal .global-profile-card ~ .p-6 > .grid > div > p:last-child { color: var(--rank-ink) !important; }
