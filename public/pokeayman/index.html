@@ -4149,138 +4149,8 @@ document.addEventListener('click', function (e) {
       </div>
      </div>
     </section>
-   </main>
-  </div><!-- Student Dashboard -->
-  <div id="student-dashboard" class="hidden">
-   <style>
-    /* Compact horizontal student feature card; stack only when the viewport is narrow. */
-    #student-dashboard > .max-w-5xl > .flex.gap-6 { flex-direction: column; gap: 1rem; }
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass {
-      display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto auto;
-      align-items: center; gap: .35rem .75rem; width: 100%; max-width: 100%; height: auto; min-width: 0; padding: .75rem 1rem;
-    }
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .mb-4.relative { grid-column: 1 / -1; grid-row: 2; justify-self: center; margin: 0; }
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .mb-4.relative img,
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .mb-4.relative > div:first-of-type { width: 4.8rem; height: 4.8rem; }
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > h2 { grid-column: 1 / -1; grid-row: 1; justify-self: center; margin: 0; text-align: center; font-size: 1.15rem; }
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #top3-badge { grid-column: 1 / -1; grid-row: 3; justify-self: center; margin: 0; align-items: center; flex-direction: row; flex-wrap: wrap; gap: .25rem; }
-    #student-dashboard #rank-badge, #student-dashboard #quiz-solver-badge, #view-student-profile #profile-rank-badge, #view-student-profile #profile-quiz-solver-badge { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; width: 9rem; height: 2rem; min-height: 2rem; padding: .25rem .45rem !important; border-radius: 999px !important; font-size: .5rem !important; line-height: 1 !important; gap: .2rem !important; white-space: nowrap; }
-    #student-dashboard #rank-badge > span:first-child, #view-student-profile #profile-rank-badge > span:first-child { font-size: .5rem !important; line-height: 1 !important; }
-    #student-dashboard #quiz-solver-badge, #view-student-profile #profile-quiz-solver-badge { display: inline-flex; align-items: center; justify-content: center; }
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 { grid-column: 1 / -1; grid-row: 4; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; gap: .4rem; }
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #student-logout-btn { grid-column: 2; grid-row: 2 / 4; justify-self: end; width: auto; min-width: 5rem; }
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #top3-badge.hidden { display: none !important; }
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 > div { min-width: 0; min-height: 3.6rem; display: flex; flex-direction: column; justify-content: center; padding: .35rem .2rem; }
-    @media (max-width: 420px) {
-      #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass { gap: .3rem .45rem; padding: .65rem; }
-      #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 { gap: .3rem; }
-      #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 > div { min-height: 3.3rem; }
-      #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #student-logout-btn { min-width: 4.5rem; }
-    }
-   </style>
-   <div class="max-w-5xl mx-auto px-4">
-    <div id="student-dashboard-trophy-slot" class="student-dashboard-trophy-slot">
-    </div>
-    <div class="flex gap-6"><!-- Left Column: Squared Profile Card -->
-     <div class="rounded-2xl p-6 shadow-lg stat-card-glass w-64 h-auto flex-shrink-0">
-      <h2 id="my-student-name" class="heading-font text-2xl font-bold text-white mb-3 text-center break-words"></h2>
-      <div class="mb-4 relative group cursor-pointer" onclick="openAvatarSelector()">
-       <img id="my-avatar-pokemon" class="w-32 h-32 mx-auto object-contain" src="" alt="Avatar" style="display:none;">
-       <div id="my-avatar-placeholder" class="w-32 h-32 mx-auto bg-white bg-opacity-20 rounded-full flex items-center justify-center text-6xl group-hover:bg-white group-hover:bg-opacity-30 transition-all">
-        👤
-       </div>
-       <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-        <span class="text-sm font-bold text-white bg-black bg-opacity-50 px-2 py-1 rounded-lg">Change Avatar</span>
-       </div>
-      </div>
-      <div id="top3-badge" class="hidden mb-3 flex flex-row flex-wrap items-center justify-center gap-1">
-       <div id="rank-badge" class="relative inline-flex items-center gap-1 px-5 py-3 rounded-xl font-bold text-sm text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"><span id="medal-emoji" class="text-lg drop-shadow-lg"></span> <span id="rank-text" class="text-xs"></span>
-       </div><span id="quiz-solver-badge" class="hidden text-xs font-bold px-3 py-1 rounded-full shadow-lg bg-gradient-to-r from-orange-400 to-red-500 text-white">🏆 Good Job</span>
-      </div>
-      <div class="grid grid-cols-2 gap-2 mb-3">
-       <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105" id="coins-stat-card">
-        <p id="my-coins" class="text-xl font-black text-yellow-300">0</p>
-        <p class="text-xs text-white mt-1 font-semibold">Coins</p>
-       </div>
-       <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105" id="pokemon-stat-card">
-        <p id="my-pokemon-count" class="text-xl font-black text-emerald-300">0</p>
-        <p class="text-xs text-white mt-1 font-semibold">Pokémon</p>
-       </div>
-       <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105">
-        <p id="my-total-power" class="text-xl font-black text-purple-400">0</p>
-        <p class="text-xs text-white mt-1 font-semibold">Power</p>
-       </div>
-       <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105">
-        <p id="my-total-value" class="text-xl font-black text-blue-400">0</p>
-        <p class="text-xs text-white mt-1 font-semibold">Value</p>
-       </div>
-      </div><button id="student-logout-btn" class="w-full px-4 py-2 rounded-lg font-semibold text-sm bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all">Logout</button>
-     </div><!-- Right Column: Tabs & Content -->
-     <div class="flex-1 flex flex-col min-w-0">
-      <div id="student-navigation-groups" class="flex gap-2 mb-4 flex-wrap" role="navigation" aria-label="Student dashboard navigation">
-       <div class="student-nav-group relative"><button type="button" class="student-nav-group-button student-dashboard-tab-active" aria-expanded="false" aria-controls="student-nav-pokemon-menu" aria-label="Open Pokémon and Vocabulary Bank">📚 Pokémon</button>
-        <div id="student-nav-pokemon-menu" class="student-nav-menu hidden absolute left-0 top-full z-30 mt-2 min-w-36 rounded-xl p-1" role="menu"><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-active" data-tab="collection" role="menuitem">📚 Collection</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="shop" role="menuitem">🛍️ Shop</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="classes" role="menuitem">👥 Classes</button>
-        </div>
-       </div>
-       <div class="student-nav-group relative"><button type="button" class="student-nav-group-button student-nav-group-button-muted" aria-expanded="false" aria-controls="student-nav-study-menu" aria-label="Open Study">📖 Study</button>
-        <div id="student-nav-study-menu" class="student-nav-menu hidden absolute left-0 top-full z-30 mt-2 min-w-36 rounded-xl p-1" role="menu"><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="quizzes" role="menuitem">❓ Quizzes</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="vocabulary" role="menuitem">📚 Vocabulary</button>
-        </div>
-       </div>
-       <div class="student-nav-group relative"><button type="button" class="student-nav-group-button student-nav-group-button-muted" aria-expanded="false" aria-controls="student-nav-games-menu" aria-label="Open Games">🎮 Games</button>
-        <div id="student-nav-games-menu" class="student-nav-menu hidden absolute left-0 top-full z-30 mt-2 min-w-40 rounded-xl p-1" role="menu"><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="games" role="menuitem">🎮 Vocabulary Games</button>
-        </div>
-       </div>
-      </div>
-      <div id="student-tab-collection" class="student-dashboard-content flex-1 overflow-y-auto">
-       <div id="my-pokemon-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
-       <p id="my-pokemon-empty" class="text-center text-gray-400 py-8 text-sm">No Pokémon yet.</p>
-      </div>
-      <div id="student-tab-shop" class="student-dashboard-content hidden flex-1 overflow-y-auto">
-       <div class="mb-2 space-y-2">
-        <input id="my-shop-search" type="text" placeholder="Search..." class="w-full border-2 border-gray-300 rounded-lg px-2 py-1.5 text-xs font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
-        <div class="flex gap-1 flex-wrap">
-         <button id="my-shop-rarity-all" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition active" data-rarity="">All</button> <button id="my-shop-rarity-common" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-slate-400 bg-slate-100 text-slate-700 hover:border-slate-600 hover:bg-slate-200 transition" data-rarity="common">Common</button> <button id="my-shop-rarity-uncommon" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-blue-400 bg-blue-100 text-blue-700 hover:border-blue-600 hover:bg-blue-200 transition" data-rarity="uncommon">Uncommon</button> <button id="my-shop-rarity-rare" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-purple-400 bg-purple-100 text-purple-700 hover:border-purple-600 hover:bg-purple-200 transition" data-rarity="rare">Rare</button> <button id="my-shop-rarity-legendary" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-yellow-400 bg-yellow-100 text-yellow-700 hover:border-yellow-600 hover:bg-yellow-200 transition" data-rarity="legendary">Legendary</button>
-        </div>
-        <div class="flex gap-1 flex-wrap">
-         <button id="my-shop-sort-name" class="shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition active" data-sort="name">Name</button> <button id="my-shop-sort-price-asc" class="shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition" data-sort="price-asc">Price ↑</button> <button id="my-shop-sort-price-desc" class="shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition" data-sort="price-desc">Price ↓</button>
-        </div>
-       </div>
-       <div id="my-shop-container" class="border-2 border-gray-300 rounded-lg p-3 h-[550px] overflow-y-auto bg-white">
-        <div id="my-shop-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
-        <p id="my-shop-empty" class="text-center text-gray-400 py-8 text-sm">No Pokémon available in shop.</p>
-       </div>
-      </div>
-      <div id="student-tab-quizzes" class="student-dashboard-content hidden flex-1 overflow-y-auto">
-       <div id="quiz-list" class="space-y-3"></div>
-       <p id="quiz-empty" class="text-center text-gray-400 py-12">No quizzes available.</p>
-      </div>
-      <div id="student-tab-classes" class="student-dashboard-content hidden flex-1 overflow-y-auto">
-       <div id="student-classes-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
-       <p id="student-classes-empty" class="text-center text-gray-400 py-8 text-sm hidden">No classmates found.</p>
-      </div>
-      <div id="student-tab-vocabulary" class="student-dashboard-content hidden flex-1 overflow-y-auto">
-       <div class="glass-container rounded-xl p-6 mb-6">
-        <h3 class="font-semibold text-lg text-white mb-2">📚 Vocabulary Lists</h3>
-        <p class="text-sm text-gray-200 mb-1">View your class vocabulary and open a list to study with flashcards.</p>
-        <p id="student-vocabulary-class" class="text-xs font-semibold text-amber-200 mb-4" aria-live="polite">Select a class to view vocabulary.</p>
-        <div id="student-vocabulary-lists" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-        <p id="student-vocabulary-empty" class="text-center text-gray-400 py-8 text-sm hidden">No vocabulary lists are available yet.</p>
-       </div>
-      </div>
-      <div id="student-tab-games" class="student-dashboard-content hidden flex-1 overflow-y-auto">
-       <div class="glass-container rounded-xl p-6 mb-6">
-        <h3 class="font-semibold text-lg text-white mb-2">🎮 Vocabulary Games</h3>
-        <p class="text-sm text-gray-200 mb-4">Choose a vocabulary list and play to practice your words!</p>
-        <div id="student-games-list-selector" class="space-y-2 mb-4"></div>
-        <div id="student-games-options-container"></div>
-       </div>
-      </div>
-     </div>
-    </div>
-   </div>
-  </div><!-- LEADERBOARD --> <!-- ADMIN TAB -->
   <section id="tab-admin" class="tab-content hidden fade-in">
-   <div class="max-w-5xl mx-auto w-full px-4 sm:px-6 py-6">
+   <div class="max-w-5xl w-full">
     <h2 data-template-id="admin-title" class="canva-text heading-font text-2xl mb-4" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 24px;">Private Data</h2>
     <div class="mb-6 flex gap-2 flex-wrap">
      <button class="admin-sub-tab admin-sub-tab-active px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="users">👥 Users</button> <button class="admin-sub-tab admin-sub-tab-inactive px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="controls">🎛️ Controls</button>
@@ -4562,7 +4432,138 @@ document.addEventListener('click', function (e) {
      </div>
     </div>
    </div>
-  </section><!-- Pokémon Detail Modal -->
+  </section>
+   </main>
+  </div><!-- Student Dashboard -->
+  <div id="student-dashboard" class="hidden">
+   <style>
+    /* Compact horizontal student feature card; stack only when the viewport is narrow. */
+    #student-dashboard > .max-w-5xl > .flex.gap-6 { flex-direction: column; gap: 1rem; }
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto auto auto;
+      align-items: center; gap: .35rem .75rem; width: 100%; max-width: 100%; height: auto; min-width: 0; padding: .75rem 1rem;
+    }
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .mb-4.relative { grid-column: 1 / -1; grid-row: 2; justify-self: center; margin: 0; }
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .mb-4.relative img,
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .mb-4.relative > div:first-of-type { width: 4.8rem; height: 4.8rem; }
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > h2 { grid-column: 1 / -1; grid-row: 1; justify-self: center; margin: 0; text-align: center; font-size: 1.15rem; }
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #top3-badge { grid-column: 1 / -1; grid-row: 3; justify-self: center; margin: 0; align-items: center; flex-direction: row; flex-wrap: wrap; gap: .25rem; }
+    #student-dashboard #rank-badge, #student-dashboard #quiz-solver-badge, #view-student-profile #profile-rank-badge, #view-student-profile #profile-quiz-solver-badge { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; width: 9rem; height: 2rem; min-height: 2rem; padding: .25rem .45rem !important; border-radius: 999px !important; font-size: .5rem !important; line-height: 1 !important; gap: .2rem !important; white-space: nowrap; }
+    #student-dashboard #rank-badge > span:first-child, #view-student-profile #profile-rank-badge > span:first-child { font-size: .5rem !important; line-height: 1 !important; }
+    #student-dashboard #quiz-solver-badge, #view-student-profile #profile-quiz-solver-badge { display: inline-flex; align-items: center; justify-content: center; }
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 { grid-column: 1 / -1; grid-row: 4; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; gap: .4rem; }
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #student-logout-btn { grid-column: 2; grid-row: 2 / 4; justify-self: end; width: auto; min-width: 5rem; }
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #top3-badge.hidden { display: none !important; }
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 > div { min-width: 0; min-height: 3.6rem; display: flex; flex-direction: column; justify-content: center; padding: .35rem .2rem; }
+    @media (max-width: 420px) {
+      #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass { gap: .3rem .45rem; padding: .65rem; }
+      #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 { gap: .3rem; }
+      #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 > div { min-height: 3.3rem; }
+      #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #student-logout-btn { min-width: 4.5rem; }
+    }
+   </style>
+   <div class="max-w-5xl mx-auto px-4">
+    <div id="student-dashboard-trophy-slot" class="student-dashboard-trophy-slot">
+    </div>
+    <div class="flex gap-6"><!-- Left Column: Squared Profile Card -->
+     <div class="rounded-2xl p-6 shadow-lg stat-card-glass w-64 h-auto flex-shrink-0">
+      <h2 id="my-student-name" class="heading-font text-2xl font-bold text-white mb-3 text-center break-words"></h2>
+      <div class="mb-4 relative group cursor-pointer" onclick="openAvatarSelector()">
+       <img id="my-avatar-pokemon" class="w-32 h-32 mx-auto object-contain" src="" alt="Avatar" style="display:none;">
+       <div id="my-avatar-placeholder" class="w-32 h-32 mx-auto bg-white bg-opacity-20 rounded-full flex items-center justify-center text-6xl group-hover:bg-white group-hover:bg-opacity-30 transition-all">
+        👤
+       </div>
+       <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+        <span class="text-sm font-bold text-white bg-black bg-opacity-50 px-2 py-1 rounded-lg">Change Avatar</span>
+       </div>
+      </div>
+      <div id="top3-badge" class="hidden mb-3 flex flex-row flex-wrap items-center justify-center gap-1">
+       <div id="rank-badge" class="relative inline-flex items-center gap-1 px-5 py-3 rounded-xl font-bold text-sm text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"><span id="medal-emoji" class="text-lg drop-shadow-lg"></span> <span id="rank-text" class="text-xs"></span>
+       </div><span id="quiz-solver-badge" class="hidden text-xs font-bold px-3 py-1 rounded-full shadow-lg bg-gradient-to-r from-orange-400 to-red-500 text-white">🏆 Good Job</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mb-3">
+       <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105" id="coins-stat-card">
+        <p id="my-coins" class="text-xl font-black text-yellow-300">0</p>
+        <p class="text-xs text-white mt-1 font-semibold">Coins</p>
+       </div>
+       <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105" id="pokemon-stat-card">
+        <p id="my-pokemon-count" class="text-xl font-black text-emerald-300">0</p>
+        <p class="text-xs text-white mt-1 font-semibold">Pokémon</p>
+       </div>
+       <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105">
+        <p id="my-total-power" class="text-xl font-black text-purple-400">0</p>
+        <p class="text-xs text-white mt-1 font-semibold">Power</p>
+       </div>
+       <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105">
+        <p id="my-total-value" class="text-xl font-black text-blue-400">0</p>
+        <p class="text-xs text-white mt-1 font-semibold">Value</p>
+       </div>
+      </div><button id="student-logout-btn" class="w-full px-4 py-2 rounded-lg font-semibold text-sm bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all">Logout</button>
+     </div><!-- Right Column: Tabs & Content -->
+     <div class="flex-1 flex flex-col min-w-0">
+      <div id="student-navigation-groups" class="flex gap-2 mb-4 flex-wrap" role="navigation" aria-label="Student dashboard navigation">
+       <div class="student-nav-group relative"><button type="button" class="student-nav-group-button student-dashboard-tab-active" aria-expanded="false" aria-controls="student-nav-pokemon-menu" aria-label="Open Pokémon and Vocabulary Bank">📚 Pokémon</button>
+        <div id="student-nav-pokemon-menu" class="student-nav-menu hidden absolute left-0 top-full z-30 mt-2 min-w-36 rounded-xl p-1" role="menu"><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-active" data-tab="collection" role="menuitem">📚 Collection</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="shop" role="menuitem">🛍️ Shop</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="classes" role="menuitem">👥 Classes</button>
+        </div>
+       </div>
+       <div class="student-nav-group relative"><button type="button" class="student-nav-group-button student-nav-group-button-muted" aria-expanded="false" aria-controls="student-nav-study-menu" aria-label="Open Study">📖 Study</button>
+        <div id="student-nav-study-menu" class="student-nav-menu hidden absolute left-0 top-full z-30 mt-2 min-w-36 rounded-xl p-1" role="menu"><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="quizzes" role="menuitem">❓ Quizzes</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="vocabulary" role="menuitem">📚 Vocabulary</button>
+        </div>
+       </div>
+       <div class="student-nav-group relative"><button type="button" class="student-nav-group-button student-nav-group-button-muted" aria-expanded="false" aria-controls="student-nav-games-menu" aria-label="Open Games">🎮 Games</button>
+        <div id="student-nav-games-menu" class="student-nav-menu hidden absolute left-0 top-full z-30 mt-2 min-w-40 rounded-xl p-1" role="menu"><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="games" role="menuitem">🎮 Vocabulary Games</button>
+        </div>
+       </div>
+      </div>
+      <div id="student-tab-collection" class="student-dashboard-content flex-1 overflow-y-auto">
+       <div id="my-pokemon-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
+       <p id="my-pokemon-empty" class="text-center text-gray-400 py-8 text-sm">No Pokémon yet.</p>
+      </div>
+      <div id="student-tab-shop" class="student-dashboard-content hidden flex-1 overflow-y-auto">
+       <div class="mb-2 space-y-2">
+        <input id="my-shop-search" type="text" placeholder="Search..." class="w-full border-2 border-gray-300 rounded-lg px-2 py-1.5 text-xs font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
+        <div class="flex gap-1 flex-wrap">
+         <button id="my-shop-rarity-all" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition active" data-rarity="">All</button> <button id="my-shop-rarity-common" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-slate-400 bg-slate-100 text-slate-700 hover:border-slate-600 hover:bg-slate-200 transition" data-rarity="common">Common</button> <button id="my-shop-rarity-uncommon" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-blue-400 bg-blue-100 text-blue-700 hover:border-blue-600 hover:bg-blue-200 transition" data-rarity="uncommon">Uncommon</button> <button id="my-shop-rarity-rare" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-purple-400 bg-purple-100 text-purple-700 hover:border-purple-600 hover:bg-purple-200 transition" data-rarity="rare">Rare</button> <button id="my-shop-rarity-legendary" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-yellow-400 bg-yellow-100 text-yellow-700 hover:border-yellow-600 hover:bg-yellow-200 transition" data-rarity="legendary">Legendary</button>
+        </div>
+        <div class="flex gap-1 flex-wrap">
+         <button id="my-shop-sort-name" class="shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition active" data-sort="name">Name</button> <button id="my-shop-sort-price-asc" class="shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition" data-sort="price-asc">Price ↑</button> <button id="my-shop-sort-price-desc" class="shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition" data-sort="price-desc">Price ↓</button>
+        </div>
+       </div>
+       <div id="my-shop-container" class="border-2 border-gray-300 rounded-lg p-3 h-[550px] overflow-y-auto bg-white">
+        <div id="my-shop-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
+        <p id="my-shop-empty" class="text-center text-gray-400 py-8 text-sm">No Pokémon available in shop.</p>
+       </div>
+      </div>
+      <div id="student-tab-quizzes" class="student-dashboard-content hidden flex-1 overflow-y-auto">
+       <div id="quiz-list" class="space-y-3"></div>
+       <p id="quiz-empty" class="text-center text-gray-400 py-12">No quizzes available.</p>
+      </div>
+      <div id="student-tab-classes" class="student-dashboard-content hidden flex-1 overflow-y-auto">
+       <div id="student-classes-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+       <p id="student-classes-empty" class="text-center text-gray-400 py-8 text-sm hidden">No classmates found.</p>
+      </div>
+      <div id="student-tab-vocabulary" class="student-dashboard-content hidden flex-1 overflow-y-auto">
+       <div class="glass-container rounded-xl p-6 mb-6">
+        <h3 class="font-semibold text-lg text-white mb-2">📚 Vocabulary Lists</h3>
+        <p class="text-sm text-gray-200 mb-1">View your class vocabulary and open a list to study with flashcards.</p>
+        <p id="student-vocabulary-class" class="text-xs font-semibold text-amber-200 mb-4" aria-live="polite">Select a class to view vocabulary.</p>
+        <div id="student-vocabulary-lists" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        <p id="student-vocabulary-empty" class="text-center text-gray-400 py-8 text-sm hidden">No vocabulary lists are available yet.</p>
+       </div>
+      </div>
+      <div id="student-tab-games" class="student-dashboard-content hidden flex-1 overflow-y-auto">
+       <div class="glass-container rounded-xl p-6 mb-6">
+        <h3 class="font-semibold text-lg text-white mb-2">🎮 Vocabulary Games</h3>
+        <p class="text-sm text-gray-200 mb-4">Choose a vocabulary list and play to practice your words!</p>
+        <div id="student-games-list-selector" class="space-y-2 mb-4"></div>
+        <div id="student-games-options-container"></div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- LEADERBOARD --> <!-- ADMIN TAB -->
+  <!-- Pokémon Detail Modal -->
   <div id="pokemon-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] hidden p-3 sm:p-4">
    <div id="modal-card" class="rounded-2xl shadow-2xl max-w-sm w-full max-h-[calc(100 * min(var(--vh, 1vh), 1vh) - 1.5rem)] overflow-y-auto bg-white" style="background-image: var(--modal-bg-image); background-size: cover; background-position: center;">
     <div id="modal-header" class="sticky top-0 p-4 flex items-center justify-between rounded-t-2xl">
