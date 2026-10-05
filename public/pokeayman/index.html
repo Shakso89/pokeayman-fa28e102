@@ -24,7 +24,8 @@
     .login-choice-student { background: linear-gradient(135deg,#10b981,#0f766e); }
     /* The landscape stays anchored to the viewport as the long workspace scrolls. */
     #app-screen:not(.hidden) { position: relative; isolation: isolate; background: transparent; }
-    #app-screen:not(.hidden)::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(rgba(2,20,30,.12), rgba(2,20,30,.26)), url('/__l5e/assets-v1/11d538ad-dd06-42ea-8131-ce7d76bbbc3d/app-bg.jpg') center / cover no-repeat; }
+    #app-screen:not(.hidden)::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(rgba(2,20,30,.12), rgba(2,20,30,.26)), url('/__l5e/assets-v1/11d538ad-dd06-42ea-8131-ce7d76bbbc3d/app-bg.jpg') center / cover no-repeat; }
+    #app-screen:not(.hidden) > header, #app-screen:not(.hidden) > nav, #app-screen:not(.hidden) > main { position: relative; z-index: 1; }
     @media (max-width: 640px) { #app-screen:not(.hidden)::before { background-position: 60% center; } }
     .teacher-zone-access-setting { padding: 1rem; border: 1px solid #99d5c9; border-radius: .6rem; background: #effaf7; }
     .teacher-zone-access-label { display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; color: #123f42; }
