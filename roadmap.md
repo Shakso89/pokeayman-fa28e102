@@ -26,3 +26,8 @@
 - [x] Fix staircase Pokémon layout and duplicate rarity badges.
 - [x] Give global top-three students consistent unique cards within classes.
 - [x] Verify actual student shop, carousel navigation, class cards and narrow-screen layout; teacher class renderer shares the same ranking treatment (teacher session not exercised).
+
+# Student shop controls
+- [x] Fix previous/next arrows to step through the current ten Pokémon without changing pages.
+- [x] Match search, sorting, rarity filters and carousel controls to the sunny student theme.
+- [x] Verify repeated arrow clicks, endpoints, dots and numbered pagination in the student shop.
