@@ -26,8 +26,8 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
         if (!apiKey) return Response.json({ message: "The natural voice service is not configured yet." }, { status: 401 });
         // Students use the existing public classroom access; never allow arbitrary paid synthesis.
         const { createClient } = await import("@supabase/supabase-js");
-        const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        const url = process.env["SUPABASE_URL"] || import.meta.env.VITE_SUPABASE_URL;
+        const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
+        const url = process.env["SUPABASE_URL"] || import.meta.env["VITE_SUPABASE_URL"];
         const client = createClient(url, key, {
           auth: { persistSession: false },
           global: { fetch: (input, init) => {
