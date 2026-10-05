@@ -31,3 +31,8 @@
 - [x] Fix previous/next arrows to step through the current ten Pokémon without changing pages.
 - [x] Match search, sorting, rarity filters and carousel controls to the sunny student theme.
 - [x] Verify repeated arrow clicks, endpoints, dots and numbered pagination in the student shop.
+
+# Champion cards and elemental collection
+- [ ] Apply distinctive global medal cards to rosters and both student profile views.
+- [ ] Restore shared shop type gradients and rarity frames in student collections.
+- [ ] Verify real student collection, global rankings, profile and narrow layouts.
