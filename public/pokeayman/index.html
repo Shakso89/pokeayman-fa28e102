@@ -3898,6 +3898,8 @@ html body #view-students #class-tabs-container .class-view-tab{background:transp
 html body #app-screen .btn-success{background:var(--ds-primary)!important;color:var(--pd-ink-dark)!important}
 html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-success):not(#header-logout){border-color:rgba(255,203,5,.55)}
 </style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/pokeayman/class-workspace.css">
 </head>
  <body data-template-id="__page-root" class="min-h-screen">
   <style>
@@ -4049,21 +4051,21 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         <button class="class-view-tab class-tab-students-active px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="students">👩‍🎓 Students</button> <button class="class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="quiz">📝 Quiz</button> <button class="class-view-tab class-tab-vocab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="vocab">📚 Vocabulary</button> <button class="class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="games">🎮 Games</button> <button class="class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="battle">⚔️ Battle Arena</button>
        </div><!-- Students sub-tab -->
        <div id="class-subtab-students" class="class-subtab-content">
-        <div class="glass-container rounded-lg p-4 mb-4">
+        <div class="class-action-console glass-container rounded-lg p-4 mb-4">
          <div class="class-student-controls-row flex flex-nowrap items-end gap-3 overflow-x-auto">
           <div class="class-student-control-group flex shrink-0 items-end gap-2">
            <div>
             <h3 data-template-id="add-student-title" class="canva-text font-semibold text-sm mb-2" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 19px;">      Add Student                         </h3>
-            <form id="add-student-form" class="flex gap-2"><input id="new-student-name" type="text" placeholder="Student name" class="w-48 border rounded-lg px-2.5 py-1.5 text-xs" required=""> <button type="submit" class="btn-success text-xs px-3 py-1.5">Add</button>
+            <form id="add-student-form" class="flex gap-2"><input id="new-student-name" aria-label="Student name" type="text" placeholder="Student name" class="w-48 border rounded-lg px-2.5 py-1.5 text-xs" required=""> <button type="submit" class="btn-success text-xs px-3 py-1.5">Add</button>
             </form>
            </div>
           </div>
           <div class="class-student-control-group flex shrink-0 items-end gap-2">
            <h3 data-template-id="award-coins-title" class="canva-text font-semibold text-sm mb-2" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 19px;">   Gift Coins      </h3>
-           <form id="award-form" class="flex gap-2"><select id="award-student" class="w-44 border rounded-lg px-2.5 py-1.5 text-xs"></select> <input id="award-amount" type="number" min="1" max="1000" value="10" class="border rounded-lg px-2 py-1.5 text-xs w-16"> <button type="submit" class="btn-primary text-xs px-2.5 py-1.5">Award</button>
+           <div class="class-gift-controls"><form id="award-form" class="flex gap-2"><select id="award-student" aria-label="Student to award" class="w-44 border rounded-lg px-2.5 py-1.5 text-xs"></select> <input id="award-amount" aria-label="Coins to award" type="number" min="1" max="1000" value="10" class="border rounded-lg px-2 py-1.5 text-xs w-16"> <button type="submit" class="btn-primary text-xs px-2.5 py-1.5">Award</button>
            </form>
-           <form id="gift-all-form" class="flex shrink-0 items-end gap-2"><input id="gift-all-amount" type="number" min="1" max="1000" value="10" aria-label="Coins per student" class="border rounded-lg px-2 py-1.5 text-xs w-16"> <button type="submit" class="btn-success text-xs px-2.5 py-1.5 whitespace-nowrap">🎁 Gift All</button>
-           </form>
+           <form id="gift-all-form" class="flex shrink-0 items-end gap-2"><input id="gift-all-amount" type="number" min="1" max="1000" value="10" aria-label="Coins per student" class="border rounded-lg px-2 py-1.5 text-xs w-16"> <button type="submit" class="btn-success text-xs px-2.5 py-1.5 whitespace-nowrap">Gift All</button>
+           </form></div>
           </div>
          </div>
         </div>
@@ -8393,6 +8395,23 @@ function applyGlobalAchievementBadges(root = document) {
     card.appendChild(badge);
   });
 }
+function renderClassRosterCard(student, rank, viewOnly = false) {
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const jsString = value => escape(JSON.stringify(String(value ?? '')));
+  const name = escape(student.student_name);
+  const count = getPokemons().filter(p => p.owner === student.student_name).length;
+  const artwork = Number(student.avatar_pokemon_id);
+  const onOpen = viewOnly ? `openLeaderboardStudentCollection(${jsString(student.student_name)})` : `openStudentProfileById(${jsString(student.__backendId)})`;
+  return `<div class="trainer-student-card ${rank >= 0 ? `class-rank-${rank + 1}` : ''}" data-student-id="${escape(student.__backendId)}" role="button" tabindex="0" aria-label="View ${name}'s profile" onclick="${onOpen}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">
+    ${rank >= 0 ? `<span class="student-rank" aria-label="Class rank ${rank + 1}">#${rank + 1}</span>` : ''}
+    <div class="student-avatar-stage">${Number.isInteger(artwork) && artwork > 0 ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${artwork}.png" alt="${name}'s Pokémon avatar" loading="lazy" decoding="async">` : `<span class="student-avatar-initial" aria-label="${name}'s initials">${escape(Array.from(student.student_name || '?')[0].toUpperCase())}</span>`}</div>
+    <h3 class="student-roster-name">${name}</h3>
+    <p class="student-roster-coins">${Number(student.coins) || 0}<span>coins</span></p>
+    <p class="student-roster-count">${count} Pokémon${viewOnly ? ` · ${Math.floor(getStudentTotalValue(student))} value` : ''}</p>
+    ${viewOnly ? '' : `<button type="button" class="btn-outline student-roster-edit" title="Edit ${name}" aria-label="Edit ${name}" onclick="event.stopPropagation();openEditStudentModal(${jsString(student.student_name)})">✎</button>`}
+  </div>`;
+}
+
 function getTop3Students() {
   const students = getAllStudents().sort((a, b) => (b.coins || 0) - (a.coins || 0));
   return students.slice(0, 3).map(s => s.student_name);
@@ -8476,34 +8495,7 @@ function renderTeacherDashboard() {
     // View-only mode for unassigned classes: show only student collection cards with name, coins, Pokémon count, and total value
     const students = getStudents(navSchool, navClass);
     const top3ByCoins = students.slice().sort((a, b) => getStudentTotalValue(b) - getStudentTotalValue(a) || a.student_name.localeCompare(b.student_name)).slice(0, 3).map(s => s.student_name);
-    const medals = ['🥇', '🥈', '🥉'];
-    const medalColors = {
-      '🥇': { border: 'border-yellow-400 border-4', bg: 'bg-gradient-to-b from-yellow-100 to-yellow-50', badge: 'bg-yellow-400 text-yellow-900' },
-      '🥈': { border: 'border-gray-300 border-4', bg: 'bg-gradient-to-b from-gray-100 to-gray-50', badge: 'bg-gray-300 text-gray-900' },
-      '🥉': { border: 'border-orange-400 border-4', bg: 'bg-gradient-to-b from-orange-100 to-orange-50', badge: 'bg-orange-400 text-orange-900' }
-    };
-    document.getElementById('students-list').innerHTML = students.map((s, idx) => {
-      const avatarPokemonId = s.avatar_pokemon_id || null;
-      const rank = top3ByCoins.indexOf(s.student_name);
-      const isTop3 = rank !== -1;
-      const medal = isTop3 ? medals[rank] : null;
-      const styling = isTop3 ? medalColors[medal] : null;
-      const baseClasses = isTop3 ? `${styling.border} ${styling.bg} shadow-lg ring-2 ring-offset-2 ${rank === 0 ? 'ring-yellow-300' : rank === 1 ? 'ring-gray-300' : 'ring-orange-300'}` : 'bg-white rounded-lg p-3 shadow-sm border';
-      const padding = isTop3 ? 'p-4' : 'p-3';
-      
-      // Calculate total value
-      const totalValue = getStudentTotalValue(s);
-      
-      return `<div class="rounded-lg ${padding} card-hover text-center group relative cursor-pointer transition-all hover:shadow-xl ${baseClasses}" onclick="openLeaderboardStudentCollection('${s.student_name}')">
-        ${isTop3 ? `<div class="absolute -top-3 -right-3 ${styling.badge} rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold shadow-lg">${medal}</div>` : ''}
-        ${isTop3 ? `<div class="absolute -top-2 left-1/2 transform -translate-x-1/2 ${styling.badge} px-3 py-1 rounded-full text-xs font-bold shadow-md">#${rank + 1}</div>` : ''}
-        ${avatarPokemonId ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarPokemonId}.png" class="w-36 h-36 mx-auto mb-2 object-contain ${isTop3 ? 'drop-shadow-lg' : ''}" alt="Avatar">` : `<div class="w-36 h-36 mx-auto mb-2 bg-blue-100 rounded-lg flex items-center justify-center text-6xl">👤</div>`}
-        <p class="font-medium text-sm ${isTop3 ? 'font-bold text-lg' : ''}">${s.student_name}</p>
-        <p class="text-amber-500 font-bold text-lg ${isTop3 ? 'text-xl' : ''}">${s.coins||0} 🪙</p>
-        <p class="text-xs text-gray-400">${getPokemons().filter(p => p.owner === s.student_name).length} Pokémon</p>
-        <p class="text-xs text-purple-600 font-bold">💜 ${Math.floor(totalValue)}</p>
-      </div>`;
-    }).join('') || '<p class="text-gray-400 text-sm col-span-4 text-center py-8">No students yet.</p>';
+    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name), true)).join('') || '<p class="student-roster-empty">No students yet.</p>';
     // Hide all tabs and management controls for view-only mode
     const classTabs = document.querySelectorAll('.class-view-tab');
     classTabs.forEach(tab => tab.style.display = 'none');
@@ -8515,31 +8507,7 @@ function renderTeacherDashboard() {
   } else {
     const students = getStudents(navSchool, navClass);
     const top3ByCoins = students.slice().sort((a, b) => getStudentTotalValue(b) - getStudentTotalValue(a) || a.student_name.localeCompare(b.student_name)).slice(0, 3).map(s => s.student_name);
-    const medals = ['🥇', '🥈', '🥉'];
-    const medalColors = {
-      '🥇': { border: 'border-yellow-400 border-4', bg: 'bg-gradient-to-b from-yellow-100 to-yellow-50', badge: 'bg-yellow-400 text-yellow-900' },
-      '🥈': { border: 'border-gray-300 border-4', bg: 'bg-gradient-to-b from-gray-100 to-gray-50', badge: 'bg-gray-300 text-gray-900' },
-      '🥉': { border: 'border-orange-400 border-4', bg: 'bg-gradient-to-b from-orange-100 to-orange-50', badge: 'bg-orange-400 text-orange-900' }
-    };
-    document.getElementById('students-list').innerHTML = students.map((s, idx) => {
-      const avatarPokemonId = s.avatar_pokemon_id || null;
-      const rank = top3ByCoins.indexOf(s.student_name);
-      const isTop3 = rank !== -1;
-      const medal = isTop3 ? medals[rank] : null;
-      const styling = isTop3 ? medalColors[medal] : null;
-      
-      const baseClasses = isTop3 ? `${styling.border} ${styling.bg} shadow-lg ring-2 ring-offset-2 ${rank === 0 ? 'ring-yellow-300' : rank === 1 ? 'ring-gray-300' : 'ring-orange-300'}` : 'bg-white rounded-lg p-3 shadow-sm border';
-      const padding = isTop3 ? 'p-4' : 'p-3';
-      
-      return `<div class="rounded-lg ${padding} card-hover text-center group relative cursor-pointer transition-all hover:shadow-xl ${baseClasses}" data-student-id="${String(s.__backendId || '').replace(/"/g, '&quot;')}" onclick="openStudentProfileById('${String(s.__backendId || '').replace(/'/g, "\\'")}')">
-        ${isTop3 ? `<div class="absolute -top-3 -right-3 ${styling.badge} rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold shadow-lg">${medal}</div>` : ''}
-        ${isTop3 ? `<div class="absolute -top-2 left-1/2 transform -translate-x-1/2 ${styling.badge} px-3 py-1 rounded-full text-xs font-bold shadow-md">#${rank + 1}</div>` : ''}
-        ${avatarPokemonId ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarPokemonId}.png" class="w-36 h-36 mx-auto mb-2 object-contain ${isTop3 ? 'drop-shadow-lg' : ''}" alt="Avatar">` : `<div class="w-36 h-36 mx-auto mb-2 bg-blue-100 rounded-lg flex items-center justify-center text-6xl">👤</div>`}
-        <p class="font-medium text-sm ${isTop3 ? 'font-bold text-lg' : ''}">${s.student_name}</p>
-        <p class="text-amber-500 font-bold text-lg ${isTop3 ? 'text-xl' : ''}">${s.coins||0} 🪙</p>
-        <p class="text-xs text-gray-400">${getPokemons().filter(p => p.owner === s.student_name).length} Pokémon</p>
-        <button class="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-6 h-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600 font-bold" onclick="event.stopPropagation(); openEditStudentModal('${s.student_name}')">✎</button></div>`;
-    }).join('') || '<p class="text-gray-400 text-sm col-span-4 text-center py-8">No students yet.</p>';
+    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name))).join('') || '<p class="student-roster-empty">No students yet.</p>';
     const award = document.getElementById('award-student');
     award.innerHTML = students.map(s => `<option value="${s.student_name}">${s.student_name}</option>`).join('');
     // Show tabs and controls for assigned teachers
