@@ -1,0 +1,94 @@
+/* Surprise Boxes: 3D gift crates, power-up stage, floating points. */
+.surprise-boxes-game #baam-board { perspective: 900px; }
+.surprise-boxes-game .baam-tile.baam-giftbox {
+  position: relative; width: 100%; height: 100%; min-height: 64px; padding: 0;
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+  cursor: pointer; animation: baamBoxFloat 3.2s ease-in-out var(--d, 0s) infinite;
+  transition: transform .2s ease, filter .2s ease;
+}
+.baam-giftbox .baam-box-body {
+  position: absolute; left: 6%; right: 6%; top: 30%; bottom: 4%; border-radius: 10px;
+  background:
+    linear-gradient(90deg, transparent 44%, #ffcb05 44%, #ffcb05 56%, transparent 56%),
+    linear-gradient(160deg, #ef4444, #b91c1c 70%);
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,.25), inset 0 2px 0 rgba(255,255,255,.25), 0 10px 18px rgba(2,6,23,.45);
+}
+.baam-giftbox .baam-box-lid {
+  position: absolute; left: 0; right: 0; top: 12%; height: 24%; border-radius: 8px; z-index: 2;
+  background:
+    linear-gradient(90deg, transparent 44%, #ffd84d 44%, #ffd84d 56%, transparent 56%),
+    linear-gradient(180deg, #f87171, #dc2626);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.35), 0 4px 6px rgba(0,0,0,.3);
+  transform-origin: 10% 100%; transition: transform .45s cubic-bezier(.2,.9,.3,1.4);
+}
+.baam-giftbox .baam-box-lid::before, .baam-giftbox .baam-box-lid::after {
+  content: ''; position: absolute; top: -55%; width: 26%; height: 70%;
+  border: 4px solid #ffcb05; border-radius: 50% 50% 0 50%; left: 24%;
+}
+.baam-giftbox .baam-box-lid::after { left: auto; right: 24%; border-radius: 50% 50% 50% 0; }
+.baam-giftbox .baam-box-seal {
+  position: absolute; left: 50%; top: 54%; width: 34%; aspect-ratio: 1; max-width: 46px;
+  transform: translate(-50%, -50%); border-radius: 50%;
+  background: linear-gradient(#f8fafc 0 46%, #111827 46% 54%, #f8fafc 54%);
+  border: 3px solid #111827; box-shadow: 0 2px 6px rgba(0,0,0,.4);
+}
+.baam-giftbox .baam-box-seal::after {
+  content: ''; position: absolute; inset: 34%; border-radius: 50%; background: #fff; border: 2px solid #111827;
+}
+.baam-giftbox .baam-box-num {
+  position: absolute; z-index: 3; top: 2%; right: 4%; min-width: 1.9rem; height: 1.9rem; padding: 0 .4rem;
+  display: grid; place-items: center; border-radius: 999px;
+  background: linear-gradient(#fde68a, #f59e0b); color: #1e1b4b; font-weight: 950; font-size: 1rem;
+  border: 2px solid #fff7d6; box-shadow: 0 3px 8px rgba(0,0,0,.4);
+}
+.surprise-boxes-game .baam-giftbox:hover:not(:disabled) { transform: translateY(-4px) scale(1.04); filter: drop-shadow(0 0 14px rgba(255,203,5,.55)); }
+.surprise-boxes-game .baam-giftbox:hover:not(:disabled) .baam-box-lid { transform: rotate(-8deg) translateY(-4px); }
+.surprise-boxes-game .baam-giftbox.is-opened { animation: none; cursor: default; filter: grayscale(.85) brightness(.6); }
+.surprise-boxes-game .baam-giftbox.is-opened .baam-box-lid { transform: rotate(-32deg) translate(-6px, -12px); }
+@keyframes baamBoxFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+/* Reveal panel: no inner scrollbar */
+.baam-reveal-panel { overflow: hidden !important; max-height: none !important; }
+.baam-reveal-panel #baam-picture { max-height: none !important; width: min(100%, 22rem) !important; }
+.baam-reveal-panel #baam-picture img:not(.baam-power-poke) { max-height: min(42vh, 15rem) !important; width: auto !important; height: auto !important; }
+
+/* Power-up stage */
+.baam-power-stage { display: flex; flex-direction: column; align-items: center; gap: .35rem; }
+.baam-powerup-reveal .baam-powerup-icon { min-height: 0 !important; margin-top: .25rem !important; font-size: 2.5rem !important; }
+.baam-power-poke { width: 9rem !important; height: 9rem !important; max-height: none !important; object-fit: contain; animation: baamPokeHop 1.6s ease-in-out .9s infinite; }
+.baam-power-emoji { position: absolute; right: -.6rem; bottom: .2rem; font-size: 2.6rem; animation: baamEmojiSpin 1.2s ease-out both; }
+.baam-power-name { margin: 0; font-size: clamp(1.5rem, 4vw, 2.1rem); font-weight: 950; color: #fde68a; text-shadow: 0 3px 0 rgba(2,6,23,.8), 0 0 18px var(--baam-glow, #facc15); }
+.baam-power-desc { margin: 0; font-size: 1.05rem; font-weight: 800; color: #e0e7ff; }
+.baam-power-player { display: inline-flex; align-items: center; gap: .5rem; margin-top: .3rem; padding: .25rem .8rem .25rem .25rem; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); font-weight: 800; color: #fff; }
+.baam-power-player .baam-power-avatar { width: 2.4rem !important; height: 2.4rem !important; margin: 0 !important; border-radius: 50%; }
+.baam-powerup-steal { --baam-glow: #a855f7; --baam-core: rgba(168,85,247,.45); }
+.baam-powerup-bomb { --baam-glow: #f87171; --baam-core: rgba(239,68,68,.45); }
+.baam-powerup-swap { --baam-glow: #f9a8d4; --baam-core: rgba(244,114,182,.4); }
+.baam-powerup-gift { --baam-glow: #86efac; --baam-core: rgba(134,239,172,.4); }
+.baam-powerup-trap { --baam-glow: #60a5fa; --baam-core: rgba(96,165,250,.4); }
+.baam-powerup-bomb .baam-power-poke { animation: baamPowerShake .6s ease 3; }
+.baam-powerup-swap .baam-power-poke { animation: baamSwapSpin 2s ease-in-out infinite; }
+.baam-powerup-trap .baam-power-poke { animation: baamWobble 1s ease-in-out infinite; }
+@keyframes baamPokeHop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes baamEmojiSpin { 0% { transform: scale(0) rotate(-180deg); } 70% { transform: scale(1.3) rotate(15deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes baamSwapSpin { 0%,100% { transform: rotate(0) scale(1); } 50% { transform: rotate(360deg) scale(1.08); } }
+@keyframes baamWobble { 0%,100% { transform: scaleX(1) scaleY(1); } 30% { transform: scaleX(1.12) scaleY(.88); } 60% { transform: scaleX(.92) scaleY(1.08); } }
+
+/* Floating points on player cards */
+.surprise-boxes-game .game-player-card { overflow: visible !important; }
+.baam-float {
+  position: absolute; left: 50%; top: 30%; z-index: 50; pointer-events: none;
+  font-size: 3rem; font-weight: 950; line-height: 1; -webkit-text-stroke: 2px rgba(2,6,23,.8);
+  animation: baamFloatUp 1.8s cubic-bezier(.2,.85,.25,1) forwards;
+}
+.baam-float.is-plus { color: #4ade80; text-shadow: 0 0 18px rgba(74,222,128,.8); }
+.baam-float.is-minus { color: #f87171; text-shadow: 0 0 18px rgba(248,113,113,.8); animation-name: baamFloatDown; }
+.baam-float.is-zero { color: #93c5fd; text-shadow: 0 0 18px rgba(147,197,253,.8); }
+@keyframes baamFloatUp { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.4); } 20% { opacity: 1; transform: translate(-50%, -10px) scale(1.3); } 70% { opacity: 1; transform: translate(-50%, -40px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -80px) scale(.9); } }
+@keyframes baamFloatDown { 0% { opacity: 0; transform: translate(-50%, -30px) scale(.4); } 20% { opacity: 1; transform: translate(-50%, 0) scale(1.3); } 45% { transform: translate(-50%, -8px) scale(1); } 70% { opacity: 1; transform: translate(-50%, 10px); } 100% { opacity: 0; transform: translate(-50%, 50px); } }
+.baam-card-hit-plus { animation: baamHitPlus .9s ease; }
+.baam-card-hit-minus { animation: baamHitMinus .6s ease; }
+@keyframes baamHitPlus { 0%,100% { box-shadow: none; } 40% { box-shadow: 0 0 0 3px #4ade80, 0 0 30px rgba(74,222,128,.7); transform: scale(1.04); } }
+@keyframes baamHitMinus { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); box-shadow: 0 0 0 3px #f87171; } 75% { transform: translateX(8px); } }
+.baam-shake { animation: baamPowerShake .5s ease 2; }
+@media (prefers-reduced-motion: reduce) { .baam-giftbox, .baam-power-poke, .baam-shake { animation: none !important; } }
