@@ -23,6 +23,6 @@
 - [x] Verify actual student collection and shop navigation, classmate collection, and detail cards at full and narrow widths; teacher profile renderer checked without authenticated teacher access.
 
 # Card and global ranking corrections
-- [ ] Fix staircase Pokémon layout and duplicate rarity badges.
-- [ ] Give global top-three students consistent unique cards within classes.
-- [ ] Verify shop, class cards and student navigation.
+- [x] Fix staircase Pokémon layout and duplicate rarity badges.
+- [x] Give global top-three students consistent unique cards within classes.
+- [x] Verify actual student shop, carousel navigation, class cards and narrow-screen layout; teacher class renderer shares the same ranking treatment (teacher session not exercised).
