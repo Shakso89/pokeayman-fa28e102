@@ -9,5 +9,5 @@
 - [x] Verify filtering, sorting, pagination and card opening in both shops (presentation checks; purchasing unchanged).
 
 # Shop styling correction
-- [ ] Select stronger rarity frames with readable filters and restored dual-type gradients.
-- [ ] Apply the selected styling to both shops and verify appearance and controls.
+- [x] Select stronger rarity frames with readable filters and restored dual-type gradients.
+- [x] Apply the selected styling to both shops and verify appearance and controls (filter, sort, search, pagination and card details; no purchasing changes).
