@@ -31,7 +31,7 @@ html body :is(#profile-tab-shop, #student-tab-shop) .shop-toolbar :is(input, sel
   border: 1px solid var(--shop-border) !important; border-radius: 8px !important;
   font-size: 13px !important; padding: 0 12px !important; box-shadow: none !important;
 }
-html body .shop-toolbar .shop-search-field input { padding-left: 40px !important; }
+html body :is(#profile-tab-shop, #student-tab-shop) .shop-toolbar .shop-search-field input { padding-left: 40px !important; }
 html body .shop-toolbar input::placeholder { color: var(--shop-muted); }
 html body .shop-toolbar :is(input, select):focus-visible { outline: 2px solid var(--shop-yellow); outline-offset: 2px; }
 html body .shop-rarity-segments {
