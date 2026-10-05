@@ -19,5 +19,5 @@
 
 # Collection correction and Pokémon details
 - [ ] Fix the missed teacher-facing collection so every collection matches the shop.
-- [ ] Redesign detailed cards by tier with type backgrounds and remove sound controls.
+- [ ] Apply selected option 1 silver detailed cards by tier with type backgrounds and remove sound controls.
 - [ ] Verify actual collection navigation and detail cards at full and narrow widths.
