@@ -9326,13 +9326,14 @@ function shopOwnerIndex() {
 }
 function shopPageSlice(key, list) {
   const st = shopPager[key] || (shopPager[key] = { page: 0, list: null });
-  if (st.list !== list) { st.list = list; st.page = 0; }
+  if (st.list !== list) { st.list = list; st.page = 0; st.active = 0; }
   const pages = Math.max(1, Math.ceil(list.length / SHOP_PAGE_SIZE));
   st.page = Math.min(Math.max(0, st.page), pages - 1);
   return { items: list.slice(st.page * SHOP_PAGE_SIZE, (st.page + 1) * SHOP_PAGE_SIZE), page: st.page, pages, total: list.length };
 }
 function shopGoPage(key, page) {
   shopPager[key].page = page;
+  shopPager[key].active = 0;
   if (key === 'my') renderShopPage(); else renderProfileShopPage();
   const g = document.getElementById(key === 'my' ? 'my-shop-grid' : 'profile-shop-grid');
   if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' });
