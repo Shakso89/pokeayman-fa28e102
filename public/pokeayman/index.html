@@ -9361,7 +9361,7 @@ function shopStairGo(key, index) {
   st.active = next;
   const root = document.querySelector(`.shop-staircase[data-shop-key="${key}"]`);
   if (!root) return;
-  root.querySelector('.stc-strip').style.transform = `translateX(calc(${-next} * var(--stc-w)))`;
+  root.querySelector('.stc-strip').style.transform = `translateX(calc(${-next - 0.5} * var(--stc-w)))`;
   root.querySelectorAll('.stc-slide').forEach((slide, i) => {
     const s = i < next ? -1 : i > next ? 1 : 0;
     slide.style.transform = `translateY(${s * 55}%) scale(${s === 0 ? 1 : 0.72})`;
@@ -9385,7 +9385,7 @@ function renderShopStaircase(key, container, items, ownIdx) {
   const dots = items.map((p, i) => `<button type="button" class="stc-dot${i === active ? ' is-active' : ''}" aria-label="Show ${String(p.name).replace(/"/g, '&quot;')}" onclick="shopStairGo('${key}',${i})"></button>`).join('');
   container.innerHTML = `<div class="shop-staircase" data-shop-key="${key}" style="--stc-w:210px">
     <p class="stc-current-name">${items[active] ? String(items[active].name).replace(/</g, '&lt;') : ''}</p>
-    <div class="stc-viewport"><div class="stc-strip" style="transform:translateX(calc(${-active} * var(--stc-w)))">${slides}</div></div>
+    <div class="stc-viewport"><div class="stc-strip" style="transform:translateX(calc(${-active - 0.5} * var(--stc-w)))">${slides}</div></div>
     <div class="stc-controls">
       <button type="button" class="stc-btn" aria-label="Previous Pokémon" ${active === 0 ? 'disabled' : ''} onclick="shopStairGo('${key}',${active - 1})">‹</button>
       <div class="stc-dots">${dots}</div>
