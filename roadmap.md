@@ -10,4 +10,4 @@
 
 # Shop styling correction
 - [x] Select stronger rarity frames with readable filters and restored dual-type gradients.
-- [ ] Apply the selected styling to both shops and verify appearance and controls.
+- [x] Apply the selected styling to both shops and verify appearance and controls (filter, sort, search, pagination and card details; no purchasing changes).

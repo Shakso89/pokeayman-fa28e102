@@ -74,7 +74,7 @@ html body :is(#my-shop-grid, #profile-shop-grid) > .shop-pokemon-card {
   border: 1px solid var(--shop-border) !important; border-radius: 20px !important;
   text-align: center; cursor: pointer; box-shadow: none !important;
   transform: none !important; transition: border-color .18s, box-shadow .18s;
-  display: flex; flex-direction: column; overflow: visible !important;
+  display: flex; flex-direction: column; align-items: stretch !important; overflow: visible !important;
 }
 html body :is(#my-shop-grid, #profile-shop-grid) > .shop-pokemon-card::after { content: none !important; }
 html body :is(#my-shop-grid, #profile-shop-grid) > .shop-pokemon-card::before {
@@ -103,7 +103,7 @@ html body .pokemon-card-rare .shop-card-rarity { color: var(--shop-rare); }
 html body .pokemon-card-legendary .shop-card-rarity { color: var(--shop-yellow); }
 html body .shop-card-art { display: block; width: 120px; height: 120px; max-width: 100%; object-fit: contain; margin: 16px auto; transition: transform .3s; }
 html body .shop-pokemon-card:hover .shop-card-art { transform: scale(1.08); }
-html body .shop-card-footer { margin: auto -14px 0; padding: 12px 14px; background: color-mix(in srgb, var(--mythic-footer) 72%, transparent); border-radius: 0 0 19px 19px; }
+html body .shop-card-footer { align-self: stretch; width: auto; margin: auto -14px 0; padding: 12px 14px; background: color-mix(in srgb, var(--mythic-footer) 72%, transparent); border-radius: 0 0 19px 19px; }
 html body .shop-card-corners { position: absolute; inset: 5px; border-radius: 16px; pointer-events: none; z-index: 2; color: var(--mythic-ice); }
 html body .shop-card-corners i { position: absolute; width: 18px; height: 18px; border: 0 solid currentColor; }
 html body .shop-card-corners i:nth-child(1) { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; border-radius: 12px 0 0; }
