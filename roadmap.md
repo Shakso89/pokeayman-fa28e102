@@ -28,6 +28,6 @@
 - [x] Verify actual student shop, carousel navigation, class cards and narrow-screen layout; teacher class renderer shares the same ranking treatment (teacher session not exercised).
 
 # Student shop controls
-- [ ] Fix previous/next arrows to step through the current ten Pokémon without changing pages.
-- [ ] Match search, sorting, rarity filters and carousel controls to the sunny student theme.
-- [ ] Verify repeated arrow clicks, endpoints, dots and numbered pagination in the student shop.
+- [x] Fix previous/next arrows to step through the current ten Pokémon without changing pages.
+- [x] Match search, sorting, rarity filters and carousel controls to the sunny student theme.
+- [x] Verify repeated arrow clicks, endpoints, dots and numbered pagination in the student shop.
