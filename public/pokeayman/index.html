@@ -5923,12 +5923,11 @@ function saveTeacherWorkspace() {
     const teacherId = verifiedTeacherIdentity();
     const payload = teacherWorkspacePayload(scope);
     localStorage.setItem(teacherWorkspaceKey, JSON.stringify(JSON.parse(payload.schedule_data)));
-    const existing = allData.filter(record => record.type === 'teacher_schedule' && String(record.teacher_id || '') === String(teacherId || '') && String(record.schedule_owner_id || '') === String(scope || '')).sort((a,b) => String(b.schedule_updated_at || '').localeCompare(String(a.schedule_updated_at || '')) || String(b.__backendId || '').localeCompare(String(a.__backendId || '')))[0];
+    const existing = teacherScheduleSource().filter(record => record.type === 'teacher_schedule' && String(record.teacher_id || '') === String(teacherId || '') && String(record.schedule_owner_id || '') === String(scope || '')).sort((a,b) => String(b.schedule_updated_at || '').localeCompare(String(a.schedule_updated_at || '')) || String(b.__backendId || '').localeCompare(String(a.__backendId || '')))[0];
     const latestPayload = existing ? { ...existing, ...payload, teacher_id: teacherId, schedule_owner_id: scope, __backendId: existing.__backendId } : payload;
     const result = existing ? await window.dataSdk.update(latestPayload) : await window.dataSdk.create(latestPayload);
     if (result?.isOk) {
       const savedStatus = document.getElementById('schedule-save-status'); if (savedStatus) savedStatus.textContent = 'Saved';
-      await window.dataSdk.init(handler);
     } else { const errorStatus = document.getElementById('schedule-save-status'); if (errorStatus) errorStatus.textContent = 'Sync failed — retry'; }
   }).catch(() => { const errorStatus = document.getElementById('schedule-save-status'); if (errorStatus) errorStatus.textContent = 'Sync failed — retry'; });
 }
