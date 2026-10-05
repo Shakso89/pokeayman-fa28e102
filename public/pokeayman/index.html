@@ -3709,7 +3709,9 @@
     await pull();
   }
   window.dataSdk = {
-    async init(handler) { listener = handler; notify(); await firstLoad(); setInterval(pull, 5000); return {isOk:true}; },
+    async init(handler) { listener = handler; notify(); await firstLoad(); if (!window.__pokeaymanPollTimer) window.__pokeaymanPollTimer = setInterval(pull, 5000); return {isOk:true}; },
+    async refresh() { await pull(); return records.map(row => ({...row})); },
+    snapshot() { return records.map(row => ({...row})); },
     async create(value) {
       const row = {...value, __backendId: value.__backendId || crypto.randomUUID()};
       try { await api('POST', '', {id: row.__backendId, data: row}); } catch (e) { console.error(e); return {isOk:false, error:e}; }
