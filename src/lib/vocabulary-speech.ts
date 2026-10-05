@@ -28,17 +28,29 @@ export async function streamSpeech(endpoint: string, text: string, signal?: Abor
   let playback: Promise<void> = Promise.resolve();
   try {
     if (context.state === "suspended") await context.resume();
-    const response = await fetch(endpoint, {
+    const cacheKey = new Request(`${location.origin}/__vocabulary_audio/kore-v1/${encodeURIComponent(text)}`);
+    const cache = await caches.open("pokeayman-natural-voice-v1").catch(() => null);
+    const cached = await cache?.match(cacheKey);
+    const response = cached || await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
       signal: controller.signal,
     });
-    if (!response.ok || !response.body) throw new Error(`TTS failed: ${response.status} ${await response.text()}`);
+    if (!response.ok || !response.body) {
+      const body = await response.text();
+      let message = "The reading voice is unavailable right now.";
+      try {
+        const error = JSON.parse(body);
+        message = error.message || error.error?.message || message;
+      } catch { /* Never expose an HTML error page. */ }
+      throw new Error(message);
+    }
+    const reusable = cached ? null : response.clone();
     const parser = createParser({
       onEvent(event) {
-        const payload = JSON.parse(event.data) as { type: string; audio?: string; error?: unknown };
-        if (payload.type === "error" || payload.error) throw new Error(`Speech failed: ${event.data}`);
+        const payload = JSON.parse(event.data) as { type: string; audio?: string; message?: string; error?: { message?: string } };
+        if (payload.type === "error" || payload.error) throw new Error(payload.error?.message || payload.message || "The reading voice could not finish this audio.");
         if (payload.type === "speech.audio.done") {
           completed = true;
           return;
@@ -82,6 +94,7 @@ export async function streamSpeech(endpoint: string, text: string, signal?: Abor
       reader.releaseLock();
     }
     if (!completed || !samplesPlayed || pending.length) throw new Error("Incomplete speech stream");
+    if (cache && reusable) await cache.put(cacheKey, reusable).catch(() => {});
     await playback;
     signal?.throwIfAborted();
   } finally {

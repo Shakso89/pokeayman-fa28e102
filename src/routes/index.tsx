@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { streamSpeech } from "@/lib/vocabulary-speech";
 
 type Result = { error?: string; name?: string; signedIn?: boolean };
 
 declare global {
   interface Window {
+    pokeaymanSpeak?: (text: string) => Promise<void>;
     pokeaymanAuth?: {
       userId: string | null;
       getToken: () => Promise<string | null>;
@@ -68,6 +70,7 @@ function Index() {
 
   // Bridge read by the same-origin PokéAyman iframe for teacher accounts and saves.
   if (typeof window !== "undefined") {
+    window.pokeaymanSpeak = (text) => streamSpeech("/api/vocabulary-speech", text);
     window.pokeaymanAuth = {
       userId: user?.id ?? null,
       getToken: async () => (await supabase.auth.getSession()).data.session?.access_token ?? null,
