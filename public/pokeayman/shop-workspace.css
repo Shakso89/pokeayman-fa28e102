@@ -185,3 +185,7 @@ html body :is(#my-pokemon-list#my-pokemon-list#my-pokemon-list, #profile-pokemon
 .stc-dot { width: 8px; height: 8px; border-radius: 999px; border: 0; padding: 0; background: #fde68a; opacity: .3; cursor: pointer; transition: width .3s, opacity .3s; }
 .stc-dot.is-active { width: 26px; opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .stc-strip, .stc-slide, .stc-dot, .stc-btn { transition: none !important; } }
+.shop-staircase { isolation: isolate; }
+.stc-viewport { position: relative; z-index: 1; padding-bottom: 190px; margin-bottom: -190px; pointer-events: none; }
+.stc-slide, .stc-slide .shop-pokemon-card { pointer-events: auto; }
+.stc-controls { position: relative; z-index: 3; }
