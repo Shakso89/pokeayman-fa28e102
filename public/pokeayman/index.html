@@ -12652,13 +12652,13 @@ function selectGameList(listRef) {
 // Surprise Boxes-style vocabulary board with an optional kid-friendly power-up setup.
 const baamboozlePowerUps = ['Star','Steal','Rocket','Bomb','Swap','Gift','Trap'];
 const BAAM_POWER_INFO = {
-  Star:   { name: 'Star Shower',    poke: 120, emoji: '⭐', desc: '+25 points for you!' },
-  Steal:  { name: 'Shadow Steal',   poke: 94,  emoji: '👻', desc: 'Steal 15 points from the leader!' },
-  Rocket: { name: 'Dragonite Rocket', poke: 149, emoji: '🚀', desc: 'Blast 5 points above first place!' },
-  Bomb:   { name: 'Voltorb Bomb',   poke: 100, emoji: '💥', desc: 'Oh no! −20 points.' },
-  Swap:   { name: "Mew's Mind Swap", poke: 151, emoji: '🔄', desc: 'Swap scores with the leader!' },
-  Gift:   { name: "Chansey's Care", poke: 113, emoji: '🎁', desc: 'Everyone else gets +10 points.' },
-  Trap:   { name: 'Wobbuffet Trap', poke: 202, emoji: '🪤', desc: 'Trapped! No points this turn.' }
+  Star:   { name: 'Star Boost',   emoji: '⭐', desc: '+25 points for you!' },
+  Steal:  { name: 'Zap Steal',    emoji: '⚡', desc: 'Steal 15 points from the leader!' },
+  Rocket: { name: 'Rocket Blast', emoji: '🚀', desc: 'Blast 5 points above first place!' },
+  Bomb:   { name: 'Mega Bomb',    emoji: '💣', desc: 'Oh no! −20 points.' },
+  Swap:   { name: 'Score Swap',   emoji: '🔄', desc: 'Swap scores with the leader!' },
+  Gift:   { name: 'Mystery Gift', emoji: '🎁', desc: 'Everyone else gets +10 points.' },
+  Trap:   { name: 'Sticky Trap',  emoji: '🕸️', desc: 'Trapped! No points this turn.' }
 };
 function chooseBaamboozlePowerUps(listName) {
   const availableWords = getGameWords(listName).filter(w => w.vocab_word);
@@ -12872,7 +12872,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
       if (impact) card.classList.add(impact > 0 ? 'baam-card-hit-plus' : 'baam-card-hit-minus');
       setTimeout(() => float.remove(), 1900);
     });
-    if (power === 'Bomb') { modal.querySelector('.surprise-boxes-game')?.classList.remove('baam-shake'); void modal.offsetWidth; modal.querySelector('.surprise-boxes-game')?.classList.add('baam-shake'); }
+    if (power === 'Bomb') { const shakeEl = modal.querySelector('#baam-board'); shakeEl?.classList.remove('baam-shake'); void modal.offsetWidth; shakeEl?.classList.add('baam-shake'); }
     advanceGameTurn();
     updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
     if (power === 'Trap') return 'Trapped! No points this turn.';
@@ -12931,10 +12931,10 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
     revealPanel.classList.remove('hidden'); word.classList.add('hidden'); status.textContent = '';
     revealPanel.classList.remove('baam-powerup-reveal');
     if (w.powerUp) {
-      const info = BAAM_POWER_INFO[w.powerUp] || { name: w.powerUp, poke: 25, emoji: '✨', desc: '' };
+      const info = BAAM_POWER_INFO[w.powerUp] || { name: w.powerUp, emoji: '✨', desc: '' };
       const activePlayer = baamPlayers[activeGamePlayerIndex];
       picture.innerHTML = `<div class="baam-power-stage" aria-label="${info.name} power-up">
-        <div class="baam-powerup-icon"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${info.poke}.png" alt="" class="baam-power-poke"><span class="baam-power-emoji">${info.emoji}</span></div>
+        <div class="baam-powerup-icon"><span class="baam-power-badge" aria-hidden="true">${info.emoji}</span></div>
         <h3 class="baam-power-name">${info.name}</h3>
         <p class="baam-power-desc">${info.desc}</p>
         ${activePlayer ? `<div class="baam-power-player">${gameStudentAvatarMarkup(activePlayer, 'baam-power-avatar')}<span>${activePlayer.student_name}</span></div>` : ''}
