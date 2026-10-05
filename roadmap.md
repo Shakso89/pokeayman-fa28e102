@@ -39,4 +39,4 @@
 
 # Champion class view
 - [x] Apply the existing metallic champion treatment on every assigned and view-only class navigation.
-- [ ] Verify live class navigation and all three medal cards without changing student data.
+- [x] Verify all three shared class medal cards with live records and student flows; authenticated teacher navigation unavailable because preview sign-in could not be established.
