@@ -3900,6 +3900,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Figtree:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="/pokeayman/class-workspace.css">
+<link rel="stylesheet" href="/pokeayman/shop-workspace.css">
+<script src="/pokeayman/shop-catalog.js"></script>
 </head>
  <body data-template-id="__page-root" class="min-h-screen">
   <style>
@@ -4272,16 +4274,11 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <p id="profile-pokemon-empty" class="text-center text-gray-400 py-8 text-sm">No Pokémon yet.</p>
          </div>
          <div id="profile-tab-shop" class="profile-tab-content hidden flex-1 overflow-y-auto">
-          <div class="mb-2 space-y-2">
-           <input id="profile-shop-search" type="text" placeholder="Search..." class="w-full border-2 border-gray-300 rounded-lg px-2 py-1.5 text-xs font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
-           <div class="flex gap-1 flex-wrap">
-            <button id="profile-shop-rarity-all" class="profile-shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition active" data-rarity="">All</button> <button id="profile-shop-rarity-common" class="profile-shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-slate-400 bg-slate-100 text-slate-700 hover:border-slate-600 hover:bg-slate-200 transition" data-rarity="common">Common</button> <button id="profile-shop-rarity-uncommon" class="profile-shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-blue-400 bg-blue-100 text-blue-700 hover:border-blue-600 hover:bg-blue-200 transition" data-rarity="uncommon">Uncommon</button> <button id="profile-shop-rarity-rare" class="profile-shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-purple-400 bg-purple-100 text-purple-700 hover:border-purple-600 hover:bg-purple-200 transition" data-rarity="rare">Rare</button> <button id="profile-shop-rarity-legendary" class="profile-shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-yellow-400 bg-yellow-100 text-yellow-700 hover:border-yellow-600 hover:bg-yellow-200 transition" data-rarity="legendary">Legendary</button>
-           </div>
-           <div class="flex gap-1 flex-wrap">
-            <button id="profile-shop-sort-name" class="profile-shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition active" data-sort="name">Name</button> <button id="profile-shop-sort-price-asc" class="profile-shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition" data-sort="price-asc">Price ↑</button> <button id="profile-shop-sort-price-desc" class="profile-shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition" data-sort="price-desc">Price ↓</button>
-           </div>
-          </div>
-          <div id="profile-shop-container" class="border-2 border-gray-300 rounded-lg p-3 h-[550px] overflow-y-auto bg-white">
+<div class="shop-toolbar" aria-label="Shop controls">
+ <div class="shop-search-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="profile-shop-search" type="search" placeholder="Search Pokémon" aria-label="Search Pokémon"></div>
+ <select id="profile-shop-sort" aria-label="Sort Pokémon"><option value="name">Name A–Z</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option></select>
+ <div class="shop-rarity-segments" role="group" aria-label="Filter by rarity"><button type="button" id="profile-shop-rarity-all" class="profile-shop-rarity-btn active" data-rarity="" aria-pressed="true">All</button><button type="button" id="profile-shop-rarity-common" class="profile-shop-rarity-btn" data-rarity="common" aria-pressed="false">Common</button><button type="button" id="profile-shop-rarity-uncommon" class="profile-shop-rarity-btn" data-rarity="uncommon" aria-pressed="false">Uncommon</button><button type="button" id="profile-shop-rarity-rare" class="profile-shop-rarity-btn" data-rarity="rare" aria-pressed="false">Rare</button><button type="button" id="profile-shop-rarity-legendary" class="profile-shop-rarity-btn" data-rarity="legendary" aria-pressed="false">Legendary</button></div></div>
+<div id="profile-shop-container" class="border-2 border-gray-300 rounded-lg p-3 h-[550px] overflow-y-auto bg-white">
            <div id="profile-shop-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
            <p id="profile-shop-empty" class="text-center text-gray-400 py-8 text-sm">No Pokémon available in shop.</p>
           </div>
@@ -4667,16 +4664,11 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
        <p id="my-pokemon-empty" class="text-center text-gray-400 py-8 text-sm">No Pokémon yet.</p>
       </div>
       <div id="student-tab-shop" class="student-dashboard-content hidden flex-1 overflow-y-auto">
-       <div class="mb-2 space-y-2">
-        <input id="my-shop-search" type="text" placeholder="Search..." class="w-full border-2 border-gray-300 rounded-lg px-2 py-1.5 text-xs font-medium focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition">
-        <div class="flex gap-1 flex-wrap">
-         <button id="my-shop-rarity-all" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition active" data-rarity="">All</button> <button id="my-shop-rarity-common" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-slate-400 bg-slate-100 text-slate-700 hover:border-slate-600 hover:bg-slate-200 transition" data-rarity="common">Common</button> <button id="my-shop-rarity-uncommon" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-blue-400 bg-blue-100 text-blue-700 hover:border-blue-600 hover:bg-blue-200 transition" data-rarity="uncommon">Uncommon</button> <button id="my-shop-rarity-rare" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-purple-400 bg-purple-100 text-purple-700 hover:border-purple-600 hover:bg-purple-200 transition" data-rarity="rare">Rare</button> <button id="my-shop-rarity-legendary" class="shop-rarity-btn px-2 py-1 rounded text-xs font-medium border-2 border-yellow-400 bg-yellow-100 text-yellow-700 hover:border-yellow-600 hover:bg-yellow-200 transition" data-rarity="legendary">Legendary</button>
-        </div>
-        <div class="flex gap-1 flex-wrap">
-         <button id="my-shop-sort-name" class="shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition active" data-sort="name">Name</button> <button id="my-shop-sort-price-asc" class="shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition" data-sort="price-asc">Price ↑</button> <button id="my-shop-sort-price-desc" class="shop-sort-btn px-2 py-1 rounded text-xs font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition" data-sort="price-desc">Price ↓</button>
-        </div>
-       </div>
-       <div id="my-shop-container" class="border-2 border-gray-300 rounded-lg p-3 h-[550px] overflow-y-auto bg-white">
+<div class="shop-toolbar" aria-label="Shop controls">
+ <div class="shop-search-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="my-shop-search" type="search" placeholder="Search Pokémon" aria-label="Search Pokémon"></div>
+ <select id="my-shop-sort" aria-label="Sort Pokémon"><option value="name">Name A–Z</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option></select>
+ <div class="shop-rarity-segments" role="group" aria-label="Filter by rarity"><button type="button" id="my-shop-rarity-all" class="shop-rarity-btn active" data-rarity="" aria-pressed="true">All</button><button type="button" id="my-shop-rarity-common" class="shop-rarity-btn" data-rarity="common" aria-pressed="false">Common</button><button type="button" id="my-shop-rarity-uncommon" class="shop-rarity-btn" data-rarity="uncommon" aria-pressed="false">Uncommon</button><button type="button" id="my-shop-rarity-rare" class="shop-rarity-btn" data-rarity="rare" aria-pressed="false">Rare</button><button type="button" id="my-shop-rarity-legendary" class="shop-rarity-btn" data-rarity="legendary" aria-pressed="false">Legendary</button></div></div>
+<div id="my-shop-container" class="border-2 border-gray-300 rounded-lg p-3 h-[550px] overflow-y-auto bg-white">
         <div id="my-shop-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
         <p id="my-shop-empty" class="text-center text-gray-400 py-8 text-sm">No Pokémon available in shop.</p>
        </div>
@@ -8712,7 +8704,7 @@ function applyShopFilters() {
   
   const searchTerm = (searchInput?.value || '').toLowerCase();
   const rarityFilter = rarityButtons.find(b => b.classList.contains('active'))?.dataset.rarity || '';
-  const sortBy = sortButtons.find(b => b.classList.contains('active'))?.dataset.sort || 'name';
+  const sortBy = document.getElementById('my-shop-sort')?.value || 'name';
   
   // Filter catalog across ALL pages
   shopState.filtered = pokemonCatalog.filter(p => {
@@ -9364,98 +9356,40 @@ function renderShopPager(key, gridId, info) {
 }
 function debounceShop(fn, ms = 200) { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; }
 
+function renderShopPokemonCard(p, ownerRecord) {
+  const owner = ownerRecord ? (ownerRecord.owner_display_name || ownerRecord.displayName || ownerRecord.username || ownerRecord.owner || '') : '';
+  const rarity = ['common', 'uncommon', 'rare', 'legendary'].includes(p.rarity) ? p.rarity : 'common';
+  const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const types = getPokemonTypes(p);
+  const badges = types.map(type => `<span class="pokemon-type-badge type-${safe(type)}" aria-label="Type: ${safe(type)}">${type === 'unknown' ? 'Type unavailable' : safe(type)}</span>`).join('');
+  const args = safe(JSON.stringify({id:p.id,name:p.name,rarity:p.rarity,price:p.price,power:p.power,hp:p.hp}));
+  const ownerArg = safe(JSON.stringify(owner));
+  return `<div class="shop-pokemon-card pokemon-card-${rarity}${owner ? ' is-owned' : ''}" data-rarity="${rarity}" role="button" tabindex="0" aria-label="${safe(p.name)}, ${rarity}, ${p.price} coins" onclick="openPokemonModal(${args},${Boolean(owner)},${ownerArg})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><div class="shop-card-heading"><span class="shop-card-number">#${String(p.id).padStart(3,'0')}</span><span class="shop-card-rarity">${rarity === 'legendary' ? '✦ ' : rarity === 'rare' ? '◇ ' : ''}${rarity}</span></div><img class="shop-card-art" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png" width="104" height="104" loading="lazy" decoding="async" alt="${safe(p.name)}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><p class="shop-card-name">${safe(p.name)}</p><div class="shop-card-types">${badges}</div><div class="shop-card-stats"><span class="shop-card-price">${p.price} <span aria-label="coins">◈</span></span><span class="shop-card-power">${p.power} PWR</span></div>${owner ? `<p class="shop-card-owner">Owned by ${safe(owner)}</p>` : ''}</div>`;
+}
 function renderShopPage() {
   const container = document.getElementById('my-shop-grid');
-  const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary' };
-  
+  if (!container) return;
   const ownIdx = shopOwnerIndex();
   const info = shopPageSlice('my', shopState.filtered);
   renderShopPager('my', 'my-shop-grid', info);
-  container.innerHTML = info.items.map(p => {
-    const ownerRecord = ownIdx.get(p.id);
-    const owner = ownerRecord ? (ownerRecord.owner_display_name || ownerRecord.displayName || ownerRecord.username || ownerRecord.owner || '') : '';
-    const cardClass = `${cardClasses[p.rarity] || cardClasses.common} ${pokemonTypeCardClass(p)}`;
-    const dimmed = owner ? 'opacity-50' : '';
-    const shopTypeStyle = getPokemonAvatarCardStyle(p);
-    const imageUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png`;
-    return `<div class="rounded-xl p-4 ${cardClass} text-center cursor-pointer relative ${dimmed}" style="${shopTypeStyle}" onclick="openPokemonModal({id:${p.id},name:'${p.name}',rarity:'${p.rarity}',price:${p.price},power:${p.power},hp:${p.hp}},${!!owner},'${owner||''}')"><img src="${imageUrl}" class="w-20 h-20 mx-auto mb-2 object-contain" loading="lazy" decoding="async" alt="${p.name}" onerror="this.src='https://via.placeholder.com/80?text=${p.id}'; this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='0.25rem';"><p class="font-bold text-sm capitalize">${p.name}</p><p class="shop-tier-label">PWR ${p.power}</p><p class="text-amber-600 font-bold text-sm mt-1">${p.price} 🪙</p>${owner ? `<p class="text-red-500 text-xs font-semibold mt-1">Owned by ${owner}</p>` : ''}</div>`;
-  }).join('');
+  container.innerHTML = info.items.map(p => renderShopPokemonCard(p, ownIdx.get(p.id))).join('');
+  document.getElementById('my-shop-empty')?.classList.toggle('hidden', info.total > 0);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const searchInput = document.getElementById('my-shop-search');
-  const rarityButtons = document.querySelectorAll('.shop-rarity-btn');
-  const sortButtons = document.querySelectorAll('.shop-sort-btn');
-  const profileRarityButtons = document.querySelectorAll('.profile-shop-rarity-btn');
-  const profileSortButtons = document.querySelectorAll('.profile-shop-sort-btn');
-  const profileSearchInput = document.getElementById('profile-shop-search');
-  
-  if (searchInput) searchInput.addEventListener('input', debounceShop(() => { applyShopFilters(); renderShopPage(); }));
-  if (profileSearchInput) profileSearchInput.addEventListener('input', debounceShop(() => { applyProfileShopFilters(); renderProfileShopPage(); }));
-  
-  // Student shop rarity buttons
-  rarityButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      rarityButtons.forEach(b => b.classList.remove('active', 'border-blue-500', 'bg-blue-50', 'text-blue-700'));
-      rarityButtons.forEach(b => b.classList.add('border-gray-300', 'bg-white', 'text-gray-700'));
-      btn.classList.add('active', 'border-blue-500', 'bg-blue-50', 'text-blue-700');
-      btn.classList.remove('border-gray-300', 'bg-white', 'text-gray-700');
-      applyShopFilters(); 
-      renderShopPage(); 
-    });
-  });
-  
-  // Student shop sort buttons
-  sortButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      sortButtons.forEach(b => b.classList.remove('active', 'border-blue-500', 'bg-blue-50', 'text-blue-700'));
-      sortButtons.forEach(b => b.classList.add('border-gray-300', 'bg-white', 'text-gray-700'));
-      btn.classList.add('active', 'border-blue-500', 'bg-blue-50', 'text-blue-700');
-      btn.classList.remove('border-gray-300', 'bg-white', 'text-gray-700');
-      applyShopFilters(); 
-      renderShopPage(); 
-    });
-  });
-  
-  // Profile shop rarity buttons
-  profileRarityButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      profileRarityButtons.forEach(b => b.classList.remove('active', 'border-blue-500', 'bg-blue-50', 'text-blue-700'));
-      // Reset each button to its tier-specific inactive styling
-      profileRarityButtons.forEach(b => {
-        const rarity = b.dataset.rarity;
-        if (rarity === '') {
-          b.className = 'profile-shop-rarity-btn px-4 py-2 rounded-lg text-sm font-medium border-2 border-gray-300 bg-white text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition';
-        } else if (rarity === 'common') {
-          b.className = 'profile-shop-rarity-btn px-4 py-2 rounded-lg text-sm font-medium border-2 border-slate-400 bg-slate-100 text-slate-700 hover:border-slate-600 hover:bg-slate-200 transition';
-        } else if (rarity === 'uncommon') {
-          b.className = 'profile-shop-rarity-btn px-4 py-2 rounded-lg text-sm font-medium border-2 border-blue-400 bg-blue-100 text-blue-700 hover:border-blue-600 hover:bg-blue-200 transition';
-        } else if (rarity === 'rare') {
-          b.className = 'profile-shop-rarity-btn px-4 py-2 rounded-lg text-sm font-medium border-2 border-purple-400 bg-purple-100 text-purple-700 hover:border-purple-600 hover:bg-purple-200 transition';
-        } else if (rarity === 'legendary') {
-          b.className = 'profile-shop-rarity-btn px-4 py-2 rounded-lg text-sm font-medium border-2 border-yellow-400 bg-yellow-100 text-yellow-700 hover:border-yellow-600 hover:bg-yellow-200 transition';
-        }
-      });
-      // Set clicked button to active state (blue highlight)
-      btn.className = 'profile-shop-rarity-btn px-4 py-2 rounded-lg text-sm font-medium border-2 border-blue-500 bg-blue-50 text-blue-700 hover:border-blue-500 hover:bg-blue-50 transition active';
-      applyProfileShopFilters(); 
-      renderProfileShopPage(); 
-    });
-  });
-  
-  // Profile shop sort buttons
-  profileSortButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      profileSortButtons.forEach(b => b.classList.remove('active', 'border-blue-500', 'bg-blue-50', 'text-blue-700'));
-      profileSortButtons.forEach(b => b.classList.add('border-gray-300', 'bg-white', 'text-gray-700'));
-      btn.classList.add('active', 'border-blue-500', 'bg-blue-50', 'text-blue-700');
-      btn.classList.remove('border-gray-300', 'bg-white', 'text-gray-700');
-      applyProfileShopFilters(); 
-      renderProfileShopPage(); 
-    });
-  });
-  
-  attachQuizSubTabListeners();
+  for (const key of ['my', 'profile']) {
+    const apply = key === 'my' ? applyShopFilters : applyProfileShopFilters;
+    const render = key === 'my' ? renderShopPage : renderProfileShopPage;
+    const search = document.getElementById(`${key}-shop-search`);
+    search?.addEventListener('input', debounceShop(() => { apply(); render(); }));
+    if (search) search.dataset.listenerAttached = 'true';
+    document.getElementById(`${key}-shop-sort`)?.addEventListener('change', () => { apply(); render(); });
+    const buttons = document.querySelectorAll(key === 'my' ? '.shop-rarity-btn' : '.profile-shop-rarity-btn');
+    buttons.forEach(button => button.addEventListener('click', () => {
+      buttons.forEach(other => { other.classList.toggle('active', other === button); other.setAttribute('aria-pressed', String(other === button)); });
+      apply(); render();
+    }));
+  }
 });
 
 function shuffleQuizChoices(quiz) {
@@ -10273,6 +10207,17 @@ let pokemonCatalogHydrated = false;
 async function hydrateCanonicalPokemonCatalog() {
   if (pokemonCatalogHydrated || !pokemonCatalog.length) return;
   pokemonCatalogHydrated = true;
+  if (window.pokeaymanShopSpecies) {
+    pokemonCatalog.forEach(item => {
+      const species = window.pokeaymanShopSpecies[item.id];
+      if (!species) return;
+      item.name = species.name;
+      item.types = species.types;
+      item.pokemon_types = species.types;
+    });
+    renderAll();
+    return;
+  }
   // PokeAPI is the authoritative source for names and primary/secondary types.
   const queue = pokemonCatalog.slice();
   const worker = async () => {
@@ -11803,7 +11748,7 @@ function applyProfileShopFilters() {
   
   const searchTerm = (searchInput?.value || '').toLowerCase();
   const rarityFilter = rarityButtons.find(b => b.classList.contains('active'))?.dataset.rarity || '';
-  const sortBy = sortButtons.find(b => b.classList.contains('active'))?.dataset.sort || 'name';
+  const sortBy = document.getElementById('profile-shop-sort')?.value || 'name';
   
   profileShopState.filtered = pokemonCatalog.filter(p => {
     const matchesSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm);
@@ -11828,33 +11773,16 @@ function renderProfileShop() {
   applyProfileShopFilters();
   renderProfileShopPage();
   
-  // Add event listeners for search and filter (only once)
-  if (!document.getElementById('profile-shop-search').dataset.listenerAttached) {
-    const searchInput = document.getElementById('profile-shop-search');
-    const filterSelect = document.getElementById('profile-shop-rarity-filter');
-    const sortSelect = document.getElementById('profile-shop-sort');
-    if (searchInput) searchInput.addEventListener('input', () => { applyProfileShopFilters(); renderProfileShopPage(); });
-    if (filterSelect) filterSelect.addEventListener('change', () => { applyProfileShopFilters(); renderProfileShopPage(); });
-    if (sortSelect) sortSelect.addEventListener('change', () => { applyProfileShopFilters(); renderProfileShopPage(); });
-    document.getElementById('profile-shop-search').dataset.listenerAttached = 'true';
-  }
 }
 
 function renderProfileShopPage() {
   const container = document.getElementById('profile-shop-grid');
-  const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary' };
-  
+  if (!container) return;
   const ownIdx = shopOwnerIndex();
   const info = shopPageSlice('profile', profileShopState.filtered);
   renderShopPager('profile', 'profile-shop-grid', info);
-  container.innerHTML = info.items.map(p => {
-    const owner = ownIdx.get(p.id)?.owner;
-    const cardClass = `${cardClasses[p.rarity] || cardClasses.common} ${pokemonTypeCardClass(p)}`;
-    const dimmed = owner ? 'opacity-50' : '';
-    const shopTypeStyle = getPokemonAvatarCardStyle(p);
-    const imageUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png`;
-    return `<div class="rounded-xl p-4 ${cardClass} text-center cursor-pointer relative ${dimmed}" style="${shopTypeStyle}" onclick="openPokemonModal({id:${p.id},name:'${p.name}',rarity:'${p.rarity}',price:${p.price},power:${p.power},hp:${p.hp}},${!!owner},'${owner||''}')"><img src="${imageUrl}" class="w-20 h-20 mx-auto mb-2 object-contain" loading="lazy" decoding="async" alt="${p.name}" onerror="this.src='https://via.placeholder.com/80?text=${p.id}'; this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='0.25rem';"><p class="font-bold text-sm capitalize">${p.name}</p><p class="shop-tier-label">PWR ${p.power}</p><p class="text-amber-600 font-bold text-sm mt-1">${p.price} 🪙</p>${owner ? `<p class="text-red-500 text-xs font-semibold mt-1">Owned by ${owner}</p>` : ''}</div>`;
-  }).join('');
+  container.innerHTML = info.items.map(p => renderShopPokemonCard(p, ownIdx.get(p.id))).join('');
+  document.getElementById('profile-shop-empty')?.classList.toggle('hidden', info.total > 0);
 }
 
 function renderProfileQuizzes() {
