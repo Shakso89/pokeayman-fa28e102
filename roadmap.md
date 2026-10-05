@@ -21,3 +21,8 @@
 - [x] Fix the missed teacher-facing collection so every collection matches the shop.
 - [x] Apply selected option 1 silver detailed cards by tier with type backgrounds and remove sound controls.
 - [x] Verify actual student collection and shop navigation, classmate collection, and detail cards at full and narrow widths; teacher profile renderer checked without authenticated teacher access.
+
+# Card and global ranking corrections
+- [ ] Fix staircase Pokémon layout and duplicate rarity badges.
+- [ ] Give global top-three students consistent unique cards within classes.
+- [ ] Verify shop, class cards and student navigation.
