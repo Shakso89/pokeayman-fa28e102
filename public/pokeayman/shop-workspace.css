@@ -189,3 +189,4 @@ html body :is(#my-pokemon-list#my-pokemon-list#my-pokemon-list, #profile-pokemon
 .stc-viewport { position: relative; z-index: 1; padding-bottom: 190px; margin-bottom: -190px; pointer-events: none; }
 .stc-slide, .stc-slide .shop-pokemon-card { pointer-events: auto; }
 .stc-controls { position: relative; z-index: 3; }
+.shop-staircase { grid-column: 1 / -1; width: 100%; }
