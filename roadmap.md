@@ -36,3 +36,7 @@
 - [x] Apply distinctive global medal cards to rosters, both student profile panels and classmate dialogs.
 - [x] Restore shared shop type gradients and rarity frames in student collections.
 - [x] Verify real student collection, global rankings, classmate profile and narrow layouts; shared teacher roster renderer checked with live leaders, without teacher actions.
+
+# Champion class view
+- [x] Apply the existing metallic champion treatment on every assigned and view-only class navigation.
+- [ ] Verify live class navigation and all three medal cards without changing student data.
