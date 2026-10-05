@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ApiVocabularySpeechRouteImport } from './routes/api/vocabulary-speech'
 import { Route as ApiPublicPexelsRouteImport } from './routes/api/public/pexels'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVocabularySpeechRoute = ApiVocabularySpeechRouteImport.update({
+  id: '/api/vocabulary-speech',
+  path: '/api/vocabulary-speech',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPexelsRoute = ApiPublicPexelsRouteImport.update({
   id: '/api/public/pexels',
   path: '/api/public/pexels',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/vocabulary-speech': typeof ApiVocabularySpeechRoute
   '/api/public/pexels': typeof ApiPublicPexelsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/vocabulary-speech': typeof ApiVocabularySpeechRoute
   '/api/public/pexels': typeof ApiPublicPexelsRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,38 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/api/vocabulary-speech': typeof ApiVocabularySpeechRoute
   '/api/public/pexels': typeof ApiPublicPexelsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/reset-password' | '/api/public/pexels'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/api/vocabulary-speech'
+    | '/api/public/pexels'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/reset-password' | '/api/public/pexels'
-  id: '__root__' | '/' | '/auth' | '/reset-password' | '/api/public/pexels'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/api/vocabulary-speech'
+    | '/api/public/pexels'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/api/vocabulary-speech'
+    | '/api/public/pexels'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiVocabularySpeechRoute: typeof ApiVocabularySpeechRoute
   ApiPublicPexelsRoute: typeof ApiPublicPexelsRoute
 }
 
@@ -92,6 +118,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/vocabulary-speech': {
+      id: '/api/vocabulary-speech'
+      path: '/api/vocabulary-speech'
+      fullPath: '/api/vocabulary-speech'
+      preLoaderRoute: typeof ApiVocabularySpeechRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/pexels': {
       id: '/api/public/pexels'
       path: '/api/public/pexels'
@@ -106,6 +139,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiVocabularySpeechRoute: ApiVocabularySpeechRoute,
   ApiPublicPexelsRoute: ApiPublicPexelsRoute,
 }
 export const routeTree = rootRouteImport

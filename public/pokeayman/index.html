@@ -8322,6 +8322,22 @@ function navigateTo(level, school, cls, studentName) {
 
 // Achievement state is earned data, not a rank approximation. Accept the legacy
 // shapes used by older Sheet rows without granting badges to unearned students.
+window.readNaturalVocabulary = async (text, button) => {
+  if (!String(text || '').trim() || window._vocabularyReading) return;
+  window._vocabularyReading = true;
+  const original = button?.textContent;
+  if (button) { button.textContent = '🔊 …'; button.disabled = true; button.setAttribute('aria-busy', 'true'); }
+  try {
+    if (!window.parent.pokeaymanSpeak) throw new Error('The natural voice is not ready yet. Please reopen the app.');
+    await window.parent.pokeaymanSpeak(String(text).trim());
+  } catch (error) {
+    toast(error?.message || 'The reading voice is unavailable right now.');
+  } finally {
+    window._vocabularyReading = false;
+    if (button) { button.textContent = original; button.disabled = false; button.setAttribute('aria-busy', 'false'); }
+  }
+};
+
 function normalizeBadgeToken(value) {
   return String(value || '').trim().toLocaleLowerCase().replace(/[\s_]+/g, '-');
 }
@@ -9181,31 +9197,7 @@ function openStudentVocabularyFlashcards(listName, trigger = null) {
       oscillator.stop(start + 0.22);
     } catch (error) {}
   };
-  const speakVocabularyText = (text, button) => {
-    if (!text || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const phrase = String(text).trim().replace(/\s+/g, ' ');
-    const utter = new SpeechSynthesisUtterance(phrase);
-    utter.lang = 'en-US';
-    const voices = window.speechSynthesis.getVoices?.() || [];
-    const markVoice = voices.find(voice => String(voice.name || '').trim().toLocaleLowerCase() === 'microsoft mark');
-    const femaleVoice = markVoice || voices
-      .filter(voice => /^en(-|_)/i.test(voice.lang || ''))
-      .sort((a, b) => {
-        const female = /female|samantha|ava|allison|karen|moira|susan|zira|siri|google us english|microsoft.*(jenny|aria|sara)/i;
-        const natural = /natural|premium|neural|enhanced|siri|google|microsoft/i;
-        const score = voice => (female.test(voice.name) ? 30 : 0) + (natural.test(voice.name) ? 12 : 0) + (voice.localService ? 1 : 0);
-        return score(b) - score(a) || a.name.localeCompare(b.name);
-      })[0] || window.pickNaturalVoice('en') || null;
-    if (femaleVoice) utter.voice = femaleVoice;
-    utter.rate = 0.82;
-    utter.pitch = 1.12;
-    utter.volume = 1;
-    utter.text = phrase;
-    if (button) { button.textContent = button.id === 'student-vocab-read-sentence' ? '🔊 …' : '🔊 …'; button.setAttribute('aria-busy', 'true'); }
-    utter.onend = utter.onerror = () => { if (button) { button.textContent = button.id === 'student-vocab-read-sentence' ? '🔊 Read sentence' : '🔊 Read word'; button.setAttribute('aria-busy', 'false'); } };
-    window.speechSynthesis.speak(utter);
-  };
+  const speakVocabularyText = (text, button) => window.readNaturalVocabulary(text, button);
   const readBtn = modal.querySelector('#student-vocab-read');
   readBtn.addEventListener('click', () => speakVocabularyText(words[index]?.vocab_word, readBtn));
   modal.querySelector('#student-vocab-font-decrease').addEventListener('click', () => { fontSize = Math.max(24, fontSize - 8); updateFontSize(); });
@@ -16093,24 +16085,7 @@ function openVocabFlashcards(listName) {
     isFlipped = !isFlipped;
     inner.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
   });
-  const speakFlashcardText = (text, button) => {
-    if (!text || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const phrase = String(text).trim().replace(/\s+/g, ' ');
-    const utter = new SpeechSynthesisUtterance(phrase);
-    utter.lang = 'en-US';
-    const voices = window.speechSynthesis.getVoices?.() || [];
-    const markVoice = voices.find(voice => String(voice.name || '').trim().toLocaleLowerCase() === 'microsoft mark');
-    const bestVoice = markVoice || window.pickNaturalVoice?.('en');
-    if (bestVoice) utter.voice = bestVoice;
-    utter.rate = 0.88;
-    utter.pitch = 1.04;
-    utter.volume = 1;
-    utter.text = phrase;
-    if (button) { button.textContent = '🔊 …'; button.setAttribute('aria-busy', 'true'); }
-    utter.onend = utter.onerror = () => { if (button) { button.textContent = button.id === 'flashcard-read-sentence' ? '🔊 Read sentence' : '🔊 Read word'; button.setAttribute('aria-busy', 'false'); } };
-    window.speechSynthesis.speak(utter);
-  };
+  const speakFlashcardText = (text, button) => window.readNaturalVocabulary(text, button);
   const flashReadBtn = modal.querySelector('#flashcard-read');
   flashReadBtn.addEventListener('click', () => speakFlashcardText(words[currentIdx]?.vocab_word, flashReadBtn));
   
