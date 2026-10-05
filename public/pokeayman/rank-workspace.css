@@ -97,9 +97,32 @@ html body #student-dashboard#student-dashboard #student-classes-grid .student-cl
 html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-avatar { width: 100px; height: 100px; margin: 12px auto; object-fit: contain; }
 html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-name { font: 600 20px Fredoka, sans-serif; white-space: normal; overflow-wrap: anywhere; }
 html body #student-dashboard#student-dashboard#student-dashboard #student-classes-grid .global-rank-card > p:first-of-type { background: color-mix(in srgb, var(--rank-edge) 15%, transparent) !important; }
-@media (max-width: 640px) {
-  html body #app-screen#app-screen#app-screen .class-top3-card.global-rank-card { display: flex !important; flex-direction: column; text-align: center; }
+/* Class previews are narrow even on desktop: use medal rows, not full-size profile headers. */
+html body #app-screen#app-screen#app-screen .class-top3-list { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+html body #app-screen#app-screen#app-screen .class-top3-card {
+  display: grid !important; grid-template-columns: 48px minmax(0, 1fr) 104px;
+  align-items: center; gap: 10px; min-height: 92px; padding: 14px !important;
+  text-align: left; box-sizing: border-box;
 }
+html body #app-screen#app-screen#app-screen .class-top3-card.global-rank-card.global-rank-card { border-radius: 16px !important; }
+html body #app-screen#app-screen#app-screen .class-top3-card.global-rank-card::before { inset: 6px !important; border-radius: 10px !important; }
+html body #app-screen#app-screen#app-screen .class-top3-card .class-top3-avatar { grid-column: 1; grid-row: 1; width: 48px; height: 48px; margin: 0; }
+html body #app-screen#app-screen#app-screen .class-top3-card > div { grid-column: 2; grid-row: 1; min-width: 0; }
+html body #app-screen#app-screen#app-screen .class-top3-card .class-top3-name { font: 700 14px Outfit, sans-serif; white-space: normal; overflow-wrap: anywhere; }
+html body #app-screen#app-screen#app-screen .class-top3-card .class-top3-score { font: 800 15px Outfit, sans-serif; margin: 4px 0; }
+html body #app-screen#app-screen#app-screen .class-top3-card .class-top3-detail { font: 600 10px Figtree, sans-serif; }
+html body #app-screen#app-screen#app-screen .class-top3-card.global-rank-card .global-rank-marker {
+  position: static !important; inset: auto !important; transform: none !important;
+  grid-column: 3; grid-row: 1; width: 104px; max-width: 100%; gap: 6px;
+  justify-content: flex-start; white-space: normal;
+}
+html body #app-screen#app-screen#app-screen .class-top3-card .rank-crest { width: 28px; height: 40px; flex-basis: 28px; }
+html body #app-screen#app-screen#app-screen .class-top3-card .rank-crest svg { width: 22px; height: 20px; }
+html body #app-screen#app-screen#app-screen .class-top3-card .rank-crest b { font-size: 12px; }
+html body #app-screen#app-screen#app-screen .class-top3-card .rank-title { min-width: 0; gap: 4px; }
+html body #app-screen#app-screen#app-screen .class-top3-card .rank-title small { font-size: 9px; }
+html body #app-screen#app-screen#app-screen .class-top3-card .rank-title strong { font-size: 11px; overflow-wrap: anywhere; }
+html body #app-screen#app-screen#app-screen .class-top3-card:not(.global-rank-card) .class-top3-medal { grid-column: 3; grid-row: 1; justify-self: center; }
 @media (prefers-reduced-motion: reduce) { html body .global-rank-card::after { animation: none !important; } }
 
 html body #classmate-profile-modal .global-profile-card.global-rank-card { border-radius: 16px 16px 0 0 !important; }
