@@ -1,10 +1,23 @@
+/* Student dashboard — "Bubbly Pastel" kid-friendly theme
+   Palette: cream #FFF6E5, sunshine #FFD23F, coral #FF6B6B, teal #4ECDC4
+   Type: Fredoka (headings) / Figtree (body) */
 :root {
   --student-landscape: url('/__l5e/assets-v1/11d538ad-dd06-42ea-8131-ce7d76bbbc3d/app-bg.jpg');
-  --student-veil: linear-gradient(180deg, color-mix(in srgb, var(--shop-deep) 25%, transparent), color-mix(in srgb, var(--shop-deep) 65%, transparent));
+  --student-veil: linear-gradient(180deg, rgba(255, 246, 229, .42), rgba(255, 246, 229, .78));
+  --kid-cream: #FFF6E5;
+  --kid-yellow: #FFD23F;
+  --kid-yellow-dark: #D9A400;
+  --kid-coral: #FF6B6B;
+  --kid-teal: #4ECDC4;
+  --kid-sky-50: #F0F9FF;
+  --kid-sky-100: #E0F2FE;
+  --kid-sky-300: #7DD3FC;
+  --kid-ink: #0C4A6E;
+  --kid-slate: #475569;
 }
 html body:has(#student-dashboard:not(.hidden)) {
   background: var(--student-veil), var(--student-landscape) center / cover fixed no-repeat !important;
-  color: var(--shop-ink);
+  color: var(--kid-ink);
 }
 html body:has(#student-dashboard:not(.hidden)) #app-screen {
   min-height: 0 !important; height: auto !important; background: transparent !important;
@@ -17,80 +30,185 @@ html body:has(#student-dashboard:not(.hidden)) #app-screen header .canva-image[d
 html body #student-dashboard:not(.hidden) {
   display: block !important; min-height: calc(100vh - 96px) !important;
   height: auto !important; background: transparent !important; padding-bottom: 32px !important;
-  font-family: Figtree, sans-serif; color: var(--shop-ink);
+  font-family: Figtree, sans-serif; color: var(--kid-ink);
 }
+html body #student-dashboard :is(h1, h2, h3, .heading-font) { font-family: Fredoka, Figtree, sans-serif !important; }
+
+/* ---- Profile hero card ---- */
 html body #student-dashboard > .max-w-5xl > .flex.gap-6 { gap: 20px !important; }
 html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass {
-  display: grid !important; grid-template-columns: 104px minmax(0, 1fr) auto !important;
-  grid-template-rows: auto auto auto !important; gap: 8px 20px !important;
-  padding: 20px !important; border-radius: 8px !important;
-  background: color-mix(in srgb, var(--shop-surface) 94%, transparent) !important;
-  border: 1px solid var(--shop-border) !important; box-shadow: none !important;
+  display: grid !important; grid-template-columns: 120px minmax(0, 1fr) auto !important;
+  grid-template-rows: auto auto auto !important; gap: 10px 22px !important;
+  padding: 26px !important; border-radius: 2.75rem !important;
+  background: #ffffff !important;
+  border: 4px solid var(--kid-sky-100) !important;
+  box-shadow: 0 18px 40px rgba(125, 211, 252, .35) !important;
 }
+html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass::before { display: none !important; }
 html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .mb-4.relative {
   grid-column: 1 !important; grid-row: 1 / 3 !important; justify-self: center !important;
-  width: 104px; min-width: 0; align-self: center; margin: 0 !important;
+  width: 120px; min-width: 0; align-self: center; margin: 0 !important;
 }
 html body #student-dashboard :is(#my-avatar-pokemon, #my-avatar-placeholder) {
-  width: 104px !important; height: 104px !important; background: transparent !important;
+  width: 120px !important; height: 120px !important;
+  background: var(--kid-sky-50) !important;
+  border: 4px solid #ffffff !important; border-radius: 9999px !important;
+  box-shadow: inset 0 2px 8px rgba(12, 74, 110, .12), 0 6px 14px rgba(125, 211, 252, .35) !important;
 }
 html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > h2 {
   grid-column: 2 !important; grid-row: 1 !important; justify-self: start !important;
   text-align: left !important; min-width: 0; overflow-wrap: anywhere;
-  font: 700 24px Outfit, sans-serif !important; margin: 0 !important; align-self: end;
+  font: 700 30px Fredoka, Figtree, sans-serif !important; color: var(--kid-ink) !important;
+  margin: 0 !important; align-self: end; text-shadow: none !important;
 }
 html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #top3-badge {
   grid-column: 2 !important; grid-row: 2 !important; justify-self: start !important;
   justify-content: flex-start !important; margin: 0 !important;
 }
 html body #student-dashboard :is(#rank-badge, #quiz-solver-badge) {
-  width: auto !important; min-height: 26px !important; height: auto !important;
-  padding: 5px 10px !important; border-radius: 4px !important; font-size: 11px !important;
+  width: auto !important; min-height: 28px !important; height: auto !important;
+  padding: 6px 14px !important; border-radius: 9999px !important; font-size: 12px !important;
+  font-weight: 800 !important; letter-spacing: .04em; text-transform: uppercase;
+  background: var(--kid-yellow) !important; color: #713F12 !important;
+  border: 2px solid #FDE68A !important; box-shadow: 0 3px 0 var(--kid-yellow-dark) !important;
+  text-shadow: none !important;
 }
-html body #student-dashboard #rank-badge > span { font-size: 11px !important; }
+html body #student-dashboard #quiz-solver-badge {
+  background: #FB923C !important; color: #ffffff !important;
+  border-color: #FDBA74 !important; box-shadow: 0 3px 0 #C2410C !important;
+}
+html body #student-dashboard #rank-badge > span { font-size: 12px !important; }
+
+/* ---- Logout ---- */
 html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #student-logout-btn {
   grid-column: 3 !important; grid-row: 1 !important; align-self: start;
-  background: var(--shop-deep) !important; color: var(--shop-ink) !important;
-  border: 1px solid var(--shop-border) !important; box-shadow: none !important;
-  transform: none !important; min-height: 36px;
+  background: var(--kid-coral) !important; color: #ffffff !important;
+  border: none !important; border-radius: 1.1rem !important;
+  box-shadow: 0 4px 0 #D64545, 0 8px 16px rgba(255, 107, 107, .35) !important;
+  transform: none !important; min-height: 40px; padding: 8px 22px !important;
+  font-weight: 800 !important;
 }
-html body #student-dashboard #student-logout-btn:hover { background: var(--shop-red) !important; }
+html body #student-dashboard #student-logout-btn:hover { background: #FF5252 !important; transform: translateY(-1px) !important; }
+html body #student-dashboard #student-logout-btn:active { transform: translateY(2px) !important; box-shadow: 0 1px 0 #D64545 !important; }
+
+/* ---- Stat tiles ---- */
 html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 {
-  grid-column: 1 / -1 !important; grid-row: 3 !important; gap: 0 !important;
-  padding-top: 14px; margin-top: 8px !important; border-top: 1px solid var(--shop-border);
+  grid-column: 1 / -1 !important; grid-row: 3 !important; gap: 12px !important;
+  padding-top: 18px; margin-top: 10px !important; border-top: 2px dashed var(--kid-sky-100) !important;
 }
 html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 > div {
-  background: transparent !important; border: 0 !important; border-radius: 0 !important;
+  border: 2px solid transparent !important; border-radius: 1.5rem !important;
   box-shadow: none !important; transform: none !important; min-width: 0;
+  padding: 12px 8px !important;
 }
-html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 > div + div { border-left: 1px solid var(--shop-border) !important; }
-html body #student-navigation-groups { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px !important; }
+html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 > div + div { border-left: 0 !important; }
+html body #student-dashboard .grid.grid-cols-2 > #coins-stat-card { background: #FEF9C3 !important; border-color: #FDE68A !important; }
+html body #student-dashboard .grid.grid-cols-2 > #pokemon-stat-card { background: var(--kid-sky-50) !important; border-color: var(--kid-sky-100) !important; }
+html body #student-dashboard .grid.grid-cols-2 > div:nth-child(3) { background: #FAF5FF !important; border-color: #E9D5FF !important; }
+html body #student-dashboard .grid.grid-cols-2 > div:nth-child(4) { background: #ECFDF5 !important; border-color: #A7F3D0 !important; }
+html body #student-dashboard .grid.grid-cols-2 > div > p:first-child { font-size: 26px !important; font-family: Fredoka, Figtree, sans-serif !important; }
+html body #student-dashboard #my-coins { color: #CA8A04 !important; }
+html body #student-dashboard #my-pokemon-count { color: #0284C7 !important; }
+html body #student-dashboard #my-total-power { color: #9333EA !important; }
+html body #student-dashboard #my-total-value { color: #059669 !important; }
+html body #student-dashboard .grid.grid-cols-2 > div > p:last-child {
+  color: var(--kid-slate) !important; font-weight: 700 !important;
+  text-transform: uppercase; letter-spacing: .08em; font-size: 11px !important;
+}
+
+/* ---- Navigation pills ---- */
+html body #student-navigation-groups { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 12px !important; }
 html body #student-navigation-groups .student-nav-group { min-width: 0; }
 html body #student-navigation-groups .student-nav-group-button {
-  width: 100% !important; min-width: 0 !important; border-radius: 6px !important;
-  background: var(--shop-surface) !important; color: var(--shop-ink) !important;
-  border: 1px solid var(--shop-border) !important; box-shadow: none !important;
-  font-size: 14px !important;
+  width: 100% !important; min-width: 0 !important; border-radius: 1.75rem !important;
+  background: #ffffff !important; color: #94A3B8 !important;
+  border: none !important; border-bottom: 6px solid #E2E8F0 !important;
+  box-shadow: 0 8px 18px rgba(125, 211, 252, .22) !important;
+  font: 700 17px Fredoka, Figtree, sans-serif !important; padding: 14px 10px !important;
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease !important;
 }
+html body #student-navigation-groups .student-nav-group-button:hover { transform: translateY(-2px) !important; color: var(--kid-ink) !important; }
 html body #student-navigation-groups .student-nav-group-button.student-dashboard-tab-active {
-  background: var(--mythic-gold-frame) !important; color: var(--shop-deep) !important;
+  background: var(--kid-yellow) !important; color: #422006 !important;
+  border-bottom-color: var(--kid-yellow-dark) !important;
+  box-shadow: 0 10px 22px rgba(255, 210, 63, .45) !important;
 }
+html body #student-navigation-groups .student-nav-group-button:active { transform: translateY(2px) !important; border-bottom-width: 2px !important; }
 html body #student-navigation-groups .student-nav-menu {
-  background: var(--shop-surface) !important; border: 1px solid var(--shop-border) !important;
-  min-width: 100% !important; border-radius: 6px !important;
+  background: #ffffff !important; border: 3px solid var(--kid-sky-100) !important;
+  min-width: 100% !important; border-radius: 1.25rem !important;
+  box-shadow: 0 14px 30px rgba(12, 74, 110, .18) !important; padding: 6px !important;
 }
-html body #student-navigation-groups .student-nav-menu-item { color: var(--shop-ink) !important; background: transparent !important; box-shadow: none !important; }
-html body #student-navigation-groups .student-nav-menu-item:hover { background: var(--shop-deep) !important; }
-html body #student-navigation-groups .student-nav-menu-item.student-dashboard-tab-active { color: var(--shop-yellow) !important; }
+html body #student-navigation-groups .student-nav-menu-item {
+  color: var(--kid-slate) !important; background: transparent !important; box-shadow: none !important;
+  border-radius: .9rem !important; font-weight: 700 !important;
+}
+html body #student-navigation-groups .student-nav-menu-item:hover { background: var(--kid-sky-50) !important; color: var(--kid-ink) !important; }
+html body #student-navigation-groups .student-nav-menu-item.student-dashboard-tab-active { color: #0284C7 !important; background: var(--kid-sky-50) !important; }
+
+/* ---- Content panels ---- */
 html body #student-dashboard .student-dashboard-content { max-height: none !important; overflow: visible !important; }
+html body #student-dashboard .glass-container {
+  background: #ffffff !important; border: 4px solid var(--kid-sky-100) !important;
+  border-radius: 2rem !important; box-shadow: 0 14px 30px rgba(125, 211, 252, .25) !important;
+}
+html body #student-dashboard .glass-container h3 { color: var(--kid-ink) !important; }
+html body #student-dashboard .glass-container p { color: var(--kid-slate) !important; }
+html body #student-dashboard .glass-container p.text-amber-200 { color: #D97706 !important; }
+
+/* ---- Collection cards: white chunky cards with pastel rarity frames ---- */
+html body #student-dashboard #my-pokemon-list > div {
+  background: #ffffff !important; border: 3px solid var(--kid-sky-100) !important;
+  border-radius: 1.75rem !important;
+  box-shadow: 0 10px 22px rgba(12, 74, 110, .12) !important;
+  color: #1E293B !important;
+  transition: transform .18s ease, box-shadow .18s ease !important;
+}
+html body #student-dashboard #my-pokemon-list > div:hover {
+  transform: translateY(-5px) scale(1.02) !important;
+  box-shadow: 0 18px 34px rgba(12, 74, 110, .2) !important;
+  filter: none !important;
+}
+html body #student-dashboard #my-pokemon-list > div.pokemon-card-common { border-color: var(--kid-sky-100) !important; background: linear-gradient(165deg, #ffffff, var(--kid-sky-50)) !important; }
+html body #student-dashboard #my-pokemon-list > div.pokemon-card-uncommon { border-color: #C4B5FD !important; background: linear-gradient(165deg, #ffffff, #F5F3FF) !important; box-shadow: 0 10px 22px rgba(139, 92, 246, .18) !important; }
+html body #student-dashboard #my-pokemon-list > div.pokemon-card-rare { border-color: #93C5FD !important; background: linear-gradient(165deg, #ffffff, #EFF6FF) !important; box-shadow: 0 10px 24px rgba(59, 130, 246, .22), 0 0 14px rgba(147, 197, 253, .4) !important; }
+html body #student-dashboard #my-pokemon-list > div.pokemon-card-legendary {
+  border: 3px solid var(--kid-yellow) !important;
+  background: linear-gradient(165deg, #ffffff, #FFFBEB) !important; color: #713F12 !important;
+  box-shadow: 0 12px 26px rgba(217, 164, 0, .28), 0 0 20px rgba(255, 210, 63, .45) !important;
+}
+html body #student-dashboard #my-pokemon-list > div p { color: #1E293B !important; text-shadow: none !important; }
+html body #student-dashboard #my-pokemon-list > div p.text-purple-600 { color: #9333EA !important; }
+html body #student-dashboard #my-pokemon-list > div p.text-green-600 { color: #059669 !important; }
+html body #student-dashboard #my-pokemon-list > div :is(.text-gray-400, .text-gray-500, .text-slate-400) { color: #94A3B8 !important; }
+html body #student-dashboard #my-pokemon-list > div img { filter: drop-shadow(0 6px 10px rgba(12, 74, 110, .18)); }
+
+/* ---- Quiz / class list cards inside student tabs ---- */
+html body #student-dashboard #quiz-list > * {
+  background: #ffffff !important; border: 3px solid var(--kid-sky-100) !important;
+  border-radius: 1.5rem !important; box-shadow: 0 8px 18px rgba(125, 211, 252, .22) !important;
+  color: var(--kid-ink) !important;
+}
+html body #student-dashboard #student-classes-grid > * {
+  border-radius: 1.5rem !important;
+}
+html body #student-dashboard :is(#my-pokemon-empty, #my-shop-empty, #quiz-empty, #student-classes-empty, #student-vocabulary-empty) { color: #64748B !important; font-weight: 600; }
+
+/* ---- Shop panel on student side stays light ---- */
+html body #student-dashboard #my-shop-container {
+  border: 4px solid var(--kid-sky-100) !important; border-radius: 2rem !important;
+  background: #ffffff !important;
+}
+
 @media (max-width: 520px) {
   html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass {
-    grid-template-columns: 64px minmax(0, 1fr) auto !important; gap: 8px 10px !important; padding: 14px !important;
+    grid-template-columns: 72px minmax(0, 1fr) auto !important; gap: 8px 12px !important; padding: 16px !important;
+    border-radius: 2rem !important;
   }
   html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .mb-4.relative,
-  html body #student-dashboard :is(#my-avatar-pokemon, #my-avatar-placeholder) { width: 64px !important; height: 64px !important; }
-  html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > h2 { font-size: 20px !important; }
+  html body #student-dashboard :is(#my-avatar-pokemon, #my-avatar-placeholder) { width: 72px !important; height: 72px !important; }
+  html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > h2 { font-size: 22px !important; }
   html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #top3-badge { grid-column: 1 / -1 !important; grid-row: 3 !important; }
   html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 { grid-row: 4 !important; }
-  html body #student-navigation-groups .student-nav-group-button { padding: 10px 6px !important; font-size: 12px !important; }
+  html body #student-navigation-groups .student-nav-group-button { padding: 12px 6px !important; font-size: 14px !important; }
 }
