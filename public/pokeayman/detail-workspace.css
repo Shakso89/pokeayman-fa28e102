@@ -1,0 +1,64 @@
+:root {
+  --detail-shadow: 0 24px 70px color-mix(in srgb, var(--mythic-footer) 75%, transparent);
+  --detail-silver-frame: linear-gradient(140deg, var(--shop-ink), var(--mythic-silver) 18%, var(--shop-rare-edge) 33%, var(--shop-ink) 48%, var(--mythic-silver) 68%, var(--shop-rare-edge) 82%, var(--shop-ink));
+  --detail-art-shadow: drop-shadow(0 14px 12px color-mix(in srgb, var(--mythic-footer) 55%, transparent));
+}
+html body #pokemon-modal#pokemon-modal { background: color-mix(in srgb, var(--mythic-footer) 78%, transparent) !important; backdrop-filter: blur(8px); padding: 18px !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card {
+  --detail-frame: var(--shop-border); --detail-accent: var(--mythic-silver);
+  position: relative; isolation: isolate; width: min(100%, 430px) !important; max-width: 430px !important;
+  max-height: calc(100dvh - 36px) !important; overflow: auto !important;
+  background: linear-gradient(var(--shop-deep), var(--shop-deep)) padding-box, var(--detail-frame) border-box !important;
+  border: 4px solid transparent !important; border-radius: 20px !important; padding: 3px !important;
+  color: var(--shop-ink) !important; box-shadow: var(--detail-shadow) !important; font-family: Figtree, sans-serif;
+  animation: detail-arrive .3s ease-out;
+}
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-uncommon { --detail-frame: var(--shop-rare-border); --detail-accent: var(--shop-rare); }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-rare { --detail-frame: var(--detail-silver-frame); --detail-accent: var(--shop-rare); border-width: 6px !important; box-shadow: var(--detail-shadow), var(--mythic-rare-shadow) !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary { --detail-frame: var(--mythic-gold-frame); --detail-accent: var(--mythic-gold-light); border-width: 7px !important; box-shadow: var(--detail-shadow), var(--mythic-legendary-shadow) !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card::before,
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card::after { content: none !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card #modal-header { display: flex !important; flex-direction: row !important; justify-content: space-between !important; position: relative !important; padding: 17px 17px 13px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; gap: 12px; align-items: flex-start !important; }
+html body #pokemon-modal#pokemon-modal #modal-header > :first-child { min-width: 0; flex: 1; }
+html body #pokemon-modal#pokemon-modal #modal-pokemon-name { font: 800 30px/1.1 Outfit, sans-serif !important; letter-spacing: 0 !important; color: var(--shop-ink) !important; overflow-wrap: anywhere; }
+html body #pokemon-modal#pokemon-modal .modal-rarity-caption { font: 600 10px Figtree, sans-serif !important; letter-spacing: 0 !important; color: var(--shop-muted) !important; margin-top: 5px; }
+html body #pokemon-modal#pokemon-modal #modal-close { flex: 0 0 36px; width: 36px !important; height: 36px !important; border-radius: 8px !important; background: var(--shop-surface) !important; color: var(--shop-ink) !important; border: 1px solid var(--shop-border) !important; box-shadow: none !important; }
+html body #pokemon-modal#pokemon-modal #modal-close:hover { background: var(--shop-red) !important; }
+html body #pokemon-modal#pokemon-modal #modal-classification-row { display: flex !important; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+html body #pokemon-modal#pokemon-modal #modal-classification-row > * { font: 700 11px Figtree, sans-serif !important; border-radius: 5px !important; padding: 4px 9px !important; }
+html body #pokemon-modal#pokemon-modal #modal-classification-row .pokemon-classification-badge:first-child { background: var(--shop-surface) !important; color: var(--detail-accent) !important; border: 1px solid var(--detail-accent) !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card .modal-card-body { padding: 0 17px 17px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; display: flex; flex-direction: column; gap: 13px; }
+html body #pokemon-modal#pokemon-modal .modal-card-body > * { margin: 0 !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card #modal-img-container {
+  position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center;
+  height: 250px !important; min-height: 0 !important; padding: 10px !important; overflow: hidden; border-radius: 8px !important;
+  background: var(--detail-stage, var(--shop-surface)) !important; border: 1px solid var(--shop-border) !important; box-shadow: none !important;
+}
+html body #pokemon-modal#pokemon-modal #modal-img-container::before { content: none !important; }
+html body #pokemon-modal#pokemon-modal #modal-img-container::after { content: '' !important; position: absolute; inset: 0 !important; background: var(--mythic-foil) !important; opacity: .55 !important; transform: translateX(-110%); pointer-events: none; animation: detail-foil 1.4s .2s ease-out both !important; }
+html body #pokemon-modal#pokemon-modal #modal-pokemon-img { width: 230px !important; height: 230px !important; max-width: 100%; object-fit: contain; filter: var(--detail-art-shadow) !important; animation: detail-float 5s ease-in-out infinite !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card #modal-facts-panel { background: transparent !important; border: 0 !important; border-left: 2px solid var(--detail-accent) !important; padding: 1px 0 1px 11px !important; border-radius: 0 !important; box-shadow: none !important; }
+html body #pokemon-modal#pokemon-modal .modal-facts-kicker { color: var(--detail-accent) !important; font: 700 9px Figtree, sans-serif !important; letter-spacing: 0 !important; }
+html body #pokemon-modal#pokemon-modal .modal-facts-category { display: none !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card .modal-facts-summary { color: var(--shop-muted) !important; font: 400 12px/1.5 Figtree, sans-serif !important; margin-top: 4px; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card #modal-pokemon-status { padding: 8px !important; background: var(--shop-surface) !important; border: 1px solid var(--shop-border) !important; color: var(--shop-muted) !important; box-shadow: none !important; font-size: 12px; }
+html body #pokemon-modal#pokemon-modal .detail-stats { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 0 !important; background: var(--shop-surface); border: 1px solid var(--shop-border); border-radius: 8px; padding: 12px 0; }
+html body #pokemon-modal#pokemon-modal #modal-type-card { display: none !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card .detail-stats > div { padding: 0 6px !important; min-width: 0 !important; min-height: 0 !important; height: auto !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: transparent !important; color: var(--shop-ink) !important; }
+html body #pokemon-modal#pokemon-modal .detail-stats > div:not(:last-child):not(#modal-type-card) { border-right: 1px solid var(--shop-border) !important; }
+html body #pokemon-modal#pokemon-modal .detail-stats p:first-child { font: 600 10px Figtree, sans-serif !important; letter-spacing: 0 !important; color: var(--shop-muted) !important; }
+html body #pokemon-modal#pokemon-modal .detail-stats p:last-of-type { font: 700 22px Outfit, sans-serif !important; color: var(--shop-ink) !important; margin-top: 4px; }
+html body #pokemon-modal#pokemon-modal .detail-stats p:last-of-type > span:first-child { display: none; }
+html body #pokemon-modal#pokemon-modal #modal-price-card p:last-of-type { color: var(--shop-yellow) !important; }
+html body #pokemon-modal#pokemon-modal .modal-hp-track { height: 3px !important; margin-top: 5px; background: var(--shop-border) !important; }
+html body #pokemon-modal#pokemon-modal #modal-hp-fill { background: var(--detail-accent) !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card #modal-pokemon-actions button { width: 100%; min-height: 46px; padding: 10px !important; border-radius: 8px !important; border: 1px solid var(--shop-yellow) !important; background: var(--shop-yellow) !important; color: var(--shop-deep) !important; font: 700 15px Figtree, sans-serif !important; box-shadow: none !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card #modal-pokemon-actions button:hover:not(:disabled) { background: var(--mythic-gold-light) !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card #modal-pokemon-actions button:disabled { background: var(--shop-surface) !important; border-color: var(--shop-border) !important; color: var(--shop-muted) !important; }
+html body #pokemon-modal#pokemon-modal button:focus-visible { outline: 2px solid var(--shop-yellow) !important; outline-offset: 3px; }
+@keyframes detail-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes detail-foil { to { transform: translateX(110%); } }
+@keyframes detail-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (max-height: 760px) { html body #pokemon-modal#pokemon-modal #modal-card#modal-card #modal-img-container { height: 195px !important; } html body #pokemon-modal#pokemon-modal #modal-pokemon-img { width: 180px !important; height: 180px !important; } }
+@media (max-width: 520px) { html body #pokemon-modal#pokemon-modal { padding: 12px !important; } html body #pokemon-modal#pokemon-modal #modal-card#modal-card { max-height: calc(100dvh - 24px) !important; } html body #pokemon-modal#pokemon-modal #modal-card#modal-card .modal-card-body { padding: 0 12px 12px !important; } }
+@media (prefers-reduced-motion: reduce) { html body #pokemon-modal#pokemon-modal #modal-card#modal-card, html body #pokemon-modal#pokemon-modal #modal-pokemon-img, html body #pokemon-modal#pokemon-modal #modal-img-container::after { animation: none !important; } }

@@ -18,6 +18,6 @@
 - [x] Verify real student sign-in, collection details, study, games and logout; check desktop and narrow layouts with no card clipping.
 
 # Collection correction and Pokémon details
-- [ ] Fix the missed teacher-facing collection so every collection matches the shop.
-- [ ] Redesign detailed cards by tier with type backgrounds and remove sound controls.
-- [ ] Verify actual collection navigation and detail cards at full and narrow widths.
+- [x] Fix the missed teacher-facing collection so every collection matches the shop.
+- [x] Apply selected option 1 silver detailed cards by tier with type backgrounds and remove sound controls.
+- [x] Verify actual student collection and shop navigation, classmate collection, and detail cards at full and narrow widths; teacher profile renderer checked without authenticated teacher access.

@@ -69,7 +69,7 @@ html body :is(#my-shop-grid#my-shop-grid#my-shop-grid, #profile-shop-grid#profil
   display: grid !important; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)) !important; gap: 18px !important;
 }
 html body :is(#my-shop-grid#my-shop-grid#my-shop-grid, #profile-shop-grid#profile-shop-grid#profile-shop-grid, #my-pokemon-list#my-pokemon-list#my-pokemon-list, #profile-pokemon-list#profile-pokemon-list#profile-pokemon-list, #collection-grid#collection-grid#collection-grid, #classmate-pokemon-grid#classmate-pokemon-grid#classmate-pokemon-grid) > .shop-pokemon-card {
-  position: relative; isolation: isolate; min-width: 0; padding: 14px 14px 0 !important;
+  position: relative; isolation: isolate; width: 100% !important; max-width: 100% !important; min-width: 0 !important; box-sizing: border-box; padding: 14px 14px 0 !important;
   color: var(--shop-ink) !important;
   border: 1px solid var(--shop-border) !important; border-radius: 20px !important;
   text-align: center; cursor: pointer; box-shadow: none !important;

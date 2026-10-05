@@ -16,3 +16,4 @@
 - Shop and collection presentation share `public/pokeayman/shop-workspace.css` and one card renderer, with collection-specific HP and existing actions. Why: keeps elemental backgrounds and rarity frames consistent without changing ownership rules.
 - Student dashboard layout fixes are scoped in `public/pokeayman/student-workspace.css`. Why: isolates student layout and background fixes from legacy teacher styles.
 - Shop species names and types load from a bundled official PokéAPI snapshot before rendering. Why: avoids hundreds of live requests and prevents temporarily mismatched artwork and badges.
+- Pokémon details use scoped detail-workspace.css with the shared elemental palette and tier classes; guard asynchronous type updates by selected species. Why: isolates legacy styling and prevents stale species backgrounds.
