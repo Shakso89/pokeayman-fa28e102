@@ -104,7 +104,7 @@ html body #app-screen#app-screen#app-screen .class-top3-card {
   align-items: center; gap: 10px; min-height: 92px; padding: 14px !important;
   text-align: left; box-sizing: border-box;
 }
-html body #app-screen#app-screen#app-screen .class-top3-card.global-rank-card.global-rank-card { border-radius: 16px !important; }
+html body #app-screen#app-screen#app-screen .class-top3-card.global-rank-card.global-rank-card { padding: 14px !important; border-radius: 16px !important; }
 html body #app-screen#app-screen#app-screen .class-top3-card.global-rank-card::before { inset: 6px !important; border-radius: 10px !important; }
 html body #app-screen#app-screen#app-screen .class-top3-card .class-top3-avatar { grid-column: 1; grid-row: 1; width: 48px; height: 48px; margin: 0; }
 html body #app-screen#app-screen#app-screen .class-top3-card > div { grid-column: 2; grid-row: 1; min-width: 0; }
