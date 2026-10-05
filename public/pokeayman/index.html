@@ -8684,7 +8684,7 @@ function renderStudentDashboard() {
   else {
     pokemonEmpty.classList.add('hidden');
     const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary', unknown: 'pokemon-card-unknown' };
-    pokemonContainer.innerHTML = myPokes.map(p => renderCollectionPokemonCard(p, currentStudent)).join('');
+    pokemonContainer.innerHTML = myPokes.map(p => renderCollectionPokemonCard(p, currentStudent).replace(/style="background:[^"]*?;"/, '')).join('');
   }
   renderStudentShop();
 }
