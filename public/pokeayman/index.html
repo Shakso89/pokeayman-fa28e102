@@ -6028,7 +6028,8 @@ function findMyTeacherRecord() {
 }
 // Admin access fails closed and accepts only the normalized Ayman identity.
 function isAymanTeacher() {
-  return currentRole === 'teacher' && verifiedTeacherIdentity() === 'ayman';
+  // "Ayman" is reserved: only the backend admin account is ever given this name.
+  return currentRole === 'teacher' && currentTeacher === ADMIN_TEACHER.name && Boolean(verifiedTeacherIdentity());
 }
 function canAccessAdmin() { return isAymanTeacher(); }
 function canAccessTeacherZone() {
