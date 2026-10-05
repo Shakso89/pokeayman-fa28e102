@@ -3901,6 +3901,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Figtree:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="/pokeayman/class-workspace.css">
 <link rel="stylesheet" href="/pokeayman/shop-workspace.css">
+<script src="/pokeayman/shop-catalog.js"></script>
 </head>
  <body data-template-id="__page-root" class="min-h-screen">
   <style>
@@ -10206,6 +10207,17 @@ let pokemonCatalogHydrated = false;
 async function hydrateCanonicalPokemonCatalog() {
   if (pokemonCatalogHydrated || !pokemonCatalog.length) return;
   pokemonCatalogHydrated = true;
+  if (window.pokeaymanShopSpecies) {
+    pokemonCatalog.forEach(item => {
+      const species = window.pokeaymanShopSpecies[item.id];
+      if (!species) return;
+      item.name = species.name;
+      item.types = species.types;
+      item.pokemon_types = species.types;
+    });
+    renderAll();
+    return;
+  }
   // PokeAPI is the authoritative source for names and primary/secondary types.
   const queue = pokemonCatalog.slice();
   const worker = async () => {

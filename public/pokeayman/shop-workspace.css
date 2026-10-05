@@ -25,7 +25,7 @@ html body .shop-search-field svg {
   position: absolute; left: 13px; top: 13px; width: 18px; height: 18px;
   color: var(--shop-muted); pointer-events: none;
 }
-html body .shop-toolbar :is(input, select) {
+html body :is(#profile-tab-shop, #student-tab-shop) .shop-toolbar :is(input, select) {
   width: 100% !important; min-width: 0; height: 44px !important;
   background: var(--shop-surface) !important; color: var(--shop-ink) !important;
   border: 1px solid var(--shop-border) !important; border-radius: 8px !important;
@@ -111,5 +111,10 @@ html body .shop-pokemon-card.is-owned .shop-card-art { opacity: .55; }
   html body .shop-rarity-segments button { font-size: 10px !important; }
   html body :is(#my-shop-grid, #profile-shop-grid) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; }
   html body :is(#my-shop-grid, #profile-shop-grid) > .shop-pokemon-card { padding: 10px !important; }
+}
+@media (max-width: 760px) {
+  html body #view-student-profile > .flex { flex-direction: column !important; gap: 16px !important; }
+  html body #view-student-profile > .flex > .stat-card-glass { width: 100% !important; }
+  html body #view-student-profile > .flex > .flex-1 { width: 100% !important; min-width: 0 !important; }
 }
 @media (prefers-reduced-motion: reduce) { html body .shop-pokemon-card { transition: none !important; } }
