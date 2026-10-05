@@ -226,3 +226,34 @@ html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list 
 }
 html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-power { color: #64748B !important; }
 html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .collection-health span { color: #475569 !important; }
+
+/* ---- Active nav pill must stay sunny yellow (beat legacy navy rule) ---- */
+html body #student-dashboard#student-dashboard #student-navigation-groups#student-navigation-groups .student-nav-group-button.student-dashboard-tab-active {
+  background: var(--kid-yellow) !important; color: #422006 !important;
+  border-bottom: 6px solid var(--kid-yellow-dark) !important;
+  box-shadow: 0 10px 22px rgba(255, 210, 63, .45) !important;
+}
+
+/* ---- Vocabulary / games / class-picker cards inside student tabs ---- */
+html body #student-dashboard#student-dashboard :is(.vocab-list-card, .game-player-card, #student-games-list-selector > *, #student-vocabulary-lists > *, #student-games-options-container > *) {
+  background: #ffffff !important; border: 3px solid var(--kid-sky-100) !important;
+  border-radius: 1.5rem !important; box-shadow: 0 8px 18px rgba(125, 211, 252, .22) !important;
+  color: var(--kid-ink) !important;
+}
+html body #student-dashboard#student-dashboard :is(.vocab-list-card, .game-player-card, #student-games-list-selector > *, #student-vocabulary-lists > *) :is(h3, h4, p, span) { color: inherit !important; }
+html body #student-dashboard#student-dashboard :is(.vocab-list-card, .game-player-card) :is(.text-gray-400, .text-gray-500, .text-slate-400) { color: #94A3B8 !important; }
+
+/* ---- Class filter pills (All classes / ESI · Stanford) ---- */
+html body #student-dashboard#student-dashboard :is(#student-tab-vocabulary, #student-tab-quizzes, #student-tab-games) button {
+  border-radius: 9999px !important;
+}
+html body #student-dashboard#student-dashboard :is(#student-tab-vocabulary, #student-tab-quizzes, #student-tab-games) :is(.btn-outline, .student-class-filter, [data-class-filter]) {
+  background: #ffffff !important; color: var(--kid-slate) !important;
+  border: 2px solid var(--kid-sky-100) !important; box-shadow: 0 3px 0 #E2E8F0 !important;
+  font-weight: 700 !important;
+}
+html body #student-dashboard#student-dashboard :is(#student-tab-vocabulary, #student-tab-quizzes, #student-tab-games) :is(.btn-primary, .student-class-filter.active, [data-class-filter].active) {
+  background: var(--kid-yellow) !important; color: #422006 !important;
+  border: 2px solid #FDE68A !important; box-shadow: 0 3px 0 var(--kid-yellow-dark) !important;
+  text-shadow: none !important;
+}
