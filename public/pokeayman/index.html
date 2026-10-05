@@ -12859,12 +12859,25 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
       });
     };
     updateTeamScores();
+    // Floating animated +/- points over each affected player card.
+    const cards = modal.querySelectorAll('.game-player-card');
+    impacts.forEach((impact, i) => {
+      if (!impact && !(power === 'Trap' && i === current)) return;
+      const card = cards[i]; if (!card) return;
+      const float = document.createElement('span');
+      float.className = `baam-float ${impact > 0 ? 'is-plus' : impact < 0 ? 'is-minus' : 'is-zero'}`;
+      float.textContent = impact > 0 ? `+${impact}` : impact < 0 ? `−${Math.abs(impact)}` : '0';
+      card.appendChild(float);
+      card.classList.remove('baam-card-hit-plus', 'baam-card-hit-minus'); void card.offsetWidth;
+      if (impact) card.classList.add(impact > 0 ? 'baam-card-hit-plus' : 'baam-card-hit-minus');
+      setTimeout(() => float.remove(), 1900);
+    });
+    if (power === 'Bomb') { modal.querySelector('.surprise-boxes-game')?.classList.remove('baam-shake'); void modal.offsetWidth; modal.querySelector('.surprise-boxes-game')?.classList.add('baam-shake'); }
     advanceGameTurn();
     updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
-    if (power === 'Trap') return '🪤 Trap! No question and no points.';
-    const affectsBoth = power === 'Thief' || power === 'Shark' || power === 'Magnet' || power === 'Virus' || power === 'Seesaw';
-    const changedPlayers = impacts.map((impact, index) => `${baamPlayers[index]?.student_name || `Player ${index + 1}`}: ${impact >= 0 ? '+' : ''}${impact}`).filter((_, index) => affectsBoth || impacts[index] !== 0);
-    return changedPlayers.join('<br>') || 'No score change';
+    if (power === 'Trap') return 'Trapped! No points this turn.';
+    const changedPlayers = impacts.map((impact, index) => impact ? `${baamPlayers[index]?.student_name || `Player ${index + 1}`} ${impact > 0 ? '+' : '−'}${Math.abs(impact)}` : '').filter(Boolean);
+    return changedPlayers.join(' · ') || 'No score change';
   };
   const endBaamboozle = async () => {
     if (roundEnded || chosenCards.size < deck.length) return;
@@ -12918,7 +12931,14 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
     revealPanel.classList.remove('hidden'); word.classList.add('hidden'); status.textContent = '';
     revealPanel.classList.remove('baam-powerup-reveal');
     if (w.powerUp) {
-      picture.innerHTML = `<div class="baam-powerup-icon" aria-label="${w.powerUp} power-up">${({Star:'⭐',Rocket:'🚀',Gold:'🪙',Gift:'🎁',Fairy:'🧚',Thief:'🦹',Magnet:'🧲',Shark:'🦈',Seesaw:'⚖️',Heart:'❤️',Banana:'🍌',Boom:'💥',Baam:'💫',Trap:'🪤',Crocodile:'🐊',Eraser:'🧽',Virus:'🦠',Lifesaver:'🛟',Ghost:'👻',Present:'🎁'})[w.powerUp] || '✨'}</div>`;
+      const info = BAAM_POWER_INFO[w.powerUp] || { name: w.powerUp, poke: 25, emoji: '✨', desc: '' };
+      const activePlayer = baamPlayers[activeGamePlayerIndex];
+      picture.innerHTML = `<div class="baam-power-stage" aria-label="${info.name} power-up">
+        <div class="baam-powerup-icon"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${info.poke}.png" alt="" class="baam-power-poke"><span class="baam-power-emoji">${info.emoji}</span></div>
+        <h3 class="baam-power-name">${info.name}</h3>
+        <p class="baam-power-desc">${info.desc}</p>
+        ${activePlayer ? `<div class="baam-power-player">${gameStudentAvatarMarkup(activePlayer, 'baam-power-avatar')}<span>${activePlayer.student_name}</span></div>` : ''}
+      </div>`;
       revealPanel.classList.add('baam-powerup-reveal', `baam-powerup-${w.powerUp.toLowerCase()}`);
       status.textContent = `✨ ${w.powerUp} activated!`;
       status.className = 'text-sm font-bold mt-2 min-h-5 text-purple-600';
