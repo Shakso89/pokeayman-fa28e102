@@ -6187,6 +6187,18 @@ function populateHomeStudents() {
   // No longer needed - students type their name directly
 }
 
+const TEACHER_AVATARS = [{"id": "cute-eevee-moonlight-pokemon", "name": "Cute Eevee Moonlight Pokemon", "url": "/__l5e/assets-v1/51c0a705-7cd7-4cdb-9462-f1b60993b108/cute-eevee-moonlight-pokemon.png"}, {"id": "pikachu-blue-scarf-cute-autumn", "name": "Pikachu Blue Scarf Cute Autumn", "url": "/__l5e/assets-v1/5227fb5f-c7e7-4eeb-8632-2cce18b5c639/pikachu-blue-scarf-cute-autumn.png"}, {"id": "pikachu-lying-with-pokeball", "name": "Pikachu Lying With Pokeball", "url": "/__l5e/assets-v1/eadc1d69-5b38-42ba-9454-4143c4b60d76/pikachu-lying-with-pokeball.png"}, {"id": "gengar-nike-sneaker-left", "name": "Gengar Nike Sneaker Left", "url": "/__l5e/assets-v1/1e3736c7-2c46-4eaf-a131-0a59d651249a/gengar-nike-sneaker-left.png"}, {"id": "pikachu-inside-pokeball", "name": "Pikachu Inside Pokeball", "url": "/__l5e/assets-v1/bbd957c2-1b3f-42f6-a62b-b76f7c68070c/pikachu-inside-pokeball.png"}, {"id": "marowak-pokemon", "name": "Marowak Pokemon", "url": "/__l5e/assets-v1/1e4fa4f1-5e80-4d72-bef3-00a1a32b69a9/marowak-pokemon.png"}, {"id": "gastly-tongue-out-pokemon", "name": "Gastly Tongue Out Pokemon", "url": "/__l5e/assets-v1/d644abe4-52cc-4c6e-a3c0-deeffb9495ef/gastly-tongue-out-pokemon.png"}, {"id": "gastly-pokemon-ghost", "name": "Gastly Pokemon Ghost", "url": "/__l5e/assets-v1/9486fc55-5b4e-40f3-b335-8c5ba4b6359c/gastly-pokemon-ghost.png"}, {"id": "vaporeon-bubbles-pokemon", "name": "Vaporeon Bubbles Pokemon", "url": "/__l5e/assets-v1/bcdc389f-2218-40fb-b750-18db84d3359f/vaporeon-bubbles-pokemon.png"}, {"id": "eevee-cute-pose", "name": "Eevee Cute Pose", "url": "/__l5e/assets-v1/b7adbde0-2139-40b9-a158-dac57a1d72a0/eevee-cute-pose.png"}, {"id": "charmander-happy-jump", "name": "Charmander Happy Jump", "url": "/__l5e/assets-v1/52e6df3a-a793-471c-ba63-01998dd9b372/charmander-happy-jump.png"}, {"id": "eevee-brown-fur-sweet-expression", "name": "Eevee Brown Fur Sweet Expression", "url": "/__l5e/assets-v1/ab215971-5467-4ff6-a099-c25f7e9135c0/eevee-brown-fur-sweet-expression.png"}, {"id": "pokemon-cute-eeveelutions-pals", "name": "Pokemon Cute Eeveelutions Pals", "url": "/__l5e/assets-v1/c815a074-bf60-4077-bb40-c04cc6643a91/pokemon-cute-eeveelutions-pals.png"}, {"id": "voltorb-pokemon", "name": "Voltorb Pokemon", "url": "/__l5e/assets-v1/e7767895-2b7b-4128-98cf-d62cacac6764/voltorb-pokemon.png"}, {"id": "blissey-pokemon-happy", "name": "Blissey Pokemon Happy", "url": "/__l5e/assets-v1/ae53106e-4cd6-4581-9db3-ca9fb5ca24e0/blissey-pokemon-happy.png"}, {"id": "cute-vaporeon-smile", "name": "Cute Vaporeon Smile", "url": "/__l5e/assets-v1/a561701b-6f4c-48c8-9836-d9cf00d7664a/cute-vaporeon-smile.png"}, {"id": "pokemon-friends-hug", "name": "Pokemon Friends Hug", "url": "/__l5e/assets-v1/40a529d0-a4cb-4c80-991c-a8fdea983320/pokemon-friends-hug.png"}, {"id": "aesthetic-eevee-pokemon", "name": "Aesthetic Eevee Pokemon", "url": "/__l5e/assets-v1/df558a37-d84d-4ecd-ad22-a7baaaa86817/aesthetic-eevee-pokemon.png"}, {"id": "cute-charmander-pirate", "name": "Cute Charmander Pirate", "url": "/__l5e/assets-v1/a4ca598d-745c-4e6c-b26a-b41470be7f2b/cute-charmander-pirate.png"}, {"id": "eevee-cute", "name": "Eevee Cute", "url": "/__l5e/assets-v1/9322e0f2-8199-4ad5-abaf-0ce52d31ab7f/eevee-cute.png"}, {"id": "gengar-shadow-pokemon", "name": "Gengar Shadow Pokemon", "url": "/__l5e/assets-v1/8dd705a1-9084-45ec-b0b1-44188ac688fc/gengar-shadow-pokemon.png"}, {"id": "charmander-pokemon-cute", "name": "Charmander Pokemon Cute", "url": "/__l5e/assets-v1/0d220a74-1f00-4617-bedf-d14e77985ce8/charmander-pokemon-cute.png"}, {"id": "jigglypuff-singing-pokemon", "name": "Jigglypuff Singing Pokemon", "url": "/__l5e/assets-v1/5735ef00-5f09-40e5-ab05-c97ec9b32fc2/jigglypuff-singing-pokemon.png"}, {"id": "gengar-evil-grin", "name": "Gengar Evil Grin", "url": "/__l5e/assets-v1/0c0717ab-19d2-41ae-899c-ae0079ec6f90/gengar-evil-grin.png"}, {"id": "squirtle-and-charmander-pokemon-friendship", "name": "Squirtle And Charmander Pokemon Friendship", "url": "/__l5e/assets-v1/e27cb71f-ba7f-4aa3-90cf-5f4fd557c6a4/squirtle-and-charmander-pokemon-friendship.png"}, {"id": "pikachu-happy-lightning", "name": "Pikachu Happy Lightning", "url": "/__l5e/assets-v1/09a90bc9-3e58-44ff-8d27-26d2fbcd3476/pikachu-happy-lightning.png"}, {"id": "squirtle-thumbs-up-sunglasses", "name": "Squirtle Thumbs Up Sunglasses", "url": "/__l5e/assets-v1/4ebcf102-5781-41b7-be48-b24c1a0eac17/squirtle-thumbs-up-sunglasses.png"}, {"id": "pikachu-lightning-bolt", "name": "Pikachu Lightning Bolt", "url": "/__l5e/assets-v1/0c90ead9-3919-406f-9245-bd33f3ef34af/pikachu-lightning-bolt.png"}, {"id": "bulbasaur-flower-pokemon", "name": "Bulbasaur Flower Pokemon", "url": "/__l5e/assets-v1/8bc43e1a-5c77-43c4-a472-995d9377057b/bulbasaur-flower-pokemon.png"}, {"id": "bulbasaur-winking-cute", "name": "Bulbasaur Winking Cute", "url": "/__l5e/assets-v1/bc1e3b8f-19ed-4eb8-ac98-fbc3f8059348/bulbasaur-winking-cute.png"}];
+const TEACHER_AVATAR_UNLOCK_STEP = 500;
+function teacherAvatarSrc(value) {
+  const v = String(value || '');
+  if (v.startsWith('sticker:')) { const a = TEACHER_AVATARS.find(x => x.id === v.slice(8)); return a ? a.url : ''; }
+  const n = Number(v); return n > 0 ? `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${n}.png` : '';
+}
+function teacherUnlockedAvatars(rec) { return String(rec?.teacher_unlocked_avatars || '').split(',').filter(Boolean); }
+function teacherAvatarUnlocksLeft(rec) {
+  if (isAymanTeacher()) return Infinity;
+  return Math.max(0, Math.floor(Number(rec?.teacher_spent_total || 0) / TEACHER_AVATAR_UNLOCK_STEP) - teacherUnlockedAvatars(rec).length);
+}
 function getTeacherCredits() {
   const identity = String(currentTeacher || '').trim().toLocaleLowerCase();
   if (identity === 'ayman' || identity === 'teacher ayman') return Infinity;
@@ -6199,7 +6211,7 @@ async function deductTeacherCredits(amount) {
   if (identity === 'ayman' || identity === 'teacher ayman') return true;
   const rec = getTeachers().find(t => normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(currentTeacher));
   if (!rec || (rec.teacher_credits || 0) < amount) { toast(`Insufficient credits! Need ${amount}, have ${rec?.teacher_credits || 0}.`); return false; }
-  const result = await window.dataSdk.update({ ...rec, teacher_credits: (rec.teacher_credits || 0) - amount });
+  const result = await window.dataSdk.update({ ...rec, teacher_credits: (rec.teacher_credits || 0) - amount, teacher_spent_total: Number(rec.teacher_spent_total || 0) + amount });
   if (!result?.isOk) { toast('Could not update teacher credits.'); return false; }
   return true;
 }
@@ -6874,14 +6886,8 @@ document.getElementById('logged-in-name-container').addEventListener('click', ()
   const savedTeacherAvatar = Number(teacherRecord?.teacher_avatar || 0);
   const ownedTeacherPokemon = getPokemons().filter(record => record.type === 'pokemon' && record.owner === currentTeacher);
   const teacherShopCatalog = pokemonCatalog.slice();
-  modal.innerHTML = `<div class="bg-slate-900 text-white rounded-2xl p-5 shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="account-settings-title"><h2 id="account-settings-title" class="heading-font text-lg font-bold mb-4">Account settings</h2><section class="mb-5 rounded-xl border border-teal-200/20 bg-teal-950/50 p-3"><h3 class="text-sm font-bold text-amber-100 mb-2">Teacher avatar</h3><p class="text-[11px] text-slate-300 mb-2">Choose any Pokémon as your teacher avatar at no cost. Teachers do not own Pokémon.</p><div class="flex flex-col sm:flex-row gap-2 mb-2"><div class="relative flex-1"><label for="teacher-avatar-search" class="sr-only">Search Pokémon</label><span class="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-cyan-200" aria-hidden="true">⌕</span><input id="teacher-avatar-search" type="search" class="w-full rounded-lg border border-teal-200/30 bg-slate-900/80 py-1.5 pl-7 pr-8 text-xs text-white placeholder:text-slate-400" placeholder="Search Pokémon by name" autocomplete="off"><button type="button" id="teacher-avatar-search-clear" class="hidden absolute right-1 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs text-cyan-200 hover:bg-teal-700/60" aria-label="Clear Pokémon search">×</button></div></div><p id="teacher-avatar-empty" class="hidden py-4 text-center text-xs text-slate-300" role="status">No Pokémon match your search.</p><div id="teacher-avatar-options" class="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Choose teacher Pokémon avatar">${teacherShopCatalog.map(item => { const ownedPokemonRecords = getPokemons().filter(record => record.type === 'pokemon'); const ownedTeacherIds = getVerifiedTeacherOwnedPokemonIds(); const globallyOwnedIds = new Set(ownedPokemonRecords.map(record => Number(record.pokemon_id))); const isAymanAvatarOverride = isAymanTeacher(); const owned = globallyOwnedIds.has(Number(item.id)); const selectable = isAymanAvatarOverride || !owned; const selected = false; return `<button type="button" class="teacher-avatar-option relative rounded-lg border-2 p-1.5 ${owned ? 'border-teal-200/20 bg-slate-900/60 opacity-45' : 'border-slate-700 bg-slate-800/70'} ${selectable ? '' : 'cursor-not-allowed pointer-events-none'}" data-pokemon-id="${item.id}" data-price="${item.price}" data-owned="${owned}" data-selectable="${selectable}" data-pokemon-name="${item.name}" role="radio" aria-checked="false" aria-disabled="${!selectable}" style="${getPokemonAvatarCardStyle(item)}" ${!selectable ? 'disabled tabindex="-1"' : ''}><img src="${item.artworkUrl}" class="w-10 h-10 mx-auto object-contain" alt="${item.name}" loading="lazy"><span class="block truncate text-[10px] font-bold">${item.name}</span>${owned ? '<span class="block text-[9px] text-emerald-200">Owned</span>' : `<span class="block text-[9px] text-amber-200">${item.price} credits</span><span class="block text-[9px] text-cyan-200">Unlock</span>`}</button>`; }).join('')}</div><div class="flex gap-2 mt-3"><button type="button" id="teacher-avatar-save" class="btn-primary flex-1 text-xs">Save avatar</button><button type="button" id="teacher-avatar-default" class="btn-outline flex-1 text-xs">Default</button></div></section><form id="teacher-profile-form" class="space-y-2 mb-4 rounded-xl border border-teal-200/20 bg-teal-950/50 p-3"><h3 class="text-sm font-bold text-amber-100">My profile</h3><p id="tp-email" class="text-[11px] text-slate-300"></p><input type="text" id="tp-name" maxlength="80" placeholder="Display name" class="w-full border rounded-lg px-3 py-2 text-sm text-teal-950" required><input type="text" id="tp-school" maxlength="120" placeholder="School (optional)" class="w-full border rounded-lg px-3 py-2 text-sm text-teal-950"><button type="submit" class="w-full btn-primary text-xs">Save profile</button></form><form id="change-pin-form" class="space-y-3"><h3 class="text-sm font-bold text-amber-100">Change password</h3><input type="password" id="new-pin" minlength="8" placeholder="New password (min 8 characters)" class="w-full border rounded-lg px-3 py-2 text-sm text-teal-950" required><input type="password" id="confirm-pin" minlength="8" placeholder="Confirm new password" class="w-full border rounded-lg px-3 py-2 text-sm text-teal-950" required><p id="pin-error" class="text-red-400 text-xs hidden"></p><div class="flex gap-2"><button type="submit" class="flex-1 btn-primary">Change</button><button type="button" id="pin-cancel-btn" class="flex-1 btn-outline">Close</button></div></form></div>`;
+  modal.innerHTML = `<div class="bg-slate-900 text-white rounded-2xl p-5 shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="account-settings-title"><h2 id="account-settings-title" class="heading-font text-lg font-bold mb-4">Account settings</h2><section class="mb-5 rounded-xl border border-teal-200/20 bg-teal-950/50 p-3"><h3 class="text-sm font-bold text-amber-100 mb-1">Teacher avatar</h3><p id="teacher-avatar-progress" class="text-[11px] text-slate-300 mb-2"></p><div id="teacher-avatar-options" class="grid grid-cols-4 sm:grid-cols-6 gap-2" role="radiogroup" aria-label="Choose teacher avatar"></div><div class="flex gap-2 mt-3"><button type="button" id="teacher-avatar-default" class="btn-outline flex-1 text-xs">Use default avatar</button></div></section><form id="teacher-profile-form" class="space-y-2 mb-4 rounded-xl border border-teal-200/20 bg-teal-950/50 p-3"><h3 class="text-sm font-bold text-amber-100">My profile</h3><p id="tp-email" class="text-[11px] text-slate-300"></p><input type="text" id="tp-name" maxlength="80" placeholder="Display name" class="w-full border rounded-lg px-3 py-2 text-sm text-teal-950" required><input type="text" id="tp-school" maxlength="120" placeholder="School (optional)" class="w-full border rounded-lg px-3 py-2 text-sm text-teal-950"><button type="submit" class="w-full btn-primary text-xs">Save profile</button></form><form id="change-pin-form" class="space-y-3"><h3 class="text-sm font-bold text-amber-100">Change password</h3><input type="password" id="new-pin" minlength="8" placeholder="New password (min 8 characters)" class="w-full border rounded-lg px-3 py-2 text-sm text-teal-950" required><input type="password" id="confirm-pin" minlength="8" placeholder="Confirm new password" class="w-full border rounded-lg px-3 py-2 text-sm text-teal-950" required><p id="pin-error" class="text-red-400 text-xs hidden"></p><div class="flex gap-2"><button type="submit" class="flex-1 btn-primary">Change</button><button type="button" id="pin-cancel-btn" class="flex-1 btn-outline">Close</button></div></form></div>`;
   document.body.appendChild(modal);
-  let selectedTeacherAvatar = savedTeacherAvatar;
-  let teacherAvatarQuery = '';
-  const avatarSearch = modal.querySelector('#teacher-avatar-search');
-  const avatarSearchClear = modal.querySelector('#teacher-avatar-search-clear');
-  const avatarEmpty = modal.querySelector('#teacher-avatar-empty');
-  const avatarOptions = modal.querySelector('#teacher-avatar-options');
   const formatTeacherAvatarOwnershipLabel = record => {
     if (!record || typeof record !== 'object') return 'Owned by another user';
     // Stable owner ID plus explicit role/type are authoritative; display names
@@ -6893,52 +6899,57 @@ document.getElementById('logged-in-name-container').addEventListener('click', ()
     const fullName = displayName.replace(/^TR\.\s*/i, '').trim();
     return role === 'teacher' ? `Owned by TR.${fullName}` : `Owned by ${fullName}`;
   };
+  const avatarOptions = modal.querySelector('#teacher-avatar-options');
+  const avatarProgress = modal.querySelector('#teacher-avatar-progress');
+  const myTeacherRec = () => getTeachers().find(record => normalizeStudentIdentity(record.teacher_name) === normalizeStudentIdentity(currentTeacher)) || null;
+  let selectedTeacherAvatar = String(teacherRecord?.teacher_avatar || '');
+  const applyHeaderAvatar = value => { const el = document.getElementById('teacher-account-avatar'); const src = teacherAvatarSrc(value); if (el) el.innerHTML = src ? `<img src="${src}" class="w-10 h-10 object-contain rounded-full" alt="Teacher avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>'; };
   const renderTeacherAvatarOptions = () => {
-    teacherAvatarQuery = String(teacherAvatarQuery || '').trim();
-    const query = teacherAvatarQuery.toLocaleLowerCase();
-    const filteredCatalog = teacherShopCatalog.filter(item => !query || String(item.name || '').toLocaleLowerCase().includes(query));
-    avatarOptions.innerHTML = filteredCatalog.map(item => {
-      const pokemonId = Number(item.id);
-      return `<button type="button" class="teacher-avatar-option relative rounded-lg border-2 border-slate-700 bg-slate-800/70 p-1.5" data-pokemon-id="${item.id}" data-pokemon-name="${item.name}" role="radio" aria-checked="${Number(item.id) === selectedTeacherAvatar}" aria-disabled="false" style="${getPokemonAvatarCardStyle(item)}"><img src="${item.artworkUrl}" class="w-10 h-10 mx-auto object-contain" alt="${item.name}" loading="lazy"><span class="block truncate text-[10px] font-bold">${item.name}</span><span class="block text-[9px] text-cyan-200">Free avatar choice</span></button>`;
+    const rec = myTeacherRec();
+    const unlocked = new Set(teacherUnlockedAvatars(rec));
+    const left = teacherAvatarUnlocksLeft(rec);
+    const admin = isAymanTeacher();
+    const spent = Number(rec?.teacher_spent_total || 0);
+    const toNext = TEACHER_AVATAR_UNLOCK_STEP - (spent % TEACHER_AVATAR_UNLOCK_STEP);
+    avatarProgress.textContent = admin ? 'Admin: every avatar is unlocked.' : `You earn 1 avatar unlock for every ${TEACHER_AVATAR_UNLOCK_STEP} coins you give to students. Coins given: ${spent}. Unlocks available: ${left}. ${toNext} more coins to the next unlock.`;
+    avatarOptions.innerHTML = TEACHER_AVATARS.map(item => {
+      const isUnlocked = admin || unlocked.has(item.id);
+      const isSel = selectedTeacherAvatar === 'sticker:' + item.id;
+      const canUnlock = !isUnlocked && left > 0;
+      const label = isSel ? '<span class="block text-[9px] text-emerald-200">Equipped</span>' : isUnlocked ? '<span class="block text-[9px] text-cyan-200">Use</span>' : canUnlock ? '<span class="block text-[9px] text-amber-200">Unlock</span>' : '<span class="block text-[9px] text-slate-400">🔒 Locked</span>';
+      return `<button type="button" class="teacher-avatar-option rounded-lg border-2 p-1.5 ${isSel ? 'border-emerald-300 bg-emerald-900/40' : 'border-slate-700 bg-slate-800/70'} ${!isUnlocked && !canUnlock ? 'opacity-50 cursor-not-allowed' : ''}" data-avatar="${item.id}" data-state="${isUnlocked ? 'unlocked' : canUnlock ? 'unlockable' : 'locked'}" role="radio" aria-checked="${isSel}"><img src="${item.url}" class="w-14 h-14 mx-auto object-contain ${!isUnlocked ? 'grayscale' : ''}" alt="${item.name}" loading="lazy"><span class="block truncate text-[10px] font-bold">${item.name}</span>${label}</button>`;
     }).join('');
-    avatarEmpty?.classList.toggle('hidden', filteredCatalog.length > 0);
-    avatarSearchClear?.classList.toggle('hidden', !query);
-    avatarOptions.querySelectorAll('.teacher-avatar-option').forEach(button => button.addEventListener('click', handleTeacherAvatarChoice));
+    avatarOptions.querySelectorAll('.teacher-avatar-option').forEach(btn => btn.addEventListener('click', handleTeacherAvatarChoice));
+  };
+  const saveTeacherAvatar = async (value, extra) => {
+    const rec = myTeacherRec();
+    if (!rec || !rec.__backendId || currentRole !== 'teacher') { toast('Could not find your teacher account.'); return false; }
+    const patch = { teacher_avatar: value, ...(extra || {}) };
+    const result = await window.dataSdk.update({ ...rec, ...patch, __backendId: rec.__backendId });
+    if (!result?.isOk) { toast('Could not save teacher avatar. Please try again.'); return false; }
+    allData = allData.map(r => r.__backendId === rec.__backendId ? { ...r, ...patch } : r);
+    selectedTeacherAvatar = value; applyHeaderAvatar(value); renderTeacherAvatarOptions();
+    return true;
   };
   const handleTeacherAvatarChoice = async event => {
-    event.preventDefault();
-    event.stopPropagation();
-    const button = event.currentTarget;
-    if (button.disabled || button.dataset.busy === 'true') return;
-    const avatarId = Number(button.dataset.pokemonId) || 0;
-    const latest = getTeachers().find(record => normalizeStudentIdentity(record.teacher_name) === normalizeStudentIdentity(currentTeacher)) || (isAymanTeacher() ? { teacher_name: ADMIN_TEACHER.name } : null);
-    if (!latest || currentRole !== 'teacher' || !latest.__backendId) return;
-    button.dataset.busy = 'true';
-    button.setAttribute('aria-busy', 'true');
+    event.preventDefault(); event.stopPropagation();
+    const btn = event.currentTarget; if (btn.dataset.busy === 'true') return;
+    const id = btn.dataset.avatar; const state = btn.dataset.state;
+    const item = TEACHER_AVATARS.find(a => a.id === id); if (!item) return;
+    if (state === 'locked') { toast(`Give ${TEACHER_AVATAR_UNLOCK_STEP} coins to students to earn an avatar unlock.`); return; }
+    btn.dataset.busy = 'true';
     try {
-      const result = latest.__backendId
-        ? await window.dataSdk.update({ ...latest, teacher_avatar: String(avatarId), __backendId: latest.__backendId })
-        : null;
-      if (latest.__backendId && !result?.isOk) { toast('Could not save teacher avatar. Please try again.'); return; }
-      selectedTeacherAvatar = avatarId;
-      allData = latest.__backendId ? allData.map(record => record.__backendId === latest.__backendId ? { ...record, teacher_avatar: String(avatarId) } : record) : allData;
-      const avatar = document.getElementById('teacher-account-avatar');
-      if (avatar) avatar.innerHTML = avatarId ? `<img src="${getCanonicalPokemon(avatarId)?.artworkUrl || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarId}.png`}" class="w-10 h-10 object-contain" alt="Selected teacher Pokémon avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>';
-      modal.remove();
-      toast('Teacher avatar saved.');
-    } finally {
-      button.dataset.busy = 'false';
-      button.removeAttribute('aria-busy');
-    }
+      if (state === 'unlockable') {
+        if (!confirm(`Use 1 unlock on "${item.name}"?`)) return;
+        const rec = myTeacherRec();
+        const list = teacherUnlockedAvatars(rec).concat(id).join(',');
+        if (await saveTeacherAvatar('sticker:' + id, { teacher_unlocked_avatars: list })) toast(`${item.name} unlocked and equipped!`);
+      } else if (await saveTeacherAvatar('sticker:' + id)) toast('Teacher avatar saved.');
+    } finally { btn.dataset.busy = 'false'; }
   };
-  avatarEmpty.textContent = 'No Pokémon match your search.';
-  avatarSearch?.addEventListener('input', event => { teacherAvatarQuery = event.currentTarget.value.trim(); renderTeacherAvatarOptions(); });
-  avatarSearchClear?.addEventListener('click', () => { teacherAvatarQuery = ''; avatarSearch.value = ''; renderTeacherAvatarOptions(); avatarSearch.focus(); });
   renderTeacherAvatarOptions();
-  const updateAvatarSelection = avatar => { selectedTeacherAvatar = Number(avatar) || 0; renderTeacherAvatarOptions(); };
   updateTeacherCreditBalance();
-  modal.querySelector('#teacher-avatar-default').addEventListener('click', () => updateAvatarSelection(0));
-  modal.querySelector('#teacher-avatar-save').addEventListener('click', async () => { const latest = getTeachers().find(record => normalizeStudentIdentity(record.teacher_name) === normalizeStudentIdentity(currentTeacher)); if (!latest || currentRole !== 'teacher' || !latest.__backendId) return; const result = await window.dataSdk.update({ ...latest, teacher_avatar: String(selectedTeacherAvatar || ''), __backendId: latest.__backendId }); if (!result?.isOk) { toast('Could not save teacher avatar.'); return; } allData = allData.map(record => record.__backendId === latest.__backendId ? { ...record, teacher_avatar: String(selectedTeacherAvatar || '') } : record); const avatar = document.getElementById('teacher-account-avatar'); if (avatar) avatar.innerHTML = selectedTeacherAvatar ? `<img src="${getCanonicalPokemon(selectedTeacherAvatar)?.artworkUrl || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${selectedTeacherAvatar}.png`}" class="w-10 h-10 object-contain" alt="Selected teacher Pokémon avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>'; modal.remove(); toast('Teacher avatar saved.'); });
+  modal.querySelector('#teacher-avatar-default').addEventListener('click', async () => { if (await saveTeacherAvatar('')) toast('Default avatar restored.'); });
   const form = modal.querySelector('#change-pin-form');
   const errorEl = modal.querySelector('#pin-error');
   form.addEventListener('submit', async e => {
@@ -7060,7 +7071,7 @@ function enterApp() {
     document.getElementById('credit-balance-nav')?.classList.toggle('account-credit-admin', isAymanTeacher());
     document.getElementById('logged-in-name-nav').textContent = currentTeacher;
     const teacherAvatar = document.getElementById('teacher-account-avatar');
-    if (teacherAvatar) { const teacher = getTeachers().find(record => record.teacher_name === currentTeacher); const avatarId = Number(teacher?.teacher_avatar || 0); teacherAvatar.innerHTML = avatarId > 0 ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarId}.png" class="w-10 h-10 object-contain" alt="Selected teacher Pokémon avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>'; }
+    if (teacherAvatar) { const teacher = getTeachers().find(record => record.teacher_name === currentTeacher); const avatarSrc = teacherAvatarSrc(teacher?.teacher_avatar); teacherAvatar.innerHTML = avatarSrc ? `<img src="${avatarSrc}" class="w-10 h-10 object-contain rounded-full" alt="Teacher avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>'; }
     document.getElementById('teacher-info-bar').classList.add('hidden');
     document.getElementById('teacher-info-name').textContent = '👨‍🏫 ' + currentTeacher;
     updateTeacherCreditBalance();
@@ -9412,7 +9423,7 @@ function renderAdminPanel() {
   const teacherQuery = String(document.getElementById('admin-teacher-search')?.value || '').trim().toLocaleLowerCase();
   const teachers = getTeachers().filter(teacher => !teacherQuery || String(teacher.teacher_name || '').trim().toLocaleLowerCase().includes(teacherQuery));
   const teachersList = document.getElementById('teachers-list');
-  teachersList.innerHTML = teachers.length ? teachers.map(t => `<div class="teachers-inventory-card" tabindex="0" role="button" aria-label="Open teacher ${t.teacher_name}" onclick="if(!event.target.closest('button')) openEditTeacherModal('${t.__backendId}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openEditTeacherModal('${t.__backendId}');}"><span class="teacher-inventory-avatar" aria-hidden="true">${(() => { const avatarId = Number(t.teacher_avatar || 0); const avatarPokemon = avatarId > 0 ? getCanonicalPokemon(avatarId) : null; const avatarSrc = avatarPokemon?.artworkUrl || (avatarId > 0 ? `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarId}.png` : ''); return avatarSrc ? `<img src="${avatarSrc}" class="w-full h-full object-contain" alt="${String(t.teacher_name || 'Teacher').replace(/"/g, '&quot;')}'s Pokémon avatar" loading="lazy">` : (String(t.teacher_name || '?').trim().charAt(0).toUpperCase() || '?'); })()}</span><p class="teacher-inventory-name" title="${t.teacher_name}">${t.teacher_name}</p><p class="teacher-inventory-detail">PIN: •••••• · Credits: ${t.teacher_credits === -1 ? '∞' : (t.teacher_credits || 0)} 💳</p><p class="teacher-inventory-detail">${t.teacher_name === 'Ayman' ? 'Admin' : 'Teacher'}</p><div class="teachers-inventory-actions">${t.teacher_name === 'Ayman' ? '<span class="text-xs bg-yellow-300 text-slate-900 px-2 py-1 rounded font-black" title="Administrator">Admin</span>' : `<button type="button" class="text-blue-200 bg-blue-900/70 hover:bg-blue-700" aria-label="Edit ${t.teacher_name}" title="Edit teacher" onclick="event.stopPropagation();openEditTeacherModal('${t.__backendId}')">✎</button><button type="button" class="text-red-200 bg-red-900/70 hover:bg-red-700" aria-label="Delete ${t.teacher_name}" title="Delete teacher" onclick="event.stopPropagation();deleteTeacher('${t.__backendId}','${t.teacher_name}')">×</button>`}</div></div>`).join('') : `<p class="text-gray-400 text-sm text-center py-8">${teacherQuery ? 'No teachers match your search.' : 'No teachers yet.'}</p>`;
+  teachersList.innerHTML = teachers.length ? teachers.map(t => `<div class="teachers-inventory-card" tabindex="0" role="button" aria-label="Open teacher ${t.teacher_name}" onclick="if(!event.target.closest('button')) openEditTeacherModal('${t.__backendId}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openEditTeacherModal('${t.__backendId}');}"><span class="teacher-inventory-avatar" aria-hidden="true">${(() => { const avatarSrc = teacherAvatarSrc(t.teacher_avatar); return avatarSrc ? `<img src="${avatarSrc}" class="w-full h-full object-contain" alt="${String(t.teacher_name || 'Teacher').replace(/"/g, '&quot;')}'s Pokémon avatar" loading="lazy">` : (String(t.teacher_name || '?').trim().charAt(0).toUpperCase() || '?'); })()}</span><p class="teacher-inventory-name" title="${t.teacher_name}">${t.teacher_name}</p><p class="teacher-inventory-detail">PIN: •••••• · Credits: ${t.teacher_credits === -1 ? '∞' : (t.teacher_credits || 0)} 💳</p><p class="teacher-inventory-detail">${t.teacher_name === 'Ayman' ? 'Admin' : 'Teacher'}</p><div class="teachers-inventory-actions">${t.teacher_name === 'Ayman' ? '<span class="text-xs bg-yellow-300 text-slate-900 px-2 py-1 rounded font-black" title="Administrator">Admin</span>' : `<button type="button" class="text-blue-200 bg-blue-900/70 hover:bg-blue-700" aria-label="Edit ${t.teacher_name}" title="Edit teacher" onclick="event.stopPropagation();openEditTeacherModal('${t.__backendId}')">✎</button><button type="button" class="text-red-200 bg-red-900/70 hover:bg-red-700" aria-label="Delete ${t.teacher_name}" title="Delete teacher" onclick="event.stopPropagation();deleteTeacher('${t.__backendId}','${t.teacher_name}')">×</button>`}</div></div>`).join('') : `<p class="text-gray-400 text-sm text-center py-8">${teacherQuery ? 'No teachers match your search.' : 'No teachers yet.'}</p>`;
   renderAdminAllStudents(); renderAdminShop(); renderCreditLog();
 }
 
