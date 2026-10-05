@@ -5443,6 +5443,9 @@ document.addEventListener('click', function (e) {
     #app-screen:is(.app-fullscreen-active, .game-fullscreen-active) > main { overflow-y: auto !important; }
     .game-inline-view, .game-inline-view > .game-popup-modal { height: auto !important; min-height: 0 !important; max-height: none !important; }
     .game-inline-view .memory-game-shell, .game-inline-view .hangman-game-shell { height: auto !important; min-height: 0 !important; max-height: none !important; }
+    /* Teacher Zone and Admin dashboard always scroll to the bottom, even if a closed popup left the page locked. */
+    html:has(#tab-admin:not(.hidden)), body:has(#tab-admin:not(.hidden)) { overflow-y: auto !important; height: auto !important; max-height: none !important; }
+    #tab-admin:not(.hidden) { overflow: visible !important; padding-bottom: 4rem; }
   </style>
     <style>
       /* Final canonical type pass: every Pokémon card surface inherits Teacher Avatar colors. */
