@@ -3709,7 +3709,9 @@
     await pull();
   }
   window.dataSdk = {
-    async init(handler) { listener = handler; notify(); await firstLoad(); setInterval(pull, 5000); return {isOk:true}; },
+    async init(handler) { listener = handler; notify(); await firstLoad(); if (!window.__pokeaymanPollTimer) window.__pokeaymanPollTimer = setInterval(pull, 5000); return {isOk:true}; },
+    async refresh() { await pull(); return records.map(row => ({...row})); },
+    snapshot() { return records.map(row => ({...row})); },
     async create(value) {
       const row = {...value, __backendId: value.__backendId || crypto.randomUUID()};
       try { await api('POST', '', {id: row.__backendId, data: row}); } catch (e) { console.error(e); return {isOk:false, error:e}; }
@@ -5878,9 +5880,15 @@ function teacherWorkspacePayload(scope, scheduleOverride = teacherSchedule) {
   const teacherId = verifiedTeacherIdentity();
   return { type: 'teacher_schedule', teacher_id: teacherId, schedule_owner_id: scope, schedule_data: JSON.stringify({ teacherSchedule: scheduleOverride, subHours, financialUnpaidDays, financialInsuranceDeductions, teacherZoneSnapshots, hourlyRate: document.getElementById('financial-hourly-rate')?.value || '0', selectedMonth: document.getElementById('financial-month')?.value || new Date().toISOString().slice(0, 7) }), schedule_section: 'teacher-zone', schedule_updated_at: new Date().toISOString(), schedule_version: Date.now(), teacher_name: currentTeacher };
 }
-function hydrateTeacherWorkspaceFromSheet(scope) {
+function teacherScheduleSource() {
+  try { const snap = window.dataSdk && window.dataSdk.snapshot ? window.dataSdk.snapshot() : null; if (Array.isArray(snap) && snap.length) return snap; } catch (e) {}
+  return allData;
+}
+async function hydrateTeacherWorkspaceFromSheet(scope) {
   const teacherId = verifiedTeacherIdentity();
-  const rows = allData.filter(record => record.type === 'teacher_schedule' && String(record.teacher_id || '') === String(teacherId || '') && String(record.schedule_owner_id || '') === String(scope || '')).sort((a,b) => String(b.schedule_updated_at || '').localeCompare(String(a.schedule_updated_at || '')) || String(b.__backendId || '').localeCompare(String(a.__backendId || '')));
+  try { if (window.dataSdk && window.dataSdk.refresh) await window.dataSdk.refresh(); } catch (e) {}
+  if (currentTeacherZoneOwnerScope() !== scope || teacherZoneOwnerScope !== scope) return;
+  const rows = teacherScheduleSource().filter(record => record.type === 'teacher_schedule' && String(record.teacher_id || '') === String(teacherId || '') && String(record.schedule_owner_id || '') === String(scope || '')).sort((a,b) => String(b.schedule_updated_at || '').localeCompare(String(a.schedule_updated_at || '')) || String(b.__backendId || '').localeCompare(String(a.__backendId || '')));
   const latest = rows[0];
   if (!latest) {
     teacherZoneLoadedScope = scope;
@@ -5921,12 +5929,11 @@ function saveTeacherWorkspace() {
     const teacherId = verifiedTeacherIdentity();
     const payload = teacherWorkspacePayload(scope);
     localStorage.setItem(teacherWorkspaceKey, JSON.stringify(JSON.parse(payload.schedule_data)));
-    const existing = allData.filter(record => record.type === 'teacher_schedule' && String(record.teacher_id || '') === String(teacherId || '') && String(record.schedule_owner_id || '') === String(scope || '')).sort((a,b) => String(b.schedule_updated_at || '').localeCompare(String(a.schedule_updated_at || '')) || String(b.__backendId || '').localeCompare(String(a.__backendId || '')))[0];
+    const existing = teacherScheduleSource().filter(record => record.type === 'teacher_schedule' && String(record.teacher_id || '') === String(teacherId || '') && String(record.schedule_owner_id || '') === String(scope || '')).sort((a,b) => String(b.schedule_updated_at || '').localeCompare(String(a.schedule_updated_at || '')) || String(b.__backendId || '').localeCompare(String(a.__backendId || '')))[0];
     const latestPayload = existing ? { ...existing, ...payload, teacher_id: teacherId, schedule_owner_id: scope, __backendId: existing.__backendId } : payload;
     const result = existing ? await window.dataSdk.update(latestPayload) : await window.dataSdk.create(latestPayload);
     if (result?.isOk) {
       const savedStatus = document.getElementById('schedule-save-status'); if (savedStatus) savedStatus.textContent = 'Saved';
-      await window.dataSdk.init(handler);
     } else { const errorStatus = document.getElementById('schedule-save-status'); if (errorStatus) errorStatus.textContent = 'Sync failed — retry'; }
   }).catch(() => { const errorStatus = document.getElementById('schedule-save-status'); if (errorStatus) errorStatus.textContent = 'Sync failed — retry'; });
 }
@@ -17225,8 +17232,10 @@ const handler = {
     if (generation !== dataRefreshGeneration) return;
     if (currentRole === 'teacher' && currentTeacherRecordId) {
       const teacherRow = normalizedData.find(record => record.type === 'teacher' && String(record.__backendId || '').trim() === String(currentTeacherRecordId).trim());
-      if (!teacherRow || !['teacher', 'educator', 'admin', 'administrator'].includes(normalizeTeacherRole(teacherRow.teacher_role || teacherRow.role || teacherRow.user_role))) return;
-    } else if (currentRole === 'teacher' && verifiedTeacherIdentity() !== 'ayman') return;
+      if (!teacherRow) return;
+      const rowRole = teacherRow.teacher_role || teacherRow.role || teacherRow.user_role;
+      if (rowRole && !['teacher', 'educator', 'admin', 'administrator'].includes(normalizeTeacherRole(rowRole))) return;
+    } else if (currentRole === 'teacher' && !verifiedTeacherIdentity()) return;
     // Keep every authoritative row delivered by the selected sheet; never seed or paginate.
     allData = normalizedData;
     rebuildCanonicalStudentIndex();
