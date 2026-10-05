@@ -3901,6 +3901,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Figtree:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="/pokeayman/class-workspace.css">
 <link rel="stylesheet" href="/pokeayman/shop-workspace.css">
+<link rel="stylesheet" href="/pokeayman/student-workspace.css">
 <script src="/pokeayman/shop-catalog.js"></script>
 </head>
  <body data-template-id="__page-root" class="min-h-screen">
@@ -8240,6 +8241,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function updateRoleUI() {
   if (!guardLoggedOutTeacherView()) return;
+  updateHeaderShowcase();
   if (currentRole === 'student') {
     document.getElementById('teacher-dashboard').classList.add('hidden');
     document.getElementById('student-dashboard').classList.remove('hidden');
@@ -8681,16 +8683,7 @@ function renderStudentDashboard() {
   else {
     pokemonEmpty.classList.add('hidden');
     const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary', unknown: 'pokemon-card-unknown' };
-    pokemonContainer.innerHTML = myPokes.map(p => {
-      const maxHP = getMaxHP(p);
-      const currentHP = getHealedHP(p);
-      const recoveryTime = getRecoveryTimeRemaining(p);
-      const recoveryDisplay = recoveryTime ? `<p class="text-orange-600 text-xs font-semibold mt-1">⏱️ Recovers in ${formatRecoveryTime(recoveryTime)}</p>` : '';
-      const canonicalRarity = getSafePokemonRarity(p);
-      const cardClass = `${cardClasses[canonicalRarity]} ${pokemonTypeCardClass(p)}`;
-      const imageUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png`;
-      return `<div class="rounded-xl p-4 ${cardClass} text-center cursor-pointer relative" style="${getPokemonAvatarCardStyle(p)}" data-rarity="${canonicalRarity}" data-tier-label="${canonicalRarity}" tabindex="0" role="button" aria-label="${p.pokemon_name}, ${canonicalRarity}, power ${p.pokemon_power}, ${Number.isFinite(currentHP) ? currentHP : 0} of ${Number.isFinite(maxHP) ? currentHP : 0} HP" onclick="openPokemonModal({id:${p.pokemon_id},name:'${p.pokemon_name}',rarity:'${p.pokemon_rarity}',price:${p.pokemon_price},power:${p.pokemon_power},hp:${maxHP}},true,'${currentStudent}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${imageUrl}" class="w-20 h-20 mx-auto mb-2 object-contain" loading="lazy" decoding="async" onerror="this.src='https://via.placeholder.com/80?text=${p.pokemon_id}'; this.style.backgroundColor='#f3f4f6'; this.style.borderRadius='0.25rem';" alt="${p.pokemon_name}"><p class="font-bold text-sm capitalize">${p.pokemon_name}</p>${getPokemonTypeLabel(p) ? `<span class="pokemon-type-badge" aria-label="Type: ${getPokemonTypeLabel(p)}">${getPokemonTypeLabel(p)}</span>` : ''}<p class="text-purple-600 text-xs font-bold mt-1">PWR ${p.pokemon_power}</p><div class="w-full bg-gray-400 rounded-full h-2 mt-2 mb-1"><div class="bg-green-500 h-2 rounded-full" style="width:${Number.isFinite(currentHP) && Number.isFinite(maxHP) && maxHP > 0 ? Math.max(0, Math.min(100, (currentHP / maxHP) * 100)) : 0}%"></div></div><p class="text-green-600 text-xs font-semibold">${Number.isFinite(currentHP) ? currentHP : 0}/${Number.isFinite(maxHP) && maxHP > 0 ? maxHP : 0} HP</p>${recoveryDisplay}</div>`;
-    }).join('');
+    pokemonContainer.innerHTML = myPokes.map(p => renderCollectionPokemonCard(p, currentStudent)).join('');
   }
   renderStudentShop();
 }
@@ -9356,7 +9349,7 @@ function renderShopPager(key, gridId, info) {
 }
 function debounceShop(fn, ms = 200) { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; }
 
-function renderShopPokemonCard(p, ownerRecord) {
+function renderShopPokemonCard(p, ownerRecord, collection = null) {
   const owner = ownerRecord ? (ownerRecord.owner_display_name || ownerRecord.displayName || ownerRecord.username || ownerRecord.owner || '') : '';
   const rarity = ['common', 'uncommon', 'rare', 'legendary'].includes(p.rarity) ? p.rarity : 'common';
   const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -9366,8 +9359,17 @@ function renderShopPokemonCard(p, ownerRecord) {
   const ownerArg = safe(JSON.stringify(owner));
   const elementalBackground = getPokemonAvatarCardStyle(p).split(";", 1)[0] + ";";
   const frameDetails = rarity === "rare" || rarity === "legendary" ? '<span class="shop-card-corners" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="shop-card-foil" aria-hidden="true"></span>' : "";
-  return `<div class="shop-pokemon-card pokemon-card-${rarity}${owner ? ' is-owned' : ''}" style="${elementalBackground}" data-rarity="${rarity}" role="button" tabindex="0" aria-label="${safe(p.name)}, ${rarity}, ${p.price} coins" onclick="openPokemonModal(${args},${Boolean(owner)},${ownerArg})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">${frameDetails}<div class="shop-card-heading"><span class="shop-card-number">#${String(p.id).padStart(3,'0')}</span><span class="shop-card-rarity">${rarity === 'legendary' ? '✦ ' : rarity === 'rare' ? '◇ ' : ''}${rarity}</span></div><img class="shop-card-art" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png" width="104" height="104" loading="lazy" decoding="async" alt="${safe(p.name)}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><div class="shop-card-footer"><p class="shop-card-name">${safe(p.name)}</p><div class="shop-card-types">${badges}</div><div class="shop-card-stats"><span class="shop-card-price">${p.price} <span aria-label="coins">◈</span></span><span class="shop-card-power">${p.power} PWR</span></div>${owner ? `<p class="shop-card-owner">Owned by ${safe(owner)}</p>` : ''}</div></div>`;
+  return `<div class="shop-pokemon-card pokemon-card-${rarity}${owner && !collection ? ' is-owned' : ''}${collection ? ' collection-pokemon-card' : ''}" style="${elementalBackground}" data-rarity="${rarity}" role="button" tabindex="0" aria-label="${safe(p.name)}, ${rarity}, ${p.price} coins" onclick="openPokemonModal(${args},${Boolean(owner)},${ownerArg})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">${frameDetails}<div class="shop-card-heading"><span class="shop-card-number">#${String(p.id).padStart(3,'0')}</span><span class="shop-card-rarity">${rarity === 'legendary' ? '✦ ' : rarity === 'rare' ? '◇ ' : ''}${rarity}</span></div><img class="shop-card-art" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png" width="104" height="104" loading="lazy" decoding="async" alt="${safe(p.name)}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><div class="shop-card-footer"><p class="shop-card-name">${safe(p.name)}</p><div class="shop-card-types">${badges}</div><div class="shop-card-stats"><span class="shop-card-price">${p.price} <span aria-label="coins">◈</span></span><span class="shop-card-power">${p.power} PWR</span></div>${collection ? `<div class="collection-health"><progress max="${collection.maxHP}" value="${collection.currentHP}" aria-label="Health"></progress><span>${collection.currentHP}/${collection.maxHP} HP</span></div>${collection.recovery ? `<p class="collection-recovery">Recovers in ${safe(collection.recovery)}</p>` : ''}${collection.removeId ? `<button type="button" class="collection-remove btn-outline" title="Remove Pokémon" aria-label="Remove ${safe(p.name)}" onclick="event.stopPropagation();removeStudentPokemon(${safe(JSON.stringify(collection.removeId))})">×</button>` : ''}` : owner ? `<p class="shop-card-owner">Owned by ${safe(owner)}</p>` : ''}</div></div>`;
 }
+function renderCollectionPokemonCard(record, studentName, editable = false) {
+  const maxHP = Math.max(1, Number(getMaxHP(record)) || 1);
+  const currentHP = Math.max(0, Math.min(maxHP, Number(getHealedHP(record)) || 0));
+  const recoveryTime = getRecoveryTimeRemaining(record);
+  const species = pokemonCatalog.find(p => Number(p.id) === Number(record.pokemon_id));
+  const pokemon = {...record, id:record.pokemon_id, name:species?.name || record.pokemon_name, rarity:getSafePokemonRarity(record), price:record.pokemon_price, power:record.pokemon_power, hp:maxHP};
+  return renderShopPokemonCard(pokemon, {owner:studentName}, {maxHP,currentHP,recovery:recoveryTime ? formatRecoveryTime(recoveryTime) : '',removeId:editable ? record.__backendId : ''});
+}
+
 function renderShopPage() {
   const container = document.getElementById('my-shop-grid');
   if (!container) return;
@@ -11703,15 +11705,7 @@ function renderStudentProfile(isViewOnly = false) {
   else {
     pokemonEmpty.classList.add('hidden');
     const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary' };
-    pokemonContainer.innerHTML = myPokes.map(p => {
-      const maxHP = getMaxHP(p);
-      const currentHP = getHealedHP(p);
-      const recoveryTime = getRecoveryTimeRemaining(p);
-      const recoveryDisplay = recoveryTime ? `<p class="text-orange-600 text-xs font-semibold mt-1">⏱️ Recovers in ${formatRecoveryTime(recoveryTime)}</p>` : '';
-      const canonicalRarity = getSafePokemonRarity(p);
-      const cardClass = `${cardClasses[canonicalRarity]} ${pokemonTypeCardClass(p)}`;
-      return `<div class="rounded-xl p-4 ${cardClass} text-center group cursor-pointer relative" style="${getPokemonAvatarCardStyle(p)}" data-rarity="${canonicalRarity}" data-tier-label="${canonicalRarity}" tabindex="0" role="button" aria-label="${p.pokemon_name}, ${canonicalRarity}, power ${p.pokemon_power}, ${currentHP}/${maxHP} HP" onclick="openPokemonModal({id:${p.pokemon_id},name:'${p.pokemon_name}',rarity:'${p.pokemon_rarity}',price:${p.pokemon_price},power:${p.pokemon_power},hp:${maxHP}},true,'${profileStudent.student_name}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png" class="w-20 h-20 mx-auto mb-2 object-contain" onerror="this.src='https://via.placeholder.com/80?text=${p.pokemon_id}'" alt="${p.pokemon_name}"><p class="font-bold text-sm truncate">${p.pokemon_name}</p><p class="text-purple-600 text-xs font-bold mt-1">PWR ${p.pokemon_power}</p><div class="w-full bg-gray-400 rounded-full h-2 mt-2 mb-1"><div class="bg-green-500 h-2 rounded-full" style="width:${Number.isFinite(currentHP) && Number.isFinite(maxHP) && maxHP > 0 ? Math.max(0, Math.min(100, (currentHP / maxHP) * 100)) : 0}%"></div></div><p class="text-green-600 text-xs font-semibold">${Number.isFinite(currentHP) ? currentHP : 0}/${Number.isFinite(maxHP) && maxHP > 0 ? maxHP : 0} HP</p>${recoveryDisplay}${!isViewOnly ? `<button onclick="event.stopPropagation();removeStudentPokemon('${p.__backendId}')" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 font-bold">×</button>` : ''}</div>`;
-    }).join('');
+    pokemonContainer.innerHTML = myPokes.map(p => renderCollectionPokemonCard(p, profileStudent.student_name, !isViewOnly)).join('');
   }
   
   if (!isViewOnly) {
@@ -11972,17 +11966,7 @@ function openLeaderboardStudentCollection(studentName) {
   } else {
     empty.classList.add('hidden');
     const icons = { common: '🔵', uncommon: '🔷', rare: '💜', legendary: '⭐' };
-    grid.innerHTML = pokemons.map(p => {
-      const maxHP = getMaxHP(p);
-      const currentHP = getHealedHP(p);
-      return `<div class="pokemon-card-${getSafePokemonRarity(p)} ${pokemonTypeCardClass(p)} card-hover text-center cursor-pointer" data-rarity="${getSafePokemonRarity(p)}" data-tier-label="${getSafePokemonRarity(p)}" tabindex="0" role="button" aria-label="${p.pokemon_name}, ${getSafePokemonRarity(p)}, power ${p.pokemon_power}, ${currentHP}/${maxHP} HP" onclick="openPokemonModal({id:${p.pokemon_id},name:'${p.pokemon_name}',rarity:'${p.pokemon_rarity}',price:${p.pokemon_price},power:${p.pokemon_power},hp:${maxHP}},true,'${studentName}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
-        <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png" class="w-20 h-20 mx-auto mb-2 object-contain" alt="${p.pokemon_name}" onerror="this.src='https://via.placeholder.com/64'">
-        <p class="font-bold text-sm truncate">${p.pokemon_name}</p>
-        <p class="text-purple-600 text-xs font-bold">PWR ${p.pokemon_power}</p>
-        <div class="w-full bg-gray-400 rounded-full h-2 mt-2 mb-1"><div class="bg-green-500 h-2 rounded-full" style="width:${(currentHP/maxHP)*100}%"></div></div>
-        <p class="text-green-600 text-xs font-semibold">${currentHP}/${maxHP}</p>
-      </div>`;
-    }).join('');
+    grid.innerHTML = pokemons.map(p => renderCollectionPokemonCard(p, studentName)).join('');
   }
   
   const closeCollection = () => { modal.remove(); returnFocus?.focus?.(); };
