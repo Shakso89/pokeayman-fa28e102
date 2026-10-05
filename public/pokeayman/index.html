@@ -9326,13 +9326,14 @@ function shopOwnerIndex() {
 }
 function shopPageSlice(key, list) {
   const st = shopPager[key] || (shopPager[key] = { page: 0, list: null });
-  if (st.list !== list) { st.list = list; st.page = 0; }
+  if (st.list !== list) { st.list = list; st.page = 0; st.active = 0; }
   const pages = Math.max(1, Math.ceil(list.length / SHOP_PAGE_SIZE));
   st.page = Math.min(Math.max(0, st.page), pages - 1);
   return { items: list.slice(st.page * SHOP_PAGE_SIZE, (st.page + 1) * SHOP_PAGE_SIZE), page: st.page, pages, total: list.length };
 }
 function shopGoPage(key, page) {
   shopPager[key].page = page;
+  shopPager[key].active = 0;
   if (key === 'my') renderShopPage(); else renderProfileShopPage();
   const g = document.getElementById(key === 'my' ? 'my-shop-grid' : 'profile-shop-grid');
   if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -9349,6 +9350,56 @@ function renderShopPager(key, gridId, info) {
     `<span class="shop-pager-info">${page * SHOP_PAGE_SIZE + 1}–${Math.min((page + 1) * SHOP_PAGE_SIZE, info.total)} of ${info.total}</span>`;
 }
 function debounceShop(fn, ms = 200) { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; }
+
+// Staircase shop: the active card sits level at full size; cards before it step
+// up, cards after it step down, and the strip slides on a smooth easing.
+function shopStairGo(key, index) {
+  const st = shopPager[key]; if (!st) return;
+  const n = st.count || 0;
+  const next = Math.min(Math.max(index, 0), n - 1);
+  if (next === (st.active || 0)) return;
+  st.active = next;
+  const root = document.querySelector(`.shop-staircase[data-shop-key="${key}"]`);
+  if (!root) return;
+  root.querySelector('.stc-strip').style.transform = `translateX(calc(${-next - 0.5} * var(--stc-w)))`;
+  root.querySelectorAll('.stc-slide').forEach((slide, i) => {
+    const s = i < next ? -1 : i > next ? 1 : 0;
+    slide.style.transform = `translateY(${s * 55}%) scale(${s === 0 ? 1 : 0.72})`;
+    slide.classList.toggle('is-active', i === next);
+    slide.setAttribute('aria-current', i === next ? 'true' : 'false');
+  });
+  root.querySelectorAll('.stc-dot').forEach((dot, i) => dot.classList.toggle('is-active', i === next));
+  const label = root.querySelector('.stc-current-name');
+  if (label) label.textContent = st.names[next] || '';
+}
+function renderShopStaircase(key, container, items, ownIdx) {
+  const st = shopPager[key];
+  st.count = items.length;
+  st.names = items.map(p => p.name);
+  st.active = Math.min(st.active || 0, Math.max(0, items.length - 1));
+  const active = st.active;
+  const slides = items.map((p, i) => {
+    const s = i < active ? -1 : i > active ? 1 : 0;
+    return `<div class="stc-slide${i === active ? ' is-active' : ''}" aria-current="${i === active}" style="transform:translateY(${s * 55}%) scale(${s === 0 ? 1 : 0.72})" onclick="if(!this.classList.contains('is-active')){event.stopPropagation();shopStairGo('${key}',${i});}">${renderShopPokemonCard(p, ownIdx.get(p.id))}</div>`;
+  }).join('');
+  const dots = items.map((p, i) => `<button type="button" class="stc-dot${i === active ? ' is-active' : ''}" aria-label="Show ${String(p.name).replace(/"/g, '&quot;')}" onclick="shopStairGo('${key}',${i})"></button>`).join('');
+  container.innerHTML = `<div class="shop-staircase" data-shop-key="${key}" style="--stc-w:210px">
+    <p class="stc-current-name">${items[active] ? String(items[active].name).replace(/</g, '&lt;') : ''}</p>
+    <div class="stc-viewport"><div class="stc-strip" style="transform:translateX(calc(${-active - 0.5} * var(--stc-w)))">${slides}</div></div>
+    <div class="stc-controls">
+      <button type="button" class="stc-btn" aria-label="Previous Pokémon" ${active === 0 ? 'disabled' : ''} onclick="shopStairGo('${key}',${active - 1})">‹</button>
+      <div class="stc-dots">${dots}</div>
+      <button type="button" class="stc-btn" aria-label="Next Pokémon" ${active >= items.length - 1 ? 'disabled' : ''} onclick="shopStairGo('${key}',${active + 1})">›</button>
+    </div>
+  </div>`;
+  const prev = container.querySelector('.stc-btn[aria-label="Previous Pokémon"]');
+  const next = container.querySelector('.stc-btn[aria-label="Next Pokémon"]');
+  const syncButtons = () => {
+    const a = shopPager[key].active || 0;
+    prev.disabled = a === 0; next.disabled = a >= items.length - 1;
+  };
+  container.querySelectorAll('.stc-dot, .stc-btn, .stc-slide').forEach(el => el.addEventListener('click', () => setTimeout(syncButtons, 0)));
+}
 
 function renderShopPokemonCard(p, ownerRecord, collection = null) {
   const owner = ownerRecord ? (ownerRecord.owner_display_name || ownerRecord.displayName || ownerRecord.username || ownerRecord.owner || '') : '';
@@ -9377,7 +9428,7 @@ function renderShopPage() {
   const ownIdx = shopOwnerIndex();
   const info = shopPageSlice('my', shopState.filtered);
   renderShopPager('my', 'my-shop-grid', info);
-  container.innerHTML = info.items.map(p => renderShopPokemonCard(p, ownIdx.get(p.id))).join('');
+  renderShopStaircase('my', container, info.items, ownIdx);
   document.getElementById('my-shop-empty')?.classList.toggle('hidden', info.total > 0);
 }
 
@@ -11731,7 +11782,7 @@ function renderProfileShopPage() {
   const ownIdx = shopOwnerIndex();
   const info = shopPageSlice('profile', profileShopState.filtered);
   renderShopPager('profile', 'profile-shop-grid', info);
-  container.innerHTML = info.items.map(p => renderShopPokemonCard(p, ownIdx.get(p.id))).join('');
+  renderShopStaircase('profile', container, info.items, ownIdx);
   document.getElementById('profile-shop-empty')?.classList.toggle('hidden', info.total > 0);
 }
 

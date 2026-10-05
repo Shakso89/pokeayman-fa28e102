@@ -167,3 +167,28 @@ html body .collection-recovery { color: var(--shop-yellow); font-size: 11px; mar
 html body .collection-remove { position: absolute; top: -10px; right: -10px; width: 28px; height: 28px; padding: 0 !important; z-index: 4; background: var(--shop-deep) !important; color: var(--shop-ink) !important; border: 1px solid var(--shop-border) !important; }
 html body .collection-remove:hover { background: var(--shop-red) !important; }
 html body :is(#my-pokemon-list#my-pokemon-list#my-pokemon-list, #profile-pokemon-list#profile-pokemon-list#profile-pokemon-list, #collection-grid#collection-grid#collection-grid, #classmate-pokemon-grid#classmate-pokemon-grid#classmate-pokemon-grid) > .collection-pokemon-card > .shop-card-art { width: 120px !important; height: 120px !important; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; margin: 16px auto !important; }
+
+/* Staircase shop carousel */
+.shop-staircase { position: relative; padding: 8px 0 4px; overflow: hidden; }
+.stc-current-name { text-align: center; font-weight: 800; font-size: 1.15rem; letter-spacing: .04em; color: var(--shop-ink, #f8fafc); margin: 0 0 6px; text-transform: capitalize; }
+.stc-viewport { overflow: visible; display: flex; justify-content: center; min-height: 340px; }
+.stc-strip { display: flex; width: max-content; transition: transform .7s cubic-bezier(.22,1.2,.36,1); }
+.stc-slide { width: var(--stc-w, 210px); flex-shrink: 0; transition: transform .55s ease-in-out; cursor: pointer; }
+.stc-slide.is-active { cursor: default; z-index: 2; position: relative; }
+.stc-slide .shop-pokemon-card { pointer-events: none; }
+.stc-slide.is-active .shop-pokemon-card { pointer-events: auto; }
+.stc-controls { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 10px; }
+.stc-btn { width: 36px; height: 36px; border-radius: 999px; border: 1px solid rgba(253,230,138,.4); background: rgba(15,23,42,.6); color: #fde68a; font-size: 20px; line-height: 1; cursor: pointer; transition: transform .2s, opacity .2s; }
+.stc-btn:disabled { opacity: .3; cursor: default; }
+.stc-btn:not(:disabled):active { transform: scale(.88); }
+.stc-dots { display: flex; gap: 8px; align-items: center; }
+.stc-dot { width: 8px; height: 8px; border-radius: 999px; border: 0; padding: 0; background: #fde68a; opacity: .3; cursor: pointer; transition: width .3s, opacity .3s; }
+.stc-dot.is-active { width: 26px; opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .stc-strip, .stc-slide, .stc-dot, .stc-btn { transition: none !important; } }
+.shop-staircase { isolation: isolate; }
+.stc-viewport { position: relative; z-index: 1; padding-bottom: 190px; margin-bottom: -190px; pointer-events: none; }
+.stc-slide, .stc-slide .shop-pokemon-card { pointer-events: auto; }
+.stc-controls { position: relative; z-index: 3; }
+.shop-staircase { grid-column: 1 / -1; width: 100%; }
+.stc-viewport { display: block; }
+.stc-strip { position: relative; left: 50%; }
