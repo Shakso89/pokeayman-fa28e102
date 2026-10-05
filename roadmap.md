@@ -33,6 +33,6 @@
 - [x] Verify repeated arrow clicks, endpoints, dots and numbered pagination in the student shop.
 
 # Champion cards and elemental collection
-- [ ] Apply distinctive global medal cards to rosters and both student profile views.
-- [ ] Restore shared shop type gradients and rarity frames in student collections.
-- [ ] Verify real student collection, global rankings, profile and narrow layouts.
+- [x] Apply distinctive global medal cards to rosters, both student profile panels and classmate dialogs.
+- [x] Restore shared shop type gradients and rarity frames in student collections.
+- [x] Verify real student collection, global rankings, classmate profile and narrow layouts; shared teacher roster renderer checked with live leaders, without teacher actions.
