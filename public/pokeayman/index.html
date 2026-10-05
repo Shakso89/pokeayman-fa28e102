@@ -7677,7 +7677,7 @@ function scheduleGroupColor(entry) {
   const mapping = readScheduleGroupColors();
   const reserved = new Set(Object.entries(mapping).filter(([savedKey]) => savedKey !== key).map(([, color]) => String(color).trim().toLowerCase()));
   const saved = String(mapping[key] || '').trim();
-  if (saved && !reserved.has(saved.toLowerCase())) return saved;
+  if (saved && !reserved.has(saved.toLowerCase())) return pdNoTeal(saved);
   const legacy = String(entry?.color || '').trim();
   const color = legacy && !reserved.has(legacy.toLowerCase()) ? legacy : scheduleGroupPalette.find(candidate => !reserved.has(candidate.toLowerCase()));
   if (color) mapping[key] = color;
