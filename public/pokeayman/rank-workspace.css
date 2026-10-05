@@ -29,7 +29,7 @@ html body :is(#student-dashboard#student-dashboard#student-dashboard, #app-scree
 html body :is(#student-dashboard#student-dashboard#student-dashboard, #app-screen#app-screen#app-screen) .global-rank-card.global-rank-card::before {
   content: '' !important; display: block !important; position: absolute !important; inset: 9px !important; border-radius: 16px !important;
   border: 1px solid color-mix(in srgb, var(--rank-edge) 35%, transparent) !important; background: transparent !important;
-  pointer-events: none; transform: none !important; opacity: 1 !important;
+  pointer-events: none; transform: none !important; opacity: 1 !important; backdrop-filter: none !important; filter: none !important;
 }
 html body :is(#student-dashboard#student-dashboard#student-dashboard, #app-screen#app-screen#app-screen) .global-rank-card.global-rank-card::after {
   content: '' !important; display: block !important; position: absolute !important; inset: 0 !important;
