@@ -7407,7 +7407,7 @@ function showMainTab(tabName) {
 // Main Tabs
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    if (['dashboard', 'teacher-zone', 'admin', 'leaderboard'].includes(btn.dataset.tab)) {
+    if (['dashboard', 'teacher-zone', 'admin', 'leaderboard', 'trainer'].includes(btn.dataset.tab)) {
       showMainTab(btn.dataset.tab);
       return;
     }
