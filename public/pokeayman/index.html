@@ -8399,7 +8399,7 @@ function renderClassRosterCard(student, rank, viewOnly = false) {
   const count = getPokemons().filter(p => p.owner === student.student_name).length;
   const artwork = Number(student.avatar_pokemon_id);
   const onOpen = viewOnly ? `openLeaderboardStudentCollection(${jsString(student.student_name)})` : `openStudentProfileById(${jsString(student.__backendId)})`;
-  return `<div class="trainer-student-card ${rank >= 0 ? `class-rank-${rank + 1}` : ''}" data-student-id="${escape(student.__backendId)}" role="button" tabindex="0" aria-label="View ${name}'s profile" onclick="${onOpen}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">
+  return `<div class="trainer-student-card ${rank >= 0 ? `class-rank-${rank + 1}` : ''}" data-student-id="${escape(student.__backendId)}" data-student-name="${name}" role="button" tabindex="0" aria-label="View ${name}'s profile" onclick="${onOpen}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">
     ${rank >= 0 ? `<span class="student-rank" aria-label="Class rank ${rank + 1}">#${rank + 1}</span>` : ''}
     <div class="student-avatar-stage">${Number.isInteger(artwork) && artwork > 0 ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${artwork}.png" alt="${name}'s Pokémon avatar" loading="lazy" decoding="async">` : `<span class="student-avatar-initial" aria-label="${name}'s initials">${escape(Array.from(student.student_name || '?')[0].toUpperCase())}</span>`}</div>
     <h3 class="student-roster-name">${name}</h3>
@@ -8500,6 +8500,7 @@ function renderTeacherDashboard() {
     if (addStudentContainer) addStudentContainer.style.display = 'none';
     const awardForm = document.getElementById('award-form');
     if (awardForm) awardForm.style.display = 'none';
+    applyGlobalAchievementBadges(document.getElementById('app-screen'));
     return;
   } else {
     const students = getStudents(navSchool, navClass);
@@ -8521,6 +8522,7 @@ function renderTeacherDashboard() {
     renderQuizHistory();
     populateBattleSelects();
   }
+  applyGlobalAchievementBadges(document.getElementById('app-screen'));
 }
 
 
