@@ -1,0 +1,56 @@
+/* One medal treatment shared by global leaders wherever they appear. */
+:root {
+  --rank-gold: #edb82d;
+  --rank-silver: #9eb7d1;
+  --rank-bronze: #d78d62;
+  --rank-paper: #ffffff;
+  --rank-ink: #19344d;
+  --rank-muted: #52697c;
+  --rank-gold-surface: #fff9df;
+  --rank-silver-surface: #edf5fd;
+  --rank-bronze-surface: #fff1e8;
+  --rank-shadow: 0 10px 25px color-mix(in srgb, var(--rank-ink) 16%, transparent);
+}
+html body .global-rank-1 { --rank-edge: var(--rank-gold); --rank-surface: var(--rank-gold-surface); }
+html body .global-rank-2 { --rank-edge: var(--rank-silver); --rank-surface: var(--rank-silver-surface); }
+html body .global-rank-3 { --rank-edge: var(--rank-bronze); --rank-surface: var(--rank-bronze-surface); }
+html body :is(#student-dashboard, #app-screen, #student-classes-grid, #students-list) .global-rank-card.global-rank-card {
+  position: relative; isolation: isolate; min-width: 0;
+  background: linear-gradient(155deg, var(--rank-paper), var(--rank-surface)) !important;
+  border: 3px solid var(--rank-edge) !important; color: var(--rank-ink) !important;
+  box-shadow: var(--rank-shadow), inset 0 0 0 3px var(--rank-paper) !important;
+  opacity: 1 !important; filter: none !important; text-shadow: none !important;
+  padding-top: 58px !important;
+}
+html body :is(#student-dashboard, #app-screen, #student-classes-grid, #students-list) .global-rank-card.global-rank-card::before,
+html body :is(#student-dashboard, #app-screen, #student-classes-grid, #students-list) .global-rank-card.global-rank-card::after {
+  content: none !important; display: none !important;
+}
+html body .global-rank-card.global-rank-card .global-rank-marker {
+  position: absolute !important; inset: 12px auto auto 50% !important; transform: translateX(-50%);
+  display: inline-flex !important; align-items: center; justify-content: center;
+  width: max-content; max-width: calc(100% - 16px); min-height: 28px; height: auto;
+  padding: 6px 10px; border-radius: 6px; border: 1px solid var(--rank-edge) !important;
+  background: var(--rank-surface) !important; color: var(--rank-ink) !important;
+  font: 700 11px Figtree, sans-serif; letter-spacing: 0; line-height: 1.3;
+  box-shadow: none !important; z-index: 3; white-space: normal; text-align: center;
+}
+html body .global-rank-card.global-rank-card :is(.student-rank, .student-podium-badge) { display: none !important; }
+html body :is(#student-dashboard, #app-screen) .global-rank-card.global-rank-card :is(.student-classmate-name, .student-roster-name, .student-classmate-coins, .student-roster-coins, .student-classmate-value) { color: var(--rank-ink) !important; text-shadow: none !important; }
+html body :is(#student-dashboard, #app-screen) .global-rank-card.global-rank-card :is(.student-classmate-stat, .student-roster-count, .student-roster-coins span) { color: var(--rank-muted) !important; }
+html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-card {
+  background: var(--rank-paper) !important; color: var(--rank-ink) !important;
+  border: 2px solid var(--kid-sky-100) !important; box-shadow: var(--rank-shadow) !important;
+  padding: 20px; border-radius: 20px; opacity: 1; filter: none;
+}
+html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-card.global-rank-card {
+  background: linear-gradient(155deg, var(--rank-paper), var(--rank-surface)) !important;
+  border: 3px solid var(--rank-edge) !important;
+}
+html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-card p { color: var(--rank-ink) !important; text-shadow: none !important; }
+html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-card > p:first-of-type { background: var(--kid-sky-50) !important; color: var(--rank-muted) !important; }
+html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-card .student-classmate-stat { color: var(--rank-muted) !important; }
+html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-card .student-classmate-avatar { width: 100px; height: 100px; margin: 12px auto; }
+html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-card .student-classmate-name { font: 600 20px Fredoka, sans-serif; white-space: normal; overflow-wrap: anywhere; }
+html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-card > div span { color: var(--rank-muted) !important; }
+html body #student-dashboard#student-dashboard .stat-card-glass.global-rank-card { padding-top: 58px !important; }

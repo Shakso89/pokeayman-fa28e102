@@ -192,3 +192,32 @@ html body :is(#my-pokemon-list#my-pokemon-list#my-pokemon-list, #profile-pokemon
 .shop-staircase { grid-column: 1 / -1; width: 100%; }
 .stc-viewport { display: block; }
 .stc-strip { position: relative; left: 50%; }
+/* Carousel cards are nested rather than direct grid children: apply the same
+   card box, artwork, and single rarity label as the collection renderer. */
+html body :is(#my-shop-grid#my-shop-grid#my-shop-grid, #profile-shop-grid#profile-shop-grid#profile-shop-grid) .stc-slide > .shop-pokemon-card {
+  position: relative; isolation: isolate; box-sizing: border-box;
+  width: 100% !important; min-width: 0 !important; max-width: 100% !important;
+  min-height: 320px !important; height: auto !important; max-height: none !important;
+  display: flex !important; flex-direction: column; align-items: stretch !important;
+  padding: 14px 14px 0 !important; border-radius: 20px !important;
+  border: 1px solid var(--shop-border) !important; color: var(--shop-ink) !important;
+  overflow: visible !important; transform: none !important;
+}
+html body :is(#my-shop-grid#my-shop-grid#my-shop-grid, #profile-shop-grid#profile-shop-grid#profile-shop-grid) .stc-slide > .shop-pokemon-card::after { content: none !important; display: none !important; }
+html body :is(#my-shop-grid#my-shop-grid#my-shop-grid, #profile-shop-grid#profile-shop-grid#profile-shop-grid) .stc-slide > .shop-pokemon-card::before { content: none !important; }
+html body :is(#my-shop-grid#my-shop-grid#my-shop-grid, #profile-shop-grid#profile-shop-grid#profile-shop-grid) .stc-slide > .shop-pokemon-card:is(.pokemon-card-rare, .pokemon-card-legendary)::before {
+  content: '' !important; position: absolute !important; inset: -3px !important;
+  padding: 3px !important; border-radius: 22px !important; pointer-events: none !important;
+  background: var(--mythic-rare-frame) !important; opacity: 1 !important;
+  mask: linear-gradient(currentColor 0 0) content-box, linear-gradient(currentColor 0 0);
+  mask-composite: exclude; z-index: 1; transform: none !important;
+}
+html body :is(#my-shop-grid#my-shop-grid#my-shop-grid, #profile-shop-grid#profile-shop-grid#profile-shop-grid) .stc-slide > .pokemon-card-rare { border-color: var(--mythic-ice) !important; box-shadow: var(--mythic-rare-shadow) !important; }
+html body :is(#my-shop-grid#my-shop-grid#my-shop-grid, #profile-shop-grid#profile-shop-grid#profile-shop-grid) .stc-slide > .pokemon-card-legendary { border-color: var(--mythic-gold) !important; box-shadow: var(--mythic-legendary-shadow) !important; }
+html body :is(#my-shop-grid#my-shop-grid#my-shop-grid, #profile-shop-grid#profile-shop-grid#profile-shop-grid) .stc-slide > .pokemon-card-legendary::before { background: var(--mythic-gold-frame) !important; }
+html body .stc-slide .shop-pokemon-card > .shop-card-art { width: 120px !important; height: 120px !important; margin: 16px auto !important; padding: 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; object-fit: contain !important; }
+html body .stc-slide .shop-pokemon-card > .shop-card-footer { margin: auto -14px 0 !important; padding: 12px 14px !important; width: auto !important; flex-shrink: 0; }
+html body .shop-staircase .stc-current-name { color: var(--shop-ink); letter-spacing: 0; }
+html body #student-dashboard .shop-staircase .stc-current-name { color: var(--kid-ink); }
+html body .stc-viewport { padding-top: 130px; min-height: 470px; }
+html body .stc-slide { transform-origin: center; }

@@ -3903,6 +3903,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/shop-workspace.css">
 <link rel="stylesheet" href="/pokeayman/student-workspace.css">
 <link rel="stylesheet" href="/pokeayman/detail-workspace.css">
+<link rel="stylesheet" href="/pokeayman/rank-workspace.css">
 <script src="/pokeayman/shop-catalog.js"></script>
 </head>
  <body data-template-id="__page-root" class="min-h-screen">
@@ -8358,13 +8359,14 @@ function getStudentRecordForCard(card) {
 }
 // Global placement remains available for other badges; Champion requires earned data.
 function getGlobalAchievementMap() {
-  const ranked = getAllStudents().slice().sort((a, b) => getStudentTotalValue(b) - getStudentTotalValue(a) || String(a.student_name || '').localeCompare(String(b.student_name || '')));
+  const ranked = mergeGlobalLeaderboardStudents().sort((a, b) => getStudentTotalValue(b) - getStudentTotalValue(a) || String(a.student_name || '').localeCompare(String(b.student_name || '')));
   return new Map(ranked.slice(0, 3).map((student, index) => [normalizeStudentIdentity(student.student_name), ['CHAMPION', 'ELITE', 'BRONZE'][index]]));
 }
 function applyGlobalAchievementBadges(root = document) {
   const badgeMap = getGlobalAchievementMap();
   root.querySelectorAll('[data-student-card], .student-classmate-card, #students-list > div, #quick-answer-students-grid > button, #battle-student-1-grid button, #battle-student-2-grid button, .game-player-card').forEach(card => {
-    card.querySelectorAll('.global-achievement-badge').forEach(badge => badge.remove());
+    card.querySelectorAll('.global-achievement-badge, .global-rank-marker').forEach(badge => badge.remove());
+    card.classList.remove('has-achievement-badge');
     const student = getStudentRecordForCard(card);
     const name = student?.student_name || card.dataset.studentName || card.dataset.name || '';
     const rankedLabel = badgeMap.get(normalizeStudentIdentity(name));
@@ -8376,11 +8378,11 @@ function applyGlobalAchievementBadges(root = document) {
       card.classList.add('global-rank-card', `global-rank-${globalRank}`);
       const marker = document.createElement('span');
       marker.className = 'global-rank-marker';
-      marker.textContent = `#${globalRank}`;
+      marker.textContent = `GLOBAL #${globalRank} · ${['CHAMPION', 'ELITE', 'BRONZE'][globalRank - 1]}`;
       marker.setAttribute('aria-label', `Global rank ${globalRank}`);
       card.appendChild(marker);
     }
-    if (!label) return;
+    if (!label || globalRank) return;
     const badge = document.createElement('span');
     badge.className = `global-achievement-badge global-achievement-${label.toLowerCase()}`;
     badge.textContent = label === 'CHAMPION' ? '👑 CHAMPION' : label === 'ELITE' ? '✦ ELITE ✦' : label === 'BRONZE' ? '🔥 BRONZE' : '• ACHIEVEMENT';
@@ -9272,8 +9274,8 @@ function renderStudentClasses() {
       const s = entry.student;
       const pokemons = getPokemons().filter(p => p.owner === s.student_name);
       const totalPower = pokemons.reduce((sum, p) => sum + (Number(p.pokemon_power) || 0), 0);
-      const podium = index < 3 ? `rank-${index + 1}` : '';
-      const rankBadge = index < 3 ? `<span class="student-podium-badge" aria-label="Rank ${index + 1}">${['🥇','🥈','🥉'][index]} #${index + 1}</span>` : '';
+      const podium = '';
+      const rankBadge = '';
       const pokemonCards = pokemons.length ? pokemons.map(p => `<span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-[10px]"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png" class="h-6 w-6 object-contain" alt="${p.pokemon_name}">${p.pokemon_name}</span>`).join('') : '<span class="text-xs text-slate-300">No Pokémon yet</span>';
       return `<div class="student-classmate-card ${podium} card-hover text-center cursor-pointer" role="button" tabindex="0" aria-label="View ${s.student_name}'s profile in ${entry.className}" data-student-id="${String(s.__backendId || '').replace(/"/g, '&quot;')}" onclick="if(!event.target.closest('button,a,input,select,textarea')) openStudentClassmateProfileById('${String(s.__backendId || '').replace(/'/g, "\\'")}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button,a,input,select,textarea')){event.preventDefault();this.click();}">${rankBadge}<p class="mb-2 rounded-full bg-amber-300/20 px-2 py-1 text-xs font-black text-amber-100">${entry.className}</p><img src="${getStudentAvatarSrc(s)}" class="student-classmate-avatar" alt="${getStudentAvatarAlt(s)}" loading="lazy"><p class="student-classmate-name">${s.student_name}</p><p class="student-classmate-coins">${s.coins || 0} 🪙</p><p class="student-classmate-stat">${pokemons.length} Pokémon · ${totalPower} power</p><p class="student-classmate-value">💜 ${Math.floor(getStudentTotalValue(s))}</p><div class="mt-2 flex flex-wrap justify-center gap-1" aria-label="${s.student_name}'s Pokémon">${pokemonCards}</div></div>`;
     }).join('');
