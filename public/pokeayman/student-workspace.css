@@ -3,7 +3,7 @@
    Type: Fredoka (headings) / Figtree (body) */
 :root {
   --student-landscape: url('/__l5e/assets-v1/11d538ad-dd06-42ea-8131-ce7d76bbbc3d/app-bg.jpg');
-  --student-veil: linear-gradient(180deg, rgba(255, 246, 229, .42), rgba(255, 246, 229, .78));
+  --student-veil: linear-gradient(180deg, rgba(255, 246, 229, .30), rgba(255, 246, 229, .62));
   --kid-cream: #FFF6E5;
   --kid-yellow: #FFD23F;
   --kid-yellow-dark: #D9A400;
@@ -212,3 +212,17 @@ html body #student-dashboard #my-shop-container {
   html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 { grid-row: 4 !important; }
   html body #student-navigation-groups .student-nav-group-button { padding: 12px 6px !important; font-size: 14px !important; }
 }
+
+/* ---- Card footer + text fixes ---- */
+html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-footer {
+  background: transparent !important; color: #1E293B !important;
+}
+html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-name {
+  color: #1E293B !important; font-family: Fredoka, Figtree, sans-serif !important; font-weight: 700 !important;
+}
+html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-number { color: #94A3B8 !important; }
+html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-rarity {
+  background: var(--kid-ink) !important; color: #ffffff !important; border-radius: 9999px !important;
+}
+html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-power { color: #64748B !important; }
+html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .collection-health span { color: #475569 !important; }
