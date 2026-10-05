@@ -3824,6 +3824,19 @@ document.addEventListener('click', function (e) {
 .th-error{font-size:.75rem;color:#fca5a5}
 @media(max-width:560px){.th-card{flex-direction:column;text-align:center}.th-chips{justify-content:center}.th-tab{font-size:.7rem}}
 </style>
+<style id="declutter-nav">
+#breadcrumb{margin-bottom:.9rem!important;gap:0!important}
+#breadcrumb .bc-trail{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;font-size:.9rem;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+#breadcrumb .bc-link{color:rgba(255,255,255,.75);text-decoration:none;transition:color .2s}
+#breadcrumb .bc-link:hover,#breadcrumb .bc-link:focus-visible{color:#fff;text-decoration:underline;text-underline-offset:3px}
+#breadcrumb .bc-current{color:#fff;font-style:normal;font-weight:800}
+#breadcrumb .bc-sep{color:rgba(255,255,255,.5);font-style:normal}
+#view-students #class-tabs-container{margin-bottom:0!important;gap:.25rem!important;flex-wrap:nowrap!important;overflow-x:auto;padding:0 .5rem;border-bottom:2px solid rgba(255,255,255,.35)}
+#view-students #class-tabs-container .class-view-tab{background:transparent!important;color:rgba(255,255,255,.8)!important;border:0!important;box-shadow:none!important;border-radius:.75rem .75rem 0 0!important;white-space:nowrap;margin-bottom:-2px;border-bottom:3px solid transparent!important;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+#view-students #class-tabs-container .class-view-tab:hover{color:#fff!important;background:rgba(255,255,255,.12)!important}
+#view-students #class-tabs-container .class-view-tab[class*="-active"]:not([class*="inactive"]){color:#fff!important;background:rgba(255,255,255,.2)!important;border-bottom-color:#facc15!important}
+#view-students .class-subtab-content > :first-child{border-top-left-radius:0!important;border-top-right-radius:0!important}
+</style>
 </head>
  <body data-template-id="__page-root" class="min-h-screen">
   <style>
@@ -8221,22 +8234,29 @@ function navigateTo(level, school, cls, studentName) {
   document.getElementById('view-students').classList.add('hidden');
   document.getElementById('view-student-profile').classList.add('hidden');
   const bc = document.getElementById('breadcrumb');
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const js = v => String(v ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+  const link = (label, call) => `<a href="#" class="bc-link" onclick="event.preventDefault();${call}">${esc(label)}</a>`;
+  const cur = label => `<em class="bc-current" aria-current="page">${esc(label)}</em>`;
+  const sep = '<i class="bc-sep" aria-hidden="true">›</i>';
+  const trail = [];
   if (level === 'schools') {
     navSchool = null; navClass = null;
     document.getElementById('view-schools').classList.remove('hidden');
-    bc.innerHTML = '<button class="bg-red-100 text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold pointer-events-none">Schools</button>';
+    trail.push(cur('Schools'));
   } else if (level === 'classes') {
     navClass = null;
     document.getElementById('view-classes').classList.remove('hidden');
-    bc.innerHTML = `<button onclick="navigateTo('schools')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold transition cursor-pointer">Schools</button> <span class="text-gray-400 text-sm">›</span> <button class="bg-red-100 text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold pointer-events-none">${school}</button>`;
+    trail.push(link('Schools', "navigateTo('schools')"), cur(school));
   } else if (level === 'students') {
     document.getElementById('view-students').classList.remove('hidden');
-    bc.innerHTML = `<button onclick="navigateTo('schools')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold transition cursor-pointer">Schools</button> <span class="text-gray-400 text-sm">›</span> <button onclick="navigateTo('classes','${school}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold transition cursor-pointer">${school}</button> <span class="text-gray-400 text-sm">›</span> <button class="bg-red-100 text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold pointer-events-none">${cls}</button>`;
+    trail.push(link('Schools', "navigateTo('schools')"), link(school, `navigateTo('classes','${js(school)}')`), cur(cls));
     renderVocabLists();
   } else if (level === 'student-profile') {
     document.getElementById('view-student-profile').classList.remove('hidden');
-    bc.innerHTML = `<button onclick="navigateTo('schools')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold transition cursor-pointer">Schools</button> <span class="text-gray-400 text-sm">›</span> <button onclick="navigateTo('classes','${school}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold transition cursor-pointer">${school}</button> <span class="text-gray-400 text-sm">›</span> <button onclick="navigateTo('students','${school}','${cls}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold transition cursor-pointer">${cls}</button> <span class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-full text-sm font-semibold">${studentName}</span>`;
+    trail.push(link('Schools', "navigateTo('schools')"), link(school, `navigateTo('classes','${js(school)}')`), link(cls, `navigateTo('students','${js(school)}','${js(cls)}')`), cur(studentName));
   }
+  bc.innerHTML = `<nav class="bc-trail" aria-label="Breadcrumb">${trail.join(sep)}</nav>`;
   renderTeacherDashboard();
 }
 
