@@ -3902,6 +3902,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/class-workspace.css">
 <link rel="stylesheet" href="/pokeayman/shop-workspace.css">
 <link rel="stylesheet" href="/pokeayman/student-workspace.css">
+<link rel="stylesheet" href="/pokeayman/detail-workspace.css">
 <script src="/pokeayman/shop-catalog.js"></script>
 </head>
  <body data-template-id="__page-root" class="min-h-screen">
@@ -4704,7 +4705,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
    </div>
   </div><!-- LEADERBOARD --> <!-- ADMIN TAB -->
   <!-- Pokémon Detail Modal -->
-  <div id="pokemon-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] hidden p-3 sm:p-4">
+  <div id="pokemon-modal" role="dialog" aria-modal="true" aria-labelledby="modal-pokemon-name" class="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] hidden p-3 sm:p-4">
    <div id="modal-card" class="rounded-2xl shadow-2xl max-w-sm w-full max-h-[calc(100 * min(var(--vh, 1vh), 1vh) - 1.5rem)] overflow-y-auto bg-white" style="background-image: var(--modal-bg-image); background-size: cover; background-position: center;">
     <div id="modal-header" class="sticky top-0 p-4 flex items-center justify-between rounded-t-2xl">
      <div class="min-w-0">
@@ -4720,7 +4721,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      </div>
      <section id="modal-facts-panel" class="modal-facts-panel" aria-label="Pokémon facts">
       <div class="modal-facts-kicker">
-       CANONICAL RECORD
+       POKÉDEX
       </div>
       <p id="modal-facts-category" class="modal-facts-category"></p>
       <p id="modal-facts-summary" class="modal-facts-summary"></p>
@@ -10459,10 +10460,21 @@ function openPokemonModal(pokemonData, isOwned = false, owner = '') {
       || `${name} is full of surprising Pokémon trivia.`;
     factsSummary.textContent = verifiedFact;
   }
+  card.dataset.pokemonId = String(pokemonData.id);
+  document.getElementById('modal-power-card').parentElement.classList.add('detail-stats');
   const detailTypes = getPokemonDetailTypes(detailData);
+  const setTypeStage = types => {
+    const primary = pokemonTypeCardPalette[types[0]] || pokemonTypeCardPalette.normal;
+    const secondary = pokemonTypeCardPalette[types[1]] || primary;
+    imgContainer.style.setProperty('--detail-stage', `linear-gradient(135deg, ${primary[0]}, ${secondary[0]})`);
+    imgContainer.dataset.primaryType = types[0] || 'normal';
+    imgContainer.dataset.secondaryType = types[1] || '';
+  };
+  setTypeStage(detailTypes);
   renderPokemonClassification(rarity, detailTypes);
   loadPokemonApiTypes(detailData).then(apiTypes => {
-    if (document.getElementById('pokemon-modal')?.classList.contains('hidden')) return;
+    if (modal.classList.contains('hidden') || card.dataset.pokemonId !== String(pokemonData.id)) return;
+    setTypeStage(apiTypes);
     renderPokemonClassification(rarity, apiTypes);
     document.getElementById('modal-pokemon-rarity').textContent = apiTypes.map(titleCasePokemonType).join(' / ');
     card.dataset.primaryType = apiTypes[0] || 'normal';
@@ -10473,81 +10485,22 @@ function openPokemonModal(pokemonData, isOwned = false, owner = '') {
     imgContainer.dataset.secondaryType = apiTypes[1] || '';
   });
   
-  // Apply tier-specific background image based on rarity
-  const bgUrl = window.modalBackgrounds?.[rarity] || '';
-  if (bgUrl) {
-    card.style.backgroundImage = `url('${bgUrl}')`;
-  }
-  
-  // Tier-specific styling
-  const tierStyles = {
-    common: {
-      header: 'bg-gradient-to-r from-slate-600 to-slate-700',
-      cards: {
-        type: 'bg-slate-100 border-slate-300 text-slate-700',
-        power: 'bg-slate-100 border-slate-300 text-slate-700',
-        hp: 'bg-slate-100 border-slate-300 text-slate-700',
-        price: 'bg-slate-100 border-slate-300 text-slate-700'
-      },
-      imgBg: 'bg-gradient-to-br from-slate-100 to-slate-200',
-      status: 'bg-slate-50 border-slate-200 text-slate-700'
-    },
-    uncommon: {
-      header: 'bg-gradient-to-r from-blue-500 to-blue-600',
-      cards: {
-        type: 'bg-blue-100 border-blue-400 text-blue-700',
-        power: 'bg-blue-100 border-blue-400 text-blue-700',
-        hp: 'bg-blue-100 border-blue-400 text-blue-700',
-        price: 'bg-blue-100 border-blue-400 text-blue-700'
-      },
-      imgBg: 'bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg shadow-blue-400/30',
-      status: 'bg-blue-50 border-blue-300 text-blue-700'
-    },
-    rare: {
-      header: 'bg-gradient-to-r from-purple-600 to-pink-600',
-      cards: {
-        type: 'bg-purple-100 border-purple-400 text-purple-700',
-        power: 'bg-purple-100 border-purple-400 text-purple-700',
-        hp: 'bg-purple-100 border-purple-400 text-purple-700',
-        price: 'bg-purple-100 border-purple-400 text-purple-700'
-      },
-      imgBg: 'bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 shadow-lg shadow-purple-500/40',
-      status: 'bg-purple-50 border-purple-300 text-purple-700'
-    },
-    legendary: {
-      header: 'bg-gradient-to-r from-yellow-600 via-amber-500 to-yellow-600',
-      cards: {
-        type: 'bg-yellow-100 border-yellow-500 text-yellow-700',
-        power: 'bg-yellow-100 border-yellow-500 text-yellow-700',
-        hp: 'bg-yellow-100 border-yellow-500 text-yellow-700',
-        price: 'bg-yellow-100 border-yellow-500 text-yellow-700'
-      },
-      imgBg: 'bg-gradient-to-br from-yellow-50 via-amber-50 to-yellow-50 shadow-xl shadow-yellow-400/50',
-      status: 'bg-yellow-50 border-yellow-400 text-yellow-700'
-    }
-  };
-  
-  const style = tierStyles[rarity] || tierStyles.common;
-  
-  // Apply tier styling
+  // Frame rarity and elemental artwork are independent visual roles.
   card.classList.remove('detail-card-common', 'detail-card-uncommon', 'detail-card-rare', 'detail-card-legendary');
   card.classList.add(`detail-card-${rarity}`);
-  card.classList.remove(...POKEMON_TYPES.map(type => `type-card-${type}`), 'pokemon-type-card');
-  card.classList.add('pokemon-type-card', `type-card-${detailTypes[0] || 'normal'}`);
-  header.className = `sticky top-0 p-5 sm:p-6 flex items-center justify-between rounded-t-2xl ${style.header}`;
-  document.getElementById('modal-type-card').className = `rounded-lg p-4 text-center border-2 ${style.cards.type}`;
-  document.getElementById('modal-power-card').className = `rounded-lg p-4 text-center border-2 ${style.cards.power}`;
-  document.getElementById('modal-hp-card').className = `rounded-lg p-4 text-center border-2 ${style.cards.hp}`;
-  document.getElementById('modal-price-card').className = `rounded-lg p-4 text-center border-2 ${style.cards.price}`;
-  imgContainer.className = `flex justify-center py-6 px-4 rounded-xl ${style.imgBg}`;
-  document.getElementById('modal-pokemon-status').className = `rounded-lg p-4 text-center border-2 ${style.status}`;
-  
+  header.className = 'detail-header';
+  for (const id of ['modal-type-card', 'modal-power-card', 'modal-hp-card', 'modal-price-card']) {
+    document.getElementById(id).className = 'modal-stat-chip';
+  }
+  imgContainer.className = 'detail-art-stage';
+  document.getElementById('modal-pokemon-status').className = 'modal-status-row';
+
   document.getElementById('modal-pokemon-name').textContent = (pokemonData.name || 'Pokémon').toUpperCase();
   const pokemonImg = document.getElementById('modal-pokemon-img');
   document.getElementById('modal-pokemon-img').src = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${pokemonData.id}.png`;
   document.getElementById('modal-pokemon-img').alt = pokemonData.name;
   document.getElementById('modal-pokemon-img').onerror = function() {
-    this.src = `https://via.placeholder.com/192?text=Pokemon+${pokemonData.id}`;
+    this.onerror = null; this.src = getAvatarFallbackSrc();
   };
   
   // Remove all tier-specific animation classes
@@ -10573,15 +10526,16 @@ function openPokemonModal(pokemonData, isOwned = false, owner = '') {
   if (currentRole === 'student' && !isOwned) {
     const student = getAllStudents().find(s => s.student_name === currentStudent);
     const canAfford = student && (student.coins || 0) >= pokemonData.price;
-    actionsEl.innerHTML = canAfford ? `<button class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-bold transition" onclick="buyPokemon(${pokemonData.id},'${pokemonData.name}','${rarity}',${pokemonData.price},${pokemonData.power});document.getElementById('pokemon-modal').classList.add('hidden')">Buy for ${pokemonData.price} 🪙</button><div class="catch-sound-controls" data-catch-sound-controls></div>` : `<button disabled class="w-full bg-gray-300 text-gray-600 py-3 rounded-lg font-bold cursor-not-allowed">Not Enough Coins</button><div class="catch-sound-controls" data-catch-sound-controls></div>`;
+    actionsEl.innerHTML = canAfford ? `<button class="btn-primary detail-action" onclick="buyPokemon(${pokemonData.id},'${pokemonData.name}','${rarity}',${pokemonData.price},${pokemonData.power});document.getElementById('pokemon-modal').classList.add('hidden')">Buy for ${pokemonData.price} 🪙</button>` : `<button disabled class="btn-primary detail-action">Not Enough Coins</button>`;
   } else if (currentRole === 'teacher' && !isOwned && profileStudent) {
     const canAfford = (profileStudent.coins || 0) >= pokemonData.price;
-    actionsEl.innerHTML = canAfford ? `<button class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-bold transition" onclick="buyPokemonFromProfile(${pokemonData.id},'${pokemonData.name}','${rarity}',${pokemonData.price},${pokemonData.power});document.getElementById('pokemon-modal').classList.add('hidden')">Award to ${profileStudent.student_name}</button><div class="catch-sound-controls" data-catch-sound-controls></div>` : `<button disabled class="w-full bg-gray-300 text-gray-600 py-3 rounded-lg font-bold cursor-not-allowed">Insufficient Coins</button><div class="catch-sound-controls" data-catch-sound-controls></div>`;
+    actionsEl.innerHTML = canAfford ? `<button class="btn-primary detail-action" onclick="buyPokemonFromProfile(${pokemonData.id},'${pokemonData.name}','${rarity}',${pokemonData.price},${pokemonData.power});document.getElementById('pokemon-modal').classList.add('hidden')">Award to ${profileStudent.student_name}</button>` : `<button disabled class="btn-primary detail-action">Insufficient Coins</button>`;
   }
   modal.classList.remove('hidden');
-  actionsEl.querySelectorAll('[data-catch-sound-controls]').forEach(bindCatchSoundControls);
+  document.getElementById('modal-close').focus();
 }
 document.getElementById('modal-close').addEventListener('click', () => document.getElementById('pokemon-modal').classList.add('hidden'));
+document.addEventListener('keydown', event => { if (event.key === 'Escape') document.getElementById('pokemon-modal').classList.add('hidden'); });
 document.getElementById('pokemon-modal').addEventListener('click', e => { if (e.target === document.getElementById('pokemon-modal')) document.getElementById('pokemon-modal').classList.add('hidden'); });
 
 function getMaxHP(pokemon) {
