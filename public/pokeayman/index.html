@@ -8364,7 +8364,7 @@ function getGlobalAchievementMap() {
 }
 function applyGlobalAchievementBadges(root = document) {
   const badgeMap = getGlobalAchievementMap();
-  root.querySelectorAll('[data-student-card], .student-classmate-card, #students-list > div, #quick-answer-students-grid > button, #battle-student-1-grid button, #battle-student-2-grid button, .game-player-card').forEach(card => {
+  root.querySelectorAll('[data-student-card], .student-classmate-card, .class-top3-card, #student-dashboard .global-profile-card, #view-student-profile .global-profile-card, #students-list > div, #quick-answer-students-grid > button, #battle-student-1-grid button, #battle-student-2-grid button, .game-player-card').forEach(card => {
     card.querySelectorAll('.global-achievement-badge, .global-rank-marker').forEach(badge => badge.remove());
     card.classList.remove('has-achievement-badge');
     const student = getStudentRecordForCard(card);
@@ -8378,7 +8378,7 @@ function applyGlobalAchievementBadges(root = document) {
       card.classList.add('global-rank-card', `global-rank-${globalRank}`);
       const marker = document.createElement('span');
       marker.className = 'global-rank-marker';
-      marker.textContent = `GLOBAL #${globalRank} · ${['CHAMPION', 'ELITE', 'BRONZE'][globalRank - 1]}`;
+      marker.innerHTML = `<span class="rank-crest" aria-hidden="true"><svg viewBox="0 0 40 32" fill="none"><path d="M7 11 12 25H28L33 11 25 16 20 5 15 16Z" fill="currentColor"/><path d="M13 29H27" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><b>${globalRank}</b></span><span class="rank-title"><small>GLOBAL #${globalRank}</small><strong>${['CHAMPION', 'ELITE', 'BRONZE'][globalRank - 1]}</strong></span>`;
       marker.setAttribute('aria-label', `Global rank ${globalRank}`);
       card.appendChild(marker);
     }
@@ -8444,7 +8444,7 @@ function renderClassTop3Leaderboard(className) {
       const avatarSrc = getStudentAvatarSrc(s);
       const avatarAlt = getStudentAvatarAlt(s);
       const pokemonCount = getPokemons().filter(p => p.owner === s.student_name).length;
-      return `<div class="class-top3-card rank-${index + 1}">
+      return `<div class="class-top3-card rank-${index + 1}" data-student-name="${String(s.student_name).replace(/"/g, '&quot;')}">
         <span class="class-top3-medal" aria-label="Rank ${index + 1}">${medals[index]}</span>
         <img class="class-top3-avatar" src="${avatarSrc}" alt="${avatarAlt}" loading="lazy">
         <div><span class="class-top3-name" title="${s.student_name}">${s.student_name}</span><div class="class-top3-score">${s.coins || 0} 🪙</div><div class="class-top3-detail">${pokemonCount} Pokémon</div></div>
@@ -8686,8 +8686,14 @@ function renderStudentDashboard() {
   else {
     pokemonEmpty.classList.add('hidden');
     const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary', unknown: 'pokemon-card-unknown' };
-    pokemonContainer.innerHTML = myPokes.map(p => renderCollectionPokemonCard(p, currentStudent).replace(/style="background:[^"]*?;"/, '')).join('');
+    pokemonContainer.innerHTML = myPokes.map(p => renderCollectionPokemonCard(p, currentStudent)).join('');
   }
+  const profileCard = document.getElementById('my-student-name')?.closest('.stat-card-glass');
+  if (profileCard) {
+    profileCard.classList.add('global-profile-card');
+    profileCard.dataset.studentName = student.student_name;
+  }
+  applyGlobalAchievementBadges(document.getElementById('student-dashboard'));
   renderStudentShop();
 }
 
@@ -11723,6 +11729,12 @@ function renderStudentProfile(isViewOnly = false) {
     pokemonContainer.innerHTML = myPokes.map(p => renderCollectionPokemonCard(p, profileStudent.student_name, !isViewOnly)).join('');
   }
   
+  const profileCard = document.getElementById('profile-student-name')?.closest('.stat-card-glass');
+  if (profileCard) {
+    profileCard.classList.add('global-profile-card');
+    profileCard.dataset.studentName = profileStudent.student_name;
+  }
+  applyGlobalAchievementBadges(document.getElementById('view-student-profile'));
   if (!isViewOnly) {
     renderProfileShop();
     renderProfileQuizzes();

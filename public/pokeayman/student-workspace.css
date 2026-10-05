@@ -158,33 +158,7 @@ html body #student-dashboard .glass-container h3 { color: var(--kid-ink) !import
 html body #student-dashboard .glass-container p { color: var(--kid-slate) !important; }
 html body #student-dashboard .glass-container p.text-amber-200 { color: #D97706 !important; }
 
-/* ---- Collection cards: white chunky cards with pastel rarity frames ---- */
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div {
-  background: #ffffff !important; border: 3px solid var(--kid-sky-100) !important;
-  border-radius: 1.75rem !important;
-  box-shadow: 0 10px 22px rgba(12, 74, 110, .12) !important;
-  color: #1E293B !important;
-  transition: transform .18s ease, box-shadow .18s ease !important;
-}
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div:hover {
-  transform: translateY(-5px) scale(1.02) !important;
-  box-shadow: 0 18px 34px rgba(12, 74, 110, .2) !important;
-  filter: none !important;
-}
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div.pokemon-card-common { border-color: var(--kid-sky-100) !important; background: linear-gradient(165deg, #ffffff, var(--kid-sky-50)) !important; }
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div.pokemon-card-uncommon { border-color: #C4B5FD !important; background: linear-gradient(165deg, #ffffff, #F5F3FF) !important; box-shadow: 0 10px 22px rgba(139, 92, 246, .18) !important; }
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div.pokemon-card-rare { border-color: #93C5FD !important; background: linear-gradient(165deg, #ffffff, #EFF6FF) !important; box-shadow: 0 10px 24px rgba(59, 130, 246, .22), 0 0 14px rgba(147, 197, 253, .4) !important; }
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div.pokemon-card-legendary {
-  border: 3px solid var(--kid-yellow) !important;
-  background: linear-gradient(165deg, #ffffff, #FFFBEB) !important; color: #713F12 !important;
-  box-shadow: 0 12px 26px rgba(217, 164, 0, .28), 0 0 20px rgba(255, 210, 63, .45) !important;
-}
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div p { color: #1E293B !important; text-shadow: none !important; }
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div p.text-purple-600 { color: #9333EA !important; }
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div p.text-green-600 { color: #059669 !important; }
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div :is(.text-gray-400, .text-gray-500, .text-slate-400) { color: #94A3B8 !important; }
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list > div img { filter: drop-shadow(0 6px 10px rgba(12, 74, 110, .18)); }
-
+/* Collection artwork, type backgrounds and rarity frames use the shared shop styling. */
 /* ---- Quiz / class list cards inside student tabs ---- */
 html body #student-dashboard #quiz-list > * {
   background: #ffffff !important; border: 3px solid var(--kid-sky-100) !important;
@@ -214,20 +188,6 @@ html body #student-dashboard #my-shop-container {
   html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 { grid-row: 4 !important; }
   html body #student-navigation-groups .student-nav-group-button { padding: 12px 6px !important; font-size: 14px !important; }
 }
-
-/* ---- Card footer + text fixes ---- */
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-footer {
-  background: transparent !important; color: #1E293B !important;
-}
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-name {
-  color: #1E293B !important; font-family: Fredoka, Figtree, sans-serif !important; font-weight: 700 !important;
-}
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-number { color: #94A3B8 !important; }
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-rarity {
-  background: var(--kid-ink) !important; color: #ffffff !important; border-radius: 9999px !important;
-}
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .shop-card-power { color: #64748B !important; }
-html body #student-dashboard#student-dashboard #my-pokemon-list#my-pokemon-list .collection-health span { color: #475569 !important; }
 
 /* ---- Active nav pill must stay sunny yellow (beat legacy navy rule) ---- */
 html body #student-dashboard#student-dashboard #student-navigation-groups#student-navigation-groups .student-nav-group-button.student-dashboard-tab-active {
