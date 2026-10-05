@@ -17,6 +17,10 @@ declare global {
       signInWithGoogle: () => Promise<Result>;
       resetPassword: (email: string) => Promise<Result>;
       signOut: () => Promise<void>;
+      email: string | null;
+      getAccount: () => Promise<{ email: string; displayName: string; school: string } | null>;
+      updateProfile: (name: string, school: string) => Promise<Result>;
+      updatePassword: (password: string) => Promise<Result>;
     };
   }
 }
@@ -93,6 +97,24 @@ function Index() {
         return error ? { error: error.message } : {};
       },
       signOut: async () => { await supabase.auth.signOut(); },
+      email: user?.email ?? null,
+      getAccount: async () => {
+        const { data } = await supabase.auth.getUser();
+        const u = data.user;
+        if (!u) return null;
+        const { data: p } = await supabase.from("profiles").select("display_name, school").eq("id", u.id).maybeSingle();
+        return { email: u.email ?? "", displayName: p?.display_name ?? "", school: p?.school ?? "" };
+      },
+      updateProfile: async (name, school) => {
+        const { data } = await supabase.auth.getUser();
+        if (!data.user) return { error: "Not signed in" };
+        const { error } = await supabase.from("profiles").upsert({ id: data.user.id, display_name: name.slice(0, 80), school: school.slice(0, 120) || null });
+        return error ? { error: error.message } : {};
+      },
+      updatePassword: async (password) => {
+        const { error } = await supabase.auth.updateUser({ password });
+        return error ? { error: error.message } : {};
+      },
     };
   }
 
