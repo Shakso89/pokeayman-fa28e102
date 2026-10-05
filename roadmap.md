@@ -13,6 +13,6 @@
 - [x] Apply the selected styling to both shops and verify appearance and controls (filter, sort, search, pagination and card details; no purchasing changes).
 
 # Collection and student dashboard
-- [ ] Apply Mythic cards to student, profile and view-only collections, preserving HP and actions.
-- [ ] Fix student background gaps, empty teacher badge, header spacing and navigation layout.
-- [ ] Verify collection details and student navigation across screen sizes.
+- [x] Apply Mythic cards to student, profile and view-only collections, preserving HP and actions.
+- [x] Fix student background gaps, empty teacher badge, header spacing and navigation layout.
+- [x] Verify real student sign-in, collection details, study, games and logout; check desktop and narrow layouts with no card clipping.
