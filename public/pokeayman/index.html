@@ -12650,7 +12650,16 @@ function selectGameList(listRef) {
 }
 
 // Surprise Boxes-style vocabulary board with an optional kid-friendly power-up setup.
-const baamboozlePowerUps = ['Fairy','Thief','Rocket','Banana','Star','Heart','Eraser','Virus','Shark','Magnet','Lifesaver','Trap','Seesaw','Gold','Boom','Gift','Baam'];
+const baamboozlePowerUps = ['Star','Steal','Rocket','Bomb','Swap','Gift','Trap'];
+const BAAM_POWER_INFO = {
+  Star:   { name: 'Star Shower',    poke: 120, emoji: '⭐', desc: '+25 points for you!' },
+  Steal:  { name: 'Shadow Steal',   poke: 94,  emoji: '👻', desc: 'Steal 15 points from the leader!' },
+  Rocket: { name: 'Dragonite Rocket', poke: 149, emoji: '🚀', desc: 'Blast 5 points above first place!' },
+  Bomb:   { name: 'Voltorb Bomb',   poke: 100, emoji: '💥', desc: 'Oh no! −20 points.' },
+  Swap:   { name: "Mew's Mind Swap", poke: 151, emoji: '🔄', desc: 'Swap scores with the leader!' },
+  Gift:   { name: "Chansey's Care", poke: 113, emoji: '🎁', desc: 'Everyone else gets +10 points.' },
+  Trap:   { name: 'Wobbuffet Trap', poke: 202, emoji: '🪤', desc: 'Trapped! No points this turn.' }
+};
 function chooseBaamboozlePowerUps(listName) {
   const availableWords = getGameWords(listName).filter(w => w.vocab_word);
   if (!availableWords.length) { toast('Add vocabulary words first'); return; }
@@ -12809,7 +12818,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
   updateBaamDensityControls();
   window.addEventListener('resize', fitBaamBoard);
   window.visualViewport?.addEventListener('resize', fitBaamBoard);
-  board.innerHTML = tileNumbers.map(n => blankTiles.has(n) ? `<button type="button" class="aspect-[1.7] rounded-lg bg-slate-50 text-slate-300 text-3xl font-black shadow-sm" disabled>×</button>` : `<button type="button" class="baam-tile aspect-[1.7] rounded-lg bg-gradient-to-b from-blue-400 to-blue-600 text-white text-2xl sm:text-3xl font-black shadow-md hover:-translate-y-0.5 hover:shadow-lg transition" data-tile="${n}">${n}</button>`).join('');
+  board.innerHTML = tileNumbers.map(n => blankTiles.has(n) ? `<button type="button" class="aspect-[1.7] rounded-lg bg-slate-50 text-slate-300 text-3xl font-black shadow-sm" disabled>×</button>` : `<button type="button" class="baam-tile baam-giftbox" data-tile="${n}" aria-label="Open box ${n}" style="--d:${(n % 8) * 0.18}s"><span class="baam-box-lid" aria-hidden="true"></span><span class="baam-box-body" aria-hidden="true"><span class="baam-box-seal"></span></span><span class="baam-box-num">${n}</span></button>`).join('');
   updateBaamGridDensity();
   let selectedCard = null;
   const updateTeamScores = () => {
@@ -12818,59 +12827,20 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
       if (score) score.textContent = activeGameScores[index] || 0;
     });
   };
-  const randomPoints = () => 5 + Math.floor(Math.random() * 21);
-  const otherTeam = () => activeGameScores.length > 1 ? (activeGameScores[0] >= activeGameScores[1] ? 1 : 0) : 0;
   const applyPowerUp = (power) => {
     const current = activeGamePlayerIndex;
     const opponents = activeGameScores.map((_, index) => index).filter(index => index !== current);
-    const other = opponents[0];
     const before = [...activeGameScores];
-    const amount = randomPoints();
-    if (power === 'Fairy' || power === 'Heart' || power === 'Lifesaver' || power === 'Gift') {
-      // Share gifts across every other active player. Whole-point remainders
-      // go to the earliest eligible players for deterministic fairness.
-      const recipients = opponents.filter(index => Number.isFinite(activeGameScores[index]));
-      if (recipients.length) {
-        const baseShare = Math.floor(amount / recipients.length);
-        let remainder = amount % recipients.length;
-        recipients.forEach(index => {
-          const share = baseShare + (remainder-- > 0 ? 1 : 0);
-          activeGameScores[index] = Math.max(0, activeGameScores[index] + share);
-        });
-      }
-    } else if (power === 'Thief' || power === 'Shark' || power === 'Magnet') {
-      // Steal evenly from every eligible opponent, never below zero. Remainders
-      // are assigned in stable player order so no opponent is targeted twice.
-      let remaining = amount;
-      const deductions = opponents.map(index => ({ index, amount: 0 }));
-      while (remaining > 0) {
-        const eligible = deductions.filter(entry => activeGameScores[entry.index] - entry.amount > 0);
-        if (!eligible.length) break;
-        const share = Math.max(1, Math.floor(remaining / eligible.length));
-        eligible.forEach(entry => {
-          if (remaining <= 0) return;
-          const available = Math.max(0, activeGameScores[entry.index] - entry.amount);
-          const deduction = Math.min(available, share, remaining);
-          entry.amount += deduction;
-          remaining -= deduction;
-        });
-      }
-      const stolen = deductions.reduce((total, entry) => {
-        activeGameScores[entry.index] = Math.max(0, activeGameScores[entry.index] - entry.amount);
-        return total + entry.amount;
-      }, 0);
-      activeGameScores[current] += stolen;
+    const leader = opponents.slice().sort((a, b) => activeGameScores[b] - activeGameScores[a])[0];
+    if (power === 'Star') activeGameScores[current] += 25;
+    else if (power === 'Steal' && leader !== undefined) {
+      const taken = Math.min(15, Math.max(0, activeGameScores[leader]));
+      activeGameScores[leader] -= taken; activeGameScores[current] += taken;
     } else if (power === 'Rocket') activeGameScores[current] = Math.max(...activeGameScores) + 5;
-    else if (power === 'Banana') activeGameScores[current] = Math.min(...activeGameScores) - 5;
-    else if (power === 'Star') activeGameScores[current] += 1 + Math.floor(Math.random() * 25);
-    else if (power === 'Eraser') activeGameScores = activeGameScores.map((score, index) => index === current ? score : 0);
-    else if (power === 'Virus') activeGameScores.fill(0);
-    else if (power === 'Seesaw' && activeGameScores.length >= 2) {
-      [activeGameScores[0], activeGameScores[1]] = [activeGameScores[1], activeGameScores[0]];
-    }
-    else if (power === 'Gold') activeGameScores[current] += 50;
-    else if (power === 'Boom') activeGameScores[current] = Math.max(0, activeGameScores[current] - 50);
-    else if (power === 'Baam') activeGameScores[current] = Math.max(0, activeGameScores[current] - amount);
+    else if (power === 'Bomb') activeGameScores[current] = Math.max(0, activeGameScores[current] - 20);
+    else if (power === 'Swap' && leader !== undefined) {
+      [activeGameScores[current], activeGameScores[leader]] = [activeGameScores[leader], activeGameScores[current]];
+    } else if (power === 'Gift') opponents.forEach(index => { activeGameScores[index] += 10; });
     const impacts = activeGameScores.map((score, index) => score - before[index]);
     const updateTeamScores = () => {
       modal.querySelectorAll('.game-player-card').forEach((card, index) => {
