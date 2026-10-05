@@ -3837,6 +3837,58 @@ document.addEventListener('click', function (e) {
 #view-students #class-tabs-container .class-view-tab[class*="-active"]:not([class*="inactive"]){color:#fff!important;background:rgba(255,255,255,.2)!important;border-bottom-color:#facc15!important}
 #view-students .class-subtab-content > :first-child{border-top-left-radius:0!important;border-top-right-radius:0!important}
 </style>
+<style id="theme-pokedex-night">
+/* Cohesive "Pokédex at dusk" theme: navy glass that matches the sky and logo outline, Poké-yellow actions, red accents. */
+:root{
+ --ds-ink:#f5f7ff;--ds-muted:#b9c3e6;
+ --ds-surface:linear-gradient(160deg,rgba(22,30,74,.86),rgba(14,20,52,.80));
+ --ds-surface-soft:rgba(20,28,68,.78);
+ --ds-border:rgba(255,255,255,.14);
+ --ds-highlight:rgba(255,255,255,.18);
+ --ds-shadow:0 18px 40px rgba(6,10,35,.35),inset 0 1px 0 rgba(255,255,255,.10);
+ --ds-primary:linear-gradient(180deg,#ffd84d,#f5b800);
+ --ds-secondary:rgba(255,255,255,.08);
+ --ds-danger:linear-gradient(180deg,#ff5a4f,#d62f24);
+ --pd-yellow:#ffcb05;--pd-red:#e3350d;--pd-navy:#121a45;--pd-ink-dark:#1b2150;
+}
+.glass-container,.stat-card-glass,.vocab-list-card,.game-player-card{backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%)}
+.glass-container{position:relative}
+.glass-container::after{content:"";position:absolute;left:1.2rem;right:1.2rem;top:0;height:3px;border-radius:0 0 3px 3px;background:linear-gradient(90deg,var(--pd-red),var(--pd-yellow));opacity:.85;pointer-events:none}
+.glass-container .glass-container::after{display:none}
+/* Primary = Poké yellow with dark ink for real contrast */
+.btn-primary,.tab-active,.profile-tab-active,.student-dashboard-tab-active,.admin-sub-tab-active,.quiz-sub-tab-active,.class-tab-students-active,.class-tab-quiz-active,.class-tab-vocab-active,.class-tab-games-active,.class-tab-battle-active{color:var(--pd-ink-dark)!important;border:1px solid rgba(255,236,150,.9)!important;box-shadow:0 6px 18px rgba(245,184,0,.35),inset 0 1px 0 rgba(255,255,255,.6)!important;text-shadow:none!important}
+.btn-outline,.tab-inactive,.profile-tab-inactive,.student-dashboard-tab-inactive,.admin-sub-tab-inactive,.quiz-sub-tab-inactive,.class-tab-inactive,.class-tab-vocab-inactive,.class-tab-games-inactive{background:rgba(18,26,69,.72)!important;backdrop-filter:blur(10px);color:#f5f7ff!important}
+.btn-outline:hover,.tab-inactive:hover{background:rgba(30,40,100,.85)!important;border-color:rgba(255,203,5,.55)!important}
+.btn-danger,.btn-secondary.danger{background:var(--ds-danger)!important}
+/* Main nav: one docked bar */
+nav.sticky>div>div:first-child{background:rgba(18,26,69,.62);backdrop-filter:blur(12px);padding:.3rem;border-radius:999px;border:1px solid rgba(255,255,255,.14);gap:.25rem!important}
+nav.sticky .tab-btn.tab-inactive{background:transparent!important;border-color:transparent!important;box-shadow:none!important}
+nav.sticky .tab-btn.tab-inactive:hover{background:rgba(255,255,255,.1)!important}
+/* Class tabs: navy strip, yellow active */
+#view-students #class-tabs-container{background:rgba(18,26,69,.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.14)!important;border-bottom:0!important;border-radius:1rem 1rem 0 0;padding:.35rem .35rem 0;margin:0 1rem!important}
+#view-students #class-tabs-container .class-view-tab{color:#d6dcf5!important;text-shadow:none}
+#view-students #class-tabs-container .class-view-tab[class*="-active"]:not([class*="inactive"]){background:var(--ds-surface)!important;color:var(--pd-yellow)!important;border-bottom-color:var(--pd-yellow)!important}
+/* Header badge: navy + gold instead of brown */
+.ths{background:linear-gradient(135deg,rgba(18,26,69,.9),rgba(32,44,110,.85))!important;border-color:rgba(255,203,5,.75)!important}
+.ths-role{color:var(--pd-yellow)!important}
+/* Breadcrumb readability over sky */
+#breadcrumb .bc-trail{display:inline-flex;background:rgba(18,26,69,.55);backdrop-filter:blur(10px);padding:.35rem .9rem;border-radius:999px;border:1px solid rgba(255,255,255,.12);text-shadow:none}
+#breadcrumb .bc-current{color:var(--pd-yellow)}
+/* Section labels & inputs */
+.glass-container h3,.glass-container h2{color:#fff}
+input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{background:rgba(255,255,255,.95)!important;color:var(--pd-ink-dark)!important;border:1px solid rgba(18,26,69,.25)!important;border-radius:.7rem!important}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pd-yellow)!important;outline-offset:1px}
+/* Soft dusk veil so the bright scenery doesn't fight the panels */
+#app-screen:not(.hidden){background:linear-gradient(180deg,rgba(18,26,69,.12) 0%,rgba(18,26,69,0) 35%,rgba(10,16,45,.40) 100%),url('/__l5e/assets-v1/11d538ad-dd06-42ea-8131-ce7d76bbbc3d/app-bg.jpg') center center / cover fixed no-repeat!important}
+</style>
+<style id="theme-pokedex-night-boost">
+html body#b, html body .glass-container, html body #app-screen .glass-container, html body #view-students .glass-container, html body #tab-admin .glass-container, html body #class-subtab-students > .glass-container, html body #class-subtab-games > .glass-container{background:var(--ds-surface)!important;border-color:var(--ds-border)!important}
+html body #app-screen .btn-primary, html body #app-screen .tab-active, html body #app-screen .btn-success, html body #app-screen [class*="-tab-active"], html body #app-screen .class-tab-students-active{background:var(--ds-primary)!important;color:var(--pd-ink-dark)!important}
+html body #app-screen nav .tab-btn.tab-active{background:var(--ds-primary)!important;color:var(--pd-ink-dark)!important}
+html body #app-screen nav button:not(.tab-btn){background:rgba(18,26,69,.72)!important;color:#fff!important;border:1px solid rgba(255,255,255,.16)!important}
+html body #view-students #class-tabs-container .class-view-tab[class*="-active"]:not([class*="inactive"]){background:rgba(255,255,255,.08)!important;color:var(--pd-yellow)!important;box-shadow:none!important;border:0!important;border-bottom:3px solid var(--pd-yellow)!important}
+html body #view-students #class-tabs-container .class-view-tab{background:transparent!important;border:0!important;border-bottom:3px solid transparent!important;box-shadow:none!important}
+</style>
 </head>
  <body data-template-id="__page-root" class="min-h-screen">
   <style>
