@@ -1,0 +1,126 @@
+/* Class workspace tokens and presentation stay inside the isolated Canva app. */
+:root {
+  --class-surface: #121a45;
+  --class-deep: #0c1232;
+  --class-ink: #f5f7ff;
+  --class-muted: #b1bbd7;
+  --class-yellow: #ffcb05;
+  --class-red: #e3350d;
+  --class-border: color-mix(in srgb, var(--class-ink) 16%, transparent);
+  --class-shadow: 0 12px 28px color-mix(in srgb, var(--class-deep) 42%, transparent);
+  --class-champion: linear-gradient(180deg, color-mix(in srgb, var(--class-yellow) 16%, var(--class-surface)), var(--class-surface) 65%);
+}
+html body #app-screen #view-students { font-family: 'Figtree', sans-serif; min-width: 0; }
+html body #app-screen #view-students #class-tabs-container {
+  display: grid !important; grid-template-columns: repeat(5,minmax(0,1fr));
+  gap: 6px !important; padding: 6px !important; margin: 0 0 20px !important;
+  height: auto !important; max-height: none !important; width: 100%;
+  overflow: visible !important; align-items: stretch; border-radius: 8px;
+  background: var(--class-surface) !important; border: 1px solid var(--class-border) !important;
+  box-shadow: var(--class-shadow); backdrop-filter: blur(12px);
+}
+html body #app-screen #view-students #class-tabs-container .class-view-tab {
+  min-width: 0; min-height: 54px; margin: 0 !important; padding: 10px 8px !important;
+  font-family: 'Outfit', sans-serif; font-size: 14px; letter-spacing: 0 !important;
+  white-space: normal !important; overflow-wrap: anywhere; line-height: 1.3;
+  border: 1px solid transparent !important; border-radius: 6px !important;
+  background: transparent !important; color: var(--class-muted) !important;
+  box-shadow: none !important; text-shadow: none !important; transform: none;
+}
+html body #app-screen #view-students #class-tabs-container .class-view-tab:hover {
+  background: color-mix(in srgb, var(--class-ink) 7%, transparent) !important;
+  color: var(--class-ink) !important;
+}
+html body #app-screen #view-students #class-tabs-container .class-view-tab[class*="-active"]:not([class*="inactive"]) {
+  background: var(--class-yellow) !important; color: var(--class-deep) !important;
+  border-color: var(--class-yellow) !important; box-shadow: none !important;
+}
+html body #app-screen #view-students #class-tabs-container .class-view-tab:focus-visible,
+html body #app-screen #view-students .trainer-student-card:focus-visible {
+  outline: 3px solid var(--class-yellow) !important; outline-offset: 3px;
+}
+html body #app-screen #view-students .class-action-console {
+  background: color-mix(in srgb, var(--class-surface) 94%, transparent) !important;
+  border: 1px solid var(--class-border) !important; border-radius: 8px !important;
+  padding: 20px !important; margin: 0 0 28px !important; box-shadow: var(--class-shadow) !important;
+}
+html body #app-screen #view-students .class-action-console::before { display: none; }
+html body #app-screen #view-students .class-student-controls-row {
+  display: grid !important; grid-template-columns: minmax(0,2fr) minmax(0,3fr);
+  gap: 24px !important; overflow: visible !important; align-items: start !important;
+}
+html body #app-screen #view-students .class-student-control-group { display: block !important; min-width: 0; }
+html body #app-screen #view-students .class-student-control-group h3 {
+  font-family: 'Outfit',sans-serif !important; color: var(--class-muted) !important;
+  font-size: 12px !important; font-weight: 600 !important; text-transform: uppercase;
+  letter-spacing: 0 !important; margin: 0 0 10px !important; line-height: 1.4;
+}
+html body #app-screen #view-students #add-student-form { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+html body #app-screen #view-students .class-gift-controls { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; }
+html body #app-screen #view-students #award-form { display: grid !important; grid-template-columns: minmax(90px,1fr) 54px auto; gap: 6px; min-width: 0; }
+html body #app-screen #view-students #gift-all-form { display: grid; grid-template-columns: 54px auto; gap: 6px; }
+html body #app-screen #view-students .class-action-console input,
+html body #app-screen #view-students .class-action-console select {
+  width: 100% !important; min-width: 0 !important; height: 44px;
+  background: var(--class-deep) !important; color: var(--class-ink) !important;
+  border: 1px solid var(--class-border) !important; border-radius: 6px !important;
+  font: 14px 'Figtree',sans-serif; padding: 8px !important; box-shadow: none !important;
+}
+html body #app-screen #view-students .class-action-console input::placeholder { color: var(--class-muted); }
+html body #app-screen #view-students .class-action-console :is(input,select):focus { outline: 2px solid var(--class-yellow); outline-offset: 2px; }
+html body #app-screen #view-students .class-action-console button {
+  min-height: 44px; border-radius: 6px !important; padding: 8px 14px !important;
+  font: 700 14px 'Outfit',sans-serif; white-space: nowrap;
+  background: var(--class-yellow) !important; color: var(--class-deep) !important;
+  border: 1px solid var(--class-yellow) !important; box-shadow: none !important;
+}
+html body #app-screen #view-students #add-student-form button { background: var(--class-surface) !important; color: var(--class-ink) !important; border-color: var(--class-border) !important; }
+html body #app-screen #view-students #gift-all-form button { background: var(--class-red) !important; color: var(--class-ink) !important; border-color: var(--class-red) !important; }
+html body #app-screen #view-students .class-action-console button:hover { filter: brightness(1.12); transform: none !important; }
+html body #app-screen #view-students #students-list { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; padding: 12px 0 24px; }
+html body #app-screen #view-students #students-list > .trainer-student-card {
+  position: relative; min-width: 0; padding: 24px 20px 20px !important; border-radius: 8px !important;
+  background: var(--class-surface) !important; color: var(--class-ink) !important;
+  border: 1px solid var(--class-border) !important; box-shadow: var(--class-shadow) !important;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  cursor: pointer; transition: transform .2s, border-color .2s; overflow: visible;
+}
+html body #app-screen #view-students #students-list > .trainer-student-card.class-rank-1 { background: var(--class-champion) !important; border-color: color-mix(in srgb,var(--class-yellow) 55%,transparent) !important; }
+html body #app-screen #view-students #students-list > .trainer-student-card:hover { transform: translateY(-4px); border-color: var(--class-yellow) !important; }
+html body #app-screen #view-students .student-rank {
+  position: absolute; top: -12px; left: -8px; z-index: 2; width: 38px; height: 38px;
+  display: grid; place-items: center; border: 3px solid var(--class-surface); border-radius: 50%;
+  background: var(--class-muted); color: var(--class-deep); font: 800 17px 'Outfit',sans-serif;
+  transform: rotate(-10deg); box-shadow: var(--class-shadow);
+}
+html body #app-screen #view-students .class-rank-1 .student-rank { background: var(--class-yellow); }
+html body #app-screen #view-students .student-avatar-stage { width: 100%; height: 170px; display: grid; place-items: center; margin-bottom: 16px; }
+html body #app-screen #view-students .student-avatar-stage img { width: 156px !important; height: 156px !important; object-fit: contain; background: transparent !important; border: none !important; border-radius: 0 !important; }
+html body #app-screen #view-students .student-avatar-initial { width: 100px; height: 100px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--class-border); background: var(--class-deep); color: var(--class-muted); font: 700 40px 'Outfit',sans-serif; }
+html body #app-screen #view-students .trainer-student-card .student-roster-name { width: 100%; overflow-wrap: anywhere; font: 700 24px 'Outfit',sans-serif; color: var(--class-ink) !important; margin: 0 0 12px; text-shadow: none !important; }
+html body #app-screen #view-students .trainer-student-card .student-roster-coins { display: flex; gap: 8px; align-items: baseline; font: 800 22px 'Outfit',sans-serif; color: var(--class-yellow) !important; margin: 0 0 12px; text-shadow: none !important; }
+html body #app-screen #view-students .student-roster-coins span { font: 400 12px 'Figtree',sans-serif; color: var(--class-muted); }
+html body #app-screen #view-students .trainer-student-card .student-roster-count { font-size: 13px; color: var(--class-muted) !important; text-shadow: none !important; }
+html body #app-screen #view-students .student-roster-edit { position: absolute; right: 10px; bottom: 12px; width: 32px; height: 32px; min-height: 32px; border-radius: 6px; background: transparent !important; color: var(--class-muted) !important; border: 1px solid var(--class-border) !important; box-shadow: none !important; padding: 0; }
+html body #app-screen #view-students .student-roster-edit:hover { color: var(--class-yellow) !important; }
+html body #app-screen #view-students #students-list .global-rank-marker { display: none; }
+html body #app-screen #view-students #students-list .global-achievement-badge { top: 8px; right: 8px; }
+@media(max-width:1100px) {
+  html body #app-screen #view-students .class-student-controls-row { grid-template-columns: minmax(0,1fr); gap: 18px !important; }
+}
+@media(max-width:700px) {
+  html body #app-screen #view-students #class-tabs-container { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  html body #app-screen #view-students #class-tabs-container .class-view-tab { font-size: 12px; min-height: 48px; }
+  html body #app-screen #view-students .class-action-console { padding: 14px !important; }
+  html body #app-screen #view-students .class-gift-controls { grid-template-columns: minmax(0,1fr); }
+  html body #app-screen #view-students #gift-all-form { grid-template-columns: 54px auto; justify-content: end; }
+  html body #app-screen #view-students #students-list { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+  html body #app-screen #view-students #students-list > .trainer-student-card { padding: 20px 10px 16px !important; }
+  html body #app-screen #view-students .student-avatar-stage { height: 132px; }
+  html body #app-screen #view-students .student-avatar-stage img { width: 124px !important; height: 124px !important; }
+  html body #app-screen #view-students .trainer-student-card .student-roster-name { font-size: 20px; }
+  html body #app-screen #view-students .student-roster-edit { position: static; margin-top: 12px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  html body #app-screen #view-students * { transition: none !important; }
+}
