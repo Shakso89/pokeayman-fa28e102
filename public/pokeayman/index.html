@@ -8600,6 +8600,8 @@ function renderStudentDashboard() {
     document.getElementById('my-total-power').textContent = '—';
     document.getElementById('my-total-value').textContent = '—';
     document.getElementById('my-pokemon-list').innerHTML = '';
+    const missingClassesList = document.getElementById('my-classes-list');
+    if (missingClassesList) missingClassesList.innerHTML = '';
     document.getElementById('my-pokemon-empty').textContent = 'Your saved student record could not be found.';
     document.getElementById('my-pokemon-empty').classList.remove('hidden');
     return;
