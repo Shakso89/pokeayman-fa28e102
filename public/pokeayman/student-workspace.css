@@ -344,3 +344,22 @@ html body #student-dashboard#student-dashboard #student-tab-shop .shop-pager-btn
 }
 html body #student-dashboard#student-dashboard #student-tab-shop .shop-pager-btn.active { background: var(--kid-yellow) !important; border-color: var(--kid-yellow-dark) !important; }
 html body #student-dashboard#student-dashboard #student-tab-shop :is(.shop-pager-info, .shop-pager-gap) { color: var(--kid-ink) !important; }
+
+/* My Classes section in the student profile card */
+html body #student-dashboard#student-dashboard .my-classes-section { text-align: center; }
+html body #student-dashboard#student-dashboard .my-classes-title {
+  margin: 0 0 .4rem; font-family: 'Fredoka', sans-serif; font-size: .72rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--kid-ink); opacity: .75;
+}
+html body #student-dashboard#student-dashboard .my-classes-list { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; }
+html body #student-dashboard#student-dashboard .my-class-chip {
+  display: inline-flex; align-items: baseline; gap: .25rem; max-width: 100%;
+  padding: .3rem .6rem; border-radius: 999px; border: 2px solid var(--kid-sky-100);
+  background: var(--kid-paper); color: var(--kid-ink);
+  font-family: 'Fredoka', sans-serif; font-size: .72rem; font-weight: 700; line-height: 1.2;
+  box-shadow: var(--kid-control-shadow);
+}
+html body #student-dashboard#student-dashboard .my-class-chip .my-class-school { font-size: .62rem; font-weight: 600; opacity: .65; }
+html body #student-dashboard#student-dashboard .my-classes-empty {
+  margin: 0; font-size: .72rem; font-weight: 600; color: var(--kid-ink); opacity: .6;
+}
