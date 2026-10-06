@@ -7574,8 +7574,32 @@ function getStudentEnrolledClasses() {
     const linkedMatch = nameMatch && (pinMatch || !identity.student_pin || !record.student_pin);
     return stableMatch || linkedMatch;
   };
-  const enrollments = getAllStudents().filter(record => record.school_name && record.class_name && sameIdentity(record));
-  return enrollments.filter((record, index, rows) => rows.findIndex(row => row.school_name === record.school_name && row.class_name === record.class_name) === index);
+  // getAllStudents() merges every membership row into one canonical record whose
+  // class_memberships lists each joined class as "School / Class" (||-joined).
+  // Parse that list so multi-class students see every class, not just one.
+  const results = [];
+  const seen = new Set();
+  const push = (school, cls) => {
+    school = String(school || '').trim();
+    cls = String(cls || '').trim();
+    if (!school || !cls) return;
+    const key = `${school}||${cls}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    results.push({ school_name: school, class_name: cls });
+  };
+  getAllStudents().filter(sameIdentity).forEach(record => {
+    normalizeStudentMembershipValues(record.class_memberships, []).forEach(value => {
+      String(value).split('||').forEach(part => {
+        const text = String(part || '').trim();
+        if (!text) return;
+        const sepIndex = text.indexOf(' / ');
+        if (sepIndex > -1) push(text.slice(0, sepIndex), text.slice(sepIndex + 3));
+      });
+    });
+    push(record.school_name, record.class_name);
+  });
+  return results;
 }
 function setStudentClassContext(classRecord) {
   if (!classRecord) return;
