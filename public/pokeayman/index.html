@@ -4647,7 +4647,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         <p id="my-total-value" class="text-xl font-black text-blue-400">0</p>
         <p class="text-xs text-white mt-1 font-semibold">Value</p>
        </div>
-      </div><button id="student-logout-btn" class="w-full px-4 py-2 rounded-lg font-semibold text-sm bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all">Logout</button>
+      </div>
+      <div id="my-classes-section" class="my-classes-section mb-3">
+       <p class="my-classes-title">My Classes</p>
+       <div id="my-classes-list" class="my-classes-list"></div>
+      </div>
+      <button id="student-logout-btn" class="w-full px-4 py-2 rounded-lg font-semibold text-sm bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all">Logout</button>
      </div><!-- Right Column: Tabs & Content -->
      <div class="flex-1 flex flex-col min-w-0">
       <div id="student-navigation-groups" class="flex gap-2 mb-4 flex-wrap" role="navigation" aria-label="Student dashboard navigation">
@@ -7569,8 +7574,32 @@ function getStudentEnrolledClasses() {
     const linkedMatch = nameMatch && (pinMatch || !identity.student_pin || !record.student_pin);
     return stableMatch || linkedMatch;
   };
-  const enrollments = getAllStudents().filter(record => record.school_name && record.class_name && sameIdentity(record));
-  return enrollments.filter((record, index, rows) => rows.findIndex(row => row.school_name === record.school_name && row.class_name === record.class_name) === index);
+  // getAllStudents() merges every membership row into one canonical record whose
+  // class_memberships lists each joined class as "School / Class" (||-joined).
+  // Parse that list so multi-class students see every class, not just one.
+  const results = [];
+  const seen = new Set();
+  const push = (school, cls) => {
+    school = String(school || '').trim();
+    cls = String(cls || '').trim();
+    if (!school || !cls) return;
+    const key = `${school}||${cls}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    results.push({ school_name: school, class_name: cls });
+  };
+  getAllStudents().filter(sameIdentity).forEach(record => {
+    normalizeStudentMembershipValues(record.class_memberships, []).forEach(value => {
+      String(value).split('||').forEach(part => {
+        const text = String(part || '').trim();
+        if (!text) return;
+        const sepIndex = text.indexOf(' / ');
+        if (sepIndex > -1) push(text.slice(0, sepIndex), text.slice(sepIndex + 3));
+      });
+    });
+    push(record.school_name, record.class_name);
+  });
+  return results;
 }
 function setStudentClassContext(classRecord) {
   if (!classRecord) return;
@@ -8584,6 +8613,8 @@ function renderStudentDashboard() {
     document.getElementById('my-pokemon-count').textContent = '…';
     document.getElementById('my-total-power').textContent = '…';
     document.getElementById('my-total-value').textContent = '…';
+    const loadingClassesList = document.getElementById('my-classes-list');
+    if (loadingClassesList) loadingClassesList.innerHTML = '';
     return;
   }
   if (!student) {
@@ -8593,6 +8624,8 @@ function renderStudentDashboard() {
     document.getElementById('my-total-power').textContent = '—';
     document.getElementById('my-total-value').textContent = '—';
     document.getElementById('my-pokemon-list').innerHTML = '';
+    const missingClassesList = document.getElementById('my-classes-list');
+    if (missingClassesList) missingClassesList.innerHTML = '';
     document.getElementById('my-pokemon-empty').textContent = 'Your saved student record could not be found.';
     document.getElementById('my-pokemon-empty').classList.remove('hidden');
     return;
@@ -8698,7 +8731,20 @@ function renderStudentDashboard() {
     totalValue += scaledPrice;
   });
   document.getElementById('my-total-value').textContent = Math.floor(totalValue);
-  
+
+  // My Classes: list every class this student has joined, not just one
+  const myClassesList = document.getElementById('my-classes-list');
+  if (myClassesList) {
+    const enrolledClasses = getStudentEnrolledClasses();
+    if (!enrolledClasses.length) {
+      myClassesList.innerHTML = '<p class="my-classes-empty">No classes yet</p>';
+    } else {
+      myClassesList.innerHTML = enrolledClasses.map(item =>
+        `<span class="my-class-chip">${item.class_name}<span class="my-class-school">· ${item.school_name}</span></span>`
+      ).join('');
+    }
+  }
+
   // Pokémon collection
   const pokemonContainer = document.getElementById('my-pokemon-list');
   const pokemonEmpty = document.getElementById('my-pokemon-empty');
