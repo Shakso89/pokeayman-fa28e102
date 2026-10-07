@@ -1,4 +1,5 @@
 # Class screen refresh
+- [x] Replace coin award, deduction and class-gift celebrations with centered animated pop-ups; verified signed amounts, dismissal, compact layout and reduced motion in the live preview. Authenticated teacher awarding remains unverified because no matching preview account was available; saving logic unchanged.
 - [x] Remove scrolling from class tabs and student actions.
 - [x] Apply selected Elite Trainer Dashboard student cards.
 - [x] Check class switching, student profile access and narrow layouts (presentation test; no authenticated data changes).
