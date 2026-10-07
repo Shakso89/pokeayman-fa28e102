@@ -3,6 +3,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PokéAyman</title>
+  <link rel="stylesheet" href="/pokeayman/coin-celebrations.css">
   <style>
     :root { --home-bg-image: none; }
     .shop-pager { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:.4rem; margin:1.25rem 0 .5rem; }
@@ -6221,39 +6222,71 @@ document.addEventListener('click', event => {
   if (nameEl?.textContent.trim()) showMotivationalPopup(nameEl.textContent.trim());
 });
 
-function showGiftAllCelebration() {
-  const pokemonId = Math.floor(Math.random() * 151) + 1;
+function showCoinCelebration(student, amount, classCount = 0) {
+  document.querySelector('.coin-celebration-overlay')?.dispatchEvent(new Event('coin-close'));
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount)) return;
+  const negative = numericAmount < 0;
+  const value = Math.abs(numericAmount);
+  const sign = negative ? '−' : '+';
+  const safe = text => String(text ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+  const name = safe(student?.student_name || 'Trainer');
+  const title = classCount ? 'Amazing teamwork!' : negative ? `Next round, ${name}!` : `Brilliant work, ${name}!`;
+  const message = classCount ? `${classCount} students · ${value.toLocaleString()} coins each` : negative ? 'A little setback. Your next win is waiting!' : 'Keep shining. You earned it!';
   const overlay = document.createElement('div');
-  overlay.className = 'game-celebration-overlay';
-  overlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="gift-all-celebration-title">
-    <img class="game-celebration-pikachu" loading="eager" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${pokemonId}.png" alt="A Pokémon celebrating the class gift">
-    <h2 id="gift-all-celebration-title" class="heading-font text-4xl font-bold text-amber-600 relative z-10">🎉 Good Job All!</h2>
-    <p class="text-lg font-semibold text-slate-700 mt-2 relative z-10">Every student received their coins!</p>
-    <button type="button" id="gift-all-celebration-close" class="btn-primary w-full mt-6 relative z-10">Awesome!</button>
-  </div>`;
+  overlay.className = 'coin-celebration-overlay';
+  overlay.innerHTML = `<section class="coin-celebration-card ${negative ? 'is-deduction' : ''}" role="dialog" aria-modal="true" aria-labelledby="coin-celebration-title" aria-describedby="coin-celebration-final coin-celebration-message">
+    <div class="coin-particles" aria-hidden="true">${'<i class="coin-particle"></i>'.repeat(8)}</div>
+    <p class="coin-celebration-kicker">${negative ? 'Coin adjustment' : classCount ? 'Class reward' : 'Reward unlocked'}</p>
+    <div class="coin-art-stage" aria-hidden="true"><span class="coin-art-ring"></span><span class="coin-art-ring"></span><div class="coin-medallion"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4"><circle cx="32" cy="32" r="22"/><path d="M10 32h44"/><circle cx="32" cy="32" r="8" fill="var(--coin-light)"/></svg></div></div>
+    <h2 id="coin-celebration-title" class="coin-celebration-title">${title}</h2>
+    <div class="coin-celebration-amount" aria-hidden="true"><span class="coin-celebration-number">${sign}0</span><span class="coin-celebration-unit">coins${classCount ? ' each' : ''}</span></div>
+    <span id="coin-celebration-final" class="sr-only">${negative ? 'Minus' : 'Plus'} ${value.toLocaleString()} coins${classCount ? ' per student' : ''}</span>
+    <p id="coin-celebration-message" class="coin-celebration-message">${message}</p>
+    <button type="button" class="btn-primary coin-celebration-close" data-sfx="click">${negative ? 'Keep going!' : 'Awesome!'}</button>
+  </section>`;
+  const previousFocus = document.activeElement;
+  const previousOverflow = document.body.style.overflow;
+  let frame = 0;
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    cancelAnimationFrame(frame);
+    overlay.remove();
+    document.body.style.overflow = previousOverflow;
+    if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
+  };
+  overlay.addEventListener('coin-close', close);
+  overlay.addEventListener('click', event => { if (event.target === overlay) close(); });
+  overlay.addEventListener('keydown', event => {
+    if (event.key === 'Escape') close();
+    if (event.key === 'Tab') { event.preventDefault(); overlay.querySelector('button')?.focus(); }
+  });
+  overlay.querySelector('button')?.addEventListener('click', close);
   document.body.appendChild(overlay);
-  const close = () => overlay.remove();
-  overlay.querySelector('#gift-all-celebration-close').addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.body.style.overflow = 'hidden';
+  overlay.querySelector('button')?.focus({ preventScroll: true });
+  window.pokeSfx?.play(negative ? 'minus' : 'star');
+  const number = overlay.querySelector('.coin-celebration-number');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const start = performance.now();
+  const tick = now => {
+    if (closed || !number) return;
+    const progress = reduced ? 1 : Math.min(1, (now - start) / 1100);
+    const count = Math.round(value * (1 - Math.pow(1 - progress, 3)));
+    number.textContent = `${sign}${count.toLocaleString()}`;
+    if (progress < 1) frame = requestAnimationFrame(tick);
+  };
+  frame = requestAnimationFrame(tick);
+}
+
+function showGiftAllCelebration(amount = 10, count = 0) {
+  showCoinCelebration(null, amount, count);
 }
 
 function showStudentAwardCelebration(student, amount = 10) {
-  const pokemonId = student?.avatar_pokemon_id || 25;
-  const studentName = student?.student_name || 'Student';
-  const safeStudentName = String(studentName).replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
-  const isNegative = amount < 0;
-  const overlay = document.createElement('div');
-  overlay.className = 'game-celebration-overlay';
-  overlay.innerHTML = `<div class="award-celebration-card ${isNegative ? 'negative-award-card' : ''}" role="dialog" aria-modal="true" aria-labelledby="student-award-celebration-title">
-    ${isNegative ? '<div class="sad-award-animation" aria-hidden="true"><span class="sad-cloud">☁️</span><span class="sad-face">😔</span><span class="sad-drop">💧</span></div>' : `<img class="game-celebration-pikachu" loading="eager" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${pokemonId}.png" alt="${studentName}'s avatar Pokémon reacting to a coin adjustment">`}
-    <h2 id="student-award-celebration-title" class="heading-font text-4xl font-bold ${isNegative ? 'text-blue-600' : 'text-amber-600'} relative z-10">${isNegative ? `Sorry, ${safeStudentName}` : `Good job, ${safeStudentName}!`}</h2>
-    <p class="text-3xl font-black ${isNegative ? 'text-blue-600' : 'text-amber-600'} mt-2 relative z-10">${isNegative ? `-${Math.abs(amount)} points` : `+${amount} coins`}</p>
-    <button type="button" id="student-award-celebration-close" class="btn-primary w-full mt-6 relative z-10">${isNegative ? 'I’ll try!' : 'Awesome!'}</button>
-  </div>`;
-  document.body.appendChild(overlay);
-  const close = () => overlay.remove();
-  overlay.querySelector('#student-award-celebration-close').addEventListener('click', close);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  showCoinCelebration(student, amount);
 }
 
 function getSchools() { return allData.filter(r => r.type === 'school'); }
@@ -11048,7 +11081,7 @@ document.getElementById('gift-all-form').addEventListener('submit', async e => {
   renderStudentDashboard();
   await logCredit('Gift All', totalCost, `${navClass} (${updatedStudents.length} students)`); playTransactionSound('reward');
   toast(`🎁 Gifted ${amount} coins to ${updatedStudents.length} students!`);
-  showGiftAllCelebration();
+  showGiftAllCelebration(amount, updatedStudents.length);
 });
 
 // Quiz form
