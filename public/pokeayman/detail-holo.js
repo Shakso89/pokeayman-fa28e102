@@ -2,7 +2,13 @@
 (function () {
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   function ensureElectric(card) {
-    if (!card.classList.contains('detail-card-legendary')) return;
+    var border = card.querySelector('.dh-electric-border');
+    if (!card.classList.contains('detail-card-legendary')) {
+      if (border) border.remove();
+      var defs = document.getElementById('dh-turbulent-displace');
+      if (defs && defs.ownerSVGElement) defs.ownerSVGElement.remove();
+      return;
+    }
     if (!document.getElementById('dh-turbulent-displace')) {
       var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.setAttribute('aria-hidden', 'true');
@@ -23,7 +29,7 @@
         '</filter></defs>';
       document.body.appendChild(svg);
     }
-    if (card.querySelector('.dh-electric-border')) return;
+    if (border) return;
     var wrap = document.createElement('div');
     wrap.className = 'dh-electric-border';
     wrap.setAttribute('aria-hidden', 'true');

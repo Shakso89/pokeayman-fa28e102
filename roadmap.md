@@ -51,5 +51,9 @@
 # Natural vocabulary reading
 - [x] Replace device speech in both flashcard views with one natural voice for words and sentences.
 - [x] Verify real student word/sentence audio streams, cached replay and clear failure messages; teacher buttons use the same reader, but authenticated teacher navigation and subjective audible quality remain unverified.
-- [ ] Delete the Noah vocabulary list from saved app data and verify removal.
-- [ ] Redesign the public home page using the shared reference, reinterpreted with Pokémon visuals.
+- [x] Delete the Noah vocabulary list from saved app data and verify removal.
+- [x] Redesign the public home page using the shared reference, reinterpreted with Pokémon visuals.
+
+# Details card tier effects
+- [x] Keep the gold electric border and its energy filter on legendary details cards only; common, uncommon and rare cards must never show it.
+- [x] Verify legendary shows the border, common/uncommon/rare never do, and the border survives repeated tier switches.
