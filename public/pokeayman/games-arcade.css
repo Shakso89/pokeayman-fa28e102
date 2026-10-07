@@ -1,0 +1,48 @@
+/* Arcade games hub. Uses the teacher-shell tokens with safe fallbacks so it adapts to dark and bright modes. */
+.ga-hub { --ga-surface: var(--ts-surface, #131c2e); --ga-ink: var(--ts-ink, #f5f7ff); --ga-muted: var(--ts-muted, #a5b0cc); --ga-border: var(--ts-border, rgba(255,255,255,.08)); --ga-yellow: var(--ts-yellow, #ffcb05);
+  border-radius: 20px; padding: 1rem; background: var(--ga-surface); border: 1px solid var(--ga-border); color: var(--ga-ink); font-family: 'Figtree', system-ui, sans-serif; }
+.ga-hub-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .85rem; }
+.ga-hub-kicker { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.25rem; letter-spacing: .02em; }
+.ga-hub-list { font-size: .85rem; color: var(--ga-muted); } .ga-hub-list b { color: var(--ga-yellow); }
+.ga-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .85rem; }
+
+.ga-cart { --a: #ffcb05; position: relative; display: flex; flex-direction: column; text-align: left; border-radius: 18px; overflow: hidden; cursor: pointer;
+  background: color-mix(in srgb, var(--a) 8%, var(--ga-surface)); border: 1.5px solid color-mix(in srgb, var(--a) 35%, transparent); color: var(--ga-ink);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s; }
+.ga-cart:hover { transform: translateY(-4px); border-color: var(--a); box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--a) 70%, transparent); }
+.ga-cart:focus-visible { outline: 3px solid var(--ga-yellow); outline-offset: 3px; }
+.ga-pink { --a: #ff6fb5; } .ga-red { --a: #ff5a5f; } .ga-violet { --a: #a78bfa; } .ga-blue { --a: #4fa3ff; } .ga-yellow { --a: #ffcb05; } .ga-mint { --a: #34d399; }
+.ga-cart-art { display: grid; place-items: center; height: 96px; background: radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--a) 70%, white) 0, var(--a) 45%, color-mix(in srgb, var(--a) 55%, black) 100%); position: relative; }
+.ga-cart-art::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(135deg, rgba(255,255,255,.08) 0 10px, transparent 10px 20px); }
+.ga-cart-art span { font-size: 2.6rem; filter: drop-shadow(0 6px 8px rgba(0,0,0,.3)); transition: transform .25s; position: relative; z-index: 1; }
+.ga-cart:hover .ga-cart-art span { transform: scale(1.15) rotate(-6deg); }
+.ga-cart-body { display: flex; flex-direction: column; gap: .35rem; padding: .8rem .9rem .3rem; flex: 1; }
+.ga-cart-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.1rem; }
+.ga-cart-desc { font-size: .82rem; color: var(--ga-muted); line-height: 1.35; }
+.ga-cart-tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .2rem; }
+.ga-cart-tags span { font-size: .68rem; font-weight: 800; padding: .15rem .5rem; border-radius: 999px; background: color-mix(in srgb, var(--a) 20%, transparent); color: var(--ga-ink); }
+.ga-cart-play { margin: .55rem .9rem .9rem; align-self: flex-start; font-weight: 900; font-size: .8rem; padding: .35rem .85rem; border-radius: 999px; background: var(--a); color: #111827; }
+
+/* Lobby */
+.ga-lobby .ga-lobby-icon { display: inline-block; margin-right: .2rem; }
+.ga-quick { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4rem; margin: 0 0 .75rem; font-size: .8rem; }
+.ga-quick span { color: var(--ts-muted, #a5b0cc); margin-right: .3rem; font-weight: 700; }
+.ga-quick button { border-radius: 999px; padding: .3rem .8rem; font-weight: 800; border: 1px solid var(--ts-border, rgba(255,255,255,.15)); background: var(--ts-chip, rgba(255,255,255,.06)); color: var(--ts-ink, #f5f7ff); }
+.ga-quick button:hover { border-color: var(--ts-yellow, #ffcb05); }
+
+/* Countdown */
+.ga-countdown { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: radial-gradient(circle at center, rgba(30,41,90,.92), rgba(5,8,20,.97)); color: #fff; font-family: 'Outfit', sans-serif; animation: ga-fade .25s ease; }
+.ga-cd-stage { text-align: center; padding: 1.5rem; }
+.ga-cd-players { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.ga-cd-player { display: flex; flex-direction: column; align-items: center; gap: .4rem; font-weight: 800; animation: ga-slide .5s calc(var(--i) * .12s) both; }
+.ga-cd-player .ga-cd-avatar, .ga-cd-player img { width: 84px; height: 84px; object-fit: contain; border-radius: 50%; background: rgba(255,255,255,.08); padding: 6px; border: 3px solid rgba(255,255,255,.2); }
+.ga-cd-player.is-first .ga-cd-avatar, .ga-cd-player.is-first img { border-color: #ffcb05; box-shadow: 0 0 0 6px rgba(255,203,5,.25), 0 0 40px rgba(255,203,5,.6); }
+.ga-cd-vs { color: #ff5a5f; font-size: 1.3rem; font-weight: 900; }
+.ga-cd-first { color: #ffcb05; font-size: 1.4rem; font-weight: 900; margin: .5rem 0 1rem; }
+.ga-cd-num { font-size: clamp(5rem, 18vw, 9rem); font-weight: 900; line-height: 1; text-shadow: 0 8px 30px rgba(79,163,255,.6); animation: ga-pop .8s ease; }
+.ga-cd-num.is-go { color: #ffcb05; text-shadow: 0 8px 40px rgba(255,203,5,.8); }
+.ga-cd-skip { margin-top: 1.2rem; background: transparent; border: 1px solid rgba(255,255,255,.3); color: #fff; border-radius: 999px; padding: .35rem 1rem; font-weight: 700; }
+@keyframes ga-pop { 0% { transform: scale(2.2); opacity: 0; } 35% { transform: scale(.9); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes ga-slide { from { transform: translateY(30px) scale(.8); opacity: 0; } }
+@keyframes ga-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ga-cart, .ga-cart-art span, .ga-cd-num, .ga-cd-player, .ga-countdown { animation: none !important; transition: none !important; } }
