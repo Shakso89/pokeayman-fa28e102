@@ -85,24 +85,25 @@ html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legend
 @keyframes dh-holo-spin { to { --dh-holo-angle: 360deg; } }
 @keyframes dh-sparkle { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
 
-/* Legendary: dramatic electric border (SVG turbulence displacement) in gold */
-html body #pokemon-modal#pokemon-modal #modal-card#modal-card .dh-electric-border {
+/* Legendary only: dramatic electric border (SVG turbulence displacement) in gold */
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card:not(.detail-card-legendary) .dh-electric-border { display: none !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .dh-electric-border {
   position: absolute; inset: 0; border-radius: 16px; pointer-events: none; z-index: 9;
 }
-html body #pokemon-modal#pokemon-modal #modal-card#modal-card .dh-electric-border > div { position: absolute; inset: 0; border-radius: 16px; }
-html body #pokemon-modal#pokemon-modal #modal-card#modal-card .dh-electric-main {
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .dh-electric-border > div { position: absolute; inset: 0; border-radius: 16px; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .dh-electric-main {
   border: 2px solid var(--mythic-gold-light);
   filter: url(#dh-turbulent-displace);
 }
-html body #pokemon-modal#pokemon-modal #modal-card#modal-card .dh-electric-glow1 {
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .dh-electric-glow1 {
   border: 2px solid color-mix(in srgb, var(--mythic-gold-light) 60%, transparent);
   filter: blur(1px);
 }
-html body #pokemon-modal#pokemon-modal #modal-card#modal-card .dh-electric-glow2 {
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .dh-electric-glow2 {
   border: 2px solid var(--mythic-gold-light);
   filter: blur(4px);
 }
-html body #pokemon-modal#pokemon-modal #modal-card#modal-card .dh-electric-overlay {
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .dh-electric-overlay {
   mix-blend-mode: overlay; opacity: .5; transform: scale(1.05); filter: blur(16px);
   background: linear-gradient(-30deg, var(--mythic-gold-light), transparent 30%, transparent 70%, var(--mythic-gold-light));
 }
