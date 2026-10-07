@@ -50,6 +50,7 @@
       card.style.setProperty('--rx', '0deg'); card.style.setProperty('--ry', '0deg');
       card.style.setProperty('--mx', '50%'); card.style.setProperty('--my', '50%');
     });
+    new MutationObserver(function () { ensureElectric(card); }).observe(card, { attributes: true, attributeFilter: ['class'] });
     return true;
   }
   if (!bind()) document.addEventListener('DOMContentLoaded', bind);
