@@ -20,15 +20,15 @@
     side.setAttribute('aria-label', 'Teacher navigation');
     side.innerHTML = `
       <div class="ts-brand"><span class="ts-ball" aria-hidden="true"></span><span>PokéAyman<small>Academy</small></span></div>
-      <div class="ts-switch-wrap"><button type="button" class="ts-switch" data-ts="switch" aria-haspopup="true" aria-expanded="false"><span class="ts-switch-label">Current class</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">▾</span></button><div id="ts-pop" class="ts-pop" hidden></div></div>
+      <div class="ts-switch-wrap"><button type="button" class="ts-switch" data-ts="switch" aria-haspopup="dialog" aria-expanded="false"><span class="ts-switch-label" id="ts-current-school">Schools &amp; classes</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">⇄</span></button></div>
       <nav class="ts-nav">
         <p class="ts-head">Classroom</p>
         ${CLASS_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-class="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}
-        <div id="ts-zone"><p class="ts-head">Teacher Zone</p>
-        ${ZONE_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-zone="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div>
-        <div id="ts-admin"><p class="ts-head">Admin Hub</p>
+        <div id="ts-zone"><button type="button" class="ts-section-toggle" data-ts-toggle="zone" aria-expanded="false" aria-controls="ts-zone-content"><span>Teacher Zone</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-zone-content" hidden>
+        ${ZONE_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-zone="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
+        <div id="ts-admin"><button type="button" class="ts-section-toggle" data-ts-toggle="admin" aria-expanded="false" aria-controls="ts-admin-content"><span>Admin Hub</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-admin-content" hidden>
         <button type="button" class="ts-item" data-ts="admin"><span aria-hidden="true">⚙️</span>Admin Console</button>
-        <button type="button" class="ts-item" data-ts="leaders"><span aria-hidden="true">🏆</span>Global Top 10</button></div>
+        <button type="button" class="ts-item" data-ts="leaders"><span aria-hidden="true">🏆</span>Global Top 10</button></div></div>
       </nav>
       <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile"><span id="ts-avatar" class="ts-avatar"></span><span class="ts-me-info"><strong id="ts-name"></strong><small id="ts-role"></small></span></button>
       <button type="button" class="ts-logout" data-ts="logout" aria-label="Log out" title="Log out">↪</button></div>`;
@@ -44,6 +44,23 @@
       <section class="ts-card ts-gift"><h3>🎁 Surprise Boxes</h3><p>Launch a special box game for your class!</p>
         <button type="button" class="ts-award-go" data-ts-class="games">Launch game</button></section>`;
     document.body.append(side, rail);
+    const chooser = document.createElement('dialog');
+    chooser.id = 'ts-chooser';
+    chooser.setAttribute('aria-labelledby', 'ts-chooser-title');
+    chooser.innerHTML = `<header class="ts-chooser-header"><div><h2 id="ts-chooser-title">Schools &amp; classes</h2><p id="ts-chooser-count"></p></div><button type="button" data-ts-close aria-label="Close class chooser">×</button></header>
+      <div class="ts-chooser-filters"><label class="sr-only" for="ts-class-search">Search schools or classes</label><input id="ts-class-search" type="search" placeholder="Search schools or classes…" autocomplete="off"><label class="sr-only" for="ts-school-filter">School</label><select id="ts-school-filter"><option value="">All schools</option></select></div>
+      <div id="ts-class-results" class="ts-class-results"></div><footer><button type="button" class="ts-pop-all" data-ts="schools">Manage schools &amp; classes →</button></footer>`;
+    document.body.appendChild(chooser);
+    chooser.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (b?.hasAttribute('data-ts-close') || e.target === chooser) return closePop();
+      if (b?.dataset.tsGo) { const [sc, cl] = JSON.parse(b.dataset.tsGo); closePop(); switchClass(sc, cl); sync(); }
+      else if (b?.dataset.tsSchool) { closePop(); showMainTab('dashboard'); navigateTo('classes', b.dataset.tsSchool); sync(); }
+      else if (b?.dataset.ts === 'schools') { closePop(); showMainTab('dashboard'); navigateTo('schools'); sync(); }
+    });
+    chooser.addEventListener('close', () => document.querySelector('.ts-switch')?.setAttribute('aria-expanded', 'false'));
+    $('ts-class-search').addEventListener('input', renderClassChoices);
+    $('ts-school-filter').addEventListener('change', renderClassChoices);
 
     side.addEventListener('click', onNav);
     rail.addEventListener('click', onRail);
@@ -58,7 +75,12 @@
 
   function onNav(e) {
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.tsToggle) {
+      const panel = $(b.getAttribute('aria-controls'));
+      panel.hidden = !panel.hidden; b.setAttribute('aria-expanded', String(!panel.hidden)); return;
+    }
     const cls = b.dataset.tsClass, zone = b.dataset.tsZone, act = b.dataset.ts;
+    if (act === 'switch') return togglePop();
     if (cls) {
       if (needClass()) return;
       if (g(() => activeMainTab) !== 'dashboard') { const s = navSchool, c = navClass; showMainTab('dashboard'); navigateTo('students', s, c); }
@@ -83,24 +105,32 @@
     return all.filter((c) => as.includes(c.school_name) || ac.some((a) => a.school_name === c.school_name && a.class_name === c.class_name) || [c.created_by, c.teacher_name, c.assigned_teacher].includes(me));
   }
   function togglePop() {
-    const pop = $('ts-pop'), btn = document.querySelector('.ts-switch');
-    if (!pop.hidden) return closePop();
-    const groups = {};
-    myClasses().forEach((c) => { (groups[c.school_name] = groups[c.school_name] || []).push(c); });
-    const cur = `${g(() => navSchool, '')}|${g(() => navClass, '')}`;
-    pop.innerHTML = Object.keys(groups).sort().map((sc) => `<p class="ts-pop-school">${esc(sc)}</p>` + groups[sc].map((c) => {
-      const n = g(() => getStudents(sc, c.class_name).length, 0);
-      return `<button type="button" class="ts-pop-item${cur === sc + '|' + c.class_name ? ' on' : ''}" data-ts-go='${esc(JSON.stringify([sc, c.class_name]))}'><span>${esc(c.class_name)}</span><small>${n} students</small></button>`;
-    }).join('')).join('') + `<button type="button" class="ts-pop-all" data-ts="schools">Browse all schools →</button>`;
-    pop.hidden = false; btn.setAttribute('aria-expanded', 'true');
+    const pop = $('ts-chooser'), btn = document.querySelector('.ts-switch');
+    if (pop.open) return closePop();
+    $('ts-class-search').value = '';
+    $('ts-school-filter').innerHTML = '<option value="">All schools</option>' + [...new Set(myClasses().map((c) => c.school_name))].sort().map((sc) => `<option value="${esc(sc)}">${esc(sc)}</option>`).join('');
+    renderClassChoices();
+    pop.showModal(); btn.setAttribute('aria-expanded', 'true'); $('ts-class-search').focus();
   }
-  function closePop() { const p = $('ts-pop'); if (p) p.hidden = true; document.querySelector('.ts-switch')?.setAttribute('aria-expanded', 'false'); }
-  document.addEventListener('click', (e) => { if (!e.target.closest('.ts-switch-wrap')) closePop(); });
+  function renderClassChoices() {
+    const groups = {};
+    const query = $('ts-class-search').value.trim().toLocaleLowerCase(), school = $('ts-school-filter').value;
+    const seen = new Set();
+    const classes = myClasses().filter((c) => { const key = JSON.stringify([c.school_name, c.class_name]); if (seen.has(key)) return false; seen.add(key); return true; });
+    $('ts-chooser-count').textContent = `${new Set(classes.map((c) => c.school_name)).size} schools · ${classes.length} classes`;
+    classes.filter((c) => (!school || c.school_name === school) && `${c.school_name} ${c.class_name}`.toLocaleLowerCase().includes(query)).forEach((c) => { (groups[c.school_name] = groups[c.school_name] || []).push(c); });
+    const cur = `${g(() => navSchool, '')}|${g(() => navClass, '')}`;
+    $('ts-class-results').innerHTML = Object.keys(groups).sort().map((sc) => `<section class="ts-school-group"><div class="ts-school-heading"><h3>${esc(sc)}</h3><button type="button" data-ts-school="${esc(sc)}" aria-label="Open ${esc(sc)} school">Open school →</button></div>` + groups[sc].sort((a, b) => a.class_name.localeCompare(b.class_name)).map((c) => {
+      const n = g(() => getStudents(sc, c.class_name).length, 0);
+      return `<button type="button" class="ts-pop-item${cur === sc + '|' + c.class_name ? ' on' : ''}" aria-pressed="${cur === sc + '|' + c.class_name}" data-ts-go='${esc(JSON.stringify([sc, c.class_name]))}'><span>${esc(c.class_name)}</span><small>${n} students ${cur === sc + '|' + c.class_name ? '✓' : '→'}</small></button>`;
+    }).join('') + '</section>').join('') || '<p class="ts-empty">No matching classes</p>';
+  }
+  function closePop() { $('ts-chooser')?.close(); document.querySelector('.ts-switch')?.setAttribute('aria-expanded', 'false'); }
   function switchClass(sc, cl) {
     const keep = document.querySelector('#class-tabs-container .class-view-tab[class*="-active"]:not([class*="inactive"])')?.dataset.classtab || 'students';
     if (g(() => activeMainTab) !== 'dashboard') g(() => showMainTab('dashboard'));
     g(() => navigateTo('students', sc, cl));
-    setTimeout(() => document.querySelector(`#class-tabs-container [data-classtab="${keep}"]`)?.click(), 30);
+    document.querySelector(`#class-tabs-container [data-classtab="${keep}"]`)?.click();
   }
 
   /* ---- Unified class stage: hero banner + quick +/-10 on cards ---- */
@@ -182,7 +212,8 @@
     const tab = g(() => activeMainTab, 'dashboard');
     const inClass = tab === 'dashboard' && !$('view-students')?.classList.contains('hidden') && g(() => navClass, null);
     document.body.classList.toggle('ts-rail-on', !!inClass);
-    $('ts-current').textContent = g(() => navClass, null) ? `${navSchool} · ${navClass}` : 'Choose a class';
+    $('ts-current').textContent = g(() => navClass, null) || 'Choose a class';
+    $('ts-current-school').textContent = g(() => navSchool, null) || 'Schools & classes';
 
     const activeClassTab = document.querySelector('#class-tabs-container .class-view-tab[class*="-active"]:not([class*="inactive"])')?.dataset.classtab;
     const zoneTab = document.querySelector('.teacher-zone-tab[aria-selected="true"]')?.id?.replace(/^teacher-zone-|-tab$/g, '');
@@ -197,6 +228,8 @@
     });
     $('ts-zone').hidden = !g(() => canAccessTeacherZone(), false);
     $('ts-admin').querySelector('[data-ts="admin"]').hidden = !g(() => canAccessAdmin(), false);
+    document.querySelector('[data-ts-toggle="zone"]').classList.toggle('current', tab === 'teacher-zone');
+    document.querySelector('[data-ts-toggle="admin"]').classList.toggle('current', tab === 'admin');
     ['financial', 'history'].forEach((k) => {
       const src = $(`teacher-zone-${k}-tab`);
       const hide = !src || src.classList.contains('hidden') || src.style.display === 'none';
