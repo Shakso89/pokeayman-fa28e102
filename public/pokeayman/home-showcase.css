@@ -223,3 +223,80 @@
 @media (prefers-reduced-motion: reduce) {
   .home-showcase .circular-carousel-card { transition: none !important; }
 }
+/* Contact dock: floating trainer-support badge */
+.home-showcase .home-contact-dock {
+  position: fixed; right: clamp(1rem, 3vw, 2rem); bottom: clamp(1rem, 3vw, 2rem); z-index: 30;
+  display: inline-flex; align-items: center; gap: .7rem;
+  padding: .6rem 1.1rem .6rem .65rem; border: 1px solid var(--home-line); border-radius: 999px;
+  background: rgba(11,13,20,.82); backdrop-filter: blur(14px); color: var(--home-ink);
+  box-shadow: 0 18px 40px rgba(0,0,0,.5); cursor: pointer; transition: transform .2s, border-color .2s, box-shadow .2s;
+}
+.home-showcase .home-contact-dock:hover, .home-showcase .home-contact-dock:focus-visible {
+  transform: translateY(-3px); border-color: var(--home-yellow); box-shadow: 0 20px 44px rgba(255,203,5,.18); outline: none;
+}
+.home-contact-dot {
+  position: relative; width: 2.1rem; height: 2.1rem; flex: none; border-radius: 50%;
+  background: linear-gradient(180deg, var(--home-red) 0 46%, #10121a 46% 54%, var(--home-ink) 54%);
+  box-shadow: 0 0 0 2px #10121a;
+}
+.home-contact-dot::after {
+  position: absolute; inset: 34%; content: ''; border-radius: 50%; background: var(--home-ink); box-shadow: 0 0 0 2px #10121a;
+}
+.home-contact-label { display: grid; text-align: left; font-size: .9rem; font-weight: 800; line-height: 1.1; }
+.home-contact-label small { color: var(--home-yellow); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; }
+@media (max-width: 640px) {
+  #home-screen #contact-pricing-btn.home-contact-dock { width: auto; min-height: 0; padding: .5rem; }
+  .home-contact-label { display: none; }
+}
+
+/* Contact & pricing modal restyle */
+#contact-pricing-modal { background: rgba(3,4,7,.78) !important; backdrop-filter: blur(6px); }
+#contact-pricing-modal > div {
+  background: linear-gradient(160deg, rgba(94,231,242,.08), transparent 40%), #0b0d14 !important;
+  border: 1px solid rgba(255,255,255,.14) !important; border-radius: 1.25rem !important;
+  box-shadow: 0 40px 90px rgba(0,0,0,.7) !important; color: var(--home-ink);
+}
+#contact-pricing-modal > div > .absolute.inset-0 { display: none; }
+#contact-pricing-modal > div > .sticky {
+  background: rgba(11,13,20,.95) !important; border-bottom: 1px solid rgba(255,255,255,.1) !important;
+}
+#contact-pricing-modal h2 { color: var(--home-ink) !important; }
+#contact-pricing-modal h2 + p { color: var(--home-muted) !important; }
+#contact-pricing-close { width: 2.2rem; height: 2.2rem; border-radius: 50%; border: 1px solid rgba(255,255,255,.16); line-height: 1; }
+#contact-pricing-close:hover { color: var(--home-yellow) !important; border-color: var(--home-yellow); }
+#contact-pricing-modal > div > .flex.gap-2 {
+  background: transparent !important; border-bottom: 1px solid rgba(255,255,255,.08) !important;
+}
+#contact-pricing-modal #contact-tab-btn, #contact-pricing-modal #pricing-tab-btn {
+  background: rgba(255,255,255,.05) !important; border: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow: none !important; border-radius: 999px !important; color: var(--home-muted) !important;
+}
+#contact-pricing-modal:has(#pricing-tab-content.hidden) #contact-tab-btn,
+#contact-pricing-modal:has(#contact-tab-content.hidden) #pricing-tab-btn {
+  background: var(--home-yellow) !important; border-color: var(--home-yellow) !important; color: #10121a !important;
+}
+#contact-tab-content > div:first-child {
+  background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important;
+}
+#contact-tab-content > div:first-child > .space-y-5 { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .9rem; }
+#contact-tab-content > div:first-child > .space-y-5 > * { margin: 0 !important; }
+#contact-tab-content .flex.items-start {
+  padding: 1rem !important; border: 1px solid rgba(255,255,255,.1) !important; border-radius: 1rem;
+  background: rgba(255,255,255,.04); transition: border-color .2s, transform .2s;
+}
+#contact-tab-content .flex.items-start:hover { border-color: var(--home-yellow) !important; transform: translateY(-2px); }
+#contact-tab-content .text-3xl {
+  display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: .8rem;
+  background: rgba(94,231,242,.1); font-size: 1.35rem !important;
+}
+#contact-tab-content .text-purple-200 { color: var(--home-yellow) !important; }
+#contact-tab-content a:hover { color: var(--home-cyan) !important; }
+#contact-pricing-modal .text-purple-100 { color: var(--home-muted) !important; }
+#pricing-tab-content .grid > div {
+  background: rgba(255,255,255,.04) !important; border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 1rem !important;
+}
+#pricing-tab-content .grid > div:nth-child(2) { border-color: var(--home-yellow) !important; box-shadow: 0 0 0 1px var(--home-yellow), 0 20px 50px rgba(255,203,5,.12) !important; }
+#pricing-tab-content .grid > div:nth-child(3) { border-color: rgba(239,51,64,.6) !important; }
+#pricing-tab-content .grid > div p[class*="text-"][class*="-100"] { color: var(--home-muted) !important; }
+#pricing-tab-content .grid > div .heading-font { color: var(--home-yellow) !important; }
