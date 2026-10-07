@@ -4,6 +4,13 @@
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const g = (fn, fb) => { try { return fn(); } catch (e) { return fb; } };
   let bright = g(() => localStorage.getItem('pokeayman-teacher-theme') === 'bright', false);
+  let collapsed = g(() => localStorage.getItem('pokeayman-sidebar-collapsed') === '1', false);
+  function applySidebar() {
+    document.body.classList.toggle('ts-collapsed', collapsed);
+    const control = $('ts-sidebar-toggle');
+    if (control) { control.textContent = collapsed ? '☰' : '‹'; control.setAttribute('aria-expanded', String(!collapsed)); control.setAttribute('aria-label', collapsed ? 'Open sidebar' : 'Collapse sidebar'); control.title = control.getAttribute('aria-label'); }
+    if ($('ts-sidebar')) $('ts-sidebar').inert = collapsed;
+  }
   function applyTheme() {
     document.body.classList.toggle('ts-bright', bright);
     const toggle = $('ts-theme-toggle');
@@ -55,6 +62,10 @@
       <section class="ts-card ts-gift"><h3>🎁 Surprise Boxes</h3><p>Launch a special box game for your class!</p>
         <button type="button" class="ts-award-go" data-ts-class="games">Launch game</button></section>`;
     document.body.append(side, rail);
+    const sidebarToggle = document.createElement('button');
+    sidebarToggle.id = 'ts-sidebar-toggle'; sidebarToggle.type = 'button'; sidebarToggle.setAttribute('aria-controls', 'ts-sidebar');
+    sidebarToggle.addEventListener('click', () => { collapsed = !collapsed; g(() => localStorage.setItem('pokeayman-sidebar-collapsed', collapsed ? '1' : '0')); applySidebar(); });
+    document.body.appendChild(sidebarToggle); applySidebar();
     const theme = document.createElement('button');
     theme.id = 'ts-theme-toggle';
     theme.type = 'button';

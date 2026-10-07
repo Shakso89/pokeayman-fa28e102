@@ -11,6 +11,15 @@
   --ts-blue: oklch(0.55 0.19 255); --ts-pink: oklch(0.95 0.035 10); --ts-mint: oklch(0.95 0.045 167);
 }
 #ts-sidebar, #ts-rail { display: none; }
+#ts-sidebar-toggle { display: none; }
+@media (min-width: 901px) {
+  body.ts-on #ts-sidebar-toggle { display: grid; place-items: center; position: fixed; top: 16px; left: calc(var(--ts-w) - 14px); z-index: 60; width: 30px; height: 34px; border: 1px solid var(--ts-border); border-radius: 6px; background: var(--ts-surface); color: var(--ts-ink); font-size: 24px; cursor: pointer; }
+  body.ts-on.ts-collapsed #ts-sidebar { display: none; }
+  body.ts-on.ts-collapsed #app-screen { padding-left: 0 !important; }
+  body.ts-on.ts-collapsed #ts-sidebar-toggle { left: 12px; }
+  body.ts-on.ts-collapsed #app-screen > header { padding-left: 42px; }
+  body.ts-on #ts-sidebar-toggle:focus-visible { outline: 2px solid var(--ts-yellow); outline-offset: 3px; }
+}
 body.ts-on #ts-sidebar {
   display: flex; flex-direction: column; gap: 14px; position: fixed; inset: 0 auto 0 0; width: var(--ts-w);
   padding: 18px 14px; z-index: 40; background: var(--ts-bg); border-right: 1px solid var(--ts-border);
