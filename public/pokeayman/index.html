@@ -14462,7 +14462,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0) {
     .memory-card-back {
       transform: rotateY(180deg);
     }
-    html, body { overflow: hidden !important; box-sizing: border-box; }
+    html:has(.ga-stage), body.ga-playing { overflow: hidden !important; box-sizing: border-box; }
     *, *::before, *::after { box-sizing: border-box; }
     /* Keep every multi-word Memory label centered on separate readable lines. */
     .memory-card .memory-word-part { display: inline; }
