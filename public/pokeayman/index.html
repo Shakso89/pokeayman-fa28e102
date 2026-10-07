@@ -16233,6 +16233,25 @@ function getCanonicalStudentMemberships(studentId, fallback = null) {
   window.__pokeymanMembershipDiagnostics = [...(window.__pokeymanMembershipDiagnostics || []), { canonicalStudentId: canonicalId, sourceCounts: { classStudents: classRows.length, profileRows: profileRows.length, persistedMembershipValues: values.length }, normalizedClassIds: [...new Set(validClassIds)], finalMembershipCount: memberships.length, loadStatus: 'complete' }].slice(-50);
   return memberships;
 }
+function getEditStudentClassList(studentId, record) {
+  const norm = v => String(v || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+  const fallbackSchool = String(record?.school_name || '').trim();
+  const seen = new Set();
+  const list = [];
+  getCanonicalStudentMemberships(studentId, record).forEach(m => {
+    const text = String(m || '').trim();
+    if (!text || /\(unresolved\)$/.test(text)) return;
+    const i = text.indexOf(' / ');
+    const school = i >= 0 ? text.slice(0, i).trim() : fallbackSchool;
+    const cls = (i >= 0 ? text.slice(i + 3) : text).trim();
+    if (!cls) return;
+    const key = norm(school) + '||' + norm(cls);
+    if (seen.has(key)) return;
+    seen.add(key);
+    list.push({ school, class: cls, key });
+  });
+  return list;
+}
 function openEditStudentModal(studentName) {
   const selectedStudent = resolveStudentProfile({ name: studentName, school: navSchool, className: navClass });
   const student = selectedStudent || getAllStudents().find(s => s.student_name === studentName);
@@ -16240,141 +16259,74 @@ function openEditStudentModal(studentName) {
   const canonicalStudentId = student.__backendId;
   const studentPokes = getPokemons().filter(p => p.owner === student.student_name);
   const canonicalStudent = getStudentRecordByStableId(canonicalStudentId) || student;
-  const enrolledClasses = getCanonicalStudentMemberships(canonicalStudentId, canonicalStudent).map(membership => {
-    const separator = membership.indexOf(' / ');
-    return separator >= 0 ? { school: membership.slice(0, separator).trim(), class: membership.slice(separator + 3).trim(), backendId: canonicalStudentId } : { school: String(canonicalStudent.school_name || '').trim(), class: membership, backendId: canonicalStudentId };
-  }).filter(item => item.class);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const cap = v => String(v || '').replace(/(^|[\s-])\S/g, s => s.toUpperCase());
+  const norm = v => String(v || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+  const initials = String(student.student_name || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  let modal = null;
   const renderJoinedClasses = () => {
     const current = getStudentRecordByStableId(canonicalStudentId) || canonicalStudent;
-    const memberships = getCanonicalStudentMemberships(canonicalStudentId, current);
+    const list = getEditStudentClassList(canonicalStudentId, current);
     const target = modal?.querySelector('#enrolled-classes');
-    if (target) target.innerHTML = memberships.length ? memberships.map(membership => `<div class="flex items-center justify-between gap-2 bg-white p-2 rounded border border-gray-200"><span class="text-sm font-medium">${membership}</span><button type="button" class="remove-class-btn px-2 py-1 text-xs bg-red-100 text-red-600 hover:bg-red-200 rounded transition font-semibold" data-membership="${String(membership).replace(/"/g, '&quot;')}">Remove</button></div>`).join('') : '<p class="text-xs text-gray-400 italic">Not enrolled in any classes</p>';
-    target?.querySelectorAll('.remove-class-btn').forEach(button => button.addEventListener('click', removeClassMembership));
+    const count = modal?.querySelector('#es-class-count');
+    if (count) count.textContent = String(list.length);
+    if (!target) return;
+    target.innerHTML = list.length ? list.map(item => `<div class="es-class-row"><span class="es-class-icon" aria-hidden="true">🏫</span><span class="es-class-text"><strong>${esc(item.class)}</strong><small>${esc(item.school || 'No school')}</small></span><button type="button" class="es-remove-btn" data-key="${esc(item.key)}" aria-label="Remove ${esc(item.class)}">✕ Remove</button></div>`).join('') : '<p class="es-empty">Not enrolled in any classes</p>';
+    target.querySelectorAll('.es-remove-btn').forEach(b => b.addEventListener('click', removeClassMembership));
   };
   const removeClassMembership = async event => {
-    event.preventDefault();
-    event.stopPropagation();
+    event.preventDefault(); event.stopPropagation();
     const btn = event.currentTarget;
-    if (!btn || btn.disabled || btn.dataset.busy === 'true') return;
-    const membership = String(btn.dataset.membership || '').trim();
-    const row = btn.closest('.flex.items-center');
-    const originalLabel = btn.textContent;
-    const normalizeClass = value => String(value || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
-    const separator = membership.indexOf(' / ');
-    const latestStudent = getStudentRecordByStableId(canonicalStudentId);
-    const removedSchool = separator >= 0 ? membership.slice(0, separator).trim() : String(latestStudent?.school_name || '').trim();
-    const removedClass = (separator >= 0 ? membership.slice(separator + 3) : membership).trim();
-    const classKey = normalizeClass(removedClass);
-    if (!latestStudent || !classKey) return;
-    const membershipMatches = value => {
-      const text = String(value || '').trim();
-      const split = text.indexOf(' / ');
-      const school = split >= 0 ? text.slice(0, split).trim() : String(latestStudent.school_name || '').trim();
-      const className = (split >= 0 ? text.slice(split + 3) : text).trim();
-      return normalizeClass(school) === normalizeClass(removedSchool) && normalizeClass(className) === classKey;
+    if (!btn || btn.dataset.busy === 'true') return;
+    if (btn.dataset.confirm !== 'true') {
+      btn.dataset.confirm = 'true'; btn.textContent = 'Confirm?';
+      setTimeout(() => { if (btn.isConnected && btn.dataset.busy !== 'true') { btn.dataset.confirm = ''; btn.textContent = '✕ Remove'; } }, 3000);
+      return;
+    }
+    const latest = getStudentRecordByStableId(canonicalStudentId) || canonicalStudent;
+    const list = getEditStudentClassList(canonicalStudentId, latest);
+    const removed = list.find(i => i.key === btn.dataset.key);
+    if (!removed) { renderJoinedClasses(); return; }
+    btn.dataset.busy = 'true'; btn.disabled = true; btn.textContent = 'Removing…';
+    const remaining = list.filter(i => i.key !== removed.key);
+    const primaryKey = norm(latest.school_name) + '||' + norm(latest.class_name);
+    const primary = remaining.find(i => i.key === primaryKey) || remaining[0] || null;
+    const updated = { ...latest, student_id: latest.student_id || canonicalStudentId, class_memberships: remaining.map(i => `${i.school} / ${i.class}`).join('||'), school_name: primary ? primary.school : (latest.school_name || ''), class_name: primary ? primary.class : '', updated_at: new Date().toISOString(), __backendId: canonicalStudentId };
+    ['classMemberships', 'classes', 'memberships'].forEach(k => { if (k in updated) delete updated[k]; });
+    const result = await window.dataSdk.update(updated);
+    if (!result?.isOk) { btn.dataset.busy = 'false'; btn.disabled = false; btn.dataset.confirm = ''; btn.textContent = '✕ Remove'; toast('Could not remove this class. Please try again.'); return; }
+    allData = allData.map(r => r.__backendId === canonicalStudentId ? { ...updated } : r);
+    const rowTypes = ['class_students','class_student','student_membership','class_membership','membership'];
+    const idMatch = r => [r.student_id, r.studentId, r.canonicalStudentId, r.profile_id, r.user_id, r.account_id].some(v => String(v ?? '').trim() === String(canonicalStudentId));
+    const classMatch = r => {
+      const meta = allData.find(c => c.type === 'class' && String(c.__backendId) === String(r.class_id ?? r.classId ?? ''));
+      const school = meta ? meta.school_name : r.school_name; const cls = meta ? meta.class_name : r.class_name;
+      return norm(cls) === norm(removed.class) && (!school || norm(school) === norm(removed.school));
     };
-    const currentMemberships = getCanonicalStudentMemberships(canonicalStudentId, latestStudent);
-    if (!currentMemberships.some(membershipMatches)) {
-      renderJoinedClasses();
-      toast(`${removedClass} is already absent from this student's classes.`);
-      return;
-    }
-    btn.dataset.busy = 'true';
-    btn.disabled = true;
-    btn.setAttribute('aria-busy', 'true');
-    btn.textContent = 'Removing…';
-    const membershipRow = allData.find(record => ['class_students','class_student','student_membership','class_membership','membership'].includes(String(record.type || '').toLowerCase()) && String(record.class_id ?? record.classId ?? '').trim() && (String(record.student_id ?? record.studentId ?? record.canonicalStudentId ?? '').trim() === canonicalStudentId) && String(record.school_name || '').trim() === removedSchool && String(record.class_name || '').trim() === removedClass);
-    if (membershipRow) {
-      const membershipResult = await window.dataSdk.delete(membershipRow);
-      if (!membershipResult?.isOk) { btn.dataset.busy = 'false'; btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = originalLabel; toast('Could not remove this class membership. Please try again.'); return; }
-    }
-    const remaining = currentMemberships.filter(value => !membershipMatches(value));
-    const timestamp = new Date().toISOString();
-    const updatedStudent = { ...latestStudent, student_id: latestStudent.student_id || canonicalStudentId, class_name: remaining.length ? latestStudent.class_name : '', class_memberships: remaining.join('||'), updated_at: timestamp, __backendId: canonicalStudentId };
-    const result = await window.dataSdk.update(updatedStudent);
-    if (!result?.isOk) {
-      btn.dataset.busy = 'false'; btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = originalLabel;
-      toast('Could not remove this class membership. Please try again.');
-      return;
-    }
-    let verifiedStudent = null;
-    let verifiedMemberships = [];
-    let selectedRoster = true;
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      await new Promise(resolve => setTimeout(resolve, 180 * (attempt + 1)));
-      const refreshResult = await window.dataSdk.init(handler);
-      if (!refreshResult?.isOk) continue;
-      verifiedStudent = getStudentRecordByStableId(canonicalStudentId);
-      verifiedMemberships = getCanonicalStudentMemberships(canonicalStudentId, verifiedStudent || updatedStudent);
-      selectedRoster = getStudents(removedSchool, removedClass).some(record => String(record.__backendId || '') === canonicalStudentId || String(record.student_id || '') === String(updatedStudent.student_id || canonicalStudentId));
-      if (verifiedStudent && !verifiedMemberships.some(membershipMatches) && !selectedRoster) break;
-    }
-    if (!verifiedStudent || verifiedMemberships.some(membershipMatches) || selectedRoster) {
-      btn.dataset.busy = 'false'; btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = originalLabel;
-      toast('Could not verify the class removal after retrying the saved record. No UI changes were applied.');
-      return;
-    }
-    allData = allData.map(record => record.__backendId === canonicalStudentId ? verifiedStudent : record);
-    if (allData.length < 999) await window.dataSdk.create({ type: 'activity_log', activity_type: 'student_removed_from_class', student_id: canonicalStudentId, removed_class: membership, details: 'Class access/profile was removed while the canonical student record was retained.', timestamp, created_at: timestamp });
+    const rows = allData.filter(r => rowTypes.includes(String(r.type || '').toLowerCase()) && idMatch(r) && classMatch(r));
+    for (const r of rows) { try { const d = await window.dataSdk.delete(r); if (d?.isOk) allData = allData.filter(x => x.__backendId !== r.__backendId); } catch (e) {} }
+    try { rebuildCanonicalStudentIndex(); } catch (e) {}
+    try { await window.dataSdk.create({ type: 'activity_log', activity_type: 'student_removed_from_class', student_id: canonicalStudentId, removed_class: `${removed.school} / ${removed.class}`, timestamp: updated.updated_at, created_at: updated.updated_at }); } catch (e) {}
     renderJoinedClasses();
-    renderTeacherDashboard();
-    renderAdminAllStudents();
-    btn.dataset.busy = 'false'; btn.disabled = false; btn.removeAttribute('aria-busy'); btn.textContent = originalLabel;
-    toast(`${removedClass} removed; canonical student record retained.`);
+    try { renderTeacherDashboard(); } catch (e) {}
+    try { renderAdminAllStudents(); } catch (e) {}
+    toast(`${removed.class} removed.`);
   };
-  let modal = null;
-  modal = document.createElement('div'); modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="bg-white rounded-xl p-6 shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto"><h2 class="heading-font text-lg font-bold mb-4">Edit Student</h2><form class="space-y-4"><div><label class="text-xs font-semibold text-gray-600 block mb-2">Student Name</label><input type="text" id="es-name" value="${student.student_name}" class="w-full border rounded-lg px-3 py-2 text-sm" required></div>${studentPokes.length > 0 ? `<div><label class="text-xs font-semibold text-gray-600 block mb-2">Select Avatar Pokémon</label><div class="grid grid-cols-4 gap-2"><option value="">None</option>${studentPokes.map(p => `<button type="button" class="es-avatar-btn p-2 rounded-lg border-2 border-gray-300 hover:border-blue-400 transition text-center" data-pokemon-id="${p.pokemon_id}" data-backend-id="${p.__backendId}"><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png" class="w-12 h-12 mx-auto mb-1 object-contain" alt="${p.pokemon_name}"><p class="text-xs font-bold truncate">${p.pokemon_name}</p></button>`).join('')}</div><input type="hidden" id="es-avatar-pokemon-id" value="${student.avatar_pokemon_id || ''}"></div>` : '<p class="text-xs text-gray-400 italic">No Pokémon in collection</p>'}<div><label class="text-xs font-semibold text-gray-600 block mb-2">Joined Classes</label><div id="enrolled-classes" class="space-y-2 bg-gray-50 rounded-lg p-3 border-2 border-gray-300 max-h-32 overflow-y-auto">${enrolledClasses.length > 0 ? enrolledClasses.map((ec, idx) => `<div class="flex items-center justify-between gap-2 bg-white p-2 rounded border border-gray-200"><span class="text-sm font-medium">${ec.school} / ${ec.class}</span><button type="button" class="remove-class-btn px-2 py-1 text-xs bg-red-100 text-red-600 hover:bg-red-200 rounded transition font-semibold" data-class-backend-id="${ec.backendId}">Remove</button></div>`).join('') : '<p class="text-xs text-gray-400 italic">Not enrolled in any classes</p>'}</div></div><p id="es-error" class="hidden text-red-600 text-xs font-semibold" role="alert" aria-live="polite"></p><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 btn-primary" id="es-save">Save</button><button type="button" class="flex-1 btn-outline" id="es-cancel">Cancel</button></div></form></div>`;
+  const currentAvatar = String(student.avatar_pokemon_id || '');
+  const avatarTiles = `<button type="button" class="es-avatar-btn es-avatar-default${!currentAvatar || currentAvatar === '0' ? ' is-selected' : ''}" data-pokemon-id=""><span class="es-initials">${esc(initials)}</span><span class="es-avatar-name">Initials</span></button>` + studentPokes.map(p => `<button type="button" class="es-avatar-btn${String(p.pokemon_id) === currentAvatar ? ' is-selected' : ''}" data-pokemon-id="${esc(p.pokemon_id)}"><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${esc(p.pokemon_id)}.png" alt="" loading="lazy"><span class="es-avatar-name">${esc(cap(p.pokemon_name))}</span></button>`).join('');
+  modal = document.createElement('div');
+  modal.className = 'es-overlay';
+  modal.innerHTML = `<div class="es-card" role="dialog" aria-modal="true" aria-labelledby="es-title"><div class="es-head"><h2 id="es-title">Edit Student</h2><button type="button" class="es-close" id="es-x" aria-label="Close">✕</button></div><form><label class="es-label" for="es-name">Student Name</label><input type="text" id="es-name" class="es-input" value="${esc(student.student_name)}" required><div class="es-label">Avatar Pokémon</div><div class="es-avatar-grid">${avatarTiles}</div>${studentPokes.length ? '' : '<p class="es-empty">No Pokémon in collection yet</p>'}<input type="hidden" id="es-avatar-pokemon-id" value="${esc(currentAvatar)}"><div class="es-label">Enrolled Classes (<span id="es-class-count">0</span>)</div><div id="enrolled-classes" class="es-classes"></div><p id="es-error" class="hidden es-error" role="alert" aria-live="polite"></p><div class="es-actions"><button type="submit" class="btn-primary es-save" id="es-save">Save Changes</button><button type="button" class="es-cancel" id="es-cancel">Cancel</button></div></form></div>`;
   document.body.appendChild(modal);
   const studentNameInput = modal.querySelector('#es-name');
-  let editedStudentName = studentNameInput?.value || student.student_name;
-  studentNameInput?.addEventListener('input', event => {
-    editedStudentName = event.target.value;
-  });
-  
   const avatarInput = modal.querySelector('#es-avatar-pokemon-id');
-  modal.querySelectorAll('.es-avatar-btn').forEach(btn => {
-    if (btn.dataset.pokemonId == student.avatar_pokemon_id) {
-      btn.classList.add('border-blue-500', 'bg-blue-50');
-    }
-    btn.addEventListener('click', e => {
-      e.preventDefault();
-      modal.querySelectorAll('.es-avatar-btn').forEach(b => b.classList.remove('border-blue-500', 'bg-blue-50'));
-      btn.classList.add('border-blue-500', 'bg-blue-50');
-      avatarInput.value = btn.dataset.pokemonId;
-    });
-  });
-  
-  // Handle "Remove from Class" buttons
-  modal.querySelectorAll('.remove-class-btn').forEach(btn => {
-    btn.addEventListener('click', async e => {
-      e.preventDefault();
-      const classBackendId = btn.dataset.classBackendId;
-      const classRec = allData.find(r => r.__backendId === classBackendId);
-      // The row text is the canonical membership key; class records are not used to resolve it.
-      
-      // Remove only the class represented by this row from the canonical record.
-      const row = btn.closest('div');
-      const rowText = row?.querySelector('span')?.textContent?.trim() || '';
-      const latestStudent = getStudentRecordByStableId(canonicalStudentId) || canonicalStudent;
-      if (!latestStudent) return;
-      const latestMemberships = Array.isArray(latestStudent.class_memberships)
-        ? latestStudent.class_memberships
-        : (typeof latestStudent.class_memberships === 'string' ? latestStudent.class_memberships.split(/\s*\|\|\s*|\s*,\s*/) : []);
-      const remainingMemberships = [...new Set(latestMemberships.map(value => String(value || '').trim()).filter(Boolean))]
-        .filter(membership => membership !== rowText);
-      const updatedStudent = { ...latestStudent, class_memberships: remainingMemberships.join('||'), updated_at: new Date().toISOString(), __backendId: latestStudent.__backendId };
-      const result = await window.dataSdk.update(updatedStudent);
-      if (!result?.isOk) { toast('Could not remove this class membership. Please try again.'); return; }
-      allData = allData.map(record => record.__backendId === latestStudent.__backendId ? updatedStudent : record);
-      const savedStudent = getStudentRecordByStableId(canonicalStudentId);
-      if (!savedStudent || String(savedStudent.class_memberships || '') !== String(updatedStudent.class_memberships || '')) { toast('Could not verify the class membership change. Please refresh and try again.'); return; }
-      toast(`${rowText.split(' / ').pop() || 'Class'} removed!`);
-      renderJoinedClasses();
-      renderAdminAllStudents();
-    });
-  });
-  
+  modal.querySelectorAll('.es-avatar-btn').forEach(btn => btn.addEventListener('click', e => {
+    e.preventDefault();
+    modal.querySelectorAll('.es-avatar-btn').forEach(b => b.classList.remove('is-selected'));
+    btn.classList.add('is-selected');
+    avatarInput.value = btn.dataset.pokemonId;
+  }));
+  modal.querySelector('#es-x').addEventListener('click', () => modal.remove());
   renderJoinedClasses();
   const saveButton = modal.querySelector('#es-save');
   const errorEl = modal.querySelector('#es-error');
@@ -16382,7 +16334,7 @@ function openEditStudentModal(studentName) {
     e.preventDefault();
     if (saveButton?.dataset.busy === 'true') return;
     const newName = String(studentNameInput?.value || '').trim();
-    const newAvatarId = avatarInput?.value ? parseInt(avatarInput.value, 10) : Number(student.avatar_pokemon_id) || 0;
+    const newAvatarId = avatarInput?.value ? parseInt(avatarInput.value, 10) : 0;
     if (!newName) {
       if (errorEl) { errorEl.textContent = 'Student name cannot be empty.'; errorEl.classList.remove('hidden'); }
       studentNameInput?.focus();
