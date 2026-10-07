@@ -122,3 +122,15 @@ html body #pokemon-modal#pokemon-modal #modal-card#modal-card .dh-electric-overl
   html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .modal-card-body::before,
   html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .modal-card-body::after { animation: none !important; opacity: .25; }
 }
+
+/* Never show scrollbars on the details card */
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card,
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card * {
+  scrollbar-width: none !important; -ms-overflow-style: none !important;
+}
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card { overflow-x: hidden !important; overflow-y: auto !important; max-height: calc(100dvh - 32px) !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card *:not(.dh-electric-border):not(.dh-electric-border *) { overflow-x: hidden !important; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card::-webkit-scrollbar,
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card *::-webkit-scrollbar,
+html body #pokemon-modal#pokemon-modal::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+html body #pokemon-modal#pokemon-modal { scrollbar-width: none !important; overflow-x: hidden !important; }
