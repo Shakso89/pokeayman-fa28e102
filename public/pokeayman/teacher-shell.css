@@ -216,6 +216,11 @@ body.ts-on.ts-bright .ts-amounts button.on { color: var(--ts-ink); }
 body.ts-on.ts-bright .ts-hero { border-left: 5px solid var(--ts-blue); }
 body.ts-on.ts-bright #ts-rail .ts-card:nth-child(2) { background: var(--ts-mint); }
 body.ts-on.ts-bright #ts-rail .ts-gift { background: var(--ts-pink); }
+html body.ts-on.ts-bright #ts-sidebar :is(.ts-switch,#ts-theme-toggle) { background: var(--ts-surface) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; box-shadow: none !important; }
+html body.ts-on.ts-bright #ts-sidebar .ts-switch-label { color: var(--ts-muted) !important; }
+html body.ts-on.ts-bright #app-screen :is(.financial-dashboard,.financial-breakdown-table) { color: var(--ts-ink) !important; }
+html body.ts-on.ts-bright #app-screen :is(.financial-hero,.financial-overview-card,.financial-period-card,.financial-source-bar,.financial-breakdown-table th,.schedule-time-button,.schedule-add-row,.vocab-list-card,.vocab-cover-button) { background: var(--ts-deep) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; box-shadow: none !important; }
+html body.ts-on.ts-bright #app-screen :is(.financial-overview-card strong,.financial-card-kicker,.financial-card-note,.financial-source-status,.financial-source-status strong,.financial-eyebrow,.financial-field-label,.financial-total-row td) { color: var(--ts-ink) !important; }
 html body.ts-on.ts-bright #app-screen :is(.glass-container,.bg-white,.bg-gray-50,.bg-gray-100) { background: var(--ts-surface) !important; border-color: var(--ts-border) !important; color: var(--ts-ink) !important; }
 html body.ts-on.ts-bright #app-screen :is(h1,h2,h3,h4,label,.text-white,.text-gray-800,.text-gray-700,.text-gray-900),
 html body.ts-on.ts-bright #app-screen .glass-container :is(h2,h3) { color: var(--ts-ink) !important; text-shadow: none !important; }
