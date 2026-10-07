@@ -51,3 +51,5 @@
 # Natural vocabulary reading
 - [x] Replace device speech in both flashcard views with one natural voice for words and sentences.
 - [x] Verify real student word/sentence audio streams, cached replay and clear failure messages; teacher buttons use the same reader, but authenticated teacher navigation and subjective audible quality remain unverified.
+- [ ] Delete the Noah vocabulary list from saved app data and verify removal.
+- [ ] Redesign the public home page using the shared reference, reinterpreted with Pokémon visuals.
