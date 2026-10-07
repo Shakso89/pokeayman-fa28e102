@@ -1,4 +1,5 @@
 # Class screen refresh
+- [x] Collapse Teacher Zone/Admin Hub and add searchable school/class switching; presentation checks passed for search, filters, direct school access, dismissal and preserving Vocabulary. Authenticated teacher checks remain unavailable because the requesting user has no matching preview account; permissions and saves unchanged.
 - [x] Replace coin award, deduction and class-gift celebrations with centered animated pop-ups; verified signed amounts, dismissal, compact layout and reduced motion in the live preview. Authenticated teacher awarding remains unverified because no matching preview account was available; saving logic unchanged.
 - [x] Remove scrolling from class tabs and student actions.
 - [x] Apply selected Elite Trainer Dashboard student cards.
