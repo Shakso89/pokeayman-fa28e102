@@ -22,3 +22,4 @@
 - Coin adjustments and class gifts use one shared body-mounted celebration renderer with scoped coin-celebrations.css tokens. Why: keeps signed coin amounts and popup positioning consistent without changing balances or permissions.
 - Teacher 3-column layout lives in `public/pokeayman/teacher-shell.js/.css` and only drives existing tabs/forms (clicks hidden buttons, submits award-form). Why: new navigation without touching legacy logic or permissions.
 - Teacher school/class navigation uses a body-mounted searchable dialog and collapsible sidebar groups, delegating to existing navigation functions. Why: keeps every class directly reachable without altering access rules or selected classroom tools.
+- Teacher display modes use body-scoped semantic tokens and a locally persisted accessible switch in the isolated shell; hide legacy navigation only when the sidebar is visible. Why: preserves legacy handlers and narrow-screen access without changing permissions or saves.

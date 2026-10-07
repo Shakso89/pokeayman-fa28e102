@@ -1,10 +1,14 @@
 /* Teacher 3-column shell (sidebar + content + rail). Active only with body.ts-on. */
 :root {
   --ts-w: 248px; --ts-rail: 300px;
-  --ts-bg: color-mix(in srgb, #0c1232 92%, transparent);
-  --ts-surface: #121a45; --ts-ink: #f5f7ff; --ts-muted: #b1bbd7;
-  --ts-yellow: #ffcb05; --ts-red: #e3350d; --ts-deep: #0c1232;
-  --ts-border: color-mix(in srgb, #f5f7ff 14%, transparent);
+  --ts-bg: oklch(0.185 0.029 263);
+  --ts-surface: oklch(0.23 0.035 263); --ts-ink: oklch(0.98 0.01 265); --ts-muted: oklch(0.78 0.04 265);
+  --ts-yellow: oklch(0.86 0.18 91); --ts-red: oklch(0.61 0.21 29); --ts-deep: oklch(0.185 0.029 263);
+  --ts-border: color-mix(in srgb, var(--ts-ink) 10%, transparent);
+  --ts-action-ink: oklch(0.22 0.04 263); --ts-on-red: oklch(0.99 0 0);
+  --ts-hero: linear-gradient(135deg, oklch(0.28 0.075 265), var(--ts-surface) 70%);
+  --ts-chip: color-mix(in srgb, var(--ts-bg) 60%, transparent);
+  --ts-blue: oklch(0.55 0.19 255); --ts-pink: oklch(0.95 0.035 10); --ts-mint: oklch(0.95 0.045 167);
 }
 #ts-sidebar, #ts-rail { display: none; }
 body.ts-on #ts-sidebar {
@@ -44,7 +48,7 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
   background: transparent; color: var(--ts-ink); font-size: 15px; font-weight: 500; text-align: left; transition: background .15s; }
 .ts-item span { width: 22px; text-align: center; }
 .ts-item:hover { background: color-mix(in srgb, var(--ts-ink) 8%, transparent); }
-.ts-item.active { background: var(--ts-yellow); color: var(--ts-deep); font-weight: 700; }
+.ts-item.active { background: var(--ts-yellow); color: var(--ts-action-ink); font-weight: 700; }
 .ts-item.dim { opacity: .55; }
 .ts-item[hidden], #ts-zone[hidden] { display: none; }
 .ts-item:focus-visible, .ts-switch:focus-visible, #ts-rail button:focus-visible { outline: 3px solid var(--ts-yellow); outline-offset: 2px; }
@@ -66,8 +70,8 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
 .ts-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
 .ts-amounts button { height: 38px; border-radius: 8px; background: transparent; color: var(--ts-ink); border: 1px solid var(--ts-border); font-weight: 700; cursor: pointer; }
 .ts-amounts button.on { border-color: var(--ts-yellow); color: var(--ts-yellow); background: color-mix(in srgb, var(--ts-yellow) 12%, transparent); }
-.ts-award-go { width: 100%; height: 44px; border-radius: 10px; border: 0; background: var(--ts-red); color: var(--ts-ink); font: 700 15px 'Outfit', sans-serif; cursor: pointer; }
-.ts-gift .ts-award-go { background: var(--ts-yellow); color: var(--ts-deep); }
+.ts-award-go { width: 100%; height: 44px; border-radius: 10px; border: 0; background: var(--ts-red); color: var(--ts-on-red); font: 700 15px 'Outfit', sans-serif; cursor: pointer; }
+.ts-gift .ts-award-go { background: var(--ts-yellow); color: var(--ts-action-ink); }
 .ts-award-go:hover { filter: brightness(1.1); }
 .ts-top3 { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
 .ts-top3 li { display: flex; align-items: center; gap: 12px; }
@@ -82,7 +86,6 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
 @media (max-width: 1280px) {
   body.ts-on.ts-rail-on #ts-rail { display: none; }
   body.ts-on.ts-rail-on #app-screen { padding-right: 0; }
-  html body.ts-on #app-screen #view-students #class-tabs-container { display: grid !important; }
 }
 @media (max-width: 900px) {
   body.ts-on #ts-sidebar { display: none; }
@@ -90,14 +93,15 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
   body.ts-on #app-screen > nav.sticky .tab-btn:not([style*="none"]):not(.hidden),
   body.ts-on #app-screen > nav.sticky #logged-in-name-container,
   body.ts-on #app-screen > nav.sticky #logout-btn, body.ts-on #teacher-header-showcase { display: revert !important; }
+  html body.ts-on #app-screen #view-students #class-tabs-container { display: grid !important; }
 }
 
 /* ---- Unified stage (matches sidebar/rail surfaces) ---- */
-body.ts-on { background: #0b1220 !important; }
-body.ts-on #app-screen { background: #0b1220 !important; }
-body.ts-on #app-screen > header, body.ts-on #app-screen > nav.sticky { background: #0b1220 !important; border: 0 !important; box-shadow: none !important; }
-body.ts-on #ts-sidebar { background: #0b1220; border-right-color: rgba(255,255,255,.06); }
-body.ts-on .ts-card, body.ts-on .ts-switch, body.ts-on .ts-me { background: #131c2e; border-color: rgba(255,255,255,.07); border-radius: 16px; backdrop-filter: none; }
+body.ts-on { background: var(--ts-bg) !important; }
+body.ts-on #app-screen { background: var(--ts-bg) !important; }
+body.ts-on #app-screen > header, body.ts-on #app-screen > nav.sticky { background: var(--ts-bg) !important; border: 0 !important; box-shadow: none !important; }
+body.ts-on #ts-sidebar { background: var(--ts-bg); border-right-color: var(--ts-border); }
+body.ts-on .ts-card, body.ts-on .ts-switch, body.ts-on .ts-me { background: var(--ts-surface); border-color: var(--ts-border); border-radius: 16px; backdrop-filter: none; }
 .ts-switch-wrap { position: relative; }
 .ts-switch { width: 100%; }
 #ts-sidebar .ts-switch { display: grid !important; }
@@ -140,26 +144,26 @@ body.ts-on .ts-card, body.ts-on .ts-switch, body.ts-on .ts-me { background: #131
 .ts-pop-item, .ts-pop-all { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 8px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--ts-ink); text-align: left; }
 .ts-pop-item small { color: var(--ts-muted); font-size: 12px; }
 .ts-pop-item:hover, .ts-pop-all:hover { background: rgba(255,255,255,.07); }
-.ts-pop-item.on { background: var(--ts-yellow); color: var(--ts-deep); font-weight: 700; }
-.ts-pop-item.on small { color: var(--ts-deep); }
+.ts-pop-item.on { background: var(--ts-yellow); color: var(--ts-action-ink); font-weight: 700; }
+.ts-pop-item.on small { color: var(--ts-action-ink); }
 .ts-pop-all { margin-top: 6px; border-top: 1px solid var(--ts-border); border-radius: 0 0 10px 10px; color: var(--ts-yellow); }
 
 body.ts-on #view-students .class-action-console { display: none !important; }
 body.ts-on #view-students > :is(h1,h2,.breadcrumb, nav), body.ts-on #view-students [id*="breadcrumb"] { display: none !important; }
 .ts-hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin: 0 0 20px; padding: 26px 28px; border-radius: 18px; font-family: 'Outfit', sans-serif; color: var(--ts-ink);
-  background: radial-gradient(circle at 85% 20%, rgba(255,203,5,.16), transparent 45%), linear-gradient(135deg, #18234a, #131c2e 70%); border: 1px solid rgba(255,255,255,.07); }
+  background: var(--ts-hero); border: 1px solid var(--ts-border); }
 .ts-hero h2 { margin: 0; font: 800 34px/1.1 'Outfit', sans-serif; color: var(--ts-yellow); }
 .ts-hero p { margin: 4px 0 16px; color: var(--ts-muted); font-size: 15px; }
 .ts-chips { display: flex; gap: 10px; flex-wrap: wrap; }
-.ts-chip { display: flex; flex-direction: column; padding: 8px 14px; border-radius: 12px; background: rgba(11,18,32,.6); border: 1px solid rgba(255,255,255,.07); }
+.ts-chip { display: flex; flex-direction: column; padding: 8px 14px; border-radius: 12px; background: var(--ts-chip); border: 1px solid var(--ts-border); }
 .ts-chip b { font-size: 20px; } .ts-chip small { font-size: 12px; color: var(--ts-muted); }
 .ts-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.ts-btn { height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--ts-yellow); background: var(--ts-yellow); color: var(--ts-deep); font: 700 15px 'Outfit', sans-serif; cursor: pointer; }
-.ts-btn.ghost { background: transparent; color: var(--ts-ink); border-color: rgba(255,255,255,.18); }
+.ts-btn { height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--ts-yellow); background: var(--ts-yellow); color: var(--ts-action-ink); font: 700 15px 'Outfit', sans-serif; cursor: pointer; }
+.ts-btn.ghost { background: transparent; color: var(--ts-ink); border-color: var(--ts-border); }
 .ts-btn:hover { filter: brightness(1.1); }
 
 html body.ts-on #app-screen #view-students #students-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; gap: 14px !important; padding-top: 4px; }
-html body.ts-on #app-screen #view-students #students-list > .trainer-student-card { background: #131c2e !important; border: 1px solid rgba(255,255,255,.07) !important; border-radius: 16px !important; padding: 16px 12px 12px !important; box-shadow: none !important; }
+html body.ts-on #app-screen #view-students #students-list > .trainer-student-card { background: var(--ts-surface) !important; border: 1px solid var(--ts-border) !important; border-radius: 16px !important; padding: 16px 12px 12px !important; box-shadow: none !important; }
 html body.ts-on #app-screen #view-students .student-avatar-stage { height: 96px; margin-bottom: 8px; }
 html body.ts-on #app-screen #view-students .student-avatar-stage img { width: 88px !important; height: 88px !important; }
 html body.ts-on #app-screen #view-students .student-avatar-initial { width: 72px; height: 72px; font-size: 30px; }
@@ -170,8 +174,65 @@ html body.ts-on #app-screen #view-students .student-roster-edit { top: 8px; righ
 html body.ts-on #app-screen #view-students #students-list .global-achievement-badge { top: auto; bottom: 52px; right: 8px; transform: scale(.85); }
 .ts-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-top: auto; }
 .ts-quick button { height: 32px; border-radius: 9px; border: 0; font: 800 14px 'Outfit', sans-serif; cursor: pointer; }
-.ts-quick .minus { background: color-mix(in srgb, var(--ts-red) 85%, transparent); color: var(--ts-ink); }
-.ts-quick .plus { background: var(--ts-yellow); color: var(--ts-deep); }
+.ts-quick .minus { background: var(--ts-red); color: var(--ts-on-red); }
+.ts-quick .plus { background: var(--ts-yellow); color: var(--ts-action-ink); }
 .ts-quick button:hover { filter: brightness(1.12); }
 .ts-quick button:focus-visible { outline: 3px solid var(--ts-ink); outline-offset: 2px; }
 @media (max-width: 700px) { .ts-hero { padding: 18px; } .ts-hero h2 { font-size: 26px; } }
+
+/* One navigation surface whenever the sidebar is available. Keep the original
+   buttons in the DOM because sidebar actions delegate to their handlers. */
+@media (min-width: 901px) {
+  html body.ts-on #app-screen #breadcrumb,
+  html body.ts-on #app-screen #view-students #class-tabs-container { display: none !important; }
+}
+#ts-theme-toggle { display: none; }
+body.ts-on #ts-theme-toggle { display: flex; align-items: center; gap: 9px; width: 100%; padding: 10px 12px; flex: none; background: var(--ts-surface); color: var(--ts-ink); border: 1px solid var(--ts-border); border-radius: 8px; font: 600 13px 'Outfit', sans-serif; cursor: pointer; }
+.ts-theme-icon { font-size: 20px; color: var(--ts-yellow); }
+.ts-theme-track { margin-left: auto; width: 36px; height: 22px; padding: 3px; flex: none; border-radius: 20px; background: var(--ts-muted); }
+.ts-theme-track > span { display: block; width: 16px; height: 16px; border-radius: 50%; background: var(--ts-surface); transition: transform .18s; }
+#ts-theme-toggle[aria-checked="true"] .ts-theme-track { background: var(--ts-blue); }
+#ts-theme-toggle[aria-checked="true"] .ts-theme-track > span { transform: translateX(14px); }
+#ts-theme-toggle:focus-visible { outline: 3px solid var(--ts-blue); outline-offset: 3px; }
+body.ts-on.ts-bright {
+  color-scheme: light;
+  --ts-bg: oklch(0.97 0.017 230); --ts-surface: oklch(0.995 0.003 230);
+  --ts-deep: oklch(0.94 0.032 230); --ts-ink: oklch(0.29 0.05 260); --ts-muted: oklch(0.48 0.04 260);
+  --ts-border: oklch(0.86 0.035 230); --ts-red: oklch(0.57 0.21 25);
+  --ts-hero: oklch(0.92 0.065 220); --ts-chip: color-mix(in srgb, var(--ts-surface) 80%, transparent);
+  --ds-ink: var(--ts-ink); --ds-muted: var(--ts-muted); --ds-surface: var(--ts-surface);
+  --ds-surface-soft: var(--ts-deep); --ds-border: var(--ts-border); --ds-highlight: var(--ts-surface);
+  --ds-shadow: 0 6px 20px color-mix(in srgb, var(--ts-blue) 8%, transparent);
+  --pd-ink: var(--ts-ink); --pd-muted: var(--ts-muted); --pd-surface: var(--ts-surface);
+  --class-surface: var(--ts-surface); --class-deep: var(--ts-deep); --class-ink: var(--ts-ink);
+  --class-muted: var(--ts-muted); --class-border: var(--ts-border);
+}
+body.ts-on.ts-bright #app-screen { color: var(--ts-ink) !important; }
+body.ts-on.ts-bright .ts-brand, body.ts-on.ts-bright .ts-hero h2,
+body.ts-on.ts-bright #ts-chooser h2, body.ts-on.ts-bright .ts-pop-all,
+body.ts-on.ts-bright .ts-theme-icon { color: var(--ts-blue); }
+body.ts-on.ts-bright #ts-sidebar .ts-section-toggle:is(:hover,.current),
+body.ts-on.ts-bright .ts-amounts button.on { color: var(--ts-ink); }
+body.ts-on.ts-bright .ts-hero { border-left: 5px solid var(--ts-blue); }
+body.ts-on.ts-bright #ts-rail .ts-card:nth-child(2) { background: var(--ts-mint); }
+body.ts-on.ts-bright #ts-rail .ts-gift { background: var(--ts-pink); }
+html body.ts-on.ts-bright #ts-sidebar :is(.ts-switch,#ts-theme-toggle) { background: var(--ts-surface) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; box-shadow: none !important; }
+html body.ts-on.ts-bright #ts-sidebar .ts-switch-label { color: var(--ts-muted) !important; }
+html body.ts-on.ts-bright #app-screen :is(.financial-dashboard,.financial-breakdown-table) { color: var(--ts-ink) !important; }
+html body.ts-on.ts-bright #app-screen :is(.financial-hero,.financial-overview-card,.financial-period-card,.financial-source-bar,.financial-breakdown-table th,.schedule-time-button,.schedule-add-row,.vocab-list-card,.vocab-cover-button) { background: var(--ts-deep) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; box-shadow: none !important; }
+html body.ts-on.ts-bright #app-screen :is(.financial-overview-card strong,.financial-card-kicker,.financial-card-note,.financial-source-status,.financial-source-status strong,.financial-eyebrow,.financial-field-label,.financial-total-row td) { color: var(--ts-ink) !important; }
+html body.ts-on.ts-bright #app-screen :is(.glass-container,.bg-white,.bg-gray-50,.bg-gray-100) { background: var(--ts-surface) !important; border-color: var(--ts-border) !important; color: var(--ts-ink) !important; }
+html body.ts-on.ts-bright #app-screen :is(h1,h2,h3,h4,label,.text-white,.text-gray-800,.text-gray-700,.text-gray-900),
+html body.ts-on.ts-bright #app-screen .glass-container :is(h2,h3) { color: var(--ts-ink) !important; text-shadow: none !important; }
+html body.ts-on.ts-bright #app-screen :is(.text-gray-400,.text-gray-500,.text-gray-600) { color: var(--ts-muted) !important; }
+html body.ts-on.ts-bright #app-screen :is(.btn-outline,.btn-secondary,.tab-inactive,.admin-sub-tab,.users-subtab,.quiz-sub-tab,.teacher-zone-tab) { background: var(--ts-deep) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; text-shadow: none !important; }
+html body.ts-on.ts-bright #app-screen :is(.btn-primary,.btn-danger,.btn-secondary.danger) { color: var(--ts-action-ink) !important; }
+html body.ts-on.ts-bright #app-screen :is(.btn-danger,.btn-secondary.danger) { color: var(--ts-on-red) !important; }
+html body.ts-on.ts-bright #app-screen :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea),
+html body.ts-on.ts-bright #ts-chooser :is(input,select), html body.ts-on.ts-bright #ts-rail select { background: var(--ts-surface) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; }
+@media (max-width: 900px) {
+  body.ts-on #ts-theme-toggle { position: fixed; display: flex !important; width: auto; right: 12px; bottom: 16px; z-index: 45; box-shadow: var(--ds-shadow); }
+  body.ts-on #ts-sidebar:has(#ts-theme-toggle) { display: contents; }
+  body.ts-on #ts-sidebar > :not(#ts-theme-toggle) { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) { .ts-theme-track > span { transition: none; } }
