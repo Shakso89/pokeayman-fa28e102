@@ -20,7 +20,7 @@
     side.setAttribute('aria-label', 'Teacher navigation');
     side.innerHTML = `
       <div class="ts-brand"><span class="ts-ball" aria-hidden="true"></span><span>PokéAyman<small>Academy</small></span></div>
-      <button type="button" class="ts-switch" data-ts="schools"><span class="ts-switch-label">Current class</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">▾</span></button>
+      <div class="ts-switch-wrap"><button type="button" class="ts-switch" data-ts="switch" aria-haspopup="true" aria-expanded="false"><span class="ts-switch-label">Current class</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">▾</span></button><div id="ts-pop" class="ts-pop" hidden></div></div>
       <nav class="ts-nav">
         <p class="ts-head">Classroom</p>
         ${CLASS_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-class="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}
@@ -75,6 +75,89 @@
     setTimeout(sync, 50);
   }
 
+  function myClasses() {
+    const all = g(() => allData.filter((r) => r.type === 'class'), []);
+    if (g(() => canAccessAdmin(), false)) return all;
+    const me = g(() => currentTeacher, '');
+    const ac = g(() => getAssignedClasses(me), []), as = g(() => getAssignedSchools(me), []).map((a) => a.school_name);
+    return all.filter((c) => as.includes(c.school_name) || ac.some((a) => a.school_name === c.school_name && a.class_name === c.class_name) || [c.created_by, c.teacher_name, c.assigned_teacher].includes(me));
+  }
+  function togglePop() {
+    const pop = $('ts-pop'), btn = document.querySelector('.ts-switch');
+    if (!pop.hidden) return closePop();
+    const groups = {};
+    myClasses().forEach((c) => { (groups[c.school_name] = groups[c.school_name] || []).push(c); });
+    const cur = `${g(() => navSchool, '')}|${g(() => navClass, '')}`;
+    pop.innerHTML = Object.keys(groups).sort().map((sc) => `<p class="ts-pop-school">${esc(sc)}</p>` + groups[sc].map((c) => {
+      const n = g(() => getStudents(sc, c.class_name).length, 0);
+      return `<button type="button" class="ts-pop-item${cur === sc + '|' + c.class_name ? ' on' : ''}" data-ts-go='${esc(JSON.stringify([sc, c.class_name]))}'><span>${esc(c.class_name)}</span><small>${n} students</small></button>`;
+    }).join('')).join('') + `<button type="button" class="ts-pop-all" data-ts="schools">Browse all schools →</button>`;
+    pop.hidden = false; btn.setAttribute('aria-expanded', 'true');
+  }
+  function closePop() { const p = $('ts-pop'); if (p) p.hidden = true; document.querySelector('.ts-switch')?.setAttribute('aria-expanded', 'false'); }
+  document.addEventListener('click', (e) => { if (!e.target.closest('.ts-switch-wrap')) closePop(); });
+  function switchClass(sc, cl) {
+    const keep = document.querySelector('#class-tabs-container .class-view-tab[class*="-active"]:not([class*="inactive"])')?.dataset.classtab || 'students';
+    if (g(() => activeMainTab) !== 'dashboard') g(() => showMainTab('dashboard'));
+    g(() => navigateTo('students', sc, cl));
+    setTimeout(() => document.querySelector(`#class-tabs-container [data-classtab="${keep}"]`)?.click(), 30);
+  }
+
+  /* ---- Unified class stage: hero banner + quick +/-10 on cards ---- */
+  function hero() {
+    const sub = $('class-subtab-students'); if (!sub) return;
+    let h = $('ts-hero');
+    if (!h) {
+      h = document.createElement('section'); h.id = 'ts-hero'; h.className = 'ts-hero';
+      h.innerHTML = `<div class="ts-hero-text"><h2 id="ts-hero-title"></h2><p id="ts-hero-school"></p>
+        <div class="ts-chips"><span class="ts-chip"><b id="ts-hero-count">0</b><small>Students</small></span><span class="ts-chip"><b id="ts-hero-coins">0</b><small>Total coins</small></span></div></div>
+        <div class="ts-hero-actions"><button type="button" class="ts-btn ghost" data-hero="gift">🎁 Gift whole class</button><button type="button" class="ts-btn" data-hero="add">＋ Add student</button></div>`;
+      sub.prepend(h);
+      h.addEventListener('click', onHero);
+    }
+    const list = g(() => getStudents(navSchool, navClass), []);
+    const set = (id, v) => { const el = $(id); if (el.textContent !== v) el.textContent = v; };
+    set('ts-hero-title', g(() => navClass, '') || ''); set('ts-hero-school', g(() => navSchool, '') || '');
+    set('ts-hero-count', String(list.length));
+    set('ts-hero-coins', list.reduce((a, s) => a + (Number(s.coins) || 0), 0).toLocaleString());
+  }
+  function onHero(e) {
+    const b = e.target.closest('[data-hero]'); if (!b) return;
+    if (b.dataset.hero === 'add') {
+      const name = (prompt('New student name') || '').trim(); if (!name) return;
+      $('new-student-name').value = name; submit($('add-student-form'));
+    } else {
+      const raw = (prompt('Coins for every student (1–1000)', '10') || '').trim(); if (!raw) return;
+      $('gift-all-amount').value = raw; submit($('gift-all-form'));
+    }
+  }
+  const submit = (f) => f && (f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })));
+  function cardButtons() {
+    document.querySelectorAll('#students-list > .trainer-student-card').forEach((card) => {
+      if (card.querySelector('.ts-quick') || !card.querySelector('.student-roster-edit')) return;
+      const q = document.createElement('div'); q.className = 'ts-quick';
+      q.innerHTML = `<button type="button" class="minus" data-q="-10" aria-label="Take 10 coins">−10</button><button type="button" class="plus" data-q="10" aria-label="Give 10 coins">+10</button>`;
+      card.appendChild(q);
+    });
+  }
+  let busy = false;
+  document.addEventListener('click', async (e) => {
+    const b = e.target.closest('.ts-quick button'); if (!b) return;
+    e.stopPropagation(); if (busy) return;
+    const card = b.closest('.trainer-student-card'), name = card.dataset.studentName && card.querySelector('.student-roster-name')?.textContent;
+    busy = true;
+    try {
+      if (b.dataset.q === '10') {
+        const sel = $('award-student'); sel.value = name; $('award-amount').value = 10; submit($('award-form'));
+      } else {
+        const latest = g(() => getStudentRecordByStableId(card.dataset.studentId), null); if (!latest) return;
+        const saved = await persistCanonicalStudentPatch(latest.__backendId, { coins: Math.max(0, (Number(latest.coins) || 0) - 10) });
+        if (!saved) return;
+        await logCredit('-10 coins', -10, saved.student_name); g(() => playTransactionSound('deduction')); g(() => showStudentAwardCelebration(saved, -10));
+      }
+    } finally { setTimeout(() => { busy = false; }, 400); }
+  }, true);
+
   let amount = 10;
   function onRail(e) {
     const b = e.target.closest('button'); if (!b) return;
@@ -126,6 +209,7 @@
     if ($('ts-avatar').innerHTML !== av) $('ts-avatar').innerHTML = av;
 
     if (inClass) {
+      hero(); cardButtons();
       const src = $('award-student');
       const opts = src ? src.innerHTML : '';
       if (opts !== lastOpts) { const keep = $('ts-award-student').value; $('ts-award-student').innerHTML = opts; if (keep) $('ts-award-student').value = keep; lastOpts = opts; }
