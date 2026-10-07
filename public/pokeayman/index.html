@@ -5731,7 +5731,9 @@ function initPokemonArch() {
   const root = document.getElementById('pokemon-arch');
   const track = document.getElementById('pokemon-arch-carousel');
   if (!root || !track) return;
-  const items = [{id:144,title:'Articuno',subtitle:'Ice bird'},{id:145,title:'Zapdos',subtitle:'Electric bird'},{id:146,title:'Moltres',subtitle:'Flame bird'},{id:150,title:'Mewtwo',subtitle:'Genetic Pokémon'},{id:249,title:'Lugia',subtitle:'Diving Pokémon'},{id:374,title:'Beldum',subtitle:'Iron Ball Pokémon'}].map(item => ({...item,itemId:item.id,src:`https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/official-artwork/${item.id}.png`,alt:item.title}));
+  const archName = id => { const s = window.pokeaymanShopSpecies?.[id]; return s?.name ? s.name.charAt(0).toUpperCase() + s.name.slice(1) : `Pokémon ${id}`; };
+  const archIds = (Array.isArray(window.homeArchPokemon) && window.homeArchPokemon.length === 6 ? window.homeArchPokemon : [144,145,146,150,249,250]).map(Number).filter(id => id >= 1 && id <= 898);
+  const items = archIds.map(id => ({id, title:archName(id), subtitle:`Pokédex #${id}`, itemId:id, src:`https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/official-artwork/${id}.png`, alt:archName(id)}));
   if (!items.length) return;
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   root.dataset.reducedMotion = String(Boolean(reduced));
@@ -10167,6 +10169,8 @@ const pokemonNames = {
 };
 
 const getPokemonName = (id) => {
+  const species = window.pokeaymanShopSpecies?.[id];
+  if (species?.name) return species.name.charAt(0).toUpperCase() + species.name.slice(1);
   return pokemonNames[id] || `Pokémon ${id}`;
 };
 
@@ -17642,16 +17646,8 @@ async function saveHomeArchConfig(pokemonIds) {
 function updateHomeArch() {
   const archContainer = document.getElementById('pokemon-arch');
   if (!archContainer) return;
-  const imgs = archContainer.querySelectorAll('.pokemon-arch');
-  if (imgs.length !== window.homeArchPokemon.length) return;
-  
-  imgs.forEach((img, idx) => {
-    const pokemonId = window.homeArchPokemon[idx];
-    if (pokemonId && pokemonId >= 1 && pokemonId <= 898) {
-      img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`;
-      img.dataset.pokemon = pokemonId;
-    }
-  });
+  archContainer._cleanupCircularCarousel?.();
+  initPokemonArch();
 }
 
 (async () => {
