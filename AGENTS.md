@@ -19,3 +19,4 @@
 - Shop species names and types load from a bundled official PokéAPI snapshot before rendering. Why: avoids hundreds of live requests and prevents temporarily mismatched artwork and badges.
 - Pokémon details use scoped detail-workspace.css with the shared elemental palette and tier classes; guard asynchronous type updates by selected species. Why: isolates legacy styling and prevents stale species backgrounds.
 - Vocabulary reading uses the shared parent-frame PCM streaming player and a server speech endpoint restricted to saved vocabulary, with successful audio cached locally. Why: gives teacher and student flashcards the same natural voice without exposing credentials or repeatedly generating identical clips.
+- Coin adjustments and class gifts use one shared body-mounted celebration renderer with scoped coin-celebrations.css tokens. Why: keeps signed coin amounts and popup positioning consistent without changing balances or permissions.
