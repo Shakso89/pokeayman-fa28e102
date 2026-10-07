@@ -239,3 +239,24 @@ html body .stc-slide { transform-origin: center; }
 .holo-cell:hover .shop-card-art { transform: translateZ(30px) scale(1.08); }
 @keyframes holoFlipIn { from { opacity: 0; transform: rotateY(-70deg) translateY(18px) scale(.9); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .holo-cell { animation: none; opacity: 1; } .holo-cell > .shop-pokemon-card { transform: none; } }
+
+/* Collection staircase: neutralize legacy "#list > div" card styles on the carousel wrapper. */
+html body :is(#my-pokemon-list, #profile-pokemon-list)#my-pokemon-list > .shop-staircase,
+html body #my-pokemon-list#my-pokemon-list > .shop-staircase,
+html body #profile-pokemon-list#profile-pokemon-list > .shop-staircase {
+  grid-column: 1 / -1 !important; width: 100% !important; max-width: 100% !important;
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+  padding: 8px 0 4px !important; overflow: hidden !important; filter: none !important;
+  transform: none !important; border-radius: 0 !important; min-height: 0 !important;
+}
+html body :is(#my-pokemon-list, #profile-pokemon-list) > .shop-staircase::before,
+html body :is(#my-pokemon-list, #profile-pokemon-list) > .shop-staircase::after { content: none !important; display: none !important; }
+html body :is(#my-pokemon-list, #profile-pokemon-list) .shop-staircase { --stc-w: 230px !important; }
+html body :is(#my-pokemon-list, #profile-pokemon-list) .stc-viewport { min-height: 420px; padding-bottom: 220px; margin-bottom: -220px; }
+html body :is(#my-pokemon-list#my-pokemon-list#my-pokemon-list, #profile-pokemon-list#profile-pokemon-list#profile-pokemon-list) .stc-slide > .collection-pokemon-card {
+  min-height: 400px !important; height: auto !important; max-height: none !important; overflow: visible !important;
+  display: flex !important; flex-direction: column !important; padding: 14px 14px 0 !important;
+}
+html body :is(#my-pokemon-list, #profile-pokemon-list) .stc-slide > .collection-pokemon-card > .shop-card-art { flex-shrink: 0; }
+html body :is(#my-pokemon-list, #profile-pokemon-list) .stc-slide .shop-card-footer { margin-top: auto !important; }
+html body :is(#my-pokemon-list, #profile-pokemon-list) .stc-current-name { color: var(--shop-yellow, #fde68a); text-shadow: 0 2px 6px rgba(2,6,23,.6); }
