@@ -3,6 +3,17 @@
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const g = (fn, fb) => { try { return fn(); } catch (e) { return fb; } };
+  let bright = g(() => localStorage.getItem('pokeayman-teacher-theme') === 'bright', false);
+  function applyTheme() {
+    document.body.classList.toggle('ts-bright', bright);
+    const toggle = $('ts-theme-toggle');
+    if (toggle) {
+      toggle.setAttribute('aria-checked', String(bright));
+      toggle.title = bright ? 'Switch to dark mode' : 'Switch to bright mode';
+      toggle.querySelector('.ts-theme-icon').textContent = bright ? '☀' : '☾';
+    }
+  }
+  applyTheme();
 
   const CLASS_ITEMS = [
     ['students', '👩‍🎓', 'Class Roster'], ['quiz', '📝', 'Quizzes'], ['vocab', '📚', 'Vocabulary'],
@@ -44,6 +55,19 @@
       <section class="ts-card ts-gift"><h3>🎁 Surprise Boxes</h3><p>Launch a special box game for your class!</p>
         <button type="button" class="ts-award-go" data-ts-class="games">Launch game</button></section>`;
     document.body.append(side, rail);
+    const theme = document.createElement('button');
+    theme.id = 'ts-theme-toggle';
+    theme.type = 'button';
+    theme.setAttribute('role', 'switch');
+    theme.setAttribute('aria-label', 'Bright mode');
+    theme.innerHTML = '<span class="ts-theme-icon" aria-hidden="true"></span><span>Bright mode</span><span class="ts-theme-track" aria-hidden="true"><span></span></span>';
+    side.insertBefore(theme, side.querySelector('.ts-me'));
+    theme.addEventListener('click', () => {
+      bright = !bright;
+      g(() => localStorage.setItem('pokeayman-teacher-theme', bright ? 'bright' : 'dark'));
+      applyTheme();
+    });
+    applyTheme();
     const chooser = document.createElement('dialog');
     chooser.id = 'ts-chooser';
     chooser.setAttribute('aria-labelledby', 'ts-chooser-title');
