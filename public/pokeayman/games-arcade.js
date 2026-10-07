@@ -28,28 +28,71 @@
   };
 
   window.gaEnhanceLobby = function (modal, fnName, refresh) {
+    if (modal.classList.contains('ga-lobby')) return;
     const game = GAMES.find(g => g.fn === fnName);
     modal.classList.add('ga-lobby');
     const h2 = modal.querySelector('h2');
-    if (h2 && game) h2.innerHTML = `<span class="ga-lobby-icon">${game.icon}</span> ${esc(game.name)} lobby`;
+    if (h2 && game) h2.innerHTML = `<span class="ga-lobby-icon" aria-hidden="true">${game.icon}</span> ${esc(game.name)}`;
     const p = h2?.nextElementSibling;
-    if (p && game) p.textContent = `${game.desc} Pick up to 4 players from this class.`;
+    if (p && game) p.textContent = 'Round setup';
     const list = modal.querySelector('#game-player-list');
     if (!list) return;
     const checks = [...list.querySelectorAll('.game-player-check')];
-    const set = picks => { checks.forEach(c => { c.disabled = false; c.checked = picks.includes(c); }); refresh?.(); };
+    const root = list.parentElement;
+    const next = modal.querySelector('#game-players-next');
+    const cancel = modal.querySelector('#game-players-cancel');
+    const footer = next?.parentElement;
+    if (!root || !footer) return;
+    const players = document.createElement('section');
+    players.className = 'ga-players-section';
     const bar = document.createElement('div');
     bar.className = 'ga-quick';
-    bar.innerHTML = `<span>${checks.length} students in this class</span>
-      <button type="button" data-q="all">First 4</button><button type="button" data-q="r2">Random 2</button><button type="button" data-q="r4">Random 4</button><button type="button" data-q="clear">Clear</button>`;
+    bar.innerHTML = `<div class="ga-player-heading"><h3>Players</h3><span class="ga-player-count" aria-live="polite">0 / 4 selected</span></div>
+      <div class="ga-pick-tools"><select aria-label="Random player count">${[1, 2, 3, 4].filter(n => n <= checks.length).map(n => `<option value="${n}" ${n === Math.min(2, checks.length) ? 'selected' : ''}>Random ${n}</option>`).join('')}</select><button type="button" data-q="random" aria-label="Pick random players" title="Pick random players">⤨</button><button type="button" data-q="clear" aria-label="Clear players" title="Clear players">×</button></div>`;
+    const update = () => {
+      const count = checks.filter(c => c.checked).length;
+      bar.querySelector('.ga-player-count').textContent = `${count} / 4 selected · ${checks.length} in class`;
+      if (next) next.textContent = count ? `Start game · ${count} player${count === 1 ? '' : 's'} →` : 'Start game →';
+    };
+    const set = picks => { checks.forEach(c => { c.disabled = false; c.checked = picks.includes(c); }); refresh?.(); update(); };
     bar.addEventListener('click', e => {
       const q = e.target.closest('button')?.dataset.q; if (!q) return;
-      const shuffled = [...checks].sort(() => Math.random() - 0.5);
-      set(q === 'all' ? checks.slice(0, 4) : q === 'r2' ? shuffled.slice(0, 2) : q === 'r4' ? shuffled.slice(0, 4) : []);
+      const shuffled = [...checks];
+      for (let i = shuffled.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+      set(q === 'random' ? shuffled.slice(0, Number(bar.querySelector('select').value)) : []);
     });
-    list.before(bar);
-    const next = modal.querySelector('#game-players-next');
-    if (next) next.textContent = 'Enter arena →';
+    list.before(players);
+    players.append(bar, list);
+    checks.forEach(c => c.addEventListener('change', update));
+    const settings = modal.querySelector('.game-settings-grid');
+    const options = document.createElement('details');
+    options.className = 'ga-round-options';
+    options.innerHTML = '<summary><span>Timer & rewards</span><span class="ga-options-summary"></span></summary><div class="ga-options-body"></div>';
+    if (settings) {
+      settings.classList.add('ga-core-settings');
+      settings.querySelectorAll('.game-setting-control').forEach(control => {
+        if (!control.querySelector('#shared-winning-score')) options.querySelector('.ga-options-body').appendChild(control);
+      });
+      if (!settings.children.length) settings.remove();
+    }
+    // Card count and timer are separate segmented controls, never competing selections.
+    modal.querySelectorAll('.shared-baam-count').forEach(button => button.classList.remove('game-timer-option'));
+    [...root.children].forEach(el => {
+      if (el.querySelector('.memory-level-option, .match-word-count-option, .shared-baam-count') || el === settings) el.classList.add('ga-round-setting');
+    });
+    if (options.querySelector('.ga-options-body').children.length) footer.before(options);
+    const updateOptions = () => {
+      const seconds = Number(modal.querySelector('.game-timer-option.is-selected')?.dataset.seconds || 0);
+      const reward = Number(modal.querySelector('.game-reward-option.is-selected')?.dataset.reward || 0);
+      options.querySelector('.ga-options-summary').textContent = `${seconds ? `${seconds / 60} min` : 'No timer'} · ${reward ? `${reward} coins` : 'No reward'}`;
+    };
+    modal.addEventListener('click', () => queueMicrotask(updateOptions));
+    updateOptions();
+    footer.classList.add('ga-lobby-footer');
+    if (cancel) { cancel.textContent = '← Games'; footer.prepend(cancel); }
+    const error = modal.querySelector('#game-player-error');
+    error?.setAttribute('role', 'alert');
+    update();
   };
 
   window.gaCountdown = function (players, firstIndex, start, avatar) {
