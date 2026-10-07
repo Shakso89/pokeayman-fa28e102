@@ -16036,8 +16036,8 @@ function openTeacherOwnedVocabDeleteDialog(listId, listName, trigger = null) {
     if (confirm.disabled) return;
     confirm.disabled = true; cancel.disabled = true; confirm.textContent = 'Deleting…'; error.classList.add('hidden');
     try {
-      await deleteVocabList(listId, listName, { confirmed: true, onError: message => { error.textContent = message; error.classList.remove('hidden'); } });
-      if (!error.classList.contains('hidden')) { confirm.disabled = false; cancel.disabled = false; confirm.textContent = 'Delete permanently'; return; }
+      const deleted = await deleteVocabList(listId, listName, { confirmed: true, onError: message => { error.textContent = message; error.classList.remove('hidden'); } });
+      if (!deleted) { confirm.disabled = false; cancel.disabled = false; confirm.textContent = 'Delete permanently'; return; }
       dialog.remove(); trigger?.focus?.();
       toast(`List “${listName}” and its vocabulary content were deleted.`);
     } catch (failure) {
@@ -16047,61 +16047,41 @@ function openTeacherOwnedVocabDeleteDialog(listId, listName, trigger = null) {
   panel.focus();
 }
 
-function deleteVocabList(listId, listName, options = {}) {
+async function deleteVocabList(listId, listName, options = {}) {
   if (!options.confirmed) { openTeacherOwnedVocabDeleteDialog(listId, listName); return; }
-  if (deleteVocabList.busy) return;
-  if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) { toast('Sign in as the list owner to delete it.'); return; }
+  const fail = message => { options.onError?.(message); return false; };
+  if (deleteVocabList.busy) return fail('Another list is being deleted. Please wait.');
+  if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return fail('Sign in as the list owner to delete it.');
   const requestedId = normalizeVocabId(listId);
   const list = getVocabLists().find(item => normalizeVocabId(item.vocab_list_id || item.__backendId) === requestedId)
     || allData.find(item => item.type === 'vocab_list' && normalizeVocabId(item.__backendId) === requestedId);
-  if (!list) { toast('Could not verify this vocabulary list. Please refresh and try again.'); return; }
-  if (normalizeStudentIdentity(list.teacher_name || list.owner) !== normalizeStudentIdentity(currentTeacher)) { toast('Only the list owner can permanently delete it.'); return; }
+  if (!list) return fail('Could not verify this vocabulary list. Please refresh and try again.');
+  if (normalizeStudentIdentity(list.teacher_name || list.owner) !== normalizeStudentIdentity(currentTeacher)) return fail('Only the list owner can permanently delete it.');
   const canonicalListId = normalizeVocabId(list.vocab_list_id || list.list_id || list.__backendId);
-  if (!canonicalListId) { toast('Could not verify this vocabulary list. Please refresh and try again.'); return; }
-  document.getElementById('vocab-delete-confirmation')?.remove();
-  const modal = document.createElement('div');
-  modal.id = 'vocab-delete-confirmation';
-  modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[12000] p-4';
-  modal.innerHTML = `<section class="vocab-editor-modal w-full max-w-sm p-5" role="alertdialog" aria-modal="true" aria-labelledby="vocab-delete-title" aria-describedby="vocab-delete-warning"><h2 id="vocab-delete-title" class="heading-font text-lg font-bold text-white">Delete vocabulary list?</h2><p id="vocab-delete-warning" class="mt-2 text-sm text-slate-300">Deleting “${String(listName || list.vocab_list_name || 'this list').replace(/[&<>\"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[character]))}” permanently removes it from every class view and My VB lists, along with its saved list record, vocabulary words, covers, and related flashcard/game references.</p><p id="vocab-delete-error" class="hidden mt-3 text-sm text-red-300" role="alert" aria-live="polite"></p><div class="flex gap-2 mt-5"><button type="button" id="vocab-delete-cancel" class="vocab-editor-secondary flex-1">Cancel</button><button type="button" id="vocab-delete-confirm" class="btn-secondary flex-1">Delete permanently</button></div></section>`;
-  document.body.appendChild(modal);
-  const close = () => modal.remove();
-  modal.querySelector('#vocab-delete-cancel').addEventListener('click', close);
-  modal.querySelector('#vocab-delete-confirm').addEventListener('click', async event => {
-    if (deleteVocabList.busy) return;
-    deleteVocabList.busy = true;
-    const button = event.currentTarget;
-    const error = modal.querySelector('#vocab-delete-error');
-    button.disabled = true;
-    button.setAttribute('aria-busy', 'true');
-    button.textContent = 'Deleting…';
+  if (!canonicalListId) return fail('Could not verify this vocabulary list. Please refresh and try again.');
+  deleteVocabList.busy = true;
     try {
       const latestList = allData.find(item => item.type === 'vocab_list' && (normalizeVocabId(item.__backendId) === normalizeVocabId(list.__backendId) || normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === canonicalListId));
-      if (!latestList) { options.onError?.('This list is no longer available. Refresh and try again.'); return; }
+      if (!latestList) return fail('This list is no longer available. Refresh and try again.');
       const words = allData.filter(item => item.type === 'vocab_word' && normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === canonicalListId);
       const listResult = await window.dataSdk.delete(latestList);
-      if (!listResult?.isOk) { options.onError?.('Could not delete this vocabulary list. No changes were confirmed.'); return; }
+      if (!listResult?.isOk) return fail('Could not delete this vocabulary list. No changes were confirmed.');
       for (const word of words) {
         const result = await window.dataSdk.delete(word);
-        if (!result?.isOk) { options.onError?.('The list was removed, but some vocabulary content could not be confirmed. Please refresh and try again.'); return; }
+        if (!result?.isOk) return fail('The list was removed, but some vocabulary content could not be confirmed. Please refresh and try again.');
       }
       const refresh = await window.dataSdk.init(handler);
-      if (!refresh?.isOk) { options.onError?.('Deletion could not be verified. Please refresh before trying again.'); return; }
+      if (!refresh?.isOk) return fail('Deletion could not be verified. Please refresh before trying again.');
       const stillPresent = allData.some(item => (item.type === 'vocab_list' && (normalizeVocabId(item.__backendId) === normalizeVocabId(latestList.__backendId) || normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === canonicalListId)) || (item.type === 'vocab_word' && normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === canonicalListId));
-      if (stillPresent) { options.onError?.('The deletion could not be verified. Please refresh before trying again.'); return; }
-      close();
+      if (stillPresent) return fail('The deletion could not be verified. Please refresh before trying again.');
       selectedGameList = selectedGameList.filter(name => name !== listName);
       renderVocabLists();
       renderGamesList();
       renderTeacherOwnedVocabLists();
-          } finally {
+      return true;
+    } finally {
       deleteVocabList.busy = false;
-      button.disabled = false;
-      button.removeAttribute('aria-busy');
     }
-  });
-  modal.addEventListener('click', event => { if (event.target === modal) event.stopPropagation(); });
-  modal.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); close(); } });
-  modal.querySelector('#vocab-delete-cancel').focus();
 }
 
 function openVocabFlashcards(listName) {
