@@ -1,0 +1,93 @@
+/* Teacher 3-column shell (sidebar + content + rail). Active only with body.ts-on. */
+:root {
+  --ts-w: 248px; --ts-rail: 300px;
+  --ts-bg: color-mix(in srgb, #0c1232 92%, transparent);
+  --ts-surface: #121a45; --ts-ink: #f5f7ff; --ts-muted: #b1bbd7;
+  --ts-yellow: #ffcb05; --ts-red: #e3350d; --ts-deep: #0c1232;
+  --ts-border: color-mix(in srgb, #f5f7ff 14%, transparent);
+}
+#ts-sidebar, #ts-rail { display: none; }
+body.ts-on #ts-sidebar {
+  display: flex; flex-direction: column; gap: 14px; position: fixed; inset: 0 auto 0 0; width: var(--ts-w);
+  padding: 18px 14px; z-index: 40; background: var(--ts-bg); border-right: 1px solid var(--ts-border);
+  backdrop-filter: blur(14px); color: var(--ts-ink); font-family: 'Outfit', sans-serif; overflow-y: auto;
+}
+body.ts-on.ts-rail-on #ts-rail {
+  display: flex; flex-direction: column; gap: 14px; position: fixed; inset: 0 0 0 auto; width: var(--ts-rail);
+  padding: 18px 14px; z-index: 40; overflow-y: auto; font-family: 'Outfit', sans-serif; color: var(--ts-ink);
+}
+body.ts-on #app-screen { padding-left: var(--ts-w); }
+body.ts-on.ts-rail-on #app-screen { padding-right: var(--ts-rail); }
+body.ts-on #app-screen > nav.sticky .tab-btn,
+body.ts-on #app-screen > nav.sticky #logged-in-name-container,
+body.ts-on #app-screen > nav.sticky #logout-btn,
+body.ts-on #teacher-header-showcase, body.ts-on #header-logout { display: none !important; }
+body.ts-on #app-screen > header > div { min-height: 64px !important; }
+body.ts-on #app-screen > header > div > div { min-height: 64px !important; }
+body.ts-on #app-screen > main, body.ts-on #app-screen > header > div, body.ts-on #app-screen > nav > div { max-width: 1280px !important; }
+body.ts-on #view-students #class-tabs-container { display: none !important; }
+body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)) !important; }
+
+.ts-brand { display: flex; align-items: center; gap: 10px; font: 800 20px 'Outfit', sans-serif; color: var(--ts-yellow); }
+.ts-brand small { display: block; font-size: 13px; color: var(--ts-ink); font-weight: 600; }
+.ts-ball { width: 34px; height: 34px; border-radius: 50%; flex: none; border: 3px solid var(--ts-deep);
+  background: linear-gradient(var(--ts-red) 0 45%, var(--ts-deep) 45% 55%, var(--ts-ink) 55%); box-shadow: 0 0 0 2px var(--ts-yellow); }
+#ts-sidebar button { font: inherit; cursor: pointer; }
+.ts-switch { display: grid; grid-template-columns: 1fr auto; text-align: left; gap: 2px 8px; padding: 10px 12px; border-radius: 10px;
+  background: var(--ts-surface); color: var(--ts-ink); border: 1px solid var(--ts-border); }
+.ts-switch-label { grid-column: 1 / -1; font-size: 11px; text-transform: uppercase; color: var(--ts-muted); }
+.ts-switch strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.ts-switch.active, .ts-switch:hover { border-color: var(--ts-yellow); }
+.ts-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.ts-head { margin: 12px 8px 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ts-muted); }
+.ts-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 12px; border-radius: 10px; border: 0;
+  background: transparent; color: var(--ts-ink); font-size: 15px; font-weight: 500; text-align: left; transition: background .15s; }
+.ts-item span { width: 22px; text-align: center; }
+.ts-item:hover { background: color-mix(in srgb, var(--ts-ink) 8%, transparent); }
+.ts-item.active { background: var(--ts-yellow); color: var(--ts-deep); font-weight: 700; }
+.ts-item.dim { opacity: .55; }
+.ts-item[hidden], #ts-zone[hidden] { display: none; }
+.ts-item:focus-visible, .ts-switch:focus-visible, #ts-rail button:focus-visible { outline: 3px solid var(--ts-yellow); outline-offset: 2px; }
+.ts-me { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 12px; background: var(--ts-surface); border: 1px solid var(--ts-border); }
+.ts-me-main { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; background: none; border: 0; color: var(--ts-ink); text-align: left; }
+.ts-avatar { width: 40px; height: 40px; flex: none; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--ts-deep); border: 2px solid var(--ts-yellow); }
+.ts-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ts-avatar > * { width: 100% !important; height: 100% !important; border: 0 !important; margin: 0 !important; }
+.ts-me-info { min-width: 0; display: flex; flex-direction: column; }
+.ts-me-info strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ts-me-info small { font-size: 12px; color: var(--ts-muted); }
+.ts-logout { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--ts-border); background: transparent; color: var(--ts-muted); }
+.ts-logout:hover { color: var(--ts-red); border-color: var(--ts-red); }
+
+.ts-card { padding: 16px; border-radius: 14px; background: var(--ts-bg); border: 1px solid var(--ts-border); backdrop-filter: blur(14px); }
+.ts-card h3 { margin: 0; font: 700 17px 'Outfit', sans-serif; }
+.ts-card p { margin: 2px 0 12px; font-size: 13px; color: var(--ts-muted); }
+.ts-card select { width: 100%; height: 42px; padding: 0 10px; border-radius: 8px; background: var(--ts-deep); color: var(--ts-ink); border: 1px solid var(--ts-border); }
+.ts-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+.ts-amounts button { height: 38px; border-radius: 8px; background: transparent; color: var(--ts-ink); border: 1px solid var(--ts-border); font-weight: 700; cursor: pointer; }
+.ts-amounts button.on { border-color: var(--ts-yellow); color: var(--ts-yellow); background: color-mix(in srgb, var(--ts-yellow) 12%, transparent); }
+.ts-award-go { width: 100%; height: 44px; border-radius: 10px; border: 0; background: var(--ts-red); color: var(--ts-ink); font: 700 15px 'Outfit', sans-serif; cursor: pointer; }
+.ts-gift .ts-award-go { background: var(--ts-yellow); color: var(--ts-deep); }
+.ts-award-go:hover { filter: brightness(1.1); }
+.ts-top3 { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.ts-top3 li { display: flex; align-items: center; gap: 12px; }
+.ts-top3 strong { display: block; font-size: 15px; }
+.ts-top3 small { font-size: 12px; color: var(--ts-muted); }
+.ts-medal { width: 34px; height: 34px; flex: none; border-radius: 50%; display: grid; place-items: center; font-weight: 800; color: var(--ts-deep); background: #cfd6e6; }
+.ts-top3 .m1 .ts-medal { background: linear-gradient(135deg, #ffe680, #d9a400); }
+.ts-top3 .m2 .ts-medal { background: linear-gradient(135deg, #f4f6fa, #9aa4b5); }
+.ts-top3 .m3 .ts-medal { background: linear-gradient(135deg, #f0b58a, #a2582a); }
+.ts-empty { color: var(--ts-muted); font-size: 13px; }
+
+@media (max-width: 1280px) {
+  body.ts-on.ts-rail-on #ts-rail { display: none; }
+  body.ts-on.ts-rail-on #app-screen { padding-right: 0; }
+  body.ts-on #view-students #class-tabs-container { display: grid !important; }
+}
+@media (max-width: 900px) {
+  body.ts-on #ts-sidebar { display: none; }
+  body.ts-on #app-screen { padding-left: 0; }
+  body.ts-on #app-screen > nav.sticky .tab-btn:not([style*="none"]):not(.hidden),
+  body.ts-on #app-screen > nav.sticky #logged-in-name-container,
+  body.ts-on #app-screen > nav.sticky #logout-btn, body.ts-on #teacher-header-showcase { display: revert !important; }
+}
