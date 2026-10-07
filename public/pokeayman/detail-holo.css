@@ -97,4 +97,6 @@ html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legend
 @media (prefers-reduced-motion: reduce) {
   html body #pokemon-modal#pokemon-modal #modal-card#modal-card { transform: none !important; animation: none !important; }
   html body #pokemon-modal#pokemon-modal #modal-card#modal-card::before { animation: none !important; opacity: 0; }
+  html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .modal-card-body::before,
+  html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .modal-card-body::after { animation: none !important; opacity: .25; }
 }
