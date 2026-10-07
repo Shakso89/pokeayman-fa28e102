@@ -3909,6 +3909,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/battle-workspace.css">
 <script src="/pokeayman/sfx.js"></script>
 <link rel="stylesheet" href="/pokeayman/teacher-shell.css">
+<link rel="stylesheet" href="/pokeayman/games-arcade.css">
+<script src="/pokeayman/games-arcade.js"></script>
 <script src="/pokeayman/teacher-shell.js" defer></script>
 <script src="/pokeayman/shop-catalog.js"></script>
 </head>
@@ -12673,17 +12675,7 @@ function renderGamesList() {
   
   // Display game options if a list is selected
   if (selectedGameList.length && gamesContainer) {
-    gamesContainer.innerHTML = `<div class="rounded-2xl p-4 sm:p-5 border border-orange-200/80 bg-gradient-to-br from-white via-orange-50/70 to-amber-50/80 shadow-[0_12px_30px_rgba(194,65,12,0.12)]">
-      <p class="text-center font-semibold text-gray-700 text-sm mb-4">Select a game to play with <span class="font-bold text-orange-700">${selectedGameList.map(item => typeof item === 'object' ? item.vocab_list_name : item).join(', ')}</span></p>
-      <div class="grid grid-cols-2 gap-3 sm:gap-4" role="group" aria-label="Choose a vocabulary game">
-        <button type="button" class="group min-h-[76px] rounded-xl border-2 border-rose-200 bg-gradient-to-br from-white to-rose-50 px-3 py-3 text-rose-700 shadow-[0_4px_12px_rgba(244,63,94,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-400 hover:shadow-[0_8px_18px_rgba(244,63,94,0.22)] focus:outline-none focus-visible:ring-4 focus-visible:ring-rose-200 active:translate-y-0 active:scale-[0.98]" onclick="chooseGamePlayers(selectedGameList, chooseMatchWordCount)"><span class="mx-auto mb-1 flex h-9 w-9 items-center justify-center rounded-full bg-rose-100 text-lg shadow-inner transition-transform group-hover:scale-110">🎯</span><span class="block text-base sm:text-lg text-center leading-tight font-extrabold tracking-wide">Match Words</span></button>
-        <button type="button" class="group min-h-[76px] rounded-xl border-2 border-violet-200 bg-gradient-to-br from-white to-violet-50 px-3 py-3 text-violet-700 shadow-[0_4px_12px_rgba(139,92,246,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-400 hover:shadow-[0_8px_18px_rgba(139,92,246,0.22)] focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-200 active:translate-y-0 active:scale-[0.98]" onclick="chooseGamePlayers(selectedGameList, chooseMemoryDifficulty)"><span class="mx-auto mb-1 flex h-9 w-9 items-center justify-center rounded-full bg-violet-100 text-lg shadow-inner transition-transform group-hover:scale-110">🧠</span><span class="block text-base sm:text-lg text-center leading-tight font-extrabold tracking-wide">Memory</span></button>
-        <button type="button" class="group min-h-[76px] rounded-xl border-2 border-sky-200 bg-gradient-to-br from-white to-sky-50 px-3 py-3 text-sky-700 shadow-[0_4px_12px_rgba(103,130,255,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-[0_8px_18px_rgba(103,130,255,0.22)] focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-200 active:translate-y-0 active:scale-[0.98]" onclick="chooseGamePlayers(selectedGameList, chooseScrambleWordCount)"><span class="mx-auto mb-1 flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-lg shadow-inner transition-transform group-hover:scale-110">🔤</span><span class="block text-base sm:text-lg text-center leading-tight font-extrabold tracking-wide">Unscramble</span></button>
-        <button type="button" class="group min-h-[76px] rounded-xl border-2 border-amber-200 bg-gradient-to-br from-white to-amber-50 px-3 py-3 text-amber-700 shadow-[0_4px_12px_rgba(245,158,11,0.14)] transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-400 hover:shadow-[0_8px_18px_rgba(245,158,11,0.24)] focus:outline-none focus-visible:ring-4 focus-visible:ring-amber-200 active:translate-y-0 active:scale-[0.98]" onclick="chooseGamePlayers(selectedGameList, chooseHangmanWordCount)"><span class="mx-auto mb-1 flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-lg shadow-inner transition-transform group-hover:scale-110">🎮</span><span class="block text-base sm:text-lg text-center leading-tight font-extrabold tracking-wide">Hangman</span></button>
-        ${!isStudentGames ? `<button type="button" class="group min-h-[76px] rounded-xl border-2 border-indigo-200 bg-gradient-to-br from-white to-indigo-50 px-3 py-3 text-indigo-700 shadow-[0_4px_12px_rgba(82,104,255,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-400 hover:shadow-[0_8px_18px_rgba(82,104,255,0.22)] focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200 active:translate-y-0 active:scale-[0.98]" onclick="chooseGamePlayers(selectedGameList, chooseBaamboozlePowerUps)"><span class="mx-auto mb-1 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-lg shadow-inner transition-transform group-hover:scale-110">🎁</span><span class="block text-base sm:text-lg text-center leading-tight font-extrabold tracking-wide">Surprise Boxes</span></button>` : ''}
-        <button type="button" class="group min-h-[76px] rounded-xl border-2 border-indigo-200 bg-gradient-to-br from-white to-indigo-50 px-3 py-3 text-indigo-700 shadow-[0_4px_12px_rgba(255,203,5,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-400 hover:shadow-[0_8px_18px_rgba(255,203,5,0.22)] focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-200 active:translate-y-0 active:scale-[0.98]" onclick="chooseGamePlayers(selectedGameList, chooseFindMeScore)"><span class="mx-auto mb-1 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-100 text-lg shadow-inner transition-transform group-hover:scale-110">🕵️</span><span class="block text-base sm:text-lg text-center leading-tight font-extrabold tracking-wide">Find Me</span></button>
-      </div>
-    </div>`;
+    gamesContainer.innerHTML = window.gaRenderHub ? window.gaRenderHub(selectedGameList.map(item => typeof item === 'object' ? item.vocab_list_name : item).join(', '), !isStudentGames) : '';
   } else if (gamesContainer) {
     gamesContainer.innerHTML = '';
   }
@@ -13623,6 +13615,7 @@ function showFirstPlayerReveal(nextStep, listName) {
     <p class="text-sm text-gray-500 mb-5">Get ready for the game.</p>
     <button type="button" id="first-player-start" class="btn-primary w-full">Start Game</button>
   </div>`;
+  if (window.gaCountdown) { window.gaCountdown(activeGamePlayers, activeGamePlayerIndex, () => nextStep(listName), gameStudentAvatarMarkup); return; }
   gamesArea?.appendChild(modal);
   modal.querySelector('#first-player-start').addEventListener('click', () => { modal.remove(); nextStep(listName); });
 }
@@ -13640,9 +13633,8 @@ function chooseGamePlayers(listName, nextStep) {
     if (!validation.ok || !validation.words.length) { toast(`My lists launch failed: ${validation.reason || 'The selected lists contain no valid words.'}`); return; }
     selectedGameSession = { source: 'my_lists', listIds: validation.listIds, lists: validation.lists, words: validation.words };
   }
-  const students = selectedGameSource === 'my_lists' && currentRole === 'teacher'
-    ? getAllStudents()
-    : getStudents(navSchool, navClass);
+  // Players always come from the class currently open (never the whole school roster).
+  const students = getStudents(navSchool, navClass);
   if (!students.length && currentRole !== 'student') { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no student players are available.' : 'No students found in this class'); return; }
 
   // Student-dashboard games always use the signed-in student in single-player mode.
@@ -13719,6 +13711,7 @@ function chooseGamePlayers(listName, nextStep) {
   };
   playerChoices.forEach(input => input.addEventListener('change', refreshPlayerChoiceState));
   refreshPlayerChoiceState();
+  window.gaEnhanceLobby?.(modal, nextStep && nextStep.name, refreshPlayerChoiceState);
   modal.querySelectorAll('.game-timer-option').forEach(option => option.addEventListener('click', () => {
     pendingGameTimerSeconds = Number(option.dataset.seconds || 0);
     modal.querySelectorAll('.game-timer-option').forEach(button => {
