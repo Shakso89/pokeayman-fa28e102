@@ -22,10 +22,66 @@
         <span class="ga-cart-play">Play ▶</span>
       </button>`).join('');
     return `<section class="ga-hub" aria-label="Game arcade">
-      <header class="ga-hub-head"><span class="ga-hub-kicker">Game Arcade</span><span class="ga-hub-list">Playing with <b>${esc(listLabel)}</b></span></header>
+      <header class="ga-hub-head"><div><span class="ga-hub-kicker">Game Arcade</span><div class="ga-hub-list">Playing with <b>${esc(listLabel)}</b></div></div><button type="button" class="ga-change-lists" onclick="gaShowListSelection()">← Change lists</button></header>
       <div class="ga-grid" role="group" aria-label="Choose a vocabulary game">${cards}</div>
     </section>`;
   };
+
+  let arcadeOpen = false;
+  window.gaShowListSelection = function () { arcadeOpen = false; renderGamesList(); };
+  window.gaListStep = function (selector, container, count) {
+    if (!selector || !container) return;
+    if (!count) arcadeOpen = false;
+    selector.hidden = arcadeOpen;
+    container.hidden = !arcadeOpen;
+    if (arcadeOpen) return;
+    const next = document.createElement('button');
+    next.type = 'button'; next.className = 'ga-continue'; next.disabled = !count;
+    next.textContent = count ? `Next · Game Arcade → (${count} list${count === 1 ? '' : 's'})` : 'Next · Game Arcade →';
+    next.addEventListener('click', () => {
+      if (getGameWords(selectedGameList).length < 2) { toast('Choose lists with at least two words.'); return; }
+      arcadeOpen = true; renderGamesList();
+    });
+    selector.appendChild(next);
+  };
+
+  window.gaMountStage = function (view) {
+    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #memory-grid, #scramble-tiles, #hangman-letters');
+    if (!board || view.querySelector('#game-player-list') || view.classList.contains('ga-stage')) return;
+    view.classList.add('ga-stage');
+    const shell = view.matches('.game-popup-modal') ? view.firstElementChild : view.querySelector('.game-popup-modal > div, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell') || view.firstElementChild;
+    if (!shell) return;
+    shell.classList.add('ga-stage-shell');
+    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .hangman-game-shell > div:first-child, .sticky.top-0') || shell.firstElementChild;
+    if (header) {
+      header.classList.add('ga-stage-header');
+      header.querySelector('[data-games-back]')?.remove();
+      header.querySelectorAll('.game-fullscreen-btn').forEach(button => button.remove());
+      const controls = document.createElement('div'); controls.className = 'ga-stage-controls';
+      const sound = document.createElement('button'); sound.type = 'button'; sound.className = 'ga-stage-sound';
+      const syncSound = () => { const muted = window.pokeSfx?.isMuted() || false; sound.textContent = muted ? '🔇' : '🔊'; sound.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off'); sound.title = sound.getAttribute('aria-label'); };
+      syncSound(); sound.addEventListener('click', () => {
+        window.pokeSfx?.setMuted(!window.pokeSfx.isMuted());
+        if (typeof gameSoundState !== 'undefined') gameSoundState.muted = window.pokeSfx?.isMuted() || false;
+        const scramble = view.querySelector('#scramble-sound-mute');
+        if (scramble && (scramble.textContent.includes('🔇') !== Boolean(window.pokeSfx?.isMuted()))) scramble.click();
+        syncSound();
+      });
+      const expand = document.createElement('button'); expand.type = 'button'; expand.textContent = '⛶'; expand.setAttribute('aria-label', 'Expand to browser fullscreen'); expand.title = 'Browser fullscreen';
+      expand.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await view.requestFullscreen(); } catch (_) {} });
+      const close = view.querySelector('#baam-close, #find-me-close, #game-close, #scramble-close, #hangman-close') || document.createElement('button');
+      close.type = 'button'; close.textContent = '×'; close.classList.add('ga-stage-exit'); close.setAttribute('aria-label', 'Close game'); close.title = 'Close game';
+      close.addEventListener('click', event => { event.preventDefault(); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); endActiveGames(); });
+      controls.append(sound, expand, close); header.appendChild(controls);
+      header.querySelectorAll('.game-sound-controls, #scramble-sound-mute').forEach(node => { node.hidden = true; });
+    }
+    document.body.appendChild(view);
+    document.body.classList.add('ga-playing');
+    view.setAttribute('role', 'dialog'); view.setAttribute('aria-modal', 'true'); view.setAttribute('aria-label', 'Vocabulary game');
+    requestAnimationFrame(() => { window.dispatchEvent(new Event('resize')); view.querySelector('.ga-stage-exit')?.focus({ preventScroll: true }); });
+  };
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && document.querySelector('.ga-stage')) { event.preventDefault(); endActiveGames(); } });
+  new MutationObserver(() => { if (!document.querySelector('.ga-stage')) document.body.classList.remove('ga-playing'); }).observe(document.body, { childList: true });
 
   window.gaEnhanceLobby = function (modal, fnName, refresh) {
     if (modal.classList.contains('ga-lobby')) return;
