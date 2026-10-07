@@ -5772,6 +5772,9 @@ function initPokemonArch() {
 }
 initPokemonArch();
 
+document.getElementById('home-student-entry')?.addEventListener('click', () => document.getElementById('student-login-toggle')?.click());
+document.getElementById('home-teacher-entry')?.addEventListener('click', () => document.getElementById('teacher-login-toggle')?.click());
+
 // Native BorderGlow behavior: pointer proximity is measured against the selected logo edge.
 function initSelectedLogoBorderGlow() {
   document.querySelectorAll('img[data-template-id="app-logo-header"]').forEach(logo => {
