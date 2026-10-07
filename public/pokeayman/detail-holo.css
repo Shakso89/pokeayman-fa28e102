@@ -57,6 +57,33 @@ html body #pokemon-modal#pokemon-modal #modal-card.detail-card-legendary #modal-
 html body #pokemon-modal#pokemon-modal #modal-card.detail-card-rare #modal-pokemon-img { animation: none !important; }
 
 @keyframes dh-gleam { to { background-position: -60% 0; } }
+
+/* Legendary: full holographic foil layer (freefrontend-style holo cards) on top of existing effects */
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .modal-card-body::before {
+  content: '' !important; position: absolute; inset: 0; border-radius: 14px; pointer-events: none; z-index: 7;
+  background:
+    repeating-linear-gradient(0deg, hsl(0 0% 0% / .12) 0 1px, transparent 1px 3px),
+    conic-gradient(from var(--dh-holo-angle, 0deg) at var(--mx) var(--my),
+      hsl(0 100% 70% / .35), hsl(60 100% 65% / .35), hsl(120 90% 60% / .35),
+      hsl(180 100% 65% / .35), hsl(240 100% 70% / .35), hsl(300 100% 68% / .35), hsl(0 100% 70% / .35));
+  mix-blend-mode: color-dodge; opacity: .5;
+  animation: dh-holo-spin 6s linear infinite;
+}
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .modal-card-body { position: relative; }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .modal-card-body::after {
+  content: '' !important; position: absolute; inset: 0; border-radius: 14px; pointer-events: none; z-index: 8;
+  background-image:
+    radial-gradient(circle at 15% 20%, hsl(50 100% 80% / .9) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 70% 10%, hsl(0 0% 100% / .8) 0 1px, transparent 2px),
+    radial-gradient(circle at 85% 55%, hsl(50 100% 80% / .9) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 30% 75%, hsl(0 0% 100% / .8) 0 1px, transparent 2px),
+    radial-gradient(circle at 55% 90%, hsl(50 100% 80% / .9) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 90% 85%, hsl(0 0% 100% / .8) 0 1px, transparent 2px);
+  animation: dh-sparkle 2.8s ease-in-out infinite;
+}
+@property --dh-holo-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes dh-holo-spin { to { --dh-holo-angle: 360deg; } }
+@keyframes dh-sparkle { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
 @keyframes dh-frame { to { background-position: 0 0, 300% 300%; } }
 @keyframes dh-aura {
   0%,100% { box-shadow: var(--detail-shadow), 0 0 22px color-mix(in srgb, var(--mythic-gold-light) 45%, transparent); }
@@ -70,4 +97,6 @@ html body #pokemon-modal#pokemon-modal #modal-card.detail-card-rare #modal-pokem
 @media (prefers-reduced-motion: reduce) {
   html body #pokemon-modal#pokemon-modal #modal-card#modal-card { transform: none !important; animation: none !important; }
   html body #pokemon-modal#pokemon-modal #modal-card#modal-card::before { animation: none !important; opacity: 0; }
+  html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .modal-card-body::before,
+  html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary .modal-card-body::after { animation: none !important; opacity: .25; }
 }
