@@ -1,4 +1,5 @@
 # Class screen refresh
+- [ ] Restore app scrolling after game results and add a reopenable teacher sidebar collapse control; vocabulary choices are hidden on the separate arcade step.
 - [ ] Separate VB list selection from arcade launch and rebuild running games as fullscreen stages with unified controls and refreshed Surprise Boxes scores; verify launch, play and exit.
 - [x] Simplify pre-game setup into a compact player roster, grouped round settings, expandable timer/rewards and one start action; all six setup control checks passed with sample class players, including independent box counts/timers and narrow layout. Real teacher launch remains unverified because no account matches the requesting user.
 - [x] Hide duplicate teacher navigation when the sidebar is visible and add a persistent bright/dark switch; verified toggling, reload persistence, sidebar-width hiding, narrow-screen switch and existing navigation. Teacher presentation checked without a signed-in teacher session; saves and permissions unchanged.
