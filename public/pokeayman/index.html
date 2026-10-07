@@ -8791,7 +8791,7 @@ function renderStudentDashboard() {
   else {
     pokemonEmpty.classList.add('hidden');
     const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary', unknown: 'pokemon-card-unknown' };
-    renderCollectionStaircase('coll-my', pokemonContainer, myPokes, p => renderCollectionPokemonCard(p, currentStudent));
+    pokemonContainer.innerHTML = myPokes.map(p => renderCollectionPokemonCard(p, currentStudent)).join('');
   }
   const profileCard = document.getElementById('my-student-name')?.closest('.stat-card-glass');
   if (profileCard) {
@@ -11829,7 +11829,7 @@ function renderStudentProfile(isViewOnly = false) {
   else {
     pokemonEmpty.classList.add('hidden');
     const cardClasses = { common: 'pokemon-card-common', uncommon: 'pokemon-card-uncommon', rare: 'pokemon-card-rare', legendary: 'pokemon-card-legendary' };
-    renderCollectionStaircase('coll-profile', pokemonContainer, myPokes, p => renderCollectionPokemonCard(p, profileStudent.student_name, !isViewOnly));
+    pokemonContainer.innerHTML = myPokes.map(p => renderCollectionPokemonCard(p, profileStudent.student_name, !isViewOnly)).join('');
   }
   
   const profileCard = document.getElementById('profile-student-name')?.closest('.stat-card-glass');
