@@ -52,6 +52,8 @@
     const shell = view.matches('.game-popup-modal') ? view.firstElementChild : view.querySelector('.game-popup-modal > div, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell') || view.firstElementChild;
     if (!shell) return;
     shell.classList.add('ga-stage-shell');
+    let parent = shell.parentElement;
+    while (parent && parent !== view) { parent.classList.add('ga-stage-wrapper'); parent = parent.parentElement; }
     const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .hangman-game-shell > div:first-child, .sticky.top-0') || shell.firstElementChild;
     if (header) {
       header.classList.add('ga-stage-header');
@@ -83,7 +85,13 @@
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && document.querySelector('.ga-stage')) { event.preventDefault(); endActiveGames(); } });
   const observeStages = () => new MutationObserver(() => {
     document.querySelectorAll('#class-subtab-games > .game-inline-view, #student-tab-games > .game-inline-view').forEach(view => window.gaMountStage(view));
-    if (!document.querySelector('.ga-stage')) document.body.classList.remove('ga-playing');
+    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #memory-grid, #scramble-tiles, #hangman-letters')) view.remove(); });
+    if (!document.querySelector('.ga-stage') && document.body.classList.contains('ga-playing')) {
+      document.body.classList.remove('ga-playing');
+      document.body.style.removeProperty('overflow');
+      document.documentElement.style.removeProperty('overflow');
+      document.querySelectorAll('#class-subtab-games > .glass-container, #student-tab-games > .glass-container').forEach(hub => { hub.hidden = false; });
+    }
   }).observe(document.body, { childList: true, subtree: true });
   if (document.body) observeStages(); else document.addEventListener('DOMContentLoaded', observeStages, { once: true });
 

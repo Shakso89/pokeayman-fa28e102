@@ -13201,6 +13201,8 @@ function endActiveGames({ returnToList = true } = {}) {
     });
     document.querySelectorAll('.baam-stage-portal, .ga-countdown').forEach(node => node.remove());
     document.body.classList.remove('ga-playing');
+    document.body.style.removeProperty('overflow');
+    document.documentElement.style.removeProperty('overflow');
     const areas = [document.getElementById('class-subtab-games'), document.getElementById('student-tab-games')].filter(Boolean);
     areas.forEach(area => {
       area.querySelectorAll(':scope > .game-inline-view, :scope > .game-popup-modal').forEach(view => {
@@ -13426,6 +13428,13 @@ let activeGamePlayerRemaining = [];
 let lastGameReplay = null;
 function setGameReplay(replay) { lastGameReplay = replay; }
 function returnToGamesTab() {
+  document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #memory-grid, #scramble-tiles, #hangman-letters')) view.remove(); });
+  if (!document.querySelector('body > .ga-stage')) {
+    document.body.classList.remove('ga-playing');
+    document.body.style.removeProperty('overflow');
+    document.documentElement.style.removeProperty('overflow');
+    document.querySelectorAll('#class-subtab-games > .glass-container, #student-tab-games > .glass-container').forEach(hub => { hub.hidden = false; });
+  }
   const gamesTab = document.querySelector('.student-dashboard-tab[data-tab="games"]');
   if (gamesTab && currentRole === 'student') gamesTab.click();
   const classGamesTab = document.querySelector('.class-view-tab[data-classtab="games"]');
