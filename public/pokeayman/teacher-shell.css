@@ -25,7 +25,7 @@ body.ts-on #teacher-header-showcase, body.ts-on #header-logout { display: none !
 body.ts-on #app-screen > header > div { min-height: 64px !important; }
 body.ts-on #app-screen > header > div > div { min-height: 64px !important; }
 body.ts-on #app-screen > main, body.ts-on #app-screen > header > div, body.ts-on #app-screen > nav > div { max-width: 1280px !important; }
-body.ts-on #view-students #class-tabs-container { display: none !important; }
+html body.ts-on #app-screen #view-students #class-tabs-container, html body.ts-on #admin-subtab-teacher-zone [role="tablist"], html body.ts-on #admin-subtab-teacher-zone > div:has(> .teacher-zone-tab) { display: none !important; }
 body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)) !important; }
 
 .ts-brand { display: flex; align-items: center; gap: 10px; font: 800 20px 'Outfit', sans-serif; color: var(--ts-yellow); }
@@ -40,7 +40,7 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
 .ts-switch.active, .ts-switch:hover { border-color: var(--ts-yellow); }
 .ts-nav { display: flex; flex-direction: column; gap: 3px; flex: 1; }
 .ts-head { margin: 12px 8px 4px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ts-muted); }
-.ts-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 12px; border-radius: 10px; border: 0;
+.ts-item { justify-content: flex-start !important; display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 12px; border-radius: 10px; border: 0;
   background: transparent; color: var(--ts-ink); font-size: 15px; font-weight: 500; text-align: left; transition: background .15s; }
 .ts-item span { width: 22px; text-align: center; }
 .ts-item:hover { background: color-mix(in srgb, var(--ts-ink) 8%, transparent); }
@@ -82,7 +82,7 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
 @media (max-width: 1280px) {
   body.ts-on.ts-rail-on #ts-rail { display: none; }
   body.ts-on.ts-rail-on #app-screen { padding-right: 0; }
-  body.ts-on #view-students #class-tabs-container { display: grid !important; }
+  html body.ts-on #app-screen #view-students #class-tabs-container { display: grid !important; }
 }
 @media (max-width: 900px) {
   body.ts-on #ts-sidebar { display: none; }

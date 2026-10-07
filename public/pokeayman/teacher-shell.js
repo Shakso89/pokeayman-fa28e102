@@ -128,7 +128,7 @@
     if (inClass) {
       const src = $('award-student');
       const opts = src ? src.innerHTML : '';
-      if (opts !== lastOpts) { const keep = $('ts-award-student').value; $('ts-award-student').innerHTML = opts; $('ts-award-student').value = keep; lastOpts = opts; }
+      if (opts !== lastOpts) { const keep = $('ts-award-student').value; $('ts-award-student').innerHTML = opts; if (keep) $('ts-award-student').value = keep; lastOpts = opts; }
       const list = g(() => getStudents(navSchool, navClass), []).slice().sort((a, b) => (Number(b.coins) || 0) - (Number(a.coins) || 0)).slice(0, 3);
       const html = list.map((s, i) => `<li class="m${i + 1}"><span class="ts-medal">${i + 1}</span><span><strong>${esc(s.student_name)}</strong><small>🪙 ${Number(s.coins || 0).toLocaleString()} coins</small></span></li>`).join('') || '<li class="ts-empty">No students yet</li>';
       if (html !== lastTop) { $('ts-top3').innerHTML = html; lastTop = html; }
