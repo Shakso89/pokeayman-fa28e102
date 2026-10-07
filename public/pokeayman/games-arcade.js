@@ -81,7 +81,11 @@
     requestAnimationFrame(() => { window.dispatchEvent(new Event('resize')); view.querySelector('.ga-stage-exit')?.focus({ preventScroll: true }); });
   };
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && document.querySelector('.ga-stage')) { event.preventDefault(); endActiveGames(); } });
-  new MutationObserver(() => { if (!document.querySelector('.ga-stage')) document.body.classList.remove('ga-playing'); }).observe(document.body, { childList: true });
+  const observeStages = () => new MutationObserver(() => {
+    document.querySelectorAll('#class-subtab-games > .game-inline-view, #student-tab-games > .game-inline-view').forEach(view => window.gaMountStage(view));
+    if (!document.querySelector('.ga-stage')) document.body.classList.remove('ga-playing');
+  }).observe(document.body, { childList: true, subtree: true });
+  if (document.body) observeStages(); else document.addEventListener('DOMContentLoaded', observeStages, { once: true });
 
   window.gaEnhanceLobby = function (modal, fnName, refresh) {
     if (modal.classList.contains('ga-lobby')) return;
