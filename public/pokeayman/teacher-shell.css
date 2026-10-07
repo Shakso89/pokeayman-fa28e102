@@ -91,3 +91,52 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
   body.ts-on #app-screen > nav.sticky #logged-in-name-container,
   body.ts-on #app-screen > nav.sticky #logout-btn, body.ts-on #teacher-header-showcase { display: revert !important; }
 }
+
+/* ---- Unified stage (matches sidebar/rail surfaces) ---- */
+body.ts-on { background: #0b1220 !important; }
+body.ts-on #app-screen { background: #0b1220 !important; }
+body.ts-on #app-screen > header, body.ts-on #app-screen > nav.sticky { background: #0b1220 !important; border: 0 !important; box-shadow: none !important; }
+body.ts-on #ts-sidebar { background: #0b1220; border-right-color: rgba(255,255,255,.06); }
+body.ts-on .ts-card, body.ts-on .ts-switch, body.ts-on .ts-me { background: #131c2e; border-color: rgba(255,255,255,.07); border-radius: 16px; backdrop-filter: none; }
+.ts-switch-wrap { position: relative; }
+.ts-pop { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 60; max-height: 60vh; overflow-y: auto; padding: 8px; border-radius: 14px; background: #131c2e; border: 1px solid var(--ts-border); box-shadow: 0 18px 40px rgba(0,0,0,.5); }
+.ts-pop[hidden] { display: none; }
+.ts-pop-school { margin: 8px 8px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ts-muted); }
+.ts-pop-item, .ts-pop-all { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 8px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--ts-ink); text-align: left; }
+.ts-pop-item small { color: var(--ts-muted); font-size: 12px; }
+.ts-pop-item:hover, .ts-pop-all:hover { background: rgba(255,255,255,.07); }
+.ts-pop-item.on { background: var(--ts-yellow); color: var(--ts-deep); font-weight: 700; }
+.ts-pop-item.on small { color: var(--ts-deep); }
+.ts-pop-all { margin-top: 6px; border-top: 1px solid var(--ts-border); border-radius: 0 0 10px 10px; color: var(--ts-yellow); }
+
+body.ts-on #view-students .class-action-console { display: none !important; }
+body.ts-on #view-students > :is(h1,h2,.breadcrumb, nav), body.ts-on #view-students [id*="breadcrumb"] { display: none !important; }
+.ts-hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin: 0 0 20px; padding: 26px 28px; border-radius: 18px; font-family: 'Outfit', sans-serif; color: var(--ts-ink);
+  background: radial-gradient(circle at 85% 20%, rgba(255,203,5,.16), transparent 45%), linear-gradient(135deg, #18234a, #131c2e 70%); border: 1px solid rgba(255,255,255,.07); }
+.ts-hero h2 { margin: 0; font: 800 34px/1.1 'Outfit', sans-serif; color: var(--ts-yellow); }
+.ts-hero p { margin: 4px 0 16px; color: var(--ts-muted); font-size: 15px; }
+.ts-chips { display: flex; gap: 10px; flex-wrap: wrap; }
+.ts-chip { display: flex; flex-direction: column; padding: 8px 14px; border-radius: 12px; background: rgba(11,18,32,.6); border: 1px solid rgba(255,255,255,.07); }
+.ts-chip b { font-size: 20px; } .ts-chip small { font-size: 12px; color: var(--ts-muted); }
+.ts-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.ts-btn { height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--ts-yellow); background: var(--ts-yellow); color: var(--ts-deep); font: 700 15px 'Outfit', sans-serif; cursor: pointer; }
+.ts-btn.ghost { background: transparent; color: var(--ts-ink); border-color: rgba(255,255,255,.18); }
+.ts-btn:hover { filter: brightness(1.1); }
+
+html body.ts-on #app-screen #view-students #students-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; gap: 14px !important; padding-top: 4px; }
+html body.ts-on #app-screen #view-students #students-list > .trainer-student-card { background: #131c2e !important; border: 1px solid rgba(255,255,255,.07) !important; border-radius: 16px !important; padding: 16px 12px 12px !important; box-shadow: none !important; }
+html body.ts-on #app-screen #view-students .student-avatar-stage { height: 96px; margin-bottom: 8px; }
+html body.ts-on #app-screen #view-students .student-avatar-stage img { width: 88px !important; height: 88px !important; }
+html body.ts-on #app-screen #view-students .student-avatar-initial { width: 72px; height: 72px; font-size: 30px; }
+html body.ts-on #app-screen #view-students .trainer-student-card .student-roster-name { font-size: 17px; margin: 0 0 4px; }
+html body.ts-on #app-screen #view-students .trainer-student-card .student-roster-coins { font-size: 16px; margin: 0 0 2px; }
+html body.ts-on #app-screen #view-students .trainer-student-card .student-roster-count { font-size: 12px; margin-bottom: 10px; }
+html body.ts-on #app-screen #view-students .student-roster-edit { top: 8px; right: 8px; bottom: auto; width: 28px; height: 28px; min-height: 28px; border: 0 !important; }
+html body.ts-on #app-screen #view-students #students-list .global-achievement-badge { top: auto; bottom: 52px; right: 8px; transform: scale(.85); }
+.ts-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-top: auto; }
+.ts-quick button { height: 32px; border-radius: 9px; border: 0; font: 800 14px 'Outfit', sans-serif; cursor: pointer; }
+.ts-quick .minus { background: color-mix(in srgb, var(--ts-red) 85%, transparent); color: var(--ts-ink); }
+.ts-quick .plus { background: var(--ts-yellow); color: var(--ts-deep); }
+.ts-quick button:hover { filter: brightness(1.12); }
+.ts-quick button:focus-visible { outline: 3px solid var(--ts-ink); outline-offset: 2px; }
+@media (max-width: 700px) { .ts-hero { padding: 18px; } .ts-hero h2 { font-size: 26px; } }
