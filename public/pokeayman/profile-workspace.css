@@ -1,5 +1,5 @@
 /* Horizontal class profile; legacy handlers and rank identities stay intact. */
-:root {
+#view-student-profile {
   --profile-surface: var(--ts-surface);
   --profile-ink: var(--ts-ink);
   --profile-muted: var(--ts-muted);
@@ -9,7 +9,7 @@
   --profile-power: var(--rank-bronze);
   --profile-value: var(--rank-silver);
 }
-html body.ts-bright { --profile-power: var(--ts-red); --profile-value: var(--ts-blue); }
+html body.ts-bright #view-student-profile { --profile-power: var(--ts-red); --profile-value: var(--ts-blue); }
 #view-student-profile { container-type: inline-size; min-width: 0; }
 html body #app-screen #view-student-profile .cp-layout { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 html body #app-screen#app-screen#app-screen #view-student-profile .cp-overview {
