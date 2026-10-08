@@ -24,3 +24,30 @@ html body :is(#my-pokemon-list#my-pokemon-list#my-pokemon-list, #profile-pokemon
   display: grid !important; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; grid-auto-flow: row !important;
   gap: 16px !important; overflow: visible !important; max-height: none !important; width: 100% !important; padding: 10px 10px 4px !important; box-sizing: border-box; }
 html body :is(#my-pokemon-list, #profile-pokemon-list) > * { min-width: 0 !important; max-width: 100% !important; }
+
+/* Good Job badge retired */
+html body #profile-quiz-solver-badge, html body #quiz-solver-badge { display: none !important; }
+
+/* Full champion effect on class roster cards */
+html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.global-rank-card {
+  background: repeating-linear-gradient(130deg, transparent 0 36px, color-mix(in srgb, var(--rank-edge) 6%, transparent) 37px 38px), linear-gradient(150deg, var(--rank-deep), var(--rank-night) 72%) !important;
+  border: 3px solid var(--rank-edge) !important; border-radius: 22px !important; overflow: hidden !important;
+  box-shadow: 0 0 22px color-mix(in srgb, var(--rank-edge) 40%, transparent), 0 14px 30px rgba(2,6,23,.45), inset 0 0 0 4px var(--rank-night), inset 0 0 0 5px color-mix(in srgb, var(--rank-edge) 60%, transparent) !important;
+  padding-top: 80px !important;
+}
+html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.global-rank-card::before {
+  content: '' !important; display: block !important; position: absolute !important; inset: 9px !important; border-radius: 15px !important;
+  border: 1px solid color-mix(in srgb, var(--rank-edge) 40%, transparent) !important; background: transparent !important; pointer-events: none; z-index: 1;
+}
+html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.global-rank-card::after {
+  content: '' !important; display: block !important; position: absolute !important; inset: 0 !important; pointer-events: none; z-index: 2;
+  background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, white 22%, transparent) 48%, transparent 64%) !important;
+  transform: translateX(-120%); animation: pk-foil 4.5s ease-in-out infinite;
+}
+html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .global-rank-card .global-rank-marker { display: flex !important; }
+html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .global-rank-card .student-avatar-stage { border-radius: 50%; box-shadow: 0 0 26px color-mix(in srgb, var(--rank-edge) 45%, transparent); }
+html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .global-rank-card :is(.student-roster-name) { color: var(--rank-text) !important; }
+html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .global-rank-card .student-roster-coins { color: var(--rank-edge) !important; }
+@keyframes pk-foil { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@media (prefers-reduced-motion: reduce) { html body #students-list > .global-rank-card::after { animation: none !important; } }
+#view-student-profile #profile-student-classes { white-space: normal; overflow-wrap: anywhere; }

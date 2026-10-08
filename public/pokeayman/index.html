@@ -4260,7 +4260,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </div>
           <div class="cp-name">
            <h2 id="profile-student-name"></h2>
-           <p class="cp-label">Pokémon Trainer</p>
+           <p class="cp-label" id="profile-student-classes">Pokémon Trainer</p>
            <div id="profile-top3-badge" class="hidden flex flex-wrap items-center gap-1">
             <div id="profile-rank-badge"><span id="profile-medal-emoji"></span> <span id="profile-rank-text"></span></div>
             <span id="profile-quiz-solver-badge" class="hidden">🏆 Good Job</span>
@@ -11725,6 +11725,13 @@ function renderStudentProfile(isViewOnly = false) {
   
   // Student name and avatar
   document.getElementById('profile-student-name').textContent = `${profileStudent.student_name}`;
+  try {
+    const rec = getAllStudents().find(st => normalizeStudentIdentity(st.student_name) === normalizeStudentIdentity(profileStudent.student_name)) || profileStudent;
+    const seen = new Set(); const list = [];
+    String(rec.class_memberships || '').split('||').concat(rec.school_name && rec.class_name ? [`${rec.school_name} / ${rec.class_name}`] : []).forEach(t => { t = String(t).trim(); if (t && !seen.has(t)) { seen.add(t); list.push(t.replace(' / ', ' · ')); } });
+    const el = document.getElementById('profile-student-classes');
+    if (el) { el.textContent = list.length ? list.join('  |  ') : 'No classes yet'; el.title = list.join(', '); }
+  } catch (e) {}
   
   // Check if student is in top 3 globally
   const allStudents = getAllStudents().sort((a, b) => {
