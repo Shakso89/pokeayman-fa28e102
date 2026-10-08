@@ -15511,7 +15511,7 @@ function openVocabCoverPicker(listId, listName) {
   modal.querySelector('#vocab-cover-remove').addEventListener('click',()=>{selectedId='';selectedUrl='';showPreview()}); modal.querySelector('#vocab-cover-apply').addEventListener('click',async()=>{const current=getVocabLists().find(item=>item.__backendId===listId);if(!current){status.textContent='This list is no longer available.';return;}const row=allData.find(r=>['vocab_list','vocabulary_list'].includes(String(r.type||'').toLowerCase())&&normalizeVocabId(r.vocab_list_id??r.list_id??r.vocabulary_list_id??r.parent_list_id)===normalizeVocabId(current.vocab_list_id||listId));if(!row){status.textContent='Could not find this list. Refresh and try again.';return;}const result=await window.dataSdk.update({...row,vocab_cover_image_id:selectedId,vocab_cover_image_url:selectedUrl});if(!result?.isOk){status.textContent='Could not save the cover. Try again.';return;}close();toast(selectedUrl?'List cover saved.':'List cover removed.');}); modal.querySelector('#vocab-cover-search').focus();
 }
 function renderVocabLists() {
-  const lists = getVocabLists().filter(l => l.vocab_list_school === navSchool && l.vocab_list_class === navClass);
+  const lists = getVocabLists().filter(l => vocabListInClass(l, navSchool, navClass));
   const container = document.getElementById('vocab-lists-container');
   const empty = document.getElementById('vocab-lists-empty');
   if (!container || !empty) return;
