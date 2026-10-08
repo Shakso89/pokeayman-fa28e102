@@ -3748,6 +3748,15 @@
       try { await api('PATCH', '?id=eq.' + encodeURIComponent(row.__backendId), {data: row}); } catch (e) { console.error(e); return {isOk:false, error:e}; }
       records[i] = row; cache(); lastSig = ''; notify(); return {isOk:true, data:row};
     },
+    async updateMany(values) {
+      const rows = [];
+      for (const value of values) {
+        const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
+        rows.push({ i, row: {...records[i], ...value} });
+      }
+      try { await api('POST', '', rows.map(({row}) => ({id: row.__backendId, data: row}))); } catch (e) { console.error(e); return {isOk:false, error:e}; }
+      rows.forEach(({i, row}) => { records[i] = row; }); cache(); lastSig = ''; notify(); return {isOk:true, data: rows.map(r => r.row)};
+    },
     async delete(value) {
       const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
       try { await api('DELETE', '?id=eq.' + encodeURIComponent(value.__backendId)); } catch (e) { console.error(e); return {isOk:false, error:e}; }
@@ -11097,17 +11106,12 @@ document.getElementById('gift-all-form').addEventListener('submit', async e => {
   if (!students.length) { toast('No students in this class!'); return; }
   const totalCost = amount * students.length;
   if (!(await deductTeacherCredits(totalCost))) return;
-  const updatedStudents = [];
-  for (const student of students) {
-    const latest = getStudentRecordByStableId(student.__backendId);
-    if (!latest) { toast(`Could not find ${student.student_name}'s saved record.`); return; }
-    const result = await window.dataSdk.update({ ...latest, coins: (Number(latest.coins) || 0) + amount, __backendId: latest.__backendId });
-    if (!result?.isOk) { toast(`Could not save ${latest.student_name}'s new balance.`); return; }
-    const saved = { ...latest, coins: (Number(latest.coins) || 0) + amount };
-    allData = allData.map(record => record.__backendId === saved.__backendId ? saved : record);
-    updatedStudents.push(saved);
-    if (currentRole === 'student' && currentStudentRecordId === saved.__backendId) setCurrentStudentRecord(saved);
-  }
+  const updatedStudents = students.map(s => getStudentRecordByStableId(s.__backendId) || s).map(latest => ({ ...latest, coins: (Number(latest.coins) || 0) + amount, __backendId: latest.__backendId }));
+  const result = await window.dataSdk.updateMany(updatedStudents);
+  if (!result?.isOk) { toast('Could not save the class gift. Please try again.'); return; }
+  const byId = new Map(updatedStudents.map(s => [s.__backendId, s]));
+  allData = allData.map(record => byId.get(record.__backendId) || record);
+  if (currentRole === 'student' && byId.has(currentStudentRecordId)) setCurrentStudentRecord(byId.get(currentStudentRecordId));
   renderStudentDashboard();
   await logCredit('Gift All', totalCost, `${navClass} (${updatedStudents.length} students)`); playTransactionSound('reward');
   toast(`🎁 Gifted ${amount} coins to ${updatedStudents.length} students!`);
