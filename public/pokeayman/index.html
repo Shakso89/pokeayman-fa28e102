@@ -15519,6 +15519,12 @@ function renderVocabLists() {
   empty.classList.add('hidden');
   container.innerHTML = lists.map(list => {
     const words = getVocabWords(list, navSchool, navClass);
+    const isShared = String(list.vocab_list_class || '') !== String(navClass || '');
+    const sharedLabel = isShared ? `<p class="vocab-list-count mt-1" style="color:#fbbf24">↗ Shared from ${String(list.vocab_list_class || 'another class').replace(/[&<>"]/g, '')}</p>` : '';
+    const removeAction = isShared
+      ? `unshareVocabListFromClass('${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}','${String(list.vocab_list_name).replace(/'/g, "\\'")}',this)`
+      : `removeVocabListFromClass('${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}','${String(list.vocab_list_name).replace(/'/g, "\\'")}',this)`;
+    const removeLabel = isShared ? 'Unshare' : 'Remove';
     return `<div class="vocab-list-card canva-card p-4 sm:p-5">
       <div class="flex items-start gap-3 mb-1">
         <span class="vocab-list-emblem" aria-hidden="true">📚</span>
