@@ -3922,6 +3922,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <script src="/pokeayman/sfx.js"></script>
 <link rel="stylesheet" href="/pokeayman/teacher-shell.css">
 <link rel="stylesheet" href="/pokeayman/profile-workspace.css">
+<link rel="stylesheet" href="/pokeayman/vocab-editor.css">
 <link rel="stylesheet" href="/pokeayman/games-arcade.css">
 <script src="/pokeayman/games-arcade.js"></script>
 <script src="/pokeayman/teacher-shell.js" defer></script>
@@ -15496,106 +15497,79 @@ function renderVocabLists() {
 }
 
 function openVocabListEditor(listId, listName) {
-  const canonicalListId = normalizeVocabId(listId);
-  if (!canonicalListId) { toast('This vocabulary list has no valid saved ID. Please refresh and try again.'); return; }
-  const words = getVocabWords({ vocab_list_id: canonicalListId }, navSchool, navClass);
+  const selectedList = allData.find(record => ['vocab_list', 'vocabulary_list'].includes(record.type) && (normalizeVocabId(record.__backendId) === normalizeVocabId(listId) || normalizeVocabId(record.vocab_list_id || record.list_id || record.vocabulary_list_id) === normalizeVocabId(listId)));
+  if (!selectedList) { toast('This vocabulary list is no longer available. Refresh and try again.'); return; }
+  const storageId = selectedList.__backendId;
+  const canonicalListId = normalizeVocabId(selectedList.vocab_list_id || selectedList.list_id || selectedList.vocabulary_list_id || storageId);
+  listId = canonicalListId;
+  listName = String(selectedList.vocab_list_name || listName || '').trim();
+  const listSchool = String(selectedList.vocab_list_school || selectedList.school_name || '');
+  const listClass = String(selectedList.vocab_list_class || selectedList.class_name || '');
+  const escape = value => String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
   const modal = document.createElement('div');
-  modal.className = 'vocab-editor-overlay fixed inset-0 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="vocab-editor-modal w-full max-w-2xl max-h-[92vh] overflow-y-auto">
-    <div class="vocab-editor-header sticky top-0 flex items-center justify-between gap-4 px-6 py-5">
-      <div class="flex-1 min-w-0"><h2 class="heading-font text-xl font-bold text-white">Edit Vocabulary List</h2><label for="edit-vocab-list-name" class="sr-only">Vocabulary list name</label><input id="edit-vocab-list-name" type="text" value="${listName}" class="vocab-editor-title-input mt-3 w-full rounded-xl px-3 py-2 text-sm" aria-label="Vocabulary list name"></div>
-      <div class="flex items-center gap-2 shrink-0"><button id="open-share-vocab-btn" type="button" class="vocab-editor-secondary" aria-haspopup="dialog" aria-expanded="false">Share</button><button id="open-merge-vocab-btn" type="button" class="vocab-editor-secondary">Merge Lists</button><button id="editor-close" class="vocab-editor-close" type="button" aria-label="Close vocabulary editor">×</button></div>
+  modal.className = 'vocab-editor-overlay ve-workspace fixed inset-0 flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `<div class="vocab-editor-modal" role="dialog" aria-modal="true" aria-labelledby="ve-title">
+    <div class="vocab-editor-header flex justify-between gap-4">
+      <div class="flex-1 min-w-0"><h2 id="ve-title">Edit Vocabulary List</h2><div class="ve-name-row"><label for="edit-vocab-list-name">List name<input id="edit-vocab-list-name" type="text" class="vocab-editor-title-input w-full" maxlength="120"></label><button id="edit-vocab-list-name-btn" type="button" class="vocab-editor-primary">Save name</button></div><p id="ve-name-status" class="ve-status" aria-live="polite"></p></div>
+      <div class="flex items-center gap-2 shrink-0"><button id="open-share-vocab-btn" type="button" class="vocab-editor-secondary" aria-haspopup="dialog" aria-expanded="false">Share</button><button id="open-merge-vocab-btn" type="button" class="vocab-editor-secondary">Merge</button><button id="editor-close" class="vocab-editor-close" type="button" aria-label="Close vocabulary editor">×</button></div>
     </div>
-    <div class="vocab-editor-content p-6 space-y-5">
-      <div class="vocab-editor-form p-4 rounded-2xl">
-        <h3 class="font-bold text-sm text-slate-800 mb-3">Add Word</h3>
-        <div class="space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input id="new-vocab-word" type="text" placeholder="Word (e.g., 'apple')" class="vocab-editor-input w-full min-w-0" required>
-            <input id="new-vocab-sentence" type="text" placeholder="Sentence example using this word" class="vocab-editor-input w-full min-w-0">
-          </div>
-          <div>
-            <label class="text-xs font-bold text-slate-600 block mb-2">Search Images from Pexels</label>
-            <div class="flex flex-col sm:flex-row gap-2 mb-2">
-              <input id="add-vocab-image-search" type="text" placeholder="Search (e.g., 'apple', 'student')" class="vocab-editor-input flex-1">
-              <div class="flex gap-2"><button id="add-vocab-copy-word-btn" type="button" class="vocab-editor-secondary">📋 Copy</button><button id="add-vocab-image-search-btn" type="button" class="vocab-editor-primary">Search photos</button></div>
-            </div>
-            <p class="text-[11px] text-slate-400">Search opens a larger photo picker. Select a thumbnail, then close to keep it.</p>
-            <div id="add-vocab-image-results" class="hidden"></div>
-          </div>
-          <input id="new-vocab-image" type="url" placeholder="Or paste URL directly" class="vocab-editor-input w-full">
-          <button id="add-vocab-word-btn" class="vocab-editor-primary w-full" data-list-id="${listId}" data-list-name="${listName}">Add Word</button>
-        </div>
+    <div class="vocab-editor-content space-y-5">
+      <div class="vocab-editor-form"><h3 class="mb-3">Add word</h3>
+        <div class="ve-fields grid grid-cols-1 sm:grid-cols-2 gap-3"><label>Word<input id="new-vocab-word" type="text" placeholder="Apple" class="vocab-editor-input w-full" required></label><label>Example sentence<input id="new-vocab-sentence" type="text" placeholder="I eat an apple every day." class="vocab-editor-input w-full"></label></div>
+        <details class="ve-photo-options"><summary>Word image</summary><div><label class="text-xs block mb-2">Search Pexels photos</label><div class="flex flex-col sm:flex-row gap-2 mb-3"><input id="add-vocab-image-search" type="text" placeholder="Search photos" aria-label="Photo search" class="vocab-editor-input flex-1"><div class="flex gap-2"><button id="add-vocab-copy-word-btn" type="button" class="vocab-editor-secondary" title="Search photos using the word" aria-label="Search photos using the word">↳</button><button id="add-vocab-image-search-btn" type="button" class="vocab-editor-secondary">Search photos</button></div></div><div id="add-vocab-image-results" class="hidden"></div><input id="new-vocab-image" type="url" placeholder="Paste image URL" aria-label="Image URL" class="vocab-editor-input w-full"></div></details>
+        <button id="add-vocab-word-btn" type="button" class="vocab-editor-primary">+ Add word</button>
       </div>
-      <div id="vocab-words-list" class="vocab-editor-word-list space-y-2 max-h-52 overflow-y-auto"></div>
-      <div id="share-vocab-popup" class="vocab-share-popup hidden" role="dialog" aria-modal="true" aria-labelledby="share-vocab-title">
-        <div class="vocab-share-popup-card">
-          <div class="flex items-center justify-between gap-3 mb-3">
-            <h3 id="share-vocab-title" class="font-bold text-sm text-slate-100">Share to Other Classes</h3>
-            <button id="share-vocab-close" type="button" class="vocab-editor-close" aria-label="Close sharing popup">×</button>
-          </div>
-          <div class="space-y-3"><label for="share-target-class" class="sr-only">Select a class to share with</label><select id="share-target-class" class="vocab-editor-input w-full"><option value="">Select a class...</option></select><button id="share-vocab-list-btn" class="vocab-editor-primary w-full" data-list-id="">Share List</button><button id="share-vocab-cancel" type="button" class="vocab-editor-secondary w-full">Cancel</button></div>
-        </div>
-      </div>
-      <div class="flex flex-col sm:flex-row gap-2"><button id="edit-vocab-list-name-btn" type="button" class="vocab-editor-primary flex-1">Save List Name</button><button id="editor-cancel" type="button" class="vocab-editor-secondary flex-1">Close</button></div>
-    </div>
+      <section><div class="ve-word-heading"><h3>Words</h3><span id="ve-word-count"></span></div><div id="vocab-words-list" class="vocab-editor-word-list space-y-2"></div></section>
+      <div id="share-vocab-popup" class="vocab-share-popup hidden" role="dialog" aria-modal="true" aria-labelledby="share-vocab-title"><div class="vocab-share-popup-card"><div class="flex items-center justify-between gap-3 mb-3"><h3 id="share-vocab-title">Share to Other Classes</h3><button id="share-vocab-close" type="button" class="vocab-editor-close" aria-label="Close sharing popup">×</button></div><div class="space-y-3"><label for="share-target-class" class="sr-only">Select a class to share with</label><select id="share-target-class" class="vocab-editor-input w-full"><option value="">Select a class...</option></select><button id="share-vocab-list-btn" class="vocab-editor-primary w-full" data-list-id="">Share List</button><button id="share-vocab-cancel" type="button" class="vocab-editor-secondary w-full">Cancel</button></div></div></div>
+    </div><div class="ve-footer"><button id="editor-cancel" type="button" class="vocab-editor-secondary">Done</button></div>
   </div>`;
   document.body.appendChild(modal);
-
+  const nameInput = modal.querySelector('#edit-vocab-list-name');
+  nameInput.value = listName;
+  const status = modal.querySelector('#ve-name-status');
+  const setStatus = (message, error = false) => { status.textContent = message; status.dataset.error = String(error); };
   modal.querySelector('#edit-vocab-list-name-btn').addEventListener('click', async () => {
-    const newListName = modal.querySelector('#edit-vocab-list-name').value.trim();
-    if (!newListName) { toast('Enter a list name'); return; }
-    if (newListName === listName) { toast('List name unchanged'); return; }
-    const listRecord = allData.find(r => r.__backendId === listId);
-    if (!listRecord) return;
-    const duplicate = getVocabLists().some(r => r.__backendId !== listId && r.vocab_list_name === newListName && r.vocab_list_school === navSchool && r.vocab_list_class === navClass);
-    if (duplicate) { toast('A vocabulary list with this name already exists'); return; }
-    const wordsToRename = getVocabWords(listName, navSchool, navClass);
     const saveButton = modal.querySelector('#edit-vocab-list-name-btn');
-    if (saveButton?.dataset.busy === 'true') return;
-    if (saveButton) { saveButton.dataset.busy = 'true'; saveButton.disabled = true; saveButton.setAttribute('aria-busy', 'true'); }
+    if (saveButton.disabled) return;
+    const newName = nameInput.value.trim();
+    if (!newName) { setStatus('Enter a list name.', true); nameInput.focus(); return; }
+    if (newName === listName) { setStatus('Name already saved.'); return; }
+    const duplicate = getVocabLists(listSchool, listClass).some(list => normalizeVocabId(list.vocab_list_id) !== canonicalListId && list.vocab_list_name.toLocaleLowerCase() === newName.toLocaleLowerCase());
+    if (duplicate) { setStatus('A list with this name already exists in this class.', true); return; }
+    const parent = allData.find(record => record.__backendId === storageId);
+    if (!parent) { setStatus('This list is no longer available.', true); return; }
+    const linkedWords = allData.filter(record => {
+      if (!['vocab_word', 'word', 'vocab_item', 'vocabulary_word'].includes(record.type)) return false;
+      const id = normalizeVocabId(record.vocab_list_id || record.list_id || record.vocabulary_list_id || record.parent_list_id);
+      return id ? id === canonicalListId : String(record.vocab_list_name || '').trim() === listName && String(record.vocab_list_school || record.school_name || '') === listSchool && String(record.vocab_list_class || record.class_name || '') === listClass;
+    });
+    const updates = [parent, ...linkedWords].map(record => ({ ...record, vocab_list_name: newName }));
+    saveButton.disabled = true; nameInput.disabled = true; saveButton.textContent = 'Saving…'; saveButton.setAttribute('aria-busy', 'true'); setStatus('Saving name…');
     try {
-      const latestList = allData.find(record => record.__backendId === listId && record.type === 'vocab_list');
-      if (!latestList) { toast('This vocabulary list is no longer available. Refresh and try again.'); return; }
-      const latestWords = allData.filter(record => record.type === 'vocab_word' && record.vocab_list_name === listName && record.vocab_list_school === navSchool && record.vocab_list_class === navClass);
-      const listResult = await window.dataSdk.update({ ...latestList, vocab_list_name: newListName, __backendId: latestList.__backendId });
-      if (!listResult?.isOk) { toast('Could not save the list name. Please try again.'); return; }
-      for (const wordRecord of latestWords) {
-        const payload = Object.fromEntries(Object.entries({ ...wordRecord, vocab_list_name: newListName, vocab_image: wordRecord.vocab_image || '', vocab_sentence: wordRecord.vocab_sentence || '', __backendId: wordRecord.__backendId }).filter(([, value]) => value !== undefined));
-        const wordResult = await window.dataSdk.update(payload);
-        if (!wordResult?.isOk) { toast(`Could not save picture for "${wordRecord.vocab_word || 'this word'}". Please try again.`); return; }
-      }
-      const verifiedList = allData.find(record => record.__backendId === listId && record.type === 'vocab_list');
-      const verifiedWords = allData.filter(record => record.type === 'vocab_word' && record.vocab_list_name === newListName && record.vocab_list_school === navSchool && record.vocab_list_class === navClass);
-      const verified = verifiedList && latestWords.every(word => {
-        const saved = verifiedWords.find(record => record.__backendId === word.__backendId);
-        return saved && saved.vocab_word === word.vocab_word && String(saved.vocab_image || '') === String(word.vocab_image || '');
-      });
-      if (!verified) { toast('The list saved, but the updated entries could not be verified. Refresh and try again.'); return; }
-      toast(`Vocabulary list renamed to "${newListName}"!`);
-      modal.remove();
-      renderVocabLists();
-    } finally {
-      if (saveButton) { saveButton.dataset.busy = 'false'; saveButton.disabled = false; saveButton.removeAttribute('aria-busy'); }
-    }
+      const result = await window.dataSdk.updateMany(updates);
+      if (!result?.isOk) { setStatus('Could not save the name. Nothing was changed; please try again.', true); return; }
+      const saved = new Map((result.data || updates).map(record => [record.__backendId, record]));
+      allData = allData.map(record => saved.get(record.__backendId) || record);
+      const refreshed = await window.dataSdk.refresh();
+      const verified = updates.every(record => refreshed.some(row => row.__backendId === record.__backendId && row.vocab_list_name === newName));
+      if (!verified) { setStatus('The saved name could not be confirmed. Refresh before trying again.', true); return; }
+      allData = refreshed;
+      listName = newName; nameInput.value = newName;
+      setStatus('Name saved.');
+      renderWordsInModal(); renderVocabLists(); renderTeacherOwnedVocabLists();
+    } catch (error) { setStatus('Could not confirm the saved name. Please refresh and try again.', true); }
+    finally { saveButton.disabled = false; nameInput.disabled = false; saveButton.textContent = 'Save name'; saveButton.removeAttribute('aria-busy'); }
   });
-  
+  nameInput.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); modal.querySelector('#edit-vocab-list-name-btn').click(); } });
   function renderWordsInModal() {
     const wordsList = modal.querySelector('#vocab-words-list');
-    const currentWords = getVocabWords({ vocab_list_id: listId }, navSchool, navClass);
-    if (!currentWords.length) { wordsList.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">No words yet</p>'; return; }
-    wordsList.innerHTML = currentWords.map(w => `<div class="bg-gray-50 p-3 rounded-lg border flex items-center justify-between gap-2">
-      <div class="flex-1 min-w-0">
-        <p class="font-medium text-sm">${w.vocab_word}</p>
-        ${w.vocab_image ? `<p class="text-xs text-gray-400 truncate">${w.vocab_image}</p>` : ''}
-      </div>
-      <div class="flex gap-1 flex-shrink-0">
-        <button class="text-blue-500 hover:text-blue-600 text-sm font-medium" onclick="editVocabWord('${w.__backendId}','${w.vocab_word}','${(w.vocab_image||'').replace(/'/g, "\\'")}')">✎</button>
-        <button class="text-red-500 hover:text-red-600 text-sm font-medium" onclick="deleteVocabWord('${w.__backendId}','${String(list.vocab_list_id).replace(/'/g, "\\'")}')">🗑️</button>
-      </div>
-    </div>`).join('');
+    const currentWords = getVocabWords({ vocab_list_id: canonicalListId }, listSchool, listClass);
+    modal.querySelector('#ve-word-count').textContent = `${currentWords.length} words`;
+    wordsList.innerHTML = currentWords.length ? currentWords.map((word, index) => `<div class="ve-word">${word.vocab_image ? `<img src="${escape(word.vocab_image)}" alt="" loading="lazy">` : '<span class="ve-word-placeholder" aria-hidden="true">▧</span>'}<div class="flex-1 min-w-0"><p class="font-medium text-sm">${escape(word.vocab_word)}</p>${word.vocab_sentence ? `<small>${escape(word.vocab_sentence)}</small>` : ''}</div><div class="ve-word-actions"><button type="button" data-edit-word="${index}" aria-label="Edit ${escape(word.vocab_word)}" title="Edit word"><svg viewBox="0 0 24 24"><path d="m16 3 5 5-12 12-6 1 1-6Z M14 5l5 5"/></svg></button><button type="button" data-delete-word="${index}" aria-label="Delete ${escape(word.vocab_word)}" title="Delete word"><svg viewBox="0 0 24 24"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7"/></svg></button></div></div>`).join('') : '<p class="ve-status">No words yet</p>';
+    wordsList.querySelectorAll('[data-edit-word]').forEach(button => button.onclick = () => { const word = currentWords[Number(button.dataset.editWord)]; editVocabWord(word.__backendId, word.vocab_word, word.vocab_image || ''); });
+    wordsList.querySelectorAll('[data-delete-word]').forEach(button => button.onclick = () => { const word = currentWords[Number(button.dataset.deleteWord)]; deleteVocabWord(word.__backendId, canonicalListId); });
   }
-  
+
   // Populate share target classes
   const otherClasses = getClasses(navSchool).filter(c => c.class_name !== navClass);
   const shareSelect = modal.querySelector('#share-target-class');
@@ -15608,22 +15582,6 @@ function openVocabListEditor(listId, listName) {
   modal.querySelector('#share-vocab-close').addEventListener('click', closeSharePopup);
   modal.querySelector('#share-vocab-cancel').addEventListener('click', closeSharePopup);
   sharePopup.addEventListener('click', event => { if (event.target === sharePopup) closeSharePopup(); });
-  
-  function renderWordsInModal() {
-    const wordsList = modal.querySelector('#vocab-words-list');
-    const currentWords = getVocabWords({ vocab_list_id: listId }, navSchool, navClass);
-    if (!currentWords.length) { wordsList.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">No words yet</p>'; return; }
-    wordsList.innerHTML = currentWords.map(w => `<div class="bg-gray-50 p-3 rounded-lg border flex items-center justify-between gap-2">
-      <div class="flex-1 min-w-0">
-        <p class="font-medium text-sm">${w.vocab_word}</p>
-        ${w.vocab_image ? `<p class="text-xs text-gray-400 truncate">${w.vocab_image}</p>` : ''}
-      </div>
-      <div class="flex gap-1 flex-shrink-0">
-        <button class="text-blue-500 hover:text-blue-600 text-sm font-medium" onclick="editVocabWord('${w.__backendId}','${w.vocab_word}','${(w.vocab_image||'').replace(/'/g, "\\'")}')">✎</button>
-        <button class="text-red-500 hover:text-red-600 text-sm font-medium" onclick="deleteVocabWord('${w.__backendId}','${String(listId).replace(/'/g, "\\'")}')">🗑️</button>
-      </div>
-    </div>`).join('');
-  }
   
   renderWordsInModal();
   
