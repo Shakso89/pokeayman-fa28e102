@@ -8472,7 +8472,7 @@ function applyGlobalAchievementBadges(root = document) {
       card.classList.add('global-rank-card', `global-rank-${globalRank}`);
       const marker = document.createElement('span');
       marker.className = 'global-rank-marker';
-      marker.innerHTML = `<span class="rank-crest" aria-hidden="true"><svg viewBox="0 0 40 32" fill="none"><path d="M7 11 12 25H28L33 11 25 16 20 5 15 16Z" fill="currentColor"/><path d="M13 29H27" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><b>${globalRank}</b></span><span class="rank-title"><small>GLOBAL #${globalRank}</small><strong>${['CHAMPION', 'ELITE', 'BRONZE'][globalRank - 1]}</strong></span>`;
+      marker.innerHTML = `<span class="rank-crest" aria-hidden="true"><svg viewBox="0 0 40 32" fill="none"><path d="M7 11 12 25H28L33 11 25 16 20 5 15 16Z" fill="currentColor"/><path d="M13 29H27" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><b>${globalRank}</b></span><span class="rank-title"><small>GLOBAL #${globalRank}</small><strong>${['GRAND CHAMPION', 'MYTHIC ELITE', 'LEGENDARY ACE'][globalRank - 1]}</strong></span>`;
       marker.setAttribute('aria-label', `Global rank ${globalRank}`);
       card.appendChild(marker);
     }
@@ -13143,6 +13143,7 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
   const overlay = document.createElement('div');
   overlay.className = 'game-celebration-overlay';
   const isFindMeResult = title === 'Find Me champion!';
+  if (!tied && winner?.student_name) window.pkRecordWin?.(winner.student_name, 'game_wins');
   if (!tied && winner && configuredReward > 0 && !activeGameRewardClaimed) {
     activeGameRewardClaimed = true;
     const winnerRecord = getAllStudents().find(student => student.__backendId === winner.__backendId) || getAllStudents().find(student => student.student_name === winnerName);
@@ -16793,6 +16794,7 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
   battleState.running = false;
   const winnerPokemon = winner === 'left' ? p1 : p2;
   finalizeBattleVisuals(winner === 'left' ? 'battle-left' : 'battle-right', winner === 'left' ? 'battle-right' : 'battle-left');
+  window.pkRecordWin?.(winner === 'left' ? battleState.left : battleState.right, 'battle_wins');
 });
 
 // Student dashboard stat card navigation
