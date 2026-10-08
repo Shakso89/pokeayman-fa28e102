@@ -112,7 +112,9 @@
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tsToggle) {
       const panel = $(b.getAttribute('aria-controls'));
-      panel.hidden = !panel.hidden; b.setAttribute('aria-expanded', String(!panel.hidden)); return;
+      const open = panel.hidden;
+      document.querySelectorAll('#ts-sidebar [data-ts-toggle]').forEach((t) => { const p = $(t.getAttribute('aria-controls')); if (p) p.hidden = true; t.setAttribute('aria-expanded', 'false'); });
+      panel.hidden = !open; b.setAttribute('aria-expanded', String(open)); return;
     }
     const cls = b.dataset.tsClass, zone = b.dataset.tsZone, act = b.dataset.ts;
     if (act === 'switch') return togglePop();
