@@ -12301,7 +12301,8 @@ function getVocabLists(schoolName = navSchool, className = navClass) {
   const result = [...grouped.values()].filter(record => (!contextSchool || String(record.vocab_list_school || '') === contextSchool) && (!contextClass || String(record.vocab_list_class || '') === contextClass || vocabSharedClasses(record).includes(contextClass))).map(record => {
     const seen = new Set();
     const words = (record.words || []).filter(word => {
-      const key = normalizeVocabId(word.__wordIdentity || word.word_id || word.item_id || word.__backendId || `${record.vocab_list_id}|${String(word.vocab_word || '').trim().toLocaleLowerCase()}`);
+      const text = String(word.vocab_word || '').trim().toLocaleLowerCase();
+      const key = text ? `${record.vocab_list_id}|${text}` : normalizeVocabId(word.__wordIdentity || word.word_id || word.item_id || word.__backendId);
       if (!key || seen.has(key)) return false;
       seen.add(key); return true;
     });
@@ -12342,9 +12343,11 @@ function getVocabWords(listRef, schoolName = navSchool, className = navClass) {
       && (!className || String(record.vocab_list_class || record.class_name || '').trim() === String(className).trim());
     if ((recordId && matchedIds.has(recordId)) || (inScope && !recordId && recordName && matchedNames.has(recordName))) candidates.push(normalizeVocabWordRecord(record, recordId || matchedLists.find(list => String(list.vocab_list_name || '').trim().toLocaleLowerCase() === recordName)?.vocab_list_id, record));
   });
+  // One entry per word text within a list: stray copied rows can never inflate the list.
   const seen = new Set();
   return candidates.filter(Boolean).filter(word => {
-    const key = normalizeVocabId(word.__wordIdentity || word.word_id || word.item_id || word.vocab_word_id || word.__backendId || `${word.vocab_list_id}|${String(word.vocab_word || '').trim().toLocaleLowerCase()}`);
+    const text = String(word.vocab_word || '').trim().toLocaleLowerCase();
+    const key = text ? `${matchedLists.length === 1 ? 'list' : normalizeVocabId(word.vocab_list_id)}|${text}` : normalizeVocabId(word.__wordIdentity || word.word_id || word.__backendId);
     if (!key || seen.has(key)) return false;
     seen.add(key); return true;
   });
