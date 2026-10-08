@@ -1,4 +1,5 @@
 # Class screen refresh
+- [ ] Organize the vocabulary list editor and fix durable-ID list renaming with linked words and failure checks.
 - [x] Apply horizontal Elite Trainer in-class profile and remove profile ±10 controls; verified saved student data, collection/shop/quiz tabs, custom negative amount entry, view-only control hiding, bright/dark modes, champion treatment and 390px layout without changing balances.
 - [x] Finish battle stadium, VS, banners, damage, elemental hits, victory, fainting and full-screen Projector; isolated preview battle passed through victory with active audio output, fullscreen enter/exit, compact layout and no runtime errors. Routing test/build passed; saved Pokémon were untouched.
 - [ ] Verify battle with a signed-in teacher and assess audible sound quality; blocked because the requesting user has no matching preview account. Isolated preview battle and generated audio output are verified, but real ownership transfers were intentionally not exercised.

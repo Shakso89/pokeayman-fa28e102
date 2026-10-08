@@ -1,0 +1,38 @@
+.ve-workspace { --ve-bg: var(--ts-bg); --ve-surface: var(--ts-surface); --ve-ink: var(--ts-ink); --ve-muted: var(--ts-muted); --ve-border: var(--ts-border); --ve-accent: var(--ts-yellow); --ve-shadow: 0 24px 70px color-mix(in srgb, var(--ts-deep) 60%, transparent); z-index: 12000 !important; }
+.ve-workspace .vocab-editor-modal { width: min(880px, 100%); max-width: 880px; max-height: 92dvh; display: flex; flex-direction: column; overflow: hidden; border-radius: 8px; background: var(--ve-bg); color: var(--ve-ink); border-color: var(--ve-border); box-shadow: var(--ve-shadow); font-family: 'Figtree', sans-serif; }
+.ve-workspace .vocab-editor-header { position: static; padding: 20px 24px; background: var(--ve-surface); border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--ve-border); align-items: start; }
+.ve-workspace h2 { font: 700 22px 'Outfit', sans-serif; color: var(--ve-ink) !important; }
+.ve-name-row { display: flex; align-items: end; gap: 8px; margin-top: 14px; }
+.ve-name-row label { flex: 1; min-width: 0; font-size: 12px; color: var(--ve-muted); }
+.ve-name-row input { margin-top: 6px; }
+.ve-workspace .vocab-editor-input, .ve-workspace .vocab-editor-title-input { height: 42px; border-radius: 6px; background: var(--ve-bg) !important; color: var(--ve-ink) !important; border: 1px solid var(--ve-border); box-shadow: none; font: 14px 'Figtree', sans-serif; min-width: 0; }
+.ve-workspace input::placeholder { color: var(--ve-muted); }
+.ve-workspace .vocab-editor-primary, .ve-workspace .vocab-editor-secondary { min-height: 42px; border-radius: 6px; font: 700 14px 'Outfit', sans-serif; box-shadow: none; }
+.ve-workspace .vocab-editor-primary { background: var(--ve-accent); color: var(--ts-action-ink); border-color: var(--ve-accent); }
+.ve-workspace .vocab-editor-secondary, .ve-workspace .vocab-editor-close { background: var(--ve-bg); color: var(--ve-ink); border: 1px solid var(--ve-border); }
+.ve-workspace button:disabled { opacity: .5; cursor: wait; }
+.ve-workspace .vocab-editor-content { padding: 20px 24px; overflow-y: auto; min-height: 0; }
+.ve-workspace .vocab-editor-form { padding: 0 0 20px; background: none; border: 0; border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--ve-border); }
+.ve-workspace h3 { color: var(--ve-ink) !important; font: 700 15px 'Outfit', sans-serif; }
+.ve-workspace .ve-fields label { display: block; font-size: 12px; color: var(--ve-muted); }
+.ve-workspace .ve-fields input { margin-top: 6px; }
+.ve-photo-options { margin: 12px 0; color: var(--ve-muted); font-size: 13px; }
+.ve-photo-options summary { cursor: pointer; padding: 8px 0; }
+.ve-photo-options > div { padding: 8px 0; }
+.ve-photo-options label { color: var(--ve-muted) !important; }
+.ve-word-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.ve-word-heading span { color: var(--ve-muted); font-size: 12px; }
+.ve-workspace .vocab-editor-word-list { max-height: none; overflow: visible; }
+.ve-workspace .vocab-editor-word-list > .ve-word { display: flex; align-items: center; gap: 12px; padding: 12px !important; background: var(--ve-surface) !important; border: 1px solid var(--ve-border) !important; border-radius: 6px; box-shadow: none !important; }
+.ve-word img, .ve-word-placeholder { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; flex: none; background: var(--ve-bg); }
+.ve-word-placeholder { display: grid; place-items: center; color: var(--ve-muted); }
+.ve-workspace .ve-word p { color: var(--ve-ink); overflow-wrap: anywhere; }
+.ve-workspace .ve-word small { display: block; color: var(--ve-muted); overflow-wrap: anywhere; margin-top: 4px; }
+.ve-word-actions { display: flex; gap: 6px; }
+.ve-word-actions button { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 4px; background: var(--ve-bg); color: var(--ve-muted); border: 1px solid var(--ve-border); }
+.ve-word-actions button:hover { color: var(--ve-accent); border-color: var(--ve-accent); }
+.ve-word-actions svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.ve-status { font-size: 12px; min-height: 18px; margin-top: 6px; color: var(--ve-muted); }
+.ve-status[data-error=true] { color: var(--ts-red); }
+.ve-workspace .ve-footer { display: flex; justify-content: flex-end; padding: 12px 24px; border-top: 1px solid var(--ve-border); background: var(--ve-surface); }
+@media(max-width:640px) { .ve-workspace { padding: 8px !important; } .ve-workspace .vocab-editor-header { flex-wrap: wrap; gap: 12px; padding: 16px; } .ve-workspace .vocab-editor-header > :first-child { flex-basis: 100%; } .ve-workspace .vocab-editor-content { padding: 16px; } .ve-name-row { align-items: end; } }
