@@ -8901,8 +8901,8 @@ function renderStudentVocabulary() {
   listGrid.insertAdjacentHTML('beforebegin', getStudentClassFilterMarkup('vocabulary', selectedStudentVocabularyClassKey));
   attachStudentClassFilterListeners(listGrid.parentElement, 'vocabulary', key => { if (key === 'all') { selectedStudentVocabularyScope = 'all'; } else { selectedStudentVocabularyScope = 'class'; selectedStudentVocabularyClassKey = key; const [school, className] = key.split('||'); setStudentClassContext({ school_name: school, class_name: className }); } renderStudentVocabulary(); });
   const lists = selectedStudentVocabularyScope === 'all'
-    ? getVocabLists().filter(list => enrolled.some(item => item.school_name === list.vocab_list_school && item.class_name === list.vocab_list_class))
-    : getVocabLists().filter(list => list.vocab_list_school === student.school_name && list.vocab_list_class === student.class_name);
+    ? getVocabLists().filter(list => enrolled.some(item => vocabListInClass(list, item.school_name, item.class_name)))
+    : getVocabLists().filter(list => vocabListInClass(list, student.school_name, student.class_name));
   listGrid.innerHTML = lists.map(list => {
     const words = getVocabWords(list.vocab_list_name, list.vocab_list_school, list.vocab_list_class);
     const safeListName = String(list.vocab_list_name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
@@ -12238,6 +12238,16 @@ function extractVocabWords(value, listId, source, output = []) {
   }
   return output;
 }
+function vocabSharedClasses(list) {
+  const v = list && list.shared_classes;
+  const arr = Array.isArray(v) ? v : (typeof v === 'string' && v ? (v.trim().startsWith('[') ? (() => { try { return JSON.parse(v); } catch (e) { return []; } })() : v.split('||')) : []);
+  return [...new Set(arr.map(x => String(x || '').trim()).filter(Boolean))];
+}
+function vocabListInClass(list, school, cls) {
+  if (String(list.vocab_list_school || '') !== String(school || '')) return false;
+  return String(list.vocab_list_class || '') === String(cls || '') || vocabSharedClasses(list).includes(String(cls || ''));
+}
+window.vocabListInClass = vocabListInClass;
 function getVocabLists(schoolName = navSchool, className = navClass) {
   const grouped = new Map();
   const sources = { parent: 0, embedded: 0, child: 0, nested: 0, unresolved: 0 };
@@ -12283,7 +12293,7 @@ function getVocabLists(schoolName = navSchool, className = navClass) {
   });
   const contextSchool = String(schoolName ?? '').trim();
   const contextClass = String(className ?? '').trim();
-  const result = [...grouped.values()].filter(record => (!contextSchool || String(record.vocab_list_school || '') === contextSchool) && (!contextClass || String(record.vocab_list_class || '') === contextClass)).map(record => {
+  const result = [...grouped.values()].filter(record => (!contextSchool || String(record.vocab_list_school || '') === contextSchool) && (!contextClass || String(record.vocab_list_class || '') === contextClass || vocabSharedClasses(record).includes(contextClass))).map(record => {
     const seen = new Set();
     const words = (record.words || []).filter(word => {
       const key = normalizeVocabId(word.__wordIdentity || word.word_id || word.item_id || word.__backendId || `${record.vocab_list_id}|${String(word.vocab_word || '').trim().toLocaleLowerCase()}`);
@@ -12325,7 +12335,7 @@ function getVocabWords(listRef, schoolName = navSchool, className = navClass) {
     const recordName = String(record.vocab_list_name || '').trim().toLocaleLowerCase();
     const inScope = (!schoolName || String(record.vocab_list_school || record.school_name || '').trim() === String(schoolName).trim())
       && (!className || String(record.vocab_list_class || record.class_name || '').trim() === String(className).trim());
-    if (inScope && ((recordId && matchedIds.has(recordId)) || (!recordId && recordName && matchedNames.has(recordName)))) candidates.push(normalizeVocabWordRecord(record, recordId || matchedLists.find(list => String(list.vocab_list_name || '').trim().toLocaleLowerCase() === recordName)?.vocab_list_id, record));
+    if ((recordId && matchedIds.has(recordId)) || (inScope && !recordId && recordName && matchedNames.has(recordName))) candidates.push(normalizeVocabWordRecord(record, recordId || matchedLists.find(list => String(list.vocab_list_name || '').trim().toLocaleLowerCase() === recordName)?.vocab_list_id, record));
   });
   const seen = new Set();
   return candidates.filter(Boolean).filter(word => {
@@ -15593,9 +15603,20 @@ function openVocabListEditor(listId, listName) {
   }
 
   // Populate share target classes
-  const otherClasses = getClasses(navSchool).filter(c => c.class_name !== navClass);
+  const findListRecord = () => allData.find(r => ['vocab_list','vocabulary_list'].includes(String(r.type || '').toLowerCase()) && normalizeVocabId(r.vocab_list_id ?? r.list_id ?? r.vocabulary_list_id ?? r.__backendId) === normalizeVocabId(canonicalListId));
+  const homeSchool = listSchool || navSchool, homeClass = listClass || navClass;
+  const otherClasses = getClasses(homeSchool).filter(c => c.class_name !== homeClass);
   const shareSelect = modal.querySelector('#share-target-class');
-  shareSelect.innerHTML = '<option value="">Select a class...</option>' + otherClasses.map(c => `<option value="${c.class_name}">${c.class_name}</option>`).join('');
+  const renderShareChoices = () => {
+    const current = vocabSharedClasses(findListRecord() || {});
+    const box = document.createElement('div');
+    box.id = 'share-class-choices'; box.className = 'space-y-2 max-h-56 overflow-y-auto';
+    box.innerHTML = otherClasses.length ? `<p class="text-sm">Pick the classes that can use this list. Words are not copied — edits show everywhere.</p>` + otherClasses.map(c => `<label class="flex items-center gap-2 rounded-lg border border-indigo-200/30 p-2"><input type="checkbox" class="share-class-choice" value="${escape(c.class_name)}" ${current.includes(c.class_name) ? 'checked' : ''}><span>${escape(c.class_name)}</span></label>`).join('') : '<p class="text-sm">No other classes in this school.</p>';
+    modal.querySelector('#share-class-choices')?.remove();
+    shareSelect.replaceWith ? (shareSelect.style.display = 'none', shareSelect.insertAdjacentElement('afterend', box)) : null;
+  };
+  renderShareChoices();
+  modal.querySelector('#share-vocab-list-btn').textContent = 'Save sharing';
   const sharePopup = modal.querySelector('#share-vocab-popup');
   const openSharePopup = () => { sharePopup.classList.remove('hidden'); modal.querySelector('#open-share-vocab-btn').setAttribute('aria-expanded', 'true'); shareSelect.focus(); };
   const closeSharePopup = () => { sharePopup.classList.add('hidden'); modal.querySelector('#open-share-vocab-btn').setAttribute('aria-expanded', 'false'); modal.querySelector('#open-share-vocab-btn').focus(); };
@@ -15769,19 +15790,19 @@ function openVocabListEditor(listId, listName) {
   });
   
   modal.querySelector('#share-vocab-list-btn').addEventListener('click', async () => {
-    const targetClass = modal.querySelector('#share-target-class').value;
-    if (!targetClass) { toast('Select a target class'); return; }
-    const currentWords = getVocabWords({ vocab_list_id: canonicalListId }, navSchool, navClass);
-    if (!currentWords.length) { toast('List is empty, nothing to share'); return; }
-    if (allData.length + currentWords.length > 999) { toast('Storage limit would be exceeded!'); return; }
-    // Create new list in target class with same name
-    await window.dataSdk.create({ type: 'vocab_list', school_name: navSchool, class_name: targetClass, student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: currentTeacher, teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', vocab_list_name: listName, vocab_word: '', vocab_image: '', vocab_list_class: targetClass, vocab_list_school: navSchool });
-    // Copy all words to target class
-    for (const w of currentWords) {
-      await window.dataSdk.create({ type: 'vocab_word', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', vocab_list_name: listName, vocab_word: w.vocab_word, vocab_image: w.vocab_image, vocab_list_class: targetClass, vocab_list_school: navSchool });
-    }
-    toast(`Shared "${listName}" to ${targetClass}!`);
-    modal.querySelector('#share-target-class').value = '';
+    const btn = modal.querySelector('#share-vocab-list-btn');
+    const rec = findListRecord();
+    if (!rec) { toast('Could not find this list. Please refresh and try again.'); return; }
+    const chosen = [...modal.querySelectorAll('.share-class-choice:checked')].map(i => i.value);
+    btn.disabled = true;
+    try {
+      const res = await window.dataSdk.update({ ...rec, shared_classes: chosen });
+      if (!res?.isOk) { toast('Sharing could not be saved. Please try again.'); return; }
+      rec.shared_classes = chosen;
+      toast(chosen.length ? `"${listName}" is now available in ${chosen.join(', ')}.` : `"${listName}" is no longer shared.`);
+      closeSharePopup();
+      try { renderVocabLists(); renderTeacherOwnedVocabLists(); } catch (e) {}
+    } finally { btn.disabled = false; }
   });
   
   modal.querySelector('#editor-close').addEventListener('click', () => modal.remove());
