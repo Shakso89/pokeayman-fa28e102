@@ -245,3 +245,16 @@ html body.ts-on.ts-bright #ts-chooser :is(input,select), html body.ts-on.ts-brig
   body.ts-on #ts-sidebar > :not(#ts-theme-toggle) { display: none !important; }
 }
 @media (prefers-reduced-motion: reduce) { .ts-theme-track > span { transition: none; } }
+
+/* Auto-fit sidebar: compact, viewport-adaptive spacing, no visible scrollbar. */
+body.ts-on #ts-sidebar { gap: clamp(6px, 1.2vh, 14px); padding: clamp(10px, 1.8vh, 18px) 12px; scrollbar-width: none; }
+body.ts-on #ts-sidebar::-webkit-scrollbar { display: none; }
+#ts-sidebar .ts-nav { gap: clamp(1px, .3vh, 3px); min-height: 0; }
+#ts-sidebar .ts-head { margin: clamp(4px, 1vh, 12px) 8px 2px; }
+#ts-sidebar .ts-item { padding: clamp(5px, .9vh, 9px) 12px; font-size: clamp(13px, 1.7vh, 15px); }
+#ts-sidebar .ts-section-toggle { margin-top: clamp(4px, 1vh, 12px); padding: clamp(6px, 1vh, 10px) 12px; }
+#ts-sidebar .ts-switch { padding: clamp(6px, 1vh, 10px) 12px; }
+#ts-sidebar .ts-brand { font-size: clamp(17px, 2.4vh, 20px); }
+body.ts-on #ts-theme-toggle { padding: clamp(6px, 1vh, 10px) 12px; }
+#ts-sidebar .ts-me { padding: clamp(6px, 1vh, 10px); }
+@media (max-height: 760px) { #ts-sidebar .ts-avatar { width: 32px; height: 32px; } #ts-sidebar .ts-brand small { display: none; } }
