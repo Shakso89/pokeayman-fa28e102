@@ -30,3 +30,8 @@
 @keyframes gc2-shine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 @keyframes gc2-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .gc2 *, .gc2 .game-celebration-card::before { animation: none !important; } .gc2 .gc2-burst { display: none; } }
+/* Keep the avatar fully visible above the card */
+.gc2 .game-celebration-card { overflow: visible !important; max-height: none !important; margin-top: 76px !important; }
+.gc2 .game-celebration-card::before { border-radius: inherit; overflow: hidden; inset: 0; clip-path: inset(0 round 24px); }
+.game-celebration-overlay.gc2 { overflow-y: auto !important; align-items: center; }
+@media (max-height: 560px) { .gc2 .game-celebration-pikachu { width: 110px !important; height: 110px !important; top: -48px; } .gc2 .game-celebration-card { padding-top: 70px !important; margin-top: 56px !important; } }

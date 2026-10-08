@@ -12395,7 +12395,18 @@ function getAuthorizedMyListsWords(listRefs) {
   window.__pokeymanMyListsDiagnostics = [...(window.__pokeymanMyListsDiagnostics || []), diagnostics].slice(-20);
   return { ok: true, source: 'my_lists', listIds: selectedIds, lists, perList: lists.map(list => ({ listId: String(list.vocab_list_id || list.__backendId), count: getVocabWords([list], '', '').filter(word => String(word.vocab_word || '').trim()).length })), words, diagnostics };
 }
+// Every game uses each word once, even when lists overlap or rows are duplicated.
 function getGameWords(listRef, requireImage = false) {
+  const unique = new Map();
+  (getGameWordsRaw(listRef, requireImage) || []).forEach(word => {
+    const key = String(word?.vocab_word || '').trim().toLocaleLowerCase();
+    if (!key) return;
+    const prev = unique.get(key);
+    if (!prev || (!String(prev.vocab_image || '').trim() && String(word.vocab_image || '').trim())) unique.set(key, word);
+  });
+  return [...unique.values()];
+}
+function getGameWordsRaw(listRef, requireImage = false) {
   if (selectedGameSource === 'my_lists') {
     if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) {
       toast('My lists launch failed: teacher authorization is required.');
