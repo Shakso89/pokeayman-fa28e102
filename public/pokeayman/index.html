@@ -15539,6 +15539,21 @@ function renderVocabLists() {
   }).join('');
 }
 
+// Unshare a list from the current class only — the list and its words are never deleted.
+async function unshareVocabListFromClass(listId, listName, button) {
+  const rec = allData.find(r => ['vocab_list', 'vocabulary_list'].includes(String(r.type || '').toLowerCase()) && normalizeVocabId(r.vocab_list_id ?? r.list_id ?? r.vocabulary_list_id ?? r.__backendId) === normalizeVocabId(listId));
+  if (!rec) { toast('This list is no longer available. Refresh and try again.'); return; }
+  if (button) button.disabled = true;
+  try {
+    const remaining = vocabSharedClasses(rec).filter(c => c !== String(navClass || ''));
+    const res = await window.dataSdk.update({ ...rec, shared_classes: remaining });
+    if (!res?.isOk) { toast('Could not unshare this list. Please try again.'); return; }
+    rec.shared_classes = remaining;
+    toast(`"${listName}" is no longer shared with ${navClass}. The list itself was not deleted.`);
+    try { renderVocabLists(); renderTeacherOwnedVocabLists(); } catch (e) {}
+  } finally { if (button) button.disabled = false; }
+}
+
 function openVocabListEditor(listId, listName) {
   const selectedList = allData.find(record => ['vocab_list', 'vocabulary_list'].includes(record.type) && (normalizeVocabId(record.__backendId) === normalizeVocabId(listId) || normalizeVocabId(record.vocab_list_id || record.list_id || record.vocabulary_list_id) === normalizeVocabId(listId)));
   if (!selectedList) { toast('This vocabulary list is no longer available. Refresh and try again.'); return; }
