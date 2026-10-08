@@ -15511,7 +15511,7 @@ function openVocabCoverPicker(listId, listName) {
   modal.querySelector('#vocab-cover-remove').addEventListener('click',()=>{selectedId='';selectedUrl='';showPreview()}); modal.querySelector('#vocab-cover-apply').addEventListener('click',async()=>{const current=getVocabLists().find(item=>item.__backendId===listId);if(!current){status.textContent='This list is no longer available.';return;}const row=allData.find(r=>['vocab_list','vocabulary_list'].includes(String(r.type||'').toLowerCase())&&normalizeVocabId(r.vocab_list_id??r.list_id??r.vocabulary_list_id??r.parent_list_id)===normalizeVocabId(current.vocab_list_id||listId));if(!row){status.textContent='Could not find this list. Refresh and try again.';return;}const result=await window.dataSdk.update({...row,vocab_cover_image_id:selectedId,vocab_cover_image_url:selectedUrl});if(!result?.isOk){status.textContent='Could not save the cover. Try again.';return;}close();toast(selectedUrl?'List cover saved.':'List cover removed.');}); modal.querySelector('#vocab-cover-search').focus();
 }
 function renderVocabLists() {
-  const lists = getVocabLists().filter(l => l.vocab_list_school === navSchool && l.vocab_list_class === navClass);
+  const lists = getVocabLists().filter(l => vocabListInClass(l, navSchool, navClass));
   const container = document.getElementById('vocab-lists-container');
   const empty = document.getElementById('vocab-lists-empty');
   if (!container || !empty) return;
@@ -15519,18 +15519,39 @@ function renderVocabLists() {
   empty.classList.add('hidden');
   container.innerHTML = lists.map(list => {
     const words = getVocabWords(list, navSchool, navClass);
+    const isShared = String(list.vocab_list_class || '') !== String(navClass || '');
+    const sharedLabel = isShared ? `<p class="vocab-list-count mt-1" style="color:#fbbf24">↗ Shared from ${String(list.vocab_list_class || 'another class').replace(/[&<>"]/g, '')}</p>` : '';
+    const removeAction = isShared
+      ? `unshareVocabListFromClass('${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}','${String(list.vocab_list_name).replace(/'/g, "\\'")}',this)`
+      : `removeVocabListFromClass('${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}','${String(list.vocab_list_name).replace(/'/g, "\\'")}',this)`;
+    const removeLabel = isShared ? 'Unshare' : 'Remove';
     return `<div class="vocab-list-card canva-card p-4 sm:p-5">
       <div class="flex items-start gap-3 mb-1">
         <span class="vocab-list-emblem" aria-hidden="true">📚</span>
         <div class="flex-1 min-w-0">
           <h4 class="vocab-list-name text-sm sm:text-base truncate">${list.vocab_list_name}</h4>
-          <p class="vocab-list-count mt-1">${words.length} word${words.length !== 1 ? 's' : ''}</p>
+          <p class="vocab-list-count mt-1">${words.length} word${words.length !== 1 ? 's' : ''}</p>${sharedLabel}
         </div>
       </div>
       ${list.vocab_cover_image_url ? `<div class="vocab-list-cover" role="button" tabindex="0" aria-label="Open ${String(list.vocab_list_name).replace(/"/g, '&quot;')} flashcards" onclick="openVocabFlashcards('${String(list.vocab_list_name).replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${list.vocab_cover_image_url}" alt="Cover for ${list.vocab_list_name}" loading="lazy"></div>` : `<div class="vocab-list-cover" role="button" tabindex="0" aria-label="Open ${String(list.vocab_list_name).replace(/"/g, '&quot;')} flashcards" onclick="openVocabFlashcards('${String(list.vocab_list_name).replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"></div>`}
-      ${words.length > 0 ? `<div class="vocab-card-actions"><button class="vocab-card-mode canva-button" type="button" onclick="openVocabFlashcards('${list.vocab_list_name}')">🎴 Flashcard Mode</button></div><div class="vocab-card-actions"><button class="vocab-card-edit canva-button" type="button" onclick="openVocabListEditor('${list.__backendId}','${list.vocab_list_name}')">Edit</button><button class="vocab-cover-button vocab-card-cover canva-button" type="button" onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${String(list.vocab_list_name).replace(/'/g,"\\'")}')">▣ Cover</button><button class="vocab-card-delete canva-button" type="button" onclick="removeVocabListFromClass('${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}','${String(list.vocab_list_name).replace(/'/g, "\\'")}',this)">Remove</button></div>` : `<div class="vocab-empty-state vocab-list-count italic">No words yet</div><div class="vocab-card-actions vocab-empty-actions"><button class="vocab-card-edit canva-button" type="button" onclick="openVocabListEditor('${list.__backendId}','${list.vocab_list_name}')">Edit</button><button class="vocab-cover-button vocab-card-cover canva-button" type="button" onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${String(list.vocab_list_name).replace(/'/g,"\\'")}')">▣ Cover</button><button class="vocab-card-delete canva-button" type="button" onclick="removeVocabListFromClass('${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}','${String(list.vocab_list_name).replace(/'/g, "\\'")}',this)">Remove</button></div>`}
+      ${words.length > 0 ? `<div class="vocab-card-actions"><button class="vocab-card-mode canva-button" type="button" onclick="openVocabFlashcards('${list.vocab_list_name}')">🎴 Flashcard Mode</button></div><div class="vocab-card-actions"><button class="vocab-card-edit canva-button" type="button" onclick="openVocabListEditor('${list.__backendId}','${list.vocab_list_name}')">Edit</button><button class="vocab-cover-button vocab-card-cover canva-button" type="button" onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${String(list.vocab_list_name).replace(/'/g,"\\'")}')">▣ Cover</button><button class="vocab-card-delete canva-button" type="button" onclick="${removeAction}">${removeLabel}</button></div>` : `<div class="vocab-empty-state vocab-list-count italic">No words yet</div><div class="vocab-card-actions vocab-empty-actions"><button class="vocab-card-edit canva-button" type="button" onclick="openVocabListEditor('${list.__backendId}','${list.vocab_list_name}')">Edit</button><button class="vocab-cover-button vocab-card-cover canva-button" type="button" onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${String(list.vocab_list_name).replace(/'/g,"\\'")}')">▣ Cover</button><button class="vocab-card-delete canva-button" type="button" onclick="${removeAction}">${removeLabel}</button></div>`}
     </div>`;
   }).join('');
+}
+
+// Unshare a list from the current class only — the list and its words are never deleted.
+async function unshareVocabListFromClass(listId, listName, button) {
+  const rec = allData.find(r => ['vocab_list', 'vocabulary_list'].includes(String(r.type || '').toLowerCase()) && normalizeVocabId(r.vocab_list_id ?? r.list_id ?? r.vocabulary_list_id ?? r.__backendId) === normalizeVocabId(listId));
+  if (!rec) { toast('This list is no longer available. Refresh and try again.'); return; }
+  if (button) button.disabled = true;
+  try {
+    const remaining = vocabSharedClasses(rec).filter(c => c !== String(navClass || ''));
+    const res = await window.dataSdk.update({ ...rec, shared_classes: remaining });
+    if (!res?.isOk) { toast('Could not unshare this list. Please try again.'); return; }
+    rec.shared_classes = remaining;
+    toast(`"${listName}" is no longer shared with ${navClass}. The list itself was not deleted.`);
+    try { renderVocabLists(); renderTeacherOwnedVocabLists(); } catch (e) {}
+  } finally { if (button) button.disabled = false; }
 }
 
 function openVocabListEditor(listId, listName) {
