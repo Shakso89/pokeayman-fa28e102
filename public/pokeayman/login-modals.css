@@ -1,0 +1,95 @@
+/* Sign-in popups (student + teacher) — scoped to .pk-login-* so legacy modal styles stay untouched. */
+.pk-login-overlay {
+  --pkl-navy: #0b1533;
+  --pkl-navy-2: #14214a;
+  --pkl-ink: #eef2ff;
+  --pkl-muted: #a9b4d8;
+  --pkl-gold: #ffcb05;
+  --pkl-gold-2: #ffa41b;
+  --pkl-red: #ee1515;
+  --pkl-cyan: #38d6ff;
+  --pkl-line: rgba(169, 180, 216, .22);
+  background: radial-gradient(circle at 50% 30%, rgba(56, 214, 255, .16), transparent 55%), rgba(3, 7, 22, .78) !important;
+  backdrop-filter: blur(6px);
+  animation: pklFade .25s ease-out;
+}
+.pk-login-overlay .pk-login-card {
+  position: relative;
+  background: linear-gradient(160deg, var(--pkl-navy-2), var(--pkl-navy) 70%) !important;
+  color: var(--pkl-ink) !important;
+  border: 2px solid rgba(255, 203, 5, .45) !important;
+  border-radius: 26px !important;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .8), 0 0 0 6px rgba(255, 203, 5, .08), inset 0 1px 0 rgba(255, 255, 255, .08) !important;
+  overflow: hidden;
+  animation: pklPop .45s cubic-bezier(.2, 1.4, .4, 1);
+}
+.pk-login-overlay .pk-login-card::before {
+  content: ""; position: absolute; inset: -40% -20% auto auto; width: 320px; height: 320px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 203, 5, .18), transparent 65%); pointer-events: none;
+}
+.pk-login-overlay .pk-login-teacher::before { background: radial-gradient(circle, rgba(56, 214, 255, .2), transparent 65%); }
+
+.pk-login-head { position: relative; display: flex; align-items: center; gap: 16px; padding: 22px 24px 16px; border-bottom: 1px solid var(--pkl-line); }
+.pk-login-ball {
+  flex: none; width: 58px; height: 58px; border-radius: 50%; position: relative;
+  background: linear-gradient(180deg, var(--pkl-red) 0 46%, #111 46% 54%, #f5f7ff 54% 100%);
+  box-shadow: 0 0 0 3px #111, 0 10px 24px -6px rgba(238, 21, 21, .6);
+  animation: pklWobble 2.8s ease-in-out infinite;
+}
+.pk-login-ball::after {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; transform: translate(-50%, -50%);
+  border-radius: 50%; background: #f5f7ff; box-shadow: 0 0 0 4px #111, 0 0 14px 4px rgba(255, 203, 5, .7);
+}
+.pk-login-teacher .pk-login-ball { background: linear-gradient(180deg, #3b5bdb 0 46%, #111 46% 54%, #f5f7ff 54% 100%); box-shadow: 0 0 0 3px #111, 0 10px 24px -6px rgba(59, 91, 219, .7); }
+.pk-login-kicker { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--pkl-gold); }
+.pk-login-teacher .pk-login-kicker { color: var(--pkl-cyan); }
+.pk-login-title { margin: 2px 0 0; font-family: 'Outfit', 'Fredoka', system-ui, sans-serif; font-size: 26px; font-weight: 900; line-height: 1.1; color: var(--pkl-ink); }
+.pk-login-sub { margin: 4px 0 0; font-size: 13px; color: var(--pkl-muted); }
+
+.pk-login-card form { position: relative; }
+html body .pk-login-overlay .pk-login-card input:not([type="checkbox"]):not([type="radio"]) {
+  background: rgba(255, 255, 255, .06) !important; color: var(--pkl-ink) !important;
+  border: 2px solid var(--pkl-line) !important; border-radius: 14px !important;
+  min-height: 48px; padding: 10px 16px !important; font-size: 15px !important; transition: border-color .2s, box-shadow .2s, background .2s;
+}
+html body .pk-login-overlay .pk-login-card input:not([type="checkbox"]):not([type="radio"])::placeholder { color: rgba(169, 180, 216, .75) !important; }
+html body .pk-login-overlay .pk-login-card input:not([type="checkbox"]):not([type="radio"]):focus { outline: none !important; border-color: var(--pkl-gold) !important; background: rgba(255, 255, 255, .1) !important; box-shadow: 0 0 0 4px rgba(255, 203, 5, .18) !important; }
+html body .pk-login-overlay .pk-login-teacher input:not([type="checkbox"]):not([type="radio"]):focus { border-color: var(--pkl-cyan) !important; box-shadow: 0 0 0 4px rgba(56, 214, 255, .18) !important; }
+html body #student-pin-modal:not(:placeholder-shown) { letter-spacing: .4em !important; text-align: center; font-weight: 800; }
+html body #student-pin-modal:placeholder-shown { letter-spacing: normal !important; }
+.pk-login-overlay .pk-login-card .hidden { display: none !important; }
+
+.pk-login-card .pk-login-primary {
+  background: linear-gradient(135deg, var(--pkl-gold), var(--pkl-gold-2)) !important; color: #1a1300 !important;
+  border: none !important; border-radius: 14px !important; min-height: 48px; font-weight: 900 !important; font-size: 15px;
+  box-shadow: 0 10px 22px -8px rgba(255, 164, 27, .8), inset 0 -3px 0 rgba(0, 0, 0, .15) !important;
+  transition: transform .15s, filter .15s;
+}
+.pk-login-card .pk-login-primary:hover { transform: translateY(-2px); filter: brightness(1.06); }
+.pk-login-card .pk-login-primary:disabled { opacity: .6; transform: none; }
+.pk-login-card .pk-login-ghost, .pk-login-card #ta-back {
+  background: transparent !important; color: var(--pkl-ink) !important; border: 2px solid var(--pkl-line) !important;
+  border-radius: 14px !important; min-height: 48px; font-weight: 800 !important;
+}
+.pk-login-card .pk-login-ghost:hover, .pk-login-card #ta-back:hover { border-color: var(--pkl-muted) !important; background: rgba(255, 255, 255, .05) !important; }
+
+.pk-login-card #student-error-modal, .pk-login-card #teacher-error-modal, .pk-login-msg.is-error {
+  color: #ffb4b4 !important; background: rgba(238, 21, 21, .14); border: 1px solid rgba(238, 21, 21, .35); border-radius: 12px; padding: 8px 12px;
+}
+.pk-login-msg.is-ok { color: #b7f5c8 !important; background: rgba(46, 204, 113, .14); border: 1px solid rgba(46, 204, 113, .35); border-radius: 12px; padding: 8px 12px; }
+
+.pk-login-tabs { background: transparent; }
+.pk-login-card .ta-tab { background: rgba(255, 255, 255, .06) !important; color: var(--pkl-muted) !important; border: 2px solid transparent !important; border-radius: 12px !important; transition: all .2s; }
+.pk-login-card .ta-tab.is-active { background: rgba(56, 214, 255, .14) !important; color: var(--pkl-ink) !important; border-color: var(--pkl-cyan) !important; }
+.pk-login-divider { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--pkl-muted); }
+.pk-login-divider span { flex: 1; height: 1px; background: var(--pkl-line); }
+.pk-login-google { border-radius: 14px; border: 2px solid var(--pkl-line); background: #f5f7ff; color: #1b2340; font-size: 14px; font-weight: 800; transition: transform .15s; }
+.pk-login-google:hover { transform: translateY(-1px); }
+.pk-login-link { color: var(--pkl-cyan); font-weight: 700; background: none; border: 0; }
+.pk-login-link:hover { text-decoration: underline; }
+
+@keyframes pklFade { from { opacity: 0; } }
+@keyframes pklPop { from { opacity: 0; transform: translateY(18px) scale(.94); } }
+@keyframes pklWobble { 0%, 70%, 100% { transform: rotate(0); } 76% { transform: rotate(-14deg); } 84% { transform: rotate(10deg); } 92% { transform: rotate(-5deg); } }
+@media (prefers-reduced-motion: reduce) { .pk-login-overlay, .pk-login-card, .pk-login-ball { animation: none !important; } }
+@media (max-width: 480px) { .pk-login-head { padding: 18px; gap: 12px; } .pk-login-ball { width: 46px; height: 46px; } .pk-login-title { font-size: 22px; } }

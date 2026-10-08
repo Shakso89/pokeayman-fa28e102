@@ -3920,6 +3920,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <script src="/pokeayman/badges.js" defer></script>
 <link rel="stylesheet" href="/pokeayman/badges.css">
 <link rel="stylesheet" href="/pokeayman/game-celebration.css">
+<link rel="stylesheet" href="/pokeayman/login-modals.css">
 <link rel="stylesheet" href="/pokeayman/rank-workspace.css">
 <link rel="stylesheet" href="/pokeayman/battle-workspace.css">
 <script src="/pokeayman/sfx.js"></script>
@@ -6573,9 +6574,12 @@ function authenticateStudentLogin(name, pin) {
     });
   });
   const unique = candidates.filter((candidate, index, list) => list.findIndex(item => `${item.studentId}|${readClassId(item.classRecord)}` === `${candidate.studentId}|${readClassId(candidate.classRecord)}`) === index);
-  if (unique.length > 1) return { ok: false, error: 'Multiple students with this name are enrolled in this class. Please contact your teacher.' };
-  if (unique.length !== 1) return { ok: false, error: 'Student not found in this class. Please check your name and Class PIN.' };
-  const match = unique[0];
+  if (!unique.length) return { ok: false, error: 'Student not found in this class. Please check your name and Class PIN.' };
+  // The same student enrolled in several classes (sharing one PIN) is one person, not a clash.
+  const studentKeys = [...new Set(unique.map(item => String(item.student.__backendId || item.studentId)))];
+  if (studentKeys.length > 1) return { ok: false, error: 'Two students share this name and PIN. Please ask your teacher to give one of you a different name.' };
+  const sameName = (a, b) => String(a || '').trim() === String(b || '').trim();
+  const match = unique.find(item => sameName(item.classRecord.school_name, item.student.school_name) && sameName(item.classRecord.class_name, item.student.class_name)) || unique[0];
   return { ok: true, student: match.student, classRecord: match.classRecord, studentId: match.studentId, classId: readClassId(match.classRecord) };
 }
 
@@ -6595,18 +6599,19 @@ document.addEventListener('click', event => { if (loginChoicePopover && !loginCh
 
 document.getElementById('student-login-toggle').addEventListener('click', () => {
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="teacher-login-modal-card bg-white rounded-xl shadow-lg w-full max-w-md">
-    <div class="bg-gradient-to-r from-indigo-400 to-indigo-500 px-6 py-4 rounded-t-xl">
-      <h2 class="heading-font text-xl font-bold text-white">🎒 Student Login</h2>
+  modal.className = 'pk-login-overlay fixed inset-0 flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `<div class="teacher-login-modal-card pk-login-card pk-login-student w-full max-w-md" role="dialog" aria-modal="true" aria-labelledby="pk-student-login-title">
+    <div class="pk-login-head">
+      <span class="pk-login-ball" aria-hidden="true"></span>
+      <div><p class="pk-login-kicker">Trainer check-in</p><h2 id="pk-student-login-title" class="pk-login-title">Student Login</h2><p class="pk-login-sub">Type your name and your class PIN to start your adventure.</p></div>
     </div>
     <form id="student-login-form-modal" class="p-6 space-y-3">
       <label for="home-student-name-modal" class="sr-only">Student Name</label><input id="home-student-name-modal" type="text" placeholder="Student Name" autocomplete="name" class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition" required>
       <label for="student-pin-modal" class="sr-only">Class PIN</label><input id="student-pin-modal" type="password" placeholder="Class PIN (6 digits)" inputmode="numeric" autocomplete="off" maxlength="6" class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm tracking-widest focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition" required>
       <p id="student-error-modal" class="text-red-500 text-xs text-center font-semibold hidden" role="alert" aria-live="polite"></p>
       <div class="flex gap-2 pt-2">
-        <button type="submit" class="flex-1 btn-success">Log In</button>
-        <button type="button" id="student-cancel-btn-modal" class="flex-1 btn-outline">Cancel</button>
+        <button type="submit" class="flex-1 btn-success pk-login-primary">Let's go!</button>
+        <button type="button" id="student-cancel-btn-modal" class="flex-1 btn-outline pk-login-ghost">Cancel</button>
       </div>
     </form>
   </div>`;
@@ -6690,13 +6695,13 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
   if (auth && auth.userId) { const p = await auth.getProfile(); window.pokeaymanEnterTeacher(p.name); return; }
   const inputCls = 'w-full min-h-11 border-2 border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition';
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="teacher-login-modal-card bg-white rounded-xl shadow-lg w-full max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto">
-    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 px-5 sm:px-7 py-4 rounded-t-xl">
-      <h2 class="heading-font text-xl font-bold text-white">🎓 Teacher Account</h2>
-      <p class="text-white/80 text-xs mt-1">Sign in or create your teacher account to save your classes.</p>
+  modal.className = 'pk-login-overlay fixed inset-0 flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `<div class="teacher-login-modal-card pk-login-card pk-login-teacher w-full max-w-lg sm:max-w-xl max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="pk-teacher-login-title">
+    <div class="pk-login-head">
+      <span class="pk-login-ball" aria-hidden="true"></span>
+      <div><p class="pk-login-kicker">Professor portal</p><h2 id="pk-teacher-login-title" class="pk-login-title">Teacher Account</h2><p class="pk-login-sub">Sign in or create your teacher account to save your classes.</p></div>
     </div>
-    <div class="flex gap-2 px-5 sm:px-7 pt-4">
+    <div class="pk-login-tabs flex gap-2 px-5 sm:px-7 pt-4">
       <button type="button" data-tab="signin" class="ta-tab flex-1 min-h-10 rounded-lg text-sm font-bold">Sign in</button>
       <button type="button" data-tab="signup" class="ta-tab flex-1 min-h-10 rounded-lg text-sm font-bold">Sign up</button>
     </div>
@@ -6708,14 +6713,14 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
       <input id="ta-email" type="email" placeholder="Email" maxlength="255" required class="${inputCls}">
       <input id="ta-password" type="password" placeholder="Password (min 6 characters)" minlength="6" required class="${inputCls}">
       <p id="ta-msg" class="text-xs sm:text-sm text-center font-semibold leading-snug hidden"></p>
-      <button type="submit" id="ta-submit" class="w-full min-h-11 btn-secondary">Sign in</button>
-      <div class="flex items-center gap-2 text-xs text-gray-400"><span class="flex-1 h-px bg-gray-200"></span>or<span class="flex-1 h-px bg-gray-200"></span></div>
-      <button type="button" id="ta-google" class="w-full min-h-11 rounded-lg border-2 border-gray-300 bg-white text-sm font-bold text-gray-700 hover:bg-gray-50">Continue with Google</button>
+      <button type="submit" id="ta-submit" class="w-full min-h-11 btn-secondary pk-login-primary">Sign in</button>
+      <div class="pk-login-divider"><span></span>or<span></span></div>
+      <button type="button" id="ta-google" class="w-full min-h-11 pk-login-google">Continue with Google</button>
       <div class="flex justify-between text-xs pt-1">
-        <button type="button" id="ta-forgot" class="text-purple-600 font-semibold hover:underline">Forgot password?</button>
+        <button type="button" id="ta-forgot" class="pk-login-link">Forgot password?</button>
         <button type="button" id="ta-admin" class="hidden">Admin PIN login</button>
       </div>
-      <button type="button" id="teacher-cancel-btn-modal" class="w-full min-h-11 btn-outline">Cancel</button>
+      <button type="button" id="teacher-cancel-btn-modal" class="w-full min-h-11 btn-outline pk-login-ghost">Cancel</button>
     </form>
     <form id="teacher-login-form-modal" class="p-5 sm:p-7 space-y-3 hidden">
       <input id="teacher-name-modal" type="text" placeholder="Admin name" class="${inputCls}" required>
@@ -6727,10 +6732,10 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
   document.body.appendChild(modal);
   const $ = s => modal.querySelector(s);
   let mode = 'signin';
-  const msg = (text, ok) => { const m = $('#ta-msg'); m.textContent = text; m.className = 'text-xs sm:text-sm text-center font-semibold leading-snug ' + (ok ? 'text-green-600' : 'text-red-600'); };
+  const msg = (text, ok) => { const m = $('#ta-msg'); m.textContent = text; m.className = 'pk-login-msg text-xs sm:text-sm text-center font-semibold leading-snug ' + (ok ? 'is-ok' : 'is-error'); };
   const setMode = m => {
     mode = m;
-    modal.querySelectorAll('.ta-tab').forEach(b => { const on = b.dataset.tab === m; b.className = 'ta-tab flex-1 min-h-10 rounded-lg text-sm font-bold ' + (on ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600'); });
+    modal.querySelectorAll('.ta-tab').forEach(b => { const on = b.dataset.tab === m; b.className = 'ta-tab flex-1 min-h-10 rounded-lg text-sm font-bold' + (on ? ' is-active' : ''); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
     $('#ta-signup-fields').classList.toggle('hidden', m !== 'signup');
     $('#ta-name').required = m === 'signup';
     $('#ta-submit').textContent = m === 'signup' ? 'Create teacher account' : 'Sign in';
