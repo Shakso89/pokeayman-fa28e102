@@ -12341,7 +12341,8 @@ function getVocabWords(listRef, schoolName = navSchool, className = navClass) {
     const recordName = String(record.vocab_list_name || '').trim().toLocaleLowerCase();
     const inScope = (!schoolName || String(record.vocab_list_school || record.school_name || '').trim() === String(schoolName).trim())
       && (!className || String(record.vocab_list_class || record.class_name || '').trim() === String(className).trim());
-    if ((recordId && matchedIds.has(recordId)) || (inScope && !recordId && recordName && matchedNames.has(recordName))) candidates.push(normalizeVocabWordRecord(record, recordId || matchedLists.find(list => String(list.vocab_list_name || '').trim().toLocaleLowerCase() === recordName)?.vocab_list_id, record));
+    const nameOwner = !recordId && recordName ? matchedLists.find(list => String(list.vocab_list_name || '').trim().toLocaleLowerCase() === recordName && String(list.vocab_list_class || '').trim() === String(record.vocab_list_class || record.class_name || '').trim()) : null;
+    if ((recordId && matchedIds.has(recordId)) || (inScope && nameOwner)) candidates.push(normalizeVocabWordRecord(record, recordId || nameOwner.vocab_list_id, record));
   });
   // One entry per word text within a list: stray copied rows can never inflate the list.
   const seen = new Set();
