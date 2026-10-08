@@ -122,5 +122,5 @@ function Index() {
   }
 
   if (!ready) return null;
-  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html" />;
+  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html" allowFullScreen />;
 }

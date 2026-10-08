@@ -16583,12 +16583,13 @@ function resetBattleVisualState() {
     card.classList.remove('battle-winner-final', 'battle-loser-final', 'battle-impact', 'battle-winner-celebrate', 'arena-fainting', 'arena-lunge-left', 'arena-lunge-right');
     card.querySelectorAll('.arena-pop, .arena-fx').forEach(n => n.remove());
     card.querySelector('.battle-winner-label')?.remove();
-    card.querySelector('img')?.classList.remove('battle-winner-art', 'attack-punch', 'take-damage', 'battle-winner-celebrate');
+    card.querySelector('img[id$="-img"]')?.classList.remove('battle-winner-art', 'attack-punch', 'take-damage', 'battle-winner-celebrate');
     card.querySelectorAll('.battle-hp-ripple, .battle-hp-trail').forEach(effect => effect.remove());
   });
 }
 
 function resetBattleTabState({ preserveManualSelections = false } = {}) {
+  arenaExitProjector();
   // Safe lifecycle reset: clear results and battle state without wiping a live picker.
   battleState = { left: null, right: null, leftPokemon: null, rightPokemon: null, running: false };
   resetBattleVisualState();
@@ -16625,7 +16626,7 @@ function finalizeBattleVisuals(winnerId, loserId) {
   if (!winner || !loser) return;
   winner.classList.add('battle-winner-final');
   loser.classList.add('battle-loser-final');
-  const image = winner.querySelector('img');
+  const image = winner.querySelector('img[id$="-img"]');
   if (image) image.classList.add('battle-winner-art');
   const label = document.createElement('span');
   label.className = 'battle-winner-label';
@@ -16683,13 +16684,29 @@ async function arenaAttack(fromSide, toSide, attacker, multiplier, dmg) {
   else if (multiplier < 1) arenaBanner(`RESISTED ×${multiplier.toFixed(1)}`, 'is-resist');
 }
 document.getElementById('arena-speed-btn')?.addEventListener('click', e => { arenaSpeed = arenaSpeed === 1 ? 2 : 1; e.currentTarget.textContent = arenaSpeed === 1 ? '⏩ 1×' : '⏩ 2×'; e.currentTarget.setAttribute('aria-pressed', String(arenaSpeed === 2)); });
-document.getElementById('arena-cinema-btn')?.addEventListener('click', () => {
+let arenaProjectorAnchor = null;
+function arenaExitProjector() {
+  const area = document.getElementById('battle-area');
+  if (!area?.classList.contains('arena-cinema')) return;
+  area.classList.remove('arena-cinema');
+  if (document.fullscreenElement === area) document.exitFullscreen().catch(() => {});
+  if (arenaProjectorAnchor?.parentNode) arenaProjectorAnchor.replaceWith(area);
+  arenaProjectorAnchor = null;
+  const button = document.getElementById('arena-cinema-btn');
+  if (button) { button.textContent = '⛶ Projector'; button.setAttribute('aria-pressed', 'false'); button.focus({ preventScroll: true }); }
+}
+document.getElementById('arena-cinema-btn')?.addEventListener('click', async () => {
   const area = document.getElementById('battle-area'); if (!area) return;
-  const on = !area.classList.contains('arena-cinema');
-  area.classList.toggle('arena-cinema', on);
-  document.getElementById('arena-cinema-btn').textContent = on ? '✕ Exit projector' : '⛶ Projector';
+  if (area.classList.contains('arena-cinema')) { arenaExitProjector(); return; }
+  arenaProjectorAnchor = document.createComment('battle-projector-position');
+  area.before(arenaProjectorAnchor); document.body.appendChild(area);
+  area.classList.add('arena-cinema');
+  const button = document.getElementById('arena-cinema-btn');
+  button.textContent = '✕ Exit projector'; button.setAttribute('aria-pressed', 'true');
+  try { await area.requestFullscreen(); } catch (_) { /* Full-viewport mode remains usable when browser fullscreen is unavailable. */ }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { const a = document.getElementById('battle-area'); if (a?.classList.contains('arena-cinema')) document.getElementById('arena-cinema-btn')?.click(); } });
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) arenaExitProjector(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') arenaExitProjector(); });
 
 function setupBattle(s1Name, p1, s2Name, p2) {
   resetBattleVisualState();
