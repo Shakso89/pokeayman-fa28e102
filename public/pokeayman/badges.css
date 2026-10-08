@@ -1,0 +1,26 @@
+/* Achievement pins */
+.pk-pins { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; position: relative; z-index: 6; }
+#view-student-profile .cp-identity .pk-pins { justify-content: flex-start; grid-column: 1 / -1; }
+.pk-pin { --pin-a: #facc15; --pin-b: #a16207; --pin-ink: #1c1203;
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px 3px 4px; border-radius: 999px;
+  background: linear-gradient(135deg, var(--pin-a), var(--pin-b)); color: var(--pin-ink);
+  border: 1.5px solid color-mix(in srgb, var(--pin-a) 60%, white); cursor: pointer;
+  box-shadow: 0 3px 8px rgba(2,6,23,.35), inset 0 1px 0 rgba(255,255,255,.55);
+  font: 800 10.5px/1 Outfit, sans-serif; letter-spacing: .02em; white-space: nowrap; transition: transform .15s ease; }
+.pk-pin:hover, .pk-pin:focus-visible { transform: translateY(-2px) scale(1.05); outline: none; }
+.pk-pin i { font-style: normal; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,.4); font-size: 11px; }
+.pk-pin-class-1 { --pin-a: #fde047; --pin-b: #ca8a04; --pin-ink: #3b2400; }
+.pk-pin-class-2 { --pin-a: #e2e8f0; --pin-b: #93c5fd; --pin-ink: #0f2742; }
+.pk-pin-class-3 { --pin-a: #fdba74; --pin-b: #c2410c; --pin-ink: #3a1306; }
+.pk-pin-battle { --pin-a: #f59e0b; --pin-b: #dc2626; --pin-ink: #fff7ed; animation: pk-spark 2.4s ease-in-out infinite; }
+.pk-pin-arcade { --pin-a: #22d3ee; --pin-b: #8b5cf6; --pin-ink: #f5f3ff; animation: pk-neon 2.4s ease-in-out infinite; }
+@keyframes pk-spark { 50% { box-shadow: 0 0 14px rgba(245,158,11,.75), inset 0 1px 0 rgba(255,255,255,.55); } }
+@keyframes pk-neon { 50% { box-shadow: 0 0 14px rgba(34,211,238,.75), inset 0 1px 0 rgba(255,255,255,.55); } }
+@media (prefers-reduced-motion: reduce) { .pk-pin { animation: none !important; transition: none; } }
+
+/* Collections: plain wrapping grid, no inner scrollbars or sideways scroll */
+html body :is(#profile-tab-collection, #student-tab-collection) { overflow: visible !important; max-height: none !important; }
+html body :is(#my-pokemon-list#my-pokemon-list#my-pokemon-list, #profile-pokemon-list#profile-pokemon-list#profile-pokemon-list) {
+  display: grid !important; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; grid-auto-flow: row !important;
+  gap: 16px !important; overflow: visible !important; max-height: none !important; width: 100% !important; padding: 10px 10px 4px !important; box-sizing: border-box; }
+html body :is(#my-pokemon-list, #profile-pokemon-list) > * { min-width: 0 !important; max-width: 100% !important; }
