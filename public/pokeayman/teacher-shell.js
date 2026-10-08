@@ -40,8 +40,8 @@
       <div class="ts-brand"><span class="ts-ball" aria-hidden="true"></span><span>PokéAyman<small>Academy</small></span></div>
       <div class="ts-switch-wrap"><button type="button" class="ts-switch" data-ts="switch" aria-haspopup="dialog" aria-expanded="false"><span class="ts-switch-label" id="ts-current-school">Schools &amp; classes</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">⇄</span></button></div>
       <nav class="ts-nav">
-        <p class="ts-head">Classroom</p>
-        ${CLASS_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-class="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}
+        <div id="ts-class"><button type="button" class="ts-section-toggle" data-ts-toggle="class" aria-expanded="true" aria-controls="ts-class-content"><span>Classroom</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-class-content">
+        ${CLASS_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-class="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
         <div id="ts-zone"><button type="button" class="ts-section-toggle" data-ts-toggle="zone" aria-expanded="false" aria-controls="ts-zone-content"><span>Teacher Zone</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-zone-content" hidden>
         ${ZONE_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-zone="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
         <div id="ts-admin"><button type="button" class="ts-section-toggle" data-ts-toggle="admin" aria-expanded="false" aria-controls="ts-admin-content"><span>Admin Hub</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-admin-content" hidden>
