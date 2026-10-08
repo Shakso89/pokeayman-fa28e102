@@ -1,0 +1,81 @@
+/* Horizontal class profile; legacy handlers and rank identities stay intact. */
+#view-student-profile {
+  --profile-surface: var(--ts-surface);
+  --profile-ink: var(--ts-ink);
+  --profile-muted: var(--ts-muted);
+  --profile-border: var(--ts-border);
+  --profile-inset: var(--ts-chip);
+  --profile-shadow: 0 12px 28px color-mix(in srgb, var(--ts-bg) 24%, transparent);
+  --profile-power: var(--rank-bronze);
+  --profile-value: var(--rank-silver);
+}
+html body.ts-bright #view-student-profile { --profile-power: var(--ts-red); --profile-value: var(--ts-blue); }
+#view-student-profile { container-type: inline-size; min-width: 0; }
+html body #app-screen #view-student-profile .cp-layout { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+html body #app-screen#app-screen#app-screen #view-student-profile .cp-overview {
+  display: grid; grid-template-columns: minmax(180px, 1fr) minmax(280px, 1.7fr) minmax(200px, .85fr);
+  align-items: center; gap: 24px; width: 100%; min-width: 0; padding: 20px !important;
+  border-radius: 8px !important; border: 1px solid var(--profile-border) !important;
+  background: var(--profile-surface) !important; color: var(--profile-ink) !important;
+  box-shadow: var(--profile-shadow) !important; position: relative;
+  animation: cp-enter .3s ease-out; overflow: visible !important;
+}
+html body #app-screen #view-student-profile .cp-identity { display: flex; align-items: center; gap: 16px; min-width: 0; }
+html body #app-screen #view-student-profile #profile-avatar-container { margin: 0 !important; width: 88px; height: 88px; flex: 0 0 88px; }
+html body #app-screen#app-screen#app-screen #view-student-profile :is(#profile-avatar-pokemon, #profile-avatar-placeholder) {
+  width: 88px !important; height: 88px !important; object-fit: contain; margin: 0 !important;
+  border: none !important; background: transparent !important; border-radius: 0 !important; box-shadow: none !important; font-size: 48px;
+}
+html body #app-screen #view-student-profile .cp-name { min-width: 0; }
+html body #app-screen#app-screen#app-screen #view-student-profile #profile-student-name {
+  font: 700 28px/1.15 Outfit, sans-serif !important; color: var(--profile-ink) !important;
+  margin: 0 !important; text-align: left; overflow-wrap: anywhere; text-shadow: none !important; letter-spacing: 0;
+}
+html body #app-screen #view-student-profile .cp-label { font: 600 12px Figtree, sans-serif; color: var(--profile-muted); margin: 6px 0 0; }
+html body #app-screen #view-student-profile #profile-top3-badge { margin: 6px 0 0 !important; justify-content: flex-start; }
+html body #app-screen #view-student-profile .cp-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; min-width: 0; }
+html body #app-screen #view-student-profile .cp-stat { padding: 8px 12px; min-width: 0; border-left: 1px solid var(--profile-border); }
+html body #app-screen#app-screen#app-screen #view-student-profile .cp-stat p:first-child { font: 700 26px/1.2 Outfit, sans-serif; margin: 0; color: var(--profile-ink) !important; overflow-wrap: anywhere; }
+html body #app-screen #view-student-profile .cp-stat p:last-child { font: 500 12px Figtree, sans-serif; margin: 6px 0 0; color: var(--profile-muted) !important; }
+html body #app-screen#app-screen#app-screen #view-student-profile .cp-stat #profile-coins { color: var(--ts-yellow) !important; }
+html body #app-screen#app-screen#app-screen #view-student-profile .cp-stat #profile-total-power { color: var(--profile-power) !important; }
+html body #app-screen#app-screen#app-screen #view-student-profile .cp-stat #profile-total-value { color: var(--profile-value) !important; }
+html body #app-screen #view-student-profile #profile-adjust-form {
+  align-items: center; gap: 8px; min-width: 0; padding: 0 !important; margin: 0;
+  background: transparent !important; border: none !important; box-shadow: none !important;
+}
+#view-student-profile #profile-adjust-form::before, #view-student-profile #profile-adjust-form::after { content: none !important; }
+html body #app-screen #view-student-profile #profile-adjust-amount { width: 100%; min-width: 0; height: 44px; border-radius: 6px; padding: 0 10px; font: 500 14px Figtree, sans-serif; background: var(--profile-inset) !important; color: var(--profile-ink) !important; border: 1px solid var(--profile-border) !important; box-shadow: none !important; }
+#view-student-profile #profile-adjust-amount::placeholder { color: var(--profile-muted); }
+html body #app-screen #view-student-profile #profile-adjust-form button { height: 44px; flex-shrink: 0; padding: 0 16px; border-radius: 6px; font: 700 14px Outfit, sans-serif; background: var(--ts-yellow) !important; color: var(--ts-action-ink) !important; box-shadow: none !important; }
+html body #app-screen #view-student-profile .cp-content { min-width: 0; width: 100%; }
+html body #app-screen #view-student-profile .cp-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 20px; padding: 0 0 16px; border-bottom: 1px solid var(--profile-border); }
+html body #app-screen #view-student-profile .profile-tab-btn { min-height: 44px; padding: 10px 20px; font: 600 14px Outfit, sans-serif; border-radius: 6px; box-shadow: none !important; background: var(--profile-surface) !important; color: var(--profile-muted) !important; border: 1px solid var(--profile-border); }
+html body #app-screen #view-student-profile .profile-tab-active { background: var(--ts-yellow) !important; color: var(--ts-action-ink) !important; border-color: var(--ts-yellow); }
+html body #app-screen #view-student-profile :is(.profile-tab-btn, #profile-adjust-amount, #profile-adjust-form button):focus-visible { outline: 2px solid var(--ts-yellow); outline-offset: 3px; }
+/* Horizontal medal treatment replaces the tall crest space only in this profile. */
+html body #app-screen#app-screen#app-screen #view-student-profile .cp-overview.global-rank-card.global-rank-card { padding: 20px !important; border-radius: 8px !important; border-color: var(--rank-edge) !important; background: linear-gradient(110deg, var(--rank-deep), var(--rank-night) 70%) !important; }
+html body #app-screen#app-screen#app-screen #view-student-profile .cp-overview.global-rank-card #profile-student-name { color: var(--rank-text) !important; }
+#view-student-profile .cp-overview.global-rank-card { --profile-ink: var(--rank-text); --profile-muted: color-mix(in srgb, var(--rank-text) 70%, transparent); --profile-border: color-mix(in srgb, var(--rank-edge) 25%, transparent); --profile-inset: var(--rank-night); }
+html body #app-screen#app-screen#app-screen #view-student-profile .cp-overview.global-rank-card::before { border-radius: 4px !important; }
+html body #app-screen#app-screen#app-screen #view-student-profile .cp-overview > .global-rank-marker { position: static !important; inset: auto !important; transform: none !important; grid-column: 1 / -1; justify-self: start; max-width: 100%; padding-top: 12px; border-top: 1px solid var(--profile-border) !important; width: 100%; }
+#view-student-profile .cp-overview .rank-crest { width: 28px; height: 34px; flex-basis: 28px; }
+#view-student-profile .cp-overview .rank-crest svg { width: 20px; height: 16px; }
+#view-student-profile .cp-overview .rank-crest b { font-size: 11px; }
+#view-student-profile .cp-overview .rank-title strong { font-size: 14px; }
+@container (max-width: 1000px) {
+  html body #app-screen#app-screen#app-screen #view-student-profile .cp-overview { grid-template-columns: minmax(180px, 1fr) minmax(260px, 1.5fr); gap: 16px; }
+  html body #app-screen #view-student-profile #profile-adjust-form { grid-column: 1 / -1; justify-self: end; width: 260px; }
+}
+@container (max-width: 580px) {
+  html body #app-screen#app-screen#app-screen #view-student-profile .cp-overview { grid-template-columns: minmax(0, 1fr); padding: 16px !important; }
+  html body #app-screen #view-student-profile .cp-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  html body #app-screen #view-student-profile .cp-stat { padding: 8px; }
+  html body #app-screen #view-student-profile .cp-stat:first-child { border-left: 0; padding-left: 0; }
+  html body #app-screen#app-screen#app-screen #view-student-profile .cp-stat p:first-child { font-size: 22px; }
+  html body #app-screen #view-student-profile .cp-stat p:last-child { font-size: 11px; }
+  html body #app-screen #view-student-profile #profile-adjust-form { width: 100%; }
+  html body #app-screen #view-student-profile .profile-tab-btn { padding: 10px 12px; }
+}
+@keyframes cp-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { html body #app-screen #view-student-profile .cp-overview { animation: none; } }
