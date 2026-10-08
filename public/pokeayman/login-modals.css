@@ -47,14 +47,14 @@
 .pk-login-sub { margin: 4px 0 0; font-size: 13px; color: var(--pkl-muted); }
 
 .pk-login-card form { position: relative; }
-html body .pk-login-overlay .pk-login-card input {
+html body .pk-login-overlay .pk-login-card input:not([type="checkbox"]):not([type="radio"]) {
   background: rgba(255, 255, 255, .06) !important; color: var(--pkl-ink) !important;
   border: 2px solid var(--pkl-line) !important; border-radius: 14px !important;
   min-height: 48px; padding: 10px 16px !important; font-size: 15px !important; transition: border-color .2s, box-shadow .2s, background .2s;
 }
-html body .pk-login-overlay .pk-login-card input::placeholder { color: rgba(169, 180, 216, .75) !important; }
-html body .pk-login-overlay .pk-login-card input:focus { outline: none !important; border-color: var(--pkl-gold) !important; background: rgba(255, 255, 255, .1) !important; box-shadow: 0 0 0 4px rgba(255, 203, 5, .18) !important; }
-html body .pk-login-overlay .pk-login-teacher input:focus { border-color: var(--pkl-cyan) !important; box-shadow: 0 0 0 4px rgba(56, 214, 255, .18) !important; }
+html body .pk-login-overlay .pk-login-card input:not([type="checkbox"]):not([type="radio"])::placeholder { color: rgba(169, 180, 216, .75) !important; }
+html body .pk-login-overlay .pk-login-card input:not([type="checkbox"]):not([type="radio"]):focus { outline: none !important; border-color: var(--pkl-gold) !important; background: rgba(255, 255, 255, .1) !important; box-shadow: 0 0 0 4px rgba(255, 203, 5, .18) !important; }
+html body .pk-login-overlay .pk-login-teacher input:not([type="checkbox"]):not([type="radio"]):focus { border-color: var(--pkl-cyan) !important; box-shadow: 0 0 0 4px rgba(56, 214, 255, .18) !important; }
 html body #student-pin-modal:not(:placeholder-shown) { letter-spacing: .4em !important; text-align: center; font-weight: 800; }
 html body #student-pin-modal:placeholder-shown { letter-spacing: normal !important; }
 .pk-login-overlay .pk-login-card .hidden { display: none !important; }
