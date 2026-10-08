@@ -3919,6 +3919,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <script src="/pokeayman/detail-holo.js" defer></script>
 <script src="/pokeayman/badges.js" defer></script>
 <link rel="stylesheet" href="/pokeayman/badges.css">
+<link rel="stylesheet" href="/pokeayman/game-celebration.css">
 <link rel="stylesheet" href="/pokeayman/rank-workspace.css">
 <link rel="stylesheet" href="/pokeayman/battle-workspace.css">
 <script src="/pokeayman/sfx.js"></script>
@@ -12685,7 +12686,7 @@ function renderGamesList() {
     const accent = accents[index % accents.length];
     // For student games, encode the school/class into an onclick that sets context before launching
     const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
-    const setCtxJs = `navSchool='${String(list.vocab_list_school).replace(/'/g,"\\'")}';navClass='${String(list.vocab_list_class).replace(/'/g,"\\'")}';`;
+    const setCtxJs = (currentRole === 'teacher' && selectedGameSource === 'my_lists') ? '' : `navSchool='${String(list.vocab_list_school).replace(/'/g,"\\'")}';navClass='${String(list.vocab_list_class).replace(/'/g,"\\'")}';`;
     html += `<div class="game-vocab-list-card group relative min-h-[150px] rounded-2xl border-2 border-${accent}-200 bg-gradient-to-br from-white to-${accent}-50 p-4 text-center ${isSelected ? `bg-${accent}-100 border-${accent}-500 ring-2 ring-${accent}-300 shadow-md` : ''}">
       <button type="button" class="absolute inset-0 z-0 rounded-2xl focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-300" aria-label="Select ${list.vocab_list_name}" aria-pressed="${isSelected}" onclick="${setCtxJs} selectGameList(${selectedGameSource === 'my_lists' ? `{vocab_list_id:'${String(list.vocab_list_id).replace(/'/g, "\\'")}',vocab_list_name:'${safeListName}'}` : `'${safeListName}'`})"></button>
       ${isSelected ? `<span class="absolute left-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-${accent}-600 text-white text-base font-black shadow-md ring-2 ring-white" aria-label="Selected">✓</span>` : ''}
@@ -13122,15 +13123,15 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
 }
 
 function mountGameCelebrationOverlay(gameModal, overlay) {
-  if (!gameModal || !overlay) return;
-  // Keep one result layer per game and place it inside the active game shell so fullscreen stacking is preserved.
-  gameModal.querySelectorAll(':scope > .game-celebration-overlay, :scope > .single-player-timeout-overlay').forEach(existing => existing.remove());
-  const fullscreenRoot = gameModal.classList.contains('game-fullscreen-active') ? gameModal : (gameModal.querySelector('.game-fullscreen-active') || gameModal);
-  fullscreenRoot.appendChild(overlay);
-  overlay.style.position = 'absolute';
-  overlay.style.inset = '0';
-  overlay.style.zIndex = '2147483647';
-  overlay.style.pointerEvents = 'auto';
+  if (!overlay) return;
+  // Mount at page level (or inside the browser-fullscreen element) so no game layer can trap or freeze it.
+  document.querySelectorAll('.game-celebration-overlay.gc2').forEach(existing => existing.remove());
+  gameModal?.querySelectorAll('.game-celebration-overlay, .single-player-timeout-overlay').forEach(existing => existing.remove());
+  overlay.classList.add('gc2');
+  if (!overlay.querySelector('.gc2-burst')) overlay.insertAdjacentHTML('afterbegin', '<div class="gc2-burst" aria-hidden="true">' + Array.from({ length: 18 }, (_, i) => `<i style="--i:${i}"></i>`).join('') + '</div>');
+  (document.fullscreenElement || document.body).appendChild(overlay);
+  overlay.querySelector('button')?.focus({ preventScroll: true });
+  try { window.pokeSfx?.play?.('victory'); } catch (e) {}
 }
 
 function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '', winnerOverride = null, solvedImage = '') {

@@ -1,0 +1,32 @@
+/* End-of-game celebration: page-level, always clickable. */
+.game-celebration-overlay.gc2 { position: fixed !important; inset: 0 !important; z-index: 2147483647 !important; display: grid !important; place-items: center; padding: 16px; pointer-events: auto !important;
+  background: radial-gradient(circle at 50% 40%, rgba(250,204,21,.18), rgba(3,9,22,.88) 60%) !important; backdrop-filter: blur(10px); overflow: hidden; font-family: Outfit, sans-serif; }
+.gc2 .gc2-burst { position: absolute; inset: 0; pointer-events: none; }
+.gc2 .gc2-burst i { position: absolute; left: 50%; top: 45%; width: 10px; height: 18px; border-radius: 3px;
+  background: hsl(calc(var(--i) * 40), 95%, 62%); transform: rotate(calc(var(--i) * 20deg)) translateY(0); opacity: 0;
+  animation: gc2-burst 1.6s cubic-bezier(.15,.8,.3,1) calc(var(--i) * 20ms) forwards; }
+@keyframes gc2-burst { 0% { opacity: 1; transform: rotate(calc(var(--i) * 20deg)) translateY(0) scale(.4); } 100% { opacity: 0; transform: rotate(calc(var(--i) * 20deg)) translateY(-46vmin) scale(1); } }
+.gc2 .game-celebration-card { position: relative; width: min(100%, 440px) !important; max-height: calc(100vh - 32px); overflow: hidden auto; scrollbar-width: none;
+  padding: 92px 26px 24px !important; margin-top: 60px; border-radius: 26px !important; text-align: center; color: #fff7d6 !important;
+  background: linear-gradient(160deg, #1b2a55, #0d1530 70%) !important; border: 3px solid #facc15 !important;
+  box-shadow: 0 0 0 6px rgba(250,204,21,.14), 0 0 60px rgba(250,204,21,.35), 0 30px 80px rgba(0,0,0,.6) !important;
+  animation: gc2-in .6s cubic-bezier(.2,.9,.3,1.3) both; }
+.gc2 .game-celebration-card::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.14) 50%, transparent 65%); transform: translateX(-120%); animation: gc2-shine 3.5s ease-in-out .6s infinite; }
+.gc2 .game-celebration-pikachu { position: absolute !important; top: -64px; left: 50%; width: 150px !important; height: 150px !important; margin: 0 !important; transform: translateX(-50%);
+  object-fit: contain; padding: 8px; border-radius: 50%; background: radial-gradient(circle, #fde68a, #f59e0b 60%, #b45309) !important; border: 4px solid #fff7d6;
+  box-shadow: 0 0 40px rgba(250,204,21,.7); animation: gc2-hop 1.6s ease-in-out .6s infinite; }
+.gc2 #celebration-title, .gc2 #battle-celebration-title { color: #fde047 !important; font: 900 clamp(28px, 6vw, 38px)/1.1 Outfit, sans-serif !important; text-shadow: 0 3px 0 #7c4a03, 0 0 24px rgba(250,204,21,.5); margin: 0; }
+.gc2 .game-celebration-card p { color: #dbe4ff !important; }
+.gc2 .game-celebration-card .rounded-xl { background: rgba(255,255,255,.07) !important; border-color: rgba(250,204,21,.35) !important; }
+.gc2 .game-celebration-card .rounded-xl p { color: #fff7d6 !important; }
+.gc2 [aria-live="polite"] { background: linear-gradient(135deg, #fde047, #f59e0b) !important; color: #3b2400 !important; border: 0 !important; font-weight: 900 !important; animation: gc2-pop .5s .5s both; }
+.gc2 .game-celebration-card button { min-height: 48px; border-radius: 12px !important; font: 800 16px Outfit, sans-serif !important; cursor: pointer; position: relative; z-index: 2; }
+.gc2 #celebration-again, .gc2 #battle-celebration-again { background: linear-gradient(135deg, #fde047, #f59e0b) !important; color: #2a1a00 !important; border: 0 !important; box-shadow: 0 4px 0 #a16207 !important; }
+.gc2 #celebration-close, .gc2 #battle-celebration-close { background: transparent !important; color: #fff7d6 !important; border: 2px solid rgba(255,247,214,.5) !important; }
+.gc2 .game-celebration-card button:hover { transform: translateY(-2px); }
+.gc2 .find-me-result-sparkles, .gc2 .find-me-result-accent { display: none !important; }
+@keyframes gc2-in { from { opacity: 0; transform: scale(.6) translateY(40px); } to { opacity: 1; transform: none; } }
+@keyframes gc2-hop { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
+@keyframes gc2-shine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@keyframes gc2-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .gc2 *, .gc2 .game-celebration-card::before { animation: none !important; } .gc2 .gc2-burst { display: none; } }
