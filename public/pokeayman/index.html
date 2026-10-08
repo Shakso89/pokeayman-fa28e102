@@ -3921,6 +3921,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/battle-workspace.css">
 <script src="/pokeayman/sfx.js"></script>
 <link rel="stylesheet" href="/pokeayman/teacher-shell.css">
+<link rel="stylesheet" href="/pokeayman/profile-workspace.css">
 <link rel="stylesheet" href="/pokeayman/games-arcade.css">
 <script src="/pokeayman/games-arcade.js"></script>
 <script src="/pokeayman/teacher-shell.js" defer></script>
@@ -4243,51 +4244,44 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         </div>
        </div>
       </div>
-      <div id="view-student-profile" class="hidden"><!-- Profile Layout: Header (Left) + Tabs/Content (Right) -->
-       <div class="flex gap-6"><!-- Squared Profile Header (Left) -->
-        <div class="rounded-2xl p-6 shadow-lg stat-card-glass w-64 h-auto flex-shrink-0">
-         <div class="mb-4 relative group cursor-pointer" id="profile-avatar-container" onclick="openProfileAvatarSelector()">
-          <img id="profile-avatar-pokemon" class="w-32 h-32 mx-auto object-contain" src="" alt="Avatar" style="display:none;">
-          <div id="profile-avatar-placeholder" class="w-32 h-32 mx-auto bg-white bg-opacity-20 rounded-full flex items-center justify-center text-8xl group-hover:bg-white group-hover:bg-opacity-30 transition-all">
-           👤
+      <div id="view-student-profile" class="hidden">
+       <div class="cp-layout">
+        <section class="cp-overview stat-card-glass" aria-label="Student overview">
+         <div class="cp-identity">
+          <div class="relative group cursor-pointer" id="profile-avatar-container" onclick="openProfileAvatarSelector()">
+           <img id="profile-avatar-pokemon" src="" alt="Avatar" style="display:none;">
+           <div id="profile-avatar-placeholder" class="flex items-center justify-center">👤</div>
+           <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <span class="text-sm font-bold px-2 py-1 rounded-lg">Change Avatar</span>
+           </div>
           </div>
-          <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-           <span class="text-sm font-bold text-white bg-black bg-opacity-50 px-2 py-1 rounded-lg">Change Avatar</span>
+          <div class="cp-name">
+           <h2 id="profile-student-name"></h2>
+           <p class="cp-label">Pokémon Trainer</p>
+           <div id="profile-top3-badge" class="hidden flex flex-wrap items-center gap-1">
+            <div id="profile-rank-badge"><span id="profile-medal-emoji"></span> <span id="profile-rank-text"></span></div>
+            <span id="profile-quiz-solver-badge" class="hidden">🏆 Good Job</span>
+           </div>
           </div>
          </div>
-         <h2 id="profile-student-name" class="heading-font text-2xl font-bold text-white mb-3 text-center break-words"></h2>
-         <div id="profile-top3-badge" class="hidden mb-3 flex flex-row flex-wrap items-center justify-center gap-1">
-          <div id="profile-rank-badge" class="relative inline-flex items-center gap-1 px-4 py-2 rounded-full font-bold text-xs text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"><span id="profile-medal-emoji" class="text-lg drop-shadow-lg"></span> <span id="profile-rank-text" class="text-xs"></span>
-          </div><span id="profile-quiz-solver-badge" class="hidden text-xs font-bold px-3 py-1 rounded-full shadow-lg bg-gradient-to-r from-orange-400 to-red-500 text-white">🏆 Good Job</span>
-         </div><!-- Stat Cards Grid (Squared, 2x2) -->
-         <div class="grid grid-cols-2 gap-2 mb-3">
-          <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105">
-           <p id="profile-coins" class="text-xl font-black text-yellow-300">0</p>
-           <p class="text-xs text-white mt-1 font-semibold">Coins</p>
-          </div>
-          <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105">
-           <p id="profile-pokemon-count" class="text-xl font-black text-indigo-300">0</p>
-           <p class="text-xs text-white mt-1 font-semibold">Pokémon</p>
-          </div>
-          <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105">
-           <p id="profile-total-power" class="text-xl font-black text-purple-400">0</p>
-           <p class="text-xs text-white mt-1 font-semibold">Power</p>
-          </div>
-          <div class="stat-card-glass rounded-lg p-2 text-center cursor-pointer transition-all hover:shadow-lg hover:scale-105">
-           <p id="profile-total-value" class="text-xl font-black text-blue-400">0</p>
-           <p class="text-xs text-white mt-1 font-semibold">Value</p>
-          </div>
-         </div><!-- Quick Action Buttons -->
-         <div class="flex flex-col gap-2 mb-3"><button id="profile-add-coins-btn" class="px-2 py-1 text-xs btn-success transition font-semibold">+10</button> <button id="profile-subtract-coins-btn" class="px-2 py-1 text-xs btn-secondary transition font-semibold">-10</button>
-         </div><!-- Adjust Balance Form -->
-         <form id="profile-adjust-form" class="glass-container rounded-lg p-2 flex flex-col gap-1"><input id="profile-adjust-amount" type="number" placeholder="Amount" class="flex-1 border border-gray-300 rounded-lg px-2 py-1 text-xs" required=""> <button type="submit" class="btn-primary transition text-xs px-3 font-semibold py-1">Adjust</button>
+         <div class="cp-stats">
+          <div class="cp-stat"><p id="profile-coins">0</p><p>Coins</p></div>
+          <div class="cp-stat"><p id="profile-pokemon-count">0</p><p>Pokémon</p></div>
+          <div class="cp-stat"><p id="profile-total-power">0</p><p>Power</p></div>
+          <div class="cp-stat"><p id="profile-total-value">0</p><p>Value</p></div>
+         </div>
+         <form id="profile-adjust-form" class="flex" aria-label="Adjust student coins">
+          <input id="profile-adjust-amount" type="number" placeholder="Amount" aria-label="Coin adjustment amount" required>
+          <button type="submit" class="btn-primary">Adjust</button>
          </form>
-        </div><!-- Right Column: Tabs + Content -->
-        <div class="flex-1 flex flex-col min-w-0"><!-- Horizontal Tab Navigation -->
-         <div class="flex gap-2 mb-4 flex-wrap">
-          <button class="profile-tab-btn profile-tab-active px-3 py-2 rounded-lg font-semibold text-xs transition" data-tab="collection">📚 Collection</button> <button class="profile-tab-btn profile-tab-inactive px-3 py-2 rounded-lg font-semibold text-xs transition" data-tab="shop">🛍️ Shop</button> <button class="profile-tab-btn profile-tab-inactive px-3 py-2 rounded-lg font-semibold text-xs transition" data-tab="quiz">❓ Quiz</button>
-         </div><!-- Tab Content Area -->
-         <div id="profile-tab-collection" class="profile-tab-content flex-1 overflow-y-auto">
+        </section>
+        <div class="cp-content">
+         <div class="cp-tabs" aria-label="Student profile sections">
+          <button class="profile-tab-btn profile-tab-active" data-tab="collection">📚 Collection</button>
+          <button class="profile-tab-btn profile-tab-inactive" data-tab="shop">🛍️ Shop</button>
+          <button class="profile-tab-btn profile-tab-inactive" data-tab="quiz">❓ Quiz</button>
+         </div>
+          <div id="profile-tab-collection" class="profile-tab-content flex-1 overflow-y-auto">
           <div id="profile-pokemon-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
           <p id="profile-pokemon-empty" class="text-center text-gray-400 py-8 text-sm">No Pokémon yet.</p>
          </div>
@@ -11710,8 +11704,6 @@ function renderStudentProfile(isViewOnly = false) {
     profileTabs.forEach(tab => tab.style.display = 'none');
     const adjustmentForm = document.getElementById('profile-adjust-form');
     if (adjustmentForm) adjustmentForm.style.display = 'none';
-    const coinButtons = document.querySelectorAll('#profile-add-coins-btn, #profile-subtract-coins-btn');
-    coinButtons.forEach(btn => btn.style.display = 'none');
     
     // Show only collection tab content
     const collectionTab = document.getElementById('profile-tab-collection');
@@ -11726,8 +11718,6 @@ function renderStudentProfile(isViewOnly = false) {
     profileTabs.forEach(tab => tab.style.display = 'inline-block');
     const adjustmentForm = document.getElementById('profile-adjust-form');
     if (adjustmentForm) adjustmentForm.style.display = 'flex';
-    const coinButtons = document.querySelectorAll('#profile-add-coins-btn, #profile-subtract-coins-btn');
-    coinButtons.forEach(btn => btn.style.display = 'block');
   }
   
   // Student name and avatar
@@ -16402,8 +16392,6 @@ function openEditStudentModal(studentName) {
 }
 
 // Profile controls
-document.getElementById('profile-add-coins-btn').addEventListener('click', async () => { const latest = profileStudent && getStudentRecordByStableId(profileStudent.__backendId); if (!latest) return; if (!(await deductTeacherCredits(10))) return; const saved = await persistCanonicalStudentPatch(latest.__backendId, { coins: (latest.coins || 0) + 10 }); if (!saved) return; await logCredit('+10 coins', 10, saved.student_name); playTransactionSound('reward'); toast('Added 10 coins!'); showStudentAwardCelebration(saved); });
-document.getElementById('profile-subtract-coins-btn').addEventListener('click', async () => { const latest = profileStudent && getStudentRecordByStableId(profileStudent.__backendId); if (!latest) return; const saved = await persistCanonicalStudentPatch(latest.__backendId, { coins: Math.max(0, (latest.coins || 0) - 10) }); if (!saved) return; await logCredit('-10 coins', -10, saved.student_name); playTransactionSound('deduction'); toast('Subtracted 10 coins!'); showStudentAwardCelebration(saved, -10); });
 document.getElementById('profile-adjust-form').addEventListener('submit', async e => { e.preventDefault(); const latest = profileStudent && getStudentRecordByStableId(profileStudent.__backendId); if (!latest) return; const amount = parseInt(document.getElementById('profile-adjust-amount').value); if (isNaN(amount)) return; if (amount > 0 && !(await deductTeacherCredits(amount))) return; const saved = await persistCanonicalStudentPatch(latest.__backendId, { coins: Math.max(0, (latest.coins || 0) + amount) }); if (!saved) return; await logCredit('Adjust', amount, saved.student_name); playTransactionSound(amount < 0 ? 'deduction' : 'reward'); document.getElementById('profile-adjust-amount').value = ''; toast(`${amount >= 0 ? '+' : ''}${amount} coins!`); showStudentAwardCelebration(saved, amount); });
 
 // ==================== BATTLE ARENA ====================
