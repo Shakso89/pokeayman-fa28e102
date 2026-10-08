@@ -5,9 +5,9 @@
 .ve-name-row { display: flex; align-items: end; gap: 8px; margin-top: 14px; }
 .ve-name-row label { flex: 1; min-width: 0; font-size: 12px; color: var(--ve-muted); }
 .ve-name-row input { margin-top: 6px; }
-.ve-workspace .vocab-editor-input, .ve-workspace .vocab-editor-title-input { height: 42px; border-radius: 6px; background: var(--ve-bg) !important; color: var(--ve-ink) !important; border: 1px solid var(--ve-border); box-shadow: none; font: 14px 'Figtree', sans-serif; min-width: 0; }
+html body .ve-workspace .vocab-editor-input, html body .ve-workspace .vocab-editor-title-input { height: 42px; border-radius: 6px !important; background: var(--ve-bg) !important; color: var(--ve-ink) !important; border: 1px solid var(--ve-border) !important; box-shadow: none !important; font: 14px 'Figtree', sans-serif; min-width: 0; }
 .ve-workspace input::placeholder { color: var(--ve-muted); }
-.ve-workspace .vocab-editor-primary, .ve-workspace .vocab-editor-secondary { min-height: 42px; border-radius: 6px; font: 700 14px 'Outfit', sans-serif; box-shadow: none; }
+html body .ve-workspace .vocab-editor-primary, html body .ve-workspace .vocab-editor-secondary { min-height: 42px; border-radius: 6px !important; font: 700 14px 'Outfit', sans-serif; box-shadow: none; }
 .ve-workspace .vocab-editor-primary { background: var(--ve-accent); color: var(--ts-action-ink); border-color: var(--ve-accent); }
 .ve-workspace .vocab-editor-secondary, .ve-workspace .vocab-editor-close { background: var(--ve-bg); color: var(--ve-ink); border: 1px solid var(--ve-border); }
 .ve-workspace button:disabled { opacity: .5; cursor: wait; }
@@ -29,7 +29,7 @@
 .ve-workspace .ve-word p { color: var(--ve-ink); overflow-wrap: anywhere; }
 .ve-workspace .ve-word small { display: block; color: var(--ve-muted); overflow-wrap: anywhere; margin-top: 4px; }
 .ve-word-actions { display: flex; gap: 6px; }
-.ve-word-actions button { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 4px; background: var(--ve-bg); color: var(--ve-muted); border: 1px solid var(--ve-border); }
+.ve-workspace .ve-word-actions button { width: 34px; height: 34px; min-width: 34px; padding: 0 !important; display: grid; place-items: center; border-radius: 4px !important; background: var(--ve-bg); color: var(--ve-muted); border: 1px solid var(--ve-border); }
 .ve-word-actions button:hover { color: var(--ve-accent); border-color: var(--ve-accent); }
 .ve-word-actions svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .ve-status { font-size: 12px; min-height: 18px; margin-top: 6px; color: var(--ve-muted); }
