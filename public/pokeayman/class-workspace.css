@@ -126,3 +126,31 @@ html body #app-screen #view-students #students-list .global-achievement-badge { 
 @media(prefers-reduced-motion:reduce) {
   html body #app-screen #view-students * { transition: none !important; }
 }
+/* Class teacher pill */
+.class-teacher-pill{display:inline-flex;margin-top:.3rem;padding:.15rem .55rem;border-radius:999px;font-size:.7rem;font-weight:800;background:rgba(255,203,5,.18);color:#ffcb05;border:1px solid rgba(255,203,5,.4);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Teacher Card: all sections visible, big avatar */
+html body .trainer-hub .th-tabs{display:none!important}
+html body .trainer-hub .th-panel.hidden{display:block!important}
+html body .trainer-page .trainer-hub{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;max-width:64rem;margin:0 auto}
+html body .trainer-hub > .th-card,html body .trainer-hub > [data-th-panel="wardrobe"]{grid-column:1/-1}
+html body .trainer-hub > [data-th-panel="wardrobe"]{order:3}
+html body .trainer-hub .th-panel{border-radius:1.2rem;padding:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,229,138,.18)}
+html body .trainer-hub [data-th-panel="profile"]::before{content:'Display name';display:block;font-weight:900;margin-bottom:.6rem;color:#ffcb05}
+html body .trainer-hub [data-th-panel="security"]::before{content:'Password';display:block;font-weight:900;margin-bottom:.6rem;color:#ffcb05}
+html body .trainer-hub [data-th-panel="wardrobe"]::before{content:'Avatar wardrobe — unlock more by rewarding students!';display:block;font-weight:900;margin-bottom:.6rem;color:#ffcb05}
+html body .trainer-hub .th-avatar-ring{width:150px!important;height:150px!important;flex:none;box-shadow:0 0 0 4px #ffcb05,0 0 36px rgba(255,203,5,.55);animation:th-glow 2.6s ease-in-out infinite}
+html body .trainer-hub .th-avatar{width:100%!important;height:100%!important}
+html body .trainer-hub .th-avatar img{width:100%!important;height:100%!important;object-fit:contain}
+@keyframes th-glow{50%{box-shadow:0 0 0 4px #ffcb05,0 0 56px rgba(255,203,5,.85)}}
+@media (max-width:760px){html body .trainer-page .trainer-hub{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){html body .trainer-hub .th-avatar-ring{animation:none}}
+
+/* Global Top 3: featured 2-column elite cards */
+@media (min-width:700px){
+html body #app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.global-rank-card{grid-column:span 2;display:grid!important;grid-template-columns:180px 1fr;grid-template-rows:auto;column-gap:18px;align-items:center;text-align:left;padding:72px 18px 18px!important;min-height:0}
+html body #app-screen#app-screen#app-screen #view-students #students-list > .global-rank-card > *{grid-column:2}
+html body #app-screen#app-screen#app-screen #view-students #students-list > .global-rank-card > .student-avatar-stage{grid-column:1;grid-row:1/span 6;width:170px;height:170px;margin:0!important}
+html body #app-screen#app-screen#app-screen #view-students #students-list > .global-rank-card .global-rank-marker{grid-column:1/-1}
+html body #app-screen#app-screen#app-screen #view-students .global-rank-card .rank-title strong{white-space:nowrap}
+}
