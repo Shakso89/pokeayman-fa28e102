@@ -62,11 +62,14 @@ html body #teacher-zone-financial-panel :is(.financial-adjustment-column,.financ
 html body.ts-bright #teacher-zone-schedule-panel :is(.schedule-weekly-graph-name,.schedule-weekly-graph-hours) { color:var(--ts-ink)!important; }
 html body #teacher-schedule-grid thead tr { background:var(--ts-deep)!important; }
 html body #teacher-schedule-grid th { color:var(--ts-ink)!important; border-color:var(--ts-border)!important; }
-html body :is(#teacher-zone-financial-panel,#teacher-zone-schedule-panel) .glass-container { background:var(--ts-surface)!important; border-color:var(--ts-border)!important; box-shadow:none!important; }
+html body #app-screen :is(#teacher-zone-financial-panel,#teacher-zone-schedule-panel) .glass-container { background:var(--ts-surface)!important; border-color:var(--ts-border)!important; box-shadow:none!important; }
 html body #teacher-zone-schedule-panel :is(h3,p,span,strong) { color:var(--ts-ink)!important; text-shadow:none!important; }
 html body #teacher-zone-financial-panel :is(.monthly-school-section,.monthly-school-heading,.monthly-school-trigger,.monthly-school-total td) { background:var(--ts-deep)!important; color:var(--ts-ink)!important; border-color:var(--ts-border)!important; box-shadow:none!important; }
 html body #teacher-zone-financial-panel .monthly-school-table { color:var(--ts-ink)!important; }
 html body #teacher-zone-financial-panel .monthly-school-legend { color:var(--ts-muted)!important; }
+html body #teacher-zone-financial-panel .monthly-school-label { color:var(--ts-ink)!important; }
+html body .flashcard-popup-shell .flashcard-popup-header :is(#flashcard-size-label,#student-vocab-size-label) { color:var(--ts-ink)!important; }
+html body .flashcard-popup-shell :is(#student-vocab-next,#flashcard-next).btn-primary { background:var(--ts-yellow)!important; color:var(--ts-action-ink)!important; }
 html body.ts-bright :is(.school-breakdown-panel,.monthly-school-popup-dialog,.salary-school-detail-panel) { background:var(--ts-surface)!important; color:var(--ts-ink)!important; }
 html body.ts-bright :is(.school-breakdown-panel,.monthly-school-popup-dialog,.salary-school-detail-panel) :is(header,.school-breakdown-header,.monthly-school-popup-header,.salary-school-detail-header,th,td,.monthly-school-heading,.monthly-school-section) { background:var(--ts-deep)!important; color:var(--ts-ink)!important; border-color:var(--ts-border)!important; }
 html body.ts-bright :is(.school-breakdown-panel,.monthly-school-popup-dialog,.salary-school-detail-panel) :is(p,span,strong,h2,h3,small,button) { color:var(--ts-ink)!important; }
