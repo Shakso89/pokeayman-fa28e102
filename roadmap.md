@@ -62,3 +62,6 @@
 - [x] Keep the gold electric border and its energy filter on legendary details cards only; common, uncommon and rare cards must never show it.
 - [x] Verify legendary shows the border, common/uncommon/rare never do, and the border survives repeated tier switches.
 - [x] Show shared vocabulary lists in the class Vocabulary tab: renderVocabLists uses vocabListInClass, shared cards get a "Shared from" label, and Remove becomes Unshare (removes the class from shared_classes without deleting the list). Verified with a scripted shared list: appears in the target class, unshare keeps the list and the home class.
+
+- [x] Class cards: centered name, big teacher avatar, no Enter label, bright mode; TR. Ayman fix; Edit Class closes on save
+- [x] Avatar picker restyle; tier-themed shop filters
