@@ -13852,12 +13852,8 @@ function chooseGamePlayers(listName, nextStep) {
     activeGameRewardClaimed = false;
     activeGamePlayers = [signedInStudent];
     resetGameTurnState();
-    // Students use one-player Memory directly; do not reopen player or starter setup.
-    if (nextStep === chooseMemoryDifficulty) {
-      openGameMemory(listName, 'easy', 0);
-    } else {
-      nextStep(listName);
-    }
+    pendingGameTimerSeconds = 0;
+    window.gaStudentSetup(listName, nextStep.name);
     return;
   }
 
@@ -14003,6 +13999,7 @@ function chooseGamePlayers(listName, nextStep) {
 
 // Find Me: picture clue plus moving word choices, using the shared player HUD and timer.
 function chooseFindMeScore(listName) {
+  if (currentRole === 'student') { window.gaStudentSetup(listName, 'chooseFindMeScore'); return; }
   const words = getGameWords(listName, true).filter(w => w.vocab_word && w.vocab_image);
   if (!words.length) { toast('Find Me needs words with pictures'); return; }
   const modal = document.createElement('div');
@@ -14129,6 +14126,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
 
 // Match Words Game - choose a word count, then match words with images
 function chooseMatchWordCount(listName) {
+  if (currentRole === 'student') { window.gaStudentSetup(listName, 'chooseMatchWordCount'); return; }
   const available = getGameWords(listName, true).filter(w => w.vocab_image && w.vocab_image.trim());
   if (available.length < 2) { toast('List needs at least 2 words with images'); return; }
   const modal = document.createElement('div');
@@ -14538,11 +14536,11 @@ function gameSoundControls() { return `<div class="game-sound-controls flex item
 function attachGameSoundControls(root) { const mute = root.querySelector('.game-sound-mute'), volume = root.querySelector('.game-sound-volume'); mute?.addEventListener('click', () => { unlockGameSound(); gameSoundState.muted = !gameSoundState.muted; try { localStorage.setItem('pokeyman-game-sound-muted', String(gameSoundState.muted)); } catch (error) {} mute.textContent = gameSoundState.muted ? '🔇' : '🔊'; mute.setAttribute('aria-label', gameSoundState.muted ? 'Unmute game sounds' : 'Mute game sounds'); }); volume?.addEventListener('input', event => { gameSoundState.volume = Number(event.target.value); try { localStorage.setItem('pokeyman-game-sound-volume', String(gameSoundState.volume)); } catch (error) {} }); }
 
 // Memory Game - One card shows word, other shows image
-function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0) {
+function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, studentWordCount = null) {
   const memoryLevels = { easy: { pairs: 5, columns: 5, rows: 2 }, medium: { pairs: 9, columns: 6, rows: 3 }, hard: { pairs: 15, columns: 10, rows: 3 } };
   const selectedDifficulty = memoryLevels[difficulty] ? difficulty : 'easy';
-  const levelConfig = memoryLevels[selectedDifficulty] || memoryLevels.easy;
-  setGameReplay(() => { resetGameTurnState(); openGameMemory(listName, selectedDifficulty, timerSeconds); });
+  const levelConfig = currentRole === 'student' && [5, 10, 15].includes(studentWordCount) ? { pairs: studentWordCount, columns: studentWordCount === 15 ? 10 : 5, rows: studentWordCount === 5 ? 2 : studentWordCount === 10 ? 4 : 3 } : memoryLevels[selectedDifficulty] || memoryLevels.easy;
+  setGameReplay(() => { resetGameTurnState(); openGameMemory(listName, selectedDifficulty, timerSeconds, studentWordCount); });
   const words = getGameWords(listName).filter(word => word && String(word.vocab_word || '').trim());
   if (words.length < levelConfig.pairs || !Array.isArray(activeGamePlayers) || !activeGamePlayers.some(player => player && player.student_name)) { toast(`Memory needs ${levelConfig.pairs} valid words and at least one selected player.`); return; }
   
@@ -14849,6 +14847,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0) {
 
 // Scramble and Hangman word-count choosers
 function chooseScrambleWordCount(listName) {
+  if (currentRole === 'student') { window.gaStudentSetup(listName, 'chooseScrambleWordCount'); return; }
   const available = getGameWords(listName);
   if (!available.length) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no complete vocabulary words were loaded. Retry loading your lists.' : 'List needs at least 1 word'); return; }
   const modal = document.createElement('div');
@@ -14914,6 +14913,7 @@ function chooseScrambleWordCount(listName) {
 }
 
 function chooseHangmanWordCount(listName) {
+  if (currentRole === 'student') { window.gaStudentSetup(listName, 'chooseHangmanWordCount'); return; }
   const available = getVocabWords(listName, navSchool, navClass);
   if (!available.length) { toast('List needs at least 1 word'); return; }
   const modal = document.createElement('div');

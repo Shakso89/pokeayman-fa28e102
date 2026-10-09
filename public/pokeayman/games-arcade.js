@@ -28,6 +28,36 @@
   };
 
   let arcadeOpen = false;
+  window.gaStudentSetup = function (listName, fnName) {
+    const game = GAMES.find(item => item.fn === fnName && !item.teacherOnly);
+    if (!game) return;
+    const pictured = fnName === 'chooseMatchWordCount' || fnName === 'chooseFindMeScore';
+    const words = getGameWords(listName, true).filter(word => String(word.vocab_word || '').trim() && (!pictured || String(word.vocab_image || '').trim()));
+    const area = document.getElementById('student-tab-games');
+    if (!area) return;
+    area.querySelectorAll(':scope > .game-inline-view').forEach(view => view.remove());
+    const hub = area.querySelector(':scope > .glass-container');
+    if (hub) hub.hidden = true;
+    const panel = document.createElement('section');
+    panel.className = 'game-inline-view ga-student-setup ga-hub';
+    panel.setAttribute('aria-label', `${game.name} word count`);
+    panel.innerHTML = `<header class="ga-hub-head"><h2>${game.icon} ${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of words">${[5, 10, 15].map(count => `<button type="button" class="btn-primary" data-count="${count}" ${words.length < count ? 'disabled' : ''}><strong>${count}</strong><span>words</span></button>`).join('')}</div>`;
+    panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
+    panel.querySelectorAll('[data-count]').forEach(button => button.addEventListener('click', () => {
+      const count = Number(button.dataset.count);
+      pendingGameTimerSeconds = 0;
+      pendingGameReward = 0;
+      activeGameReward = 0;
+      resetGameTurnState();
+      panel.remove();
+      if (fnName === 'chooseMatchWordCount') openGameMatch(listName, count, 0);
+      else if (fnName === 'chooseMemoryDifficulty') openGameMemory(listName, 'easy', 0, count);
+      else if (fnName === 'chooseScrambleWordCount') { scrambleSession = null; openGameScramble(listName, count, 0); }
+      else if (fnName === 'chooseFindMeScore') openGameFindMe(listName, count, 0);
+      else if (fnName === 'chooseHangmanWordCount') openGameHangman(listName, count, 0, 'easy', true);
+    }));
+    area.appendChild(panel);
+  };
   window.gaShowListSelection = function () { arcadeOpen = false; renderGamesList(); };
   window.gaListStep = function (selector, container, count) {
     if (!selector || !container) return;
