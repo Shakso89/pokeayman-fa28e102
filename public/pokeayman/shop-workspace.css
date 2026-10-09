@@ -260,3 +260,19 @@ html body :is(#my-pokemon-list#my-pokemon-list#my-pokemon-list, #profile-pokemon
 html body :is(#my-pokemon-list, #profile-pokemon-list) .stc-slide > .collection-pokemon-card > .shop-card-art { flex-shrink: 0; }
 html body :is(#my-pokemon-list, #profile-pokemon-list) .stc-slide .shop-card-footer { margin-top: auto !important; }
 html body :is(#my-pokemon-list, #profile-pokemon-list) .stc-current-name { color: var(--shop-yellow, #fde68a); text-shadow: 0 2px 6px rgba(2,6,23,.6); }
+
+/* Tier-themed rarity filters */
+html body .shop-rarity-segments button{position:relative;overflow:hidden;transition:transform .15s,box-shadow .2s!important;border:1.5px solid transparent!important}
+html body .shop-rarity-segments button[data-rarity="common"]{color:#cfd6e6!important}
+html body .shop-rarity-segments button[data-rarity="uncommon"]{color:#5eead4!important}
+html body .shop-rarity-segments button[data-rarity="rare"]{color:#a5b4fc!important}
+html body .shop-rarity-segments button[data-rarity="legendary"]{color:#ffd54a!important;text-shadow:0 0 8px rgba(255,203,5,.6)}
+html body .shop-rarity-segments button:hover{transform:translateY(-1px)!important}
+html body .shop-rarity-segments button.active[data-rarity="common"]{background:linear-gradient(135deg,#8a94a8,#d7dde8,#8a94a8)!important;color:#1b2238!important;border-color:#e6ebf3!important}
+html body .shop-rarity-segments button.active[data-rarity="uncommon"]{background:linear-gradient(135deg,#0f9f86,#34d399)!important;color:#04291f!important;box-shadow:0 0 14px rgba(52,211,153,.5)!important}
+html body .shop-rarity-segments button.active[data-rarity="rare"]{background:linear-gradient(120deg,#3b5bdb,#8b5cf6,#38bdf8,#3b5bdb)!important;background-size:250% 100%!important;color:#fff!important;box-shadow:0 0 16px rgba(139,92,246,.55)!important;animation:pkRareShift 4s linear infinite}
+html body .shop-rarity-segments button.active[data-rarity="legendary"]{background:linear-gradient(120deg,#7c2d12,#f59e0b,#fde68a,#a855f7,#f59e0b,#7c2d12)!important;background-size:300% 100%!important;color:#1a0b00!important;text-shadow:0 1px 0 rgba(255,255,255,.5);border-color:#ffe08a!important;box-shadow:0 0 18px rgba(255,203,5,.7),0 0 30px rgba(168,85,247,.45)!important;animation:pkRareShift 3s linear infinite}
+html body .shop-rarity-segments button[data-rarity="legendary"]::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);transform:translateX(-120%);animation:pkShine 2.6s ease-in-out infinite;pointer-events:none}
+@keyframes pkRareShift{to{background-position:250% 0}}
+@keyframes pkShine{60%,100%{transform:translateX(120%)}}
+@media (prefers-reduced-motion:reduce){html body .shop-rarity-segments button,html body .shop-rarity-segments button::after{animation:none!important}}

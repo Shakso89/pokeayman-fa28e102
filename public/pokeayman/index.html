@@ -8577,7 +8577,7 @@ function renderTeacherDashboard() {
       const onClickHandler = canManage ? `navigateTo('students','${navSchool}','${c.class_name}')` : `openClassPreviewModal('${navSchool}','${c.class_name}')`;
       const roster = getStudents(navSchool, c.class_name);
       const totalCoins = roster.reduce((a, s) => a + (Number(s.coins) || 0), 0);
-      return `<div class="gym-card group relative" role="button" tabindex="0" onclick="${onClickHandler}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}"><div class="gym-head"><p class="gym-name">${c.class_name}</p><span class="gym-enter" aria-hidden="true">${canManage ? 'Enter →' : 'View →'}</span></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}${canManage ? `<button class="gym-edit" title="Edit class" aria-label="Edit ${c.class_name}" onclick="event.stopPropagation(); openEditClassModal('${c.__backendId}','${navSchool}')">✎</button>` : ''}</div>`;
+      return `<div class="gym-card group relative" role="button" tabindex="0" onclick="${onClickHandler}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">${canManage ? `<button class="gym-edit" title="Edit class" aria-label="Edit ${c.class_name}" onclick="event.stopPropagation(); openEditClassModal('${c.__backendId}','${navSchool}')">✎</button>` : ''}<div class="gym-head"><p class="gym-name">${c.class_name}</p></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}</div>`;
     }).join('') || '<p class="text-gray-400 text-sm col-span-3 text-center py-8">No classes yet.</p>';
   } else if (isViewOnly) {
     // View-only mode for unassigned classes: show only student collection cards with name, coins, Pokémon count, and total value
@@ -11224,31 +11224,28 @@ document.getElementById('create-teacher-form')?.addEventListener('submit', async
 
 function openEditClassModal(classId, schoolName) {
   const classRec = allData.find(c => c.__backendId === classId); if (!classRec) return;
+  const adminAvatar = teacherAvatarSrc(getAdminTeacherRecord()?.teacher_avatar);
   const modal = document.createElement('div'); modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
-  modal.innerHTML = `<div class="bg-white rounded-xl p-6 shadow-lg w-96"><h2 class="heading-font text-lg font-bold mb-4">Edit Class</h2><form class="space-y-3"><input type="text" id="ec-name" value="${classRec.class_name}" class="w-full border rounded-lg px-3 py-2 text-sm" required><input type="password" id="ec-pin" value="${classRec.class_pin||''}" maxlength="6" class="w-full border rounded-lg px-3 py-2 text-sm tracking-widest" required><p class="text-xs text-gray-500 italic">Changing PIN will update all students in this class</p>${currentTeacher === 'Ayman' ? `<label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" id="ec-show-admin" ${classRec.show_admin_teacher === true ? 'checked' : ''}> Show TR. Ayman as teacher on this class</label>` : ''}<div class="flex gap-2 pt-2"><button type="submit" class="flex-1 btn-primary">Save</button><button type="button" class="flex-1 btn-secondary" id="ec-delete">Delete</button><button type="button" class="flex-1 btn-outline" id="ec-cancel">Cancel</button></div></form></div>`;
+  modal.innerHTML = `<div class="bg-white rounded-xl p-6 shadow-lg w-96"><h2 class="heading-font text-lg font-bold mb-4">Edit Class</h2><form class="space-y-3"><input type="text" id="ec-name" value="${classRec.class_name}" class="w-full border rounded-lg px-3 py-2 text-sm" required><input type="password" id="ec-pin" value="${classRec.class_pin||''}" maxlength="6" class="w-full border rounded-lg px-3 py-2 text-sm tracking-widest" required><p class="text-xs text-gray-500 italic">Changing PIN will update all students in this class</p>${currentTeacher === 'Ayman' ? `<label class="ec-teacher-toggle flex items-center gap-3 text-sm font-semibold"><input type="checkbox" id="ec-show-admin" ${classRec.show_admin_teacher === true ? 'checked' : ''}>${adminAvatar ? `<img src="${adminAvatar}" alt="" class="ec-teacher-avatar">` : '<span class="ec-teacher-avatar">🎓</span>'}<span>Show TR. Ayman as teacher on this class</span></label>` : ''}<div class="flex gap-2 pt-2"><button type="submit" class="flex-1 btn-primary">Save</button><button type="button" class="flex-1 btn-secondary" id="ec-delete">Delete</button><button type="button" class="flex-1 btn-outline" id="ec-cancel">Cancel</button></div></form></div>`;
   document.body.appendChild(modal);
-  modal.querySelector('form').addEventListener('submit', async e => { 
-    e.preventDefault(); 
+  modal.querySelector('form').addEventListener('submit', async e => {
+    e.preventDefault();
     const newName = modal.querySelector('#ec-name').value.trim();
     const newPin = modal.querySelector('#ec-pin').value.trim();
+    if (!newName) { toast('Class name cannot be empty'); return; }
     if (newPin.length !== 6 || !/^\d+$/.test(newPin)) { toast('PIN must be 6 digits'); return; }
-    const oldClassName = classRec.class_name;
-    const oldPin = classRec.class_pin;
-    // Update the class record with new name and PIN
-    const showAdminBox = modal.querySelector('#ec-show-admin');
-    await window.dataSdk.update({ ...classRec, class_name: newName, class_pin: newPin, ...(showAdminBox ? { show_admin_teacher: showAdminBox.checked } : {}) });
-    // Update all students in this class: change class_name and student_pin
+    const oldClassName = classRec.class_name, oldPin = classRec.class_pin;
+    const box = modal.querySelector('#ec-show-admin');
     const studentsInClass = getStudents(schoolName, oldClassName);
-    for (const student of studentsInClass) {
-      await window.dataSdk.update({ ...student, class_name: newName, student_pin: newPin });
+    const pokemonInClass = getPokemons().filter(p => p.owner && studentsInClass.some(s => s.student_name === p.owner));
+    modal.remove();
+    const res = await window.dataSdk.update({ ...classRec, class_name: newName, class_pin: newPin, ...(box ? { show_admin_teacher: box.checked } : {}) });
+    if (res && res.isOk === false) { toast('Could not save class. Please try again.'); return; }
+    if (newName !== oldClassName || newPin !== oldPin) {
+      for (const student of studentsInClass) await window.dataSdk.update({ ...student, class_name: newName, student_pin: newPin });
+      if (newName !== oldClassName) for (const pokemon of pokemonInClass) await window.dataSdk.update({ ...pokemon, class_name: newName });
     }
-    // Update all Pokémon owned by students in this class: change class_name reference
-    const pokemonInClass = getPokemons().filter(p => p.owner && getStudents(schoolName, oldClassName).some(s => s.student_name === p.owner));
-    for (const pokemon of pokemonInClass) {
-      await window.dataSdk.update({ ...pokemon, class_name: newName });
-    }
-    modal.remove(); 
-    toast(`Class updated to "${newName}"! ${studentsInClass.length} student(s) and ${pokemonInClass.length} Pokémon data preserved.`); 
+    toast(`Class "${newName}" saved!`);
   });
   modal.querySelector('#ec-delete').addEventListener('click', async () => {
     const deleteModal = document.createElement('div');
@@ -11422,16 +11419,19 @@ function getAllTeacherClasses() {
 function getClassTeacherNames(schoolName, className) {
   const names = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === className).map(r => String(r.assigned_teacher || '').trim()).filter(Boolean);
   const cls = getClasses(schoolName).find(c => c.class_name === className);
-  if (cls && cls.show_admin_teacher === true) names.unshift('Ayman Soliman');
-  return [...new Set(names)].filter(n => n !== 'Ayman' || cls?.show_admin_teacher === true);
+  const isAdminName = n => /^ayman( soliman)?$/i.test(n);
+  const rest = names.filter(n => !isAdminName(n));
+  if (cls && cls.show_admin_teacher === true) rest.unshift('Ayman');
+  return [...new Set(rest)];
 }
 window.getClassTeacherNames = getClassTeacherNames;
 function classTeacherAvatarFor(name) {
   const clean = String(name || '').replace(/^TR\.\s*/i, '').trim();
-  const rec = getTeachers().find(t => t.teacher_name === clean) || (/^ayman\b/i.test(clean) ? getTeachers().find(t => t.teacher_name === 'Ayman') : null);
+  const rec = clean === 'Ayman' ? getAdminTeacherRecord() : getTeachers().find(t => t.teacher_name === clean);
   return teacherAvatarSrc(rec?.teacher_avatar);
 }
 window.classTeacherAvatarFor = classTeacherAvatarFor;
+function getAdminTeacherRecord() { const t = getTeachers(); return t.find(r => r.teacher_role === 'admin') || t.find(r => r.teacher_name === 'Ayman') || null; }
 function classTeacherPill(schoolName, className) {
   const names = getClassTeacherNames(schoolName, className);
   if (!names.length) return '';
@@ -17046,9 +17046,10 @@ function openProfileAvatarSelector() {
   
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
-    <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-purple-600 p-6 flex items-center justify-between rounded-t-xl">
-      <h2 class="heading-font text-xl font-bold text-white">Select Avatar Pokémon</h2>
+  modal.classList.add('pk-avatar-modal');
+  modal.innerHTML = `<div class="pk-avatar-box max-w-md w-full max-h-[80vh] overflow-y-auto">
+    <div class="pk-avatar-head sticky top-0 p-5 flex items-center justify-between">
+      <h2 class="heading-font text-xl font-bold">Choose your avatar</h2>
       <button id="profile-avatar-close" class="text-white hover:text-gray-200 text-2xl font-bold">×</button>
     </div>
     <div class="p-6 space-y-2" id="profile-avatar-grid"></div>
@@ -17090,9 +17091,10 @@ function openAvatarSelector() {
   
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="bg-white rounded-xl shadow-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
-    <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-purple-600 p-6 flex items-center justify-between rounded-t-xl">
-      <h2 class="heading-font text-xl font-bold text-white">Select Avatar Pokémon</h2>
+  modal.classList.add('pk-avatar-modal');
+  modal.innerHTML = `<div class="pk-avatar-box max-w-md w-full max-h-[80vh] overflow-y-auto">
+    <div class="pk-avatar-head sticky top-0 p-5 flex items-center justify-between">
+      <h2 class="heading-font text-xl font-bold">Choose your avatar</h2>
       <button id="avatar-close" class="text-white hover:text-gray-200 text-2xl font-bold">×</button>
     </div>
     <div class="p-6 space-y-2" id="avatar-grid"></div>
