@@ -3925,6 +3925,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/battle-workspace.css">
 <script src="/pokeayman/sfx.js"></script>
 <link rel="stylesheet" href="/pokeayman/teacher-shell.css">
+<link rel="stylesheet" href="/pokeayman/leaderboard-views.css">
 <link rel="stylesheet" href="/pokeayman/profile-workspace.css">
 <link rel="stylesheet" href="/pokeayman/vocab-editor.css">
 <link rel="stylesheet" href="/pokeayman/games-arcade.css">
@@ -6202,7 +6203,7 @@ function openGlobalLeaderboard() {
   const close = () => { overlay.remove(); document.getElementById('global-leaderboard-trigger')?.focus(); };
   overlay.querySelector('#global-leaderboard-close').addEventListener('click', close); overlay.addEventListener('click', event => { if (event.target === overlay) close(); }); overlay.addEventListener('keydown', event => { if (event.key === 'Escape') close(); }); overlay.querySelector('.global-leaderboard-dialog').focus();
 }
-document.getElementById('global-leaderboard-trigger')?.addEventListener('click', () => document.getElementById('my-total-value')?.parentElement?.click());
+document.getElementById('global-leaderboard-trigger')?.addEventListener('click', openGlobalLeaderboard);
 
 function animateAnswerResult(gameModal, isCorrect) {
   const card = gameModal?.querySelector('.game-player-card.is-active') || document.querySelector('.game-player-card.is-active');
@@ -7264,7 +7265,7 @@ function renderTrainerTab() {
   });
   modal.querySelector('#pin-cancel-btn').addEventListener('click', () => modal.remove());
   (async () => { const auth = window.parent.pokeaymanAuth; const acc = auth?.getAccount ? await auth.getAccount() : null; if (!acc) { modal.querySelector('#teacher-profile-form')?.classList.add('hidden'); modal.querySelector('#change-pin-form')?.classList.add('hidden'); modal.querySelectorAll('[data-th-panel="profile"],[data-th-panel="security"]').forEach(p => p.insertAdjacentHTML('beforeend', '<p class="th-hint" style="text-align:center;padding:1.5rem">Sign in with your teacher email to edit this.</p>')); return; } modal.querySelector('#tp-email').textContent = acc.email; modal.querySelector('#tp-name').value = acc.displayName || ''; modal.querySelector('#tp-school').value = acc.school || ''; })();
-  modal.querySelector('#teacher-profile-form').addEventListener('submit', async e => { e.preventDefault(); const name = modal.querySelector('#tp-name').value.trim(); const school = modal.querySelector('#tp-school').value.trim(); if (!name) return; const r = await window.parent.pokeaymanAuth?.updateProfile(name, school); if (!r || r.error) { toast('Could not save profile.'); return; } const latest = getTeachers().find(t => t.__backendId === currentTeacherRecordId); if (latest && currentTeacher !== 'Ayman') { await window.dataSdk.update({ ...latest, teacher_name: name }); currentTeacher = name; } toast('Profile saved!'); });
+  modal.querySelector('#teacher-profile-form').addEventListener('submit', async e => { e.preventDefault(); const name = modal.querySelector('#tp-name').value.trim(); const school = modal.querySelector('#tp-school').value.trim(); if (!name) return; const r = await window.parent.pokeaymanAuth?.updateProfile(name, school); if (!r || r.error) { toast('Could not save profile.'); return; } const latest = getTeachers().find(t => t.__backendId === currentTeacherRecordId); if (latest && currentTeacher !== 'Ayman') { const oldName = latest.teacher_name; await window.dataSdk.update({ ...latest, teacher_name: name }); await relinkTeacherAssignments(latest, oldName, name); currentTeacher = name; renderAll?.(); } toast('Profile saved!'); });
 }
 document.getElementById('logged-in-name-container').addEventListener('click', () => showMainTab('trainer'));
 document.getElementById('teacher-header-showcase').addEventListener('click', () => showMainTab('trainer'));
@@ -11353,8 +11354,8 @@ function openEditTeacherModal(teacherId) {
       });
       
       // Get current assignments for this teacher using the OLD teacher name (before rename)
-      const currentClassAssignments = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_teacher === teacher.teacher_name);
-      const currentSchoolAssignments = allData.filter(r => r.type === 'teacher_school_assignment' && r.assigned_teacher === teacher.teacher_name);
+      const currentClassAssignments = getAssignedClasses(teacher.teacher_name);
+      const currentSchoolAssignments = getAssignedSchools(teacher.teacher_name);
       
       // Remove class assignments that are no longer checked
       for (const assignment of currentClassAssignments) {
@@ -11370,7 +11371,7 @@ function openEditTeacherModal(teacherId) {
         
         if (!existingAssign && allData.length < 999) {
           await window.dataSdk.create({ 
-            type: 'teacher_class_assignment', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', assigned_teacher: newName, assigned_school: classData.schoolName, assigned_class: classData.className 
+            type: 'teacher_class_assignment', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', assigned_teacher: newName, assigned_teacher_id: teacher.__backendId, assigned_school: classData.schoolName, assigned_class: classData.className 
           });
         }
       }
@@ -11388,20 +11389,13 @@ function openEditTeacherModal(teacherId) {
         
         if (!existingAssign && allData.length < 999) {
           await window.dataSdk.create({ 
-            type: 'teacher_school_assignment', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', assigned_teacher: newName, assigned_school: schoolName, assigned_class: '' 
+            type: 'teacher_school_assignment', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', assigned_teacher: newName, assigned_teacher_id: teacher.__backendId, assigned_school: schoolName, assigned_class: '' 
           });
         }
       }
       
       // If teacher name changed, update all existing assignments with new teacher name
-      if (newName !== teacher.teacher_name) {
-        for (const assignment of currentClassAssignments) {
-          await window.dataSdk.update({ ...assignment, assigned_teacher: newName });
-        }
-        for (const assignment of currentSchoolAssignments) {
-          await window.dataSdk.update({ ...assignment, assigned_teacher: newName });
-        }
-      }
+      await relinkTeacherAssignments(teacher, teacher.teacher_name, newName);
     }
     
     modal.remove(); 
@@ -11416,18 +11410,29 @@ function getAllTeacherClasses() {
   return allData.filter(r => r.type === 'class');
 }
 
+function assignmentTeacherName(r) {
+  const id = String(r.assigned_teacher_id || '').trim();
+  const rec = id && getTeachers().find(t => t.__backendId === id);
+  return String((rec && rec.teacher_name) || r.assigned_teacher || '').trim();
+}
+function assignmentMatchesTeacher(r, teacherName) {
+  const recs = getTeachers().filter(t => t.teacher_name === teacherName);
+  if (currentRole === 'teacher' && teacherName === currentTeacher && currentTeacherRecordId) { const me = getTeachers().find(t => t.__backendId === currentTeacherRecordId); if (me && !recs.includes(me)) recs.push(me); }
+  const id = String(r.assigned_teacher_id || '').trim();
+  if (id) return recs.some(t => t.__backendId === id);
+  return r.assigned_teacher === teacherName;
+}
 function getClassTeacherNames(schoolName, className) {
-  const names = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === className).map(r => String(r.assigned_teacher || '').trim()).filter(Boolean);
+  const names = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === className).map(assignmentTeacherName).filter(Boolean);
   const cls = getClasses(schoolName).find(c => c.class_name === className);
-  const isAdminName = n => /^ayman( soliman)?$/i.test(n);
-  const rest = names.filter(n => !isAdminName(n));
+  const rest = names.filter(n => n !== 'Ayman');
   if (cls && cls.show_admin_teacher === true) rest.unshift('Ayman');
   return [...new Set(rest)];
 }
 window.getClassTeacherNames = getClassTeacherNames;
 function classTeacherAvatarFor(name) {
   const clean = String(name || '').replace(/^TR\.\s*/i, '').trim();
-  const rec = clean === 'Ayman' ? getAdminTeacherRecord() : getTeachers().find(t => t.teacher_name === clean);
+  const rec = clean === 'Ayman' ? getAdminTeacherRecord() : getTeachers().find(t => t.teacher_name === clean && t.teacher_role !== 'admin');
   return teacherAvatarSrc(rec?.teacher_avatar);
 }
 window.classTeacherAvatarFor = classTeacherAvatarFor;
@@ -11439,12 +11444,19 @@ function classTeacherPill(schoolName, className) {
   return `<span class="class-teacher-pill" title="Class teacher">${names.map(n => { const src = classTeacherAvatarFor(n); return `<span class="class-teacher-item" title="TR. ${esc(n)}">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}TR. ${esc(n.replace(/^TR\.\s*/i, ''))}</span>`; }).join('')}</span>`;
 }
 function getAssignedClasses(teacherName) {
-  return allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_teacher === teacherName);
+  return allData.filter(r => r.type === 'teacher_class_assignment' && assignmentMatchesTeacher(r, teacherName));
 }
+window.getAssignedClasses = getAssignedClasses;
 async function deleteTeacher(teacherId, name) { if (name === 'Ayman') { toast('Cannot delete admin!'); return; } const teacher = allData.find(t => t.__backendId === teacherId); if (teacher) { await window.dataSdk.delete(teacher); toast(`${name} deleted!`); } }
 
 function getAssignedSchools(teacherName) {
-  return allData.filter(r => r.type === 'teacher_school_assignment' && r.assigned_teacher === teacherName);
+  return allData.filter(r => r.type === 'teacher_school_assignment' && assignmentMatchesTeacher(r, teacherName));
+}
+window.getAssignedSchools = getAssignedSchools;
+async function relinkTeacherAssignments(teacherRec, oldName, newName) {
+  if (!teacherRec) return;
+  const rows = allData.filter(r => (r.type === 'teacher_class_assignment' || r.type === 'teacher_school_assignment') && (r.assigned_teacher_id === teacherRec.__backendId || (!r.assigned_teacher_id && r.assigned_teacher === oldName)));
+  for (const r of rows) await window.dataSdk.update({ ...r, assigned_teacher: newName, assigned_teacher_id: teacherRec.__backendId });
 }
 
 async function openEditSchoolModal(schoolId, schoolName) {
@@ -16899,7 +16911,7 @@ document.getElementById('pokemon-stat-card').addEventListener('click', () => {
   }
 });
 
-document.getElementById('my-total-value').parentElement.addEventListener('click', () => {
+document.getElementById('my-total-value').parentElement.addEventListener('click', () => { openGlobalLeaderboard(); return;
   // Show leaderboard in a modal with student cards
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
@@ -16971,63 +16983,14 @@ document.getElementById('my-total-value').parentElement.addEventListener('click'
 function openClassPreviewModal(schoolName, className) {
   const students = getStudents(schoolName, className);
   if (!students.length) { toast('No students in this class'); return; }
-  
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const ranked = students.slice().sort((x, y) => getStudentTotalValue(y) - getStudentTotalValue(x) || String(x.student_name).localeCompare(String(y.student_name)));
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto">
-    <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-purple-600 p-6 flex items-center justify-between rounded-t-2xl">
-      <div>
-        <h2 class="heading-font text-2xl font-bold text-white">${className} - Students</h2>
-        <p class="text-sm text-blue-100 mt-1">${students.length} student${students.length !== 1 ? 's' : ''}</p>
-      </div>
-      <button id="preview-close" class="text-white hover:text-gray-200 text-3xl font-bold">×</button>
-    </div>
-    <div class="p-6">
-      <div id="preview-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
-    </div>
-  </div>`;
+  modal.className = 'pk-cv-overlay';
+  modal.innerHTML = `<section class="pk-cv-dialog" role="dialog" aria-modal="true" aria-label="${esc(className)} students"><header class="pk-cv-head"><div><p class="pk-cv-kicker">${esc(schoolName)} · View only</p><h2>${esc(className)}</h2><p class="pk-cv-sub">${students.length} trainer${students.length !== 1 ? 's' : ''}</p></div><button type="button" class="pk-cv-close" aria-label="Close">×</button></header><div class="pk-cv-grid">${ranked.map((s, i) => { const count = getPokemons().filter(p => p.owner === s.student_name).length; const medal = ['🥇','🥈','🥉'][i] || ''; return `<button type="button" class="pk-cv-card${i < 3 ? ' top top-' + (i + 1) : ''}" data-name="${esc(s.student_name)}"><span class="pk-cv-rank">${medal || '#' + (i + 1)}</span><img src="${esc(getStudentAvatarSrc(s))}" alt="" loading="lazy"><strong>${esc(s.student_name)}</strong><span class="pk-cv-stats"><span>🪙 ${Number(s.coins) || 0}</span><span>⚡ ${count}</span><span>💜 ${Math.floor(getStudentTotalValue(s))}</span></span></button>`; }).join('')}</div></section>`;
   document.body.appendChild(modal);
-  
-  const top3Global = getTop3Students();
-  const medals = ['🥇', '🥈', '🥉'];
-  const medalColors = {
-    '🥇': { border: 'border-yellow-400 border-4', bg: 'bg-gradient-to-b from-yellow-100 to-yellow-50', badge: 'bg-yellow-400 text-yellow-900' },
-    '🥈': { border: 'border-gray-300 border-4', bg: 'bg-gradient-to-b from-gray-100 to-gray-50', badge: 'bg-gray-300 text-gray-900' },
-    '🥉': { border: 'border-orange-400 border-4', bg: 'bg-gradient-to-b from-orange-100 to-orange-50', badge: 'bg-orange-400 text-orange-900' }
-  };
-  
-  const grid = modal.querySelector('#preview-grid');
-  grid.innerHTML = students.map((s) => {
-    const avatarPokemonId = s.avatar_pokemon_id || null;
-    const rank = top3Global.indexOf(s.student_name);
-    const isTop3 = rank !== -1;
-    const medal = isTop3 ? medals[rank] : null;
-    const styling = isTop3 ? medalColors[medal] : null;
-    const baseClasses = isTop3 ? `${styling.border} ${styling.bg} shadow-lg ring-2 ring-offset-2 ${rank === 0 ? 'ring-yellow-300' : rank === 1 ? 'ring-gray-300' : 'ring-orange-300'}` : 'bg-white rounded-lg p-3 shadow-sm border';
-    const padding = isTop3 ? 'p-4' : 'p-3';
-    
-    let totalValue = s.coins || 0;
-    const myPokes = getPokemons().filter(p => p.owner === s.student_name);
-    myPokes.forEach(p => {
-      const maxHP = getMaxHP(p);
-      const currentHP = getHealedHP(p);
-      const hpRatio = Math.max(0, Math.min(1, currentHP / maxHP));
-      const scaledPrice = (p.pokemon_price || 0) * hpRatio;
-      totalValue += scaledPrice;
-    });
-    
-    return `<div class="rounded-lg ${padding} card-hover text-center group relative cursor-pointer transition-all hover:shadow-xl ${baseClasses}" onclick="openLeaderboardStudentCollection('${s.student_name}')">
-      ${isTop3 ? `<div class="absolute -top-3 -right-3 ${styling.badge} rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold shadow-lg">${medal}</div>` : ''}
-      ${isTop3 ? `<div class="absolute -top-2 left-1/2 transform -translate-x-1/2 ${styling.badge} px-3 py-1 rounded-full text-xs font-bold shadow-md">#${rank + 1}</div>` : ''}
-      ${avatarPokemonId ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarPokemonId}.png" class="w-36 h-36 mx-auto mb-2 object-contain ${isTop3 ? 'drop-shadow-lg' : ''}" alt="Avatar">` : `<div class="w-36 h-36 mx-auto mb-2 bg-blue-100 rounded-lg flex items-center justify-center text-6xl">👤</div>`}
-      <p class="font-medium text-sm ${isTop3 ? 'font-bold text-lg' : ''}">${s.student_name}</p>
-      <p class="text-amber-500 font-bold text-lg ${isTop3 ? 'text-xl' : ''}">${s.coins||0} 🪙</p>
-      <p class="text-xs text-gray-400">${getPokemons().filter(p => p.owner === s.student_name).length} Pokémon</p>
-      <p class="text-xs text-purple-600 font-bold">💜 ${Math.floor(totalValue)}</p>
-    </div>`;
-  }).join('') || '<p class="text-center text-gray-400 py-8">No students found.</p>';
-  
-  modal.querySelector('#preview-close').addEventListener('click', () => modal.remove());
+  modal.querySelectorAll('.pk-cv-card').forEach(c => c.addEventListener('click', () => openLeaderboardStudentCollection(c.dataset.name)));
+  modal.querySelector('.pk-cv-close').addEventListener('click', () => modal.remove());
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
