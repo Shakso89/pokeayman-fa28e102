@@ -11436,7 +11436,7 @@ function classTeacherPill(schoolName, className) {
   const names = getClassTeacherNames(schoolName, className);
   if (!names.length) return '';
   const esc = v => String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  return `<span class="class-teacher-pill" title="Class teacher">${names.map(n => { const src = classTeacherAvatarFor(n); return `<span class="class-teacher-item">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}TR. ${esc(n.replace(/^TR\.\s*/i, ''))}</span>`; }).join('')}</span>`;
+  return `<span class="class-teacher-pill" title="Class teacher">${names.map(n => { const src = classTeacherAvatarFor(n); return `<span class="class-teacher-item" title="TR. ${esc(n)}">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}TR. ${esc(n.replace(/^TR\.\s*/i, ''))}</span>`; }).join('')}</span>`;
 }
 function getAssignedClasses(teacherName) {
   return allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_teacher === teacherName);

@@ -218,3 +218,10 @@ body.ts-bright .pk-avatar-head{background:#f3f7ff}
 body.ts-bright .pk-avatar-head h2{color:#2a4bd6}
 body.ts-bright .pk-avatar-head button{color:#1d2650!important}
 body.ts-bright .pk-avatar-box :is(.avatar-option,.profile-avatar-option){background:#f6f8ff!important;border-color:#d6def5!important;color:#1d2650}
+/* Multiple teachers: equal, unclipped */
+html body .gym-card .class-teacher-pill{display:flex!important;flex-direction:row!important;flex-wrap:wrap;justify-content:center;gap:14px!important;overflow:visible!important;max-width:100%;text-overflow:clip!important}
+html body .gym-card .class-teacher-item{flex:0 1 96px;min-width:78px;text-align:center;white-space:normal;overflow-wrap:anywhere;line-height:1.2;color:#ffcb05;font-weight:800}
+html body .gym-card .class-teacher-pill:has(.class-teacher-item + .class-teacher-item) .class-teacher-avatar{width:64px;height:64px}
+html body .ec-teacher-toggle,html body .ec-teacher-toggle span{color:#3b2a00!important}
+html body .ec-teacher-toggle{background:#fff6d6!important;border-color:#f0c94a!important}
+body.ts-on.ts-bright .gym-card .class-teacher-item{color:var(--ts-blue)}
