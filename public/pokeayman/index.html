@@ -6202,7 +6202,7 @@ function openGlobalLeaderboard() {
   const close = () => { overlay.remove(); document.getElementById('global-leaderboard-trigger')?.focus(); };
   overlay.querySelector('#global-leaderboard-close').addEventListener('click', close); overlay.addEventListener('click', event => { if (event.target === overlay) close(); }); overlay.addEventListener('keydown', event => { if (event.key === 'Escape') close(); }); overlay.querySelector('.global-leaderboard-dialog').focus();
 }
-document.getElementById('global-leaderboard-trigger')?.addEventListener('click', () => document.getElementById('my-total-value')?.parentElement?.click());
+document.getElementById('global-leaderboard-trigger')?.addEventListener('click', openGlobalLeaderboard);
 
 function animateAnswerResult(gameModal, isCorrect) {
   const card = gameModal?.querySelector('.game-player-card.is-active') || document.querySelector('.game-player-card.is-active');
@@ -7264,7 +7264,7 @@ function renderTrainerTab() {
   });
   modal.querySelector('#pin-cancel-btn').addEventListener('click', () => modal.remove());
   (async () => { const auth = window.parent.pokeaymanAuth; const acc = auth?.getAccount ? await auth.getAccount() : null; if (!acc) { modal.querySelector('#teacher-profile-form')?.classList.add('hidden'); modal.querySelector('#change-pin-form')?.classList.add('hidden'); modal.querySelectorAll('[data-th-panel="profile"],[data-th-panel="security"]').forEach(p => p.insertAdjacentHTML('beforeend', '<p class="th-hint" style="text-align:center;padding:1.5rem">Sign in with your teacher email to edit this.</p>')); return; } modal.querySelector('#tp-email').textContent = acc.email; modal.querySelector('#tp-name').value = acc.displayName || ''; modal.querySelector('#tp-school').value = acc.school || ''; })();
-  modal.querySelector('#teacher-profile-form').addEventListener('submit', async e => { e.preventDefault(); const name = modal.querySelector('#tp-name').value.trim(); const school = modal.querySelector('#tp-school').value.trim(); if (!name) return; const r = await window.parent.pokeaymanAuth?.updateProfile(name, school); if (!r || r.error) { toast('Could not save profile.'); return; } const latest = getTeachers().find(t => t.__backendId === currentTeacherRecordId); if (latest && currentTeacher !== 'Ayman') { await window.dataSdk.update({ ...latest, teacher_name: name }); currentTeacher = name; } toast('Profile saved!'); });
+  modal.querySelector('#teacher-profile-form').addEventListener('submit', async e => { e.preventDefault(); const name = modal.querySelector('#tp-name').value.trim(); const school = modal.querySelector('#tp-school').value.trim(); if (!name) return; const r = await window.parent.pokeaymanAuth?.updateProfile(name, school); if (!r || r.error) { toast('Could not save profile.'); return; } const latest = getTeachers().find(t => t.__backendId === currentTeacherRecordId); if (latest && currentTeacher !== 'Ayman') { const oldName = latest.teacher_name; await window.dataSdk.update({ ...latest, teacher_name: name }); await relinkTeacherAssignments(latest, oldName, name); currentTeacher = name; renderAll?.(); } toast('Profile saved!'); });
 }
 document.getElementById('logged-in-name-container').addEventListener('click', () => showMainTab('trainer'));
 document.getElementById('teacher-header-showcase').addEventListener('click', () => showMainTab('trainer'));
@@ -11353,8 +11353,8 @@ function openEditTeacherModal(teacherId) {
       });
       
       // Get current assignments for this teacher using the OLD teacher name (before rename)
-      const currentClassAssignments = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_teacher === teacher.teacher_name);
-      const currentSchoolAssignments = allData.filter(r => r.type === 'teacher_school_assignment' && r.assigned_teacher === teacher.teacher_name);
+      const currentClassAssignments = getAssignedClasses(teacher.teacher_name);
+      const currentSchoolAssignments = getAssignedSchools(teacher.teacher_name);
       
       // Remove class assignments that are no longer checked
       for (const assignment of currentClassAssignments) {
@@ -11370,7 +11370,7 @@ function openEditTeacherModal(teacherId) {
         
         if (!existingAssign && allData.length < 999) {
           await window.dataSdk.create({ 
-            type: 'teacher_class_assignment', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', assigned_teacher: newName, assigned_school: classData.schoolName, assigned_class: classData.className 
+            type: 'teacher_class_assignment', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', assigned_teacher: newName, assigned_teacher_id: teacher.__backendId, assigned_school: classData.schoolName, assigned_class: classData.className 
           });
         }
       }
@@ -11388,20 +11388,13 @@ function openEditTeacherModal(teacherId) {
         
         if (!existingAssign && allData.length < 999) {
           await window.dataSdk.create({ 
-            type: 'teacher_school_assignment', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', assigned_teacher: newName, assigned_school: schoolName, assigned_class: '' 
+            type: 'teacher_school_assignment', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', assigned_teacher: newName, assigned_teacher_id: teacher.__backendId, assigned_school: schoolName, assigned_class: '' 
           });
         }
       }
       
       // If teacher name changed, update all existing assignments with new teacher name
-      if (newName !== teacher.teacher_name) {
-        for (const assignment of currentClassAssignments) {
-          await window.dataSdk.update({ ...assignment, assigned_teacher: newName });
-        }
-        for (const assignment of currentSchoolAssignments) {
-          await window.dataSdk.update({ ...assignment, assigned_teacher: newName });
-        }
-      }
+      await relinkTeacherAssignments(teacher, teacher.teacher_name, newName);
     }
     
     modal.remove(); 
@@ -16917,7 +16910,7 @@ document.getElementById('pokemon-stat-card').addEventListener('click', () => {
   }
 });
 
-document.getElementById('my-total-value').parentElement.addEventListener('click', () => {
+document.getElementById('my-total-value').parentElement.addEventListener('click', () => { openGlobalLeaderboard(); return;
   // Show leaderboard in a modal with student cards
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
