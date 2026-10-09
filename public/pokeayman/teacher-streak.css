@@ -1,0 +1,47 @@
+/* Teacher login streak, surprise credit box and Edit Teacher popup. */
+.ts-streak-dots { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 6px 0 12px; }
+.ts-streak-dots span { aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; font: 800 11px 'Outfit', sans-serif; color: var(--ts-muted); border: 1px solid var(--ts-border); }
+.ts-streak-dots span.on { background: linear-gradient(135deg, #ffcb05, #ff7a1a); color: #1c2766; border-color: transparent; box-shadow: 0 0 10px rgba(255,160,0,.5); }
+#ts-box-open:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.4); }
+#ts-box-open.ready { animation: tsbPulse 1.4s ease-in-out infinite; }
+@keyframes tsbPulse { 50% { transform: scale(1.04); box-shadow: 0 0 18px rgba(255,203,5,.7); } }
+
+.tsb-overlay { position: fixed; inset: 0; z-index: 2147483100; display: grid; place-items: center; background: rgba(3,9,22,.8); backdrop-filter: blur(8px); }
+.tsb-card { width: min(92vw, 360px); padding: 28px 22px; text-align: center; border-radius: 20px; color: #f5f7ff; background: radial-gradient(circle at 50% 0, #2a3a8f, #0c1238 70%); border: 2px solid #ffcb05; box-shadow: 0 0 60px rgba(255,203,5,.35); font-family: 'Outfit', sans-serif; animation: tsbIn .5s cubic-bezier(.2,1.4,.4,1); }
+.tsb-box { font-size: 84px; animation: tsbShake .6s ease 2, tsbPop .4s ease 1.2s forwards; }
+.tsb-kicker { margin: 6px 0 0; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #ffcb05; font-size: 13px; }
+.tsb-amount { margin: 4px 0; font-size: 56px; font-weight: 900; color: #ffe680; text-shadow: 0 0 20px rgba(255,203,5,.6); }
+.tsb-sub { margin: 0 0 18px; color: #b1bbd7; font-size: 14px; }
+.tsb-btn { width: 100%; height: 46px; border: 0; border-radius: 12px; background: #ffcb05; color: #1c2766; font: 800 16px 'Outfit', sans-serif; cursor: pointer; }
+@keyframes tsbIn { from { transform: scale(.6); opacity: 0; } }
+@keyframes tsbShake { 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
+@keyframes tsbPop { to { transform: scale(1.25); } }
+@media (prefers-reduced-motion: reduce) { .tsb-card, .tsb-box, #ts-box-open.ready { animation: none; } }
+
+.et-card { width: min(100%, 560px); }
+.et-hero { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--es-border); }
+.et-avatar { width: 72px; height: 72px; flex: none; border-radius: 50%; object-fit: contain; background: var(--es-deep); border: 3px solid var(--es-yellow); box-shadow: 0 0 16px rgba(255,203,5,.4); }
+.et-initial { display: grid; place-items: center; font: 900 28px 'Outfit', sans-serif; color: var(--es-yellow); }
+.et-hero-info { flex: 1; min-width: 0; }
+.et-hero-info h2 { margin: 0; font: 800 22px 'Outfit', sans-serif; overflow-wrap: anywhere; }
+.et-kicker { margin: 0; font: 700 11px 'Outfit', sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--es-yellow); }
+.et-email { margin: 2px 0 0; font-size: 13px; color: var(--es-muted); overflow-wrap: anywhere; }
+.et-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.et-stats div { padding: 10px; border-radius: 12px; text-align: center; background: rgba(245,247,255,.06); border: 1px solid var(--es-border); }
+.et-stats strong { display: block; font: 800 18px 'Outfit', sans-serif; }
+.et-stats small { font-size: 11px; color: var(--es-muted); }
+.et-email-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; padding: 8px 12px; border-radius: 8px; background: var(--es-deep); border: 1px solid var(--es-border); overflow-wrap: anywhere; }
+.et-link { flex: none; border: 0; background: none; color: var(--es-yellow); font: 700 12px 'Outfit', sans-serif; cursor: pointer; }
+.et-gift { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 12px 14px; border-radius: 12px; background: linear-gradient(135deg, rgba(255,203,5,.16), rgba(227,53,13,.12)); border: 1px solid rgba(255,203,5,.4); }
+.et-gift strong { display: block; font: 800 15px 'Outfit', sans-serif; }
+.et-gift small { font-size: 12px; color: var(--es-muted); }
+.et-grant { flex: none; height: 38px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--es-yellow); color: var(--es-deep); font: 800 13px 'Outfit', sans-serif; cursor: pointer; }
+.et-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.et-chips-scroll { max-height: 180px; overflow-y: auto; scrollbar-width: thin; }
+.et-chip { cursor: pointer; }
+.et-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.et-chip span { display: inline-flex; flex-direction: column; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--es-border); background: rgba(245,247,255,.05); font: 700 13px 'Outfit', sans-serif; color: var(--es-ink); }
+.et-chip span small { font-weight: 500; font-size: 11px; color: var(--es-muted); }
+.et-chip input:checked + span { border-color: var(--es-yellow); background: rgba(255,203,5,.16); box-shadow: 0 0 10px rgba(255,203,5,.3); }
+.et-chip input:focus-visible + span { outline: 2px solid var(--es-yellow); outline-offset: 2px; }
+.et-card .teacher-zone-access-setting { margin-top: 16px; }
