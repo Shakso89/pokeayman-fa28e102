@@ -5,6 +5,7 @@
   <title>PokéAyman</title>
   <link rel="stylesheet" href="/pokeayman/coin-celebrations.css">
   <link rel="stylesheet" href="/pokeayman/edit-student.css">
+  <link rel="stylesheet" href="/pokeayman/teacher-streak.css">
   <link rel="stylesheet" href="/pokeayman/home-showcase.css">
   <style>
     :root { --home-bg-image: none; }
@@ -6433,28 +6434,77 @@ function teacherAvatarUnlocksLeft(rec) {
   if (isAymanTeacher()) return Infinity;
   return Math.max(0, Math.floor(Number(rec?.teacher_spent_total || 0) / TEACHER_AVATAR_UNLOCK_STEP) - teacherUnlockedAvatars(rec).length);
 }
+function currentTeacherRec() {
+  return (currentTeacherRecordId && getTeachers().find(t => t.__backendId === currentTeacherRecordId))
+    || getTeachers().find(t => normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(currentTeacher));
+}
 function getTeacherCredits() {
   const identity = String(currentTeacher || '').trim().toLocaleLowerCase();
   if (identity === 'ayman' || identity === 'teacher ayman') return Infinity;
-  const rec = getTeachers().find(t => normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(currentTeacher));
+  const rec = currentTeacherRec();
   return rec ? (rec.teacher_credits === -1 ? Infinity : (rec.teacher_credits || 0)) : 0;
 }
 
 async function deductTeacherCredits(amount) {
   const identity = String(currentTeacher || '').trim().toLocaleLowerCase();
   if (identity === 'ayman' || identity === 'teacher ayman') return true;
-  const rec = getTeachers().find(t => normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(currentTeacher));
+  const rec = currentTeacherRec();
+  if (rec && rec.teacher_credits === -1) return true;
   if (!rec || (rec.teacher_credits || 0) < amount) { toast(`Insufficient credits! Need ${amount}, have ${rec?.teacher_credits || 0}.`); return false; }
-  const result = await window.dataSdk.update({ ...rec, teacher_credits: (rec.teacher_credits || 0) - amount, teacher_spent_total: Number(rec.teacher_spent_total || 0) + amount });
+  const next = { ...rec, teacher_credits: (rec.teacher_credits || 0) - amount, teacher_spent_total: Number(rec.teacher_spent_total || 0) + amount };
+  const result = await window.dataSdk.update(next);
   if (!result?.isOk) { toast('Could not update teacher credits.'); return false; }
+  allData = allData.map(r => r.__backendId === rec.__backendId ? next : r);
   return true;
 }
 
 async function refundTeacherCredits(amount, teacherName) {
   if (teacherName === ADMIN_TEACHER.name) return;
-  const rec = getTeachers().find(t => t.teacher_name === teacherName);
-  if (rec) await window.dataSdk.update({ ...rec, teacher_credits: (rec.teacher_credits || 0) + amount });
+  const rec = (teacherName === currentTeacher && currentTeacherRec()) || getTeachers().find(t => t.teacher_name === teacherName);
+  if (rec && rec.teacher_credits !== -1) await window.dataSdk.update({ ...rec, teacher_credits: (rec.teacher_credits || 0) + amount });
 }
+
+// ---- Teacher login streak & surprise credit boxes ----
+const STREAK_DAYS = 7;
+function streakDay(d = new Date()) { return d.toLocaleDateString('en-CA'); }
+function teacherStreakState() {
+  const rec = currentTeacherRec();
+  if (!rec) return null;
+  return { count: Number(rec.streak_count || 0), boxes: Number(rec.surprise_boxes || 0), last: rec.streak_last_day || '' };
+}
+async function saveTeacherPatch(rec, patch) {
+  const next = { ...rec, ...patch };
+  const r = await window.dataSdk.update(next);
+  if (!r?.isOk) return null;
+  allData = allData.map(x => x.__backendId === rec.__backendId ? next : x);
+  return next;
+}
+async function recordTeacherDailyLogin() {
+  const rec = currentTeacherRec(); if (!rec) return;
+  const today = streakDay(); if (rec.streak_last_day === today) return;
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  let count = rec.streak_last_day === streakDay(y) ? Number(rec.streak_count || 0) + 1 : 1;
+  let boxes = Number(rec.surprise_boxes || 0);
+  if (count >= STREAK_DAYS) { boxes += 1; count = 0; setTimeout(() => toast('🎁 7-day streak! A surprise box is ready to open.'), 800); }
+  await saveTeacherPatch(rec, { streak_last_day: today, streak_count: count, surprise_boxes: boxes });
+}
+window.teacherStreakState = teacherStreakState;
+window.openTeacherSurpriseBox = async function () {
+  const rec = currentTeacherRec(); if (!rec || Number(rec.surprise_boxes || 0) < 1) { toast('Keep your streak going to unlock a box!'); return; }
+  const prize = 10 + Math.floor(Math.random() * 91);
+  const unlimited = rec.teacher_credits === -1;
+  const saved = await saveTeacherPatch(rec, { surprise_boxes: Number(rec.surprise_boxes) - 1, teacher_credits: unlimited ? -1 : Number(rec.teacher_credits || 0) + prize });
+  if (!saved) { toast('Could not open the box. Please try again.'); return; }
+  try { playTransactionSound('reward'); } catch (_) {}
+  const ov = document.createElement('div'); ov.className = 'tsb-overlay';
+  ov.innerHTML = `<div class="tsb-card" role="dialog" aria-modal="true" aria-label="Surprise box reward"><div class="tsb-box" aria-hidden="true">🎁</div><p class="tsb-kicker">Surprise box opened!</p><p class="tsb-amount">+<span>0</span></p><p class="tsb-sub">credits added to your wallet</p><button type="button" class="tsb-btn">Awesome!</button></div>`;
+  document.body.appendChild(ov);
+  const span = ov.querySelector('.tsb-amount span'); let n = 0; const step = Math.max(1, Math.round(prize / 30));
+  const iv = setInterval(() => { n = Math.min(prize, n + step); span.textContent = n; if (n >= prize) clearInterval(iv); }, 30);
+  const close = () => { clearInterval(iv); ov.remove(); try { updateRoleUI(); } catch (_) {} };
+  ov.querySelector('.tsb-btn').addEventListener('click', close); ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  try { await logCredit('Surprise Box', prize, rec.teacher_name); } catch (_) {}
+};
 
 // Centralized teacher logout: reveal the public dashboard first, then invalidate every session marker.
 let teacherLogoutEpoch = 0;
@@ -6682,6 +6732,9 @@ window.pokeaymanEnterTeacher = async function (name) {
   currentTeacher = (rec && clean !== ADMIN_TEACHER.name) ? String(rec.teacher_name).trim() : clean;
   currentTeacherRecordId = rec ? (rec.__backendId || '') : '';
   try { sessionStorage.removeItem('pokeayman-enter-teacher'); } catch (_) {}
+  const authEmail = (window.parent && window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.email) || '';
+  if (rec && authEmail && rec.teacher_email !== authEmail) { try { await saveTeacherPatch(rec, { teacher_email: authEmail }); } catch (_) {} }
+  try { await recordTeacherDailyLogin(); } catch (e) { console.warn('Streak update failed', e); }
   enterApp();
 };
 window.addEventListener('load', () => {
@@ -11082,13 +11135,16 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
 });
 
 document.getElementById('award-form').addEventListener('submit', async e => {
-  e.preventDefault(); const name = document.getElementById('award-student').value; const rawAmount = document.getElementById('award-amount').value.trim(); const amount = Number(rawAmount);
+  e.preventDefault(); const name = document.getElementById('award-student').value; const rawAmount = String(document.getElementById('award-amount').value).trim(); const amount = Number(rawAmount);
   if (!/^\d+$/.test(rawAmount) || amount < 1 || amount > 1000) { toast('Value must be an integer between 1 and 1,000 coins.'); return; }
-  const student = getAllStudents().find(s => s.student_name === name); if (!student) return;
+  const student = getStudents(navSchool, navClass).find(s => s.student_name === name) || getAllStudents().find(s => s.student_name === name);
+  if (!student) { toast('Could not find that student.'); return; }
   if (!(await deductTeacherCredits(amount))) return;
-  await window.dataSdk.update({ ...student, coins: (student.coins || 0) + amount });
+  const latest = getStudentRecordByStableId(student.__backendId) || student;
+  const saved = await persistCanonicalStudentPatch(latest.__backendId, { coins: (Number(latest.coins) || 0) + amount }, 'Could not award coins.');
+  if (!saved) { await refundTeacherCredits(amount, currentTeacher); return; }
   await logCredit('Award', amount, name); playTransactionSound('reward'); toast(`Awarded ${amount} coins to ${name}!`);
-  showStudentAwardCelebration(student, amount);
+  showStudentAwardCelebration(saved, amount);
 });
 
 // Gift All
@@ -11304,9 +11360,25 @@ function openEditTeacherModal(teacherId) {
   const assignedClassKeys = new Set(assignedClasses.map(a => `${a.assigned_school}||${a.assigned_class}`));
   const assignedSchoolNames = new Set(assignedSchools.map(a => a.assigned_school));
   
-  const modal = document.createElement('div'); 
-  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="bg-white rounded-xl shadow-lg w-96 max-h-[90vh] overflow-y-auto"><div class="sticky top-0 bg-blue-500 text-white p-6 rounded-t-xl"><h2 class="heading-font text-lg font-bold">Edit Teacher</h2></div><form class="p-6 space-y-4"><div><label class="text-xs font-semibold text-gray-600 block mb-2">Teacher Name</label><input type="text" id="et-name" value="${teacher.teacher_name}" class="w-full border rounded-lg px-3 py-2 text-sm" ${teacher.teacher_name === 'Ayman' ? 'disabled' : ''} required></div><div><label class="text-xs font-semibold text-gray-600 block mb-2">Sign-in account</label><div class="w-full border rounded-lg px-3 py-2 text-sm bg-gray-50 text-indigo-950">${teacher.teacher_email || (teacher.cloud_user_id ? 'Linked account (email shows after next sign-in)' : 'Not linked yet')}</div>${teacher.teacher_email ? '<button type="button" id="et-reset" class="mt-2 text-xs font-semibold text-purple-600 hover:underline">Send password reset email</button>' : ''}</div><div><label class="text-xs font-semibold text-gray-600 block mb-2">Credits</label><input type="number" id="et-credits" value="${teacher.teacher_credits||0}" class="w-full border rounded-lg px-3 py-2 text-sm"></div>${teacher.teacher_name !== 'Ayman' ? `<div><label class="text-xs font-semibold text-gray-600 block mb-3">Assign Schools</label><div class="space-y-2 max-h-32 overflow-y-auto border rounded-lg p-3 bg-gray-50">${allSchools.length > 0 ? allSchools.map(school => `<label class="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded transition"><input type="checkbox" class="et-school-checkbox" data-school-name="${school.school_name}" ${assignedSchoolNames.has(school.school_name) ? 'checked' : ''}><span class="text-sm text-indigo-950">${school.school_name}</span></label>`).join('') : '<p class="text-xs text-gray-500">No schools available</p>'}</div></div><div><label class="text-xs font-semibold text-gray-600 block mb-3">Assign Classes</label><div class="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50">${allClasses.length > 0 ? allClasses.map(cls => `<label class="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded transition"><input type="checkbox" class="et-class-checkbox" data-class-id="${cls.__backendId}" data-school-name="${cls.school_name}" data-class-name="${cls.class_name}" ${assignedClassKeys.has(`${cls.school_name}||${cls.class_name}`) ? 'checked' : ''}><span class="text-sm text-indigo-950">${cls.school_name} - ${cls.class_name}</span></label>`).join('') : '<p class="text-xs text-gray-500">No classes available</p>'}</div></div>` : ''}<div class="teacher-zone-access-setting"><label class="teacher-zone-access-label" for="et-zone-access"><span class="teacher-zone-access-copy"><strong>Financial &amp; History</strong><small>Financial and History tabs in Teacher Zone</small></span><span class="teacher-zone-switch"><input type="checkbox" id="et-zone-access" ${teacher.teacher_zone_access !== 'hide' ? 'checked' : ''}><span aria-hidden="true"></span></span></label><p id="et-zone-status" class="teacher-zone-access-status"></p></div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 btn-primary">Save</button><button type="button" class="flex-1 btn-outline" id="et-cancel">Cancel</button></div></form></div>`;
+  const modal = document.createElement('div');
+  modal.className = 'es-overlay et-overlay';
+  const avatar = teacherAvatarSrc(teacher.teacher_avatar);
+  const isAdminRow = teacher.teacher_name === 'Ayman';
+  const email = teacher.teacher_email || '';
+  modal.innerHTML = `<div class="es-card et-card" role="dialog" aria-modal="true" aria-label="Edit teacher"><form>
+    <div class="et-hero">${avatar ? `<img src="${avatar}" alt="" class="et-avatar">` : `<span class="et-avatar et-initial">${String(teacher.teacher_name||'?').charAt(0).toUpperCase()}</span>`}
+      <div class="et-hero-info"><p class="et-kicker">${isAdminRow ? 'Administrator' : 'Teacher'}</p><h2>${teacher.teacher_name}</h2><p class="et-email">✉️ ${email || (teacher.cloud_user_id ? 'Email appears after their next sign-in' : 'No sign-in account linked')}</p></div>
+      <button type="button" class="es-close" id="et-x" aria-label="Close">×</button></div>
+    <div class="et-stats"><div><strong>${teacher.teacher_credits === -1 ? '∞' : (teacher.teacher_credits||0)}</strong><small>credits</small></div><div><strong>🔥 ${Number(teacher.streak_count||0)}/7</strong><small>login streak</small></div><div><strong>🎁 <span id="et-box-count">${Number(teacher.surprise_boxes||0)}</span></strong><small>boxes to open</small></div></div>
+    <label class="es-label" for="et-name">Teacher name</label><input type="text" id="et-name" value="${teacher.teacher_name}" class="es-input" ${isAdminRow ? 'disabled' : ''} required>
+    <label class="es-label">Sign-in email</label><div class="et-email-row"><span>${email || '—'}</span>${email ? '<button type="button" id="et-reset" class="et-link">Send password reset</button>' : ''}</div>
+    <label class="es-label" for="et-credits">Credits</label><input type="number" id="et-credits" value="${teacher.teacher_credits||0}" class="es-input">
+    ${!isAdminRow ? `<div class="et-gift"><div><strong>🎁 Gift a surprise box</strong><small>They open it for 10–100 free credits</small></div><button type="button" id="et-grant" class="et-grant">Grant box</button></div>` : ''}
+    ${!isAdminRow ? `<label class="es-label">Manage whole schools</label><div class="et-chips">${allSchools.length ? allSchools.map(school => `<label class="et-chip"><input type="checkbox" class="et-school-checkbox" data-school-name="${school.school_name}" ${assignedSchoolNames.has(school.school_name) ? 'checked' : ''}><span>${school.school_name}</span></label>`).join('') : '<p class="es-empty">No schools yet</p>'}</div>
+    <label class="es-label">Manage classes</label><div class="et-chips et-chips-scroll">${allClasses.length ? allClasses.map(cls => `<label class="et-chip"><input type="checkbox" class="et-class-checkbox" data-class-id="${cls.__backendId}" data-school-name="${cls.school_name}" data-class-name="${cls.class_name}" ${assignedClassKeys.has(`${cls.school_name}||${cls.class_name}`) ? 'checked' : ''}><span>${cls.class_name}<small>${cls.school_name}</small></span></label>`).join('') : '<p class="es-empty">No classes yet</p>'}</div>` : ''}
+    <div class="teacher-zone-access-setting"><label class="teacher-zone-access-label" for="et-zone-access"><span class="teacher-zone-access-copy"><strong>Financial &amp; History</strong><small>Financial and History tabs in Teacher Zone</small></span><span class="teacher-zone-switch"><input type="checkbox" id="et-zone-access" ${teacher.teacher_zone_access !== 'hide' ? 'checked' : ''}><span aria-hidden="true"></span></span></label><p id="et-zone-status" class="teacher-zone-access-status"></p></div>
+    <div class="es-actions"><button type="submit" class="es-save btn-primary">Save</button><button type="button" class="es-cancel" id="et-cancel">Cancel</button></div>
+  </form></div>`;
   document.body.appendChild(modal);
   const zoneToggle = modal.querySelector('#et-zone-access');
   const zoneStatus = modal.querySelector('#et-zone-status');
@@ -11314,13 +11386,22 @@ function openEditTeacherModal(teacherId) {
   zoneToggle.addEventListener('change', updateZoneStatus);
   updateZoneStatus();
   
+  modal.querySelector('#et-x')?.addEventListener('click', () => modal.remove());
+  modal.querySelector('#et-grant')?.addEventListener('click', async () => {
+    const latest = allData.find(t => t.__backendId === teacher.__backendId) || teacher;
+    const boxes = Number(latest.surprise_boxes || 0) + 1;
+    const saved = await saveTeacherPatch(latest, { surprise_boxes: boxes });
+    if (!saved) { toast('Could not grant the box.'); return; }
+    teacher.surprise_boxes = boxes; modal.querySelector('#et-box-count').textContent = boxes;
+    toast(`🎁 Surprise box sent to ${latest.teacher_name}!`);
+  });
   modal.querySelector('#et-reset')?.addEventListener('click', async () => { const r = await window.parent.pokeaymanAuth?.resetPassword(teacher.teacher_email); toast(r && r.error ? 'Could not send reset email.' : 'Password reset email sent to ' + teacher.teacher_email); });
   modal.querySelector('form').addEventListener('submit', async e => { 
     e.preventDefault(); 
     const newName = modal.querySelector('#et-name').value.trim();
     const newCredits = parseInt(modal.querySelector('#et-credits').value);
     const teacherZoneAccess = modal.querySelector('#et-zone-access').checked ? 'allow' : 'hide';
-    const saved = await window.dataSdk.update({ ...teacher, teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess });
+    const saved = await window.dataSdk.update({ ...(allData.find(t => t.__backendId === teacher.__backendId) || teacher), teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess });
     if (!saved?.isOk) { toast('Could not save teacher settings. Please try again.'); return; }
     allData = allData.map(row => row.__backendId === teacher.__backendId ? { ...row, teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess } : row);
     if (currentRole === 'teacher' && currentTeacherRecordId === teacher.__backendId) {

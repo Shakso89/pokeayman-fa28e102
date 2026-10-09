@@ -59,8 +59,9 @@
         <div class="ts-amounts">${[10, 50, 100].map((n) => `<button type="button" data-amt="${n}"${n === 10 ? ' class="on"' : ''}>+${n}</button>`).join('')}</div>
         <button type="button" class="ts-award-go" id="ts-award-go">Award coins</button></section>
       <section class="ts-card"><h3>🏆 Top 3 Students</h3><ol id="ts-top3" class="ts-top3"></ol></section>
-      <section class="ts-card ts-gift"><h3>🎁 Surprise Boxes</h3><p>Launch a special box game for your class!</p>
-        <button type="button" class="ts-award-go" data-ts-class="games">Launch game</button></section>`;
+      <section class="ts-card ts-gift ts-streak"><h3>🔥 Login Streak</h3><p id="ts-streak-text">Log in 7 days in a row to unlock a surprise box</p>
+        <div class="ts-streak-dots" id="ts-streak-dots"></div>
+        <button type="button" class="ts-award-go" id="ts-box-open">🎁 Open surprise box</button></section>`;
     document.body.append(side, rail);
     const sidebarToggle = document.createElement('button');
     sidebarToggle.id = 'ts-sidebar-toggle'; sidebarToggle.type = 'button'; sidebarToggle.setAttribute('aria-controls', 'ts-sidebar');
@@ -231,6 +232,7 @@
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.amt) { amount = +b.dataset.amt; b.parentElement.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); return; }
     if (b.dataset.tsClass) return onNav(e);
+    if (b.id === 'ts-box-open') { g(() => window.openTeacherSurpriseBox()); return; }
     if (b.id === 'ts-award-go') {
       const sel = $('award-student'), amt = $('award-amount'), form = $('award-form');
       const pick = $('ts-award-student').value;
@@ -287,6 +289,15 @@
       const list = g(() => getStudents(navSchool, navClass), []).slice().sort((a, b) => (Number(b.coins) || 0) - (Number(a.coins) || 0)).slice(0, 3);
       const html = list.map((s, i) => `<li class="m${i + 1}"><span class="ts-medal">${i + 1}</span><span><strong>${esc(s.student_name)}</strong><small>🪙 ${Number(s.coins || 0).toLocaleString()} coins</small></span></li>`).join('') || '<li class="ts-empty">No students yet</li>';
       if (html !== lastTop) { $('ts-top3').innerHTML = html; lastTop = html; }
+      const st = g(() => window.teacherStreakState(), null);
+      if (st) {
+        const dots = Array.from({ length: 7 }, (_, i) => `<span class="${i < st.count ? 'on' : ''}">${i + 1}</span>`).join('');
+        if ($('ts-streak-dots').innerHTML !== dots) $('ts-streak-dots').innerHTML = dots;
+        const txt = st.boxes > 0 ? `You have ${st.boxes} box${st.boxes > 1 ? 'es' : ''} to open!` : `${7 - st.count} more day${7 - st.count === 1 ? '' : 's'} to unlock a box`;
+        if ($('ts-streak-text').textContent !== txt) $('ts-streak-text').textContent = txt;
+        $('ts-box-open').disabled = st.boxes < 1;
+        $('ts-box-open').classList.toggle('ready', st.boxes > 0);
+      }
     }
   }
 
