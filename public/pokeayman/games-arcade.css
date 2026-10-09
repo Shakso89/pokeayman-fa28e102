@@ -24,6 +24,13 @@
 .ga-cart-play { margin: .55rem .9rem .9rem; align-self: flex-start; font-weight: 900; font-size: .8rem; padding: .35rem .85rem; border-radius: 999px; background: var(--a); color: #111827; }
 
 /* Lobby */
+.ga-student-setup { max-width: 620px; margin: 1rem auto; }
+.ga-student-setup h2 { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; margin: 0; }
+.ga-student-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+.ga-student-counts button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .25rem; min-height: 100px; border-radius: 8px; background: var(--ga-yellow); color: var(--ts-action-ink, var(--ga-ink)); }
+.ga-student-counts strong { font-size: 2rem; }
+.ga-student-counts button:disabled { background: var(--ga-surface); color: var(--ga-muted); border: 1px solid var(--ga-border); opacity: .5; cursor: not-allowed; box-shadow: none; }
+
 .ga-lobby .ga-lobby-icon { display: inline-block; margin-right: .2rem; }
 .ga-quick { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4rem; margin: 0 0 .75rem; font-size: .8rem; }
 .ga-quick span { color: var(--ts-muted, #a5b0cc); margin-right: .3rem; font-weight: 700; }
