@@ -6433,28 +6433,77 @@ function teacherAvatarUnlocksLeft(rec) {
   if (isAymanTeacher()) return Infinity;
   return Math.max(0, Math.floor(Number(rec?.teacher_spent_total || 0) / TEACHER_AVATAR_UNLOCK_STEP) - teacherUnlockedAvatars(rec).length);
 }
+function currentTeacherRec() {
+  return (currentTeacherRecordId && getTeachers().find(t => t.__backendId === currentTeacherRecordId))
+    || getTeachers().find(t => normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(currentTeacher));
+}
 function getTeacherCredits() {
   const identity = String(currentTeacher || '').trim().toLocaleLowerCase();
   if (identity === 'ayman' || identity === 'teacher ayman') return Infinity;
-  const rec = getTeachers().find(t => normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(currentTeacher));
+  const rec = currentTeacherRec();
   return rec ? (rec.teacher_credits === -1 ? Infinity : (rec.teacher_credits || 0)) : 0;
 }
 
 async function deductTeacherCredits(amount) {
   const identity = String(currentTeacher || '').trim().toLocaleLowerCase();
   if (identity === 'ayman' || identity === 'teacher ayman') return true;
-  const rec = getTeachers().find(t => normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(currentTeacher));
+  const rec = currentTeacherRec();
+  if (rec && rec.teacher_credits === -1) return true;
   if (!rec || (rec.teacher_credits || 0) < amount) { toast(`Insufficient credits! Need ${amount}, have ${rec?.teacher_credits || 0}.`); return false; }
-  const result = await window.dataSdk.update({ ...rec, teacher_credits: (rec.teacher_credits || 0) - amount, teacher_spent_total: Number(rec.teacher_spent_total || 0) + amount });
+  const next = { ...rec, teacher_credits: (rec.teacher_credits || 0) - amount, teacher_spent_total: Number(rec.teacher_spent_total || 0) + amount };
+  const result = await window.dataSdk.update(next);
   if (!result?.isOk) { toast('Could not update teacher credits.'); return false; }
+  allData = allData.map(r => r.__backendId === rec.__backendId ? next : r);
   return true;
 }
 
 async function refundTeacherCredits(amount, teacherName) {
   if (teacherName === ADMIN_TEACHER.name) return;
-  const rec = getTeachers().find(t => t.teacher_name === teacherName);
-  if (rec) await window.dataSdk.update({ ...rec, teacher_credits: (rec.teacher_credits || 0) + amount });
+  const rec = (teacherName === currentTeacher && currentTeacherRec()) || getTeachers().find(t => t.teacher_name === teacherName);
+  if (rec && rec.teacher_credits !== -1) await window.dataSdk.update({ ...rec, teacher_credits: (rec.teacher_credits || 0) + amount });
 }
+
+// ---- Teacher login streak & surprise credit boxes ----
+const STREAK_DAYS = 7;
+function streakDay(d = new Date()) { return d.toLocaleDateString('en-CA'); }
+function teacherStreakState() {
+  const rec = currentTeacherRec();
+  if (!rec) return null;
+  return { count: Number(rec.streak_count || 0), boxes: Number(rec.surprise_boxes || 0), last: rec.streak_last_day || '' };
+}
+async function saveTeacherPatch(rec, patch) {
+  const next = { ...rec, ...patch };
+  const r = await window.dataSdk.update(next);
+  if (!r?.isOk) return null;
+  allData = allData.map(x => x.__backendId === rec.__backendId ? next : x);
+  return next;
+}
+async function recordTeacherDailyLogin() {
+  const rec = currentTeacherRec(); if (!rec) return;
+  const today = streakDay(); if (rec.streak_last_day === today) return;
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  let count = rec.streak_last_day === streakDay(y) ? Number(rec.streak_count || 0) + 1 : 1;
+  let boxes = Number(rec.surprise_boxes || 0);
+  if (count >= STREAK_DAYS) { boxes += 1; count = 0; setTimeout(() => toast('🎁 7-day streak! A surprise box is ready to open.'), 800); }
+  await saveTeacherPatch(rec, { streak_last_day: today, streak_count: count, surprise_boxes: boxes });
+}
+window.teacherStreakState = teacherStreakState;
+window.openTeacherSurpriseBox = async function () {
+  const rec = currentTeacherRec(); if (!rec || Number(rec.surprise_boxes || 0) < 1) { toast('Keep your streak going to unlock a box!'); return; }
+  const prize = 10 + Math.floor(Math.random() * 91);
+  const unlimited = rec.teacher_credits === -1;
+  const saved = await saveTeacherPatch(rec, { surprise_boxes: Number(rec.surprise_boxes) - 1, teacher_credits: unlimited ? -1 : Number(rec.teacher_credits || 0) + prize });
+  if (!saved) { toast('Could not open the box. Please try again.'); return; }
+  try { playTransactionSound('reward'); } catch (_) {}
+  const ov = document.createElement('div'); ov.className = 'tsb-overlay';
+  ov.innerHTML = `<div class="tsb-card" role="dialog" aria-modal="true" aria-label="Surprise box reward"><div class="tsb-box" aria-hidden="true">🎁</div><p class="tsb-kicker">Surprise box opened!</p><p class="tsb-amount">+<span>0</span></p><p class="tsb-sub">credits added to your wallet</p><button type="button" class="tsb-btn">Awesome!</button></div>`;
+  document.body.appendChild(ov);
+  const span = ov.querySelector('.tsb-amount span'); let n = 0; const step = Math.max(1, Math.round(prize / 30));
+  const iv = setInterval(() => { n = Math.min(prize, n + step); span.textContent = n; if (n >= prize) clearInterval(iv); }, 30);
+  const close = () => { clearInterval(iv); ov.remove(); try { updateRoleUI(); } catch (_) {} };
+  ov.querySelector('.tsb-btn').addEventListener('click', close); ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  try { await logCredit('Surprise Box', prize, rec.teacher_name); } catch (_) {}
+};
 
 // Centralized teacher logout: reveal the public dashboard first, then invalidate every session marker.
 let teacherLogoutEpoch = 0;
@@ -11082,13 +11131,16 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
 });
 
 document.getElementById('award-form').addEventListener('submit', async e => {
-  e.preventDefault(); const name = document.getElementById('award-student').value; const rawAmount = document.getElementById('award-amount').value.trim(); const amount = Number(rawAmount);
+  e.preventDefault(); const name = document.getElementById('award-student').value; const rawAmount = String(document.getElementById('award-amount').value).trim(); const amount = Number(rawAmount);
   if (!/^\d+$/.test(rawAmount) || amount < 1 || amount > 1000) { toast('Value must be an integer between 1 and 1,000 coins.'); return; }
-  const student = getAllStudents().find(s => s.student_name === name); if (!student) return;
+  const student = getStudents(navSchool, navClass).find(s => s.student_name === name) || getAllStudents().find(s => s.student_name === name);
+  if (!student) { toast('Could not find that student.'); return; }
   if (!(await deductTeacherCredits(amount))) return;
-  await window.dataSdk.update({ ...student, coins: (student.coins || 0) + amount });
+  const latest = getStudentRecordByStableId(student.__backendId) || student;
+  const saved = await persistCanonicalStudentPatch(latest.__backendId, { coins: (Number(latest.coins) || 0) + amount }, 'Could not award coins.');
+  if (!saved) { await refundTeacherCredits(amount, currentTeacher); return; }
   await logCredit('Award', amount, name); playTransactionSound('reward'); toast(`Awarded ${amount} coins to ${name}!`);
-  showStudentAwardCelebration(student, amount);
+  showStudentAwardCelebration(saved, amount);
 });
 
 // Gift All
