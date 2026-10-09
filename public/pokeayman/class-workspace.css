@@ -154,3 +154,31 @@ html body #app-screen#app-screen#app-screen #view-students #students-list > .glo
 html body #app-screen#app-screen#app-screen #view-students #students-list > .global-rank-card .global-rank-marker{grid-column:1/-1}
 html body #app-screen#app-screen#app-screen #view-students .global-rank-card .rank-title strong{white-space:nowrap}
 }
+
+/* Whole school view: compact gym cards */
+#classes-list{gap:14px!important}
+html body #view-classes #classes-list > .gym-card{display:flex;flex-direction:column;gap:10px;padding:16px 18px!important;border-radius:16px!important;text-align:left;cursor:pointer;background:linear-gradient(160deg,rgba(30,40,100,.92),rgba(14,20,56,.95))!important;border:1px solid rgba(255,255,255,.12)!important;color:#f5f7ff!important;box-shadow:0 10px 24px rgba(2,6,23,.28)!important;transition:transform .15s,border-color .15s}
+html body #view-classes #classes-list > .gym-card:hover,html body #view-classes #classes-list > .gym-card:focus-visible{transform:translateY(-2px);border-color:rgba(255,203,5,.6)!important;outline:none}
+.gym-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:30px}
+.gym-name{margin:0;font:800 1.25rem Outfit,sans-serif;color:#fff!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gym-enter{font-size:.75rem;font-weight:800;color:#ffcb05;opacity:.7;white-space:nowrap}
+.gym-card:hover .gym-enter{opacity:1}
+.gym-chips{display:flex;gap:6px;flex-wrap:wrap}
+.gym-chips span{padding:3px 10px;border-radius:999px;font-size:.75rem;font-weight:700;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:rgba(230,236,255,.85)}
+.gym-edit{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#e6ecff;font-weight:800;opacity:.6;cursor:pointer}
+.gym-edit:hover{opacity:1;border-color:#ffcb05;color:#ffcb05}
+.gym-top3{display:flex;align-items:center;gap:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1);min-width:0}
+.gym-top3.empty{font-size:.75rem;color:rgba(230,236,255,.55)}
+.gym-top3-label{font-size:.65rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,229,138,.75)}
+.gym-bubbles{display:flex;flex:none}
+.gym-bubble{position:relative;width:38px;height:38px;border-radius:50%;background:#16204f;border:2px solid #9aa4b5;margin-left:-8px}
+.gym-bubble:first-child{margin-left:0}
+.gym-bubble.rank-1{border-color:#e6b422;z-index:3}.gym-bubble.rank-2{border-color:#b8c0cc;z-index:2}.gym-bubble.rank-3{border-color:#b87333;z-index:1}
+.gym-bubble img{width:100%;height:100%;object-fit:contain;border-radius:50%}
+.gym-bubble i{position:absolute;right:-4px;bottom:-4px;font-size:.7rem;font-style:normal}
+.gym-top3-names{min-width:0;font-size:.75rem;font-weight:600;color:rgba(230,236,255,.75);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.class-teacher-pill{gap:8px;align-items:center;padding:3px 10px 3px 3px!important;margin-top:0!important;font-size:.75rem!important}
+.class-teacher-item{display:inline-flex;align-items:center;gap:6px}
+.class-teacher-avatar{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;object-fit:contain;background:rgba(14,20,56,.9);border:1.5px solid #ffcb05;font-size:.8rem}
+.gym-card .class-teacher-pill{align-self:flex-start}
+#ts-hero-teacher .class-teacher-avatar{width:22px;height:22px;vertical-align:middle;margin-right:4px}

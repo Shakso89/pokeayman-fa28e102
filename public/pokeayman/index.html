@@ -8536,21 +8536,10 @@ function renderClassTop3Leaderboard(className) {
   const students = getStudents(navSchool, className)
     .sort((a, b) => getStudentTotalValue(b) - getStudentTotalValue(a) || a.student_name.localeCompare(b.student_name))
     .slice(0, 3);
-  if (!students.length) return '<div class="class-top3-panel"><div class="class-top3-header"><span>🏆 Top 3 Students</span></div><p class="class-top3-detail">No students in this class yet.</p></div>';
+  if (!students.length) return '<div class="gym-top3 empty">No students yet</div>';
   const medals = ['🥇', '🥈', '🥉'];
-  return `<div class="class-top3-panel" aria-label="Top 3 students in ${className}">
-    <div class="class-top3-header"><span>🏆 Top 3 Students</span><span>${students.length}/3</span></div>
-    <div class="class-top3-list">${students.map((s, index) => {
-      const avatarSrc = getStudentAvatarSrc(s);
-      const avatarAlt = getStudentAvatarAlt(s);
-      const pokemonCount = getPokemons().filter(p => p.owner === s.student_name).length;
-      return `<div class="class-top3-card rank-${index + 1}" data-student-name="${String(s.student_name).replace(/"/g, '&quot;')}">
-        <span class="class-top3-medal" aria-label="Rank ${index + 1}">${medals[index]}</span>
-        <img class="class-top3-avatar" src="${avatarSrc}" alt="${avatarAlt}" loading="lazy">
-        <div><span class="class-top3-name" title="${s.student_name}">${s.student_name}</span><div class="class-top3-score">${s.coins || 0} 🪙</div><div class="class-top3-detail">${pokemonCount} Pokémon</div></div>
-      </div>`;
-    }).join('')}</div>
-  </div>`;
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  return `<div class="gym-top3" aria-label="Top 3 students in ${esc(className)}"><span class="gym-top3-label">Top 3</span><div class="gym-bubbles">${students.map((s, index) => `<span class="gym-bubble rank-${index + 1}" title="${esc(s.student_name)} · ${Number(s.coins) || 0} coins"><img src="${getStudentAvatarSrc(s)}" alt="${esc(getStudentAvatarAlt(s))}" loading="lazy"><i aria-hidden="true">${medals[index]}</i></span>`).join('')}</div><span class="gym-top3-names">${students.map(s => esc(s.student_name)).join(' · ')}</span></div>`;
 }
 
 function renderTeacherDashboard() {
@@ -8586,7 +8575,9 @@ function renderTeacherDashboard() {
       // School-assigned teachers can manage ALL classes in their school (not just assigned ones)
       const canManage = currentTeacher === 'Ayman' || isSchoolAssigned || isClassAssigned;
       const onClickHandler = canManage ? `navigateTo('students','${navSchool}','${c.class_name}')` : `openClassPreviewModal('${navSchool}','${c.class_name}')`;
-      return `<div class="bg-white rounded-xl p-4 shadow-sm border card-hover text-center group relative" onclick="${onClickHandler}"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 text-lg">📚</div><div class="flex-1 text-left"><p class="font-semibold">${c.class_name}</p><p class="text-xs text-gray-400">${getStudents(navSchool, c.class_name).length} students</p>${classTeacherPill(navSchool, c.class_name)}</div></div>${renderClassTop3Leaderboard(c.class_name)}${canManage ? `<button class="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-6 h-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600 font-bold" onclick="event.stopPropagation(); openEditClassModal('${c.__backendId}','${navSchool}')">✎</button>` : ''}</div>`;
+      const roster = getStudents(navSchool, c.class_name);
+      const totalCoins = roster.reduce((a, s) => a + (Number(s.coins) || 0), 0);
+      return `<div class="gym-card group relative" role="button" tabindex="0" onclick="${onClickHandler}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}"><div class="gym-head"><p class="gym-name">${c.class_name}</p><span class="gym-enter" aria-hidden="true">${canManage ? 'Enter →' : 'View →'}</span></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}${canManage ? `<button class="gym-edit" title="Edit class" aria-label="Edit ${c.class_name}" onclick="event.stopPropagation(); openEditClassModal('${c.__backendId}','${navSchool}')">✎</button>` : ''}</div>`;
     }).join('') || '<p class="text-gray-400 text-sm col-span-3 text-center py-8">No classes yet.</p>';
   } else if (isViewOnly) {
     // View-only mode for unassigned classes: show only student collection cards with name, coins, Pokémon count, and total value
@@ -11435,11 +11426,17 @@ function getClassTeacherNames(schoolName, className) {
   return [...new Set(names)].filter(n => n !== 'Ayman' || cls?.show_admin_teacher === true);
 }
 window.getClassTeacherNames = getClassTeacherNames;
+function classTeacherAvatarFor(name) {
+  const clean = String(name || '').replace(/^TR\.\s*/i, '').trim();
+  const rec = getTeachers().find(t => t.teacher_name === clean) || (/^ayman\b/i.test(clean) ? getTeachers().find(t => t.teacher_name === 'Ayman') : null);
+  return teacherAvatarSrc(rec?.teacher_avatar);
+}
+window.classTeacherAvatarFor = classTeacherAvatarFor;
 function classTeacherPill(schoolName, className) {
   const names = getClassTeacherNames(schoolName, className);
   if (!names.length) return '';
   const esc = v => String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  return `<span class="class-teacher-pill" title="Class teacher">🎓 ${names.map(n => 'TR. ' + esc(n.replace(/^TR\.\s*/i, ''))).join(', ')}</span>`;
+  return `<span class="class-teacher-pill" title="Class teacher">${names.map(n => { const src = classTeacherAvatarFor(n); return `<span class="class-teacher-item">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}TR. ${esc(n.replace(/^TR\.\s*/i, ''))}</span>`; }).join('')}</span>`;
 }
 function getAssignedClasses(teacherName) {
   return allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_teacher === teacherName);
