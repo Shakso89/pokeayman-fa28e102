@@ -11141,10 +11141,24 @@ document.getElementById('award-form').addEventListener('submit', async e => {
   if (!student) { toast('Could not find that student.'); return; }
   if (!(await deductTeacherCredits(amount))) return;
   const latest = getStudentRecordByStableId(student.__backendId) || student;
-  const saved = await persistCanonicalStudentPatch(latest.__backendId, { coins: (Number(latest.coins) || 0) + amount }, 'Could not award coins.');
-  if (!saved) { await refundTeacherCredits(amount, currentTeacher); return; }
-  await logCredit('Award', amount, name); playTransactionSound('reward'); toast(`Awarded ${amount} coins to ${name}!`);
-  showStudentAwardCelebration(saved, amount);
+  const optimistic = { ...latest, coins: (Number(latest.coins) || 0) + amount };
+  // Optimistic: celebrate and update the UI instantly, persist in the background.
+  allData = allData.map(r => r.__backendId === latest.__backendId ? optimistic : r);
+  if (currentRole === 'student' && currentStudentRecordId === latest.__backendId) setCurrentStudentRecord(optimistic);
+  renderStudentDashboard();
+  playTransactionSound('reward'); toast(`Awarded ${amount} coins to ${name}!`);
+  showStudentAwardCelebration(optimistic, amount);
+  persistCanonicalStudentPatch(latest.__backendId, { coins: optimistic.coins }, 'Could not award coins.').then(async saved => {
+    if (!saved) {
+      allData = allData.map(r => r.__backendId === latest.__backendId ? latest : r);
+      if (currentRole === 'student' && currentStudentRecordId === latest.__backendId) setCurrentStudentRecord(latest);
+      renderStudentDashboard();
+      await refundTeacherCredits(amount, currentTeacher);
+      toast('Award failed — coins were not added.');
+      return;
+    }
+    logCredit('Award', amount, name);
+  });
 });
 
 // Gift All
