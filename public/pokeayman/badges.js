@@ -35,6 +35,25 @@
     ['class-3', '🥉', 'Rising Star', '#3 in this class']
   ];
 
+  const GLOBAL_PINS = [
+    ['global-1', '👑', 'Grand Champion', '#1 in the whole school'],
+    ['global-2', '🌟', 'Mythic Elite', '#2 in the whole school'],
+    ['global-3', '⚡', 'Legendary Ace', '#3 in the whole school']
+  ];
+  const val = s => (typeof getStudentTotalValue === 'function' ? getStudentTotalValue(s) : Number(s.coins) || 0);
+  function globalRank(key) {
+    try { const r = mergeGlobalLeaderboardStudents().sort((a, b) => val(b) - val(a) || String(a.student_name).localeCompare(String(b.student_name))).slice(0, 3).map(s => norm(s.student_name)); const i = r.indexOf(key); return i + 1; } catch (e) { return 0; }
+  }
+  function classRank(card, key) {
+    try {
+      if (!card.closest('#view-student-profile, #students-list, #classmate-profile-modal')) return 0;
+      const sch = typeof navSchool !== 'undefined' ? navSchool : '', cls = typeof navClass !== 'undefined' ? navClass : '';
+      if (!sch || !cls) return 0;
+      const r = getStudents(sch, cls).slice().sort((a, b) => val(b) - val(a) || String(a.student_name).localeCompare(String(b.student_name))).slice(0, 3).map(s => norm(s.student_name));
+      return r.indexOf(key) + 1;
+    } catch (e) { return 0; }
+  }
+
   function pin(cls, icon, title, tip) {
     const el = document.createElement('span');
     el.className = `pk-pin pk-pin-${cls}`;
@@ -51,21 +70,24 @@
     const arcade = leader('game_wins');
     const sel = '#students-list > .trainer-student-card, .student-classmate-card, #view-student-profile .cp-identity, #student-dashboard .global-profile-card, #classmate-profile-modal .global-profile-card';
     root.querySelectorAll(sel).forEach(card => {
-      card.querySelectorAll(':scope > .pk-pins').forEach(n => n.remove());
+      card.querySelectorAll(':scope > .pk-pins, :scope > .cp-name > .pk-pins').forEach(n => n.remove());
       let name = card.dataset.studentName || '';
       if (!name && typeof getStudentRecordForCard === 'function') name = getStudentRecordForCard(card)?.student_name || '';
       if (!name) name = card.querySelector('#profile-student-name, #my-student-name, .student-classmate-name, h2, h3')?.textContent?.trim() || '';
       const key = norm(name); if (!key) return;
       const pins = [];
-      const m = (card.className.match(/class-rank-(\d)/) || [])[1];
-      if (m && +m <= 3) { const c = CLASS_PINS[+m - 1]; pins.push(pin(...c)); }
+      let m = +((card.className.match(/class-rank-(\d)/) || [])[1] || 0);
+      if (!m) m = classRank(card, key);
+      if (m && m <= 3) { const c = CLASS_PINS[m - 1]; pins.push(pin(...c)); }
+      const g = globalRank(key);
+      if (g) pins.unshift(pin(...GLOBAL_PINS[g - 1]));
       if (battle && battle.key === key) pins.push(pin('battle', '⚔️', 'Battle Master', `School record: ${battle.count} arena win${battle.count === 1 ? '' : 's'}`));
       if (arcade && arcade.key === key) pins.push(pin('arcade', '🕹️', 'Arcade Prodigy', `School record: ${arcade.count} game win${arcade.count === 1 ? '' : 's'}`));
       if (!pins.length) return;
       const row = document.createElement('div');
       row.className = 'pk-pins';
       pins.forEach(p => row.appendChild(p));
-      card.appendChild(row);
+      (card.matches('.cp-identity') && card.querySelector('.cp-name') || card).appendChild(row);
     });
   };
 
