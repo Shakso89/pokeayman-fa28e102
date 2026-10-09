@@ -138,8 +138,8 @@
     const all = g(() => allData.filter((r) => r.type === 'class'), []);
     if (g(() => canAccessAdmin(), false)) return all;
     const me = g(() => currentTeacher, '');
-    const ac = g(() => getAssignedClasses(me), []), as = g(() => getAssignedSchools(me), []).map((a) => a.school_name);
-    return all.filter((c) => as.includes(c.school_name) || ac.some((a) => a.school_name === c.school_name && a.class_name === c.class_name) || [c.created_by, c.teacher_name, c.assigned_teacher].includes(me));
+    const ac = g(() => getAssignedClasses(me), []), as = g(() => getAssignedSchools(me), []).map((a) => a.assigned_school || a.school_name);
+    return all.filter((c) => as.includes(c.school_name) || ac.some((a) => (a.assigned_school || a.school_name) === c.school_name && (a.assigned_class || a.class_name) === c.class_name) || [c.created_by, c.teacher_name, c.assigned_teacher].includes(me));
   }
   function togglePop() {
     const pop = $('ts-chooser'), btn = document.querySelector('.ts-switch');

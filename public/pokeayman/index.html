@@ -3925,6 +3925,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/battle-workspace.css">
 <script src="/pokeayman/sfx.js"></script>
 <link rel="stylesheet" href="/pokeayman/teacher-shell.css">
+<link rel="stylesheet" href="/pokeayman/leaderboard-views.css">
 <link rel="stylesheet" href="/pokeayman/profile-workspace.css">
 <link rel="stylesheet" href="/pokeayman/vocab-editor.css">
 <link rel="stylesheet" href="/pokeayman/games-arcade.css">
@@ -16982,63 +16983,14 @@ document.getElementById('my-total-value').parentElement.addEventListener('click'
 function openClassPreviewModal(schoolName, className) {
   const students = getStudents(schoolName, className);
   if (!students.length) { toast('No students in this class'); return; }
-  
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const ranked = students.slice().sort((x, y) => getStudentTotalValue(y) - getStudentTotalValue(x) || String(x.student_name).localeCompare(String(y.student_name)));
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto">
-    <div class="sticky top-0 bg-gradient-to-r from-blue-500 to-purple-600 p-6 flex items-center justify-between rounded-t-2xl">
-      <div>
-        <h2 class="heading-font text-2xl font-bold text-white">${className} - Students</h2>
-        <p class="text-sm text-blue-100 mt-1">${students.length} student${students.length !== 1 ? 's' : ''}</p>
-      </div>
-      <button id="preview-close" class="text-white hover:text-gray-200 text-3xl font-bold">×</button>
-    </div>
-    <div class="p-6">
-      <div id="preview-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
-    </div>
-  </div>`;
+  modal.className = 'pk-cv-overlay';
+  modal.innerHTML = `<section class="pk-cv-dialog" role="dialog" aria-modal="true" aria-label="${esc(className)} students"><header class="pk-cv-head"><div><p class="pk-cv-kicker">${esc(schoolName)} · View only</p><h2>${esc(className)}</h2><p class="pk-cv-sub">${students.length} trainer${students.length !== 1 ? 's' : ''}</p></div><button type="button" class="pk-cv-close" aria-label="Close">×</button></header><div class="pk-cv-grid">${ranked.map((s, i) => { const count = getPokemons().filter(p => p.owner === s.student_name).length; const medal = ['🥇','🥈','🥉'][i] || ''; return `<button type="button" class="pk-cv-card${i < 3 ? ' top top-' + (i + 1) : ''}" data-name="${esc(s.student_name)}"><span class="pk-cv-rank">${medal || '#' + (i + 1)}</span><img src="${esc(getStudentAvatarSrc(s))}" alt="" loading="lazy"><strong>${esc(s.student_name)}</strong><span class="pk-cv-stats"><span>🪙 ${Number(s.coins) || 0}</span><span>⚡ ${count}</span><span>💜 ${Math.floor(getStudentTotalValue(s))}</span></span></button>`; }).join('')}</div></section>`;
   document.body.appendChild(modal);
-  
-  const top3Global = getTop3Students();
-  const medals = ['🥇', '🥈', '🥉'];
-  const medalColors = {
-    '🥇': { border: 'border-yellow-400 border-4', bg: 'bg-gradient-to-b from-yellow-100 to-yellow-50', badge: 'bg-yellow-400 text-yellow-900' },
-    '🥈': { border: 'border-gray-300 border-4', bg: 'bg-gradient-to-b from-gray-100 to-gray-50', badge: 'bg-gray-300 text-gray-900' },
-    '🥉': { border: 'border-orange-400 border-4', bg: 'bg-gradient-to-b from-orange-100 to-orange-50', badge: 'bg-orange-400 text-orange-900' }
-  };
-  
-  const grid = modal.querySelector('#preview-grid');
-  grid.innerHTML = students.map((s) => {
-    const avatarPokemonId = s.avatar_pokemon_id || null;
-    const rank = top3Global.indexOf(s.student_name);
-    const isTop3 = rank !== -1;
-    const medal = isTop3 ? medals[rank] : null;
-    const styling = isTop3 ? medalColors[medal] : null;
-    const baseClasses = isTop3 ? `${styling.border} ${styling.bg} shadow-lg ring-2 ring-offset-2 ${rank === 0 ? 'ring-yellow-300' : rank === 1 ? 'ring-gray-300' : 'ring-orange-300'}` : 'bg-white rounded-lg p-3 shadow-sm border';
-    const padding = isTop3 ? 'p-4' : 'p-3';
-    
-    let totalValue = s.coins || 0;
-    const myPokes = getPokemons().filter(p => p.owner === s.student_name);
-    myPokes.forEach(p => {
-      const maxHP = getMaxHP(p);
-      const currentHP = getHealedHP(p);
-      const hpRatio = Math.max(0, Math.min(1, currentHP / maxHP));
-      const scaledPrice = (p.pokemon_price || 0) * hpRatio;
-      totalValue += scaledPrice;
-    });
-    
-    return `<div class="rounded-lg ${padding} card-hover text-center group relative cursor-pointer transition-all hover:shadow-xl ${baseClasses}" onclick="openLeaderboardStudentCollection('${s.student_name}')">
-      ${isTop3 ? `<div class="absolute -top-3 -right-3 ${styling.badge} rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold shadow-lg">${medal}</div>` : ''}
-      ${isTop3 ? `<div class="absolute -top-2 left-1/2 transform -translate-x-1/2 ${styling.badge} px-3 py-1 rounded-full text-xs font-bold shadow-md">#${rank + 1}</div>` : ''}
-      ${avatarPokemonId ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarPokemonId}.png" class="w-36 h-36 mx-auto mb-2 object-contain ${isTop3 ? 'drop-shadow-lg' : ''}" alt="Avatar">` : `<div class="w-36 h-36 mx-auto mb-2 bg-blue-100 rounded-lg flex items-center justify-center text-6xl">👤</div>`}
-      <p class="font-medium text-sm ${isTop3 ? 'font-bold text-lg' : ''}">${s.student_name}</p>
-      <p class="text-amber-500 font-bold text-lg ${isTop3 ? 'text-xl' : ''}">${s.coins||0} 🪙</p>
-      <p class="text-xs text-gray-400">${getPokemons().filter(p => p.owner === s.student_name).length} Pokémon</p>
-      <p class="text-xs text-purple-600 font-bold">💜 ${Math.floor(totalValue)}</p>
-    </div>`;
-  }).join('') || '<p class="text-center text-gray-400 py-8">No students found.</p>';
-  
-  modal.querySelector('#preview-close').addEventListener('click', () => modal.remove());
+  modal.querySelectorAll('.pk-cv-card').forEach(c => c.addEventListener('click', () => openLeaderboardStudentCollection(c.dataset.name)));
+  modal.querySelector('.pk-cv-close').addEventListener('click', () => modal.remove());
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
