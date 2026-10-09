@@ -1,4 +1,5 @@
 # Class screen refresh
+- [ ] Correct both-mode contrast for leaders, flashcards, finances and schedule; verify controls without changing saved data.
 - [x] Organize the vocabulary editor and resolve canonical IDs to saved record IDs for batch renaming; isolated preview tests passed for linked/legacy words, reopening, reload, duplicate rejection, failed save/retry and Enter. Signed-in Cloud writes remain unverified because no matching preview account is available; no user lists changed.
 - [x] Apply horizontal Elite Trainer in-class profile and remove profile ±10 controls; verified saved student data, collection/shop/quiz tabs, custom negative amount entry, view-only control hiding, bright/dark modes, champion treatment and 390px layout without changing balances.
 - [x] Finish battle stadium, VS, banners, damage, elemental hits, victory, fainting and full-screen Projector; isolated preview battle passed through victory with active audio output, fullscreen enter/exit, compact layout and no runtime errors. Routing test/build passed; saved Pokémon were untouched.

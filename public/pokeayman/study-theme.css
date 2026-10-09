@@ -1,0 +1,47 @@
+/* Scoped legacy views share the shell's semantic palette. */
+html body .global-leaderboard-dialog { background:var(--ts-surface)!important; color:var(--ts-ink)!important; border-color:var(--ts-border)!important; }
+html body .global-leaderboard-dialog > div:first-child :is(h2,p,button) { color:var(--ts-ink)!important; }
+html body .global-leaderboard-card:not(.lb-champ) { background:var(--ts-deep)!important; color:var(--ts-ink)!important; }
+html body .global-leaderboard-card:not(.lb-champ) :is(p,span,strong,small,div) { color:var(--ts-ink)!important; }
+html body .global-leaderboard-card.lb-champ :is(p,span,strong,small,div) { color:var(--rank-text,var(--ts-ink))!important; }
+html body .global-leaderboard-card.lb-champ .lb-crest :is(small,strong),html body .global-leaderboard-card.lb-champ .global-rank-badge { color:var(--rank-edge)!important; }
+html body .global-leaderboard-card.lb-champ .lb-crest-shield,html body .global-leaderboard-card.lb-champ .lb-crest-shield b { color:var(--ts-action-ink)!important; }
+html body.ts-bright .global-leaderboard-card.lb-champ {
+  background:repeating-linear-gradient(130deg,transparent 0 36px,color-mix(in srgb,var(--rank-edge) 12%,transparent) 37px 38px),linear-gradient(150deg,color-mix(in srgb,var(--rank-edge) 20%,var(--ts-surface)),var(--ts-surface) 72%)!important;
+  --rank-text:var(--ts-ink);
+}
+html body.ts-bright .global-leaderboard-card.lb-champ .lb-crest :is(small,strong),html body.ts-bright .global-leaderboard-card.lb-champ .global-rank-badge { color:var(--ts-ink)!important; }
+html body .global-leaderboard-card :is(.global-card-metrics,.global-card-collection) { background:color-mix(in srgb,var(--ts-ink) 8%,transparent)!important; }
+html body .lb-crest { min-width:0; } html body .lb-crest strong { white-space:normal; }
+
+/* Both readers retain their existing flip, voice, size and zoom handlers. */
+html body .flashcard-popup-shell .flashcard-popup-frame {
+  background:var(--ts-surface)!important; color:var(--ts-ink)!important; border:1px solid var(--ts-border)!important;
+  border-radius:16px!important; padding:20px!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  grid-template-areas:'header header' 'card card' 'sentence sentence' 'read read' 'nav nav' 'close close'!important;
+  gap:16px!important; box-shadow:0 18px 50px color-mix(in srgb,var(--ts-bg) 45%,transparent)!important;
+}
+html body .flashcard-popup-shell { background:none!important; border:none!important; box-shadow:none!important; }
+html body .flashcard-popup-shell .flashcard-popup-header { display:flex!important; flex-wrap:wrap; gap:8px!important; overflow:visible!important; padding-bottom:12px; border-bottom:1px solid var(--ts-border); }
+html body .flashcard-popup-shell .flashcard-popup-header :is(p,span) { color:var(--ts-muted)!important; }
+html body .flashcard-popup-shell .flashcard-controls-row { flex:0 1 auto!important; width:auto!important; }
+html body .flashcard-popup-shell :is(#student-vocab-card,#flashcard-card) { width:100%!important; border:1px solid var(--ts-border)!important; border-radius:12px!important; background:var(--ts-deep)!important; }
+html body .flashcard-popup-shell :is(#student-vocab-card-front,#flashcard-front) { background:var(--ts-deep)!important; color:var(--ts-ink)!important; border-radius:12px!important; }
+html body .flashcard-popup-shell :is(#student-vocab-card-back,#flashcard-back) { background-color:var(--ts-deep)!important; color:var(--ts-muted)!important; }
+html body .flashcard-popup-shell :is(#student-vocab-card-front,#flashcard-front) p { color:var(--ts-ink)!important; text-shadow:none!important; overflow-wrap:anywhere; }
+html body .flashcard-popup-shell :is(#student-vocab-sentence,#flashcard-sentence) { color:var(--ts-ink)!important; font-size:1.4rem!important; margin:0!important; line-height:1.5!important; }
+html body .flashcard-popup-shell :is(#student-vocab-sentence,#flashcard-sentence) strong { color:var(--ts-red)!important; }
+html body .flashcard-popup-shell button:not(#student-vocab-card) { background:var(--ts-deep)!important; color:var(--ts-ink)!important; border:1px solid var(--ts-border)!important; border-radius:8px!important; box-shadow:none!important; }
+html body .flashcard-popup-shell button:not(#student-vocab-card):hover { border-color:var(--ts-yellow)!important; }
+html body .flashcard-popup-shell button:focus-visible { outline:3px solid var(--ts-yellow)!important; outline-offset:2px; }
+html body .flashcard-popup-shell .flashcard-popup-frame > div:has(#student-vocab-prev),html body .flashcard-popup-shell .flashcard-popup-frame > div:has(#flashcard-prev) { display:flex!important; position:static!important; margin:0!important; grid-area:nav; }
+html body .flashcard-popup-shell :is(#student-vocab-prev,#flashcard-prev,#student-vocab-next,#flashcard-next) { position:static!important; transform:none!important; width:auto!important; height:44px!important; flex:1!important; font-size:.95rem!important; padding:8px 16px!important; }
+html body .flashcard-popup-shell :is(#student-vocab-prev,#flashcard-prev,#student-vocab-next,#flashcard-next)::after { content:none!important; }
+html body .flashcard-popup-shell :is(#student-vocab-next,#flashcard-next) { background:var(--ts-yellow)!important; color:var(--ts-action-ink)!important; }
+html body .flashcard-popup-shell .flashcard-popup-frame > div:has(#student-vocab-read-sentence),html body .flashcard-popup-shell .flashcard-popup-frame > div:has(#flashcard-read-sentence) { padding:0!important; flex-wrap:wrap!important; }
+html body .flashcard-popup-shell :is(#student-vocab-read,#flashcard-read,#student-vocab-read-sentence,#flashcard-read-sentence) { width:auto!important; min-width:0!important; max-width:100%!important; flex:1 1 9rem!important; padding:10px!important; }
+@media(max-width:420px) { html body .flashcard-popup-shell .flashcard-popup-frame { padding:12px!important; gap:12px!important; } }
+
+html body .schedule-weekly-graph :is(.schedule-weekly-graph-name,.schedule-weekly-graph-hours) { color:var(--ts-ink)!important; font-size:.85rem; }
+html body .schedule-weekly-graph-empty { color:var(--ts-muted)!important; }
