@@ -186,7 +186,7 @@
     const set = (id, v) => { const el = $(id); if (el.textContent !== v) el.textContent = v; };
     set('ts-hero-title', g(() => navClass, '') || ''); set('ts-hero-school', g(() => navSchool, '') || '');
     set('ts-hero-count', String(list.length));
-    { const names = g(() => window.getClassTeacherNames(navSchool, navClass), []) || []; const chip = $('ts-hero-teacher-chip'); if (chip) { chip.hidden = !names.length; set('ts-hero-teacher', names.map(n => '🎓 TR. ' + n).join(', ')); } }
+    { const names = g(() => window.getClassTeacherNames(navSchool, navClass), []) || []; const chip = $('ts-hero-teacher-chip'); if (chip) { chip.hidden = !names.length; const html = names.map(n => { const src = g(() => window.classTeacherAvatarFor(n), ''); return (src ? `<img class="class-teacher-avatar" src="${esc(src)}" alt="">` : '🎓 ') + 'TR. ' + esc(n); }).join(', '); const el = $('ts-hero-teacher'); if (el.innerHTML !== html) el.innerHTML = html; } }
     set('ts-hero-coins', list.reduce((a, s) => a + (Number(s.coins) || 0), 0).toLocaleString());
   }
   function onHero(e) {
