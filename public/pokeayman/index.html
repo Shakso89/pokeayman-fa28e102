@@ -14022,7 +14022,8 @@ function chooseFindMeScore(listName) {
 
 function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   setGameReplay(() => { resetGameTurnState(); openGameFindMe(listName, winningScore, timerSeconds); });
-  const words = getGameWords(listName, true).filter(w => w.vocab_word && w.vocab_image);
+  const availableWords = getGameWords(listName, true).filter(w => w.vocab_word && w.vocab_image);
+  const words = currentRole === 'student' ? availableWords.slice().sort(() => Math.random() - 0.5).slice(0, winningScore) : availableWords;
   if (!words.length) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: selected lists need valid words with pictures.' : 'Find Me needs words with pictures'); return; }
   let round = 0, locked = false;
   // Each player has an independent score against the same fixed target.
@@ -14065,6 +14066,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   const updateFindMeWordSize = () => box.querySelectorAll('.find-me-word').forEach(btn => { btn.style.fontSize = `${findMeWordSize}px`; });
   const getFindMeRoundItems = (target, itemCount) => {
     const pool = words.filter(word => word.vocab_word !== target.vocab_word);
+    if (currentRole === 'student') return [target, ...pool.slice().sort(() => Math.random() - 0.5).slice(0, itemCount - 1)].sort(() => Math.random() - 0.5);
     const items = [target];
     while (items.length < itemCount) {
       const source = pool.length ? pool[Math.floor(Math.random() * pool.length)] : target;
@@ -14938,7 +14940,8 @@ let hangmanSession = null;
 // Scramble Game
 function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   setGameReplay(() => { resetGameTurnState(); scrambleSession = null; openGameScramble(listName, wordCount, timerSeconds); });
-  const words = getGameWords(listName);
+  const availableWords = getGameWords(listName);
+  const words = currentRole === 'student' ? availableWords.slice().sort(() => Math.random() - 0.5).slice(0, wordCount) : availableWords;
   if (words.length < 1) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'List needs at least 1 word'); return; }
   // Always initialize the complete round state before loading the first word.
   // The previous two-step initialization left playerWords undefined on a fresh round.
@@ -15313,7 +15316,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
 }
 
 // Hangman Game with Classic Drawing
-function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty = 'easy', freshRound = false) {
+function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty = 'easy', freshRound = false, studentRound = null) {
   const difficultyConfig = { easy: { maxWrong: 8, showClue: true }, hard: { maxWrong: 8, showClue: false } };
   difficulty = difficultyConfig[difficulty] ? difficulty : 'easy';
   const activeDifficulty = difficultyConfig[difficulty];
@@ -15322,8 +15325,9 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
   setGameReplay(() => { resetGameTurnState(); hangmanSession = null; openGameHangman(listName, wordCount, timerSeconds, difficulty, true); });
   const words = getGameWords(listName);
   if (words.length < 1) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'List needs at least 1 word'); return; }
+  if (currentRole === 'student' && !studentRound) studentRound = { words: words.slice().sort(() => Math.random() - 0.5).slice(0, wordCount), index: 0 };
   const sessionIsValid = hangmanSession && hangmanSession.listName === listName && hangmanSession.difficulty === difficulty && hangmanSession.word && !hangmanSession.ended;
-  if (!sessionIsValid) hangmanSession = { listName, difficulty, guessed: [], wrongGuesses: 0, word: words[Math.floor(Math.random() * words.length)].vocab_word.toUpperCase(), ended: false };
+  if (!sessionIsValid) hangmanSession = { listName, difficulty, guessed: [], wrongGuesses: 0, word: (studentRound ? studentRound.words[studentRound.index] : words[Math.floor(Math.random() * words.length)]).vocab_word.toUpperCase(), ended: false };
   hangmanSession.difficulty = difficulty;
   hangmanSession.guessed = [...new Set(Array.isArray(hangmanSession.guessed) ? hangmanSession.guessed : [])].filter(letter => /^[A-Z]$/.test(letter));
   hangmanSession.wrongGuesses = Math.max(0, Math.min(activeDifficulty.maxWrong, Number(hangmanSession.wrongGuesses) || 0));
@@ -15570,6 +15574,13 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
             const winningPlayer = winningEntry?.player || activeGamePlayers[activeGamePlayerIndex];
             const winningName = winningPlayer?.student_name || 'Player';
             setTimeout(() => {
+              if (!document.body.contains(modal)) return;
+              if (currentRole === 'student' && studentRound && studentRound.index + 1 < studentRound.words.length) {
+                studentRound.index += 1;
+                modal.remove();
+                openGameHangman(listName, wordCount, 0, difficulty, true, studentRound);
+                return;
+              }
               hangmanSession = { listName, winningScore: wordCount, guessed: [], wrongGuesses: 0, word: null };
               showGameCelebration(modal, `Good job ${winningName}!`, word, winningPlayer, currentWordRecord?.vocab_image || '');
             }, 650);
