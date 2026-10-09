@@ -220,9 +220,14 @@
         const sel = $('award-student'); sel.value = name; $('award-amount').value = 10; submit($('award-form'));
       } else {
         const latest = g(() => getStudentRecordByStableId(card.dataset.studentId), null); if (!latest) return;
-        const saved = await persistCanonicalStudentPatch(latest.__backendId, { coins: Math.max(0, (Number(latest.coins) || 0) - 10) });
-        if (!saved) return;
-        await logCredit('-10 coins', -10, saved.student_name); g(() => playTransactionSound('deduction')); g(() => showStudentAwardCelebration(saved, -10));
+        const optimistic = { ...latest, coins: Math.max(0, (Number(latest.coins) || 0) - 10) };
+        allData = allData.map((r) => r.__backendId === latest.__backendId ? optimistic : r);
+        g(() => renderStudentDashboard());
+        g(() => playTransactionSound('deduction')); g(() => showStudentAwardCelebration(optimistic, -10));
+        persistCanonicalStudentPatch(latest.__backendId, { coins: optimistic.coins }, 'Could not save.').then((saved) => {
+          if (!saved) { allData = allData.map((r) => r.__backendId === latest.__backendId ? latest : r); g(() => renderStudentDashboard()); g(() => toast('Could not save the deduction.')); return; }
+          logCredit('-10 coins', -10, saved.student_name);
+        });
       }
     } finally { setTimeout(() => { busy = false; }, 400); }
   }, true);
