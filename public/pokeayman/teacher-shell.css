@@ -258,3 +258,26 @@ body.ts-on #ts-sidebar::-webkit-scrollbar { display: none; }
 body.ts-on #ts-theme-toggle { padding: clamp(6px, 1vh, 10px) 12px; }
 #ts-sidebar .ts-me { padding: clamp(6px, 1vh, 10px); }
 @media (max-height: 760px) { #ts-sidebar .ts-avatar { width: 46px; height: 46px; } #ts-sidebar .ts-brand small { display: none; } }
+
+/* Bright mode: cover popups, Teacher Card and legacy dark panels everywhere. */
+body.ts-bright {
+  --ts-bg: oklch(0.97 0.017 230); --ts-surface: oklch(0.995 0.003 230); --ts-deep: oklch(0.94 0.032 230);
+  --ts-ink: oklch(0.29 0.05 260); --ts-muted: oklch(0.48 0.04 260); --ts-border: oklch(0.86 0.035 230);
+  --es-deep: var(--ts-deep); --es-surface: var(--ts-surface); --es-ink: var(--ts-ink); --es-muted: var(--ts-muted); --es-border: var(--ts-border);
+  --class-surface: var(--ts-surface); --class-deep: var(--ts-deep); --class-ink: var(--ts-ink); --class-muted: var(--ts-muted); --class-border: var(--ts-border);
+}
+html body.ts-bright :is(.trainer-hub,.tsb-card,.pk-cv-dialog,.pk-cv-head,.ts-pop,.bg-slate-900,.bg-gray-800,.bg-gray-900,.bg-indigo-950,[class*="bg-indigo-950"],[class*="bg-slate-9"],[class*="from-indigo-950"]) {
+  background: var(--ts-surface) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; box-shadow: 0 10px 30px color-mix(in srgb, var(--ts-blue) 12%, transparent) !important;
+}
+html body.ts-bright :is(.trainer-hub .th-panel,.th-form,.th-progress,.th-grid .teacher-avatar-option,.et-stats div,.et-chip span,.es-class-row,.es-avatar-btn,.pk-cv-card,.tsb-card .tsb-sub) { background: var(--ts-deep) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; }
+html body.ts-bright :is(.trainer-hub,.tsb-card,.pk-cv-dialog,.bg-slate-900,.es-card) :is(h1,h2,h3,h4,p,span,label,strong,small,td,th,.text-white,.text-slate-300,.text-gray-300,.text-amber-100,.text-amber-200,.text-indigo-200) { color: var(--ts-ink) !important; text-shadow: none !important; }
+html body.ts-bright :is(.th-field span,.th-progress-head,.th-kicker,.th-hint,.th-email,.et-kicker,.tsb-kicker,.pk-cv-kicker,.pk-cv-sub,.th-ghost) { color: var(--ts-muted) !important; }
+html body.ts-bright :is(.th-close,.pk-cv-close,.es-close) { background: var(--ts-deep) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; }
+html body.ts-bright .th-card { background: linear-gradient(120deg, #ffe680, #ffcb05 45%, #9ec5ff) !important; color: #1d2650 !important; }
+html body.ts-bright .th-card * { color: #1d2650 !important; }
+html body.ts-bright .th-chip-gold { background: #1d2650 !important; } html body.ts-bright .th-chip-gold, html body.ts-bright .th-chip-gold * { color: #ffe680 !important; }
+html body.ts-bright .trainer-hub-backdrop, html body.ts-bright :is(.es-overlay,.tsb-overlay,.pk-cv-overlay) { background: color-mix(in srgb, var(--ts-ink) 35%, transparent) !important; }
+html body.ts-bright :is(.trainer-hub,.es-card,.bg-slate-900,.pk-cv-dialog) :is(input:not([type=checkbox]):not([type=radio]):not([type=color]),select,textarea) { background: var(--ts-surface) !important; color: var(--ts-ink) !important; border: 1px solid var(--ts-border) !important; }
+html body.ts-bright .es-card { background: var(--ts-surface) !important; }
+html body.ts-bright #app-screen :is(.text-amber-200,.text-amber-300,.text-amber-100,.text-indigo-200,.text-slate-300,.text-gray-300,.text-green-300) { color: var(--ts-ink) !important; }
+html body.ts-bright #app-screen :is(#battle-left,#battle-right) :is(p) { color: var(--ts-ink) !important; }
