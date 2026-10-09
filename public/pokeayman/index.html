@@ -11416,18 +11416,29 @@ function getAllTeacherClasses() {
   return allData.filter(r => r.type === 'class');
 }
 
+function assignmentTeacherName(r) {
+  const id = String(r.assigned_teacher_id || '').trim();
+  const rec = id && getTeachers().find(t => t.__backendId === id);
+  return String((rec && rec.teacher_name) || r.assigned_teacher || '').trim();
+}
+function assignmentMatchesTeacher(r, teacherName) {
+  const recs = getTeachers().filter(t => t.teacher_name === teacherName);
+  if (currentRole === 'teacher' && teacherName === currentTeacher && currentTeacherRecordId) { const me = getTeachers().find(t => t.__backendId === currentTeacherRecordId); if (me && !recs.includes(me)) recs.push(me); }
+  const id = String(r.assigned_teacher_id || '').trim();
+  if (id) return recs.some(t => t.__backendId === id);
+  return r.assigned_teacher === teacherName;
+}
 function getClassTeacherNames(schoolName, className) {
-  const names = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === className).map(r => String(r.assigned_teacher || '').trim()).filter(Boolean);
+  const names = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === className).map(assignmentTeacherName).filter(Boolean);
   const cls = getClasses(schoolName).find(c => c.class_name === className);
-  const isAdminName = n => /^ayman( soliman)?$/i.test(n);
-  const rest = names.filter(n => !isAdminName(n));
+  const rest = names.filter(n => n !== 'Ayman');
   if (cls && cls.show_admin_teacher === true) rest.unshift('Ayman');
   return [...new Set(rest)];
 }
 window.getClassTeacherNames = getClassTeacherNames;
 function classTeacherAvatarFor(name) {
   const clean = String(name || '').replace(/^TR\.\s*/i, '').trim();
-  const rec = clean === 'Ayman' ? getAdminTeacherRecord() : getTeachers().find(t => t.teacher_name === clean);
+  const rec = clean === 'Ayman' ? getAdminTeacherRecord() : getTeachers().find(t => t.teacher_name === clean && t.teacher_role !== 'admin');
   return teacherAvatarSrc(rec?.teacher_avatar);
 }
 window.classTeacherAvatarFor = classTeacherAvatarFor;
@@ -11439,12 +11450,19 @@ function classTeacherPill(schoolName, className) {
   return `<span class="class-teacher-pill" title="Class teacher">${names.map(n => { const src = classTeacherAvatarFor(n); return `<span class="class-teacher-item" title="TR. ${esc(n)}">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}TR. ${esc(n.replace(/^TR\.\s*/i, ''))}</span>`; }).join('')}</span>`;
 }
 function getAssignedClasses(teacherName) {
-  return allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_teacher === teacherName);
+  return allData.filter(r => r.type === 'teacher_class_assignment' && assignmentMatchesTeacher(r, teacherName));
 }
+window.getAssignedClasses = getAssignedClasses;
 async function deleteTeacher(teacherId, name) { if (name === 'Ayman') { toast('Cannot delete admin!'); return; } const teacher = allData.find(t => t.__backendId === teacherId); if (teacher) { await window.dataSdk.delete(teacher); toast(`${name} deleted!`); } }
 
 function getAssignedSchools(teacherName) {
-  return allData.filter(r => r.type === 'teacher_school_assignment' && r.assigned_teacher === teacherName);
+  return allData.filter(r => r.type === 'teacher_school_assignment' && assignmentMatchesTeacher(r, teacherName));
+}
+window.getAssignedSchools = getAssignedSchools;
+async function relinkTeacherAssignments(teacherRec, oldName, newName) {
+  if (!teacherRec) return;
+  const rows = allData.filter(r => (r.type === 'teacher_class_assignment' || r.type === 'teacher_school_assignment') && (r.assigned_teacher_id === teacherRec.__backendId || (!r.assigned_teacher_id && r.assigned_teacher === oldName)));
+  for (const r of rows) await window.dataSdk.update({ ...r, assigned_teacher: newName, assigned_teacher_id: teacherRec.__backendId });
 }
 
 async function openEditSchoolModal(schoolId, schoolName) {
