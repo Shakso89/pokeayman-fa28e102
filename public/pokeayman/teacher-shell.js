@@ -28,7 +28,7 @@
   ];
   const ZONE_ITEMS = [
     ['schedule', '🗓️', 'Schedule'], ['financial', '💰', 'Financial'], ['history', '🕘', 'History'],
-    ['vb-lists', '🔖', 'My Word Banks'], ['profile', '🎓', 'Trainer Card'],
+    ['vb-lists', '🔖', 'My Word Banks'], ['profile', '🎓', 'Teacher Card'],
   ];
 
   function build() {
@@ -177,7 +177,7 @@
     if (!h) {
       h = document.createElement('section'); h.id = 'ts-hero'; h.className = 'ts-hero';
       h.innerHTML = `<div class="ts-hero-text"><h2 id="ts-hero-title"></h2><p id="ts-hero-school"></p>
-        <div class="ts-chips"><span class="ts-chip"><b id="ts-hero-count">0</b><small>Students</small></span><span class="ts-chip"><b id="ts-hero-coins">0</b><small>Total coins</small></span></div></div>
+        <div class="ts-chips"><span class="ts-chip"><b id="ts-hero-count">0</b><small>Students</small></span><span class="ts-chip"><b id="ts-hero-coins">0</b><small>Total coins</small></span><span class="ts-chip" id="ts-hero-teacher-chip" hidden><b id="ts-hero-teacher"></b><small>Teacher</small></span></div></div>
         <div class="ts-hero-actions"><button type="button" class="ts-btn ghost" data-hero="gift">🎁 Gift whole class</button><button type="button" class="ts-btn" data-hero="add">＋ Add student</button></div>`;
       sub.prepend(h);
       h.addEventListener('click', onHero);
@@ -186,6 +186,7 @@
     const set = (id, v) => { const el = $(id); if (el.textContent !== v) el.textContent = v; };
     set('ts-hero-title', g(() => navClass, '') || ''); set('ts-hero-school', g(() => navSchool, '') || '');
     set('ts-hero-count', String(list.length));
+    { const names = g(() => window.getClassTeacherNames(navSchool, navClass), []) || []; const chip = $('ts-hero-teacher-chip'); if (chip) { chip.hidden = !names.length; set('ts-hero-teacher', names.map(n => '🎓 TR. ' + n).join(', ')); } }
     set('ts-hero-coins', list.reduce((a, s) => a + (Number(s.coins) || 0), 0).toLocaleString());
   }
   function onHero(e) {
