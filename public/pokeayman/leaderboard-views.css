@@ -36,3 +36,18 @@ body.ts-bright .pk-cv-dialog,body.ts-bright .global-leaderboard-dialog{backgroun
 body.ts-bright .pk-cv-head{background:#f3f7ff}
 body.ts-bright .pk-cv-card,body.ts-bright .global-leaderboard-card{background:#f6f8ff!important;color:#1d2650}
 body.ts-bright .global-leaderboard-card *{color:#1d2650!important}
+/* Top 3 champion treatment, matching class cards */
+html body .global-leaderboard-card.lb-champ{position:relative;overflow:hidden;isolation:isolate;border:3px solid var(--rank-edge)!important;border-radius:22px!important;color:var(--rank-text,#f9fcff);
+  background:repeating-linear-gradient(130deg,transparent 0 36px,color-mix(in srgb,var(--rank-edge) 6%,transparent) 37px 38px),linear-gradient(150deg,var(--rank-deep),var(--rank-night,#111b2d) 72%)!important;
+  box-shadow:0 0 22px color-mix(in srgb,var(--rank-edge) 40%,transparent),0 14px 30px rgba(2,6,23,.45),inset 0 0 0 4px var(--rank-night,#111b2d),inset 0 0 0 5px color-mix(in srgb,var(--rank-edge) 60%,transparent)!important}
+html body .global-leaderboard-card.lb-champ::before{content:'';position:absolute;inset:9px;border-radius:15px;border:1px solid color-mix(in srgb,var(--rank-edge) 40%,transparent);background:none;pointer-events:none}
+html body .global-leaderboard-card.lb-champ::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.22) 48%,transparent 64%);transform:translateX(-120%);animation:pk-foil 4.5s ease-in-out infinite}
+.lb-crest{display:flex;align-items:center;gap:8px;justify-content:center;color:var(--rank-edge)}
+.lb-crest-shield{display:grid;place-items:center;width:38px;height:46px;flex:none;background:linear-gradient(150deg,#fff6cd,var(--rank-edge));color:#111b2d;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);font-size:14px;line-height:1}
+.lb-crest-shield b{font:800 13px Outfit,sans-serif}
+.lb-crest small{display:block;font-size:9px;font-weight:700}
+.lb-crest strong{font:800 14px Outfit,sans-serif;white-space:nowrap}
+html body .global-leaderboard-card.lb-champ .global-rank-badge{background:color-mix(in srgb,var(--rank-edge) 20%,transparent);color:var(--rank-edge);border-color:var(--rank-edge)}
+html body .global-leaderboard-card.lb-champ .global-featured-art{box-shadow:0 0 26px color-mix(in srgb,var(--rank-edge) 45%,transparent)}
+@keyframes pk-foil{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+@media (prefers-reduced-motion:reduce){html body .global-leaderboard-card.lb-champ::after{animation:none}}
