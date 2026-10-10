@@ -5,6 +5,7 @@
   <title>PokéAyman</title>
   <link rel="stylesheet" href="/pokeayman/coin-celebrations.css">
   <link rel="stylesheet" href="/pokeayman/edit-student.css">
+  <script src="/pokeayman/admin-student-editor.js" defer></script>
   <link rel="stylesheet" href="/pokeayman/teacher-streak.css">
   <link rel="stylesheet" href="/pokeayman/home-showcase.css">
   <style>
@@ -9953,7 +9954,7 @@ function renderAdminAllStudents() {
   document.getElementById('admin-students-list').innerHTML = students.map(s => {
     const memberships = String(s.class_memberships || '').split('||').filter(Boolean);
     const status = memberships.length ? memberships.join(' · ') : 'No class assigned';
-    return `<div class="bg-white rounded-lg p-3 shadow-sm border flex items-center gap-3 group" tabindex="0" role="button" data-admin-student-id="${escape(s.__backendId)}" aria-label="View recent activity for ${escape(s.student_name)}" onclick="openStudentActivityPopup(getStudentRecordByStableId(this.dataset.adminStudentId), this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${getStudentAvatarSrc(s)}" class="w-8 h-8 rounded-full object-contain bg-white/20" alt="${escape(getStudentAvatarAlt(s))}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><div class="flex-1 min-w-0"><p class="font-medium text-sm truncate">${escape(s.student_name)}</p><p class="text-xs text-gray-400 truncate">${escape(status)}</p></div><span class="text-amber-500 font-bold text-sm">${s.coins || 0} 🪙</span><button type="button" class="admin-student-edit text-blue-200 bg-blue-900/70 hover:bg-blue-700 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" data-admin-student-id="${escape(s.__backendId)}" aria-label="Edit classes for ${escape(s.student_name)}" title="Edit class memberships">✎</button><button type="button" class="admin-student-delete text-red-500 hover:text-red-600 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" data-admin-student-id="${escape(s.__backendId)}" aria-label="Delete student record for ${escape(s.student_name)}" title="Delete student record">×</button></div>`;
+    return `<div class="bg-white rounded-lg p-3 shadow-sm border flex items-center gap-3 group" tabindex="0" role="button" data-admin-student-id="${escape(s.__backendId)}" aria-label="View recent activity for ${escape(s.student_name)}" onclick="openStudentActivityPopup(getStudentRecordByStableId(this.dataset.adminStudentId), this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${getStudentAvatarSrc(s)}" class="w-8 h-8 rounded-full object-contain bg-white/20" alt="${escape(getStudentAvatarAlt(s))}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><div class="flex-1 min-w-0"><p class="font-medium text-sm truncate">${escape(s.student_name)}</p><p class="text-xs text-gray-400 truncate">${escape(status)}</p></div><span class="text-amber-500 font-bold text-sm">${s.coins || 0} 🪙</span><button type="button" class="admin-student-edit text-blue-200 bg-blue-900/70 hover:bg-blue-700 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" data-admin-student-id="${escape(s.__backendId)}" aria-label="Edit classes for ${escape(s.student_name)}" title="Edit student">✎</button><button type="button" class="admin-student-delete text-red-500 hover:text-red-600 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" data-admin-student-id="${escape(s.__backendId)}" aria-label="Delete student record for ${escape(s.student_name)}" title="Delete student record">×</button></div>`;
   }).join('') || '<p class="text-gray-400 text-sm text-center py-8">No students found.</p>';
 }
 document.getElementById('admin-student-search')?.addEventListener('input', renderAdminAllStudents);
@@ -11313,10 +11314,9 @@ function openEditClassModal(classId, schoolName) {
     modal.remove();
     const res = await window.dataSdk.update({ ...classRec, class_name: newName, class_pin: newPin, ...(box ? { show_admin_teacher: box.checked } : {}) });
     if (res && res.isOk === false) { toast('Could not save class. Please try again.'); return; }
-    if (newName !== oldClassName || newPin !== oldPin) {
-      for (const student of studentsInClass) await window.dataSdk.update({ ...student, class_name: newName, student_pin: newPin });
-      if (newName !== oldClassName) for (const pokemon of pokemonInClass) await window.dataSdk.update({ ...pokemon, class_name: newName });
-    }
+    if (newPin !== oldPin && studentsInClass.length) await window.dataSdk.updateMany(studentsInClass.map(st => ({ ...st, student_pin: newPin })));
+    if (newName !== oldClassName) await window.cascadeClassRename(schoolName, oldClassName, schoolName, newName, classRec.__backendId);
+    try { renderTeacherDashboard(); } catch (e) {}
     toast(`Class "${newName}" saved!`);
   });
   modal.querySelector('#ec-delete').addEventListener('click', async () => {
@@ -11596,14 +11596,8 @@ async function openEditSchoolModal(schoolId, schoolName) {
     allData.push(...uniqueTeacherIds.map(teacherId => { const teacher = getTeachers().find(record => String(record.__backendId || '').trim() === teacherId); return { type: 'teacher_school_assignment', assigned_teacher: teacher?.teacher_name || '', assigned_teacher_id: teacherId, assigned_school: newName, assigned_class: '' }; }));
     // Update all classes in this school with new school name
     const classesInSchool = getClasses(schoolName);
-    for (const cls of classesInSchool) {
-      await window.dataSdk.update({ ...cls, school_name: newName });
-    }
-    // Update all students in this school with new school name
     const studentsInSchool = getAllStudents().filter(s => s.school_name === schoolName);
-    for (const student of studentsInSchool) {
-      await window.dataSdk.update({ ...student, school_name: newName });
-    }
+    if (newName !== schoolName) await window.cascadeClassRename(schoolName, null, newName, null, latestSchool.__backendId);
     
     // Teacher assignments were replaced above by stable teacher ID, including an explicit empty selection.
     renderSchoolsList();
@@ -12168,7 +12162,7 @@ async function deleteAdminStudent(studentId) {
 }
 document.addEventListener('click', event => {
   const editButton = event.target.closest('.admin-student-edit');
-  if (editButton) { event.preventDefault(); event.stopPropagation(); openAdminStudentMembershipEditor(editButton.dataset.adminStudentId); return; }
+  if (editButton) { event.preventDefault(); event.stopPropagation(); openAdminStudentFullEditor(editButton.dataset.adminStudentId); return; }
   const button = event.target.closest('.admin-student-delete');
   if (!button) return;
   event.preventDefault(); event.stopPropagation();
@@ -12176,7 +12170,7 @@ document.addEventListener('click', event => {
 }, true);
 document.addEventListener('keydown', event => {
   const editButton = event.target.closest('.admin-student-edit');
-  if (editButton && ['Enter', ' '].includes(event.key)) { event.preventDefault(); event.stopPropagation(); openAdminStudentMembershipEditor(editButton.dataset.adminStudentId); return; }
+  if (editButton && ['Enter', ' '].includes(event.key)) { event.preventDefault(); event.stopPropagation(); openAdminStudentFullEditor(editButton.dataset.adminStudentId); return; }
   const button = event.target.closest('.admin-student-delete');
   if (!button || !['Enter', ' '].includes(event.key)) return;
   event.preventDefault(); event.stopPropagation();
