@@ -73,3 +73,9 @@ html body .flashcard-popup-shell :is(#student-vocab-next,#flashcard-next).btn-pr
 html body.ts-bright :is(.school-breakdown-panel,.monthly-school-popup-dialog,.salary-school-detail-panel) { background:var(--ts-surface)!important; color:var(--ts-ink)!important; }
 html body.ts-bright :is(.school-breakdown-panel,.monthly-school-popup-dialog,.salary-school-detail-panel) :is(header,.school-breakdown-header,.monthly-school-popup-header,.salary-school-detail-header,th,td,.monthly-school-heading,.monthly-school-section) { background:var(--ts-deep)!important; color:var(--ts-ink)!important; border-color:var(--ts-border)!important; }
 html body.ts-bright :is(.school-breakdown-panel,.monthly-school-popup-dialog,.salary-school-detail-panel) :is(p,span,strong,h2,h3,small,button) { color:var(--ts-ink)!important; }
+/* One-time sub-hours live inside the weekly grid. */
+html body .schedule-sub-head { display:flex; flex-direction:column; gap:4px; color:var(--ts-yellow,#ffcb05)!important; font-weight:800; }
+html body .schedule-sub-head small { color:var(--ts-muted)!important; font-weight:600; }
+html body .schedule-sub-card { background:color-mix(in srgb,var(--sub-c) 85%,transparent)!important; border:2px dashed color-mix(in srgb,var(--ts-yellow,#ffcb05) 70%,transparent); }
+html body .schedule-sub-card, html body .schedule-sub-card * { color:#fff!important; }
+html body .schedule-sub-badge { display:inline-block; font-size:10px; font-weight:800; letter-spacing:.04em; padding:1px 6px; border-radius:999px; background:rgba(0,0,0,.28); margin-bottom:3px; }
