@@ -6316,6 +6316,17 @@ function getClasses(schoolName) { return allData.filter(r => r.type === 'class' 
 function getStudents(schoolName, className) {
   const membershipRows = allData.filter(r => (r.type === 'student' || r.type === 'student_membership') && r.school_name === schoolName && r.class_name === className);
   rebuildCanonicalStudentIndex();
+  // Also include students whose saved class list names this class (multi-class edits from Admin).
+  const wanted = `${String(schoolName || '').trim().toLocaleLowerCase()} / ${String(className || '').trim().toLocaleLowerCase()}`;
+  const seenKeys = new Set(membershipRows.map(r => canonicalStudentKey(r)));
+  allData.forEach(r => {
+    if (r.type !== 'student' || typeof r.class_memberships !== 'string' || !r.class_memberships) return;
+    if (!r.class_memberships.split('||').some(seg => seg.trim().toLocaleLowerCase() === wanted)) return;
+    const k = canonicalStudentKey(r);
+    if (seenKeys.has(k)) return;
+    seenKeys.add(k);
+    membershipRows.push({ ...r, school_name: schoolName, class_name: className });
+  });
   return membershipRows.map(row => {
     const canonicalId = canonicalStudentKey(row);
     const canonical = canonicalStudentAccounts.get(canonicalId);
