@@ -129,3 +129,68 @@
 .baam-stage-float { top: 42% !important; font-size: clamp(3rem, 9vw, 5.5rem) !important; z-index: 10 !important; }
 .game-player-card { position: relative; }
 .game-player-card { overflow: visible !important; }
+
+/* The question reveal is an editorial picture card, not the old particle stage. */
+html body .baam-stage-portal .baam-reveal-panel.baam-question-card {
+  width: min(100%, 560px) !important; min-height: 0 !important;
+  max-height: calc(100dvh - 32px) !important; padding: 0 !important;
+  display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+  gap: 0 !important; border: 1px solid var(--ts-border) !important; border-radius: 8px !important;
+  background: var(--ts-surface) !important; color: var(--ts-ink) !important;
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--ts-deep) 65%, transparent) !important;
+  animation: baamQuestionIn .3s ease-out both !important; overflow-y: auto !important;
+}
+html body .baam-stage-portal .baam-question-card::before,
+html body .baam-stage-portal .baam-question-card::after { display: none !important; }
+.baam-question-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px 14px; border-top: 4px solid var(--ts-yellow); }
+.baam-question-kicker { display: block; font-size: 11px; font-weight: 800; color: var(--ts-muted); }
+.baam-question-header h3 { margin: 2px 0 0; font-size: 24px; line-height: 1.2; color: var(--ts-ink); font-weight: 900; }
+html body .baam-stage-portal .baam-question-card #baam-reveal-close {
+  position: static !important; width: 40px !important; height: 40px !important; flex: none;
+  display: grid; place-items: center; padding: 0; border-radius: 6px !important;
+  background: var(--ts-deep) !important; border: 1px solid var(--ts-border) !important;
+  color: var(--ts-ink) !important; font-size: 26px; box-shadow: none;
+}
+.baam-question-player { display: flex; align-items: center; gap: 10px; margin: 0 24px 16px; font-size: 14px; font-weight: 700; color: var(--ts-ink); min-width: 0; }
+.baam-question-player span { overflow-wrap: anywhere; }
+.baam-question-player .baam-question-avatar { width: 32px !important; height: 32px !important; object-fit: contain; flex: none; }
+html body .baam-stage-portal .baam-question-card #baam-picture {
+  width: calc(100% - 48px) !important; min-height: 0 !important; height: min(42dvh, 320px) !important;
+  max-height: none !important; margin: 0 24px !important; padding: 12px;
+  background: var(--ts-deep); border: 1px solid var(--ts-border); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+html body .baam-stage-portal .baam-question-card #baam-picture img {
+  width: 100% !important; height: 100% !important; max-width: 100% !important;
+  max-height: 100% !important; object-fit: contain !important; filter: none !important; border-radius: 3px;
+}
+html body .baam-stage-portal .baam-question-card #baam-answer-controls {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px !important;
+  width: auto !important; margin: 0 !important; padding: 20px 24px 24px;
+}
+html body .baam-stage-portal .baam-question-card #baam-answer-controls.hidden { display: none !important; }
+html body .baam-stage-portal .baam-question-card #baam-answer-controls button {
+  min-height: 60px !important; padding: 12px !important; display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-size: 17px !important; font-weight: 800; border-radius: 6px !important;
+  box-shadow: none !important; background-image: none !important; transition: transform .15s, background .15s;
+}
+html body .baam-stage-portal .baam-question-card #baam-correct { background: var(--ts-yellow) !important; color: var(--ts-action-ink) !important; border: 1px solid var(--ts-yellow) !important; }
+html body .baam-stage-portal .baam-question-card #baam-wrong { background: var(--ts-deep) !important; color: var(--ts-ink) !important; border: 1px solid color-mix(in srgb, var(--ts-red) 65%, var(--ts-border)) !important; }
+#baam-wrong .baam-answer-icon { color: var(--ts-red); }
+.baam-answer-icon { display: grid; place-items: center; width: 28px; height: 28px; font-size: 25px; line-height: 1; }
+html body .baam-stage-portal .baam-question-card #baam-answer-controls button:hover { transform: translateY(-2px); }
+html body .baam-stage-portal .baam-question-card button:focus-visible { outline: 3px solid var(--ts-yellow); outline-offset: 3px; }
+html body .baam-stage-portal .baam-question-card #baam-answer-status:empty { display: none !important; }
+html body .baam-stage-portal .baam-question-card #baam-answer-status { margin: 16px 24px 24px !important; background: var(--ts-deep) !important; color: var(--ts-ink) !important; border: 1px solid var(--ts-border) !important; border-radius: 6px !important; text-shadow: none; }
+html body .baam-stage-portal .baam-question-card #baam-word { color: var(--ts-yellow) !important; font-size: 24px !important; text-shadow: none !important; }
+html body .baam-stage-portal .baam-question-card :is(.baam-power-name, .baam-power-desc) { color: var(--ts-ink); text-shadow: none; }
+@keyframes baamQuestionIn { from { opacity: 0; transform: translateY(16px) scale(.97); } to { opacity: 1; transform: none; } }
+@media (max-width: 480px), (max-height: 600px) {
+  .baam-stage-portal .baam-reveal-overlay { padding: 12px; }
+  .baam-question-header { padding: 12px 16px; }
+  .baam-question-player { margin: 0 16px 10px; }
+  html body .baam-stage-portal .baam-question-card #baam-picture { width: calc(100% - 32px) !important; margin: 0 16px !important; height: min(38dvh, 280px) !important; }
+  html body .baam-stage-portal .baam-question-card #baam-answer-controls { padding: 16px; gap: 8px !important; }
+  html body .baam-stage-portal .baam-question-card #baam-answer-controls button { min-height: 52px !important; }
+}
+@media (prefers-reduced-motion: reduce) { html body .baam-stage-portal .baam-reveal-panel.baam-question-card { animation: none !important; } }
