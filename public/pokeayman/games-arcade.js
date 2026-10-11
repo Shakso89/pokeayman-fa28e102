@@ -7,11 +7,12 @@
     { fn: 'chooseScrambleWordCount', icon: '🔤', name: 'Unscramble', desc: 'Put the mixed-up letters back in order.', tags: ['1–4 players', 'Spelling'], accent: 'blue' },
     { fn: 'chooseHangmanWordCount', icon: '🎮', name: 'Hangman', desc: 'Guess the secret word letter by letter.', tags: ['1–4 players', 'Classic'], accent: 'yellow' },
     { fn: 'chooseFindMeScore', icon: '🕵️', name: 'Find Me', desc: 'Spot the right word as fast as you can.', tags: ['1–4 players', 'Quick recall'], accent: 'mint' },
+    { fn: 'startVocabBattle', icon: '⚔️', name: 'Poké Battle', desc: 'Unscramble words to defeat a wild Pokémon, then claim it for your collection.', tags: ['Solo', 'Win a Pokémon'], accent: 'red', studentOnly: true },
   ];
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   window.gaRenderHub = function (listLabel, isTeacher) {
-    const cards = GAMES.filter(g => isTeacher || !g.teacherOnly).map(g => `
+    const cards = GAMES.filter(g => isTeacher ? !g.studentOnly : !g.teacherOnly).map(g => `
       <button type="button" class="ga-cart ga-${g.accent}" onclick="chooseGamePlayers(selectedGameList, ${g.fn})" aria-label="Play ${esc(g.name)}">
         <span class="ga-cart-art" aria-hidden="true"><span>${g.icon}</span></span>
         <span class="ga-cart-body">
@@ -31,6 +32,7 @@
   window.gaStudentSetup = function (listName, fnName) {
     const game = GAMES.find(item => item.fn === fnName && !item.teacherOnly);
     if (!game) return;
+    if (fnName === 'startVocabBattle') { window.startVocabBattle(listName); return; }
     const pictured = fnName === 'chooseMatchWordCount' || fnName === 'chooseFindMeScore';
     const words = getGameWords(listName, true).filter(word => String(word.vocab_word || '').trim() && (!pictured || String(word.vocab_image || '').trim()));
     const area = document.getElementById('student-tab-games');
