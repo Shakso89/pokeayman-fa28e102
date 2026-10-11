@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { streamSpeech } from "@/lib/vocabulary-speech";
+import homeHabitat from "@/assets/home-habitat.jpg";
 
 type Result = { error?: string; name?: string; signedIn?: boolean };
 
@@ -122,5 +123,7 @@ function Index() {
   }
 
   if (!ready) return null;
-  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html" allowFullScreen />;
+  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html" allowFullScreen onLoad={(event) => {
+    event.currentTarget.contentDocument?.documentElement.style.setProperty("--home-habitat-image", `url("${new URL(homeHabitat, window.location.href).href}")`);
+  }} />;
 }
