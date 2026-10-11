@@ -13100,7 +13100,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
       </div>
     </div>
     <div class="surprise-boxes-body p-3 sm:p-5 bg-slate-50"><div id="baam-player-hud" class="game-player-hud justify-center mt-0 mb-4 max-w-[900px]"></div><div id="baam-board" class="grid grid-cols-4 gap-1.5 sm:gap-2"></div>
-      <div id="baam-reveal" class="hidden baam-reveal-overlay"><div class="baam-reveal-panel rounded-2xl bg-amber-50 p-4 text-center shadow-2xl relative"><button type="button" id="baam-reveal-close" class="absolute top-2 right-3 text-2xl font-black text-slate-500 hover:text-slate-900" aria-label="Close power-up pop-up">×</button><div id="baam-picture" class="min-h-24 mt-2 flex items-center justify-center"></div><p id="baam-word" class="hidden text-2xl font-black text-amber-700 mt-2"></p><div id="baam-answer-controls" class="flex gap-2 mt-3"><button type="button" id="baam-correct" class="flex-1 btn-success text-sm">✓ Correct</button><button type="button" id="baam-wrong" class="flex-1 btn-secondary text-sm">✕ Wrong</button></div><p id="baam-answer-status" class="text-sm font-bold mt-2 min-h-5"></p></div></div>
+      <div id="baam-reveal" class="hidden baam-reveal-overlay"><div class="baam-reveal-panel baam-question-card" role="dialog" aria-modal="true" aria-labelledby="baam-question-title"><header class="baam-question-header"><div><span class="baam-question-kicker">SURPRISE BOXES</span><h3 id="baam-question-title">Box 01</h3></div><button type="button" id="baam-reveal-close" class="btn-outline baam-question-close" aria-label="Close question" title="Close question">×</button></header><div id="baam-question-player" class="baam-question-player"></div><div id="baam-picture" class="baam-question-picture"></div><p id="baam-word" class="hidden"></p><div id="baam-answer-controls" class="baam-question-actions"><button type="button" id="baam-correct" class="btn-primary"><span class="baam-answer-icon" aria-hidden="true">✓</span><span>Correct</span></button><button type="button" id="baam-wrong" class="btn-outline"><span class="baam-answer-icon" aria-hidden="true">×</span><span>Wrong</span></button></div><p id="baam-answer-status" aria-live="polite"></p></div></div>
     </div></div>`;
   document.body.appendChild(modal);
   // Surprise Boxes stays inside the normal page view; other games retain fullscreen behavior.
@@ -13279,6 +13279,16 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
     const picture = baamQ('#baam-picture');
     const word = baamQ('#baam-word');
     const status = baamQ('#baam-answer-status');
+    baamQ('#baam-question-title').textContent = `Box ${String(index + 1).padStart(2, '0')}`;
+    const playerChip = baamQ('#baam-question-player');
+    const questionPlayer = baamPlayers[activeGamePlayerIndex];
+    playerChip.replaceChildren();
+    if (questionPlayer) {
+      playerChip.innerHTML = gameStudentAvatarMarkup(questionPlayer, 'baam-question-avatar');
+      const playerName = document.createElement('span');
+      playerName.textContent = questionPlayer.student_name;
+      playerChip.appendChild(playerName);
+    }
     revealPanel.classList.remove('hidden'); word.classList.add('hidden'); status.textContent = '';
     revealPanel.classList.remove('baam-powerup-reveal');
     if (w.powerUp) {
