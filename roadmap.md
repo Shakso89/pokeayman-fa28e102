@@ -1,5 +1,5 @@
 # Schedule redesign
-- [ ] Refresh weekly planner, class cards, hours overview and editor colours in both modes; preserve saves and check existing edit/day controls.
+- [x] Refresh weekly planner, class cards, hours overview and editor colours in both modes; existing table/agenda edit and day controls checked with sample entries, no narrow overflow or runtime errors, routing test passed. Saved records untouched; authenticated schedule writes not exercised.
 
 # Workspace UI refresh
 - [x] Match Quizzes and Admin Hub to shared colours and flat workspace styling; original quiz answer controls and both-mode presentation checked without changing saved records. Authenticated administration actions remain unverified.
