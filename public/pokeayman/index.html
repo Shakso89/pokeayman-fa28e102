@@ -2178,6 +2178,19 @@
     .find-me-difficulty-btn.difficulty-medium.is-selected { background: linear-gradient(135deg,#fbbf24,#d97706); }
     .find-me-difficulty-btn.difficulty-hard.is-selected { background: linear-gradient(135deg,#fb7185,#dc2626); color: #fff7ed; }
     @media (max-width: 520px) { .find-me-controls { gap: .5rem; } .find-me-control-group { flex: 1 1 12rem; justify-content: center; } }
+    /* Find Me tile feedback: golden burst on correct, red shake on wrong. */
+    .find-me-word { position: absolute; will-change: transform; }
+    .find-me-word--correct { z-index: 6; border-color: #f59e0b !important; background: linear-gradient(135deg,#fef3c7,#fde68a) !important; color: #92400e !important; box-shadow: 0 0 0 4px rgba(251,191,36,.35), 0 0 26px rgba(251,191,36,.65), 0 10px 22px rgba(2,6,23,.25) !important; animation: findMeCorrectBurst .65s cubic-bezier(.2,.9,.3,1.4) both; pointer-events: none; }
+    .find-me-word--correct::after { content: ''; position: absolute; inset: -14px; border-radius: 1.25rem; border: 3px solid rgba(251,191,36,.85); animation: findMeRingOut .6s ease-out both; pointer-events: none; }
+    .find-me-score-pop { position: absolute; top: -1.4rem; left: 50%; transform: translateX(-50%); color: #fbbf24; font-size: 1.15rem; font-weight: 900; text-shadow: 0 2px 6px rgba(2,6,23,.5); animation: findMeScorePop .85s ease-out both; pointer-events: none; }
+    .find-me-word--wrong { z-index: 5; border-color: #ef4444 !important; background: linear-gradient(135deg,#fee2e2,#fecaca) !important; color: #991b1b !important; box-shadow: 0 0 0 3px rgba(239,68,68,.3), 0 6px 16px rgba(2,6,23,.25) !important; animation: findMeWrongShake .55s ease both; pointer-events: none; }
+    .find-me-word--hint { border-color: #22c55e !important; box-shadow: 0 0 0 3px rgba(34,197,94,.35), 0 0 18px rgba(34,197,94,.45) !important; animation: findMeHintPulse .5s ease .25s both; }
+    @keyframes findMeCorrectBurst { 0% { transform: scale(1); } 35% { transform: scale(1.28) rotate(-3deg); } 60% { transform: scale(1.12) rotate(2deg); } 100% { transform: scale(1.15); } }
+    @keyframes findMeRingOut { from { opacity: .95; transform: scale(.6); } to { opacity: 0; transform: scale(1.5); } }
+    @keyframes findMeScorePop { 0% { opacity: 0; transform: translate(-50%, 6px) scale(.5); } 30% { opacity: 1; transform: translate(-50%, -4px) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -26px) scale(1); } }
+    @keyframes findMeWrongShake { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-9px) rotate(-2deg); } 30% { transform: translateX(8px) rotate(2deg); } 45% { transform: translateX(-6px); } 60% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
+    @keyframes findMeHintPulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+    @media (prefers-reduced-motion: reduce) { .find-me-word--correct, .find-me-word--correct::after, .find-me-word--wrong, .find-me-word--hint, .find-me-score-pop { animation: none; } }
 
     /* Scoped Surprise Boxes palette with high-contrast setup states. */
     .surprise-boxes-setup { color: #f5f7ff !important; }
