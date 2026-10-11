@@ -1,0 +1,46 @@
+/* Stage 3: page-level hierarchy using tokens. Teacher dashboard + class first.
+   Presentation only; no layout logic or handlers touched. */
+
+/* ---------- Teacher sidebar ---------- */
+body.ts-on #ts-sidebar { font-family: var(--pk-font-display); }
+#ts-sidebar .ts-section-toggle {
+  font-size: var(--pk-text-xs) !important; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--pk-muted) !important; border-radius: var(--pk-radius-sm) !important;
+}
+#ts-sidebar .ts-nav button, #ts-sidebar .ts-nav a {
+  border-radius: var(--pk-radius-md) !important; font-size: var(--pk-text-sm);
+  transition: background-color var(--pk-dur-fast) var(--pk-ease), color var(--pk-dur-fast) var(--pk-ease);
+}
+
+/* ---------- Class header: one focal title + one main action ---------- */
+body.ts-on .ts-hero {
+  padding: var(--pk-space-5) var(--pk-space-6) !important; border-radius: var(--pk-radius-lg) !important;
+  margin-bottom: var(--pk-space-5) !important; box-shadow: var(--pk-shadow-1);
+}
+body.ts-on .ts-hero h2 { font: 800 var(--pk-text-h1)/var(--pk-leading-tight) var(--pk-font-display) !important; letter-spacing: -.01em; }
+body.ts-on .ts-hero p { font-size: var(--pk-text-sm) !important; color: var(--pk-muted); margin: var(--pk-space-1) 0 var(--pk-space-4) !important; }
+body.ts-on .ts-hero-actions { gap: var(--pk-space-2) !important; }
+
+/* ---------- Right rail cards ---------- */
+body.ts-on .ts-card { padding: var(--pk-space-4) !important; border-radius: var(--pk-radius-lg) !important; box-shadow: var(--pk-shadow-1); }
+body.ts-on .ts-card h3 { font: 700 var(--pk-text-h3)/var(--pk-leading-tight) var(--pk-font-display) !important; }
+body.ts-on .ts-card p { font-size: var(--pk-text-sm) !important; color: var(--pk-muted) !important; }
+
+/* ---------- Class cards grid ---------- */
+#classes-list { gap: var(--pk-space-4) !important; }
+.gym-card {
+  border-radius: var(--pk-radius-lg) !important;
+  transition: transform var(--pk-dur-base) var(--pk-ease), box-shadow var(--pk-dur-base) var(--pk-ease), border-color var(--pk-dur-base) var(--pk-ease) !important;
+}
+.gym-card:hover { transform: translateY(-3px); box-shadow: var(--pk-shadow-2) !important; }
+.gym-card:focus-visible { outline: none; box-shadow: var(--pk-focus-ring) !important; }
+.gym-name { font: 800 var(--pk-text-h3)/var(--pk-leading-tight) var(--pk-font-display) !important; }
+.gym-card .class-teacher-avatar { box-shadow: var(--pk-shadow-2) !important; }
+
+/* ---------- Section headings inside main content ---------- */
+body.ts-on #app-screen main :is(h2) { font-family: var(--pk-font-display); letter-spacing: -.01em; }
+body.ts-on #app-screen main :is(h3) { font-family: var(--pk-font-display); }
+body.ts-on #app-screen main p { line-height: var(--pk-leading-body); }
+
+/* Calm secondary emphasis: less glow on non-primary chips */
+body.ts-on #app-screen main .modal-stat-chip { box-shadow: none !important; }
