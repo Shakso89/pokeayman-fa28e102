@@ -79,6 +79,39 @@ body.ts-bright .vb-result-title.vb-win { color: #b45309; }
 body.ts-bright .vb-btn.vb-btn-ghost { border-color: rgba(15, 23, 58, .35); }
 .vb-btn:disabled { opacity: .5; cursor: default; }
 
+/* Cinematic feedback: token colours follow both display modes. */
+.vb-attack-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: hidden; --vb-energy: var(--color-brand); --vb-impact: var(--color-info); }
+.vb-attack-layer.vb-counter { --vb-energy: var(--color-error); --vb-impact: var(--color-warning); }
+.vb-energy-bolt { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: var(--vb-energy); border: 5px solid var(--color-text-primary); box-shadow: 0 0 0 8px color-mix(in srgb,var(--vb-energy) 25%,transparent), 0 0 28px var(--vb-energy); }
+.vb-energy-bolt::after { content: ''; position: absolute; left: 6px; top: 18px; width: 16px; height: 85px; background: linear-gradient(var(--vb-energy),transparent); border-radius: 50%; }
+.vb-counter .vb-energy-bolt::after { top: auto; bottom: 18px; }
+.vb-impact-burst { position: absolute; width: 0; height: 0; color: var(--vb-energy); }
+.vb-impact-burst b { position: absolute; width: 110px; height: 110px; margin: -55px; border: 7px solid currentColor; border-radius: 50%; animation: vb-impact-ring .6s ease-out both; }
+.vb-impact-burst i { position: absolute; width: 7px; height: 32px; margin: -16px -3px; background: var(--vb-impact); border-radius: 4px; animation: vb-impact-spark .65s ease-out both; }
+.vb-stage .vb-foe-art.vb-hit { animation: vb-punch .55s both; }
+.vb-stage .vb-me.vb-hit { animation: vb-punch .55s both; }
+.vb-stage .vb-hp-track { position: relative; height: 16px; background: var(--color-surface-hover); border-color: var(--color-border-strong); }
+.vb-stage .vb-hp-fill { position: relative; z-index: 1; transition: width .55s cubic-bezier(.2,.8,.2,1); background: var(--color-success); }
+.vb-stage .vb-hp-fill.vb-mid { background: var(--color-warning); }
+.vb-stage .vb-hp-fill.vb-low { background: var(--color-error); }
+.vb-hp-trail { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--color-warning); transition: width .65s .3s ease-out; }
+.vb-hp-loss .vb-hp-track { animation: vb-health-hit .65s both; }
+.vb-hp-critical .vb-hp-label { color: var(--color-error); }
+.vb-hp-num { font-variant-numeric: tabular-nums; min-width: 8ch; text-align: right; }
+.vb-stage .vb-damage { font-family: var(--font-display); font-size: 2.25rem; line-height: 1; color: var(--color-brand); text-shadow: 0 2px 2px var(--color-bg), 2px 0 var(--color-bg), -2px 0 var(--color-bg); animation: vb-damage-punch 1.4s both; }
+.vb-stage .vb-damage.vb-dmg-me { color: var(--color-error); }
+.vb-stage .vb-damage.vb-dmg-dodge { color: var(--color-info); font-size: 1.125rem; }
+@keyframes vb-impact-ring { from { opacity: 1; transform: scale(.25); } to { opacity: 0; transform: scale(1.8); } }
+@keyframes vb-impact-spark { from { opacity: 1; transform: rotate(var(--spark-angle)) translateY(-12px) scale(.4); } to { opacity: 0; transform: rotate(var(--spark-angle)) translateY(-110px) scale(.8); } }
+@keyframes vb-punch { 0%,100% { transform: none; } 15% { transform: scale(.9) rotate(-5deg); } 30% { transform: translateX(12px) rotate(5deg); } 50% { transform: translateX(-8px); } 70% { transform: translateX(4px); } }
+@keyframes vb-health-hit { 25% { box-shadow: 0 0 0 4px color-mix(in srgb,var(--color-error) 45%,transparent); } 60% { box-shadow: 0 0 0 8px transparent; } }
+@keyframes vb-damage-punch { 0% { opacity: 0; transform: translate(-50%,0) scale(.3) rotate(-12deg); } 18% { opacity: 1; transform: translate(-50%,-20px) scale(1.3) rotate(-6deg); } 40%,65% { opacity: 1; transform: translate(-50%,-28px) scale(1); } 100% { opacity: 0; transform: translate(-50%,-80px) scale(.9); } }
+@media (prefers-reduced-motion: reduce) {
+  .vb-attack-layer { display: none; }
+  .vb-stage .vb-damage { animation: none !important; transform: translateX(-50%); }
+  .vb-stage .vb-hp-fill,.vb-hp-trail { transition: none; }
+}
+
 /* Teacher: battle claims panel */
 .vb-claims { display: grid; gap: .7rem; }
 .vb-claim { display: flex; align-items: center; gap: .8rem; padding: .7rem .9rem; border-radius: 1rem; background: rgba(30, 42, 110, .35); border: 1px solid rgba(248, 250, 252, .14); }

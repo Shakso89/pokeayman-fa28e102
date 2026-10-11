@@ -1,3 +1,6 @@
+# Poké Battle effects
+- [x] Add travelling attacks, impact bursts, animated HP loss and delayed knockout reveal. Saved-word isolated practice checked attacks, retaliation, dodges, victory, replay/exit and bright reduced motion with no runtime errors; routing test passed. Real claims and credits unchanged and not exercised.
+
 # Schedule redesign
 - [x] Rebuild Home arch with six visual slots, 898-species search, reorder, draft preview and reliable save/discard/default controls. Browser checks passed including failed-save retry, gallery readback, both modes and narrow fit; routing test passed. Cloud writes mocked; no saved home settings changed.
 - [x] Honour persisted schedule colours instead of no-green/duplicate-colour substitutions; enlarge picker to 52px and card marker to 10px. Sample-entry save/cache/reopen, duplicate colours, one-time cards, both modes and narrow layouts passed; routing test passed. Cloud writes not exercised.

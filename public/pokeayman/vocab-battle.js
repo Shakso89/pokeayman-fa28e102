@@ -57,24 +57,99 @@
   function hpClass(ratio) { return ratio > 0.5 ? '' : ratio > 0.25 ? 'vb-mid' : 'vb-low'; }
 
   function renderHp(el, current, max) {
+    if (!el) return;
     const ratio = Math.max(0, Math.min(1, current / max));
     const fill = el.querySelector('.vb-hp-fill');
+    const track = el.querySelector('.vb-hp-track');
+    const number = el.querySelector('.vb-hp-num');
+    if (!fill || !track || !number) return;
+    let trail = track.querySelector('.vb-hp-trail');
+    if (!trail) { trail = document.createElement('div'); trail.className = 'vb-hp-trail'; track.prepend(trail); }
+    const before = Number(el.dataset.hp ?? current);
+    el.dataset.hp = String(current);
+    cancelAnimationFrame(el._hpFrame);
+    trail.style.width = `${Math.max(0, before / max) * 100}%`;
     fill.style.width = `${ratio * 100}%`;
     fill.className = `vb-hp-fill ${hpClass(ratio)}`;
-    el.querySelector('.vb-hp-num').textContent = `${Math.max(0, current)}/${max}`;
+    el.classList.toggle('vb-hp-critical', ratio <= .25 && current > 0);
+    el.classList.remove('vb-hp-loss');
+    if (before > current) { void el.offsetWidth; el.classList.add('vb-hp-loss'); }
+    const started = performance.now();
+    const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650;
+    function count(now) {
+      if (!el.isConnected) return;
+      const progress = duration ? Math.min(1, (now - started) / duration) : 1;
+      number.textContent = `${Math.max(0, Math.round(before + (current - before) * progress))}/${max}`;
+      if (progress < 1) el._hpFrame = requestAnimationFrame(count);
+    }
+    el._hpFrame = requestAnimationFrame(count);
+    requestAnimationFrame(() => { if (trail.isConnected) trail.style.width = `${ratio * 100}%`; });
   }
 
   function setMessage(text) { const m = battle?.root.querySelector('.vb-message'); if (m) m.textContent = text; }
 
   function floatDamage(text, targetEl, kind) {
+    if (!battle || !targetEl) return;
     const rect = targetEl.getBoundingClientRect();
     const tag = document.createElement('span');
     tag.className = `vb-damage ${kind}`;
     tag.textContent = text;
-    tag.style.left = `${rect.left + rect.width / 2 - 20}px`;
-    tag.style.top = `${rect.top}px`;
+    tag.style.left = `${rect.left + rect.width / 2}px`;
+    tag.style.top = `${rect.top + rect.height * .35}px`;
     battle.root.appendChild(tag);
-    setTimeout(() => tag.remove(), 1000);
+    setTimeout(() => tag.remove(), 1400);
+  }
+
+  function later(callback, delay) {
+    const active = battle;
+    const id = setTimeout(() => { active?.timeouts.delete(id); if (battle === active) callback(); }, delay);
+    active?.timeouts.add(id);
+  }
+
+  function animateAttack(retaliation, dodged, impact) {
+    const active = battle;
+    if (!active) return;
+    const root = active.root;
+    const source = root.querySelector(retaliation ? '.vb-foe-art' : '.vb-slots');
+    const target = root.querySelector(retaliation ? '.vb-me' : '.vb-foe-art');
+    if (!source || !target) { impact(); return; }
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const layer = document.createElement('div');
+    layer.className = `vb-attack-layer${retaliation ? ' vb-counter' : ''}`;
+    layer.setAttribute('aria-hidden', 'true');
+    root.appendChild(layer);
+    const bounds = root.getBoundingClientRect();
+    const a = source.getBoundingClientRect(); const b = target.getBoundingClientRect();
+    const start = { x: a.left + a.width / 2 - bounds.left, y: a.top + a.height / 2 - bounds.top + root.scrollTop };
+    const end = { x: b.left + b.width / 2 - bounds.left, y: b.top + b.height / 2 - bounds.top + root.scrollTop };
+    const bolt = document.createElement('i'); bolt.className = 'vb-energy-bolt';
+    bolt.style.left = `${start.x}px`; bolt.style.top = `${start.y}px`; layer.appendChild(bolt);
+    const travel = reduced ? 0 : 420;
+    if (!reduced) {
+      source.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)', offset: .5 }, { transform: 'scale(1)' }], { duration: 260 });
+      bolt.animate([
+        { transform: 'translate(-50%, -50%) scale(.2)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: .2 },
+        { transform: `translate(calc(-50% + ${end.x - start.x}px), calc(-50% + ${end.y - start.y}px)) scale(.8)`, opacity: 1 },
+      ], { duration: travel, easing: 'cubic-bezier(.5,0,.85,.5)', fill: 'forwards' });
+    }
+    later(() => {
+      bolt.remove();
+      if (dodged) {
+        target.classList.add('vb-dodge');
+        floatDamage('DODGED', target, 'vb-dmg-dodge');
+        later(() => target.classList.remove('vb-dodge'), 650);
+      } else {
+        const burst = document.createElement('div'); burst.className = 'vb-impact-burst';
+        burst.style.left = `${end.x}px`; burst.style.top = `${end.y}px`;
+        burst.innerHTML = '<b></b>' + Array.from({ length: 10 }, (_, i) => `<i style="--spark-angle:${i * 36}deg"></i>`).join('');
+        layer.appendChild(burst);
+        target.classList.add('vb-hit');
+        later(() => target.classList.remove('vb-hit'), 600);
+      }
+      impact();
+      later(() => layer.remove(), 900);
+    }, travel);
   }
 
   function stopTimer() {
@@ -84,6 +159,7 @@
   function startTurn() {
     if (!battle) return;
     stopTimer();
+    battle.resolving = false;
     if (!battle.queue.length) battle.queue = [...battle.words].sort(() => Math.random() - 0.5);
     const entry = battle.queue.shift();
     const word = String(entry.vocab_word || '').trim();
@@ -115,6 +191,7 @@
   }
 
   function fillNextSlot(tileKey) {
+    if (battle.resolving) return;
     const tile = battle.tiles.find((t) => t.key === tileKey);
     const idx = battle.slots.indexOf(null);
     if (!tile || tile.used || idx < 0) return;
@@ -126,6 +203,7 @@
   }
 
   function clearSlot(slotIdx) {
+    if (battle.resolving) return;
     const letter = battle.slots[slotIdx];
     if (!letter) return;
     const tile = battle.tiles.find((t) => t.used && t._slot === slotIdx);
@@ -139,47 +217,55 @@
     if (guess.toLowerCase() === battle.currentWord.toLowerCase()) onSuccess();
     else {
       battle.root.querySelectorAll('.vb-slot').forEach((s) => s.classList.add('vb-wrong'));
-      setTimeout(() => { if (!battle) return; battle.slots.fill(null); battle.tiles.forEach((t) => { t.used = false; delete t._slot; }); renderWord(); }, 500);
+      later(() => { battle.slots.fill(null); battle.tiles.forEach((t) => { t.used = false; delete t._slot; }); renderWord(); }, 500);
     }
   }
 
   function onSuccess() {
     stopTimer();
+    battle.resolving = true;
     battle.failStreak = 0;
     const foeArt = battle.root.querySelector('.vb-foe-art');
     if (Math.random() < DODGE_CHANCE) {
-      setMessage(`${battle.foe.shop_pokemon_name} dodged the attack!`);
-      foeArt?.classList.add('vb-dodge');
-      setTimeout(() => foeArt?.classList.remove('vb-dodge'), 550);
-      return scheduleNext(900);
+      setMessage('Attack incoming!');
+      return animateAttack(false, true, () => {
+        setMessage(`${battle.foe.shop_pokemon_name} dodged the attack!`);
+        scheduleNext(1000);
+      });
     }
     const damage = 10 + battle.currentWord.length * 2 + rand(0, 6);
-    battle.foeHp = Math.max(0, battle.foeHp - damage);
-    renderHp(battle.root.querySelector('.vb-foe-hp'), battle.foeHp, battle.foeMaxHp);
-    floatDamage(`-${damage}`, foeArt, 'vb-dmg-foe');
-    foeArt?.classList.add('vb-hit');
-    setTimeout(() => foeArt?.classList.remove('vb-hit'), 500);
-    setMessage(`Correct! You hit ${battle.foe.shop_pokemon_name} for ${damage}!`);
-    if (battle.foeHp <= 0) return endBattle(true);
-    scheduleNext(1100);
+    setMessage('Correct! Energy strike!');
+    animateAttack(false, false, () => {
+      battle.foeHp = Math.max(0, battle.foeHp - damage);
+      renderHp(battle.root.querySelector('.vb-foe-hp'), battle.foeHp, battle.foeMaxHp);
+      floatDamage(`−${damage}`, foeArt, 'vb-dmg-foe');
+      setMessage(`You hit ${battle.foe.shop_pokemon_name} for ${damage}!`);
+      if (battle.foeHp <= 0) {
+        later(() => foeArt?.classList.add('vb-faint'), 600);
+        return later(() => endBattle(true), 1500);
+      }
+      scheduleNext(1300);
+    });
   }
 
   function onFail(reason) {
     stopTimer();
+    battle.resolving = true;
     const damage = rand(6, 12) + battle.failStreak * 5;
     battle.failStreak += 1;
-    battle.studentHp = Math.max(0, battle.studentHp - damage);
-    renderHp(battle.root.querySelector('.vb-me-hp'), battle.studentHp, STUDENT_HP);
     const meEl = battle.root.querySelector('.vb-me');
-    floatDamage(`-${damage}`, meEl, 'vb-dmg-me');
-    meEl?.classList.add('vb-hit');
-    setTimeout(() => meEl?.classList.remove('vb-hit'), 500);
-    setMessage(`${reason} ${battle.foe.shop_pokemon_name} strikes back for ${damage}! The word was "${battle.currentWord}".`);
-    if (battle.studentHp <= 0) return endBattle(false);
-    scheduleNext(1600);
+    setMessage(`${reason} ${battle.foe.shop_pokemon_name} is charging an attack!`);
+    animateAttack(true, false, () => {
+      battle.studentHp = Math.max(0, battle.studentHp - damage);
+      renderHp(battle.root.querySelector('.vb-me-hp'), battle.studentHp, STUDENT_HP);
+      floatDamage(`−${damage}`, meEl, 'vb-dmg-me');
+      setMessage(`${battle.foe.shop_pokemon_name} strikes back for ${damage}! The word was "${battle.currentWord}".`);
+      if (battle.studentHp <= 0) return later(() => endBattle(false), 1400);
+      scheduleNext(1700);
+    });
   }
 
-  function scheduleNext(delay) { setTimeout(() => { if (battle && !battle.over) startTurn(); }, delay); }
+  function scheduleNext(delay) { later(() => { if (!battle.over) startTurn(); }, delay); }
 
   async function logBattle(outcome) {
     try {
@@ -312,6 +398,8 @@
   function closeBattle() {
     if (!battle) return;
     stopTimer();
+    battle.timeouts.forEach(clearTimeout);
+    battle.root.querySelectorAll('.vb-hp').forEach((el) => cancelAnimationFrame(el._hpFrame));
     battle.root.remove();
     battle = null;
   }
@@ -356,7 +444,7 @@
     battle = {
       root, student, studentId: String(student.__teacherLed ? (student.__backendId || '') : (currentStudentRecordId || student.__backendId || '')),
       foe, foeMaxHp, foeHp: foeMaxHp, studentHp: STUDENT_HP,
-      words, queue: [], failStreak: 0, over: false, claimed: false, timerId: null,
+      words, queue: [], failStreak: 0, over: false, claimed: false, timerId: null, resolving: false, timeouts: new Set(),
     };
     renderHp(root.querySelector('.vb-foe-hp'), battle.foeHp, foeMaxHp);
     renderHp(root.querySelector('.vb-me-hp'), STUDENT_HP, STUDENT_HP);
