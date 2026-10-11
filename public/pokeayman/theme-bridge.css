@@ -1,0 +1,24 @@
+/* Bridges every legacy colour family onto the supplied --color-* theme tokens.
+   Loaded last so both dark (default) and bright modes follow one palette. */
+html body, html body.ts-bright, html body.ts-on, html body.ts-on.ts-bright {
+  --ts-bg: var(--color-bg); --ts-surface: var(--color-surface); --ts-deep: var(--color-surface-raised);
+  --ts-ink: var(--color-text-primary); --ts-muted: var(--color-text-secondary); --ts-border: var(--color-border);
+  --es-deep: var(--color-surface-raised); --es-surface: var(--color-surface); --es-ink: var(--color-text-primary); --es-muted: var(--color-text-secondary); --es-border: var(--color-border);
+  --class-surface: var(--color-surface); --class-deep: var(--color-surface-raised); --class-ink: var(--color-text-primary); --class-muted: var(--color-text-secondary); --class-border: var(--color-border);
+  --ga-surface: var(--color-surface); --ga-ink: var(--color-text-primary); --ga-muted: var(--color-text-secondary); --ga-border: var(--color-border);
+  background: var(--color-bg) !important; color: var(--color-text-primary);
+}
+html body.ts-bright, html body.ts-on.ts-bright { --ts-hero: var(--color-surface-selected); --ts-deep: var(--color-surface-hover); --es-deep: var(--color-surface-hover); --class-deep: var(--color-surface-hover); }
+html body.ts-bright :is(.tsb-card, .ts-streak, #ts-streak, .ts-rail-card, [class*="ts-streak-card"]) {
+  background: var(--color-surface) !important; color: var(--color-text-primary) !important;
+  border: 1px solid var(--color-border) !important; box-shadow: var(--shadow-card) !important;
+}
+html body.ts-bright :is(.tsb-card, .ts-streak, #ts-streak) :is(h1,h2,h3,h4,p,span,strong,small) { color: var(--color-text-primary) !important; text-shadow: none !important; }
+html body.ts-bright :is(.btn-primary, .tsb-btn, .ts-award-go) { background: var(--color-brand) !important; color: var(--color-text-on-brand) !important; }
+html body.ts-bright :is(.bg-white, .glass-container, .card, .modal-content, [role="dialog"] > div) { background-color: var(--color-surface) !important; color: var(--color-text-primary); border-color: var(--color-border) !important; }
+html body.ts-bright :is(.text-white, .text-gray-100, .text-gray-200, .text-slate-200, .text-indigo-100, .text-indigo-200, .text-amber-100) { color: var(--color-text-primary) !important; }
+html body.ts-bright :is(.text-gray-300, .text-gray-400, .text-slate-300, .text-slate-400) { color: var(--color-text-secondary) !important; }
+html body.ts-bright :is(input, select, textarea) { background-color: var(--color-surface) !important; color: var(--color-text-primary) !important; border-color: var(--color-border-strong) !important; }
+html body :is(input, select, textarea, button, a):focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+/* Keep the theme switch clickable above the right utility column. */
+#ts-theme-toggle { position: relative; z-index: 5; }
