@@ -94,3 +94,20 @@ html body:is(body, #pk-refresh):is(body, #pk-refresh):is(body, #pk-refresh) {
     & .th-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
   }
 }
+/* Clear the host surfaces too, not only their cards. */
+html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
+  & :is(#class-subtab-games,#student-tab-games),
+  & :is(#class-subtab-games,#student-tab-games) > .glass-container,
+  & :is(#games-options-container,#student-games-options-container) > div {
+    background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+  }
+  & :is(#class-subtab-games,#student-tab-games) > .glass-container { padding: 0 !important; }
+  & :is(#class-subtab-games,#student-tab-games) > .glass-container::before,
+  & :is(#class-subtab-games,#student-tab-games) > .glass-container::after,
+  & #class-subtab-vocab > .glass-container::after { display: none !important; }
+  & :is(.ga-hub-kicker,.ga-hub-list,.ga-hub-head) { color: var(--ui-ink) !important; }
+  & .battle-arena-panel h3 { font-family: var(--font-body) !important; font-weight: 800; letter-spacing: 0 !important; }
+  & .vocab-list-card .vocab-card-actions .vocab-card-mode { background: var(--ui-gold) !important; color: var(--ui-on-gold) !important; }
+  & .vocab-list-card .vocab-card-actions .vocab-card-delete { color: var(--ui-red) !important; }
+  & #battle-area :is(#battle-left-hp-bar,#battle-right-hp-bar) { background: var(--ui-blue) !important; }
+}
