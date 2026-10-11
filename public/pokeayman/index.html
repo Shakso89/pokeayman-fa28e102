@@ -3732,7 +3732,9 @@
   let listener = null;
   let records = [];
   try { records = JSON.parse(localStorage.getItem(key) || '[]'); if (!Array.isArray(records)) records = []; } catch (_) { records = []; }
-  function cache() { try { localStorage.setItem(key, JSON.stringify(records)); } catch (_) {} }
+  function cache() { try { const serialized = JSON.stringify(records); localStorage.setItem(key, serialized); return serialized; } catch (_) { return ''; } }
+  let deferredCacheTimer = 0;
+  function cacheAfterPaint() { clearTimeout(deferredCacheTimer); deferredCacheTimer = setTimeout(() => { lastSig = cache(); deferredCacheTimer = 0; }, 100); }
   function notify() { if (listener && typeof listener.onDataChanged === 'function') listener.onDataChanged(records.map(row => ({...row}))); }
   async function api(method, qs, body) {
     const auth = window.parent && window.parent.pokeaymanAuth;
@@ -3765,30 +3767,30 @@
     async init(handler) { listener = handler; notify(); await firstLoad(); if (!window.__pokeaymanPollTimer) window.__pokeaymanPollTimer = setInterval(pull, 5000); return {isOk:true}; },
     async refresh() { await pull(); return records.map(row => ({...row})); },
     snapshot() { return records.map(row => ({...row})); },
-    async create(value) {
+    async create(value, options = {}) {
       const row = {...value, __backendId: value.__backendId || crypto.randomUUID()};
       try { await api('POST', '', {id: row.__backendId, data: row}); } catch (e) { console.error(e); return {isOk:false, error:e}; }
-      records.push(row); cache(); lastSig = ''; notify(); return {isOk:true, data:row};
+      records.push(row); if (options.notify !== false) { lastSig = cache(); notify(); } else cacheAfterPaint(); return {isOk:true, data:row};
     },
-    async update(value) {
+    async update(value, options = {}) {
       const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
       const row = {...records[i], ...value};
       try { await api('PATCH', '?id=eq.' + encodeURIComponent(row.__backendId), {data: row}); } catch (e) { console.error(e); return {isOk:false, error:e}; }
-      records[i] = row; cache(); lastSig = ''; notify(); return {isOk:true, data:row};
+      records[i] = row; if (options.notify !== false) { lastSig = cache(); notify(); } else cacheAfterPaint(); return {isOk:true, data:row};
     },
-    async updateMany(values) {
+    async updateMany(values, options = {}) {
       const rows = [];
       for (const value of values) {
         const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
         rows.push({ i, row: {...records[i], ...value} });
       }
       try { await api('POST', '', rows.map(({row}) => ({id: row.__backendId, data: row}))); } catch (e) { console.error(e); return {isOk:false, error:e}; }
-      rows.forEach(({i, row}) => { records[i] = row; }); cache(); lastSig = ''; notify(); return {isOk:true, data: rows.map(r => r.row)};
+      rows.forEach(({i, row}) => { records[i] = row; }); if (options.notify !== false) { lastSig = cache(); notify(); } else cacheAfterPaint(); return {isOk:true, data: rows.map(r => r.row)};
     },
     async delete(value) {
       const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
       try { await api('DELETE', '?id=eq.' + encodeURIComponent(value.__backendId)); } catch (e) { console.error(e); return {isOk:false, error:e}; }
-      records.splice(i, 1); cache(); lastSig = ''; notify(); return {isOk:true};
+      records.splice(i, 1); lastSig = cache(); notify(); return {isOk:true};
     }
   };
 })();
@@ -5919,16 +5921,45 @@ function canonicalStudentKey(recordOrId) {
   return canonicalStudentAliases.get(String(candidate || '').trim()) || String(candidate || '').trim() || studentStableIdentity(raw || {});
 }
 function canonicalStudentRows(key) { return allData.filter(record => record.type === 'student' && canonicalStudentKey(record) === key); }
+function updateVisibleStudentCoinLabels(student) {
+  const id = String(student?.__backendId || '');
+  const coinText = String(Number(student?.coins) || 0);
+  if (!id) return;
+  if (currentRole === 'student' && String(currentStudentRecordId || '') === id) {
+    const node = document.getElementById('my-coins');
+    if (node) node.textContent = coinText;
+  }
+  if (profileStudent && String(profileStudent.__backendId || '') === id) {
+    const node = document.getElementById('profile-coins');
+    if (node) node.textContent = coinText;
+  }
+  document.querySelectorAll('.trainer-student-card[data-student-id], .student-classmate-card[data-student-id]').forEach(card => {
+    if (String(card.dataset.studentId || '') !== id) return;
+    const rosterCoins = card.querySelector('.student-roster-coins');
+    if (rosterCoins) {
+      const label = rosterCoins.querySelector('span');
+      rosterCoins.textContent = coinText;
+      if (label) { label.textContent = 'coins'; rosterCoins.appendChild(label); }
+    }
+    const classmateCoins = card.querySelector('.student-classmate-coins');
+    if (classmateCoins) classmateCoins.textContent = `${coinText} 🪙`;
+  });
+}
 function refreshCanonicalStudentViews(saved, diagnostics = {}) {
+  if (saved?.__backendId) allData = allData.map(record => record.__backendId === saved.__backendId ? { ...record, ...saved } : record);
   rebuildCanonicalStudentIndex();
   const key = canonicalStudentKey(saved);
   const canonical = canonicalStudentAccounts.get(key) || saved;
   allData = allData.map(record => canonicalStudentKey(record) === key ? { ...record, ...canonical, student_id: key, coins: canonical.coins } : record);
   if (currentRole === 'student' && canonicalStudentKey(getCurrentStudentRecord()) === key) setCurrentStudentRecord(canonical);
   if (profileStudent && canonicalStudentKey(profileStudent) === key) profileStudent = canonical;
+  if (Object.hasOwn(diagnostics, 'coins')) {
+    updateVisibleStudentCoinLabels(canonical);
+  } else {
+    renderStudentDashboard(); renderStudentProfile(); renderTeacherDashboard(); renderAdminAllStudents();
+  }
   window.__pokeymanCanonicalDiagnostics = window.__pokeymanCanonicalDiagnostics || [];
   window.__pokeymanCanonicalDiagnostics.push({ canonicalId:key, mutationType:diagnostics.mutationType || 'refresh', sourceClass:diagnostics.sourceClass || navClass || '', affectedViewCount:canonicalStudentRows(key).length, responseStatus:diagnostics.responseStatus || 'verified' });
-  renderStudentDashboard(); renderStudentProfile(); renderTeacherDashboard(); renderAdminAllStudents();
   return canonical;
 }
 // Serialize shared-account mutations, re-read before writing, verify after writing,
@@ -5948,19 +5979,17 @@ async function persistCanonicalStudentPatch(stableId, patch, errorMessage = 'Cou
     const latest = canonicalStudentAccounts.get(key);
     if (!latest?.__backendId) { toast(`${errorMessage} Please refresh and try again.`); return null; }
     const payload = { ...latest, ...patch, student_id: key, __backendId: latest.__backendId };
-    const result = await window.dataSdk.update(payload);
+    const result = await window.dataSdk.update(payload, { notify:false });
     if (!result?.isOk) {
       window.__pokeymanCanonicalDiagnostics = window.__pokeymanCanonicalDiagnostics || [];
       window.__pokeymanCanonicalDiagnostics.push({ canonicalId:key, mutationType:Object.keys(patch).join(','), sourceClass:navClass || '', affectedViewCount:canonicalStudentRows(key).length, responseStatus:'rejected' });
       toast(errorMessage); return null;
     }
-    const reload = await window.dataSdk.init(handler);
-    if (!reload?.isOk) { toast(`${errorMessage} Please refresh and try again.`); return null; }
-    rebuildCanonicalStudentIndex();
-    const verified = canonicalStudentAccounts.get(key);
+    const verified = result.data;
+    if (!verified || String(verified.__backendId || '') !== String(latest.__backendId || '')) { toast(`${errorMessage} Please refresh and try again.`); return null; }
     const matches = verified && Object.entries(patch).every(([field, value]) => String(verified[field] ?? '') === String(value ?? ''));
     if (!matches) { toast(`${errorMessage} Please retry.`); return null; }
-    return refreshCanonicalStudentViews({ ...verified, __operationId: operationId }, { mutationType:Object.keys(patch).join(','), responseStatus:'verified' });
+    return refreshCanonicalStudentViews({ ...verified, __operationId: operationId }, { mutationType:Object.keys(patch).join(','), responseStatus:'verified', ...(Object.hasOwn(patch, 'coins') ? { coins:true } : {}) });
   } finally { release(); if (canonicalStudentLocks.get(key) === queuedLock) canonicalStudentLocks.delete(key); }
 }
 
@@ -6432,16 +6461,18 @@ function getTeacherCredits() {
   return rec ? (rec.teacher_credits === -1 ? Infinity : (rec.teacher_credits || 0)) : 0;
 }
 
-async function deductTeacherCredits(amount) {
+async function deductTeacherCredits(amount, options = {}) {
   const identity = String(currentTeacher || '').trim().toLocaleLowerCase();
   if (identity === 'ayman' || identity === 'teacher ayman') return true;
   const rec = currentTeacherRec();
   if (rec && rec.teacher_credits === -1) return true;
   if (!rec || (rec.teacher_credits || 0) < amount) { toast(`Insufficient credits! Need ${amount}, have ${rec?.teacher_credits || 0}.`); return false; }
   const next = { ...rec, teacher_credits: (rec.teacher_credits || 0) - amount, teacher_spent_total: Number(rec.teacher_spent_total || 0) + amount };
-  const result = await window.dataSdk.update(next);
+  const result = await window.dataSdk.update(next, { notify:options.notify !== false });
   if (!result?.isOk) { toast('Could not update teacher credits.'); return false; }
-  allData = allData.map(r => r.__backendId === rec.__backendId ? next : r);
+  const saved = result.data || next;
+  allData = allData.map(r => r.__backendId === rec.__backendId ? saved : r);
+  if (options.notify === false) updateTeacherCreditBalance();
   return true;
 }
 
@@ -10663,9 +10694,10 @@ async function awardQuickAnswerCoins(studentName) {
   showStudentAwardCelebration(student, 5);
 }
 
-async function logCredit(action, amount, target) {
+async function logCredit(action, amount, target, options = {}) {
   if (allData.length >= 999) return;
-  await window.dataSdk.create({ type: 'credit_log', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: currentTeacher, teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: action, log_amount: amount, log_target: target, shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '' });
+  const result = await window.dataSdk.create({ type: 'credit_log', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: currentTeacher, teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: action, log_amount: amount, log_target: target, shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '' }, options);
+  if (result?.isOk && result.data && !allData.some(row => row.__backendId === result.data.__backendId)) allData.push(result.data);
 }
 
 // Reusable Pokémon detail classifications: preserve bound values and use safe fallbacks.
@@ -10929,8 +10961,12 @@ async function reconcileStudentPurchase(stableId) {
     if (alreadyGranted) continue;
     const catalog = pokemonCatalog.find(item => Number(item.id) === Number(transaction.pokemon_id));
     if (!catalog) continue;
-    const result = await window.dataSdk.create({ type:'pokemon', student_id:stableId, purchase_id:transaction.purchase_id, purchase_status:'granted', school_name:student.school_name || '', class_name:student.class_name || '', student_name:'', coins:0, pokemon_id:catalog.id, pokemon_name:catalog.name, pokemon_rarity:catalog.rarity, pokemon_price:catalog.price, pokemon_power:catalog.power, owner:student.student_name, current_hp:catalog.hp, last_battle_time:'', created_at:new Date().toISOString() });
-    if (result?.isOk) await window.dataSdk.update({ ...transaction, purchase_status:'granted', __backendId:transaction.__backendId });
+    const result = await window.dataSdk.create({ type:'pokemon', student_id:stableId, purchase_id:transaction.purchase_id, purchase_status:'granted', school_name:student.school_name || '', class_name:student.class_name || '', student_name:'', coins:0, pokemon_id:catalog.id, pokemon_name:catalog.name, pokemon_rarity:catalog.rarity, pokemon_price:catalog.price, pokemon_power:catalog.power, owner:student.student_name, current_hp:catalog.hp, last_battle_time:'', created_at:new Date().toISOString() }, { notify:false });
+    if (result?.isOk) {
+      if (result.data) allData.push(result.data);
+      const updated = await window.dataSdk.update({ ...transaction, purchase_status:'granted', __backendId:transaction.__backendId }, { notify:false });
+      if (updated?.isOk && updated.data) allData = allData.map(row => row.__backendId === updated.data.__backendId ? updated.data : row);
+    }
   }
   return getStudentRecordByStableId(stableId) || student;
 }
@@ -10949,33 +10985,45 @@ async function buyPokemon(id, name, rarity, price, power) {
   if (allData.length >= 999) { toast('Storage limit reached!'); return; }
   const purchaseId = `purchase-${stableId}-${id}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
   const transaction = { type:'purchase_transaction', student_id:stableId, purchase_id:purchaseId, purchase_status:'paid', pokemon_id:Number(id), pokemon_name:name, pokemon_price:Number(price), created_at:new Date().toISOString() };
-  const debitResult = await window.dataSdk.update({ ...student, coins:(Number(student.coins)||0) - Number(price), __backendId:stableId });
+  const nextStudent = { ...student, coins:(Number(student.coins)||0) - Number(price), __backendId:stableId };
+  const debitResult = await window.dataSdk.update(nextStudent, { notify:false });
   if (!debitResult?.isOk) { toast('Could not complete the purchase. Please try again.'); return; }
-  const transactionResult = await window.dataSdk.create(transaction);
-  if (!transactionResult?.isOk) { await window.dataSdk.update({ ...student, coins:Number(student.coins)||0, __backendId:stableId }); toast('Purchase was not recorded; no coins were charged. Please try again.'); return; }
-  const purchaseResult = await window.dataSdk.create({ type:'pokemon', student_id:stableId, purchase_id:purchaseId, purchase_status:'granted', school_name:student.school_name || '', class_name:student.class_name || '', student_name:'', coins:0, pokemon_id:Number(id), pokemon_name:name, pokemon_rarity:rarity, pokemon_price:Number(price), pokemon_power:Number(power), owner:student.student_name, current_hp:Number(power)+30, last_battle_time:'', created_at:new Date().toISOString() });
+  refreshCanonicalStudentViews(debitResult.data || nextStudent, { mutationType:'purchase', coins:true, responseStatus:'verified' });
+  const transactionResult = await window.dataSdk.create(transaction, { notify:false });
+  if (!transactionResult?.isOk) { const refund = await window.dataSdk.update({ ...student, coins:Number(student.coins)||0, __backendId:stableId }, { notify:false }); if (refund?.isOk) refreshCanonicalStudentViews(refund.data || student, { mutationType:'purchase-refund', coins:true, responseStatus:'verified' }); toast('Purchase was not recorded; no coins were charged. Please try again.'); return; }
+  if (transactionResult.data) allData.push(transactionResult.data);
+  const purchaseResult = await window.dataSdk.create({ type:'pokemon', student_id:stableId, purchase_id:purchaseId, purchase_status:'granted', school_name:student.school_name || '', class_name:student.class_name || '', student_name:'', coins:0, pokemon_id:Number(id), pokemon_name:name, pokemon_rarity:rarity, pokemon_price:Number(price), pokemon_power:Number(power), owner:student.student_name, current_hp:Number(power)+30, last_battle_time:'', created_at:new Date().toISOString() }, { notify:false });
   if (!purchaseResult?.isOk) { await reconcileStudentPurchase(stableId); toast('Purchase is being recovered safely. Please refresh shortly.'); return; }
-  allData = allData.map(row => row.__backendId === stableId ? { ...row, coins:(Number(student.coins)||0) - Number(price) } : row);
-  setCurrentStudentRecord(getStudentRecordByStableId(stableId));
-  await reconcileStudentPurchase(stableId);
-  renderStudentDashboard();
-  await playCatchSound();
+  if (purchaseResult.data) allData.push(purchaseResult.data);
   showCatchCelebration(name, id);
   toast(`Caught ${name}!`);
+  void playCatchSound().catch(() => {});
+  if (transactionResult.data) {
+    const transactionUpdate = await window.dataSdk.update({ ...transactionResult.data, purchase_status:'granted' }, { notify:false });
+    if (transactionUpdate?.isOk && transactionUpdate.data) allData = allData.map(row => row.__backendId === transactionUpdate.data.__backendId ? transactionUpdate.data : row);
+  }
+  rebuildCanonicalStudentIndex();
+  setCurrentStudentRecord(getStudentRecordByStableId(stableId));
+  setTimeout(() => { if (currentRole === 'student' && currentStudentRecordId === stableId) renderStudentDashboard(); }, 0);
 }
 
 async function buyPokemonFromProfile(id, name, rarity, price, power) {
   ensureCatchSoundContext();
   if (!profileStudent || (profileStudent.coins || 0) < price) { toast('Not enough coins!'); return; }
   if (allData.length >= 999) { toast('Storage limit reached!'); return; }
-  const debitResult = await window.dataSdk.update({ ...profileStudent, coins: (profileStudent.coins || 0) - price });
+  const latestProfile = getStudentRecordByStableId(profileStudent.__backendId) || profileStudent;
+  const nextProfile = { ...latestProfile, coins: (Number(latestProfile.coins) || 0) - price };
+  const debitResult = await window.dataSdk.update(nextProfile, { notify:false });
   if (!debitResult?.isOk) { toast('Could not complete the award.'); return; }
+  refreshCanonicalStudentViews(debitResult.data || nextProfile, { mutationType:'purchase', coins:true, responseStatus:'verified' });
   const maxHP = power + 30;
-  const awardResult = await window.dataSdk.create({ type: 'pokemon', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: id, pokemon_name: name, pokemon_rarity: rarity, pokemon_price: price, pokemon_power: power, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: profileStudent.student_name, created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', current_hp: maxHP, last_battle_time: '' });
-  if (!awardResult?.isOk) { toast('Could not save the awarded Pokémon.'); return; }
-  await playCatchSound();
+  const awardResult = await window.dataSdk.create({ type: 'pokemon', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: id, pokemon_name: name, pokemon_rarity: rarity, pokemon_price: price, pokemon_power: power, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: profileStudent.student_name, created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', current_hp: maxHP, last_battle_time: '' }, { notify:false });
+  if (!awardResult?.isOk) { const refund = await window.dataSdk.update({ ...latestProfile, coins:Number(latestProfile.coins) || 0 }, { notify:false }); if (refund?.isOk) refreshCanonicalStudentViews(refund.data || latestProfile, { mutationType:'purchase-refund', coins:true, responseStatus:'verified' }); toast('Could not save the awarded Pokémon. Coins were returned.'); return; }
+  if (awardResult.data) allData.push(awardResult.data);
   showCatchCelebration(name, id);
   toast(`Caught ${name}!`);
+  void playCatchSound().catch(() => {});
+  setTimeout(() => { if (profileStudent && profileStudent.__backendId === latestProfile.__backendId) renderStudentProfile(); }, 0);
 }
 
 // Forms
@@ -11247,25 +11295,26 @@ document.getElementById('award-form').addEventListener('submit', async e => {
   if (!/^\d+$/.test(rawAmount) || amount < 1 || amount > 1000) { toast('Value must be an integer between 1 and 1,000 coins.'); return; }
   const student = getStudents(navSchool, navClass).find(s => s.student_name === name) || getAllStudents().find(s => s.student_name === name);
   if (!student) { toast('Could not find that student.'); return; }
-  if (!(await deductTeacherCredits(amount))) return;
+  if (!(await deductTeacherCredits(amount, { notify:false }))) return;
   const latest = getStudentRecordByStableId(student.__backendId) || student;
   const optimistic = { ...latest, coins: (Number(latest.coins) || 0) + amount };
   // Optimistic: celebrate and update the UI instantly, persist in the background.
   allData = allData.map(r => r.__backendId === latest.__backendId ? optimistic : r);
   if (currentRole === 'student' && currentStudentRecordId === latest.__backendId) setCurrentStudentRecord(optimistic);
-  renderStudentDashboard();
+  updateVisibleStudentCoinLabels(optimistic);
   playTransactionSound('reward'); toast(`Awarded ${amount} coins to ${name}!`);
   showStudentAwardCelebration(optimistic, amount);
+  setTimeout(() => { if (currentRole === 'student') renderStudentDashboard(); }, 0);
   persistCanonicalStudentPatch(latest.__backendId, { coins: optimistic.coins }, 'Could not award coins.').then(async saved => {
     if (!saved) {
       allData = allData.map(r => r.__backendId === latest.__backendId ? latest : r);
       if (currentRole === 'student' && currentStudentRecordId === latest.__backendId) setCurrentStudentRecord(latest);
-      renderStudentDashboard();
+      updateVisibleStudentCoinLabels(latest);
       await refundTeacherCredits(amount, currentTeacher);
       toast('Award failed — coins were not added.');
       return;
     }
-    logCredit('Award', amount, name);
+    logCredit('Award', amount, name, { notify:false });
   });
 });
 
@@ -11278,17 +11327,23 @@ document.getElementById('gift-all-form').addEventListener('submit', async e => {
   const students = getStudents(navSchool, navClass).map(student => getStudentRecordByStableId(student.__backendId)).filter(Boolean);
   if (!students.length) { toast('No students in this class!'); return; }
   const totalCost = amount * students.length;
-  if (!(await deductTeacherCredits(totalCost))) return;
+  if (!(await deductTeacherCredits(totalCost, { notify:false }))) return;
   const updatedStudents = students.map(s => getStudentRecordByStableId(s.__backendId) || s).map(latest => ({ ...latest, coins: (Number(latest.coins) || 0) + amount, __backendId: latest.__backendId }));
-  const result = await window.dataSdk.updateMany(updatedStudents);
+  const result = await window.dataSdk.updateMany(updatedStudents, { notify:false });
   if (!result?.isOk) { toast('Could not save the class gift. Please try again.'); return; }
-  const byId = new Map(updatedStudents.map(s => [s.__backendId, s]));
-  allData = allData.map(record => byId.get(record.__backendId) || record);
+  const savedStudents = Array.isArray(result.data) ? result.data : updatedStudents;
+  const savedByAccount = new Map(savedStudents.map(student => [canonicalStudentKey(student), student]));
+  allData = allData.map(record => {
+    const saved = savedByAccount.get(canonicalStudentKey(record));
+    return saved ? { ...record, ...saved, __backendId:record.__backendId, coins:saved.coins } : record;
+  });
+  rebuildCanonicalStudentIndex();
   if (currentRole === 'student' && byId.has(currentStudentRecordId)) setCurrentStudentRecord(byId.get(currentStudentRecordId));
-  renderStudentDashboard();
-  await logCredit('Gift All', totalCost, `${navClass} (${updatedStudents.length} students)`); playTransactionSound('reward');
+  playTransactionSound('reward');
   toast(`🎁 Gifted ${amount} coins to ${updatedStudents.length} students!`);
   showGiftAllCelebration(amount, updatedStudents.length);
+  savedStudents.forEach(updateVisibleStudentCoinLabels);
+  logCredit('Gift All', totalCost, `${navClass} (${updatedStudents.length} students)`, { notify:false });
 });
 
 // Quiz form
@@ -16698,7 +16753,34 @@ function openEditStudentModal(studentName) {
 }
 
 // Profile controls
-document.getElementById('profile-adjust-form').addEventListener('submit', async e => { e.preventDefault(); const latest = profileStudent && getStudentRecordByStableId(profileStudent.__backendId); if (!latest) return; const amount = parseInt(document.getElementById('profile-adjust-amount').value); if (isNaN(amount)) return; if (amount > 0 && !(await deductTeacherCredits(amount))) return; const saved = await persistCanonicalStudentPatch(latest.__backendId, { coins: Math.max(0, (latest.coins || 0) + amount) }); if (!saved) return; await logCredit('Adjust', amount, saved.student_name); playTransactionSound(amount < 0 ? 'deduction' : 'reward'); document.getElementById('profile-adjust-amount').value = ''; toast(`${amount >= 0 ? '+' : ''}${amount} coins!`); showStudentAwardCelebration(saved, amount); });
+document.getElementById('profile-adjust-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const latest = profileStudent && getStudentRecordByStableId(profileStudent.__backendId);
+  if (!latest) return;
+  const amount = parseInt(document.getElementById('profile-adjust-amount').value, 10);
+  if (isNaN(amount)) return;
+  if (amount > 0 && !(await deductTeacherCredits(amount, { notify:false }))) return;
+  const coins = Math.max(0, (Number(latest.coins) || 0) + amount);
+  const optimistic = { ...latest, coins };
+  allData = allData.map(row => row.__backendId === latest.__backendId ? optimistic : row);
+  rebuildCanonicalStudentIndex();
+  profileStudent = getStudentRecordByStableId(latest.__backendId) || optimistic;
+  document.getElementById('profile-adjust-amount').value = '';
+  playTransactionSound(amount < 0 ? 'deduction' : 'reward');
+  toast(`${amount >= 0 ? '+' : ''}${amount} coins!`);
+  showStudentAwardCelebration(optimistic, amount);
+  refreshCanonicalStudentViews(optimistic, { mutationType:'coins', coins:true, responseStatus:'optimistic' });
+  const saved = await persistCanonicalStudentPatch(latest.__backendId, { coins }, 'Could not save student coin adjustment.');
+  if (!saved) {
+    allData = allData.map(row => row.__backendId === latest.__backendId ? latest : row);
+    rebuildCanonicalStudentIndex();
+    profileStudent = getStudentRecordByStableId(latest.__backendId) || latest;
+    refreshCanonicalStudentViews(latest, { mutationType:'coins', coins:true, responseStatus:'rejected' });
+    if (amount > 0) await refundTeacherCredits(amount, currentTeacher);
+    return;
+  }
+  logCredit('Adjust', amount, saved.student_name, { notify:false });
+});
 
 // ==================== BATTLE ARENA ====================
 let battleState = { left: null, right: null, leftPokemon: null, rightPokemon: null, running: false };
