@@ -15162,8 +15162,10 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   }
 
   function updateAnswerDisplay() {
-    const answer = selectedLetters.map(letter => letter?.letter || '_').join('');
-    answerDisplay.textContent = answer;
+    // Render one slot per letter so the fly-in animation can target the exact slot rect.
+    answerDisplay.innerHTML = selectedLetters.map((letter, i) =>
+      `<span class="scramble-answer-slot${letter ? ' is-filled' : ''}" data-slot="${i}">${letter ? letter.letter : ''}</span>`
+    ).join('');
   }
 
   function queueScrambleTile(tile) {
@@ -15183,10 +15185,10 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     unlockGameSound();
     playScrambleSound('select');
     next.tile.disabled = true;
-    const target = answerDisplay;
+    const slotTarget = answerDisplay.querySelector(`[data-slot="${next.targetIndex}"]`) || answerDisplay;
     const from = next.tile.getBoundingClientRect();
-    const to = target.getBoundingClientRect();
-    const x = to.left + to.width * Math.min(0.94, (next.targetIndex + 0.5) / Math.max(1, correctWord.length)) - (from.left + from.width / 2);
+    const to = slotTarget.getBoundingClientRect();
+    const x = to.left + to.width / 2 - (from.left + from.width / 2);
     const y = to.top + to.height / 2 - (from.top + from.height / 2);
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     scrambleTileAnimation = reduced ? null : next.tile.animate([
