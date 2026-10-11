@@ -24,3 +24,4 @@
 
 - Schedule presentation shares workspace-refresh.css, with one escaped event-card renderer used by the weekly table and cloned agenda; keep original action selectors and save handlers. Why: ensures consistent two-mode colours without duplicating scheduling logic.
 - Schedule rendering reads persisted entry colours before legacy colour mappings; explicit group updates synchronise matching entries and bypass automatic palette substitution. Why: keeps picker, cards and legend consistent across saves and reloads.
+- Poké Battle effects stay scoped in vocab-battle.js/.css, with battle-instance guarded turn callbacks and HP animation cleanup on exit. Why: attack presentation must not change scoring, claims or leak into a replayed battle.
