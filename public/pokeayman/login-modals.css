@@ -93,3 +93,9 @@ html body #student-pin-modal:placeholder-shown { letter-spacing: normal !importa
 @keyframes pklWobble { 0%, 70%, 100% { transform: rotate(0); } 76% { transform: rotate(-14deg); } 84% { transform: rotate(10deg); } 92% { transform: rotate(-5deg); } }
 @media (prefers-reduced-motion: reduce) { .pk-login-overlay, .pk-login-card, .pk-login-ball { animation: none !important; } }
 @media (max-width: 480px) { .pk-login-head { padding: 18px; gap: 12px; } .pk-login-ball { width: 46px; height: 46px; } .pk-login-title { font-size: 22px; } }
+
+/* Mobile: scrollable overlay so buttons stay reachable with the keyboard open */
+.pk-login-overlay { overflow-y: auto; -webkit-overflow-scrolling: touch; align-items: safe center !important; }
+.pk-login-overlay .pk-login-card { max-height: none !important; overflow: visible !important; margin: auto 0; }
+.pk-login-card button { touch-action: manipulation; }
+.pk-login-card button:active { transform: scale(.97); }

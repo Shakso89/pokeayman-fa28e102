@@ -344,3 +344,10 @@
   .home-showcase .home-side-card small { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .home-showcase .home-side-card { animation: none; transform: rotate(var(--rot)); } }
+
+/* Mobile taps: keep the help badge in the header so it never covers login buttons */
+.home-showcase .home-actions button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; position: relative; z-index: 6; }
+.home-showcase .home-actions button:active { transform: scale(.97); filter: brightness(.92); }
+@media (max-width: 700px) {
+  .home-showcase .home-contact-dock { position: static !important; padding: .35rem !important; }
+}

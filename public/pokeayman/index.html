@@ -5773,8 +5773,10 @@ function initPokemonArch() {
 initPokemonArch();
 document.querySelectorAll('.home-side-card').forEach(c=>c.addEventListener('click',()=>{const id=Number(c.dataset.sidePokemon);const cat=typeof pokemonCatalog!=='undefined'?pokemonCatalog.find(p=>Number(p.id)===id):null;if(typeof openPokemonModal==='function')openPokemonModal({id,name:c.getAttribute('aria-label'),rarity:cat?.rarity||'rare',price:cat?.price||0,power:cat?.power||0,hp:cat?.hp||50},false,'');}));
 
-document.getElementById('home-student-entry')?.addEventListener('click', () => document.getElementById('student-login-toggle')?.click());
-document.getElementById('home-teacher-entry')?.addEventListener('click', () => document.getElementById('teacher-login-toggle')?.click());
+const pkOpenLogin = id => { document.querySelectorAll('.pk-login-overlay').forEach(m => m.remove()); document.getElementById(id)?.dispatchEvent(new MouseEvent('click', { bubbles: true })); };
+document.getElementById('home-student-entry')?.addEventListener('click', () => pkOpenLogin('student-login-toggle'));
+document.getElementById('home-teacher-entry')?.addEventListener('click', () => pkOpenLogin('teacher-login-toggle'));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.pk-login-overlay').forEach(m => m.remove()); });
 
 // Native BorderGlow behavior: pointer proximity is measured against the selected logo edge.
 function initSelectedLogoBorderGlow() {
@@ -6710,7 +6712,7 @@ document.getElementById('student-login-toggle').addEventListener('click', () => 
   });
   
   modal.querySelector('#student-cancel-btn-modal').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (false && e.target === modal) modal.remove(); });
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 });
 
 // Enter the teacher dashboard for a signed-in Cloud teacher account.
@@ -6852,6 +6854,7 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
   });
   
   $('#teacher-cancel-btn-modal').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 });
 
 document.getElementById('contact-pricing-btn').addEventListener('click', () => {
@@ -6958,7 +6961,7 @@ if (false) document.getElementById('leaderboard-home-btn').addEventListener('cli
   }).join('') || '<p class="text-center text-gray-400 py-8 col-span-4">No players yet.</p>';
   
   modal.querySelector('#leaderboard-close').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (false && e.target === modal) modal.remove(); });
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 });
 
 if (false) document.getElementById('leaderboard-app-btn').addEventListener('click', () => {
@@ -7027,7 +7030,7 @@ if (false) document.getElementById('leaderboard-app-btn').addEventListener('clic
   }).join('') || '<p class="text-center text-gray-400 py-8 col-span-4">No players yet.</p>';
   
   modal.querySelector('#leaderboard-close').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (false && e.target === modal) modal.remove(); });
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 });
 
 ['home-student-name', 'student-pin'].forEach(id => document.getElementById(id)?.addEventListener('input', () => document.getElementById('student-error')?.classList.add('hidden')));
