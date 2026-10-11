@@ -136,6 +136,8 @@
 }
 @media (min-width: 640px) and (max-width: 1024px) {
   #schedule-agenda .ag-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1024px) {
   #schedule-agenda .ag-list article { margin: 0 !important; padding: 12px 14px !important; font-size: 13px; border-radius: 14px; }
   #schedule-agenda .ag-list article .text-\[11px\] { font-size: 12.5px; }
   #schedule-agenda .ag-act { padding: 4px 12px; border-radius: 999px; background: rgba(255,255,255,.18); color: #fff; font-size: 12px; font-weight: 700; border: 0; margin-right: 4px; }
