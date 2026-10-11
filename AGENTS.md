@@ -20,3 +20,5 @@
 - Bright-mode legacy corrections live in bright-fixes.css/.js with ID-aware full-background overrides and body-scoped derived tokens; computed colours are normalized through a cached canvas. Why: legacy gradients and root-resolved aliases must not keep dark surfaces after the theme switch.
 
 - Vocabulary cards/create row, arcade cards, stadium panels, avatar wardrobe, Quizzes and Admin Hub share workspace-refresh.css loaded after legacy bright corrections. Why: a scoped final presentation layer preserves existing handlers while enforcing both-mode layout and contrast.
+
+- Schedule presentation shares workspace-refresh.css, with one escaped event-card renderer used by the weekly table and cloned agenda; keep original action selectors and save handlers. Why: ensures consistent two-mode colours without duplicating scheduling logic.
