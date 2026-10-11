@@ -5775,7 +5775,7 @@ document.querySelectorAll('.home-side-card').forEach(c=>c.addEventListener('clic
 const pkOpenLogin = id => { document.querySelectorAll('.pk-login-overlay').forEach(m => m.remove()); document.getElementById(id)?.dispatchEvent(new MouseEvent('click', { bubbles: true })); };
 document.getElementById('home-student-entry')?.addEventListener('click', () => pkOpenLogin('student-login-toggle'));
 document.getElementById('home-teacher-entry')?.addEventListener('click', () => pkOpenLogin('teacher-login-toggle'));
-document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.pk-login-overlay').forEach(m => m.remove()); });
+// Sign-in/sign-up popups stay open until the Cancel button is pressed: no outside-tap or Escape closing.
 
 // Native BorderGlow behavior: pointer proximity is measured against the selected logo edge.
 function initSelectedLogoBorderGlow() {
@@ -6711,7 +6711,6 @@ document.getElementById('student-login-toggle').addEventListener('click', () => 
   });
   
   modal.querySelector('#student-cancel-btn-modal').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 });
 
 // Enter the teacher dashboard for a signed-in Cloud teacher account.
@@ -6853,7 +6852,6 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
   });
   
   $('#teacher-cancel-btn-modal').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 });
 
 document.getElementById('contact-pricing-btn').addEventListener('click', () => {
