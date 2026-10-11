@@ -14,6 +14,7 @@
 - Backend admin roles: user_roles table; admins enter the PokéAyman iframe as the built-in "Ayman" Admin identity (reserved name blocked for non-admins). Why: reuses all existing Admin permission checks unchanged.
 - Presentation/layout rules for the iframe app live in `public/pokeayman/AGENTS.md`.
 - The home fan gallery is iframe-native in home-hand.js/.css and keeps the existing admin Pokémon configuration; bundled habitat imagery is passed from the index iframe load handler. Why: reproduces the supplied interaction without introducing React into the legacy DOM.
+- Home gallery settings keep a separate draft until the existing published-config save succeeds, reuse the hand renderer for preview and use a bundled full species-name snapshot for selection. Why: prevents unsaved/reset changes affecting the public gallery and supports every allowed Pokédex ID.
 
 - Teacher sidebar identity stays in teacher-shell.js/.css, using the existing header name/image, a CSS Poké Ball fallback, and measured mobile profile height. Why: maintains avatar synchronization and avoids long-name overlap without changing account logic.
 - Hangman keeps eight persistent SVG stages with scoped hangman-animation.css and local miss feedback. Why: each wrong guess visibly draws one new stage without restarting previous strokes or covering the game.

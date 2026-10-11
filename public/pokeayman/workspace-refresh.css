@@ -1,4 +1,48 @@
 /* Classroom workspaces: one token-driven presentation layer. */
+html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
+  & :is(.home-manager,.home-picker) { color: var(--color-text-primary); font-family: var(--font-body); }
+  & .home-manager-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:24px; }
+  & .home-manager h3 { font-size:24px; margin:0; }
+  & #arch-draft-status { color:var(--color-text-secondary); font-size:12px; }
+  & #arch-positions-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+  & .home-slot { position:relative; min-width:0; border:1px solid var(--color-border); border-radius:8px; background:var(--color-surface); padding:12px; }
+  & .home-slot-number { font-size:12px; color:var(--color-text-muted); font-weight:700; }
+  & .arch-pokemon-picker { display:flex; flex-direction:column; align-items:center; width:100%; padding:8px !important; background:transparent !important; border:0 !important; color:var(--color-text-primary) !important; box-shadow:none !important; }
+  & .arch-pokemon-picker img { width:100%; height:140px; object-fit:contain; }
+  & :is(.arch-pokemon-picker,.arch-picker-card) strong { font-size:15px; overflow-wrap:anywhere; }
+  & :is(.arch-pokemon-picker,.arch-picker-card) small { font-size:11px; color:var(--color-text-secondary); margin-top:4px; }
+  & .home-slot-order { display:flex; justify-content:space-between; margin-top:12px; }
+  & :is(.home-slot-order,.home-picker header,.home-picker footer) button { min-width:36px; min-height:36px; padding:4px !important; }
+  & .home-manager-toolbar { display:flex; flex-wrap:wrap; gap:10px; margin:24px 0 16px; }
+  & .home-manager :is(.btn-outline,.btn-primary), & .home-picker .btn-outline { border-radius:6px !important; }
+  & .home-manager button:disabled, & .home-picker button:disabled { opacity:.45; cursor:not-allowed; }
+  & #arch-error { color:var(--color-error); font-size:13px; }
+  & #arch-success { color:var(--color-text-primary); font-size:13px; }
+  & .home-manager-preview { border-top:1px solid var(--color-border); margin-top:24px; padding-top:20px; overflow:hidden; }
+  & .home-manager-preview h4 { margin:0; font-size:14px; color:var(--color-text-secondary); }
+  & #arch-preview-root { display:grid; grid-template-columns:1fr; width:100%; --home-ink:var(--color-text-primary); --home-muted:var(--color-text-secondary); --home-yellow:var(--color-brand); --home-cyan:var(--color-focus); }
+  & #arch-preview-root .pokemon-hand-stage { grid-column:1; grid-row:1; }
+  & #arch-preview-root .pokemon-hand-caption { grid-column:1; grid-row:2; text-align:center; padding:12px; }
+  & .home-picker-overlay { position:fixed; inset:0; z-index:21000; background:var(--color-bg); display:grid; place-items:center; padding:16px; }
+  & .home-picker { width:min(100%,840px); max-height:92vh; display:flex; flex-direction:column; background:var(--color-surface); border:1px solid var(--color-border); border-radius:8px; padding:20px; box-shadow:var(--shadow-popover); }
+  & .home-picker header, & .home-picker footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-shrink:0; }
+  & .home-picker h2 { font-size:20px; margin:0; }
+  & #arch-picker-search { margin:20px 0; min-height:44px; flex-shrink:0; }
+  & #arch-picker-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; overflow-y:auto; min-height:0; }
+  & .arch-picker-card { display:flex; flex-direction:column; align-items:center; min-width:0; background:var(--color-surface-hover) !important; color:var(--color-text-primary) !important; border:1px solid var(--color-border) !important; padding:12px !important; box-shadow:none !important; }
+  & .arch-picker-card[aria-pressed='true'], & .arch-picker-card:hover { border-color:var(--color-brand) !important; }
+  & .arch-picker-card img { width:100%; height:96px; object-fit:contain; }
+  & .home-picker footer { margin-top:16px; font-size:12px; color:var(--color-text-secondary); }
+}
+@media(max-width:640px) {
+  html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
+    & #arch-positions-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    & .arch-pokemon-picker img { height:100px; }
+    & #arch-picker-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    & .home-picker { padding:12px; }
+    & .home-manager-toolbar button { flex:1 1 140px; }
+  }
+}
 /* Quizzes and administration share the same flat workspace hierarchy. */
 html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
   & :is(#class-subtab-quiz,#tab-admin) {
