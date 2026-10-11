@@ -4014,7 +4014,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   <div id="home-screen" class="home-showcase w-full flex flex-col fixed inset-0" style="height: calc(100 * min(var(--vh, 1vh), 1vh)); z-index: 1;">
    <style>
      #home-screen { overflow: hidden; position: fixed; top: 0; left: 0; right: 0; bottom: 0; }
-    </style><!-- Teacher Info Bar (hidden initially) -->
+    </style>
+   <div class="home-fireflies" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><!-- Teacher Info Bar (hidden initially) -->
    <div id="teacher-info-bar" class="hidden bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-white text-sm font-medium flex items-center justify-between border-b border-indigo-500">
     <span id="teacher-info-name"></span> <button id="logout-home-btn" class="px-2 py-1 rounded bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition">Logout</button>
    </div><!-- Home Header with Logos -->

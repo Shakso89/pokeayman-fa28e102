@@ -36,6 +36,47 @@
   content: none !important;
 }
 
+/* Small drifting lights sit over the backdrop and below the home content. */
+#home-screen.home-showcase .home-fireflies {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  contain: paint;
+  pointer-events: none;
+}
+
+#home-screen.home-showcase .home-fireflies span {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fff3b0;
+  box-shadow: 0 0 5px 1px rgba(255, 232, 140, .8), 0 0 15px 3px rgba(255, 203, 5, .34);
+  opacity: .2;
+  animation: homeFireflyDrift var(--flight-time, 12s) ease-in-out var(--flight-delay, 0s) infinite alternate;
+  will-change: transform, opacity;
+}
+
+#home-screen.home-showcase .home-fireflies span:nth-child(1) { left: 7%; top: 16%; --drift-x: 42px; --drift-y: 65px; --flight-time: 15s; --flight-delay: -8s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(2) { left: 18%; top: 66%; --drift-x: -34px; --drift-y: -52px; --flight-time: 18s; --flight-delay: -4s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(3) { left: 29%; top: 30%; --drift-x: 55px; --drift-y: -40px; --flight-time: 13s; --flight-delay: -11s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(4) { left: 38%; top: 82%; --drift-x: -48px; --drift-y: -70px; --flight-time: 17s; --flight-delay: -2s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(5) { left: 49%; top: 12%; --drift-x: 30px; --drift-y: 58px; --flight-time: 16s; --flight-delay: -12s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(6) { left: 58%; top: 72%; --drift-x: 62px; --drift-y: -46px; --flight-time: 14s; --flight-delay: -6s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(7) { left: 68%; top: 39%; --drift-x: -40px; --drift-y: 63px; --flight-time: 19s; --flight-delay: -14s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(8) { left: 78%; top: 17%; --drift-x: 45px; --drift-y: 54px; --flight-time: 12s; --flight-delay: -3s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(9) { left: 89%; top: 63%; --drift-x: -57px; --drift-y: -58px; --flight-time: 17s; --flight-delay: -10s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(10) { left: 95%; top: 31%; --drift-x: -44px; --drift-y: 70px; --flight-time: 15s; --flight-delay: -5s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(11) { left: 13%; top: 42%; --drift-x: 60px; --drift-y: 45px; --flight-time: 20s; --flight-delay: -16s; }
+#home-screen.home-showcase .home-fireflies span:nth-child(12) { left: 83%; top: 86%; --drift-x: -50px; --drift-y: -42px; --flight-time: 14s; --flight-delay: -9s; }
+
+@keyframes homeFireflyDrift {
+  0% { opacity: .08; transform: translate3d(0, 0, 0) scale(.65); }
+  45% { opacity: .75; }
+  100% { opacity: .16; transform: translate3d(var(--drift-x), var(--drift-y), 0) scale(1.2); }
+}
+
 .home-showcase .home-showcase-header {
   width: min(100%, 1440px);
   margin-inline: auto;
@@ -79,6 +120,8 @@
 
 .home-showcase .hero-text-glass {
   display: grid;
+  position: relative;
+  z-index: 2;
   width: min(100%, 72rem);
   margin: 0 !important;
   padding: 0 !important;
@@ -306,14 +349,14 @@
   transition: transform .45s cubic-bezier(.34,1.56,.64,1), box-shadow .35s, filter .35s;
   animation: hscFloat 6s ease-in-out infinite;
 }
-.home-showcase .home-side-left { left: -2%; --rot: 12deg; background: linear-gradient(145deg, rgba(255,255,255,.28), transparent 35%), linear-gradient(160deg, #f97316, var(--home-red) 55%, #3b0a0f); }
-.home-showcase .home-side-right { right: -2%; --rot: -12deg; animation-delay: -3s; background: linear-gradient(145deg, rgba(255,255,255,.25), transparent 35%), linear-gradient(160deg, #8b5cf6, #4c1d95 55%, #120726); }
+.home-showcase .home-side-left { left: -2%; --rot: 12deg; --reveal-x: 2rem; background: linear-gradient(145deg, rgba(255,255,255,.28), transparent 35%), linear-gradient(160deg, #f97316, var(--home-red) 55%, #3b0a0f); }
+.home-showcase .home-side-right { right: -2%; --rot: -12deg; --reveal-x: -2rem; animation-delay: -3s; background: linear-gradient(145deg, rgba(255,255,255,.25), transparent 35%), linear-gradient(160deg, #8b5cf6, #4c1d95 55%, #120726); }
 .home-showcase .home-side-card img { flex: 1; width: 92%; min-height: 0; object-fit: contain; filter: drop-shadow(0 12px 18px rgba(0,0,0,.5)); transition: transform .45s cubic-bezier(.34,1.56,.64,1); }
 .home-showcase .hsc-name { font-weight: 900; text-transform: uppercase; font-size: .9rem; letter-spacing: .06em; }
 .home-showcase .home-side-card small { font-size: .62rem; opacity: .8; }
 .home-showcase .hsc-shine { position: absolute; inset: -40%; pointer-events: none; background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.45) 50%, transparent 60%); transform: translateX(-60%); transition: transform .8s ease; }
 .home-showcase .home-side-card:hover, .home-showcase .home-side-card:focus-visible {
-  animation-play-state: paused; transform: rotate(0deg) translateY(-14px) scale(1.07); outline: none;
+  animation-play-state: paused; transform: rotate(var(--rot)) translateX(var(--reveal-x, 0)) translateY(-8px) scale(1.025); outline: none;
   box-shadow: 0 40px 80px rgba(0,0,0,.65), 0 0 40px rgba(255,203,5,.35), inset 0 0 0 5px rgba(3,4,7,.25);
 }
 .home-showcase .home-side-card:hover img { transform: scale(1.12) translateY(-6px); }
@@ -335,10 +378,14 @@
   .home-showcase .home-side-card { top: 9rem; width: 6.2rem; opacity: .45; padding: .5rem; pointer-events: none; }
   .home-showcase .home-side-left { left: -2.6rem; }
   .home-showcase .home-side-right { right: -2.6rem; }
+  .home-showcase .home-fireflies span:nth-child(3n) { display: none; }
   .home-showcase .hsc-name { font-size: .6rem; }
   .home-showcase .home-side-card small { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .home-showcase .home-side-card { animation: none; transform: rotate(var(--rot)); } }
+@media (prefers-reduced-motion: reduce) {
+  .home-showcase .home-side-card { animation: none; transform: rotate(var(--rot)); }
+  .home-showcase .home-fireflies span { animation: none; opacity: .35; will-change: auto; }
+}
 
 /* Keep the home help button docked to the viewport at every breakpoint. */
 .home-showcase .home-actions button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; position: relative; z-index: 6; }
