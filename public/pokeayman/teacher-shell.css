@@ -239,11 +239,6 @@ html body.ts-on.ts-bright #app-screen :is(.btn-primary,.btn-danger,.btn-secondar
 html body.ts-on.ts-bright #app-screen :is(.btn-danger,.btn-secondary.danger) { color: var(--ts-on-red) !important; }
 html body.ts-on.ts-bright #app-screen :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea),
 html body.ts-on.ts-bright #ts-chooser :is(input,select), html body.ts-on.ts-bright #ts-rail select { background: var(--ts-surface) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; }
-@media (max-width: 900px) {
-  body.ts-on #ts-theme-toggle { position: fixed; display: flex !important; width: auto; right: 12px; bottom: 16px; z-index: 45; box-shadow: var(--ds-shadow); }
-  body.ts-on #ts-sidebar:has(#ts-theme-toggle) { display: contents; }
-  body.ts-on #ts-sidebar > :not(#ts-theme-toggle) { display: none !important; }
-}
 @media (prefers-reduced-motion: reduce) { .ts-theme-track > span { transition: none; } }
 
 /* Auto-fit sidebar: compact, viewport-adaptive spacing, no visible scrollbar. */
