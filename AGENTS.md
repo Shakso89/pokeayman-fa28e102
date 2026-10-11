@@ -16,3 +16,4 @@
 - The home fan gallery is iframe-native in home-hand.js/.css and keeps the existing admin Pokémon configuration; bundled habitat imagery is passed from the index iframe load handler. Why: reproduces the supplied interaction without introducing React into the legacy DOM.
 
 - Teacher sidebar identity stays in teacher-shell.js/.css, using the existing header name/image, a CSS Poké Ball fallback, and measured mobile profile height. Why: maintains avatar synchronization and avoids long-name overlap without changing account logic.
+- Hangman keeps eight persistent SVG stages with scoped hangman-animation.css and local miss feedback. Why: each wrong guess visibly draws one new stage without restarting previous strokes or covering the game.

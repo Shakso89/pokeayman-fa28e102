@@ -6,6 +6,7 @@
   <script>document.addEventListener("touchstart",function(){},{passive:true});</script>
   <title>PokéAyman</title>
   <link rel="stylesheet" href="/pokeayman/coin-celebrations.css">
+  <link rel="stylesheet" href="/pokeayman/hangman-animation.css">
   <link rel="stylesheet" href="/pokeayman/edit-student.css">
   <script src="/pokeayman/admin-student-editor.js" defer></script>
   <link rel="stylesheet" href="/pokeayman/teacher-streak.css">
@@ -15435,18 +15436,19 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
   let wrongGuesses = hangmanSession.wrongGuesses;
   let gameEnded = false;
   
-  // Hangman drawing stages (SVG progressively built)
+  // Eight misses, eight visible stages; completed strokes stay mounted.
   const drawingStages = [
-    '', // 0 wrong - empty
-    '<line x1="180" y1="40" x2="180" y2="220" stroke="black" stroke-width="4"/>', // 1 - vertical pole
-    '<line x1="30" y1="40" x2="180" y2="40" stroke="black" stroke-width="4"/>', // 2 - horizontal top
-    '<line x1="30" y1="40" x2="30" y2="80" stroke="black" stroke-width="4"/>', // 3 - rope
-    '<circle cx="30" cy="95" r="15" fill="none" stroke="black" stroke-width="4"/>', // 4 - head
-    '<line x1="30" y1="110" x2="30" y2="160" stroke="black" stroke-width="4"/>', // 5 - body
-    '<g><line x1="30" y1="130" x2="10" y2="145" stroke="black" stroke-width="4"/><line x1="30" y1="130" x2="50" y2="145" stroke="black" stroke-width="4"/></g>', // 6 - arms
-    '<g><line x1="30" y1="160" x2="10" y2="185" stroke="black" stroke-width="4"/><line x1="30" y1="160" x2="50" y2="185" stroke="black" stroke-width="4"/></g>', // 7 - legs
-    '<circle cx="30" cy="95" r="3" fill="black"/><circle cx="36" cy="95" r="3" fill="black"/><path d="M 26 100 Q 30 103 34 100" stroke="black" stroke-width="2" fill="none"/>', // 8 - face (X eyes and sad mouth)
+    '<path class="hm-line hm-scaffold" pathLength="1" d="M54 214 V38"/>',
+    '<path class="hm-line hm-scaffold" pathLength="1" d="M54 38 H146 M54 68 L84 38"/>',
+    '<path class="hm-line hm-scaffold" pathLength="1" d="M146 38 V70"/>',
+    '<circle class="hm-line hm-character" pathLength="1" cx="146" cy="89" r="19"/>',
+    '<path class="hm-line hm-character" pathLength="1" d="M146 108 V160"/>',
+    '<path class="hm-line hm-character" pathLength="1" d="M146 121 L118 143 M146 121 L174 143"/>',
+    '<path class="hm-line hm-character" pathLength="1" d="M146 160 L123 193 M146 160 L169 193"/>',
+    '<path class="hm-line hm-face" pathLength="1" d="M136 83 L141 88 M141 83 L136 88 M151 83 L156 88 M156 83 L151 88 M138 99 Q146 93 154 99"/>',
   ];
+  const impactPoints = [[54,130],[108,38],[146,57],[146,89],[146,135],[174,143],[169,193],[146,89]];
+  let drawnWrongCount = -1;
   
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
@@ -15469,9 +15471,11 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
         <div id="hangman-clue" class="mb-3 flex h-24 w-36 items-center justify-center overflow-hidden rounded-xl border-2 border-red-200 bg-red-50" aria-label="Picture clue"></div>
         <p id="hangman-word" class="text-3xl sm:text-4xl font-bold text-red-600 mb-3 font-mono text-center break-words" style="letter-spacing: -0.15em;"></p>
         <div id="hangman-solved-image" class="hidden mb-3 flex justify-center"></div>
-        <svg id="hangman-drawing" width="220" height="260" viewBox="0 0 220 260" style="border: 2px solid #e5e7eb; border-radius: 8px; background: #f9fafb; max-width: 100%; height: auto;">
-          <!-- Base -->
-          <line x1="10" y1="240" x2="170" y2="240" stroke="black" stroke-width="4"/>
+        <svg id="hangman-drawing" width="220" height="260" viewBox="0 0 220 260" role="img" aria-label="Hangman: no wrong guesses">
+          <path class="hm-grid" d="M20 60 H200 M20 110 H200 M20 160 H200 M20 210 H200 M60 20 V210 M110 20 V210 M160 20 V210"/>
+          <rect class="hm-platform" x="25" y="211" width="170" height="9" rx="4"/>
+          <g class="hm-stages"></g><g class="hm-effects" aria-hidden="true"></g>
+          <g aria-hidden="true">${Array.from({length: maxWrong}, (_, i) => `<circle class="hm-life" cx="${47 + i * 18}" cy="239" r="4"/>`).join('')}</g>
         </svg>
         <p class="text-center mt-2 text-base font-bold">
           Wrong letters: <span id="hangman-wrong" class="text-red-600">${wrongGuesses}</span>/<span class="text-red-600">${maxWrong}</span>
@@ -15507,13 +15511,25 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
   
   function drawHangman() {
     const svg = modal.querySelector('#hangman-drawing');
-    svg.innerHTML = '<line x1="10" y1="240" x2="170" y2="240" stroke="black" stroke-width="4"/>'; // Base always visible
-    // Add stages up to current wrong count
-    for (let i = 0; i < wrongGuesses && i < drawingStages.length; i++) {
-      if (drawingStages[i]) {
-        svg.innerHTML += drawingStages[i];
-      }
+    if (drawnWrongCount === wrongGuesses) return;
+    const animate = drawnWrongCount >= 0 && wrongGuesses > drawnWrongCount;
+    const stages = svg.querySelector('.hm-stages');
+    stages.querySelectorAll('.hm-new').forEach(part => part.classList.remove('hm-new'));
+    for (let i = Math.max(0, drawnWrongCount); i < wrongGuesses; i++) {
+      stages.insertAdjacentHTML('beforeend', `<g class="hm-stage ${animate ? 'hm-new' : ''}" data-stage="${i + 1}">${drawingStages[i]}</g>`);
     }
+    svg.dataset.wrong = String(wrongGuesses);
+    svg.setAttribute('aria-label', `Hangman: ${wrongGuesses} of ${maxWrong} wrong guesses`);
+    svg.querySelectorAll('.hm-life').forEach((life, i) => life.classList.toggle('is-lost', i < wrongGuesses));
+    if (animate) {
+      const [x, y] = impactPoints[wrongGuesses - 1];
+      const letter = guessed[guessed.length - 1];
+      svg.querySelector('.hm-effects').innerHTML = `<circle class="hm-impact" cx="${x}" cy="${y}" r="12"/><text class="hm-miss" x="190" y="${Math.max(40, y - 12)}" text-anchor="end">${letter} ✕</text>`;
+      svg.classList.remove('hm-hit');
+      void svg.getBoundingClientRect();
+      svg.classList.add('hm-hit');
+    }
+    drawnWrongCount = wrongGuesses;
   }
   
   const updateHangmanDifficulty = nextDifficulty => {
@@ -15555,9 +15571,10 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
           const letter = btn.dataset.letter;
           guessed.push(letter);
           if (!word.includes(letter)) {
-            showWrongAnswerCelebration(modal);
             wrongGuesses++;
             hangmanSession.wrongGuesses = wrongGuesses;
+            modal.querySelector('#hangman-wrong').textContent = wrongGuesses;
+            drawHangman();
             if (activeGamePlayers.length) {
               activeGameScores[activeGamePlayerIndex] -= 1;
               hangmanSession.playerWrongGuesses = hangmanSession.playerWrongGuesses || {};
@@ -15595,7 +15612,11 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
                 </div>
               </div>`;
               // Mount the result dialog inside the active game/fullscreen root so it stays above the game.
-              mountGameCelebrationOverlay(modal, gameOverOverlay);
+              setTimeout(() => {
+                if (!modal.isConnected) return;
+                mountGameCelebrationOverlay(modal, gameOverOverlay);
+                gameOverOverlay.querySelector('.game-celebration-card')?.focus();
+              }, 850);
               gameOverOverlay.style.zIndex = '2147483647';
               gameOverOverlay.style.pointerEvents = 'auto';
               const closeGameOver = () => { gameOverOverlay.remove(); modal.remove(); returnToGamesTab(); };
@@ -15607,7 +15628,6 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
                 resetGameTurnState();
                 openGameHangman(listName, wordCount, timerSeconds, difficulty, true);
               });
-              gameOverOverlay.querySelector('.game-celebration-card').focus();
               return;
             }
             // Wrong letter ends the turn while preserving shared guesses and blocked letters.
