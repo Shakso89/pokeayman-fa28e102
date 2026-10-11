@@ -7813,15 +7813,17 @@ function writeScheduleGroupColors(mapping) {
 function scheduleGroupColor(entry) {
   const key = scheduleGroupKey(entry);
   const mapping = readScheduleGroupColors();
-  const reserved = new Set(Object.entries(mapping).filter(([savedKey]) => savedKey !== key).map(([, color]) => String(color).trim().toLowerCase()));
+  // The stored entry is authoritative, including colours previously remapped by
+  // the legacy no-green filter or duplicate-colour restriction.
+  const chosen = String(entry?.color || '').trim();
+  if (chosen) return chosen;
   const saved = String(mapping[key] || '').trim();
-  if (saved && !reserved.has(saved.toLowerCase())) return pdNoTeal(saved);
-  if (/^hsl/.test(saved)) return saved;
-  const legacy = String(entry?.color || '').trim();
-  const color = legacy && !reserved.has(legacy.toLowerCase()) ? legacy : scheduleGroupPalette.find(candidate => !reserved.has(candidate.toLowerCase()));
+  if (saved) return saved;
+  const reserved = new Set(Object.values(mapping).map(color => String(color).trim().toLowerCase()));
+  const color = scheduleGroupPalette.find(candidate => !reserved.has(candidate.toLowerCase()));
   if (color) mapping[key] = color;
   else { let hash = 0; for (const char of key) hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0; mapping[key] = `hsl(${Math.abs(hash) % 360} 62% 38%)`; }
-  mapping[key] = pdNoTeal(mapping[key]); writeScheduleGroupColors(mapping);
+  writeScheduleGroupColors(mapping);
   return mapping[key];
 }
 function setScheduleGroupColor(entry, color) {
@@ -7829,12 +7831,10 @@ function setScheduleGroupColor(entry, color) {
   const nextColor = String(color || '').trim();
   if (!nextColor) return scheduleGroupColor(entry);
   const mapping = readScheduleGroupColors();
-  const normalizedColor = nextColor.toLowerCase();
-  const conflict = Object.entries(mapping).some(([savedKey, savedColor]) => savedKey !== key && String(savedColor).trim().toLowerCase() === normalizedColor);
-  if (conflict) {
-    const fallback = scheduleGroupPalette.find(candidate => !new Set(Object.entries(mapping).filter(([savedKey]) => savedKey !== key).map(([, value]) => String(value).trim().toLowerCase())).has(candidate.toLowerCase()));
-    mapping[key] = fallback || nextColor;
-  } else mapping[key] = nextColor;
+  mapping[key] = nextColor;
+  (teacherSchedule.entries || []).forEach(item => {
+    if (scheduleGroupKey(item) === key) item.color = nextColor;
+  });
   writeScheduleGroupColors(mapping);
   return mapping[key];
 }
@@ -7873,7 +7873,7 @@ function scheduleCardIcon(kind) {
 }
 function scheduleEventCard(entry, oneTime = false) {
   const text = scheduleCardText;
-  const accent = oneTime ? pdNoTeal(entry.color || '#4355de') : scheduleGroupColor(entry);
+  const accent = oneTime ? (entry.color || '#4355de') : scheduleGroupColor(entry);
   const meta = [entry.school, entry.group, entry.teacher].filter(Boolean).map(text).join(' · ');
   const editAttrs = oneTime ? `data-sub-edit="${text(entry.id)}"` : `class="schedule-edit" data-id="${text(entry.id)}"`;
   const deleteAttrs = oneTime ? `data-sub-delete="${text(entry.id)}"` : `class="schedule-delete" data-id="${text(entry.id)}"`;
@@ -7893,7 +7893,7 @@ function renderTeacherZone() {
   const rows = [...new Set([...(teacherSchedule.rows || starterScheduleRows), ...(teacherSchedule.entries || []).map(e => e.slot).filter(Boolean)])];
   body.innerHTML = rows.map(slot => `<tr class="border-t border-indigo-200/15 align-top"><th class="p-2 text-left whitespace-nowrap text-amber-100 bg-indigo-950/35"><div class="schedule-time-controls"><button type="button" class="schedule-time-button" data-schedule-slot="${slot}" aria-label="Edit time frame ${slot}">${slot}</button>${slot === rows[rows.length - 1] ? '<button type="button" class="schedule-add-row" aria-label="Add time frame" title="Add time frame">＋</button>' : ''}</div></th>${scheduleDays.map(day => `<td class="p-2 min-w-[140px] bg-indigo-900/20">${(teacherSchedule.entries || []).filter(e => e.day === day && e.slot === slot).map(e => scheduleEventCard(e)).join('')}</td>`).join('')}</tr>`).join('');
   { const cutoff = new Date(Date.now() - 7*864e5).toISOString().slice(0,10); const dayName = d => scheduleDays[Math.min(4,(new Date(d+'T12:00:00').getDay()+6)%7)]; const subs = (subHours||[]).filter(x => x.date >= cutoff).sort((a,b)=>`${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`)); const subHrs = subs.reduce((t,x)=>t+subHourDuration(x),0); body.insertAdjacentHTML('beforeend', `<tr class="schedule-sub-row border-t border-indigo-200/15 align-top"><th class="p-2 text-left whitespace-nowrap bg-indigo-950/35"><div class="schedule-sub-head">Sub-hours<small>${subHrs.toFixed(1)} hrs</small><button type="button" class="schedule-add-row schedule-sub-add" aria-label="Add sub-hour" title="Add one-time sub-hour">＋</button></div></th>${scheduleDays.map(day => `<td class="p-2 min-w-[140px] bg-indigo-900/20">${subs.filter(x => dayName(x.date)===day).map(x => scheduleEventCard(x, true)).join('')}</td>`).join('')}</tr>`); body.querySelector('.schedule-sub-add').onclick = () => openSubHourEditor(); body.querySelectorAll('[data-sub-edit]').forEach(b => b.onclick = () => openSubHourEditor(b.dataset.subEdit)); body.querySelectorAll('[data-sub-delete]').forEach(b => b.onclick = () => { if (confirm('Delete this one-time sub-hour?')) { subHours = subHours.filter(i => i.id !== b.dataset.subDelete); saveSubHours(); } }); }
-  const legend = document.getElementById('schedule-legend'); const weeklyByClass = {}; (teacherSchedule.entries || []).forEach(entry => { const school = String(entry.school || '').trim() || 'No school specified'; const className = String(entry.title || '').trim() || 'Untitled'; const key = `${school}||${className}`; weeklyByClass[key] = (weeklyByClass[key] || 0) + scheduleHours(entry); }); const classNameCounts = {}; Object.keys(weeklyByClass).forEach(key => { const [, className] = key.split('||'); classNameCounts[className] = (classNameCounts[className] || 0) + 1; }); const weeklyItems = Object.entries(weeklyByClass).sort(([a], [b]) => a.localeCompare(b)); if (legend) { legend.setAttribute('role', 'img'); legend.setAttribute('aria-label', 'Weekly hours by school and class'); legend.className = 'schedule-weekly-graph'; if (weeklyItems.length) { const totalWeeklyHours = weeklyItems.reduce((sum, [, hours]) => sum + hours, 0); let angle = 0; const slices = weeklyItems.map(([key, hours]) => { const [school, className] = key.split('||'); const sample = (teacherSchedule.entries || []).find(entry => (String(entry.school || '').trim() || 'No school specified') === school && (String(entry.title || '').trim() || 'Untitled') === className) || { school, title: className }; const color = pdNoTeal(scheduleGroupColor(sample)); const nextAngle = angle + (hours / totalWeeklyHours) * 360; const slice = `${color} ${angle}deg ${nextAngle}deg`; angle = nextAngle; const label = classNameCounts[className] > 1 ? `${school} — ${className}` : className; return { label, hours, color, slice }; }); const gradient = `conic-gradient(${slices.map(item => item.slice).join(',')})`; legend.innerHTML = `<div class="schedule-weekly-graph-pie" role="img" aria-label="Pie chart of weekly hours by school and class" style="background:${gradient}"></div><div class="schedule-weekly-graph-legend">${slices.map(item => `<div class="schedule-weekly-graph-item" title="${item.label}: ${item.hours.toFixed(1)} hours per week"><span class="schedule-weekly-graph-swatch" style="background:${item.color}"></span><span class="schedule-weekly-graph-name">${item.label}</span><strong class="schedule-weekly-graph-hours">${item.hours.toFixed(1)} hrs/wk</strong></div>`).join('')}</div>`; } else { legend.innerHTML = '<span class="schedule-weekly-graph-empty">No class or subject hours yet.</span>'; } }
+  const legend = document.getElementById('schedule-legend'); const weeklyByClass = {}; (teacherSchedule.entries || []).forEach(entry => { const school = String(entry.school || '').trim() || 'No school specified'; const className = String(entry.title || '').trim() || 'Untitled'; const key = `${school}||${className}`; weeklyByClass[key] = (weeklyByClass[key] || 0) + scheduleHours(entry); }); const classNameCounts = {}; Object.keys(weeklyByClass).forEach(key => { const [, className] = key.split('||'); classNameCounts[className] = (classNameCounts[className] || 0) + 1; }); const weeklyItems = Object.entries(weeklyByClass).sort(([a], [b]) => a.localeCompare(b)); if (legend) { legend.setAttribute('role', 'img'); legend.setAttribute('aria-label', 'Weekly hours by school and class'); legend.className = 'schedule-weekly-graph'; if (weeklyItems.length) { const totalWeeklyHours = weeklyItems.reduce((sum, [, hours]) => sum + hours, 0); let angle = 0; const slices = weeklyItems.map(([key, hours]) => { const [school, className] = key.split('||'); const sample = (teacherSchedule.entries || []).find(entry => (String(entry.school || '').trim() || 'No school specified') === school && (String(entry.title || '').trim() || 'Untitled') === className) || { school, title: className }; const color = scheduleGroupColor(sample); const nextAngle = angle + (hours / totalWeeklyHours) * 360; const slice = `${color} ${angle}deg ${nextAngle}deg`; angle = nextAngle; const label = classNameCounts[className] > 1 ? `${school} — ${className}` : className; return { label, hours, color, slice }; }); const gradient = `conic-gradient(${slices.map(item => item.slice).join(',')})`; legend.innerHTML = `<div class="schedule-weekly-graph-pie" role="img" aria-label="Pie chart of weekly hours by school and class" style="background:${gradient}"></div><div class="schedule-weekly-graph-legend">${slices.map(item => `<div class="schedule-weekly-graph-item" title="${item.label}: ${item.hours.toFixed(1)} hours per week"><span class="schedule-weekly-graph-swatch" style="background:${item.color}"></span><span class="schedule-weekly-graph-name">${item.label}</span><strong class="schedule-weekly-graph-hours">${item.hours.toFixed(1)} hrs/wk</strong></div>`).join('')}</div>`; } else { legend.innerHTML = '<span class="schedule-weekly-graph-empty">No class or subject hours yet.</span>'; } }
   const total = (teacherSchedule.entries || []).reduce((sum,e) => sum + scheduleHours(e), 0); const totalEl = document.getElementById('schedule-total-hours'); if (totalEl) totalEl.textContent = `${total.toFixed(1)} hrs`;
   const bySchool = {}; (teacherSchedule.entries || []).forEach(e => { const key = String(e.school || '').trim() || 'No school specified'; bySchool[key] = (bySchool[key] || 0) + scheduleHours(e); }); const schoolHoursEl = document.getElementById('schedule-category-hours'); if (schoolHoursEl) schoolHoursEl.innerHTML = Object.entries(bySchool).sort(([a], [b]) => a.localeCompare(b)).map(([school, hours]) => `<div class="flex justify-between gap-3"><span class="min-w-0 truncate" title="${school}">${school}</span><strong class="text-amber-200 whitespace-nowrap">${hours.toFixed(1)} hrs</strong></div>`).join('') || '<span class="text-gray-400">No entries yet.</span>';
   body.querySelectorAll('.schedule-edit').forEach(b => b.onclick = () => openScheduleEditor(b.dataset.id)); body.querySelectorAll('.schedule-delete').forEach(b => b.onclick = () => { teacherSchedule.entries = teacherSchedule.entries.filter(e => e.id !== b.dataset.id); saveTeacherSchedule(); renderTeacherZone(); });

@@ -22,3 +22,4 @@
 - Vocabulary cards/create row, arcade cards, stadium panels, avatar wardrobe, Quizzes and Admin Hub share workspace-refresh.css loaded after legacy bright corrections. Why: a scoped final presentation layer preserves existing handlers while enforcing both-mode layout and contrast.
 
 - Schedule presentation shares workspace-refresh.css, with one escaped event-card renderer used by the weekly table and cloned agenda; keep original action selectors and save handlers. Why: ensures consistent two-mode colours without duplicating scheduling logic.
+- Schedule rendering reads persisted entry colours before legacy colour mappings; explicit group updates synchronise matching entries and bypass automatic palette substitution. Why: keeps picker, cards and legend consistent across saves and reloads.

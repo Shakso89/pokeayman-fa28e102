@@ -254,7 +254,7 @@ html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
   & .schedule-sub-head small { color: var(--color-text-muted) !important; }
   & :is(#teacher-schedule-grid,#schedule-agenda) article.schedule-event {
     background: var(--color-surface-hover) !important; color: var(--color-text-primary) !important;
-    border: 1px solid var(--color-border) !important; border-left: 3px solid var(--schedule-accent) !important;
+    border: 1px solid var(--color-border) !important; border-left: 10px solid var(--schedule-accent) !important;
     border-radius: 6px !important; padding: 12px 10px !important; margin: 0 0 8px !important;
     box-shadow: none !important; min-width: 0; overflow-wrap: anywhere;
     transition: border-color var(--motion-fast) var(--ease-standard);
@@ -275,7 +275,7 @@ html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
   & .schedule-weekly-graph-pie::after { content: ''; position: absolute; inset: 22px; border-radius: 50%; background: var(--color-bg); }
   & .schedule-weekly-graph-legend { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px 24px; }
   & :is(.schedule-weekly-graph-name,.schedule-weekly-graph-hours) { color: var(--color-text-secondary) !important; font: 550 12px var(--font-body) !important; }
-  & .schedule-weekly-graph-swatch { border: 0 !important; box-shadow: none !important; width: 8px; height: 8px; }
+  & .schedule-weekly-graph-swatch { border: 0 !important; box-shadow: none !important; width: 16px; height: 16px; flex-shrink: 0; }
   & #schedule-agenda :is(.ag-days,.ag-title,.ag-empty,.ag-add) { background: transparent !important; color: var(--color-text-secondary) !important; border-color: var(--color-border) !important; border-radius: 6px !important; font-family: var(--font-body); }
   & #schedule-agenda .ag-days { background: var(--color-bg) !important; margin: 0 0 20px; padding: 6px 0; }
   & #schedule-agenda .ag-days button { min-height: 40px; background: var(--color-surface) !important; color: var(--color-text-secondary) !important; border: 1px solid var(--color-border) !important; border-radius: 6px !important; font-family: var(--font-body); }
@@ -285,6 +285,10 @@ html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
   & .fixed:has(#schedule-editor-form,#schedule-row-title,#sub-hour-title) > div { background: var(--color-surface) !important; color: var(--color-text-primary) !important; border: 1px solid var(--color-border); border-radius: 8px !important; box-shadow: var(--shadow-popover); }
   & .fixed:has(#schedule-editor-form,#schedule-row-title,#sub-hour-title) :is(h2,label,p,span) { color: var(--color-text-primary) !important; font-family: var(--font-body); }
   & .fixed:has(#schedule-editor-form,#schedule-row-title,#sub-hour-title) :is(input,select,textarea) { background: var(--color-surface-hover) !important; color: var(--color-text-primary) !important; border: 1px solid var(--color-border-strong) !important; border-radius: 6px !important; min-height: 40px; padding: 8px !important; }
+  & .fixed :is(#se-color,#sh-color) { height: 52px !important; min-height: 52px; padding: 4px !important; cursor: pointer; }
+  & .fixed :is(#se-color,#sh-color)::-webkit-color-swatch-wrapper { padding: 0; }
+  & .fixed :is(#se-color,#sh-color)::-webkit-color-swatch { border: 0; border-radius: 3px; }
+  & .fixed :is(#se-color,#sh-color)::-moz-color-swatch { border: 0; border-radius: 3px; }
 }
 @media(max-width:640px) {
   html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {

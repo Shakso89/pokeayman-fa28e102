@@ -1,4 +1,5 @@
 # Schedule redesign
+- [x] Honour persisted schedule colours instead of no-green/duplicate-colour substitutions; enlarge picker to 52px and card marker to 10px. Sample-entry save/cache/reopen, duplicate colours, one-time cards, both modes and narrow layouts passed; routing test passed. Cloud writes not exercised.
 - [x] Refresh weekly planner, class cards, hours overview and editor colours in both modes; existing table/agenda edit and day controls checked with sample entries, no narrow overflow or runtime errors, routing test passed. Saved records untouched; authenticated schedule writes not exercised.
 
 # Workspace UI refresh
