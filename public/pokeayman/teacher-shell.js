@@ -183,7 +183,7 @@
   }
 
   /* ---- Unified class stage: hero banner + quick +/-10 on cards ---- */
-  function hero() {
+  function hero(list = g(() => getStudents(navSchool, navClass), [])) {
     const sub = $('class-subtab-students'); if (!sub) return;
     let h = $('ts-hero');
     if (!h) {
@@ -194,7 +194,6 @@
       sub.prepend(h);
       h.addEventListener('click', onHero);
     }
-    const list = g(() => getStudents(navSchool, navClass), []);
     const set = (id, v) => { const el = $(id); if (el.textContent !== v) el.textContent = v; };
     set('ts-hero-title', g(() => navClass, '') || ''); set('ts-hero-school', g(() => navSchool, '') || '');
     set('ts-hero-count', String(list.length));
@@ -258,7 +257,8 @@
     }
   }
 
-  let lastOpts = '', lastTop = '';
+  let lastOpts = '', lastTop = '', lastClassKey = '';
+  let lastClassData = null;
   function sync() {
     const app = $('app-screen');
     const on = !!app && !app.classList.contains('hidden') && g(() => currentRole) === 'teacher';
@@ -303,13 +303,20 @@
     if ($('ts-avatar').innerHTML !== av) $('ts-avatar').innerHTML = av;
 
     if (inClass) {
-      hero(); cardButtons();
+      cardButtons();
+      const classKey = `${g(() => navSchool, '')}\u0000${g(() => navClass, '')}`;
+      if (allData !== lastClassData || classKey !== lastClassKey) {
+        const students = g(() => getStudents(navSchool, navClass), []);
+        hero(students);
+        const list = students.slice().sort((a, b) => (Number(b.coins) || 0) - (Number(a.coins) || 0)).slice(0, 3);
+        const html = list.map((s, i) => `<li class="m${i + 1}"><span class="ts-medal">${i + 1}</span><span><strong>${esc(s.student_name)}</strong><small>🪙 ${Number(s.coins || 0).toLocaleString()} coins</small></span></li>`).join('') || '<li class="ts-empty">No students yet</li>';
+        if (html !== lastTop) { $('ts-top3').innerHTML = html; lastTop = html; }
+        lastClassData = allData;
+        lastClassKey = classKey;
+      }
       const src = $('award-student');
       const opts = src ? src.innerHTML : '';
       if (opts !== lastOpts) { const keep = $('ts-award-student').value; $('ts-award-student').innerHTML = opts; if (keep) $('ts-award-student').value = keep; lastOpts = opts; }
-      const list = g(() => getStudents(navSchool, navClass), []).slice().sort((a, b) => (Number(b.coins) || 0) - (Number(a.coins) || 0)).slice(0, 3);
-      const html = list.map((s, i) => `<li class="m${i + 1}"><span class="ts-medal">${i + 1}</span><span><strong>${esc(s.student_name)}</strong><small>🪙 ${Number(s.coins || 0).toLocaleString()} coins</small></span></li>`).join('') || '<li class="ts-empty">No students yet</li>';
-      if (html !== lastTop) { $('ts-top3').innerHTML = html; lastTop = html; }
       const st = g(() => window.teacherStreakState(), null);
       if (st) {
         const dots = Array.from({ length: 7 }, (_, i) => `<span class="${i < st.count ? 'on' : ''}">${i + 1}</span>`).join('');

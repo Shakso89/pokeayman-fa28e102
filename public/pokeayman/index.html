@@ -5863,6 +5863,7 @@ function getStudentRecordByStableId(stableId) {
 const canonicalStudentAccounts = new Map();
 const canonicalStudentAliases = new Map();
 const canonicalStudentLocks = new Map();
+let canonicalStudentIndexData = null;
 function canonicalIdentityFromRecord(record) {
   return String(record?.student_id || record?.user_id || record?.profile_id || record?.account_id || '').trim();
 }
@@ -5906,10 +5907,11 @@ function rebuildCanonicalStudentIndex() {
       canonicalStudentAliases.forEach((value, alias) => { if (value === key) canonicalStudentAliases.set(alias, existingKey); });
     } else if (!existingKey) linkedByName.set(name, key);
   });
+  canonicalStudentIndexData = allData;
   return canonicalStudentAccounts;
 }
 function canonicalStudentKey(recordOrId) {
-  rebuildCanonicalStudentIndex();
+  if (canonicalStudentIndexData !== allData) rebuildCanonicalStudentIndex();
   const raw = typeof recordOrId === 'object' ? recordOrId : null;
   const candidate = raw ? canonicalIdentityFromRecord(raw) || raw.__backendId : recordOrId;
   return canonicalStudentAliases.get(String(candidate || '').trim()) || String(candidate || '').trim() || studentStableIdentity(raw || {});
@@ -8180,11 +8182,12 @@ function renderTeacherOwnedVocabLists() {
   grid.replaceChildren();
   try {
     const teacherKey = normalizeStudentIdentity(currentTeacher);
-    const lists = getVocabLists('', '').filter(list => (String(list.teacher_id || '').trim() === String(verifiedTeacherIdentity() || '').trim()) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey))
+    const allLists = getVocabLists('', '');
+    const lists = allLists.filter(list => (String(list.teacher_id || '').trim() === String(verifiedTeacherIdentity() || '').trim()) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey))
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
     if (ownerScope !== currentTeacherZoneOwnerScope() || requestVersion !== teacherZoneRequestVersion || teacherWorkspaceKey !== teacherStorageKey(ownerScope)) return;
     const myId = String(verifiedTeacherIdentity() || '').trim();
-    const otherLists = getVocabLists('', '').filter(list => !((String(list.teacher_id || '').trim() === myId && myId) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey)))
+    const otherLists = allLists.filter(list => !((String(list.teacher_id || '').trim() === myId && myId) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey)))
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
     const schoolMode = window.vbListsMode === 'school';
     if (schoolMode) {
@@ -8204,7 +8207,7 @@ function renderTeacherOwnedVocabLists() {
       return `<span style="display:inline-flex;align-items:center;gap:.45rem;">${avatar}<span style="font-size:.75rem;font-weight:800;color:#fde68a;">by ${name}</span></span>`;
     };
     const schoolCard = list => {
-      const words = getVocabWords(list, list.vocab_list_school, list.vocab_list_class);
+      const words = list.words || [];
       const safeId = String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'");
       const safeName = escape(list.vocab_list_name || 'Untitled list');
       const school = escape(list.vocab_list_school || '');
@@ -8216,7 +8219,7 @@ function renderTeacherOwnedVocabLists() {
     };
     if (schoolMode) { grid.innerHTML = sectionHead('School lists · by other teachers') + otherLists.map(schoolCard).join(''); return; }
     grid.innerHTML = lists.map(list => {
-      const words = getVocabWords(list, list.vocab_list_school, list.vocab_list_class);
+      const words = list.words || [];
       const safeId = String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'");
       const safeName = escape(list.vocab_list_name || 'Untitled list');
       const school = escape(list.vocab_list_school || '');
@@ -11644,6 +11647,7 @@ async function openEditSchoolModal(schoolId, schoolName) {
     }
     allData = allData.filter(record => !(record.type === 'teacher_school_assignment' && record.assigned_school === schoolName));
     allData.push(...uniqueTeacherIds.map(teacherId => { const teacher = getTeachers().find(record => String(record.__backendId || '').trim() === teacherId); return { type: 'teacher_school_assignment', assigned_teacher: teacher?.teacher_name || '', assigned_teacher_id: teacherId, assigned_school: newName, assigned_class: '' }; }));
+    canonicalStudentIndexData = null;
     // Update all classes in this school with new school name
     const classesInSchool = getClasses(schoolName);
     const studentsInSchool = getAllStudents().filter(s => s.school_name === schoolName);
@@ -15736,7 +15740,7 @@ function renderVocabLists() {
   if (!lists.length) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
   container.innerHTML = lists.map(list => {
-    const words = getVocabWords(list, navSchool, navClass);
+    const words = list.words || [];
     const isShared = String(list.vocab_list_class || '') !== String(navClass || '');
     const sharedLabel = isShared ? `<p class="vocab-list-count mt-1" style="color:#fbbf24">↗ Shared from ${String(list.vocab_list_class || 'another class').replace(/[&<>"]/g, '')}</p>` : '';
     const removeAction = isShared
@@ -16020,8 +16024,10 @@ function openVocabListEditor(listId, listName) {
     const diagnostics = { parentListId: canonicalListId, wordId, payloadFields: Object.keys(wordPayload).sort(), source: 'child:vocab_word', requestVersion: Date.now(), writeResult: Boolean(saveResult?.isOk), readBackResult: false };
     window.__pokeymanVocabDiagnostics = { ...(window.__pokeymanVocabDiagnostics || {}), lastWordMutation: diagnostics };
     if (!saveResult?.isOk) { toast('Could not save this word. Please try again.'); return; }
-    const refreshResult = await window.dataSdk.init(handler);
-    const readBack = refreshResult?.isOk && getVocabWords(canonicalListId, navSchool, navClass).some(saved => String(saved.vocab_list_id) === canonicalListId && String(saved.vocab_word_id || saved.word_id || saved.__backendId || '') === wordId);
+    // create() notifies the shared data handler and updates allData before it resolves.
+    // Reinitializing the SDK here would reload every record and redraw the whole app.
+    const savedWord = allData.find(saved => saved.type === 'vocab_word' && String(saved.vocab_word_id || saved.word_id || saved.__backendId || '') === wordId);
+    const readBack = Boolean(savedWord && normalizeVocabId(savedWord.vocab_list_id || savedWord.list_id || savedWord.vocabulary_list_id) === canonicalListId);
     diagnostics.readBackResult = Boolean(readBack);
     if (!readBack) { toast('The word was not confirmed in its vocabulary list. Please refresh and try again.'); return; }
     modal.querySelector('#new-vocab-word').value = '';
