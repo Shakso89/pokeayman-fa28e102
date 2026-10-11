@@ -1,0 +1,104 @@
+/* Poké Battle: fullscreen vocabulary battle stage. Scoped to .vb-stage and .vb-claims. */
+.vb-stage {
+  position: fixed; inset: 0; z-index: 9500; display: flex; flex-direction: column;
+  background: radial-gradient(120% 90% at 50% 0%, #1e2a6e 0%, #0f173a 55%, #0a1028 100%);
+  color: #f8fafc; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  font-family: inherit; touch-action: manipulation;
+}
+body.ts-bright .vb-stage { background: radial-gradient(120% 90% at 50% 0%, #dbe7ff 0%, #f4f7ff 55%, #e8eeff 100%); color: #0f173a; }
+.vb-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .8rem 1rem; position: sticky; top: 0; z-index: 2; background: rgba(10, 16, 40, .55); backdrop-filter: blur(8px); }
+body.ts-bright .vb-head { background: rgba(255, 255, 255, .6); }
+.vb-title { font-weight: 900; letter-spacing: .12em; text-transform: uppercase; font-size: .85rem; color: #fde047; }
+body.ts-bright .vb-title { color: #b45309; }
+.vb-close { border: 2px solid rgba(248, 250, 252, .35); background: transparent; color: inherit; border-radius: 999px; padding: .35rem .9rem; font-weight: 800; cursor: pointer; }
+body.ts-bright .vb-close { border-color: rgba(15, 23, 58, .35); }
+.vb-close:hover { background: rgba(248, 250, 252, .12); }
+.vb-arena { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 1rem; max-width: 720px; width: 100%; margin: 0 auto; }
+
+.vb-foe { display: flex; flex-direction: column; align-items: center; gap: .35rem; }
+.vb-foe-art { width: clamp(120px, 28vw, 190px); height: auto; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, .45)); transition: transform .18s ease; }
+.vb-foe-art.vb-hit { animation: vb-shake .45s ease; }
+.vb-foe-art.vb-dodge { animation: vb-dodge .5s ease; }
+.vb-foe-art.vb-faint { animation: vb-faint 1s ease forwards; }
+@keyframes vb-shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-12px) rotate(-3deg); } 45% { transform: translateX(10px); } 70% { transform: translateX(-6px); } }
+@keyframes vb-dodge { 0% { transform: translateX(0); } 40% { transform: translateX(46px) scale(1.04); } 100% { transform: translateX(0); } }
+@keyframes vb-faint { to { transform: translateY(60px) scale(.6); opacity: 0; } }
+.vb-foe-name { font-weight: 900; font-size: 1.05rem; }
+.vb-foe-rarity { font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; opacity: .8; }
+
+.vb-hp { width: min(340px, 80vw); }
+.vb-hp-label { display: flex; justify-content: space-between; font-size: .72rem; font-weight: 800; margin-bottom: .2rem; }
+.vb-hp-track { height: 12px; border-radius: 999px; background: rgba(148, 163, 184, .3); overflow: hidden; border: 1px solid rgba(248, 250, 252, .25); }
+body.ts-bright .vb-hp-track { border-color: rgba(15, 23, 58, .2); }
+.vb-hp-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #22c55e, #4ade80); transition: width .45s ease, background .45s ease; }
+.vb-hp-fill.vb-mid { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.vb-hp-fill.vb-low { background: linear-gradient(90deg, #dc2626, #f87171); }
+
+.vb-message { min-height: 1.6em; font-weight: 800; font-size: .95rem; text-align: center; color: #fde047; }
+body.ts-bright .vb-message { color: #92400e; }
+.vb-damage { position: fixed; z-index: 3; font-weight: 900; font-size: 1.5rem; pointer-events: none; animation: vb-float 1s ease forwards; text-shadow: 0 2px 8px rgba(0, 0, 0, .5); }
+.vb-damage.vb-dmg-foe { color: #fde047; }
+.vb-damage.vb-dmg-me { color: #f87171; }
+@keyframes vb-float { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-56px); opacity: 0; } }
+
+.vb-timer { width: min(340px, 80vw); }
+.vb-timer-track { height: 8px; border-radius: 999px; background: rgba(148, 163, 184, .3); overflow: hidden; }
+.vb-timer-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); transition: width .1s linear; }
+.vb-timer-fill.vb-urgent { background: linear-gradient(90deg, #dc2626, #f87171); }
+.vb-timer-text { text-align: center; font-size: .72rem; font-weight: 800; margin-top: .2rem; opacity: .85; }
+
+.vb-word { display: flex; flex-direction: column; align-items: center; gap: .9rem; width: 100%; }
+.vb-slots { display: flex; flex-wrap: wrap; justify-content: center; gap: .45rem; min-height: 3.2rem; }
+.vb-slot { width: 2.6rem; height: 3rem; border-radius: .6rem; border: 2px dashed rgba(248, 250, 252, .35); display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; text-transform: uppercase; background: rgba(15, 23, 58, .35); cursor: pointer; }
+body.ts-bright .vb-slot { border-color: rgba(15, 23, 58, .3); background: rgba(255, 255, 255, .55); }
+.vb-slot.is-filled { border-style: solid; border-color: #fde047; color: #fde047; animation: vb-pop .2s ease; }
+body.ts-bright .vb-slot.is-filled { border-color: #b45309; color: #b45309; }
+.vb-slot.vb-wrong { border-color: #f87171; color: #f87171; animation: vb-shake .4s ease; }
+@keyframes vb-pop { from { transform: scale(.6); } to { transform: scale(1); } }
+.vb-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
+.vb-tile { width: 2.9rem; height: 2.9rem; border-radius: .7rem; border: none; font-size: 1.35rem; font-weight: 900; text-transform: uppercase; cursor: pointer; color: #0f173a; background: linear-gradient(160deg, #fde047, #f59e0b); box-shadow: 0 4px 0 #b45309, 0 8px 16px rgba(0, 0, 0, .35); transition: transform .12s ease, opacity .12s ease; }
+.vb-tile:hover:not(:disabled) { transform: translateY(-3px); }
+.vb-tile:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 2px 0 #b45309; }
+.vb-tile:disabled { opacity: .25; cursor: default; box-shadow: none; }
+
+.vb-me { display: flex; flex-direction: column; align-items: center; gap: .3rem; padding-bottom: 1.2rem; }
+.vb-me-name { font-weight: 900; font-size: .95rem; }
+.vb-me.vb-hit { animation: vb-shake .45s ease; }
+
+.vb-result { display: flex; flex-direction: column; align-items: center; gap: .8rem; text-align: center; padding: 2rem 1rem; }
+.vb-result-art { width: clamp(140px, 34vw, 220px); filter: drop-shadow(0 16px 28px rgba(0, 0, 0, .5)); animation: vb-pop .5s ease; }
+.vb-result-title { font-size: 1.8rem; font-weight: 900; }
+.vb-result-title.vb-win { color: #fde047; }
+body.ts-bright .vb-result-title.vb-win { color: #b45309; }
+.vb-result-title.vb-lose { color: #f87171; }
+.vb-result-sub { font-size: .95rem; opacity: .9; max-width: 34ch; }
+.vb-result-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: .4rem; }
+.vb-btn { border: none; border-radius: 999px; padding: .7rem 1.5rem; font-weight: 900; font-size: .95rem; cursor: pointer; color: #0f173a; background: linear-gradient(160deg, #fde047, #f59e0b); box-shadow: 0 4px 0 #b45309; }
+.vb-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #b45309; }
+.vb-btn.vb-btn-ghost { background: transparent; color: inherit; border: 2px solid rgba(248, 250, 252, .4); box-shadow: none; }
+body.ts-bright .vb-btn.vb-btn-ghost { border-color: rgba(15, 23, 58, .35); }
+.vb-btn:disabled { opacity: .5; cursor: default; }
+
+/* Teacher: battle claims panel */
+.vb-claims { display: grid; gap: .7rem; }
+.vb-claim { display: flex; align-items: center; gap: .8rem; padding: .7rem .9rem; border-radius: 1rem; background: rgba(30, 42, 110, .35); border: 1px solid rgba(248, 250, 252, .14); }
+body.ts-bright .vb-claim { background: rgba(255, 255, 255, .75); border-color: rgba(15, 23, 58, .12); }
+.vb-claim-art { width: 56px; height: 56px; object-fit: contain; flex: none; }
+.vb-claim-info { flex: 1; min-width: 0; }
+.vb-claim-name { font-weight: 900; font-size: .95rem; }
+.vb-claim-meta { font-size: .75rem; opacity: .85; }
+.vb-claim-actions { display: flex; gap: .45rem; flex: none; }
+.vb-approve, .vb-decline { border: none; border-radius: .7rem; padding: .5rem .9rem; font-weight: 900; font-size: .8rem; cursor: pointer; }
+.vb-approve { background: linear-gradient(160deg, #fde047, #f59e0b); color: #0f173a; }
+.vb-decline { background: transparent; border: 2px solid rgba(248, 113, 113, .7); color: #f87171; }
+.vb-claims-empty { text-align: center; padding: 2rem 1rem; opacity: .8; font-size: .9rem; }
+.vb-claims-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 1.15rem; height: 1.15rem; padding: 0 .3rem; margin-left: .35rem; border-radius: 999px; background: #dc2626; color: #fff; font-size: .62rem; font-weight: 900; }
+
+@media (max-width: 640px) {
+  .vb-slot { width: 2.2rem; height: 2.6rem; font-size: 1.15rem; }
+  .vb-tile { width: 2.5rem; height: 2.5rem; font-size: 1.1rem; }
+  .vb-claim { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vb-stage *, .vb-stage *::before, .vb-stage *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
