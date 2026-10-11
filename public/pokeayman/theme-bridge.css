@@ -1,6 +1,6 @@
 /* Bridges every legacy colour family onto the supplied --color-* theme tokens.
    Loaded last so both dark (default) and bright modes follow one palette. */
-html body, html body.ts-bright {
+html body, html body.ts-bright, html body.ts-on, html body.ts-on.ts-bright {
   --ts-bg: var(--color-bg); --ts-surface: var(--color-surface); --ts-deep: var(--color-surface-raised);
   --ts-ink: var(--color-text-primary); --ts-muted: var(--color-text-secondary); --ts-border: var(--color-border);
   --es-deep: var(--color-surface-raised); --es-surface: var(--color-surface); --es-ink: var(--color-text-primary); --es-muted: var(--color-text-secondary); --es-border: var(--color-border);
@@ -8,7 +8,7 @@ html body, html body.ts-bright {
   --ga-surface: var(--color-surface); --ga-ink: var(--color-text-primary); --ga-muted: var(--color-text-secondary); --ga-border: var(--color-border);
   background: var(--color-bg) !important; color: var(--color-text-primary);
 }
-html body.ts-bright { --ts-deep: var(--color-surface-hover); --es-deep: var(--color-surface-hover); --class-deep: var(--color-surface-hover); }
+html body.ts-bright, html body.ts-on.ts-bright { --ts-hero: var(--color-surface-selected); --ts-deep: var(--color-surface-hover); --es-deep: var(--color-surface-hover); --class-deep: var(--color-surface-hover); }
 html body.ts-bright :is(.tsb-card, .ts-streak, #ts-streak, .ts-rail-card, [class*="ts-streak-card"]) {
   background: var(--color-surface) !important; color: var(--color-text-primary) !important;
   border: 1px solid var(--color-border) !important; box-shadow: var(--shadow-card) !important;
