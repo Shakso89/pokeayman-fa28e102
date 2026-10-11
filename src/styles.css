@@ -145,8 +145,11 @@
 
 .imported-app {
   display: block;
+  position: fixed;
+  inset: 0;
   width: 100%;
-  height: 100dvh;
+  height: 100%;
+  touch-action: manipulation;
   border: 0;
   background: var(--background);
 }
