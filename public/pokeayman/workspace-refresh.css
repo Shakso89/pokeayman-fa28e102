@@ -1,4 +1,29 @@
 /* Four classroom workspaces: one token-driven presentation layer. */
+/* List-source segmented control: solid selected state in both display modes. */
+html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
+  & .teacher-list-source-tabs {
+    display: grid !important; grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 6px !important; padding: 6px !important; background: var(--color-surface-raised) !important;
+    border: 1px solid var(--color-border) !important; border-radius: 8px !important;
+    box-shadow: none !important; overflow: visible !important;
+  }
+  & .teacher-list-source-tab {
+    position: relative; min-width: 0; min-height: 46px; padding: 10px 16px !important;
+    border: 1px solid transparent !important; border-radius: 6px !important;
+    background: transparent !important; color: var(--color-text-secondary) !important;
+    font-family: var(--font-body); font-size: 14px; font-weight: 700; line-height: 1.35;
+    letter-spacing: 0; white-space: normal; box-shadow: none !important;
+    transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+  }
+  & .teacher-list-source-tab::before, & .teacher-list-source-tab::after { display: none !important; }
+  & .teacher-list-source-tab:hover { background: var(--color-surface-hover) !important; color: var(--color-text-primary) !important; }
+  & .teacher-list-source-tab:is(.is-active,[aria-selected="true"]) {
+    background: var(--color-brand) !important; color: var(--color-text-on-brand) !important;
+    border-color: var(--color-brand) !important; box-shadow: var(--shadow-card) !important;
+  }
+  & .teacher-list-source-tab:is(.is-active,[aria-selected="true"]):hover { background: var(--color-brand-hover) !important; }
+  & .teacher-list-source-tab:focus-visible { outline: 2px solid var(--color-focus) !important; outline-offset: 2px; }
+}
 html body {
   --ui-surface: var(--color-surface);
   --ui-soft: var(--color-surface-raised);
