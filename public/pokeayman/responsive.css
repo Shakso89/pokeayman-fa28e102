@@ -117,3 +117,35 @@
   body.ts-on[data-ts-sheet="me"] #ts-sheet-scrim { display: block; position: fixed; inset: 0; z-index: 68; background: rgba(5,10,30,.45); }
 }
 @media (max-width: 400px) { #ts-bottom .tsb-l { font-size: 10px; } html body.ts-on #ts-sidebar .ts-item { font-size: 13px; padding: 7px 11px; } }
+
+/* Schedule: agenda on phones/tablets, full grid on desktop — switches automatically. */
+#schedule-agenda { display: none; }
+@media (max-width: 1024px) {
+  #teacher-schedule-grid { display: none; }
+  #teacher-schedule-grid + * , div:has(> #teacher-schedule-grid) { border: 0 !important; }
+  #schedule-agenda { display: block; }
+  #schedule-agenda .ag-days { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
+  #schedule-agenda .ag-days button { padding: 9px 0; border-radius: 999px; border: 1px solid var(--ts-border, rgba(255,255,255,.2)); background: var(--ts-surface, rgba(255,255,255,.06)); color: var(--ts-ink, #fff); font: 700 13px 'Outfit', sans-serif; }
+  #schedule-agenda .ag-days button[aria-selected="true"] { background: var(--ts-yellow, #facc15); border-color: var(--ts-yellow, #facc15); color: var(--ts-action-ink, #1e1b4b); }
+  #schedule-agenda .ag-title { margin: 0 0 8px; font: 800 16px 'Outfit', sans-serif; color: var(--ts-ink, #fff); }
+  #schedule-agenda .ag-list { display: flex; flex-direction: column; gap: 10px; }
+  #schedule-agenda .ag-list article { margin: 0 !important; padding: 12px 14px !important; font-size: 13px; border-radius: 14px; }
+  #schedule-agenda .ag-list article .text-\[11px\] { font-size: 12.5px; }
+  #schedule-agenda .ag-act { padding: 4px 12px; border-radius: 999px; background: rgba(255,255,255,.18); color: #fff; font-size: 12px; font-weight: 700; border: 0; margin-right: 4px; }
+  #schedule-agenda .ag-empty { padding: 18px; text-align: center; color: var(--ts-muted, #c7d2fe); border: 1px dashed var(--ts-border, rgba(255,255,255,.25)); border-radius: 14px; }
+  #schedule-agenda .ag-add { margin-top: 10px; width: 100%; min-height: 44px; border-radius: 12px; border: 1px dashed var(--ts-yellow, #facc15); background: transparent; color: var(--ts-ink, #fff); font-weight: 700; }
+
+  /* Redundant top Dashboard/Teacher Zone pill bar removed. */
+  html body.ts-on #app-screen > nav.sticky { display: none !important; }
+
+  /* Sub-tab strip: momentum swipe + fade hint at the edge. */
+  html body.ts-on #ts-sidebar > .ts-nav { -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; padding-right: 28px;
+    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  html body.ts-on #ts-sidebar .ts-item { scroll-snap-align: start; }
+
+  /* Avatar clearly visible on the Me button and in the Me panel. */
+  #ts-bottom [data-tsb="me"] .tsb-ic { width: 36px; height: 36px; margin-top: -6px; border-radius: 50%; border: 2px solid var(--ts-yellow, #facc15); background: var(--ts-surface, rgba(255,255,255,.08)); overflow: hidden; }
+  #ts-bottom [data-tsb="me"] .tsb-ic img { width: 32px !important; height: 32px !important; }
+  html body.ts-on[data-ts-sheet="me"] #ts-sidebar .ts-me :is(#ts-avatar, .ts-avatar) { width: 64px !important; height: 64px !important; flex: none; border-radius: 50%; border: 3px solid var(--ts-yellow, #facc15); }
+  html body.ts-on[data-ts-sheet="me"] #ts-sidebar .ts-me :is(#ts-avatar, .ts-avatar) img { width: 100% !important; height: 100% !important; object-fit: contain; }
+}
