@@ -41,3 +41,10 @@ html body.ts-bright .teacher-avatar-option span:first-of-type { color: var(--col
 .vb-picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .6rem; }
 .vb-picker-btn { padding: .8rem .6rem; border-radius: .9rem; border: 1px solid var(--color-border); background: var(--color-surface-hover); color: var(--color-text-primary); font-weight: 800; cursor: pointer; }
 .vb-picker-btn:hover { border-color: var(--color-brand); background: var(--color-surface-selected); }
+
+/* Runtime-tagged legacy dark surfaces / pale text (see bright-fixes.js) */
+html body.ts-bright .pk-bf-dark { background: var(--color-surface) !important; background-image: none !important; border-color: var(--color-border) !important; color: var(--color-text-primary) !important; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 6px 18px -10px rgba(15,23,42,.18) !important; }
+html body.ts-bright .pk-bf-ink { color: var(--color-text-primary) !important; -webkit-text-fill-color: currentColor !important; text-shadow: none !important; }
+
+/* Tab buttons: text only, no emoji icons */
+#ts-sidebar .ts-item > span[aria-hidden="true"], .ts-mnav .ts-item > span[aria-hidden="true"], .ts-tools .ts-item > span[aria-hidden="true"] { display: none !important; }

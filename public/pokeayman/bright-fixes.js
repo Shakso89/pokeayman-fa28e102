@@ -45,3 +45,14 @@
   window.addEventListener('load', schedule);
   schedule();
 })();
+// Strip leading emoji from tab buttons (labels stay text-only).
+(function () {
+  const EMOJI = /^[\s\p{Extended_Pictographic}\u200d\ufe0f]+/u;
+  function strip() {
+    document.querySelectorAll('.student-dashboard-tab, .class-subtab-btn, [role="tab"], .ts-item, .th-tab').forEach((b) => {
+      for (const n of b.childNodes) { if (n.nodeType === 3 && n.textContent.trim()) { const v = n.textContent.replace(EMOJI, ''); if (v !== n.textContent) n.textContent = v; break; } }
+    });
+  }
+  let t; new MutationObserver(() => { clearTimeout(t); t = setTimeout(strip, 150); }).observe(document.documentElement, { childList: true, subtree: true });
+  strip();
+})();
