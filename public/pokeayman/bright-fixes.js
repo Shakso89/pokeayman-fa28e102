@@ -3,12 +3,25 @@
 // bright-fixes.css can repaint them with the bright tokens. Dark mode is untouched.
 (function () {
   const SKIP = '.vb-stage .vb-arena *, img, svg, canvas, video, .ga-cart-art, .ga-cart-play, [class*="holo"], [class*="rarity"], [class*="tier-"], .coin-celebration, [class*="celebrat"], .pokeball, [class*="pokeball"], [class*="hp-fill"], [class*="timer-fill"], .hangman-figure *';
-  const parse = (c) => { const m = String(c).match(/[\d.]+/g); return m ? m.map(Number) : null; };
+  // Modern computed colours can be oklch()/color(srgb ...), not just rgb().
+  const colorCache = new Map();
+  const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const parse = (c) => {
+    if (!c || c === 'transparent') return null;
+    if (colorCache.has(c)) return colorCache.get(c);
+    if (!ctx || !CSS.supports('color', c)) return null;
+    ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = c; ctx.fillRect(0, 0, 1, 1);
+    const pixel = ctx.getImageData(0, 0, 1, 1).data;
+    const value = [pixel[0], pixel[1], pixel[2], pixel[3] / 255];
+    colorCache.set(c, value); return value;
+  };
   const lum = (rgb) => { const [r, g, b] = rgb.slice(0, 3).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   function surfaceColor(s) {
     const bg = parse(s.backgroundColor);
-    if (bg && (bg[3] === undefined || bg[3] > 0.4)) return bg;
-    if (s.backgroundImage && s.backgroundImage.includes('gradient')) { const m = s.backgroundImage.match(/rgba?\([^)]+\)/); if (m) { const c = parse(m[0]); if (c && (c[3] === undefined || c[3] > 0.4)) return c; } }
+    // An opaque base does not hide a gradient painted above it.
+    if (s.backgroundImage && s.backgroundImage.includes('gradient')) { const m = s.backgroundImage.match(/(?:rgba?|oklch|oklab|color|hsl|hsla)\([^)]+\)/); if (m) { const c = parse(m[0]); if (c && c[3] > 0.4) return c; } }
+    if (bg && bg[3] > 0.4) return bg;
     return null;
   }
   function sweep() {
@@ -25,7 +38,7 @@
       if (!c) continue;
       const sat = Math.max(...c.slice(0, 3)) - Math.min(...c.slice(0, 3));
       // Dark navy / slate legacy surfaces only (keeps red, yellow, purple action buttons).
-      if (lum(c) < 0.06 && sat < 120) el.classList.add('pk-bf-dark');
+      if (lum(c) < 0.10 && sat < 120) el.classList.add('pk-bf-dark');
     }
     for (const el of all) {
       if (el.classList.contains('pk-bf-ink') || el.matches(SKIP)) continue;
@@ -41,7 +54,7 @@
   }
   let t = null;
   const schedule = () => { clearTimeout(t); t = setTimeout(sweep, 180); };
-  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
   window.addEventListener('load', schedule);
   schedule();
 })();
