@@ -1,5 +1,5 @@
 # Class screen refresh
-- [ ] Replace home circular gallery with fan cards and clearer Pokémon/background artwork; verify selection, configuration refresh and login access.
+- [x] Replace home circular gallery with fan cards, official Pokémon artwork and illustrated habitat backgrounds; desktop selection, admin configuration refresh, phone fit and both login popups verified with no runtime errors.
 - [ ] Simplify every student game to 5/10/15-word launch buttons with no score, reward or timer setup; preserve teacher controls.
 - [x] Correct both-mode contrast for leaders, flashcards, finances and schedule; live saved-list flashcard controls and ranking modes verified, plus teacher panel presentation and routing test. Signed-in teacher workspace verification blocked: no account matches the requesting user.
 - [x] Organize the vocabulary editor and resolve canonical IDs to saved record IDs for batch renaming; isolated preview tests passed for linked/legacy words, reopening, reload, duplicate rejection, failed save/retry and Enter. Signed-in Cloud writes remain unverified because no matching preview account is available; no user lists changed.
