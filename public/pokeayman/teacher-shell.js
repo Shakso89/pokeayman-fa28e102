@@ -319,7 +319,7 @@
     if ($('ts-bottom') || !$('ts-sidebar')) return;
     const bar = document.createElement('nav');
     bar.id = 'ts-bottom'; bar.setAttribute('aria-label', 'Teacher navigation');
-    bar.innerHTML = [['class', '🏫', 'Classroom'], ['switch', '⇄', 'Classes'], ['zone', '🧰', 'Teacher Zone'], ['admin', '⚙️', 'Admin'], ['me', '👤', 'Me']]
+    bar.innerHTML = [['class', '🏫', 'Classroom'], ['switch', '⇄', 'Classes'], ['zone', '🧰', 'Zone'], ['admin', '⚙️', 'Admin'], ['me', '👤', 'Me']]
       .map(([k, i, l]) => `<button type="button" data-tsb="${k}"><span class="tsb-ic" aria-hidden="true">${i}</span><span class="tsb-l">${l}</span></button>`).join('');
     const scrim = document.createElement('div'); scrim.id = 'ts-sheet-scrim';
     document.body.append(scrim, bar);
