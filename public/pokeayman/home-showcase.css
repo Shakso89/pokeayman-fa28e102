@@ -300,3 +300,47 @@
 #pricing-tab-content .grid > div:nth-child(3) { border-color: rgba(239,51,64,.6) !important; }
 #pricing-tab-content .grid > div p[class*="text-"][class*="-100"] { color: var(--home-muted) !important; }
 #pricing-tab-content .grid > div .heading-font { color: var(--home-yellow) !important; }
+
+/* Animated Pokémon side cards (replace static flank shapes) */
+.home-showcase .home-stage::before, .home-showcase .home-stage::after { content: none !important; }
+.home-showcase .home-side-card {
+  position: absolute; top: 12%; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  width: clamp(10rem, 18vw, 16rem); aspect-ratio: 5 / 7; padding: .9rem .7rem 1rem; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.35); border-radius: .6rem; color: var(--home-ink); cursor: pointer;
+  box-shadow: 0 30px 70px rgba(0,0,0,.6), inset 0 0 0 5px rgba(3,4,7,.25);
+  transition: transform .45s cubic-bezier(.34,1.56,.64,1), box-shadow .35s, filter .35s;
+  animation: hscFloat 6s ease-in-out infinite;
+}
+.home-showcase .home-side-left { left: -2%; --rot: 12deg; background: linear-gradient(145deg, rgba(255,255,255,.28), transparent 35%), linear-gradient(160deg, #f97316, var(--home-red) 55%, #3b0a0f); }
+.home-showcase .home-side-right { right: -2%; --rot: -12deg; animation-delay: -3s; background: linear-gradient(145deg, rgba(255,255,255,.25), transparent 35%), linear-gradient(160deg, #8b5cf6, #4c1d95 55%, #120726); }
+.home-showcase .home-side-card img { flex: 1; width: 92%; min-height: 0; object-fit: contain; filter: drop-shadow(0 12px 18px rgba(0,0,0,.5)); transition: transform .45s cubic-bezier(.34,1.56,.64,1); }
+.home-showcase .hsc-name { font-weight: 900; text-transform: uppercase; font-size: .9rem; letter-spacing: .06em; }
+.home-showcase .home-side-card small { font-size: .62rem; opacity: .8; }
+.home-showcase .hsc-shine { position: absolute; inset: -40%; pointer-events: none; background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.45) 50%, transparent 60%); transform: translateX(-60%); transition: transform .8s ease; }
+.home-showcase .home-side-card:hover, .home-showcase .home-side-card:focus-visible {
+  animation-play-state: paused; transform: rotate(0deg) translateY(-14px) scale(1.07); outline: none;
+  box-shadow: 0 40px 80px rgba(0,0,0,.65), 0 0 40px rgba(255,203,5,.35), inset 0 0 0 5px rgba(3,4,7,.25);
+}
+.home-showcase .home-side-card:hover img { transform: scale(1.12) translateY(-6px); }
+.home-showcase .home-side-card:hover .hsc-shine { transform: translateX(60%); }
+@keyframes hscFloat { 0%,100% { transform: rotate(var(--rot)) translateY(0); } 50% { transform: rotate(var(--rot)) translateY(-10px); } }
+@media (max-width: 1100px) { .home-showcase .home-side-left { left: -7%; } .home-showcase .home-side-right { right: -7%; } }
+
+/* Mobile: tidy vertical flow, no overlaps */
+@media (max-width: 700px) {
+  .home-showcase .home-showcase-header { padding: .75rem 1rem; }
+  .home-showcase .home-stage { padding: .5rem 1rem 6rem; min-height: auto; }
+  .home-showcase .hero-text-glass { display: flex !important; flex-direction: column; align-items: center; width: 100% !important; max-width: 26rem; margin: 0 auto !important; padding: 0 !important; }
+  .home-showcase .home-kicker { order: 1; margin-bottom: .6rem; }
+  .home-showcase .home-title { order: 2; font-size: clamp(2rem, 9.5vw, 2.6rem) !important; line-height: 1.02; max-width: 14ch; }
+  .home-showcase .home-subtitle { order: 3; margin: .8rem auto 0 !important; font-size: .88rem !important; line-height: 1.5 !important; }
+  .home-showcase #pokemon-arch { order: 4; height: 14.5rem !important; min-height: 14.5rem !important; margin: 1.25rem 0 .75rem !important; padding: 0 !important; }
+  .home-showcase .circular-carousel-card { width: 7rem; height: 10rem; }
+  .home-showcase .home-actions { order: 5; width: 100%; margin-top: .75rem; position: relative; z-index: 5; }
+  .home-showcase .home-side-card { top: 9rem; width: 6.2rem; opacity: .45; padding: .5rem; pointer-events: none; }
+  .home-showcase .home-side-left { left: -2.6rem; }
+  .home-showcase .home-side-right { right: -2.6rem; }
+  .home-showcase .hsc-name { font-size: .6rem; }
+  .home-showcase .home-side-card small { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .home-showcase .home-side-card { animation: none; transform: rotate(var(--rot)); } }
