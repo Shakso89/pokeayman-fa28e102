@@ -8347,10 +8347,8 @@ function selectUsersSubtab(name) {
   document.getElementById('admin-subtab-teachers')?.classList.toggle('hidden', name !== 'teachers');
   document.getElementById('admin-subtab-all-students')?.classList.toggle('hidden', name !== 'all-students');
   document.getElementById('admin-subtab-credit-log')?.classList.toggle('hidden', name !== 'credit-log');
-  document.getElementById('admin-subtab-data-backup')?.classList.toggle('hidden', name !== 'data-backup');
   if (name === 'all-students') renderAdminAllStudents();
   else if (name === 'credit-log') renderCreditLog();
-  else if (name === 'data-backup') renderBackupHistory();
   else renderAdminPanel();
 }
 document.querySelectorAll('.users-subtab').forEach(tab => tab.addEventListener('click', () => {
