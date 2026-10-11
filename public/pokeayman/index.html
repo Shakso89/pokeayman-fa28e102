@@ -7813,15 +7813,17 @@ function writeScheduleGroupColors(mapping) {
 function scheduleGroupColor(entry) {
   const key = scheduleGroupKey(entry);
   const mapping = readScheduleGroupColors();
-  const reserved = new Set(Object.entries(mapping).filter(([savedKey]) => savedKey !== key).map(([, color]) => String(color).trim().toLowerCase()));
+  // The stored entry is authoritative, including colours previously remapped by
+  // the legacy no-green filter or duplicate-colour restriction.
+  const chosen = String(entry?.color || '').trim();
+  if (chosen) return chosen;
   const saved = String(mapping[key] || '').trim();
-  if (saved && !reserved.has(saved.toLowerCase())) return pdNoTeal(saved);
-  if (/^hsl/.test(saved)) return saved;
-  const legacy = String(entry?.color || '').trim();
-  const color = legacy && !reserved.has(legacy.toLowerCase()) ? legacy : scheduleGroupPalette.find(candidate => !reserved.has(candidate.toLowerCase()));
+  if (saved) return saved;
+  const reserved = new Set(Object.values(mapping).map(color => String(color).trim().toLowerCase()));
+  const color = scheduleGroupPalette.find(candidate => !reserved.has(candidate.toLowerCase()));
   if (color) mapping[key] = color;
   else { let hash = 0; for (const char of key) hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0; mapping[key] = `hsl(${Math.abs(hash) % 360} 62% 38%)`; }
-  mapping[key] = pdNoTeal(mapping[key]); writeScheduleGroupColors(mapping);
+  writeScheduleGroupColors(mapping);
   return mapping[key];
 }
 function setScheduleGroupColor(entry, color) {
@@ -7829,12 +7831,10 @@ function setScheduleGroupColor(entry, color) {
   const nextColor = String(color || '').trim();
   if (!nextColor) return scheduleGroupColor(entry);
   const mapping = readScheduleGroupColors();
-  const normalizedColor = nextColor.toLowerCase();
-  const conflict = Object.entries(mapping).some(([savedKey, savedColor]) => savedKey !== key && String(savedColor).trim().toLowerCase() === normalizedColor);
-  if (conflict) {
-    const fallback = scheduleGroupPalette.find(candidate => !new Set(Object.entries(mapping).filter(([savedKey]) => savedKey !== key).map(([, value]) => String(value).trim().toLowerCase())).has(candidate.toLowerCase()));
-    mapping[key] = fallback || nextColor;
-  } else mapping[key] = nextColor;
+  mapping[key] = nextColor;
+  (teacherSchedule.entries || []).forEach(item => {
+    if (scheduleGroupKey(item) === key) item.color = nextColor;
+  });
   writeScheduleGroupColors(mapping);
   return mapping[key];
 }
@@ -7873,7 +7873,7 @@ function scheduleCardIcon(kind) {
 }
 function scheduleEventCard(entry, oneTime = false) {
   const text = scheduleCardText;
-  const accent = oneTime ? pdNoTeal(entry.color || '#4355de') : scheduleGroupColor(entry);
+  const accent = oneTime ? (entry.color || '#4355de') : scheduleGroupColor(entry);
   const meta = [entry.school, entry.group, entry.teacher].filter(Boolean).map(text).join(' · ');
   const editAttrs = oneTime ? `data-sub-edit="${text(entry.id)}"` : `class="schedule-edit" data-id="${text(entry.id)}"`;
   const deleteAttrs = oneTime ? `data-sub-delete="${text(entry.id)}"` : `class="schedule-delete" data-id="${text(entry.id)}"`;
