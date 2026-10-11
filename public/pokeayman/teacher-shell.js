@@ -9,7 +9,7 @@
     document.body.classList.toggle('ts-collapsed', collapsed);
     const control = $('ts-sidebar-toggle');
     if (control) { control.textContent = collapsed ? '☰' : '‹'; control.setAttribute('aria-expanded', String(!collapsed)); control.setAttribute('aria-label', collapsed ? 'Open sidebar' : 'Collapse sidebar'); control.title = control.getAttribute('aria-label'); }
-    if ($('ts-sidebar')) $('ts-sidebar').inert = collapsed;
+    if ($('ts-sidebar')) $('ts-sidebar').inert = collapsed && !window.matchMedia('(max-width: 1024px)').matches;
   }
   function applyTheme() {
     document.body.classList.toggle('ts-bright', bright);
@@ -311,6 +311,50 @@
     }
   }
 
-  function start() { sync(); setInterval(sync, 700); }
+  // Tablet/phone: bottom tab bar that opens the sidebar as a bottom sheet.
+  const mq = window.matchMedia('(max-width: 1024px)');
+  function closeSheet() { document.body.classList.remove('ts-sheet-open'); document.body.removeAttribute('data-ts-sheet'); document.querySelectorAll('#ts-bottom [data-tsb]').forEach((b) => b.setAttribute('aria-expanded', 'false')); }
+  function openSheet(section) {
+    if (document.body.dataset.tsSheet === section) return closeSheet();
+    document.body.classList.add('ts-sheet-open'); document.body.dataset.tsSheet = section;
+    document.querySelectorAll('#ts-bottom [data-tsb]').forEach((b) => b.setAttribute('aria-expanded', String(b.dataset.tsb === section)));
+    document.querySelectorAll('#ts-sidebar [data-ts-toggle]').forEach((t) => { const p = $(t.getAttribute('aria-controls')); const on = t.dataset.tsToggle === section; if (p) p.hidden = !on; t.setAttribute('aria-expanded', String(on)); });
+  }
+  function buildBottom() {
+    if ($('ts-bottom') || !$('ts-sidebar')) return;
+    const bar = document.createElement('nav');
+    bar.id = 'ts-bottom'; bar.setAttribute('aria-label', 'Teacher navigation');
+    bar.innerHTML = [['class', '🏫', 'Classroom'], ['switch', '⇄', 'Classes'], ['zone', '🧰', 'Teacher Zone'], ['admin', '⚙️', 'Admin'], ['me', '👤', 'Me']]
+      .map(([k, i, l]) => `<button type="button" data-tsb="${k}" aria-expanded="false"><span class="tsb-ic" aria-hidden="true">${i}</span><span class="tsb-l">${l}</span></button>`).join('');
+    const scrim = document.createElement('div'); scrim.id = 'ts-sheet-scrim';
+    document.body.append(scrim, bar);
+    scrim.addEventListener('click', closeSheet);
+    bar.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-tsb]'); if (!b) return;
+      if (b.dataset.tsb === 'switch') { closeSheet(); return togglePop(); }
+      openSheet(b.dataset.tsb);
+    });
+    $('ts-sidebar').addEventListener('click', (e) => {
+      if (!mq.matches) return;
+      const b = e.target.closest('button');
+      if (b && !b.dataset.tsToggle && b.id !== 'ts-theme-toggle') setTimeout(closeSheet, 0);
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+    mq.addEventListener?.('change', closeSheet);
+  }
+  function syncBottom() {
+    buildBottom();
+    const bar = $('ts-bottom'); if (!bar) return;
+    bar.querySelector('[data-tsb="admin"]').hidden = !g(() => canAccessAdmin(), false);
+    bar.querySelector('[data-tsb="zone"]').hidden = !g(() => canAccessTeacherZone(), false);
+    const tab = g(() => activeMainTab, 'dashboard');
+    const cur = { class: tab === 'dashboard', zone: tab === 'teacher-zone', admin: tab === 'admin' };
+    bar.querySelectorAll('[data-tsb]').forEach((b) => b.classList.toggle('current', !!cur[b.dataset.tsb]));
+    const av = $('ts-avatar')?.innerHTML;
+    const me = bar.querySelector('[data-tsb="me"] .tsb-ic');
+    if (av && av.includes('<img') && me.innerHTML !== av) me.innerHTML = av;
+  }
+
+  function start() { sync(); syncBottom(); setInterval(() => { sync(); syncBottom(); }, 700); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
