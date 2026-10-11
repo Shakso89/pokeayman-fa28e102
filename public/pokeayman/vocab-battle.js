@@ -18,7 +18,7 @@
   }
 
   function pickOpponent(student) {
-    const teacher = classTeacherFor(student);
+    const teacher = student && student.__practice ? (typeof currentTeacherRec === 'function' ? currentTeacherRec() : null) : classTeacherFor(student);
     const credits = teacher ? (teacher.teacher_credits === -1 ? Infinity : Number(teacher.teacher_credits || 0)) : Infinity;
     const pool = getShopItems().filter((item) => {
       const rarity = String(item.shop_pokemon_rarity || 'common').toLowerCase();
@@ -191,7 +191,7 @@
   function endBattle(won) {
     battle.over = true;
     stopTimer();
-    logBattle(won ? 'win' : 'loss');
+    if (!battle.student.__practice) logBattle(won ? 'win' : 'loss');
     const arena = battle.root.querySelector('.vb-arena');
     const foe = battle.foe;
     if (won) battle.root.querySelector('.vb-foe-art')?.classList.add('vb-faint');
@@ -200,10 +200,10 @@
         <img class="vb-result-art" src="${sprite(foe.shop_pokemon_id)}" alt="${esc(foe.shop_pokemon_name)}">
         <h2 class="vb-result-title ${won ? 'vb-win' : 'vb-lose'}">${won ? '🏆 Victory!' : '💫 You fainted…'}</h2>
         <p class="vb-result-sub">${won
-          ? `You defeated ${esc(foe.shop_pokemon_name)}! Ask your teacher to approve the claim and it joins your collection for ${Number(foe.shop_pokemon_price) || 0} credits.`
+          ? battle.student.__practice ? `Practice win against ${esc(foe.shop_pokemon_name)}! Nothing is claimed or charged in teacher practice.` : `You defeated ${esc(foe.shop_pokemon_name)}! Ask your teacher to approve the claim and it joins your collection for ${Number(foe.shop_pokemon_price) || 0} credits.`
           : `${esc(foe.shop_pokemon_name)} was too strong this time. Train your words and try again!`}</p>
         <div class="vb-result-actions">
-          ${won ? `<button type="button" class="vb-btn" data-vb="claim">🎁 Request claim</button>` : `<button type="button" class="vb-btn" data-vb="retry">⚔️ Battle again</button>`}
+          ${won && battle.student.__practice ? `<button type="button" class="vb-btn" data-vb="retry">⚔️ Practice again</button>` : won ? `<button type="button" class="vb-btn" data-vb="claim">🎁 Request claim</button>` : `<button type="button" class="vb-btn" data-vb="retry">⚔️ Battle again</button>`}
           <button type="button" class="vb-btn vb-btn-ghost" data-vb="close">${won ? 'Maybe later' : 'Back to games'}</button>
         </div>
       </div>`;
@@ -248,9 +248,9 @@
   }
 
   window.startVocabBattle = function (listName) {
-    if (currentRole !== 'student') { toast('Poké Battle is a student game.'); return; }
-    const student = (typeof getStudentRecordByStableId === 'function' && currentStudentRecordId && getStudentRecordByStableId(currentStudentRecordId))
-      || getAllStudents().find((s) => s.student_name === currentStudent);
+    const practice = currentRole !== 'student';
+    const student = practice ? { student_name: 'Teacher practice', __practice: true } : ((typeof getStudentRecordByStableId === 'function' && currentStudentRecordId && getStudentRecordByStableId(currentStudentRecordId))
+      || getAllStudents().find((s) => s.student_name === currentStudent));
     if (!student) { toast('Signed-in student was not found.'); return; }
     const words = getGameWords(listName).filter((w) => String(w.vocab_word || '').trim().length >= 2);
     if (!words.length) { toast('This list has no battle-ready words yet.'); return; }

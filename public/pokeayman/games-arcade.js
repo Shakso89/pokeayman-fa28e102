@@ -12,8 +12,8 @@
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   window.gaRenderHub = function (listLabel, isTeacher) {
-    const cards = GAMES.filter(g => isTeacher ? !g.studentOnly : !g.teacherOnly).map(g => `
-      <button type="button" class="ga-cart ga-${g.accent}" onclick="chooseGamePlayers(selectedGameList, ${g.fn})" aria-label="Play ${esc(g.name)}">
+    const cards = GAMES.filter(g => !(isTeacher ? false : g.teacherOnly)).map(g => `
+      <button type="button" class="ga-cart ga-${g.accent}" onclick="${isTeacher && g.studentOnly ? `startVocabBattle(selectedGameList)` : `chooseGamePlayers(selectedGameList, ${g.fn})`}" aria-label="Play ${esc(g.name)}">
         <span class="ga-cart-art" aria-hidden="true"><span>${g.icon}</span></span>
         <span class="ga-cart-body">
           <span class="ga-cart-name">${esc(g.name)}</span>
