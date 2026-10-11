@@ -97,3 +97,135 @@ body.ts-bright {
 @media (prefers-reduced-motion: reduce) {
   :root { --pk-dur-fast: 0ms; --pk-dur-base: 0ms; --pk-dur-slow: 0ms; }
 }
+
+/* ===== Supplied theme tokens (dark default, light) ===== */
+:root {
+  /* Foundations */
+  --color-bg: #0b1220;
+  --color-surface: #121c2d;
+  --color-surface-raised: #1a2740;
+  --color-surface-hover: #22314b;
+  --color-surface-selected: #293750;
+
+  /* Brand */
+  --color-brand: #f4c542;
+  --color-brand-hover: #ffd65a;
+  --color-brand-pressed: #d9a91f;
+  --color-brand-secondary: #5b8def;
+
+  /* Text */
+  --color-text-primary: #f5f7fb;
+  --color-text-secondary: #b8c3d4;
+  --color-text-muted: #8794a8;
+  --color-text-on-brand: #172033;
+
+  /* Semantic */
+  --color-success: #42c98a;
+  --color-warning: #f0a943;
+  --color-error: #ef6673;
+  --color-info: #65b7e8;
+
+  /* Borders and focus */
+  --color-border: #2b3950;
+  --color-border-strong: #40516b;
+  --color-focus: #ffe083;
+
+  /* Spacing: 4px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Typography */
+  --font-body: Inter, system-ui, sans-serif;
+  --font-display: var(--font-body);
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-display: 2.5rem;
+
+  /* Shape and elevation */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-card: 0 4px 16px rgb(0 0 0 / 18%);
+  --shadow-popover: 0 12px 32px rgb(0 0 0 / 28%);
+
+  /* Motion */
+  --motion-fast: 120ms;
+  --motion-standard: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+[data-theme="light"], body.ts-bright {
+  /* Foundations */
+  --color-bg: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-hover: #eef2f8;
+  --color-surface-selected: #fff4c7;
+
+  /* Brand */
+  --color-brand: #f2c230;
+  --color-brand-hover: #e2ae1a;
+  --color-brand-pressed: #c99712;
+  --color-brand-secondary: #4779d1;
+
+  /* Text */
+  --color-text-primary: #172033;
+  --color-text-secondary: #46536a;
+  --color-text-muted: #6b778c;
+  --color-text-on-brand: #172033;
+
+  /* Semantic */
+  --color-success: #16804b;
+  --color-warning: #a85d08;
+  --color-error: #c43d4b;
+  --color-info: #176b9b;
+
+  /* Borders and focus */
+  --color-border: #dce2ec;
+  --color-border-strong: #bac5d5;
+  --color-focus: #8a6500;
+
+  /* Elevation */
+  --shadow-card: 0 4px 16px rgb(23 32 51 / 8%);
+  --shadow-popover: 0 12px 32px rgb(23 32 51 / 14%);
+}
+
+/* Map existing component tokens onto the supplied theme tokens. */
+:root, [data-theme="light"], body.ts-bright {
+  --pk-bg: var(--color-bg);
+  --pk-surface: var(--color-surface);
+  --pk-surface-2: var(--color-surface-raised);
+  --pk-surface-elevated: var(--color-surface-raised);
+  --pk-surface-hover: var(--color-surface-hover);
+  --pk-surface-selected: var(--color-surface-selected);
+  --pk-border: var(--color-border);
+  --pk-border-strong: var(--color-border-strong);
+  --pk-ink: var(--color-text-primary);
+  --pk-ink-2: var(--color-text-secondary);
+  --pk-muted: var(--color-text-muted);
+  --pk-brand: var(--color-brand);
+  --pk-brand-hover: var(--color-brand-hover);
+  --pk-on-brand: var(--color-text-on-brand);
+  --pk-blue: var(--color-brand-secondary);
+  --pk-success: var(--color-success);
+  --pk-warning: var(--color-warning);
+  --pk-danger: var(--color-error);
+  --pk-info: var(--color-info);
+  --pk-font-body: var(--font-body);
+  --pk-radius-sm: var(--radius-sm); --pk-radius-md: var(--radius-md); --pk-radius-lg: var(--radius-lg); --pk-radius-pill: var(--radius-pill);
+  --pk-shadow-2: var(--shadow-card);
+  --pk-shadow-3: var(--shadow-popover);
+  --pk-dur-fast: var(--motion-fast);
+  --pk-dur-base: var(--motion-standard);
+}
+body { background-color: var(--color-bg); color: var(--color-text-primary); font-family: var(--font-body); }

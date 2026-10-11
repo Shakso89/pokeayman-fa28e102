@@ -13,6 +13,7 @@
   }
   function applyTheme() {
     document.body.classList.toggle('ts-bright', bright);
+    document.documentElement.setAttribute('data-theme', bright ? 'light' : 'dark');
     const toggle = $('ts-theme-toggle');
     if (toggle) {
       toggle.setAttribute('aria-checked', String(bright));
