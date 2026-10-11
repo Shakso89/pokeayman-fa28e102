@@ -112,7 +112,7 @@
   html body.ts-on[data-ts-sheet="me"] #ts-sidebar { flex-direction: column; align-items: stretch; height: auto; padding: 14px; border-radius: 18px 18px 0 0; }
   html body.ts-on[data-ts-sheet="me"] #ts-sidebar > .ts-nav { display: none !important; }
   html body.ts-on[data-ts-sheet="me"] #ts-sidebar > :is(.ts-me, #ts-theme-toggle) { display: flex !important; position: static; width: 100%; }
-  html body.ts-on[data-ts-sheet="me"] #ts-rail { display: flex !important; position: fixed; inset: auto 0 calc(62px + 150px + env(safe-area-inset-bottom)) 0 !important; width: auto; padding: 0 14px; z-index: 69; }
+  html body.ts-on[data-ts-sheet="me"] #ts-rail { display: flex !important; position: fixed; inset: auto 0 calc(62px + var(--ts-me-height, 220px) + env(safe-area-inset-bottom)) 0 !important; width: auto; padding: 0 14px; z-index: 69; }
   html body.ts-on:not([data-ts-sheet="me"]) #ts-rail { display: none !important; }
   body.ts-on[data-ts-sheet="me"] #ts-sheet-scrim { display: block; position: fixed; inset: 0; z-index: 68; background: rgba(5,10,30,.45); }
 }
