@@ -17,3 +17,4 @@
 
 - Teacher sidebar identity stays in teacher-shell.js/.css, using the existing header name/image, a CSS Poké Ball fallback, and measured mobile profile height. Why: maintains avatar synchronization and avoids long-name overlap without changing account logic.
 - Hangman keeps eight persistent SVG stages with scoped hangman-animation.css and local miss feedback. Why: each wrong guess visibly draws one new stage without restarting previous strokes or covering the game.
+- Bright-mode legacy corrections live in bright-fixes.css/.js with ID-aware full-background overrides and body-scoped derived tokens; computed colours are normalized through a cached canvas. Why: legacy gradients and root-resolved aliases must not keep dark surfaces after the theme switch.
