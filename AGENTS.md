@@ -19,4 +19,4 @@
 - Hangman keeps eight persistent SVG stages with scoped hangman-animation.css and local miss feedback. Why: each wrong guess visibly draws one new stage without restarting previous strokes or covering the game.
 - Bright-mode legacy corrections live in bright-fixes.css/.js with ID-aware full-background overrides and body-scoped derived tokens; computed colours are normalized through a cached canvas. Why: legacy gradients and root-resolved aliases must not keep dark surfaces after the theme switch.
 
-- The vocabulary cards/create row, arcade cards, stadium panels and avatar wardrobe share workspace-refresh.css loaded after legacy bright corrections. Why: a scoped final presentation layer preserves existing handlers while enforcing both-mode layout and contrast.
+- Vocabulary cards/create row, arcade cards, stadium panels, avatar wardrobe, Quizzes and Admin Hub share workspace-refresh.css loaded after legacy bright corrections. Why: a scoped final presentation layer preserves existing handlers while enforcing both-mode layout and contrast.

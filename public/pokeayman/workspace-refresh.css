@@ -1,4 +1,83 @@
-/* Four classroom workspaces: one token-driven presentation layer. */
+/* Classroom workspaces: one token-driven presentation layer. */
+/* Quizzes and administration share the same flat workspace hierarchy. */
+html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
+  & :is(#class-subtab-quiz,#tab-admin) {
+    background: transparent !important; border: 0 !important; border-radius: 0 !important;
+    box-shadow: none !important; padding: 0 !important; color: var(--color-text-primary) !important;
+  }
+  & :is(#class-subtab-quiz,#tab-admin)::before, & :is(#class-subtab-quiz,#tab-admin)::after,
+  & #class-subtab-quiz .glass-container::before, & #class-subtab-quiz .glass-container::after,
+  & #tab-admin .admin-subtab-content > .glass-container::before,
+  & #tab-admin .admin-subtab-content > .glass-container::after { display: none !important; }
+  & #class-subtab-quiz { gap: 24px !important; align-items: flex-start; }
+  & #class-subtab-quiz > .flex.flex-col {
+    width: 170px !important; padding: 0 16px 0 0 !important; background: transparent !important;
+    border: 0 !important; border-right: 1px solid var(--color-border) !important;
+    border-radius: 0 !important; box-shadow: none !important; gap: 8px !important;
+  }
+  & #class-subtab-quiz > .flex-1 { padding: 0 !important; }
+  & #class-subtab-quiz :is(#quiz-form-container,.quiz-subtab-content > .glass-container,.quiz-subtab-content > div:not(.hidden)),
+  & #tab-admin .admin-subtab-content > .glass-container,
+  & #tab-admin :is(.teachers-inventory-panel,.teachers-inventory-toolbar,.admin-students-scroll,#admin-shop-container) {
+    background: transparent !important; border: 0 !important; border-radius: 0 !important;
+    box-shadow: none !important; backdrop-filter: none !important; padding: 0 !important;
+  }
+  & #tab-admin .admin-subtab-content > .glass-container { padding-bottom: 24px !important; border-bottom: 1px solid var(--color-border) !important; }
+  & :is(#class-subtab-quiz,#tab-admin) :is(h2,h3,h4,label) {
+    color: var(--color-text-primary) !important; font-family: var(--font-body) !important;
+    letter-spacing: 0 !important; text-shadow: none !important; -webkit-text-fill-color: currentColor !important;
+  }
+  & :is(#class-subtab-quiz,#tab-admin) :is(p,small),
+  & #quiz-form > .flex > span,
+  & #tab-admin .teachers-inventory-hint { color: var(--color-text-secondary) !important; text-shadow: none !important; }
+  & :is(#class-subtab-quiz,#tab-admin) :is(.quiz-sub-tab,.admin-sub-tab,.users-subtab) > span[aria-hidden="true"] { display: none !important; }
+  & #class-subtab-quiz h3 { font-size: 22px !important; font-weight: 800 !important; margin-bottom: 20px !important; }
+  & :is(#class-subtab-quiz,#tab-admin) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea) {
+    background: var(--color-surface) !important; color: var(--color-text-primary) !important;
+    border: 1px solid var(--color-border-strong) !important; border-radius: 6px !important;
+    min-height: 44px; box-shadow: none !important; font-family: var(--font-body); font-size: 14px;
+  }
+  & :is(#class-subtab-quiz,#tab-admin) :is(input,textarea)::placeholder { color: var(--color-text-muted) !important; }
+  & :is(#class-subtab-quiz,#tab-admin) :is(.quiz-sub-tab,.admin-sub-tab,.users-subtab,.btn-outline,.btn-primary,.btn-secondary),
+  & #class-subtab-quiz :is(.quiz-photo-open-btn,.quiz-image-search-submit,.quiz-image-load-more) {
+    background: var(--color-surface) !important; color: var(--color-text-secondary) !important;
+    border: 1px solid var(--color-border) !important; border-radius: 6px !important;
+    min-height: 44px; padding: 10px 16px !important; font-family: var(--font-body) !important;
+    font-size: 14px !important; font-weight: 700 !important; letter-spacing: 0 !important;
+    box-shadow: none !important; text-shadow: none !important; transform: none !important; filter: none !important;
+  }
+  & :is(#class-subtab-quiz,#tab-admin) :is(.quiz-sub-tab,.admin-sub-tab,.users-subtab)::after { display: none !important; }
+  & :is(#class-subtab-quiz,#tab-admin) :is(.quiz-sub-tab-active,.admin-sub-tab-active,.users-subtab-active,.btn-primary) {
+    background: var(--color-brand) !important; color: var(--color-text-on-brand) !important; border-color: var(--color-brand) !important;
+  }
+  & :is(#class-subtab-quiz,#tab-admin) button:hover:not(:disabled) { border-color: var(--color-brand) !important; }
+  & :is(#class-subtab-quiz,#tab-admin) button:disabled { opacity: .5 !important; cursor: not-allowed; }
+  & #class-subtab-quiz :is(.quiz-image-picker-panel,#quiz-image-preview) {
+    background: transparent !important; border: 0 !important; border-radius: 0 !important; padding: 0 !important; box-shadow: none !important;
+  }
+  & #class-subtab-quiz :is(.quiz-image-picker-dialog,.quiz-image-picker-header,.quiz-image-results-grid) {
+    background: var(--color-surface) !important; color: var(--color-text-primary) !important; border-color: var(--color-border) !important;
+  }
+  & #tab-admin .users-subtab-header { background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--color-border) !important; border-radius: 0 !important; padding: 0 0 16px !important; box-shadow: none !important; gap: 8px !important; }
+  & #tab-admin .teachers-inventory-toolbar { margin-bottom: 20px; gap: 16px; flex-wrap: wrap; color: var(--color-text-primary) !important; }
+  & #tab-admin :is(.teachers-inventory-card,.solved-results-row,#backup-summary),
+  & #tab-admin :is(#admin-students-list,#admin-shop-list) > div {
+    background: var(--color-surface) !important; color: var(--color-text-primary) !important;
+    border: 1px solid var(--color-border) !important; border-radius: 8px !important; box-shadow: var(--shadow-card) !important;
+  }
+  & #tab-admin .teachers-inventory-card::before, & #tab-admin .teachers-inventory-card::after { display: none !important; }
+  & #tab-admin .teachers-inventory-card { transform: none !important; }
+  & #tab-admin :is(.teacher-inventory-name,.teacher-inventory-detail) { color: var(--color-text-primary) !important; -webkit-text-fill-color: currentColor !important; text-shadow: none !important; }
+  & #tab-admin :is(.teacher-inventory-avatar,.teachers-inventory-actions button) { background: var(--color-surface-hover) !important; color: var(--color-text-primary) !important; border-color: var(--color-border) !important; box-shadow: none !important; }
+}
+@media(max-width:640px) {
+  html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
+    & #class-subtab-quiz { flex-direction: column !important; gap: 20px !important; }
+    & #class-subtab-quiz > .flex.flex-col { width: 100% !important; flex-direction: row !important; flex-wrap: wrap; padding: 0 0 16px !important; border-right: 0 !important; border-bottom: 1px solid var(--color-border) !important; }
+    & #class-subtab-quiz .quiz-sub-tab { flex: 1 1 120px; text-align: center; }
+    & #class-subtab-quiz > .flex-1 { width: 100%; }
+  }
+}
 /* List-source segmented control: solid selected state in both display modes. */
 html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
   & .teacher-list-source-tabs {
