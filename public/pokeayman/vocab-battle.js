@@ -10,6 +10,21 @@
   const rand = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
   let battle = null;
 
+  function battlePartner(student) {
+    if (student.__practice) return null;
+    const resolve = (id) => typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(id) : null;
+    const identity = (record) => String(record?.__backendId || record?.student_id || '').trim();
+    const canonical = resolve(identity(student)) || student;
+    const ids = new Set([identity(student), identity(canonical), String(canonical.student_id || '')].filter(Boolean));
+    const owned = getPokemons().filter((pokemon) => {
+      if (!(Number(pokemon.pokemon_id) > 0)) return false;
+      const ownerId = String(pokemon.student_id || pokemon.owner_id || '').trim();
+      if (ownerId) return ids.has(ownerId) || ids.has(identity(resolve(ownerId)));
+      return normalizeStudentIdentity(pokemon.owner) === normalizeStudentIdentity(canonical.student_name);
+    });
+    return owned.find((pokemon) => Number(pokemon.pokemon_id) === Number(canonical.avatar_pokemon_id)) || owned[0] || null;
+  }
+
   function classTeacherFor(student) {
     const cls = (typeof allData !== 'undefined' ? allData : []).find((r) => r.type === 'class' && r.school_name === student.school_name && r.class_name === student.class_name);
     const name = cls?.teacher_name || cls?.created_by || cls?.assigned_teacher || '';
@@ -110,8 +125,8 @@
     const active = battle;
     if (!active) return;
     const root = active.root;
-    const source = root.querySelector(retaliation ? '.vb-foe-art' : '.vb-slots');
-    const target = root.querySelector(retaliation ? '.vb-me' : '.vb-foe-art');
+    const source = root.querySelector(retaliation ? '.vb-foe-art' : '.vb-me-art') || root.querySelector('.vb-slots');
+    const target = root.querySelector(retaliation ? '.vb-me-art' : '.vb-foe-art') || root.querySelector('.vb-me');
     if (!source || !target) { impact(); return; }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const layer = document.createElement('div');
@@ -423,22 +438,27 @@
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', 'Poké Battle');
     const foeMaxHp = Number(foe.shop_pokemon_hp) || (Number(foe.shop_pokemon_power) || 20) + 30;
+    const partner = battlePartner(student);
     root.innerHTML = `
       <header class="vb-head"><span class="vb-title">⚔️ Poké Battle</span><button type="button" class="vb-close" data-vb="close">✕ Leave battle</button></header>
       <div class="vb-arena">
+        <div class="vb-matchup">
+        <div class="vb-me">
+          ${partner ? `<img class="vb-me-art" src="${sprite(Number(partner.pokemon_id))}" alt="${esc(student.student_name)}'s ${esc(partner.pokemon_name)}"><p class="vb-partner-name">${esc(partner.pokemon_name || `Pokémon ${partner.pokemon_id}`)}</p>` : '<span class="vb-me-art vb-trainer-fallback" role="img" aria-label="Trainer">' + esc(String(student.student_name || '?').charAt(0).toUpperCase()) + '</span>'}
+          <p class="vb-me-name">${esc(student.student_name)}</p>
+          <div class="vb-hp vb-me-hp"><div class="vb-hp-label"><span>HP</span><span class="vb-hp-num"></span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div>
+        </div>
+        <span class="vb-versus" aria-hidden="true">VS</span>
         <div class="vb-foe">
           <img class="vb-foe-art" src="${sprite(foe.shop_pokemon_id)}" alt="Wild ${esc(foe.shop_pokemon_name)}">
           <p class="vb-foe-name">Wild ${esc(foe.shop_pokemon_name)}</p>
           <p class="vb-foe-rarity">${esc(foe.shop_pokemon_rarity || 'common')} · wins cost ${Number(foe.shop_pokemon_price) || 0} credits</p>
           <div class="vb-hp vb-foe-hp"><div class="vb-hp-label"><span>HP</span><span class="vb-hp-num"></span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div>
         </div>
+        </div>
         <p class="vb-message" aria-live="polite">Unscramble the word to attack!</p>
         <div class="vb-timer"><div class="vb-timer-track"><div class="vb-timer-fill"></div></div><p class="vb-timer-text"></p></div>
         <div class="vb-word"><div class="vb-slots"></div><div class="vb-tiles"></div></div>
-        <div class="vb-me">
-          <p class="vb-me-name">${esc(student.student_name)}</p>
-          <div class="vb-hp vb-me-hp"><div class="vb-hp-label"><span>HP</span><span class="vb-hp-num"></span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div>
-        </div>
       </div>`;
     document.body.appendChild(root);
     battle = {
