@@ -1,0 +1,123 @@
+/* Shared component primitives (stage 2). Uses tokens.css only.
+   Loaded after feature styles; special treatments (rarity, holo, battle,
+   celebrations, game tiles) are intentionally not targeted. */
+
+/* ---------- Buttons ---------- */
+:is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn) {
+  display: inline-flex !important; align-items: center; justify-content: center; gap: var(--pk-space-2);
+  min-height: 40px; padding: 0 var(--pk-space-4) !important;
+  border-radius: var(--pk-radius-md) !important;
+  font-family: var(--pk-font-display) !important; font-weight: 700 !important;
+  font-size: var(--pk-text-sm) !important; line-height: 1 !important; letter-spacing: .01em;
+  text-shadow: none !important; backdrop-filter: none !important;
+  transition: background-color var(--pk-dur-fast) var(--pk-ease), border-color var(--pk-dur-fast) var(--pk-ease),
+    transform var(--pk-dur-fast) var(--pk-ease), box-shadow var(--pk-dur-fast) var(--pk-ease) !important;
+}
+/* Primary: one clear main action */
+:is(.btn-primary, .ts-btn:not(.ghost)) {
+  background: var(--pk-brand) !important; color: var(--pk-on-brand) !important;
+  border: 1px solid var(--pk-brand) !important; box-shadow: var(--pk-shadow-1) !important;
+}
+:is(.btn-primary, .ts-btn:not(.ghost)):hover:not(:disabled) {
+  background: var(--pk-brand-hover) !important; filter: none !important;
+  transform: translateY(-1px); box-shadow: var(--pk-shadow-2) !important;
+}
+/* Secondary: filled surface */
+.btn-secondary {
+  background: var(--pk-surface-2) !important; color: var(--pk-ink) !important;
+  border: 1px solid var(--pk-border-strong) !important; box-shadow: none !important;
+}
+/* Ghost/outline: low emphasis */
+:is(.btn-outline, .ts-btn.ghost) {
+  background: transparent !important; color: var(--pk-ink) !important;
+  border: 1px solid var(--pk-border-strong) !important; box-shadow: none !important;
+}
+:is(.btn-secondary, .btn-outline, .ts-btn.ghost):hover:not(:disabled) {
+  background: var(--pk-surface-hover) !important; border-color: color-mix(in oklab, var(--pk-brand) 55%, transparent) !important;
+  filter: none !important; transform: translateY(-1px);
+}
+/* Success / danger */
+.btn-success { background: var(--pk-success) !important; color: var(--pk-on-brand) !important; border: 1px solid var(--pk-success) !important; box-shadow: none !important; }
+.btn-danger { background: var(--pk-danger) !important; color: var(--pk-on-accent) !important; border: 1px solid var(--pk-danger) !important; box-shadow: none !important; }
+:is(.btn-success, .btn-danger):hover:not(:disabled) { filter: brightness(1.06) !important; transform: translateY(-1px); }
+
+:is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn):active:not(:disabled) { transform: translateY(1px) scale(.98) !important; }
+:is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn):focus-visible { outline: none !important; box-shadow: var(--pk-focus-ring) !important; }
+:is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn):is(:disabled, [aria-disabled="true"]) {
+  opacity: .5 !important; cursor: not-allowed !important; transform: none !important; filter: grayscale(.3) !important; box-shadow: none !important;
+}
+
+/* ---------- Form fields ---------- */
+#app-screen :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]), select, textarea),
+.pk-login-overlay :is(input, select, textarea) {
+  min-height: 40px; border-radius: var(--pk-radius-md) !important;
+  border: 1px solid var(--pk-border-strong) !important;
+  background-color: var(--pk-surface-2) !important; color: var(--pk-ink) !important;
+  font-family: var(--pk-font-body) !important; font-size: var(--pk-text-sm);
+  transition: border-color var(--pk-dur-fast) var(--pk-ease), box-shadow var(--pk-dur-fast) var(--pk-ease);
+}
+#app-screen :is(input, select, textarea)::placeholder { color: var(--pk-muted) !important; opacity: 1; }
+#app-screen :is(input, select, textarea):hover:not(:disabled) { border-color: color-mix(in oklab, var(--pk-ink) 32%, transparent) !important; }
+#app-screen :is(input, select, textarea):focus,
+.pk-login-overlay :is(input, select, textarea):focus {
+  outline: none !important; border-color: var(--pk-brand) !important;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--pk-brand) 28%, transparent) !important;
+}
+#app-screen :is(input, select, textarea):disabled { opacity: .55; cursor: not-allowed; }
+#app-screen :is(input[type="checkbox"], input[type="radio"]) { accent-color: var(--pk-brand); }
+#app-screen label { font-family: var(--pk-font-body); }
+
+/* ---------- Tabs / segmented controls ---------- */
+:is(.tab-active, .profile-tab-active, .student-dashboard-tab-active, .admin-sub-tab-active, .quiz-sub-tab-active,
+    .tab-inactive, .profile-tab-inactive, .student-dashboard-tab-inactive, .admin-sub-tab-inactive, .quiz-sub-tab-inactive) {
+  border-radius: var(--pk-radius-pill) !important; font-family: var(--pk-font-display) !important;
+  font-weight: 700 !important; font-size: var(--pk-text-sm) !important; text-shadow: none !important;
+  transition: background-color var(--pk-dur-fast) var(--pk-ease), color var(--pk-dur-fast) var(--pk-ease) !important;
+}
+:is(.tab-active, .profile-tab-active, .student-dashboard-tab-active, .admin-sub-tab-active, .quiz-sub-tab-active) {
+  background: var(--pk-brand) !important; color: var(--pk-on-brand) !important;
+  border: 1px solid var(--pk-brand) !important; box-shadow: var(--pk-shadow-1) !important;
+}
+:is(.tab-inactive, .profile-tab-inactive, .student-dashboard-tab-inactive, .admin-sub-tab-inactive, .quiz-sub-tab-inactive) {
+  background: transparent !important; color: var(--pk-ink-2) !important;
+  border: 1px solid var(--pk-border) !important; box-shadow: none !important; backdrop-filter: none !important;
+}
+:is(.tab-inactive, .profile-tab-inactive, .student-dashboard-tab-inactive, .admin-sub-tab-inactive, .quiz-sub-tab-inactive):hover {
+  background: var(--pk-surface-hover) !important; color: var(--pk-ink) !important;
+}
+
+/* ---------- Cards ---------- */
+.card-hover { border-radius: var(--pk-radius-lg); transition: transform var(--pk-dur-base) var(--pk-ease), box-shadow var(--pk-dur-base) var(--pk-ease) !important; }
+.card-hover:hover { transform: translateY(-2px) !important; box-shadow: var(--pk-shadow-2) !important; }
+.pk-card {
+  background: var(--pk-surface); color: var(--pk-ink); border: 1px solid var(--pk-border);
+  border-radius: var(--pk-radius-lg); padding: var(--pk-space-5); box-shadow: var(--pk-shadow-1);
+}
+
+/* ---------- Badges / chips ---------- */
+.pk-badge {
+  display: inline-flex; align-items: center; gap: var(--pk-space-1); height: 24px; padding: 0 var(--pk-space-2);
+  border-radius: var(--pk-radius-pill); font: 700 var(--pk-text-xs)/1 var(--pk-font-display);
+  background: var(--pk-surface-2); color: var(--pk-ink-2); border: 1px solid var(--pk-border);
+}
+.pk-badge--brand { background: color-mix(in oklab, var(--pk-brand) 18%, transparent); color: var(--pk-brand); border-color: color-mix(in oklab, var(--pk-brand) 40%, transparent); }
+.pk-badge--danger { background: color-mix(in oklab, var(--pk-danger) 18%, transparent); color: var(--pk-danger); border-color: color-mix(in oklab, var(--pk-danger) 40%, transparent); }
+body.ts-bright .pk-badge--brand { color: var(--pk-on-brand); }
+
+/* ---------- Popups ---------- */
+.pk-login-overlay > * , [role="dialog"]:not(.baam-question-card):not([class*="celebrat"]) {
+  border-radius: var(--pk-radius-lg);
+}
+.pk-modal-title { font: 800 var(--pk-text-h2)/var(--pk-leading-tight) var(--pk-font-display); color: var(--pk-ink); }
+.pk-modal-body { font: 400 var(--pk-text-body)/var(--pk-leading-body) var(--pk-font-body); color: var(--pk-ink-2); }
+
+/* ---------- Empty states ---------- */
+.pk-empty {
+  display: grid; place-items: center; gap: var(--pk-space-3); text-align: center;
+  padding: var(--pk-space-7) var(--pk-space-5); border: 1px dashed var(--pk-border-strong);
+  border-radius: var(--pk-radius-lg); color: var(--pk-muted); font-family: var(--pk-font-body);
+}
+
+@media (max-width: 640px) {
+  :is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn) { min-height: 44px; }
+}
