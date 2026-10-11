@@ -36,6 +36,39 @@
   content: none !important;
 }
 
+/* Soft volumetric beams, inspired by React Bits Light Rays. */
+#home-screen.home-showcase .home-light-rays {
+  position: fixed;
+  inset: -12% -18% -8%;
+  z-index: -1;
+  pointer-events: none;
+  transform-origin: 50% 0;
+  background:
+    conic-gradient(from 155deg at 50% -10%,
+      transparent 0deg 36deg,
+      rgba(255, 203, 5, .025) 42deg,
+      rgba(255, 203, 5, .11) 48deg,
+      rgba(255, 203, 5, .025) 54deg,
+      transparent 60deg 78deg,
+      rgba(56, 214, 255, .025) 84deg,
+      rgba(56, 214, 255, .085) 91deg,
+      rgba(56, 214, 255, .02) 98deg,
+      transparent 104deg 128deg,
+      rgba(129, 140, 248, .025) 134deg,
+      rgba(129, 140, 248, .085) 141deg,
+      rgba(129, 140, 248, .02) 148deg,
+      transparent 154deg 360deg),
+    radial-gradient(ellipse at 50% 0%, rgba(94, 231, 242, .12), transparent 60%);
+  opacity: .72;
+  animation: homeLightRaySway 30s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+@keyframes homeLightRaySway {
+  from { opacity: .52; transform: rotate(-1.5deg) scale(1); }
+  to { opacity: .82; transform: rotate(1.5deg) scale(1.035); }
+}
+
 /* Small drifting lights sit over the backdrop and below the home content. */
 #home-screen.home-showcase .home-fireflies {
   position: fixed;
@@ -379,12 +412,14 @@
   .home-showcase .home-side-left { left: -2.6rem; }
   .home-showcase .home-side-right { right: -2.6rem; }
   .home-showcase .home-fireflies span:nth-child(3n) { display: none; }
+  .home-showcase .home-light-rays { inset: -8% -45% -4%; opacity: .56; }
   .home-showcase .hsc-name { font-size: .6rem; }
   .home-showcase .home-side-card small { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-showcase .home-side-card { animation: none; transform: rotate(var(--rot)); }
   .home-showcase .home-fireflies span { animation: none; opacity: .35; will-change: auto; }
+  .home-showcase .home-light-rays { animation: none; opacity: .62; will-change: auto; }
 }
 
 /* Keep the home help button docked to the viewport at every breakpoint. */
