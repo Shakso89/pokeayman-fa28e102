@@ -12848,11 +12848,16 @@ function renderGamesList() {
   // Re-render the selector in place so repeated data refreshes never stack duplicate VB cards.
   selector.replaceChildren();
   if (gamesContainer) gamesContainer.replaceChildren();
+  if (currentRole === 'teacher' && (!navSchool || !navClass)) {
+    const firstAssigned = getAssignedClasses(currentTeacher)[0];
+    if (firstAssigned) { navSchool = firstAssigned.assigned_school; navClass = firstAssigned.assigned_class; }
+  }
   const teacherClassAuthorized = currentRole === 'teacher' && canManageClass(navSchool, navClass);
   const selectedClassRecord = currentRole === 'teacher' ? getClasses(navSchool).find(record => record.class_name === navClass) : null;
   const selectedClassId = String(selectedClassRecord?.__backendId || '');
-  if (currentRole === 'teacher' && (!verifiedTeacherIdentity() || !teacherClassAuthorized)) {
-    selector.innerHTML = '<div class="student-games-empty rounded-xl border border-amber-200/30 bg-indigo-950/60 p-5 text-center"><p class="text-sm font-semibold text-amber-100">You do not have permission to manage this class.</p></div>';
+  // Only teacher identity is required to open Games; class permission gates Class lists only.
+  if (currentRole === 'teacher' && !verifiedTeacherIdentity()) {
+    selector.innerHTML = '<div class="student-games-empty rounded-xl border border-amber-200/30 bg-indigo-950/60 p-5 text-center"><p class="text-sm font-semibold text-amber-100">Please sign in again to play games.</p></div>';
     if (gamesContainer) gamesContainer.replaceChildren();
     return;
   }
