@@ -18,7 +18,7 @@
   }
 
   function pickOpponent(student) {
-    const teacher = student && student.__practice ? (typeof currentTeacherRec === 'function' ? currentTeacherRec() : null) : classTeacherFor(student);
+    const teacher = student && (student.__practice || student.__teacherLed) ? (typeof currentTeacherRec === 'function' ? currentTeacherRec() : null) : classTeacherFor(student);
     const credits = teacher ? (teacher.teacher_credits === -1 ? Infinity : Number(teacher.teacher_credits || 0)) : Infinity;
     const catalog = (typeof pokemonCatalog !== 'undefined' && Array.isArray(pokemonCatalog)) ? pokemonCatalog : [];
     const pool = catalog.map((p) => ({
@@ -205,11 +205,11 @@
         <img class="vb-result-art" src="${sprite(foe.shop_pokemon_id)}" alt="${esc(foe.shop_pokemon_name)}">
         <h2 class="vb-result-title ${won ? 'vb-win' : 'vb-lose'}">${won ? '🏆 Victory!' : '💫 You fainted…'}</h2>
         <p class="vb-result-sub">${won
-          ? battle.student.__practice ? `Practice win against ${esc(foe.shop_pokemon_name)}! Nothing is claimed or charged in teacher practice.` : `You defeated ${esc(foe.shop_pokemon_name)}! Ask your teacher to approve the claim and it joins your collection for ${Number(foe.shop_pokemon_price) || 0} credits.`
+          ? battle.student.__teacherLed ? `${esc(battle.student.student_name)} defeated ${esc(foe.shop_pokemon_name)}! Approve to add it to their collection for ${Number(foe.shop_pokemon_price) || 0} of your credits, or deny.` : battle.student.__practice ? `Practice win against ${esc(foe.shop_pokemon_name)}! Nothing is claimed or charged in teacher practice.` : `You defeated ${esc(foe.shop_pokemon_name)}! Ask your teacher to approve the claim and it joins your collection for ${Number(foe.shop_pokemon_price) || 0} credits.`
           : `${esc(foe.shop_pokemon_name)} was too strong this time. Train your words and try again!`}</p>
         <div class="vb-result-actions">
-          ${won && battle.student.__practice ? `<button type="button" class="vb-btn" data-vb="retry">⚔️ Practice again</button>` : won ? `<button type="button" class="vb-btn" data-vb="claim">🎁 Request claim</button>` : `<button type="button" class="vb-btn" data-vb="retry">⚔️ Battle again</button>`}
-          <button type="button" class="vb-btn vb-btn-ghost" data-vb="close">${won ? 'Maybe later' : 'Back to games'}</button>
+          ${won && battle.student.__teacherLed ? `<button type="button" class="vb-btn" data-vb="approve">✅ Approve · ${Number(foe.shop_pokemon_price) || 0} credits</button><button type="button" class="vb-btn vb-btn-ghost" data-vb="deny">✕ Deny</button>` : won && battle.student.__practice ? `<button type="button" class="vb-btn" data-vb="retry">⚔️ Practice again</button>` : won ? `<button type="button" class="vb-btn" data-vb="claim">🎁 Request claim</button>` : `<button type="button" class="vb-btn" data-vb="retry">⚔️ Battle again</button>`}
+          <button type="button" class="vb-btn vb-btn-ghost" data-vb="close">${won ? (battle.student.__teacherLed ? 'Close' : 'Maybe later') : 'Back to games'}</button>
         </div>
       </div>`;
   }
@@ -245,6 +245,70 @@
     toast('Claim sent! Your teacher will review it.');
   }
 
+  async function teacherDecide(approve, button) {
+    if (!battle || battle.claimed || battle.claimSending) return;
+    battle.claimSending = true;
+    const actions = battle.root.querySelectorAll('[data-vb="approve"],[data-vb="deny"]');
+    actions.forEach((b) => { b.disabled = true; });
+    if (!approve) {
+      battle.claimed = true;
+      button.textContent = 'Denied';
+      toast(`Claim denied. ${battle.foe.shop_pokemon_name} stays in the shop.`);
+      return;
+    }
+    const foe = battle.foe;
+    const s = battle.student;
+    const claimId = `claim-${battle.studentId}-${foe.__backendId}-${Date.now()}`;
+    const result = await window.dataSdk.create({
+      type: 'battle_claim', status: 'pending', claim_id: claimId,
+      student_id: battle.studentId, student_name: s.student_name,
+      school_name: s.school_name || '', class_name: s.class_name || '',
+      teacher_name: currentTeacher || '', shop_record_id: String(foe.__backendId),
+      pokemon_id: Number(foe.shop_pokemon_id), pokemon_name: foe.shop_pokemon_name,
+      pokemon_rarity: foe.shop_pokemon_rarity || '', pokemon_price: Number(foe.shop_pokemon_price) || 0,
+      pokemon_power: Number(foe.shop_pokemon_power) || 0, created_at: new Date().toISOString(),
+    });
+    if (!result?.isOk) { battle.claimSending = false; actions.forEach((b) => { b.disabled = false; }); toast('Could not save. Try again.'); return; }
+    const saved = result.data || result;
+    if (!allData.some((r) => r.type === 'battle_claim' && r.claim_id === claimId)) allData.push({ ...saved });
+    const ok = await approveClaim(claimId);
+    if (ok) { battle.claimed = true; button.textContent = '✓ Approved'; }
+    else { battle.claimSending = false; actions.forEach((b) => { b.disabled = false; }); }
+  }
+
+  function openPlayerPicker(listName) {
+    const school = typeof navSchool !== 'undefined' ? navSchool : '';
+    const cls = typeof navClass !== 'undefined' ? navClass : '';
+    const seen = new Set();
+    const roster = (school && cls && typeof getStudents === 'function' ? getStudents(school, cls) : []).filter((st) => {
+      const k = String(st.__backendId || st.student_name);
+      if (!st.student_name || seen.has(k)) return false;
+      seen.add(k); return true;
+    }).sort((a, b) => String(a.student_name).localeCompare(String(b.student_name)));
+    const root = document.createElement('div');
+    root.className = 'vb-stage vb-picker-stage';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-label', 'Choose a player');
+    root.innerHTML = `
+      <header class="vb-head"><span class="vb-title">⚔️ Choose who battles</span><button type="button" class="vb-close" data-pick="close">✕ Close</button></header>
+      <div class="vb-picker">
+        <p class="vb-picker-sub">${roster.length ? `Students in ${esc(cls)}. If they win, you approve or deny the Pokémon (your credits pay for it).` : 'No students in the current class. Open a class first, or practise on your own.'}</p>
+        <div class="vb-picker-grid">${roster.map((st, i) => `<button type="button" class="vb-picker-btn" data-pick="${i}">${esc(st.student_name)}</button>`).join('')}</div>
+        <button type="button" class="vb-btn vb-btn-ghost" data-pick="practice">Practise myself (no claim)</button>
+      </div>`;
+    document.body.appendChild(root);
+    root.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-pick]');
+      if (!b) return;
+      const v = b.dataset.pick;
+      root.remove();
+      if (v === 'close') return;
+      if (v === 'practice') return launchBattle(listName, { student_name: 'Teacher practice', __practice: true });
+      const st = roster[Number(v)];
+      launchBattle(listName, { ...st, school_name: st.school_name || school, class_name: st.class_name || cls, __teacherLed: true });
+    });
+  }
+
   function closeBattle() {
     if (!battle) return;
     stopTimer();
@@ -253,10 +317,14 @@
   }
 
   window.startVocabBattle = function (listName) {
-    const practice = currentRole !== 'student';
-    const student = practice ? { student_name: 'Teacher practice', __practice: true } : ((typeof getStudentRecordByStableId === 'function' && currentStudentRecordId && getStudentRecordByStableId(currentStudentRecordId))
+    if (currentRole !== 'student') return openPlayerPicker(listName);
+    const student = ((typeof getStudentRecordByStableId === 'function' && currentStudentRecordId && getStudentRecordByStableId(currentStudentRecordId))
       || getAllStudents().find((s) => s.student_name === currentStudent));
     if (!student) { toast('Signed-in student was not found.'); return; }
+    launchBattle(listName, student);
+  };
+
+  function launchBattle(listName, student) {
     const words = getGameWords(listName).filter((w) => String(w.vocab_word || '').trim().length >= 2);
     if (!words.length) { toast('This list has no battle-ready words yet.'); return; }
     const foe = pickOpponent(student);
@@ -286,7 +354,7 @@
       </div>`;
     document.body.appendChild(root);
     battle = {
-      root, student, studentId: String(currentStudentRecordId || student.__backendId || ''),
+      root, student, studentId: String(student.__teacherLed ? (student.__backendId || '') : (currentStudentRecordId || student.__backendId || '')),
       foe, foeMaxHp, foeHp: foeMaxHp, studentHp: STUDENT_HP,
       words, queue: [], failStreak: 0, over: false, claimed: false, timerId: null,
     };
@@ -297,12 +365,14 @@
       if (!btn || !battle) return;
       if (btn.dataset.vb === 'close') return closeBattle();
       if (btn.dataset.vb === 'claim') return requestClaim(btn);
-      if (btn.dataset.vb === 'retry') { closeBattle(); window.startVocabBattle(listName); return; }
+      if (btn.dataset.vb === 'approve') return teacherDecide(true, btn);
+      if (btn.dataset.vb === 'deny') return teacherDecide(false, btn);
+      if (btn.dataset.vb === 'retry') { closeBattle(); if (student.__practice) launchBattle(listName, student); else window.startVocabBattle(listName); return; }
       if (btn.dataset.tile !== undefined && !battle.over) return fillNextSlot(Number(btn.dataset.tile));
       if (btn.dataset.slot !== undefined && !battle.over) return clearSlot(Number(btn.dataset.slot));
     });
     startTurn();
-  };
+  }
 
   /* ---- Teacher: claim approvals ---- */
   function myPendingClaims() {
@@ -335,16 +405,16 @@
 
   async function approveClaim(claimId) {
     const claim = allData.find((r) => r.type === 'battle_claim' && r.claim_id === claimId && r.status === 'pending');
-    if (!claim) { toast('This claim is no longer pending.'); return renderBattleClaims(); }
+    if (!claim) { toast('This claim is no longer pending.'); renderBattleClaims(); return false; }
     const isCatalog = String(claim.shop_record_id || '').startsWith('catalog-');
     const shopItem = isCatalog ? null : allData.find((r) => String(r.__backendId) === String(claim.shop_record_id) && r.type === 'shop_pokemon');
     if (!isCatalog && !shopItem) {
       await window.dataSdk.update({ ...claim, status: 'expired', resolved_at: new Date().toISOString() });
       toast('That Pokémon is no longer in the shop.');
-      return renderBattleClaims();
+      renderBattleClaims(); return false;
     }
     const price = Number(claim.pokemon_price) || 0;
-    if (!(await deductTeacherCredits(price))) return; // keeps the Pokémon in the shop, claim stays pending
+    if (!(await deductTeacherCredits(price))) return false; // keeps the Pokémon in the shop, claim stays pending
     const grant = await window.dataSdk.create({
       type: 'pokemon', student_id: claim.student_id, school_name: claim.school_name || '', class_name: claim.class_name || '',
       student_name: '', coins: 0, owner: claim.student_name,
@@ -352,17 +422,18 @@
       pokemon_price: price, pokemon_power: Number(claim.pokemon_power) || 0,
       current_hp: (Number(claim.pokemon_power) || 0) + 30, last_battle_time: '', created_at: new Date().toISOString(),
     });
-    if (!grant?.isOk) { await refundTeacherCredits(price, currentTeacher); toast('Could not add the Pokémon. No credits were charged.'); return; }
+    if (!grant?.isOk) { await refundTeacherCredits(price, currentTeacher); toast('Could not add the Pokémon. No credits were charged.'); return false; }
     const removed = isCatalog ? { isOk: true } : await window.dataSdk.delete(shopItem);
     if (!removed?.isOk) {
       await window.dataSdk.delete(grant.data || grant);
       await refundTeacherCredits(price, currentTeacher);
       toast('Could not remove the shop item. The claim was rolled back.');
-      return;
+      return false;
     }
     await window.dataSdk.update({ ...claim, status: 'approved', resolved_at: new Date().toISOString(), resolved_by: currentTeacher });
     toast(`Approved! ${claim.pokemon_name} joins ${claim.student_name}'s collection.`);
     renderBattleClaims();
+    return true;
   }
 
   async function declineClaim(claimId) {
