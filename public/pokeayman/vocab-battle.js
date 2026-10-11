@@ -114,6 +114,7 @@
     const idx = battle.slots.indexOf(null);
     if (!tile || tile.used || idx < 0) return;
     tile.used = true;
+    tile._slot = idx;
     battle.slots[idx] = tile.letter;
     renderWord();
     if (!battle.slots.includes(null)) checkAnswer();
@@ -122,25 +123,13 @@
   function clearSlot(slotIdx) {
     const letter = battle.slots[slotIdx];
     if (!letter) return;
-    const tile = battle.tiles.find((t) => t.used && t.letter === letter && !battle.slots.some((l, i) => i !== slotIdx && l === t.letter && battle.tiles.indexOf(t) !== -1 && t._slot === i));
-    // Simpler: find the used tile assigned to this slot.
-    const assigned = battle.tiles.find((t) => t.used && t._slot === slotIdx);
+    const tile = battle.tiles.find((t) => t.used && t._slot === slotIdx);
     battle.slots[slotIdx] = null;
-    const target = assigned || tile;
-    if (target) { target.used = false; delete target._slot; }
+    if (tile) { tile.used = false; delete tile._slot; }
     renderWord();
   }
 
-  function markSlots() {
-    battle.slots.forEach((letter, i) => {
-      if (!letter) return;
-      const tile = battle.tiles.find((t) => t.used && t.letter === letter && t._slot === undefined);
-      if (tile) tile._slot = i;
-    });
-  }
-
   function checkAnswer() {
-    markSlots();
     const guess = battle.slots.join('');
     if (guess.toLowerCase() === battle.currentWord.toLowerCase()) onSuccess();
     else {
