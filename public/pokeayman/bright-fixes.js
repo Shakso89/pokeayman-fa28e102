@@ -2,7 +2,9 @@
 // high-specificity rules. In bright mode we detect those at runtime and tag them so
 // bright-fixes.css can repaint them with the bright tokens. Dark mode is untouched.
 (function () {
-  const SKIP = '.vb-stage .vb-arena *, img, svg, canvas, video, .ga-cart-art, .ga-cart-play, [class*="holo"], [class*="rarity"], [class*="tier-"], .coin-celebration, [class*="celebrat"], .pokeball, [class*="pokeball"], [class*="hp-fill"], [class*="timer-fill"], .hangman-figure *';
+  // These surfaces have their own intentional dark palette even in bright mode.
+  // The legacy contrast sweep must not recolour the home hero or login dialogs.
+  const SKIP = '#home-screen, #home-screen *, .pk-login-overlay, .pk-login-overlay *, .vb-stage .vb-arena *, img, svg, canvas, video, .ga-cart-art, .ga-cart-play, [class*="holo"], [class*="rarity"], [class*="tier-"], .coin-celebration, [class*="celebrat"], .pokeball, [class*="pokeball"], [class*="hp-fill"], [class*="timer-fill"], .hangman-figure *';
   // Modern computed colours can be oklch()/color(srgb ...), not just rgb().
   const colorCache = new Map();
   const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
@@ -31,8 +33,8 @@
     }
     const all = document.body.querySelectorAll('div,section,article,aside,header,nav,label,button,span,p,li,form,a,h1,h2,h3,h4,table,td,th,tr');
     for (const el of all) {
+      if (el.matches(SKIP)) { el.classList.remove('pk-bf-dark', 'pk-bf-ink'); continue; }
       if (el.classList.contains('pk-bf-dark') || el.closest('.vb-stage') && !el.closest('.vb-picker, .vb-head')) continue;
-      if (el.matches(SKIP)) continue;
       const s = getComputedStyle(el);
       const c = surfaceColor(s);
       if (!c) continue;
@@ -41,7 +43,8 @@
       if (lum(c) < 0.10 && sat < 120) el.classList.add('pk-bf-dark');
     }
     for (const el of all) {
-      if (el.classList.contains('pk-bf-ink') || el.matches(SKIP)) continue;
+      if (el.matches(SKIP)) { el.classList.remove('pk-bf-dark', 'pk-bf-ink'); continue; }
+      if (el.classList.contains('pk-bf-ink')) continue;
       if (el.closest('.vb-stage') && !el.closest('.vb-picker, .vb-head')) continue;
       const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
       if (!hasText) continue;
