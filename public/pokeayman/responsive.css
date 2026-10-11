@@ -124,11 +124,20 @@
   #teacher-schedule-grid { display: none; }
   #teacher-schedule-grid + * , div:has(> #teacher-schedule-grid) { border: 0 !important; }
   #schedule-agenda { display: block; }
-  #schedule-agenda .ag-days { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
+  #schedule-agenda .ag-days { position: sticky; top: 0; z-index: 5; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 0 -6px 12px; padding: 8px 6px; border-radius: 999px; background: var(--ts-bg, rgba(15,23,42,.92)); backdrop-filter: blur(8px); }
   #schedule-agenda .ag-days button { padding: 9px 0; border-radius: 999px; border: 1px solid var(--ts-border, rgba(255,255,255,.2)); background: var(--ts-surface, rgba(255,255,255,.06)); color: var(--ts-ink, #fff); font: 700 13px 'Outfit', sans-serif; }
   #schedule-agenda .ag-days button[aria-selected="true"] { background: var(--ts-yellow, #facc15); border-color: var(--ts-yellow, #facc15); color: var(--ts-action-ink, #1e1b4b); }
-  #schedule-agenda .ag-title { margin: 0 0 8px; font: 800 16px 'Outfit', sans-serif; color: var(--ts-ink, #fff); }
-  #schedule-agenda .ag-list { display: flex; flex-direction: column; gap: 10px; }
+  #schedule-agenda .ag-sec { scroll-margin-top: 70px; margin-bottom: 18px; }
+  #schedule-agenda .ag-title { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--ts-border, rgba(255,255,255,.15)); font: 800 16px 'Outfit', sans-serif; color: var(--ts-ink, #fff); }
+  #schedule-agenda .ag-title small { margin-left: auto; font: 600 12px 'Outfit', sans-serif; color: var(--ts-muted, #c7d2fe); }
+  #schedule-agenda .ag-today { padding: 2px 8px; border-radius: 999px; background: var(--ts-yellow, #facc15); color: var(--ts-action-ink, #1e1b4b); font-size: 11px; }
+  #schedule-agenda .ag-list { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  #schedule-agenda .ag-empty { grid-column: 1 / -1; }
+}
+@media (min-width: 640px) and (max-width: 1024px) {
+  #schedule-agenda .ag-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1024px) {
   #schedule-agenda .ag-list article { margin: 0 !important; padding: 12px 14px !important; font-size: 13px; border-radius: 14px; }
   #schedule-agenda .ag-list article .text-\[11px\] { font-size: 12.5px; }
   #schedule-agenda .ag-act { padding: 4px 12px; border-radius: 999px; background: rgba(255,255,255,.18); color: #fff; font-size: 12px; font-weight: 700; border: 0; margin-right: 4px; }
