@@ -228,6 +228,12 @@
       pokemon_power: Number(foe.shop_pokemon_power) || 0, created_at: new Date().toISOString(),
     });
     if (!result?.isOk) { button.disabled = false; button.textContent = '🎁 Request claim'; toast('Could not send the claim. Try again.'); return; }
+    const saved = result.data || result;
+    const claimId = saved?.__backendId || saved?.id;
+    if (claimId) {
+      const local = allData.find((r) => r.type === 'battle_claim' && r.student_id === battle.studentId && String(r.shop_record_id) === String(foe.__backendId) && r.status === 'pending' && !r.__backendId);
+      if (local) local.__backendId = claimId;
+    }
     battle.claimed = true;
     button.textContent = '✓ Sent to your teacher';
     toast('Claim sent! Your teacher will review it.');
