@@ -1,4 +1,5 @@
 # Workspace UI refresh
+- [x] Match Quizzes and Admin Hub to shared colours and flat workspace styling; original quiz answer controls and both-mode presentation checked without changing saved records. Authenticated administration actions remain unverified.
 - [x] Redesign vocabulary creation/cards, arcade, battle and avatar wardrobe in both themes.
 - [x] Original arcade renderer and existing battle/form markup checked in both themes and at 390px; no horizontal overflow or runtime errors, routing test passed. Authenticated account flows remain unverified; saved records unchanged.
 
