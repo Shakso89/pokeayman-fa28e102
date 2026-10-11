@@ -86,6 +86,7 @@
   #ts-bottom .tsb-l { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #ts-bottom button.current { color: var(--ts-ink); }
   #ts-bottom button.current .tsb-ic { background: var(--ts-yellow); color: var(--ts-action-ink); }
+  #ts-bottom [data-tsb="theme"][aria-checked="true"] .tsb-ic { background: var(--ts-yellow); color: var(--ts-action-ink); }
   #ts-bottom button:focus-visible { outline: 2px solid var(--ts-yellow); outline-offset: -2px; }
 
   /* Sidebar = slim strip of the current section's tools, sitting just above the bottom bar. */

@@ -20,6 +20,14 @@
       toggle.title = bright ? 'Switch to dark mode' : 'Switch to bright mode';
       toggle.querySelector('.ts-theme-icon').textContent = bright ? '☀' : '☾';
     }
+    const mobileToggle = document.querySelector('#ts-bottom [data-tsb="theme"]');
+    if (mobileToggle) {
+      mobileToggle.setAttribute('aria-checked', String(bright));
+      mobileToggle.setAttribute('aria-label', bright ? 'Switch to dark mode' : 'Switch to bright mode');
+      mobileToggle.title = bright ? 'Switch to dark mode' : 'Switch to bright mode';
+      mobileToggle.querySelector('.tsb-ic').textContent = bright ? '☀' : '☾';
+      mobileToggle.querySelector('.tsb-l').textContent = bright ? 'Dark' : 'Bright';
+    }
   }
   applyTheme();
 
@@ -323,13 +331,21 @@
     const bar = document.createElement('nav');
     bar.id = 'ts-bottom'; bar.setAttribute('aria-label', 'Teacher navigation');
     bar.innerHTML = [['class', '🏫', 'Classroom'], ['switch', '⇄', 'Classes'], ['zone', '🧰', 'Zone'], ['admin', '⚙️', 'Admin'], ['me', '👤', 'Me']]
-      .map(([k, i, l]) => `<button type="button" data-tsb="${k}"><span class="tsb-ic" aria-hidden="true">${i}</span><span class="tsb-l">${l}</span></button>`).join('');
+      .map(([k, i, l]) => `<button type="button" data-tsb="${k}"><span class="tsb-ic" aria-hidden="true">${i}</span><span class="tsb-l">${l}</span></button>`).join('') +
+      `<button type="button" data-tsb="theme" role="switch" aria-checked="${bright}" aria-label="${bright ? 'Switch to dark mode' : 'Switch to bright mode'}" title="${bright ? 'Switch to dark mode' : 'Switch to bright mode'}"><span class="tsb-ic" aria-hidden="true">${bright ? '☀' : '☾'}</span><span class="tsb-l">${bright ? 'Dark' : 'Bright'}</span></button>`;
     const scrim = document.createElement('div'); scrim.id = 'ts-sheet-scrim';
     document.body.append(scrim, bar);
     scrim.addEventListener('click', closeSheet);
     bar.addEventListener('click', (e) => {
       const b = e.target.closest('[data-tsb]'); if (!b) return;
-      const k = b.dataset.tsb; meOpen = k === 'me' ? !meOpen : false;
+      const k = b.dataset.tsb;
+      if (k === 'theme') {
+        bright = !bright;
+        g(() => localStorage.setItem('pokeayman-teacher-theme', bright ? 'bright' : 'dark'));
+        applyTheme();
+        return;
+      }
+      meOpen = k === 'me' ? !meOpen : false;
       if (k === 'switch') togglePop();
       else if (k === 'class') { if (!needClass()) { const s = navSchool, c = navClass; g(() => showMainTab('dashboard')); g(() => navigateTo('students', s, c)); } }
       else if (k === 'zone') { g(() => showMainTab('teacher-zone')); }
