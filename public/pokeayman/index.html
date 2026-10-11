@@ -4247,7 +4247,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <button id="manual-battle-btn" class="btn-battle-manual battle-action-btn flex items-center justify-center gap-2">🎮 Manual Battle</button> <button id="random-battle-btn" class="btn-battle-random battle-action-btn flex items-center justify-center gap-2">🎲 Random Battle</button>
          </div>
          <div id="battle-area" class="hidden">
-          <div class="arena-toolbar"><p class="arena-title heading-font">⚔️ Stadium Showdown</p><div class="arena-tools"><button type="button" id="arena-speed-btn" class="arena-tool" aria-pressed="false" data-sfx="tab">⏩ 1×</button><button type="button" id="arena-cinema-btn" class="arena-tool" data-sfx="tab">⛶ Projector</button></div></div>
+          <div class="arena-toolbar"><div class="arena-heading"><span class="arena-kicker">TRAINER BATTLE</span><p class="arena-title heading-font">Pokémon Stadium</p></div><div class="arena-tools"><span id="arena-round-badge" class="arena-round">READY</span><button type="button" id="arena-speed-btn" class="arena-tool" aria-pressed="false" data-sfx="tab">⏩ 1×</button><button type="button" id="arena-cinema-btn" class="arena-tool" data-sfx="tab">⛶ Projector</button></div></div>
           <div id="arena-stage" class="arena-stage grid grid-cols-2 gap-4 mb-4"><div class="arena-vs" aria-hidden="true"><span>VS</span></div><div id="arena-banner" class="arena-banner" aria-live="polite"></div>
            <div class="hidden" aria-hidden="true">
             <div id="battle-selected-s1" data-student="" data-pokemon-id=""></div>
@@ -4269,7 +4269,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             </div>
             <p id="battle-right-hp" class="text-green-300 text-xs"></p>
            </div>
-          </div><button id="start-battle-btn" data-sfx="vs" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold text-lg transition">Start Battle</button>
+          </div><p id="arena-callout" class="arena-callout" aria-live="polite">The trainers are ready.</p><div class="arena-actions"><button id="start-battle-btn" data-sfx="vs" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold text-lg transition">Start Battle</button><button type="button" id="arena-new-match-btn" class="arena-next-btn hidden">Choose the next battle</button></div>
          </div><!-- Manual selection UI -->
          <div id="manual-select-ui" class="hidden">
           <div class="grid grid-cols-2 gap-4">
@@ -16915,6 +16915,7 @@ document.getElementById('random-battle-btn').addEventListener('click', () => {
   document.getElementById('battle-selected-s2').dataset.pokemonId = p2.__backendId;
   setupBattle(s1.student_name, p1, s2.student_name, p2);
 });
+document.getElementById('arena-new-match-btn')?.addEventListener('click', () => document.getElementById('manual-battle-btn')?.click());
 
 // Manual Battle owns only the four current draft selections; ended-battle state never gates readiness.
 function getManualBattleDraft() {
@@ -16974,6 +16975,8 @@ function animateBattleHp(barId, nextHp, maxHp, cardId) {
 }
 
 function resetBattleVisualState() {
+  document.getElementById('arena-stage')?.classList.remove('arena-ready', 'arena-active', 'arena-result');
+  document.querySelectorAll('#arena-stage .arena-projectile').forEach(projectile => projectile.remove());
   ['battle-left', 'battle-right'].forEach(id => {
     const card = document.getElementById(id);
     if (!card) return;
@@ -16996,6 +16999,8 @@ function resetBattleTabState({ preserveManualSelections = false } = {}) {
   if (battleArea) battleArea.classList.add('hidden');
   if (manualSelect) manualSelect.classList.add('hidden');
   if (startButton) { startButton.disabled = false; startButton.textContent = 'Start Battle'; }
+  document.getElementById('arena-new-match-btn')?.classList.add('hidden');
+  ['manual-battle-btn', 'random-battle-btn'].forEach(id => { const modeButton = document.getElementById(id); if (modeButton) modeButton.disabled = false; });
   ['battle-selected-s1', 'battle-selected-s2'].forEach(id => {
     const selected = document.getElementById(id);
     if (!selected) return;
@@ -17032,7 +17037,9 @@ function finalizeBattleVisuals(winnerId, loserId) {
 }
 
 const ARENA_TYPE_ICON = { fire:'🔥', water:'💧', grass:'🌿', electric:'⚡', ice:'❄️', fighting:'🥊', poison:'☠️', ground:'⛰️', flying:'🪶', psychic:'🔮', bug:'🐛', rock:'🪨', ghost:'👻', dragon:'🐉', dark:'🌑', steel:'⚙️', fairy:'✨', normal:'⭐' };
+const ARENA_ATTACK_NAME = { fire:'Flame Burst', water:'Aqua Jet', grass:'Leaf Blade', electric:'Thunderbolt', ice:'Ice Beam', fighting:'Power Strike', poison:'Toxic Stinger', ground:'Earth Power', flying:'Air Slash', psychic:'Psybeam', bug:'Bug Buzz', rock:'Rock Blast', ghost:'Shadow Ball', dragon:'Dragon Pulse', dark:'Night Slash', steel:'Metal Claw', fairy:'Dazzling Gleam', normal:'Quick Attack' };
 let arenaSpeed = 1;
+let arenaRound = 1;
 const arenaWait = ms => new Promise(r => setTimeout(r, ms / arenaSpeed));
 function arenaTypes(p) { try { const t = getPokemonTypes(p); return (Array.isArray(t) ? t : [t]).filter(Boolean).map(x => String(x).toLowerCase()); } catch (e) { return ['normal']; } }
 function arenaEsc(v) { return String(v ?? '').replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c])); }
@@ -17084,6 +17091,8 @@ function arenaBanner(text, kind = '') {
 async function arenaAttack(fromSide, toSide, attacker, multiplier, dmg) {
   const fromImg = document.getElementById(`battle-${fromSide}-img`), to = `battle-${toSide}`, toImg = document.getElementById(`battle-${toSide}-img`);
   const type = arenaTypes(attacker)[0] || 'normal';
+  const callout = document.getElementById('arena-callout');
+  if (callout) callout.textContent = `${attacker.pokemon_name} used ${ARENA_ATTACK_NAME[type] || 'Quick Attack'}!`;
   const windup = `arena-windup-${fromSide}`, strike = `arena-strike-${fromSide}`;
   fromImg?.classList.remove(windup, strike);
   toImg?.classList.remove('arena-hit-react');
@@ -17156,7 +17165,12 @@ function setupBattle(s1Name, p1, s2Name, p2) {
   arenaDecorate('battle-left', s1Name, p1); arenaDecorate('battle-right', s2Name, p2);
   document.getElementById('arena-banner')?.classList.remove('is-on', 'is-victory');
   const arenaStage = document.getElementById('arena-stage');
-  if (arenaStage) { arenaStage.classList.remove('arena-intro'); void arenaStage.offsetWidth; arenaStage.classList.add('arena-intro'); }
+  const roundBadge = document.getElementById('arena-round-badge');
+  const callout = document.getElementById('arena-callout');
+  if (roundBadge) roundBadge.textContent = 'READY';
+  if (callout) callout.textContent = `${p1.pokemon_name} faces ${p2.pokemon_name}. Let the battle begin!`;
+  document.getElementById('arena-new-match-btn')?.classList.add('hidden');
+  if (arenaStage) { arenaStage.classList.remove('arena-intro', 'arena-active', 'arena-result'); arenaStage.classList.add('arena-ready'); void arenaStage.offsetWidth; arenaStage.classList.add('arena-intro'); }
   window.pokeSfx?.play('whoosh'); setTimeout(() => window.pokeSfx?.play('vs'), 450);
   document.getElementById('battle-area').classList.remove('hidden');
   document.getElementById('start-battle-btn').disabled = false;
@@ -17168,13 +17182,21 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
   battleState.running = true;
   const btn = document.getElementById('start-battle-btn');
   btn.disabled = true; btn.textContent = 'Battling...';
+  document.getElementById('arena-new-match-btn')?.classList.add('hidden');
+  ['manual-battle-btn', 'random-battle-btn'].forEach(id => { const modeButton = document.getElementById(id); if (modeButton) modeButton.disabled = true; });
+  arenaRound = 1;
+  const roundBadge = document.getElementById('arena-round-badge');
+  if (roundBadge) roundBadge.textContent = 'ROUND 1';
+  const arenaStage = document.getElementById('arena-stage');
+  arenaStage?.classList.remove('arena-ready', 'arena-result');
+  arenaStage?.classList.add('arena-active');
   const p1 = battleState.leftPokemon;
   const p2 = battleState.rightPokemon;
   const maxHp1 = getMaxHP(p1);
   const maxHp2 = getMaxHP(p2);
   let hp1 = getHealedHP(p1);
   let hp2 = getHealedHP(p2);
-  const log = { innerHTML: '', scrollTop: 0 };
+  const callout = document.getElementById('arena-callout');
 
   async function turn() {
     // Left attacks right
@@ -17185,9 +17207,7 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
     const dmg1 = Math.max(1, Math.floor((Math.random() * (p1.pokemon_power || 50) * 0.4 + 5) * matchup1));
     hp2 = Math.max(0, hp2 - dmg1);
     await arenaAttack('left', 'right', p1, matchup1, dmg1);
-    log.innerHTML += `<p class="text-indigo-200 text-xs">${getPokemonTypeLabel(p1)} vs ${getPokemonTypeLabel(p2)}: ×${matchup1.toFixed(2)}</p>`;
-    
-    log.innerHTML += `<p class="text-green-300 text-xs">${p1.pokemon_name} deals ${dmg1} damage!</p>`;
+    if (callout) callout.textContent = `${p1.pokemon_name} hit for ${dmg1} damage${matchup1 > 1 ? ' — super effective!' : matchup1 < 1 ? ' — resisted!' : '.'}`;
     document.getElementById('battle-right-hp').textContent = `${hp2}/${maxHp2} HP`;
     animateBattleHp('battle-right-hp-bar', hp2, maxHp2, 'battle-right');
     
@@ -17203,9 +17223,7 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
     const dmg2 = Math.max(1, Math.floor((Math.random() * (p2.pokemon_power || 50) * 0.4 + 5) * matchup2));
     hp1 = Math.max(0, hp1 - dmg2);
     await arenaAttack('right', 'left', p2, matchup2, dmg2);
-    log.innerHTML += `<p class="text-indigo-200 text-xs">${getPokemonTypeLabel(p2)} vs ${getPokemonTypeLabel(p1)}: ×${matchup2.toFixed(2)}</p>`;
-    
-    log.innerHTML += `<p class="text-purple-300 text-xs">${p2.pokemon_name} deals ${dmg2} damage!</p>`;
+    if (callout) callout.textContent = `${p2.pokemon_name} hit for ${dmg2} damage${matchup2 > 1 ? ' — super effective!' : matchup2 < 1 ? ' — resisted!' : '.'}`;
     document.getElementById('battle-left-hp').textContent = `${hp1}/${maxHp1} HP`;
     animateBattleHp('battle-left-hp-bar', hp1, maxHp1, 'battle-left');
     
@@ -17219,7 +17237,10 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
   let winner = null;
   while (!winner) {
     winner = await turn();
-    log.scrollTop = log.scrollHeight;
+    if (!winner) {
+      arenaRound += 1;
+      if (roundBadge) roundBadge.textContent = `ROUND ${arenaRound}`;
+    }
     await arenaWait(600);
   }
   {
@@ -17227,6 +17248,8 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
     loserCard?.classList.add('arena-fainting'); window.pokeSfx?.play('faint');
     await arenaWait(700);
     arenaBanner(`🏆 VICTORY! ${winner === 'left' ? battleState.left : battleState.right}`, 'is-victory');
+    if (roundBadge) roundBadge.textContent = 'FINISH';
+    if (callout) callout.textContent = `${winner === 'left' ? battleState.left : battleState.right} wins the stadium battle!`;
     window.pokeSfx?.play('fanfare');
     const stage = document.getElementById('arena-stage');
     if (stage) { const c = document.createElement('div'); c.className = 'arena-confetti'; c.innerHTML = Array.from({ length: 28 }, (_, i) => `<i style="--i:${i};--x:${Math.round(Math.random() * 100)}%"></i>`).join(''); stage.appendChild(c); setTimeout(() => c.remove(), 3200); }
@@ -17234,7 +17257,6 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
 
   // Determine winner and transfer pokemon with reduced HP
   if (winner === 'left') {
-    log.innerHTML += `<p class="text-yellow-400 text-sm font-bold mt-2">🏆 ${battleState.left} wins! ${p2.pokemon_name} is now theirs!</p>`;
     document.getElementById('battle-left-img').classList.add('battle-winner-celebrate');
     const maxHp2 = getMaxHP(p2);
     const recoveryHp2 = Math.max(1, Math.floor(maxHp2 * 0.1)); // 10% of max HP for battle-claimed
@@ -17244,7 +17266,6 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
     await window.dataSdk.update({ ...p2, owner: battleState.left, current_hp: recoveryHp2, last_battle_time: new Date().toISOString(), claimed_via_battle: true });
     await syncStudentAvatarAfterPokemonLoss(battleState.right, p2.pokemon_id);
   } else {
-    log.innerHTML += `<p class="text-yellow-400 text-sm font-bold mt-2">🏆 ${battleState.right} wins! ${p1.pokemon_name} is now theirs!</p>`;
     document.getElementById('battle-right-img').classList.add('battle-winner-celebrate');
     const maxHp1 = getMaxHP(p1);
     const recoveryHp1 = Math.max(1, Math.floor(maxHp1 * 0.1)); // 10% of max HP for battle-claimed
@@ -17254,11 +17275,15 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
     await window.dataSdk.update({ ...p1, owner: battleState.right, current_hp: recoveryHp1, last_battle_time: new Date().toISOString(), claimed_via_battle: true });
     await syncStudentAvatarAfterPokemonLoss(battleState.left, p1.pokemon_id);
   }
-  log.scrollTop = log.scrollHeight;
   btn.textContent = 'Battle Complete!';
   battleState.running = false;
+  if (callout) callout.textContent = `${winner === 'left' ? battleState.left : battleState.right} wins! ${winner === 'left' ? p2.pokemon_name : p1.pokemon_name} joins their collection.`;
   const winnerPokemon = winner === 'left' ? p1 : p2;
   finalizeBattleVisuals(winner === 'left' ? 'battle-left' : 'battle-right', winner === 'left' ? 'battle-right' : 'battle-left');
+  arenaStage?.classList.remove('arena-active');
+  arenaStage?.classList.add('arena-result');
+  document.getElementById('arena-new-match-btn')?.classList.remove('hidden');
+  ['manual-battle-btn', 'random-battle-btn'].forEach(id => { const modeButton = document.getElementById(id); if (modeButton) modeButton.disabled = false; });
   window.pkRecordWin?.(winner === 'left' ? battleState.left : battleState.right, 'battle_wins');
 });
 
