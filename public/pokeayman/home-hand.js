@@ -75,7 +75,7 @@ window.mountPokemonHand = function (root, track, items) {
     const height = width * 1.4;
     const resting = cards.map((_, i) => i).filter(i => i !== active);
     const maxOffset = (resting.length - 1) / 2;
-    const spacing = maxOffset > 0 ? Math.min(width * .52, Math.max(0, (track.clientWidth / 2 - width * .45) / maxOffset)) : 0;
+    const spacing = maxOffset > 0 ? Math.min(width * .52, Math.max(0, (track.clientWidth / 2 - width * .62) / maxOffset)) : 0;
     track.style.setProperty('--hand-card-width', `${width}px`);
     track.style.setProperty('--hand-stage-height', `${height * 1.78}px`);
     cards.forEach(({ slot, lift, button }, index) => {

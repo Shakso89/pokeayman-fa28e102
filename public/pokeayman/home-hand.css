@@ -48,7 +48,7 @@
   .pokemon-hand-caption { grid-column: 1; grid-row: 2; text-align: center; padding: .5rem 0 0; gap: .2rem; }
   .pokemon-hand-caption strong { font-size: 1.25rem; }
   .pokemon-hand-caption span { display: none; }
-  .home-showcase .home-side-card { display: none; }
+  .home-showcase .home-side-card { display: none !important; }
 }
 @media (max-width: 700px) {
   .home-showcase .home-stage { padding-bottom: 2rem; }
