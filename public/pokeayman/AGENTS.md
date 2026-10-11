@@ -1,0 +1,2 @@
+- Vocabulary example sentences come from `/api/vocabulary-sentence` (server-held AI key, rate-limited), injected beside sentence fields by `sentence-generator.js`. Why: adds AI help without touching legacy editor markup.
+- Teacher Zone "School Lists" reuses the word-banks tab via `window.vbListsMode` ('mine'|'school'). Why: one renderer, no duplicate panel.
