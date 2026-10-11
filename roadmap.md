@@ -1,3 +1,7 @@
+# Workspace UI refresh
+- [ ] Redesign vocabulary creation/cards, arcade, battle and avatar wardrobe in both themes.
+- [ ] Verify original renderers, action hooks and compact layouts without changing saved records.
+
 # Class screen refresh
 - [x] Correct bright-mode shared vocabulary cards, arcade cards, Battle Arena and avatar wardrobe; original arcade renderer and representative legacy markup verified through repeated bright/dark switches. Routing test passed; signed-in navigation remains blocked because no account matches the requester.
 - [x] Redesign Surprise Boxes question reveal; isolated preview verified opening, box/current-player labels, Correct scoring, Wrong turn advance, dismissal, bright/dark styling and power-up presentation. Routing test and build passed; saved data unchanged.
