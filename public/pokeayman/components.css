@@ -3,7 +3,7 @@
    celebrations, game tiles) are intentionally not targeted. */
 
 /* ---------- Buttons ---------- */
-:is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn) {
+html body:is(#pk-ds, body) :is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn) {
   display: inline-flex !important; align-items: center; justify-content: center; gap: var(--pk-space-2);
   min-height: 40px; padding: 0 var(--pk-space-4) !important;
   border-radius: var(--pk-radius-md) !important;
@@ -14,36 +14,36 @@
     transform var(--pk-dur-fast) var(--pk-ease), box-shadow var(--pk-dur-fast) var(--pk-ease) !important;
 }
 /* Primary: one clear main action */
-:is(.btn-primary, .ts-btn:not(.ghost)) {
+html body:is(#pk-ds, body) :is(.btn-primary, .ts-btn:not(.ghost)) {
   background: var(--pk-brand) !important; color: var(--pk-on-brand) !important;
   border: 1px solid var(--pk-brand) !important; box-shadow: var(--pk-shadow-1) !important;
 }
-:is(.btn-primary, .ts-btn:not(.ghost)):hover:not(:disabled) {
+html body:is(#pk-ds, body) :is(.btn-primary, .ts-btn:not(.ghost)):hover:not(:disabled) {
   background: var(--pk-brand-hover) !important; filter: none !important;
   transform: translateY(-1px); box-shadow: var(--pk-shadow-2) !important;
 }
 /* Secondary: filled surface */
-.btn-secondary {
+html body:is(#pk-ds, body) .btn-secondary {
   background: var(--pk-surface-2) !important; color: var(--pk-ink) !important;
   border: 1px solid var(--pk-border-strong) !important; box-shadow: none !important;
 }
 /* Ghost/outline: low emphasis */
-:is(.btn-outline, .ts-btn.ghost) {
+html body:is(#pk-ds, body) :is(.btn-outline, .ts-btn.ghost) {
   background: transparent !important; color: var(--pk-ink) !important;
   border: 1px solid var(--pk-border-strong) !important; box-shadow: none !important;
 }
-:is(.btn-secondary, .btn-outline, .ts-btn.ghost):hover:not(:disabled) {
+html body:is(#pk-ds, body) :is(.btn-secondary, .btn-outline, .ts-btn.ghost):hover:not(:disabled) {
   background: var(--pk-surface-hover) !important; border-color: color-mix(in oklab, var(--pk-brand) 55%, transparent) !important;
   filter: none !important; transform: translateY(-1px);
 }
 /* Success / danger */
-.btn-success { background: var(--pk-success) !important; color: var(--pk-on-brand) !important; border: 1px solid var(--pk-success) !important; box-shadow: none !important; }
-.btn-danger { background: var(--pk-danger) !important; color: var(--pk-on-accent) !important; border: 1px solid var(--pk-danger) !important; box-shadow: none !important; }
-:is(.btn-success, .btn-danger):hover:not(:disabled) { filter: brightness(1.06) !important; transform: translateY(-1px); }
+html body:is(#pk-ds, body) .btn-success { background: var(--pk-success) !important; color: var(--pk-on-brand) !important; border: 1px solid var(--pk-success) !important; box-shadow: none !important; }
+html body:is(#pk-ds, body) .btn-danger { background: var(--pk-danger) !important; color: var(--pk-on-accent) !important; border: 1px solid var(--pk-danger) !important; box-shadow: none !important; }
+html body:is(#pk-ds, body) :is(.btn-success, .btn-danger):hover:not(:disabled) { filter: brightness(1.06) !important; transform: translateY(-1px); }
 
-:is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn):active:not(:disabled) { transform: translateY(1px) scale(.98) !important; }
-:is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn):focus-visible { outline: none !important; box-shadow: var(--pk-focus-ring) !important; }
-:is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn):is(:disabled, [aria-disabled="true"]) {
+html body:is(#pk-ds, body) :is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn):active:not(:disabled) { transform: translateY(1px) scale(.98) !important; }
+html body:is(#pk-ds, body) :is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn):focus-visible { outline: none !important; box-shadow: var(--pk-focus-ring) !important; }
+html body:is(#pk-ds, body) :is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn):is(:disabled, [aria-disabled="true"]) {
   opacity: .5 !important; cursor: not-allowed !important; transform: none !important; filter: grayscale(.3) !important; box-shadow: none !important;
 }
 
@@ -68,21 +68,21 @@
 #app-screen label { font-family: var(--pk-font-body); }
 
 /* ---------- Tabs / segmented controls ---------- */
-:is(.tab-active, .profile-tab-active, .student-dashboard-tab-active, .admin-sub-tab-active, .quiz-sub-tab-active,
+html body:is(#pk-ds, body) :is(.tab-active, .profile-tab-active, .student-dashboard-tab-active, .admin-sub-tab-active, .quiz-sub-tab-active,
     .tab-inactive, .profile-tab-inactive, .student-dashboard-tab-inactive, .admin-sub-tab-inactive, .quiz-sub-tab-inactive) {
   border-radius: var(--pk-radius-pill) !important; font-family: var(--pk-font-display) !important;
   font-weight: 700 !important; font-size: var(--pk-text-sm) !important; text-shadow: none !important;
   transition: background-color var(--pk-dur-fast) var(--pk-ease), color var(--pk-dur-fast) var(--pk-ease) !important;
 }
-:is(.tab-active, .profile-tab-active, .student-dashboard-tab-active, .admin-sub-tab-active, .quiz-sub-tab-active) {
+html body:is(#pk-ds, body) :is(.tab-active, .profile-tab-active, .student-dashboard-tab-active, .admin-sub-tab-active, .quiz-sub-tab-active) {
   background: var(--pk-brand) !important; color: var(--pk-on-brand) !important;
   border: 1px solid var(--pk-brand) !important; box-shadow: var(--pk-shadow-1) !important;
 }
-:is(.tab-inactive, .profile-tab-inactive, .student-dashboard-tab-inactive, .admin-sub-tab-inactive, .quiz-sub-tab-inactive) {
+html body:is(#pk-ds, body) :is(.tab-inactive, .profile-tab-inactive, .student-dashboard-tab-inactive, .admin-sub-tab-inactive, .quiz-sub-tab-inactive) {
   background: transparent !important; color: var(--pk-ink-2) !important;
   border: 1px solid var(--pk-border) !important; box-shadow: none !important; backdrop-filter: none !important;
 }
-:is(.tab-inactive, .profile-tab-inactive, .student-dashboard-tab-inactive, .admin-sub-tab-inactive, .quiz-sub-tab-inactive):hover {
+html body:is(#pk-ds, body) :is(.tab-inactive, .profile-tab-inactive, .student-dashboard-tab-inactive, .admin-sub-tab-inactive, .quiz-sub-tab-inactive):hover {
   background: var(--pk-surface-hover) !important; color: var(--pk-ink) !important;
 }
 
