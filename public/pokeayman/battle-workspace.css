@@ -95,3 +95,235 @@ html body #battle-area#battle-area.arena-cinema,html body #battle-area#battle-ar
   #battle-area#battle-area *,#battle-area#battle-area *::before,#battle-area#battle-area *::after { animation: none !important; transition: none !important; }
   #battle-area .arena-confetti,#battle-area .arena-fx { display: none; }
 }
+
+/* Manual battle setup follows the shared theme tokens in both display modes. */
+#view-students #class-subtab-battle .battle-arena-panel {
+  color: var(--pk-ink) !important;
+  padding: clamp(var(--pk-space-4), 3vw, var(--pk-space-6)) !important;
+  border: 1px solid var(--pk-border-strong) !important;
+  border-radius: var(--pk-radius-lg) !important;
+  background: var(--pk-surface) !important;
+  box-shadow: var(--pk-shadow-2) !important;
+}
+#view-students #class-subtab-battle .battle-arena-panel > .flex.items-center.justify-between {
+  padding: 0 0 var(--pk-space-3);
+  border: 0;
+  border-bottom: 1px solid var(--pk-border-strong);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#view-students #class-subtab-battle .battle-arena-panel > .flex.items-center.justify-between h3 {
+  color: var(--pk-ink) !important;
+  font-family: var(--pk-font-display);
+  font-size: var(--pk-text-h2);
+  letter-spacing: 0;
+  text-shadow: none;
+}
+#view-students #class-subtab-battle .battle-arena-panel > .grid.grid-cols-2 { gap: var(--pk-space-3); }
+#view-students #class-subtab-battle .battle-arena-panel #manual-battle-btn,
+#view-students #class-subtab-battle .battle-arena-panel #random-battle-btn {
+  min-height: 3.5rem !important;
+  padding: var(--pk-space-3) var(--pk-space-4) !important;
+  border: 1px solid var(--pk-border-strong) !important;
+  border-radius: var(--pk-radius-md) !important;
+  box-shadow: var(--pk-shadow-1) !important;
+  font: 800 var(--pk-text-body)/1.25 var(--pk-font-display) !important;
+  text-shadow: none;
+}
+#view-students #class-subtab-battle .battle-arena-panel #manual-battle-btn {
+  background: var(--pk-brand) !important;
+  color: var(--pk-on-brand) !important;
+  border-color: color-mix(in srgb, var(--pk-brand) 72%, var(--pk-border-strong)) !important;
+}
+#view-students #class-subtab-battle .battle-arena-panel #random-battle-btn {
+  background: var(--pk-surface-2) !important;
+  color: var(--pk-ink) !important;
+}
+#view-students #class-subtab-battle .battle-arena-panel :is(#manual-battle-btn,#random-battle-btn):hover {
+  transform: translateY(-1px);
+  filter: none;
+  box-shadow: var(--pk-shadow-2) !important;
+}
+#view-students #class-subtab-battle .battle-arena-panel #manual-battle-btn:hover { background: var(--pk-brand-hover) !important; }
+#view-students #class-subtab-battle .battle-arena-panel #random-battle-btn:hover { background: var(--pk-surface-hover) !important; }
+
+#view-students #manual-select-ui {
+  margin-top: var(--pk-space-4);
+  padding: clamp(var(--pk-space-3), 2.5vw, var(--pk-space-5));
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-2);
+  box-shadow: var(--pk-shadow-1);
+  color: var(--pk-ink);
+}
+#view-students #manual-select-ui > .grid { gap: var(--pk-space-4); }
+#view-students #manual-select-ui > .grid > div {
+  --manual-side-accent: var(--pk-blue);
+  min-width: 0;
+  padding: var(--pk-space-4);
+  border: 1px solid color-mix(in srgb, var(--manual-side-accent) 38%, var(--pk-border-strong)) !important;
+  border-radius: var(--pk-radius-lg) !important;
+  background: var(--pk-surface) !important;
+  box-shadow: var(--pk-shadow-1) !important;
+  color: var(--pk-ink);
+}
+#view-students #manual-select-ui > .grid > div:has(#battle-student-2-grid) { --manual-side-accent: var(--pk-accent); }
+#view-students #manual-select-ui label {
+  display: flex;
+  align-items: center;
+  gap: var(--pk-space-2);
+  margin: 0 0 var(--pk-space-2);
+  color: var(--pk-ink) !important;
+  font: 800 var(--pk-text-xs)/1.3 var(--pk-font-body);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+#view-students #manual-select-ui label::before {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--pk-radius-pill);
+  background: var(--manual-side-accent, var(--pk-brand));
+  content: '';
+}
+#view-students #manual-select-ui #battle-student-1-grid,
+#view-students #manual-select-ui #battle-student-2-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: var(--pk-space-2);
+  min-height: 11rem;
+  max-height: 22rem !important;
+  margin: 0 0 var(--pk-space-4);
+  padding: var(--pk-space-2);
+  overflow: auto;
+  border: 1px solid var(--pk-border);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-bg);
+  scrollbar-color: var(--pk-border-strong) var(--pk-bg);
+  scrollbar-width: thin;
+}
+#view-students #manual-select-ui #battle-student-1-grid button,
+#view-students #manual-select-ui #battle-student-2-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pk-space-2);
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 8.25rem !important;
+  padding: var(--pk-space-3) !important;
+  border: 1px solid var(--pk-border-strong) !important;
+  border-radius: var(--pk-radius-md) !important;
+  background: var(--pk-surface-elevated) !important;
+  color: var(--pk-ink) !important;
+  box-shadow: var(--pk-shadow-1) !important;
+  font: 700 var(--pk-text-sm)/1.25 var(--pk-font-body) !important;
+  transition: transform var(--pk-dur-base) var(--pk-ease), background var(--pk-dur-base) var(--pk-ease), border-color var(--pk-dur-base) var(--pk-ease), box-shadow var(--pk-dur-base) var(--pk-ease);
+}
+#view-students #manual-select-ui #battle-student-1-grid button .battle-student-avatar,
+#view-students #manual-select-ui #battle-student-2-grid button .battle-student-avatar { width: 4rem; height: 4rem; margin: 0; }
+#view-students #manual-select-ui #battle-student-1-grid button .battle-student-name,
+#view-students #manual-select-ui #battle-student-2-grid button .battle-student-name {
+  color: var(--pk-ink-2) !important;
+  font: 700 var(--pk-text-sm)/1.2 var(--pk-font-body) !important;
+  text-align: center;
+}
+#view-students #manual-select-ui #battle-student-1-grid button:hover,
+#view-students #manual-select-ui #battle-student-2-grid button:hover {
+  transform: translateY(-1px);
+  border-color: var(--manual-side-accent, var(--pk-brand)) !important;
+  background: var(--pk-surface-hover) !important;
+  box-shadow: var(--pk-shadow-2) !important;
+}
+#view-students #manual-select-ui #battle-student-1-grid button.border-blue-400,
+#view-students #manual-select-ui #battle-student-1-grid button[aria-pressed="true"] {
+  border-color: var(--pk-blue) !important;
+  background: color-mix(in srgb, var(--pk-blue) 16%, var(--pk-surface)) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pk-blue) 38%, transparent), var(--pk-shadow-1) !important;
+}
+#view-students #manual-select-ui #battle-student-2-grid button.border-purple-400,
+#view-students #manual-select-ui #battle-student-2-grid button[aria-pressed="true"] {
+  border-color: var(--pk-accent) !important;
+  background: color-mix(in srgb, var(--pk-accent) 14%, var(--pk-surface)) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pk-accent) 34%, transparent), var(--pk-shadow-1) !important;
+}
+#view-students #manual-select-ui #battle-pokemon-1-grid,
+#view-students #manual-select-ui #battle-pokemon-2-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: var(--pk-space-2);
+  min-height: 5rem;
+  max-height: 14rem !important;
+  padding: var(--pk-space-2);
+  overflow: auto;
+  border: 1px solid var(--pk-border);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-bg);
+  scrollbar-color: var(--pk-border-strong) var(--pk-bg);
+  scrollbar-width: thin;
+}
+#view-students #manual-select-ui #battle-pokemon-1-grid button,
+#view-students #manual-select-ui #battle-pokemon-2-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pk-space-1);
+  min-width: 0;
+  min-height: 5rem;
+  padding: var(--pk-space-2) !important;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--pk-border-strong) !important;
+  border-radius: var(--pk-radius-md) !important;
+  background: var(--pk-surface-elevated) !important;
+  color: var(--pk-ink) !important;
+  box-shadow: var(--pk-shadow-1);
+  font: 700 var(--pk-text-xs)/1.25 var(--pk-font-body) !important;
+}
+#view-students #manual-select-ui #battle-pokemon-1-grid button:hover,
+#view-students #manual-select-ui #battle-pokemon-2-grid button:hover { border-color: var(--pk-brand) !important; background: var(--pk-surface-hover) !important; }
+#view-students #manual-select-ui #battle-pokemon-1-grid button.border-green-400,
+#view-students #manual-select-ui #battle-pokemon-2-grid button.border-pink-400 {
+  border: 2px solid var(--pk-brand) !important;
+  background: var(--pk-surface-selected) !important;
+  color: var(--pk-ink) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pk-brand) 30%, transparent), var(--pk-shadow-1) !important;
+}
+#view-students #manual-select-ui #manual-battle-instruction {
+  margin: var(--pk-space-4) 0 var(--pk-space-2);
+  color: var(--pk-muted) !important;
+  font: 600 var(--pk-text-sm)/var(--pk-leading-body) var(--pk-font-body);
+}
+#view-students #manual-select-ui #confirm-manual-battle {
+  min-height: 3.25rem;
+  margin-top: var(--pk-space-2);
+  border: 1px solid var(--pk-brand) !important;
+  border-radius: var(--pk-radius-md) !important;
+  background: var(--pk-brand) !important;
+  color: var(--pk-on-brand) !important;
+  box-shadow: var(--pk-shadow-1) !important;
+  font: 800 var(--pk-text-body)/1.2 var(--pk-font-display) !important;
+  letter-spacing: 0;
+  transition: background var(--pk-dur-base) var(--pk-ease), opacity var(--pk-dur-base) var(--pk-ease), transform var(--pk-dur-base) var(--pk-ease), box-shadow var(--pk-dur-base) var(--pk-ease);
+}
+#view-students #manual-select-ui #confirm-manual-battle:not(:disabled):hover { transform: translateY(-1px); background: var(--pk-brand-hover) !important; box-shadow: var(--pk-shadow-2) !important; }
+#view-students #manual-select-ui #confirm-manual-battle:disabled { border-color: var(--pk-border-strong) !important; background: var(--pk-surface-elevated) !important; color: var(--pk-disabled) !important; opacity: 1; filter: none; box-shadow: none !important; cursor: not-allowed; }
+#view-students #manual-select-ui :is(button,input,select,textarea):focus-visible { outline: none; box-shadow: var(--pk-focus-ring) !important; }
+
+@media (max-width: 640px) {
+  #view-students #manual-select-ui { padding: var(--pk-space-3); }
+  #view-students #manual-select-ui > .grid { grid-template-columns: 1fr; }
+  #view-students #manual-select-ui > .grid > div { padding: var(--pk-space-3); }
+  #view-students #manual-select-ui #battle-student-1-grid,
+  #view-students #manual-select-ui #battle-student-2-grid { max-height: 19rem !important; }
+  #view-students #manual-select-ui #battle-student-1-grid button,
+  #view-students #manual-select-ui #battle-student-2-grid button { width: 100% !important; min-width: 0 !important; height: auto !important; min-height: 7.75rem !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #view-students #manual-select-ui * { transition: none !important; }
+  #view-students #manual-select-ui button:hover { transform: none !important; }
+}
