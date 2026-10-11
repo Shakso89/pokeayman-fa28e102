@@ -16980,7 +16980,7 @@ function resetBattleVisualState() {
     card.classList.remove('battle-winner-final', 'battle-loser-final', 'battle-impact', 'battle-winner-celebrate', 'arena-fainting', 'arena-lunge-left', 'arena-lunge-right');
     card.querySelectorAll('.arena-pop, .arena-fx').forEach(n => n.remove());
     card.querySelector('.battle-winner-label')?.remove();
-    card.querySelector('img[id$="-img"]')?.classList.remove('battle-winner-art', 'attack-punch', 'take-damage', 'battle-winner-celebrate');
+    card.querySelector('img[id$="-img"]')?.classList.remove('battle-winner-art', 'attack-punch', 'take-damage', 'battle-winner-celebrate', 'arena-windup-left', 'arena-windup-right', 'arena-strike-left', 'arena-strike-right', 'arena-hit-react');
     card.querySelectorAll('.battle-hp-ripple, .battle-hp-trail').forEach(effect => effect.remove());
   });
 }
@@ -17070,12 +17070,21 @@ function arenaBanner(text, kind = '') {
   clearTimeout(b._t); if (kind !== 'is-victory') b._t = setTimeout(() => b.classList.remove('is-on'), 1100 / arenaSpeed);
 }
 async function arenaAttack(fromSide, toSide, attacker, multiplier, dmg) {
-  const from = document.getElementById(`battle-${fromSide}`), to = `battle-${toSide}`;
+  const fromImg = document.getElementById(`battle-${fromSide}-img`), to = `battle-${toSide}`, toImg = document.getElementById(`battle-${toSide}-img`);
   const type = arenaTypes(attacker)[0] || 'normal';
-  from?.classList.add(`arena-lunge-${fromSide}`); window.pokeSfx?.play('lunge');
-  await arenaWait(220);
-  from?.classList.remove(`arena-lunge-${fromSide}`);
+  const windup = `arena-windup-${fromSide}`, strike = `arena-strike-${fromSide}`;
+  fromImg?.classList.remove(windup, strike);
+  toImg?.classList.remove('arena-hit-react');
+  if (fromImg) void fromImg.offsetWidth;
+  fromImg?.classList.add(windup);
+  await arenaWait(180);
+  fromImg?.classList.remove(windup);
+  fromImg?.classList.add(strike);
+  window.pokeSfx?.play('lunge');
+  await arenaWait(420);
+  fromImg?.classList.remove(strike);
   arenaFx(to, type); window.pokeSfx?.play('hit', type);
+  toImg?.classList.add('arena-hit-react');
   arenaPop(to, `-${dmg} HP`, 'dmg');
   if (multiplier > 1) { arenaBanner(`SUPER EFFECTIVE! ×${multiplier.toFixed(1)}`, 'is-super'); window.pokeSfx?.play('superEff'); }
   else if (multiplier < 1) arenaBanner(`RESISTED ×${multiplier.toFixed(1)}`, 'is-resist');
@@ -17164,13 +17173,12 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
     await arenaAttack('left', 'right', p1, matchup1, dmg1);
     log.innerHTML += `<p class="text-indigo-200 text-xs">${getPokemonTypeLabel(p1)} vs ${getPokemonTypeLabel(p2)}: ×${matchup1.toFixed(2)}</p>`;
     
-    rightImg.classList.add('take-damage');
     log.innerHTML += `<p class="text-green-300 text-xs">${p1.pokemon_name} deals ${dmg1} damage!</p>`;
     document.getElementById('battle-right-hp').textContent = `${hp2}/${maxHp2} HP`;
     animateBattleHp('battle-right-hp-bar', hp2, maxHp2, 'battle-right');
     
-    await arenaWait(500);
-    rightImg.classList.remove('take-damage');
+    await arenaWait(400);
+    rightImg.classList.remove('arena-hit-react');
     
     if (hp2 <= 0) { document.getElementById('battle-right-hp-bar').style.background = '#ef4444'; return 'left'; }
 
@@ -17183,13 +17191,12 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
     await arenaAttack('right', 'left', p2, matchup2, dmg2);
     log.innerHTML += `<p class="text-indigo-200 text-xs">${getPokemonTypeLabel(p2)} vs ${getPokemonTypeLabel(p1)}: ×${matchup2.toFixed(2)}</p>`;
     
-    leftImg.classList.add('take-damage');
     log.innerHTML += `<p class="text-purple-300 text-xs">${p2.pokemon_name} deals ${dmg2} damage!</p>`;
     document.getElementById('battle-left-hp').textContent = `${hp1}/${maxHp1} HP`;
     animateBattleHp('battle-left-hp-bar', hp1, maxHp1, 'battle-left');
     
-    await arenaWait(500);
-    leftImg.classList.remove('take-damage');
+    await arenaWait(400);
+    leftImg.classList.remove('arena-hit-react');
     
     if (hp1 <= 0) { document.getElementById('battle-left-hp-bar').style.background = '#ef4444'; return 'right'; }
     return null;

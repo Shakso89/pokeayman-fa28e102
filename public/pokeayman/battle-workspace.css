@@ -26,7 +26,7 @@ html body #battle-area :is(#battle-left,#battle-right) { position: relative; min
 #battle-area .arena-trainer-avatar { width: 30px; height: 30px; object-fit: contain; border-radius: 50%; background: var(--arena-bg); display: grid; place-items: center; }
 #battle-area .arena-trainer-label { font-size: 10px; color: var(--arena-muted); text-transform: uppercase; }
 html body #battle-area :is(#battle-left-name,#battle-right-name) { color: var(--arena-ink) !important; font: 700 17px Outfit,sans-serif !important; overflow-wrap: anywhere; margin-bottom: 8px; }
-html body #battle-area :is(#battle-left-img,#battle-right-img) { display: block; width: min(100%,210px) !important; height: 210px !important; object-fit: contain; margin: 0 auto 12px !important; filter: var(--detail-art-shadow); }
+html body #battle-area :is(#battle-left-img,#battle-right-img) { position: relative; z-index: 2; display: block; width: min(100%,210px) !important; height: 210px !important; object-fit: contain; margin: 0 auto 12px !important; filter: var(--detail-art-shadow); transform-origin: 50% 75%; will-change: transform, filter; }
 html body #battle-area :is(#battle-left-pokemon,#battle-right-pokemon) { font: 800 22px Outfit,sans-serif !important; color: var(--arena-ink) !important; overflow-wrap: anywhere; }
 #battle-area .arena-types { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; min-height: 26px; margin: 8px 0 18px; }
 #battle-area .arena-type { color: var(--arena-ink); background: color-mix(in srgb,var(--arena-element) 15%,var(--arena-bg)); border: 1px solid var(--arena-element); border-radius: 4px; padding: 3px 7px; font-size: 10px; font-weight: 700; }
@@ -41,6 +41,8 @@ html body #battle-area :is(#battle-left-hp,#battle-right-hp) { color: var(--aren
 #battle-area .arena-banner.is-resist { background: var(--mythic-silver); }
 #battle-area .arena-pop { position: absolute; top: 40%; left: 0; right: 0; z-index: 7; text-align: center; font: 800 30px Outfit,sans-serif; color: var(--arena-gold); text-shadow: 2px 2px 0 var(--mythic-footer), -1px -1px 0 var(--mythic-footer); pointer-events: none; animation: arena-damage 1.35s both; }
 #battle-area .arena-fx { position: absolute; inset: 0; pointer-events: none; z-index: 5; color: var(--arena-element); }
+#battle-area .arena-fx::before { content: ''; position: absolute; left: 50%; top: 43%; width: 72px; height: 72px; border: 3px solid currentColor; border-radius: 50%; transform: translate(-50%,-50%) scale(.25); animation: arena-impact-ring .45s ease-out both; }
+#battle-area .arena-fx::after { content: ''; position: absolute; left: 50%; top: 43%; width: 64px; height: 5px; border-radius: 99px; background: currentColor; transform: translate(-50%,-50%) rotate(-38deg) scaleX(.1); animation: arena-impact-slash .34s .04s ease-out both; }
 #battle-area .arena-fx i { position: absolute; left: 50%; top: 45%; width: 8px; height: 60px; background: currentColor; transform-origin: center bottom; animation: arena-hit .7s both; --angle: 0deg; }
 #battle-area .arena-fx i:nth-child(2) { --angle: 60deg; } #battle-area .arena-fx i:nth-child(3) { --angle: 120deg; } #battle-area .arena-fx i:nth-child(4) { --angle: 180deg; } #battle-area .arena-fx i:nth-child(5) { --angle: 240deg; } #battle-area .arena-fx i:nth-child(6) { --angle: 300deg; }
 #battle-area .arena-fx[data-type="electric"] i { clip-path: polygon(60% 0,20% 55%,55% 55%,20% 100%,100% 35%,55% 35%); }
@@ -50,7 +52,11 @@ html body #battle-area :is(#battle-left-hp,#battle-right-hp) { color: var(--aren
 #battle-area .arena-confetti i:nth-child(3n) { background: var(--arena-red); } #battle-area .arena-confetti i:nth-child(3n + 1) { background: var(--arena-blue); }
 #battle-area .arena-intro #battle-left { animation: arena-enter-left .7s both; } #battle-area .arena-intro #battle-right { animation: arena-enter-right .7s both; }
 #battle-area .arena-intro .arena-vs span { display: block; animation: arena-vs .8s .2s both; }
-#battle-area#battle-area .arena-lunge-left { animation: arena-lunge-left .22s both; } #battle-area#battle-area .arena-lunge-right { animation: arena-lunge-right .22s both; }
+#battle-area#battle-area #battle-left-img.arena-windup-left { animation: arena-windup-left .2s ease-out both; }
+#battle-area#battle-area #battle-right-img.arena-windup-right { animation: arena-windup-right .2s ease-out both; }
+#battle-area#battle-area #battle-left-img.arena-strike-left { z-index: 6; animation: arena-strike-left .58s cubic-bezier(.2,.8,.25,1) both; }
+#battle-area#battle-area #battle-right-img.arena-strike-right { z-index: 6; animation: arena-strike-right .58s cubic-bezier(.2,.8,.25,1) both; }
+#battle-area#battle-area #battle-left-img.arena-hit-react,#battle-area#battle-area #battle-right-img.arena-hit-react { animation: arena-hit-react .38s ease-out both; }
 #battle-area#battle-area .battle-impact { animation: arena-impact .45s both; }
 #battle-area#battle-area .arena-shake { animation: arena-impact .25s both; }
 #battle-area#battle-area .arena-fainting > img { animation: arena-faint .7s both; }
@@ -66,8 +72,13 @@ html body #battle-area#battle-area.arena-cinema,html body #battle-area#battle-ar
 @keyframes arena-enter-left { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: none; } }
 @keyframes arena-enter-right { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: none; } }
 @keyframes arena-vs { from { opacity: 0; transform: scale(3); } to { opacity: 1; transform: scale(1); } }
-@keyframes arena-lunge-left { 50%,100% { transform: translateX(22px) rotate(2deg); } }
-@keyframes arena-lunge-right { 50%,100% { transform: translateX(-22px) rotate(-2deg); } }
+@keyframes arena-windup-left { to { transform: translateX(-8px) scale(.9) rotate(-5deg); filter: brightness(1.25) var(--detail-art-shadow); } }
+@keyframes arena-windup-right { to { transform: translateX(8px) scale(.9) rotate(5deg); filter: brightness(1.25) var(--detail-art-shadow); } }
+@keyframes arena-strike-left { 0% { transform: translateX(-8px) scale(.9) rotate(-5deg); } 42% { transform: translateX(90%) scale(1.14) rotate(5deg); filter: brightness(1.3) var(--detail-art-shadow); } 62% { transform: translateX(90%) scale(1.14) rotate(5deg); } 100% { transform: translateX(0) scale(1) rotate(0); } }
+@keyframes arena-strike-right { 0% { transform: translateX(8px) scale(.9) rotate(5deg); } 42% { transform: translateX(-90%) scale(1.14) rotate(-5deg); filter: brightness(1.3) var(--detail-art-shadow); } 62% { transform: translateX(-90%) scale(1.14) rotate(-5deg); } 100% { transform: translateX(0) scale(1) rotate(0); } }
+@keyframes arena-hit-react { 15%,55% { transform: translateX(8px) rotate(4deg) scale(.96); filter: brightness(1.55) sepia(.25) var(--detail-art-shadow); } 35%,75% { transform: translateX(-7px) rotate(-4deg) scale(.96); } 100% { transform: none; } }
+@keyframes arena-impact-ring { 20% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.65); } }
+@keyframes arena-impact-slash { 25% { opacity: 1; transform: translate(-50%,-50%) rotate(-38deg) scaleX(1); } 100% { opacity: 0; transform: translate(-50%,-50%) rotate(-38deg) scaleX(1.3); } }
 @keyframes arena-impact { 20%,60% { transform: translateX(6px); } 40%,80% { transform: translateX(-6px); } }
 @keyframes arena-damage { 0% { opacity: 0; transform: translateY(15px) scale(.6); } 20% { opacity: 1; transform: translateY(-10px) scale(1.1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-75px); } }
 @keyframes arena-hit { 0% { opacity: 1; transform: rotate(var(--angle)) translateY(-5px) scale(.3); } 100% { opacity: 0; transform: rotate(var(--angle)) translateY(-100px) scale(1.2); } }
