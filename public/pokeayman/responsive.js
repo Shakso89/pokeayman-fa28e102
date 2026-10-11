@@ -21,10 +21,10 @@
   window.addEventListener('resize', schedule);
 })();
 
-// Phones/tablets: the weekly schedule automatically shows as a one-day agenda (desktop keeps the full grid).
+// Phones/tablets: the weekly schedule shows as a full Monday–Friday feed with sticky jump pills (desktop keeps the grid).
 (function () {
   const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  let day = Math.min(4, Math.max(0, (new Date().getDay() + 6) % 7));
+  const today = (new Date().getDay() + 6) % 7;
   let last = '';
   const build = () => {
     const body = document.getElementById('schedule-grid-body');
@@ -37,24 +37,32 @@
       wrap.parentElement.insertBefore(ag, wrap.nextSibling);
       ag.addEventListener('click', (e) => {
         const d = e.target.closest('[data-ag-day]');
-        if (d) { day = Number(d.dataset.agDay); last = ''; build(); return; }
+        if (d) {
+          const sec = ag.querySelector(`[data-ag-sec="${d.dataset.agDay}"]`);
+          ag.querySelectorAll('[data-ag-day]').forEach((x) => x.setAttribute('aria-selected', String(x === d)));
+          sec && sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
         const b = e.target.closest('[data-ag-src]');
         if (b) { const src = body.querySelectorAll('button')[Number(b.dataset.agSrc)]; src && src.click(); }
       });
     }
     const btns = [...body.querySelectorAll('button')];
-    const items = [];
-    body.querySelectorAll('tr').forEach((tr) => {
-      const td = tr.querySelectorAll('td')[day]; if (!td) return;
-      td.querySelectorAll('article').forEach((a) => {
-        const c = a.cloneNode(true);
-        c.querySelectorAll('button').forEach((x, i) => { x.dataset.agSrc = btns.indexOf(a.querySelectorAll('button')[i]); x.removeAttribute('data-id'); x.className = 'ag-act'; });
-        items.push(c.outerHTML);
+    const sections = DAYS.map((name, day) => {
+      const items = [];
+      body.querySelectorAll('tr').forEach((tr) => {
+        const td = tr.querySelectorAll('td')[day]; if (!td) return;
+        td.querySelectorAll('article').forEach((a) => {
+          const c = a.cloneNode(true);
+          c.querySelectorAll('button').forEach((x, i) => { x.dataset.agSrc = btns.indexOf(a.querySelectorAll('button')[i]); x.removeAttribute('data-id'); x.className = 'ag-act'; });
+          items.push(c.outerHTML);
+        });
       });
+      return `<section class="ag-sec" data-ag-sec="${day}"><h4 class="ag-title">${name}${day === today ? ' <span class="ag-today">Today</span>' : ''}<small>${items.length} ${items.length === 1 ? 'class' : 'classes'}</small></h4><div class="ag-list">${items.join('') || '<p class="ag-empty">No classes scheduled.</p>'}</div></section>`;
     });
     const addSrc = btns.indexOf(body.querySelector('.schedule-sub-add'));
-    const html = `<div class="ag-days" role="tablist">${DAYS.map((d, i) => `<button type="button" role="tab" aria-selected="${i === day}" data-ag-day="${i}">${d.slice(0, 3)}</button>`).join('')}</div>`
-      + `<h4 class="ag-title">${DAYS[day]}</h4><div class="ag-list">${items.join('') || '<p class="ag-empty">No classes this day.</p>'}</div>`
+    const html = `<div class="ag-days" role="tablist">${DAYS.map((d, i) => `<button type="button" role="tab" aria-selected="${i === Math.min(today, 4)}" data-ag-day="${i}">${d.slice(0, 3)}</button>`).join('')}</div>`
+      + sections.join('')
       + (addSrc >= 0 ? `<button type="button" class="ag-add" data-ag-src="${addSrc}">＋ Add sub-hour</button>` : '');
     if (html !== last) { ag.innerHTML = html; last = html; }
   };
