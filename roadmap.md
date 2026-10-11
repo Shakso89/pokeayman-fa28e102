@@ -1,3 +1,6 @@
+# Schedule redesign
+- [ ] Refresh weekly planner, class cards, hours overview and editor colours in both modes; preserve saves and check existing edit/day controls.
+
 # Workspace UI refresh
 - [x] Match Quizzes and Admin Hub to shared colours and flat workspace styling; original quiz answer controls and both-mode presentation checked without changing saved records. Authenticated administration actions remain unverified.
 - [x] Redesign vocabulary creation/cards, arcade, battle and avatar wardrobe in both themes.
