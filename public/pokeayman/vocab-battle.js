@@ -20,7 +20,12 @@
   function pickOpponent(student) {
     const teacher = student && student.__practice ? (typeof currentTeacherRec === 'function' ? currentTeacherRec() : null) : classTeacherFor(student);
     const credits = teacher ? (teacher.teacher_credits === -1 ? Infinity : Number(teacher.teacher_credits || 0)) : Infinity;
-    const pool = getShopItems().filter((item) => {
+    const catalog = (typeof pokemonCatalog !== 'undefined' && Array.isArray(pokemonCatalog)) ? pokemonCatalog : [];
+    const pool = catalog.map((p) => ({
+      shop_pokemon_id: Number(p.id), shop_pokemon_name: p.name, shop_pokemon_rarity: String(p.rarity || 'common').toLowerCase(),
+      shop_pokemon_price: Number(p.price) || 0, shop_pokemon_power: Number(p.power) || 0, shop_pokemon_hp: Number(p.hp) || 0,
+      __backendId: `catalog-${p.id}`,
+    })).filter((item) => {
       const rarity = String(item.shop_pokemon_rarity || 'common').toLowerCase();
       if (rarity === 'legendary') return false;
       return Number(item.shop_pokemon_price || 0) <= credits;
@@ -331,8 +336,9 @@
   async function approveClaim(claimId) {
     const claim = allData.find((r) => r.type === 'battle_claim' && r.claim_id === claimId && r.status === 'pending');
     if (!claim) { toast('This claim is no longer pending.'); return renderBattleClaims(); }
-    const shopItem = allData.find((r) => String(r.__backendId) === String(claim.shop_record_id) && r.type === 'shop_pokemon');
-    if (!shopItem) {
+    const isCatalog = String(claim.shop_record_id || '').startsWith('catalog-');
+    const shopItem = isCatalog ? null : allData.find((r) => String(r.__backendId) === String(claim.shop_record_id) && r.type === 'shop_pokemon');
+    if (!isCatalog && !shopItem) {
       await window.dataSdk.update({ ...claim, status: 'expired', resolved_at: new Date().toISOString() });
       toast('That Pokémon is no longer in the shop.');
       return renderBattleClaims();
@@ -347,7 +353,7 @@
       current_hp: (Number(claim.pokemon_power) || 0) + 30, last_battle_time: '', created_at: new Date().toISOString(),
     });
     if (!grant?.isOk) { await refundTeacherCredits(price, currentTeacher); toast('Could not add the Pokémon. No credits were charged.'); return; }
-    const removed = await window.dataSdk.delete(shopItem);
+    const removed = isCatalog ? { isOk: true } : await window.dataSdk.delete(shopItem);
     if (!removed?.isOk) {
       await window.dataSdk.delete(grant.data || grant);
       await refundTeacherCredits(price, currentTeacher);
