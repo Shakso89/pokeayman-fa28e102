@@ -16,6 +16,7 @@
   };
   let raf = 0;
   const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); };
-  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['style'] });
+  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+  document.addEventListener('click', () => setTimeout(schedule, 0), true);
   window.addEventListener('resize', schedule);
 })();
