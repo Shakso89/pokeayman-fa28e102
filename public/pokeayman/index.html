@@ -13638,7 +13638,7 @@ document.head.appendChild(inlineGamePinnedLayoutStyle);
 const gamesAreaObserver = new MutationObserver(records => {
   for (const record of records) for (const node of record.addedNodes) {
     if (!(node instanceof HTMLElement) || node.dataset.inGamesHub === 'true') continue;
-    const isGame = node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .fixed.inset-0') && (node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell') || node.querySelector('#words-grid, #memory-grid, #scramble-tiles, #hangman-letters, #find-me-box, #baam-board'));
+    const isGame = node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .fixed.inset-0') && (node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell') || node.querySelector('#words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #find-me-box, #baam-board'));
     if (!isGame) continue;
     const area = document.getElementById(currentRole === 'student' ? 'student-tab-games' : 'class-subtab-games');
     const hub = area?.querySelector(':scope > .glass-container');
@@ -14365,6 +14365,10 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   // Randomly select the requested number of words for this round.
   const wordList = wordsWithImages.slice().sort(() => Math.random() - 0.5).slice(0, wordCount || wordsWithImages.length);
   const imageList = wordList.slice().sort(() => Math.random() - 0.5);
+  const matchTileOrder = [
+    ...wordList.map((_, index) => ({ type: 'word', index })),
+    ...imageList.map((_, index) => ({ type: 'image', index }))
+  ].sort(() => Math.random() - 0.5);
   
   let selectedWord = null;
   let selectedImage = null;
@@ -14374,82 +14378,67 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   const matchedImages = new Set();
   
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-    <div class="sticky top-0 bg-gradient-to-r from-orange-500 to-orange-600 p-4 flex items-center justify-between rounded-t-2xl">
-      <div class="flex-1 text-center">
-        <h2 class="heading-font text-2xl font-bold text-white">🎯 Match Words</h2>
+  modal.className = 'fixed inset-0 bg-black/50 z-50 p-4 game-match-root';
+  modal.innerHTML = `<section class="match-game-shell" aria-label="Match Words game">
+    <header class="match-game-header sticky top-0">
+      <div class="match-game-heading"><h2>🎯 Match Words</h2><p>Match each word with its picture</p></div>
+      <div class="match-game-tools">${gameSoundControls()}<div class="match-game-density" role="group" aria-label="Tile size"><button type="button" id="match-size-decrease" aria-label="Show fewer tiles per row" title="Fewer tiles">−</button><button type="button" id="match-size-increase" aria-label="Show more tiles per row" title="More tiles">+</button></div><button type="button" id="game-close" aria-label="Close game" title="Close">×</button></div>
+    </header>
+    <main class="match-game-content">
+      <div class="match-game-summary"><div class="game-player-hud-slot"></div>
+        <div class="match-game-progress" role="status" aria-live="polite"><div class="match-game-progress-copy"><strong id="match-progress-current">0</strong><span>of ${totalWords} pairs</span><span id="match-status">Choose a word and its matching picture.</span></div><div class="match-game-progress-track"><span id="match-progress-fill"></span></div></div>
       </div>
-      <div class="flex items-center gap-2 flex-wrap justify-end">${gameSoundControls()}<div class="flex items-center gap-1.5 rounded-2xl border border-white/20 bg-white/10 p-1 shadow-lg shadow-orange-950/10 backdrop-blur-md"><button type="button" id="match-size-decrease" class="text-white hover:bg-white/20 hover:text-yellow-200 text-sm font-bold w-9 h-9 rounded-xl bg-white/10 transition-all duration-200 shadow-inner" aria-label="Show fewer items per row" title="Fewer items">−</button><button type="button" id="match-size-increase" class="text-white hover:bg-white/20 hover:text-yellow-200 text-sm font-bold w-9 h-9 rounded-xl bg-white/10 transition-all duration-200 shadow-inner" aria-label="Show more items per row" title="More items">+</button></div><button id="game-close" class="text-white hover:bg-white/20 hover:text-yellow-200 text-2xl font-bold w-10 h-9 rounded-xl bg-white/10 border border-white/10 transition-all duration-200 shadow-lg shadow-orange-950/10" aria-label="Close game" title="Close">×</button></div>
-    </div>
-    <div class="p-6">
-      <div class="game-player-hud-slot flex justify-center w-full mb-6"></div>
-      <!-- Match status remains available without reserving a progress row -->
-      <p id="match-status" class="text-center text-sm text-gray-600 h-6 font-semibold mb-4"></p>
-      
-      <!-- Compact side-by-side word and image cards -->
-      <div class="grid grid-cols-2 gap-3 sm:gap-4">
-        <div id="words-grid" class="grid grid-cols-2 gap-2 sm:gap-3"></div>
-        <div id="images-grid" class="grid grid-cols-2 gap-2 sm:gap-3"></div>
-      </div>
-    </div>
-  </div>`;
+      <div id="match-board" class="match-game-board" role="group" aria-label="Word and picture tiles"></div>
+    </main>
+  </section>`;
   document.body.appendChild(modal);
   attachGameSoundControls(modal);
   attachGameFullscreen(modal);
   renderGamePlayerHud(modal, totalWords, 0);
   startPlayerTurnTimer(modal, timerSeconds);
   
-  const wordsGrid = modal.querySelector('#words-grid');
-  const imagesGrid = modal.querySelector('#images-grid');
+  const board = modal.querySelector('#match-board');
   const statusEl = modal.querySelector('#match-status');
-  // Keep the match counter internal; no visible progress element is rendered.
-  const progressEl = { textContent: '', style: {} };
-  // Start each new Match Words game in a balanced three-column layout.
-  let matchGridColumns = 3;
+  const progressCurrentEl = modal.querySelector('#match-progress-current');
+  const progressFillEl = modal.querySelector('#match-progress-fill');
+  let matchGridColumns = window.matchMedia('(max-width: 480px)').matches ? 2 : window.matchMedia('(max-width: 850px)').matches ? 3 : 4;
 
   const updateMatchGridDensity = () => {
-    wordsGrid.style.gridTemplateColumns = `repeat(${matchGridColumns}, minmax(0, 1fr))`;
-    imagesGrid.style.gridTemplateColumns = `repeat(${matchGridColumns}, minmax(0, 1fr))`;
+    board.style.gridTemplateColumns = `repeat(${matchGridColumns}, minmax(0, 1fr))`;
   };
-  modal.querySelector('#match-size-decrease').addEventListener('click', () => { matchGridColumns = Math.min(10, matchGridColumns + 1); updateMatchGridDensity(); });
-  modal.querySelector('#match-size-increase').addEventListener('click', () => { matchGridColumns = Math.max(1, matchGridColumns - 1); updateMatchGridDensity(); });
+  modal.querySelector('#match-size-decrease').addEventListener('click', () => { matchGridColumns = Math.max(2, matchGridColumns - 1); updateMatchGridDensity(); });
+  modal.querySelector('#match-size-increase').addEventListener('click', () => { matchGridColumns = Math.min(6, matchGridColumns + 1); updateMatchGridDensity(); });
   
   function renderGame() {
-    // Render words - bigger, centered text
-    wordsGrid.innerHTML = wordList.map((w, idx) => {
-      const isMatched = matchedWords.has(idx);
-      const isSelected = selectedWord === idx;
-      return `<button type="button" class="word-card w-full aspect-square p-2 sm:p-3 rounded-lg border-2 border-orange-200 bg-white hover:border-orange-500 transition text-center font-bold text-sm sm:text-base flex items-center justify-center ${isMatched ? 'opacity-50 pointer-events-none bg-green-50 border-green-400 text-green-700' : isSelected ? 'border-orange-500 bg-orange-50' : 'text-gray-800'}" data-word-id="${idx}">
-        ${w.vocab_word}
-      </button>`;
+    board.innerHTML = matchTileOrder.map(tile => {
+      if (tile.type === 'word') {
+        const w = wordList[tile.index];
+        const isMatched = matchedWords.has(tile.index);
+        const isSelected = selectedWord === tile.index;
+        return `<button type="button" class="match-tile match-word-card${isMatched ? ' is-matched' : ''}${isSelected ? ' is-selected' : ''}" data-word-id="${tile.index}" aria-label="Word: ${w.vocab_word}" aria-pressed="${isSelected}" ${isMatched ? 'disabled' : ''}><span class="match-tile-kind" aria-hidden="true">Aa</span><span class="match-tile-word">${w.vocab_word}</span>${isMatched ? '<span class="match-tile-check" aria-hidden="true">✓</span>' : ''}</button>`;
+      }
+      const w = imageList[tile.index];
+      const isMatched = matchedImages.has(tile.index);
+      const isSelected = selectedImage === tile.index;
+      return `<button type="button" class="match-tile match-image-card${isMatched ? ' is-matched' : ''}${isSelected ? ' is-selected' : ''}" data-image-id="${tile.index}" aria-label="Picture matching a word" aria-pressed="${isSelected}" ${isMatched ? 'disabled' : ''}><span class="match-tile-kind" aria-hidden="true">▧</span><img src="${w.vocab_image}" alt="Vocabulary picture" onerror="this.src='https://via.placeholder.com/300?text=Image+Not+Found'">${isMatched ? '<span class="match-tile-check" aria-hidden="true">✓</span>' : ''}</button>`;
     }).join('');
-    
-    // Render images - larger cards with better spacing
-    imagesGrid.innerHTML = imageList.map((w, idx) => {
-      const isMatched = matchedImages.has(idx);
-      return `<button type="button" class="image-card w-full aspect-square rounded-lg border-2 border-orange-200 bg-white hover:border-orange-500 transition overflow-hidden ${isMatched ? 'opacity-50 pointer-events-none border-green-400' : ''}" data-image-id="${idx}">
-        <img src="${w.vocab_image}" class="w-full h-full object-cover" alt="${w.vocab_word}" onerror="this.src='https://via.placeholder.com/300?text=Image+Not+Found'">
-      </button>`;
-    }).join('');
-    
-    // Update progress - bigger, bolder
-    progressEl.textContent = `${correctAnswers} / ${totalWords} matched`;
+    progressCurrentEl.textContent = String(correctAnswers);
+    progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
+    statusEl.textContent = correctAnswers ? 'Find the next matching pair.' : 'Choose a word and its matching picture.';
     
     // Either side can be selected first; matching is checked once both are chosen.
     const clearSelection = () => {
       selectedWord = null;
       selectedImage = null;
-      wordsGrid.querySelectorAll('.word-card').forEach(b => b.classList.remove('border-orange-500', 'bg-orange-50'));
-      imagesGrid.querySelectorAll('.image-card').forEach(b => b.classList.remove('border-orange-500', 'bg-orange-50'));
+      board.querySelectorAll('.is-selected').forEach(b => { b.classList.remove('is-selected'); b.setAttribute('aria-pressed', 'false'); });
     };
 
     const checkSelectedPair = () => {
       if (selectedWord === null || selectedImage === null) return;
       const wordIdx = selectedWord;
       const imageIdx = selectedImage;
-      const wordBtn = wordsGrid.querySelector(`[data-word-id="${wordIdx}"]`);
-      const imageBtn = imagesGrid.querySelector(`[data-image-id="${imageIdx}"]`);
+      const wordBtn = board.querySelector(`[data-word-id="${wordIdx}"]`);
+      const imageBtn = board.querySelector(`[data-image-id="${imageIdx}"]`);
       const wordItem = wordList[wordIdx];
       const imageItem = imageList[imageIdx];
 
@@ -14460,29 +14449,26 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
         // Correct matches let the same player continue their turn.
         updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
-        wordBtn.style.animation = 'bounce 0.6s ease';
-        imageBtn.style.animation = 'bounce 0.6s ease';
-        wordBtn.classList.add('animate-pulse');
-        imageBtn.classList.add('animate-pulse');
-        wordBtn.style.backgroundColor = '#dcfce7';
-        wordBtn.style.borderColor = '#5166ff';
-        imageBtn.style.backgroundColor = '#dcfce7';
-        imageBtn.style.borderColor = '#5166ff';
+        wordBtn.classList.remove('is-selected');
+        imageBtn.classList.remove('is-selected');
+        wordBtn.classList.add('is-matched', 'is-correct');
+        imageBtn.classList.add('is-matched', 'is-correct');
+        wordBtn.insertAdjacentHTML('beforeend', '<span class="match-tile-check" aria-hidden="true">✓</span>');
+        imageBtn.insertAdjacentHTML('beforeend', '<span class="match-tile-check" aria-hidden="true">✓</span>');
+        wordBtn.disabled = true;
+        imageBtn.disabled = true;
         statusEl.textContent = correctAnswers === totalWords ? '🎉 Perfect! All matches found!' : '✅ Correct!';
-        statusEl.style.color = '#4052d6';
-        statusEl.style.fontSize = correctAnswers === totalWords ? '18px' : '16px';
-        statusEl.style.fontWeight = 'bold';
-        progressEl.textContent = `${correctAnswers} / ${totalWords} matched`;
+        progressCurrentEl.textContent = String(correctAnswers);
+        progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
         if (correctAnswers === totalWords) {
           playGameSound('complete');
-          progressEl.style.color = '#4052d6';
           showCorrectAnswerCelebration(modal);
           clearSelection();
-          setTimeout(() => showGameCelebration(modal, 'Perfect match!'), 650);
+          setTimeout(() => showGameCelebration(modal, 'Perfect match!'), 520);
         } else {
           showCorrectAnswerCelebration();
           clearSelection();
-          setTimeout(() => renderGame(), 700);
+          setTimeout(() => renderGame(), 520);
         }
       } else {
         // A wrong match ends the turn and passes play to the next player.
@@ -14491,38 +14477,35 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         advanceGameTurn();
         updateGamePlayerHud(modal, Math.round((correctAnswers / totalWords) * 100), activeGamePlayerIndex);
         statusEl.textContent = '❌ Wrong match!';
-        statusEl.style.color = '#dc2626';
-        statusEl.style.fontSize = '16px';
-        statusEl.style.fontWeight = 'bold';
-        wordBtn.style.animation = 'shake 0.4s ease';
-        imageBtn.style.animation = 'shake 0.4s ease';
-        wordBtn.style.backgroundColor = '#fee2e2';
-        imageBtn.style.backgroundColor = '#fee2e2';
-        setTimeout(() => { clearSelection(); renderGame(); }, 400);
+        wordBtn.classList.add('is-wrong');
+        imageBtn.classList.add('is-wrong');
+        setTimeout(() => { clearSelection(); renderGame(); }, 460);
       }
     };
 
-    wordsGrid.querySelectorAll('.word-card').forEach(btn => {
+    board.querySelectorAll('[data-word-id]').forEach(btn => {
       btn.addEventListener('click', () => {
         const wordIdx = parseInt(btn.dataset.wordId);
         if (!matchedWords.has(wordIdx)) {
-          wordsGrid.querySelectorAll('.word-card').forEach(b => b.classList.remove('border-orange-500', 'bg-orange-50'));
+          board.querySelectorAll('[data-word-id]').forEach(b => { b.classList.remove('is-selected'); b.setAttribute('aria-pressed', 'false'); });
           selectedWord = wordIdx;
           unlockGameSound(); playGameSound('select');
-          btn.classList.add('border-orange-500', 'bg-orange-50');
+          btn.classList.add('is-selected');
+          btn.setAttribute('aria-pressed', 'true');
           checkSelectedPair();
         }
       });
     });
 
-    imagesGrid.querySelectorAll('.image-card').forEach(btn => {
+    board.querySelectorAll('[data-image-id]').forEach(btn => {
       btn.addEventListener('click', () => {
         const imageIdx = parseInt(btn.dataset.imageId);
         if (!matchedImages.has(imageIdx)) {
-          imagesGrid.querySelectorAll('.image-card').forEach(b => b.classList.remove('border-orange-500', 'bg-orange-50'));
+          board.querySelectorAll('[data-image-id]').forEach(b => { b.classList.remove('is-selected'); b.setAttribute('aria-pressed', 'false'); });
           selectedImage = imageIdx;
           unlockGameSound(); playGameSound('select');
-          btn.classList.add('border-orange-500', 'bg-orange-50');
+          btn.classList.add('is-selected');
+          btn.setAttribute('aria-pressed', 'true');
           checkSelectedPair();
         }
       });

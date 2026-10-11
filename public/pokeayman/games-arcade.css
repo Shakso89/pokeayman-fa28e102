@@ -105,6 +105,64 @@ body { --ga-stage-bg: var(--ts-bg, #0b1220); --ga-stage-surface: var(--ts-surfac
 .ga-continue { display: block; margin: 1rem 0 0 auto; background: var(--ga-stage-yellow); color: var(--ga-stage-action-ink); }
 .ga-continue:disabled { opacity: .4; cursor: not-allowed; }
 .ga-change-lists { background: var(--ga-stage-chip); color: var(--ga-stage-ink); }
+
+/* Match Words: one mixed, touch-friendly board for words and pictures. */
+.game-match-root { width: 100%; color: var(--ga-stage-ink); }
+.match-game-shell { width: min(100%, 76rem); margin: 0 auto; overflow: hidden; border: 1px solid var(--ga-stage-line); border-radius: 1rem; background: var(--ga-stage-bg); color: var(--ga-stage-ink); box-shadow: 0 18px 50px rgba(2,6,23,.28); }
+.match-game-header { z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--ga-stage-line); background: var(--ga-stage-surface); }
+.match-game-heading { min-width: 0; }
+.match-game-heading h2 { margin: 0; color: var(--ga-stage-ink); font: 850 1.35rem/1.15 'Outfit', sans-serif; }
+.match-game-heading p { margin: .22rem 0 0; color: var(--ga-stage-muted); font: 600 .8rem/1.3 'Figtree', sans-serif; }
+.match-game-tools { display: flex; align-items: center; justify-content: flex-end; gap: .4rem; flex: 0 0 auto; }
+.match-game-tools button { display: inline-grid; place-items: center; width: 2.4rem; height: 2.4rem; min-width: 2.4rem; padding: 0; border: 1px solid var(--ga-stage-line); border-radius: .65rem; background: var(--ga-stage-chip); color: var(--ga-stage-ink); font: 800 1.2rem/1 'Figtree', sans-serif; transition: background .16s ease, border-color .16s ease, transform .16s ease; }
+.match-game-tools button:hover { border-color: var(--ga-stage-yellow); background: color-mix(in srgb, var(--ga-stage-yellow) 14%, var(--ga-stage-chip)); transform: translateY(-1px); }
+.match-game-tools button:focus-visible, .match-tile:focus-visible { outline: 3px solid var(--ga-stage-yellow); outline-offset: 3px; }
+.match-game-density { display: flex; gap: .2rem; padding: .2rem; border: 1px solid var(--ga-stage-line); border-radius: .8rem; background: var(--ga-stage-bg); }
+.match-game-density button { width: 2rem; height: 2rem; min-width: 2rem; border: 0; background: transparent; }
+.match-game-content { padding: clamp(.75rem, 2.5vw, 1.5rem); }
+.match-game-summary { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(12rem, .8fr); align-items: center; gap: 1rem; width: min(100%, 76rem); margin: 0 auto 1.15rem; }
+.match-game-summary .game-player-hud-slot { min-width: 0; margin: 0; }
+.match-game-progress { min-width: 0; padding: .8rem .95rem; border: 1px solid var(--ga-stage-line); border-radius: .8rem; background: var(--ga-stage-surface); }
+.match-game-progress-copy { display: flex; align-items: baseline; flex-wrap: wrap; gap: .35rem .55rem; color: var(--ga-stage-muted); font: 650 .82rem/1.35 'Figtree', sans-serif; }
+.match-game-progress-copy strong { color: var(--ga-stage-yellow); font: 900 1.5rem/1 'Outfit', sans-serif; }
+.match-game-progress-copy #match-status { flex-basis: 100%; min-height: 1.2em; color: var(--ga-stage-ink); font-weight: 750; }
+.match-game-progress-track { height: .45rem; margin-top: .65rem; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--ga-stage-line) 72%, transparent); }
+.match-game-progress-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--ga-stage-blue), var(--ga-stage-yellow)); transition: width .35s cubic-bezier(.2,.8,.2,1); }
+.match-game-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(.5rem, 1.5vw, .9rem); width: min(100%, 76rem); margin: 0 auto; }
+.match-tile { position: relative; display: flex; min-width: 0; min-height: clamp(6.1rem, 12vw, 9rem); align-items: center; justify-content: center; overflow: hidden; padding: .85rem; border: 1px solid var(--ga-stage-line); border-radius: .9rem; background: var(--ga-stage-surface); color: var(--ga-stage-ink); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 5px 12px rgba(2,6,23,.12); cursor: pointer; transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease, opacity .2s ease; }
+.match-tile:hover:not(:disabled) { transform: translateY(-3px); border-color: color-mix(in srgb, var(--ga-stage-blue) 75%, white); box-shadow: 0 9px 22px rgba(2,6,23,.24); }
+.match-tile-kind { position: absolute; top: .45rem; left: .5rem; color: var(--ga-stage-muted); font: 800 .62rem/1 'Figtree', sans-serif; letter-spacing: .04em; }
+.match-tile-word { max-width: 100%; overflow-wrap: anywhere; text-align: center; font: 850 clamp(.88rem, 2vw, 1.25rem)/1.2 'Figtree', sans-serif; }
+.match-image-card { padding: .55rem; }
+.match-image-card img { display: block; width: 100%; height: 100%; min-height: 4.5rem; max-height: 7rem; object-fit: contain; border-radius: .5rem; }
+.match-tile.is-selected { transform: translateY(-3px) scale(1.025); border-color: var(--ga-stage-yellow); background: color-mix(in srgb, var(--ga-stage-yellow) 12%, var(--ga-stage-surface)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ga-stage-yellow) 24%, transparent), 0 10px 24px rgba(2,6,23,.3); }
+.match-tile.is-matched { border-color: color-mix(in srgb, #34d399 75%, var(--ga-stage-line)); background: color-mix(in srgb, #10b981 14%, var(--ga-stage-surface)); opacity: .48; cursor: default; }
+.match-tile.is-correct { animation: match-correct-pop .48s cubic-bezier(.2,.85,.25,1) both; }
+.match-tile.is-wrong { border-color: var(--ga-stage-red); background: color-mix(in srgb, var(--ga-stage-red) 18%, var(--ga-stage-surface)); animation: match-retry-shake .42s ease-in-out both; }
+.match-tile-check { position: absolute; right: .45rem; bottom: .4rem; display: grid; width: 1.35rem; height: 1.35rem; place-items: center; border-radius: 50%; background: #10b981; color: #06281e; font: 950 .85rem/1 'Figtree', sans-serif; animation: match-check-pop .28s cubic-bezier(.2,.85,.25,1) both; }
+.match-image-card.is-matched img { filter: saturate(.55); }
+@keyframes match-correct-pop { 0% { transform: scale(.96); } 38% { transform: translateY(-5px) scale(1.06); box-shadow: 0 0 0 5px rgba(52,211,153,.22), 0 0 24px rgba(52,211,153,.3); } 100% { transform: scale(1); } }
+@keyframes match-check-pop { from { transform: scale(0) rotate(-35deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes match-retry-shake { 0%,100% { transform: translateX(0); } 22% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-3px); } }
+@media (max-width: 850px) { .match-game-board { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) {
+  .match-game-header { align-items: flex-start; gap: .5rem; padding: .7rem; }
+  .match-game-heading h2 { font-size: 1.08rem; }
+  .match-game-heading p { font-size: .7rem; }
+  .match-game-tools { gap: .25rem; }
+  .match-game-tools button { width: 2rem; height: 2rem; min-width: 2rem; border-radius: .55rem; font-size: 1rem; }
+  .match-game-density { gap: 0; padding: .12rem; }
+  .match-game-density button { width: 1.65rem; height: 1.65rem; min-width: 1.65rem; }
+  .match-game-summary { grid-template-columns: minmax(0, 1fr); gap: .6rem; margin-bottom: .8rem; }
+  .match-game-progress { padding: .65rem .8rem; }
+  .match-game-board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
+  .match-tile { min-height: 6rem; padding: .7rem; border-radius: .75rem; }
+  .match-image-card { padding: .45rem; }
+  .match-image-card img { min-height: 4.5rem; max-height: 6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .match-game-tools button, .match-game-progress-track span, .match-tile, .match-tile.is-correct, .match-tile.is-wrong, .match-tile-check { transition: none !important; animation: none !important; }
+}
 [id$="games-list-selector"][hidden], [id$="games-options-container"][hidden] { display: none !important; }
 body.ga-playing { overflow: hidden !important; }
 body.ga-playing > .sfx-toggle { display: none !important; }

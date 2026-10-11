@@ -78,7 +78,7 @@
   };
 
   window.gaMountStage = function (view) {
-    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #memory-grid, #scramble-tiles, #hangman-letters');
+    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters');
     if (!board || view.querySelector('#game-player-list') || view.classList.contains('ga-stage')) return;
     view.classList.add('ga-stage');
     const shell = view.matches('.game-popup-modal') ? view.firstElementChild : view.querySelector('.game-popup-modal > div, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell') || view.firstElementChild;
@@ -117,7 +117,7 @@
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && document.querySelector('.ga-stage')) { event.preventDefault(); endActiveGames(); } });
   const observeStages = () => new MutationObserver(() => {
     document.querySelectorAll('#class-subtab-games > .game-inline-view, #student-tab-games > .game-inline-view').forEach(view => window.gaMountStage(view));
-    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #memory-grid, #scramble-tiles, #hangman-letters')) view.remove(); });
+    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters')) view.remove(); });
     if (!document.querySelector('.ga-stage') && document.body.classList.contains('ga-playing')) {
       document.body.classList.remove('ga-playing');
       document.body.style.removeProperty('overflow');
