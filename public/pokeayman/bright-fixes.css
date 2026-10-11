@@ -117,3 +117,15 @@ html body.ts-bright .trainer-hub :is(.th-panel, .th-progress, .th-grid) {
   color: var(--color-text-primary) !important;
   border-color: var(--color-border) !important;
 }
+
+/* Keep the dark login palette legible while the rest of the app is bright. */
+html body:is(#pk-ds, body).ts-bright .pk-login-overlay .pk-login-card :is(.pk-login-ghost, #ta-back) {
+  background: transparent !important;
+  color: var(--pkl-ink) !important;
+  border-color: var(--pkl-line) !important;
+}
+html body:is(#pk-ds, body).ts-bright .pk-login-overlay .pk-login-card.pk-login-teacher .pk-login-primary {
+  background: linear-gradient(135deg, var(--pkl-gold), var(--pkl-gold-2)) !important;
+  border-color: transparent !important;
+  color: #1a1300 !important;
+}

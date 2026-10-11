@@ -15,7 +15,7 @@ html body.ts-bright :is(.tsb-card, .ts-streak, #ts-streak, .ts-rail-card, [class
 }
 html body.ts-bright :is(.tsb-card, .ts-streak, #ts-streak) :is(h1,h2,h3,h4,p,span,strong,small) { color: var(--color-text-primary) !important; text-shadow: none !important; }
 html body.ts-bright :is(.btn-primary, .tsb-btn, .ts-award-go) { background: var(--color-brand) !important; color: var(--color-text-on-brand) !important; }
-html body.ts-bright :is(.bg-white, .glass-container, .card, .modal-content, [role="dialog"] > div) { background-color: var(--color-surface) !important; color: var(--color-text-primary); border-color: var(--color-border) !important; }
+html body.ts-bright :is(.bg-white, .glass-container, .card, .modal-content, [role="dialog"] > div):not(.pk-login-overlay *) { background-color: var(--color-surface) !important; color: var(--color-text-primary); border-color: var(--color-border) !important; }
 html body.ts-bright :is(.text-white, .text-gray-100, .text-gray-200, .text-slate-200, .text-indigo-100, .text-indigo-200, .text-amber-100) { color: var(--color-text-primary) !important; }
 html body.ts-bright :is(.text-gray-300, .text-gray-400, .text-slate-300, .text-slate-400) { color: var(--color-text-secondary) !important; }
 html body.ts-bright :is(input, select, textarea) { background-color: var(--color-surface) !important; color: var(--color-text-primary) !important; border-color: var(--color-border-strong) !important; }
