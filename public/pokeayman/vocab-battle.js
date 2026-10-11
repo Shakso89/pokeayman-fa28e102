@@ -301,7 +301,7 @@
   }
 
   window.renderBattleClaims = function () {
-    const panel = document.getElementById('teacher-zone-battle-claims-panel');
+    const panel = document.getElementById('battle-claims-list');
     if (!panel) return;
     const claims = myPendingClaims();
     panel.innerHTML = `<div class="vb-claims">${claims.length ? claims.map((c) => `
