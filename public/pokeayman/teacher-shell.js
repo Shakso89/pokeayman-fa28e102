@@ -67,10 +67,14 @@
         <div class="ts-amounts">${[10, 50, 100].map((n) => `<button type="button" data-amt="${n}"${n === 10 ? ' class="on"' : ''}>+${n}</button>`).join('')}</div>
         <button type="button" class="ts-award-go" id="ts-award-go">Award coins</button></section>
       <section class="ts-card"><h3>🏆 Top 3 Students</h3><ol id="ts-top3" class="ts-top3"></ol></section>
-      <section class="ts-card ts-gift ts-streak"><h3>🔥 Login Streak</h3><p id="ts-streak-text">Log in 7 days in a row to unlock a surprise box</p>
+      <section class="ts-card ts-gift ts-streak"><button type="button" class="ts-streak-close" data-ts-streak-close aria-label="Close login streak card" title="Close">×</button><h3>🔥 Login Streak</h3><p id="ts-streak-text">Log in 7 days in a row to unlock a surprise box</p>
         <div class="ts-streak-dots" id="ts-streak-dots"></div>
         <button type="button" class="ts-award-go" id="ts-box-open">🎁 Open surprise box</button></section>`;
     document.body.append(side, rail);
+    rail.querySelector('[data-ts-streak-close]')?.addEventListener('click', () => {
+      const streakCard = rail.querySelector('.ts-streak');
+      if (streakCard) streakCard.hidden = true;
+    });
     const sidebarToggle = document.createElement('button');
     sidebarToggle.id = 'ts-sidebar-toggle'; sidebarToggle.type = 'button'; sidebarToggle.setAttribute('aria-controls', 'ts-sidebar');
     sidebarToggle.addEventListener('click', () => { collapsed = !collapsed; g(() => localStorage.setItem('pokeayman-sidebar-collapsed', collapsed ? '1' : '0')); applySidebar(); });

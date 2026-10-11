@@ -42,5 +42,144 @@ body.ts-on #app-screen main :is(h2) { font-family: var(--pk-font-display); lette
 body.ts-on #app-screen main :is(h3) { font-family: var(--pk-font-display); }
 body.ts-on #app-screen main p { line-height: var(--pk-leading-body); }
 
+/* ---------- Teacher Zone utility views ---------- */
+body.ts-on .teacher-zone-content-panel { margin: 0 0 var(--pk-space-5); }
+body.ts-on .teacher-zone-content-card {
+  padding: var(--pk-space-5); border: 1px solid var(--pk-border); border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface); color: var(--pk-ink); box-shadow: var(--pk-shadow-1);
+}
+body.ts-on .teacher-zone-page-heading {
+  display: flex; align-items: center; gap: var(--pk-space-4); margin: 0 0 var(--pk-space-5);
+}
+body.ts-on .teacher-zone-page-heading > div { flex: 1; min-width: 0; }
+body.ts-on .teacher-zone-page-icon {
+  display: grid; place-items: center; width: 48px; height: 48px; flex: none;
+  border: 1px solid color-mix(in oklab, var(--pk-brand) 35%, transparent);
+  border-radius: var(--pk-radius-md); background: color-mix(in oklab, var(--pk-brand) 12%, var(--pk-surface));
+  font-size: 1.35rem;
+}
+body.ts-on .teacher-zone-page-kicker {
+  margin: 0 0 var(--pk-space-1) !important; color: var(--pk-brand) !important;
+  font: 700 var(--pk-text-xs)/1 var(--pk-font-display) !important; letter-spacing: .1em; text-transform: uppercase;
+}
+body.ts-on .teacher-zone-page-heading h3 {
+  margin: 0 !important; color: var(--pk-ink) !important;
+  font: 800 var(--pk-text-h2)/var(--pk-leading-tight) var(--pk-font-display) !important;
+}
+body.ts-on .teacher-zone-page-heading p:not(.teacher-zone-page-kicker) {
+  margin: var(--pk-space-1) 0 0 !important; color: var(--pk-muted) !important; font-size: var(--pk-text-sm) !important;
+}
+body.ts-on .teacher-zone-status {
+  display: flex; align-items: center; min-height: 2.5rem; margin: 0 0 var(--pk-space-4) !important;
+  padding: 0 var(--pk-space-3); border: 1px solid var(--pk-border); border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-2); color: var(--pk-ink-2) !important; font-size: var(--pk-text-sm) !important;
+}
+body.ts-on .teacher-zone-history-list { display: grid; gap: var(--pk-space-3); }
+body.ts-on .teacher-zone-history-item {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--pk-space-4);
+  padding: var(--pk-space-4); border: 1px solid var(--pk-border); border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-2);
+}
+body.ts-on .teacher-zone-history-copy { display: grid; gap: var(--pk-space-1); min-width: 0; }
+body.ts-on .teacher-zone-history-copy strong { overflow: hidden; color: var(--pk-ink); font: 700 var(--pk-text-body)/var(--pk-leading-tight) var(--pk-font-display); text-overflow: ellipsis; white-space: nowrap; }
+body.ts-on .teacher-zone-history-copy span { color: var(--pk-muted); font-size: var(--pk-text-xs); }
+body.ts-on .teacher-zone-history-actions { display: flex; flex-wrap: wrap; gap: var(--pk-space-2); }
+body.ts-on #teacher-zone-history-empty { margin-top: var(--pk-space-4); }
+
+body.ts-on #teacher-vb-lists-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  align-items: stretch; gap: var(--pk-space-4);
+}
+body.ts-on #teacher-vb-lists-grid .teacher-zone-list-section-title {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: var(--pk-space-3);
+  margin: var(--pk-space-2) 0 0; color: var(--pk-muted); font: 700 var(--pk-text-xs)/1 var(--pk-font-display);
+  letter-spacing: .08em; text-transform: uppercase;
+}
+body.ts-on #teacher-vb-lists-grid .teacher-zone-list-section-title::after { content: ''; height: 1px; flex: 1; background: var(--pk-border-strong); }
+body.ts-on #teacher-vb-lists-grid .teacher-zone-wordbank-card {
+  display: flex !important; flex-direction: column; align-items: stretch; gap: var(--pk-space-3) !important;
+  width: 100% !important; min-height: 0 !important; height: auto !important; aspect-ratio: auto !important;
+  padding: var(--pk-space-4) !important; overflow: hidden !important; border: 1px solid var(--pk-border) !important;
+  border-radius: var(--pk-radius-lg) !important; background: var(--pk-surface) !important; box-shadow: var(--pk-shadow-1) !important;
+}
+body.ts-on #teacher-vb-lists-grid .teacher-zone-wordbank-card::before { content: none !important; }
+body.ts-on #teacher-vb-lists-grid .teacher-zone-wordbank-card:hover {
+  transform: translateY(-2px) !important; border-color: var(--pk-border-strong) !important; box-shadow: var(--pk-shadow-2) !important;
+}
+body.ts-on #teacher-vb-lists-grid .teacher-zone-wordbank-heading {
+  display: flex; align-items: center; gap: var(--pk-space-3); min-width: 0; margin: 0;
+}
+body.ts-on #teacher-vb-lists-grid .vocab-list-card .student-vocab-list-name {
+  min-width: 0; margin: 0 !important; padding: 0 !important; color: var(--pk-ink) !important;
+  font: 700 var(--pk-text-body)/var(--pk-leading-tight) var(--pk-font-display) !important; text-align: left !important; overflow-wrap: anywhere;
+}
+body.ts-on #teacher-vb-lists-grid .teacher-zone-list-author { display: flex; align-items: center; gap: var(--pk-space-2); color: var(--pk-muted); font-size: var(--pk-text-xs); }
+body.ts-on #teacher-vb-lists-grid .teacher-zone-list-avatar,
+body.ts-on #teacher-vb-lists-grid .teacher-zone-list-avatar-fallback {
+  display: grid; place-items: center; width: 2rem; height: 2rem; flex: none; border: 1px solid var(--pk-border);
+  border-radius: 50%; background: var(--pk-surface-elevated); object-fit: contain; font-size: 1rem;
+}
+body.ts-on #teacher-vb-lists-grid .teacher-zone-wordbank-context,
+body.ts-on #teacher-vb-lists-grid .teacher-zone-wordbank-count {
+  width: auto !important; margin: 0 !important; color: var(--pk-muted) !important; font-size: var(--pk-text-xs); text-align: left !important;
+}
+body.ts-on #teacher-vb-lists-grid .student-vocab-cover {
+  width: 100% !important; max-width: none !important; height: auto !important; aspect-ratio: 16 / 9;
+  margin: 0 !important; overflow: hidden; border: 1px solid var(--pk-border); border-radius: var(--pk-radius-md);
+  background: var(--pk-surface-2);
+}
+body.ts-on #teacher-vb-lists-grid .student-vocab-cover img { width: 100%; height: 100%; object-fit: cover; }
+body.ts-on #teacher-vb-lists-grid .student-vocab-cover-fallback { display: grid; place-items: center; color: var(--pk-muted); font-size: 2rem; }
+body.ts-on #teacher-vb-lists-grid .vocab-card-actions {
+  display: flex !important; grid-row: auto !important; justify-content: stretch; gap: var(--pk-space-2);
+  width: 100%; margin: 0 !important;
+}
+body.ts-on #teacher-vb-lists-grid .vocab-card-actions button {
+  flex: 1 1 0; min-width: 0; min-height: 2.5rem; height: auto; margin: 0 !important;
+  padding: var(--pk-space-2) var(--pk-space-3); border-radius: var(--pk-radius-md); font-size: var(--pk-text-xs);
+  white-space: normal; overflow-wrap: anywhere;
+}
+body.ts-on #teacher-vb-lists-grid .vocab-card-mode { min-width: 0 !important; }
+body.ts-on #teacher-vb-lists-grid .vocab-card-mode { border: 1px solid var(--pk-brand) !important; background: var(--pk-brand) !important; color: var(--pk-on-brand) !important; box-shadow: none !important; }
+body.ts-on #teacher-vb-lists-grid .vocab-card-edit,
+body.ts-on #teacher-vb-lists-grid .vocab-cover-button { border: 1px solid var(--pk-border-strong) !important; background: var(--pk-surface-elevated) !important; color: var(--pk-ink) !important; box-shadow: none !important; }
+body.ts-on #teacher-vb-lists-grid .vocab-card-delete { border: 1px solid color-mix(in oklab, var(--pk-danger) 45%, transparent) !important; background: color-mix(in oklab, var(--pk-danger) 12%, var(--pk-surface)) !important; color: var(--pk-danger) !important; box-shadow: none !important; }
+body.ts-on #teacher-vb-lists-grid .vocab-card-actions:has(.vocab-card-mode) .vocab-card-edit,
+body.ts-on #teacher-vb-lists-grid .vocab-card-actions:has(.vocab-card-mode) .vocab-card-delete { grid-row: auto !important; grid-column: auto !important; margin: 0 !important; }
+
+body.ts-on #battle-claims-list .vb-claims { display: grid; gap: var(--pk-space-3); }
+body.ts-on #battle-claims-list .vb-claim {
+  display: grid; grid-template-columns: 4rem minmax(0, 1fr) auto; align-items: center; gap: var(--pk-space-4);
+  padding: var(--pk-space-4); border: 1px solid var(--pk-border); border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-2); color: var(--pk-ink);
+}
+body.ts-on #battle-claims-list .vb-claim-art { width: 4rem; height: 4rem; padding: var(--pk-space-1); border-radius: var(--pk-radius-md); background: var(--pk-surface-elevated); }
+body.ts-on #battle-claims-list .vb-claim-info { display: grid; gap: var(--pk-space-1); }
+body.ts-on #battle-claims-list .vb-claim-name { margin: 0; color: var(--pk-ink) !important; font: 700 var(--pk-text-body)/var(--pk-leading-tight) var(--pk-font-display); }
+body.ts-on #battle-claims-list .vb-claim-meta { margin: 0; color: var(--pk-muted) !important; font-size: var(--pk-text-xs); }
+body.ts-on #battle-claims-list .vb-claim-actions { display: flex; flex-wrap: wrap; gap: var(--pk-space-2); }
+body.ts-on #battle-claims-list .vb-approve,
+body.ts-on #battle-claims-list .vb-decline {
+  min-height: 2.5rem; padding: 0 var(--pk-space-3); border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md); font: 700 var(--pk-text-xs)/1 var(--pk-font-display); cursor: pointer;
+}
+body.ts-on #battle-claims-list .vb-approve { background: var(--pk-brand); color: var(--pk-on-brand); }
+body.ts-on #battle-claims-list .vb-decline { background: transparent; color: var(--pk-danger); border-color: color-mix(in oklab, var(--pk-danger) 45%, transparent); }
+body.ts-on #battle-claims-list .vb-claims-empty { margin: 0; padding: var(--pk-space-7) var(--pk-space-5); border: 1px dashed var(--pk-border-strong); border-radius: var(--pk-radius-lg); background: var(--pk-surface-2); color: var(--pk-muted); }
+
+@media (max-width: 700px) {
+  body.ts-on .teacher-zone-content-card { padding: var(--pk-space-4); }
+  body.ts-on .teacher-zone-page-heading { align-items: flex-start; flex-wrap: wrap; gap: var(--pk-space-3); }
+  body.ts-on .teacher-zone-page-heading > div { flex-basis: calc(100% - 52px); }
+  body.ts-on .teacher-zone-page-icon { width: 40px; height: 40px; }
+  body.ts-on .teacher-zone-page-heading h3 { font-size: var(--pk-text-h3) !important; }
+  body.ts-on #teacher-zone-history-panel .teacher-zone-page-heading > button { margin-left: auto; }
+  body.ts-on .teacher-zone-history-item { align-items: stretch; flex-direction: column; }
+  body.ts-on #battle-claims-list .vb-claim { grid-template-columns: 3rem minmax(0, 1fr); gap: var(--pk-space-3); }
+  body.ts-on #battle-claims-list .vb-claim-art { width: 3rem; height: 3rem; }
+  body.ts-on #battle-claims-list .vb-claim-actions { grid-column: 1 / -1; }
+  body.ts-on #battle-claims-list .vb-claim-actions button { flex: 1; }
+}
+
 /* Calm secondary emphasis: less glow on non-primary chips */
 body.ts-on #app-screen main .modal-stat-chip { box-shadow: none !important; }

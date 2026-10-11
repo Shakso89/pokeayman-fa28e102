@@ -1,6 +1,20 @@
 /* Tablet & mobile layout fixes. Loaded last so it wins over legacy rules. */
 
 /* Login streak: when the right rail is hidden, show only the streak card as a floating chip. */
+#ts-rail .ts-streak { position: relative; }
+#ts-rail .ts-streak[hidden] { display: none !important; }
+#ts-rail .ts-streak h3 { padding-right: 34px; }
+#ts-rail .ts-streak-close {
+  position: absolute; top: 8px; right: 8px; z-index: 1; display: grid; place-items: center;
+  width: 28px; height: 28px; padding: 0; border: 1px solid var(--ts-border, rgba(255,255,255,.2));
+  border-radius: 8px; background: var(--ts-deep, #111827); color: var(--ts-muted, #aab5c7);
+  font: 600 20px/1 'Outfit', sans-serif; cursor: pointer; opacity: 0; pointer-events: none;
+  transition: opacity .15s ease, color .15s ease, border-color .15s ease;
+}
+#ts-rail .ts-streak:hover .ts-streak-close,
+#ts-rail .ts-streak:focus-within .ts-streak-close { opacity: 1; pointer-events: auto; }
+#ts-rail .ts-streak-close:hover { color: var(--ts-ink, #f8fafc); border-color: var(--ts-yellow, #facc15); }
+#ts-rail .ts-streak-close:focus-visible { opacity: 1; pointer-events: auto; outline: 2px solid var(--ts-yellow, #facc15); outline-offset: 2px; }
 @media (max-width: 1280px) {
   body.ts-on #ts-rail {
     display: flex !important; position: fixed; inset: auto auto 16px 12px; width: min(260px, calc(100vw - 24px));
@@ -8,6 +22,7 @@
   }
   body.ts-on #ts-rail > .ts-card:not(.ts-streak) { display: none !important; }
   body.ts-on #ts-rail .ts-streak { padding: 10px 12px; box-shadow: 0 12px 30px rgba(0,0,0,.4); }
+  body.ts-on #ts-rail .ts-streak-close { top: 5px; right: 6px; opacity: 1; pointer-events: auto; }
   body.ts-on #ts-rail .ts-streak h3 { margin: 0 0 2px; font-size: 14px; cursor: pointer; }
   body.ts-on #ts-rail .ts-streak #ts-streak-text { font-size: 11px; margin: 0; }
   body.ts-on #ts-rail .ts-streak .ts-streak-dots { margin: 6px 0 8px; }
