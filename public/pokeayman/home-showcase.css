@@ -13,32 +13,27 @@
 #home-screen.home-showcase {
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  background: var(--home-night) !important;
+  /* Keep the backdrop attached to the viewport as the home content scrolls. */
+  background-color: var(--home-night) !important;
+  background-image:
+    radial-gradient(ellipse at 12% 18%, rgba(50,104,178,.24), transparent 45%),
+    radial-gradient(ellipse at 88% 28%, rgba(239,51,64,.09), transparent 42%),
+    linear-gradient(90deg, transparent 49.8%, rgba(255,255,255,.025) 50%, transparent 50.2%),
+    linear-gradient(0deg, transparent 49.8%, rgba(255,255,255,.02) 50%, transparent 50.2%),
+    linear-gradient(180deg, #0a1020 0%, #030407 62%, #060914 100%) !important;
+  background-size: auto, auto, 120px 120px, 120px 120px, auto !important;
+  background-position: center, center, center, center, center !important;
+  background-attachment: fixed, fixed, fixed, fixed, fixed !important;
   color: var(--home-ink);
   isolation: isolate;
 }
 
 #home-screen.home-showcase::before {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  content: '';
-  background:
-    linear-gradient(90deg, transparent 49.8%, rgba(255,255,255,.035) 50%, transparent 50.2%),
-    linear-gradient(0deg, transparent 49.8%, rgba(255,255,255,.025) 50%, transparent 50.2%);
-  background-size: 120px 120px;
-  opacity: .8;
+  content: none !important;
 }
 
 #home-screen.home-showcase::after {
-  position: fixed;
-  inset: auto 0 0;
-  z-index: -1;
-  height: 42vh;
-  content: '';
-  background: radial-gradient(ellipse at 50% 105%, rgba(50,104,178,.42), transparent 66%);
-  clip-path: none;
-  border: 0;
+  content: none !important;
 }
 
 .home-showcase .home-showcase-header {
@@ -345,9 +340,22 @@
 }
 @media (prefers-reduced-motion: reduce) { .home-showcase .home-side-card { animation: none; transform: rotate(var(--rot)); } }
 
-/* Mobile taps: keep the help badge in the header so it never covers login buttons */
+/* Keep the home help button docked to the viewport at every breakpoint. */
 .home-showcase .home-actions button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; position: relative; z-index: 6; }
 .home-showcase .home-actions button:active { transform: scale(.97); filter: brightness(.92); }
 @media (max-width: 700px) {
-  .home-showcase .home-contact-dock { position: static !important; padding: .35rem !important; }
+  #home-screen.home-showcase #contact-pricing-btn.home-contact-dock {
+    position: fixed !important;
+    top: auto !important;
+    right: max(1rem, calc(env(safe-area-inset-right) + .5rem)) !important;
+    bottom: max(1rem, calc(env(safe-area-inset-bottom) + .5rem)) !important;
+    left: auto !important;
+    z-index: 50 !important;
+    width: 3.25rem !important;
+    min-width: 3.25rem !important;
+    min-height: 3.25rem !important;
+    padding: .55rem !important;
+    justify-content: center;
+  }
+  #home-screen.home-showcase .home-contact-label { display: none; }
 }
