@@ -1,5 +1,5 @@
 # Class screen refresh
-- [ ] Redesign Surprise Boxes question reveal and verify both answer controls, dismissal and power-up display.
+- [x] Redesign Surprise Boxes question reveal; isolated preview verified opening, box/current-player labels, Correct scoring, Wrong turn advance, dismissal, bright/dark styling and power-up presentation. Routing test and build passed; saved data unchanged.
 - [x] Replace Hangman drawing with eight animated stages; isolated preview verified every miss, delayed result, replay reset, correct guesses and reduced motion with no runtime errors. Routing test and build passed; saved vocabulary and scores were untouched.
 - [x] Organize sidebar teacher identity, long names, default Poké Ball avatar and logout; desktop dark/bright and mobile presentation verified with a long sample name. Signed-in account actions were not exercised.
 - [x] Replace home circular gallery with fan cards, official Pokémon artwork and illustrated habitat backgrounds; desktop selection, admin configuration refresh, phone fit and both login popups verified with no runtime errors.
