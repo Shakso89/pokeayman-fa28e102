@@ -8224,7 +8224,8 @@ function renderTeacherOwnedVocabLists() {
       const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${escape(list.vocab_cover_image_url)}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
       return `<article class="vocab-list-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="flex items-start justify-center gap-3">${teacherByline(list)}<span class="student-vocab-list-name vocab-list-name mt-2">${safeName}</span></div><p class="vocab-list-count">${context}</p>${cover}<p class="vocab-list-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div><div class="vocab-card-actions"><button type="button" class="vocab-cover-button" onclick="openVocabSharePopupFor('${safeId}','${safeName.replace(/'/g, "\\'")}')">🔗 Share to my classes</button></div></article>`;
     };
-    grid.innerHTML = (lists.length ? sectionHead('My lists') : '') + lists.map(list => {
+    if (schoolMode) { grid.innerHTML = sectionHead('School lists · by other teachers') + otherLists.map(schoolCard).join(''); return; }
+    grid.innerHTML = lists.map(list => {
       const words = getVocabWords(list, list.vocab_list_school, list.vocab_list_class);
       const safeId = String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'");
       const safeName = escape(list.vocab_list_name || 'Untitled list');
@@ -8235,7 +8236,7 @@ function renderTeacherOwnedVocabLists() {
       const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${escape(list.vocab_cover_image_url)}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
       const owned = currentRole === 'teacher' && verifiedTeacherIdentity() && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey;
       return `<article class="vocab-list-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="flex items-start justify-center gap-3"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name mt-2">${safeName}</span></div><p class="vocab-list-count">${context}</p>${cover}<p class="vocab-list-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div><div class="vocab-card-actions"><button type="button" class="vocab-card-edit" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Edit</button>${owned ? `<button type="button" class="vocab-cover-button" onclick="openVocabCoverPicker('${safeId}','${safeName.replace(/'/g, "\\'")}')">▣ Cover</button><button type="button" class="vocab-card-delete" onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeName.replace(/'/g, "\\'")}',this)">Delete</button>` : ''}</div></article>`;
-    }).join('') + (otherLists.length ? sectionHead('School lists · shared by other teachers') + otherLists.map(schoolCard).join('') : '');
+    }).join('');
   } catch (error) { status.textContent = 'Could not load your vocabulary lists. Please refresh and try again.'; }
 }
 
@@ -18001,4 +18002,5 @@ lucide.createIcons();
 (function(){function mv(){var b=document.getElementById('teacher-header-showcase');var lo=document.getElementById('logout-btn');if(!b||!lo||document.getElementById('header-logout'))return;var h=document.createElement('button');h.id='header-logout';h.type='button';h.title='Log out';h.innerHTML='<span aria-hidden="true">⏻</span><span>Log out</span>';h.addEventListener('click',function(){lo.click()});b.insertAdjacentElement('afterend',h);var sync=function(){h.style.display=b.classList.contains('hidden')?'none':''};sync();new MutationObserver(sync).observe(b,{attributes:true,attributeFilter:['class']});}
 if(document.readyState!=='loading')mv();else document.addEventListener('DOMContentLoaded',mv);})();
 </script>
+<script src="/pokeayman/sentence-generator.js"></script>
 </body></html>
