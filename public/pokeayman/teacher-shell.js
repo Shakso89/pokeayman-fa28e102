@@ -37,7 +37,7 @@
     side.id = 'ts-sidebar';
     side.setAttribute('aria-label', 'Teacher navigation');
     side.innerHTML = `
-      <div class="ts-brand"><span class="ts-ball" aria-hidden="true"></span><span>PokéAyman<small>Academy</small></span></div>
+      <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile" title="Open Teacher Card"><span id="ts-avatar" class="ts-avatar"></span><span class="ts-me-info"><span class="ts-me-label">Teacher Card</span><strong id="ts-name"></strong><small id="ts-role"></small></span></button><button type="button" class="ts-logout" data-ts="logout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5H4v14h5M14 8l4 4-4 4M8 12h12"/></svg><span>Log out</span></button></div>
       <div class="ts-switch-wrap"><button type="button" class="ts-switch" data-ts="switch" aria-haspopup="dialog" aria-expanded="false"><span class="ts-switch-label" id="ts-current-school">Schools &amp; classes</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">⇄</span></button></div>
       <nav class="ts-nav">
         <div id="ts-class"><button type="button" class="ts-section-toggle" data-ts-toggle="class" aria-expanded="true" aria-controls="ts-class-content"><span>Classroom</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-class-content">
@@ -48,8 +48,7 @@
         <button type="button" class="ts-item" data-ts="admin"><span aria-hidden="true">⚙️</span>Admin Console</button>
         <button type="button" class="ts-item" data-ts="leaders"><span aria-hidden="true">🏆</span>Global Top 10</button></div></div>
       </nav>
-      <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile"><span id="ts-avatar" class="ts-avatar"></span><span class="ts-me-info"><strong id="ts-name"></strong><small id="ts-role"></small></span></button>
-      <button type="button" class="ts-logout" data-ts="logout" aria-label="Log out" title="Log out">↪</button></div>`;
+`;
     const rail = document.createElement('aside');
     rail.id = 'ts-rail';
     rail.setAttribute('aria-label', 'Class tools');
@@ -73,7 +72,7 @@
     theme.setAttribute('role', 'switch');
     theme.setAttribute('aria-label', 'Bright mode');
     theme.innerHTML = '<span class="ts-theme-icon" aria-hidden="true"></span><span>Bright mode</span><span class="ts-theme-track" aria-hidden="true"><span></span></span>';
-    side.insertBefore(theme, side.querySelector('.ts-me'));
+    side.appendChild(theme);
     theme.addEventListener('click', () => {
       bright = !bright;
       g(() => localStorage.setItem('pokeayman-teacher-theme', bright ? 'bright' : 'dark'));
@@ -287,8 +286,11 @@
     });
 
     $('ts-name').textContent = $('logged-in-name-nav')?.textContent || g(() => currentTeacher, '') || 'Teacher';
-    $('ts-role').textContent = g(() => canAccessAdmin(), false) ? 'Admin' : ($('credit-balance-nav')?.textContent || 'Teacher');
-    const av = $('teacher-account-avatar')?.innerHTML || '🎓';
+    $('ts-name').title = $('ts-name').textContent;
+    const credits = $('credit-balance-nav')?.textContent?.trim();
+    $('ts-role').textContent = g(() => canAccessAdmin(), false) ? 'Admin · Unlimited credits' : (credits ? `${credits} credits` : 'Teacher');
+    const sourceAvatar = $('teacher-account-avatar')?.querySelector('img');
+    const av = sourceAvatar ? sourceAvatar.outerHTML : '<span class="ts-ball" role="img" aria-label="Poké Ball avatar"></span>';
     if ($('ts-avatar').innerHTML !== av) $('ts-avatar').innerHTML = av;
 
     if (inClass) {
@@ -347,7 +349,8 @@
     bar.querySelectorAll('[data-tsb]').forEach((b) => { const on = b.dataset.tsb === sec; b.classList.toggle('current', on); b.setAttribute('aria-current', on ? 'page' : 'false'); });
     const av = $('ts-avatar')?.innerHTML;
     const me = bar.querySelector('[data-tsb="me"] .tsb-ic');
-    if (av && av.includes('<img') && me.innerHTML !== av) me.innerHTML = av;
+    if (av && me.innerHTML !== av) me.innerHTML = av;
+    if (mq.matches && meOpen) document.body.style.setProperty('--ts-me-height', `${$('ts-sidebar').getBoundingClientRect().height}px`);
   }
 
   function start() { sync(); syncBottom(); setInterval(() => { sync(); syncBottom(); }, 700); }
