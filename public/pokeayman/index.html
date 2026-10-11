@@ -5864,6 +5864,8 @@ const canonicalStudentAccounts = new Map();
 const canonicalStudentAliases = new Map();
 const canonicalStudentLocks = new Map();
 let canonicalStudentIndexData = null;
+let canonicalStudentViewsData = null;
+let canonicalStudentViewsCache = [];
 function canonicalIdentityFromRecord(record) {
   return String(record?.student_id || record?.user_id || record?.profile_id || record?.account_id || '').trim();
 }
@@ -6283,7 +6285,6 @@ function getSchools() { return allData.filter(r => r.type === 'school'); }
 function getClasses(schoolName) { return allData.filter(r => r.type === 'class' && r.school_name === schoolName); }
 function getStudents(schoolName, className) {
   const membershipRows = allData.filter(r => (r.type === 'student' || r.type === 'student_membership') && r.school_name === schoolName && r.class_name === className);
-  rebuildCanonicalStudentIndex();
   // Also include students whose saved class list names this class (multi-class edits from Admin).
   const wanted = `${String(schoolName || '').trim().toLocaleLowerCase()} / ${String(className || '').trim().toLocaleLowerCase()}`;
   const seenKeys = new Set(membershipRows.map(r => canonicalStudentKey(r)));
@@ -6331,7 +6332,8 @@ function getAllStudents() {
   // Always project student views from the verified canonical-account map. A
   // membership row may provide school/class context, but never shared coins,
   // avatar, or collection state.
-  rebuildCanonicalStudentIndex();
+  if (canonicalStudentIndexData !== allData) rebuildCanonicalStudentIndex();
+  if (canonicalStudentViewsData === allData) return canonicalStudentViewsCache.slice();
   const byCanonicalId = new Map();
   allData.filter(record => record.type === 'student' || record.type === 'student_membership').forEach(record => {
     const canonicalId = canonicalStudentKey(record);
@@ -6353,7 +6355,9 @@ function getAllStudents() {
       class_memberships: [...memberships].join('||')
     });
   });
-  return [...byCanonicalId.values()];
+  canonicalStudentViewsData = allData;
+  canonicalStudentViewsCache = [...byCanonicalId.values()];
+  return canonicalStudentViewsCache.slice();
 }
 function getPokemons() {
   // Collapse duplicate source rows before any card, shop, collection, battle, or leaderboard render.
@@ -8375,6 +8379,8 @@ document.querySelectorAll('.class-view-tab').forEach(btn => {
     if (leavingBattle) resetBattleTabState();
     document.querySelectorAll('.class-subtab-content').forEach(c => c.classList.add('hidden'));
     document.getElementById('class-subtab-' + btn.dataset.classtab).classList.remove('hidden');
+    if (btn.dataset.classtab === 'quiz') { renderQuickAnswerStudents(); renderOngoingQuizzes(); renderQuizHistory(); }
+    if (btn.dataset.classtab === 'battle') populateBattleSelects();
     if (btn.dataset.classtab === 'games') renderGamesList();
   });
 });
@@ -8555,23 +8561,42 @@ function getStudentAchievementBadge(student) {
     .map(key => inspect(student[key])).find(Boolean) || '';
 }
 function hasChampionBadge(student) { return getStudentAchievementBadge(student) === 'champion'; }
-function getStudentRecordForCard(card) {
+function getStudentRecordForCard(card, studentsById = null, studentsByName = null) {
   const id = card?.dataset?.studentId || card?.dataset?.backendId || card?.dataset?.studentRecordId;
+  if (studentsById && studentsByName) {
+    if (id) return studentsById.get(String(id)) || null;
+    const name = card?.querySelector('.student-classmate-name, .battle-student-name, .game-player-name, [data-student-name]')?.textContent?.trim() || card?.dataset?.studentName || card?.dataset?.name || '';
+    return studentsByName.get(normalizeStudentIdentity(name)) || null;
+  }
   if (id) return getAllStudents().find(student => String(student.__backendId || '') === String(id)) || null;
   const name = card?.querySelector('.student-classmate-name, .battle-student-name, .game-player-name, [data-student-name]')?.textContent?.trim() || card?.dataset?.studentName || card?.dataset?.name || '';
   return getAllStudents().find(student => normalizeStudentIdentity(student.student_name) === normalizeStudentIdentity(name)) || null;
 }
 // Global placement remains available for other badges; Champion requires earned data.
+let globalAchievementMapData = null;
+let globalAchievementMapCache = new Map();
 function getGlobalAchievementMap() {
-  const ranked = mergeGlobalLeaderboardStudents().sort((a, b) => getStudentTotalValue(b) - getStudentTotalValue(a) || String(a.student_name || '').localeCompare(String(b.student_name || '')));
-  return new Map(ranked.slice(0, 3).map((student, index) => [normalizeStudentIdentity(student.student_name), ['CHAMPION', 'ELITE', 'BRONZE'][index]]));
+  if (globalAchievementMapData === allData) return globalAchievementMapCache;
+  const ranked = mergeGlobalLeaderboardStudents();
+  const metrics = getClassRosterMetrics(ranked);
+  ranked.sort((a, b) => metrics.valueFor(b) - metrics.valueFor(a) || String(a.student_name || '').localeCompare(String(b.student_name || '')));
+  globalAchievementMapCache = new Map(ranked.slice(0, 3).map((student, index) => [normalizeStudentIdentity(student.student_name), ['CHAMPION', 'ELITE', 'BRONZE'][index]]));
+  globalAchievementMapData = allData;
+  return globalAchievementMapCache;
 }
 function applyGlobalAchievementBadges(root = document) {
   const badgeMap = getGlobalAchievementMap();
+  const studentsById = new Map();
+  const studentsByName = new Map();
+  getAllStudents().forEach(student => {
+    if (student.__backendId) studentsById.set(String(student.__backendId), student);
+    const name = normalizeStudentIdentity(student.student_name);
+    if (name && !studentsByName.has(name)) studentsByName.set(name, student);
+  });
   root.querySelectorAll('[data-student-card], .student-classmate-card, .class-top3-card, #classmate-profile-modal .global-profile-card, #student-dashboard .global-profile-card, #view-student-profile .global-profile-card, #students-list > div, #quick-answer-students-grid > button, #battle-student-1-grid button, #battle-student-2-grid button, .game-player-card').forEach(card => {
     card.querySelectorAll('.global-achievement-badge, .global-rank-marker').forEach(badge => badge.remove());
     card.classList.remove('has-achievement-badge');
-    const student = getStudentRecordForCard(card);
+    const student = getStudentRecordForCard(card, studentsById, studentsByName);
     const name = student?.student_name || card.dataset.studentName || card.dataset.name || '';
     const rankedLabel = badgeMap.get(normalizeStudentIdentity(name));
     const earnedBadge = getStudentAchievementBadge(student);
@@ -8596,11 +8621,11 @@ function applyGlobalAchievementBadges(root = document) {
     card.appendChild(badge);
   });
 }
-function renderClassRosterCard(student, rank, viewOnly = false) {
+function renderClassRosterCard(student, rank, viewOnly = false, pokemonByOwner = null, valueFor = null) {
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const jsString = value => escape(JSON.stringify(String(value ?? '')));
   const name = escape(student.student_name);
-  const count = getPokemons().filter(p => p.owner === student.student_name).length;
+  const count = pokemonByOwner ? (pokemonByOwner.get(student.student_name) || []).length : getPokemons().filter(p => p.owner === student.student_name).length;
   const artwork = Number(student.avatar_pokemon_id);
   const onOpen = viewOnly ? `openLeaderboardStudentCollection(${jsString(student.student_name)})` : `openStudentProfileById(${jsString(student.__backendId)})`;
   return `<div class="trainer-student-card ${rank >= 0 ? `class-rank-${rank + 1}` : ''}" data-student-id="${escape(student.__backendId)}" data-student-name="${name}" role="button" tabindex="0" aria-label="View ${name}'s profile" onclick="${onOpen}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">
@@ -8608,7 +8633,7 @@ function renderClassRosterCard(student, rank, viewOnly = false) {
     <div class="student-avatar-stage">${Number.isInteger(artwork) && artwork > 0 ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${artwork}.png" alt="${name}'s Pokémon avatar" loading="lazy" decoding="async">` : `<span class="student-avatar-initial" aria-label="${name}'s initials">${escape(Array.from(student.student_name || '?')[0].toUpperCase())}</span>`}</div>
     <h3 class="student-roster-name">${name}</h3>
     <p class="student-roster-coins">${Number(student.coins) || 0}<span>coins</span></p>
-    <p class="student-roster-count">${count} Pokémon${viewOnly ? ` · ${Math.floor(getStudentTotalValue(student))} value` : ''}</p>
+    <p class="student-roster-count">${count} Pokémon${viewOnly ? ` · ${Math.floor(valueFor ? valueFor(student) : getStudentTotalValue(student))} value` : ''}</p>
     ${viewOnly ? '' : `<button type="button" class="btn-outline student-roster-edit" title="Edit ${name}" aria-label="Edit ${name}" onclick="event.stopPropagation();openEditStudentModal(${jsString(student.student_name)})">✎</button>`}
   </div>`;
 }
@@ -8629,6 +8654,33 @@ function getStudentTotalValue(student) {
     value += scaledPrice;
   });
   return value;
+}
+
+function getClassRosterMetrics(students) {
+  const pokemonByOwner = new Map();
+  getPokemons().forEach(pokemon => {
+    const owner = String(pokemon.owner || '');
+    if (!owner) return;
+    const owned = pokemonByOwner.get(owner) || [];
+    owned.push(pokemon);
+    pokemonByOwner.set(owner, owned);
+  });
+  const values = new Map();
+  const valueFor = student => {
+    const key = String(student.__canonicalStudentId || student.__backendId || student.student_name || '');
+    if (!values.has(key)) {
+      const pokemons = pokemonByOwner.get(student.student_name) || [];
+      let value = student.coins || 0;
+      pokemons.forEach(pokemon => {
+        const maxHP = getMaxHP(pokemon);
+        const currentHP = getHealedHP(pokemon);
+        value += (pokemon.pokemon_price || 0) * Math.max(0, Math.min(1, currentHP / maxHP));
+      });
+      values.set(key, value);
+    }
+    return values.get(key);
+  };
+  return { pokemonByOwner, valueFor };
 }
 
 function getTop3StudentsByValue() {
@@ -8686,8 +8738,9 @@ function renderTeacherDashboard() {
   } else if (isViewOnly) {
     // View-only mode for unassigned classes: show only student collection cards with name, coins, Pokémon count, and total value
     const students = getStudents(navSchool, navClass);
-    const top3ByCoins = students.slice().sort((a, b) => getStudentTotalValue(b) - getStudentTotalValue(a) || a.student_name.localeCompare(b.student_name)).slice(0, 3).map(s => s.student_name);
-    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name), true)).join('') || '<p class="student-roster-empty">No students yet.</p>';
+    const metrics = getClassRosterMetrics(students);
+    const top3ByCoins = students.slice().sort((a, b) => metrics.valueFor(b) - metrics.valueFor(a) || a.student_name.localeCompare(b.student_name)).slice(0, 3).map(s => s.student_name);
+    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name), true, metrics.pokemonByOwner, metrics.valueFor)).join('') || '<p class="student-roster-empty">No students yet.</p>';
     // Hide all tabs and management controls for view-only mode
     const classTabs = document.querySelectorAll('.class-view-tab');
     classTabs.forEach(tab => tab.style.display = 'none');
@@ -8695,12 +8748,13 @@ function renderTeacherDashboard() {
     if (addStudentContainer) addStudentContainer.style.display = 'none';
     const awardForm = document.getElementById('award-form');
     if (awardForm) awardForm.style.display = 'none';
-    applyGlobalAchievementBadges(document.getElementById('app-screen'));
+    applyGlobalAchievementBadges(document.getElementById('students-list'));
     return;
   } else {
     const students = getStudents(navSchool, navClass);
-    const top3ByCoins = students.slice().sort((a, b) => getStudentTotalValue(b) - getStudentTotalValue(a) || a.student_name.localeCompare(b.student_name)).slice(0, 3).map(s => s.student_name);
-    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name))).join('') || '<p class="student-roster-empty">No students yet.</p>';
+    const metrics = getClassRosterMetrics(students);
+    const top3ByCoins = students.slice().sort((a, b) => metrics.valueFor(b) - metrics.valueFor(a) || a.student_name.localeCompare(b.student_name)).slice(0, 3).map(s => s.student_name);
+    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name), false, metrics.pokemonByOwner, metrics.valueFor)).join('') || '<p class="student-roster-empty">No students yet.</p>';
     const award = document.getElementById('award-student');
     award.innerHTML = students.map(s => `<option value="${s.student_name}">${s.student_name}</option>`).join('');
     // Show tabs and controls for assigned teachers
@@ -8712,12 +8766,11 @@ function renderTeacherDashboard() {
     if (addStudentContainer) addStudentContainer.style.display = '';
     const awardForm = document.getElementById('award-form');
     if (awardForm) awardForm.style.display = '';
-    renderQuickAnswerStudents();
-    renderOngoingQuizzes();
-    renderQuizHistory();
-    populateBattleSelects();
+    const activeClassTab = document.querySelector('#class-tabs-container .class-view-tab[class*="-active"]:not([class*="inactive"])')?.dataset.classtab || 'students';
+    if (activeClassTab === 'quiz') { renderQuickAnswerStudents(); renderOngoingQuizzes(); renderQuizHistory(); }
+    if (activeClassTab === 'battle') populateBattleSelects();
   }
-  applyGlobalAchievementBadges(document.getElementById('app-screen'));
+  applyGlobalAchievementBadges(document.getElementById('students-list'));
 }
 
 
@@ -11648,6 +11701,8 @@ async function openEditSchoolModal(schoolId, schoolName) {
     allData = allData.filter(record => !(record.type === 'teacher_school_assignment' && record.assigned_school === schoolName));
     allData.push(...uniqueTeacherIds.map(teacherId => { const teacher = getTeachers().find(record => String(record.__backendId || '').trim() === teacherId); return { type: 'teacher_school_assignment', assigned_teacher: teacher?.teacher_name || '', assigned_teacher_id: teacherId, assigned_school: newName, assigned_class: '' }; }));
     canonicalStudentIndexData = null;
+    canonicalStudentViewsData = null;
+    globalAchievementMapData = null;
     // Update all classes in this school with new school name
     const classesInSchool = getClasses(schoolName);
     const studentsInSchool = getAllStudents().filter(s => s.school_name === schoolName);
