@@ -5771,6 +5771,7 @@ function initPokemonArch() {
   render(); rafId=requestAnimationFrame(animate); root._cleanupCircularCarousel=()=>{cancelAnimationFrame(rafId);resizeObserver.disconnect();intersectionObserver.disconnect();};
 }
 initPokemonArch();
+document.querySelectorAll('.home-side-card').forEach(c=>c.addEventListener('click',()=>{const id=Number(c.dataset.sidePokemon);const cat=typeof pokemonCatalog!=='undefined'?pokemonCatalog.find(p=>Number(p.id)===id):null;if(typeof openPokemonModal==='function')openPokemonModal({id,name:c.getAttribute('aria-label'),rarity:cat?.rarity||'rare',price:cat?.price||0,power:cat?.power||0,hp:cat?.hp||50},false,'');}));
 
 document.getElementById('home-student-entry')?.addEventListener('click', () => document.getElementById('student-login-toggle')?.click());
 document.getElementById('home-teacher-entry')?.addEventListener('click', () => document.getElementById('teacher-login-toggle')?.click());
