@@ -1,4 +1,5 @@
 # Class screen refresh
+- [ ] Replace Hangman drawing with eight animated stages and verify wrong guesses, final result and reduced motion.
 - [x] Organize sidebar teacher identity, long names, default Poké Ball avatar and logout; desktop dark/bright and mobile presentation verified with a long sample name. Signed-in account actions were not exercised.
 - [x] Replace home circular gallery with fan cards, official Pokémon artwork and illustrated habitat backgrounds; desktop selection, admin configuration refresh, phone fit and both login popups verified with no runtime errors.
 - [ ] Simplify every student game to 5/10/15-word launch buttons with no score, reward or timer setup; preserve teacher controls.
