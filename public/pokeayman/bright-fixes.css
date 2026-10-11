@@ -51,30 +51,30 @@ html body.ts-bright .pk-bf-ink { color: var(--color-text-primary) !important; -w
 
 /* Legacy ID-scoped gradients beat class-only overrides. Clear the whole
    background, not just its colour, and cover decorative pseudo-elements. */
-html body.ts-bright :is(#view-students, #student-dashboard, #word-bank-content, #word-banks-content, #vocab-list-container, #vocab-lists-container, #teacher-card-modal, #teacher-profile-modal, #app, body) :is(.vocab-list-card, .game-vocab-list-card, .ga-cart, .battle-arena-panel, .teacher-avatar-option),
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.vocab-list-card, .game-vocab-list-card, .ga-cart, .battle-arena-panel, .teacher-avatar-option),
 html body.ts-bright .th-grid .teacher-avatar-option {
   background: var(--color-surface) !important;
   border-color: var(--color-border) !important;
   color: var(--color-text-primary) !important;
   box-shadow: var(--shadow-card) !important;
 }
-html body.ts-bright :is(#view-students, #student-dashboard, body) :is(.vocab-list-card, .game-vocab-list-card, .ga-cart, .battle-arena-panel)::before,
-html body.ts-bright :is(#view-students, #student-dashboard, body) :is(.vocab-list-card, .game-vocab-list-card, .ga-cart, .battle-arena-panel)::after {
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.vocab-list-card, .game-vocab-list-card, .ga-cart, .battle-arena-panel)::before,
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.vocab-list-card, .game-vocab-list-card, .ga-cart, .battle-arena-panel)::after {
   background: none !important;
 }
-html body.ts-bright :is(#view-students, #student-dashboard, body) :is(.ga-cart-body, .battle-arena-panel > .flex.items-center.justify-between) {
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.ga-cart-body, .battle-arena-panel > .flex.items-center.justify-between) {
   background: var(--color-surface) !important;
   border-color: var(--color-border) !important;
   box-shadow: none !important;
 }
-html body.ts-bright :is(#view-students, #student-dashboard, body) :is(.ga-cart-name, .vocab-list-name, .student-vocab-list-name, .battle-arena-panel h3, .vocab-list-card p, .vocab-list-card strong, .vocab-list-card span),
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.ga-cart-name, .vocab-list-name, .student-vocab-list-name, .battle-arena-panel h3, .vocab-list-card p, .vocab-list-card strong, .vocab-list-card span),
 html body.ts-bright .th-grid .teacher-avatar-option > span {
   color: var(--color-text-primary) !important;
   -webkit-text-fill-color: currentColor !important;
   text-shadow: none !important;
 }
-html body.ts-bright :is(#view-students, #student-dashboard, body) :is(.ga-cart-desc, .vocab-list-count) { color: var(--color-text-secondary) !important; }
-html body.ts-bright :is(#view-students, #student-dashboard, body) .vocab-card-mode {
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.ga-cart-desc, .vocab-list-count) { color: var(--color-text-secondary) !important; }
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) .vocab-card-mode {
   background: var(--color-surface-selected) !important;
   color: var(--color-text-primary) !important;
   border-color: var(--color-border-strong) !important;
@@ -98,4 +98,22 @@ html body.ts-bright {
   --arena-muted: var(--color-text-secondary);
   --arena-line: var(--color-border);
   --arena-shadow: var(--shadow-card);
+}
+
+html body.ts-bright :is(#games-options-container, #student-games-options-container) > div,
+html body.ts-bright :is(#games-options-container, #student-games-options-container) [role="group"] .ga-cart,
+html body.ts-bright :is(#games-options-container, #student-games-options-container) [role="group"] .ga-cart > .ga-cart-body {
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+html body.ts-bright :is(#games-options-container, #student-games-options-container) [role="group"] .ga-cart > .ga-cart-play {
+  background: var(--color-brand) !important;
+  color: var(--color-text-on-brand) !important;
+}
+html body.ts-bright .trainer-hub :is(.th-panel, .th-progress, .th-grid) {
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
 }
