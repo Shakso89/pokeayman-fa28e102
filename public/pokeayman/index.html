@@ -12593,10 +12593,11 @@ function getGameSource(listRef) {
 function canManageClass(schoolName, className) {
   if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return false;
   if (isAymanTeacher()) return true;
-  const school = String(schoolName || '').trim();
-  const cls = String(className || '').trim();
-  return getAssignedSchools(currentTeacher).some(item => String(item.assigned_school || '').trim() === school)
-    || getAssignedClasses(currentTeacher).some(item => String(item.assigned_school || '').trim() === school && String(item.assigned_class || '').trim() === cls);
+  const norm = v => String(v || '').trim().toLocaleLowerCase();
+  const school = norm(schoolName);
+  const cls = norm(className);
+  return getAssignedSchools(currentTeacher).some(item => norm(item.assigned_school) === school)
+    || getAssignedClasses(currentTeacher).some(item => norm(item.assigned_school) === school && norm(item.assigned_class) === cls);
 }
 function getAuthorizedMyListsWords(listRefs) {
   if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return { ok: false, reason: 'Teacher authorization is required.' };
@@ -12872,9 +12873,10 @@ function renderGamesList() {
     sourceTabs[1].addEventListener('click', () => { selectedGameList = []; selectedGameSource = 'class_lists'; selectedGameSession = null; renderGamesList(); });
   }
   if (isStudentGames && !selectedStudentGamesClassKey && enrolledClasses.length) { selectedStudentGamesClassKey = `${enrolledClasses[0].school_name}||${enrolledClasses[0].class_name}`; navSchool = enrolledClasses[0].school_name; navClass = enrolledClasses[0].class_name; }
-  const lists = currentRole === 'teacher' ? (selectedGameSource === 'my_lists' ? teacherOwnLists : classLists) : (isStudentGames && selectedStudentGamesScope !== 'all' ? classLists.filter(list => list.__gamesClassKey === selectedStudentGamesClassKey) : classLists);
+  const classListsBlocked = currentRole === 'teacher' && selectedGameSource !== 'my_lists' && !teacherClassAuthorized;
+  const lists = currentRole === 'teacher' ? (selectedGameSource === 'my_lists' ? teacherOwnLists : (classListsBlocked ? [] : classLists)) : (isStudentGames && selectedStudentGamesScope !== 'all' ? classLists.filter(list => list.__gamesClassKey === selectedStudentGamesClassKey) : classLists);
   const listArea = document.createElement('div');
-  listArea.innerHTML = !lists.length ? `<p class="text-xs text-gray-400 text-center py-4">${currentRole === 'teacher' && selectedGameSource === 'my_lists' ? 'No vocabulary lists created by you yet.' : currentRole === 'teacher' ? 'No vocabulary lists assigned to this class yet.' : 'No vocabulary lists available. Create one first!'}</p>` : '';
+  listArea.innerHTML = !lists.length ? `<p class="text-xs text-gray-400 text-center py-4">${classListsBlocked ? 'Class lists are only available for classes you manage. Use My lists to play with these students.' : currentRole === 'teacher' && selectedGameSource === 'my_lists' ? 'No vocabulary lists created by you yet.' : currentRole === 'teacher' ? 'No vocabulary lists assigned to this class yet.' : 'No vocabulary lists available. Create one first!'}</p>` : '';
   selector.appendChild(listArea);
   
   // Keep every available list visible; only lists with at least two words can launch a game.
