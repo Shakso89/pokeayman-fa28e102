@@ -9,7 +9,7 @@
     document.body.classList.toggle('ts-collapsed', collapsed);
     const control = $('ts-sidebar-toggle');
     if (control) { control.textContent = collapsed ? '☰' : '‹'; control.setAttribute('aria-expanded', String(!collapsed)); control.setAttribute('aria-label', collapsed ? 'Open sidebar' : 'Collapse sidebar'); control.title = control.getAttribute('aria-label'); }
-    if ($('ts-sidebar')) $('ts-sidebar').inert = collapsed;
+    if ($('ts-sidebar')) $('ts-sidebar').inert = collapsed && !window.matchMedia('(max-width: 1024px)').matches;
   }
   function applyTheme() {
     document.body.classList.toggle('ts-bright', bright);
