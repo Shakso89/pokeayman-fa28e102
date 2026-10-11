@@ -21,3 +21,5 @@
 - Design tokens live in public/pokeayman/tokens.css (--pk-*, loaded first); new or refactored styles use tokens, and bright mode overrides token values under body.ts-bright only. Why: one source for colour, type, spacing, radius, elevation and motion across 24 legacy stylesheets.
 - Shared buttons, fields, tabs, cards, badges and empty states live in public/pokeayman/components.css (after feature styles, before responsive.css); feature-special visuals (rarity, holo, battle, celebrations, game tiles) are excluded. Why: one interaction language without breaking intentional variety.
 - Page-level hierarchy refinements live in public/pokeayman/pages.css (after components.css), token-based and presentation-only. Why: refines composition per page without touching legacy markup or handlers.
+
+- Schedule presentation uses workspace-refresh.css and scheduleEventCard for weekly and one-time entries; agenda clones preserve source action delegation. Why: keeps planner colours and icon actions consistent without changing schedule persistence.
