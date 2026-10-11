@@ -8193,10 +8193,32 @@ function renderTeacherOwnedVocabLists() {
     const lists = getVocabLists('', '').filter(list => (String(list.teacher_id || '').trim() === String(verifiedTeacherIdentity() || '').trim()) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey))
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
     if (ownerScope !== currentTeacherZoneOwnerScope() || requestVersion !== teacherZoneRequestVersion || teacherWorkspaceKey !== teacherStorageKey(ownerScope)) return;
-    if (!lists.length) { status.textContent = 'You have not created any vocabulary lists yet.'; return; }
-    status.textContent = `${lists.length} list${lists.length === 1 ? '' : 's'} across your classes`;
+    const myId = String(verifiedTeacherIdentity() || '').trim();
+    const otherLists = getVocabLists('', '').filter(list => !((String(list.teacher_id || '').trim() === myId && myId) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey)))
+      .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
+    if (!lists.length && !otherLists.length) { status.textContent = 'You have not created any vocabulary lists yet.'; return; }
+    status.textContent = `${lists.length} of your list${lists.length === 1 ? '' : 's'} · ${otherLists.length} shared by other teachers`;
     const escape = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
-    grid.innerHTML = lists.map(list => {
+    const sectionHead = text => `<div style="grid-column:1/-1;display:flex;align-items:center;gap:.6rem;margin:.35rem 0 0;"><span style="font-weight:900;color:#fef3c7;letter-spacing:.04em;text-transform:uppercase;font-size:.8rem;">${text}</span><span style="flex:1;height:1px;background:rgba(253,224,71,.25);"></span></div>`;
+    const teacherByline = list => {
+      const rec = getTeachers().find(t => (list.teacher_id && String(t.__backendId) === String(list.teacher_id)) || normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(list.teacher_name || list.owner));
+      const name = escape(rec?.teacher_name || list.teacher_name || list.owner || 'Another teacher');
+      const src = rec ? teacherAvatarSrc(rec.teacher_avatar) : '';
+      const avatar = src ? `<img src="${src}" alt="${name}'s avatar" loading="lazy" style="width:2.4rem;height:2.4rem;object-fit:contain;border-radius:9999px;background:rgba(253,224,71,.12);padding:.15rem;">` : `<span aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;width:2.4rem;height:2.4rem;border-radius:9999px;background:rgba(253,224,71,.12);font-size:1.2rem;">🎓</span>`;
+      return `<span style="display:inline-flex;align-items:center;gap:.45rem;">${avatar}<span style="font-size:.75rem;font-weight:800;color:#fde68a;">by ${name}</span></span>`;
+    };
+    const schoolCard = list => {
+      const words = getVocabWords(list, list.vocab_list_school, list.vocab_list_class);
+      const safeId = String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'");
+      const safeName = escape(list.vocab_list_name || 'Untitled list');
+      const school = escape(list.vocab_list_school || '');
+      const className = escape(list.vocab_list_class || 'Class unavailable');
+      const context = school ? `${className} · ${school}` : className;
+      const coverAction = `role="button" tabindex="0" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault();event.stopPropagation();navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"`;
+      const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${escape(list.vocab_cover_image_url)}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
+      return `<article class="vocab-list-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="flex items-start justify-center gap-3">${teacherByline(list)}<span class="student-vocab-list-name vocab-list-name mt-2">${safeName}</span></div><p class="vocab-list-count">${context}</p>${cover}<p class="vocab-list-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div><div class="vocab-card-actions"><button type="button" class="vocab-cover-button" onclick="openVocabSharePopupFor('${safeId}','${safeName.replace(/'/g, "\\'")}')">🔗 Share to my classes</button></div></article>`;
+    };
+    grid.innerHTML = (lists.length ? sectionHead('My lists') : '') + lists.map(list => {
       const words = getVocabWords(list, list.vocab_list_school, list.vocab_list_class);
       const safeId = String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'");
       const safeName = escape(list.vocab_list_name || 'Untitled list');
