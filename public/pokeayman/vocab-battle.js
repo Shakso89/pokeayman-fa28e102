@@ -210,7 +210,8 @@
   }
 
   async function requestClaim(button) {
-    if (!battle || battle.claimed) return;
+    if (!battle || battle.claimed || battle.claimSending) return;
+    battle.claimSending = true;
     const foe = battle.foe;
     const existing = allData.find((r) => r.type === 'battle_claim' && r.status === 'pending' && r.student_id === battle.studentId && String(r.shop_record_id) === String(foe.__backendId));
     if (existing) { toast('Your teacher already has this claim request.'); battle.claimed = true; button.disabled = true; return; }
@@ -227,7 +228,7 @@
       pokemon_rarity: foe.shop_pokemon_rarity || '', pokemon_price: Number(foe.shop_pokemon_price) || 0,
       pokemon_power: Number(foe.shop_pokemon_power) || 0, created_at: new Date().toISOString(),
     });
-    if (!result?.isOk) { button.disabled = false; button.textContent = '🎁 Request claim'; toast('Could not send the claim. Try again.'); return; }
+    if (!result?.isOk) { battle.claimSending = false; button.disabled = false; button.textContent = '🎁 Request claim'; toast('Could not send the claim. Try again.'); return; }
     const saved = result.data || result;
     const claimId = saved?.__backendId || saved?.id;
     if (claimId) {
