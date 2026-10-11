@@ -4583,14 +4583,14 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     #student-dashboard #rank-badge > span:first-child, #view-student-profile #profile-rank-badge > span:first-child { font-size: .5rem !important; line-height: 1 !important; }
     #student-dashboard #quiz-solver-badge, #view-student-profile #profile-quiz-solver-badge { display: inline-flex; align-items: center; justify-content: center; }
     #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 { grid-column: 1 / -1; grid-row: 4; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; gap: .4rem; }
-    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #student-logout-btn { grid-column: 2; grid-row: 2 / 4; justify-self: end; width: auto; min-width: 5rem; }
+    #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .student-profile-actions { grid-column: 2; grid-row: 2 / 4; justify-self: end; width: auto; min-width: 0; }
     #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #top3-badge.hidden { display: none !important; }
     #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 > div { min-width: 0; min-height: 3.6rem; display: flex; flex-direction: column; justify-content: center; padding: .35rem .2rem; }
     @media (max-width: 420px) {
       #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass { gap: .3rem .45rem; padding: .65rem; }
       #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 { gap: .3rem; }
       #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 > div { min-height: 3.3rem; }
-      #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #student-logout-btn { min-width: 4.5rem; }
+      #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .student-profile-actions { min-width: 0; }
     }
    </style>
    <div class="max-w-5xl mx-auto px-4">
@@ -4634,7 +4634,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
        <p class="my-classes-title">My Classes</p>
        <div id="my-classes-list" class="my-classes-list"></div>
       </div>
-      <button id="student-logout-btn" class="w-full px-4 py-2 rounded-lg font-semibold text-sm bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all">Logout</button>
+      <div class="student-profile-actions"><button type="button" id="student-theme-toggle" class="student-theme-toggle" role="switch" aria-checked="false" aria-label="Bright mode" title="Switch to bright mode"><span class="student-theme-icon" aria-hidden="true">☾</span><span class="student-theme-label">Bright mode</span></button><button id="student-logout-btn" class="w-full px-4 py-2 rounded-lg font-semibold text-sm bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all">Logout</button></div>
      </div><!-- Right Column: Tabs & Content -->
      <div class="flex-1 flex flex-col min-w-0">
       <div id="student-navigation-groups" class="flex gap-2 mb-4 flex-wrap" role="navigation" aria-label="Student dashboard navigation">
@@ -4650,7 +4650,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         <div id="student-nav-games-menu" class="student-nav-menu hidden absolute left-0 top-full z-30 mt-2 min-w-40 rounded-xl p-1" role="menu"><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="games" role="menuitem">🎮 Vocabulary Games</button>
         </div>
        </div>
-       <button type="button" id="student-theme-toggle" class="student-theme-toggle" role="switch" aria-checked="false" aria-label="Bright mode" title="Switch to bright mode"><span class="student-theme-icon" aria-hidden="true">☾</span><span class="student-theme-label">Bright mode</span></button>
       </div>
       <div id="student-tab-collection" class="student-dashboard-content flex-1 overflow-y-auto">
        <div id="my-pokemon-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>

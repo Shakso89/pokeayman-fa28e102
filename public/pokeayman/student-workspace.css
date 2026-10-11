@@ -81,9 +81,13 @@ html body #student-dashboard #quiz-solver-badge {
 }
 html body #student-dashboard #rank-badge > span { font-size: 12px !important; }
 
-/* ---- Logout ---- */
-html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #student-logout-btn {
-  grid-column: 3 !important; grid-row: 1 !important; align-self: start;
+/* ---- Profile actions: theme switch beside logout ---- */
+html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .student-profile-actions {
+  grid-column: 3 !important; grid-row: 1 / span 2 !important; align-self: start;
+  display: flex; align-items: center; justify-content: flex-end; gap: .5rem; min-width: 0;
+}
+html body #student-dashboard .student-profile-actions > #student-logout-btn {
+  width: auto !important; min-width: 0; flex: 0 0 auto;
   background: var(--kid-coral) !important; color: #ffffff !important;
   border: none !important; border-radius: 1.1rem !important;
   box-shadow: 0 4px 0 #D64545, 0 8px 16px rgba(255, 107, 107, .35) !important;
@@ -336,7 +340,7 @@ html body #student-dashboard#student-dashboard #student-tab-shop .stc-dot {
 /* Student display mode switch shares the teacher theme preference. */
 html body #student-dashboard #student-theme-toggle {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-  min-height: 2.75rem; margin-left: auto; padding: .55rem .85rem;
+  min-height: 2.75rem; margin: 0; padding: .55rem .85rem; flex: 0 0 auto;
   border: 1px solid var(--color-border-strong); border-radius: .8rem;
   background: var(--color-surface); color: var(--color-text-primary);
   box-shadow: var(--shadow-card); font: 750 .82rem/1 Figtree, sans-serif;
@@ -345,6 +349,13 @@ html body #student-dashboard #student-theme-toggle {
 html body #student-dashboard #student-theme-toggle:hover { border-color: var(--color-brand-secondary); transform: translateY(-1px); }
 html body #student-dashboard #student-theme-toggle:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
 html body #student-dashboard #student-theme-toggle .student-theme-icon { font-size: 1.05rem; }
+@media (max-width: 520px) {
+  html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .student-profile-actions {
+    grid-column: 1 / -1 !important; grid-row: 5 !important; justify-self: center; align-self: center;
+    gap: .45rem; padding-top: .35rem;
+  }
+  html body #student-dashboard .student-profile-actions > #student-logout-btn { min-width: 5.5rem; padding: .5rem .75rem !important; }
+}
 
 /* Student dashboard dark mode. Teacher and student controls share ts-bright; dark is the default. */
 html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) {
