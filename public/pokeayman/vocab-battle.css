@@ -65,6 +65,22 @@ body.ts-bright .vb-slot.is-filled { border-color: #b45309; color: #b45309; }
 .vb-me-name { font-weight: 900; font-size: .95rem; }
 .vb-me.vb-hit { animation: vb-shake .45s ease; }
 
+/* Owned partner and wild opponent share an unframed, stable battlefield. */
+.vb-stage .vb-matchup { display: grid; grid-template-columns: minmax(0,1fr) 38px minmax(0,1fr); align-items: start; gap: 12px; width: 100%; }
+.vb-stage .vb-matchup :is(.vb-me,.vb-foe) { min-width: 0; width: 100%; padding-bottom: 0; gap: 6px; text-align: center; }
+.vb-stage .vb-matchup :is(.vb-me-art,.vb-foe-art) { display: block; width: min(100%,190px); height: 190px; object-fit: contain; flex: none; filter: var(--detail-art-shadow); }
+.vb-stage .vb-matchup :is(.vb-partner-name,.vb-foe-name) { font-weight: 900; font-size: 1.05rem; overflow-wrap: anywhere; margin: 0; }
+.vb-stage .vb-matchup :is(.vb-me-name,.vb-foe-rarity) { min-height: 32px; display: grid; align-items: center; margin: 0; overflow-wrap: anywhere; font-size: .75rem; color: var(--color-text-secondary); letter-spacing: 0; }
+.vb-stage .vb-matchup .vb-hp { width: 100%; }
+.vb-stage .vb-versus { align-self: center; color: var(--color-brand); font: 900 1.25rem var(--font-display); text-align: center; }
+.vb-stage .vb-trainer-fallback { display: grid !important; place-items: center; font-size: 3rem; font-weight: 900; color: var(--color-text-secondary); }
+.vb-stage .vb-me-art.vb-hit { animation: vb-punch .55s both; }
+@media (max-width: 640px) {
+  .vb-stage .vb-matchup { gap: 6px; grid-template-columns: minmax(0,1fr) 28px minmax(0,1fr); }
+  .vb-stage .vb-matchup :is(.vb-me-art,.vb-foe-art) { height: 140px; }
+  .vb-stage .vb-matchup :is(.vb-partner-name,.vb-foe-name) { font-size: .9rem; }
+}
+
 .vb-result { display: flex; flex-direction: column; align-items: center; gap: .8rem; text-align: center; padding: 2rem 1rem; }
 .vb-result-art { width: clamp(140px, 34vw, 220px); filter: drop-shadow(0 16px 28px rgba(0, 0, 0, .5)); animation: vb-pop .5s ease; }
 .vb-result-title { font-size: 1.8rem; font-weight: 900; }
