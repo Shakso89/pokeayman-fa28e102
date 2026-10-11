@@ -17852,16 +17852,9 @@ async function publishAdminConfig(nextConfig) {
 
 // Load home arch Pokémon configuration from localStorage
 function loadHomeArchConfig() {
-  const stored = localStorage.getItem('homeArchPokemon');
-  if (stored) {
-    try {
-      window.homeArchPokemon = JSON.parse(stored);
-    } catch (e) {
-      window.homeArchPokemon = [144, 145, 146, 150, 249, 250]; // Default
-    }
-  } else {
-    window.homeArchPokemon = [144, 145, 146, 150, 249, 250]; // Default
-  }
+  // The published configuration is authoritative for every visitor.
+  const ids = (readPublishedConfig().homeArchPokemon || DEFAULT_PUBLISHED_CONFIG.homeArchPokemon).map(Number);
+  window.homeArchPokemon = ids;
   updateHomeArch();
 }
 
