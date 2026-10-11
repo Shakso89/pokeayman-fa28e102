@@ -130,7 +130,7 @@
     if (!source || !target) { impact(); return; }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const layer = document.createElement('div');
-    layer.className = `vb-attack-layer${retaliation ? ' vb-counter' : ''}`;
+    layer.className = `vb-attack-layer vb-fire${retaliation ? ' vb-counter' : ''}`;
     layer.setAttribute('aria-hidden', 'true');
     root.appendChild(layer);
     const bounds = root.getBoundingClientRect();
