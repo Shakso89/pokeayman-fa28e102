@@ -8229,8 +8229,43 @@ function renderTeacherOwnedVocabLists() {
       const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${escape(list.vocab_cover_image_url)}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
       const owned = currentRole === 'teacher' && verifiedTeacherIdentity() && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey;
       return `<article class="vocab-list-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="flex items-start justify-center gap-3"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name mt-2">${safeName}</span></div><p class="vocab-list-count">${context}</p>${cover}<p class="vocab-list-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div><div class="vocab-card-actions"><button type="button" class="vocab-card-edit" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Edit</button>${owned ? `<button type="button" class="vocab-cover-button" onclick="openVocabCoverPicker('${safeId}','${safeName.replace(/'/g, "\\'")}')">▣ Cover</button><button type="button" class="vocab-card-delete" onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeName.replace(/'/g, "\\'")}',this)">Delete</button>` : ''}</div></article>`;
-    }).join('');
+    }).join('') + (otherLists.length ? sectionHead('School lists · shared by other teachers') + otherLists.map(schoolCard).join('') : '');
   } catch (error) { status.textContent = 'Could not load your vocabulary lists. Please refresh and try again.'; }
+}
+
+// Standalone share popup: share any visible list (e.g. another teacher's) to the current teacher's classes.
+function openVocabSharePopupFor(listId, listName) {
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const canonicalId = normalizeVocabId(listId);
+  const findRec = () => allData.find(r => ['vocab_list','vocabulary_list'].includes(String(r.type || '').toLowerCase()) && normalizeVocabId(r.vocab_list_id ?? r.list_id ?? r.vocabulary_list_id ?? r.__backendId) === canonicalId);
+  const rec = findRec();
+  if (!rec) { toast('Could not find this list. Please refresh and try again.'); return; }
+  const homeClass = String(rec.vocab_list_class || rec.class_name || '');
+  const schools = [...new Set(allData.filter(r => r.type === 'class').map(r => r.school_name).filter(Boolean))];
+  const classes = schools.flatMap(s => getClasses(s)).filter(c => c.class_name !== homeClass);
+  if (!classes.length) { toast('There are no other classes to share with yet.'); return; }
+  const current = vocabSharedClasses(rec);
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[11000] p-4';
+  modal.innerHTML = `<div class="vocab-share-popup-card" role="dialog" aria-modal="true" aria-labelledby="school-share-title" style="max-width:26rem;width:100%;"><div class="flex items-center justify-between gap-3 mb-3"><h3 id="school-share-title" class="font-black text-lg">Share "${escape(listName)}"</h3><button type="button" class="vocab-editor-close" data-share-close aria-label="Close sharing popup">×</button></div><p class="text-sm mb-2">Pick the classes that can use this list. Words are not copied — edits show everywhere.</p><div class="space-y-2 max-h-56 overflow-y-auto">${classes.map(c => `<label class="flex items-center gap-2 rounded-lg border border-indigo-200/30 p-2"><input type="checkbox" class="share-class-choice" value="${escape(c.class_name)}" ${current.includes(c.class_name) ? 'checked' : ''}><span>${escape(c.class_name)}${c.school_name ? ` · ${escape(c.school_name)}` : ''}</span></label>`).join('')}</div><div class="flex gap-2 mt-3"><button type="button" class="vocab-editor-primary flex-1" data-share-save>Save sharing</button><button type="button" class="vocab-editor-secondary flex-1" data-share-close>Cancel</button></div></div>`;
+  document.body.appendChild(modal);
+  modal.querySelectorAll('[data-share-close]').forEach(b => b.addEventListener('click', () => modal.remove()));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  modal.querySelector('[data-share-save]').addEventListener('click', async () => {
+    const btn = modal.querySelector('[data-share-save]');
+    const fresh = findRec();
+    if (!fresh) { toast('Could not find this list. Please refresh and try again.'); return; }
+    const chosen = [...modal.querySelectorAll('.share-class-choice:checked')].map(i => i.value);
+    btn.disabled = true;
+    try {
+      const res = await window.dataSdk.update({ ...fresh, shared_classes: chosen });
+      if (!res?.isOk) { toast('Sharing could not be saved. Please try again.'); return; }
+      fresh.shared_classes = chosen;
+      toast(chosen.length ? `"${listName}" is now available in ${chosen.join(', ')}.` : `"${listName}" is no longer shared.`);
+      modal.remove();
+      try { renderVocabLists(); renderTeacherOwnedVocabLists(); } catch (e) {}
+    } finally { btn.disabled = false; }
+  });
 }
 function setTeacherZonePanel(panelId, tabId) {
   const scope = currentTeacherZoneOwnerScope();
