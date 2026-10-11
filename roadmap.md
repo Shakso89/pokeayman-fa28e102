@@ -1,4 +1,5 @@
 # Schedule redesign
+- [ ] Fix selected schedule colours being replaced and enlarge the picker and card marker; verify save/reopen and both display modes.
 - [x] Refresh weekly planner, class cards, hours overview and editor colours in both modes; existing table/agenda edit and day controls checked with sample entries, no narrow overflow or runtime errors, routing test passed. Saved records untouched; authenticated schedule writes not exercised.
 
 # Workspace UI refresh
