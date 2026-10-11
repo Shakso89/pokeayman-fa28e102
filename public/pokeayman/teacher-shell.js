@@ -311,36 +311,30 @@
     }
   }
 
-  // Tablet/phone: bottom tab bar that opens the sidebar as a bottom sheet.
+  // Tablet/phone: bottom tab bar; the sidebar shows the current section's tools as a strip above it.
   const mq = window.matchMedia('(max-width: 1024px)');
-  function closeSheet() { document.body.classList.remove('ts-sheet-open'); document.body.removeAttribute('data-ts-sheet'); document.querySelectorAll('#ts-bottom [data-tsb]').forEach((b) => b.setAttribute('aria-expanded', 'false')); }
-  function openSheet(section) {
-    if (document.body.dataset.tsSheet === section) return closeSheet();
-    document.body.classList.add('ts-sheet-open'); document.body.dataset.tsSheet = section;
-    document.querySelectorAll('#ts-bottom [data-tsb]').forEach((b) => b.setAttribute('aria-expanded', String(b.dataset.tsb === section)));
-    document.querySelectorAll('#ts-sidebar [data-ts-toggle]').forEach((t) => { const p = $(t.getAttribute('aria-controls')); const on = t.dataset.tsToggle === section; if (p) p.hidden = !on; t.setAttribute('aria-expanded', String(on)); });
-  }
+  let meOpen = false;
+  function closeSheet() { meOpen = false; syncBottom(); }
   function buildBottom() {
     if ($('ts-bottom') || !$('ts-sidebar')) return;
     const bar = document.createElement('nav');
     bar.id = 'ts-bottom'; bar.setAttribute('aria-label', 'Teacher navigation');
     bar.innerHTML = [['class', '🏫', 'Classroom'], ['switch', '⇄', 'Classes'], ['zone', '🧰', 'Teacher Zone'], ['admin', '⚙️', 'Admin'], ['me', '👤', 'Me']]
-      .map(([k, i, l]) => `<button type="button" data-tsb="${k}" aria-expanded="false"><span class="tsb-ic" aria-hidden="true">${i}</span><span class="tsb-l">${l}</span></button>`).join('');
+      .map(([k, i, l]) => `<button type="button" data-tsb="${k}"><span class="tsb-ic" aria-hidden="true">${i}</span><span class="tsb-l">${l}</span></button>`).join('');
     const scrim = document.createElement('div'); scrim.id = 'ts-sheet-scrim';
     document.body.append(scrim, bar);
     scrim.addEventListener('click', closeSheet);
     bar.addEventListener('click', (e) => {
       const b = e.target.closest('[data-tsb]'); if (!b) return;
-      if (b.dataset.tsb === 'switch') { closeSheet(); return togglePop(); }
-      openSheet(b.dataset.tsb);
+      const k = b.dataset.tsb; meOpen = k === 'me' ? !meOpen : false;
+      if (k === 'switch') togglePop();
+      else if (k === 'class') { if (!needClass()) { const s = navSchool, c = navClass; g(() => showMainTab('dashboard')); g(() => navigateTo('students', s, c)); } }
+      else if (k === 'zone') { g(() => showMainTab('teacher-zone')); }
+      else if (k === 'admin') { g(() => showMainTab('admin')); }
+      syncBottom();
     });
-    $('ts-sidebar').addEventListener('click', (e) => {
-      if (!mq.matches) return;
-      const b = e.target.closest('button');
-      if (b && !b.dataset.tsToggle && b.id !== 'ts-theme-toggle') setTimeout(closeSheet, 0);
-    });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
-    mq.addEventListener?.('change', closeSheet);
+    $('ts-sidebar').addEventListener('click', (e) => { if (mq.matches && e.target.closest('.ts-logout')) meOpen = false; });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && meOpen) closeSheet(); });
   }
   function syncBottom() {
     buildBottom();
@@ -348,8 +342,9 @@
     bar.querySelector('[data-tsb="admin"]').hidden = !g(() => canAccessAdmin(), false);
     bar.querySelector('[data-tsb="zone"]').hidden = !g(() => canAccessTeacherZone(), false);
     const tab = g(() => activeMainTab, 'dashboard');
-    const cur = { class: tab === 'dashboard', zone: tab === 'teacher-zone', admin: tab === 'admin' };
-    bar.querySelectorAll('[data-tsb]').forEach((b) => b.classList.toggle('current', !!cur[b.dataset.tsb]));
+    const sec = meOpen ? 'me' : ({ dashboard: 'class', 'teacher-zone': 'zone', admin: 'admin' }[tab] || 'class');
+    if (document.body.dataset.tsSheet !== sec) document.body.dataset.tsSheet = sec;
+    bar.querySelectorAll('[data-tsb]').forEach((b) => { const on = b.dataset.tsb === sec; b.classList.toggle('current', on); b.setAttribute('aria-current', on ? 'page' : 'false'); });
     const av = $('ts-avatar')?.innerHTML;
     const me = bar.querySelector('[data-tsb="me"] .tsb-ic');
     if (av && av.includes('<img') && me.innerHTML !== av) me.innerHTML = av;
