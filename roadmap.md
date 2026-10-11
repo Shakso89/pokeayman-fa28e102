@@ -1,4 +1,5 @@
 # Poké Battle effects
+- [ ] Show the selected student's owned Pokémon opposite the wild opponent and anchor attacks to its artwork; preserve battle and credit rules.
 - [x] Add travelling attacks, impact bursts, animated HP loss and delayed knockout reveal. Saved-word isolated practice checked attacks, retaliation, dodges, victory, replay/exit and bright reduced motion with no runtime errors; routing test passed. Real claims and credits unchanged and not exercised.
 
 # Schedule redesign
