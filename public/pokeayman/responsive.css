@@ -1,0 +1,66 @@
+/* Tablet & mobile layout fixes. Loaded last so it wins over legacy rules. */
+
+/* Login streak: when the right rail is hidden, show only the streak card as a floating chip. */
+@media (max-width: 1280px) {
+  body.ts-on #ts-rail {
+    display: flex !important; position: fixed; inset: auto auto 16px 12px; width: min(260px, calc(100vw - 24px));
+    padding: 0; background: transparent; border: 0; box-shadow: none; z-index: 44; overflow: visible; flex-direction: column;
+  }
+  body.ts-on #ts-rail > .ts-card:not(.ts-streak) { display: none !important; }
+  body.ts-on #ts-rail .ts-streak { padding: 10px 12px; box-shadow: 0 12px 30px rgba(0,0,0,.4); }
+  body.ts-on #ts-rail .ts-streak h3 { margin: 0 0 2px; font-size: 14px; cursor: pointer; }
+  body.ts-on #ts-rail .ts-streak #ts-streak-text { font-size: 11px; margin: 0; }
+  body.ts-on #ts-rail .ts-streak .ts-streak-dots { margin: 6px 0 8px; }
+  body.ts-on #ts-rail .ts-streak #ts-box-open { height: 34px; font-size: 13px; }
+  body.ts-on.ts-rail-on #app-screen { padding-right: 0 !important; }
+  body.ts-on #app-screen { padding-bottom: 210px; }
+  body.ga-playing #ts-rail { display: none !important; }
+}
+
+/* Teacher header + nav on small screens. */
+@media (max-width: 900px) {
+  #app-screen > header .ths { max-width: 100%; min-width: 0; }
+  #app-screen > header .ths-info { min-width: 0; overflow: hidden; }
+  #app-screen > header .ths-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #global-leaderboard-trigger img { width: 64px !important; height: 64px !important; }
+  #app-screen > nav.sticky > div { justify-content: center; }
+  #app-screen > nav.sticky > div > div:first-child { justify-content: center; width: 100%; }
+  #app-screen > nav.sticky > div > .ml-auto { margin-left: 0; width: 100%; justify-content: center; }
+  #app-screen > nav.sticky #logged-in-name-container { min-width: 0; max-width: calc(100vw - 150px); }
+}
+@media (max-width: 520px) {
+  #app-screen > header .ths-ring { width: 48px !important; height: 48px !important; }
+  #app-screen > header .ths-role, #app-screen > header .ths-credits { font-size: 10px !important; }
+}
+
+/* Add Class / Add School forms wrap instead of scrolling sideways. */
+@media (max-width: 640px) {
+  #add-class-form, #add-school-form { flex-wrap: wrap !important; overflow: visible !important; }
+  #add-class-form input, #add-school-form input { min-width: 0 !important; flex: 1 1 100% !important; width: 100%; }
+  #add-class-form button[type="submit"], #add-school-form button[type="submit"] { flex: 1 1 100%; min-height: 44px; }
+}
+
+/* Flashcards: never split a word mid-way. Font is fitted by responsive.js. */
+#flashcard-front p, #student-vocab-word { word-break: normal !important; overflow-wrap: normal !important; hyphens: none; white-space: nowrap; max-width: 100%; }
+@media (max-width: 520px) {
+  .flashcard-popup-shell .flashcard-popup-header { flex-wrap: wrap; row-gap: .4rem; }
+  .flashcard-popup-shell #flashcard-sentence, .flashcard-popup-shell #student-vocab-sentence { font-size: 1.35rem !important; }
+}
+
+/* Find Me: a taller board and smaller word tiles so words don't pile on top of each other. */
+@media (max-width: 700px) {
+  .find-me-board-layout { grid-template-columns: 1fr !important; }
+  .find-me-board-layout > div:first-child .find-me-square { width: min(100%, 14rem); aspect-ratio: 4 / 3; margin: 0 auto; }
+  #find-me-box { aspect-ratio: auto !important; min-height: 24rem !important; }
+  #find-me-box .find-me-word { padding: .3rem .6rem !important; font-size: min(1em, 15px); }
+}
+
+/* Game score boxes: compact row on phones so the board stays visible. */
+@media (max-width: 640px) {
+  .game-player-hud { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)) !important; gap: .4rem !important; margin-bottom: .6rem !important; }
+  .game-player-card { min-height: 0 !important; padding: .45rem !important; }
+  .game-player-card .game-player-avatar, .game-player-card.is-active .game-player-avatar { width: 40px !important; height: 40px !important; transform: none !important; }
+  .game-player-card .game-player-avatar-wrap { min-height: 0 !important; margin-right: .4rem !important; padding: 0 !important; }
+  .game-player-card .game-player-score { font-size: 1.6rem !important; min-width: 0 !important; }
+  .game-player-card .game-player-name, .game-player-card.is-active .game-player-name { font-size: .75rem !important; margin-bottom: .2rem !important; }
+}
