@@ -12,22 +12,22 @@ html body #battle-area#battle-area { font-family: Figtree, sans-serif; color: va
 html body #battle-area .arena-tool { min-height: 42px; border: 1px solid var(--arena-line); border-radius: 8px; background: var(--arena-surface) !important; color: var(--arena-ink) !important; padding: 8px 12px; font: 600 13px Figtree, sans-serif; cursor: pointer; }
 #battle-area .arena-tool[aria-pressed="true"] { border-color: var(--arena-gold); }
 #battle-area button:focus-visible { outline: 3px solid var(--arena-gold); outline-offset: 3px; }
-html body #battle-area #arena-stage { position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 64px; padding: 40px 22px 30px; margin: 0 0 14px; overflow: hidden; border: 1px solid var(--arena-line); border-radius: 8px; background: var(--arena-bg); }
-#arena-stage::before { content: ''; position: absolute; inset: 0; z-index: -1; background: repeating-linear-gradient(0deg, transparent 0 39px, var(--arena-line) 40px 41px), repeating-linear-gradient(90deg, transparent 0 79px, var(--arena-line) 80px 81px); opacity: .3; pointer-events: none; }
-#arena-stage::after { content: ''; position: absolute; width: 85%; height: 42%; bottom: -14%; left: 7.5%; border: 2px solid var(--arena-blue); border-radius: 50%; box-shadow: 0 0 0 22px var(--arena-line), 0 0 0 44px var(--arena-line); opacity: .25; z-index: -1; pointer-events: none; }
+html body #battle-area #arena-stage { position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: 1fr; align-items: stretch; gap: 0; min-height: 500px; padding: 28px clamp(8px,3vw,30px) 22px; margin: 0 0 14px; overflow: hidden; border: 1px solid color-mix(in srgb,var(--arena-blue) 38%,var(--arena-line)); border-radius: 22px; background: radial-gradient(ellipse at 50% 100%,color-mix(in srgb,var(--arena-blue) 20%,transparent),transparent 56%), radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--arena-surface) 90%,transparent),var(--arena-bg) 78%); }
+#arena-stage::before { content: ''; position: absolute; inset: auto 6% 3%; height: 34%; z-index: -1; border-radius: 50%; background: radial-gradient(ellipse at center, color-mix(in srgb,var(--arena-blue) 20%,transparent), transparent 68%); transform: perspective(190px) rotateX(54deg); pointer-events: none; }
+#arena-stage::after { content: ''; position: absolute; width: 84%; height: 36%; bottom: -13%; left: 8%; border: 2px solid color-mix(in srgb,var(--arena-blue) 68%,transparent); border-radius: 50%; box-shadow: 0 0 0 18px color-mix(in srgb,var(--arena-line) 28%,transparent), 0 0 0 38px color-mix(in srgb,var(--arena-line) 16%,transparent); opacity: .48; z-index: -1; pointer-events: none; }
 #battle-area :where(.arena-card,.arena-fx,.arena-type) { --arena-element: var(--arena-blue); }
-html body #battle-area :is(#battle-left,#battle-right) { position: relative; min-width: 0; padding: 18px 16px !important; border: 1px solid color-mix(in srgb,var(--arena-element) 60%,var(--arena-line)) !important; border-top: 3px solid var(--arena-element) !important; border-radius: 8px !important; background: linear-gradient(160deg,color-mix(in srgb,var(--arena-element) 16%,var(--arena-surface)),var(--arena-surface) 70%) !important; box-shadow: var(--arena-shadow) !important; color: var(--arena-ink) !important; }
+html body #battle-area :is(#battle-left,#battle-right) { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-width: 0; padding: 10px clamp(4px,1.4vw,16px) 18px !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--arena-ink) !important; }
 #battle-area [data-type="fire"],#battle-area [data-type="fighting"] { --arena-element: var(--arena-red); }
 #battle-area [data-type="grass"],#battle-area [data-type="bug"] { --arena-element: var(--arena-health); }
 #battle-area [data-type="electric"],#battle-area [data-type="dragon"] { --arena-element: var(--arena-gold); }
 #battle-area [data-type="poison"],#battle-area [data-type="psychic"],#battle-area [data-type="fairy"],#battle-area [data-type="ghost"] { --arena-element: var(--shop-rare-edge); }
 #battle-area [data-type="rock"],#battle-area [data-type="ground"],#battle-area [data-type="steel"],#battle-area [data-type="normal"],#battle-area [data-type="dark"] { --arena-element: var(--mythic-silver); }
-#battle-area .arena-trainer { display: flex; align-items: center; justify-content: center; gap: 7px; margin-bottom: 4px; }
-#battle-area .arena-trainer-avatar { width: 30px; height: 30px; object-fit: contain; border-radius: 50%; background: var(--arena-bg); display: grid; place-items: center; }
-#battle-area .arena-trainer-label { font-size: 10px; color: var(--arena-muted); text-transform: uppercase; }
-html body #battle-area :is(#battle-left-name,#battle-right-name) { color: var(--arena-ink) !important; font: 700 17px Outfit,sans-serif !important; overflow-wrap: anywhere; margin-bottom: 8px; }
-html body #battle-area :is(#battle-left-img,#battle-right-img) { position: relative; z-index: 2; display: block; width: min(100%,210px) !important; height: 210px !important; object-fit: contain; margin: 0 auto 12px !important; filter: var(--detail-art-shadow); transform-origin: 50% 75%; will-change: transform, filter; }
-html body #battle-area :is(#battle-left-pokemon,#battle-right-pokemon) { font: 800 22px Outfit,sans-serif !important; color: var(--arena-ink) !important; overflow-wrap: anywhere; }
+#battle-area .arena-trainer { display: flex; align-items: center; justify-content: center; gap: 7px; min-height: 34px; margin: 0 0 4px; }
+#battle-area .arena-trainer-avatar { width: 28px; height: 28px; object-fit: contain; border-radius: 50%; background: color-mix(in srgb,var(--arena-surface) 72%,transparent); display: grid; place-items: center; }
+#battle-area .arena-trainer-label { font-size: 10px; color: var(--arena-muted); text-transform: uppercase; letter-spacing: .14em; }
+html body #battle-area :is(#battle-left-name,#battle-right-name) { color: var(--arena-ink) !important; font: 700 17px Outfit,sans-serif !important; overflow-wrap: anywhere; margin: 0 0 4px; }
+html body #battle-area :is(#battle-left-img,#battle-right-img) { position: relative; z-index: 2; display: block; width: min(100%,290px) !important; height: 270px !important; object-fit: contain; margin: 0 auto 0 !important; filter: var(--detail-art-shadow); transform-origin: 50% 75%; will-change: transform, filter; }
+html body #battle-area :is(#battle-left-pokemon,#battle-right-pokemon) { font: 900 clamp(19px,2.5vw,25px) Outfit,sans-serif !important; color: var(--arena-ink) !important; overflow-wrap: anywhere; text-transform: capitalize; text-shadow: 0 2px 18px color-mix(in srgb,var(--arena-element) 48%,transparent); }
 #battle-area .arena-types { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; min-height: 26px; margin: 8px 0 18px; }
 #battle-area .arena-type { color: var(--arena-ink); background: color-mix(in srgb,var(--arena-element) 15%,var(--arena-bg)); border: 1px solid var(--arena-element); border-radius: 4px; padding: 3px 7px; font-size: 10px; font-weight: 700; }
 #battle-area :is(#battle-left-hp-bar,#battle-right-hp-bar) { position: relative; z-index: 2; background: var(--arena-element) !important; height: 8px; transition: width .45s ease-out; }
@@ -47,6 +47,17 @@ html body #battle-area :is(#battle-left-hp,#battle-right-hp) { color: var(--aren
 #battle-area .arena-fx i:nth-child(2) { --angle: 60deg; } #battle-area .arena-fx i:nth-child(3) { --angle: 120deg; } #battle-area .arena-fx i:nth-child(4) { --angle: 180deg; } #battle-area .arena-fx i:nth-child(5) { --angle: 240deg; } #battle-area .arena-fx i:nth-child(6) { --angle: 300deg; }
 #battle-area .arena-fx[data-type="electric"] i { clip-path: polygon(60% 0,20% 55%,55% 55%,20% 100%,100% 35%,55% 35%); }
 #battle-area .arena-fx[data-type="water"] i,#battle-area .arena-fx[data-type="ice"] i { border-radius: 50%; }
+#battle-area .arena-projectile { --arena-flight-duration: .48s; position: absolute; top: 47%; left: 27%; z-index: 7; display: block; width: 34px; height: 34px; border-radius: 50%; color: var(--arena-element); background: radial-gradient(circle at 32% 28%,#fff9d6 0 8%,#ffe66d 16%,#ff8d35 48%,#e22c27 74%,transparent 76%); filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 18px currentColor); pointer-events: none; animation: arena-flight-left var(--arena-flight-duration) cubic-bezier(.2,.72,.3,1) both; }
+#battle-area .arena-projectile::before { content: ''; position: absolute; inset: -14px; border: 2px solid currentColor; border-radius: 50%; opacity: .7; animation: arena-projectile-aura .38s ease-out both; }
+#battle-area .arena-projectile::after { content: ''; position: absolute; z-index: -1; top: 38%; right: 65%; width: 46px; height: 12px; border-radius: 50%; background: linear-gradient(90deg,transparent,currentColor); filter: blur(4px); opacity: .9; }
+#battle-area .arena-projectile[data-from="right"] { left: 73%; animation-name: arena-flight-right; }
+#battle-area .arena-projectile[data-from="right"]::after { left: 65%; right: auto; transform: rotate(180deg); }
+#battle-area .arena-projectile[data-type="fire"] { background: radial-gradient(circle at 32% 28%,#fffbd1 0 8%,#ffe66d 18%,#ff922e 45%,#ef3d24 72%,transparent 75%); }
+#battle-area .arena-projectile[data-type="electric"] { width: 42px; height: 68px; border-radius: 0; clip-path: polygon(52% 0,25% 40%,45% 40%,20% 100%,82% 31%,58% 31%); background: linear-gradient(90deg,#fff8b5,#fff200 48%,#f4a900); filter: drop-shadow(0 0 8px #fff200) drop-shadow(0 0 17px #fff200); }
+#battle-area .arena-projectile[data-type="water"],#battle-area .arena-projectile[data-type="ice"] { background: radial-gradient(circle at 30% 26%,#fff 0 8%,#baf5ff 18%,#37c8ff 47%,#3275ff 74%,transparent 76%); }
+#battle-area .arena-projectile[data-type="psychic"],#battle-area .arena-projectile[data-type="ghost"],#battle-area .arena-projectile[data-type="fairy"] { background: radial-gradient(circle at 35% 30%,#fff 0 8%,#ffc9ff 18%,#d45aff 46%,#743bff 72%,transparent 76%); }
+#battle-area .arena-projectile[data-type="grass"],#battle-area .arena-projectile[data-type="bug"] { border-radius: 0 90% 0 90%; background: linear-gradient(135deg,#eaffab,#8be64c 48%,#17a866); transform: rotate(-38deg); }
+#battle-area .arena-projectile[data-type="rock"],#battle-area .arena-projectile[data-type="ground"],#battle-area .arena-projectile[data-type="steel"] { border-radius: 6px; background: linear-gradient(135deg,#fff1bc,#c0b7a2 52%,#655d58); clip-path: polygon(50% 0,100% 40%,72% 100%,18% 84%,0 30%); }
 #battle-area .arena-confetti { position: absolute; inset: 0; overflow: hidden; z-index: 8; pointer-events: none; }
 #battle-area .arena-confetti i { position: absolute; top: -20px; left: var(--x); width: 8px; height: 14px; background: var(--arena-gold); animation: arena-confetti 2.8s calc(var(--i) * 25ms) ease-in both; }
 #battle-area .arena-confetti i:nth-child(3n) { background: var(--arena-red); } #battle-area .arena-confetti i:nth-child(3n + 1) { background: var(--arena-blue); }
@@ -61,9 +72,9 @@ html body #battle-area :is(#battle-left-hp,#battle-right-hp) { color: var(--aren
 #battle-area#battle-area .arena-shake { animation: arena-impact .25s both; }
 #battle-area#battle-area .arena-fainting > img { animation: arena-faint .7s both; }
 #battle-area#battle-area .battle-loser-final > img { opacity: .35; transform: translateY(18px) scale(.85); filter: grayscale(1); }
-#battle-area#battle-area .battle-winner-final { border-color: var(--arena-gold) !important; box-shadow: var(--mythic-legendary-shadow) !important; }
+#battle-area#battle-area .battle-winner-final { border: 0 !important; background: transparent !important; box-shadow: none !important; }
 #battle-area .battle-winner-label { display: block; font: 800 13px Outfit,sans-serif; color: var(--arena-gold); margin-bottom: 4px; }
-#battle-area .battle-winner-art { animation: arena-victory 1.2s ease-in-out 2; }
+#battle-area .battle-winner-art { animation: arena-victory 1.2s ease-in-out 2; filter: brightness(1.12) drop-shadow(0 0 18px color-mix(in srgb,var(--arena-gold) 82%,transparent)); }
 html body #battle-area #start-battle-btn { background: var(--arena-red) !important; color: var(--ts-on-red) !important; min-height: 48px; border-radius: 8px; border: 0; box-shadow: none; font: 800 17px Outfit,sans-serif; }
 #battle-area #start-battle-btn:disabled { opacity: .7; cursor: default; }
 html body #battle-area#battle-area.arena-cinema,html body #battle-area#battle-area:fullscreen { position: fixed; inset: 0; z-index: 10000; width: 100%; height: 100dvh; padding: 20px; margin: 0; background: var(--arena-bg); display: flex; flex-direction: column; overflow: auto; }
@@ -79,6 +90,9 @@ html body #battle-area#battle-area.arena-cinema,html body #battle-area#battle-ar
 @keyframes arena-hit-react { 15%,55% { transform: translateX(8px) rotate(4deg) scale(.96); filter: brightness(1.55) sepia(.25) var(--detail-art-shadow); } 35%,75% { transform: translateX(-7px) rotate(-4deg) scale(.96); } 100% { transform: none; } }
 @keyframes arena-impact-ring { 20% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.65); } }
 @keyframes arena-impact-slash { 25% { opacity: 1; transform: translate(-50%,-50%) rotate(-38deg) scaleX(1); } 100% { opacity: 0; transform: translate(-50%,-50%) rotate(-38deg) scaleX(1.3); } }
+@keyframes arena-flight-left { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.25) rotate(-20deg); } 12% { opacity: 1; transform: translate(-50%,-50%) scale(1.1) rotate(0); } 68% { opacity: 1; transform: translate(calc(-50% + 40cqw),-50%) scale(1.22) rotate(25deg); } 100% { opacity: 0; transform: translate(calc(-50% + 45cqw),-50%) scale(.3) rotate(40deg); } }
+@keyframes arena-flight-right { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.25) rotate(20deg); } 12% { opacity: 1; transform: translate(-50%,-50%) scale(1.1) rotate(0); } 68% { opacity: 1; transform: translate(calc(-50% - 40cqw),-50%) scale(1.22) rotate(-25deg); } 100% { opacity: 0; transform: translate(calc(-50% - 45cqw),-50%) scale(.3) rotate(-40deg); } }
+@keyframes arena-projectile-aura { to { opacity: 0; transform: scale(1.8); } }
 @keyframes arena-impact { 20%,60% { transform: translateX(6px); } 40%,80% { transform: translateX(-6px); } }
 @keyframes arena-damage { 0% { opacity: 0; transform: translateY(15px) scale(.6); } 20% { opacity: 1; transform: translateY(-10px) scale(1.1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-75px); } }
 @keyframes arena-hit { 0% { opacity: 1; transform: rotate(var(--angle)) translateY(-5px) scale(.3); } 100% { opacity: 0; transform: rotate(var(--angle)) translateY(-100px) scale(1.2); } }
@@ -87,18 +101,20 @@ html body #battle-area#battle-area.arena-cinema,html body #battle-area#battle-ar
 @keyframes arena-confetti { to { transform: translateY(700px) rotate(540deg); opacity: 0; } }
 @keyframes arena-ripple { to { opacity: 0; transform: scaleX(4); } }
 @media (max-width: 600px) {
-  html body #battle-area #arena-stage { gap: 24px; padding: 50px 8px 18px; }
+  html body #battle-area #arena-stage { gap: 0; min-height: 420px; padding: 38px 4px 14px; }
   html body #battle-area :is(#battle-left,#battle-right) { padding: 12px 8px !important; }
-  html body #battle-area :is(#battle-left-img,#battle-right-img) { height: 140px !important; }
+  html body #battle-area :is(#battle-left-img,#battle-right-img) { width: min(100%,200px) !important; height: 190px !important; }
   html body #battle-area :is(#battle-left-pokemon,#battle-right-pokemon) { font-size: 17px !important; }
   #battle-area .arena-vs { font-size: 22px; }
   #battle-area .arena-pop { font-size: 23px; }
+  #battle-area .arena-projectile { top: 48%; width: 26px; height: 26px; }
+  #battle-area .arena-projectile[data-type="electric"] { width: 32px; height: 52px; }
   html body #battle-area#battle-area.arena-cinema { padding: 12px; }
 }
 @container (max-width: 600px) {
-  html body #battle-area #arena-stage { gap: 26px; padding: 50px 8px 18px; }
+  html body #battle-area #arena-stage { gap: 0; min-height: 420px; padding: 38px 4px 14px; }
   html body #battle-area :is(#battle-left,#battle-right) { padding: 12px 8px !important; }
-  html body #battle-area :is(#battle-left-img,#battle-right-img) { height: 140px !important; }
+  html body #battle-area :is(#battle-left-img,#battle-right-img) { width: min(100%,200px) !important; height: 190px !important; }
   html body #battle-area :is(#battle-left-pokemon,#battle-right-pokemon) { font-size: 17px !important; }
   #battle-area .arena-vs { font-size: 22px; }
 }

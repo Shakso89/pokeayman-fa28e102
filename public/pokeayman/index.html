@@ -17064,6 +17064,18 @@ function arenaFx(cardId, type) {
   const stage = document.getElementById('arena-stage');
   if (stage) { stage.classList.remove('arena-shake'); void stage.offsetWidth; stage.classList.add('arena-shake'); }
 }
+function arenaLaunchProjectile(fromSide, type) {
+  const stage = document.getElementById('arena-stage');
+  if (!stage) return null;
+  const projectile = document.createElement('span');
+  projectile.className = 'arena-projectile';
+  projectile.dataset.type = type || 'normal';
+  projectile.dataset.from = fromSide;
+  projectile.setAttribute('aria-hidden', 'true');
+  projectile.style.setProperty('--arena-flight-duration', `${480 / arenaSpeed}ms`);
+  stage.appendChild(projectile);
+  return projectile;
+}
 function arenaBanner(text, kind = '') {
   const b = document.getElementById('arena-banner'); if (!b) return;
   b.className = `arena-banner is-on ${kind}`; b.textContent = text;
@@ -17080,8 +17092,10 @@ async function arenaAttack(fromSide, toSide, attacker, multiplier, dmg) {
   await arenaWait(180);
   fromImg?.classList.remove(windup);
   fromImg?.classList.add(strike);
+  const projectile = arenaLaunchProjectile(fromSide, type);
   window.pokeSfx?.play('lunge');
-  await arenaWait(420);
+  await arenaWait(480);
+  projectile?.remove();
   fromImg?.classList.remove(strike);
   arenaFx(to, type); window.pokeSfx?.play('hit', type);
   toImg?.classList.add('arena-hit-react');
