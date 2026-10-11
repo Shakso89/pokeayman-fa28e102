@@ -28,7 +28,7 @@
   ];
   const ZONE_ITEMS = [
     ['schedule', '🗓️', 'Schedule'], ['financial', '💰', 'Financial'], ['history', '🕘', 'History'],
-    ['vb-lists', '🔖', 'My Word Banks'], ['profile', '🎓', 'Teacher Card'],
+    ['vb-lists', '🔖', 'My Word Banks'], ['school-lists', '🏫', 'School Lists'], ['profile', '🎓', 'Teacher Card'],
   ];
 
   function build() {
@@ -125,8 +125,11 @@
       if ($('view-students')?.classList.contains('hidden')) navigateTo('students', navSchool, navClass);
       document.querySelector(`#class-tabs-container [data-classtab="${cls}"]`)?.click();
     } else if (zone) {
+      const isSchool = zone === 'school-lists';
+      if (zone === 'vb-lists' || isSchool) window.vbListsMode = isSchool ? 'school' : 'mine';
       g(() => showMainTab('teacher-zone'));
-      $(`teacher-zone-${zone}-tab`)?.click();
+      $(`teacher-zone-${isSchool ? 'vb-lists' : zone}-tab`)?.click();
+      if (zone === 'vb-lists' || isSchool) g(() => renderTeacherOwnedVocabLists());
     } else if (act === 'schools') { g(() => showMainTab('dashboard')); }
     else if (act === 'admin') { g(() => showMainTab('admin')); }
     else if (act === 'leaders') { $('global-leaderboard-trigger')?.click(); }
@@ -265,6 +268,8 @@
     document.querySelectorAll('#ts-sidebar .ts-item, #ts-sidebar .ts-switch').forEach((b) => {
       let a = false;
       if (b.dataset.tsClass) a = !!inClass && activeClassTab === b.dataset.tsClass;
+      else if (b.dataset.tsZone === 'school-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists' && window.vbListsMode === 'school';
+      else if (b.dataset.tsZone === 'vb-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists' && window.vbListsMode !== 'school';
       else if (b.dataset.tsZone) a = tab === 'teacher-zone' && zoneTab === b.dataset.tsZone;
       else if (b.dataset.ts === 'admin') a = tab === 'admin';
       else if (b.dataset.ts === 'schools') a = tab === 'dashboard' && !inClass;
