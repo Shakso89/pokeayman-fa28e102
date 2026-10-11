@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="/pokeayman/home-hand.css">
   <script src="/pokeayman/home-artwork.js"></script>
   <script src="/pokeayman/home-hand.js"></script>
+  <script src="/pokeayman/home-species.js"></script>
   <style>
     :root { --home-bg-image: none; }
     .shop-pager { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:.4rem; margin:1.25rem 0 .5rem; }
@@ -4574,34 +4575,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      </div>
     </div>
     <div id="admin-subtab-home-arch" class="admin-subtab-content hidden">
-     <div class="glass-container rounded-xl p-6 mb-6">
-      <h3 class="font-semibold text-lg text-white mb-4">🏛️ Customize Home Page Pokémon Arch</h3>
-      <p class="text-xs text-gray-300 mb-4">Select 6 Pokémon to display in the home page arch animation (left to right). Positions and sizes remain fixed. Enter Pokédex IDs (1-898) or Pokémon names.</p>
-      <div id="arch-positions-grid" class="grid grid-cols-3 gap-4 mb-6">
-       <div class="glass-container rounded-lg p-4 flex flex-col gap-2">
-        <label class="text-xs font-semibold text-gray-300">Position 1 (Height: 60px)</label> <button type="button" class="arch-pokemon-picker text-left border rounded-lg px-3 py-2 text-xs bg-gray-700 text-white border-gray-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition" data-arch-position="1" aria-label="Choose Pokémon for position 1"></button>
-       </div>
-       <div class="glass-container rounded-lg p-4 flex flex-col gap-2">
-        <label class="text-xs font-semibold text-gray-300">Position 2 (Height: 90px)</label> <button type="button" class="arch-pokemon-picker text-left border rounded-lg px-3 py-2 text-xs bg-gray-700 text-white border-gray-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition" data-arch-position="2" aria-label="Choose Pokémon for position 2"></button>
-       </div>
-       <div class="glass-container rounded-lg p-4 flex flex-col gap-2">
-        <label class="text-xs font-semibold text-gray-300">Position 3 (Height: 120px)</label> <button type="button" class="arch-pokemon-picker text-left border rounded-lg px-3 py-2 text-xs bg-gray-700 text-white border-gray-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition" data-arch-position="3" aria-label="Choose Pokémon for position 3"></button>
-       </div>
-       <div class="glass-container rounded-lg p-4 flex flex-col gap-2">
-        <label class="text-xs font-semibold text-gray-300">Position 4 (Height: 120px)</label> <button type="button" class="arch-pokemon-picker text-left border rounded-lg px-3 py-2 text-xs bg-gray-700 text-white border-gray-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition" data-arch-position="4" aria-label="Choose Pokémon for position 4"></button>
-       </div>
-       <div class="glass-container rounded-lg p-4 flex flex-col gap-2">
-        <label class="text-xs font-semibold text-gray-300">Position 5 (Height: 90px)</label> <button type="button" class="arch-pokemon-picker text-left border rounded-lg px-3 py-2 text-xs bg-gray-700 text-white border-gray-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition" data-arch-position="5" aria-label="Choose Pokémon for position 5"></button>
-       </div>
-       <div class="glass-container rounded-lg p-4 flex flex-col gap-2">
-        <label class="text-xs font-semibold text-gray-300">Position 6 (Height: 60px)</label> <button type="button" class="arch-pokemon-picker text-left border rounded-lg px-3 py-2 text-xs bg-gray-700 text-white border-gray-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400 transition" data-arch-position="6" aria-label="Choose Pokémon for position 6"></button>
-       </div>
-      </div>
-      <div class="flex gap-2">
-       <button id="save-arch-btn" class="flex-1 btn-primary">Save Home Arch</button> <button id="reset-arch-btn" class="flex-1 btn-secondary">Reset to Default</button>
-      </div>
-      <p id="arch-error" class="text-red-500 text-xs mt-3 hidden"></p>
-      <p id="arch-success" class="text-green-500 text-xs mt-3 hidden">✓ Saved! Changes will appear on the home page.</p>
+     <div class="home-manager">
+      <header class="home-manager-heading"><h3>Home Pokémon</h3><span id="arch-draft-status" role="status">Saved</span></header>
+      <div id="arch-positions-grid"></div>
+      <div class="home-manager-toolbar"><button id="save-arch-btn" type="button" class="btn-primary">Save home Pokémon</button><button id="reset-arch-btn" type="button" class="btn-outline">Restore defaults</button><button id="discard-arch-btn" type="button" class="btn-outline">Discard changes</button></div>
+      <p id="arch-error" role="alert" class="hidden"></p><p id="arch-success" role="status" class="hidden"></p>
+      <section class="home-manager-preview"><h4>Home gallery preview</h4><div id="arch-preview-root"><div id="arch-preview-track"></div></div></section>
      </div>
     </div>
    </div>
@@ -5753,7 +5732,7 @@ function initPokemonArch() {
   const root = document.getElementById('pokemon-arch');
   const track = document.getElementById('pokemon-arch-carousel');
   if (!root || !track || !window.mountPokemonHand) return;
-  const archName = id => { const s = window.pokeaymanShopSpecies?.[id]; return s?.name ? s.name.charAt(0).toUpperCase() + s.name.slice(1) : `Pokémon ${id}`; };
+  const archName = id => { const name = window.pokeaymanHomeSpecies?.[id] || window.pokeaymanShopSpecies?.[id]?.name; return name ? name.charAt(0).toUpperCase() + name.slice(1) : `Pokémon ${id}`; };
   const archIds = (Array.isArray(window.homeArchPokemon) && window.homeArchPokemon.length === 6 ? window.homeArchPokemon : [144,145,146,150,249,250]).map(Number).filter(id => id >= 1 && id <= 898);
   const items = archIds.map(id => ({ id, title: archName(id), subtitle: `Pokédex #${id}`, src: `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/official-artwork/${id}.png` }));
   if (!items.length) return;
@@ -10265,68 +10244,54 @@ function renderPricingPlansModal() {
   </div>`;
 }
 
+let homeArchDraft = null;
+let homeArchSaving = false;
+function homeArchName(id) { const name = window.pokeaymanHomeSpecies?.[id] || `Pokémon ${id}`; return name.charAt(0).toUpperCase() + name.slice(1); }
+function homeArchArt(id) { return window.pokeaymanHomeArtwork?.[id] || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/official-artwork/${id}.png`; }
+function homeArchDirty() { return JSON.stringify(homeArchDraft) !== JSON.stringify(window.homeArchPokemon); }
 function renderHomeArchConfig() {
-  const buttons = document.querySelectorAll('.arch-pokemon-picker');
-  buttons.forEach((button, idx) => {
-    const pokemonId = Number(window.homeArchPokemon?.[idx] || [144,145,146,150,249,250][idx]);
-    button.dataset.pokemonId = pokemonId;
-    button.innerHTML = `<span class="font-bold">${getPokemonName(pokemonId)}</span><span class="block text-[10px] text-indigo-200 mt-1">Pokédex #${pokemonId} · Choose Pokémon</span>`;
-  });
+  if (!homeArchDraft) homeArchDraft = [...(window.homeArchPokemon || [144,145,146,150,249,250])];
+  const grid = document.getElementById('arch-positions-grid');
+  if (!grid) return;
+  grid.innerHTML = homeArchDraft.map((id, index) => `<article class="home-slot"><div class="home-slot-number">${String(index + 1).padStart(2,'0')}</div><button type="button" class="btn-outline arch-pokemon-picker" data-position="${index}" aria-label="Choose Pokémon for position ${index+1}" ${homeArchSaving ? 'disabled' : ''}><img src="${homeArchArt(id)}" alt="" loading="lazy"><strong>${homeArchName(id)}</strong><small>Pokédex #${id}</small></button><div class="home-slot-order"><button type="button" class="btn-outline" data-move="${index}" data-direction="-1" title="Move earlier" aria-label="Move position ${index+1} earlier" ${index===0 || homeArchSaving ? 'disabled' : ''}>←</button><button type="button" class="btn-outline" data-move="${index}" data-direction="1" title="Move later" aria-label="Move position ${index+1} later" ${index===5 || homeArchSaving ? 'disabled' : ''}>→</button></div></article>`).join('');
+  grid.querySelectorAll('[data-position]').forEach(button => button.onclick = () => openHomeArchPicker(Number(button.dataset.position)));
+  grid.querySelectorAll('[data-move]').forEach(button => button.onclick = () => { const index=Number(button.dataset.move), next=index+Number(button.dataset.direction); [homeArchDraft[index],homeArchDraft[next]]=[homeArchDraft[next],homeArchDraft[index]]; renderHomeArchConfig(); });
+  document.getElementById('arch-draft-status').textContent = homeArchSaving ? 'Saving…' : homeArchDirty() ? 'Unsaved changes' : 'Saved';
+  document.getElementById('save-arch-btn').disabled = homeArchSaving || !homeArchDirty();
+  document.getElementById('save-arch-btn').textContent = homeArchSaving ? 'Saving…' : 'Save home Pokémon';
+  ['reset-arch-btn','discard-arch-btn'].forEach(id => document.getElementById(id).disabled=homeArchSaving);
+  const root=document.getElementById('arch-preview-root'), track=document.getElementById('arch-preview-track');
+  root._cleanupHand?.();
+  root._cleanupHand=window.mountPokemonHand(root,track,homeArchDraft.map(id=>({id,title:homeArchName(id),subtitle:`Pokédex #${id}`,src:homeArchArt(id)})));
 }
-
 function openHomeArchPicker(position) {
-  const current = Number(window.homeArchPokemon?.[position] || 1);
-  const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-[21000] p-4';
-  modal.innerHTML = `<section class="bg-slate-900 text-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="arch-picker-title"><header class="flex items-center justify-between gap-3 p-4 border-b border-indigo-200/20"><div><h2 id="arch-picker-title" class="heading-font text-xl font-bold">Choose Pokémon</h2><p class="text-xs text-slate-300">Position ${position + 1} · Select a card to assign it</p></div><button type="button" class="btn-outline" data-arch-picker-close aria-label="Close Pokémon picker">×</button></header><div class="p-4"><label for="arch-picker-search" class="sr-only">Search Pokémon</label><input id="arch-picker-search" type="search" placeholder="Search by name or Pokédex number" class="w-full mb-4"><div id="arch-picker-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[62vh] overflow-y-auto" tabindex="0"></div></div></section>`;
-  document.body.appendChild(modal);
-  const grid = modal.querySelector('#arch-picker-grid');
-  const search = modal.querySelector('#arch-picker-search');
-  const catalog = pokemonCatalog;
-  const render = () => {
-    const term = search.value.trim().toLowerCase();
-    const filtered = catalog.filter(p => !term || p.name.toLowerCase().includes(term) || String(p.id) === term);
-    grid.innerHTML = filtered.map(p => `<button type="button" class="arch-picker-card rounded-xl border border-indigo-200/30 bg-indigo-950/80 p-3 text-center hover:border-amber-300 hover:bg-indigo-800 focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-300 transition" data-id="${p.id}"><img src="${p.artworkUrl}" class="w-20 h-20 mx-auto object-contain" alt="${p.name}" loading="lazy"><span class="block mt-1 font-bold text-sm">${p.name}</span><span class="block text-xs text-indigo-200">Pokédex #${p.id}</span></button>`).join('') || '<p class="col-span-full text-center text-slate-300 py-8">No Pokémon found.</p>';
-    grid.querySelectorAll('.arch-picker-card').forEach(card => card.addEventListener('click', () => { window.homeArchPokemon[position] = Number(card.dataset.id); renderHomeArchConfig(); modal.remove(); }));
+  if (homeArchSaving) return;
+  const modal=document.createElement('div'); modal.className='home-picker-overlay';
+  modal.innerHTML=`<section class="home-picker" role="dialog" aria-modal="true" aria-labelledby="arch-picker-title"><header><h2 id="arch-picker-title">Choose Pokémon · ${position+1}</h2><button type="button" class="btn-outline" data-close aria-label="Close Pokémon picker">×</button></header><input id="arch-picker-search" type="search" aria-label="Search Pokémon" placeholder="Search name or Pokédex number"><div id="arch-picker-grid"></div><footer><button class="btn-outline" type="button" data-page="-1" aria-label="Previous Pokémon page">←</button><span id="arch-picker-page"></span><button class="btn-outline" type="button" data-page="1" aria-label="Next Pokémon page">→</button></footer></section>`;
+  document.body.append(modal);
+  const input=modal.querySelector('input'), grid=modal.querySelector('#arch-picker-grid'); let page=0;
+  const render=()=>{ const term=input.value.trim().toLowerCase(); const matches=Object.entries(window.pokeaymanHomeSpecies || {}).filter(([id,name])=>!term || name.includes(term) || id===term); const pages=Math.max(1,Math.ceil(matches.length/24)); page=Math.min(page,pages-1);
+    grid.innerHTML=matches.slice(page*24,page*24+24).map(([id])=>`<button type="button" class="btn-outline arch-picker-card" data-id="${id}" aria-pressed="${Number(id)===homeArchDraft[position]}"><img src="${homeArchArt(id)}" alt="" loading="lazy"><strong>${homeArchName(id)}</strong><small>#${id}</small></button>`).join('') || '<p>No Pokémon found.</p>';
+    modal.querySelector('#arch-picker-page').textContent=`${page+1} / ${pages} · ${matches.length} Pokémon`;
+    modal.querySelector('[data-page="-1"]').disabled=page===0;modal.querySelector('[data-page="1"]').disabled=page===pages-1;
+    grid.querySelectorAll('[data-id]').forEach(button=>button.onclick=()=>{homeArchDraft[position]=Number(button.dataset.id);renderHomeArchConfig();close();});
   };
-  const close = () => modal.remove();
-  modal.querySelector('[data-arch-picker-close]').addEventListener('click', close);
-  modal.addEventListener('click', event => { if (event.target === modal) close(); });
-  modal.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
-  search.addEventListener('input', render);
-  render();
-  search.focus();
+  const close=()=>{modal.remove();document.querySelector(`[data-position="${position}"]`)?.focus();};
+  modal.querySelector('[data-close]').onclick=close; modal.addEventListener('click',e=>{if(e.target===modal)close();});
+  modal.addEventListener('keydown',e=>{if(e.key==='Escape')close();if(e.key==='Tab'){const focusable=[...modal.querySelectorAll('button:not(:disabled),input')];const first=focusable[0],last=focusable[focusable.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
+  input.oninput=()=>{page=0;render();}; modal.querySelectorAll('[data-page]').forEach(button=>button.onclick=()=>{page+=Number(button.dataset.page);render();}); render();input.focus();
 }
-document.querySelectorAll('.arch-pokemon-picker').forEach(button => button.addEventListener('click', () => openHomeArchPicker(Number(button.dataset.archPosition) - 1)));
-
-document.getElementById('save-arch-btn')?.addEventListener('click', async () => {
-  const errorEl = document.getElementById('arch-error');
-  const successEl = document.getElementById('arch-success');
-  errorEl.classList.add('hidden');
-  successEl.classList.add('hidden');
-  
-  const pokemonIds = [...(window.homeArchPokemon || [])].slice(0, 6).map(Number);
-  if (pokemonIds.length !== 6 || pokemonIds.some(id => !Number.isInteger(id) || !pokemonCatalog.some(p => p.id === id))) {
-    errorEl.textContent = 'Choose one valid Pokémon for each position.';
-    errorEl.classList.remove('hidden');
-    return;
-  }
-  
-  // Save and update only after the published Sheet write succeeds.
-  const published = await saveHomeArchConfig(pokemonIds);
-  if (!published) { errorEl.textContent = 'Publish failed. The last published Home arch is still active.'; errorEl.classList.remove('hidden'); return; }
-  successEl.textContent = `✓ Published configuration v${publishedConfigMeta.version} by ${publishedConfigMeta.publishedBy || currentTeacher || 'Admin'}.`;
-  successEl.classList.remove('hidden');
-  setTimeout(() => successEl.classList.add('hidden'), 3000);
+document.getElementById('save-arch-btn')?.addEventListener('click',async()=>{
+  if(homeArchSaving || !homeArchDraft) return;
+  const error=document.getElementById('arch-error'), success=document.getElementById('arch-success');error.classList.add('hidden');success.classList.add('hidden');
+  const ids=[...homeArchDraft];if(ids.length!==6 || ids.some(id=>!Number.isInteger(id)||id<1||id>898)){error.textContent='Choose a Pokémon for all six positions.';error.classList.remove('hidden');return;}
+  homeArchSaving=true;renderHomeArchConfig();
+  try { const saved=await saveHomeArchConfig(ids);if(!saved)throw new Error('save');homeArchDraft=[...window.homeArchPokemon];success.textContent='Home Pokémon saved.';success.classList.remove('hidden'); }
+  catch {error.textContent='Could not save. Your changes are still here; please try again.';error.classList.remove('hidden');}
+  finally {homeArchSaving=false;renderHomeArchConfig();}
 });
-
-document.getElementById('reset-arch-btn')?.addEventListener('click', () => {
-  saveHomeArchConfig([144, 145, 146, 150, 249, 374]);
-  renderHomeArchConfig();
-  document.getElementById('arch-success').textContent = '✓ Reset to default Pokémon!';
-  document.getElementById('arch-success').classList.remove('hidden');
-  setTimeout(() => document.getElementById('arch-success').classList.add('hidden'), 3000);
-});
+document.getElementById('reset-arch-btn')?.addEventListener('click',()=>{homeArchDraft=[144,145,146,150,249,250];renderHomeArchConfig();});
+document.getElementById('discard-arch-btn')?.addEventListener('click',()=>{homeArchDraft=[...window.homeArchPokemon];document.getElementById('arch-error').classList.add('hidden');document.getElementById('arch-success').classList.add('hidden');renderHomeArchConfig();});
 
 // Pokémon names by ID (1-420) - accurate official names from official Pokédex
 // Used for Home Arch configuration UI - displays proper names for Pokémon in the shop catalog (IDs 1-420)
