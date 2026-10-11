@@ -12906,14 +12906,15 @@ function renderGamesList() {
     }
     html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-2">';
     group.lists.forEach((list, index) => {
-    const words = selectedGameSource === 'my_lists' ? getAuthorizedMyListsWords([String(list.vocab_list_id || list.__backendId)]).words || [] : getVocabWords(list.vocab_list_name, list.vocab_list_school, list.vocab_list_class);
+    const [ctxSchool, ctxClass] = String(list.__gamesClassKey || `${list.vocab_list_school || ''}||${list.vocab_list_class || ''}`).split('||');
+    const words = selectedGameSource === 'my_lists' ? getAuthorizedMyListsWords([String(list.vocab_list_id || list.__backendId)]).words || [] : getVocabWords({ vocab_list_id: list.vocab_list_id, vocab_list_name: list.vocab_list_name }, ctxSchool, ctxClass);
     const playable = words.length >= 2;
     const isSelected = selectedGameList.some(item => String(typeof item === 'object' ? item.vocab_list_id || item.__backendId : item) === String(selectedGameSource === 'my_lists' ? list.vocab_list_id || list.__backendId : list.vocab_list_name));
     const accents = ['rose', 'violet', 'sky', 'amber', 'emerald', 'cyan'];
     const accent = accents[index % accents.length];
     // For student games, encode the school/class into an onclick that sets context before launching
     const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
-    const setCtxJs = (currentRole === 'teacher' && selectedGameSource === 'my_lists') ? '' : `navSchool='${String(list.vocab_list_school).replace(/'/g,"\\'")}';navClass='${String(list.vocab_list_class).replace(/'/g,"\\'")}';`;
+    const setCtxJs = (currentRole === 'teacher' && selectedGameSource === 'my_lists') ? '' : `navSchool='${String(ctxSchool).replace(/'/g,"\\'")}';navClass='${String(ctxClass).replace(/'/g,"\\'")}';`;
     html += `<div class="game-vocab-list-card group relative min-h-[150px] rounded-2xl border-2 border-${accent}-200 bg-gradient-to-br from-white to-${accent}-50 p-4 text-center ${isSelected ? `bg-${accent}-100 border-${accent}-500 ring-2 ring-${accent}-300 shadow-md` : ''}">
       <button type="button" class="absolute inset-0 z-0 rounded-2xl focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-300" aria-label="Select ${list.vocab_list_name}" aria-pressed="${isSelected}" onclick="${setCtxJs} selectGameList(${selectedGameSource === 'my_lists' ? `{vocab_list_id:'${String(list.vocab_list_id).replace(/'/g, "\\'")}',vocab_list_name:'${safeListName}'}` : `'${safeListName}'`})"></button>
       ${isSelected ? `<span class="absolute left-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-${accent}-600 text-white text-base font-black shadow-md ring-2 ring-white" aria-label="Selected">✓</span>` : ''}
