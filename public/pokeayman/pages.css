@@ -43,6 +43,8 @@ body.ts-on #app-screen main :is(h3) { font-family: var(--pk-font-display); }
 body.ts-on #app-screen main p { line-height: var(--pk-leading-body); }
 
 /* ---------- Teacher Zone utility views ---------- */
+/* The Finance dashboard sets display:grid; preserve the shared hidden state when another tab is selected. */
+#admin-subtab-teacher-zone [role="tabpanel"].hidden { display: none !important; }
 body.ts-on .teacher-zone-content-panel { margin: 0 0 var(--pk-space-5); }
 body.ts-on .teacher-zone-content-card {
   padding: var(--pk-space-5); border: 1px solid var(--pk-border); border-radius: var(--pk-radius-lg);
