@@ -130,7 +130,7 @@
     if (!source || !target) { impact(); return; }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const layer = document.createElement('div');
-    layer.className = `vb-attack-layer${retaliation ? ' vb-counter' : ''}`;
+    layer.className = `vb-attack-layer vb-fire${retaliation ? ' vb-counter' : ''}`;
     layer.setAttribute('aria-hidden', 'true');
     root.appendChild(layer);
     const bounds = root.getBoundingClientRect();
@@ -157,7 +157,8 @@
       } else {
         const burst = document.createElement('div'); burst.className = 'vb-impact-burst';
         burst.style.left = `${end.x}px`; burst.style.top = `${end.y}px`;
-        burst.innerHTML = '<b></b>' + Array.from({ length: 10 }, (_, i) => `<i style="--spark-angle:${i * 36}deg"></i>`).join('');
+        burst.innerHTML = '<b></b>' + Array.from({ length: 10 }, (_, i) => `<i style="--spark-angle:${i * 36}deg"></i>`).join('')
+          + Array.from({ length: 7 }, (_, i) => `<em class="vb-ember" style="--ember-angle:${i * 51 + 12}deg;--ember-delay:${i * 45}ms"></em>`).join('');
         layer.appendChild(burst);
         target.classList.add('vb-hit');
         later(() => target.classList.remove('vb-hit'), 600);

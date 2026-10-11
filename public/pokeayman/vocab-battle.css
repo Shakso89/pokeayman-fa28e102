@@ -101,6 +101,18 @@ body.ts-bright .vb-btn.vb-btn-ghost { border-color: rgba(15, 23, 58, .35); }
 .vb-energy-bolt { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: var(--vb-energy); border: 5px solid var(--color-text-primary); box-shadow: 0 0 0 8px color-mix(in srgb,var(--vb-energy) 25%,transparent), 0 0 28px var(--vb-energy); }
 .vb-energy-bolt::after { content: ''; position: absolute; left: 6px; top: 18px; width: 16px; height: 85px; background: linear-gradient(var(--vb-energy),transparent); border-radius: 50%; }
 .vb-counter .vb-energy-bolt::after { top: auto; bottom: 18px; }
+/* Fire attack: flaming fireball with flicker, fire trail and embers */
+.vb-fire { --vb-energy: #f97316; --vb-impact: #fbbf24; }
+.vb-fire.vb-counter { --vb-energy: #dc2626; --vb-impact: #fb923c; }
+.vb-fire .vb-energy-bolt { width: 42px; height: 42px; border: none; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; background: radial-gradient(circle at 50% 68%, #fef08a 0%, #fbbf24 32%, var(--vb-energy) 62%, #7c2d12 100%); box-shadow: 0 0 18px 6px color-mix(in srgb, var(--vb-energy) 65%, transparent), 0 0 44px 14px color-mix(in srgb, var(--vb-energy) 30%, transparent); animation: vb-flame-flicker .18s infinite alternate ease-in-out; }
+.vb-fire .vb-energy-bolt::before { content: ''; position: absolute; left: 50%; top: -14px; width: 20px; height: 26px; margin-left: -10px; border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%; background: radial-gradient(circle at 50% 80%, #fde68a 0%, var(--vb-impact) 55%, transparent 100%); filter: blur(1px); animation: vb-flame-flicker .14s infinite alternate ease-in-out; }
+.vb-fire .vb-energy-bolt::after { left: 8px; top: 20px; width: 26px; height: 110px; background: linear-gradient(to bottom, color-mix(in srgb, var(--vb-energy) 85%, transparent), transparent); filter: blur(3px); opacity: .9; }
+.vb-fire.vb-counter .vb-energy-bolt::after { top: auto; bottom: 20px; background: linear-gradient(to top, color-mix(in srgb, var(--vb-energy) 85%, transparent), transparent); }
+.vb-fire .vb-impact-burst b { border-color: var(--vb-impact); box-shadow: 0 0 24px var(--vb-energy), inset 0 0 18px var(--vb-energy); }
+.vb-fire .vb-impact-burst i { background: linear-gradient(to top, var(--vb-energy), var(--vb-impact)); box-shadow: 0 0 8px var(--vb-energy); }
+.vb-fire .vb-ember { position: absolute; width: 10px; height: 10px; margin: -5px; border-radius: 50%; background: radial-gradient(circle, #fef08a 0%, var(--vb-impact) 55%, transparent 100%); box-shadow: 0 0 10px var(--vb-impact); animation: vb-ember-fly .8s ease-out both; animation-delay: var(--ember-delay); }
+@keyframes vb-flame-flicker { from { transform: scale(1) rotate(-3deg); } to { transform: scale(1.12) rotate(4deg); } }
+@keyframes vb-ember-fly { from { opacity: 1; transform: rotate(var(--ember-angle)) translateY(-8px) scale(1); } to { opacity: 0; transform: rotate(var(--ember-angle)) translateY(-95px) scale(.3); } }
 .vb-impact-burst { position: absolute; width: 0; height: 0; color: var(--vb-energy); }
 .vb-impact-burst b { position: absolute; width: 110px; height: 110px; margin: -55px; border: 7px solid currentColor; border-radius: 50%; animation: vb-impact-ring .6s ease-out both; }
 .vb-impact-burst i { position: absolute; width: 7px; height: 32px; margin: -16px -3px; background: var(--vb-impact); border-radius: 4px; animation: vb-impact-spark .65s ease-out both; }
