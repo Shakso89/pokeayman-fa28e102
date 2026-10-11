@@ -28,8 +28,22 @@
       mobileToggle.querySelector('.tsb-ic').textContent = bright ? '☀' : '☾';
       mobileToggle.querySelector('.tsb-l').textContent = bright ? 'Dark' : 'Bright';
     }
+    const studentToggle = $('student-theme-toggle');
+    if (studentToggle) {
+      studentToggle.setAttribute('aria-checked', String(bright));
+      studentToggle.setAttribute('aria-label', 'Bright mode');
+      studentToggle.title = bright ? 'Switch to dark mode' : 'Switch to bright mode';
+      studentToggle.querySelector('.student-theme-icon').textContent = bright ? '☀' : '☾';
+      studentToggle.querySelector('.student-theme-label').textContent = bright ? 'Bright mode' : 'Dark mode';
+    }
   }
   applyTheme();
+  function setThemeMode(nextBright) {
+    bright = Boolean(nextBright);
+    g(() => localStorage.setItem('pokeayman-teacher-theme', bright ? 'bright' : 'dark'));
+    applyTheme();
+  }
+  window.setPokeaymanThemeMode = setThemeMode;
 
   const CLASS_ITEMS = [
     ['students', '👩‍🎓', 'Class Roster'], ['quiz', '📝', 'Quizzes'], ['vocab', '📚', 'Vocabulary'],
@@ -87,9 +101,7 @@
     theme.innerHTML = '<span class="ts-theme-icon" aria-hidden="true"></span><span>Bright mode</span><span class="ts-theme-track" aria-hidden="true"><span></span></span>';
     side.appendChild(theme);
     theme.addEventListener('click', () => {
-      bright = !bright;
-      g(() => localStorage.setItem('pokeayman-teacher-theme', bright ? 'bright' : 'dark'));
-      applyTheme();
+      setThemeMode(!bright);
     });
     applyTheme();
     const chooser = document.createElement('dialog');
@@ -351,9 +363,7 @@
       const b = e.target.closest('[data-tsb]'); if (!b) return;
       const k = b.dataset.tsb;
       if (k === 'theme') {
-        bright = !bright;
-        g(() => localStorage.setItem('pokeayman-teacher-theme', bright ? 'bright' : 'dark'));
-        applyTheme();
+        setThemeMode(!bright);
         return;
       }
       meOpen = k === 'me' ? !meOpen : false;
@@ -381,6 +391,10 @@
     if (mq.matches && meOpen) document.body.style.setProperty('--ts-me-height', `${$('ts-sidebar').getBoundingClientRect().height}px`);
   }
 
-  function start() { sync(); syncBottom(); setInterval(() => { sync(); syncBottom(); }, 700); }
+  function start() {
+    const studentToggle = $('student-theme-toggle');
+    studentToggle?.addEventListener('click', () => setThemeMode(!bright));
+    sync(); syncBottom(); setInterval(() => { sync(); syncBottom(); }, 700);
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
