@@ -2672,6 +2672,13 @@
     .scramble-answer-slot { display:inline-flex; align-items:center; justify-content:center; min-width:.78em; min-height:1.15em; border-bottom:.07em solid rgba(186,230,253,.6); border-radius:.1em; line-height:1; }
     .scramble-answer-slot.is-filled { border-bottom-color:transparent; color:#fde047; text-shadow:0 0 18px rgba(255,203,5,.55); animation:scramble-slot-pop .22s ease; }
     @keyframes scramble-slot-pop { from { transform:scale(.55); } to { transform:scale(1); } }
+    .cipher-lab-answer.scramble-result-correct .scramble-answer-slot.is-filled { color:#86efac; text-shadow:0 0 20px rgba(74,222,128,.9); animation:scramble-letter-correct .52s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--slot-index, 0) * 55ms); }
+    .cipher-lab-answer.scramble-result-wrong .scramble-answer-slot.is-filled { color:#fca5a5; text-shadow:0 0 16px rgba(248,113,113,.7); animation:scramble-letter-wrong .42s ease both; animation-delay:calc(var(--slot-index, 0) * 28ms); }
+    @keyframes scramble-letter-correct { 0%{transform:translateY(0) scale(1)} 45%{transform:translateY(-.22em) scale(1.22);color:#bbf7d0} 100%{transform:translateY(0) scale(1)} }
+    @keyframes scramble-letter-wrong { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-.12em)} 40%,80%{transform:translateX(.12em)} }
+    #scramble-tiles.scramble-tiles-wrong .scramble-tile:not(:disabled) { animation:scramble-tiles-nudge .38s ease; border-color:rgba(248,113,113,.8)!important; }
+    @keyframes scramble-tiles-nudge { 0%,100%{transform:translateX(0)} 30%{transform:translateX(-3px)} 70%{transform:translateX(3px)} }
+    @media(prefers-reduced-motion:reduce){.cipher-lab-answer.scramble-result-correct .scramble-answer-slot.is-filled,.cipher-lab-answer.scramble-result-wrong .scramble-answer-slot.is-filled,#scramble-tiles.scramble-tiles-wrong .scramble-tile:not(:disabled){animation:none!important}}
     .cipher-lab-tile { min-width:3.1rem; min-height:3.1rem; border:1px solid rgba(147,197,253,.5) !important; border-radius:.8rem !important; background:linear-gradient(145deg,#3b82f6,#2563eb) !important; color:#fff !important; box-shadow:0 6px 14px rgba(30,64,175,.3), inset 0 1px 0 rgba(255,255,255,.3); transition:transform .18s ease, filter .18s ease, box-shadow .18s ease, opacity .18s ease; }
     .cipher-lab-tile:hover:not(:disabled) { transform:translateY(-2px); filter:brightness(1.12); box-shadow:0 10px 20px rgba(37,99,235,.42), 0 0 0 2px rgba(125,211,252,.18); }
     .cipher-lab-tile:active:not(:disabled) { transform:translateY(1px) scale(.97); }
@@ -15161,7 +15168,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
       <p class="text-xs font-bold uppercase tracking-[.22em] text-indigo-200 mb-3">Required score to win: ${wordCount}</p>
       <p id="scramble-answer" class="cipher-lab-answer text-5xl sm:text-7xl font-black mb-6 tracking-wider flex items-center justify-center" aria-label="Unscramble word">_____</p>
       <div id="scramble-tiles" class="flex flex-wrap gap-3 mb-7 justify-center" aria-label="Available letters"></div>
-      <div id="scramble-feedback" class="mt-4 text-lg font-semibold"></div>
+      <div id="scramble-feedback" class="sr-only" aria-live="polite" aria-atomic="true"></div>
       <div id="scramble-practice-hint" class="hidden mt-2 flex flex-col items-center gap-2" aria-live="polite"></div>
       <div class="flex gap-3 mt-6">
         <button id="scramble-reset" class="cipher-lab-reset flex-1 font-bold py-3 rounded-lg transition text-lg">Reset</button>
@@ -15245,8 +15252,18 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   function updateAnswerDisplay() {
     // Render one slot per letter so the fly-in animation can target the exact slot rect.
     answerDisplay.innerHTML = selectedLetters.map((letter, i) =>
-      `<span class="scramble-answer-slot${letter ? ' is-filled' : ''}" data-slot="${i}">${letter ? letter.letter : ''}</span>`
+      `<span class="scramble-answer-slot${letter ? ' is-filled' : ''}" data-slot="${i}" style="--slot-index:${i}">${letter ? letter.letter : ''}</span>`
     ).join('');
+  }
+
+  function animateScrambleResult(result, announcement) {
+    answerDisplay.classList.remove('scramble-result-correct', 'scramble-result-wrong');
+    tilesContainer.classList.remove('scramble-tiles-wrong');
+    // Restart the short feedback animation without changing the answer layout.
+    void answerDisplay.offsetWidth;
+    answerDisplay.classList.add(result === 'correct' ? 'scramble-result-correct' : 'scramble-result-wrong');
+    if (result === 'wrong') tilesContainer.classList.add('scramble-tiles-wrong');
+    feedback.textContent = announcement;
   }
 
   function queueScrambleTile(tile) {
@@ -15300,7 +15317,8 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     selectedLetters = Array(correctWord.length).fill(null);
     usedIndices.clear();
     feedback.textContent = '';
-    feedback.className = 'mt-4 text-lg font-semibold';
+    answerDisplay.classList.remove('scramble-result-correct', 'scramble-result-wrong');
+    tilesContainer.classList.remove('scramble-tiles-wrong');
     updateAnswerDisplay();
     renderTiles();
   }
@@ -15318,7 +15336,6 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     if (!Number.isFinite(latestScore) || latestScore < 1) {
       updateNextWordAvailability();
       feedback.textContent = 'You need at least 1 point to continue.';
-      feedback.className = 'mt-4 text-lg font-semibold text-orange-600';
       return;
     }
     nextBtn.dataset.busy = 'true';
@@ -15389,7 +15406,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
         updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
         updateNextWordAvailability();
       }
-      feedback.textContent = '✅ Correct!';
+      animateScrambleResult('correct', 'Correct answer.');
       showCorrectAnswerCelebration();
       setTimeout(() => {
         const playerKey = getPlayerKey();
@@ -15411,9 +15428,9 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
           scrambledLetters = correctWord.split('').sort(() => Math.random() - 0.5);
           selectedLetters = Array(correctWord.length).fill(null);
           usedIndices = new Set();
-          answerDisplay.classList.remove('animate-pulse', 'shake');
+          answerDisplay.classList.remove('animate-pulse', 'shake', 'scramble-result-correct', 'scramble-result-wrong');
+          tilesContainer.classList.remove('scramble-tiles-wrong');
           feedback.textContent = '';
-          feedback.className = 'mt-4 text-lg font-semibold';
           modal.querySelector('#scramble-practice-hint')?.classList.add('hidden');
           updateAnswerDisplay();
           renderTiles();
@@ -15428,16 +15445,12 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
           showGameCelebration(modal, 'Word champion!');
         }
       }, 650);
-      feedback.className = 'mt-4 text-lg font-semibold text-green-600 animate-bounce';
-      answerDisplay.classList.remove('shake');
-      answerDisplay.classList.add('animate-pulse');
-      tilesContainer.classList.add('animate-bounce');
+      answerDisplay.classList.remove('shake', 'animate-pulse');
       tilesContainer.querySelectorAll('.scramble-tile').forEach(t => {
         t.disabled = true;
         t.classList.remove('bg-blue-400', 'hover:bg-blue-500');
         t.classList.add('bg-green-500', 'animate-pulse');
       });
-      setTimeout(() => tilesContainer.classList.remove('animate-bounce'), 600);
     } else if (answer.length === correctWord.length) {
       // Keep the same round visible after a wrong submission. The correct
       // answer and its picture are shown immediately; only a correct retry
@@ -15450,23 +15463,19 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
         practiceHint.innerHTML = `<p class="text-red-300 font-bold">Correct answer: <span class="text-amber-200">${correctWord}</span></p>${image}`;
         practiceHint.classList.remove('hidden');
       }
-      feedback.textContent = isMakeoverAttempt ? 'Keep trying this same makeover round — 0 points.' : 'Not quite — try the same word again.';
-      feedback.className = 'mt-4 text-lg font-semibold text-red-600 animate-pulse';
+      animateScrambleResult('wrong', isMakeoverAttempt ? 'Incorrect. Keep trying this same word. No points are awarded for this retry.' : 'Incorrect. Try the same word again.');
       answerDisplay.classList.remove('animate-pulse');
-      answerDisplay.classList.add('shake');
-      tilesContainer.classList.add('shake');
       phase = 'retrying';
       awaitingMakeup = true;
       submissionGuard = false;
       setTimeout(() => {
-        tilesContainer.classList.remove('shake');
-        answerDisplay.classList.remove('shake');
         if (phase === 'retrying') reset();
       }, 700);
     } else {
       submissionGuard = false;
-      feedback.textContent = `❌ Select ${correctWord.length - answer.length} more letter${correctWord.length - answer.length !== 1 ? 's' : ''}`;
-      feedback.className = 'mt-4 text-lg font-semibold text-orange-600 animate-pulse';
+      feedback.textContent = `Select ${correctWord.length - answer.length} more letter${correctWord.length - answer.length !== 1 ? 's' : ''}.`;
+      answerDisplay.classList.remove('scramble-result-correct', 'scramble-result-wrong');
+      tilesContainer.classList.remove('scramble-tiles-wrong');
     }
   };
   
