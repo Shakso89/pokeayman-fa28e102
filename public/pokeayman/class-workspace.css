@@ -225,5 +225,6 @@ html body .gym-card .class-teacher-pill:has(.class-teacher-item + .class-teacher
 html body .ec-teacher-toggle,html body .ec-teacher-toggle span{color:#3b2a00!important}
 html body .ec-teacher-toggle{background:#fff6d6!important;border-color:#f0c94a!important}
 body.ts-on.ts-bright .gym-card .class-teacher-item{color:var(--ts-blue)}
-html body #view-classes .gym-card .class-teacher-pill{width:100%;flex-direction:row!important;flex-wrap:nowrap!important;align-items:flex-start!important;justify-content:center!important}
-html body #view-classes .gym-card .class-teacher-item{flex:0 0 auto!important;display:inline-flex!important;flex-direction:column!important;align-items:center}
+html body #view-classes .gym-card .class-teacher-pill{width:100%;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start!important;justify-content:center!important;gap:12px!important}
+html body #view-classes .gym-card .class-teacher-item{min-width:0!important;max-width:100%;display:flex!important;flex-direction:column!important;align-items:center;white-space:normal!important;overflow-wrap:anywhere;color:var(--class-yellow)}
+html body #view-classes .gym-card .class-teacher-pill:not(:has(.class-teacher-item + .class-teacher-item)){grid-template-columns:minmax(0,1fr)}

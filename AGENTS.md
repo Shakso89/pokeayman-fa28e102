@@ -13,6 +13,7 @@
 - PokéAyman data saves to the shared Cloud table `app_records` (id + jsonb data) via a dataSdk shim in the iframe HTML; localStorage is only an offline cache. Why: keeps the original Canva code unchanged.
 - Backend admin roles: user_roles table; admins enter the PokéAyman iframe as the built-in "Ayman" Admin identity (reserved name blocked for non-admins). Why: reuses all existing Admin permission checks unchanged.
 - Presentation/layout rules for the iframe app live in `public/pokeayman/AGENTS.md`.
+- Class teacher previews cap the shared pill renderer without changing assignment data; shared-list class cards omit mutation controls and editor/cover entry points guard the destination-class context. Why: prevents preview overflow and accidental edits to source vocabulary while preserving source-list management.
 - The home fan gallery is iframe-native in home-hand.js/.css and keeps the existing admin Pokémon configuration; bundled habitat imagery is passed from the index iframe load handler. Why: reproduces the supplied interaction without introducing React into the legacy DOM.
 - Home gallery settings keep a separate draft until the existing published-config save succeeds, reuse the hand renderer for preview and use a bundled full species-name snapshot for selection. Why: prevents unsaved/reset changes affecting the public gallery and supports every allowed Pokédex ID.
 

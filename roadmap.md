@@ -1,3 +1,6 @@
+# Class overview and shared vocabulary
+- [x] Limit overview cards to two teachers without changing assignments; shared class lists expose flashcards only and block editor/cover entry points, while original-list editing remains available. Sample class/list browser checks passed at desktop/tablet/phone widths; shared words remain in game selection, routing test/build passed. Authenticated account navigation unverified; saved records unchanged.
+
 # Teacher profile refinement
 - [x] Remove “available” from sidebar and profile credit labels; profile wording checked in the browser.
 - [x] Move name/password forms behind buttons and verify current credentials through Cloud Auth before signed-in password changes. Isolated button opening, cancellation, password clearing and error presentation passed in both themes; routing test/build passed. Real-account password changes and hosted auth settings remain unverified; no real password changed.
