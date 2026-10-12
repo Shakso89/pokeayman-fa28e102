@@ -25,16 +25,32 @@
     return owned.find((pokemon) => Number(pokemon.pokemon_id) === Number(canonical.avatar_pokemon_id)) || owned[0] || null;
   }
 
+  function classManagersFor(student) {
+    const rows = typeof allData !== 'undefined' ? allData : [];
+    const school = String(student.school_name || '');
+    const className = String(student.class_name || '');
+    const cls = rows.find((r) => r.type === 'class' && r.school_name === school && r.class_name === className);
+    const names = new Set([cls?.teacher_name, cls?.created_by, cls?.assigned_teacher].filter(Boolean).map(normalizeStudentIdentity));
+    const ids = new Set();
+    rows.filter((r) => r.type === 'teacher_class_assignment' && r.assigned_school === school && r.assigned_class === className)
+      .forEach((r) => { if (r.assigned_teacher_id) ids.add(String(r.assigned_teacher_id)); if (r.assigned_teacher) names.add(normalizeStudentIdentity(r.assigned_teacher)); });
+    rows.filter((r) => r.type === 'teacher_school_assignment' && r.assigned_school === school)
+      .forEach((r) => { if (r.assigned_teacher_id) ids.add(String(r.assigned_teacher_id)); if (r.assigned_teacher) names.add(normalizeStudentIdentity(r.assigned_teacher)); });
+    return getTeachers().filter((teacher) => ids.has(String(teacher.__backendId || '')) || names.has(normalizeStudentIdentity(teacher.teacher_name)));
+  }
+
   function classTeacherFor(student) {
-    const cls = (typeof allData !== 'undefined' ? allData : []).find((r) => r.type === 'class' && r.school_name === student.school_name && r.class_name === student.class_name);
-    const name = cls?.teacher_name || cls?.created_by || cls?.assigned_teacher || '';
-    if (!name) return null;
-    return getTeachers().find((t) => normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(name)) || null;
+    const teachers = classManagersFor(student);
+    const rows = typeof allData !== 'undefined' ? allData : [];
+    const cls = rows.find((r) => r.type === 'class' && r.school_name === student.school_name && r.class_name === student.class_name);
+    const owner = normalizeStudentIdentity(cls?.teacher_name || cls?.created_by || cls?.assigned_teacher || '');
+    return teachers.find((teacher) => normalizeStudentIdentity(teacher.teacher_name) === owner) || teachers[0] || null;
   }
 
   function pickOpponent(student) {
-    const teacher = student && (student.__practice || student.__teacherLed) ? (typeof currentTeacherRec === 'function' ? currentTeacherRec() : null) : classTeacherFor(student);
+    const teacher = student && (student.__practice || student.__teacherLed) ? (typeof currentTeacherRec === 'function' ? currentTeacherRec() : null) : null;
     const credits = teacher ? (teacher.teacher_credits === -1 ? Infinity : Number(teacher.teacher_credits || 0)) : Infinity;
+    const studentRequestBattle = Boolean(student && !student.__practice && !student.__teacherLed && typeof currentRole !== 'undefined' && currentRole === 'student');
     const catalog = (typeof pokemonCatalog !== 'undefined' && Array.isArray(pokemonCatalog)) ? pokemonCatalog : [];
     const pool = catalog.map((p) => ({
       shop_pokemon_id: Number(p.id), shop_pokemon_name: p.name, shop_pokemon_rarity: String(p.rarity || 'common').toLowerCase(),
@@ -43,7 +59,9 @@
     })).filter((item) => {
       const rarity = String(item.shop_pokemon_rarity || 'common').toLowerCase();
       if (rarity === 'legendary') return false;
-      return Number(item.shop_pokemon_price || 0) <= credits;
+      // Let students play even when teacher credits are low; approval still charges
+      // the approving manager and remains pending if they need more credits.
+      return studentRequestBattle || Number(item.shop_pokemon_price || 0) <= credits;
     });
     if (!pool.length) return null;
     const weighted = [];
@@ -425,7 +443,12 @@
     const student = ((typeof getStudentRecordByStableId === 'function' && currentStudentRecordId && getStudentRecordByStableId(currentStudentRecordId))
       || getAllStudents().find((s) => s.student_name === currentStudent));
     if (!student) { toast('Signed-in student was not found.'); return; }
-    launchBattle(listName, student);
+    // Do not inherit a teacher's cross-list mode or pass through generic multiplayer setup.
+    selectedGameSource = 'class';
+    selectedGameSession = null;
+    // The selected list may belong to one of this student's other enrolled classes.
+    const battleStudent = { ...student, school_name: navSchool || student.school_name || '', class_name: navClass || student.class_name || '' };
+    launchBattle(listName, battleStudent);
   };
 
   function launchBattle(listName, student) {
@@ -488,7 +511,8 @@
     const claims = allData.filter((r) => r.type === 'battle_claim' && r.status === 'pending');
     if (typeof canAccessAdmin === 'function' && canAccessAdmin()) return claims;
     const me = normalizeStudentIdentity(currentTeacher || '');
-    return claims.filter((c) => normalizeStudentIdentity(c.teacher_name || '') === me || !c.teacher_name);
+    return claims.filter((c) => normalizeStudentIdentity(c.teacher_name || '') === me
+      || (typeof canManageClass === 'function' && canManageClass(c.school_name || '', c.class_name || '')));
   }
 
   window.renderBattleClaims = function () {
