@@ -1,4 +1,37 @@
 /* Classroom workspaces: one token-driven presentation layer. */
+/* Teacher profile: an unframed identity header and shared form colours. */
+html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
+  & .trainer-page .trainer-hub { background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important; color: var(--color-text-primary) !important; font-family: var(--font-body); gap: 24px; }
+  & .trainer-page .th-card { background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--color-border) !important; border-radius: 0 !important; box-shadow: none !important; padding: 8px 0 24px !important; gap: 24px; text-align: left; flex-direction: row; }
+  & .trainer-page :is(.th-card-shine,.th-ball) { display: none !important; }
+  & .trainer-page .th-avatar-ring { width: 180px !important; height: 180px !important; padding: 6px; background: var(--color-surface) !important; border: 2px solid var(--color-brand); box-shadow: none !important; animation: none !important; }
+  & .trainer-page .th-avatar { background: var(--color-surface) !important; color: var(--color-text-primary) !important; }
+  & .trainer-page .th-name { color: var(--color-text-primary) !important; font-size: 28px; line-height: 1.25; overflow-wrap: anywhere; text-shadow: none !important; }
+  & .trainer-page :is(.th-email,.th-hint,.th-field span) { color: var(--color-text-secondary) !important; opacity: 1; letter-spacing: 0 !important; }
+  & .trainer-page .th-chips { gap: 16px; margin-top: 14px; justify-content: flex-start; }
+  & .trainer-page .th-chip { background: transparent !important; border: 0 !important; border-radius: 0 !important; padding: 0 !important; color: var(--color-text-secondary) !important; font-size: 13px; }
+  & .trainer-page .th-chip-gold, & .trainer-page .th-chip-gold * { color: var(--color-brand) !important; }
+  & .trainer-page .th-panel { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; }
+  & .trainer-page .th-panel::before { color: var(--color-text-primary) !important; font-family: var(--font-body); font-size: 16px; margin-bottom: 16px !important; }
+  & .trainer-page .th-form { padding: 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; gap: 16px; }
+  & .trainer-page .th-form input { min-width: 0; width: 100%; min-height: 46px; border-radius: 6px !important; background: var(--color-surface) !important; color: var(--color-text-primary) !important; border: 1px solid var(--color-border-strong) !important; box-shadow: none !important; }
+  & .trainer-page .th-form input::placeholder { color: var(--color-text-muted) !important; }
+  & .trainer-page :is(.th-primary,.th-ghost) { min-height: 44px; border-radius: 6px !important; background: var(--color-surface) !important; color: var(--color-text-primary) !important; border: 1px solid var(--color-border) !important; box-shadow: none !important; transform: none !important; font-family: var(--font-body); }
+  & .trainer-page .th-primary { background: var(--color-brand) !important; color: var(--color-text-on-brand) !important; border-color: var(--color-brand) !important; }
+  & .trainer-page .th-progress { padding: 16px 0 !important; border: 0 !important; }
+  & .trainer-page .th-progress-head, & .trainer-page .th-progress-head * { color: var(--color-text-secondary) !important; }
+  & .trainer-page .th-bar { background: var(--color-surface-raised) !important; }
+  & .trainer-page .th-bar-fill { background: var(--color-brand) !important; }
+}
+@media(max-width:640px) {
+  html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
+    & .trainer-page .th-card { gap: 16px; }
+    & .trainer-page .th-avatar-ring { width: 108px !important; height: 108px !important; }
+    & .trainer-page .th-name { font-size: 22px; }
+    & #ts-sidebar .ts-me-main { grid-template-columns: 77px minmax(0,1fr); }
+    & #ts-sidebar .ts-me #ts-avatar { width: 77px !important; height: 77px !important; }
+  }
+}
 html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
   & :is(.home-manager,.home-picker) { color: var(--color-text-primary); font-family: var(--font-body); }
   & .home-manager-heading { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:24px; }

@@ -16,7 +16,7 @@
 - The home fan gallery is iframe-native in home-hand.js/.css and keeps the existing admin Pokémon configuration; bundled habitat imagery is passed from the index iframe load handler. Why: reproduces the supplied interaction without introducing React into the legacy DOM.
 - Home gallery settings keep a separate draft until the existing published-config save succeeds, reuse the hand renderer for preview and use a bundled full species-name snapshot for selection. Why: prevents unsaved/reset changes affecting the public gallery and supports every allowed Pokédex ID.
 
-- Teacher sidebar identity stays in teacher-shell.js/.css, using the existing header name/image, a CSS Poké Ball fallback, and measured mobile profile height. Why: maintains avatar synchronization and avoids long-name overlap without changing account logic.
+- Teacher sidebar identity stays in teacher-shell.js/.css, using the existing header name/image, a CSS Poké Ball fallback, and measured mobile profile height; profile page presentation uses workspace-refresh.css shared tokens. Why: maintains avatar synchronization and consistent themed headers/forms without changing account logic.
 - Hangman keeps eight persistent SVG stages with scoped hangman-animation.css and local miss feedback. Why: each wrong guess visibly draws one new stage without restarting previous strokes or covering the game.
 - Bright-mode legacy corrections live in bright-fixes.css/.js with ID-aware full-background overrides and body-scoped derived tokens; computed colours are normalized through a cached canvas. Why: legacy gradients and root-resolved aliases must not keep dark surfaces after the theme switch.
 

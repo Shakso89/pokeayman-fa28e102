@@ -62,8 +62,8 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
 .ts-item[hidden], #ts-zone[hidden] { display: none; }
 .ts-item:focus-visible, .ts-switch:focus-visible, #ts-rail button:focus-visible { outline: 3px solid var(--ts-yellow); outline-offset: 2px; }
 .ts-me { display: flex; flex-direction: column; align-items: stretch; flex: none; gap: 10px; padding: 10px; border-radius: 8px; background: var(--ts-surface); border: 1px solid var(--ts-border); }
-.ts-me-main { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 10px; width: 100%; min-width: 0; padding: 2px 0; background: none; border: 0; color: var(--ts-ink); text-align: left; }
-.ts-avatar { width: 60px; height: 60px; border-width: 3px !important; box-shadow: 0 0 14px color-mix(in srgb, var(--ts-yellow) 45%, transparent); flex: none; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--ts-deep); border: 2px solid var(--ts-yellow); }
+.ts-me-main { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 10px; width: 100%; min-width: 0; padding: 2px 0; background: none; border: 0; color: var(--ts-ink); text-align: left; }
+.ts-avatar { width: 72px; height: 72px; border-width: 3px !important; box-shadow: none; flex: none; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--ts-deep); border: 2px solid var(--ts-yellow); }
 .ts-avatar img { width: 100%; height: 100%; object-fit: contain; }
 .ts-avatar > * { width: 100% !important; height: 100% !important; border: 0 !important; margin: 0 !important; }
 .ts-me-info { min-width: 0; display: flex; flex-direction: column; }
@@ -253,7 +253,7 @@ body.ts-on #ts-sidebar::-webkit-scrollbar { display: none; }
 #ts-sidebar .ts-brand { font-size: clamp(17px, 2.4vh, 20px); }
 body.ts-on #ts-theme-toggle { padding: clamp(6px, 1vh, 10px) 12px; }
 #ts-sidebar .ts-me { padding: clamp(6px, 1vh, 10px); }
-@media (max-height: 760px) { #ts-sidebar .ts-avatar { width: 60px; height: 60px; } #ts-sidebar .ts-brand small { display: none; } }
+@media (max-height: 760px) { #ts-sidebar .ts-avatar { width: 72px; height: 72px; } #ts-sidebar .ts-brand small { display: none; } }
 
 /* Bright mode: cover popups, Teacher Card and legacy dark panels everywhere. */
 body.ts-bright {
