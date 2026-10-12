@@ -313,7 +313,7 @@
     $('ts-name').textContent = $('logged-in-name-nav')?.textContent || g(() => currentTeacher, '') || 'Teacher';
     $('ts-name').title = $('ts-name').textContent;
     const credits = $('credit-balance-nav')?.textContent?.trim();
-    $('ts-role').textContent = g(() => canAccessAdmin(), false) ? 'Unlimited credits' : (credits ? `${credits} credits available` : 'Credits unavailable');
+    $('ts-role').textContent = g(() => canAccessAdmin(), false) ? 'Unlimited credits' : (credits ? `${credits} credits` : 'Credits');
     const sourceAvatar = $('teacher-account-avatar')?.querySelector('img');
     const av = sourceAvatar ? sourceAvatar.outerHTML : '<span class="ts-ball" role="img" aria-label="Poké Ball avatar"></span>';
     if ($('ts-avatar').innerHTML !== av) $('ts-avatar').innerHTML = av;
