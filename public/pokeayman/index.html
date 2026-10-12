@@ -3787,10 +3787,10 @@
       try { await api('POST', '', rows.map(({row}) => ({id: row.__backendId, data: row}))); } catch (e) { console.error(e); return {isOk:false, error:e}; }
       rows.forEach(({i, row}) => { records[i] = row; }); if (options.notify !== false) { lastSig = cache(); notify(); } else cacheAfterPaint(); return {isOk:true, data: rows.map(r => r.row)};
     },
-    async delete(value) {
+    async delete(value, options = {}) {
       const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
       try { await api('DELETE', '?id=eq.' + encodeURIComponent(value.__backendId)); } catch (e) { console.error(e); return {isOk:false, error:e}; }
-      records.splice(i, 1); lastSig = cache(); notify(); return {isOk:true};
+      records.splice(i, 1); if (options.notify === false) cacheAfterPaint(); else { lastSig = cache(); notify(); } return {isOk:true};
     }
   };
 })();
@@ -15889,7 +15889,7 @@ function openVocabListEditor(listId, listName) {
       <div class="vocab-editor-form"><h3 class="mb-3">Add word</h3>
         <div class="ve-fields grid grid-cols-1 sm:grid-cols-2 gap-3"><label>Word<input id="new-vocab-word" type="text" placeholder="Apple" class="vocab-editor-input w-full" required></label><label>Example sentence<input id="new-vocab-sentence" type="text" placeholder="I eat an apple every day." class="vocab-editor-input w-full"></label></div>
         <details class="ve-photo-options"><summary>Word image</summary><div><label class="text-xs block mb-2">Search Pexels photos</label><div class="flex flex-col sm:flex-row gap-2 mb-3"><input id="add-vocab-image-search" type="text" placeholder="Search photos" aria-label="Photo search" class="vocab-editor-input flex-1"><div class="flex gap-2"><button id="add-vocab-copy-word-btn" type="button" class="vocab-editor-secondary" title="Search photos using the word" aria-label="Search photos using the word">↳</button><button id="add-vocab-image-search-btn" type="button" class="vocab-editor-secondary">Search photos</button></div></div><div id="add-vocab-image-results" class="hidden"></div><input id="new-vocab-image" type="url" placeholder="Paste image URL" aria-label="Image URL" class="vocab-editor-input w-full"></div></details>
-        <button id="add-vocab-word-btn" type="button" class="vocab-editor-primary">+ Add word</button>
+        <button id="add-vocab-word-btn" type="button" class="vocab-editor-primary" aria-label="Add word to this list">Add to list</button>
       </div>
       <section><div class="ve-word-heading"><h3>Words</h3><span id="ve-word-count"></span></div><div id="vocab-words-list" class="vocab-editor-word-list space-y-2"></div></section>
       <div id="share-vocab-popup" class="vocab-share-popup hidden" role="dialog" aria-modal="true" aria-labelledby="share-vocab-title"><div class="vocab-share-popup-card"><div class="flex items-center justify-between gap-3 mb-3"><h3 id="share-vocab-title">Share to Other Classes</h3><button id="share-vocab-close" type="button" class="vocab-editor-close" aria-label="Close sharing popup">×</button></div><div class="space-y-3"><label for="share-target-class" class="sr-only">Select a class to share with</label><select id="share-target-class" class="vocab-editor-input w-full"><option value="">Select a class...</option></select><button id="share-vocab-list-btn" class="vocab-editor-primary w-full" data-list-id="">Share List</button><button id="share-vocab-cancel" type="button" class="vocab-editor-secondary w-full">Cancel</button></div></div></div>
@@ -15939,8 +15939,16 @@ function openVocabListEditor(listId, listName) {
     modal.querySelector('#ve-word-count').textContent = `${currentWords.length} words`;
     wordsList.innerHTML = currentWords.length ? currentWords.map((word, index) => `<div class="ve-word">${word.vocab_image ? `<img src="${escape(word.vocab_image)}" alt="" loading="lazy">` : '<span class="ve-word-placeholder" aria-hidden="true">▧</span>'}<div class="flex-1 min-w-0"><p class="font-medium text-sm">${escape(word.vocab_word)}</p>${word.vocab_sentence ? `<small>${escape(word.vocab_sentence)}</small>` : ''}</div><div class="ve-word-actions"><button type="button" data-edit-word="${index}" aria-label="Edit ${escape(word.vocab_word)}" title="Edit word"><svg viewBox="0 0 24 24"><path d="m16 3 5 5-12 12-6 1 1-6Z M14 5l5 5"/></svg></button><button type="button" data-delete-word="${index}" aria-label="Delete ${escape(word.vocab_word)}" title="Delete word"><svg viewBox="0 0 24 24"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7"/></svg></button></div></div>`).join('') : '<p class="ve-status">No words yet</p>';
     wordsList.querySelectorAll('[data-edit-word]').forEach(button => button.onclick = () => { const word = currentWords[Number(button.dataset.editWord)]; editVocabWord(word.__backendId, word.vocab_word, word.vocab_image || ''); });
-    wordsList.querySelectorAll('[data-delete-word]').forEach(button => button.onclick = () => { const word = currentWords[Number(button.dataset.deleteWord)]; deleteVocabWord(word.__backendId, canonicalListId); });
+    wordsList.querySelectorAll('[data-delete-word]').forEach(button => button.onclick = async () => {
+      const word = currentWords[Number(button.dataset.deleteWord)];
+      if (!word) return;
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      const deleted = await deleteVocabWord(word.__backendId, canonicalListId, { onDeleted: renderWordsInModal });
+      if (!deleted && button.isConnected) { button.disabled = false; button.removeAttribute('aria-busy'); }
+    });
   }
+  modal.__renderVocabWords = renderWordsInModal;
 
   // Populate share target classes
   const findListRecord = () => allData.find(r => ['vocab_list','vocabulary_list'].includes(String(r.type || '').toLowerCase()) && normalizeVocabId(r.vocab_list_id ?? r.list_id ?? r.vocabulary_list_id ?? r.__backendId) === normalizeVocabId(canonicalListId));
@@ -16103,7 +16111,9 @@ function openVocabListEditor(listId, listName) {
   };
   addWordSearchBtn.addEventListener('click', () => { vocabPhotoQuery = addWordSearchInput.value.trim(); openVocabPhotoPicker(); });
 
-  modal.querySelector('#add-vocab-word-btn').addEventListener('click', async () => {
+  modal.querySelector('#add-vocab-word-btn').addEventListener('click', async event => {
+    const addButton = event.currentTarget;
+    if (addButton.disabled) return;
     const word = modal.querySelector('#new-vocab-word').value.trim();
     const image = modal.querySelector('#new-vocab-image').value.trim();
     const sentence = modal.querySelector('#new-vocab-sentence').value.trim();
@@ -16112,16 +16122,30 @@ function openVocabListEditor(listId, listName) {
     const canonicalListId = normalizeVocabId(listId);
     const wordId = `vocab-word-${canonicalListId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const wordPayload = { type: 'vocab_word', vocab_list_id: canonicalListId, list_id: canonicalListId, vocabulary_list_id: canonicalListId, school_name: navSchool, class_name: navClass, vocab_list_school: navSchool, vocab_list_class: navClass, vocab_list_name: listName, vocab_word_id: wordId, word_id: wordId, vocab_word: word, vocab_image: image, vocab_sentence: sentence, created_at: new Date().toISOString(), teacher_name: currentTeacher, owner: currentTeacher };
-    const saveResult = await window.dataSdk.create(wordPayload);
+    addButton.disabled = true;
+    addButton.setAttribute('aria-busy', 'true');
+    addButton.textContent = 'Adding…';
+    let saveResult;
+    try { saveResult = await window.dataSdk.create(wordPayload, { notify: false }); }
+    catch (error) { console.error('Could not add vocabulary word', error); }
     const diagnostics = { parentListId: canonicalListId, wordId, payloadFields: Object.keys(wordPayload).sort(), source: 'child:vocab_word', requestVersion: Date.now(), writeResult: Boolean(saveResult?.isOk), readBackResult: false };
     window.__pokeymanVocabDiagnostics = { ...(window.__pokeymanVocabDiagnostics || {}), lastWordMutation: diagnostics };
-    if (!saveResult?.isOk) { toast('Could not save this word. Please try again.'); return; }
-    // create() notifies the shared data handler and updates allData before it resolves.
-    // Reinitializing the SDK here would reload every record and redraw the whole app.
-    const savedWord = allData.find(saved => saved.type === 'vocab_word' && String(saved.vocab_word_id || saved.word_id || saved.__backendId || '') === wordId);
+    if (!saveResult?.isOk) {
+      toast('Could not save this word. Please try again.');
+      addButton.disabled = false; addButton.removeAttribute('aria-busy'); addButton.textContent = 'Add to list';
+      return;
+    }
+    // Keep the shared snapshot current without invoking onDataChanged, which rerenders
+    // every dashboard and game while the teacher is editing a single list.
+    const savedWord = normalizeSheetRecord(saveResult.data || { ...wordPayload, __backendId: wordId });
+    if (savedWord && !allData.some(saved => saved.__backendId === savedWord.__backendId)) allData.push(savedWord);
     const readBack = Boolean(savedWord && normalizeVocabId(savedWord.vocab_list_id || savedWord.list_id || savedWord.vocabulary_list_id) === canonicalListId);
     diagnostics.readBackResult = Boolean(readBack);
-    if (!readBack) { toast('The word was not confirmed in its vocabulary list. Please refresh and try again.'); return; }
+    if (!readBack) {
+      toast('The word was saved, but could not be confirmed in this list.');
+      addButton.disabled = false; addButton.removeAttribute('aria-busy'); addButton.textContent = 'Add to list';
+      return;
+    }
     modal.querySelector('#new-vocab-word').value = '';
     modal.querySelector('#new-vocab-sentence').value = '';
     modal.querySelector('#new-vocab-image').value = '';
@@ -16129,6 +16153,11 @@ function openVocabListEditor(listId, listName) {
     addWordResultsContainer.classList.add('hidden');
     toast(`Added "${word}"!`);
     renderWordsInModal();
+    try { renderVocabLists(); renderTeacherOwnedVocabLists(); } catch (error) { console.warn('Could not refresh vocabulary list cards', error); }
+    addButton.textContent = 'Done ✓';
+    window.setTimeout(() => { if (addButton.isConnected) addButton.textContent = 'Add to list'; }, 1000);
+    addButton.disabled = false;
+    addButton.removeAttribute('aria-busy');
   });
   
   modal.querySelector('#share-vocab-list-btn').addEventListener('click', async () => {
@@ -16204,8 +16233,9 @@ function editVocabWord(wordId, currentWord, currentImage) {
     e.preventDefault();
     const confirmed = confirm(`Delete word "${currentWord}"? This cannot be undone.`);
     if (!confirmed) return;
-    await deleteVocabWord(wordId);
-    modal.remove();
+    const wordRecord = allData.find(record => record.__backendId === wordId);
+    const deleted = await deleteVocabWord(wordId, wordRecord?.vocab_list_id || wordRecord?.list_id || wordRecord?.vocabulary_list_id);
+    if (deleted) modal.remove();
   });
   
   searchBtn.addEventListener('click', async () => {
@@ -16309,8 +16339,9 @@ function editVocabWord(wordId, currentWord, currentImage) {
     deleteConfirmModal.querySelector('#confirm-delete-word').addEventListener('click', async () => {
       const word = allData.find(w => w.__backendId === wordId);
       if (word) {
-        await window.dataSdk.delete(word);
-        toast(`"${currentWord}" deleted!`);
+        const listId = word.vocab_list_id || word.list_id || word.vocabulary_list_id;
+        const deleted = await deleteVocabWord(wordId, listId);
+        if (!deleted) return;
       }
       deleteConfirmModal.remove();
       modal.remove();
@@ -16328,19 +16359,32 @@ function editVocabWord(wordId, currentWord, currentImage) {
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
-async function deleteVocabWord(wordId, listId) {
-  const canonicalListId = normalizeVocabId(listId);
+async function deleteVocabWord(wordId, listId, options = {}) {
   const word = allData.find(w => w.__backendId === wordId && w.type === 'vocab_word');
   const wordParentId = normalizeVocabId(word?.vocab_list_id || word?.list_id || word?.vocabulary_list_id);
-  if (!canonicalListId || !word || wordParentId !== canonicalListId) { toast('Could not verify this word’s vocabulary list. Please refresh and try again.'); return; }
-  const result = await window.dataSdk.delete(word);
-  window.__pokeymanVocabDiagnostics = { ...(window.__pokeymanVocabDiagnostics || {}), lastWordMutation: { model:'vocab_list/vocab_word', canonicalListId, wordId:String(wordId), payloadFields:Object.keys(word).sort(), writeResult:Boolean(result?.isOk), readBackResult:false, hydrationCounts:{before:getVocabWords({vocab_list_id:canonicalListId}, navSchool, navClass).length} } };
-  if (!result?.isOk) { toast('Could not delete this word. Please try again.'); return; }
-  const refresh = await window.dataSdk.init(handler);
-  const stillThere = refresh?.isOk && allData.some(record => record.__backendId === wordId && normalizeVocabId(record.vocab_list_id || record.list_id || record.vocabulary_list_id) === canonicalListId);
-  window.__pokeymanVocabDiagnostics.lastWordMutation.readBackResult = !stillThere;
-  if (stillThere) { toast('The word deletion could not be verified. Please refresh and try again.'); return; }
-  toast('Word deleted!');
+  const canonicalListId = normalizeVocabId(listId || wordParentId);
+  if (!canonicalListId || !word || wordParentId !== canonicalListId) { toast('Could not verify this word’s vocabulary list. Please refresh and try again.'); return false; }
+  window.__pendingVocabWordDeletes ||= new Set();
+  if (window.__pendingVocabWordDeletes.has(wordId)) return false;
+  window.__pendingVocabWordDeletes.add(wordId);
+  try {
+    const result = await window.dataSdk.delete(word, { notify: false });
+    window.__pokeymanVocabDiagnostics = { ...(window.__pokeymanVocabDiagnostics || {}), lastWordMutation: { model:'vocab_list/vocab_word', canonicalListId, wordId:String(wordId), payloadFields:Object.keys(word).sort(), writeResult:Boolean(result?.isOk), readBackResult:false } };
+    if (!result?.isOk) { toast('Could not delete this word. Please try again.'); return false; }
+    allData = allData.filter(record => record.__backendId !== wordId);
+    window.__pokeymanVocabDiagnostics.lastWordMutation.readBackResult = true;
+    if (options.onDeleted) options.onDeleted();
+    else document.querySelector('.ve-workspace')?.__renderVocabWords?.();
+    try { renderVocabLists(); renderTeacherOwnedVocabLists(); } catch (error) { console.warn('Could not refresh vocabulary list cards', error); }
+    toast('Word deleted!');
+    return true;
+  } catch (error) {
+    console.error('Could not delete vocabulary word', error);
+    toast('Could not delete this word. Please try again.');
+    return false;
+  } finally {
+    window.__pendingVocabWordDeletes.delete(wordId);
+  }
 }
 
 async function removeVocabListFromClass(listId, listName, button) {

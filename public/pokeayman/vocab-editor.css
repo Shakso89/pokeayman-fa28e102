@@ -13,6 +13,7 @@ html body .ve-workspace .vocab-editor-primary, html body .ve-workspace .vocab-ed
 .ve-workspace button:disabled { opacity: .5; cursor: wait; }
 .ve-workspace .vocab-editor-content { padding: 20px 24px; overflow-y: auto; min-height: 0; }
 .ve-workspace .vocab-editor-form { padding: 0 0 20px; background: none; border: 0; border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--ve-border); }
+.ve-workspace #add-vocab-word-btn { display: block; min-width: 150px; margin: 16px auto 0; }
 .ve-workspace h3 { color: var(--ve-ink) !important; font: 700 15px 'Outfit', sans-serif; }
 .ve-workspace .ve-fields label { display: block; font-size: 12px; color: var(--ve-muted); }
 .ve-workspace .ve-fields input { margin-top: 6px; }
