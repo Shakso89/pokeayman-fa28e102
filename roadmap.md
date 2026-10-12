@@ -1,4 +1,5 @@
 # Teacher profile refinement
+- [ ] Remove “available” from sidebar and profile credit labels.
 - [ ] Move name/password forms behind buttons and require verified current password for signed-in changes; check opening, cancellation and validation without changing a real password.
 - [x] Remove redundant identity labels, enlarge avatars by 20%, and align the profile header/forms with both website themes. Isolated profile rendering checked in dark/bright and narrow layouts with no overflow or runtime errors; routing test/build passed. Signed-in profile navigation and account edits remain unverified; save handlers unchanged.
 
