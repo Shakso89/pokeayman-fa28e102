@@ -7217,24 +7217,40 @@ function renderTrainerTab() {
  <button type="button" id="teacher-avatar-default" class="th-ghost">Restore default avatar</button>
 </section>
 <section class="th-panel hidden" data-th-panel="profile">
- <form id="teacher-profile-form" class="th-form">
+ <button type="button" class="th-ghost th-edit-toggle" data-th-editor="teacher-profile-form" aria-expanded="false" aria-controls="teacher-profile-form">Change name</button>
+ <form id="teacher-profile-form" class="th-form hidden">
   <label class="th-field"><span>Display name</span><input type="text" id="tp-name" maxlength="80" placeholder="Your name" required></label>
   <label class="th-field"><span>School</span><input type="text" id="tp-school" maxlength="120" placeholder="Optional"></label>
-  <button type="submit" class="th-primary">Save profile</button>
+  <div class="th-row"><button type="submit" class="th-primary">Save profile</button><button type="button" class="th-ghost" data-th-cancel="teacher-profile-form">Cancel</button></div>
  </form>
 </section>
 <section class="th-panel hidden" data-th-panel="security">
- <form id="change-pin-form" class="th-form">
-  <label class="th-field"><span>New password</span><input type="password" id="new-pin" minlength="8" placeholder="At least 8 characters" required></label>
-  <label class="th-field"><span>Confirm password</span><input type="password" id="confirm-pin" minlength="8" placeholder="Type it again" required></label>
+ <button type="button" class="th-ghost th-edit-toggle" data-th-editor="change-pin-form" aria-expanded="false" aria-controls="change-pin-form">Change password</button>
+ <form id="change-pin-form" class="th-form hidden">
+  <label class="th-field"><span>Current password</span><input type="password" id="current-pin" autocomplete="current-password" maxlength="1024" placeholder="Your current password" required></label>
+  <label class="th-field"><span>New password</span><input type="password" id="new-pin" autocomplete="new-password" minlength="8" maxlength="1024" placeholder="At least 8 characters" required></label>
+  <label class="th-field"><span>Confirm password</span><input type="password" id="confirm-pin" autocomplete="new-password" minlength="8" maxlength="1024" placeholder="Type it again" required></label>
   <p id="pin-error" class="th-error hidden"></p>
-  <div class="th-row"><button type="submit" class="th-primary">Change password</button><button type="button" id="pin-cancel-btn" class="th-ghost">Close</button></div>
+  <div class="th-row"><button type="submit" class="th-primary">Save password</button><button type="button" id="pin-cancel-btn" class="th-ghost" data-th-cancel="change-pin-form">Cancel</button></div>
  </form>
 </section>
 </div>`;
   const host = document.getElementById('tab-trainer'); host.innerHTML = ''; host.appendChild(modal);
   modal.remove = () => showMainTab('dashboard');
   modal.querySelector('#account-settings-title').textContent = currentTeacher;
+  const closeTeacherEditor = id => {
+    const editor = modal.querySelector('#' + id);
+    editor.classList.add('hidden');
+    modal.querySelector('[data-th-editor="' + id + '"]').setAttribute('aria-expanded', 'false');
+    if (id === 'change-pin-form') { editor.reset(); modal.querySelector('#pin-error').classList.add('hidden'); }
+  };
+  modal.querySelectorAll('[data-th-editor]').forEach(button => button.addEventListener('click', () => {
+    const editor = modal.querySelector('#' + button.dataset.thEditor);
+    if (!editor.classList.contains('hidden')) { closeTeacherEditor(editor.id); return; }
+    modal.querySelectorAll('[data-th-editor]').forEach(other => closeTeacherEditor(other.dataset.thEditor));
+    editor.classList.remove('hidden'); button.setAttribute('aria-expanded', 'true'); editor.querySelector('input')?.focus();
+  }));
+  modal.querySelectorAll('[data-th-cancel]').forEach(button => button.addEventListener('click', () => closeTeacherEditor(button.dataset.thCancel)));
   modal.querySelectorAll('.th-tab').forEach(t => t.addEventListener('click', () => {
     modal.querySelectorAll('.th-tab').forEach(x => x.classList.toggle('is-active', x === t));
     modal.querySelectorAll('[data-th-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.thPanel !== t.dataset.th));
@@ -7322,15 +7338,20 @@ function renderTrainerTab() {
   const errorEl = modal.querySelector('#pin-error');
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    const np = modal.querySelector('#new-pin').value; const cp = modal.querySelector('#confirm-pin').value;
+    const np = modal.querySelector('#new-pin').value; const cp = modal.querySelector('#confirm-pin').value; const current = modal.querySelector('#current-pin').value;
     errorEl.classList.add('hidden');
+    if (!current) { errorEl.textContent = 'Enter your current password.'; errorEl.classList.remove('hidden'); return; }
     if (np.length < 8) { errorEl.textContent = 'Password must be at least 8 characters.'; errorEl.classList.remove('hidden'); return; }
     if (np !== cp) { errorEl.textContent = 'Passwords do not match.'; errorEl.classList.remove('hidden'); return; }
-    const r = await window.parent.pokeaymanAuth?.updatePassword(np);
+    const submit = form.querySelector('[type="submit"]');
+    submit.disabled = true;
+    let r;
+    try { r = await window.parent.pokeaymanAuth?.updatePassword(np, current); }
+    catch { r = { error: 'Could not change password. Try again.' }; }
+    finally { submit.disabled = false; }
     if (!r || r.error) { errorEl.textContent = (r && r.error) || 'Could not change password.'; errorEl.classList.remove('hidden'); return; }
-    form.reset(); toast('Password changed!');
+    closeTeacherEditor('change-pin-form'); toast('Password changed!');
   });
-  modal.querySelector('#pin-cancel-btn').addEventListener('click', () => modal.remove());
   (async () => { const auth = window.parent.pokeaymanAuth; const acc = auth?.getAccount ? await auth.getAccount() : null; if (!acc) { modal.querySelector('#teacher-profile-form')?.classList.add('hidden'); modal.querySelector('#change-pin-form')?.classList.add('hidden'); modal.querySelectorAll('[data-th-panel="profile"],[data-th-panel="security"]').forEach(p => p.insertAdjacentHTML('beforeend', '<p class="th-hint" style="text-align:center;padding:1.5rem">Sign in with your teacher email to edit this.</p>')); return; } modal.querySelector('#tp-email').textContent = acc.email; modal.querySelector('#tp-name').value = acc.displayName || ''; modal.querySelector('#tp-school').value = acc.school || ''; })();
   modal.querySelector('#teacher-profile-form').addEventListener('submit', async e => { e.preventDefault(); const name = modal.querySelector('#tp-name').value.trim(); const school = modal.querySelector('#tp-school').value.trim(); if (!name) return; const r = await window.parent.pokeaymanAuth?.updateProfile(name, school); if (!r || r.error) { toast('Could not save profile.'); return; } const latest = getTeachers().find(t => t.__backendId === currentTeacherRecordId); if (latest && currentTeacher !== 'Ayman') { const oldName = latest.teacher_name; await window.dataSdk.update({ ...latest, teacher_name: name }); await relinkTeacherAssignments(latest, oldName, name); currentTeacher = name; renderAll?.(); } toast('Profile saved!'); });
 }

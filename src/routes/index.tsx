@@ -23,7 +23,7 @@ declare global {
       email: string | null;
       getAccount: () => Promise<{ email: string; displayName: string; school: string } | null>;
       updateProfile: (name: string, school: string) => Promise<Result>;
-      updatePassword: (password: string) => Promise<Result>;
+      updatePassword: (password: string, currentPassword: string) => Promise<Result>;
     };
   }
 }
@@ -115,8 +115,16 @@ function Index() {
         const { error } = await supabase.from("profiles").upsert({ id: data.user.id, display_name: name.slice(0, 80), school: school.slice(0, 120) || null });
         return error ? { error: error.message } : {};
       },
-      updatePassword: async (password) => {
-        const { error } = await supabase.auth.updateUser({ password });
+      updatePassword: async (password, currentPassword) => {
+        if (!currentPassword || currentPassword.length > 1024) return { error: "Enter your current password." };
+        if (password.length < 8 || password.length > 1024) return { error: "New password must be between 8 and 1024 characters." };
+        const { data, error: userError } = await supabase.auth.getUser();
+        if (userError || !data.user?.email) return { error: "Sign in again to change your password." };
+        // Verify the existing credential with Cloud Auth before any password write,
+        // even if the hosted current-password requirement is not enabled.
+        const { data: verified, error: verificationError } = await supabase.auth.signInWithPassword({ email: data.user.email, password: currentPassword });
+        if (verificationError || verified.user?.id !== data.user.id) return { error: "Current password is incorrect." };
+        const { error } = await supabase.auth.updateUser({ password, current_password: currentPassword });
         return error ? { error: error.message } : {};
       },
     };

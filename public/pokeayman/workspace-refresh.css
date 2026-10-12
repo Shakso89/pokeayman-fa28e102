@@ -13,6 +13,10 @@ html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
   & .trainer-page .th-chip-gold, & .trainer-page .th-chip-gold * { color: var(--color-brand) !important; }
   & .trainer-page .th-panel { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; }
   & .trainer-page .th-panel::before { color: var(--color-text-primary) !important; font-family: var(--font-body); font-size: 16px; margin-bottom: 16px !important; }
+  & .trainer-page :is([data-th-panel="profile"],[data-th-panel="security"])::before { content: none !important; }
+  & .trainer-page .th-form.hidden { display: none !important; }
+  & .trainer-page .th-edit-toggle { width: 100%; text-align: center; }
+  & .trainer-page .th-form:not(.hidden) { margin-top: 16px; }
   & .trainer-page .th-form { padding: 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important; gap: 16px; }
   & .trainer-page .th-form input { min-width: 0; width: 100%; min-height: 46px; border-radius: 6px !important; background: var(--color-surface) !important; color: var(--color-text-primary) !important; border: 1px solid var(--color-border-strong) !important; box-shadow: none !important; }
   & .trainer-page .th-form input::placeholder { color: var(--color-text-muted) !important; }
