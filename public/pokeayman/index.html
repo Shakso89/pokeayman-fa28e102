@@ -4667,7 +4667,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       </div>
       <div id="student-tab-quizzes" class="student-dashboard-content hidden flex-1 overflow-y-auto">
        <div id="quiz-list" class="space-y-3"></div>
-       <p id="quiz-empty" class="text-center text-gray-400 py-12">No quizzes available.</p>
+       <p id="quiz-empty" class="text-center text-gray-400 py-12">Your teacher hasn’t posted a quiz for this class yet. Check back after your next lesson.</p>
       </div>
       <div id="student-tab-classes" class="student-dashboard-content hidden flex-1 overflow-y-auto">
        <div id="student-classes-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
@@ -4685,7 +4685,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       <div id="student-tab-games" class="student-dashboard-content hidden flex-1 overflow-y-auto">
        <div class="glass-container rounded-xl p-6 mb-6">
         
-        <p class="text-sm text-gray-200 mb-4">Choose a vocabulary list and play to practice your words!</p>
+        <p class="text-sm text-gray-200 mb-4">Choose a list with at least 2 words. Select more than one to combine lists.</p>
         <div id="student-games-list-selector" class="space-y-2 mb-4"></div>
         <div id="student-games-options-container"></div>
        </div>
@@ -9087,7 +9087,10 @@ function renderStudentVocabulary() {
     const safeListName = String(list.vocab_list_name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     const safeName = String(list.vocab_list_name).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\"/g, '&quot;');
     const coverAction = `role="button" tabindex="0" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault(); event.stopPropagation(); openStudentVocabularyFlashcards('${safeListName}', this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"`; const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${String(list.vocab_cover_image_url).replace(/\"/g, '&quot;')}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
-    return `<article class="vocab-list-card text-left" data-list-name="${safeName}"><div class="flex items-start justify-center gap-3"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name mt-2">${safeName}</span></div>${cover}<button type="button" class="student-vocab-open-button" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault(); event.stopPropagation(); openStudentVocabularyFlashcards('${safeListName}', this);">${words.length} words · Open flashcards</button></article>`;
+    const flashcardsAction = words.length
+      ? `<button type="button" class="student-vocab-open-button" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault(); event.stopPropagation(); openStudentVocabularyFlashcards('${safeListName}', this);">${words.length} words · Open flashcards</button>`
+      : `<button type="button" class="student-vocab-open-button" disabled aria-label="${safeName} has no words yet">No words yet · Ask your teacher</button>`;
+    return `<article class="vocab-list-card text-left" data-list-name="${safeName}"><div class="flex items-start justify-center gap-3"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name mt-2">${safeName}</span></div>${cover}${flashcardsAction}</article>`;
   }).join('');
   empty.textContent = lists.length ? '' : 'No vocabulary lists are available for this class yet.';
   empty.classList.toggle('hidden', lists.length > 0);

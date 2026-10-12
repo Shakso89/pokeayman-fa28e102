@@ -28,7 +28,7 @@
   body.ts-on #ts-rail .ts-streak .ts-streak-dots { margin: 6px 0 8px; }
   body.ts-on #ts-rail .ts-streak #ts-box-open { height: 34px; font-size: 13px; }
   body.ts-on.ts-rail-on #app-screen { padding-right: 0 !important; }
-  body.ts-on #app-screen { padding-bottom: 210px; }
+  body.ts-on #app-screen { padding-bottom: 194px; }
   body.ga-playing #ts-rail { display: none !important; }
 }
 
@@ -84,19 +84,19 @@
 #ts-bottom, #ts-sheet-scrim { display: none; }
 @media (max-width: 1024px) {
   html body.ts-on #ts-sidebar-toggle { display: none !important; }
-  html body.ts-on #app-screen { padding-left: 0 !important; padding-bottom: calc(140px + env(safe-area-inset-bottom)) !important; }
+  html body.ts-on #app-screen { padding-left: 0 !important; padding-bottom: calc(126px + env(safe-area-inset-bottom)) !important; }
   html body.ts-on #app-screen > nav.sticky .tab-btn, html body.ts-on #app-screen > nav.sticky #logged-in-name-container,
   html body.ts-on #app-screen > nav.sticky #logout-btn, html body.ts-on #teacher-header-showcase, html body.ts-on #header-logout,
   html body.ts-on #app-screen #breadcrumb, html body.ts-on #app-screen #view-students #class-tabs-container { display: none !important; }
 
   body.ts-on #ts-bottom {
     display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
-    height: calc(62px + env(safe-area-inset-bottom)); padding: 4px 6px env(safe-area-inset-bottom);
+    height: calc(56px + env(safe-area-inset-bottom)); padding: 3px 6px env(safe-area-inset-bottom);
     background: var(--ts-bg); border-top: 1px solid var(--ts-border); box-shadow: 0 -8px 24px rgba(0,0,0,.25); font-family: 'Outfit', sans-serif;
   }
   #ts-bottom button[hidden] { display: none; }
   #ts-bottom button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; border: 0; background: transparent; color: var(--ts-muted); font: 600 11px 'Outfit', sans-serif; cursor: pointer; }
-  #ts-bottom .tsb-ic { display: grid; place-items: center; width: 44px; height: 28px; font-size: 18px; border-radius: 999px; transition: background .15s; }
+  #ts-bottom .tsb-ic { display: grid; place-items: center; width: 40px; height: 24px; font-size: 17px; border-radius: 999px; transition: background .15s; }
   #ts-bottom .tsb-ic img { width: 26px !important; height: 26px !important; border-radius: 50%; object-fit: contain; }
   #ts-bottom .tsb-l { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #ts-bottom button.current { color: var(--ts-ink); }
@@ -106,8 +106,8 @@
 
   /* Sidebar = slim strip of the current section's tools, sitting just above the bottom bar. */
   html body.ts-on #ts-sidebar {
-    display: flex !important; flex-direction: row; align-items: center; position: fixed; inset: auto 0 calc(62px + env(safe-area-inset-bottom)) 0;
-    width: auto; height: 56px; padding: 8px 10px; gap: 8px; z-index: 69; overflow: hidden;
+    display: flex !important; flex-direction: row; align-items: center; position: fixed; inset: auto 0 calc(56px + env(safe-area-inset-bottom)) 0;
+    width: auto; height: 46px; padding: 5px 10px; gap: 6px; z-index: 69; overflow: hidden;
     border: 0; border-top: 1px solid var(--ts-border); background: var(--ts-bg); box-shadow: none; transform: none; visibility: visible;
   }
   html body.ts-on #ts-sidebar > * { display: none !important; }
@@ -128,7 +128,7 @@
   html body.ts-on[data-ts-sheet="me"] #ts-sidebar { flex-direction: column; align-items: stretch; height: auto; padding: 14px; border-radius: 18px 18px 0 0; }
   html body.ts-on[data-ts-sheet="me"] #ts-sidebar > .ts-nav { display: none !important; }
   html body.ts-on[data-ts-sheet="me"] #ts-sidebar > :is(.ts-me, #ts-theme-toggle) { display: flex !important; position: static; width: 100%; }
-  html body.ts-on[data-ts-sheet="me"] #ts-rail { display: flex !important; position: fixed; inset: auto 0 calc(62px + var(--ts-me-height, 220px) + env(safe-area-inset-bottom)) 0 !important; width: auto; padding: 0 14px; z-index: 69; }
+  html body.ts-on[data-ts-sheet="me"] #ts-rail { display: flex !important; position: fixed; inset: auto 0 calc(56px + var(--ts-me-height, 220px) + env(safe-area-inset-bottom)) 0 !important; width: auto; padding: 0 14px; z-index: 69; }
   html body.ts-on:not([data-ts-sheet="me"]) #ts-rail { display: none !important; }
   body.ts-on[data-ts-sheet="me"] #ts-sheet-scrim { display: block; position: fixed; inset: 0; z-index: 68; background: rgba(5,10,30,.45); }
 }

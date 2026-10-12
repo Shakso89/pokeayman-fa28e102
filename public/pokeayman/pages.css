@@ -185,3 +185,166 @@ body.ts-on #battle-claims-list .vb-claims-empty { margin: 0; padding: var(--pk-s
 
 /* Calm secondary emphasis: less glow on non-primary chips */
 body.ts-on #app-screen main .modal-stat-chip { box-shadow: none !important; }
+
+/* Student home: keep identity, class, controls and stats in one compact hero. */
+html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass {
+  grid-template-columns: 104px minmax(0, 1fr) auto !important;
+  grid-template-rows: auto auto auto auto !important;
+  align-items: center; gap: 8px 18px !important; padding: 20px !important;
+  border-radius: var(--pk-radius-lg) !important;
+  border: 1px solid var(--pk-border-strong) !important;
+  box-shadow: var(--pk-shadow-2) !important;
+}
+html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .mb-4.relative {
+  grid-column: 1 !important; grid-row: 1 / span 3 !important; align-self: center;
+}
+html body #student-dashboard :is(#my-avatar-pokemon, #my-avatar-placeholder) {
+  width: 96px !important; height: 96px !important;
+}
+html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > h2 {
+  grid-column: 2 !important; grid-row: 1 !important; justify-self: start !important;
+  align-self: end; font: 800 var(--pk-text-h1)/var(--pk-leading-tight) var(--pk-font-display) !important;
+}
+html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #my-classes-section {
+  grid-column: 2 !important; grid-row: 2 !important; justify-self: start !important;
+  align-self: start; text-align: left !important; margin: 0 !important;
+}
+html body #student-dashboard #my-classes-section .my-classes-list { justify-content: flex-start !important; }
+html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #top3-badge {
+  grid-column: 2 !important; grid-row: 3 !important; justify-self: start !important;
+  margin: 0 !important; justify-content: flex-start !important;
+}
+html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .student-profile-actions {
+  grid-column: 3 !important; grid-row: 1 / span 3 !important; align-self: start;
+}
+html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 {
+  grid-column: 1 / -1 !important; grid-row: 4 !important; padding-top: 14px;
+  margin-top: 4px !important; border-top: 1px solid var(--pk-border-strong) !important;
+}
+html body #student-dashboard :is(.my-classes-title, .my-class-chip, .my-class-chip .my-class-school) {
+  font-family: var(--pk-font-body) !important;
+}
+html body #student-dashboard .my-class-chip .my-class-school { font-size: var(--pk-text-xs) !important; }
+html body #student-dashboard .grid.grid-cols-2 > div > p:last-child {
+  font: 700 var(--pk-text-xs)/1.2 var(--pk-font-body) !important;
+  letter-spacing: .045em !important;
+}
+html body #student-dashboard :is(.my-classes-title, .student-vocab-list-name, #student-vocabulary-class) {
+  font-size: var(--pk-text-sm) !important;
+}
+
+/* Mobile dashboard hierarchy and short, easy-to-tap section navigation. */
+@media (max-width: 640px) {
+  html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass {
+    grid-template-columns: 68px minmax(0, 1fr) !important;
+    grid-template-rows: auto auto auto auto auto !important;
+    gap: 8px 12px !important; padding: 14px !important;
+  }
+  html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .mb-4.relative {
+    grid-column: 1 !important; grid-row: 1 / span 2 !important; justify-self: start !important;
+  }
+  html body #student-dashboard :is(#my-avatar-pokemon, #my-avatar-placeholder) { width: 64px !important; height: 64px !important; }
+  html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > h2 {
+    grid-column: 2 !important; grid-row: 1 !important; font-size: var(--pk-text-h2) !important;
+  }
+  html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .student-profile-actions {
+    grid-column: 2 !important; grid-row: 2 !important; justify-self: start !important;
+    align-self: center; justify-content: flex-start !important; flex-wrap: wrap; gap: 6px !important;
+  }
+  html body #student-dashboard #student-theme-toggle,
+  html body #student-dashboard .student-profile-actions > #student-logout-btn {
+    min-height: 36px !important; padding: 6px 10px !important; font-size: var(--pk-text-xs) !important;
+  }
+  html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #my-classes-section {
+    grid-column: 1 / -1 !important; grid-row: 3 !important; justify-self: start !important;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > #top3-badge {
+    grid-column: 1 / -1 !important; grid-row: 4 !important;
+  }
+  html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .grid.grid-cols-2 {
+    grid-row: 5 !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  html body #student-navigation-groups { gap: 8px !important; margin-bottom: 12px !important; }
+  html body #student-navigation-groups .student-nav-group-button {
+    min-height: 42px !important; padding: 8px 6px !important; border-radius: var(--pk-radius-md) !important;
+    border-bottom-width: 3px !important; font: 700 var(--pk-text-sm)/1.2 var(--pk-font-display) !important;
+    box-shadow: var(--pk-shadow-1) !important;
+  }
+  html body #student-navigation-groups .student-nav-menu { z-index: 40; }
+  html body #student-dashboard .glass-container { padding: 14px !important; border-width: 1px !important; }
+}
+
+/* Bright-mode scenery stays atmospheric behind readable surfaces. */
+html body.ts-bright:has(#student-dashboard:not(.hidden)) {
+  background:
+    linear-gradient(180deg, rgba(247,250,252,.76), rgba(247,250,252,.88)),
+    var(--student-landscape) center / cover fixed no-repeat !important;
+}
+html body.ts-bright:has(#student-dashboard:not(.hidden)) #student-dashboard .stat-card-glass,
+html body.ts-bright:has(#student-dashboard:not(.hidden)) #student-dashboard .glass-container {
+  box-shadow: 0 8px 24px rgba(24, 44, 72, .10) !important;
+}
+
+/* Vocabulary empty covers become a clear state instead of a blank poster. */
+html body #student-tab-vocabulary .student-vocab-cover {
+  height: clamp(72px, 12vw, 112px) !important; min-height: 72px !important;
+  border-radius: var(--pk-radius-md) !important;
+}
+html body #student-tab-vocabulary .student-vocab-cover-fallback {
+  display: grid !important; place-items: center; font-size: 1.5rem !important;
+  background: color-mix(in oklab, var(--pk-surface-2) 86%, var(--pk-brand)) !important;
+}
+html body #student-tab-vocabulary .student-vocab-open-button:disabled {
+  cursor: not-allowed; opacity: .7; filter: grayscale(.2);
+}
+html body #student-dashboard :is(#quiz-empty, #student-vocabulary-empty, #student-classes-empty, #my-pokemon-empty) {
+  max-width: 42rem; margin: 12px auto; padding: 16px !important;
+  border: 1px dashed var(--pk-border-strong); border-radius: var(--pk-radius-md);
+  background: color-mix(in oklab, var(--pk-surface) 88%, transparent);
+  color: var(--pk-muted) !important; font: 600 var(--pk-text-sm)/var(--pk-leading-body) var(--pk-font-body) !important;
+}
+
+/* Vocabulary game selector: clear selection, compact cards, legible word counts. */
+html body #student-tab-games #student-games-list-selector > .mb-4 > p {
+  margin-bottom: 10px !important; color: var(--pk-muted) !important;
+  font: 600 var(--pk-text-sm)/var(--pk-leading-body) var(--pk-font-body) !important;
+  letter-spacing: 0 !important; text-transform: none !important;
+}
+html body #student-tab-games .game-vocab-list-card {
+  min-height: 112px !important; padding: 12px !important;
+  border: 1px solid var(--pk-border-strong) !important; border-radius: var(--pk-radius-md) !important;
+  background: var(--pk-surface) !important; box-shadow: var(--pk-shadow-1) !important;
+  transition: transform var(--pk-dur-fast) var(--pk-ease), border-color var(--pk-dur-fast) var(--pk-ease), background var(--pk-dur-fast) var(--pk-ease) !important;
+}
+html body #student-tab-games .game-vocab-list-card:has(> button[aria-pressed="true"]) {
+  border: 2px solid var(--pk-brand) !important; background: var(--pk-surface-selected) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pk-brand) 18%, transparent) !important;
+}
+html body #student-tab-games .game-vocab-list-card h4 {
+  color: var(--pk-ink) !important; font: 700 var(--pk-text-h3)/var(--pk-leading-tight) var(--pk-font-display) !important;
+}
+html body #student-tab-games .game-vocab-list-card p {
+  display: inline-flex; gap: 4px; align-items: center; margin: 0; padding: 4px 9px;
+  border-radius: var(--pk-radius-pill); background: var(--pk-surface-2);
+  color: var(--pk-ink-2) !important; font: 700 var(--pk-text-xs)/1.2 var(--pk-font-body) !important;
+}
+html body #student-tab-games .game-vocab-list-card > button:focus-visible { outline: var(--pk-focus-ring); outline-offset: 3px; }
+@media (max-width: 640px) {
+  html body #student-tab-games #student-games-list-selector > .mb-4 .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important;
+  }
+  html body #student-tab-games .game-vocab-list-card { min-height: 100px !important; }
+  html body #student-tab-games .game-vocab-list-card img { width: 52px; height: 52px; object-fit: cover; }
+}
+@media (max-width: 359px) {
+  html body #student-tab-games #student-games-list-selector > .mb-4 .grid { grid-template-columns: 1fr !important; }
+}
+
+/* Use a readable body face for teacher panels and preserve display type for headings. */
+body.ts-on #app-screen { font-family: var(--pk-font-body); }
+body.ts-on #app-screen :is(h1, h2, h3, h4, .ts-hero h2, .financial-card-title) { font-family: var(--pk-font-display) !important; }
+body.ts-on #app-screen :is(.financial-card-kicker, .financial-eyebrow, .financial-field-label, .financial-source-status, .financial-card-note) {
+  font-family: var(--pk-font-body) !important; font-size: max(var(--pk-text-xs), .78rem) !important;
+  line-height: 1.35; color: var(--ts-muted) !important;
+}
