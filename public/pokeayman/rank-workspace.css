@@ -64,7 +64,8 @@ html body :is(#student-dashboard#student-dashboard#student-dashboard, #app-scree
 html body #app-screen #view-students .global-rank-card .student-avatar-stage { width: 170px; max-width: 100%; margin: 0 auto 18px; }
 /* Navigation renders the roster independently of renderAll; keep its medal treatment authoritative. */
 html body #app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.global-rank-card {
-  padding: 88px 24px 26px !important; min-height: 388px;
+  grid-column: span 1 !important; min-height: 330px;
+  padding: 62px 14px 16px !important;
 }
 html body #app-screen#app-screen#app-screen #view-students #students-list > .global-rank-card:hover { border-color: var(--rank-edge) !important; }
 html body #app-screen#app-screen#app-screen #view-students .global-rank-card .student-avatar-initial {
@@ -76,7 +77,7 @@ html body #app-screen#app-screen#app-screen #view-students .global-rank-card .st
   background: var(--rank-night) !important;
 }
 @media (max-width: 700px) {
-  html body #app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.global-rank-card { padding: 88px 12px 20px !important; min-height: 350px; }
+  html body #app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.global-rank-card { grid-column: span 1 !important; padding: 58px 9px 14px !important; min-height: 300px; }
   html body #app-screen#app-screen#app-screen #view-students .global-rank-card .student-avatar-stage { width: 132px; height: 132px; }
   html body #app-screen#app-screen#app-screen #view-students .global-rank-card .rank-title strong { font-size: 14px; }
   html body #app-screen#app-screen#app-screen #view-students .global-rank-card .global-rank-marker { gap: 6px; }

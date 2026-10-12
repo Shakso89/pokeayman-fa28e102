@@ -172,7 +172,7 @@ body.ts-on #view-students > :is(h1,h2,.breadcrumb, nav), body.ts-on #view-studen
 .ts-btn.ghost { background: transparent; color: var(--ts-ink); border-color: var(--ts-border); }
 .ts-btn:hover { filter: brightness(1.1); }
 
-html body.ts-on #app-screen #view-students #students-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; gap: 14px !important; padding-top: 4px; }
+html body.ts-on #app-screen #view-students #students-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)) !important; gap: 14px !important; padding-top: 4px; }
 html body.ts-on #app-screen #view-students #students-list > .trainer-student-card { background: var(--ts-surface) !important; border: 1px solid var(--ts-border) !important; border-radius: 16px !important; padding: 16px 12px 12px !important; box-shadow: none !important; }
 html body.ts-on #app-screen #view-students .student-avatar-stage { height: 96px; margin-bottom: 8px; }
 html body.ts-on #app-screen #view-students .student-avatar-stage img { width: 88px !important; height: 88px !important; }
@@ -182,7 +182,7 @@ html body.ts-on #app-screen #view-students .trainer-student-card .student-roster
 html body.ts-on #app-screen #view-students .trainer-student-card .student-roster-count { font-size: 12px; margin-bottom: 10px; }
 html body.ts-on #app-screen #view-students .student-roster-edit { top: 8px; right: 8px; bottom: auto; width: 28px; height: 28px; min-height: 28px; border: 0 !important; }
 html body.ts-on #app-screen #view-students #students-list .global-achievement-badge { top: auto; bottom: 52px; right: 8px; transform: scale(.85); }
-.ts-quick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-top: auto; }
+.ts-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; min-width: 0; margin-top: auto; }
 .ts-quick button { height: 32px; border-radius: 9px; border: 0; font: 800 14px 'Outfit', sans-serif; cursor: pointer; }
 .ts-quick .minus { background: var(--ts-red); color: var(--ts-on-red); }
 .ts-quick .plus { background: var(--ts-yellow); color: var(--ts-action-ink); }
