@@ -1,6 +1,6 @@
 # Teacher profile refinement
-- [ ] Remove “available” from sidebar and profile credit labels.
-- [ ] Move name/password forms behind buttons and require verified current password for signed-in changes; check opening, cancellation and validation without changing a real password.
+- [x] Remove “available” from sidebar and profile credit labels; profile wording checked in the browser.
+- [x] Move name/password forms behind buttons and verify current credentials through Cloud Auth before signed-in password changes. Isolated button opening, cancellation, password clearing and error presentation passed in both themes; routing test/build passed. Real-account password changes and hosted auth settings remain unverified; no real password changed.
 - [x] Remove redundant identity labels, enlarge avatars by 20%, and align the profile header/forms with both website themes. Isolated profile rendering checked in dark/bright and narrow layouts with no overflow or runtime errors; routing test/build passed. Signed-in profile navigation and account edits remain unverified; save handlers unchanged.
 
 # Poké Battle effects
