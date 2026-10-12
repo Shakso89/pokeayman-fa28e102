@@ -17,6 +17,7 @@
 - Home gallery settings keep a separate draft until the existing published-config save succeeds, reuse the hand renderer for preview and use a bundled full species-name snapshot for selection. Why: prevents unsaved/reset changes affecting the public gallery and supports every allowed Pokédex ID.
 
 - Teacher sidebar identity stays in teacher-shell.js/.css, using the existing header name/image, a CSS Poké Ball fallback, and measured mobile profile height; profile page presentation uses workspace-refresh.css shared tokens. Why: maintains avatar synchronization and consistent themed headers/forms without changing account logic.
+- Signed-in password changes verify the current credential through Cloud Auth before updateUser and pass current_password; recovery stays separate. Why: enforces credential verification regardless of hosted setting defaults without affecting password resets.
 - Hangman keeps eight persistent SVG stages with scoped hangman-animation.css and local miss feedback. Why: each wrong guess visibly draws one new stage without restarting previous strokes or covering the game.
 - Bright-mode legacy corrections live in bright-fixes.css/.js with ID-aware full-background overrides and body-scoped derived tokens; computed colours are normalized through a cached canvas. Why: legacy gradients and root-resolved aliases must not keep dark surfaces after the theme switch.
 
