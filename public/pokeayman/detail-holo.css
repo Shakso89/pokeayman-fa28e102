@@ -35,18 +35,22 @@ html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legend
   position: relative;
   isolation: isolate;
   overflow: hidden !important;
-  border: 3px solid #f4ca52 !important;
+  border: 8px solid transparent !important;
+  border-radius: 23px !important;
+  --legendary-frame: conic-gradient(from 18deg, #fff0a6, #bd8b32 12%, #6be6d2 24%, #f5d36a 38%, #c09aff 52%, #fff1ac 66%, #51cbbb 79%, #e3b84f 91%, #fff0a6);
   background:
-    radial-gradient(ellipse at 18% 18%, rgba(74, 222, 190, .17), transparent 42%),
-    radial-gradient(ellipse at 85% 78%, rgba(167, 96, 245, .18), transparent 44%),
-    linear-gradient(145deg, #10233c, #14234d 56%, #172444) !important;
-  box-shadow: 0 20px 48px rgba(1, 7, 21, .52), 0 0 0 1px rgba(255, 224, 123, .28) !important;
+    radial-gradient(ellipse at 18% 18%, rgba(74, 222, 190, .17), transparent 42%) padding-box,
+    radial-gradient(ellipse at 85% 78%, rgba(167, 96, 245, .18), transparent 44%) padding-box,
+    linear-gradient(145deg, #10233c, #14234d 56%, #172444) padding-box,
+    var(--legendary-frame) border-box !important;
+  box-shadow: 0 0 0 2px rgba(255, 236, 158, .75), 0 20px 48px rgba(1, 7, 21, .52), 0 0 30px rgba(103, 220, 201, .22), 0 0 44px rgba(189, 139, 50, .18), inset 0 0 0 2px rgba(255, 246, 195, .42) !important;
   transform: none !important;
   transform-style: flat !important;
   will-change: auto !important;
   transition: box-shadow .2s ease, border-color .2s ease !important;
   animation: dh-card-enter .3s ease-out both !important;
 }
+html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary { outline: 1px solid rgba(255, 224, 123, .68); outline-offset: 3px; }
 html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-legendary::before {
   content: '' !important;
   position: absolute;
@@ -151,11 +155,13 @@ html body #pokemon-modal#pokemon-modal { overflow-x: hidden !important; }
    type chips, lore rail, and stat panel all climb with rarity. */
 html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-common {
   --detail-accent: #ffad69;
-  --detail-frame: linear-gradient(135deg, #d9a16d, #714341 48%, #30243a) !important;
+  --detail-frame: linear-gradient(145deg, #ffe0a4, #c7824f 30%, #6f3b38 70%, #f2c68d);
+  border: 4px solid transparent !important;
+  border-radius: 17px !important;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(255, 164, 89, .12), transparent 42%),
-    linear-gradient(155deg, #251b2c, #101a34 58%, #10182c) !important;
-  border-color: #d19a71 !important;
+    radial-gradient(ellipse at 50% 0%, rgba(255, 164, 89, .12), transparent 42%) padding-box,
+    linear-gradient(155deg, #251b2c, #101a34 58%, #10182c) padding-box,
+    var(--detail-frame) border-box !important;
   box-shadow: 0 16px 36px rgba(1, 7, 21, .44), inset 0 0 0 1px rgba(255, 220, 178, .12) !important;
 }
 html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-common #modal-img-container {
@@ -174,12 +180,14 @@ html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-common
 
 html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-uncommon {
   --detail-accent: #6be4d0;
-  --detail-frame: linear-gradient(135deg, #c0fff4, #36bdc0 38%, #586fe0 74%, #e5fcff) !important;
+  --detail-frame: linear-gradient(120deg, #e1fff9, #5ce4d3 22%, #338ec1 52%, #b0a0ff 78%, #e9fffc);
+  border: 5px solid transparent !important;
+  border-radius: 18px !important;
   background:
-    radial-gradient(ellipse at 90% 8%, rgba(48, 219, 193, .17), transparent 42%),
-    linear-gradient(150deg, #102c3b, #102447 60%, #16213d) !important;
-  border-color: #69dccc !important;
-  box-shadow: 0 18px 42px rgba(1, 7, 21, .48), 0 0 20px rgba(51, 209, 191, .12), inset 0 0 0 1px rgba(190, 255, 245, .18) !important;
+    radial-gradient(ellipse at 90% 8%, rgba(48, 219, 193, .17), transparent 42%) padding-box,
+    linear-gradient(150deg, #102c3b, #102447 60%, #16213d) padding-box,
+    var(--detail-frame) border-box !important;
+  box-shadow: 0 0 0 1px rgba(74, 239, 219, .38), 0 18px 42px rgba(1, 7, 21, .48), 0 0 20px rgba(51, 209, 191, .16), inset 0 0 0 1px rgba(190, 255, 245, .22) !important;
 }
 html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-uncommon #modal-classification-row .pokemon-classification-badge:first-child {
   color: #bafff3 !important; background: rgba(30, 122, 133, .38) !important; border-color: #58d8ce !important;
@@ -200,13 +208,15 @@ html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-uncomm
 
 html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-rare {
   --detail-accent: #c7b7ff;
-  --detail-frame: linear-gradient(125deg, #f4fbff, #8ab6ec 24%, #9c83fa 52%, #dce4ff 75%, #657bea) !important;
+  --detail-frame: linear-gradient(115deg, #f3fbff 0%, #aac8ee 16%, #6476c6 32%, #e4eaff 49%, #a47ee9 65%, #c7e5ff 82%, #f5f7ff);
+  border: 6px solid transparent !important;
+  border-radius: 20px !important;
   background:
-    radial-gradient(ellipse at 8% 92%, rgba(122, 97, 237, .22), transparent 43%),
-    radial-gradient(ellipse at 92% 8%, rgba(167, 196, 255, .15), transparent 42%),
-    linear-gradient(145deg, #141b3b, #201943 56%, #101c39) !important;
-  border-color: #b9c6ff !important;
-  box-shadow: 0 20px 46px rgba(1, 7, 21, .55), 0 0 26px rgba(137, 129, 255, .2), inset 0 0 0 1px rgba(238, 243, 255, .22) !important;
+    radial-gradient(ellipse at 8% 92%, rgba(122, 97, 237, .22), transparent 43%) padding-box,
+    radial-gradient(ellipse at 92% 8%, rgba(167, 196, 255, .15), transparent 42%) padding-box,
+    linear-gradient(145deg, #141b3b, #201943 56%, #101c39) padding-box,
+    var(--detail-frame) border-box !important;
+  box-shadow: 0 0 0 1px rgba(238, 243, 255, .55), 0 20px 46px rgba(1, 7, 21, .55), 0 0 26px rgba(137, 129, 255, .22), inset 0 0 0 2px rgba(238, 243, 255, .22) !important;
 }
 html body #pokemon-modal#pokemon-modal #modal-card#modal-card.detail-card-rare::after {
   content: '✦ RARE ✦' !important;
