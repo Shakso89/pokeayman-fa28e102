@@ -1,3 +1,6 @@
+# Class overview and shared vocabulary
+- [ ] Limit overview cards to two teachers without changing assignments; keep shared class lists read-only with flashcards and games intact.
+
 # Teacher profile refinement
 - [x] Remove “available” from sidebar and profile credit labels; profile wording checked in the browser.
 - [x] Move name/password forms behind buttons and verify current credentials through Cloud Auth before signed-in password changes. Isolated button opening, cancellation, password clearing and error presentation passed in both themes; routing test/build passed. Real-account password changes and hosted auth settings remain unverified; no real password changed.
