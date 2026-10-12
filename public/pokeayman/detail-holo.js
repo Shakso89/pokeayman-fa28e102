@@ -1,6 +1,24 @@
 // Pointer-driven 3D tilt for the Pokémon details card.
 (function () {
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var modal = document.getElementById('pokemon-modal');
+  function syncModalEffects() {
+    if (!modal) return;
+    var isOpen = !modal.classList.contains('hidden');
+    var svg = document.getElementById('dh-turbulent-displace');
+    var svgRoot = svg && svg.ownerSVGElement;
+    if (svgRoot) {
+      if (isOpen) svgRoot.unpauseAnimations();
+      else svgRoot.pauseAnimations();
+    }
+    // Keep the card's existing effects intact, but don't animate the hidden modal.
+    if (typeof modal.getAnimations === 'function') {
+      modal.getAnimations({ subtree: true }).forEach(function (animation) {
+        if (isOpen) animation.play();
+        else animation.pause();
+      });
+    }
+  }
   function ensureElectric(card) {
     var border = card.querySelector('.dh-electric-border');
     if (!card.classList.contains('detail-card-legendary')) {
@@ -28,6 +46,7 @@
         '<feDisplacementMap in="SourceGraphic" in2="cn" scale="30" xChannelSelector="R" yChannelSelector="B"/>' +
         '</filter></defs>';
       document.body.appendChild(svg);
+      if (modal && modal.classList.contains('hidden')) svg.pauseAnimations();
     }
     if (border) return;
     var wrap = document.createElement('div');
@@ -41,22 +60,39 @@
     if (!card || card.dataset.dhBound) return !!card;
     card.dataset.dhBound = '1';
     ensureElectric(card);
+    var pointerFrame = 0;
+    var lastPointer = null;
     card.addEventListener('pointermove', function (e) {
-      var r = card.getBoundingClientRect();
-      var x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-      var max = card.classList.contains('detail-card-legendary') ? 14 : card.classList.contains('detail-card-rare') ? 11 : 6;
-      card.classList.remove('dh-resting');
-      card.style.setProperty('--ry', ((x - 0.5) * max * 2).toFixed(2) + 'deg');
-      card.style.setProperty('--rx', ((0.5 - y) * max * 2).toFixed(2) + 'deg');
-      card.style.setProperty('--mx', (x * 100).toFixed(1) + '%');
-      card.style.setProperty('--my', (y * 100).toFixed(1) + '%');
+      lastPointer = e;
+      if (pointerFrame) return;
+      // Coalesce high-frequency pointer events into one layout read and style
+      // update per display frame; this preserves the tilt and foil response.
+      pointerFrame = requestAnimationFrame(function () {
+        pointerFrame = 0;
+        if (!lastPointer || (modal && modal.classList.contains('hidden'))) return;
+        var rect = card.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        var x = (lastPointer.clientX - rect.left) / rect.width;
+        var y = (lastPointer.clientY - rect.top) / rect.height;
+        var max = card.classList.contains('detail-card-legendary') ? 14 : card.classList.contains('detail-card-rare') ? 11 : 6;
+        card.classList.remove('dh-resting');
+        card.style.setProperty('--ry', ((x - 0.5) * max * 2).toFixed(2) + 'deg');
+        card.style.setProperty('--rx', ((0.5 - y) * max * 2).toFixed(2) + 'deg');
+        card.style.setProperty('--mx', (x * 100).toFixed(1) + '%');
+        card.style.setProperty('--my', (y * 100).toFixed(1) + '%');
+        lastPointer = null;
+      });
     });
     card.addEventListener('pointerleave', function () {
+      if (pointerFrame) cancelAnimationFrame(pointerFrame);
+      pointerFrame = 0; lastPointer = null;
       card.classList.add('dh-resting');
       card.style.setProperty('--rx', '0deg'); card.style.setProperty('--ry', '0deg');
       card.style.setProperty('--mx', '50%'); card.style.setProperty('--my', '50%');
     });
-    new MutationObserver(function () { ensureElectric(card); }).observe(card, { attributes: true, attributeFilter: ['class'] });
+    new MutationObserver(function () { ensureElectric(card); syncModalEffects(); }).observe(card, { attributes: true, attributeFilter: ['class'] });
+    if (modal) new MutationObserver(syncModalEffects).observe(modal, { attributes: true, attributeFilter: ['class'] });
+    syncModalEffects();
     return true;
   }
   if (!bind()) document.addEventListener('DOMContentLoaded', bind);
