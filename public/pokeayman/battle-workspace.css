@@ -111,6 +111,33 @@ html body #battle-area#battle-area.arena-cinema,html body #battle-area#battle-ar
   #battle-area .arena-projectile[data-type="electric"] { width: 32px; height: 52px; }
   html body #battle-area#battle-area.arena-cinema { padding: 12px; }
 }
+
+/* Arena attacks use the same readable cast → projectile → impact → HP response as Poké Battle. */
+#battle-area #arena-stage .arena-attack-layer { position:absolute; inset:0; z-index:8; overflow:hidden; pointer-events:none; }
+#battle-area #arena-stage .arena-projectile { top:auto; left:auto; width:40px; height:40px; animation:none; transform:translate(-50%,-50%) scale(.25); will-change:transform,opacity; }
+#battle-area #arena-stage .arena-projectile[data-type="fire"] { width:44px; height:48px; border:0; border-radius:50% 50% 48% 48% / 62% 62% 38% 38%; background:radial-gradient(circle at 48% 68%,#fff8bb 0 10%,#ffd34d 26%,#ff852c 56%,#df3425 78%,transparent 80%); box-shadow:0 0 15px 5px rgba(255,130,36,.65),0 0 38px 12px rgba(239,61,36,.32); animation:arena-flame-flicker .16s ease-in-out infinite alternate; }
+#battle-area #arena-stage .arena-projectile[data-type="fire"]::before { inset:auto; left:50%; top:-12px; width:22px; height:28px; border:0; border-radius:50% 50% 45% 45%; background:radial-gradient(circle at 50% 78%,#fff5ac,#ff9c32 60%,transparent 75%); filter:blur(1px); transform:translateX(-50%); animation:arena-flame-flicker .13s ease-in-out infinite alternate; }
+#battle-area #arena-stage .arena-projectile::after { top:39%; right:65%; width:58px; height:14px; background:linear-gradient(90deg,transparent,currentColor); opacity:.95; }
+#battle-area #arena-stage .arena-projectile[data-from="right"]::after { left:65%; right:auto; }
+#battle-area #arena-stage .arena-attack-layer .arena-fx { position:absolute; inset:auto; width:0; height:0; z-index:1; }
+#battle-area #arena-stage .arena-attack-layer .arena-fx::before { left:0; top:0; width:96px; height:96px; border:5px solid currentColor; box-shadow:0 0 32px currentColor,inset 0 0 20px currentColor; }
+#battle-area #arena-stage .arena-attack-layer .arena-fx::after { left:0; top:0; width:78px; height:8px; box-shadow:0 0 18px currentColor; }
+#battle-area #arena-stage .arena-attack-layer .arena-fx i { left:0; top:0; width:7px; height:46px; margin-top:-23px; transform-origin:center; border-radius:6px; box-shadow:0 0 12px currentColor; }
+#battle-area #arena-stage .arena-attack-layer .arena-fx em { position:absolute; left:0; top:0; width:9px; height:9px; margin:-4px; border-radius:50%; background:radial-gradient(circle,#fff8b0 0 12%,#ffb13b 56%,transparent 75%); box-shadow:0 0 12px #ff9b35; animation:arena-ember-burst .7s ease-out both; }
+#battle-area #arena-stage .arena-attack-layer .arena-pop { top:auto; left:var(--pop-x); right:auto; transform:translate(-50%,0); min-width:max-content; font-size:clamp(24px,3vw,36px); filter:drop-shadow(0 0 10px color-mix(in srgb,var(--arena-element) 60%,transparent)); animation:arena-damage-anchor 1.35s both; }
+#battle-area #arena-stage .arena-attack-layer .arena-pop-dmg { color:#fff3ab; }
+#battle-area #arena-stage .arena-attack-layer .arena-pop-dmg::first-letter { color:#ffdb55; }
+#battle-area#battle-area .arena-hit-react { animation:arena-hit-react .48s cubic-bezier(.2,.8,.2,1) both; }
+#battle-area#battle-area .arena-cast { animation:arena-cast .3s ease both; }
+#battle-area #arena-stage :is(#battle-left,#battle-right).battle-impact { animation:arena-impact .35s ease both; }
+@keyframes arena-flame-flicker { from { filter:brightness(1); scale:1; } to { filter:brightness(1.22); scale:1.1; } }
+@keyframes arena-ember-burst { from { opacity:1; transform:rotate(var(--spark-angle)) translateY(-10px) scale(1); } to { opacity:0; transform:rotate(var(--spark-angle)) translateY(-74px) scale(.25); } }
+@keyframes arena-cast { 35% { transform:scale(1.1) rotate(-3deg); filter:brightness(1.45) var(--detail-art-shadow); } 100% { transform:scale(1); } }
+@keyframes arena-damage-anchor { 0% { opacity:0; transform:translate(-50%,15px) scale(.6); } 20% { opacity:1; transform:translate(-50%,-10px) scale(1.12); } 72% { opacity:1; transform:translate(-50%,-18px) scale(1); } 100% { opacity:0; transform:translate(-50%,-65px) scale(.9); } }
+@media(prefers-reduced-motion:reduce) {
+  #battle-area #arena-stage .arena-attack-layer,#battle-area #arena-stage .arena-fx { display:none!important; }
+  #battle-area #arena-stage .arena-pop { animation:none!important; transform:translate(-50%,0); opacity:1; }
+}
 @container (max-width: 600px) {
   html body #battle-area #arena-stage { gap: 0; min-height: 420px; padding: 38px 4px 14px; }
   html body #battle-area :is(#battle-left,#battle-right) { padding: 12px 8px !important; }

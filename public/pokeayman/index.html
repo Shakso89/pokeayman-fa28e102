@@ -16997,6 +16997,7 @@ function animateBattleHp(barId, nextHp, maxHp, cardId) {
 function resetBattleVisualState() {
   document.getElementById('arena-stage')?.classList.remove('arena-ready', 'arena-active', 'arena-result');
   document.querySelectorAll('#arena-stage .arena-projectile').forEach(projectile => projectile.remove());
+  document.querySelectorAll('#arena-stage .arena-attack-layer').forEach(layer => layer.remove());
   ['battle-left', 'battle-right'].forEach(id => {
     const card = document.getElementById(id);
     if (!card) return;
@@ -17078,29 +17079,57 @@ function arenaDecorate(cardId, studentName, pokemon) {
   badges.innerHTML = types.map(t => `<span class="arena-type" data-type="${t}">${ARENA_TYPE_ICON[t] || '⭐'} ${arenaEsc(t.toUpperCase())}</span>`).join('');
   const nameEl = card.querySelector('[id$="-pokemon"]'); nameEl?.after(badges);
 }
-function arenaPop(cardId, text, kind) {
-  const card = document.getElementById(cardId); if (!card) return;
-  const el = document.createElement('span'); el.className = `arena-pop arena-pop-${kind}`; el.textContent = text;
-  card.appendChild(el); setTimeout(() => el.remove(), 1400);
-}
-function arenaFx(cardId, type) {
-  const card = document.getElementById(cardId); if (!card) return;
-  const fx = document.createElement('span'); fx.className = 'arena-fx'; fx.dataset.type = type || 'normal';
-  fx.innerHTML = '<i></i><i></i><i></i><i></i><i></i><i></i>';
-  card.appendChild(fx); setTimeout(() => fx.remove(), 750);
-  const stage = document.getElementById('arena-stage');
-  if (stage) { stage.classList.remove('arena-shake'); void stage.offsetWidth; stage.classList.add('arena-shake'); }
-}
-function arenaLaunchProjectile(fromSide, type) {
+function getArenaAttackLayer() {
   const stage = document.getElementById('arena-stage');
   if (!stage) return null;
+  let layer = stage.querySelector('.arena-attack-layer');
+  if (!layer) { layer = document.createElement('div'); layer.className = 'arena-attack-layer'; layer.setAttribute('aria-hidden', 'true'); stage.appendChild(layer); }
+  return { stage, layer };
+}
+function arenaPop(cardId, text, kind) {
+  const card = document.getElementById(cardId), image = card?.querySelector('img[id$="-img"]');
+  const attack = getArenaAttackLayer();
+  if (!card || !image || !attack) return;
+  const stageRect = attack.stage.getBoundingClientRect(), imageRect = image.getBoundingClientRect();
+  const el = document.createElement('span'); el.className = `arena-pop arena-pop-${kind}`; el.textContent = text;
+  el.style.setProperty('--pop-x', `${imageRect.left + imageRect.width / 2 - stageRect.left}px`);
+  el.style.top = `${imageRect.top - stageRect.top + imageRect.height * .22}px`;
+  attack.layer.appendChild(el); setTimeout(() => el.remove(), 1400);
+}
+function arenaFx(cardId, type) {
+  const card = document.getElementById(cardId), image = card?.querySelector('img[id$="-img"]');
+  const attack = getArenaAttackLayer();
+  if (!card || !image || !attack) return;
+  const stageRect = attack.stage.getBoundingClientRect(), imageRect = image.getBoundingClientRect();
+  const fx = document.createElement('span'); fx.className = 'arena-fx'; fx.dataset.type = type || 'normal';
+  fx.style.left = `${imageRect.left + imageRect.width / 2 - stageRect.left}px`;
+  fx.style.top = `${imageRect.top + imageRect.height * .48 - stageRect.top}px`;
+  fx.innerHTML = '<i style="--angle:0deg"></i><i style="--angle:60deg"></i><i style="--angle:120deg"></i><i style="--angle:180deg"></i><i style="--angle:240deg"></i><i style="--angle:300deg"></i>'
+    + Array.from({ length: 8 }, (_, i) => `<em style="--spark-angle:${i * 45}deg"></em>`).join('');
+  attack.layer.appendChild(fx); setTimeout(() => fx.remove(), 850);
+  card.classList.remove('battle-impact'); void card.offsetWidth; card.classList.add('battle-impact');
+  clearTimeout(card._impactTimer); card._impactTimer = setTimeout(() => card.classList.remove('battle-impact'), 500);
+}
+function arenaLaunchProjectile(fromSide, type, start, end) {
+  const attack = getArenaAttackLayer();
+  if (!attack) return null;
   const projectile = document.createElement('span');
   projectile.className = 'arena-projectile';
   projectile.dataset.type = type || 'normal';
   projectile.dataset.from = fromSide;
   projectile.setAttribute('aria-hidden', 'true');
   projectile.style.setProperty('--arena-flight-duration', `${480 / arenaSpeed}ms`);
-  stage.appendChild(projectile);
+  projectile.style.left = `${start.x}px`; projectile.style.top = `${start.y}px`;
+  attack.layer.appendChild(projectile);
+  const dx = end.x - start.x, dy = end.y - start.y;
+  if (!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    projectile.animate([
+      { transform: 'translate(-50%,-50%) scale(.22) rotate(-18deg)', opacity: 0 },
+      { transform: 'translate(-50%,-50%) scale(1.12) rotate(0)', opacity: 1, offset: .18 },
+      { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.9) rotate(22deg)`, opacity: 1, offset: .88 },
+      { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.25) rotate(36deg)`, opacity: 0 }
+    ], { duration: 480 / arenaSpeed, easing: 'cubic-bezier(.45,.02,.72,.45)', fill: 'forwards' });
+  }
   return projectile;
 }
 function arenaBanner(text, kind = '') {
@@ -17110,22 +17139,24 @@ function arenaBanner(text, kind = '') {
 }
 async function arenaAttack(fromSide, toSide, attacker, multiplier, dmg) {
   const fromImg = document.getElementById(`battle-${fromSide}-img`), to = `battle-${toSide}`, toImg = document.getElementById(`battle-${toSide}-img`);
+  const stage = document.getElementById('arena-stage'), attack = getArenaAttackLayer();
   const type = arenaTypes(attacker)[0] || 'normal';
   const callout = document.getElementById('arena-callout');
   if (callout) callout.textContent = `${attacker.pokemon_name} used ${ARENA_ATTACK_NAME[type] || 'Quick Attack'}!`;
-  const windup = `arena-windup-${fromSide}`, strike = `arena-strike-${fromSide}`;
-  fromImg?.classList.remove(windup, strike);
+  const windup = `arena-windup-${fromSide}`;
+  fromImg?.classList.remove(windup, 'arena-cast');
   toImg?.classList.remove('arena-hit-react');
   if (fromImg) void fromImg.offsetWidth;
   fromImg?.classList.add(windup);
   await arenaWait(180);
   fromImg?.classList.remove(windup);
-  fromImg?.classList.add(strike);
-  const projectile = arenaLaunchProjectile(fromSide, type);
+  fromImg?.classList.add('arena-cast');
+  const stageRect = stage?.getBoundingClientRect(), fromRect = fromImg?.getBoundingClientRect(), toRect = toImg?.getBoundingClientRect();
+  const point = (rect, direction) => ({ x: rect.left + rect.width / 2 - stageRect.left + direction * Math.min(24, rect.width * .08), y: rect.top + rect.height * .48 - stageRect.top });
+  const projectile = stageRect && fromRect && toRect ? arenaLaunchProjectile(fromSide, type, point(fromRect, fromSide === 'left' ? 1 : -1), point(toRect, fromSide === 'left' ? -1 : 1)) : null;
   window.pokeSfx?.play('lunge');
   await arenaWait(480);
   projectile?.remove();
-  fromImg?.classList.remove(strike);
   arenaFx(to, type); window.pokeSfx?.play('hit', type);
   toImg?.classList.add('arena-hit-react');
   arenaPop(to, `-${dmg} HP`, 'dmg');
