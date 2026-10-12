@@ -1,5 +1,5 @@
 # Teacher profile refinement
-- [ ] Remove redundant identity labels, enlarge avatars by 20%, and align the profile header/forms with both website themes; verify profile navigation and layouts without changing account saves.
+- [x] Remove redundant identity labels, enlarge avatars by 20%, and align the profile header/forms with both website themes. Isolated profile rendering checked in dark/bright and narrow layouts with no overflow or runtime errors; routing test/build passed. Signed-in profile navigation and account edits remain unverified; save handlers unchanged.
 
 # Poké Battle effects
 - [x] Show the selected student's owned Pokémon opposite the wild opponent and anchor attacks to its artwork; saved collection artwork, attack origin, retaliation target, teacher selection and practice fallback checked in the browser in both modes. Routing test/build passed; session/list launch isolated, claims and credits unchanged.
