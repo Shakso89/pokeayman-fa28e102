@@ -353,9 +353,9 @@
     if ($('ts-bottom') || !$('ts-sidebar')) return;
     const bar = document.createElement('nav');
     bar.id = 'ts-bottom'; bar.setAttribute('aria-label', 'Teacher navigation');
-    bar.innerHTML = [['class', '🏫', 'Classroom'], ['switch', '⇄', 'Classes'], ['zone', '🧰', 'Zone'], ['admin', '⚙️', 'Admin'], ['me', '👤', 'Me']]
+    bar.innerHTML = [['class', '', 'Class'], ['switch', '', 'Classes'], ['zone', '', 'Zone'], ['admin', '', 'Admin'], ['me', '', 'Me']]
       .map(([k, i, l]) => `<button type="button" data-tsb="${k}"><span class="tsb-ic" aria-hidden="true">${i}</span><span class="tsb-l">${l}</span></button>`).join('') +
-      `<button type="button" data-tsb="theme" role="switch" aria-checked="${bright}" aria-label="${bright ? 'Switch to dark mode' : 'Switch to bright mode'}" title="${bright ? 'Switch to dark mode' : 'Switch to bright mode'}"><span class="tsb-ic" aria-hidden="true">${bright ? '☀' : '☾'}</span><span class="tsb-l">${bright ? 'Dark' : 'Bright'}</span></button>`;
+      `<button type="button" data-tsb="theme" role="switch" aria-checked="${bright}" aria-label="${bright ? 'Switch to dark mode' : 'Switch to bright mode'}" title="${bright ? 'Switch to dark mode' : 'Switch to bright mode'}"><span class="tsb-ic" aria-hidden="true"></span><span class="tsb-l">${bright ? 'Dark' : 'Bright'}</span></button>`;
     const scrim = document.createElement('div'); scrim.id = 'ts-sheet-scrim';
     document.body.append(scrim, bar);
     scrim.addEventListener('click', closeSheet);
@@ -381,6 +381,8 @@
     const bar = $('ts-bottom'); if (!bar) return;
     bar.querySelector('[data-tsb="admin"]').hidden = !g(() => canAccessAdmin(), false);
     bar.querySelector('[data-tsb="zone"]').hidden = !g(() => canAccessTeacherZone(), false);
+    const visibleItems = [...bar.querySelectorAll('[data-tsb]')].filter((button) => !button.hidden).length;
+    bar.style.gridTemplateColumns = `repeat(${visibleItems}, minmax(0, 1fr))`;
     const tab = g(() => activeMainTab, 'dashboard');
     const sec = meOpen ? 'me' : ({ dashboard: 'class', 'teacher-zone': 'zone', admin: 'admin' }[tab] || 'class');
     if (document.body.dataset.tsSheet !== sec) document.body.dataset.tsSheet = sec;

@@ -90,18 +90,18 @@
   html body.ts-on #app-screen #breadcrumb, html body.ts-on #app-screen #view-students #class-tabs-container { display: none !important; }
 
   body.ts-on #ts-bottom {
-    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
-    height: calc(56px + env(safe-area-inset-bottom)); padding: 3px 6px env(safe-area-inset-bottom);
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
+    box-sizing: border-box; height: calc(64px + env(safe-area-inset-bottom)); padding: 4px 8px env(safe-area-inset-bottom);
     background: var(--ts-bg); border-top: 1px solid var(--ts-border); box-shadow: 0 -8px 24px rgba(0,0,0,.25); font-family: 'Outfit', sans-serif;
   }
   #ts-bottom button[hidden] { display: none; }
-  #ts-bottom button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; border: 0; background: transparent; color: var(--ts-muted); font: 600 11px 'Outfit', sans-serif; cursor: pointer; }
-  #ts-bottom .tsb-ic { display: grid; place-items: center; width: 40px; height: 24px; font-size: 17px; border-radius: 999px; transition: background .15s; }
+  #ts-bottom button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 0; min-height: 0; padding: 2px 1px; border: 0; border-radius: 10px; background: transparent; color: var(--ts-muted); font: 650 11px/1.15 'Outfit', sans-serif; cursor: pointer; }
+  #ts-bottom .tsb-ic { display: none; }
   #ts-bottom .tsb-ic img { width: 26px !important; height: 26px !important; border-radius: 50%; object-fit: contain; }
-  #ts-bottom .tsb-l { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #ts-bottom .tsb-l { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #ts-bottom button.current { color: var(--ts-ink); }
-  #ts-bottom button.current .tsb-ic { background: var(--ts-yellow); color: var(--ts-action-ink); }
-  #ts-bottom [data-tsb="theme"][aria-checked="true"] .tsb-ic { background: var(--ts-yellow); color: var(--ts-action-ink); }
+  #ts-bottom button.current { background: color-mix(in srgb, var(--ts-yellow) 12%, transparent); }
+  #ts-bottom [data-tsb="theme"][aria-checked="true"] { color: var(--ts-ink); }
   #ts-bottom button:focus-visible { outline: 2px solid var(--ts-yellow); outline-offset: -2px; }
 
   /* Sidebar = slim strip of the current section's tools, sitting just above the bottom bar. */
@@ -132,7 +132,7 @@
   html body.ts-on:not([data-ts-sheet="me"]) #ts-rail { display: none !important; }
   body.ts-on[data-ts-sheet="me"] #ts-sheet-scrim { display: block; position: fixed; inset: 0; z-index: 68; background: rgba(5,10,30,.45); }
 }
-@media (max-width: 400px) { #ts-bottom .tsb-l { font-size: 10px; } html body.ts-on #ts-sidebar .ts-item { font-size: 13px; padding: 7px 11px; } }
+@media (max-width: 400px) { #ts-bottom button { font-size: 10px; } html body.ts-on #ts-sidebar .ts-item { font-size: 13px; padding: 7px 11px; } }
 
 /* Schedule: agenda on phones/tablets, full grid on desktop — switches automatically. */
 #schedule-agenda { display: none; }
@@ -169,8 +169,8 @@
   html body.ts-on #ts-sidebar .ts-item { scroll-snap-align: start; }
 
   /* Avatar clearly visible on the Me button and in the Me panel. */
-  #ts-bottom [data-tsb="me"] .tsb-ic { width: 36px; height: 36px; margin-top: -6px; border-radius: 50%; border: 2px solid var(--ts-yellow, #facc15); background: var(--ts-surface, rgba(255,255,255,.08)); overflow: hidden; }
-  #ts-bottom [data-tsb="me"] .tsb-ic img { width: 32px !important; height: 32px !important; }
+  #ts-bottom [data-tsb="me"] .tsb-ic { display: grid; place-items: center; width: 28px; height: 28px; margin: 0 auto; border-radius: 50%; border: 2px solid var(--ts-yellow, #facc15); background: var(--ts-surface, rgba(255,255,255,.08)); overflow: hidden; }
+  #ts-bottom [data-tsb="me"] .tsb-ic img { width: 24px !important; height: 24px !important; }
   html body.ts-on[data-ts-sheet="me"] #ts-sidebar .ts-me :is(#ts-avatar, .ts-avatar) { width: 64px !important; height: 64px !important; flex: none; border-radius: 50%; border: 3px solid var(--ts-yellow, #facc15); }
   html body.ts-on[data-ts-sheet="me"] #ts-sidebar .ts-me :is(#ts-avatar, .ts-avatar) img { width: 100% !important; height: 100% !important; object-fit: contain; }
 }
