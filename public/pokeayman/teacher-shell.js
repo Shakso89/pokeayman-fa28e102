@@ -60,7 +60,7 @@
     side.id = 'ts-sidebar';
     side.setAttribute('aria-label', 'Teacher navigation');
     side.innerHTML = `
-      <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile" title="Open Teacher Card"><span id="ts-avatar" class="ts-avatar"></span><span class="ts-me-info"><span class="ts-me-label">Teacher Card</span><strong id="ts-name"></strong><small id="ts-role"></small></span></button><button type="button" class="ts-logout" data-ts="logout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5H4v14h5M14 8l4 4-4 4M8 12h12"/></svg><span>Log out</span></button></div>
+      <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile" title="Open teacher profile"><span id="ts-avatar" class="ts-avatar"></span><span class="ts-me-info"><strong id="ts-name"></strong><small id="ts-role"></small></span></button><button type="button" class="ts-logout" data-ts="logout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5H4v14h5M14 8l4 4-4 4M8 12h12"/></svg><span>Log out</span></button></div>
       <div class="ts-switch-wrap"><button type="button" class="ts-switch" data-ts="switch" aria-haspopup="dialog" aria-expanded="false"><span class="ts-switch-label" id="ts-current-school">Schools &amp; classes</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">⇄</span></button></div>
       <nav class="ts-nav">
         <div id="ts-class"><button type="button" class="ts-section-toggle" data-ts-toggle="class" aria-expanded="true" aria-controls="ts-class-content"><span>Classroom</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-class-content">
@@ -313,7 +313,7 @@
     $('ts-name').textContent = $('logged-in-name-nav')?.textContent || g(() => currentTeacher, '') || 'Teacher';
     $('ts-name').title = $('ts-name').textContent;
     const credits = $('credit-balance-nav')?.textContent?.trim();
-    $('ts-role').textContent = g(() => canAccessAdmin(), false) ? 'Admin · Unlimited credits' : (credits ? `${credits} credits` : 'Teacher');
+    $('ts-role').textContent = g(() => canAccessAdmin(), false) ? 'Unlimited credits' : (credits ? `${credits} credits available` : 'Credits unavailable');
     const sourceAvatar = $('teacher-account-avatar')?.querySelector('img');
     const av = sourceAvatar ? sourceAvatar.outerHTML : '<span class="ts-ball" role="img" aria-label="Poké Ball avatar"></span>';
     if ($('ts-avatar').innerHTML !== av) $('ts-avatar').innerHTML = av;

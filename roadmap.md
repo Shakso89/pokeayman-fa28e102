@@ -1,3 +1,6 @@
+# Teacher profile refinement
+- [ ] Remove redundant identity labels, enlarge avatars by 20%, and align the profile header/forms with both website themes; verify profile navigation and layouts without changing account saves.
+
 # Poké Battle effects
 - [x] Show the selected student's owned Pokémon opposite the wild opponent and anchor attacks to its artwork; saved collection artwork, attack origin, retaliation target, teacher selection and practice fallback checked in the browser in both modes. Routing test/build passed; session/list launch isolated, claims and credits unchanged.
 - [x] Add travelling attacks, impact bursts, animated HP loss and delayed knockout reveal. Saved-word isolated practice checked attacks, retaliation, dodges, victory, replay/exit and bright reduced motion with no runtime errors; routing test passed. Real claims and credits unchanged and not exercised.
