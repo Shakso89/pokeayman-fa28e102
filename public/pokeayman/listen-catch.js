@@ -3,6 +3,7 @@
   const ROUNDS = 5;
   const DAILY_BALL_LIMIT = 10;
   const POKEMON_TYPES = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
+  const POKEMON_TIERS = ['common', 'uncommon', 'rare', 'legendary'];
   const DEFAULT_CHALLENGE_GOAL = 20;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const art = id => `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${id}.png`;
@@ -40,14 +41,26 @@
     const setting = challengeSetting(); if (!setting?.challenge_start) return null;
     const start = new Date(`${setting.challenge_start}T00:00:00`); const end = new Date(start); end.setDate(end.getDate() + 7);
     const now = new Date(); if (!Number.isFinite(start.getTime()) || now < start || now >= end) return null;
-    const type = POKEMON_TYPES.includes(String(setting.challenge_type || '').toLowerCase()) ? String(setting.challenge_type).toLowerCase() : 'grass';
+    const type = POKEMON_TYPES.includes(String(setting.challenge_type || '').toLowerCase()) ? String(setting.challenge_type).toLowerCase() : '';
+    const tier = POKEMON_TIERS.includes(String(setting.challenge_tier || '').toLowerCase()) ? String(setting.challenge_tier).toLowerCase() : '';
     const goal = Math.max(1, Math.min(200, Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL));
     const lastDay = new Date(end); lastDay.setDate(lastDay.getDate() - 1);
-    return { id: `week-${setting.challenge_start}`, title: String(setting.challenge_title || 'Weekly Catchdex Challenge'), type, goal, start: setting.challenge_start, end: dateInput(lastDay), setting };
+    return { id: `week-${setting.challenge_start}`, title: String(setting.challenge_title || 'Weekly Catchdex Challenge'), type, tier, goal, start: setting.challenge_start, end: dateInput(lastDay), setting };
   }
   function typeOf(item) {
     const type = typeof getPokemonTypes === 'function' ? getPokemonTypes(item).find(value => value !== 'unknown') : '';
     return type || 'normal';
+  }
+  function tierOf(entry) {
+    const species = catalog().find(item => Number(item.id) === Number(entry.pokemon_id));
+    const tier = String(entry.rarity || species?.rarity || '').toLowerCase();
+    return POKEMON_TIERS.includes(tier) ? tier : 'common';
+  }
+  function matchesChallenge(entry, active) {
+    return (!active.type || hasType(entry, active.type)) && (!active.tier || tierOf(entry) === active.tier);
+  }
+  function challengeCriteria(active) {
+    return [active.type && `${active.type} type`, active.tier && `${active.tier} tier`].filter(Boolean).join(' · ') || 'any type or tier';
   }
   function catalog() { return Array.isArray(window.pokemonCatalog) ? window.pokemonCatalog : (typeof pokemonCatalog !== 'undefined' ? pokemonCatalog : []); }
   function randomPokemon() {
@@ -103,7 +116,7 @@
   function challenge(state) {
     const active = activeChallenge();
     if (!active) return { id: '', title: 'No challenge this week', type: '', goal: DEFAULT_CHALLENGE_GOAL, unique: 0, ready: false, claimed: false, active: null };
-    const qualifying = state.album.filter(entry => hasType(entry, active.type));
+    const qualifying = state.album.filter(entry => matchesChallenge(entry, active));
     const unique = new Set(qualifying.map(entry => Number(entry.pokemon_id))).size;
     const claimed = (state.claimedChallengeIds || []).includes(active.id) || (state.openedChallengeIds || []).includes(active.id);
     return { ...active, unique: claimed ? active.goal : unique, ready: unique >= active.goal && !claimed, claimed, qualifying };
@@ -118,7 +131,7 @@
     let grant;
     try { grant = await window.dataSdk.create(newPokemon); } catch (_) { grant = null; }
     if (!grant?.isOk) { albumViewer.openingChallenge = false; return toast('Could not open the Mystery Box. Your stickers are safe; please try again.'); }
-    state.album = state.album.filter(entry => !consumedIds.has(Number(entry.pokemon_id)) || !hasType(entry, goal.type));
+    state.album = state.album.filter(entry => !consumedIds.has(Number(entry.pokemon_id)) || !matchesChallenge(entry, goal));
     state.claimedChallengeIds = [...(state.claimedChallengeIds || []), goal.id];
     state.openedChallengeIds = [...(state.openedChallengeIds || []), goal.id];
     state.lastChallengeReward = { challengeId: goal.id, pokemonId: Number(item.id), pokemonName: item.name, consumed: consumed.length, claimedAt: now };
@@ -148,7 +161,7 @@
     if (typeof canAccessAdmin !== 'function' || !canAccessAdmin()) return;
     const data = new FormData(form); const start = String(data.get('start') || '');
     if (!start || !Number.isFinite(new Date(`${start}T00:00:00`).getTime())) return toast('Choose a valid challenge start date.');
-    const existing = challengeSetting(); const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_type: String(data.get('pokemonType') || 'grass'), challenge_goal: Math.max(1, Math.min(200, Number(data.get('goal')) || DEFAULT_CHALLENGE_GOAL)), challenge_start: start, updated_at: new Date().toISOString() };
+    const existing = challengeSetting(); const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_type: String(data.get('pokemonType') || ''), challenge_tier: String(data.get('pokemonTier') || ''), challenge_goal: Math.max(1, Math.min(200, Number(data.get('goal')) || DEFAULT_CHALLENGE_GOAL)), challenge_start: start, updated_at: new Date().toISOString() };
     const button = form.querySelector('button[type="submit"]'); button.disabled = true;
     let result;
     try { result = existing ? await window.dataSdk.update({ ...payload, __backendId: existing.__backendId }) : await window.dataSdk.create(payload); }
@@ -162,23 +175,23 @@
 
   function renderAdminChallenge() {
     if (typeof canAccessAdmin !== 'function' || !canAccessAdmin()) { document.getElementById('listen-catch-admin')?.remove(); return; }
-    const host = document.querySelector('#tab-admin > .max-w-5xl'); if (!host) return;
+    const host = document.getElementById('admin-subtab-challenges'); if (!host) return;
     let panel = document.getElementById('listen-catch-admin');
     if (!panel) {
       panel = document.createElement('section'); panel.id = 'listen-catch-admin'; panel.className = 'lc-admin-panel';
-      const target = host.querySelector('#admin-subtab-users'); host.insertBefore(panel, target || host.firstChild);
       const start = dateInput(weekStart());
-      panel.innerHTML = `<header><span>LISTEN AND CATCH</span><h3>Weekly Catchdex challenge</h3><p>Set one shared challenge for every student. It runs for seven days from the selected start date.</p></header><form class="lc-admin-form"><label>Challenge name<input name="title" maxlength="48" placeholder="Green Explorer" required></label><label>Pokémon type<select name="pokemonType">${POKEMON_TYPES.map(type => `<option value="${type}">${type[0].toUpperCase()}${type.slice(1)}</option>`).join('')}</select></label><label>Unique Pokémon needed<input name="goal" type="number" min="1" max="200" value="${DEFAULT_CHALLENGE_GOAL}" required></label><label>Week starts<input name="start" type="date" value="${start}" required></label><button type="submit" class="lc-primary">Save weekly challenge</button></form><p class="lc-admin-status" aria-live="polite"></p>`;
+      panel.innerHTML = `<header><span>LISTEN AND CATCH</span><h3>Weekly Catchdex challenge</h3><p>Set one shared challenge for every student. It runs for seven days from the selected start date. Choose a type, a tier, or both.</p></header><form class="lc-admin-form"><label>Challenge name<input name="title" maxlength="48" placeholder="Green Explorer" required></label><label>Pokémon type<select name="pokemonType"><option value="">Any type</option>${POKEMON_TYPES.map(type => `<option value="${type}">${type[0].toUpperCase()}${type.slice(1)}</option>`).join('')}</select></label><label>Pokémon tier<select name="pokemonTier"><option value="">Any tier</option>${POKEMON_TIERS.map(tier => `<option value="${tier}">${tier[0].toUpperCase()}${tier.slice(1)}</option>`).join('')}</select></label><label>Unique Pokémon needed<input name="goal" type="number" min="1" max="200" value="${DEFAULT_CHALLENGE_GOAL}" required></label><label>Week starts<input name="start" type="date" value="${start}" required></label><button type="submit" class="lc-primary">Save weekly challenge</button></form><p class="lc-admin-status" aria-live="polite"></p>`;
       panel.querySelector('form').addEventListener('submit', event => { event.preventDefault(); saveChallengeConfig(event.currentTarget); });
     }
+    if (panel.parentElement !== host) host.appendChild(panel);
     const setting = challengeSetting(); const active = activeChallenge(); const form = panel.querySelector('form');
     if (!form.dataset.loaded) {
-      if (active && setting) { form.elements.title.value = setting.challenge_title || ''; form.elements.pokemonType.value = POKEMON_TYPES.includes(setting.challenge_type) ? setting.challenge_type : 'grass'; form.elements.goal.value = Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL; form.elements.start.value = setting.challenge_start; }
-      else { form.elements.title.value = ''; form.elements.pokemonType.value = 'grass'; form.elements.goal.value = DEFAULT_CHALLENGE_GOAL; form.elements.start.value = dateInput(weekStart()); }
+      if (setting) { form.elements.title.value = setting.challenge_title || ''; form.elements.pokemonType.value = POKEMON_TYPES.includes(setting.challenge_type) ? setting.challenge_type : ''; form.elements.pokemonTier.value = POKEMON_TIERS.includes(setting.challenge_tier) ? setting.challenge_tier : ''; form.elements.goal.value = Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL; form.elements.start.value = setting.challenge_start || dateInput(weekStart()); }
+      else { form.elements.title.value = ''; form.elements.pokemonType.value = ''; form.elements.pokemonTier.value = ''; form.elements.goal.value = DEFAULT_CHALLENGE_GOAL; form.elements.start.value = dateInput(weekStart()); }
       form.dataset.loaded = 'true';
     }
     const status = panel.querySelector('.lc-admin-status');
-    status.textContent = active ? `Live now: ${active.title} · collect ${active.goal} unique ${active.type} Pokémon · ${active.start} through ${active.end}.` : `No challenge is active. Set this week’s challenge to get students started.`;
+    status.textContent = active ? `Live now: ${active.title} · collect ${active.goal} unique Pokémon matching ${challengeCriteria(active)} · ${active.start} through ${active.end}.` : `No challenge is active. Set this week’s challenge to get students started.`;
   }
   function closeGame() { session?.root?.remove(); session = null; }
   function speak(word) {
@@ -271,7 +284,7 @@
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
     const cards = state.album.length ? state.album.map(entry => `<article class="catchdex-mon"><img src="${art(entry.pokemon_id)}" alt="${esc(entry.pokemon_name)}" loading="lazy"><b>${esc(entry.pokemon_name)}</b><span>${esc(entry.pokemon_type)}</span></article>`).join('') : '<p class="catchdex-empty">Win a Catch Ball in Listen and Catch, then open it here.</p>';
     const challengeMarkup = goal.active
-      ? `<section class="catchdex-challenge"><div><span>WEEKLY CHALLENGE${goal.claimed ? ' · COMPLETE' : ''}</span><h3>${esc(goal.title)}</h3><p>Collect ${goal.goal} unique ${esc(goal.type)} Pokémon · ${goal.start} – ${goal.end}</p></div><b>${Math.min(goal.unique, goal.goal)} / ${goal.goal}</b>${goal.ready && !readOnly ? '<button type="button" class="lc-primary" data-catchdex="reward">Open Mystery Box</button>' : ''}${goal.claimed ? '<p class="lc-challenge-claimed">Mystery Box claimed · qualifying stickers were used.</p>' : ''}</section>`
+      ? `<section class="catchdex-challenge"><div><span>WEEKLY CHALLENGE${goal.claimed ? ' · COMPLETE' : ''}</span><h3>${esc(goal.title)}</h3><p>Collect ${goal.goal} unique Pokémon matching ${esc(challengeCriteria(goal))} · ${goal.start} – ${goal.end}</p></div><b>${Math.min(goal.unique, goal.goal)} / ${goal.goal}</b>${goal.ready && !readOnly ? '<button type="button" class="lc-primary" data-catchdex="reward">Open Mystery Box</button>' : ''}${goal.claimed ? '<p class="lc-challenge-claimed">Mystery Box claimed · qualifying stickers were used.</p>' : ''}</section>`
       : '<section class="catchdex-challenge is-inactive"><div><span>WEEKLY CHALLENGE</span><h3>No active challenge</h3><p>Your next Catchdex challenge will appear here when the admin schedules it.</p></div></section>';
     modal.innerHTML = `<div class="catchdex-modal-card"><header><div><span>GAME COLLECTION</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2></div><button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button></header><section class="catchdex-summary"><div><b>${state.balls}</b><span>Catch Balls</span>${readOnly ? '' : `<small class="catchdex-daily">${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} balls earned today · unopened balls have no daily limit</small>`}</div>${readOnly ? '' : `<button type="button" class="lc-primary" data-catchdex="ball" ${state.balls ? '' : 'disabled'}>Open a Catch Ball</button>`}</section>${state.last ? `<p class="catchdex-last ${state.last.duplicate ? 'is-duplicate' : ''}">${state.last.duplicate ? `Duplicate ${esc(state.last.item.name)} became ${state.last.coins} coins.` : `New discovery: ${esc(state.last.item.name)}!`}</p>` : ''}${challengeMarkup}<section class="catchdex-grid">${cards}</section></div>`;
     modal.classList.remove('hidden');

@@ -4371,7 +4371,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     </div>
     <div id="admin-subtab-controls" class="admin-subtab-content hidden">
      <div class="users-subtab-header controls-subtab-header" role="tablist" aria-label="Control sections">
-      <button type="button" class="users-subtab users-subtab-active" data-controls-subtab="pricing-plans" role="tab" aria-selected="true">💳 Pricing</button><button type="button" class="users-subtab users-subtab-inactive" data-controls-subtab="shop-mgmt" role="tab" aria-selected="false">🛒 Shop</button><button type="button" class="users-subtab users-subtab-inactive" data-controls-subtab="home-arch" role="tab" aria-selected="false">🏛️ Home arch</button>
+      <button type="button" class="users-subtab users-subtab-active" data-controls-subtab="pricing-plans" role="tab" aria-selected="true">💳 Pricing</button><button type="button" class="users-subtab users-subtab-inactive" data-controls-subtab="shop-mgmt" role="tab" aria-selected="false">🛒 Shop</button><button type="button" class="users-subtab users-subtab-inactive" data-controls-subtab="home-arch" role="tab" aria-selected="false">🏛️ Home arch</button><button type="button" class="users-subtab users-subtab-inactive" data-controls-subtab="challenges" role="tab" aria-selected="false">Challenges</button>
      </div>
     </div>
     <div id="admin-subtab-teacher-zone" class="admin-subtab-content hidden">
@@ -4573,6 +4573,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       <section class="home-manager-preview"><h4>Home gallery preview</h4><div id="arch-preview-root"><div id="arch-preview-track"></div></div></section>
      </div>
     </div>
+    <div id="admin-subtab-challenges" class="admin-subtab-content hidden"></div>
    </div>
   </section>
    </main>
@@ -8459,7 +8460,7 @@ function selectControlsSubtab(name) {
     tab.classList.toggle('admin-sub-tab-inactive', !active);
   });
   document.querySelectorAll('.admin-subtab-content').forEach(panel => {
-    if (panel.id !== 'admin-subtab-controls' && panel.id !== 'admin-subtab-pricing-plans' && panel.id !== 'admin-subtab-shop-mgmt' && panel.id !== 'admin-subtab-home-arch') panel.classList.add('hidden');
+    if (panel.id !== 'admin-subtab-controls' && panel.id !== 'admin-subtab-pricing-plans' && panel.id !== 'admin-subtab-shop-mgmt' && panel.id !== 'admin-subtab-home-arch' && panel.id !== 'admin-subtab-challenges') panel.classList.add('hidden');
   });
   document.getElementById('admin-subtab-controls')?.classList.remove('hidden');
   document.querySelectorAll('.controls-subtab-header .users-subtab').forEach(tab => {
@@ -8468,11 +8469,12 @@ function selectControlsSubtab(name) {
     tab.classList.toggle('users-subtab-inactive', !active);
     tab.setAttribute('aria-selected', String(active));
   });
-  ['pricing-plans', 'shop-mgmt', 'home-arch'].forEach(section => {
+  ['pricing-plans', 'shop-mgmt', 'home-arch', 'challenges'].forEach(section => {
     document.getElementById('admin-subtab-' + section)?.classList.toggle('hidden', section !== name);
   });
   if (name === 'pricing-plans') renderPricingPlans();
   if (name === 'home-arch') renderHomeArchConfig();
+  if (name === 'challenges') window.listenCatchAdminRefresh?.();
 }
 document.querySelectorAll('.controls-subtab-header .users-subtab').forEach(tab => tab.addEventListener('click', () => selectControlsSubtab(tab.dataset.controlsSubtab)));
 document.querySelectorAll('.admin-sub-tab[data-subtab="controls"]').forEach(tab => tab.addEventListener('click', () => {
