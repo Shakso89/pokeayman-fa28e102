@@ -3760,6 +3760,7 @@
     } catch (e) { console.warn('Backend unavailable, using local copy', e); }
   }
   let migrated = false;
+  let resolveReady; window.pokeaymanDataReady = new Promise(r => { resolveReady = r; });
   async function firstLoad() {
     try {
       const rows = await api('GET', '?select=id&limit=1');
@@ -3769,6 +3770,7 @@
       }
     } catch (_) {}
     await pull();
+    resolveReady();
   }
   window.dataSdk = {
     async init(handler) { listener = handler; notify(); await firstLoad(); if (!window.__pokeaymanPollTimer) window.__pokeaymanPollTimer = setInterval(pull, 5000); return {isOk:true}; },
@@ -6733,7 +6735,17 @@ document.getElementById('student-login-toggle').addEventListener('click', () => 
 });
 
 // Enter the teacher dashboard for a signed-in Cloud teacher account.
+let pkTeacherEntering = false;
 window.pokeaymanEnterTeacher = async function (name) {
+  if (pkTeacherEntering) return;
+  pkTeacherEntering = true;
+  try {
+    // Wait for saved teachers to load (max 8s) so we match the account instead of creating a duplicate.
+    if (window.pokeaymanDataReady) await Promise.race([window.pokeaymanDataReady, new Promise(r => setTimeout(r, 8000))]);
+    await pkEnterTeacherNow(name);
+  } finally { pkTeacherEntering = false; }
+};
+async function pkEnterTeacherNow(name) {
   const clean = String(name || 'Teacher').trim();
   const cloudId = (window.parent && window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.userId) || '';
   // "Ayman" is only passed for backend-verified admins; it maps to the built-in Admin with no sheet row.
@@ -6761,7 +6773,7 @@ window.pokeaymanEnterTeacher = async function (name) {
   if (rec && authEmail && rec.teacher_email !== authEmail) { try { await saveTeacherPatch(rec, { teacher_email: authEmail }); } catch (_) {} }
   try { await recordTeacherDailyLogin(); } catch (e) { console.warn('Streak update failed', e); }
   enterApp();
-};
+}
 window.addEventListener('load', () => {
   let want = false; try { want = sessionStorage.getItem('pokeayman-enter-teacher') === '1'; } catch (_) {}
   const auth = window.parent && window.parent.pokeaymanAuth;
@@ -6771,7 +6783,11 @@ window.addEventListener('load', () => {
 
 document.getElementById('teacher-login-toggle').addEventListener('click', async () => {
   const auth = window.parent && window.parent.pokeaymanAuth;
-  if (auth && auth.userId) { const p = await auth.getProfile(); window.pokeaymanEnterTeacher(p.name); return; }
+  if (auth && auth.userId) {
+    const btn = document.getElementById('teacher-login-toggle'); if (btn) btn.disabled = true;
+    try { const p = await auth.getProfile(); await window.pokeaymanEnterTeacher(p.name); } finally { if (btn) btn.disabled = false; }
+    return;
+  }
   const inputCls = 'w-full min-h-11 border-2 border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition';
   const modal = document.createElement('div');
   modal.className = 'pk-login-overlay fixed inset-0 flex items-center justify-center z-50 p-4';
@@ -6838,11 +6854,12 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
         msg('Account created! Check your email and click the link to confirm, then sign in.', true);
         setMode('signin'); $('#ta-msg').classList.remove('hidden');
       } else {
+        btn.textContent = 'Signing in…';
         const r = await auth.signIn(email, password);
         if (r.error) { msg(r.error, false); return; }
-        modal.remove(); window.pokeaymanEnterTeacher(r.name);
+        modal.remove(); await window.pokeaymanEnterTeacher(r.name);
       }
-    } finally { btn.disabled = false; }
+    } finally { btn.disabled = false; if (mode !== 'signup') btn.textContent = 'Sign in'; }
   });
   $('#ta-google').addEventListener('click', async () => {
     if (!auth) return;

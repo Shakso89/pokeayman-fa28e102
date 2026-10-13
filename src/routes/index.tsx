@@ -79,7 +79,7 @@ function Index() {
       signIn: async (email, password) => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) return { error: error.message.includes("confirm") ? "Please confirm your email first (check your inbox)." : "Wrong email or password." };
-        if (window.pokeaymanAuth) window.pokeaymanAuth.userId = data.user?.id ?? null;
+        if (window.pokeaymanAuth) { window.pokeaymanAuth.userId = data.user?.id ?? null; window.pokeaymanAuth.email = data.user?.email ?? null; }
         return { name: await profileName() };
       },
       signUp: async (email, password, name, school) => {
