@@ -1,8 +1,9 @@
 /* Listen and Catch: a student-only listening game with a separate Catchdex. */
 (function () {
   const ROUNDS = 5;
-  const CHALLENGE_TYPE = 'grass';
-  const CHALLENGE_GOAL = 20;
+  const DAILY_BALL_LIMIT = 10;
+  const POKEMON_TYPES = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
+  const DEFAULT_CHALLENGE_GOAL = 20;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const art = id => `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${id}.png`;
   const identity = student => String(student?.__backendId || student?.student_id || '').trim();
@@ -20,8 +21,28 @@
     return (typeof allData === 'undefined' ? [] : allData).find(row => row.type === 'listen_catch_progress' && String(row.student_id || '') === id) || null;
   }
   function parseProgress(record) {
-    try { return { album: [], balls: 0, openedChallengeIds: [], ...JSON.parse(record?.listen_catch_data || '{}') }; }
-    catch (_) { return { album: [], balls: 0, openedChallengeIds: [] }; }
+    try { return { album: [], balls: 0, openedChallengeIds: [], claimedChallengeIds: [], dailyBallDate: '', dailyBallsEarned: 0, ...JSON.parse(record?.listen_catch_data || '{}') }; }
+    catch (_) { return { album: [], balls: 0, openedChallengeIds: [], claimedChallengeIds: [], dailyBallDate: '', dailyBallsEarned: 0 }; }
+  }
+  function localDayKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+  function ballsEarnedToday(state) { return state.dailyBallDate === localDayKey() ? Math.min(DAILY_BALL_LIMIT, Number(state.dailyBallsEarned) || 0) : 0; }
+  function hasType(entry, type) {
+    const types = Array.isArray(entry.pokemon_types) ? [...entry.pokemon_types] : [entry.pokemon_type];
+    const species = catalog().find(item => Number(item.id) === Number(entry.pokemon_id));
+    if (species && typeof getPokemonTypes === 'function') types.push(...getPokemonTypes(species));
+    return types.some(value => String(value || '').toLowerCase() === type);
+  }
+  function weekStart(date = new Date()) { const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()); day.setDate(day.getDate() - ((day.getDay() + 6) % 7)); return day; }
+  function dateInput(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
+  function challengeSetting() { return (typeof allData === 'undefined' ? [] : allData).find(row => row.type === 'listen_catch_challenge') || null; }
+  function activeChallenge() {
+    const setting = challengeSetting(); if (!setting?.challenge_start) return null;
+    const start = new Date(`${setting.challenge_start}T00:00:00`); const end = new Date(start); end.setDate(end.getDate() + 7);
+    const now = new Date(); if (!Number.isFinite(start.getTime()) || now < start || now >= end) return null;
+    const type = POKEMON_TYPES.includes(String(setting.challenge_type || '').toLowerCase()) ? String(setting.challenge_type).toLowerCase() : 'grass';
+    const goal = Math.max(1, Math.min(200, Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL));
+    const lastDay = new Date(end); lastDay.setDate(lastDay.getDate() - 1);
+    return { id: `week-${setting.challenge_start}`, title: String(setting.challenge_title || 'Weekly Catchdex Challenge'), type, goal, start: setting.challenge_start, end: dateInput(lastDay), setting };
   }
   function typeOf(item) {
     const type = typeof getPokemonTypes === 'function' ? getPokemonTypes(item).find(value => value !== 'unknown') : '';
@@ -66,27 +87,97 @@
     const caught = state.album.some(entry => Number(entry.pokemon_id) === Number(item.id));
     state.balls -= 1;
     if (caught) { const coins = duplicateCoins(item); await addCoins(record, coins); state.last = { item, duplicate: true, coins }; }
-    else { state.album.push({ pokemon_id: Number(item.id), pokemon_name: item.name, rarity: item.rarity || 'common', pokemon_type: typeOf(item), caught_at: new Date().toISOString() }); state.last = { item, duplicate: false }; }
+    else { const types = typeof getPokemonTypes === 'function' ? getPokemonTypes(item).filter(value => value !== 'unknown') : [typeOf(item)]; state.album.push({ pokemon_id: Number(item.id), pokemon_name: item.name, rarity: item.rarity || 'common', pokemon_type: types[0] || typeOf(item), pokemon_types: types, caught_at: new Date().toISOString() }); state.last = { item, duplicate: false }; }
     await save(record, state);
-    renderAlbumModal(); mountCards();
+    renderAlbumModal(); mountCards(); showReveal(item, caught, caught ? duplicateCoins(item) : 0);
+  }
+  function showReveal(item, duplicate, coins) {
+    document.getElementById('lc-reveal')?.remove();
+    const overlay = document.createElement('div'); overlay.id = 'lc-reveal'; overlay.className = 'lc-reveal'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Catch Ball reveal');
+    overlay.innerHTML = `<section class="lc-reveal-card"><button type="button" class="lc-reveal-close" data-reveal-close aria-label="Close">×</button><span class="lc-reveal-kicker">CATCH BALL</span><div class="lc-reveal-orb" aria-hidden="true"><span class="lc-reveal-pokeball">◓</span><img src="${art(item.id)}" alt="${esc(item.name)} sticker" loading="eager"></div><h2>${duplicate ? 'A duplicate!' : 'New sticker!'}</h2><p>${duplicate ? `${esc(item.name)} was already in your Catchdex, so you earned ${coins} coins.` : `${esc(item.name)} joined your Catchdex!`}</p><button type="button" class="lc-primary" data-reveal-close>Nice!</button></section>`;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('is-revealed'));
+    overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-reveal-close]')) overlay.remove(); });
   }
   function challenge(state) {
-    const unique = new Set(state.album.filter(entry => entry.pokemon_type === CHALLENGE_TYPE).map(entry => Number(entry.pokemon_id))).size;
-    return { id: `type-${CHALLENGE_TYPE}-${CHALLENGE_GOAL}`, unique, ready: unique >= CHALLENGE_GOAL && !state.openedChallengeIds.includes(`type-${CHALLENGE_TYPE}-${CHALLENGE_GOAL}`) };
+    const active = activeChallenge();
+    if (!active) return { id: '', title: 'No challenge this week', type: '', goal: DEFAULT_CHALLENGE_GOAL, unique: 0, ready: false, claimed: false, active: null };
+    const qualifying = state.album.filter(entry => hasType(entry, active.type));
+    const unique = new Set(qualifying.map(entry => Number(entry.pokemon_id))).size;
+    const claimed = (state.claimedChallengeIds || []).includes(active.id) || (state.openedChallengeIds || []).includes(active.id);
+    return { ...active, unique: claimed ? active.goal : unique, ready: unique >= active.goal && !claimed, claimed, qualifying };
   }
-  async function requestMysteryReward() {
+  async function openMysteryBox() {
     const record = student(); const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    if (!goal.ready) return;
-    const item = randomPokemon(); if (!item) return;
-    const existing = allData.find(row => row.type === 'battle_claim' && row.status === 'pending' && row.claim_source === 'listen_catch_mystery' && row.student_id === identity(record));
-    if (existing) return toast('Your Mystery Box reward is already waiting for teacher approval.');
-    const claim = { type: 'battle_claim', status: 'pending', claim_source: 'listen_catch_mystery', claim_id: `catchdex-${identity(record)}-${Date.now()}`,
-      student_id: identity(record), student_name: record.student_name, school_name: record.school_name || '', class_name: record.class_name || '',
-      shop_record_id: `catalog-${item.id}`, pokemon_id: Number(item.id), pokemon_name: item.name, pokemon_rarity: item.rarity || 'common', pokemon_price: Number(item.price) || 0, pokemon_power: Number(item.power) || 0, created_at: new Date().toISOString() };
-    const result = await window.dataSdk.create(claim);
-    if (!result?.isOk) return toast('Could not send the Mystery Box reward. Please try again.');
-    state.openedChallengeIds.push(goal.id); await save(record, state); renderAlbumModal(); mountCards();
-    toast('Mystery Box opened! Your teacher can now approve the Pokémon reward.');
+    if (!record || !goal.ready || albumViewer?.openingChallenge) return;
+    const item = randomPokemon(); if (!item) return toast('The Pokémon collection is loading. Try again in a moment.');
+    const consumed = goal.qualifying.slice(0, goal.goal); const consumedIds = new Set(consumed.map(entry => Number(entry.pokemon_id)));
+    const now = new Date().toISOString(); const newPokemon = { type: 'pokemon', student_id: identity(record), school_name: record.school_name || '', class_name: record.class_name || '', student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(item.id), pokemon_name: item.name, pokemon_rarity: item.rarity || 'common', pokemon_price: Number(item.price) || 0, pokemon_power: Number(item.power) || 0, current_hp: Number(item.hp) || (Number(item.power) || 0) + 30, last_battle_time: '', created_at: now, catchdex_challenge_id: goal.id };
+    albumViewer.openingChallenge = true;
+    let grant;
+    try { grant = await window.dataSdk.create(newPokemon); } catch (_) { grant = null; }
+    if (!grant?.isOk) { albumViewer.openingChallenge = false; return toast('Could not open the Mystery Box. Your stickers are safe; please try again.'); }
+    state.album = state.album.filter(entry => !consumedIds.has(Number(entry.pokemon_id)) || !hasType(entry, goal.type));
+    state.claimedChallengeIds = [...(state.claimedChallengeIds || []), goal.id];
+    state.openedChallengeIds = [...(state.openedChallengeIds || []), goal.id];
+    state.lastChallengeReward = { challengeId: goal.id, pokemonId: Number(item.id), pokemonName: item.name, consumed: consumed.length, claimedAt: now };
+    try { await save(record, state); }
+    catch (_) {
+      const savedPokemon = grant.data || grant;
+      if (savedPokemon.__backendId || savedPokemon.id) await window.dataSdk.delete(savedPokemon);
+      albumViewer.openingChallenge = false;
+      return toast('Could not save the challenge. The reward was rolled back; please try again.');
+    }
+    const savedPokemon = grant.data || grant;
+    if (typeof allData !== 'undefined' && !allData.some(row => row.type === 'pokemon' && row.catchdex_challenge_id === goal.id && row.student_id === identity(record))) allData.push({ ...newPokemon, __backendId: savedPokemon.__backendId || savedPokemon.id || '' });
+    albumViewer.openingChallenge = false;
+    renderAlbumModal(); mountCards();
+    if (currentRole === 'student' && typeof renderStudentDashboard === 'function') renderStudentDashboard();
+    showMysteryReveal(item, consumed.length, goal.title);
+  }
+  function showMysteryReveal(item, consumed, title) {
+    document.getElementById('lc-mystery-reveal')?.remove();
+    const overlay = document.createElement('div'); overlay.id = 'lc-mystery-reveal'; overlay.className = 'lc-mystery-reveal'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Mystery Box reward');
+    overlay.innerHTML = `<section class="lc-mystery-card"><button type="button" class="lc-mystery-close" data-mystery-close aria-label="Close">×</button><span class="lc-mystery-kicker">${esc(title)}</span><div class="lc-mystery-scene"><div class="lc-mystery-burst"></div><div class="lc-mystery-box"><span class="lc-mystery-box-lid"></span><span class="lc-mystery-box-body"><b>?</b></span></div><img class="lc-mystery-pokemon" src="${art(item.id)}" alt="${esc(item.name)}" loading="eager"></div><h2>${esc(item.name)}!</h2><p>Your new Pokémon is in your collection. ${consumed} challenge sticker${consumed === 1 ? '' : 's'} added to the box.</p><button type="button" class="lc-primary" data-mystery-close>Awesome!</button></section>`;
+    document.body.appendChild(overlay); requestAnimationFrame(() => overlay.classList.add('is-opening'));
+    overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-mystery-close]')) overlay.remove(); });
+  }
+
+  async function saveChallengeConfig(form) {
+    if (typeof canAccessAdmin !== 'function' || !canAccessAdmin()) return;
+    const data = new FormData(form); const start = String(data.get('start') || '');
+    if (!start || !Number.isFinite(new Date(`${start}T00:00:00`).getTime())) return toast('Choose a valid challenge start date.');
+    const existing = challengeSetting(); const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_type: String(data.get('pokemonType') || 'grass'), challenge_goal: Math.max(1, Math.min(200, Number(data.get('goal')) || DEFAULT_CHALLENGE_GOAL)), challenge_start: start, updated_at: new Date().toISOString() };
+    const button = form.querySelector('button[type="submit"]'); button.disabled = true;
+    let result;
+    try { result = existing ? await window.dataSdk.update({ ...payload, __backendId: existing.__backendId }) : await window.dataSdk.create(payload); }
+    catch (_) { result = null; }
+    button.disabled = false;
+    if (!result?.isOk) return toast('Challenge could not be saved. Try again.');
+    if (existing) Object.assign(existing, payload); else allData.push({ ...payload, __backendId: (result.data || result).__backendId || (result.data || result).id || '' });
+    toast('Weekly Catchdex challenge saved.'); renderAdminChallenge(); mountCards();
+    const modal = document.getElementById('catchdex-modal'); if (modal && !modal.classList.contains('hidden')) renderAlbumModal();
+  }
+
+  function renderAdminChallenge() {
+    if (typeof canAccessAdmin !== 'function' || !canAccessAdmin()) { document.getElementById('listen-catch-admin')?.remove(); return; }
+    const host = document.querySelector('#tab-admin > .max-w-5xl'); if (!host) return;
+    let panel = document.getElementById('listen-catch-admin');
+    if (!panel) {
+      panel = document.createElement('section'); panel.id = 'listen-catch-admin'; panel.className = 'lc-admin-panel';
+      const target = host.querySelector('#admin-subtab-users'); host.insertBefore(panel, target || host.firstChild);
+      const start = dateInput(weekStart());
+      panel.innerHTML = `<header><span>LISTEN AND CATCH</span><h3>Weekly Catchdex challenge</h3><p>Set one shared challenge for every student. It runs for seven days from the selected start date.</p></header><form class="lc-admin-form"><label>Challenge name<input name="title" maxlength="48" placeholder="Green Explorer" required></label><label>Pokémon type<select name="pokemonType">${POKEMON_TYPES.map(type => `<option value="${type}">${type[0].toUpperCase()}${type.slice(1)}</option>`).join('')}</select></label><label>Unique Pokémon needed<input name="goal" type="number" min="1" max="200" value="${DEFAULT_CHALLENGE_GOAL}" required></label><label>Week starts<input name="start" type="date" value="${start}" required></label><button type="submit" class="lc-primary">Save weekly challenge</button></form><p class="lc-admin-status" aria-live="polite"></p>`;
+      panel.querySelector('form').addEventListener('submit', event => { event.preventDefault(); saveChallengeConfig(event.currentTarget); });
+    }
+    const setting = challengeSetting(); const active = activeChallenge(); const form = panel.querySelector('form');
+    if (!form.dataset.loaded) {
+      if (active && setting) { form.elements.title.value = setting.challenge_title || ''; form.elements.pokemonType.value = POKEMON_TYPES.includes(setting.challenge_type) ? setting.challenge_type : 'grass'; form.elements.goal.value = Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL; form.elements.start.value = setting.challenge_start; }
+      else { form.elements.title.value = ''; form.elements.pokemonType.value = 'grass'; form.elements.goal.value = DEFAULT_CHALLENGE_GOAL; form.elements.start.value = dateInput(weekStart()); }
+      form.dataset.loaded = 'true';
+    }
+    const status = panel.querySelector('.lc-admin-status');
+    status.textContent = active ? `Live now: ${active.title} · collect ${active.goal} unique ${active.type} Pokémon · ${active.start} through ${active.end}.` : `No challenge is active. Set this week’s challenge to get students started.`;
   }
   function closeGame() { session?.root?.remove(); session = null; }
   function speak(word) {
@@ -104,31 +195,39 @@
     while (decoys.length < 3) decoys.push({ vocab_word: `Choice ${decoys.length + 1}` });
     session.options = shuffle([word, ...decoys]);
     session.root.querySelector('.lc-round').textContent = `${session.index + 1} / ${session.words.length}`;
-    session.root.querySelector('.lc-prompt').textContent = 'Listen carefully, then catch the matching word.';
+    const sentence = String(word.vocab_sentence || '').trim();
+    session.root.querySelector('.lc-prompt').textContent = sentence ? 'Listen to the full sentence, then choose the vocabulary word you hear.' : 'Listen carefully, then catch the matching word.';
     session.root.querySelector('.lc-options').innerHTML = session.options.map((option, index) => `<button type="button" class="lc-option" data-choice="${index}">${esc(option.vocab_word)}</button>`).join('');
     session.root.querySelector('.lc-listen').disabled = false;
-    setTimeout(() => speak(word.vocab_word), 150);
+    session.root.querySelector('.lc-listen').setAttribute('aria-label', sentence ? `Hear sentence: ${sentence}` : `Hear word: ${word.vocab_word}`);
+    session.root.querySelector('.lc-listen-label').textContent = sentence ? 'Hear the sentence' : 'Hear the word';
+    setTimeout(() => speak(sentence || word.vocab_word), 150);
   }
   function answer(index) {
     const option = session.options[index]; const correct = session.words[session.index]; const buttons = [...session.root.querySelectorAll('.lc-option')];
     buttons.forEach(button => button.disabled = true);
     const selected = buttons[index]; const ok = String(option.vocab_word).trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase();
-    if (ok) { selected.classList.add('is-correct'); session.earned += 1; session.root.querySelector('.lc-balls').textContent = session.earned; session.root.querySelector('.lc-prompt').textContent = 'Caught it! You earned a Catch Ball.'; }
+    if (ok) { selected.classList.add('is-correct'); session.correct += 1; if (session.earned < session.dailyAllowance) { session.earned += 1; session.root.querySelector('.lc-balls').textContent = session.earned; session.root.querySelector('.lc-daily-cap').textContent = `Catch Balls today: ${session.dailyEarnedBefore + session.earned} / ${DAILY_BALL_LIMIT}`; session.root.querySelector('.lc-prompt').textContent = 'Caught it! You earned a Catch Ball.'; } else session.root.querySelector('.lc-prompt').textContent = 'Correct! You have reached today’s 10-ball limit.'; }
     else { selected.classList.add('is-wrong'); buttons.find(button => button.textContent.trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase())?.classList.add('is-correct'); session.root.querySelector('.lc-prompt').textContent = `The answer was “${correct.vocab_word}”.`; }
     setTimeout(() => { session.index += 1; session.index < session.words.length ? startRound() : finishGame(); }, 900);
   }
   async function finishGame() {
-    const record = student(); const state = parseProgress(progressFor(record)); state.balls += session.earned; await save(record, state);
-    session.root.querySelector('.lc-play').innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${session.earned ? `${session.earned} Catch Ball${session.earned === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2><p>Open your balls now, or find them later in your Catchdex.</p><div><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
+    const record = student(); const state = parseProgress(progressFor(record));
+    const today = localDayKey(); const alreadyEarned = state.dailyBallDate === today ? Math.min(DAILY_BALL_LIMIT, Number(state.dailyBallsEarned) || 0) : 0;
+    const awarded = Math.min(session.correct, DAILY_BALL_LIMIT - alreadyEarned);
+    state.balls += awarded; state.dailyBallDate = today; state.dailyBallsEarned = alreadyEarned + awarded; await save(record, state);
+    session.earned = awarded;
+    session.root.querySelector('.lc-play').innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${awarded ? `${awarded} Catch Ball${awarded === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2><p>${awarded < session.correct ? `Daily limit reached. You have earned ${state.dailyBallsEarned} of ${DAILY_BALL_LIMIT} balls today. ` : ''}Open your balls now, or find them later in your Catchdex.</p><div><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
     mountCards();
   }
   function launchForStudent(listName, record) {
     const words = gameWords(listName); if (words.length < 2) return toast('This list needs at least two words.');
     closeGame();
     const root = document.createElement('div'); root.className = 'lc-stage'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Listen and Catch');
-    root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span>LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><b>◓ <span class="lc-balls">0</span></b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><span>🔊</span> Hear the word</button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div></section></main>`;
-    document.body.appendChild(root); activeStudent = record; session = { root, listName, words, index: 0, earned: 0, options: [], student: record };
-    root.addEventListener('click', event => { const button = event.target.closest('button'); if (!button) return; if (button.dataset.lc === 'close') closeGame(); else if (button.dataset.lc === 'listen') speak(session.words[session.index].vocab_word); else if (button.dataset.lc === 'open') { closeGame(); window.openCatchdex(); } else if (button.dataset.choice !== undefined) answer(Number(button.dataset.choice)); });
+    const saved = parseProgress(progressFor(record)); const dailyEarnedBefore = ballsEarnedToday(saved); const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
+    root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span>LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><b>◓ <span class="lc-balls">0</span></b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><span>🔊</span><span class="lc-listen-label">Hear the sentence</span></button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div><small class="lc-daily-cap">Catch Balls today: ${ballsEarnedToday(saved)} / ${DAILY_BALL_LIMIT}</small></section></main>`;
+    document.body.appendChild(root); activeStudent = record; session = { root, listName, words, index: 0, earned: 0, correct: 0, dailyAllowance, dailyEarnedBefore, options: [], student: record };
+    root.addEventListener('click', event => { const button = event.target.closest('button'); if (!button) return; if (button.dataset.lc === 'close') closeGame(); else if (button.dataset.lc === 'listen') { const word = session.words[session.index]; speak(String(word.vocab_sentence || word.vocab_word)); } else if (button.dataset.lc === 'open') { closeGame(); window.openCatchdex(); } else if (button.dataset.choice !== undefined) answer(Number(button.dataset.choice)); });
     startRound();
   }
   function chooseStudent(listName) {
@@ -152,17 +251,17 @@
   };
   function albumCard(state, compact = false, viewOnly = false) {
     const goal = challenge(state); const unique = new Set(state.album.map(entry => Number(entry.pokemon_id))).size;
-    return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p></div><div class="catchdex-goal"><b>${goal.unique} / ${CHALLENGE_GOAL}</b><span>unique Grass Pokémon</span></div><button type="button" ${viewOnly ? 'data-catchdex-profile' : 'data-catchdex-open'}>${viewOnly ? 'View Catchdex' : 'Open Catchdex'}</button></section>`;
+    return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p>${!viewOnly ? `<small class="catchdex-daily">${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} balls earned today</small>` : ''}</div><div class="catchdex-goal"><b>${goal.unique} / ${goal.goal}</b><span>${goal.active ? `unique ${goal.type} Pokémon` : 'weekly challenge inactive'}</span></div><button type="button" ${viewOnly ? 'data-catchdex-profile' : 'data-catchdex-open'}>${viewOnly ? 'View Catchdex' : 'Open Catchdex'}</button></section>`;
   }
   function mountCards() {
     const state = parseProgress(progressFor(student()));
     const dashboard = document.querySelector('#student-dashboard .max-w-5xl');
-    const dashSignature = `${state.album.length}:${state.balls}:${challenge(state).unique}`;
+    const currentGoal = challenge(state); const dashSignature = `${state.album.length}:${state.balls}:${currentGoal.id}:${currentGoal.unique}`;
     if (currentRole === 'student' && dashboard && dashboard.querySelector('#catchdex-dashboard-card')?.dataset.catchdexSig !== dashSignature) { dashboard.querySelector('#catchdex-dashboard-card')?.remove(); const holder = document.createElement('div'); holder.id = 'catchdex-dashboard-card'; holder.dataset.catchdexSig = dashSignature; holder.innerHTML = albumCard(state, true); dashboard.appendChild(holder); }
     document.querySelectorAll('[data-catchdex-open]').forEach(button => button.onclick = () => window.openCatchdex());
     const profile = typeof profileStudent !== 'undefined' ? profileStudent : null;
     const content = document.querySelector('#view-student-profile .cp-content');
-    const profileState = parseProgress(progressFor(profile)); const profileSignature = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${challenge(profileState).unique}`;
+    const profileState = parseProgress(progressFor(profile)); const profileGoal = challenge(profileState); const profileSignature = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileGoal.id}:${profileGoal.unique}`;
     if (profile && content && content.querySelector('#catchdex-profile-card')?.dataset.catchdexSig !== profileSignature) { content.querySelector('#catchdex-profile-card')?.remove(); const holder = document.createElement('div'); holder.id = 'catchdex-profile-card'; holder.dataset.catchdexSig = profileSignature; holder.innerHTML = albumCard(profileState, true, true); content.prepend(holder); }
     document.querySelectorAll('[data-catchdex-profile]').forEach(button => button.onclick = () => window.openCatchdexFor(profile, true));
   }
@@ -170,14 +269,17 @@
     const modal = document.getElementById('catchdex-modal'); if (!modal) return;
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
     const cards = state.album.length ? state.album.map(entry => `<article class="catchdex-mon"><img src="${art(entry.pokemon_id)}" alt="${esc(entry.pokemon_name)}" loading="lazy"><b>${esc(entry.pokemon_name)}</b><span>${esc(entry.pokemon_type)}</span></article>`).join('') : '<p class="catchdex-empty">Win a Catch Ball in Listen and Catch, then open it here.</p>';
-    modal.innerHTML = `<div class="catchdex-modal-card"><header><div><span>GAME COLLECTION</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2></div><button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button></header><section class="catchdex-summary"><div><b>${state.balls}</b><span>Catch Balls</span></div>${readOnly ? '' : `<button type="button" class="lc-primary" data-catchdex="ball" ${state.balls ? '' : 'disabled'}>Open a Catch Ball</button>`}</section>${state.last ? `<p class="catchdex-last ${state.last.duplicate ? 'is-duplicate' : ''}">${state.last.duplicate ? `Duplicate ${esc(state.last.item.name)} became ${state.last.coins} coins.` : `New discovery: ${esc(state.last.item.name)}!`}</p>` : ''}<section class="catchdex-challenge"><div><span>ACTIVE CHALLENGE</span><h3>Green Explorer</h3><p>Collect ${CHALLENGE_GOAL} unique Grass-type Pokémon.</p></div><b>${goal.unique} / ${CHALLENGE_GOAL}</b>${goal.ready && !readOnly ? '<button type="button" class="lc-primary" data-catchdex="reward">Open Mystery Box</button>' : ''}</section><section class="catchdex-grid">${cards}</section></div>`;
+    const challengeMarkup = goal.active
+      ? `<section class="catchdex-challenge"><div><span>WEEKLY CHALLENGE${goal.claimed ? ' · COMPLETE' : ''}</span><h3>${esc(goal.title)}</h3><p>Collect ${goal.goal} unique ${esc(goal.type)} Pokémon · ${goal.start} – ${goal.end}</p></div><b>${Math.min(goal.unique, goal.goal)} / ${goal.goal}</b>${goal.ready && !readOnly ? '<button type="button" class="lc-primary" data-catchdex="reward">Open Mystery Box</button>' : ''}${goal.claimed ? '<p class="lc-challenge-claimed">Mystery Box claimed · qualifying stickers were used.</p>' : ''}</section>`
+      : '<section class="catchdex-challenge is-inactive"><div><span>WEEKLY CHALLENGE</span><h3>No active challenge</h3><p>Your next Catchdex challenge will appear here when the admin schedules it.</p></div></section>';
+    modal.innerHTML = `<div class="catchdex-modal-card"><header><div><span>GAME COLLECTION</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2></div><button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button></header><section class="catchdex-summary"><div><b>${state.balls}</b><span>Catch Balls</span>${readOnly ? '' : `<small class="catchdex-daily">${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} balls earned today · unopened balls have no daily limit</small>`}</div>${readOnly ? '' : `<button type="button" class="lc-primary" data-catchdex="ball" ${state.balls ? '' : 'disabled'}>Open a Catch Ball</button>`}</section>${state.last ? `<p class="catchdex-last ${state.last.duplicate ? 'is-duplicate' : ''}">${state.last.duplicate ? `Duplicate ${esc(state.last.item.name)} became ${state.last.coins} coins.` : `New discovery: ${esc(state.last.item.name)}!`}</p>` : ''}${challengeMarkup}<section class="catchdex-grid">${cards}</section></div>`;
     modal.classList.remove('hidden');
     modal.querySelector('[data-catchdex="close"]').onclick = () => modal.classList.add('hidden');
     modal.querySelector('[data-catchdex="ball"]')?.addEventListener('click', openBall);
-    modal.querySelector('[data-catchdex="reward"]')?.addEventListener('click', requestMysteryReward);
+    modal.querySelector('[data-catchdex="reward"]')?.addEventListener('click', openMysteryBox);
   }
   window.openCatchdex = function () { albumViewer = { record: student(), readOnly: false }; let modal = document.getElementById('catchdex-modal'); if (!modal) { modal = document.createElement('div'); modal.id = 'catchdex-modal'; modal.className = 'catchdex-modal'; document.body.appendChild(modal); modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); }); } renderAlbumModal(); };
   window.openCatchdexFor = function (record, readOnly = true) { albumViewer = { record, readOnly }; let modal = document.getElementById('catchdex-modal'); if (!modal) { modal = document.createElement('div'); modal.id = 'catchdex-modal'; modal.className = 'catchdex-modal'; document.body.appendChild(modal); modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); }); } renderAlbumModal(record, readOnly); };
   window.listenCatchRefresh = mountCards;
-  document.addEventListener('DOMContentLoaded', () => { const observer = new MutationObserver(() => { mountCards(); }); observer.observe(document.body, { childList: true, subtree: true }); });
+  document.addEventListener('DOMContentLoaded', () => { const observer = new MutationObserver(() => { mountCards(); renderAdminChallenge(); }); observer.observe(document.body, { childList: true, subtree: true }); mountCards(); renderAdminChallenge(); });
 })();

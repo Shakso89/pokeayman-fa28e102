@@ -51,7 +51,7 @@
   ];
   const ZONE_ITEMS = [
     ['schedule', '🗓️', 'Schedule'], ['financial', '💰', 'Financial'], ['history', '🕘', 'History'],
-    ['vb-lists', '🔖', 'My Word Banks'], ['school-lists', '🏫', 'School Lists'], ['battle-claims', '⚔️', 'Battle Claims'], ['profile', '🎓', 'Teacher Card'],
+    ['vb-lists', '🔖', 'My Word Banks'], ['school-lists', '🏫', 'School Lists'], ['battle-claims', '⚔️', 'Battle Claims'], ['leaders', '🏆', 'Global Top 10'], ['profile', '🎓', 'Teacher Card'],
   ];
 
   function build() {
@@ -67,9 +67,8 @@
         ${CLASS_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-class="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
         <div id="ts-zone"><button type="button" class="ts-section-toggle" data-ts-toggle="zone" aria-expanded="false" aria-controls="ts-zone-content"><span>Teacher Zone</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-zone-content" hidden>
         ${ZONE_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-zone="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
-        <div id="ts-admin"><button type="button" class="ts-section-toggle" data-ts-toggle="admin" aria-expanded="false" aria-controls="ts-admin-content"><span>Admin Hub</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-admin-content" hidden>
-        <button type="button" class="ts-item" data-ts="admin"><span aria-hidden="true">⚙️</span>Admin Console</button>
-        <button type="button" class="ts-item" data-ts="leaders"><span aria-hidden="true">🏆</span>Global Top 10</button></div></div>
+        <div id="ts-admin" hidden><button type="button" class="ts-section-toggle" data-ts-toggle="admin" aria-expanded="false" aria-controls="ts-admin-content"><span>Admin Hub</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-admin-content" hidden>
+        <button type="button" class="ts-item" data-ts="admin-users">Users</button><button type="button" class="ts-item" data-ts="admin-controls">Controls</button></div></div>
       </nav>
 `;
     const rail = document.createElement('aside');
@@ -143,11 +142,19 @@
     }
     const cls = b.dataset.tsClass, zone = b.dataset.tsZone, act = b.dataset.ts;
     if (act === 'switch') return togglePop();
+    if (act === 'admin-users' || act === 'admin-controls') {
+      if (!g(() => canAccessAdmin(), false)) return;
+      g(() => showMainTab('admin'));
+      document.querySelector(`.admin-sub-tab[data-subtab="${act === 'admin-users' ? 'users' : 'controls'}"]`)?.click();
+    }
     if (cls) {
       if (needClass()) return;
       if (g(() => activeMainTab) !== 'dashboard') { const s = navSchool, c = navClass; showMainTab('dashboard'); navigateTo('students', s, c); }
       if ($('view-students')?.classList.contains('hidden')) navigateTo('students', navSchool, navClass);
       document.querySelector(`#class-tabs-container [data-classtab="${cls}"]`)?.click();
+    } else if (zone === 'leaders') {
+      g(() => showMainTab('teacher-zone'));
+      $('global-leaderboard-trigger')?.click();
     } else if (zone) {
       const isSchool = zone === 'school-lists';
       if (zone === 'vb-lists' || isSchool) window.vbListsMode = isSchool ? 'school' : 'mine';
@@ -295,13 +302,15 @@
       else if (b.dataset.tsZone === 'school-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists' && window.vbListsMode === 'school';
       else if (b.dataset.tsZone === 'vb-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists' && window.vbListsMode !== 'school';
       else if (b.dataset.tsZone) a = tab === 'teacher-zone' && zoneTab === b.dataset.tsZone;
+      else if (b.dataset.ts === 'admin-users') a = tab === 'admin' && document.querySelector('.admin-sub-tab[data-subtab="users"]')?.classList.contains('admin-sub-tab-active');
+      else if (b.dataset.ts === 'admin-controls') a = tab === 'admin' && document.querySelector('.admin-sub-tab[data-subtab="controls"]')?.classList.contains('admin-sub-tab-active');
       else if (b.dataset.ts === 'admin') a = tab === 'admin';
       else if (b.dataset.ts === 'schools') a = tab === 'dashboard' && !inClass;
       b.classList.toggle('active', a);
       if (b.dataset.tsClass) b.classList.toggle('dim', !g(() => navClass, null));
     });
     $('ts-zone').hidden = !g(() => canAccessTeacherZone(), false);
-    $('ts-admin').querySelector('[data-ts="admin"]').hidden = !g(() => canAccessAdmin(), false);
+    $('ts-admin').hidden = !g(() => canAccessAdmin(), false);
     document.querySelector('[data-ts-toggle="zone"]').classList.toggle('current', tab === 'teacher-zone');
     document.querySelector('[data-ts-toggle="admin"]').classList.toggle('current', tab === 'admin');
     ['financial', 'history'].forEach((k) => {

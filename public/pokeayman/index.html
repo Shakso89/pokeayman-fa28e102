@@ -4358,9 +4358,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     </section>
   <section id="tab-admin" class="tab-content hidden fade-in">
    <div class="max-w-5xl w-full">
-    <h2 data-template-id="admin-title" class="canva-text heading-font text-2xl mb-4" style="color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 24px;">Private Data</h2>
-    <div class="mb-6 flex gap-2 flex-wrap">
-     <button class="admin-sub-tab admin-sub-tab-active px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="users">👥 Users</button> <button class="admin-sub-tab admin-sub-tab-inactive px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="controls">🎛️ Controls</button>
+    <h2 data-template-id="admin-title" class="canva-text heading-font text-2xl mb-4 hidden" aria-hidden="true" style="display:none;color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 24px;"></h2>
+    <div class="mb-6 flex gap-2 flex-wrap" aria-hidden="true" style="display:none">
+     <button class="admin-sub-tab admin-sub-tab-active px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="users">Users</button> <button class="admin-sub-tab admin-sub-tab-inactive px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="controls">Controls</button>
     </div>
     <div id="admin-subtab-users" class="admin-subtab-content">
      <div class="users-subtab-header" role="tablist" aria-label="User management sections">
