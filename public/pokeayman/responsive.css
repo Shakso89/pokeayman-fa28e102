@@ -51,9 +51,11 @@
 /* Add Class / Add School forms wrap instead of scrolling sideways. */
 @media (max-width: 640px) {
   #add-class-form, #add-school-form { flex-wrap: wrap !important; overflow: visible !important; }
-  #add-class-form input, #add-school-form input { min-width: 0 !important; flex: 1 1 100% !important; width: 100%; }
+  #add-class-form input, #add-class-form select, #add-school-form input { min-width: 0 !important; flex: 1 1 100% !important; width: 100%; }
   #add-class-form button[type="submit"], #add-school-form button[type="submit"] { flex: 1 1 100%; min-height: 44px; }
 }
+
+.class-level-select { min-height: 42px; background-color: #fff; color: #172033; }
 
 /* Flashcards: never split a word mid-way. Font is fitted by responsive.js. */
 #flashcard-front p, #student-vocab-word { word-break: normal !important; overflow-wrap: normal !important; hyphens: none; white-space: nowrap; max-width: 100%; }

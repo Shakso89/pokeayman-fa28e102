@@ -11,7 +11,7 @@ export function decodePCM(pending: Uint8Array, incoming: Uint8Array) {
   return { samples, pending: bytes.slice(usable) };
 }
 
-export async function streamSpeech(endpoint: string, text: string, signal?: AbortSignal): Promise<void> {
+export async function streamSpeech(endpoint: string, text: string, level = "P3", signal?: AbortSignal): Promise<void> {
   signal?.throwIfAborted();
   const context = new AudioContext({ sampleRate: 24000 });
   const sources = new Set<AudioBufferSourceNode>();
@@ -28,13 +28,14 @@ export async function streamSpeech(endpoint: string, text: string, signal?: Abor
   let playback: Promise<void> = Promise.resolve();
   try {
     if (context.state === "suspended") await context.resume();
-    const cacheKey = new Request(`${location.origin}/__vocabulary_audio/kore-v1/${encodeURIComponent(text)}`);
+    const normalizedLevel = /^P[1-6]$/.test(level) ? level : "P3";
+    const cacheKey = new Request(`${location.origin}/__vocabulary_audio/kore-v1/${normalizedLevel}/${encodeURIComponent(text)}`);
     const cache = await caches.open("pokeayman-natural-voice-v1").catch(() => null);
     const cached = await cache?.match(cacheKey);
     const response = cached || await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, level: normalizedLevel }),
       signal: controller.signal,
     });
     if (!response.ok || !response.body) {

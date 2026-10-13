@@ -10,7 +10,7 @@ type Result = { error?: string; name?: string; signedIn?: boolean };
 
 declare global {
   interface Window {
-    pokeaymanSpeak?: (text: string) => Promise<void>;
+    pokeaymanSpeak?: (text: string, level?: string) => Promise<void>;
     pokeaymanAuth?: {
       userId: string | null;
       getToken: () => Promise<string | null>;
@@ -71,7 +71,7 @@ function Index() {
 
   // Bridge read by the same-origin PokéAyman iframe for teacher accounts and saves.
   if (typeof window !== "undefined") {
-    window.pokeaymanSpeak = (text) => streamSpeech("/api/vocabulary-speech", text);
+    window.pokeaymanSpeak = (text, level = "P3") => streamSpeech("/api/vocabulary-speech", text, level);
     window.pokeaymanAuth = {
       userId: user?.id ?? null,
       getToken: async () => (await supabase.auth.getSession()).data.session?.access_token ?? null,
