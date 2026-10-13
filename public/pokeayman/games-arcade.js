@@ -7,13 +7,14 @@
     { fn: 'chooseScrambleWordCount', icon: '🔤', name: 'Unscramble', desc: 'Put the mixed-up letters back in order.', tags: ['1–4 players', 'Spelling'], accent: 'blue' },
     { fn: 'chooseHangmanWordCount', icon: '🎮', name: 'Hangman', desc: 'Guess the secret word letter by letter.', tags: ['1–4 players', 'Classic'], accent: 'yellow' },
     { fn: 'chooseFindMeScore', icon: '🕵️', name: 'Find Me', desc: 'Spot the right word as fast as you can.', tags: ['1–4 players', 'Quick recall'], accent: 'mint' },
+    { fn: 'startListenCatch', icon: '🔊', name: 'Listen and Catch', desc: 'Hear a word, catch the right answer, and fill your Catchdex.', tags: ['Solo', 'Listening'], accent: 'violet', studentOnly: true },
     { fn: 'startVocabBattle', icon: '⚔️', name: 'Poké Battle', desc: 'Defeat a wild Pokémon and send its reward to your teacher for approval.', tags: ['Solo', 'Teacher-approved reward'], accent: 'red', studentOnly: true },
   ];
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   window.gaRenderHub = function (listLabel, isTeacher) {
-    const cards = GAMES.filter(g => !(isTeacher ? false : g.teacherOnly)).map(g => `
-      <button type="button" class="ga-cart ga-${g.accent}" onclick="${g.fn === 'startVocabBattle' ? `startVocabBattle(selectedGameList)` : `chooseGamePlayers(selectedGameList, ${g.fn})`}" aria-label="Play ${esc(g.name)}">
+    const cards = GAMES.filter(g => !(isTeacher ? g.studentOnly : g.teacherOnly)).map(g => `
+      <button type="button" class="ga-cart ga-${g.accent}" onclick="${g.fn === 'startVocabBattle' || g.fn === 'startListenCatch' ? `${g.fn}(selectedGameList)` : `chooseGamePlayers(selectedGameList, ${g.fn})`}" aria-label="Play ${esc(g.name)}">
         <span class="ga-cart-art" aria-hidden="true"><span>${g.icon}</span></span>
         <span class="ga-cart-body">
           <span class="ga-cart-name">${esc(g.name)}</span>
@@ -33,6 +34,7 @@
     const game = GAMES.find(item => item.fn === fnName && !item.teacherOnly);
     if (!game) return;
     if (fnName === 'startVocabBattle') { window.startVocabBattle(listName); return; }
+    if (fnName === 'startListenCatch') { window.startListenCatch(listName); return; }
     const pictured = fnName === 'chooseMatchWordCount' || fnName === 'chooseFindMeScore';
     const words = getGameWords(listName, true).filter(word => String(word.vocab_word || '').trim() && (!pictured || String(word.vocab_image || '').trim()));
     const area = document.getElementById('student-tab-games');

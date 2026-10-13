@@ -523,7 +523,7 @@
       <article class="vb-claim">
         <img class="vb-claim-art" src="${sprite(c.pokemon_id)}" alt="${esc(c.pokemon_name)}" loading="lazy">
         <div class="vb-claim-info">
-          <p class="vb-claim-name">${esc(c.student_name)} defeated ${esc(c.pokemon_name)}!</p>
+          <p class="vb-claim-name">${esc(c.student_name)} ${c.claim_source === 'listen_catch_mystery' ? `unlocked ${esc(c.pokemon_name)} from a Catchdex Mystery Box!` : `defeated ${esc(c.pokemon_name)}!`}</p>
           <p class="vb-claim-meta">${esc(c.class_name || '')}${c.school_name ? ` · ${esc(c.school_name)}` : ''} · ${esc(c.pokemon_rarity || 'common')} · costs ${Number(c.pokemon_price) || 0} credits</p>
         </div>
         <div class="vb-claim-actions">
