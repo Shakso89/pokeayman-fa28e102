@@ -160,6 +160,31 @@ body.ts-bright .vb-claim { background: rgba(255, 255, 255, .75); border-color: r
   .vb-tile { width: 2.5rem; height: 2.5rem; font-size: 1.1rem; }
   .vb-claim { flex-wrap: wrap; }
 }
+
+/* Poké Battle casts use the active Pokémon's type for a distinct projectile and impact. */
+.vb-element[data-type="water"],.vb-element[data-type="ice"] { --vb-energy:#31c9ff; --vb-impact:#b9f4ff; }
+.vb-element[data-type="electric"] { --vb-energy:#ffe23f; --vb-impact:#fff7a8; }
+.vb-element[data-type="poison"],.vb-element[data-type="ghost"] { --vb-energy:#b56cff; --vb-impact:#edb4ff; }
+.vb-element[data-type="grass"],.vb-element[data-type="bug"] { --vb-energy:#62d879; --vb-impact:#d8ff88; }
+.vb-element[data-type="psychic"],.vb-element[data-type="fairy"] { --vb-energy:#f06ed1; --vb-impact:#ffd2f2; }
+.vb-element[data-type="ground"],.vb-element[data-type="rock"] { --vb-energy:#d49b54; --vb-impact:#ffe0a4; }
+.vb-element[data-type="dragon"],.vb-element[data-type="dark"] { --vb-energy:#7774f4; --vb-impact:#b8b7ff; }
+.vb-element[data-type="steel"] { --vb-energy:#a7bacb; --vb-impact:#f1f7fc; }
+.vb-element[data-type="water"] .vb-energy-bolt,.vb-element[data-type="ice"] .vb-energy-bolt { border:3px solid #effcff; border-radius:70% 30% 60% 40%; background:radial-gradient(circle at 35% 28%,#fff 0 8%,#a9f2ff 23%,#3bbaff 55%,#2466e8 82%); box-shadow:0 0 20px 7px color-mix(in srgb,var(--vb-energy) 70%,transparent); }
+.vb-element[data-type="water"] .vb-energy-bolt::before,.vb-element[data-type="ice"] .vb-energy-bolt::before { content:''; position:absolute; inset:-9px; border:2px solid color-mix(in srgb,var(--vb-impact) 76%,transparent); border-radius:50% 45% 60% 40%; animation:vb-splash-ring .42s ease-out infinite alternate; }
+.vb-element[data-type="electric"] .vb-energy-bolt { width:34px; height:68px; border:0; border-radius:0; clip-path:polygon(55% 0,24% 42%,47% 42%,16% 100%,86% 30%,58% 30%); background:linear-gradient(90deg,#fffde0,var(--vb-energy) 54%,#ff9a24); box-shadow:0 0 26px var(--vb-energy); }
+.vb-element[data-type="electric"] .vb-energy-bolt::after { display:none; }
+.vb-element[data-type="poison"] .vb-energy-bolt,.vb-element[data-type="ghost"] .vb-energy-bolt { border:3px solid color-mix(in srgb,var(--vb-impact) 72%,transparent); background:radial-gradient(circle at 38% 32%,#f7d5ff 0 8%,var(--vb-energy) 48%,#51237c 100%); box-shadow:0 0 24px 8px color-mix(in srgb,var(--vb-energy) 55%,transparent); }
+.vb-element[data-type="grass"] .vb-energy-bolt,.vb-element[data-type="bug"] .vb-energy-bolt { width:32px; height:46px; border:0; border-radius:0 90% 0 90%; background:linear-gradient(135deg,#efffa0,var(--vb-energy) 55%,#168b4a); }
+.vb-element[data-type="psychic"] .vb-energy-bolt,.vb-element[data-type="fairy"] .vb-energy-bolt { border:2px solid #ffeaff; background:radial-gradient(circle at 30% 28%,#fff 0 8%,#ffd1f1 25%,var(--vb-energy) 62%,#7130a4); box-shadow:0 0 24px 8px color-mix(in srgb,var(--vb-energy) 55%,transparent); }
+.vb-element[data-type="ground"] .vb-energy-bolt,.vb-element[data-type="rock"] .vb-energy-bolt { border:2px solid #ffe5b4; border-radius:5px; clip-path:polygon(50% 0,100% 40%,72% 100%,18% 84%,0 30%); background:linear-gradient(135deg,#fff0c2,var(--vb-energy) 55%,#6a412a); }
+.vb-element[data-type="dragon"] .vb-energy-bolt,.vb-element[data-type="dark"] .vb-energy-bolt { border:2px solid #d2d0ff; background:radial-gradient(circle at 34% 30%,#fff 0 8%,#b5b1ff 25%,var(--vb-energy) 60%,#252157); box-shadow:0 0 25px 8px color-mix(in srgb,var(--vb-energy) 55%,transparent); }
+.vb-element[data-type="steel"] .vb-energy-bolt { border:3px solid white; background:radial-gradient(circle at 34% 30%,#fff 0 8%,#d7e9fa 25%,var(--vb-energy) 62%,#516579); }
+.vb-element[data-type="water"] .vb-impact-burst b,.vb-element[data-type="ice"] .vb-impact-burst b { border-radius:45% 55% 68% 32%; border-width:9px; }
+.vb-element[data-type="electric"] .vb-impact-burst i { width:12px; clip-path:polygon(55% 0,20% 56%,52% 56%,22% 100%,100% 32%,61% 32%); }
+.vb-element[data-type="poison"] .vb-impact-burst i,.vb-element[data-type="ghost"] .vb-impact-burst i { border-radius:50%; box-shadow:0 0 12px var(--vb-energy); }
+.vb-element[data-type="grass"] .vb-impact-burst i,.vb-element[data-type="bug"] .vb-impact-burst i { width:12px; border-radius:0 90% 0 90%; }
+@keyframes vb-splash-ring { to { transform:scale(1.35) rotate(25deg); opacity:.4; } }
 @media (prefers-reduced-motion: reduce) {
   .vb-stage *, .vb-stage *::before, .vb-stage *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }

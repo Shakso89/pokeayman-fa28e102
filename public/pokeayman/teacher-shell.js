@@ -213,7 +213,7 @@
       h = document.createElement('section'); h.id = 'ts-hero'; h.className = 'ts-hero';
       h.innerHTML = `<div class="ts-hero-text"><h2 id="ts-hero-title"></h2><p id="ts-hero-school"></p>
         <div class="ts-chips"><span class="ts-chip"><b id="ts-hero-count">0</b><small>Students</small></span><span class="ts-chip"><b id="ts-hero-coins">0</b><small>Total coins</small></span><span class="ts-chip" id="ts-hero-teacher-chip" hidden><b id="ts-hero-teacher"></b><small>Teacher</small></span></div></div>
-        <div class="ts-hero-actions"><button type="button" class="ts-btn ghost" data-hero="gift">🎁 Gift whole class</button><button type="button" class="ts-btn" data-hero="add">＋ Add student</button></div>`;
+        <div class="ts-hero-actions"><button type="button" class="ts-btn ghost" data-hero="gift">Gift whole class</button><button type="button" class="ts-btn" data-hero="add">＋ Add student</button></div>`;
       sub.prepend(h);
       h.addEventListener('click', onHero);
     }
@@ -225,13 +225,44 @@
   }
   function onHero(e) {
     const b = e.target.closest('[data-hero]'); if (!b) return;
-    if (b.dataset.hero === 'add') {
-      const name = (prompt('New student name') || '').trim(); if (!name) return;
-      $('new-student-name').value = name; submit($('add-student-form'));
-    } else {
-      const raw = (prompt('Coins for every student (1–1000)', '10') || '').trim(); if (!raw) return;
-      $('gift-all-amount').value = raw; submit($('gift-all-form'));
+    e.preventDefault();
+    openHeroActionDialog(b.dataset.hero, b);
+  }
+  function openHeroActionDialog(action, trigger) {
+    let dialog = $('ts-hero-action-dialog');
+    if (!dialog) {
+      dialog = document.createElement('dialog');
+      dialog.id = 'ts-hero-action-dialog';
+      dialog.className = 'ts-action-dialog';
+      document.body.appendChild(dialog);
+      dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+      dialog.addEventListener('close', () => dialog._trigger?.focus({ preventScroll:true }));
+      dialog.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const form = event.target;
+        if (!form.reportValidity()) return;
+        const targetId = form.dataset.action === 'add' ? 'add-student-form' : 'gift-all-form';
+        const source = form.elements.namedItem('value');
+        const target = $(form.dataset.action === 'add' ? 'new-student-name' : 'gift-all-amount');
+        if (!target || !source) return;
+        target.value = source.value.trim();
+        dialog.close();
+        submit($(targetId));
+      });
     }
+    const add = action === 'add';
+    dialog._trigger = trigger;
+    dialog.innerHTML = `<form class="ts-action-dialog-form" data-action="${add ? 'add' : 'gift'}">
+      <header><div><p class="ts-action-kicker">${add ? 'CLASS ROSTER' : 'CLASS REWARD'}</p><h2>${add ? 'Add a student' : 'Gift the whole class'}</h2></div><button class="ts-action-close" type="button" aria-label="Close">×</button></header>
+      <p class="ts-action-copy">${add ? 'Add a student to the currently selected class.' : 'Give the same number of coins to every student in this class.'}</p>
+      <label for="ts-action-value">${add ? 'Student name' : 'Coins per student'}</label>
+      <input id="ts-action-value" name="value" type="${add ? 'text' : 'number'}" ${add ? 'maxlength="80" autocomplete="off" placeholder="Student name" required' : 'min="1" max="1000" step="1" value="10" required'}>
+      <footer><button type="button" class="ts-action-cancel">Cancel</button><button type="submit" class="ts-action-confirm">${add ? 'Add student' : 'Gift coins'}</button></footer>
+    </form>`;
+    dialog.querySelector('.ts-action-close').addEventListener('click', () => dialog.close());
+    dialog.querySelector('.ts-action-cancel').addEventListener('click', () => dialog.close());
+    if (!dialog.open) dialog.showModal();
+    dialog.querySelector('[name="value"]').focus();
   }
   const submit = (f) => f && (f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })));
   function cardButtons() {

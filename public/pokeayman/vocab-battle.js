@@ -147,8 +147,16 @@
     const target = root.querySelector(retaliation ? '.vb-me-art' : '.vb-foe-art') || root.querySelector('.vb-me');
     if (!source || !target) { impact(); return; }
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const attacker = retaliation ? active.foe : active.partner;
+    let attackType = 'fire';
+    try {
+      const id = Number(attacker?.pokemon_id || attacker?.shop_pokemon_id);
+      const resolved = typeof getPokemonTypes === 'function' ? getPokemonTypes({ pokemon_id: id }) : [];
+      if (Array.isArray(resolved) && resolved.length && resolved[0] !== 'unknown') attackType = String(resolved[0]).toLowerCase();
+    } catch (_) { /* Use the familiar fire attack when type data is unavailable. */ }
     const layer = document.createElement('div');
-    layer.className = `vb-attack-layer vb-fire${retaliation ? ' vb-counter' : ''}`;
+    layer.className = `vb-attack-layer vb-fire vb-element${retaliation ? ' vb-counter' : ''}`;
+    layer.dataset.type = attackType;
     layer.setAttribute('aria-hidden', 'true');
     root.appendChild(layer);
     const bounds = root.getBoundingClientRect();
@@ -486,7 +494,7 @@
       </div>`;
     document.body.appendChild(root);
     battle = {
-      root, student, studentId: String(student.__teacherLed ? (student.__backendId || '') : (currentStudentRecordId || student.__backendId || '')),
+      root, student, partner, studentId: String(student.__teacherLed ? (student.__backendId || '') : (currentStudentRecordId || student.__backendId || '')),
       foe, foeMaxHp, foeHp: foeMaxHp, studentHp: STUDENT_HP,
       words, queue: [], failStreak: 0, over: false, claimed: false, timerId: null, resolving: false, timeouts: new Set(),
     };
