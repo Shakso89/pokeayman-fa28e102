@@ -6937,7 +6937,16 @@ if (contactPricingButton) {
   }
   if (contactPricingButton.parentElement !== dock) dock.prepend(contactPricingButton);
   if (dock.parentElement !== document.body) document.body.appendChild(dock);
+  // Inline positioning keeps the dock floating on the public home/login screen
+  // even while its responsive stylesheet finishes loading.
+  dock.style.setProperty('position', 'fixed', 'important');
+  dock.style.setProperty('z-index', '2147482000', 'important');
+  dock.style.right = '1rem';
+  dock.style.bottom = '1rem';
   dock.hidden = false;
+  document.addEventListener('DOMContentLoaded', () => {
+    if (dock.isConnected && dock.parentElement === document.body) document.body.appendChild(dock);
+  }, { once: true });
 }
 
 contactPricingButton?.addEventListener('click', () => {
