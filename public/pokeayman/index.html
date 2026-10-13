@@ -7086,18 +7086,30 @@ document.getElementById('student-login-form').addEventListener('submit', async e
 });
 document.getElementById('teacher-login-form').addEventListener('submit', e => {
   e.preventDefault();
+  const submitButton = e.currentTarget.querySelector('button[type="submit"]');
+  const errorEl = document.getElementById('teacher-error');
   const name = document.getElementById('teacher-name').value.trim();
   const pin = document.getElementById('teacher-pin').value;
   const result = authenticateTeacher(name, pin);
   if (result.success) {
+    submitButton.disabled = true;
+    submitButton.setAttribute('aria-busy', 'true');
     currentRole = result.role;
     currentTeacher = result.teacherName;
     currentTeacherRecordId = result.teacherRecordId;
-    document.getElementById('teacher-error').classList.add('hidden');
-    enterApp();
+    errorEl.classList.add('hidden');
+    try {
+      enterApp();
+    } catch (error) {
+      currentRole = ''; currentTeacher = ''; currentTeacherRecordId = '';
+      errorEl.textContent = 'We could not load the teacher portal. Please try again.';
+      errorEl.classList.remove('hidden');
+      submitButton.disabled = false;
+      submitButton.removeAttribute('aria-busy');
+    }
     return;
   }
-  document.getElementById('teacher-error').classList.remove('hidden');
+  errorEl.classList.remove('hidden');
 });
 document.getElementById('logout-btn').addEventListener('click', () => {
   logoutTeacherSession();
@@ -7491,6 +7503,7 @@ function enterApp() {
   appScreen.classList.remove('hidden');
   
   if (currentRole === 'teacher') { 
+    activeMainTab = 'dashboard';
     document.getElementById('credit-balance-nav')?.classList.toggle('account-credit-admin', isAymanTeacher());
     document.getElementById('logged-in-name-nav').textContent = currentTeacher;
     const teacherAvatar = document.getElementById('teacher-account-avatar');
@@ -7513,7 +7526,6 @@ function enterApp() {
       });
       document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
       document.getElementById('tab-' + dashboardBtn.dataset.tab).classList.remove('hidden');
-      navigateTo('schools');
     }
   }
   else { 
@@ -8873,8 +8885,7 @@ function renderAll() {
   }
   renderStudentDashboard();
   renderQuizzes();
-  renderAdminPanel();
-  if (currentRole === 'teacher') applyGlobalAchievementBadges();
+  if (currentRole === 'teacher' && activeMainTab === 'admin') renderAdminPanel();
 }
 
 function renderStudentDashboard() {
