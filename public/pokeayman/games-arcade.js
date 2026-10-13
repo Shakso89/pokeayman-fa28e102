@@ -7,7 +7,7 @@
     { fn: 'chooseScrambleWordCount', icon: '🔤', name: 'Unscramble', desc: 'Put the mixed-up letters back in order.', tags: ['1–4 players', 'Spelling'], accent: 'blue' },
     { fn: 'chooseHangmanWordCount', icon: '🎮', name: 'Hangman', desc: 'Guess the secret word letter by letter.', tags: ['1–4 players', 'Classic'], accent: 'yellow' },
     { fn: 'chooseFindMeScore', icon: '🕵️', name: 'Find Me', desc: 'Spot the right word as fast as you can.', tags: ['1–4 players', 'Quick recall'], accent: 'mint' },
-    { fn: 'startVocabBattle', icon: '⚔️', name: 'Poké Battle', desc: 'Defeat a wild Pokémon and send its reward to your teacher for approval.', tags: ['Solo', 'Teacher-approved reward'], accent: 'red', studentOnly: true },
+    { fn: 'startVocabBattle', icon: '⚔️', name: 'Poké Battle', desc: 'Defeat a wild Pokémon using every list in your class.', tags: ['Solo', 'Teacher-approved reward'], accent: 'red', studentOnly: true },
   ];
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -67,6 +67,13 @@
     selector.hidden = arcadeOpen;
     container.hidden = !arcadeOpen;
     if (arcadeOpen) return;
+    if (currentRole === 'student' && window.startVocabBattle) {
+      const battleBtn = document.createElement('button');
+      battleBtn.type = 'button'; battleBtn.className = 'ga-continue ga-battle-direct';
+      battleBtn.textContent = 'Poké Battle · all class lists';
+      battleBtn.addEventListener('click', () => window.startVocabBattle([]));
+      selector.appendChild(battleBtn);
+    }
     const next = document.createElement('button');
     next.type = 'button'; next.className = 'ga-continue'; next.disabled = !count;
     next.textContent = count ? `Next · Game Arcade → (${count} list${count === 1 ? '' : 's'})` : 'Next · Game Arcade →';
