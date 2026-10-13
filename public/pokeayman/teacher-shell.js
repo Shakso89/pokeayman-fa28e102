@@ -215,7 +215,7 @@
         <div class="ts-chips"><span class="ts-chip"><b id="ts-hero-count">0</b><small>Students</small></span><span class="ts-chip"><b id="ts-hero-coins">0</b><small>Total coins</small></span><span class="ts-chip" id="ts-hero-teacher-chip" hidden><b id="ts-hero-teacher"></b><small>Teacher</small></span></div></div>
         <div class="ts-hero-actions"><button type="button" class="ts-btn ghost" data-hero="gift">Gift whole class</button><button type="button" class="ts-btn" data-hero="add">＋ Add student</button></div>`;
       sub.prepend(h);
-      h.addEventListener('click', onHero);
+      h.querySelectorAll('[data-hero]').forEach(button => button.addEventListener('click', onHero));
     }
     const set = (id, v) => { const el = $(id); if (el.textContent !== v) el.textContent = v; };
     set('ts-hero-title', g(() => navClass, '') || ''); set('ts-hero-school', g(() => navSchool, '') || '');

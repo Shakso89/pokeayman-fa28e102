@@ -160,19 +160,18 @@ body.ts-on .ts-card, body.ts-on .ts-switch, body.ts-on .ts-me { background: var(
 
 body.ts-on #view-students .class-action-console { display: none !important; }
 body.ts-on #view-students > :is(h1,h2,.breadcrumb, nav), body.ts-on #view-students [id*="breadcrumb"] { display: none !important; }
-.ts-hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin: 0 0 20px; padding: 26px 28px; border-radius: 18px; font-family: 'Outfit', sans-serif; color: var(--ts-ink);
+.ts-hero { position:relative; z-index:10; isolation:isolate; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin: 0 0 20px; padding: 26px 28px; border-radius: 18px; font-family: 'Outfit', sans-serif; color: var(--ts-ink);
   background: var(--ts-hero); border: 1px solid var(--ts-border); }
 .ts-hero h2 { margin: 0; font: 800 34px/1.1 'Outfit', sans-serif; color: var(--ts-yellow); }
 .ts-hero p { margin: 4px 0 16px; color: var(--ts-muted); font-size: 15px; }
 .ts-chips { display: flex; gap: 10px; flex-wrap: wrap; }
 .ts-chip { display: flex; flex-direction: column; padding: 8px 14px; border-radius: 12px; background: var(--ts-chip); border: 1px solid var(--ts-border); }
 .ts-chip b { font-size: 20px; } .ts-chip small { font-size: 12px; color: var(--ts-muted); }
-.ts-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.ts-btn { height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--ts-yellow); background: var(--ts-yellow); color: var(--ts-action-ink); font: 700 15px 'Outfit', sans-serif; cursor: pointer; }
+.ts-hero-actions { position:relative; z-index:20; display: flex; gap: 10px; flex-wrap: wrap; isolation:isolate; }
+.ts-btn { position:relative; z-index:21; display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto; min-width:max-content; height: 44px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--ts-yellow); background: var(--ts-yellow); color: var(--ts-action-ink); font: 700 15px 'Outfit', sans-serif; white-space:nowrap; cursor: pointer; pointer-events:auto !important; touch-action:manipulation; }
 .ts-btn.ghost { background: transparent; color: var(--ts-ink); border-color: var(--ts-border); }
 .ts-btn:hover { filter: brightness(1.1); }
-.ts-hero-actions { position:relative; z-index:2; }
-.ts-hero-actions .ts-btn { pointer-events:auto; }
+.ts-hero-actions .ts-btn { pointer-events:auto !important; }
 .ts-action-dialog { width:min(440px,calc(100vw - 32px)); max-width:none; padding:0; overflow:hidden; border:1px solid var(--ts-border); border-radius:18px; background:var(--ts-deep); color:var(--ts-ink); font-family:'Outfit',sans-serif; box-shadow:0 28px 90px rgba(0,0,0,.5); }
 .ts-action-dialog::backdrop { background:rgba(3,8,19,.72); backdrop-filter:blur(6px); }
 .ts-action-dialog[open] { animation:ts-action-enter .18s ease-out both; }
@@ -190,7 +189,7 @@ body.ts-on #view-students > :is(h1,h2,.breadcrumb, nav), body.ts-on #view-studen
 .ts-action-dialog-form footer .ts-action-confirm { border-color:var(--ts-yellow); background:var(--ts-yellow); color:var(--ts-action-ink); }
 .ts-action-dialog-form footer button:focus-visible,.ts-action-close:focus-visible { outline:3px solid var(--ts-yellow); outline-offset:2px; }
 @keyframes ts-action-enter { from { opacity:0; transform:translateY(8px) scale(.98); } to { opacity:1; transform:none; } }
-@media(max-width:520px) { .ts-hero-actions { width:100%; } .ts-hero-actions .ts-btn { flex:1; padding-inline:12px; font-size:13px; } .ts-action-dialog-form { padding:18px; } }
+@media(max-width:520px) { .ts-hero-actions { width:100%; } .ts-hero-actions .ts-btn { flex:1 1 0; min-width:0; padding-inline:12px; font-size:13px; } .ts-action-dialog-form { padding:18px; } }
 @media(prefers-reduced-motion:reduce) { .ts-action-dialog[open] { animation:none; } }
 
 html body.ts-on #app-screen #view-students #students-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)) !important; gap: 14px !important; padding-top: 4px; }

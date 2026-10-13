@@ -88,6 +88,29 @@ html body :is(#student-dashboard#student-dashboard#student-dashboard, #app-scree
 }
 html body :is(#student-dashboard#student-dashboard#student-dashboard, #app-screen#app-screen#app-screen, #classmate-profile-modal#classmate-profile-modal#classmate-profile-modal) .global-profile-card.global-rank-card > .grid > div > p:first-child { color: var(--rank-edge) !important; }
 html body #student-dashboard#student-dashboard#student-dashboard .global-profile-card.global-rank-card > .grid { border-top-color: color-mix(in srgb, var(--rank-edge) 30%, transparent) !important; }
+
+/* Keep the podium crest inside each narrow roster card. badges.css reserves
+   room for the edit control but inherited this centered transform, shifting
+   the marker halfway outside the card on mobile. */
+html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.global-rank-card .global-rank-marker {
+  inset: 8px 42px auto 8px !important;
+  width: auto !important;
+  max-width: none !important;
+  transform: none !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.global-rank-card .rank-title {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.global-rank-card .rank-title strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
+  font-size: clamp(9px, 1vw, 12px) !important;
+  line-height: 1.15;
+}
 html body #student-dashboard#student-dashboard#student-dashboard .global-profile-card.global-rank-card > .global-rank-marker { left: 28px !important; transform: none; }
 html body #student-dashboard#student-dashboard #student-classes-grid .student-classmate-card:not(.global-rank-card) {
   background: var(--rank-paper) !important; color: var(--rank-ink) !important;
