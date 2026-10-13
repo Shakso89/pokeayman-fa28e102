@@ -14,6 +14,7 @@
 
   function student() {
     if (activeStudent) return activeStudent;
+    if (typeof currentRole === 'undefined' || currentRole !== 'student') return null;
     return typeof getCurrentStudentRecord === 'function' ? getCurrentStudentRecord() : null;
   }
   function progressFor(record = student()) {
@@ -281,5 +282,6 @@
   window.openCatchdex = function () { albumViewer = { record: student(), readOnly: false }; let modal = document.getElementById('catchdex-modal'); if (!modal) { modal = document.createElement('div'); modal.id = 'catchdex-modal'; modal.className = 'catchdex-modal'; document.body.appendChild(modal); modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); }); } renderAlbumModal(); };
   window.openCatchdexFor = function (record, readOnly = true) { albumViewer = { record, readOnly }; let modal = document.getElementById('catchdex-modal'); if (!modal) { modal = document.createElement('div'); modal.id = 'catchdex-modal'; modal.className = 'catchdex-modal'; document.body.appendChild(modal); modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); }); } renderAlbumModal(record, readOnly); };
   window.listenCatchRefresh = mountCards;
-  document.addEventListener('DOMContentLoaded', () => { const observer = new MutationObserver(() => { mountCards(); renderAdminChallenge(); }); observer.observe(document.body, { childList: true, subtree: true }); mountCards(); renderAdminChallenge(); });
+  window.listenCatchAdminRefresh = renderAdminChallenge;
+  document.addEventListener('DOMContentLoaded', () => { mountCards(); renderAdminChallenge(); });
 })();

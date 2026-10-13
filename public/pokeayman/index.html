@@ -7667,6 +7667,8 @@ function showMainTab(tabName) {
     adminView?.classList.remove('hidden');
     document.getElementById('admin-subtab-users')?.classList.remove('hidden');
     selectUsersSubtab('teachers');
+    applyGlobalAchievementBadges(adminView);
+    window.listenCatchAdminRefresh?.();
   } else if (tabName === 'dashboard') {
     document.getElementById('tab-dashboard')?.classList.remove('hidden');
     navigateTo('schools');
@@ -8893,8 +8895,11 @@ function renderAll() {
   }
   renderStudentDashboard();
   renderQuizzes();
-  renderAdminPanel();
-  applyGlobalAchievementBadges();
+  if (currentRole === 'teacher' && activeMainTab === 'admin') {
+    renderAdminPanel();
+    applyGlobalAchievementBadges(document.getElementById('tab-admin'));
+    window.listenCatchAdminRefresh?.();
+  }
 }
 
 function renderStudentDashboard() {
@@ -9042,6 +9047,7 @@ function renderStudentDashboard() {
   }
   applyGlobalAchievementBadges(document.getElementById('student-dashboard'));
   renderStudentShop();
+  window.listenCatchRefresh?.();
 }
 
 let shopState = { currentPage: 0, filtered: [], itemsPerPage: 12, priceFilter: '', powerFilter: '' };
@@ -12182,6 +12188,7 @@ function renderStudentProfile(isViewOnly = false) {
     profileCard.dataset.studentName = profileStudent.student_name;
   }
   applyGlobalAchievementBadges(document.getElementById('view-student-profile'));
+  window.listenCatchRefresh?.();
   if (!isViewOnly) {
     renderProfileShop();
     renderProfileQuizzes();
