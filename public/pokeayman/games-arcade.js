@@ -67,13 +67,6 @@
     selector.hidden = arcadeOpen;
     container.hidden = !arcadeOpen;
     if (arcadeOpen) return;
-    if (currentRole === 'student' && window.startVocabBattle) {
-      const battleBtn = document.createElement('button');
-      battleBtn.type = 'button'; battleBtn.className = 'ga-continue ga-battle-direct';
-      battleBtn.textContent = 'Poké Battle · all class lists';
-      battleBtn.addEventListener('click', () => window.startVocabBattle([]));
-      selector.appendChild(battleBtn);
-    }
     const next = document.createElement('button');
     next.type = 'button'; next.className = 'ga-continue'; next.disabled = !count;
     next.textContent = count ? `Next · Game Arcade → (${count} list${count === 1 ? '' : 's'})` : 'Next · Game Arcade →';
