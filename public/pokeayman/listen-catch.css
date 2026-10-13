@@ -35,6 +35,7 @@
 .lc-admin-panel{margin:0 0 22px;padding:clamp(16px,2vw,24px);border:1px solid rgba(255,203,5,.34);border-radius:18px;background:linear-gradient(130deg,rgba(34,48,104,.96),rgba(13,20,38,.98));color:#f8fafc;box-shadow:0 16px 40px rgba(2,6,23,.25)}
 .lc-admin-panel>header>span{color:#ffcb05;font-size:.68rem;font-weight:900;letter-spacing:.14em}.lc-admin-panel h3{margin:5px 0;font:800 1.35rem Outfit,sans-serif}.lc-admin-panel header p,.lc-admin-status{margin:0;color:#c7d2fe;font-size:.84rem;line-height:1.5}
 .lc-admin-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.lc-admin-form label{display:grid;gap:6px;color:#dbe4ff;font-size:.78rem;font-weight:750}.lc-admin-form input,.lc-admin-form select{width:100%;min-height:44px;padding:9px 11px;border:1px solid #3c4b6d;border-radius:10px;background:#10182b;color:#f8fafc;font:600 .9rem Figtree,sans-serif}.lc-admin-form button{align-self:end;min-height:44px}.lc-admin-status{margin-top:12px}
+.catchdex-card [data-catchdex-claim-profile]{grid-column:1/-1;justify-self:stretch}
 .catchdex-challenge.is-inactive{border-color:rgba(148,163,184,.24);background:rgba(30,41,59,.45)}.lc-challenge-claimed{grid-column:1/-1;margin:2px 0 0;color:#a7f3d0;font-size:.8rem;font-weight:750}
 
 /* Mystery box opens in two beats: lid, burst, then the collection Pokémon. */

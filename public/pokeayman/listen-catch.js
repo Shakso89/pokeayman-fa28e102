@@ -121,8 +121,9 @@
     const claimed = (state.claimedChallengeIds || []).includes(active.id) || (state.openedChallengeIds || []).includes(active.id);
     return { ...active, unique: claimed ? active.goal : unique, ready: unique >= active.goal && !claimed, claimed, qualifying };
   }
-  async function openMysteryBox() {
-    const record = student(); const state = parseProgress(progressFor(record)); const goal = challenge(state);
+  async function openMysteryBox(record = student()) {
+    if (currentRole !== 'student' && !(currentRole === 'teacher' && albumViewer?.readOnly && identity(albumViewer.record) === identity(record))) return;
+    const state = parseProgress(progressFor(record)); const goal = challenge(state);
     if (!record || !goal.ready || albumViewer?.openingChallenge) return;
     const item = randomPokemon(); if (!item) return toast('The Pokémon collection is loading. Try again in a moment.');
     const consumed = goal.qualifying.slice(0, goal.goal); const consumedIds = new Set(consumed.map(entry => Number(entry.pokemon_id)));
@@ -145,7 +146,9 @@
     const savedPokemon = grant.data || grant;
     if (typeof allData !== 'undefined' && !allData.some(row => row.type === 'pokemon' && row.catchdex_challenge_id === goal.id && row.student_id === identity(record))) allData.push({ ...newPokemon, __backendId: savedPokemon.__backendId || savedPokemon.id || '' });
     albumViewer.openingChallenge = false;
-    renderAlbumModal(); mountCards();
+    if (currentRole === 'student') renderAlbumModal();
+    else renderAlbumModal(record, true);
+    mountCards();
     if (currentRole === 'student' && typeof renderStudentDashboard === 'function') renderStudentDashboard();
     showMysteryReveal(item, consumed.length, goal.title);
   }
@@ -265,19 +268,22 @@
   };
   function albumCard(state, compact = false, viewOnly = false) {
     const goal = challenge(state); const unique = new Set(state.album.map(entry => Number(entry.pokemon_id))).size;
-    return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p>${!viewOnly ? `<small class="catchdex-daily">${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} balls earned today</small>` : ''}</div><div class="catchdex-goal"><b>${goal.unique} / ${goal.goal}</b><span>${goal.active ? `unique ${goal.type} Pokémon` : 'weekly challenge inactive'}</span></div><button type="button" ${viewOnly ? 'data-catchdex-profile' : 'data-catchdex-open'}>${viewOnly ? 'View Catchdex' : 'Open Catchdex'}</button></section>`;
+    return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p>${!viewOnly ? `<small class="catchdex-daily">${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} balls earned today</small>` : ''}</div><div class="catchdex-goal"><b>${goal.unique} / ${goal.goal}</b><span>${goal.active ? `unique ${challengeCriteria(goal)} Pokémon` : 'weekly challenge inactive'}</span></div><button type="button" ${viewOnly ? 'data-catchdex-profile' : 'data-catchdex-open'}>${viewOnly ? 'View Catchdex' : 'Open Catchdex'}</button>${viewOnly && goal.ready ? '<button type="button" class="lc-primary" data-catchdex-claim-profile>Open Mystery Box</button>' : ''}</section>`;
   }
   function mountCards() {
     const state = parseProgress(progressFor(student()));
-    const dashboard = document.querySelector('#student-dashboard .max-w-5xl');
     const currentGoal = challenge(state); const dashSignature = `${state.album.length}:${state.balls}:${currentGoal.id}:${currentGoal.unique}`;
-    if (currentRole === 'student' && dashboard && dashboard.querySelector('#catchdex-dashboard-card')?.dataset.catchdexSig !== dashSignature) { dashboard.querySelector('#catchdex-dashboard-card')?.remove(); const holder = document.createElement('div'); holder.id = 'catchdex-dashboard-card'; holder.dataset.catchdexSig = dashSignature; holder.innerHTML = albumCard(state, true); dashboard.appendChild(holder); }
-    document.querySelectorAll('[data-catchdex-open]').forEach(button => button.onclick = () => window.openCatchdex());
+    const pokemonMenu = document.getElementById('student-nav-pokemon-menu');
+    const menuDexButton = pokemonMenu?.querySelector('[data-catchdex-menu]');
+    if (menuDexButton) menuDexButton.onclick = () => window.openCatchdex();
+    const menuClaimButton = pokemonMenu?.querySelector('[data-catchdex-open-box]');
+    if (menuClaimButton) { menuClaimButton.classList.toggle('hidden', !currentGoal.ready); menuClaimButton.onclick = () => openMysteryBox(); }
     const profile = typeof profileStudent !== 'undefined' ? profileStudent : null;
     const content = document.querySelector('#view-student-profile .cp-content');
     const profileState = parseProgress(progressFor(profile)); const profileGoal = challenge(profileState); const profileSignature = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileGoal.id}:${profileGoal.unique}`;
     if (profile && content && content.querySelector('#catchdex-profile-card')?.dataset.catchdexSig !== profileSignature) { content.querySelector('#catchdex-profile-card')?.remove(); const holder = document.createElement('div'); holder.id = 'catchdex-profile-card'; holder.dataset.catchdexSig = profileSignature; holder.innerHTML = albumCard(profileState, true, true); content.prepend(holder); }
     document.querySelectorAll('[data-catchdex-profile]').forEach(button => button.onclick = () => window.openCatchdexFor(profile, true));
+    document.querySelectorAll('[data-catchdex-claim-profile]').forEach(button => button.onclick = () => { albumViewer = { record: profile, readOnly: true }; openMysteryBox(profile); });
   }
   function renderAlbumModal(record = albumViewer?.record || student(), readOnly = Boolean(albumViewer?.readOnly)) {
     const modal = document.getElementById('catchdex-modal'); if (!modal) return;
