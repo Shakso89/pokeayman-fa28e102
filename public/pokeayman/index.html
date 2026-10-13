@@ -8893,7 +8893,8 @@ function renderAll() {
   }
   renderStudentDashboard();
   renderQuizzes();
-  if (currentRole === 'teacher' && activeMainTab === 'admin') renderAdminPanel();
+  renderAdminPanel();
+  applyGlobalAchievementBadges();
 }
 
 function renderStudentDashboard() {
