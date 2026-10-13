@@ -4522,6 +4522,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      <div class="glass-container rounded-xl p-5 mb-6">
       <h3 class="canva-text font-semibold mb-1" style="color:#fff;font-weight:600;font-size:19px;">Teacher accounts</h3><p class="text-sm" style="color:rgba(255,255,255,.8)">Teachers create their own account with email and password (or Google) from Teacher Login on the home page. They appear below after their first sign-in, where you can manage credits, schools, classes and access.</p>
      </div>
+     <section class="glass-container rounded-xl p-5 mb-6" aria-labelledby="admin-notification-title">
+      <h3 id="admin-notification-title" class="heading-font text-lg font-bold text-white">Send teacher notification</h3>
+      <p class="mt-1 mb-4 text-sm text-slate-300">Send an in-app message to one teacher or a teacher group.</p>
+      <form id="admin-notification-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+       <label class="text-sm font-semibold text-white">Recipients<select id="admin-notification-audience" class="account-control mt-1 w-full"><option value="specific">Specific teacher</option><option value="pro">Pro teachers</option><option value="managers">School managers</option><option value="all">All teachers</option></select></label>
+       <label id="admin-notification-teacher-wrap" class="text-sm font-semibold text-white">Teacher<select id="admin-notification-teacher" class="account-control mt-1 w-full"></select></label>
+       <label class="text-sm font-semibold text-white sm:col-span-2">Title<input id="admin-notification-heading" class="account-control mt-1 w-full" maxlength="100" required placeholder="Important update"></label>
+       <label class="text-sm font-semibold text-white sm:col-span-2">Message<textarea id="admin-notification-message" class="account-control mt-1 w-full" rows="3" maxlength="700" required placeholder="Write a clear message for teachers"></textarea></label>
+       <div class="sm:col-span-2 flex items-center gap-3"><button type="submit" id="admin-notification-send" class="btn-primary">Send notification</button><span id="admin-notification-status" class="text-sm text-slate-300" role="status" aria-live="polite"></span></div>
+      </form>
+     </section>
      <div id="teachers-inventory-panel" class="teachers-inventory-panel">
       <div class="teachers-inventory-toolbar">
        <div class="min-w-0"><span>Teacher inventory</span><span class="teachers-inventory-hint block">Select a card to edit</span>
@@ -6544,6 +6555,44 @@ function teacherStreakState() {
   if (!rec) return null;
   return { count: Number(rec.streak_count || 0), boxes: Number(rec.surprise_boxes || 0), last: rec.streak_last_day || '' };
 }
+function teacherNotificationEscape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character])); }
+function teacherNotificationsFor(record = currentTeacherRec()) {
+  if (!record) return [];
+  const id = String(record.__backendId || currentTeacherRecordId || '');
+  return (allData || []).filter(item => item.type === 'teacher_notification' && String(item.notification_recipient_id || '') === id)
+    .sort((a,b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+}
+window.teacherUnreadNotificationCount = () => teacherNotificationsFor().filter(item => !item.notification_read).length;
+window.sendTeacherNotifications = async function (recipients, title, message, category = 'announcement') {
+  const unique = [...new Map((recipients || []).filter(Boolean).map(record => [String(record.__backendId || ''), record])).values()];
+  let sent = 0;
+  for (const recipient of unique) {
+    if (!recipient.__backendId) continue;
+    const result = await window.dataSdk.create({
+      type: 'teacher_notification', notification_id: `tn-${recipient.__backendId}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+      notification_recipient_id: String(recipient.__backendId), notification_recipient_name: recipient.teacher_name || '',
+      notification_title: String(title || '').trim(), notification_message: String(message || '').trim(),
+      notification_category: category, notification_read: false, notification_read_at: '',
+      notification_sender: currentTeacher || 'PokéAyman Admin', created_at: new Date().toISOString()
+    });
+    if (result?.isOk) sent++;
+  }
+  return sent;
+};
+window.openTeacherNotificationCenter = function () {
+  const overlay = document.createElement('div'); overlay.className = 'fixed inset-0 z-[2147483000] grid place-items-center bg-black/75 p-4';
+  const close = () => { overlay.remove(); document.removeEventListener('keydown', closeOnEscape); };
+  const closeOnEscape = event => { if (event.key === 'Escape') close(); };
+  const render = () => {
+    const current = teacherNotificationsFor();
+    overlay.innerHTML = `<section class="w-full max-w-xl max-h-[88vh] overflow-hidden rounded-2xl border border-amber-300/40 bg-slate-900 text-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="teacher-notifications-title"><header class="flex items-start justify-between gap-3 border-b border-white/10 p-5"><div><p class="text-xs font-black tracking-widest text-amber-300">TEACHER INBOX</p><h2 id="teacher-notifications-title" class="heading-font text-xl font-bold">Notifications</h2><p class="mt-1 text-sm text-slate-300">${current.filter(item => !item.notification_read).length} unread</p></div><div class="flex gap-2"><button type="button" data-notices-readall class="btn-outline text-xs" ${current.some(item => !item.notification_read) ? '' : 'disabled'}>Mark all read</button><button type="button" data-notices-close class="btn-outline" aria-label="Close notifications">×</button></div></header><div class="max-h-[65vh] space-y-2 overflow-y-auto p-4">${current.length ? current.map(item => `<article class="rounded-xl border ${item.notification_read ? 'border-white/10 bg-white/5' : 'border-amber-300/40 bg-amber-300/10'} p-4"><div class="flex items-start justify-between gap-3"><div><span class="text-[10px] font-black uppercase tracking-wider text-amber-300">${teacherNotificationEscape(item.notification_category || 'update')}</span><h3 class="mt-1 font-bold">${teacherNotificationEscape(item.notification_title)}</h3></div>${item.notification_read ? '<span class="text-xs text-slate-400">Read</span>' : `<button type="button" class="btn-outline shrink-0 text-xs" data-notice-read="${teacherNotificationEscape(item.__backendId)}">Mark read</button>`}</div><p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">${teacherNotificationEscape(item.notification_message)}</p><time class="mt-3 block text-xs text-slate-400">${teacherNotificationEscape(new Date(item.created_at).toLocaleString())}</time></article>`).join('') : '<p class="rounded-xl border border-dashed border-white/20 p-8 text-center text-slate-300">You’re all caught up. New class, reward, and admin updates will appear here.</p>'}</div></section>`;
+    overlay.querySelector('[data-notices-close]').onclick = close;
+    overlay.querySelector('[data-notices-readall]')?.addEventListener('click', async () => { for (const item of current.filter(row => !row.notification_read)) await window.dataSdk.update({ ...item, notification_read: true, notification_read_at: new Date().toISOString() }); render(); });
+    overlay.querySelectorAll('[data-notice-read]').forEach(button => button.addEventListener('click', async () => { const item = allData.find(row => row.__backendId === button.dataset.noticeRead); if (item) await window.dataSdk.update({ ...item, notification_read: true, notification_read_at: new Date().toISOString() }); render(); }));
+  };
+  render(); document.body.appendChild(overlay); overlay.addEventListener('click', event => { if (event.target === overlay) close(); });
+  document.addEventListener('keydown', closeOnEscape);
+};
 async function saveTeacherPatch(rec, patch) {
   const next = { ...rec, ...patch };
   const r = await window.dataSdk.update(next);
@@ -6838,7 +6887,10 @@ async function pkEnterTeacherNow(name) {
       sessionStorage.removeItem('pokeayman-teacher-access-notice');
     }
   } catch (_) {}
-  if (signupNeedsAccessNotice) setTimeout(showTeacherAccessContactNotice, 250);
+  if (signupNeedsAccessNotice) {
+    setTimeout(showTeacherAccessContactNotice, 250);
+    window.sendTeacherNotifications?.([currentTeacherRec()], 'Welcome to PokéAyman', 'To access your school classes, contact your school admin or manager and ask them to add your teacher account. If you are unsure who to contact, reach out to Ayman through Contact & plans.', 'welcome');
+  }
 }
 function showTeacherAccessContactNotice() {
   const modal = document.getElementById('contact-pricing-modal');
@@ -7434,7 +7486,16 @@ function renderTrainerTab() {
   const myTeacherRec = () => findMyTeacherRecord();
   const streak = teacherStreakState() || { count: 0, boxes: 0 };
   const streakPanel = modal.querySelector('#teacher-streak-panel');
-  streakPanel.innerHTML = `<p class="th-hint" style="text-align:left;margin:0 0 .5rem">${streak.count} of ${STREAK_DAYS} consecutive login days</p><div class="ts-streak-dots" role="img" aria-label="${streak.count} of ${STREAK_DAYS} streak days completed">${Array.from({ length: STREAK_DAYS }, (_, index) => `<span class="${index < streak.count ? 'on' : ''}">${index + 1}</span>`).join('')}</div><p class="th-hint" style="text-align:left;margin:0">Log in daily to build your streak. Completing ${STREAK_DAYS} days earns a surprise box. Boxes ready: <strong>${streak.boxes}</strong>.</p>`;
+  const renderStreakPanel = () => {
+    const state = teacherStreakState() || streak;
+    streakPanel.innerHTML = `<p class="th-hint" style="text-align:left;margin:0 0 .5rem">${state.count} of ${STREAK_DAYS} consecutive login days</p><div class="ts-streak-dots" role="img" aria-label="${state.count} of ${STREAK_DAYS} streak days completed">${Array.from({ length: STREAK_DAYS }, (_, index) => `<span class="${index < state.count ? 'on' : ''}">${index + 1}</span>`).join('')}</div><p class="th-hint" style="text-align:left;margin:0 0 .75rem">Log in daily to build your streak. Completing ${STREAK_DAYS} days earns a surprise box. Boxes ready: <strong>${state.boxes}</strong>.</p><button type="button" id="teacher-streak-open-box" class="th-primary" ${state.boxes > 0 ? '' : 'disabled'}>${state.boxes > 0 ? `Open surprise box (${state.boxes})` : 'No surprise boxes ready'}</button>`;
+    streakPanel.querySelector('#teacher-streak-open-box')?.addEventListener('click', async buttonEvent => {
+      const button = buttonEvent.currentTarget; button.disabled = true;
+      await window.openTeacherSurpriseBox?.();
+      renderStreakPanel();
+    });
+  };
+  renderStreakPanel();
   let selectedTeacherAvatar = String(teacherRecord?.teacher_avatar || '');
   const applyHeaderAvatar = value => { const el = document.getElementById('teacher-account-avatar'); const src = teacherAvatarSrc(value); if (el) el.innerHTML = src ? `<img src="${src}" class="w-10 h-10 object-contain rounded-full" alt="Teacher avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>'; };
   const renderTeacherAvatarOptions = () => {
@@ -10256,11 +10317,50 @@ function renderAdminPanel() {
   }
   const teacherQuery = String(document.getElementById('admin-teacher-search')?.value || '').trim().toLocaleLowerCase();
   const teachers = getTeachers().filter(teacher => !teacherQuery || String(teacher.teacher_name || '').trim().toLocaleLowerCase().includes(teacherQuery));
+  renderAdminNotificationRecipients();
   const teachersList = document.getElementById('teachers-list');
   teachersList.innerHTML = teachers.length ? teachers.map(t => `<div class="teachers-inventory-card" tabindex="0" role="button" aria-label="Open teacher ${t.teacher_name}" onclick="if(!event.target.closest('button')) openEditTeacherModal('${t.__backendId}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openEditTeacherModal('${t.__backendId}');}"><span class="teacher-inventory-avatar" aria-hidden="true">${(() => { const avatarSrc = teacherAvatarSrc(t.teacher_avatar); return avatarSrc ? `<img src="${avatarSrc}" class="w-full h-full object-contain" alt="${String(t.teacher_name || 'Teacher').replace(/"/g, '&quot;')}'s Pokémon avatar" loading="lazy">` : (String(t.teacher_name || '?').trim().charAt(0).toUpperCase() || '?'); })()}</span><p class="teacher-inventory-name" title="${t.teacher_name}">${t.teacher_name}</p><p class="teacher-inventory-detail">Credits: ${t.teacher_credits === -1 ? '∞' : (t.teacher_credits || 0)} 💳</p><p class="teacher-inventory-detail">${t.teacher_name === 'Ayman' ? 'Admin' : (t.teacher_pro === true ? 'Pro teacher' : 'Teacher')}</p><div class="teachers-inventory-actions">${t.teacher_name === 'Ayman' ? '<span class="text-xs bg-yellow-300 text-slate-900 px-2 py-1 rounded font-black" title="Administrator">Admin</span>' : `<button type="button" class="text-blue-200 bg-blue-900/70 hover:bg-blue-700" aria-label="Edit ${t.teacher_name}" title="Edit teacher" onclick="event.stopPropagation();openEditTeacherModal('${t.__backendId}')">✎</button><button type="button" class="text-red-200 bg-red-900/70 hover:bg-red-700" aria-label="Delete ${t.teacher_name}" title="Delete teacher" onclick="event.stopPropagation();deleteTeacher('${t.__backendId}','${t.teacher_name}')">×</button>`}</div></div>`).join('') : `<p class="text-gray-400 text-sm text-center py-8">${teacherQuery ? 'No teachers match your search.' : 'No teachers yet.'}</p>`;
   renderAdminClassManagers();
   renderAdminAllStudents(); renderAdminShop(); renderCreditLog();
 }
+
+function renderAdminNotificationRecipients() {
+  const select = document.getElementById('admin-notification-teacher');
+  if (!select) return;
+  const current = select.value;
+  const teachers = getTeachers().filter(teacher => normalizeTeacherRole(teacher.teacher_role || teacher.role || teacher.user_role) !== 'admin').sort((a,b) => String(a.teacher_name).localeCompare(String(b.teacher_name)));
+  select.innerHTML = teachers.map(teacher => `<option value="${escapeAdminText(teacher.__backendId)}">${escapeAdminText(teacher.teacher_name)}${teacher.teacher_pro === true ? ' · Pro' : ''}</option>`).join('') || '<option value="">No teachers available</option>';
+  if (teachers.some(teacher => String(teacher.__backendId) === current)) select.value = current;
+  const audience = document.getElementById('admin-notification-audience')?.value || 'specific';
+  const wrap = document.getElementById('admin-notification-teacher-wrap');
+  if (wrap) wrap.classList.toggle('hidden', audience !== 'specific');
+}
+document.getElementById('admin-notification-audience')?.addEventListener('change', renderAdminNotificationRecipients);
+document.getElementById('admin-notification-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!canAccessAdmin()) { toast('Admin access is required to send teacher notifications.'); return; }
+  const button = document.getElementById('admin-notification-send');
+  const status = document.getElementById('admin-notification-status');
+  const audience = document.getElementById('admin-notification-audience').value;
+  const teachers = getTeachers().filter(teacher => normalizeTeacherRole(teacher.teacher_role || teacher.role || teacher.user_role) !== 'admin');
+  let recipients = [];
+  if (audience === 'specific') recipients = teachers.filter(teacher => String(teacher.__backendId) === document.getElementById('admin-notification-teacher').value);
+  else if (audience === 'pro') recipients = teachers.filter(teacher => teacher.teacher_pro === true);
+  else if (audience === 'managers') {
+    const managerIds = new Set(allData.filter(row => row.type === 'teacher_school_assignment' && row.assigned_teacher_id).map(row => String(row.assigned_teacher_id)));
+    const managerNames = new Set(allData.filter(row => row.type === 'teacher_school_assignment' && row.assigned_teacher).map(row => normalizeStudentIdentity(row.assigned_teacher)));
+    allData.filter(row => row.type === 'class' && (row.main_manager_id || row.main_manager_name)).forEach(row => { if (row.main_manager_id) managerIds.add(String(row.main_manager_id)); if (row.main_manager_name) managerNames.add(normalizeStudentIdentity(row.main_manager_name)); });
+    recipients = teachers.filter(teacher => managerIds.has(String(teacher.__backendId)) || managerNames.has(normalizeStudentIdentity(teacher.teacher_name)));
+  } else recipients = teachers;
+  const title = document.getElementById('admin-notification-heading').value.trim();
+  const message = document.getElementById('admin-notification-message').value.trim();
+  if (!recipients.length) { status.textContent = 'No teachers match this recipient group.'; return; }
+  button.disabled = true; status.textContent = 'Sending…';
+  const sent = await window.sendTeacherNotifications(recipients, title, message, 'admin');
+  status.textContent = sent === recipients.length ? `Sent to ${sent} teacher${sent === 1 ? '' : 's'}.` : `Sent to ${sent} of ${recipients.length} teachers.`;
+  if (sent) { document.getElementById('admin-notification-heading').value = ''; document.getElementById('admin-notification-message').value = ''; }
+  button.disabled = false;
+});
 
 function escapeAdminText(value) { return String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char])); }
 function renderAdminClassManagers() {
@@ -10286,6 +10386,9 @@ function renderAdminClassManagers() {
       if (newAssignment) await window.dataSdk.delete(newAssignment);
       toast('Could not save the main class manager.');
     } else toast(teacher ? `${teacher.teacher_name} is now main manager of ${classRec.class_name}.` : `Main manager cleared for ${classRec.class_name}.`);
+    if (saved?.isOk && teacher && (String(latest.main_manager_id || '') !== String(teacher.__backendId || '')) && window.sendTeacherNotifications) {
+      await window.sendTeacherNotifications([teacher], 'Class assigned to you', `You are now the main manager for ${classRec.class_name} at ${classRec.school_name}. Open your dashboard to view the class.`, 'class');
+    }
     renderAdminClassManagers();
   }));
 }
@@ -11864,6 +11967,7 @@ function openEditTeacherModal(teacherId) {
     const saved = await saveTeacherPatch(latest, { surprise_boxes: boxes });
     if (!saved) { toast('Could not grant the box.'); return; }
     teacher.surprise_boxes = boxes; modal.querySelector('#et-box-count').textContent = boxes;
+    await window.sendTeacherNotifications?.([latest], 'Surprise box granted', 'An admin granted you a surprise box. Open it from your Login Streak card to reveal your free credits.', 'reward');
     toast(`🎁 Surprise box sent to ${latest.teacher_name}!`);
   });
   modal.querySelector('#et-reset')?.addEventListener('click', async () => { const r = await window.parent.pokeaymanAuth?.resetPassword(teacher.teacher_email); toast(r && r.error ? 'Could not send reset email.' : 'Password reset email sent to ' + teacher.teacher_email); });
@@ -11909,6 +12013,7 @@ function openEditTeacherModal(teacherId) {
       // Get current assignments for this teacher using the OLD teacher name (before rename)
       const currentClassAssignments = getAssignedClasses(teacher.teacher_name);
       const currentSchoolAssignments = getAssignedSchools(teacher.teacher_name);
+      const newlyAssignedClasses = [];
       
       // Remove class assignments that are no longer checked
       for (const assignment of currentClassAssignments) {
@@ -11927,9 +12032,10 @@ function openEditTeacherModal(teacherId) {
         const existingAssign = currentClassAssignments.find(a => a.assigned_school === classData.schoolName && a.assigned_class === classData.className);
         
         if (!existingAssign && allData.length < 999) {
-          await window.dataSdk.create({ 
+          const createdAssignment = await window.dataSdk.create({
             type: 'teacher_class_assignment', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', assigned_teacher: newName, assigned_teacher_id: teacher.__backendId, assigned_school: classData.schoolName, assigned_class: classData.className 
           });
+          if (createdAssignment?.isOk) newlyAssignedClasses.push(classData);
         }
       }
       
@@ -11953,6 +12059,10 @@ function openEditTeacherModal(teacherId) {
       
       // If teacher name changed, update all existing assignments with new teacher name
       await relinkTeacherAssignments(teacher, teacher.teacher_name, newName);
+      if (newlyAssignedClasses.length) {
+        const classList = newlyAssignedClasses.map(item => `${item.className} (${item.schoolName})`).join(', ');
+        await window.sendTeacherNotifications?.([getTeachers().find(item => item.__backendId === teacher.__backendId) || { ...teacher, teacher_name:newName }], 'New class access', `You have been assigned to: ${classList}. Sign in to view your classes.`, 'class');
+      }
     }
     
     modal.remove(); 
@@ -18325,6 +18435,16 @@ function normalizeSheetRecord(record) {
 }
 
 let dataRefreshGeneration = 0;
+let teacherNotificationSnapshotReady = false;
+const announcedTeacherNotificationIds = new Set();
+function announceIncomingTeacherNotifications() {
+  if (currentRole !== 'teacher') { teacherNotificationSnapshotReady = false; announcedTeacherNotificationIds.clear(); return; }
+  const notices = teacherNotificationsFor().filter(item => !item.notification_read);
+  if (!teacherNotificationSnapshotReady) { notices.forEach(item => announcedTeacherNotificationIds.add(String(item.__backendId))); teacherNotificationSnapshotReady = true; return; }
+  const incoming = notices.filter(item => !announcedTeacherNotificationIds.has(String(item.__backendId)));
+  incoming.forEach(item => announcedTeacherNotificationIds.add(String(item.__backendId)));
+  if (incoming.length) toast(`🔔 ${incoming[incoming.length - 1].notification_title || 'New teacher notification'}`);
+}
 const handler = {
   onDataChanged(data) {
     const generation = ++dataRefreshGeneration;
@@ -18341,6 +18461,7 @@ const handler = {
     } else if (currentRole === 'teacher' && !verifiedTeacherIdentity()) return;
     // Keep every authoritative row delivered by the selected sheet; never seed or paginate.
     allData = normalizedData;
+    announceIncomingTeacherNotifications();
     rebuildCanonicalStudentIndex();
     const configRow = getPublishedConfigRows().sort((a,b) => Number(b.config_version || 0) - Number(a.config_version || 0))[0];
     applyPublishedConfig(readPublishedConfig(), configRow ? { version: configRow.config_version, publishedAt: configRow.config_published_at, publishedBy: configRow.config_published_by } : {});

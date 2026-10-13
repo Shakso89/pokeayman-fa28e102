@@ -370,6 +370,7 @@
     }
     battle.claimed = true;
     button.textContent = '✓ Sent to your teacher';
+    await window.sendTeacherNotifications?.(classManagersFor(battle.student), 'Battle claim needs review', `${battle.student.student_name} won ${foe.shop_pokemon_name} in ${battle.student.class_name || 'their class'} and is waiting for an approval decision.`, 'battle');
     toast('Claim sent! Your teacher will review it.');
   }
 

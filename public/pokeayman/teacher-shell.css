@@ -76,6 +76,7 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
 .ts-me-info small { font-size: 12px; color: var(--ts-muted); }
 .ts-logout { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; border-radius: 8px; border: 1px solid var(--ts-border); background: var(--ts-bg); color: var(--ts-ink); }
 .ts-logout:hover { color: var(--ts-red); border-color: var(--ts-red); }
+.ts-logout #ts-notification-count { min-width: 1.35rem; padding: .12rem .38rem; border-radius: 999px; background: var(--ts-yellow); color: var(--ts-action-ink); font-size: .72rem; line-height: 1.1; text-align: center; }
 
 .ts-card { padding: 16px; border-radius: 14px; background: var(--ts-bg); border: 1px solid var(--ts-border); backdrop-filter: blur(14px); }
 .ts-card h3 { margin: 0; font: 700 17px 'Outfit', sans-serif; }
