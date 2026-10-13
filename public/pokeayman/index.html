@@ -5801,7 +5801,6 @@ async function loadStudentProfile(identity = {}) {
   setCurrentStudentRecord(matched);
   await reconcileStudentPurchase(matched.__backendId);
   currentStudentLoading = false;
-  renderStudentDashboard();
   return getCurrentStudentRecord() || matched;
 }
 
@@ -6391,7 +6390,8 @@ function getAllStudents() {
 function getPokemons() {
   // Collapse duplicate source rows before any card, shop, collection, battle, or leaderboard render.
   const canonical = new Map();
-  allData.filter(r => r.type === 'pokemon' && !getTeachers().some(teacher => normalizeStudentIdentity(teacher.teacher_name) === normalizeStudentIdentity(r.owner))).forEach(record => {
+  const teacherNames = new Set(getTeachers().map(teacher => normalizeStudentIdentity(teacher.teacher_name)));
+  allData.filter(r => r.type === 'pokemon' && !teacherNames.has(normalizeStudentIdentity(r.owner))).forEach(record => {
     const owner = normalizeStudentIdentity(record.owner);
     const id = Number(record.pokemon_id);
     const name = String(record.pokemon_name || '').trim().toLocaleLowerCase();
@@ -6715,7 +6715,15 @@ document.getElementById('student-login-toggle').addEventListener('click', () => 
     currentRole = 'student';
     currentStudent = student.student_name;
     currentStudentClassId = String(classRec.__backendId || '');
-    await loadStudentProfile({ id: student.__backendId, name: student.student_name, pin, school: student.school_name, className: student.class_name });
+    try {
+      await loadStudentProfile({ id: student.__backendId, name: student.student_name, pin, school: student.school_name, className: student.class_name });
+    } catch (error) {
+      currentRole = ''; currentStudentRecordId = ''; currentStudentLoading = false;
+      errorEl.textContent = 'We could not load your student profile. Please try again.';
+      errorEl.classList.remove('hidden');
+      submitButton.disabled = false; submitButton.removeAttribute('aria-busy');
+      return;
+    }
     if (!currentStudentRecordId) { currentRole = ''; submitButton.disabled = false; submitButton.removeAttribute('aria-busy'); return; }
     modal.remove();
     enterApp();
@@ -7063,8 +7071,17 @@ document.getElementById('student-login-form').addEventListener('submit', async e
   currentRole = 'student';
   currentStudent = student.student_name;
   currentStudentClassId = String(classRec.__backendId || '');
-  await loadStudentProfile({ id: student.__backendId, name: student.student_name, pin, school: student.school_name, className: student.class_name });
-  if (!currentStudentRecordId) { currentRole = ''; form.querySelector('button[type="submit"]').disabled = false; return; }
+  submitButton.setAttribute('aria-busy', 'true');
+  try {
+    await loadStudentProfile({ id: student.__backendId, name: student.student_name, pin, school: student.school_name, className: student.class_name });
+  } catch (error) {
+    currentRole = ''; currentStudentRecordId = ''; currentStudentLoading = false;
+    errorEl.textContent = 'We could not load your student profile. Please try again.';
+    errorEl.classList.remove('hidden');
+    submitButton.disabled = false; submitButton.removeAttribute('aria-busy');
+    return;
+  }
+  if (!currentStudentRecordId) { currentRole = ''; submitButton.disabled = false; submitButton.removeAttribute('aria-busy'); return; }
   enterApp(); 
 });
 document.getElementById('teacher-login-form').addEventListener('submit', e => {
@@ -8857,7 +8874,7 @@ function renderAll() {
   renderStudentDashboard();
   renderQuizzes();
   renderAdminPanel();
-  applyGlobalAchievementBadges();
+  if (currentRole === 'teacher') applyGlobalAchievementBadges();
 }
 
 function renderStudentDashboard() {
@@ -8891,21 +8908,9 @@ function renderStudentDashboard() {
   document.getElementById('my-student-name').textContent = student ? student.student_name : '';
   
   // Check if student is in top 3 globally
-  const allStudents = getAllStudents().sort((a, b) => {
-    const getStudentTotalValue = (s) => {
-      let value = s.coins || 0;
-      const myPokes = getPokemons().filter(p => p.owner === s.student_name);
-      myPokes.forEach(p => {
-        const maxHP = getMaxHP(p);
-        const currentHP = getHealedHP(p);
-        const hpRatio = Math.max(0, Math.min(1, currentHP / maxHP));
-        const scaledPrice = (p.pokemon_price || 0) * hpRatio;
-        value += scaledPrice;
-      });
-      return value;
-    };
-    return getStudentTotalValue(b) - getStudentTotalValue(a);
-  });
+  const allStudents = getAllStudents();
+  const rosterMetrics = getClassRosterMetrics(allStudents);
+  allStudents.sort((a, b) => rosterMetrics.valueFor(b) - rosterMetrics.valueFor(a));
   const top3Index = allStudents.findIndex(s => s.student_name === currentStudent);
   const badge = document.getElementById('top3-badge');
   const rankBadge = document.getElementById('rank-badge');
