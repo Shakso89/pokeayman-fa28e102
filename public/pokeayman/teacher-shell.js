@@ -60,7 +60,7 @@
     side.id = 'ts-sidebar';
     side.setAttribute('aria-label', 'Teacher navigation');
     side.innerHTML = `
-      <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile" title="Open teacher profile"><span class="ts-avatar-wrap"><span id="ts-avatar" class="ts-avatar"></span><span id="ts-account-badge" class="ts-account-badge" hidden></span></span><span class="ts-me-info"><strong id="ts-name"></strong><small id="ts-role"></small></span></button><button type="button" class="ts-logout" data-ts="notifications" aria-label="Open notifications"><span>Notifications</span><strong id="ts-notification-count" aria-live="polite">0</strong></button><button type="button" class="ts-logout" data-ts="logout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5H4v14h5M14 8l4 4-4 4M8 12h12"/></svg><span>Log out</span></button></div>
+      <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile" title="Open teacher profile"><span class="ts-avatar-wrap"><span id="ts-avatar" class="ts-avatar"></span><span id="ts-account-badge" class="ts-account-badge" hidden></span></span><span class="ts-me-info"><strong id="ts-name"></strong><small id="ts-role"></small></span></button><button type="button" class="ts-logout" data-ts="logout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5H4v14h5M14 8l4 4-4 4M8 12h12"/></svg><span>Log out</span></button></div>
       <div class="ts-switch-wrap"><button type="button" class="ts-switch" data-ts="switch" aria-haspopup="dialog" aria-expanded="false"><span class="ts-switch-label" id="ts-current-school">Schools &amp; classes</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">⇄</span></button></div>
       <nav class="ts-nav">
         <div id="ts-class"><button type="button" class="ts-section-toggle" data-ts-toggle="class" aria-expanded="true" aria-controls="ts-class-content"><span>Classroom</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-class-content">
@@ -80,9 +80,9 @@
         <div class="ts-amounts">${[10, 50, 100].map((n) => `<button type="button" data-amt="${n}"${n === 10 ? ' class="on"' : ''}>+${n}</button>`).join('')}</div>
         <button type="button" class="ts-award-go" id="ts-award-go">Award coins</button></section>
       <section class="ts-card"><h3>🏆 Top 3 Students</h3><ol id="ts-top3" class="ts-top3"></ol></section>
-      <section class="ts-card ts-gift ts-streak"><button type="button" class="ts-streak-close" data-ts-streak-close aria-label="Close login streak card" title="Close">×</button><h3>🔥 Login Streak</h3><p id="ts-streak-text">Log in 7 days in a row to unlock a surprise box</p>
+      <section class="ts-card ts-gift ts-streak"><button type="button" class="ts-streak-close" data-ts-streak-close aria-label="Close login streak card" title="Close">×</button><h3>🔥 Login Streak</h3><p id="ts-streak-text">Log in 7 days in a row to unlock a Streak Box</p>
         <div class="ts-streak-dots" id="ts-streak-dots"></div>
-        <button type="button" class="ts-award-go" id="ts-box-open">🎁 Open surprise box</button></section>`;
+        <button type="button" class="ts-award-go" id="ts-box-open">🎁 Open Streak Box</button></section>`;
     document.body.append(side, rail);
     rail.querySelector('[data-ts-streak-close]')?.addEventListener('click', () => {
       const streakCard = rail.querySelector('.ts-streak');
@@ -98,7 +98,15 @@
     theme.setAttribute('role', 'switch');
     theme.setAttribute('aria-label', 'Bright mode');
     theme.innerHTML = '<span class="ts-theme-icon" aria-hidden="true"></span><span>Bright mode</span><span class="ts-theme-track" aria-hidden="true"><span></span></span>';
-    side.appendChild(theme);
+    const tools = document.createElement('div');
+    tools.id = 'ts-sidebar-tools'; tools.className = 'ts-sidebar-tools';
+    const notifications = document.createElement('button');
+    notifications.type = 'button'; notifications.id = 'ts-notifications-toggle';
+    notifications.className = 'ts-notification-button'; notifications.dataset.ts = 'notifications';
+    notifications.setAttribute('aria-label', 'Open notifications'); notifications.title = 'Notifications';
+    notifications.innerHTML = '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><strong id="ts-notification-count" class="ts-notification-count" aria-live="polite" hidden>0</strong>';
+    tools.append(theme, notifications);
+    side.appendChild(tools);
     theme.addEventListener('click', () => {
       setThemeMode(!bright);
     });
@@ -142,7 +150,7 @@
     }
     const cls = b.dataset.tsClass, zone = b.dataset.tsZone, act = b.dataset.ts;
     if (act === 'switch') return togglePop();
-    if (act === 'notifications') { g(() => window.openTeacherNotificationCenter?.()); return; }
+    if (act === 'notifications') { if (window.matchMedia('(max-width: 1024px)').matches) closeSheet(); g(() => window.openTeacherNotificationCenter?.()); return; }
     if (act === 'admin-users' || act === 'admin-controls') {
       if (!g(() => canAccessAdmin(), false)) return;
       g(() => showMainTab('admin'));
@@ -387,8 +395,9 @@
       if (st) {
         const dots = Array.from({ length: 7 }, (_, i) => `<span class="${i < st.count ? 'on' : ''}">${i + 1}</span>`).join('');
         if ($('ts-streak-dots').innerHTML !== dots) $('ts-streak-dots').innerHTML = dots;
-        const txt = st.boxes > 0 ? `You have ${st.boxes} box${st.boxes > 1 ? 'es' : ''} to open!` : `${7 - st.count} more day${7 - st.count === 1 ? '' : 's'} to unlock a box`;
+        const txt = st.boxes > 0 ? `You have ${st.boxes} Streak Box${st.boxes > 1 ? 'es' : ''} to open!` : `${7 - st.count} more day${7 - st.count === 1 ? '' : 's'} to unlock a Streak Box`;
         if ($('ts-streak-text').textContent !== txt) $('ts-streak-text').textContent = txt;
+        $('ts-box-open').textContent = st.boxes > 0 ? `🎁 Open Streak Box${st.boxes > 1 ? ` (${st.boxes})` : ''}` : 'No Streak Boxes Ready';
         $('ts-box-open').disabled = st.boxes < 1;
         $('ts-box-open').classList.toggle('ready', st.boxes > 0);
       }

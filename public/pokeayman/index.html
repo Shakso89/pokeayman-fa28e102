@@ -3837,6 +3837,11 @@ document.addEventListener('click', function (e) {
 .th-card{position:relative;overflow:hidden;display:flex;align-items:center;gap:1.1rem;padding:1.2rem 1.3rem;border-radius:1.25rem;background:linear-gradient(120deg,#f59e0b 0%,#fbbf24 38%,#3d52d5 100%);color:#181e5f;box-shadow:0 12px 30px rgba(245,158,11,.25)}
 .th-card-shine{position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(255,255,255,.14) 0 12px,transparent 12px 28px);pointer-events:none}
 .th-avatar-ring{position:relative;flex:none;padding:4px;border-radius:999px;background:conic-gradient(#fff,#fde68a,#ffd84d,#fff);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.th-account-badge{position:absolute;right:-.55rem;bottom:.15rem;z-index:2;display:inline-flex;align-items:center;justify-content:center;min-width:3.25rem;height:1.25rem;padding:0 .42rem;border:3px solid #fbbf24;border-radius:999px;background:linear-gradient(135deg,#ffe37a,#f0a900);color:#352300;font:1000 .55rem/1 'Figtree',sans-serif;letter-spacing:.06em;box-shadow:0 3px 9px rgba(0,0,0,.3)}
+.th-account-badge.is-admin{border-color:#fbbf24;background:linear-gradient(135deg,#dbeafe,#60a5fa);color:#10244a}
+.th-account-badge[hidden]{display:none}
+html body.ts-bright .trainer-hub .th-account-badge:not(.is-admin){color:#352300!important}
+html body.ts-bright .trainer-hub .th-account-badge.is-admin{color:#10244a!important}
 .th-avatar{width:5.5rem;height:5.5rem;border-radius:999px;background:#f5f7ff;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:2.4rem}
 .th-avatar img{width:100%;height:100%;object-fit:contain}
 .th-id{position:relative;min-width:0;flex:1}
@@ -6563,6 +6568,28 @@ function teacherNotificationsFor(record = currentTeacherRec()) {
     .sort((a,b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
 }
 window.teacherUnreadNotificationCount = () => teacherNotificationsFor().filter(item => !item.notification_read).length;
+function refreshTeacherNotificationCount() {
+  const unread = window.teacherUnreadNotificationCount();
+  const badge = document.getElementById('ts-notification-count');
+  if (badge) { badge.textContent = unread > 99 ? '99+' : String(unread); badge.hidden = unread === 0; }
+  document.querySelector('[data-ts="notifications"]')?.setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
+}
+async function markTeacherNotificationRead(item) {
+  if (!item || item.notification_read) return Boolean(item);
+  const updated = { ...item, notification_read: true, notification_read_at: new Date().toISOString() };
+  const result = await window.dataSdk.update(updated);
+  if (!result?.isOk) return false;
+  const saved = { ...updated, ...(result.data || {}), notification_read: true, notification_read_at: updated.notification_read_at };
+  allData = (allData || []).map(row => row.__backendId === item.__backendId ? saved : row);
+  return true;
+}
+async function pruneTeacherReadNotifications() {
+  const olderRead = teacherNotificationsFor().filter(item => item.notification_read).slice(5);
+  for (const item of olderRead) {
+    const result = await window.dataSdk.delete(item);
+    if (result?.isOk) allData = (allData || []).filter(row => row.__backendId !== item.__backendId);
+  }
+}
 window.sendTeacherNotifications = async function (recipients, title, message, category = 'announcement') {
   const unique = [...new Map((recipients || []).filter(Boolean).map(record => [String(record.__backendId || ''), record])).values()];
   let sent = 0;
@@ -6583,12 +6610,28 @@ window.openTeacherNotificationCenter = function () {
   const overlay = document.createElement('div'); overlay.className = 'fixed inset-0 z-[2147483000] grid place-items-center bg-black/75 p-4';
   const close = () => { overlay.remove(); document.removeEventListener('keydown', closeOnEscape); };
   const closeOnEscape = event => { if (event.key === 'Escape') close(); };
+  const markOne = async button => {
+    const item = teacherNotificationsFor().find(row => String(row.__backendId) === String(button.dataset.noticeRead));
+    if (!item) return;
+    button.disabled = true;
+    if (!await markTeacherNotificationRead(item)) { button.disabled = false; toast('Could not mark this notification as read. Please try again.'); return; }
+    await pruneTeacherReadNotifications(); refreshTeacherNotificationCount(); render();
+  };
+  const markAll = async button => {
+    button.disabled = true;
+    let failed = false;
+    for (const item of teacherNotificationsFor().filter(row => !row.notification_read)) {
+      if (!await markTeacherNotificationRead(item)) failed = true;
+    }
+    await pruneTeacherReadNotifications(); refreshTeacherNotificationCount(); render();
+    if (failed) toast('Some notifications could not be marked as read. Please try again.');
+  };
   const render = () => {
     const current = teacherNotificationsFor();
     overlay.innerHTML = `<section class="w-full max-w-xl max-h-[88vh] overflow-hidden rounded-2xl border border-amber-300/40 bg-slate-900 text-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="teacher-notifications-title"><header class="flex items-start justify-between gap-3 border-b border-white/10 p-5"><div><p class="text-xs font-black tracking-widest text-amber-300">TEACHER INBOX</p><h2 id="teacher-notifications-title" class="heading-font text-xl font-bold">Notifications</h2><p class="mt-1 text-sm text-slate-300">${current.filter(item => !item.notification_read).length} unread</p></div><div class="flex gap-2"><button type="button" data-notices-readall class="btn-outline text-xs" ${current.some(item => !item.notification_read) ? '' : 'disabled'}>Mark all read</button><button type="button" data-notices-close class="btn-outline" aria-label="Close notifications">×</button></div></header><div class="max-h-[65vh] space-y-2 overflow-y-auto p-4">${current.length ? current.map(item => `<article class="rounded-xl border ${item.notification_read ? 'border-white/10 bg-white/5' : 'border-amber-300/40 bg-amber-300/10'} p-4"><div class="flex items-start justify-between gap-3"><div><span class="text-[10px] font-black uppercase tracking-wider text-amber-300">${teacherNotificationEscape(item.notification_category || 'update')}</span><h3 class="mt-1 font-bold">${teacherNotificationEscape(item.notification_title)}</h3></div>${item.notification_read ? '<span class="text-xs text-slate-400">Read</span>' : `<button type="button" class="btn-outline shrink-0 text-xs" data-notice-read="${teacherNotificationEscape(item.__backendId)}">Mark read</button>`}</div><p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">${teacherNotificationEscape(item.notification_message)}</p><time class="mt-3 block text-xs text-slate-400">${teacherNotificationEscape(new Date(item.created_at).toLocaleString())}</time></article>`).join('') : '<p class="rounded-xl border border-dashed border-white/20 p-8 text-center text-slate-300">You’re all caught up. New class, reward, and admin updates will appear here.</p>'}</div></section>`;
     overlay.querySelector('[data-notices-close]').onclick = close;
-    overlay.querySelector('[data-notices-readall]')?.addEventListener('click', async () => { for (const item of current.filter(row => !row.notification_read)) await window.dataSdk.update({ ...item, notification_read: true, notification_read_at: new Date().toISOString() }); render(); });
-    overlay.querySelectorAll('[data-notice-read]').forEach(button => button.addEventListener('click', async () => { const item = allData.find(row => row.__backendId === button.dataset.noticeRead); if (item) await window.dataSdk.update({ ...item, notification_read: true, notification_read_at: new Date().toISOString() }); render(); }));
+    overlay.querySelector('[data-notices-readall]')?.addEventListener('click', event => markAll(event.currentTarget));
+    overlay.querySelectorAll('[data-notice-read]').forEach(button => button.addEventListener('click', event => markOne(event.currentTarget)));
   };
   render(); document.body.appendChild(overlay); overlay.addEventListener('click', event => { if (event.target === overlay) close(); });
   document.addEventListener('keydown', closeOnEscape);
@@ -6606,25 +6649,25 @@ async function recordTeacherDailyLogin() {
   const y = new Date(); y.setDate(y.getDate() - 1);
   let count = rec.streak_last_day === streakDay(y) ? Number(rec.streak_count || 0) + 1 : 1;
   let boxes = Number(rec.surprise_boxes || 0);
-  if (count >= STREAK_DAYS) { boxes += 1; count = 0; setTimeout(() => toast('🎁 7-day streak! A surprise box is ready to open.'), 800); }
+  if (count >= STREAK_DAYS) { boxes += 1; count = 0; setTimeout(() => toast('🎁 7-day streak! A Streak Box is ready to open.'), 800); }
   await saveTeacherPatch(rec, { streak_last_day: today, streak_count: count, surprise_boxes: boxes });
 }
 window.teacherStreakState = teacherStreakState;
 window.openTeacherSurpriseBox = async function () {
-  const rec = currentTeacherRec(); if (!rec || Number(rec.surprise_boxes || 0) < 1) { toast('Keep your streak going to unlock a box!'); return; }
+  const rec = currentTeacherRec(); if (!rec || Number(rec.surprise_boxes || 0) < 1) { toast('No Streak Boxes are ready to open yet.'); return; }
   const prize = 10 + Math.floor(Math.random() * 91);
   const unlimited = rec.teacher_credits === -1;
   const saved = await saveTeacherPatch(rec, { surprise_boxes: Number(rec.surprise_boxes) - 1, teacher_credits: unlimited ? -1 : Number(rec.teacher_credits || 0) + prize });
   if (!saved) { toast('Could not open the box. Please try again.'); return; }
   try { playTransactionSound('reward'); } catch (_) {}
   const ov = document.createElement('div'); ov.className = 'tsb-overlay';
-  ov.innerHTML = `<div class="tsb-card" role="dialog" aria-modal="true" aria-label="Surprise box reward"><div class="tsb-box" aria-hidden="true">🎁</div><p class="tsb-kicker">Surprise box opened!</p><p class="tsb-amount">+<span>0</span></p><p class="tsb-sub">credits added to your wallet</p><button type="button" class="tsb-btn">Awesome!</button></div>`;
+  ov.innerHTML = `<div class="tsb-card" role="dialog" aria-modal="true" aria-label="Streak Box reward"><div class="tsb-box" aria-hidden="true">🎁</div><p class="tsb-kicker">Streak Box opened!</p><p class="tsb-amount">+<span>0</span></p><p class="tsb-sub">credits added to your wallet</p><button type="button" class="tsb-btn">Awesome!</button></div>`;
   document.body.appendChild(ov);
   const span = ov.querySelector('.tsb-amount span'); let n = 0; const step = Math.max(1, Math.round(prize / 30));
   const iv = setInterval(() => { n = Math.min(prize, n + step); span.textContent = n; if (n >= prize) clearInterval(iv); }, 30);
   const close = () => { clearInterval(iv); ov.remove(); try { updateRoleUI(); } catch (_) {} };
   ov.querySelector('.tsb-btn').addEventListener('click', close); ov.addEventListener('click', e => { if (e.target === ov) close(); });
-  try { await logCredit('Surprise Box', prize, rec.teacher_name); } catch (_) {}
+  try { await logCredit('Streak Box', prize, rec.teacher_name); } catch (_) {}
 };
 
 // Centralized teacher logout: reveal the public dashboard first, then invalidate every session marker.
@@ -7411,7 +7454,7 @@ function renderTrainerTab() {
   modal.innerHTML = `<div class="trainer-hub" role="dialog" aria-modal="true" aria-labelledby="account-settings-title">
 <header class="th-card">
  <div class="th-card-shine" aria-hidden="true"></div>
- <div class="th-avatar-ring"><div id="th-avatar" class="th-avatar"></div></div>
+ <div class="th-avatar-ring"><div id="th-avatar" class="th-avatar"></div><span id="th-account-badge" class="th-account-badge" hidden></span></div>
  <div class="th-id">
   <h2 id="account-settings-title" class="th-name"></h2>
   <p id="tp-email" class="th-email"></p>
@@ -7453,6 +7496,12 @@ function renderTrainerTab() {
   const host = document.getElementById('tab-trainer'); host.innerHTML = ''; host.appendChild(modal);
   modal.remove = () => showMainTab('dashboard');
   modal.querySelector('#account-settings-title').textContent = currentTeacher;
+  const teacherBadge = modal.querySelector('#th-account-badge');
+  const teacherIsAdmin = canAccessAdmin();
+  const teacherIsPro = teacherRecord?.teacher_pro === true;
+  teacherBadge.textContent = teacherIsAdmin ? 'ADMIN' : 'PRO';
+  teacherBadge.hidden = !teacherIsAdmin && !teacherIsPro;
+  teacherBadge.classList.toggle('is-admin', teacherIsAdmin);
   const closeTeacherEditor = id => {
     const editor = modal.querySelector('#' + id);
     editor.classList.add('hidden');
@@ -7488,7 +7537,7 @@ function renderTrainerTab() {
   const streakPanel = modal.querySelector('#teacher-streak-panel');
   const renderStreakPanel = () => {
     const state = teacherStreakState() || streak;
-    streakPanel.innerHTML = `<p class="th-hint" style="text-align:left;margin:0 0 .5rem">${state.count} of ${STREAK_DAYS} consecutive login days</p><div class="ts-streak-dots" role="img" aria-label="${state.count} of ${STREAK_DAYS} streak days completed">${Array.from({ length: STREAK_DAYS }, (_, index) => `<span class="${index < state.count ? 'on' : ''}">${index + 1}</span>`).join('')}</div><p class="th-hint" style="text-align:left;margin:0 0 .75rem">Log in daily to build your streak. Completing ${STREAK_DAYS} days earns a surprise box. Boxes ready: <strong>${state.boxes}</strong>.</p><button type="button" id="teacher-streak-open-box" class="th-primary" ${state.boxes > 0 ? '' : 'disabled'}>${state.boxes > 0 ? `Open surprise box (${state.boxes})` : 'No surprise boxes ready'}</button>`;
+    streakPanel.innerHTML = `<p class="th-hint" style="text-align:left;margin:0 0 .5rem">${state.count} of ${STREAK_DAYS} consecutive login days</p><div class="ts-streak-dots" role="img" aria-label="${state.count} of ${STREAK_DAYS} streak days completed">${Array.from({ length: STREAK_DAYS }, (_, index) => `<span class="${index < state.count ? 'on' : ''}">${index + 1}</span>`).join('')}</div><p class="th-hint" style="text-align:left;margin:0 0 .75rem">Log in daily to build your streak. Completing ${STREAK_DAYS} days earns a Streak Box. Streak Boxes ready: <strong>${state.boxes}</strong>.</p><button type="button" id="teacher-streak-open-box" class="th-primary" ${state.boxes > 0 ? '' : 'disabled'}>${state.boxes > 0 ? `Open Streak Box (${state.boxes})` : 'No Streak Boxes Ready'}</button>`;
     streakPanel.querySelector('#teacher-streak-open-box')?.addEventListener('click', async buttonEvent => {
       const button = buttonEvent.currentTarget; button.disabled = true;
       await window.openTeacherSurpriseBox?.();
@@ -11947,7 +11996,7 @@ function openEditTeacherModal(teacherId) {
     <label class="es-label">Sign-in email</label><div class="et-email-row"><span>${email || '—'}</span>${email ? '<button type="button" id="et-reset" class="et-link">Send password reset</button>' : ''}</div>
     <label class="es-label" for="et-credits">Credits</label><input type="number" id="et-credits" value="${teacher.teacher_credits||0}" class="es-input">
     ${!isAdminRow ? `<div class="teacher-zone-access-setting et-pro-setting"><div class="teacher-zone-access-label"><span class="teacher-zone-access-copy"><strong>Pro badge</strong><small>Unlock Poké Battle and Listen and Catch for this teacher and their managed classes.</small></span><label class="teacher-zone-switch" for="et-pro-access" aria-label="Pro badge"><input type="checkbox" id="et-pro-access" ${teacher.teacher_pro === true ? 'checked' : ''}><span aria-hidden="true"></span></label></div></div>` : ''}
-    ${!isAdminRow ? `<div class="et-gift"><div><strong>🎁 Gift a surprise box</strong><small>They open it for 10–100 free credits</small></div><button type="button" id="et-grant" class="et-grant">Grant box</button></div>` : ''}
+    ${!isAdminRow ? `<div class="et-gift"><div><strong>🎁 Gift a Streak Box</strong><small>They open it for 10–100 free credits</small></div><button type="button" id="et-grant" class="et-grant">Grant Streak Box</button></div>` : ''}
     ${!isAdminRow ? `<label class="es-label">Manage whole schools</label><div class="et-chips">${allSchools.length ? allSchools.map(school => `<label class="et-chip"><input type="checkbox" class="et-school-checkbox" data-school-name="${school.school_name}" ${assignedSchoolNames.has(school.school_name) ? 'checked' : ''}><span>${school.school_name}</span></label>`).join('') : '<p class="es-empty">No schools yet</p>'}</div>
     <label class="es-label">Manage classes</label><div class="et-chips et-chips-scroll">${allClasses.length ? allClasses.map(cls => `<label class="et-chip"><input type="checkbox" class="et-class-checkbox" data-class-id="${cls.__backendId}" data-school-name="${cls.school_name}" data-class-name="${cls.class_name}" ${assignedClassKeys.has(`${cls.school_name}||${cls.class_name}`) ? 'checked' : ''}><span>${cls.class_name}<small>${cls.school_name}</small></span></label>`).join('') : '<p class="es-empty">No classes yet</p>'}</div>` : ''}
     <div class="teacher-zone-access-setting"><label class="teacher-zone-access-label" for="et-zone-access"><span class="teacher-zone-access-copy"><strong>Financial &amp; History</strong><small>Financial and History tabs in Teacher Zone</small></span><span class="teacher-zone-switch"><input type="checkbox" id="et-zone-access" ${teacher.teacher_zone_access !== 'hide' ? 'checked' : ''}><span aria-hidden="true"></span></span></label><p id="et-zone-status" class="teacher-zone-access-status"></p></div>
@@ -11967,8 +12016,8 @@ function openEditTeacherModal(teacherId) {
     const saved = await saveTeacherPatch(latest, { surprise_boxes: boxes });
     if (!saved) { toast('Could not grant the box.'); return; }
     teacher.surprise_boxes = boxes; modal.querySelector('#et-box-count').textContent = boxes;
-    await window.sendTeacherNotifications?.([latest], 'Surprise box granted', 'An admin granted you a surprise box. Open it from your Login Streak card to reveal your free credits.', 'reward');
-    toast(`🎁 Surprise box sent to ${latest.teacher_name}!`);
+    await window.sendTeacherNotifications?.([latest], 'Streak Box granted', 'An admin granted you a Streak Box. Open it from your Login Streak card to reveal your free credits.', 'reward');
+    toast(`🎁 Streak Box sent to ${latest.teacher_name}!`);
   });
   modal.querySelector('#et-reset')?.addEventListener('click', async () => { const r = await window.parent.pokeaymanAuth?.resetPassword(teacher.teacher_email); toast(r && r.error ? 'Could not send reset email.' : 'Password reset email sent to ' + teacher.teacher_email); });
   modal.querySelector('form').addEventListener('submit', async e => { 

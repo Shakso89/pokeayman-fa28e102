@@ -76,7 +76,13 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
 .ts-me-info small { font-size: 12px; color: var(--ts-muted); }
 .ts-logout { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; border-radius: 8px; border: 1px solid var(--ts-border); background: var(--ts-bg); color: var(--ts-ink); }
 .ts-logout:hover { color: var(--ts-red); border-color: var(--ts-red); }
-.ts-logout #ts-notification-count { min-width: 1.35rem; padding: .12rem .38rem; border-radius: 999px; background: var(--ts-yellow); color: var(--ts-action-ink); font-size: .72rem; line-height: 1.1; text-align: center; }
+.ts-sidebar-tools { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: auto; flex: none; }
+body.ts-on #ts-sidebar-tools #ts-theme-toggle { width: auto; min-width: 0; flex: 1; }
+.ts-notification-button { position: relative; display: grid; place-items: center; width: 42px; height: 42px; flex: none; border: 1px solid var(--ts-border); border-radius: 10px; background: var(--ts-surface); color: var(--ts-ink); cursor: pointer; transition: border-color .16s, background .16s, color .16s; }
+.ts-notification-button:hover { border-color: var(--ts-yellow); color: var(--ts-yellow); background: color-mix(in srgb, var(--ts-yellow) 8%, var(--ts-surface)); }
+.ts-notification-button:focus-visible { outline: 3px solid var(--ts-blue); outline-offset: 2px; }
+.ts-notification-count { position: absolute; top: -5px; right: -5px; display: grid; min-width: 18px; height: 18px; padding: 0 4px; place-items: center; border: 2px solid var(--ts-bg); border-radius: 999px; background: var(--ts-red); color: #fff; font: 800 10px/1 'Outfit', sans-serif; }
+.ts-notification-count[hidden] { display: none; }
 
 .ts-card { padding: 16px; border-radius: 14px; background: var(--ts-bg); border: 1px solid var(--ts-border); backdrop-filter: blur(14px); }
 .ts-card h3 { margin: 0; font: 700 17px 'Outfit', sans-serif; }
@@ -251,7 +257,7 @@ body.ts-on.ts-bright .ts-amounts button.on { color: var(--ts-ink); }
 body.ts-on.ts-bright .ts-hero { border-left: 5px solid var(--ts-blue); }
 body.ts-on.ts-bright #ts-rail .ts-card:nth-child(2) { background: var(--ts-mint); }
 body.ts-on.ts-bright #ts-rail .ts-gift { background: var(--ts-pink); }
-html body.ts-on.ts-bright #ts-sidebar :is(.ts-switch,#ts-theme-toggle) { background: var(--ts-surface) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; box-shadow: none !important; }
+html body.ts-on.ts-bright #ts-sidebar :is(.ts-switch,#ts-theme-toggle,.ts-notification-button) { background: var(--ts-surface) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; box-shadow: none !important; }
 html body.ts-on.ts-bright #ts-sidebar .ts-switch-label { color: var(--ts-muted) !important; }
 html body.ts-on.ts-bright #app-screen :is(.financial-dashboard,.financial-breakdown-table) { color: var(--ts-ink) !important; }
 html body.ts-on.ts-bright #app-screen :is(.financial-hero,.financial-overview-card,.financial-period-card,.financial-source-bar,.financial-breakdown-table th,.schedule-time-button,.schedule-add-row,.vocab-list-card,.vocab-cover-button) { background: var(--ts-deep) !important; color: var(--ts-ink) !important; border-color: var(--ts-border) !important; box-shadow: none !important; }
@@ -304,7 +310,7 @@ html body.ts-bright #app-screen :is(.text-amber-200,.text-amber-300,.text-amber-
 html body.ts-bright #app-screen :is(#battle-left,#battle-right) :is(p) { color: var(--ts-ink) !important; }
 
 /* Teacher identity: full names and consistent Poké Ball fallback. */
-.ts-me-main:focus-visible, .ts-logout:focus-visible { outline: 2px solid var(--ts-yellow); outline-offset: 2px; }
+.ts-me-main:focus-visible, .ts-logout:focus-visible, .ts-notification-button:focus-visible { outline: 2px solid var(--ts-yellow); outline-offset: 2px; }
 .ts-avatar > .ts-ball { width: 78% !important; height: 78% !important; border: 3px solid var(--ts-deep) !important; position: relative; box-shadow: none; }
 .ts-ball::after { content: ''; position: absolute; width: 28%; height: 28%; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid var(--ts-deep); background: var(--ts-on-red); }
 #ts-bottom .tsb-ic > .ts-ball { position: relative; width: 26px; height: 26px; box-shadow: none; }
