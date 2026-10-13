@@ -4376,7 +4376,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     </div>
     <div id="admin-subtab-teacher-zone" class="admin-subtab-content hidden">
      <div class="flex gap-2 mb-4" role="tablist" aria-label="Teacher Zone sections">
-      <button id="teacher-zone-schedule-tab" type="button" class="teacher-zone-tab btn-primary text-sm" role="tab" aria-selected="true" aria-controls="teacher-zone-schedule-panel">Schedule</button><button id="teacher-zone-financial-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-financial-panel">Financial</button><button id="teacher-zone-history-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-history-panel">History</button><button id="teacher-zone-vb-lists-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-vb-lists-panel">My VB lists</button><button id="teacher-zone-battle-claims-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-battle-claims-panel">Battle Claims</button><button id="teacher-zone-profile-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-profile-panel">Profile</button>
+      <button id="teacher-zone-schedule-tab" type="button" class="teacher-zone-tab btn-primary text-sm" role="tab" aria-selected="true" aria-controls="teacher-zone-schedule-panel">Schedule</button><button id="teacher-zone-financial-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-financial-panel">Financial</button><button id="teacher-zone-history-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-history-panel">History</button><button id="teacher-zone-vb-lists-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-vb-lists-panel">Word Bank</button><button id="teacher-zone-battle-claims-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-battle-claims-panel">Battle Claims</button><button id="teacher-zone-profile-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-profile-panel">Profile</button>
      </div>
      <section id="teacher-zone-profile-panel" class="hidden" role="tabpanel" aria-labelledby="teacher-zone-profile-tab"><div id="tab-trainer"></div></section>
      <div id="teacher-zone-schedule-panel" role="tabpanel" aria-labelledby="teacher-zone-schedule-tab">
@@ -4503,8 +4503,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      </section>
      <section id="teacher-zone-vb-lists-panel" class="hidden teacher-zone-content-panel" role="tabpanel" aria-labelledby="teacher-zone-vb-lists-tab">
       <div class="teacher-zone-content-card">
-       <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">📚</span><div><p class="teacher-zone-page-kicker">VOCABULARY</p><h3 id="teacher-vb-lists-title">My Word Banks</h3><p id="teacher-vb-lists-description">Your word banks, ready to review or share with your classes.</p></div></header>
-       <div class="teacher-vb-list-modes" role="group" aria-label="Vocabulary list view"><button id="teacher-vb-mode-mine" type="button" class="btn-primary" aria-pressed="true">My Word Banks</button><button id="teacher-vb-mode-school" type="button" class="btn-secondary" aria-pressed="false">School Lists</button></div>
+       <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">📚</span><div><p class="teacher-zone-page-kicker">WORD BANK</p><h3 id="teacher-vb-lists-title">My Lists</h3><p id="teacher-vb-lists-description">Review, edit, or delete the word banks you created.</p></div></header>
+       <div class="teacher-vb-list-modes" role="group" aria-label="Vocabulary list view"><button id="teacher-vb-mode-mine" type="button" class="btn-primary" aria-pressed="true">My Lists</button><button id="teacher-vb-mode-school" type="button" class="btn-secondary" aria-pressed="false">School Lists</button></div>
+       <form id="teacher-vb-create-form" class="teacher-vb-create-form"><label class="teacher-vb-create-field"><span>List name</span><input id="teacher-vb-create-name" type="text" maxlength="80" placeholder="e.g. Unit 5 Verbs" required></label><label class="teacher-vb-create-field"><span>Class</span><select id="teacher-vb-create-class" required><option value="">Choose a class</option></select></label><button id="teacher-vb-create-submit" type="submit" class="btn-primary">Create list</button></form>
        <p id="teacher-vb-lists-status" class="teacher-zone-status" aria-live="polite">Loading your lists…</p>
        <div id="teacher-vb-lists-grid"></div>
       </div>
@@ -8403,8 +8404,18 @@ function renderTeacherOwnedVocabLists() {
   document.getElementById('teacher-vb-mode-school')?.classList.toggle('is-active', schoolMode);
   const title = document.getElementById('teacher-vb-lists-title');
   const description = document.getElementById('teacher-vb-lists-description');
-  if (title) title.textContent = schoolMode ? 'School Lists' : 'My Word Banks';
+  if (title) title.textContent = schoolMode ? 'School Lists' : 'My Lists';
   if (description) description.textContent = schoolMode ? 'Browse and share word banks other teachers have made available.' : 'Review, edit, or delete the word banks you created.';
+  const classSelect = document.getElementById('teacher-vb-create-class');
+  const createForm = document.getElementById('teacher-vb-create-form');
+  if (createForm) createForm.hidden = schoolMode;
+  if (classSelect) {
+    const escOption = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const classes = getAllTeacherClasses().filter(cls => canManageClass(cls.school_name, cls.class_name)).sort((a,b) => `${a.school_name} ${a.class_name}`.localeCompare(`${b.school_name} ${b.class_name}`));
+    const previousSelection = classSelect.value;
+    classSelect.innerHTML = '<option value="">Choose a class</option>' + classes.map(cls => `<option value="${escOption(cls.__backendId)}">${escOption(cls.class_name)} · ${escOption(cls.school_name)}</option>`).join('');
+    if (classes.some(cls => String(cls.__backendId) === previousSelection)) classSelect.value = previousSelection;
+  }
   if (!ownerScope || !teacherWorkspaceKey || ownerScope !== teacherZoneOwnerScope) { grid.replaceChildren(); status.textContent = 'Sign in as a teacher to view your lists.'; return; }
   status.textContent = 'Loading your lists…';
   grid.replaceChildren();
@@ -8468,6 +8479,16 @@ document.getElementById('teacher-vb-mode-mine')?.addEventListener('click', () =>
 document.getElementById('teacher-vb-mode-school')?.addEventListener('click', () => {
   window.vbListsMode = 'school';
   renderTeacherOwnedVocabLists();
+});
+document.getElementById('teacher-vb-create-form')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const input = document.getElementById('teacher-vb-create-name');
+  const select = document.getElementById('teacher-vb-create-class');
+  const button = document.getElementById('teacher-vb-create-submit');
+  const chosenClass = allData.find(row => row.type === 'class' && String(row.__backendId) === String(select?.value || ''));
+  if (!chosenClass || !canManageClass(chosenClass.school_name, chosenClass.class_name)) { toast('Choose one of your managed classes.'); select?.focus(); return; }
+  const created = await createVocabListForClass({ listName: input?.value, school: chosenClass.school_name, className: chosenClass.class_name, button, input });
+  if (created) { window.vbListsMode = 'mine'; renderTeacherOwnedVocabLists(); }
 });
 
 // Standalone share popup: share any visible list (e.g. another teacher's) to the current teacher's classes.
@@ -12872,31 +12893,35 @@ function getVocabWords(listRef, schoolName = navSchool, className = navClass) {
   });
 }
 
-document.getElementById('create-vocab-list-btn')?.addEventListener('click', async event => {
-  event.preventDefault();
-  const button = event.currentTarget;
+async function createVocabListForClass({ listName: rawName, school: rawSchool, className: rawClassName, button, input }) {
+  const listName = String(rawName || '').trim().replace(/\s+/g, ' ');
+  const school = String(rawSchool || '').trim();
+  const className = String(rawClassName || '').trim();
   if (button.dataset.busy === 'true') return;
-  const input = document.getElementById('new-vocab-list-name');
-  const listName = String(input?.value || '').trim().replace(/\s+/g, ' ');
-  const school = String(navSchool || '').trim();
-  const className = String(navClass || '').trim();
   if (!listName) { toast('Enter a list name'); input?.focus(); return; }
-  if (!school || !className) { toast('Select a class before creating a vocabulary list.'); return; }
+  if (!school || !className || (currentRole === 'teacher' && !canManageClass(school, className))) { toast('Choose one of your managed classes before creating a vocabulary list.'); return; }
   if (getVocabLists(school, className).some(list => list.vocab_list_name.toLocaleLowerCase() === listName.toLocaleLowerCase())) { toast('A vocabulary list with this name already exists in this class.'); return; }
   if (allData.length >= 999) { toast('Storage limit reached!'); return; }
   const listId = `vocab-list-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const record = { type: 'vocab_list', vocab_list_id: listId, vocab_list_name: listName, vocab_list_school: school, vocab_list_class: className, school_name: school, class_name: className, owner: currentTeacher, teacher_name: currentTeacher, created_at: new Date().toISOString(), vocab_word: '', vocab_image: '', vocab_cover_image_id: '', vocab_cover_image_url: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: currentTeacher, quiz_class: className, quiz_submitted_answers: '' };
+  const record = { type: 'vocab_list', vocab_list_id: listId, vocab_list_name: listName, vocab_list_school: school, vocab_list_class: className, school_name: school, class_name: className, owner: currentTeacher, teacher_name: currentTeacher, teacher_id: currentTeacherRecordId || '', created_at: new Date().toISOString(), vocab_word: '', vocab_image: '', vocab_cover_image_id: '', vocab_cover_image_url: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: currentTeacher, quiz_class: className, quiz_submitted_answers: '' };
   button.dataset.busy = 'true'; button.disabled = true; button.setAttribute('aria-busy', 'true');
   try {
     const result = await window.dataSdk.create(record);
     if (!result?.isOk) { toast('Could not save the vocabulary list. Please try again.'); return; }
     const refresh = await window.dataSdk.init(handler);
     if (!refresh?.isOk) { toast('The list was saved, but could not be refreshed. Please try again.'); return; }
-    input.value = '';
+    if (input) input.value = '';
     renderVocabLists();
     renderGamesList();
     toast(`Vocabulary list "${listName}" created!`);
+    return true;
   } finally { button.dataset.busy = 'false'; button.disabled = false; button.removeAttribute('aria-busy'); }
+}
+document.getElementById('create-vocab-list-btn')?.addEventListener('click', async event => {
+  event.preventDefault();
+  const button = event.currentTarget;
+  const input = document.getElementById('new-vocab-list-name');
+  await createVocabListForClass({ listName: input?.value, school: navSchool, className: navClass, button, input });
 });
 
 let selectedGameList = [];
