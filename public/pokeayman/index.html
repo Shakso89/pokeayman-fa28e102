@@ -16495,7 +16495,7 @@ async function deleteVocabList(listId, listName, options = {}) {
   if (deleteVocabList.busy) return fail('Another list is being deleted. Please wait.');
   if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return fail('Sign in as the list owner to delete it.');
   const requestedId = normalizeVocabId(listId);
-  const list = getVocabLists().find(item => normalizeVocabId(item.vocab_list_id || item.__backendId) === requestedId)
+  const list = getVocabLists('', '').find(item => normalizeVocabId(item.vocab_list_id || item.__backendId) === requestedId)
     || allData.find(item => item.type === 'vocab_list' && normalizeVocabId(item.__backendId) === requestedId);
   if (!list) return fail('Could not verify this vocabulary list. Please refresh and try again.');
   if (normalizeStudentIdentity(list.teacher_name || list.owner) !== normalizeStudentIdentity(currentTeacher)) return fail('Only the list owner can permanently delete it.');
