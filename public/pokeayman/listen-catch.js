@@ -94,16 +94,36 @@
     if (typeof setCurrentStudentRecord === 'function' && identity(latest) === String(currentStudentRecordId || '')) setCurrentStudentRecord(update);
     if (currentRole === 'student' && typeof renderStudentDashboard === 'function') renderStudentDashboard();
   }
-  async function openBall() {
-    const record = student(); const state = parseProgress(progressFor(record));
-    if (!record || !state.balls) return;
+  const openingBallIds = new Set();
+  async function openBall(record = student()) {
+    if (!canManageCatchdex(record)) return;
+    const recordId = identity(record);
+    if (!recordId || openingBallIds.has(recordId)) return;
+    const state = parseProgress(progressFor(record));
+    if (!state.balls) return toast('No Catch Balls are available to open.');
     const item = randomPokemon(); if (!item) return toast('The Catchdex is loading. Try again in a moment.');
     const caught = state.album.some(entry => Number(entry.pokemon_id) === Number(item.id));
     state.balls -= 1;
-    if (caught) { const coins = duplicateCoins(item); await addCoins(record, coins); state.last = { item, duplicate: true, coins }; }
+    const coins = caught ? duplicateCoins(item) : 0;
+    if (caught) state.last = { item, duplicate: true, coins };
     else { const types = typeof getPokemonTypes === 'function' ? getPokemonTypes(item).filter(value => value !== 'unknown') : [typeOf(item)]; state.album.push({ pokemon_id: Number(item.id), pokemon_name: item.name, rarity: item.rarity || 'common', pokemon_type: types[0] || typeOf(item), pokemon_types: types, caught_at: new Date().toISOString() }); state.last = { item, duplicate: false }; }
-    await save(record, state);
-    renderCatchdexTab(); mountCards(); showReveal(item, caught, caught ? duplicateCoins(item) : 0);
+    openingBallIds.add(recordId);
+    let coinsAwarded = false;
+    try {
+      await save(record, state);
+      if (caught) { await addCoins(record, coins); coinsAwarded = true; }
+    } catch (_) {
+      state.balls += 1;
+      if (!caught) state.album = state.album.filter(entry => Number(entry.pokemon_id) !== Number(item.id));
+      if (coinsAwarded) { try { await addCoins(record, -coins); } catch (_) {} }
+      try { await save(record, state); } catch (_) {}
+      openingBallIds.delete(recordId);
+      return toast('Could not open the Catch Ball. It is still available; please try again.');
+    }
+    openingBallIds.delete(recordId);
+    if (currentRole === 'student') renderCatchdexTab();
+    else renderAlbumModal(record, true);
+    mountCards(); showReveal(item, caught, coins);
   }
   function showReveal(item, duplicate, coins) {
     document.getElementById('lc-reveal')?.remove();
@@ -335,11 +355,11 @@
     const challengeMarkup = goal.active
       ? `<section class="catchdex-challenge"><div><span>WEEKLY CHALLENGE${goal.claimed ? ' · COMPLETE' : ''}</span><h3>${esc(goal.title)}</h3><p>Collect ${goal.goal} unique Pokémon matching ${esc(challengeCriteria(goal))} · ${goal.start} – ${goal.end}</p></div><b>${Math.min(goal.unique, goal.goal)} / ${goal.goal}</b>${goal.ready ? '<button type="button" class="lc-primary" data-catchdex="claim">Claim Mystery Box</button>' : ''}${goal.claimed ? '<p class="lc-challenge-claimed">Mystery Box claimed · qualifying stickers were used.</p>' : ''}</section>`
       : '<section class="catchdex-challenge is-inactive"><div><span>WEEKLY CHALLENGE</span><h3>No active challenge</h3><p>Your next Catchdex challenge will appear here when the admin schedules it.</p></div></section>';
-    return `<div class="catchdex-content"><header><div><span>GAME COLLECTION</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2></div>${readOnly ? '<button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button>' : ''}</header><section class="catchdex-summary"><div><b>${state.balls}</b><span>Catch Balls</span>${readOnly ? '' : `<small class="catchdex-daily">${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} balls earned today · unopened balls have no daily limit</small>`}</div><div><b>${state.mysteryBoxes}</b><span>Mystery Boxes</span></div><div class="catchdex-actions">${!readOnly ? `<button type="button" class="lc-primary" data-catchdex="ball" ${state.balls ? '' : 'disabled'}>Open a Catch Ball</button>` : ''}${state.mysteryBoxes ? '<button type="button" class="lc-primary" data-catchdex="boxes">Open Mystery Box</button>' : ''}</div></section>${state.last ? `<p class="catchdex-last ${state.last.duplicate ? 'is-duplicate' : ''}">${state.last.duplicate ? `Duplicate ${esc(state.last.item.name)} became ${state.last.coins} coins.` : `New discovery: ${esc(state.last.item.name)}!`}</p>` : ''}${challengeMarkup}<section class="catchdex-grid">${cards}</section></div>`;
+    return `<div class="catchdex-content"><header><div><span>GAME COLLECTION</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2></div>${readOnly ? '<button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button>' : ''}</header><section class="catchdex-summary"><div><b>${state.balls}</b><span>Catch Balls</span>${readOnly ? '' : `<small class="catchdex-daily">${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} balls earned today · unopened balls have no daily limit</small>`}</div><div><b>${state.mysteryBoxes}</b><span>Mystery Boxes</span></div><div class="catchdex-actions">${state.balls ? '<button type="button" class="lc-primary" data-catchdex="balls">Open Catch Balls</button>' : ''}${state.mysteryBoxes ? '<button type="button" class="lc-primary" data-catchdex="boxes">Open Mystery Boxes</button>' : ''}</div></section>${state.last ? `<p class="catchdex-last ${state.last.duplicate ? 'is-duplicate' : ''}">${state.last.duplicate ? `Duplicate ${esc(state.last.item.name)} became ${state.last.coins} coins.` : `New discovery: ${esc(state.last.item.name)}!`}</p>` : ''}${challengeMarkup}<section class="catchdex-grid">${cards}</section></div>`;
   }
   function bindCatchdexContents(root, record, readOnly) {
     root.querySelector('[data-catchdex="close"]')?.addEventListener('click', () => document.getElementById('catchdex-modal')?.classList.add('hidden'));
-    root.querySelector('[data-catchdex="ball"]')?.addEventListener('click', openBall);
+    root.querySelector('[data-catchdex="balls"]')?.addEventListener('click', () => showBallCountPopup(record));
     root.querySelector('[data-catchdex="claim"]')?.addEventListener('click', () => claimChallenge(record));
     root.querySelector('[data-catchdex="boxes"]')?.addEventListener('click', () => showBoxCountPopup(record));
   }
@@ -368,6 +388,18 @@
     const close = () => overlay.remove();
     overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-box-close]')) close(); });
     overlay.querySelector('[data-box-open]').addEventListener('click', () => { close(); openMysteryBox(record); });
+  }
+  function showBallCountPopup(record) {
+    if (!canManageCatchdex(record)) return;
+    const count = parseProgress(progressFor(record)).balls;
+    if (!count) return toast('No Catch Balls are available to open.');
+    document.getElementById('lc-ball-inventory')?.remove();
+    const overlay = document.createElement('div'); overlay.id = 'lc-ball-inventory'; overlay.className = 'lc-box-inventory'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Catch Ball inventory');
+    overlay.innerHTML = `<section class="lc-box-inventory-card"><button type="button" class="lc-mystery-close" data-ball-close aria-label="Close">×</button><span class="lc-mystery-kicker">CATCHDEX REWARDS</span><h2>${esc(record.student_name || 'Student')} has ${count} Catch Ball${count === 1 ? '' : 's'}</h2><p>Open a ball to reveal a Pokémon sticker. Duplicates convert into coins for this student.</p><button type="button" class="lc-primary" data-ball-open>Open one Catch Ball</button></section>`;
+    document.body.appendChild(overlay);
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-ball-close]')) close(); });
+    overlay.querySelector('[data-ball-open]').addEventListener('click', () => { close(); openBall(record); });
   }
   window.openCatchdex = function () { const tab = document.querySelector('.student-dashboard-tab[data-tab="catchdex"]'); if (currentRole === 'student' && tab) tab.click(); else if (albumViewer?.record) renderAlbumModal(albumViewer.record, true); };
   window.openCatchdexFor = function (record, readOnly = true) { albumViewer = { record, readOnly }; let modal = document.getElementById('catchdex-modal'); if (!modal) { modal = document.createElement('div'); modal.id = 'catchdex-modal'; modal.className = 'catchdex-modal'; document.body.appendChild(modal); modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); }); } renderAlbumModal(record, readOnly); };

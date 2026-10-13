@@ -4504,6 +4504,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      <section id="teacher-zone-vb-lists-panel" class="hidden teacher-zone-content-panel" role="tabpanel" aria-labelledby="teacher-zone-vb-lists-tab">
       <div class="teacher-zone-content-card">
        <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">📚</span><div><p class="teacher-zone-page-kicker">VOCABULARY</p><h3 id="teacher-vb-lists-title">My Word Banks</h3><p id="teacher-vb-lists-description">Your word banks, ready to review or share with your classes.</p></div></header>
+       <div class="flex justify-end mb-3"><button id="teacher-vb-lists-switch" type="button" class="btn-secondary hidden" style="min-height:2.7rem;white-space:nowrap">Show my lists</button></div>
        <p id="teacher-vb-lists-status" class="teacher-zone-status" aria-live="polite">Loading your lists…</p>
        <div id="teacher-vb-lists-grid"></div>
       </div>
@@ -8292,27 +8293,32 @@ function renderTeacherOwnedVocabLists() {
   const ownerScope = currentTeacherZoneOwnerScope();
   const requestVersion = teacherZoneRequestVersion;
   const schoolMode = window.vbListsMode === 'school';
+  const showMyLists = window.vbListsMode === 'school-mine';
+  const schoolPanel = schoolMode || showMyLists;
+  const switchButton = document.getElementById('teacher-vb-lists-switch');
+  if (switchButton) { switchButton.classList.toggle('hidden', !schoolPanel); switchButton.textContent = schoolMode ? 'Show my lists' : 'Show school lists'; }
   const title = document.getElementById('teacher-vb-lists-title');
   const description = document.getElementById('teacher-vb-lists-description');
-  if (title) title.textContent = schoolMode ? 'School Lists' : 'My Word Banks';
-  if (description) description.textContent = schoolMode ? 'Browse and share word banks other teachers have made available.' : 'Your word banks, ready to review or share with your classes.';
+  if (title) title.textContent = schoolMode ? 'School Lists' : showMyLists ? 'My Lists' : 'My Word Banks';
+  if (description) description.textContent = schoolMode ? 'Browse and share word banks other teachers have made available.' : showMyLists ? 'Review, edit, or delete the word banks you created.' : 'Your word banks, ready to review or share with your classes.';
   if (!ownerScope || !teacherWorkspaceKey || ownerScope !== teacherZoneOwnerScope) { grid.replaceChildren(); status.textContent = 'Sign in as a teacher to view your lists.'; return; }
   status.textContent = 'Loading your lists…';
   grid.replaceChildren();
   try {
     const teacherKey = normalizeStudentIdentity(currentTeacher);
     const allLists = getVocabLists('', '');
-    const lists = allLists.filter(list => (String(list.teacher_id || '').trim() === String(verifiedTeacherIdentity() || '').trim()) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey))
+    const myId = String(verifiedTeacherIdentity() || '').trim();
+    const isOwnedByCurrentTeacher = list => Boolean((myId && String(list.teacher_id || '').trim() === myId) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey));
+    const lists = allLists.filter(isOwnedByCurrentTeacher)
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
     if (ownerScope !== currentTeacherZoneOwnerScope() || requestVersion !== teacherZoneRequestVersion || teacherWorkspaceKey !== teacherStorageKey(ownerScope)) return;
-    const myId = String(verifiedTeacherIdentity() || '').trim();
-    const otherLists = allLists.filter(list => !((String(list.teacher_id || '').trim() === myId && myId) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey)))
+    const otherLists = allLists.filter(list => !isOwnedByCurrentTeacher(list))
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
     if (schoolMode) {
       if (!otherLists.length) { status.textContent = 'No other teachers have created vocabulary lists yet.'; return; }
       status.textContent = `${otherLists.length} list${otherLists.length === 1 ? '' : 's'} by other teachers · share any of them to your classes`;
     } else {
-      if (!lists.length) { status.textContent = 'You have not created any vocabulary lists yet.'; return; }
+      if (!lists.length) { status.textContent = showMyLists ? 'You have not created any lists yet.' : 'You have not created any vocabulary lists yet.'; return; }
       status.textContent = `${lists.length} of your list${lists.length === 1 ? '' : 's'}`;
     }
     const escape = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
@@ -8345,11 +8351,16 @@ function renderTeacherOwnedVocabLists() {
       const context = school ? `${className} · ${school}` : className;
       const coverAction = `role="button" tabindex="0" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault();event.stopPropagation();navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"`;
       const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${escape(list.vocab_cover_image_url)}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
-      const owned = currentRole === 'teacher' && verifiedTeacherIdentity() && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey;
+      const owned = currentRole === 'teacher' && isOwnedByCurrentTeacher(list);
       return `<article class="vocab-list-card teacher-zone-wordbank-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="teacher-zone-wordbank-heading"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name">${safeName}</span></div><p class="vocab-list-count teacher-zone-wordbank-context">${context}</p>${cover}<p class="vocab-list-count teacher-zone-wordbank-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode btn-primary" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div><div class="vocab-card-actions teacher-zone-wordbank-actions"><button type="button" class="vocab-card-edit btn-outline" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Edit</button>${owned ? `<button type="button" class="vocab-cover-button btn-secondary" onclick="openVocabCoverPicker('${safeId}','${safeName.replace(/'/g, "\\'")}')">Cover</button><button type="button" class="vocab-card-delete btn-danger" onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeName.replace(/'/g, "\\'")}',this)">Delete</button>` : ''}</div></article>`;
     }).join('');
   } catch (error) { status.textContent = 'Could not load your vocabulary lists. Please refresh and try again.'; }
 }
+
+document.getElementById('teacher-vb-lists-switch')?.addEventListener('click', () => {
+  window.vbListsMode = window.vbListsMode === 'school' ? 'school-mine' : 'school';
+  renderTeacherOwnedVocabLists();
+});
 
 // Standalone share popup: share any visible list (e.g. another teacher's) to the current teacher's classes.
 function openVocabSharePopupFor(listId, listName) {

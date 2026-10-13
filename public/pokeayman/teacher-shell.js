@@ -330,8 +330,8 @@
     document.querySelectorAll('#ts-sidebar .ts-item, #ts-sidebar .ts-switch').forEach((b) => {
       let a = false;
       if (b.dataset.tsClass) a = !!inClass && activeClassTab === b.dataset.tsClass;
-      else if (b.dataset.tsZone === 'school-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists' && window.vbListsMode === 'school';
-      else if (b.dataset.tsZone === 'vb-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists' && window.vbListsMode !== 'school';
+      else if (b.dataset.tsZone === 'school-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists' && (window.vbListsMode === 'school' || window.vbListsMode === 'school-mine');
+      else if (b.dataset.tsZone === 'vb-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists' && window.vbListsMode === 'mine';
       else if (b.dataset.tsZone) a = tab === 'teacher-zone' && zoneTab === b.dataset.tsZone;
       else if (b.dataset.ts === 'admin-users') a = tab === 'admin' && document.querySelector('.admin-sub-tab[data-subtab="users"]')?.classList.contains('admin-sub-tab-active');
       else if (b.dataset.ts === 'admin-controls') a = tab === 'admin' && document.querySelector('.admin-sub-tab[data-subtab="controls"]')?.classList.contains('admin-sub-tab-active');
