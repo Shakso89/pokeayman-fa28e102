@@ -334,6 +334,7 @@
     picker.addEventListener('click', event => { const button=event.target.closest('[data-lcpick]');if(!button)return;const choice=button.dataset.lcpick;picker.remove();if(choice==='close')return;const record=roster[Number(choice)];launchForStudent(listName,{...record,school_name:record.school_name||school,class_name:record.class_name||className}); });
   }
   window.startListenCatch = function (listName) {
+    if (!window.canUseProGames?.()) { window.requireProGame?.('Listen and Catch'); return; }
     if (currentRole === 'student') {
       const record = typeof getCurrentStudentRecord === 'function' ? getCurrentStudentRecord() : null;
       if (!record) return toast('Signed-in student was not found.');

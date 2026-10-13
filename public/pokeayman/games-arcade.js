@@ -7,22 +7,26 @@
     { fn: 'chooseScrambleWordCount', icon: '🔤', name: 'Unscramble', desc: 'Put the mixed-up letters back in order.', tags: ['1–4 players', 'Spelling'], accent: 'blue' },
     { fn: 'chooseHangmanWordCount', icon: '🎮', name: 'Hangman', desc: 'Guess the secret word letter by letter.', tags: ['1–4 players', 'Classic'], accent: 'yellow' },
     { fn: 'chooseFindMeScore', icon: '🕵️', name: 'Find Me', desc: 'Spot the right word as fast as you can.', tags: ['1–4 players', 'Quick recall'], accent: 'mint' },
-    { fn: 'startListenCatch', icon: '🔊', name: 'Listen and Catch', desc: 'Hear a word, catch the right answer, and fill your Catchdex.', tags: ['Solo', 'Listening'], accent: 'violet' },
-    { fn: 'startVocabBattle', icon: '⚔️', name: 'Poké Battle', desc: 'Defeat a wild Pokémon and send its reward to your teacher for approval.', tags: ['Solo', 'Teacher-approved reward'], accent: 'red' },
+    { fn: 'startListenCatch', icon: '🔊', name: 'Listen and Catch', desc: 'Hear a word, catch the right answer, and fill your Catchdex.', tags: ['Solo', 'Listening'], accent: 'violet', proOnly: true },
+    { fn: 'startVocabBattle', icon: '⚔️', name: 'Poké Battle', desc: 'Defeat a wild Pokémon and send its reward to your teacher for approval.', tags: ['Solo', 'Teacher-approved reward'], accent: 'red', proOnly: true },
   ];
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   window.gaRenderHub = function (listLabel, isTeacher) {
-    const cards = GAMES.filter(g => !(isTeacher ? g.studentOnly : g.teacherOnly)).map(g => `
-      <button type="button" class="ga-cart ga-${g.accent}" onclick="${g.fn === 'startVocabBattle' || g.fn === 'startListenCatch' ? `${g.fn}(selectedGameList)` : `chooseGamePlayers(selectedGameList, ${g.fn})`}" aria-label="Play ${esc(g.name)}">
+    const cards = GAMES.filter(g => !(isTeacher ? g.studentOnly : g.teacherOnly)).map(g => {
+      const locked = Boolean(g.proOnly && !window.canUseProGames?.());
+      const launch = g.fn === 'startVocabBattle' || g.fn === 'startListenCatch' ? `${g.fn}(selectedGameList)` : `chooseGamePlayers(selectedGameList, ${g.fn})`;
+      return `
+      <button type="button" class="ga-cart ga-${g.accent}${locked ? ' ga-pro-locked' : ''}" onclick="${locked ? `window.requireProGame('${esc(g.name)}')` : launch}" aria-disabled="${locked}" aria-label="${locked ? `${g.name}, Pro access required` : `Play ${g.name}`}" ${locked ? 'title="Pro access required"' : ''}>
         <span class="ga-cart-art" aria-hidden="true"><span>${g.icon}</span></span>
         <span class="ga-cart-body">
-          <span class="ga-cart-name">${esc(g.name)}</span>
+          <span class="ga-cart-name">${esc(g.name)}${g.proOnly ? '<span class="ga-pro-badge">PRO</span>' : ''}</span>
           <span class="ga-cart-desc">${esc(g.desc)}</span>
           <span class="ga-cart-tags">${g.tags.map(t => `<span>${esc(t)}</span>`).join('')}</span>
         </span>
-        <span class="ga-cart-play">Play ▶</span>
-      </button>`).join('');
+        <span class="ga-cart-play">${locked ? (isTeacher ? 'Upgrade to Pro' : 'Locked for class') : 'Play ▶'}</span>
+      </button>`;
+    }).join('');
     return `<section class="ga-hub" aria-label="Game arcade">
       <header class="ga-hub-head"><div><span class="ga-hub-kicker">Game Arcade</span><div class="ga-hub-list">Playing with <b>${esc(listLabel)}</b></div></div><button type="button" class="ga-change-lists" onclick="gaShowListSelection()">← Change lists</button></header>
       <div class="ga-grid" role="group" aria-label="Choose a vocabulary game">${cards}</div>

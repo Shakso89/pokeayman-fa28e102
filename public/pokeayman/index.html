@@ -4528,6 +4528,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       </div>
       <div id="teachers-list" class="teachers-inventory-grid"></div>
      </div>
+     <section id="admin-class-managers" class="glass-container rounded-xl p-5 mt-6" aria-labelledby="admin-class-managers-title"></section>
     </div>
     <div id="admin-subtab-all-students" class="admin-subtab-content hidden">
      <div class="mb-4"><input id="admin-student-search" type="text" placeholder="Search students..." class="w-full border rounded-lg px-3 py-2.5 text-sm">
@@ -6122,6 +6123,49 @@ function isAymanTeacher() {
   return currentRole === 'teacher' && currentTeacher === ADMIN_TEACHER.name && Boolean(verifiedTeacherIdentity());
 }
 function canAccessAdmin() { return isAymanTeacher(); }
+function isProTeacher(teacher) {
+  if (!teacher) return false;
+  return normalizeTeacherRole(teacher.teacher_role || teacher.role || teacher.user_role) === 'admin'
+    || normalizeStudentIdentity(teacher.teacher_name) === 'ayman'
+    || teacher.teacher_pro === true;
+}
+function isCurrentTeacherPro() { return isAymanTeacher() || isProTeacher(findMyTeacherRecord()); }
+function isClassManagedByPro(schoolName, className) {
+  const cls = allData.find(row => row.type === 'class' && row.school_name === schoolName && row.class_name === className);
+  if (!cls?.main_manager_id && !cls?.main_manager_name) return false;
+  const manager = allData.find(row => row.type === 'teacher' && (String(row.__backendId || '') === String(cls.main_manager_id || '') || normalizeStudentIdentity(row.teacher_name) === normalizeStudentIdentity(cls.main_manager_name)));
+  return isProTeacher(manager);
+}
+function canUseProGames() {
+  if (currentRole === 'teacher') return isCurrentTeacherPro();
+  if (currentRole !== 'student') return false;
+  const enrolled = getStudentEnrolledClasses();
+  if (!enrolled.length) return false;
+  const scope = typeof selectedStudentGamesScope !== 'undefined' ? selectedStudentGamesScope : 'class';
+  if (scope === 'all') return enrolled.every(item => isClassManagedByPro(item.school_name, item.class_name));
+  const key = typeof selectedStudentGamesClassKey !== 'undefined' ? selectedStudentGamesClassKey : '';
+  const selected = enrolled.find(item => `${item.school_name}||${item.class_name}` === key)
+    || enrolled.find(item => item.school_name === currentStudentSchool && item.class_name === currentStudentClass)
+    || enrolled[0];
+  return isClassManagedByPro(selected.school_name, selected.class_name);
+}
+window.canUseProGames = canUseProGames;
+window.requireProGame = function(gameName) {
+  if (canUseProGames()) return true;
+  if (currentRole === 'teacher') {
+    const modal = document.getElementById('contact-pricing-modal');
+    const content = document.getElementById('contact-tab-content');
+    if (modal && content) {
+      modal.classList.remove('hidden');
+      document.getElementById('contact-tab-btn')?.click();
+      let notice = document.getElementById('pro-upgrade-contact-notice');
+      if (!notice) { notice = document.createElement('div'); notice.id = 'pro-upgrade-contact-notice'; notice.setAttribute('role', 'status'); notice.className = 'rounded-xl border border-amber-300/50 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-100'; content.prepend(notice); }
+      notice.textContent = `${gameName} is part of PokéAyman Pro. Contact us to upgrade your teacher plan.`;
+      notice.scrollIntoView({ block: 'nearest' });
+    } else toast(`${gameName} requires a Pro teacher plan. Contact the administrator to upgrade.`);
+  } else toast('This game is locked for this class. Ask your class manager about Pro access.');
+  return false;
+};
 function canAccessTeacherZone() {
   if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return false;
   return true;
@@ -10152,8 +10196,37 @@ function renderAdminPanel() {
   const teacherQuery = String(document.getElementById('admin-teacher-search')?.value || '').trim().toLocaleLowerCase();
   const teachers = getTeachers().filter(teacher => !teacherQuery || String(teacher.teacher_name || '').trim().toLocaleLowerCase().includes(teacherQuery));
   const teachersList = document.getElementById('teachers-list');
-  teachersList.innerHTML = teachers.length ? teachers.map(t => `<div class="teachers-inventory-card" tabindex="0" role="button" aria-label="Open teacher ${t.teacher_name}" onclick="if(!event.target.closest('button')) openEditTeacherModal('${t.__backendId}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openEditTeacherModal('${t.__backendId}');}"><span class="teacher-inventory-avatar" aria-hidden="true">${(() => { const avatarSrc = teacherAvatarSrc(t.teacher_avatar); return avatarSrc ? `<img src="${avatarSrc}" class="w-full h-full object-contain" alt="${String(t.teacher_name || 'Teacher').replace(/"/g, '&quot;')}'s Pokémon avatar" loading="lazy">` : (String(t.teacher_name || '?').trim().charAt(0).toUpperCase() || '?'); })()}</span><p class="teacher-inventory-name" title="${t.teacher_name}">${t.teacher_name}</p><p class="teacher-inventory-detail">Credits: ${t.teacher_credits === -1 ? '∞' : (t.teacher_credits || 0)} 💳</p><p class="teacher-inventory-detail">${t.teacher_name === 'Ayman' ? 'Admin' : 'Teacher'}</p><div class="teachers-inventory-actions">${t.teacher_name === 'Ayman' ? '<span class="text-xs bg-yellow-300 text-slate-900 px-2 py-1 rounded font-black" title="Administrator">Admin</span>' : `<button type="button" class="text-blue-200 bg-blue-900/70 hover:bg-blue-700" aria-label="Edit ${t.teacher_name}" title="Edit teacher" onclick="event.stopPropagation();openEditTeacherModal('${t.__backendId}')">✎</button><button type="button" class="text-red-200 bg-red-900/70 hover:bg-red-700" aria-label="Delete ${t.teacher_name}" title="Delete teacher" onclick="event.stopPropagation();deleteTeacher('${t.__backendId}','${t.teacher_name}')">×</button>`}</div></div>`).join('') : `<p class="text-gray-400 text-sm text-center py-8">${teacherQuery ? 'No teachers match your search.' : 'No teachers yet.'}</p>`;
+  teachersList.innerHTML = teachers.length ? teachers.map(t => `<div class="teachers-inventory-card" tabindex="0" role="button" aria-label="Open teacher ${t.teacher_name}" onclick="if(!event.target.closest('button')) openEditTeacherModal('${t.__backendId}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openEditTeacherModal('${t.__backendId}');}"><span class="teacher-inventory-avatar" aria-hidden="true">${(() => { const avatarSrc = teacherAvatarSrc(t.teacher_avatar); return avatarSrc ? `<img src="${avatarSrc}" class="w-full h-full object-contain" alt="${String(t.teacher_name || 'Teacher').replace(/"/g, '&quot;')}'s Pokémon avatar" loading="lazy">` : (String(t.teacher_name || '?').trim().charAt(0).toUpperCase() || '?'); })()}</span><p class="teacher-inventory-name" title="${t.teacher_name}">${t.teacher_name}</p><p class="teacher-inventory-detail">Credits: ${t.teacher_credits === -1 ? '∞' : (t.teacher_credits || 0)} 💳</p><p class="teacher-inventory-detail">${t.teacher_name === 'Ayman' ? 'Admin' : (t.teacher_pro === true ? 'Pro teacher' : 'Teacher')}</p><div class="teachers-inventory-actions">${t.teacher_name === 'Ayman' ? '<span class="text-xs bg-yellow-300 text-slate-900 px-2 py-1 rounded font-black" title="Administrator">Admin</span>' : `<button type="button" class="text-blue-200 bg-blue-900/70 hover:bg-blue-700" aria-label="Edit ${t.teacher_name}" title="Edit teacher" onclick="event.stopPropagation();openEditTeacherModal('${t.__backendId}')">✎</button><button type="button" class="text-red-200 bg-red-900/70 hover:bg-red-700" aria-label="Delete ${t.teacher_name}" title="Delete teacher" onclick="event.stopPropagation();deleteTeacher('${t.__backendId}','${t.teacher_name}')">×</button>`}</div></div>`).join('') : `<p class="text-gray-400 text-sm text-center py-8">${teacherQuery ? 'No teachers match your search.' : 'No teachers yet.'}</p>`;
+  renderAdminClassManagers();
   renderAdminAllStudents(); renderAdminShop(); renderCreditLog();
+}
+
+function escapeAdminText(value) { return String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char])); }
+function renderAdminClassManagers() {
+  const host = document.getElementById('admin-class-managers'); if (!host) return;
+  const classes = getAllTeacherClasses().slice().sort((a,b) => `${a.school_name} ${a.class_name}`.localeCompare(`${b.school_name} ${b.class_name}`));
+  const teachers = getTeachers().filter(teacher => teacher.teacher_name && normalizeTeacherRole(teacher.teacher_role || teacher.role || teacher.user_role) !== 'admin').slice().sort((a,b) => String(a.teacher_name).localeCompare(String(b.teacher_name)));
+  host.innerHTML = `<div class="mb-4"><p class="text-xs font-black tracking-widest text-amber-300">CLASS ACCESS</p><h3 id="admin-class-managers-title" class="heading-font text-lg font-bold text-white">Main class managers</h3><p class="mt-1 text-sm text-slate-300">Choose the teacher responsible for each class. Their Pro status controls Poké Battle and Listen and Catch for students in that class.</p></div>${classes.length ? `<div class="grid gap-3 sm:grid-cols-2">${classes.map(cls => `<label class="flex min-w-0 flex-col gap-2 rounded-xl border border-indigo-200/20 bg-slate-900/50 p-3"><span class="min-w-0"><strong class="block truncate text-white">${escapeAdminText(cls.class_name)}</strong><small class="block truncate text-slate-300">${escapeAdminText(cls.school_name)}</small></span><select class="admin-main-manager-select account-control w-full" data-class-id="${escapeAdminText(cls.__backendId)}" aria-label="Main manager for ${escapeAdminText(cls.class_name)}"><option value="">No main manager selected</option>${teachers.map(teacher => `<option value="${escapeAdminText(teacher.__backendId)}" ${String(cls.main_manager_id || '') === String(teacher.__backendId || '') ? 'selected' : ''}>${escapeAdminText(teacher.teacher_name)}${teacher.teacher_pro === true ? ' · Pro' : ''}</option>`).join('')}</select></label>`).join('')}</div>` : '<p class="rounded-xl bg-slate-900/60 p-4 text-sm text-slate-300">Create a class first to assign its main manager.</p>'}`;
+  host.querySelectorAll('.admin-main-manager-select').forEach(select => select.addEventListener('change', async () => {
+    const classId = select.dataset.classId; const classRec = allData.find(row => row.type === 'class' && String(row.__backendId) === String(classId));
+    if (!classRec || select.dataset.busy === 'true') return;
+    const teacher = teachers.find(row => String(row.__backendId) === String(select.value));
+    select.dataset.busy = 'true'; select.disabled = true;
+    const assignment = teacher && allData.find(row => row.type === 'teacher_class_assignment' && (String(row.assigned_teacher_id || '') === String(teacher.__backendId) || (!row.assigned_teacher_id && normalizeStudentIdentity(row.assigned_teacher) === normalizeStudentIdentity(teacher.teacher_name))) && row.assigned_school === classRec.school_name && row.assigned_class === classRec.class_name);
+    let newAssignment = null;
+    if (teacher && !assignment) {
+      const created = await window.dataSdk.create({ type: 'teacher_class_assignment', assigned_teacher: teacher.teacher_name, assigned_teacher_id: teacher.__backendId, assigned_school: classRec.school_name, assigned_class: classRec.class_name, created_at: new Date().toISOString() });
+      if (!created?.isOk) { toast('Could not assign this teacher to the class.'); select.disabled = false; select.dataset.busy = 'false'; renderAdminClassManagers(); return; }
+      newAssignment = created.data;
+    }
+    const latest = allData.find(row => row.type === 'class' && String(row.__backendId) === String(classId)) || classRec;
+    const saved = await window.dataSdk.update({ ...latest, main_manager_id: teacher?.__backendId || '', main_manager_name: teacher?.teacher_name || '' });
+    if (!saved?.isOk) {
+      if (newAssignment) await window.dataSdk.delete(newAssignment);
+      toast('Could not save the main class manager.');
+    } else toast(teacher ? `${teacher.teacher_name} is now main manager of ${classRec.class_name}.` : `Main manager cleared for ${classRec.class_name}.`);
+    renderAdminClassManagers();
+  }));
 }
 
 function studentActivityTimestamp(record) {
@@ -11706,6 +11779,7 @@ function openEditTeacherModal(teacherId) {
     <label class="es-label" for="et-name">Teacher name</label><input type="text" id="et-name" value="${teacher.teacher_name}" class="es-input" ${isAdminRow ? 'disabled' : ''} required>
     <label class="es-label">Sign-in email</label><div class="et-email-row"><span>${email || '—'}</span>${email ? '<button type="button" id="et-reset" class="et-link">Send password reset</button>' : ''}</div>
     <label class="es-label" for="et-credits">Credits</label><input type="number" id="et-credits" value="${teacher.teacher_credits||0}" class="es-input">
+    ${!isAdminRow ? `<label class="teacher-zone-access-setting"><span class="teacher-zone-access-label"><span class="teacher-zone-access-copy"><strong>Pro badge</strong><small>Unlock Poké Battle and Listen and Catch for this teacher and their managed classes.</small></span><span class="teacher-zone-switch"><input type="checkbox" id="et-pro-access" ${teacher.teacher_pro === true ? 'checked' : ''}><span aria-hidden="true"></span></span></span></label>` : ''}
     ${!isAdminRow ? `<div class="et-gift"><div><strong>🎁 Gift a surprise box</strong><small>They open it for 10–100 free credits</small></div><button type="button" id="et-grant" class="et-grant">Grant box</button></div>` : ''}
     ${!isAdminRow ? `<label class="es-label">Manage whole schools</label><div class="et-chips">${allSchools.length ? allSchools.map(school => `<label class="et-chip"><input type="checkbox" class="et-school-checkbox" data-school-name="${school.school_name}" ${assignedSchoolNames.has(school.school_name) ? 'checked' : ''}><span>${school.school_name}</span></label>`).join('') : '<p class="es-empty">No schools yet</p>'}</div>
     <label class="es-label">Manage classes</label><div class="et-chips et-chips-scroll">${allClasses.length ? allClasses.map(cls => `<label class="et-chip"><input type="checkbox" class="et-class-checkbox" data-class-id="${cls.__backendId}" data-school-name="${cls.school_name}" data-class-name="${cls.class_name}" ${assignedClassKeys.has(`${cls.school_name}||${cls.class_name}`) ? 'checked' : ''}><span>${cls.class_name}<small>${cls.school_name}</small></span></label>`).join('') : '<p class="es-empty">No classes yet</p>'}</div>` : ''}
@@ -11734,9 +11808,10 @@ function openEditTeacherModal(teacherId) {
     const newName = modal.querySelector('#et-name').value.trim();
     const newCredits = parseInt(modal.querySelector('#et-credits').value);
     const teacherZoneAccess = modal.querySelector('#et-zone-access').checked ? 'allow' : 'hide';
-    const saved = await window.dataSdk.update({ ...(allData.find(t => t.__backendId === teacher.__backendId) || teacher), teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess });
+    const teacherPro = isAdminRow ? true : modal.querySelector('#et-pro-access').checked;
+    const saved = await window.dataSdk.update({ ...(allData.find(t => t.__backendId === teacher.__backendId) || teacher), teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess, teacher_pro: teacherPro });
     if (!saved?.isOk) { toast('Could not save teacher settings. Please try again.'); return; }
-    allData = allData.map(row => row.__backendId === teacher.__backendId ? { ...row, teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess } : row);
+    allData = allData.map(row => row.__backendId === teacher.__backendId ? { ...row, teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess, teacher_pro: teacherPro } : row);
     if (currentRole === 'teacher' && currentTeacherRecordId === teacher.__backendId) {
       if (!canAccessTeacherZone() && activeMainTab === 'teacher-zone') showMainTab('dashboard');
       updateRoleUI();
@@ -11774,6 +11849,10 @@ function openEditTeacherModal(teacherId) {
       // Remove class assignments that are no longer checked
       for (const assignment of currentClassAssignments) {
         if (!selectedClassIds.has(`${assignment.assigned_school}||${assignment.assigned_class}`)) {
+          const assignedClass = allData.find(row => row.type === 'class' && row.school_name === assignment.assigned_school && row.class_name === assignment.assigned_class);
+          if (assignedClass && String(assignedClass.main_manager_id || '') === String(teacher.__backendId || '')) {
+            await window.dataSdk.update({ ...assignedClass, main_manager_id: '', main_manager_name: '' });
+          }
           await window.dataSdk.delete(assignment);
         }
       }
@@ -13144,7 +13223,8 @@ function renderGamesList() {
   }
 
   const gamesListHeading = isStudentGames && selectedStudentGamesScope === 'all' ? 'All joined classes' : 'CHOOSE A VOCABULARY LIST TO PLAY';
-  let html = '<div class="mb-4">' + classFilterHtml + (isStudentGames ? '<button type="button" class="ga-listen-quickplay"><span><b>Listen and Catch</b><small>Uses all vocabulary lists in the selected class automatically.</small></span><span aria-hidden="true">▶</span></button>' : '') + `<p class="mb-3 text-xs font-black text-amber-200 tracking-widest uppercase">${gamesListHeading}</p>`;
+  const listenCatchLocked = isStudentGames && !canUseProGames();
+  let html = '<div class="mb-4">' + classFilterHtml + (isStudentGames ? `<button type="button" class="ga-listen-quickplay${listenCatchLocked ? ' is-pro-locked' : ''}" aria-disabled="${listenCatchLocked}" aria-label="Listen and Catch${listenCatchLocked ? ', Pro access required for this class' : ''}"><span><b>Listen and Catch <span class="ga-pro-badge">PRO</span></b><small>${listenCatchLocked ? 'Locked for this class. Ask your main class manager about Pro access.' : 'Uses all vocabulary lists in the selected class automatically.'}</small></span><span aria-hidden="true">${listenCatchLocked ? 'Locked' : '▶'}</span></button>` : '') + `<p class="mb-3 text-xs font-black text-amber-200 tracking-widest uppercase">${gamesListHeading}</p>`;
   classGroups.forEach(group => {
     if (showClassHeaders) {
       html += `<div class="mb-2 mt-4 flex items-center gap-2"><span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-indigo-500 text-[10px] font-black text-slate-900 shadow">📚</span><span class="text-sm font-extrabold text-amber-200 tracking-wide">${group.className}<span class="ml-1.5 text-xs font-bold text-indigo-200/80">· ${group.school}</span></span></div>`;

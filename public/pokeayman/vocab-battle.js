@@ -447,6 +447,7 @@
   }
 
   window.startVocabBattle = function (listName) {
+    if (!window.canUseProGames?.()) { window.requireProGame?.('Poké Battle'); return; }
     if (currentRole !== 'student') return openPlayerPicker(listName);
     const student = ((typeof getStudentRecordByStableId === 'function' && currentStudentRecordId && getStudentRecordByStableId(currentStudentRecordId))
       || getAllStudents().find((s) => s.student_name === currentStudent));
