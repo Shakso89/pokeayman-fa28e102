@@ -221,6 +221,10 @@ body.ts-bright .pk-avatar-box :is(.avatar-option,.profile-avatar-option){backgro
 /* Multiple teachers: equal, unclipped */
 html body .gym-card .class-teacher-pill{display:flex!important;flex-direction:row!important;flex-wrap:wrap;justify-content:center;gap:14px!important;overflow:visible!important;max-width:100%;text-overflow:clip!important}
 html body .gym-card .class-teacher-item{flex:0 1 96px;min-width:78px;text-align:center;white-space:normal;overflow-wrap:anywhere;line-height:1.2;color:#ffcb05;font-weight:800}
+html body .gym-card .class-teacher-label{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px}
+html body .gym-card .class-teacher-badge{display:inline-flex;align-items:center;padding:2px 5px;border:1px solid rgba(255,221,90,.58);border-radius:999px;background:rgba(255,203,5,.16);color:#ffe58a;font-size:.53rem;font-weight:1000;line-height:1;letter-spacing:.06em}
+html body .gym-card .class-teacher-badge.is-admin{border-color:rgba(147,197,253,.68);background:rgba(59,130,246,.2);color:#bfdbfe}
+html body .gym-card .class-teacher-more{align-self:center;flex:none;padding:5px 9px;border:1px solid rgba(255,203,5,.28);border-radius:999px;background:rgba(255,203,5,.1);color:rgba(230,236,255,.82);font-size:.72rem;font-weight:800;white-space:nowrap}
 html body .gym-card .class-teacher-pill:has(.class-teacher-item + .class-teacher-item) .class-teacher-avatar{width:64px;height:64px}
 html body .ec-teacher-toggle,html body .ec-teacher-toggle span{color:#3b2a00!important}
 html body .ec-teacher-toggle{background:#fff6d6!important;border-color:#f0c94a!important}

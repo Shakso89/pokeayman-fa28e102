@@ -33,8 +33,12 @@
 .ga-cart-tags span { font-size: .68rem; font-weight: 800; padding: .15rem .5rem; border-radius: 999px; background: color-mix(in srgb, var(--a) 20%, transparent); color: var(--ga-ink); }
 .ga-cart-play { margin: .55rem .9rem .9rem; align-self: flex-start; font-weight: 900; font-size: .8rem; padding: .35rem .85rem; border-radius: 999px; background: var(--a); color: #111827; }
 .ga-pro-badge { display: inline-flex; vertical-align: middle; margin-left: .45rem; padding: .12rem .42rem; border: 1px solid rgba(255,221,90,.55); border-radius: 999px; background: rgba(255,203,5,.16); color: #ffe58a; font: 900 .58rem/1.2 'Figtree',sans-serif; letter-spacing: .1em; }
-.ga-cart.ga-pro-locked { border-style: dashed; filter: saturate(.72); }
-.ga-cart.ga-pro-locked:hover { transform: translateY(-2px); border-color: #ffcb05; }
+.ga-cart.ga-pro-locked { background: color-mix(in srgb, var(--ga-surface) 94%, #080d18); border-color: color-mix(in srgb, var(--ga-border) 72%, #64748b); }
+.ga-cart.ga-pro-locked .ga-cart-art { filter: grayscale(.82) brightness(.62); }
+.ga-cart.ga-pro-locked .ga-cart-name, .ga-cart.ga-pro-locked .ga-cart-desc, .ga-cart.ga-pro-locked .ga-cart-tags { opacity: .58; }
+.ga-cart.ga-pro-locked .ga-pro-badge { opacity: .78; }
+.ga-cart.ga-pro-locked .ga-cart-play { background: color-mix(in srgb, var(--ga-yellow) 82%, #9ca3af); color: #252016; }
+.ga-cart.ga-pro-locked:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--ga-border) 50%, #ffcb05); }
 
 /* Lobby */
 .ga-student-setup { max-width: 620px; margin: 1rem auto; }

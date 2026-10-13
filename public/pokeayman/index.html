@@ -11998,7 +11998,9 @@ function classTeacherPill(schoolName, className) {
   const names = getClassTeacherNames(schoolName, className);
   if (!names.length) return '';
   const esc = v => String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  return `<span class="class-teacher-pill" title="Class teacher">${names.map(n => { const src = classTeacherAvatarFor(n); return `<span class="class-teacher-item" title="TR. ${esc(n)}">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}TR. ${esc(n.replace(/^TR\.\s*/i, ''))}</span>`; }).join('')}</span>`;
+  const visibleNames = names.slice(0, 2);
+  const hiddenCount = Math.max(0, names.length - visibleNames.length);
+  return `<span class="class-teacher-pill" title="Class teachers">${visibleNames.map(n => { const src = classTeacherAvatarFor(n); const cleanName = n.replace(/^TR\.\s*/i, ''); const teacher = cleanName === 'Ayman' ? getAdminTeacherRecord() : getTeachers().find(record => record.teacher_name === cleanName); const badge = cleanName === 'Ayman' || teacher?.teacher_role === 'admin' ? '<span class="class-teacher-badge is-admin">ADMIN</span>' : teacher?.teacher_pro === true ? '<span class="class-teacher-badge is-pro">PRO</span>' : ''; return `<span class="class-teacher-item" title="TR. ${esc(n)}">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}<span class="class-teacher-label">TR. ${esc(cleanName)}${badge}</span></span>`; }).join('')}${hiddenCount ? `<span class="class-teacher-more" aria-label="${hiddenCount} more teacher${hiddenCount === 1 ? '' : 's'}">+${hiddenCount} more</span>` : ''}</span>`;
 }
 function getAssignedClasses(teacherName) {
   return allData.filter(r => r.type === 'teacher_class_assignment' && assignmentMatchesTeacher(r, teacherName));
