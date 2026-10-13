@@ -62,6 +62,11 @@
   function challengeCriteria(active) {
     return [active.type && `${active.type} type`, active.tier && `${active.tier} tier`].filter(Boolean).join(' · ') || 'any type or tier';
   }
+  function hasClaimedChallenge(state, challengeId) {
+    if (!challengeId) return false;
+    const claimed = [...(Array.isArray(state.claimedChallengeIds) ? state.claimedChallengeIds : []), ...(Array.isArray(state.openedChallengeIds) ? state.openedChallengeIds : [])];
+    return claimed.some(id => String(id) === String(challengeId)) || String(state.lastChallengeReward?.challengeId || '') === String(challengeId);
+  }
   function catalog() { return Array.isArray(window.pokemonCatalog) ? window.pokemonCatalog : (typeof pokemonCatalog !== 'undefined' ? pokemonCatalog : []); }
   function randomPokemon() {
     const pool = catalog().filter(item => Number(item.id) > 0);
@@ -138,7 +143,7 @@
     if (!active) return { id: '', title: 'No challenge this week', type: '', goal: DEFAULT_CHALLENGE_GOAL, unique: 0, ready: false, claimed: false, active: null };
     const qualifying = state.album.filter(entry => matchesChallenge(entry, active));
     const unique = new Set(qualifying.map(entry => Number(entry.pokemon_id))).size;
-    const claimed = (state.claimedChallengeIds || []).includes(active.id) || (state.openedChallengeIds || []).includes(active.id);
+    const claimed = hasClaimedChallenge(state, active.id);
     return { ...active, unique: claimed ? active.goal : unique, ready: unique >= active.goal && !claimed, claimed, qualifying };
   }
   function canManageCatchdex(record) {
@@ -148,13 +153,16 @@
   async function claimChallenge(record = student()) {
     if (!canManageCatchdex(record)) return;
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    if (!goal.ready || !goal.id || (state.claimedChallengeIds || []).includes(goal.id)) return;
+    if (!goal.ready || !goal.id || goal.claimed || hasClaimedChallenge(state, goal.id)) return;
     const claimKey = `${identity(record)}:${goal.id}`;
     if (claimingChallengeIds.has(claimKey)) return;
     claimingChallengeIds.add(claimKey);
     const consumed = goal.qualifying.slice(0, goal.goal); const consumedIds = new Set(consumed.map(entry => Number(entry.pokemon_id)));
     state.album = state.album.filter(entry => !consumedIds.has(Number(entry.pokemon_id)) || !matchesChallenge(entry, goal));
-    state.claimedChallengeIds = [...(state.claimedChallengeIds || []), goal.id];
+    state.claimedChallengeIds = [...new Set([...(Array.isArray(state.claimedChallengeIds) ? state.claimedChallengeIds : []), goal.id])];
+    // Keep the legacy marker in sync so older dashboard bundles also treat this
+    // student's challenge as already claimed after a reload.
+    state.openedChallengeIds = [...new Set([...(Array.isArray(state.openedChallengeIds) ? state.openedChallengeIds : []), goal.id])];
     state.mysteryBoxes += 1;
     state.lastChallengeReward = { challengeId: goal.id, consumed: consumed.length, claimedAt: new Date().toISOString() };
     try { await save(record, state); }

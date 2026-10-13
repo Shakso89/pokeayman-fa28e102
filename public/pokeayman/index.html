@@ -6925,17 +6925,22 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
 });
 
 const contactPricingButton = document.getElementById('contact-pricing-btn');
-if (contactPricingButton && !document.getElementById('contact-pricing-float')) {
-  const dock = document.createElement('div');
-  dock.id = 'contact-pricing-float';
-  const close = document.createElement('button');
-  close.id = 'contact-pricing-dock-close'; close.type = 'button'; close.setAttribute('aria-label', 'Hide Contact and plans button'); close.title = 'Hide'; close.textContent = '×';
-  dock.append(contactPricingButton, close);
-  document.body.appendChild(dock);
-  close.addEventListener('click', () => { dock.hidden = true; });
+if (contactPricingButton) {
+  let dock = document.getElementById('contact-pricing-float');
+  if (!dock) {
+    dock = document.createElement('div');
+    dock.id = 'contact-pricing-float';
+    const close = document.createElement('button');
+    close.id = 'contact-pricing-dock-close'; close.type = 'button'; close.setAttribute('aria-label', 'Hide Contact and plans button'); close.title = 'Hide'; close.textContent = '×';
+    close.addEventListener('click', () => { dock.hidden = true; });
+    dock.appendChild(close);
+  }
+  if (contactPricingButton.parentElement !== dock) dock.prepend(contactPricingButton);
+  if (dock.parentElement !== document.body) document.body.appendChild(dock);
+  dock.hidden = false;
 }
 
-document.getElementById('contact-pricing-btn').addEventListener('click', () => {
+contactPricingButton?.addEventListener('click', () => {
   document.getElementById('contact-pricing-modal').classList.remove('hidden');
 });
 

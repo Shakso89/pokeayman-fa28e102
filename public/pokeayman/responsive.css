@@ -57,6 +57,52 @@
 
 /* Flashcards: never split a word mid-way. Font is fitted by responsive.js. */
 #flashcard-front p, #student-vocab-word { word-break: normal !important; overflow-wrap: normal !important; hyphens: none; white-space: nowrap; max-width: 100%; }
+
+/* Contact & plans stays attached to the viewport on home and dashboard screens.
+   Keep it above the responsive navigation bars and mount styling independent of
+   the screen where its original button was rendered. */
+body > #contact-pricing-float {
+  position: fixed !important;
+  inset: auto max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) auto !important;
+  z-index: 1000 !important;
+  display: inline-flex !important;
+  align-items: center;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+body > #contact-pricing-float[hidden] { display: none !important; }
+body > #contact-pricing-float > #contact-pricing-btn {
+  position: relative !important;
+  width: auto;
+  min-width: 0;
+  min-height: 48px;
+  pointer-events: auto !important;
+}
+@media (max-width: 1024px) {
+  body.ts-on > #contact-pricing-float {
+    bottom: calc(126px + env(safe-area-inset-bottom)) !important;
+  }
+  body > #contact-pricing-float > #contact-pricing-btn {
+    width: 52px;
+    min-width: 52px;
+    min-height: 52px;
+    padding: 8px;
+    justify-content: center;
+  }
+  body > #contact-pricing-float .home-contact-label { display: none; }
+  body > #contact-pricing-float #contact-pricing-dock-close { opacity: 1; pointer-events: auto; }
+}
+@media (max-width: 640px) {
+  body > #contact-pricing-float {
+    right: max(.75rem, env(safe-area-inset-right)) !important;
+    bottom: max(.75rem, env(safe-area-inset-bottom)) !important;
+  }
+  body.ts-on > #contact-pricing-float {
+    bottom: calc(126px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
 @media (max-width: 520px) {
   .flashcard-popup-shell .flashcard-popup-header { flex-wrap: wrap; row-gap: .4rem; }
   .flashcard-popup-shell #flashcard-sentence, .flashcard-popup-shell #student-vocab-sentence { font-size: 1.35rem !important; }
