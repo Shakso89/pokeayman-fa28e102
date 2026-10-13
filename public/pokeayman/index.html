@@ -63,9 +63,9 @@
     #home-screen::after { content: ''; position: fixed; inset: 8% 10% 18%; pointer-events: none; border: 1px solid rgba(125,211,252,.12); clip-path: polygon(8% 20%, 38% 8%, 72% 25%, 92% 12%, 82% 70%, 52% 88%, 18% 72%); opacity: .8; z-index: -1; }
     @media (max-width: 640px) { #home-screen { overflow-x: hidden; } #home-screen > .relative.bg-transparent { min-height: 4.75rem; } #home-screen .hero-text-glass { z-index: 2; display: flex; flex-direction: column; align-items: center; width: calc(100% - 1.5rem); max-width: 27rem; margin: 0 auto 1rem; padding: .7rem .75rem .9rem; overflow: visible; } #home-screen #pokemon-arch { position: relative; z-index: 3; order: 0; flex: 0 0 auto; width: 100%; height: clamp(7rem, 29vw, 9.5rem); min-height: 7rem; margin: 0 0 .75rem; padding: .15rem .1rem 0; align-items: flex-end; gap: .15rem; overflow: visible; } #home-screen #pokemon-arch .pokemon-arch { position: relative; z-index: 4; flex: 0 1 auto; max-width: 16%; max-height: 72%; } #home-screen .hero-text-glass > p { position: relative; z-index: 5; order: 1; width: 100%; max-width: 23rem; margin: 0; padding: 0 .15rem; font-size: .82rem; line-height: 1.35; } #home-screen > .flex.flex-col.items-center.justify-center { width: 100%; min-width: 0; padding-inline: .75rem; } #home-screen > .flex.flex-col.items-center.justify-center > .flex.flex-col.sm\:flex-row { width: 100%; max-width: 27rem; flex-direction: column; gap: .65rem; margin-bottom: .75rem; } #home-screen > .flex.flex-col.items-center.justify-center > .flex.flex-col.sm\:flex-row > button, #home-screen #contact-pricing-btn { width: 100%; min-height: 2.75rem; padding: .7rem 1rem; font-size: .9rem; } #home-screen #login-forms-container { width: 100%; max-width: 27rem; margin-top: .75rem; } }
 
-    /* BorderGlow: pointer-near, static edge response for the selected PokéAyman logo only. */
+    /* Warm contact-dock glow on the PokéAyman logo across home and dashboard headers. */
     #app-screen img[data-template-id="app-logo-header"], #home-screen img[data-template-id="app-logo-header"] { --border-glow-x: 50%; --border-glow-y: 50%; position: relative; z-index: 1; transition: filter .12s ease-out; will-change: filter; }
-    #app-screen img[data-template-id="app-logo-header"].border-glow-active, #home-screen img[data-template-id="app-logo-header"].border-glow-active { filter: drop-shadow(0 0 10px rgba(192,132,252,.95)) drop-shadow(0 0 18px rgba(244,114,182,.72)) drop-shadow(0 0 28px rgba(123,156,255,.52)); }
+    #app-screen img[data-template-id="app-logo-header"].border-glow-active, #home-screen img[data-template-id="app-logo-header"].border-glow-active { filter: drop-shadow(0 0 8px rgba(255,203,5,.95)) drop-shadow(0 0 18px rgba(255,203,5,.62)) drop-shadow(0 0 30px rgba(245,158,11,.42)); }
     .heading-font { font-family: 'Fraunces', serif; }
     .tab-active { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
     .tab-inactive { background: #ffffff; color: #6b7280; border: 2px solid #e5e7eb; font-weight: 500; transition: all 0.3s ease; }
@@ -6751,6 +6751,7 @@ window.pokeaymanEnterTeacher = async function (name) {
 async function pkEnterTeacherNow(name) {
   const clean = String(name || 'Teacher').trim();
   const cloudId = (window.parent && window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.userId) || '';
+  let createdTeacherRecord = false;
   // "Ayman" is only passed for backend-verified admins; it maps to the built-in Admin with no sheet row.
   let rec = null;
   if (clean === ADMIN_TEACHER.name) {
@@ -6761,7 +6762,8 @@ async function pkEnterTeacherNow(name) {
     // Register Cloud teacher accounts so they appear in the Admin dashboard's teacher inventory.
     if (!rec && cloudId) {
       try {
-        await window.dataSdk.create({ type: 'teacher', teacher_name: clean, teacher_pin: '', teacher_role: 'teacher', teacher_credits: 100, avatar_pokemon_id: 0, cloud_user_id: cloudId, teacher_email: (window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.email) || '', archived: false, created_at: new Date().toISOString() });
+        const created = await window.dataSdk.create({ type: 'teacher', teacher_name: clean, teacher_pin: '', teacher_role: 'teacher', teacher_credits: 100, avatar_pokemon_id: 0, cloud_user_id: cloudId, teacher_email: (window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.email) || '', archived: false, created_at: new Date().toISOString() });
+        createdTeacherRecord = Boolean(created?.isOk);
         rec = getTeachers().find(t => t.cloud_user_id === cloudId) || null;
       } catch (e) { console.warn('Teacher registration failed', e); }
     } else if (rec && cloudId && !rec.cloud_user_id) {
@@ -6776,6 +6778,34 @@ async function pkEnterTeacherNow(name) {
   if (rec && authEmail && rec.teacher_email !== authEmail) { try { await saveTeacherPatch(rec, { teacher_email: authEmail }); } catch (_) {} }
   try { await recordTeacherDailyLogin(); } catch (e) { console.warn('Streak update failed', e); }
   enterApp();
+  const dock = document.getElementById('contact-pricing-float');
+  if (dock) dock.hidden = false;
+  let signupNeedsAccessNotice = createdTeacherRecord;
+  const signedInEmail = String(authEmail || '').trim().toLowerCase();
+  try {
+    const pendingEmail = sessionStorage.getItem('pokeayman-teacher-access-notice') || '';
+    if (pendingEmail && pendingEmail.trim().toLowerCase() === signedInEmail) {
+      signupNeedsAccessNotice = true;
+      sessionStorage.removeItem('pokeayman-teacher-access-notice');
+    }
+  } catch (_) {}
+  if (signupNeedsAccessNotice) setTimeout(showTeacherAccessContactNotice, 250);
+}
+function showTeacherAccessContactNotice() {
+  const modal = document.getElementById('contact-pricing-modal');
+  const content = document.getElementById('contact-tab-content');
+  if (!modal || !content) return;
+  let notice = document.getElementById('teacher-access-request-notice');
+  if (!notice) {
+    notice = document.createElement('section');
+    notice.id = 'teacher-access-request-notice';
+    notice.setAttribute('role', 'status');
+    notice.style.cssText = 'padding:1rem 1.1rem;margin-bottom:1rem;border:1px solid rgba(255,203,5,.58);border-radius:1rem;background:linear-gradient(130deg,rgba(255,203,5,.16),rgba(50,104,178,.18));box-shadow:0 10px 28px rgba(0,0,0,.2)';
+    notice.innerHTML = '<strong style="display:block;color:#ffdf63;font-size:1rem;margin-bottom:.35rem">Welcome to PokéAyman!</strong><span style="display:block;color:#f8fafc;line-height:1.5">To access your school’s classes, contact your school admin or manager and ask them to add your teacher account to the class. Once they approve access, your classes will appear in your dashboard.</span>';
+    content.prepend(notice);
+  }
+  document.getElementById('contact-tab-btn')?.click();
+  modal.classList.remove('hidden');
 }
 window.addEventListener('load', () => {
   let want = false; try { want = sessionStorage.getItem('pokeayman-enter-teacher') === '1'; } catch (_) {}
@@ -6853,6 +6883,7 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
         if (!name) { msg('Please enter your name.', false); return; }
         const r = await auth.signUp(email, password, name, $('#ta-school').value.trim());
         if (r.error) { msg(r.error, false); return; }
+        try { sessionStorage.setItem('pokeayman-teacher-access-notice', email.toLowerCase()); } catch (_) {}
         if (r.signedIn) { modal.remove(); window.pokeaymanEnterTeacher(name); return; }
         msg('Account created! Check your email and click the link to confirm, then sign in.', true);
         setMode('signin'); $('#ta-msg').classList.remove('hidden');
@@ -6892,6 +6923,17 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
   
   $('#teacher-cancel-btn-modal').addEventListener('click', () => modal.remove());
 });
+
+const contactPricingButton = document.getElementById('contact-pricing-btn');
+if (contactPricingButton && !document.getElementById('contact-pricing-float')) {
+  const dock = document.createElement('div');
+  dock.id = 'contact-pricing-float';
+  const close = document.createElement('button');
+  close.id = 'contact-pricing-dock-close'; close.type = 'button'; close.setAttribute('aria-label', 'Hide Contact and plans button'); close.title = 'Hide'; close.textContent = '×';
+  dock.append(contactPricingButton, close);
+  document.body.appendChild(dock);
+  close.addEventListener('click', () => { dock.hidden = true; });
+}
 
 document.getElementById('contact-pricing-btn').addEventListener('click', () => {
   document.getElementById('contact-pricing-modal').classList.remove('hidden');

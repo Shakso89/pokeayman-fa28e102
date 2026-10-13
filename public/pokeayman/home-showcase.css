@@ -284,17 +284,31 @@
 @media (prefers-reduced-motion: reduce) {
   .home-showcase .circular-carousel-card { transition: none !important; }
 }
-/* Contact dock: floating trainer-support badge */
-.home-showcase .home-contact-dock {
-  position: fixed; right: clamp(1rem, 3vw, 2rem); bottom: clamp(1rem, 3vw, 2rem); z-index: 30;
+/* Contact dock: fixed at the viewport edge across home, teacher, and student views. */
+#contact-pricing-float {
+  position: fixed; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); z-index: 40;
+  display: inline-flex; align-items: center;
+}
+#contact-pricing-float[hidden] { display: none !important; }
+#contact-pricing-float .home-contact-dock {
+  position: relative; z-index: 1;
   display: inline-flex; align-items: center; gap: .7rem;
   padding: .6rem 1.1rem .6rem .65rem; border: 1px solid var(--home-line); border-radius: 999px;
   background: rgba(11,13,20,.82); backdrop-filter: blur(14px); color: var(--home-ink);
   box-shadow: 0 18px 40px rgba(0,0,0,.5); cursor: pointer; transition: transform .2s, border-color .2s, box-shadow .2s;
 }
-.home-showcase .home-contact-dock:hover, .home-showcase .home-contact-dock:focus-visible {
+#contact-pricing-float .home-contact-dock:hover, #contact-pricing-float .home-contact-dock:focus-visible {
   transform: translateY(-3px); border-color: var(--home-yellow); box-shadow: 0 20px 44px rgba(255,203,5,.18); outline: none;
 }
+#contact-pricing-dock-close {
+  position: absolute; top: -.45rem; right: -.45rem; z-index: 2; display: grid; place-items: center;
+  width: 1.55rem; height: 1.55rem; padding: 0; border: 1px solid rgba(255,255,255,.42); border-radius: 50%;
+  background: #17202b; color: #f8fafc; font: 700 1rem/1 sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,.42);
+  opacity: 0; pointer-events: none; transition: opacity .15s ease, color .15s ease, border-color .15s ease;
+}
+#contact-pricing-float:hover #contact-pricing-dock-close,
+#contact-pricing-float:focus-within #contact-pricing-dock-close { opacity: 1; pointer-events: auto; }
+#contact-pricing-dock-close:hover, #contact-pricing-dock-close:focus-visible { color: #ffcb05; border-color: #ffcb05; outline: 2px solid rgba(255,203,5,.45); outline-offset: 2px; }
 .home-contact-dot {
   position: relative; width: 2.1rem; height: 2.1rem; flex: none; border-radius: 50%;
   background: linear-gradient(180deg, var(--home-red) 0 46%, #10121a 46% 54%, var(--home-ink) 54%);
@@ -306,7 +320,9 @@
 .home-contact-label { display: grid; text-align: left; font-size: .9rem; font-weight: 800; line-height: 1.1; }
 .home-contact-label small { color: var(--home-yellow); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; }
 @media (max-width: 640px) {
-  #home-screen #contact-pricing-btn.home-contact-dock { width: auto; min-height: 0; padding: .5rem; }
+  #contact-pricing-float { right: max(.75rem, env(safe-area-inset-right)); bottom: max(.75rem, env(safe-area-inset-bottom)); }
+  #contact-pricing-float .home-contact-dock { width: 3.25rem; min-width: 3.25rem; min-height: 3.25rem; padding: .5rem; justify-content: center; }
+  #contact-pricing-float #contact-pricing-dock-close { opacity: 1; pointer-events: auto; }
   .home-contact-label { display: none; }
 }
 
@@ -412,22 +428,6 @@
   .home-showcase .home-light-rays { opacity: .56; }
 }
 
-/* Keep the home help button docked to the viewport at every breakpoint. */
+/* Keep the help button easy to tap at every breakpoint. */
 .home-showcase .home-actions button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; position: relative; z-index: 6; }
 .home-showcase .home-actions button:active { transform: scale(.97); filter: brightness(.92); }
-@media (max-width: 700px) {
-  #home-screen.home-showcase #contact-pricing-btn.home-contact-dock {
-    position: fixed !important;
-    top: auto !important;
-    right: max(1rem, calc(env(safe-area-inset-right) + .5rem)) !important;
-    bottom: max(1rem, calc(env(safe-area-inset-bottom) + .5rem)) !important;
-    left: auto !important;
-    z-index: 50 !important;
-    width: 3.25rem !important;
-    min-width: 3.25rem !important;
-    min-height: 3.25rem !important;
-    padding: .55rem !important;
-    justify-content: center;
-  }
-  #home-screen.home-showcase .home-contact-label { display: none; }
-}
