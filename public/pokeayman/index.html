@@ -7229,6 +7229,12 @@ function renderTrainerTab() {
   <label class="th-field"><span>School</span><input type="text" id="tp-school" maxlength="120" placeholder="Optional"></label>
   <div class="th-row"><button type="submit" class="th-primary">Save profile</button><button type="button" class="th-ghost" data-th-cancel="teacher-profile-form">Cancel</button></div>
  </form>
+ <button type="button" class="th-ghost th-edit-toggle" data-th-editor="th-streak-panel" aria-expanded="false" aria-controls="th-streak-panel">Login streak</button>
+ <div id="th-streak-panel" class="th-form hidden">
+  <p class="th-hint"><strong>🔥 Login Streak</strong> — <span id="th-streak-text">Log in 7 days in a row to unlock a surprise box</span></p>
+  <div class="ts-streak-dots" id="th-streak-dots"></div>
+  <div class="th-row"><button type="button" class="th-primary" id="th-box-open">Open surprise box</button><button type="button" class="th-ghost" data-th-cancel="th-streak-panel">Close</button></div>
+ </div>
 </section>
 <section class="th-panel hidden" data-th-panel="security">
  <button type="button" class="th-ghost th-edit-toggle" data-th-editor="change-pin-form" aria-expanded="false" aria-controls="change-pin-form">Change password</button>
@@ -7257,6 +7263,15 @@ function renderTrainerTab() {
     editor.classList.remove('hidden'); button.setAttribute('aria-expanded', 'true'); editor.querySelector('input')?.focus();
   }));
   modal.querySelectorAll('[data-th-cancel]').forEach(button => button.addEventListener('click', () => closeTeacherEditor(button.dataset.thCancel)));
+  const renderThStreak = () => {
+    const st = teacherStreakState(); if (!st) return;
+    modal.querySelector('#th-streak-dots').innerHTML = Array.from({ length: 7 }, (_, i) => `<span class="${i < st.count ? 'on' : ''}">${i + 1}</span>`).join('');
+    modal.querySelector('#th-streak-text').textContent = st.boxes > 0 ? `You have ${st.boxes} box${st.boxes > 1 ? 'es' : ''} to open!` : `${7 - st.count} more day${7 - st.count === 1 ? '' : 's'} to unlock a box`;
+    const btn = modal.querySelector('#th-box-open'); btn.disabled = st.boxes < 1; btn.style.opacity = st.boxes < 1 ? '.5' : '';
+  };
+  renderThStreak();
+  modal.querySelector('[data-th-editor="th-streak-panel"]').addEventListener('click', renderThStreak);
+  modal.querySelector('#th-box-open').addEventListener('click', async () => { await window.openTeacherSurpriseBox(); renderThStreak(); });
   modal.querySelectorAll('.th-tab').forEach(t => t.addEventListener('click', () => {
     modal.querySelectorAll('.th-tab').forEach(x => x.classList.toggle('is-active', x === t));
     modal.querySelectorAll('[data-th-panel]').forEach(p => p.classList.toggle('hidden', p.dataset.thPanel !== t.dataset.th));

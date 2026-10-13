@@ -85,10 +85,10 @@
         <div class="ts-streak-dots" id="ts-streak-dots"></div>
         <button type="button" class="ts-award-go" id="ts-box-open">🎁 Open surprise box</button></section>`;
     document.body.append(side, rail);
-    rail.querySelector('[data-ts-streak-close]')?.addEventListener('click', () => {
-      const streakCard = rail.querySelector('.ts-streak');
-      if (streakCard) streakCard.hidden = true;
-    });
+    const hideStreak = () => { clearTimeout(streakTimer); const c = rail.querySelector('.ts-streak'); if (c) c.hidden = true; };
+    // Auto-close the streak card after at most one minute; it stays reachable from the Teacher Card.
+    const streakTimer = setTimeout(hideStreak, 60000);
+    rail.querySelector('[data-ts-streak-close]')?.addEventListener('click', hideStreak);
     const sidebarToggle = document.createElement('button');
     sidebarToggle.id = 'ts-sidebar-toggle'; sidebarToggle.type = 'button'; sidebarToggle.setAttribute('aria-controls', 'ts-sidebar');
     sidebarToggle.addEventListener('click', () => { collapsed = !collapsed; g(() => localStorage.setItem('pokeayman-sidebar-collapsed', collapsed ? '1' : '0')); applySidebar(); });
