@@ -13069,7 +13069,7 @@ function renderGamesList() {
   }
 
   const gamesListHeading = isStudentGames && selectedStudentGamesScope === 'all' ? 'All joined classes' : 'CHOOSE A VOCABULARY LIST TO PLAY';
-  let html = '<div class="mb-4">' + classFilterHtml + `<p class="mb-3 text-xs font-black text-amber-200 tracking-widest uppercase">${gamesListHeading}</p>`;
+  let html = '<div class="mb-4">' + classFilterHtml + (isStudentGames ? '<button type="button" class="ga-listen-quickplay"><span><b>Listen and Catch</b><small>Uses all vocabulary lists in the selected class automatically.</small></span><span aria-hidden="true">▶</span></button>' : '') + `<p class="mb-3 text-xs font-black text-amber-200 tracking-widest uppercase">${gamesListHeading}</p>`;
   classGroups.forEach(group => {
     if (showClassHeaders) {
       html += `<div class="mb-2 mt-4 flex items-center gap-2"><span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-indigo-500 text-[10px] font-black text-slate-900 shadow">📚</span><span class="text-sm font-extrabold text-amber-200 tracking-wide">${group.className}<span class="ml-1.5 text-xs font-bold text-indigo-200/80">· ${group.school}</span></span></div>`;
@@ -13095,6 +13095,7 @@ function renderGamesList() {
   });
   html += '</div>';
   listArea.insertAdjacentHTML('beforeend', html);
+  listArea.querySelector('.ga-listen-quickplay')?.addEventListener('click', () => window.startListenCatch?.());
   
   // Attach class filter listeners for student games
   if (isStudentGames && enrolledClasses.length > 1) {

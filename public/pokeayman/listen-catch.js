@@ -235,6 +235,22 @@
   function gameWords(listName) {
     return shuffle(getGameWords(listName, false).filter(word => String(word.vocab_word || '').trim())).slice(0, ROUNDS);
   }
+  function studentClassListRefs(record) {
+    const enrolled = typeof getStudentEnrolledClasses === 'function' ? getStudentEnrolledClasses() : [];
+    const primaryKey = `${record?.school_name || ''}||${record?.class_name || ''}`;
+    const selectedKey = typeof selectedStudentGamesScope !== 'undefined' && selectedStudentGamesScope === 'class'
+      ? String(selectedStudentGamesClassKey || '') : primaryKey;
+    const selected = enrolled.find(item => `${item.school_name}||${item.class_name}` === selectedKey)
+      || enrolled.find(item => `${item.school_name}||${item.class_name}` === primaryKey)
+      || enrolled[0];
+    if (!selected?.school_name || !selected?.class_name) return [];
+    navSchool = selected.school_name;
+    navClass = selected.class_name;
+    return getVocabLists(selected.school_name, selected.class_name).map(list => ({
+      vocab_list_id: list.vocab_list_id || list.__backendId,
+      vocab_list_name: list.vocab_list_name,
+    }));
+  }
   function startRound() {
     const word = session.words[session.index];
     const pool = getGameWords(session.listName, false).filter(entry => String(entry.vocab_word || '').trim().toLocaleLowerCase() !== String(word.vocab_word).trim().toLocaleLowerCase());
@@ -268,7 +284,9 @@
     mountCards();
   }
   function launchForStudent(listName, record) {
-    const words = gameWords(listName); if (words.length < 2) return toast('This list needs at least two words.');
+    if (currentRole === 'student') listName = studentClassListRefs(record);
+    const words = gameWords(listName);
+    if (words.length < 2) return toast(currentRole === 'student' ? 'Your class needs at least two vocabulary words to play.' : 'This list needs at least two words.');
     closeGame();
     const root = document.createElement('div'); root.className = 'lc-stage'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Listen and Catch');
     const saved = parseProgress(progressFor(record)); const dailyEarnedBefore = ballsEarnedToday(saved); const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
@@ -291,7 +309,7 @@
     if (currentRole === 'student') {
       const record = typeof getCurrentStudentRecord === 'function' ? getCurrentStudentRecord() : null;
       if (!record) return toast('Signed-in student was not found.');
-      return launchForStudent(listName, record);
+      return launchForStudent(null, record);
     }
     if (currentRole === 'teacher') return chooseStudent(listName);
     toast('Sign in as a student or teacher to play.');
