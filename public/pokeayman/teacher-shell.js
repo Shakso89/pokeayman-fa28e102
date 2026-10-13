@@ -51,7 +51,7 @@
   ];
   const ZONE_ITEMS = [
     ['schedule', '🗓️', 'Schedule'], ['financial', '💰', 'Financial'], ['history', '🕘', 'History'],
-    ['vb-lists', '🔖', 'My Word Banks'], ['school-lists', '🏫', 'School Lists'], ['battle-claims', '⚔️', 'Battle Claims'], ['leaders', '🏆', 'Global Top 10'], ['profile', '🎓', 'Teacher Card'],
+    ['vb-lists', '🔖', 'Vocabulary Lists'], ['battle-claims', '⚔️', 'Battle Claims'], ['leaders', '🏆', 'Global Top 10'], ['profile', '🎓', 'Teacher Card'],
   ];
 
   function build() {
@@ -156,11 +156,11 @@
       g(() => showMainTab('teacher-zone'));
       $('global-leaderboard-trigger')?.click();
     } else if (zone) {
-      const isSchool = zone === 'school-lists';
-      if (zone === 'vb-lists' || isSchool) window.vbListsMode = isSchool ? 'school' : 'mine';
+      const isVocabLists = zone === 'vb-lists';
+      if (isVocabLists) window.vbListsMode = 'mine';
       g(() => showMainTab('teacher-zone'));
-      $(`teacher-zone-${isSchool ? 'vb-lists' : zone}-tab`)?.click();
-      if (zone === 'vb-lists' || isSchool) g(() => renderTeacherOwnedVocabLists());
+      $(`teacher-zone-${zone}-tab`)?.click();
+      if (isVocabLists) g(() => renderTeacherOwnedVocabLists());
     } else if (act === 'schools') { g(() => showMainTab('dashboard')); }
     else if (act === 'admin') { g(() => showMainTab('admin')); }
     else if (act === 'leaders') { $('global-leaderboard-trigger')?.click(); }
@@ -330,8 +330,7 @@
     document.querySelectorAll('#ts-sidebar .ts-item, #ts-sidebar .ts-switch').forEach((b) => {
       let a = false;
       if (b.dataset.tsClass) a = !!inClass && activeClassTab === b.dataset.tsClass;
-      else if (b.dataset.tsZone === 'school-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists' && (window.vbListsMode === 'school' || window.vbListsMode === 'school-mine');
-      else if (b.dataset.tsZone === 'vb-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists' && window.vbListsMode === 'mine';
+      else if (b.dataset.tsZone === 'vb-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists';
       else if (b.dataset.tsZone) a = tab === 'teacher-zone' && zoneTab === b.dataset.tsZone;
       else if (b.dataset.ts === 'admin-users') a = tab === 'admin' && document.querySelector('.admin-sub-tab[data-subtab="users"]')?.classList.contains('admin-sub-tab-active');
       else if (b.dataset.ts === 'admin-controls') a = tab === 'admin' && document.querySelector('.admin-sub-tab[data-subtab="controls"]')?.classList.contains('admin-sub-tab-active');

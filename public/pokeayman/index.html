@@ -4504,7 +4504,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      <section id="teacher-zone-vb-lists-panel" class="hidden teacher-zone-content-panel" role="tabpanel" aria-labelledby="teacher-zone-vb-lists-tab">
       <div class="teacher-zone-content-card">
        <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">📚</span><div><p class="teacher-zone-page-kicker">VOCABULARY</p><h3 id="teacher-vb-lists-title">My Word Banks</h3><p id="teacher-vb-lists-description">Your word banks, ready to review or share with your classes.</p></div></header>
-       <div class="flex justify-end mb-3"><button id="teacher-vb-lists-switch" type="button" class="btn-secondary hidden" style="min-height:2.7rem;white-space:nowrap">Show my lists</button></div>
+       <div class="teacher-vb-list-modes" role="group" aria-label="Vocabulary list view"><button id="teacher-vb-mode-mine" type="button" class="btn-primary" aria-pressed="true">My Word Banks</button><button id="teacher-vb-mode-school" type="button" class="btn-secondary" aria-pressed="false">School Lists</button></div>
        <p id="teacher-vb-lists-status" class="teacher-zone-status" aria-live="polite">Loading your lists…</p>
        <div id="teacher-vb-lists-grid"></div>
       </div>
@@ -8397,14 +8397,14 @@ function renderTeacherOwnedVocabLists() {
   const ownerScope = currentTeacherZoneOwnerScope();
   const requestVersion = teacherZoneRequestVersion;
   const schoolMode = window.vbListsMode === 'school';
-  const showMyLists = window.vbListsMode === 'school-mine';
-  const schoolPanel = schoolMode || showMyLists;
-  const switchButton = document.getElementById('teacher-vb-lists-switch');
-  if (switchButton) { switchButton.classList.toggle('hidden', !schoolPanel); switchButton.textContent = schoolMode ? 'Show my lists' : 'Show school lists'; }
+  document.getElementById('teacher-vb-mode-mine')?.setAttribute('aria-pressed', String(!schoolMode));
+  document.getElementById('teacher-vb-mode-school')?.setAttribute('aria-pressed', String(schoolMode));
+  document.getElementById('teacher-vb-mode-mine')?.classList.toggle('is-active', !schoolMode);
+  document.getElementById('teacher-vb-mode-school')?.classList.toggle('is-active', schoolMode);
   const title = document.getElementById('teacher-vb-lists-title');
   const description = document.getElementById('teacher-vb-lists-description');
-  if (title) title.textContent = schoolMode ? 'School Lists' : showMyLists ? 'My Lists' : 'My Word Banks';
-  if (description) description.textContent = schoolMode ? 'Browse and share word banks other teachers have made available.' : showMyLists ? 'Review, edit, or delete the word banks you created.' : 'Your word banks, ready to review or share with your classes.';
+  if (title) title.textContent = schoolMode ? 'School Lists' : 'My Word Banks';
+  if (description) description.textContent = schoolMode ? 'Browse and share word banks other teachers have made available.' : 'Review, edit, or delete the word banks you created.';
   if (!ownerScope || !teacherWorkspaceKey || ownerScope !== teacherZoneOwnerScope) { grid.replaceChildren(); status.textContent = 'Sign in as a teacher to view your lists.'; return; }
   status.textContent = 'Loading your lists…';
   grid.replaceChildren();
@@ -8422,7 +8422,7 @@ function renderTeacherOwnedVocabLists() {
       if (!otherLists.length) { status.textContent = 'No other teachers have created vocabulary lists yet.'; return; }
       status.textContent = `${otherLists.length} list${otherLists.length === 1 ? '' : 's'} by other teachers · share any of them to your classes`;
     } else {
-      if (!lists.length) { status.textContent = showMyLists ? 'You have not created any lists yet.' : 'You have not created any vocabulary lists yet.'; return; }
+      if (!lists.length) { status.textContent = 'You have not created any vocabulary lists yet.'; return; }
       status.textContent = `${lists.length} of your list${lists.length === 1 ? '' : 's'}`;
     }
     const escape = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
@@ -8461,8 +8461,12 @@ function renderTeacherOwnedVocabLists() {
   } catch (error) { status.textContent = 'Could not load your vocabulary lists. Please refresh and try again.'; }
 }
 
-document.getElementById('teacher-vb-lists-switch')?.addEventListener('click', () => {
-  window.vbListsMode = window.vbListsMode === 'school' ? 'school-mine' : 'school';
+document.getElementById('teacher-vb-mode-mine')?.addEventListener('click', () => {
+  window.vbListsMode = 'mine';
+  renderTeacherOwnedVocabLists();
+});
+document.getElementById('teacher-vb-mode-school')?.addEventListener('click', () => {
+  window.vbListsMode = 'school';
   renderTeacherOwnedVocabLists();
 });
 
@@ -11779,7 +11783,7 @@ function openEditTeacherModal(teacherId) {
     <label class="es-label" for="et-name">Teacher name</label><input type="text" id="et-name" value="${teacher.teacher_name}" class="es-input" ${isAdminRow ? 'disabled' : ''} required>
     <label class="es-label">Sign-in email</label><div class="et-email-row"><span>${email || '—'}</span>${email ? '<button type="button" id="et-reset" class="et-link">Send password reset</button>' : ''}</div>
     <label class="es-label" for="et-credits">Credits</label><input type="number" id="et-credits" value="${teacher.teacher_credits||0}" class="es-input">
-    ${!isAdminRow ? `<label class="teacher-zone-access-setting"><span class="teacher-zone-access-label"><span class="teacher-zone-access-copy"><strong>Pro badge</strong><small>Unlock Poké Battle and Listen and Catch for this teacher and their managed classes.</small></span><span class="teacher-zone-switch"><input type="checkbox" id="et-pro-access" ${teacher.teacher_pro === true ? 'checked' : ''}><span aria-hidden="true"></span></span></span></label>` : ''}
+    ${!isAdminRow ? `<div class="teacher-zone-access-setting et-pro-setting"><div class="teacher-zone-access-label"><span class="teacher-zone-access-copy"><strong>Pro badge</strong><small>Unlock Poké Battle and Listen and Catch for this teacher and their managed classes.</small></span><label class="teacher-zone-switch" for="et-pro-access" aria-label="Pro badge"><input type="checkbox" id="et-pro-access" ${teacher.teacher_pro === true ? 'checked' : ''}><span aria-hidden="true"></span></label></div></div>` : ''}
     ${!isAdminRow ? `<div class="et-gift"><div><strong>🎁 Gift a surprise box</strong><small>They open it for 10–100 free credits</small></div><button type="button" id="et-grant" class="et-grant">Grant box</button></div>` : ''}
     ${!isAdminRow ? `<label class="es-label">Manage whole schools</label><div class="et-chips">${allSchools.length ? allSchools.map(school => `<label class="et-chip"><input type="checkbox" class="et-school-checkbox" data-school-name="${school.school_name}" ${assignedSchoolNames.has(school.school_name) ? 'checked' : ''}><span>${school.school_name}</span></label>`).join('') : '<p class="es-empty">No schools yet</p>'}</div>
     <label class="es-label">Manage classes</label><div class="et-chips et-chips-scroll">${allClasses.length ? allClasses.map(cls => `<label class="et-chip"><input type="checkbox" class="et-class-checkbox" data-class-id="${cls.__backendId}" data-school-name="${cls.school_name}" data-class-name="${cls.class_name}" ${assignedClassKeys.has(`${cls.school_name}||${cls.class_name}`) ? 'checked' : ''}><span>${cls.class_name}<small>${cls.school_name}</small></span></label>`).join('') : '<p class="es-empty">No classes yet</p>'}</div>` : ''}

@@ -92,6 +92,10 @@ body.ts-on #teacher-vb-lists-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
   align-items: stretch; gap: var(--pk-space-4);
 }
+.teacher-vb-list-modes { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1rem; }
+.teacher-vb-list-modes button { min-height: 2.65rem; padding: .65rem 1rem; border: 1px solid var(--pk-border-strong); border-radius: var(--pk-radius-md); background: var(--pk-surface-elevated); color: var(--pk-ink); font-weight: 800; }
+.teacher-vb-list-modes button.is-active { border-color: var(--pk-brand); background: var(--pk-brand); color: var(--pk-on-brand); box-shadow: 0 6px 16px color-mix(in oklab,var(--pk-brand) 24%,transparent); }
+.teacher-vb-list-modes button:focus-visible { outline: 3px solid var(--pk-focus); outline-offset: 2px; }
 body.ts-on #teacher-vb-lists-grid .teacher-zone-list-section-title {
   grid-column: 1 / -1; display: flex; align-items: center; gap: var(--pk-space-3);
   margin: var(--pk-space-2) 0 0; color: var(--pk-muted); font: 700 var(--pk-text-xs)/1 var(--pk-font-display);

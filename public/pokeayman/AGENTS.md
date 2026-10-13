@@ -1,5 +1,5 @@
 - Vocabulary example sentences come from `/api/vocabulary-sentence` (server-held AI key, rate-limited), injected beside sentence fields by `sentence-generator.js`. Why: adds AI help without touching legacy editor markup.
-- Teacher Zone "School Lists" reuses the word-banks tab via `window.vbListsMode` ('mine'|'school'|'school-mine'); its in-panel switch lets teachers browse shared lists or their own editable lists. Why: one renderer, no duplicate panel.
+- Teacher Zone uses one Vocabulary Lists navigation entry with in-panel My Word Banks and School Lists views, backed by `window.vbListsMode` ('mine'|'school'). Why: keeps related list management in one place and reuses one renderer.
 - Class workspace presentation is scoped in `public/pokeayman/class-workspace.css`, with one shared roster-card renderer for assigned and view-only classes. Why: prevents legacy style collisions and keeps the two card views consistent without changing data permissions.
 - Shop and collection presentation share `public/pokeayman/shop-workspace.css` and one card renderer, with collection-specific HP and existing actions. Why: keeps elemental backgrounds and rarity frames consistent without changing ownership rules.
 - Student dashboard layout fixes are scoped in `public/pokeayman/student-workspace.css`. Why: isolates student layout and background fixes from legacy teacher styles.
