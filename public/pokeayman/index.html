@@ -7384,6 +7384,8 @@ function renderTrainerTab() {
   <label class="th-field"><span>School</span><input type="text" id="tp-school" maxlength="120" placeholder="Optional"></label>
   <div class="th-row"><button type="submit" class="th-primary">Save profile</button><button type="button" class="th-ghost" data-th-cancel="teacher-profile-form">Cancel</button></div>
  </form>
+ <button type="button" class="th-ghost th-edit-toggle" data-th-editor="teacher-streak-panel" aria-expanded="false" aria-controls="teacher-streak-panel">Login streak</button>
+ <div id="teacher-streak-panel" class="th-form hidden" aria-live="polite"></div>
 </section>
 <section class="th-panel hidden" data-th-panel="security">
  <button type="button" class="th-ghost th-edit-toggle" data-th-editor="change-pin-form" aria-expanded="false" aria-controls="change-pin-form">Change password</button>
@@ -7430,6 +7432,9 @@ function renderTrainerTab() {
   const avatarOptions = modal.querySelector('#teacher-avatar-options');
   const avatarProgress = modal.querySelector('#teacher-avatar-progress');
   const myTeacherRec = () => findMyTeacherRecord();
+  const streak = teacherStreakState() || { count: 0, boxes: 0 };
+  const streakPanel = modal.querySelector('#teacher-streak-panel');
+  streakPanel.innerHTML = `<p class="th-hint" style="text-align:left;margin:0 0 .5rem">${streak.count} of ${STREAK_DAYS} consecutive login days</p><div class="ts-streak-dots" role="img" aria-label="${streak.count} of ${STREAK_DAYS} streak days completed">${Array.from({ length: STREAK_DAYS }, (_, index) => `<span class="${index < streak.count ? 'on' : ''}">${index + 1}</span>`).join('')}</div><p class="th-hint" style="text-align:left;margin:0">Log in daily to build your streak. Completing ${STREAK_DAYS} days earns a surprise box. Boxes ready: <strong>${streak.boxes}</strong>.</p>`;
   let selectedTeacherAvatar = String(teacherRecord?.teacher_avatar || '');
   const applyHeaderAvatar = value => { const el = document.getElementById('teacher-account-avatar'); const src = teacherAvatarSrc(value); if (el) el.innerHTML = src ? `<img src="${src}" class="w-10 h-10 object-contain rounded-full" alt="Teacher avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>'; };
   const renderTeacherAvatarOptions = () => {
