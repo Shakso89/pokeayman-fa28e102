@@ -9,8 +9,10 @@
   const shuffle = list => { const items = [...list]; for (let i = items.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [items[i], items[j]] = [items[j], items[i]]; } return items; };
   let session = null;
   let albumViewer = null;
+  let activeStudent = null;
 
   function student() {
+    if (activeStudent) return activeStudent;
     return typeof getCurrentStudentRecord === 'function' ? getCurrentStudentRecord() : null;
   }
   function progressFor(record = student()) {
@@ -120,15 +122,33 @@
     session.root.querySelector('.lc-play').innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${session.earned ? `${session.earned} Catch Ball${session.earned === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2><p>Open your balls now, or find them later in your Catchdex.</p><div><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
     mountCards();
   }
-  window.startListenCatch = function (listName) {
-    if (currentRole !== 'student') return toast('Listen and Catch is for students.');
+  function launchForStudent(listName, record) {
     const words = gameWords(listName); if (words.length < 2) return toast('This list needs at least two words.');
     closeGame();
     const root = document.createElement('div'); root.className = 'lc-stage'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Listen and Catch');
     root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span>LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><b>◓ <span class="lc-balls">0</span></b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><span>🔊</span> Hear the word</button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div></section></main>`;
-    document.body.appendChild(root); session = { root, listName, words, index: 0, earned: 0, options: [] };
+    document.body.appendChild(root); activeStudent = record; session = { root, listName, words, index: 0, earned: 0, options: [], student: record };
     root.addEventListener('click', event => { const button = event.target.closest('button'); if (!button) return; if (button.dataset.lc === 'close') closeGame(); else if (button.dataset.lc === 'listen') speak(session.words[session.index].vocab_word); else if (button.dataset.lc === 'open') { closeGame(); window.openCatchdex(); } else if (button.dataset.choice !== undefined) answer(Number(button.dataset.choice)); });
     startRound();
+  }
+  function chooseStudent(listName) {
+    const school = typeof navSchool !== 'undefined' ? navSchool : '';
+    const className = typeof navClass !== 'undefined' ? navClass : '';
+    const roster = school && className && typeof getStudents === 'function' ? getStudents(school, className).filter(record => record.student_name) : [];
+    if (!roster.length) return toast('Open a class first to choose a student for Listen and Catch.');
+    const picker = document.createElement('div'); picker.className = 'lc-stage'; picker.setAttribute('role', 'dialog'); picker.setAttribute('aria-modal', 'true'); picker.setAttribute('aria-label', 'Choose student');
+    picker.innerHTML = `<section class="lc-picker"><header><div><span>CLASS GAME</span><h2>Who is catching?</h2></div><button type="button" data-lcpick="close" aria-label="Close">×</button></header><p>Choose a student. Catch Balls and album progress will be saved to their account.</p><div class="lc-roster">${roster.map((record,index)=>`<button type="button" data-lcpick="${index}">${esc(record.student_name)}</button>`).join('')}</div></section>`;
+    document.body.appendChild(picker);
+    picker.addEventListener('click', event => { const button=event.target.closest('[data-lcpick]');if(!button)return;const choice=button.dataset.lcpick;picker.remove();if(choice==='close')return;const record=roster[Number(choice)];launchForStudent(listName,{...record,school_name:record.school_name||school,class_name:record.class_name||className}); });
+  }
+  window.startListenCatch = function (listName) {
+    if (currentRole === 'student') {
+      const record = typeof getCurrentStudentRecord === 'function' ? getCurrentStudentRecord() : null;
+      if (!record) return toast('Signed-in student was not found.');
+      return launchForStudent(listName, record);
+    }
+    if (currentRole === 'teacher') return chooseStudent(listName);
+    toast('Sign in as a student or teacher to play.');
   };
   function albumCard(state, compact = false, viewOnly = false) {
     const goal = challenge(state); const unique = new Set(state.album.map(entry => Number(entry.pokemon_id))).size;
