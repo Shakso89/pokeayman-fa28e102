@@ -7229,6 +7229,12 @@ function renderTrainerTab() {
   <label class="th-field"><span>School</span><input type="text" id="tp-school" maxlength="120" placeholder="Optional"></label>
   <div class="th-row"><button type="submit" class="th-primary">Save profile</button><button type="button" class="th-ghost" data-th-cancel="teacher-profile-form">Cancel</button></div>
  </form>
+ <button type="button" class="th-ghost th-edit-toggle" data-th-editor="th-streak-panel" aria-expanded="false" aria-controls="th-streak-panel">Login streak</button>
+ <div id="th-streak-panel" class="th-form hidden">
+  <p class="th-hint"><strong>🔥 Login Streak</strong> — <span id="th-streak-text">Log in 7 days in a row to unlock a surprise box</span></p>
+  <div class="ts-streak-dots" id="th-streak-dots"></div>
+  <div class="th-row"><button type="button" class="th-primary" id="th-box-open">Open surprise box</button><button type="button" class="th-ghost" data-th-cancel="th-streak-panel">Close</button></div>
+ </div>
 </section>
 <section class="th-panel hidden" data-th-panel="security">
  <button type="button" class="th-ghost th-edit-toggle" data-th-editor="change-pin-form" aria-expanded="false" aria-controls="change-pin-form">Change password</button>
