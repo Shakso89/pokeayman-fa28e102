@@ -63,9 +63,9 @@
     #home-screen::after { content: ''; position: fixed; inset: 8% 10% 18%; pointer-events: none; border: 1px solid rgba(125,211,252,.12); clip-path: polygon(8% 20%, 38% 8%, 72% 25%, 92% 12%, 82% 70%, 52% 88%, 18% 72%); opacity: .8; z-index: -1; }
     @media (max-width: 640px) { #home-screen { overflow-x: hidden; } #home-screen > .relative.bg-transparent { min-height: 4.75rem; } #home-screen .hero-text-glass { z-index: 2; display: flex; flex-direction: column; align-items: center; width: calc(100% - 1.5rem); max-width: 27rem; margin: 0 auto 1rem; padding: .7rem .75rem .9rem; overflow: visible; } #home-screen #pokemon-arch { position: relative; z-index: 3; order: 0; flex: 0 0 auto; width: 100%; height: clamp(7rem, 29vw, 9.5rem); min-height: 7rem; margin: 0 0 .75rem; padding: .15rem .1rem 0; align-items: flex-end; gap: .15rem; overflow: visible; } #home-screen #pokemon-arch .pokemon-arch { position: relative; z-index: 4; flex: 0 1 auto; max-width: 16%; max-height: 72%; } #home-screen .hero-text-glass > p { position: relative; z-index: 5; order: 1; width: 100%; max-width: 23rem; margin: 0; padding: 0 .15rem; font-size: .82rem; line-height: 1.35; } #home-screen > .flex.flex-col.items-center.justify-center { width: 100%; min-width: 0; padding-inline: .75rem; } #home-screen > .flex.flex-col.items-center.justify-center > .flex.flex-col.sm\:flex-row { width: 100%; max-width: 27rem; flex-direction: column; gap: .65rem; margin-bottom: .75rem; } #home-screen > .flex.flex-col.items-center.justify-center > .flex.flex-col.sm\:flex-row > button, #home-screen #contact-pricing-btn { width: 100%; min-height: 2.75rem; padding: .7rem 1rem; font-size: .9rem; } #home-screen #login-forms-container { width: 100%; max-width: 27rem; margin-top: .75rem; } }
 
-    /* Warm contact-dock glow on the PokéAyman logo across home and dashboard headers. */
-    #app-screen img[data-template-id="app-logo-header"], #home-screen img[data-template-id="app-logo-header"] { --border-glow-x: 50%; --border-glow-y: 50%; position: relative; z-index: 1; transition: filter .12s ease-out; will-change: filter; }
-    #app-screen img[data-template-id="app-logo-header"].border-glow-active, #home-screen img[data-template-id="app-logo-header"].border-glow-active { filter: drop-shadow(0 0 8px rgba(255,203,5,.95)) drop-shadow(0 0 18px rgba(255,203,5,.62)) drop-shadow(0 0 30px rgba(245,158,11,.42)); }
+    /* Keep the logo halo tight to its artwork; large stacked filters create a rectangular haze. */
+    #app-screen img[data-template-id="app-logo-header"], #home-screen img[data-template-id="app-logo-header"] { position: relative; z-index: 1; transition: filter .18s ease-out; }
+    #app-screen img[data-template-id="app-logo-header"].border-glow-active, #home-screen img[data-template-id="app-logo-header"].border-glow-active { filter: drop-shadow(0 0 3px rgba(255,203,5,.62)) drop-shadow(0 0 8px rgba(255,203,5,.28)); }
     .heading-font { font-family: 'Fraunces', serif; }
     .tab-active { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
     .tab-inactive { background: #ffffff; color: #6b7280; border: 2px solid #e5e7eb; font-weight: 500; transition: all 0.3s ease; }
@@ -5752,7 +5752,7 @@ function initSelectedLogoBorderGlow() {
     const update = event => {
       const rect = logo.getBoundingClientRect();
       const edgeDistance = Math.min(event.clientX - rect.left, rect.right - event.clientX, event.clientY - rect.top, rect.bottom - event.clientY);
-      logo.classList.toggle('border-glow-active', edgeDistance >= -40 && edgeDistance <= 40);
+      logo.classList.toggle('border-glow-active', edgeDistance >= -8 && edgeDistance <= 12);
     };
     logo.addEventListener('pointermove', update, { passive: true });
     logo.addEventListener('pointerleave', () => logo.classList.remove('border-glow-active'), { passive: true });
