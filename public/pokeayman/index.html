@@ -4651,7 +4651,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      <div class="flex-1 flex flex-col min-w-0">
       <div id="student-navigation-groups" class="flex gap-2 mb-4 flex-wrap" role="navigation" aria-label="Student dashboard navigation">
        <div class="student-nav-group relative"><button type="button" class="student-nav-group-button student-dashboard-tab-active" aria-expanded="false" aria-controls="student-nav-pokemon-menu" aria-label="Open Pokémon and Vocabulary Bank">📚 Pokémon</button>
-        <div id="student-nav-pokemon-menu" class="student-nav-menu hidden absolute left-0 top-full z-30 mt-2 min-w-36 rounded-xl p-1" role="menu"><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-active" data-tab="collection" role="menuitem">📚 Collection</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="shop" role="menuitem">🛍️ Shop</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="classes" role="menuitem">👥 Classes</button><button type="button" class="student-nav-menu-item" data-catchdex-menu role="menuitem">Catchdex</button><button type="button" class="student-nav-menu-item hidden" data-catchdex-open-box role="menuitem">Open Mystery Box</button>
+        <div id="student-nav-pokemon-menu" class="student-nav-menu hidden absolute left-0 top-full z-30 mt-2 min-w-36 rounded-xl p-1" role="menu"><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-active" data-tab="collection" role="menuitem">📚 Collection</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="shop" role="menuitem">🛍️ Shop</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="classes" role="menuitem">👥 Classes</button><button type="button" class="student-dashboard-tab student-nav-menu-item student-dashboard-tab-inactive" data-tab="catchdex" role="menuitem">Catchdex</button>
         </div>
        </div>
        <div class="student-nav-group relative"><button type="button" class="student-nav-group-button student-nav-group-button-muted" aria-expanded="false" aria-controls="student-nav-study-menu" aria-label="Open Study">📖 Study</button>
@@ -4667,6 +4667,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
        <div id="my-pokemon-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
        <p id="my-pokemon-empty" class="text-center text-gray-400 py-8 text-sm">No Pokémon yet.</p>
       </div>
+      <div id="student-tab-catchdex" class="student-dashboard-content hidden flex-1 overflow-y-auto"><div id="student-catchdex-root"></div></div>
       <div id="student-tab-shop" class="student-dashboard-content hidden flex-1 overflow-y-auto">
 <div class="shop-toolbar" aria-label="Shop controls">
  <div class="shop-search-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="my-shop-search" type="search" placeholder="Search Pokémon" aria-label="Search Pokémon"></div>
@@ -7831,6 +7832,7 @@ function openStudentDashboardTab(btn) {
   document.getElementById('student-tab-' + btn.dataset.tab).classList.remove('hidden');
   if (btn.dataset.tab === 'quizzes') renderQuizzes();
   if (btn.dataset.tab === 'classes') renderStudentClasses();
+  if (btn.dataset.tab === 'catchdex') window.renderListenCatchTab?.();
   if (btn.dataset.tab === 'vocabulary') renderStudentVocabulary();
   if (btn.dataset.tab === 'games') renderGamesList();
 }
