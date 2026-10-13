@@ -7099,7 +7099,12 @@ document.getElementById('teacher-login-form').addEventListener('submit', e => {
     currentTeacherRecordId = result.teacherRecordId;
     errorEl.classList.add('hidden');
     try {
-      enterApp();
+      if (enterApp() === false) {
+        errorEl.textContent = 'We could not load the teacher portal. Please try again.';
+        errorEl.classList.remove('hidden');
+        submitButton.disabled = false;
+        submitButton.removeAttribute('aria-busy');
+      }
     } catch (error) {
       currentRole = ''; currentTeacher = ''; currentTeacherRecordId = '';
       errorEl.textContent = 'We could not load the teacher portal. Please try again.';
@@ -7487,7 +7492,7 @@ function enterApp() {
     if (trophy && trophyHome) trophyHome.appendChild(trophy);
     if (trophySlot) { trophySlot.style.display = 'none'; }
   }
-  if (currentRole === 'teacher' && !loadTeacherWorkspace()) { toast('Access denied. Please sign in again.'); currentRole = ''; currentTeacher = ''; return; }
+  if (currentRole === 'teacher' && !loadTeacherWorkspace()) { toast('Access denied. Please sign in again.'); currentRole = ''; currentTeacher = ''; currentTeacherRecordId = ''; return false; }
   const homeScreen = document.getElementById('home-screen');
   const appScreen = document.getElementById('app-screen');
   const studentDashboard = document.getElementById('student-dashboard');
@@ -7539,7 +7544,10 @@ function enterApp() {
     if (trophy && studentHeaderControls) studentHeaderControls.appendChild(trophy);
   }
   updateRoleUI(); 
-  loadShop();
+  // Shop hydration is a student feature; avoid hundreds of catalog requests and
+  // their follow-up render while a teacher is opening the classroom dashboard.
+  if (currentRole === 'student') loadShop();
+  return true;
 }
 
 document.getElementById('logout-home-btn')?.addEventListener('click', () => {
