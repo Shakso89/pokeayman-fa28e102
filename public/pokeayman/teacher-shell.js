@@ -5,6 +5,7 @@
   const g = (fn, fb) => { try { return fn(); } catch (e) { return fb; } };
   let bright = g(() => localStorage.getItem('pokeayman-teacher-theme') === 'bright', false);
   let collapsed = g(() => localStorage.getItem('pokeayman-sidebar-collapsed') === '1', false);
+  let failedAvatarSrc = '';
   function applySidebar() {
     document.body.classList.toggle('ts-collapsed', collapsed);
     const control = $('ts-sidebar-toggle');
@@ -104,7 +105,7 @@
     notifications.type = 'button'; notifications.id = 'ts-notifications-toggle';
     notifications.className = 'ts-notification-button'; notifications.dataset.ts = 'notifications';
     notifications.setAttribute('aria-label', 'Open notifications'); notifications.title = 'Notifications';
-    notifications.innerHTML = '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><strong id="ts-notification-count" class="ts-notification-count" aria-live="polite" hidden>0</strong>';
+    notifications.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><strong id="ts-notification-count" class="ts-notification-count" aria-live="polite" hidden>0</strong>';
     tools.append(theme, notifications);
     side.appendChild(tools);
     theme.addEventListener('click', () => {
@@ -373,8 +374,17 @@
     $('ts-notification-count').hidden = unread === 0;
     $('[data-ts="notifications"]').setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
     const sourceAvatar = $('teacher-account-avatar')?.querySelector('img');
-    const av = sourceAvatar ? sourceAvatar.outerHTML : '<span class="ts-ball" role="img" aria-label="Poké Ball avatar"></span>';
-    if ($('ts-avatar').innerHTML !== av) $('ts-avatar').innerHTML = av;
+    const avatarSrc = sourceAvatar?.currentSrc || sourceAvatar?.src || '';
+    const avatarAlt = sourceAvatar?.alt || 'Teacher avatar';
+    if (avatarSrc && avatarSrc !== failedAvatarSrc) {
+      const currentAvatar = $('ts-avatar').querySelector('img');
+      if (currentAvatar?.src !== avatarSrc) {
+        $('ts-avatar').innerHTML = `<img src="${esc(avatarSrc)}" alt="${esc(avatarAlt)}">`;
+        $('ts-avatar').querySelector('img')?.addEventListener('error', () => { failedAvatarSrc = avatarSrc; sync(); }, { once: true });
+      }
+    } else if (!$('ts-avatar').querySelector('.ts-avatar-fallback')) {
+      $('ts-avatar').innerHTML = '<span class="ts-avatar-fallback" role="img" aria-label="Teacher avatar unavailable">🎓</span>';
+    }
 
     if (inClass) {
       cardButtons();
