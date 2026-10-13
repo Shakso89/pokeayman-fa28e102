@@ -6315,10 +6315,16 @@ function getStudents(schoolName, className) {
   // Legacy imports can contain a class row and a linked-account row for the
   // same pupil. A class roster must render one card for that name, even while
   // the canonical index is being rebuilt after a save or poll.
+  // Membership rows carry a blank name, so resolve the canonical account's
+  // name before keying; match by canonical ID or name to keep one card.
   const uniqueRows = new Map();
+  const keyById = new Map();
   membershipRows.forEach(row => {
-    const nameKey = normalizeStudentIdentity(row.student_name);
-    const key = nameKey ? `name:${nameKey}` : `id:${canonicalStudentKey(row)}`;
+    const canonicalId = canonicalStudentKey(row);
+    const canonicalName = canonicalStudentAccounts.get(canonicalId)?.student_name;
+    const nameKey = normalizeStudentIdentity(row.student_name || canonicalName);
+    const key = (canonicalId && keyById.get(canonicalId)) || (nameKey ? `name:${nameKey}` : `id:${canonicalId}`);
+    if (canonicalId) keyById.set(canonicalId, key);
     const previous = uniqueRows.get(key);
     const score = studentCompletenessScore(row) + (row.type === 'student' ? 1000 : 0) + (canonicalIdentityFromRecord(row) ? 100 : 0);
     if (!previous || score > previous.score) uniqueRows.set(key, { row, score });
