@@ -3,7 +3,7 @@
 (function () {
   const TURN_SECONDS = 20;
   const STUDENT_HP = 100;
-  const DODGE_CHANCE = 0.2;
+  const DODGE_CHANCE = 0.35;
   const RARITY_WEIGHT = { common: 100, uncommon: 45, rare: 15, epic: 6, mythic: 4 };
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const sprite = (id) => `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${id}.png`;
@@ -268,7 +268,7 @@
         scheduleNext(1000);
       });
     }
-    const damage = battle.currentWord.length * 7 + rand(0, 5);
+    const damage = battle.currentWord.length * 3 + rand(1, 4);
     setMessage('Correct! Energy strike!');
     animateAttack(false, false, () => {
       battle.foeHp = Math.max(0, battle.foeHp - damage);
@@ -286,7 +286,7 @@
   function onFail(reason) {
     stopTimer();
     battle.resolving = true;
-    const damage = rand(6, 12) + battle.failStreak * 5;
+    const damage = rand(5, 9) + battle.failStreak * 3;
     battle.failStreak += 1;
     const meEl = battle.root.querySelector('.vb-me');
     setMessage(`${reason} ${battle.foe.shop_pokemon_name} is charging an attack!`);
