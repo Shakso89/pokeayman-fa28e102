@@ -29,8 +29,8 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
   try {
     if (context.state === "suspended") await context.resume();
     const normalizedLevel = /^P[1-6]$/.test(level) ? level : "P3";
-    const cacheKey = new Request(`${location.origin}/__vocabulary_audio/kore-v1/${normalizedLevel}/${encodeURIComponent(text)}`);
-    const cache = await caches.open("pokeayman-natural-voice-v1").catch(() => null);
+    const cacheKey = new Request(`${location.origin}/__vocabulary_audio/kore-v2/${normalizedLevel}/${encodeURIComponent(text)}`);
+    const cache = await caches.open("pokeayman-natural-voice-v2").catch(() => null);
     const cached = await cache?.match(cacheKey);
     const response = cached || await fetch(endpoint, {
       method: "POST",

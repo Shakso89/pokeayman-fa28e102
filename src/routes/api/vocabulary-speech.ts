@@ -46,7 +46,7 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
         if (word.error || sentence.error) return Response.json({ message: "Could not load this vocabulary. Please try again later." }, { status: 503 });
         if (!word.data?.length && !sentence.data?.length) return Response.json({ message: "This word or sentence must be saved in a vocabulary list first." }, { status: 400 });
         const { requestSpeech } = await import("@/lib/speech-request.server");
-        const pacing: Record<string, string> = { P1: "Speak very slowly, with clear pauses between words.", P2: "Speak slowly and clearly, with a little space between words.", P3: "Speak at a gentle, clear classroom pace.", P4: "Speak at a steady, natural classroom pace.", P5: "Speak at a confident, natural pace.", P6: "Speak at a fluent, natural pace." };
+        const pacing: Record<string, string> = { P1: "Speak slowly and clearly, with a little space between words.", P2: "Speak slowly and clearly, with a little space between words.", P3: "Speak at a gentle, clear classroom pace.", P4: "Speak at a steady, natural classroom pace.", P5: "Speak at a confident, natural pace.", P6: "Speak at a fluent, natural pace." };
         const upstream = await requestSpeech({ baseURL: "https://ai.gateway.lovable.dev", apiKey, model: "google/gemini-3.1-flash-tts-preview", format: "gemini", voice: "Kore" }, `Read only the text below in warm, natural, clear English for a child learning vocabulary. ${pacing[level]} Use accurate pronunciation and no introduction or extra words.\n\n${text}`);
         return new Response(upstream.body, {
           status: upstream.status,

@@ -258,7 +258,7 @@
   function speak(word) {
     window.speechSynthesis?.cancel();
     if (typeof window.readNaturalVocabulary === 'function') window.readNaturalVocabulary(word, null, { level: window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P3' });
-    else { const level = window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P3'; const rates = { P1: .62, P2: .72, P3: .82, P4: .92, P5: 1, P6: 1.08 }; const utterance = new SpeechSynthesisUtterance(word); utterance.rate = rates[level] || .82; window.speechSynthesis?.speak(utterance); }
+    else { const level = window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P3'; const rates = { P1: .72, P2: .72, P3: .82, P4: .92, P5: 1, P6: 1.08 }; const utterance = new SpeechSynthesisUtterance(word); utterance.rate = rates[level] || .82; window.speechSynthesis?.speak(utterance); }
   }
   function gameWords(listName) {
     return shuffle(getGameWords(listName, false).filter(word => String(word.vocab_word || '').trim())).slice(0, ROUNDS);
