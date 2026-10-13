@@ -8288,7 +8288,14 @@ function renderTeacherOwnedVocabLists() {
       const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${escape(list.vocab_cover_image_url)}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
       const owned = currentRole === 'teacher' && verifiedTeacherIdentity() && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey;
       return `<article class="vocab-list-card teacher-zone-wordbank-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="teacher-zone-wordbank-heading"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name">${safeName}</span></div><p class="vocab-list-count teacher-zone-wordbank-context">${context}</p>${cover}<p class="vocab-list-count teacher-zone-wordbank-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode btn-primary" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div><div class="vocab-card-actions teacher-zone-wordbank-actions"><button type="button" class="vocab-card-edit btn-outline" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Edit</button>${owned ? `<button type="button" class="vocab-cover-button btn-secondary" onclick="openVocabCoverPicker('${safeId}','${safeName.replace(/'/g, "\\'")}')">Cover</button><button type="button" class="vocab-card-delete btn-danger" onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeName.replace(/'/g, "\\'")}',this)">Delete</button>` : ''}</div></article>`;
-    }).join('');
+    };
+    if (schoolMode) {
+      const toggle = `<div class="teacher-zone-list-section-title vb-show-mine-row" style="display:flex;justify-content:flex-end;grid-column:1/-1"><button type="button" class="${showMine ? 'btn-primary' : 'btn-outline'} vb-show-mine-toggle" aria-pressed="${showMine}" onclick="window.vbSchoolShowMine=!window.vbSchoolShowMine;renderTeacherOwnedVocabLists()">${showMine ? 'Hide my lists' : 'Show my lists'}</button></div>`;
+      const mine = showMine ? (lists.length ? sectionHead('My lists') + lists.map(ownCard).join('') : sectionHead('You have not created any vocabulary lists yet.')) : '';
+      grid.innerHTML = toggle + (otherLists.length ? sectionHead('School lists · by other teachers') + otherLists.map(schoolCard).join('') : '') + mine;
+      return;
+    }
+    grid.innerHTML = lists.map(ownCard).join('');
   } catch (error) { status.textContent = 'Could not load your vocabulary lists. Please refresh and try again.'; }
 }
 
