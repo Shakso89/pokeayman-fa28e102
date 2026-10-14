@@ -36,16 +36,37 @@
   }
   function weekStart(date = new Date()) { const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()); day.setDate(day.getDate() - ((day.getDay() + 6) % 7)); return day; }
   function dateInput(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
-  function challengeSetting() { return (typeof allData === 'undefined' ? [] : allData).find(row => row.type === 'listen_catch_challenge') || null; }
+  function challengeSetting() {
+    return (typeof allData === 'undefined' ? [] : allData)
+      .filter(row => String(row.type || '').trim().toLowerCase().replace(/[ -]+/g, '_') === 'listen_catch_challenge')
+      .sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')))[0] || null;
+  }
+  function challengeDate(value) {
+    if (value instanceof Date && Number.isFinite(value.getTime())) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    if (typeof value === 'number' && Number.isFinite(value) && value > 20000 && value < 100000) {
+      const serialDate = new Date(Date.UTC(1899, 11, 30) + Math.floor(value) * 86400000);
+      return new Date(serialDate.getUTCFullYear(), serialDate.getUTCMonth(), serialDate.getUTCDate());
+    }
+    const raw = String(value ?? '').trim();
+    if (!raw) return null;
+    let match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    match = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    if (match) return new Date(Number(match[3]), Number(match[1]) - 1, Number(match[2]));
+    const parsed = new Date(raw);
+    return Number.isFinite(parsed.getTime()) ? new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()) : null;
+  }
   function activeChallenge() {
     const setting = challengeSetting(); if (!setting?.challenge_start) return null;
-    const start = new Date(`${setting.challenge_start}T00:00:00`); const end = new Date(start); end.setDate(end.getDate() + 7);
-    const now = new Date(); if (!Number.isFinite(start.getTime()) || now < start || now >= end) return null;
+    const start = challengeDate(setting.challenge_start); if (!start || !Number.isFinite(start.getTime())) return null;
+    const end = new Date(start); end.setDate(end.getDate() + 7);
+    const today = new Date(); today.setHours(0, 0, 0, 0); if (today < start || today >= end) return null;
     const type = POKEMON_TYPES.includes(String(setting.challenge_type || '').toLowerCase()) ? String(setting.challenge_type).toLowerCase() : '';
     const tier = POKEMON_TIERS.includes(String(setting.challenge_tier || '').toLowerCase()) ? String(setting.challenge_tier).toLowerCase() : '';
     const goal = Math.max(1, Math.min(200, Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL));
     const lastDay = new Date(end); lastDay.setDate(lastDay.getDate() - 1);
-    return { id: `week-${setting.challenge_start}`, title: String(setting.challenge_title || 'Weekly Catchdex Challenge'), type, tier, goal, start: setting.challenge_start, end: dateInput(lastDay), setting };
+    const startKey = dateInput(start);
+    return { id: String(setting.challenge_id || `week-${startKey}`), title: String(setting.challenge_title || 'Weekly Catchdex Challenge'), type, tier, goal, start: startKey, end: dateInput(lastDay), setting };
   }
   function typeOf(item) {
     const type = typeof getPokemonTypes === 'function' ? getPokemonTypes(item).find(value => value !== 'unknown') : '';
@@ -157,8 +178,9 @@
     const claimKey = `${identity(record)}:${goal.id}`;
     if (claimingChallengeIds.has(claimKey)) return;
     claimingChallengeIds.add(claimKey);
-    const consumed = goal.qualifying.slice(0, goal.goal); const consumedIds = new Set(consumed.map(entry => Number(entry.pokemon_id)));
-    state.album = state.album.filter(entry => !consumedIds.has(Number(entry.pokemon_id)) || !matchesChallenge(entry, goal));
+    const consumed = goal.qualifying;
+    const consumedIds = new Set(consumed.map(entry => Number(entry.pokemon_id)));
+    state.album = state.album.filter(entry => !consumedIds.has(Number(entry.pokemon_id)));
     state.claimedChallengeIds = [...new Set([...(Array.isArray(state.claimedChallengeIds) ? state.claimedChallengeIds : []), goal.id])];
     // Keep the legacy marker in sync so older dashboard bundles also treat this
     // student's challenge as already claimed after a reload.
@@ -256,7 +278,7 @@
     let posted = panel.querySelector('.lc-admin-posted');
     if (!posted) { posted = document.createElement('section'); posted.className = 'lc-admin-posted'; panel.appendChild(posted); posted.addEventListener('click', e => { if (e.target.closest('[data-lc-delete]')) deleteChallenge(); }); }
     if (!setting) { posted.innerHTML = ''; return; }
-    const id = `week-${setting.challenge_start}`;
+    const id = String(setting.challenge_id || `week-${challengeDate(setting.challenge_start) ? dateInput(challengeDate(setting.challenge_start)) : setting.challenge_start}`);
     const done = []; const ready = [];
     (typeof allData === 'undefined' ? [] : allData).filter(r => r.type === 'listen_catch_progress').forEach(r => {
       const state = parseProgress(r); const rec = (typeof getStudentRecordByStableId === 'function' && getStudentRecordByStableId(r.student_id)) || r; const name = rec.student_name || r.student_name || 'Student';
@@ -394,7 +416,7 @@
   }
   function renderCatchdexContents(record, readOnly) {
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    const cards = state.album.length ? state.album.map(entry => `<article class="catchdex-mon"><img src="${art(entry.pokemon_id)}" alt="${esc(entry.pokemon_name)}" loading="lazy"><b>${esc(entry.pokemon_name)}</b><span>${esc(entry.pokemon_type)}</span></article>`).join('') : '<p class="catchdex-empty">Win a Catch Ball in Listen and Catch, then open it here.</p>';
+    const cards = state.album.length ? state.album.map(entry => { const qualifies = goal.active && !goal.claimed && matchesChallenge(entry, goal); return `<article class="catchdex-mon${qualifies ? ' is-challenge-match' : ''}"${qualifies ? ' aria-label="Matches the weekly challenge"' : ''}><img src="${art(entry.pokemon_id)}" alt="${esc(entry.pokemon_name)} sticker" loading="lazy">${qualifies ? '<span class="catchdex-match-tag">✓ CHALLENGE</span>' : ''}<b>${esc(entry.pokemon_name)}</b><span>${esc(entry.pokemon_type)}</span></article>`; }).join('') : '<p class="catchdex-empty">Win a Catch Ball in Listen and Catch, then open it here.</p>';
     const challengeMarkup = goal.active
       ? `<section class="catchdex-challenge"><div><span>WEEKLY CHALLENGE${goal.claimed ? ' · COMPLETE' : ''}</span><h3>${esc(goal.title)}</h3><p>Collect ${goal.goal} unique Pokémon matching ${esc(challengeCriteria(goal))} · ${goal.start} – ${goal.end}</p></div><b>${Math.min(goal.unique, goal.goal)} / ${goal.goal}</b>${goal.ready ? '<button type="button" class="lc-primary" data-catchdex="claim">Claim Mystery Box</button>' : ''}${goal.claimed ? '<p class="lc-challenge-claimed">Mystery Box claimed · qualifying stickers were used.</p>' : ''}</section>`
       : '<section class="catchdex-challenge is-inactive"><div><span>WEEKLY CHALLENGE</span><h3>No active challenge</h3><p>Your next Catchdex challenge will appear here when the admin schedules it.</p></div></section>';

@@ -61,6 +61,12 @@
 @keyframes lc-mystery-rise{0%{opacity:0;transform:translateY(75px) scale(.25) rotate(-14deg)}70%{opacity:1;transform:translateY(-8px) scale(1.08) rotate(4deg)}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
 @media(max-width:560px){.lc-admin-form{grid-template-columns:1fr}.lc-mystery-card{padding:24px 16px 18px;border-radius:22px}.lc-mystery-scene{height:220px}.lc-mystery-pokemon{width:165px;height:165px}}
 @media(prefers-reduced-motion:reduce){.lc-mystery-reveal,.lc-mystery-card,.lc-mystery-box,.lc-mystery-box-lid,.lc-mystery-pokemon,.lc-mystery-burst{animation:none!important;transition:none!important}.lc-mystery-box-lid{transform:perspective(180px) rotateX(-100deg) translateY(-10px)}.lc-mystery-pokemon{opacity:1;transform:none}.lc-mystery-burst{opacity:.4;transform:translate(-50%,-50%) scale(1)}}
+.catchdex-mon.is-challenge-match{position:relative;border-color:rgba(250,204,21,.9);background:linear-gradient(155deg,rgba(113,83,13,.34),var(--ga-stage-surface,#131c2e) 72%);box-shadow:0 0 0 2px rgba(250,204,21,.22),0 0 20px rgba(250,204,21,.15);animation:catchdex-challenge-glow 2.6s ease-in-out infinite}
+.catchdex-mon.is-challenge-match img{filter:drop-shadow(0 0 8px rgba(250,204,21,.5))}
+.catchdex-match-tag{padding:3px 7px;border:1px solid rgba(250,204,21,.48);border-radius:999px;background:rgba(250,204,21,.14);color:#fde68a!important;font-size:.56rem!important;font-weight:900;letter-spacing:.06em}
+.catchdex-challenge:not(.is-inactive) h3::after{content:' · matching stickers are highlighted below';color:#fde68a;font:600 .72rem Figtree,sans-serif}
+@keyframes catchdex-challenge-glow{50%{box-shadow:0 0 0 3px rgba(250,204,21,.3),0 0 26px rgba(250,204,21,.25)}}
+@media(prefers-reduced-motion:reduce){.catchdex-mon.is-challenge-match{animation:none}}
 .lc-admin-posted{margin-top:18px;padding:16px;border:1px solid var(--color-border,rgba(255,255,255,.16));border-radius:14px;background:var(--color-surface,rgba(15,23,42,.5));color:var(--color-text-primary,#f8fafc)}
 .lc-admin-posted:empty{display:none}
 .lc-admin-posted header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
