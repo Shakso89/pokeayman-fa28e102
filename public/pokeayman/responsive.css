@@ -133,9 +133,8 @@ body > #contact-pricing-float > #contact-pricing-btn {
 @media (max-width: 1024px) {
   /* The Teacher Card is a full-page workspace; fixed mobile navigation must not cover its avatar grid. */
   body.ts-on:has(#teacher-zone-profile-panel:not(.hidden) .trainer-page) #ts-sidebar,
-  body.ts-on:has(#teacher-zone-profile-panel:not(.hidden) .trainer-page) #ts-bottom,
   body.ts-on:has(#teacher-zone-profile-panel:not(.hidden) .trainer-page) #ts-rail { display: none !important; }
-  body.ts-on:has(#teacher-zone-profile-panel:not(.hidden) .trainer-page) #app-screen { padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important; }
+  body.ts-on:has(#teacher-zone-profile-panel:not(.hidden) .trainer-page) #app-screen { padding-bottom: calc(126px + env(safe-area-inset-bottom)) !important; }
   html body.ts-on #ts-sidebar-toggle { display: none !important; }
   html body.ts-on #app-screen { padding-left: 0 !important; padding-bottom: calc(126px + env(safe-area-inset-bottom)) !important; }
   html body.ts-on #app-screen > nav.sticky .tab-btn, html body.ts-on #app-screen > nav.sticky #logged-in-name-container,
