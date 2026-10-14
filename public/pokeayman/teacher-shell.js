@@ -374,10 +374,11 @@
     $('ts-notification-count').hidden = unread === 0;
     $('[data-ts="notifications"]').setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
     const sourceAvatar = $('teacher-account-avatar')?.querySelector('img');
-    const savedAvatarSrc = g(() => teacherAvatarSrc(findMyTeacherRecord()?.teacher_avatar), '');
+    const avatarRecord = g(() => isAymanTeacher() ? getAdminTeacherRecord() : findMyTeacherRecord(), null);
+    const savedAvatarSrc = g(() => teacherAvatarSrc(avatarRecord?.teacher_avatar), '');
     const avatarSrc = savedAvatarSrc || sourceAvatar?.currentSrc || sourceAvatar?.src || '';
     const avatarUrl = avatarSrc ? g(() => new URL(avatarSrc, document.baseURI).href, '') : '';
-    const avatarAlt = sourceAvatar?.alt || 'Teacher avatar';
+    const avatarAlt = avatarRecord?.teacher_name ? `${avatarRecord.teacher_name}'s avatar` : (sourceAvatar?.alt || 'Teacher avatar');
     if (avatarUrl && avatarUrl !== failedAvatarSrc) {
       const currentAvatar = $('ts-avatar').querySelector('img');
       if (currentAvatar?.src !== avatarUrl) {
