@@ -67,6 +67,20 @@
 .catchdex-challenge:not(.is-inactive) h3::after{content:' · matching stickers are highlighted below';color:#fde68a;font:600 .72rem Figtree,sans-serif}
 @keyframes catchdex-challenge-glow{50%{box-shadow:0 0 0 3px rgba(250,204,21,.3),0 0 26px rgba(250,204,21,.25)}}
 @media(prefers-reduced-motion:reduce){.catchdex-mon.is-challenge-match{animation:none}}
+
+/* Weekly Catchdex challenge progress and reward actions. */
+.catchdex-challenge-copy{min-width:0}
+.catchdex-challenge-copy>small,.catchdex-challenge-progress>small{display:block;margin-top:5px;color:var(--ga-stage-muted,#c7d2fe);font-size:.72rem;font-weight:700}
+.catchdex-challenge-progress{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(80px,1fr) auto;align-items:center;gap:10px}
+.catchdex-challenge-progress>b{color:#fde68a;font:900 .9rem Outfit,sans-serif;white-space:nowrap}
+.catchdex-progress-track{height:12px;overflow:hidden;border:1px solid rgba(250,204,21,.35);border-radius:999px;background:rgba(15,23,42,.72)}
+.catchdex-progress-track>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f59e0b,#fde047);box-shadow:0 0 12px rgba(250,204,21,.45);transition:width .35s ease}
+.catchdex-challenge-progress>small{grid-column:2/-1;margin-top:-6px}
+.catchdex-challenge-action{grid-column:1/-1!important;justify-self:start!important;margin:0!important}
+.catchdex-challenge.is-ready{border-color:rgba(250,204,21,.72);box-shadow:0 0 24px rgba(250,204,21,.12)}
+.catchdex-challenge.is-claimed{border-color:rgba(52,211,153,.5)}
+.catchdex-challenge .lc-challenge-claimed{grid-column:1/-1}
+@media(max-width:560px){.catchdex-challenge-progress{grid-template-columns:1fr auto;gap:8px}.catchdex-progress-track{grid-column:1/-1;grid-row:2}.catchdex-challenge-progress>small{grid-column:1/-1;margin:0}.catchdex-challenge-action{width:100%}}
 .lc-admin-posted{margin-top:18px;padding:16px;border:1px solid var(--color-border,rgba(255,255,255,.16));border-radius:14px;background:var(--color-surface,rgba(15,23,42,.5));color:var(--color-text-primary,#f8fafc)}
 .lc-admin-posted:empty{display:none}
 .lc-admin-posted header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}

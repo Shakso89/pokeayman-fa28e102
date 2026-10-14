@@ -3751,13 +3751,29 @@
     return method === 'GET' ? r.json() : null;
   }
   let lastSig = '';
+  let pullInFlight = null;
   async function pull() {
-    try {
-      const rows = await api('GET', '?select=id,data&order=created_at.asc&limit=10000');
+    if (pullInFlight) return pullInFlight;
+    pullInFlight = (async () => { try {
+      // PostgREST enforces a server-side max_rows cap (commonly 1,000), even
+      // when a larger limit is requested. Read every page so recent global
+      // settings such as Catchdex challenges are not silently omitted.
+      const pageSize = 1000;
+      const rows = [];
+      let offset = 0;
+      while (true) {
+        const page = await api('GET', `?select=id,data&order=created_at.asc,id.asc&limit=${pageSize}&offset=${offset}`);
+        if (!Array.isArray(page) || !page.length) break;
+        rows.push(...page);
+        offset += page.length;
+        if (page.length < pageSize) break;
+      }
       const next = rows.map(r => ({...r.data, __backendId: r.id}));
       const sig = JSON.stringify(next);
       if (sig !== lastSig) { lastSig = sig; records = next; cache(); notify(); }
     } catch (e) { console.warn('Backend unavailable, using local copy', e); }
+    })();
+    try { return await pullInFlight; } finally { pullInFlight = null; }
   }
   let migrated = false;
   let resolveReady; window.pokeaymanDataReady = new Promise(r => { resolveReady = r; });

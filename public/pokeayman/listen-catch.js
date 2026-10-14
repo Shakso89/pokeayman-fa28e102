@@ -36,10 +36,12 @@
   }
   function weekStart(date = new Date()) { const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()); day.setDate(day.getDate() - ((day.getDay() + 6) % 7)); return day; }
   function dateInput(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
-  function challengeSetting() {
+  function challengeRows() {
     return (typeof allData === 'undefined' ? [] : allData)
-      .filter(row => String(row.type || '').trim().toLowerCase().replace(/[ -]+/g, '_') === 'listen_catch_challenge')
-      .sort((a, b) => String(b.updated_at || b.created_at || '').localeCompare(String(a.updated_at || a.created_at || '')))[0] || null;
+      .filter(row => String(row.type || row.record_type || row.category || '').trim().toLowerCase().replace(/[ -]+/g, '_') === 'listen_catch_challenge');
+  }
+  function challengeStartValue(setting) {
+    return setting?.challenge_start ?? setting?.challenge_start_date ?? setting?.start_date ?? setting?.starts_at ?? '';
   }
   function challengeDate(value) {
     if (value instanceof Date && Number.isFinite(value.getTime())) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
@@ -56,17 +58,34 @@
     const parsed = new Date(raw);
     return Number.isFinite(parsed.getTime()) ? new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()) : null;
   }
+  function challengeWindow(setting, now = new Date()) {
+    const start = challengeDate(challengeStartValue(setting));
+    if (!start || !Number.isFinite(start.getTime())) return null;
+    const explicitEnd = challengeDate(setting.challenge_end ?? setting.challenge_end_date ?? setting.end_date ?? setting.ends_at);
+    const end = explicitEnd || new Date(start);
+    if (!explicitEnd) end.setDate(end.getDate() + 6);
+    const endExclusive = new Date(end); endExclusive.setDate(endExclusive.getDate() + 1);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return { start, end, active: today >= start && today < endExclusive };
+  }
+  function challengeSetting() {
+    const settings = challengeRows().sort((a, b) => {
+      const aTime = Date.parse(a.updated_at || a.created_at || '') || 0;
+      const bTime = Date.parse(b.updated_at || b.created_at || '') || 0;
+      return bTime - aTime;
+    });
+    // A later scheduled challenge must not hide the challenge that is live now.
+    return settings.find(setting => challengeWindow(setting)?.active) || settings[0] || null;
+  }
   function activeChallenge() {
-    const setting = challengeSetting(); if (!setting?.challenge_start) return null;
-    const start = challengeDate(setting.challenge_start); if (!start || !Number.isFinite(start.getTime())) return null;
-    const end = new Date(start); end.setDate(end.getDate() + 7);
-    const today = new Date(); today.setHours(0, 0, 0, 0); if (today < start || today >= end) return null;
+    const setting = challengeSetting(); if (!setting) return null;
+    const window = challengeWindow(setting); if (!window?.active) return null;
+    const { start, end } = window;
     const type = POKEMON_TYPES.includes(String(setting.challenge_type || '').toLowerCase()) ? String(setting.challenge_type).toLowerCase() : '';
     const tier = POKEMON_TIERS.includes(String(setting.challenge_tier || '').toLowerCase()) ? String(setting.challenge_tier).toLowerCase() : '';
-    const goal = Math.max(1, Math.min(200, Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL));
-    const lastDay = new Date(end); lastDay.setDate(lastDay.getDate() - 1);
+    const goal = Math.max(1, Math.min(200, Number(setting.challenge_goal ?? setting.goal) || DEFAULT_CHALLENGE_GOAL));
     const startKey = dateInput(start);
-    return { id: String(setting.challenge_id || `week-${startKey}`), title: String(setting.challenge_title || 'Weekly Catchdex Challenge'), type, tier, goal, start: startKey, end: dateInput(lastDay), setting };
+    return { id: String(setting.challenge_id || `week-${startKey}`), title: String(setting.challenge_title || setting.title || 'Weekly Catchdex Challenge'), type, tier, goal, start: startKey, end: dateInput(end), setting };
   }
   function typeOf(item) {
     const type = typeof getPokemonTypes === 'function' ? getPokemonTypes(item).find(value => value !== 'unknown') : '';
@@ -406,7 +425,7 @@
     const profileRoot = document.getElementById('profile-catchdex-root');
     if (profile && profileRoot) {
       const profileState = parseProgress(progressFor(profile)); const profileGoal = challenge(profileState);
-      const sig = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.unique}:${profileGoal.claimed}:${profileState.last?.item?.id || ''}`;
+      const sig = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.title}:${profileGoal.start}:${profileGoal.end}:${profileGoal.type}:${profileGoal.tier}:${profileGoal.goal}:${profileGoal.unique}:${profileGoal.claimed}:${profileState.last?.item?.id || ''}`;
       if (profileRoot.dataset.catchdexSig !== sig) {
         albumViewer = { record: profile, readOnly: true };
         profileRoot.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(profile, true).replace('<button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button>', '')}</section>`;
@@ -418,7 +437,7 @@
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
     const cards = state.album.length ? state.album.map(entry => { const qualifies = goal.active && !goal.claimed && matchesChallenge(entry, goal); return `<article class="catchdex-mon${qualifies ? ' is-challenge-match' : ''}"${qualifies ? ' aria-label="Matches the weekly challenge"' : ''}><img src="${art(entry.pokemon_id)}" alt="${esc(entry.pokemon_name)} sticker" loading="lazy">${qualifies ? '<span class="catchdex-match-tag">✓ CHALLENGE</span>' : ''}<b>${esc(entry.pokemon_name)}</b><span>${esc(entry.pokemon_type)}</span></article>`; }).join('') : '<p class="catchdex-empty">Win a Catch Ball in Listen and Catch, then open it here.</p>';
     const challengeMarkup = goal.active
-      ? `<section class="catchdex-challenge"><div><span>WEEKLY CHALLENGE${goal.claimed ? ' · COMPLETE' : ''}</span><h3>${esc(goal.title)}</h3><p>Collect ${goal.goal} unique Pokémon matching ${esc(challengeCriteria(goal))} · ${goal.start} – ${goal.end}</p></div><b>${Math.min(goal.unique, goal.goal)} / ${goal.goal}</b>${goal.ready ? '<button type="button" class="lc-primary" data-catchdex="claim">Claim Mystery Box</button>' : ''}${goal.claimed ? '<p class="lc-challenge-claimed">Mystery Box claimed · qualifying stickers were used.</p>' : ''}</section>`
+      ? `<section class="catchdex-challenge${goal.ready ? ' is-ready' : ''}${goal.claimed ? ' is-claimed' : ''}"><div class="catchdex-challenge-copy"><span>WEEKLY CHALLENGE${goal.claimed ? ' · COMPLETE' : ''}</span><h3>${esc(goal.title)}</h3><p>Collect ${goal.goal} unique Pokémon matching ${esc(challengeCriteria(goal))}</p><small>Ends ${esc(goal.end)}</small></div><div class="catchdex-challenge-progress"><b>${Math.min(goal.unique, goal.goal)} / ${goal.goal}</b><div class="catchdex-progress-track" role="progressbar" aria-label="Weekly Catchdex challenge progress" aria-valuemin="0" aria-valuemax="${goal.goal}" aria-valuenow="${Math.min(goal.unique, goal.goal)}"><span style="width:${Math.min(100, goal.unique / goal.goal * 100)}%"></span></div><small>${goal.claimed ? 'Challenge complete' : `${Math.max(0, goal.goal - goal.unique)} more to go`}</small></div>${goal.ready ? '<button type="button" class="lc-primary catchdex-challenge-action" data-catchdex="claim">🎁 Claim Mystery Box</button>' : ''}${goal.claimed && state.mysteryBoxes ? '<button type="button" class="lc-primary catchdex-challenge-action" data-catchdex="boxes">🎁 Open Mystery Box</button>' : ''}${goal.claimed ? '<p class="lc-challenge-claimed">Challenge claimed · matching stickers were used.</p>' : ''}</section>`
       : '<section class="catchdex-challenge is-inactive"><div><span>WEEKLY CHALLENGE</span><h3>No active challenge</h3><p>Your next Catchdex challenge will appear here when the admin schedules it.</p></div></section>';
     return `<div class="catchdex-content"><header><div><span>GAME COLLECTION</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2></div>${readOnly ? '<button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button>' : ''}</header><section class="catchdex-summary"><div><b>${state.balls}</b><span>Catch Balls</span>${readOnly ? '' : `<small class="catchdex-daily">${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} balls earned today · unopened balls have no daily limit</small>`}</div><div><b>${state.mysteryBoxes}</b><span>Mystery Boxes</span></div><div class="catchdex-actions">${state.balls ? '<button type="button" class="lc-primary" data-catchdex="balls">Open Catch Balls</button>' : ''}${state.mysteryBoxes ? '<button type="button" class="lc-primary" data-catchdex="boxes">Open Mystery Boxes</button>' : ''}</div></section>${state.last ? `<p class="catchdex-last ${state.last.duplicate ? 'is-duplicate' : ''}">${state.last.duplicate ? `Duplicate ${esc(state.last.item.name)} became ${state.last.coins} coins.` : `New discovery: ${esc(state.last.item.name)}!`}</p>` : ''}${challengeMarkup}<section class="catchdex-grid">${cards}</section></div>`;
   }
@@ -431,7 +450,7 @@
   function renderCatchdexTab() {
     const root = document.getElementById('student-catchdex-root'); const record = student(); if (!root || !record) return;
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    const signature = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.unique}:${goal.claimed}:${state.last?.item?.id || ''}`;
+    const signature = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.title}:${goal.start}:${goal.end}:${goal.type}:${goal.tier}:${goal.goal}:${goal.unique}:${goal.claimed}:${state.last?.item?.id || ''}`;
     if (root.dataset.catchdexSig === signature) return;
     root.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(record, false)}</section>`;
     root.dataset.catchdexSig = signature; bindCatchdexContents(root, record, false);
