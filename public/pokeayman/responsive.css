@@ -78,6 +78,12 @@ body > #contact-pricing-float {
   pointer-events: auto !important;
 }
 body > #contact-pricing-float[hidden] { display: none !important; }
+/* Keep the floating contact control off the student dashboard; it remains on home and teacher views. */
+body:has(#student-dashboard:not(.hidden)) > #contact-pricing-float {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
 body > #contact-pricing-float > #contact-pricing-btn {
   position: relative !important;
   width: auto;

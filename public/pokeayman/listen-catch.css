@@ -105,6 +105,7 @@
 .cdx-stat{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;min-width:0;padding:18px;border:1px solid #2b3b55;border-radius:19px;background:linear-gradient(145deg,#17243a,#121b2d)}
 .cdx-stat.is-box{background:linear-gradient(145deg,rgba(101,77,20,.28),#121b2d 75%);border-color:rgba(255,203,5,.25)}
 .cdx-stat-icon{display:grid;place-items:center;width:48px;height:48px;border:1px solid #3b4c69;border-radius:15px;background:#0d1627;font-size:1.4rem}
+.cdx-stat-icon img{display:block;width:36px;height:36px;object-fit:contain}
 .cdx-stat>div{display:grid;gap:2px;min-width:0}.cdx-stat-label{color:#aab7cc;font-size:.66rem;font-weight:900;letter-spacing:.13em}.cdx-stat b{font:900 1.8rem/1.05 Outfit,sans-serif;color:#ffcf24}.cdx-stat small{color:#9baac0;font-size:.75rem}
 .cdx-button{min-height:40px;padding:0 13px;border:1px solid #3b4d69;border-radius:12px;background:#1c2a42;color:#f3f6ff;font:800 .8rem Figtree,sans-serif;white-space:nowrap;cursor:pointer;transition:transform .16s ease,border-color .16s ease,background .16s ease}
 .cdx-button:hover{transform:translateY(-1px);border-color:#ffcb05}.cdx-button.is-gold{border-color:#f4c52b;background:linear-gradient(135deg,#ffdc58,#f6b91b);color:#182034}
