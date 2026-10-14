@@ -317,7 +317,9 @@
     if (b.id === 'ts-award-go') {
       const sel = $('award-student'), amt = $('award-amount'), form = $('award-form');
       const pick = $('ts-award-student').value;
-      if (!sel || !form || !pick) { g(() => toast('Pick a student first')); return; }
+      if (!g(() => canManageClass(navSchool, navClass), false)) { g(() => toast('Quick Award is available only for classes you manage.')); return; }
+      if (!sel || !amt || !form || !pick) { g(() => toast('Pick a student first')); return; }
+      if (![...sel.options].some(option => option.value === pick)) sel.add(new Option(pick, pick));
       sel.value = pick; amt.value = amount;
       form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
     }
@@ -378,18 +380,30 @@
     if (inClass) {
       cardButtons();
       const classKey = `${g(() => navSchool, '')}\u0000${g(() => navClass, '')}`;
+      const students = g(() => getStudents(navSchool, navClass), []);
+      const rosterStudents = students.length ? students : [...document.querySelectorAll('#students-list > .trainer-student-card[data-student-id]')]
+        .map(card => allData.find(row => row.__backendId === card.dataset.studentId))
+        .filter(Boolean);
       if (allData !== lastClassData || classKey !== lastClassKey) {
-        const students = g(() => getStudents(navSchool, navClass), []);
         hero(students);
-        const list = students.slice().sort((a, b) => (Number(b.coins) || 0) - (Number(a.coins) || 0)).slice(0, 3);
-        const html = list.map((s, i) => `<li class="m${i + 1}"><span class="ts-medal">${i + 1}</span><span><strong>${esc(s.student_name)}</strong><small>🪙 ${Number(s.coins || 0).toLocaleString()} coins</small></span></li>`).join('') || '<li class="ts-empty">No students yet</li>';
-        if (html !== lastTop) { $('ts-top3').innerHTML = html; lastTop = html; }
         lastClassData = allData;
         lastClassKey = classKey;
       }
-      const src = $('award-student');
-      const opts = src ? src.innerHTML : '';
-      if (opts !== lastOpts) { const keep = $('ts-award-student').value; $('ts-award-student').innerHTML = opts; if (keep) $('ts-award-student').value = keep; lastOpts = opts; }
+      const list = rosterStudents.slice().sort((a, b) => (Number(b.coins) || 0) - (Number(a.coins) || 0) || String(a.student_name || '').localeCompare(String(b.student_name || ''))).slice(0, 3);
+      const topHtml = list.map((s, i) => `<li class="m${i + 1}"><span class="ts-medal">${i + 1}</span><span><strong>${esc(s.student_name)}</strong><small>🪙 ${Number(s.coins || 0).toLocaleString()} coins</small></span></li>`).join('') || '<li class="ts-empty">No students yet</li>';
+      if (topHtml !== lastTop) { $('ts-top3').innerHTML = topHtml; lastTop = topHtml; }
+      const optionsHtml = '<option value="">Choose a student</option>' + rosterStudents.map(student => `<option value="${esc(student.student_name)}">${esc(student.student_name)}</option>`).join('');
+      const sidebarSelect = $('ts-award-student');
+      if (optionsHtml !== lastOpts || !sidebarSelect.options.length) {
+        const keep = sidebarSelect.value;
+        sidebarSelect.innerHTML = optionsHtml;
+        if (keep && [...sidebarSelect.options].some(option => option.value === keep)) sidebarSelect.value = keep;
+        lastOpts = optionsHtml;
+      }
+      const canAward = g(() => canManageClass(navSchool, navClass), false);
+      sidebarSelect.disabled = !canAward || !rosterStudents.length;
+      document.querySelectorAll('#ts-rail .ts-amounts button').forEach(button => { button.disabled = !canAward; });
+      $('ts-award-go').disabled = !canAward || !rosterStudents.length;
       const st = g(() => window.teacherStreakState(), null);
       if (st) {
         const dots = Array.from({ length: 7 }, (_, i) => `<span class="${i < st.count ? 'on' : ''}">${i + 1}</span>`).join('');

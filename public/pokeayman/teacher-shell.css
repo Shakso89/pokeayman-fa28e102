@@ -95,6 +95,7 @@ body.ts-on #ts-sidebar-tools #ts-theme-toggle .ts-theme-icon { display: block; f
 .ts-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
 .ts-amounts button { height: 38px; border-radius: 8px; background: transparent; color: var(--ts-ink); border: 1px solid var(--ts-border); font-weight: 700; cursor: pointer; }
 .ts-amounts button.on { border-color: var(--ts-yellow); color: var(--ts-yellow); background: color-mix(in srgb, var(--ts-yellow) 12%, transparent); }
+.ts-amounts button:disabled, .ts-award-go:disabled, #ts-award-student:disabled { cursor: not-allowed; opacity: .48; filter: grayscale(.35); }
 .ts-award-go { width: 100%; height: 44px; border-radius: 10px; border: 0; background: var(--ts-red); color: var(--ts-on-red); font: 700 15px 'Outfit', sans-serif; cursor: pointer; }
 .ts-gift .ts-award-go { background: var(--ts-yellow); color: var(--ts-action-ink); }
 .ts-award-go:hover { filter: brightness(1.1); }
