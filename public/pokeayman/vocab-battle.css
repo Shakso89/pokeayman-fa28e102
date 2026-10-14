@@ -188,3 +188,16 @@ body.ts-bright .vb-claim { background: rgba(255, 255, 255, .75); border-color: r
 @media (prefers-reduced-motion: reduce) {
   .vb-stage *, .vb-stage *::before, .vb-stage *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Classic top HUD: both HP bars on top with VS between */
+.vb-stage .vb-hud { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 2px solid var(--color-border, rgba(148,163,184,.35)); border-radius: 12px; background: var(--color-surface-raised, rgba(15,23,58,.7)); }
+.vb-stage .vb-hud-side { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.vb-stage .vb-hud-foe { text-align: right; }
+.vb-stage .vb-hud-foe .vb-hp-track { transform: scaleX(-1); }
+.vb-stage .vb-hud-name { margin: 0; font-weight: 900; font-size: .95rem; text-transform: uppercase; letter-spacing: .06em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vb-stage .vb-hud .vb-hp { width: 100%; }
+.vb-stage .vb-hud .vb-hp-track { height: 16px; }
+.vb-stage .vb-hud-vs { font: 900 1.6rem var(--font-display, inherit); color: var(--color-brand, #fde047); text-shadow: 2px 2px 0 #dc2626; font-style: italic; }
+.vb-stage .vb-matchup .vb-versus { visibility: hidden; }
+.vb-stage .vb-matchup .vb-me-name { display: none; }
+@media (max-width: 640px) { .vb-stage .vb-hud { gap: 6px; padding: 8px; } .vb-stage .vb-hud-vs { font-size: 1.2rem; } .vb-stage .vb-hud-name { font-size: .75rem; } }

@@ -3,7 +3,7 @@
 (function () {
   const TURN_SECONDS = 20;
   const STUDENT_HP = 100;
-  const DODGE_CHANCE = 0.2;
+  const DODGE_CHANCE = 0.35;
   const RARITY_WEIGHT = { common: 100, uncommon: 45, rare: 15, epic: 6, mythic: 4 };
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const sprite = (id) => `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${id}.png`;
@@ -208,7 +208,8 @@
     battle.currentWord = word;
     battle.slots = new Array(word.length).fill(null);
     battle.tiles = scrambleWord(word.toLowerCase()).map((letter, i) => ({ letter, used: false, key: i }));
-    battle.deadline = Date.now() + TURN_SECONDS * 1000;
+    battle.turnSeconds = rand(10, 22) + Math.min(6, Math.floor(word.length / 2));
+    battle.deadline = Date.now() + battle.turnSeconds * 1000;
     renderWord();
     battle.timerId = setInterval(tickTimer, 100);
     tickTimer();
@@ -217,7 +218,7 @@
   function tickTimer() {
     if (!battle) return;
     const left = Math.max(0, battle.deadline - Date.now());
-    const ratio = left / (TURN_SECONDS * 1000);
+    const ratio = left / ((battle.turnSeconds || TURN_SECONDS) * 1000);
     const fill = battle.root.querySelector('.vb-timer-fill');
     const text = battle.root.querySelector('.vb-timer-text');
     if (fill) { fill.style.width = `${ratio * 100}%`; fill.classList.toggle('vb-urgent', ratio < 0.3); }
@@ -275,7 +276,7 @@
         scheduleNext(1000);
       });
     }
-    const damage = 10 + battle.currentWord.length * 2 + rand(0, 6);
+    const damage = battle.currentWord.length * 3 + rand(1, 4);
     setMessage('Correct! Energy strike!');
     animateAttack(false, false, () => {
       battle.foeHp = Math.max(0, battle.foeHp - damage);
@@ -293,7 +294,7 @@
   function onFail(reason) {
     stopTimer();
     battle.resolving = true;
-    const damage = rand(6, 12) + battle.failStreak * 5;
+    const damage = rand(5, 9) + battle.failStreak * 3;
     battle.failStreak += 1;
     const meEl = battle.root.querySelector('.vb-me');
     setMessage(`${reason} ${battle.foe.shop_pokemon_name} is charging an attack!`);
@@ -458,7 +459,10 @@
     selectedGameSession = null;
     // The selected list may belong to one of this student's other enrolled classes.
     const battleStudent = { ...student, school_name: navSchool || student.school_name || '', class_name: navClass || student.class_name || '' };
-    launchBattle(listName, battleStudent);
+    // Students always battle with every list available in their current class.
+    const classLists = (typeof getVocabLists === 'function' ? getVocabLists(battleStudent.school_name, battleStudent.class_name) : []).map((l) => l.vocab_list_name).filter(Boolean);
+    navSchool = battleStudent.school_name; navClass = battleStudent.class_name;
+    launchBattle(classLists.length ? classLists : listName, battleStudent);
   };
 
   function launchBattle(listName, student) {
@@ -476,18 +480,21 @@
     root.innerHTML = `
       <header class="vb-head"><span class="vb-title">⚔️ Poké Battle</span><button type="button" class="vb-close" data-vb="close">✕ Leave battle</button></header>
       <div class="vb-arena">
+        <div class="vb-hud">
+          <div class="vb-hud-side vb-hud-me"><p class="vb-hud-name">${esc(student.student_name)}</p><div class="vb-hp vb-me-hp"><div class="vb-hp-label"><span>HP</span><span class="vb-hp-num"></span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div></div>
+          <span class="vb-hud-vs" aria-hidden="true">VS</span>
+          <div class="vb-hud-side vb-hud-foe"><p class="vb-hud-name">${esc(foe.shop_pokemon_name)}</p><div class="vb-hp vb-foe-hp"><div class="vb-hp-label"><span class="vb-hp-num"></span><span>HP</span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div></div>
+        </div>
         <div class="vb-matchup">
         <div class="vb-me">
           ${partner ? `<img class="vb-me-art" src="${sprite(Number(partner.pokemon_id))}" alt="${esc(student.student_name)}'s ${esc(partner.pokemon_name)}"><p class="vb-partner-name">${esc(partner.pokemon_name || `Pokémon ${partner.pokemon_id}`)}</p>` : '<span class="vb-me-art vb-trainer-fallback" role="img" aria-label="Trainer">' + esc(String(student.student_name || '?').charAt(0).toUpperCase()) + '</span>'}
           <p class="vb-me-name">${esc(student.student_name)}</p>
-          <div class="vb-hp vb-me-hp"><div class="vb-hp-label"><span>HP</span><span class="vb-hp-num"></span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div>
         </div>
         <span class="vb-versus" aria-hidden="true">VS</span>
         <div class="vb-foe">
           <img class="vb-foe-art" src="${sprite(foe.shop_pokemon_id)}" alt="Wild ${esc(foe.shop_pokemon_name)}">
           <p class="vb-foe-name">Wild ${esc(foe.shop_pokemon_name)}</p>
           <p class="vb-foe-rarity">${esc(foe.shop_pokemon_rarity || 'common')} · wins cost ${Number(foe.shop_pokemon_price) || 0} credits</p>
-          <div class="vb-hp vb-foe-hp"><div class="vb-hp-label"><span>HP</span><span class="vb-hp-num"></span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div>
         </div>
         </div>
         <p class="vb-message" aria-live="polite">Unscramble the word to attack!</p>
