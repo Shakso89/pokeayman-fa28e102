@@ -18,6 +18,7 @@
     const toggle = $('ts-theme-toggle');
     if (toggle) {
       toggle.setAttribute('aria-checked', String(bright));
+      toggle.setAttribute('aria-label', bright ? 'Switch to dark mode' : 'Switch to bright mode');
       toggle.title = bright ? 'Switch to dark mode' : 'Switch to bright mode';
       toggle.querySelector('.ts-theme-icon').textContent = bright ? '☀' : '☾';
     }
@@ -107,8 +108,8 @@
     notifications.className = 'ts-notification-button'; notifications.dataset.ts = 'notifications';
     notifications.setAttribute('aria-label', 'Open notifications'); notifications.title = 'Notifications';
     notifications.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><strong id="ts-notification-count" class="ts-notification-count" aria-live="polite" hidden>0</strong>';
-    tools.append(theme, notifications);
-    side.insertBefore(tools, side.querySelector('.ts-logout'));
+    tools.append(side.querySelector('.ts-logout'), theme, notifications);
+    side.insertBefore(tools, side.querySelector('.ts-switch-wrap'));
     theme.addEventListener('click', () => {
       setThemeMode(!bright);
     });

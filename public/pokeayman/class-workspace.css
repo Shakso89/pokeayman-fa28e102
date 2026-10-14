@@ -238,6 +238,8 @@ html body #view-classes .gym-card .class-teacher-item{display:flex!important;fle
 html body #view-classes .gym-card .class-teacher-avatar{display:grid;width:clamp(48px,14vw,64px);height:clamp(48px,14vw,64px);max-width:100%;box-sizing:border-box;object-fit:contain}
 html body #view-classes .gym-card .class-teacher-label{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;max-width:100%;font-size:inherit;font-weight:500!important;line-height:1.25;overflow-wrap:anywhere}
 html body #view-classes .gym-card .class-teacher-badge{flex:none}
+html body #view-classes .gym-card .class-teacher-badge{display:inline-grid;place-items:center;width:19px;height:19px;padding:0;border-radius:50%;font-size:.7rem;line-height:1;letter-spacing:0}
+html body #view-classes .gym-card .class-teacher-item:only-child{grid-column:1/-1;justify-self:center;width:fit-content;max-width:100%}
 html body #view-classes .gym-card .class-teacher-more{grid-column:1/-1;justify-self:center;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center}
 html body #view-classes .gym-card .gym-top3{min-width:0;max-width:100%;flex-wrap:wrap;gap:8px}
 html body #view-classes .gym-card .gym-top3-names{flex:1 1 60px}
