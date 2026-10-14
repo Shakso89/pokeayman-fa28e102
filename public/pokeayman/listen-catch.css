@@ -140,3 +140,23 @@
 .lc-daily-cap.is-limit{border-color:rgba(251,191,36,.48);background:rgba(120,78,12,.24);color:#fde68a}
 @media(max-width:560px){.lc-listen{min-height:7rem;width:100%;gap:10px;padding:.8rem}.lc-listen .lc-listen-label{font-size:clamp(.88rem,4vw,1.15rem)}.lc-reward-panel{gap:10px;padding:12px}.lc-reward-icon{width:48px;height:48px;border-radius:14px}.lc-reward-icon img{width:37px;height:37px}.lc-result{padding:20px 14px}.lc-result-actions{gap:6px}.lc-result-actions button{font-size:clamp(.72rem,3.4vw,.9rem);padding:0 6px}}
 @media(prefers-reduced-motion:reduce){.lc-reward-fill{transition:none}}
+
+/* Listen & Catch play layout: align the reward, listening control and answer grid. */
+.lc-main{gap:clamp(14px,2.2vh,22px);padding:clamp(16px,3vw,32px)}
+.lc-main>.lc-reward-panel,.lc-main>.lc-listen,.lc-main>.lc-prompt,.lc-main>.lc-options{width:min(100%,46rem)}
+.lc-main>.lc-reward-panel{grid-template-columns:54px minmax(0,1fr);gap:clamp(12px,2vw,18px);padding:clamp(12px,2vw,18px) clamp(14px,2.4vw,22px);border-radius:18px}
+.lc-reward-icon{width:54px;height:54px;border-radius:16px}
+.lc-reward-icon img{width:42px;height:42px}
+.lc-reward-copy{gap:6px 12px}
+.lc-reward-copy>span{font-size:.68rem}
+.lc-reward-copy>strong{font-size:clamp(.95rem,1.8vw,1.15rem)}
+.lc-reward-copy>strong b{font-size:clamp(1.25rem,2.4vw,1.6rem)}
+.lc-reward-status,.lc-daily-cap{font-size:.78rem}
+.lc-daily-cap{padding:7px 10px}
+.lc-main>.lc-listen{min-height:clamp(6.5rem,14vh,8.5rem);border-radius:20px;box-shadow:0 0 0 5px rgba(255,203,5,.1),0 12px 34px rgba(45,75,190,.28)}
+.lc-main>.lc-listen>span:first-child{font-size:clamp(2.5rem,6vw,3.5rem)}
+.lc-main>.lc-listen .lc-listen-label{font-size:clamp(1.05rem,2.3vw,1.45rem)}
+.lc-main>.lc-prompt{min-height:1.5em;font-size:clamp(.95rem,1.8vw,1.12rem);line-height:1.45}
+.lc-main>.lc-options{gap:clamp(10px,1.5vw,14px)}
+.lc-main .lc-option{min-height:clamp(54px,8vh,66px);padding:12px 16px;font-size:clamp(1rem,1.8vw,1.15rem)}
+@media(max-width:560px){.lc-main{gap:14px;padding:14px}.lc-main>.lc-reward-panel{grid-template-columns:46px minmax(0,1fr);gap:10px;padding:11px;border-radius:15px}.lc-reward-icon{width:46px;height:46px;border-radius:13px}.lc-reward-icon img{width:36px;height:36px}.lc-reward-copy>strong{font-size:.92rem}.lc-reward-status,.lc-daily-cap{font-size:.72rem}.lc-main>.lc-listen{min-height:6rem;border-radius:17px}.lc-main>.lc-listen>span:first-child{font-size:2.5rem}.lc-main>.lc-listen .lc-listen-label{font-size:1.02rem}.lc-main>.lc-prompt{font-size:.94rem}.lc-main>.lc-options{gap:9px}.lc-main .lc-option{min-height:52px;padding:10px;font-size:1rem}}

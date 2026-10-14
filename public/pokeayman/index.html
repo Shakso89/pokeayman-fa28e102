@@ -10021,9 +10021,11 @@ function getStudentTotalValue(student) {
 
 const SHOP_PAGE_SIZE = 15;
 const shopPager = {};
-function shopOwnerIndex() {
+function shopOwnerIndex(shopOwnerName) {
   const m = new Map();
-  for (const r of getPokemons()) if (!m.has(r.pokemon_id)) m.set(r.pokemon_id, r);
+  const ownerKey = normalizeStudentIdentity(shopOwnerName);
+  if (!ownerKey) return m;
+  for (const r of getPokemons()) if (normalizeStudentIdentity(r.owner) === ownerKey && !m.has(r.pokemon_id)) m.set(r.pokemon_id, r);
   return m;
 }
 function shopPageSlice(key, list) {
@@ -10141,7 +10143,7 @@ function renderShopPokemonCard(p, ownerRecord, collection = null) {
   const ownerArg = safe(JSON.stringify(owner));
   const elementalBackground = getPokemonAvatarCardStyle(p).split(";", 1)[0] + ";";
   const frameDetails = rarity === "rare" || rarity === "legendary" ? '<span class="shop-card-corners" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="shop-card-foil" aria-hidden="true"></span>' : "";
-  return `<div class="shop-pokemon-card pokemon-card-${rarity}${owner && !collection ? ' is-owned' : ''}${collection ? ' collection-pokemon-card' : ''}" style="${elementalBackground}" data-rarity="${rarity}" role="button" tabindex="0" aria-label="${safe(p.name)}, ${rarity}, ${p.price} coins" onclick="openPokemonModal(${args},${Boolean(owner)},${ownerArg})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">${frameDetails}<div class="shop-card-heading"><span class="shop-card-number">#${String(p.id).padStart(3,'0')}</span><span class="shop-card-rarity">${rarity === 'legendary' ? '✦ ' : rarity === 'rare' ? '◇ ' : ''}${rarity}</span></div><img class="shop-card-art" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png" width="104" height="104" loading="lazy" decoding="async" alt="${safe(p.name)}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><div class="shop-card-footer"><p class="shop-card-name">${safe(p.name)}</p><div class="shop-card-types">${badges}</div><div class="shop-card-stats"><span class="shop-card-price">${p.price} <span aria-label="coins">◈</span></span><span class="shop-card-power">${p.power} PWR</span></div>${collection ? `<div class="collection-health"><progress max="${collection.maxHP}" value="${collection.currentHP}" aria-label="Health"></progress><span>${collection.currentHP}/${collection.maxHP} HP</span></div>${collection.recovery ? `<p class="collection-recovery">Recovers in ${safe(collection.recovery)}</p>` : ''}${collection.removeId ? `<button type="button" class="collection-remove btn-outline" title="Remove Pokémon" aria-label="Remove ${safe(p.name)}" onclick="event.stopPropagation();removeStudentPokemon(${safe(JSON.stringify(collection.removeId))})">×</button>` : ''}` : owner ? `<p class="shop-card-owner">Owned by ${safe(owner)}</p>` : ''}</div></div>`;
+  return `<div class="shop-pokemon-card pokemon-card-${rarity}${owner && !collection ? ' is-owned' : ''}${collection ? ' collection-pokemon-card' : ''}" style="${elementalBackground}" data-rarity="${rarity}" role="button" tabindex="0" aria-label="${safe(p.name)}, ${rarity}, ${p.price} coins${owner && !collection ? ', already owned' : ''}" onclick="openPokemonModal(${args},${Boolean(owner)},${ownerArg})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">${frameDetails}<div class="shop-card-heading">${owner && !collection ? '<span class="shop-card-sold" aria-label="Already owned">SOLD</span>' : `<span class="shop-card-number">#${String(p.id).padStart(3,'0')}</span>`}<span class="shop-card-rarity">${rarity === 'legendary' ? '✦ ' : rarity === 'rare' ? '◇ ' : ''}${rarity}</span></div><img class="shop-card-art" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png" width="104" height="104" loading="lazy" decoding="async" alt="${safe(p.name)}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><div class="shop-card-footer"><p class="shop-card-name">${safe(p.name)}</p><div class="shop-card-types">${badges}</div><div class="shop-card-stats"><span class="shop-card-price">${p.price} <span aria-label="coins">◈</span></span><span class="shop-card-power">${p.power} PWR</span></div>${collection ? `<div class="collection-health"><progress max="${collection.maxHP}" value="${collection.currentHP}" aria-label="Health"></progress><span>${collection.currentHP}/${collection.maxHP} HP</span></div>${collection.recovery ? `<p class="collection-recovery">Recovers in ${safe(collection.recovery)}</p>` : ''}${collection.removeId ? `<button type="button" class="collection-remove btn-outline" title="Remove Pokémon" aria-label="Remove ${safe(p.name)}" onclick="event.stopPropagation();removeStudentPokemon(${safe(JSON.stringify(collection.removeId))})">×</button>` : ''}` : owner ? `<p class="shop-card-owner">Owned by ${safe(owner)}</p>` : ''}</div></div>`;
 }
 function renderCollectionPokemonCard(record, studentName, editable = false) {
   const maxHP = Math.max(1, Number(getMaxHP(record)) || 1);
@@ -10155,7 +10157,7 @@ function renderCollectionPokemonCard(record, studentName, editable = false) {
 function renderShopPage() {
   const container = document.getElementById('my-shop-grid');
   if (!container) return;
-  const ownIdx = shopOwnerIndex();
+  const ownIdx = shopOwnerIndex(currentStudent);
   const info = shopPageSlice('my', shopState.filtered);
   renderShopPager('my', 'my-shop-grid', info);
   renderShopHoloGrid(container, info.items, ownIdx);
@@ -12709,7 +12711,7 @@ function renderProfileShop() {
 function renderProfileShopPage() {
   const container = document.getElementById('profile-shop-grid');
   if (!container) return;
-  const ownIdx = shopOwnerIndex();
+  const ownIdx = shopOwnerIndex(profileStudent?.student_name);
   const info = shopPageSlice('profile', profileShopState.filtered);
   renderShopPager('profile', 'profile-shop-grid', info);
   renderShopHoloGrid(container, info.items, ownIdx);
