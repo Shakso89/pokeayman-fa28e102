@@ -252,7 +252,34 @@
       form.dataset.loaded = 'true';
     }
     const status = panel.querySelector('.lc-admin-status');
-    status.textContent = active ? `Live now: ${active.title} · collect ${active.goal} unique Pokémon matching ${challengeCriteria(active)} · ${active.start} through ${active.end}.` : `No challenge is active. Set this week’s challenge to get students started.`;
+    status.textContent = setting ? '' : 'No challenge is posted. Set this week’s challenge to get students started.';
+    let posted = panel.querySelector('.lc-admin-posted');
+    if (!posted) { posted = document.createElement('section'); posted.className = 'lc-admin-posted'; panel.appendChild(posted); posted.addEventListener('click', e => { if (e.target.closest('[data-lc-delete]')) deleteChallenge(); }); }
+    if (!setting) { posted.innerHTML = ''; return; }
+    const id = `week-${setting.challenge_start}`;
+    const done = []; const ready = [];
+    (typeof allData === 'undefined' ? [] : allData).filter(r => r.type === 'listen_catch_progress').forEach(r => {
+      const state = parseProgress(r); const rec = (typeof getStudentRecordByStableId === 'function' && getStudentRecordByStableId(r.student_id)) || r; const name = rec.student_name || r.student_name || 'Student';
+      const cls = [rec.school_name || r.school_name, rec.class_name || r.class_name].filter(Boolean).join(' · ');
+      if (hasClaimedChallenge(state, id)) done.push({ name, cls }); else if (active && challenge(state).ready) ready.push({ name, cls });
+    });
+    const row = (s, tag) => `<li><b>${esc(s.name)}</b><span>${esc(s.cls)}</span><em>${tag}</em></li>`;
+    const crit = challengeCriteria({ type: setting.challenge_type, tier: setting.challenge_tier });
+    posted.innerHTML = `<header><div><span>${active ? 'LIVE NOW' : 'POSTED CHALLENGE'}</span><h4>${esc(setting.challenge_title || 'Weekly Catchdex Challenge')}</h4><p>Collect ${Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL} unique Pokémon · ${esc(crit)} · starts ${esc(setting.challenge_start)}</p></div><button type="button" class="lc-admin-delete" data-lc-delete>Delete challenge</button></header><h5>Completed (${done.length + ready.length})</h5>${done.length + ready.length ? `<ul>${done.map(s => row(s, 'Box claimed')).join('')}${ready.map(s => row(s, 'Ready to claim')).join('')}</ul>` : '<p class="lc-admin-empty">No students have completed this challenge yet.</p>'}`;
+  }
+  async function deleteChallenge() {
+    const setting = challengeSetting(); if (!setting || !canAccessAdmin()) return;
+    if (!confirm('Delete this challenge? You can then post a new one.')) return;
+    let result; try { result = await window.dataSdk.delete(setting); } catch (_) { result = null; }
+    if (!result?.isOk) return toast('Challenge could not be deleted. Try again.');
+    allData = allData.filter(r => r !== setting && r.type !== 'listen_catch_challenge');
+    const form = document.querySelector('#listen-catch-admin form'); if (form) { form.reset(); form.elements.goal.value = DEFAULT_CHALLENGE_GOAL; form.elements.start.value = dateInput(weekStart()); }
+    toast('Challenge deleted. You can post a new one.'); renderAdminChallenge(); mountCards();
+  }
+  function refreshViewer(record) {
+    const modal = document.getElementById('catchdex-modal');
+    if (modal && !modal.classList.contains('hidden')) renderAlbumModal(record, true);
+    const root = document.getElementById('profile-catchdex-root'); if (root) root.dataset.catchdexSig = '';
   }
   function closeGame() { session?.root?.remove(); session = null; }
   function speak(word) {
