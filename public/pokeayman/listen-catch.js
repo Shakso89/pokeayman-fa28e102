@@ -127,7 +127,7 @@
     }
     openingBallIds.delete(recordId);
     if (currentRole === 'student') renderCatchdexTab();
-    else renderAlbumModal(record, true);
+    else refreshViewer(record);
     mountCards(); showReveal(item, caught, coins);
   }
   function showReveal(item, duplicate, coins) {
@@ -169,7 +169,7 @@
     catch (_) { claimingChallengeIds.delete(claimKey); return toast('Could not claim the Mystery Box. Your Catchdex stickers are safe; please try again.'); }
     claimingChallengeIds.delete(claimKey);
     if (currentRole === 'student') renderCatchdexTab();
-    else if (albumViewer?.record) renderAlbumModal(record, true);
+    else refreshViewer(record);
     mountCards();
     toast('Mystery Box added to your Catchdex.');
   }
@@ -205,7 +205,7 @@
     }
     openingBoxIds.delete(recordId);
     if (currentRole === 'student') renderCatchdexTab();
-    else renderAlbumModal(record, true);
+    else refreshViewer(record);
     mountCards();
     if (currentRole === 'student' && typeof renderStudentDashboard === 'function') renderStudentDashboard();
     showMysteryReveal(item, alreadyOwned, coins, record.student_name || 'Mystery Box');
