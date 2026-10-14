@@ -61,7 +61,8 @@
     side.id = 'ts-sidebar';
     side.setAttribute('aria-label', 'Teacher navigation');
     side.innerHTML = `
-      <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile" title="Open teacher profile"><span class="ts-avatar-wrap"><span id="ts-avatar" class="ts-avatar"></span><span id="ts-account-badge" class="ts-account-badge" hidden></span></span><span class="ts-me-info"><strong id="ts-name"></strong><small id="ts-role"></small></span></button><button type="button" class="ts-logout" data-ts="logout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5H4v14h5M14 8l4 4-4 4M8 12h12"/></svg><span>Log out</span></button></div>
+      <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile" title="Open teacher profile"><span class="ts-avatar-wrap"><span id="ts-avatar" class="ts-avatar"><span class="ts-avatar-fallback" role="img" aria-label="Teacher avatar loading">🎓</span></span><span id="ts-account-badge" class="ts-account-badge" hidden></span></span><span class="ts-me-info"><strong id="ts-name"></strong><small id="ts-role"></small></span></button></div>
+      <button type="button" class="ts-logout" data-ts="logout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5H4v14h5M14 8l4 4-4 4M8 12h12"/></svg><span>Log out</span></button>
       <div class="ts-switch-wrap"><button type="button" class="ts-switch" data-ts="switch" aria-haspopup="dialog" aria-expanded="false"><span class="ts-switch-label" id="ts-current-school">Schools &amp; classes</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">⇄</span></button></div>
       <nav class="ts-nav">
         <div id="ts-class"><button type="button" class="ts-section-toggle" data-ts-toggle="class" aria-expanded="true" aria-controls="ts-class-content"><span>Classroom</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-class-content">
@@ -107,7 +108,7 @@
     notifications.setAttribute('aria-label', 'Open notifications'); notifications.title = 'Notifications';
     notifications.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><strong id="ts-notification-count" class="ts-notification-count" aria-live="polite" hidden>0</strong>';
     tools.append(theme, notifications);
-    side.appendChild(tools);
+    side.insertBefore(tools, side.querySelector('.ts-logout'));
     theme.addEventListener('click', () => {
       setThemeMode(!bright);
     });
@@ -373,23 +374,6 @@
     $('ts-notification-count').textContent = unread > 99 ? '99+' : String(unread);
     $('ts-notification-count').hidden = unread === 0;
     $('[data-ts="notifications"]').setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
-    const sourceAvatar = $('teacher-account-avatar')?.querySelector('img');
-    const avatarRecord = g(() => isAymanTeacher() ? getAdminTeacherRecord() : findMyTeacherRecord(), null);
-    const savedAvatarSrc = g(() => teacherAvatarSrc(avatarRecord?.teacher_avatar), '');
-    const avatarSrc = savedAvatarSrc || sourceAvatar?.currentSrc || sourceAvatar?.src || '';
-    const avatarUrl = avatarSrc ? g(() => new URL(avatarSrc, document.baseURI).href, '') : '';
-    const avatarAlt = avatarRecord?.teacher_name ? `${avatarRecord.teacher_name}'s avatar` : (sourceAvatar?.alt || 'Teacher avatar');
-    if (avatarUrl && avatarUrl !== failedAvatarSrc) {
-      const currentAvatar = $('ts-avatar').querySelector('img');
-      if (currentAvatar?.src !== avatarUrl) {
-        failedAvatarSrc = '';
-        $('ts-avatar').innerHTML = `<img src="${esc(avatarUrl)}" alt="${esc(avatarAlt)}">`;
-        $('ts-avatar').querySelector('img')?.addEventListener('error', () => { failedAvatarSrc = avatarUrl; sync(); }, { once: true });
-      }
-    } else if (!$('ts-avatar').querySelector('.ts-avatar-fallback')) {
-      $('ts-avatar').innerHTML = '<span class="ts-avatar-fallback" role="img" aria-label="Teacher avatar unavailable">🎓</span>';
-    }
-
     if (inClass) {
       cardButtons();
       const classKey = `${g(() => navSchool, '')}\u0000${g(() => navClass, '')}`;
@@ -421,6 +405,25 @@
   // Tablet/phone: bottom tab bar; the sidebar shows the current section's tools as a strip above it.
   const mq = window.matchMedia('(max-width: 1024px)');
   let meOpen = false;
+  function syncAvatar() {
+    const host = $('ts-avatar'); if (!host) return;
+    const sourceAvatar = $('teacher-account-avatar')?.querySelector('img');
+    const avatarRecord = g(() => isAymanTeacher() ? getAdminTeacherRecord() : findMyTeacherRecord(), null) || g(() => findMyTeacherRecord(), null);
+    const avatarValue = avatarRecord?.teacher_avatar || (Number(avatarRecord?.avatar_pokemon_id) > 0 ? avatarRecord.avatar_pokemon_id : '');
+    const avatarSrc = g(() => teacherAvatarSrc(avatarValue), '') || sourceAvatar?.currentSrc || sourceAvatar?.src || '';
+    const avatarUrl = avatarSrc ? g(() => new URL(avatarSrc, document.baseURI).href, '') : '';
+    const avatarAlt = avatarRecord?.teacher_name ? `${avatarRecord.teacher_name}'s avatar` : (sourceAvatar?.alt || 'Teacher avatar');
+    if (avatarUrl && avatarUrl !== failedAvatarSrc) {
+      const currentAvatar = host.querySelector('img');
+      if (currentAvatar?.src !== avatarUrl) {
+        failedAvatarSrc = '';
+        host.innerHTML = `<img src="${esc(avatarUrl)}" alt="${esc(avatarAlt)}">`;
+        host.querySelector('img')?.addEventListener('error', () => { failedAvatarSrc = avatarUrl; syncAvatar(); }, { once: true });
+      }
+    } else if (!host.querySelector('.ts-avatar-fallback')) {
+      host.innerHTML = '<span class="ts-avatar-fallback" role="img" aria-label="Teacher avatar unavailable">🎓</span>';
+    }
+  }
   function closeSheet() { meOpen = false; syncBottom(); }
   function buildBottom() {
     if ($('ts-bottom') || !$('ts-sidebar')) return;
@@ -450,6 +453,7 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && meOpen) closeSheet(); });
   }
   function syncBottom() {
+    if (document.body.classList.contains('ts-on') && !$('ts-sidebar')) build();
     buildBottom();
     const bar = $('ts-bottom'); if (!bar) return;
     bar.querySelector('[data-tsb="admin"]').hidden = !g(() => canAccessAdmin(), false);
@@ -466,10 +470,15 @@
     if (mq.matches && meOpen) document.body.style.setProperty('--ts-me-height', `${$('ts-sidebar').getBoundingClientRect().height}px`);
   }
 
+  function refreshShell() {
+    try { sync(); } catch (error) { console.error('Teacher sidebar refresh failed:', error); }
+    try { syncAvatar(); } catch (error) { console.error('Teacher avatar refresh failed:', error); }
+    try { syncBottom(); } catch (error) { console.error('Teacher navigation refresh failed:', error); }
+  }
   function start() {
     const studentToggle = $('student-theme-toggle');
     studentToggle?.addEventListener('click', () => setThemeMode(!bright));
-    sync(); syncBottom(); setInterval(() => { sync(); syncBottom(); }, 700);
+    refreshShell(); setInterval(refreshShell, 700); window.addEventListener('resize', refreshShell, { passive: true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
