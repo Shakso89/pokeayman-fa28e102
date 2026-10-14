@@ -136,5 +136,7 @@
 .lc-reward-status{grid-column:1/-1;color:#b8c5da;font-size:.72rem}
 .lc-result-actions{display:flex;flex-wrap:nowrap;justify-content:center;gap:8px;width:min(100%,34rem)}
 .lc-result-actions button{flex:1 1 0;min-width:0;margin:0;padding:0 10px;white-space:nowrap}
+.lc-daily-cap{grid-column:1/-1;display:block;margin-top:2px;padding:8px 10px;border:1px solid rgba(148,163,184,.2);border-radius:10px;background:rgba(8,16,31,.54);color:#cbd5e1;font-size:.75rem;font-weight:700;line-height:1.4}
+.lc-daily-cap.is-limit{border-color:rgba(251,191,36,.48);background:rgba(120,78,12,.24);color:#fde68a}
 @media(max-width:560px){.lc-listen{min-height:7rem;width:100%;gap:10px;padding:.8rem}.lc-listen .lc-listen-label{font-size:clamp(.88rem,4vw,1.15rem)}.lc-reward-panel{gap:10px;padding:12px}.lc-reward-icon{width:48px;height:48px;border-radius:14px}.lc-reward-icon img{width:37px;height:37px}.lc-result{padding:20px 14px}.lc-result-actions{gap:6px}.lc-result-actions button{font-size:clamp(.72rem,3.4vw,.9rem);padding:0 6px}}
 @media(prefers-reduced-motion:reduce){.lc-reward-fill{transition:none}}
