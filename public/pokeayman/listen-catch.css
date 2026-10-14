@@ -72,3 +72,25 @@
 .lc-admin-posted li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--color-border,rgba(255,255,255,.12));border-radius:8px}
 .lc-admin-posted li span{color:var(--color-text-secondary,#c7d2fe);font-size:.8rem}.lc-admin-posted li em{font-style:normal;font-size:.75rem;font-weight:800;color:var(--ga-stage-yellow,#ffcb05)}
 @media(max-width:560px){.lc-admin-posted li{grid-template-columns:1fr auto}.lc-admin-posted li span{grid-column:1}}
+
+/* Student weekly challenge banner */
+#lc-challenge-banner:empty { display: none; }
+.lc-banner { display: flex; align-items: center; gap: 16px; margin: 0 0 14px; padding: 14px 18px; border-radius: 14px; background: var(--pk-surface, #1e293b); border: 1px solid var(--pk-border, rgba(255,255,255,.12)); color: var(--pk-text, #f8fafc); }
+.lc-banner.is-box { border-color: #facc15; box-shadow: 0 0 0 2px rgba(250,204,21,.25); }
+.lc-banner-copy { flex: 1; min-width: 0; }
+.lc-banner-copy > span { font-size: 11px; font-weight: 800; letter-spacing: .08em; color: #facc15; }
+.lc-banner-copy h3 { margin: 2px 0; font-size: 18px; font-weight: 800; }
+.lc-banner-copy p { margin: 0; font-size: 13px; opacity: .85; }
+.lc-banner-bar { height: 10px; margin: 8px 0 6px; border-radius: 999px; background: rgba(148,163,184,.25); overflow: hidden; }
+.lc-banner-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #facc15, #f97316); transition: width .4s ease; }
+.lc-banner-count b { color: #facc15; font-size: 15px; }
+.lc-banner .lc-primary { flex-shrink: 0; }
+.lc-banner-box { position: relative; flex: 0 0 64px; height: 56px; border-radius: 10px; background: linear-gradient(160deg, #a855f7, #6d28d9); display: grid; place-items: center; animation: lc-box-bounce 1.4s ease-in-out infinite; }
+.lc-banner-box span { position: absolute; top: -6px; left: -4px; right: -4px; height: 16px; border-radius: 6px; background: #facc15; }
+.lc-banner-box b { color: #fff; font-size: 26px; font-weight: 900; margin-top: 8px; }
+@keyframes lc-box-bounce { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-5px) rotate(-3deg); } }
+@media (prefers-reduced-motion: reduce) { .lc-banner-box { animation: none; } }
+@media (max-width: 640px) { .lc-banner { flex-wrap: wrap; } .lc-banner .lc-primary { width: 100%; } }
+.catchdex-challenge small { display: block; font-size: 12px; opacity: .8; }
+body.ts-bright .lc-banner { background: #fff; color: #0f172a; border-color: #e2e8f0; }
+body.ts-bright .lc-banner-copy > span, body.ts-bright .lc-banner-count b { color: #b45309; }
