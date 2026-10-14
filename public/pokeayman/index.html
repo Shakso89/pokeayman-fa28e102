@@ -4371,7 +4371,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     </div>
     <div id="admin-subtab-users" class="admin-subtab-content">
      <div class="users-subtab-header" role="tablist" aria-label="User management sections">
-      <button type="button" class="users-subtab users-subtab-active" data-users-subtab="teachers" role="tab" aria-selected="true">👨‍🏫 Teachers</button><button type="button" class="users-subtab users-subtab-inactive" data-users-subtab="all-students" role="tab" aria-selected="false">👩‍🎓 All Students</button><button type="button" class="users-subtab users-subtab-inactive" data-users-subtab="credit-log" role="tab" aria-selected="false">📋 Credit Log</button>
+      <button type="button" class="users-subtab users-subtab-active" data-users-subtab="teachers" role="tab" aria-selected="true" aria-controls="admin-subtab-teachers">👨‍🏫 Teachers</button><button type="button" class="users-subtab users-subtab-inactive" data-users-subtab="all-students" role="tab" aria-selected="false" aria-controls="admin-subtab-all-students">👩‍🎓 All Students</button><button type="button" class="users-subtab users-subtab-inactive" data-users-subtab="credit-log" role="tab" aria-selected="false" aria-controls="admin-subtab-credit-log">📋 Credit Log</button><button type="button" class="users-subtab users-subtab-inactive" data-users-subtab="notifications" role="tab" aria-selected="false" aria-controls="admin-subtab-notifications">🔔 Notifications</button><button type="button" class="users-subtab users-subtab-inactive" data-users-subtab="class-managers" role="tab" aria-selected="false" aria-controls="admin-subtab-class-managers">🏫 Main Class Managers</button>
      </div>
     </div>
     <div id="admin-subtab-controls" class="admin-subtab-content hidden">
@@ -4527,17 +4527,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      <div class="glass-container rounded-xl p-5 mb-6">
       <h3 class="canva-text font-semibold mb-1" style="color:#fff;font-weight:600;font-size:19px;">Teacher accounts</h3><p class="text-sm" style="color:rgba(255,255,255,.8)">Teachers create their own account with email and password (or Google) from Teacher Login on the home page. They appear below after their first sign-in, where you can manage credits, schools, classes and access.</p>
      </div>
-     <section class="glass-container rounded-xl p-5 mb-6" aria-labelledby="admin-notification-title">
-      <h3 id="admin-notification-title" class="heading-font text-lg font-bold text-white">Send teacher notification</h3>
-      <p class="mt-1 mb-4 text-sm text-slate-300">Send an in-app message to one teacher or a teacher group.</p>
-      <form id="admin-notification-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-       <label class="text-sm font-semibold text-white">Recipients<select id="admin-notification-audience" class="account-control mt-1 w-full"><option value="specific">Specific teacher</option><option value="pro">Pro teachers</option><option value="managers">School managers</option><option value="all">All teachers</option></select></label>
-       <label id="admin-notification-teacher-wrap" class="text-sm font-semibold text-white">Teacher<select id="admin-notification-teacher" class="account-control mt-1 w-full"></select></label>
-       <label class="text-sm font-semibold text-white sm:col-span-2">Title<input id="admin-notification-heading" class="account-control mt-1 w-full" maxlength="100" required placeholder="Important update"></label>
-       <label class="text-sm font-semibold text-white sm:col-span-2">Message<textarea id="admin-notification-message" class="account-control mt-1 w-full" rows="3" maxlength="700" required placeholder="Write a clear message for teachers"></textarea></label>
-       <div class="sm:col-span-2 flex items-center gap-3"><button type="submit" id="admin-notification-send" class="btn-primary">Send notification</button><span id="admin-notification-status" class="text-sm text-slate-300" role="status" aria-live="polite"></span></div>
-      </form>
-     </section>
      <div id="teachers-inventory-panel" class="teachers-inventory-panel">
       <div class="teachers-inventory-toolbar">
        <div class="min-w-0"><span>Teacher inventory</span><span class="teachers-inventory-hint block">Select a card to edit</span>
@@ -4545,8 +4534,19 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       </div>
       <div id="teachers-list" class="teachers-inventory-grid"></div>
      </div>
-     <section id="admin-class-managers" class="glass-container rounded-xl p-5 mt-6" aria-labelledby="admin-class-managers-title"></section>
     </div>
+    <section id="admin-subtab-notifications" class="admin-subtab-content hidden glass-container rounded-xl p-5" aria-labelledby="admin-notification-title">
+     <h3 id="admin-notification-title" class="heading-font text-lg font-bold text-white">Send teacher notification</h3>
+     <p class="mt-1 mb-4 text-sm text-slate-300">Send an in-app message to one teacher or a teacher group.</p>
+     <form id="admin-notification-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <label class="text-sm font-semibold text-white">Recipients<select id="admin-notification-audience" class="account-control mt-1 w-full"><option value="specific">Specific teacher</option><option value="pro">Pro teachers</option><option value="managers">School managers</option><option value="all">All teachers</option></select></label>
+      <label id="admin-notification-teacher-wrap" class="text-sm font-semibold text-white">Teacher<select id="admin-notification-teacher" class="account-control mt-1 w-full"></select></label>
+      <label class="text-sm font-semibold text-white sm:col-span-2">Title<input id="admin-notification-heading" class="account-control mt-1 w-full" maxlength="100" required placeholder="Important update"></label>
+      <label class="text-sm font-semibold text-white sm:col-span-2">Message<textarea id="admin-notification-message" class="account-control mt-1 w-full" rows="3" maxlength="700" required placeholder="Write a clear message for teachers"></textarea></label>
+      <div class="sm:col-span-2 flex items-center gap-3"><button type="submit" id="admin-notification-send" class="btn-primary">Send notification</button><span id="admin-notification-status" class="text-sm text-slate-300" role="status" aria-live="polite"></span></div>
+     </form>
+    </section>
+    <section id="admin-subtab-class-managers" class="admin-subtab-content hidden" aria-labelledby="admin-class-managers-title"><div id="admin-class-managers" class="glass-container rounded-xl p-5"></div></section>
     <div id="admin-subtab-all-students" class="admin-subtab-content hidden">
      <div class="mb-4"><input id="admin-student-search" type="text" placeholder="Search students..." class="w-full border rounded-lg px-3 py-2.5 text-sm">
      </div>
@@ -8716,7 +8716,7 @@ function selectUsersSubtab(name) {
     tab.classList.toggle('admin-sub-tab-inactive', !active);
   });
   document.querySelectorAll('.admin-subtab-content').forEach(panel => {
-    if (panel.id !== 'admin-subtab-users' && panel.id !== 'admin-subtab-teachers' && panel.id !== 'admin-subtab-all-students' && panel.id !== 'admin-subtab-credit-log') panel.classList.add('hidden');
+    if (panel.id !== 'admin-subtab-users' && panel.id !== 'admin-subtab-teachers' && panel.id !== 'admin-subtab-all-students' && panel.id !== 'admin-subtab-credit-log' && panel.id !== 'admin-subtab-notifications' && panel.id !== 'admin-subtab-class-managers') panel.classList.add('hidden');
   });
   document.getElementById('admin-subtab-users')?.classList.remove('hidden');
   document.querySelectorAll('.users-subtab').forEach(tab => {
@@ -8728,6 +8728,8 @@ function selectUsersSubtab(name) {
   document.getElementById('admin-subtab-teachers')?.classList.toggle('hidden', name !== 'teachers');
   document.getElementById('admin-subtab-all-students')?.classList.toggle('hidden', name !== 'all-students');
   document.getElementById('admin-subtab-credit-log')?.classList.toggle('hidden', name !== 'credit-log');
+  document.getElementById('admin-subtab-notifications')?.classList.toggle('hidden', name !== 'notifications');
+  document.getElementById('admin-subtab-class-managers')?.classList.toggle('hidden', name !== 'class-managers');
   if (name === 'all-students') renderAdminAllStudents();
   else if (name === 'credit-log') renderCreditLog();
   else renderAdminPanel();
