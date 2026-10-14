@@ -353,10 +353,17 @@
     const tabRoot = document.getElementById('student-catchdex-root');
     if (currentRole === 'student' && tabRoot) renderCatchdexTab();
     const profile = typeof profileStudent !== 'undefined' ? profileStudent : null;
-    const content = document.querySelector('#view-student-profile .cp-content');
-    const profileState = parseProgress(progressFor(profile)); const profileGoal = challenge(profileState); const profileSignature = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.unique}:${profileGoal.claimed}`;
-    if (profile && content && content.querySelector('#catchdex-profile-card')?.dataset.catchdexSig !== profileSignature) { content.querySelector('#catchdex-profile-card')?.remove(); const holder = document.createElement('div'); holder.id = 'catchdex-profile-card'; holder.dataset.catchdexSig = profileSignature; holder.innerHTML = albumCard(profileState, true); content.prepend(holder); }
-    document.querySelectorAll('[data-catchdex-profile]').forEach(button => button.onclick = () => window.openCatchdexFor(profile, true));
+    document.getElementById('catchdex-profile-card')?.remove();
+    const profileRoot = document.getElementById('profile-catchdex-root');
+    if (profile && profileRoot) {
+      const profileState = parseProgress(progressFor(profile)); const profileGoal = challenge(profileState);
+      const sig = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.unique}:${profileGoal.claimed}:${profileState.last?.item?.id || ''}`;
+      if (profileRoot.dataset.catchdexSig !== sig) {
+        albumViewer = { record: profile, readOnly: true };
+        profileRoot.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(profile, true).replace('<button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button>', '')}</section>`;
+        profileRoot.dataset.catchdexSig = sig; bindCatchdexContents(profileRoot, profile, true);
+      }
+    }
   }
   function renderCatchdexContents(record, readOnly) {
     const state = parseProgress(progressFor(record)); const goal = challenge(state);

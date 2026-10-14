@@ -393,7 +393,7 @@
         $('ts-box-open').classList.toggle('ready', st.boxes > 0);
       }
     if (inClass) {
-      cardButtons();
+      document.querySelectorAll('#students-list .ts-quick').forEach((q) => q.remove());
       const classKey = `${g(() => navSchool, '')}\u0000${g(() => navClass, '')}`;
       const students = g(() => getStudents(navSchool, navClass), []) || [];
       const rosterStudents = students.length ? students : [...document.querySelectorAll('#students-list > .trainer-student-card[data-student-id]')]
