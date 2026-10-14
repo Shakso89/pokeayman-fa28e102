@@ -208,7 +208,9 @@
     const qualifying = state.album.filter(entry => matchesChallenge(entry, active));
     const unique = new Set(qualifying.map(entry => Number(entry.pokemon_id))).size;
     const claimed = hasClaimedChallenge(state, active.id);
-    return { ...active, unique: claimed ? active.goal : unique, ready: unique >= active.goal && !claimed, claimed, qualifying };
+    // The student Catchdex uses this flag to decide whether to render the live challenge.
+    // activeChallenge() has already applied the shared schedule window, so this result is live.
+    return { ...active, active: true, unique: claimed ? active.goal : unique, ready: unique >= active.goal && !claimed, claimed, qualifying };
   }
   function canManageCatchdex(record) {
     return Boolean(record && ((currentRole === 'student' && identity(student()) === identity(record)) || (currentRole === 'teacher' && albumViewer?.readOnly && identity(albumViewer.record) === identity(record))));
