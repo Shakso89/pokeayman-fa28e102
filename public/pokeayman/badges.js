@@ -36,9 +36,9 @@
   ];
 
   const GLOBAL_PINS = [
-    ['global-1', '👑', 'Grand Champion', '#1 in the whole school'],
-    ['global-2', '🌟', 'Mythic Elite', '#2 in the whole school'],
-    ['global-3', '⚡', 'Legendary Ace', '#3 in the whole school']
+    ['global-1', '👑', 'Grand Champion', 'is the number 1 student in the school'],
+    ['global-2', '🌟', 'Mythic Elite', 'is number 2 in the school'],
+    ['global-3', '⚡', 'Legendary Ace', 'is number 3 in the school']
   ];
   const val = s => (typeof getStudentTotalValue === 'function' ? getStudentTotalValue(s) : Number(s.coins) || 0);
   function globalRank(key) {
@@ -54,14 +54,34 @@
     } catch (e) { return 0; }
   }
 
-  function pin(cls, icon, title, tip) {
+  function showBadgeExplanation(icon, title, tip, studentName, trigger) {
+    document.getElementById('pk-badge-explanation')?.remove();
+    const dialog = document.createElement('div');
+    dialog.id = 'pk-badge-explanation';
+    dialog.className = 'pk-badge-explanation';
+    dialog.innerHTML = '<section role="dialog" aria-modal="true" aria-labelledby="pk-badge-explanation-title" aria-describedby="pk-badge-explanation-text"><button type="button" class="pk-badge-explanation-close" aria-label="Close explanation">×</button><div class="pk-badge-explanation-icon" aria-hidden="true"></div><h2 id="pk-badge-explanation-title"></h2><p id="pk-badge-explanation-text"></p></section>';
+    dialog.querySelector('.pk-badge-explanation-icon').textContent = icon;
+    dialog.querySelector('#pk-badge-explanation-title').textContent = title;
+    const detail = tip.startsWith('is ') ? `${studentName} ${tip}.` : `${studentName} — ${tip}.`;
+    dialog.querySelector('#pk-badge-explanation-text').textContent = detail;
+    document.body.appendChild(dialog);
+    const close = () => { dialog.remove(); trigger?.focus?.(); };
+    dialog.querySelector('.pk-badge-explanation-close').addEventListener('click', close);
+    dialog.addEventListener('click', event => { if (event.target === dialog) close(); });
+    dialog.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); close(); } });
+    dialog.querySelector('.pk-badge-explanation-close').focus();
+  }
+
+  function pin(cls, icon, title, tip, studentName = 'Student') {
     const el = document.createElement('span');
     el.className = `pk-pin pk-pin-${cls}`;
     el.tabIndex = 0;
+    el.setAttribute('role', 'button');
     el.title = `${title} — ${tip}`;
-    el.setAttribute('aria-label', `${title}: ${tip}`);
+    el.setAttribute('aria-label', `${title}: ${studentName} — ${tip}. Click for an explanation.`);
     el.innerHTML = `<i aria-hidden="true">${icon}</i><b>${title}</b>`;
-    el.addEventListener('click', e => { e.stopPropagation(); if (typeof toast === 'function') toast(`${icon} ${title} — ${tip}`); });
+    el.addEventListener('click', e => { e.stopPropagation(); showBadgeExplanation(icon, title, tip, studentName, el); });
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); showBadgeExplanation(icon, title, tip, studentName, el); } });
     return el;
   }
 
@@ -78,11 +98,11 @@
       const pins = [];
       let m = +((card.className.match(/class-rank-(\d)/) || [])[1] || 0);
       if (!m) m = classRank(card, key);
-      if (m && m <= 3) { const c = CLASS_PINS[m - 1]; pins.push(pin(...c)); }
+      if (m && m <= 3) { const c = CLASS_PINS[m - 1]; pins.push(pin(...c, name)); }
       const g = globalRank(key);
-      if (g) pins.unshift(pin(...GLOBAL_PINS[g - 1]));
-      if (battle && battle.key === key) pins.push(pin('battle', '⚔️', 'Battle Master', `School record: ${battle.count} arena win${battle.count === 1 ? '' : 's'}`));
-      if (arcade && arcade.key === key) pins.push(pin('arcade', '🕹️', 'Arcade Prodigy', `School record: ${arcade.count} game win${arcade.count === 1 ? '' : 's'}`));
+      if (g) pins.unshift(pin(...GLOBAL_PINS[g - 1], name));
+      if (battle && battle.key === key) pins.push(pin('battle', '⚔️', 'Battle Master', `School record: ${battle.count} arena win${battle.count === 1 ? '' : 's'}`, name));
+      if (arcade && arcade.key === key) pins.push(pin('arcade', '🕹️', 'Arcade Prodigy', `School record: ${arcade.count} game win${arcade.count === 1 ? '' : 's'}`, name));
       if (!pins.length) return;
       const row = document.createElement('div');
       row.className = `pk-pins${pins.length > 2 ? ' pk-pins-compact' : ''}`;

@@ -4528,7 +4528,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       <div class="teacher-zone-content-card">
        <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">📚</span><div><p class="teacher-zone-page-kicker">WORD BANK</p><h3 id="teacher-vb-lists-title">My Lists</h3><p id="teacher-vb-lists-description">Review, edit, or delete the word banks you created.</p></div></header>
        <div class="teacher-vb-list-modes" role="group" aria-label="Vocabulary list view"><button id="teacher-vb-mode-mine" type="button" class="btn-primary" aria-pressed="true">My Lists</button><button id="teacher-vb-mode-school" type="button" class="btn-secondary" aria-pressed="false">School Lists</button></div>
-       <form id="teacher-vb-create-form" class="teacher-vb-create-form"><label class="teacher-vb-create-field"><span>List name</span><input id="teacher-vb-create-name" type="text" maxlength="80" placeholder="e.g. Unit 5 Verbs" required></label><label class="teacher-vb-create-field"><span>Class</span><select id="teacher-vb-create-class" required><option value="">Choose a class</option></select></label><button id="teacher-vb-create-submit" type="submit" class="btn-primary">Create list</button></form>
+       <button id="teacher-vb-open-create" type="button" class="btn-primary teacher-vb-open-create">+ Create list</button>
+       <div id="teacher-vb-create-modal" class="teacher-vb-create-modal hidden" role="dialog" aria-modal="true" aria-labelledby="teacher-vb-create-title"><div class="teacher-vb-create-dialog"><div class="teacher-vb-create-heading"><h4 id="teacher-vb-create-title">Create vocabulary list</h4><button id="teacher-vb-create-close" type="button" aria-label="Close">×</button></div><form id="teacher-vb-create-form" class="teacher-vb-create-form"><label class="teacher-vb-create-field"><span>List name</span><input id="teacher-vb-create-name" type="text" maxlength="80" placeholder="e.g. Unit 5 Verbs" required></label><label class="teacher-vb-create-field"><span>Class</span><select id="teacher-vb-create-class" required><option value="">Choose a class</option></select></label><button id="teacher-vb-create-submit" type="submit" class="btn-primary">Create list</button></form></div></div>
+       <div class="teacher-vb-search"><label for="teacher-vb-search-field">Search lists</label><select id="teacher-vb-search-field" aria-label="Search filter"><option value="all">All fields</option><option value="list">List name</option><option value="teacher">Teacher name</option><option value="word">Word</option><option value="class">Class or school</option></select><input id="teacher-vb-search-query" type="search" placeholder="Search by list, teacher, word, class…" autocomplete="off"></div>
        <p id="teacher-vb-lists-status" class="teacher-zone-status" aria-live="polite">Loading your lists…</p>
        <div id="teacher-vb-lists-grid"></div>
       </div>
@@ -8539,6 +8541,13 @@ renderTeacherZoneHistory();
 document.getElementById('teacher-zone-history-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-history-panel', 'teacher-zone-history-tab'); renderTeacherZoneHistory(); });
 const teacherVbCardLayoutStyles = document.createElement('style');
 teacherVbCardLayoutStyles.textContent = `
+  .teacher-vb-open-create{display:block;width:100%;margin:1rem 0}.teacher-vb-open-create[hidden]{display:none}
+  .teacher-vb-search{display:grid;grid-template-columns:auto minmax(9rem,12rem) minmax(12rem,1fr);align-items:center;gap:.65rem;margin:1rem 0;padding:.9rem;border:1px solid rgba(148,163,184,.22);border-radius:1rem;background:rgba(15,23,42,.55);color:#f8fafc}
+  .teacher-vb-search label{font-weight:800}.teacher-vb-search input,.teacher-vb-search select{width:100%;min-width:0;min-height:2.8rem;padding:.65rem .8rem;border:1px solid rgba(148,163,184,.35);border-radius:.7rem;background:#111c30;color:#f8fafc}
+  .teacher-vb-create-modal{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(2,6,23,.78);backdrop-filter:blur(5px)}
+  .teacher-vb-create-modal.hidden{display:none}.teacher-vb-create-dialog{width:min(100%,42rem);padding:1.25rem;border:1px solid rgba(148,163,184,.35);border-radius:1.1rem;background:#111c30;color:#f8fafc;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+  .teacher-vb-create-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}.teacher-vb-create-heading h4{font-size:1.2rem;font-weight:900}.teacher-vb-create-heading button{width:2.4rem;height:2.4rem;border:1px solid rgba(148,163,184,.4);border-radius:.7rem;background:#0b1220;color:#fff;font-size:1.5rem}
+  @media(max-width:640px){.teacher-vb-search{grid-template-columns:1fr}.teacher-vb-create-form{grid-template-columns:1fr!important}}
   #teacher-vb-lists-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr)); align-items:stretch; gap:1rem; }
   #teacher-vb-lists-grid .vocab-list-card { width:100%; height:auto; min-height:0; aspect-ratio:auto; display:flex; flex-direction:column; align-items:stretch; gap:.65rem; padding:1rem; overflow:visible; }
   #teacher-vb-lists-grid .vocab-list-card > .flex.items-start { display:flex; align-items:flex-start; justify-content:flex-start; gap:.65rem; margin:0; }
@@ -8573,8 +8582,8 @@ function renderTeacherOwnedVocabLists() {
   if (title) title.textContent = schoolMode ? 'School Lists' : adminCanManageAnyList ? 'All Lists' : 'My Lists';
   if (description) description.textContent = schoolMode ? 'Browse and share word banks other teachers have made available.' : adminCanManageAnyList ? 'Review, edit, or delete any teacher’s word bank.' : 'Review, edit, or delete the word banks you created.';
   const classSelect = document.getElementById('teacher-vb-create-class');
-  const createForm = document.getElementById('teacher-vb-create-form');
-  if (createForm) createForm.hidden = schoolMode;
+  const createButton = document.getElementById('teacher-vb-open-create');
+  if (createButton) createButton.hidden = schoolMode;
   if (classSelect) {
     const escOption = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const classes = getAllTeacherClasses().filter(cls => canManageClass(cls.school_name, cls.class_name)).sort((a,b) => `${a.school_name} ${a.class_name}`.localeCompare(`${b.school_name} ${b.class_name}`));
@@ -8590,16 +8599,27 @@ function renderTeacherOwnedVocabLists() {
     const allLists = getVocabLists('', '');
     const myId = String(verifiedTeacherIdentity() || '').trim();
     const isOwnedByCurrentTeacher = list => Boolean((myId && String(list.teacher_id || '').trim() === myId) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey));
-    const lists = allLists.filter(list => adminCanManageAnyList || isOwnedByCurrentTeacher(list))
+    const baseLists = allLists.filter(list => adminCanManageAnyList || isOwnedByCurrentTeacher(list))
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
     if (ownerScope !== currentTeacherZoneOwnerScope() || requestVersion !== teacherZoneRequestVersion || teacherWorkspaceKey !== teacherStorageKey(ownerScope)) return;
-    const otherLists = allLists.filter(list => !isOwnedByCurrentTeacher(list))
+    const baseOtherLists = allLists.filter(list => !isOwnedByCurrentTeacher(list))
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
+    const query = String(document.getElementById('teacher-vb-search-query')?.value || '').trim().toLocaleLowerCase();
+    const field = document.getElementById('teacher-vb-search-field')?.value || 'all';
+    const searchValue = list => {
+      const teacher = getTeachers().find(t => (list.teacher_id && String(t.__backendId) === String(list.teacher_id)) || normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(list.teacher_name || list.owner))?.teacher_name || list.teacher_name || list.owner || '';
+      const words = (list.words || []).map(word => typeof word === 'string' ? word : `${word?.vocab_word || ''} ${word?.word || ''}`).join(' ');
+      const values = { list: list.vocab_list_name || '', teacher, word: words, class: `${list.vocab_list_class || list.class_name || ''} ${list.vocab_list_school || list.school_name || ''}` };
+      return field === 'all' ? Object.values(values).join(' ').toLocaleLowerCase() : String(values[field] || '').toLocaleLowerCase();
+    };
+    const matches = list => !query || searchValue(list).includes(query);
+    const lists = baseLists.filter(matches);
+    const otherLists = baseOtherLists.filter(matches);
     if (schoolMode) {
-      if (!otherLists.length) { status.textContent = 'No other teachers have created vocabulary lists yet.'; return; }
+      if (!otherLists.length) { status.textContent = query ? 'No school lists match your search.' : 'No other teachers have created vocabulary lists yet.'; return; }
       status.textContent = `${otherLists.length} list${otherLists.length === 1 ? '' : 's'} by other teachers · share any of them to your classes`;
     } else {
-      if (!lists.length) { status.textContent = adminCanManageAnyList ? 'No vocabulary lists are available yet.' : 'You have not created any vocabulary lists yet.'; return; }
+      if (!lists.length) { status.textContent = query ? 'No lists match your search.' : adminCanManageAnyList ? 'No vocabulary lists are available yet.' : 'You have not created any vocabulary lists yet.'; return; }
       status.textContent = adminCanManageAnyList ? `${lists.length} vocabulary list${lists.length === 1 ? '' : 's'} available to manage` : `${lists.length} of your list${lists.length === 1 ? '' : 's'}`;
     }
     const escape = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
@@ -8647,6 +8667,17 @@ document.getElementById('teacher-vb-mode-school')?.addEventListener('click', () 
   window.vbListsMode = 'school';
   renderTeacherOwnedVocabLists();
 });
+const teacherVbCreateModal = document.getElementById('teacher-vb-create-modal');
+function closeTeacherVbCreateModal() { teacherVbCreateModal?.classList.add('hidden'); }
+document.getElementById('teacher-vb-open-create')?.addEventListener('click', () => {
+  teacherVbCreateModal?.classList.remove('hidden');
+  document.getElementById('teacher-vb-create-name')?.focus();
+});
+document.getElementById('teacher-vb-create-close')?.addEventListener('click', closeTeacherVbCreateModal);
+teacherVbCreateModal?.addEventListener('click', event => { if (event.target === teacherVbCreateModal) closeTeacherVbCreateModal(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !teacherVbCreateModal?.classList.contains('hidden')) closeTeacherVbCreateModal(); });
+document.getElementById('teacher-vb-search-query')?.addEventListener('input', renderTeacherOwnedVocabLists);
+document.getElementById('teacher-vb-search-field')?.addEventListener('change', renderTeacherOwnedVocabLists);
 document.getElementById('teacher-vb-create-form')?.addEventListener('submit', async event => {
   event.preventDefault();
   const input = document.getElementById('teacher-vb-create-name');
@@ -8655,7 +8686,7 @@ document.getElementById('teacher-vb-create-form')?.addEventListener('submit', as
   const chosenClass = allData.find(row => row.type === 'class' && String(row.__backendId) === String(select?.value || ''));
   if (!chosenClass || !canManageClass(chosenClass.school_name, chosenClass.class_name)) { toast('Choose one of your managed classes.'); select?.focus(); return; }
   const created = await createVocabListForClass({ listName: input?.value, school: chosenClass.school_name, className: chosenClass.class_name, button, input });
-  if (created) { window.vbListsMode = 'mine'; renderTeacherOwnedVocabLists(); }
+  if (created) { closeTeacherVbCreateModal(); window.vbListsMode = 'mine'; renderTeacherOwnedVocabLists(); }
 });
 
 // Standalone share popup: share any visible list (e.g. another teacher's) to the current teacher's classes.

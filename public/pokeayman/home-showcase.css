@@ -301,11 +301,11 @@
   transform: translateY(-3px); border-color: var(--home-yellow); box-shadow: 0 20px 44px rgba(255,203,5,.18); outline: none;
 }
 #contact-pricing-dock-close {
-  position: absolute; top: -.45rem; right: -.45rem; z-index: 2; display: grid !important; place-items: center;
+  position: absolute; top: -2rem; left: 1.7rem; right: auto; z-index: 2; display: grid !important; place-items: center;
   box-sizing: border-box; width: 2rem !important; min-width: 2rem !important; max-width: 2rem !important;
   height: 2rem !important; min-height: 2rem !important; max-height: 2rem !important; aspect-ratio: 1;
   padding: 0 !important; border: 1px solid rgba(255,255,255,.42); border-radius: 50% !important;
-  background: #17202b; color: #f8fafc; font: 700 1rem/1 sans-serif !important; line-height: 1 !important; box-shadow: 0 4px 12px rgba(0,0,0,.42);
+  transform: translateX(-50%); background: #17202b; color: #f8fafc; font: 700 1rem/1 sans-serif !important; line-height: 1 !important; box-shadow: 0 4px 12px rgba(0,0,0,.42);
   opacity: 0; pointer-events: none; transition: opacity .15s ease, color .15s ease, border-color .15s ease;
 }
 #contact-pricing-float:hover #contact-pricing-dock-close,
@@ -324,7 +324,7 @@
 @media (max-width: 640px) {
   #contact-pricing-float { right: max(.75rem, env(safe-area-inset-right)); bottom: max(.75rem, env(safe-area-inset-bottom)); }
   #contact-pricing-float .home-contact-dock { width: 3.25rem; min-width: 3.25rem; min-height: 3.25rem; padding: .5rem; justify-content: center; }
-  #contact-pricing-float #contact-pricing-dock-close { opacity: 1; pointer-events: auto; }
+  #contact-pricing-float #contact-pricing-dock-close { left: 50%; opacity: 1; pointer-events: auto; }
   .home-contact-label { display: none; }
 }
 
