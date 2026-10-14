@@ -319,3 +319,9 @@ html body.ts-bright #app-screen :is(#battle-left,#battle-right) :is(p) { color: 
 .ts-avatar > .ts-ball { width: 78% !important; height: 78% !important; border: 3px solid var(--ts-deep) !important; position: relative; box-shadow: none; }
 .ts-ball::after { content: ''; position: absolute; width: 28%; height: 28%; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid var(--ts-deep); background: var(--ts-on-red); }
 #ts-bottom .tsb-ic > .ts-ball { position: relative; width: 26px; height: 26px; box-shadow: none; }
+
+/* Side tools must never block content: no contact badge inside the teacher workspace. */
+body.ts-on > #contact-pricing-float, body.ts-on #contact-pricing-float { display: none !important; }
+.ts-rail-add { flex: none; background: var(--ts-yellow) !important; color: var(--ts-action-ink, #111) !important; }
+body.ts-on .ts-card select#ts-award-student { background: var(--ts-surface) !important; color: var(--ts-ink) !important; }
+body.ts-on .ts-card select#ts-award-student option { background: var(--ts-surface); color: var(--ts-ink); }

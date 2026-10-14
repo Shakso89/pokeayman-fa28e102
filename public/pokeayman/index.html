@@ -9147,7 +9147,7 @@ function renderTeacherDashboard() {
     const students = getStudents(navSchool, navClass);
     const metrics = getClassRosterMetrics(students);
     const top3ByCoins = students.slice().sort((a, b) => metrics.valueFor(b) - metrics.valueFor(a) || a.student_name.localeCompare(b.student_name)).slice(0, 3).map(s => s.student_name);
-    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name), true, metrics.pokemonByOwner, metrics.valueFor)).join('') || '<p class="student-roster-empty">No students yet.</p>';
+    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name), true, metrics.pokemonByOwner, metrics.valueFor)).join('') || '<p class="student-roster-empty">No students yet. <button type="button" class="ts-btn" data-ts-add-student>＋ Add student</button></p>';
     // Hide all tabs and management controls for view-only mode
     const classTabs = document.querySelectorAll('.class-view-tab');
     classTabs.forEach(tab => tab.style.display = 'none');
@@ -9161,7 +9161,7 @@ function renderTeacherDashboard() {
     const students = getStudents(navSchool, navClass);
     const metrics = getClassRosterMetrics(students);
     const top3ByCoins = students.slice().sort((a, b) => metrics.valueFor(b) - metrics.valueFor(a) || a.student_name.localeCompare(b.student_name)).slice(0, 3).map(s => s.student_name);
-    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name), false, metrics.pokemonByOwner, metrics.valueFor)).join('') || '<p class="student-roster-empty">No students yet.</p>';
+    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name), false, metrics.pokemonByOwner, metrics.valueFor)).join('') || '<p class="student-roster-empty">No students yet. <button type="button" class="ts-btn" data-ts-add-student>＋ Add student</button></p>';
     const award = document.getElementById('award-student');
     award.innerHTML = students.map(s => `<option value="${s.student_name}">${s.student_name}</option>`).join('');
     // Show tabs and controls for assigned teachers

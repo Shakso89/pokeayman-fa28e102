@@ -78,7 +78,8 @@
     rail.id = 'ts-rail';
     rail.setAttribute('aria-label', 'Class tools');
     rail.innerHTML = `
-      <section class="ts-card"><h3>⚡ Quick Award</h3><p>Give coins to a student instantly</p>
+      <button type="button" class="ts-award-go ts-rail-add" id="ts-rail-add">＋ Add student</button>
+      <section class="ts-card"><h3>Quick Award</h3><p>Give coins to a student instantly</p>
         <label class="sr-only" for="ts-award-student">Student</label><select id="ts-award-student"></select>
         <div class="ts-amounts">${[10, 50, 100].map((n) => `<button type="button" data-amt="${n}"${n === 10 ? ' class="on"' : ''}>+${n}</button>`).join('')}</div>
         <button type="button" class="ts-award-go" id="ts-award-go">Award coins</button></section>
@@ -236,7 +237,8 @@
     set('ts-hero-coins', list.reduce((a, s) => a + (Number(s.coins) || 0), 0).toLocaleString());
   }
   function onHero(e) {
-    const b = e.target.closest('[data-hero]'); if (!b) return;
+    const b = e.target.closest('[data-hero],[data-ts-add-student]'); if (!b) return;
+    if (b.dataset.tsAddStudent !== undefined) { e.preventDefault(); return openHeroActionDialog('add', b); }
     e.preventDefault();
     openHeroActionDialog(b.dataset.hero, b);
   }
@@ -313,6 +315,7 @@
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.amt) { amount = +b.dataset.amt; b.parentElement.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); return; }
     if (b.dataset.tsClass) return onNav(e);
+    if (b.id === 'ts-rail-add') { openHeroActionDialog('add', b); return; }
     if (b.id === 'ts-box-open') { g(() => window.openTeacherSurpriseBox()); return; }
     if (b.id === 'ts-award-go') {
       const sel = $('award-student'), amt = $('award-amount'), form = $('award-form');
@@ -325,6 +328,8 @@
     }
   }
 
+  window.pokeaymanOpenAddStudent = (t) => openHeroActionDialog('add', t);
+  document.addEventListener('click', (e) => { const b = e.target.closest('[data-ts-add-student]'); if (b) { e.preventDefault(); openHeroActionDialog('add', b); } });
   let lastOpts = '', lastTop = '', lastClassKey = '';
   let lastClassData = null;
   function sync() {
@@ -384,7 +389,7 @@
       const rosterStudents = students.length ? students : [...document.querySelectorAll('#students-list > .trainer-student-card[data-student-id]')]
         .map(card => allData.find(row => row.__backendId === card.dataset.studentId))
         .filter(Boolean);
-      if (allData !== lastClassData || classKey !== lastClassKey) {
+      if (allData !== lastClassData || classKey !== lastClassKey || !$('ts-hero')?.isConnected || $('ts-hero')?.parentElement !== $('class-subtab-students')) {
         hero(students);
         lastClassData = allData;
         lastClassKey = classKey;
