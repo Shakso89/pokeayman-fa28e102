@@ -229,5 +229,22 @@ html body .gym-card .class-teacher-pill:has(.class-teacher-item + .class-teacher
 html body .ec-teacher-toggle,html body .ec-teacher-toggle span{color:#3b2a00!important}
 html body .ec-teacher-toggle{background:#fff6d6!important;border-color:#f0c94a!important}
 body.ts-on.ts-bright .gym-card .class-teacher-item{color:var(--ts-blue)}
-html body #view-classes .gym-card .class-teacher-pill{width:100%;flex-direction:row!important;flex-wrap:nowrap!important;align-items:flex-start!important;justify-content:center!important}
-html body #view-classes .gym-card .class-teacher-item{flex:0 0 auto!important;display:inline-flex!important;flex-direction:column!important;align-items:center}
+/* Outside class cards: keep all teacher identities inside the card at every width. */
+html body #view-classes #classes-list > .gym-card{box-sizing:border-box;min-width:0;max-width:100%;overflow:hidden;gap:12px;padding:16px!important}
+html body #view-classes .gym-card > *{box-sizing:border-box;min-width:0;max-width:100%}
+html body #view-classes .gym-card .gym-head{padding-inline:30px;width:100%;min-width:0}
+html body #view-classes .gym-card .class-teacher-pill{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));align-self:stretch;width:100%;max-width:100%;box-sizing:border-box;justify-items:stretch;align-items:start;gap:12px 8px!important;margin:0!important;padding:0!important;overflow:hidden!important;white-space:normal!important;background:none!important;border:0!important}
+html body #view-classes .gym-card .class-teacher-item{display:flex!important;flex:initial!important;flex-direction:column!important;align-items:center;justify-content:flex-start;gap:6px!important;width:100%;min-width:0;max-width:100%;text-align:center;white-space:normal;overflow-wrap:anywhere;line-height:1.2;color:#ffcb05;font-size:clamp(.7rem,2vw,.82rem)!important;font-weight:500!important}
+html body #view-classes .gym-card .class-teacher-avatar{display:grid;width:clamp(48px,14vw,64px);height:clamp(48px,14vw,64px);max-width:100%;box-sizing:border-box;object-fit:contain}
+html body #view-classes .gym-card .class-teacher-label{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;max-width:100%;font-size:inherit;font-weight:500!important;line-height:1.25;overflow-wrap:anywhere}
+html body #view-classes .gym-card .class-teacher-badge{flex:none}
+html body #view-classes .gym-card .class-teacher-more{grid-column:1/-1;justify-self:center;max-width:100%;box-sizing:border-box;white-space:normal;text-align:center}
+html body #view-classes .gym-card .gym-top3{min-width:0;max-width:100%;flex-wrap:wrap;gap:8px}
+html body #view-classes .gym-card .gym-top3-names{flex:1 1 60px}
+@media(max-width:480px){
+  html body #view-classes #classes-list > .gym-card{gap:10px;padding:14px!important}
+  html body #view-classes .gym-card .class-teacher-pill{gap:10px 6px!important}
+  html body #view-classes .gym-card .class-teacher-avatar{width:52px;height:52px}
+  html body #view-classes .gym-card .gym-top3{gap:6px}
+  html body #view-classes .gym-card .gym-bubble{width:34px;height:34px}
+}
