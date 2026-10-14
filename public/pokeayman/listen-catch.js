@@ -23,8 +23,8 @@
     return (typeof allData === 'undefined' ? [] : allData).find(row => row.type === 'listen_catch_progress' && String(row.student_id || '') === id) || null;
   }
   function parseProgress(record) {
-    try { const state = { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], dailyBallDate: '', dailyBallsEarned: 0, ...JSON.parse(record?.listen_catch_data || '{}') }; state.mysteryBoxes = Math.max(0, Number(state.mysteryBoxes) || 0); return state; }
-    catch (_) { return { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], dailyBallDate: '', dailyBallsEarned: 0 }; }
+    try { const state = { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], dailyBallDate: '', dailyBallsEarned: 0, ...JSON.parse(record?.listen_catch_data || '{}') }; state.mysteryBoxes = Math.max(0, Number(state.mysteryBoxes) || 0); return state; }
+    catch (_) { return { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], dailyBallDate: '', dailyBallsEarned: 0 }; }
   }
   function localDayKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
   function ballsEarnedToday(state) { return state.dailyBallDate === localDayKey() ? Math.min(DAILY_BALL_LIMIT, Number(state.dailyBallsEarned) || 0) : 0; }
@@ -210,7 +210,10 @@
     const claimed = hasClaimedChallenge(state, active.id);
     // The student Catchdex uses this flag to decide whether to render the live challenge.
     // activeChallenge() has already applied the shared schedule window, so this result is live.
-    return { ...active, active: true, unique: claimed ? active.goal : unique, ready: unique >= active.goal && !claimed, claimed, qualifying };
+    const pendingBoxes = Array.isArray(state.mysteryBoxChallengeIds) ? state.mysteryBoxChallengeIds : [];
+    const openedBoxes = Array.isArray(state.openedBoxChallengeIds) ? state.openedBoxChallengeIds : [];
+    const recoverable = claimed && !Number(state.mysteryBoxes) && !pendingBoxes.includes(active.id) && !openedBoxes.includes(active.id);
+    return { ...active, active: true, unique: claimed ? active.goal : unique, ready: unique >= active.goal && !claimed, claimed, recoverable, qualifying };
   }
   function canManageCatchdex(record) {
     return Boolean(record && ((currentRole === 'student' && identity(student()) === identity(record)) || (currentRole === 'teacher' && albumViewer?.readOnly && identity(albumViewer.record) === identity(record))));
@@ -219,26 +222,29 @@
   async function claimChallenge(record = student()) {
     if (!canManageCatchdex(record)) return;
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    if (!goal.ready || !goal.id || goal.claimed || hasClaimedChallenge(state, goal.id)) return;
+    const recovery = Boolean(goal.recoverable && goal.id);
+    if ((!goal.ready && !recovery) || !goal.id || (goal.claimed && !recovery) || (hasClaimedChallenge(state, goal.id) && !recovery)) return;
     const claimKey = `${identity(record)}:${goal.id}`;
     if (claimingChallengeIds.has(claimKey)) return;
     claimingChallengeIds.add(claimKey);
-    const consumed = goal.qualifying;
-    const consumedIds = new Set(consumed.map(entry => Number(entry.pokemon_id)));
-    state.album = state.album.filter(entry => !consumedIds.has(Number(entry.pokemon_id)));
-    state.claimedChallengeIds = [...new Set([...(Array.isArray(state.claimedChallengeIds) ? state.claimedChallengeIds : []), goal.id])];
-    // Keep the legacy marker in sync so older dashboard bundles also treat this
-    // student's challenge as already claimed after a reload.
-    state.openedChallengeIds = [...new Set([...(Array.isArray(state.openedChallengeIds) ? state.openedChallengeIds : []), goal.id])];
+    const consumed = recovery ? [] : goal.qualifying;
+    if (!recovery) {
+      const consumedIds = new Set(consumed.map(entry => Number(entry.pokemon_id)));
+      state.album = state.album.filter(entry => !consumedIds.has(Number(entry.pokemon_id)));
+      state.claimedChallengeIds = [...new Set([...(Array.isArray(state.claimedChallengeIds) ? state.claimedChallengeIds : []), goal.id])];
+      // Keep the legacy claim marker in sync for older dashboard bundles.
+      state.openedChallengeIds = [...new Set([...(Array.isArray(state.openedChallengeIds) ? state.openedChallengeIds : []), goal.id])];
+    }
+    state.mysteryBoxChallengeIds = [...new Set([...(Array.isArray(state.mysteryBoxChallengeIds) ? state.mysteryBoxChallengeIds : []), goal.id])];
     state.mysteryBoxes += 1;
-    state.lastChallengeReward = { challengeId: goal.id, consumed: consumed.length, claimedAt: new Date().toISOString() };
+    state.lastChallengeReward = { ...(state.lastChallengeReward || {}), challengeId: goal.id, consumed: recovery ? (state.lastChallengeReward?.consumed || 0) : consumed.length, claimedAt: state.lastChallengeReward?.claimedAt || new Date().toISOString(), ...(recovery ? { recoveredAt: new Date().toISOString() } : {}) };
     try { await save(record, state); }
     catch (_) { claimingChallengeIds.delete(claimKey); return toast('Could not claim the Mystery Box. Your Catchdex stickers are safe; please try again.'); }
     claimingChallengeIds.delete(claimKey);
     if (currentRole === 'student') renderCatchdexTab();
     else refreshViewer(record);
     mountCards();
-    toast('Mystery Box added to your Catchdex.');
+    toast(recovery ? 'Your missing Mystery Box has been restored.' : 'Mystery Box added to your Catchdex.');
   }
   const openingBoxIds = new Set();
   async function openMysteryBox(record = student()) {
@@ -262,6 +268,10 @@
         createdPokemon = result.data || result;
       } else { await addCoins(record, coins); coinsAwarded = true; }
       state.mysteryBoxes -= 1;
+      const pendingChallengeBoxes = Array.isArray(state.mysteryBoxChallengeIds) ? [...state.mysteryBoxChallengeIds] : [];
+      const openedChallengeId = pendingChallengeBoxes.shift() || [...(Array.isArray(state.claimedChallengeIds) ? state.claimedChallengeIds : []), ...(Array.isArray(state.openedChallengeIds) ? state.openedChallengeIds : [])].reverse().find(id => !(state.openedBoxChallengeIds || []).includes(id));
+      state.mysteryBoxChallengeIds = pendingChallengeBoxes;
+      if (openedChallengeId) state.openedBoxChallengeIds = [...new Set([...(Array.isArray(state.openedBoxChallengeIds) ? state.openedBoxChallengeIds : []), openedChallengeId])];
       await save(record, state);
       if (createdPokemon && typeof allData !== 'undefined') allData.push({ ...pokemonRecord, __backendId: createdPokemon.__backendId || createdPokemon.id || '' });
     } catch (_) {
@@ -478,9 +488,9 @@
     const challengeMarkup = goal.active
       ? `<section class="cdx-challenge${goal.ready ? ' is-ready' : ''}${goal.claimed ? ' is-claimed' : ''}" aria-labelledby="cdx-challenge-title">
           <div class="cdx-challenge-top"><div><span class="cdx-eyebrow">${goal.claimed ? 'CHALLENGE COMPLETE' : 'ACTIVE COLLECTION CHALLENGE'}</span><h3 id="cdx-challenge-title">${esc(goal.title)}</h3><p>Collect <strong>${goal.goal} unique Pokémon</strong> matching <strong>${esc(challengeCriteria(goal))}</strong>.</p></div><span class="cdx-challenge-mark" aria-hidden="true">${goal.claimed ? '✓' : '🎯'}</span></div>
-          <div class="cdx-progress-row"><div class="cdx-progress-label"><b>${progress}<span> / ${goal.goal}</span></b><span>${goal.claimed ? 'Reward claimed' : goal.ready ? 'Ready to claim!' : `${Math.max(0, goal.goal - goal.unique)} more needed`}</span></div><div class="cdx-progress-track" role="progressbar" aria-label="${esc(goal.title)} progress" aria-valuemin="0" aria-valuemax="${goal.goal}" aria-valuenow="${progress}"><span style="width:${pct}%"></span></div></div>
-          <div class="cdx-challenge-foot"><small>${goal.end ? `Challenge ends ${esc(goal.end)}` : 'Limited-time challenge'}</small>${goal.ready ? '<button type="button" class="cdx-button is-gold" data-catchdex="claim">🎁 Claim Mystery Box</button>' : ''}${goal.claimed && state.mysteryBoxes ? '<button type="button" class="cdx-button is-gold" data-catchdex="boxes">🎁 Open a Mystery Box</button>' : ''}</div>
-          ${goal.claimed ? '<p class="cdx-claimed">✓ Reward claimed. The challenge stickers have been removed from your album.</p>' : '<p class="cdx-hint">Stickers that count toward this challenge are highlighted in your album below.</p>'}
+          <div class="cdx-progress-row"><div class="cdx-progress-label"><b>${progress}<span> / ${goal.goal}</span></b><span>${goal.recoverable ? 'Mystery Box missing' : goal.claimed && state.mysteryBoxes ? 'Mystery Box ready to open' : goal.claimed ? 'Reward claimed' : goal.ready ? 'Ready to claim!' : `${Math.max(0, goal.goal - goal.unique)} more needed`}</span></div><div class="cdx-progress-track" role="progressbar" aria-label="${esc(goal.title)} progress" aria-valuemin="0" aria-valuemax="${goal.goal}" aria-valuenow="${progress}"><span style="width:${pct}%"></span></div></div>
+          <div class="cdx-challenge-foot"><small>${goal.end ? `Challenge ends ${esc(goal.end)}` : 'Limited-time challenge'}</small>${goal.ready ? '<button type="button" class="cdx-button is-gold" data-catchdex="claim">🎁 Claim Mystery Box</button>' : ''}${goal.recoverable ? '<button type="button" class="cdx-button is-gold" data-catchdex="claim">🎁 Restore Mystery Box</button>' : ''}${goal.claimed && state.mysteryBoxes ? '<button type="button" class="cdx-button is-gold" data-catchdex="boxes">🎁 Open a Mystery Box</button>' : ''}</div>
+          ${goal.recoverable ? '<p class="cdx-hint">Your challenge was marked complete, but no box is in your inventory. Restore the missing Mystery Box here.</p>' : goal.claimed ? '<p class="cdx-claimed">✓ Reward claimed. The challenge stickers have been removed from your album.</p>' : '<p class="cdx-hint">Stickers that count toward this challenge are highlighted in your album below.</p>'}
         </section>`
       : '<section class="cdx-challenge is-inactive"><span class="cdx-challenge-mark" aria-hidden="true">🗓️</span><div><span class="cdx-eyebrow">WEEKLY CHALLENGE</span><h3>No active challenge</h3><p>Your next Catchdex challenge will appear here when the admin schedules it.</p></div></section>';
     return `<div class="cdx-view">
@@ -505,7 +515,7 @@
   function renderCatchdexTab() {
     const root = document.getElementById('student-catchdex-root'); const record = student(); if (!root || !record) return;
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    const signature = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.title}:${goal.start}:${goal.end}:${goal.type}:${goal.tier}:${goal.goal}:${goal.unique}:${goal.claimed}:${state.last?.item?.id || ''}`;
+    const signature = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.title}:${goal.start}:${goal.end}:${goal.type}:${goal.tier}:${goal.goal}:${goal.unique}:${goal.claimed}:${goal.recoverable}:${state.last?.item?.id || ''}`;
     if (root.dataset.catchdexSig === signature) return;
     root.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(record, false)}</section>`;
     root.dataset.catchdexSig = signature; bindCatchdexContents(root, record, false);
