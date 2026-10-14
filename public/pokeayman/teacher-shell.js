@@ -339,7 +339,7 @@
     if (!on) return;
     build();
     const tab = g(() => activeMainTab, 'dashboard');
-    const inClass = tab === 'dashboard' && !$('view-students')?.classList.contains('hidden') && g(() => navClass, null);
+    const inClass = tab === 'dashboard' && [...document.querySelectorAll('[id="view-students"]')].some(v => !v.classList.contains('hidden') && v.getClientRects().length) && g(() => navClass, null);
     document.body.classList.toggle('ts-rail-on', !!inClass);
     $('ts-current').textContent = g(() => navClass, null) || 'Choose a class';
     $('ts-current-school').textContent = g(() => navSchool, null) || 'Schools & classes';
@@ -381,13 +381,23 @@
     const unread = g(() => window.teacherUnreadNotificationCount?.(), 0) || 0;
     $('ts-notification-count').textContent = unread > 99 ? '99+' : String(unread);
     $('ts-notification-count').hidden = unread === 0;
-    $('[data-ts="notifications"]').setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
+    document.querySelector('[data-ts="notifications"]')?.setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
+      const st = g(() => window.teacherStreakState(), null);
+      if (st) {
+        const dots = Array.from({ length: 7 }, (_, i) => `<span class="${i < st.count ? 'on' : ''}">${i + 1}</span>`).join('');
+        if ($('ts-streak-dots').innerHTML !== dots) $('ts-streak-dots').innerHTML = dots;
+        const txt = st.boxes > 0 ? `You have ${st.boxes} Streak Box${st.boxes > 1 ? 'es' : ''} to open!` : `${7 - st.count} more day${7 - st.count === 1 ? '' : 's'} to unlock a Streak Box`;
+        if ($('ts-streak-text').textContent !== txt) $('ts-streak-text').textContent = txt;
+        $('ts-box-open').textContent = st.boxes > 0 ? `🎁 Open Streak Box${st.boxes > 1 ? ` (${st.boxes})` : ''}` : 'No Streak Boxes Ready';
+        $('ts-box-open').disabled = st.boxes < 1;
+        $('ts-box-open').classList.toggle('ready', st.boxes > 0);
+      }
     if (inClass) {
       cardButtons();
       const classKey = `${g(() => navSchool, '')}\u0000${g(() => navClass, '')}`;
-      const students = g(() => getStudents(navSchool, navClass), []);
+      const students = g(() => getStudents(navSchool, navClass), []) || [];
       const rosterStudents = students.length ? students : [...document.querySelectorAll('#students-list > .trainer-student-card[data-student-id]')]
-        .map(card => allData.find(row => row.__backendId === card.dataset.studentId))
+        .map(card => g(() => allData.find(row => row.__backendId === card.dataset.studentId), null) || { student_name: card.dataset.studentName, coins: Number(card.querySelector('[class*="coin"]')?.textContent.replace(/\D/g, '')) || 0 })
         .filter(Boolean);
       if (allData !== lastClassData || classKey !== lastClassKey || !$('ts-hero')?.isConnected || $('ts-hero')?.parentElement !== $('class-subtab-students')) {
         hero(students);
@@ -409,16 +419,6 @@
       sidebarSelect.disabled = !canAward || !rosterStudents.length;
       document.querySelectorAll('#ts-rail .ts-amounts button').forEach(button => { button.disabled = !canAward; });
       $('ts-award-go').disabled = !canAward || !rosterStudents.length;
-      const st = g(() => window.teacherStreakState(), null);
-      if (st) {
-        const dots = Array.from({ length: 7 }, (_, i) => `<span class="${i < st.count ? 'on' : ''}">${i + 1}</span>`).join('');
-        if ($('ts-streak-dots').innerHTML !== dots) $('ts-streak-dots').innerHTML = dots;
-        const txt = st.boxes > 0 ? `You have ${st.boxes} Streak Box${st.boxes > 1 ? 'es' : ''} to open!` : `${7 - st.count} more day${7 - st.count === 1 ? '' : 's'} to unlock a Streak Box`;
-        if ($('ts-streak-text').textContent !== txt) $('ts-streak-text').textContent = txt;
-        $('ts-box-open').textContent = st.boxes > 0 ? `🎁 Open Streak Box${st.boxes > 1 ? ` (${st.boxes})` : ''}` : 'No Streak Boxes Ready';
-        $('ts-box-open').disabled = st.boxes < 1;
-        $('ts-box-open').classList.toggle('ready', st.boxes > 0);
-      }
     }
   }
 
