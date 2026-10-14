@@ -127,7 +127,7 @@
     }
     openingBallIds.delete(recordId);
     if (currentRole === 'student') renderCatchdexTab();
-    else renderAlbumModal(record, true);
+    else refreshViewer(record);
     mountCards(); showReveal(item, caught, coins);
   }
   function showReveal(item, duplicate, coins) {
@@ -169,7 +169,7 @@
     catch (_) { claimingChallengeIds.delete(claimKey); return toast('Could not claim the Mystery Box. Your Catchdex stickers are safe; please try again.'); }
     claimingChallengeIds.delete(claimKey);
     if (currentRole === 'student') renderCatchdexTab();
-    else if (albumViewer?.record) renderAlbumModal(record, true);
+    else refreshViewer(record);
     mountCards();
     toast('Mystery Box added to your Catchdex.');
   }
@@ -205,7 +205,7 @@
     }
     openingBoxIds.delete(recordId);
     if (currentRole === 'student') renderCatchdexTab();
-    else renderAlbumModal(record, true);
+    else refreshViewer(record);
     mountCards();
     if (currentRole === 'student' && typeof renderStudentDashboard === 'function') renderStudentDashboard();
     showMysteryReveal(item, alreadyOwned, coins, record.student_name || 'Mystery Box');
@@ -252,7 +252,34 @@
       form.dataset.loaded = 'true';
     }
     const status = panel.querySelector('.lc-admin-status');
-    status.textContent = active ? `Live now: ${active.title} · collect ${active.goal} unique Pokémon matching ${challengeCriteria(active)} · ${active.start} through ${active.end}.` : `No challenge is active. Set this week’s challenge to get students started.`;
+    status.textContent = setting ? '' : 'No challenge is posted. Set this week’s challenge to get students started.';
+    let posted = panel.querySelector('.lc-admin-posted');
+    if (!posted) { posted = document.createElement('section'); posted.className = 'lc-admin-posted'; panel.appendChild(posted); posted.addEventListener('click', e => { if (e.target.closest('[data-lc-delete]')) deleteChallenge(); }); }
+    if (!setting) { posted.innerHTML = ''; return; }
+    const id = `week-${setting.challenge_start}`;
+    const done = []; const ready = [];
+    (typeof allData === 'undefined' ? [] : allData).filter(r => r.type === 'listen_catch_progress').forEach(r => {
+      const state = parseProgress(r); const rec = (typeof getStudentRecordByStableId === 'function' && getStudentRecordByStableId(r.student_id)) || r; const name = rec.student_name || r.student_name || 'Student';
+      const cls = [rec.school_name || r.school_name, rec.class_name || r.class_name].filter(Boolean).join(' · ');
+      if (hasClaimedChallenge(state, id)) done.push({ name, cls }); else if (active && challenge(state).ready) ready.push({ name, cls });
+    });
+    const row = (s, tag) => `<li><b>${esc(s.name)}</b><span>${esc(s.cls)}</span><em>${tag}</em></li>`;
+    const crit = challengeCriteria({ type: setting.challenge_type, tier: setting.challenge_tier });
+    posted.innerHTML = `<header><div><span>${active ? 'LIVE NOW' : 'POSTED CHALLENGE'}</span><h4>${esc(setting.challenge_title || 'Weekly Catchdex Challenge')}</h4><p>Collect ${Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL} unique Pokémon · ${esc(crit)} · starts ${esc(setting.challenge_start)}</p></div><button type="button" class="lc-admin-delete" data-lc-delete>Delete challenge</button></header><h5>Completed (${done.length + ready.length})</h5>${done.length + ready.length ? `<ul>${done.map(s => row(s, 'Box claimed')).join('')}${ready.map(s => row(s, 'Ready to claim')).join('')}</ul>` : '<p class="lc-admin-empty">No students have completed this challenge yet.</p>'}`;
+  }
+  async function deleteChallenge() {
+    const setting = challengeSetting(); if (!setting || !canAccessAdmin()) return;
+    if (!confirm('Delete this challenge? You can then post a new one.')) return;
+    let result; try { result = await window.dataSdk.delete(setting); } catch (_) { result = null; }
+    if (!result?.isOk) return toast('Challenge could not be deleted. Try again.');
+    allData = allData.filter(r => r !== setting && r.type !== 'listen_catch_challenge');
+    const form = document.querySelector('#listen-catch-admin form'); if (form) { form.reset(); form.elements.goal.value = DEFAULT_CHALLENGE_GOAL; form.elements.start.value = dateInput(weekStart()); }
+    toast('Challenge deleted. You can post a new one.'); renderAdminChallenge(); mountCards();
+  }
+  function refreshViewer(record) {
+    const modal = document.getElementById('catchdex-modal');
+    if (modal && !modal.classList.contains('hidden')) renderAlbumModal(record, true);
+    const root = document.getElementById('profile-catchdex-root'); if (root) root.dataset.catchdexSig = '';
   }
   function closeGame() { session?.root?.remove(); session = null; }
   function speak(word) {
@@ -353,10 +380,17 @@
     const tabRoot = document.getElementById('student-catchdex-root');
     if (currentRole === 'student' && tabRoot) renderCatchdexTab();
     const profile = typeof profileStudent !== 'undefined' ? profileStudent : null;
-    const content = document.querySelector('#view-student-profile .cp-content');
-    const profileState = parseProgress(progressFor(profile)); const profileGoal = challenge(profileState); const profileSignature = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.unique}:${profileGoal.claimed}`;
-    if (profile && content && content.querySelector('#catchdex-profile-card')?.dataset.catchdexSig !== profileSignature) { content.querySelector('#catchdex-profile-card')?.remove(); const holder = document.createElement('div'); holder.id = 'catchdex-profile-card'; holder.dataset.catchdexSig = profileSignature; holder.innerHTML = albumCard(profileState, true); content.prepend(holder); }
-    document.querySelectorAll('[data-catchdex-profile]').forEach(button => button.onclick = () => window.openCatchdexFor(profile, true));
+    document.getElementById('catchdex-profile-card')?.remove();
+    const profileRoot = document.getElementById('profile-catchdex-root');
+    if (profile && profileRoot) {
+      const profileState = parseProgress(progressFor(profile)); const profileGoal = challenge(profileState);
+      const sig = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.unique}:${profileGoal.claimed}:${profileState.last?.item?.id || ''}`;
+      if (profileRoot.dataset.catchdexSig !== sig) {
+        albumViewer = { record: profile, readOnly: true };
+        profileRoot.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(profile, true).replace('<button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button>', '')}</section>`;
+        profileRoot.dataset.catchdexSig = sig; bindCatchdexContents(profileRoot, profile, true);
+      }
+    }
   }
   function renderCatchdexContents(record, readOnly) {
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
