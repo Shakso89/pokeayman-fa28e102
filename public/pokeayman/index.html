@@ -4170,7 +4170,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
        <div id="class-subtab-quiz" class="class-subtab-content hidden flex gap-2 w-full">
         <!-- Left sidebar with vertical sub-tabs -->
         <div class="flex flex-col gap-2 w-40 flex-shrink-0">
-         <button class="quiz-sub-tab quiz-sub-tab-active px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="post">📝 Post Quiz</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="quick">⚡ Quick Answer</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="ongoing">📋 Ongoing</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="history">📊 History</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="archive">📁 Archive</button>
+         <button class="quiz-sub-tab quiz-sub-tab-active px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="post">Post Quiz</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="quick">Quick Answer</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="ongoing">Ongoing</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="history">History</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="archive">Archive</button>
         </div><!-- Right content area -->
         <div class="flex-1 min-w-0 flex flex-col">
          <!-- Create Quiz Form -->
@@ -4352,9 +4352,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         </section>
         <div class="cp-content">
          <div class="cp-tabs" aria-label="Student profile sections">
-          <button class="profile-tab-btn profile-tab-active" data-tab="collection">📚 Collection</button>
-          <button class="profile-tab-btn profile-tab-inactive" data-tab="shop">🛍️ Shop</button>
-          <button class="profile-tab-btn profile-tab-inactive" data-tab="quiz">❓ Quiz</button>
+          <button class="profile-tab-btn profile-tab-active" data-tab="collection">Collection</button>
+          <button class="profile-tab-btn profile-tab-inactive" data-tab="shop">Shop</button>
+          <button class="profile-tab-btn profile-tab-inactive" data-tab="quiz">Quiz</button>
           <button class="profile-tab-btn profile-tab-inactive" data-tab="catchdex">Catchdex</button>
          </div>
          <div id="profile-tab-catchdex" class="profile-tab-content hidden flex-1 overflow-y-auto"><div id="profile-catchdex-root"></div></div>
@@ -17743,7 +17743,7 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
     const rightImg = document.getElementById('battle-right-img');
     
     const matchup1 = getTypeEffectiveness(getPokemonTypes(p1), getPokemonTypes(p2));
-    const dmg1 = Math.max(1, Math.floor((Math.random() * (p1.pokemon_power || 50) * 0.4 + 5) * matchup1));
+    const dmg1 = Math.max(1, Math.floor((Math.random() * (p1.pokemon_power || 50) * 0.25 + 3) * matchup1));
     hp2 = Math.max(0, hp2 - dmg1);
     await arenaAttack('left', 'right', p1, matchup1, dmg1);
     if (callout) callout.textContent = `${p1.pokemon_name} hit for ${dmg1} damage${matchup1 > 1 ? ' — super effective!' : matchup1 < 1 ? ' — resisted!' : '.'}`;
@@ -17759,7 +17759,7 @@ document.getElementById('start-battle-btn').addEventListener('click', async () =
 
     // Right attacks left
     const matchup2 = getTypeEffectiveness(getPokemonTypes(p2), getPokemonTypes(p1));
-    const dmg2 = Math.max(1, Math.floor((Math.random() * (p2.pokemon_power || 50) * 0.4 + 5) * matchup2));
+    const dmg2 = Math.max(1, Math.floor((Math.random() * (p2.pokemon_power || 50) * 0.25 + 3) * matchup2));
     hp1 = Math.max(0, hp1 - dmg2);
     await arenaAttack('right', 'left', p2, matchup2, dmg2);
     if (callout) callout.textContent = `${p2.pokemon_name} hit for ${dmg2} damage${matchup2 > 1 ? ' — super effective!' : matchup2 < 1 ? ' — resisted!' : '.'}`;

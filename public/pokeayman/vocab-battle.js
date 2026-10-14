@@ -154,6 +154,7 @@
       const resolved = typeof getPokemonTypes === 'function' ? getPokemonTypes({ pokemon_id: id }) : [];
       if (Array.isArray(resolved) && resolved.length && resolved[0] !== 'unknown') attackType = String(resolved[0]).toLowerCase();
     } catch (_) { /* Use the familiar fire attack when type data is unavailable. */ }
+    window.pokeSfx?.play('lunge');
     const layer = document.createElement('div');
     layer.className = `vb-attack-layer vb-fire vb-element${retaliation ? ' vb-counter' : ''}`;
     layer.dataset.type = attackType;
@@ -177,10 +178,12 @@
     later(() => {
       bolt.remove();
       if (dodged) {
+        window.pokeSfx?.play('whoosh');
         target.classList.add('vb-dodge');
         floatDamage('DODGED', target, 'vb-dmg-dodge');
         later(() => target.classList.remove('vb-dodge'), 650);
       } else {
+        window.pokeSfx?.play('hit', attackType);
         const burst = document.createElement('div'); burst.className = 'vb-impact-burst';
         burst.style.left = `${end.x}px`; burst.style.top = `${end.y}px`;
         burst.innerHTML = '<b></b>' + Array.from({ length: 10 }, (_, i) => `<i style="--spark-angle:${i * 36}deg"></i>`).join('')
@@ -276,7 +279,7 @@
         scheduleNext(1000);
       });
     }
-    const damage = battle.currentWord.length * 3 + rand(1, 4);
+    const damage = 6 + battle.currentWord.length + rand(0, 4);
     setMessage('Correct! Energy strike!');
     animateAttack(false, false, () => {
       battle.foeHp = Math.max(0, battle.foeHp - damage);
@@ -294,7 +297,7 @@
   function onFail(reason) {
     stopTimer();
     battle.resolving = true;
-    const damage = rand(5, 9) + battle.failStreak * 3;
+    const damage = rand(4, 8) + battle.failStreak * 2;
     battle.failStreak += 1;
     const meEl = battle.root.querySelector('.vb-me');
     setMessage(`${reason} ${battle.foe.shop_pokemon_name} is charging an attack!`);
