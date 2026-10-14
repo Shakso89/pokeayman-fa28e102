@@ -108,12 +108,20 @@
     return claimed.some(id => String(id) === String(challengeId)) || String(state.lastChallengeReward?.challengeId || '') === String(challengeId);
   }
   function catalog() { return Array.isArray(window.pokemonCatalog) ? window.pokemonCatalog : (typeof pokemonCatalog !== 'undefined' ? pokemonCatalog : []); }
-  function randomPokemon() {
+  function randomPokemon(source = 'catch-ball') {
     const pool = catalog().filter(item => Number(item.id) > 0);
     if (!pool.length) return null;
-    const roll = Math.random() * 100;
-    const rarity = roll < 68 ? 'common' : roll < 91 ? 'uncommon' : roll < 99 ? 'rare' : 'legendary';
-    const tier = pool.filter(item => item.rarity === rarity);
+    const roll = Math.random() * 10000;
+    // Mystery Boxes are a celebration reward, so keep their high rarities scarce:
+    // 82.75% common, 15% uncommon, 2% rare, and 0.25% legendary.
+    const rarity = source === 'mystery-box'
+      ? (roll < 25 ? 'legendary' : roll < 225 ? 'rare' : roll < 1725 ? 'uncommon' : 'common')
+      : (roll < 6800 ? 'common' : roll < 9100 ? 'uncommon' : roll < 9900 ? 'rare' : 'legendary');
+    let tier = pool.filter(item => String(item.rarity || '').toLowerCase() === rarity);
+    if (!tier.length && source === 'mystery-box') {
+      const fallback = { legendary: ['rare', 'uncommon', 'common'], rare: ['uncommon', 'common'], uncommon: ['common'], common: ['uncommon', 'rare', 'legendary'] }[rarity] || [];
+      tier = fallback.map(name => pool.filter(item => String(item.rarity || '').toLowerCase() === name)).find(group => group.length) || [];
+    }
     return (tier.length ? tier : pool)[Math.floor(Math.random() * (tier.length || pool.length))];
   }
   async function save(record, data) {
@@ -130,6 +138,22 @@
     return data;
   }
   function duplicateCoins(item) { return item.rarity === 'legendary' ? 12 : item.rarity === 'rare' ? 7 : item.rarity === 'uncommon' ? 4 : 2; }
+  function studentAlreadyOwnsPokemon(item, record) {
+    const recordId = identity(record);
+    const recordName = String(record?.student_name || '').trim().toLocaleLowerCase();
+    const school = String(record?.school_name || '').trim().toLocaleLowerCase();
+    const className = String(record?.class_name || '').trim().toLocaleLowerCase();
+    return (typeof allData === 'undefined' ? [] : allData).some(row => {
+      if (row.type !== 'pokemon' || Number(row.pokemon_id) !== Number(item.id)) return false;
+      const ownerId = String(row.student_id || row.canonical_student_id || '').trim();
+      if (ownerId && recordId) return ownerId === recordId;
+      const ownerName = String(row.owner || row.student_name || '').trim().toLocaleLowerCase();
+      if (!recordName || ownerName !== recordName) return false;
+      const ownerSchool = String(row.school_name || '').trim().toLocaleLowerCase();
+      const ownerClass = String(row.class_name || '').trim().toLocaleLowerCase();
+      return (!school || !ownerSchool || ownerSchool === school) && (!className || !ownerClass || ownerClass === className);
+    });
+  }
   async function addCoins(record, amount) {
     const latest = (typeof getStudentRecordByStableId === 'function' && getStudentRecordByStableId(identity(record))) || record;
     const update = { ...latest, coins: Number(latest.coins || 0) + amount, __backendId: latest.__backendId };
@@ -221,8 +245,8 @@
     if (!recordId || openingBoxIds.has(recordId)) return;
     const state = parseProgress(progressFor(record));
     if (state.mysteryBoxes < 1) return toast('Claim a challenge Mystery Box before opening one.');
-    const item = randomPokemon(); if (!item) return toast('The Pokémon collection is loading. Try again in a moment.');
-    const alreadyOwned = (typeof allData === 'undefined' ? [] : allData).some(row => row.type === 'pokemon' && Number(row.pokemon_id) === Number(item.id));
+    const item = randomPokemon('mystery-box'); if (!item) return toast('The Pokémon collection is loading. Try again in a moment.');
+    const alreadyOwned = studentAlreadyOwnsPokemon(item, record);
     const now = new Date().toISOString();
     const pokemonRecord = { type: 'pokemon', student_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '', student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(item.id), pokemon_name: item.name, pokemon_rarity: item.rarity || 'common', pokemon_price: Number(item.price) || 0, pokemon_power: Number(item.power) || 0, current_hp: Number(item.hp) || (Number(item.power) || 0) + 30, last_battle_time: '', created_at: now, catchdex_box_reward: true };
     const coins = alreadyOwned ? duplicateCoins(item) : 0;
@@ -467,7 +491,7 @@
     if (!count) return toast('No Mystery Boxes to open yet. Claim a completed challenge first.');
     document.getElementById('lc-box-inventory')?.remove();
     const overlay = document.createElement('div'); overlay.id = 'lc-box-inventory'; overlay.className = 'lc-box-inventory'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Mystery Box inventory');
-    overlay.innerHTML = `<section class="lc-box-inventory-card"><button type="button" class="lc-mystery-close" data-box-close aria-label="Close">×</button><span class="lc-mystery-kicker">CATCHDEX REWARDS</span><h2>${esc(record.student_name || 'Student')} has ${count} Mystery Box${count === 1 ? '' : 'es'}</h2><p>Open one box to reveal a Pokémon. If it is already in a student collection, it becomes coins instead.</p><button type="button" class="lc-primary" data-box-open>Open one box</button></section>`;
+    overlay.innerHTML = `<section class="lc-box-inventory-card"><button type="button" class="lc-mystery-close" data-box-close aria-label="Close">×</button><span class="lc-mystery-kicker">CATCHDEX REWARDS</span><h2>${esc(record.student_name || 'Student')} has ${count} Mystery Box${count === 1 ? '' : 'es'}</h2><p>Open one box to reveal a random Pokémon. Each box has a 2% rare and 0.25% legendary chance. If you already own the Pokémon, it becomes coins instead.</p><button type="button" class="lc-primary" data-box-open>Open one box</button></section>`;
     document.body.appendChild(overlay);
     const close = () => overlay.remove();
     overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-box-close]')) close(); });
