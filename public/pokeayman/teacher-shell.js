@@ -374,13 +374,16 @@
     $('ts-notification-count').hidden = unread === 0;
     $('[data-ts="notifications"]').setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
     const sourceAvatar = $('teacher-account-avatar')?.querySelector('img');
-    const avatarSrc = sourceAvatar?.currentSrc || sourceAvatar?.src || '';
+    const savedAvatarSrc = g(() => teacherAvatarSrc(findMyTeacherRecord()?.teacher_avatar), '');
+    const avatarSrc = savedAvatarSrc || sourceAvatar?.currentSrc || sourceAvatar?.src || '';
+    const avatarUrl = avatarSrc ? g(() => new URL(avatarSrc, document.baseURI).href, '') : '';
     const avatarAlt = sourceAvatar?.alt || 'Teacher avatar';
-    if (avatarSrc && avatarSrc !== failedAvatarSrc) {
+    if (avatarUrl && avatarUrl !== failedAvatarSrc) {
       const currentAvatar = $('ts-avatar').querySelector('img');
-      if (currentAvatar?.src !== avatarSrc) {
-        $('ts-avatar').innerHTML = `<img src="${esc(avatarSrc)}" alt="${esc(avatarAlt)}">`;
-        $('ts-avatar').querySelector('img')?.addEventListener('error', () => { failedAvatarSrc = avatarSrc; sync(); }, { once: true });
+      if (currentAvatar?.src !== avatarUrl) {
+        failedAvatarSrc = '';
+        $('ts-avatar').innerHTML = `<img src="${esc(avatarUrl)}" alt="${esc(avatarAlt)}">`;
+        $('ts-avatar').querySelector('img')?.addEventListener('error', () => { failedAvatarSrc = avatarUrl; sync(); }, { once: true });
       }
     } else if (!$('ts-avatar').querySelector('.ts-avatar-fallback')) {
       $('ts-avatar').innerHTML = '<span class="ts-avatar-fallback" role="img" aria-label="Teacher avatar unavailable">🎓</span>';
