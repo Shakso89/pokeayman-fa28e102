@@ -85,7 +85,7 @@
       if (arcade && arcade.key === key) pins.push(pin('arcade', '🕹️', 'Arcade Prodigy', `School record: ${arcade.count} game win${arcade.count === 1 ? '' : 's'}`));
       if (!pins.length) return;
       const row = document.createElement('div');
-      row.className = 'pk-pins';
+      row.className = `pk-pins${pins.length > 2 ? ' pk-pins-compact' : ''}`;
       pins.forEach(p => row.appendChild(p));
       (card.matches('.cp-identity') && card.querySelector('.cp-name') || card).appendChild(row);
     });

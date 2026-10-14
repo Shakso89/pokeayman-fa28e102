@@ -9,6 +9,9 @@
   font: 800 10.5px/1 Outfit, sans-serif; letter-spacing: .02em; white-space: nowrap; transition: transform .15s ease; }
 .pk-pin:hover, .pk-pin:focus-visible { transform: translateY(-2px) scale(1.05); outline: none; }
 .pk-pin i { font-style: normal; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,.4); font-size: 11px; }
+.pk-pins-compact .pk-pin { box-sizing: border-box; width: 32px; height: 32px; min-width: 32px; padding: 0; justify-content: center; border-radius: 50%; }
+.pk-pins-compact .pk-pin b { display: none; }
+.pk-pins-compact .pk-pin i { width: 21px; height: 21px; font-size: 13px; }
 .pk-pin-class-1 { --pin-a: #fde047; --pin-b: #ca8a04; --pin-ink: #3b2400; }
 .pk-pin-class-2 { --pin-a: #e2e8f0; --pin-b: #93c5fd; --pin-ink: #0f2742; }
 .pk-pin-class-3 { --pin-a: #fdba74; --pin-b: #c2410c; --pin-ink: #3a1306; }

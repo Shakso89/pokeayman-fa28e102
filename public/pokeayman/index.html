@@ -8548,10 +8548,12 @@ function renderTeacherOwnedVocabLists() {
   document.getElementById('teacher-vb-mode-school')?.setAttribute('aria-pressed', String(schoolMode));
   document.getElementById('teacher-vb-mode-mine')?.classList.toggle('is-active', !schoolMode);
   document.getElementById('teacher-vb-mode-school')?.classList.toggle('is-active', schoolMode);
+  if (document.getElementById('teacher-vb-mode-mine')) document.getElementById('teacher-vb-mode-mine').textContent = canAccessAdmin() ? 'All Lists' : 'My Lists';
   const title = document.getElementById('teacher-vb-lists-title');
   const description = document.getElementById('teacher-vb-lists-description');
-  if (title) title.textContent = schoolMode ? 'School Lists' : 'My Lists';
-  if (description) description.textContent = schoolMode ? 'Browse and share word banks other teachers have made available.' : 'Review, edit, or delete the word banks you created.';
+  const adminCanManageAnyList = canAccessAdmin();
+  if (title) title.textContent = schoolMode ? 'School Lists' : adminCanManageAnyList ? 'All Lists' : 'My Lists';
+  if (description) description.textContent = schoolMode ? 'Browse and share word banks other teachers have made available.' : adminCanManageAnyList ? 'Review, edit, or delete any teacher’s word bank.' : 'Review, edit, or delete the word banks you created.';
   const classSelect = document.getElementById('teacher-vb-create-class');
   const createForm = document.getElementById('teacher-vb-create-form');
   if (createForm) createForm.hidden = schoolMode;
@@ -8570,7 +8572,7 @@ function renderTeacherOwnedVocabLists() {
     const allLists = getVocabLists('', '');
     const myId = String(verifiedTeacherIdentity() || '').trim();
     const isOwnedByCurrentTeacher = list => Boolean((myId && String(list.teacher_id || '').trim() === myId) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey));
-    const lists = allLists.filter(isOwnedByCurrentTeacher)
+    const lists = allLists.filter(list => adminCanManageAnyList || isOwnedByCurrentTeacher(list))
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
     if (ownerScope !== currentTeacherZoneOwnerScope() || requestVersion !== teacherZoneRequestVersion || teacherWorkspaceKey !== teacherStorageKey(ownerScope)) return;
     const otherLists = allLists.filter(list => !isOwnedByCurrentTeacher(list))
@@ -8579,8 +8581,8 @@ function renderTeacherOwnedVocabLists() {
       if (!otherLists.length) { status.textContent = 'No other teachers have created vocabulary lists yet.'; return; }
       status.textContent = `${otherLists.length} list${otherLists.length === 1 ? '' : 's'} by other teachers · share any of them to your classes`;
     } else {
-      if (!lists.length) { status.textContent = 'You have not created any vocabulary lists yet.'; return; }
-      status.textContent = `${lists.length} of your list${lists.length === 1 ? '' : 's'}`;
+      if (!lists.length) { status.textContent = adminCanManageAnyList ? 'No vocabulary lists are available yet.' : 'You have not created any vocabulary lists yet.'; return; }
+      status.textContent = adminCanManageAnyList ? `${lists.length} vocabulary list${lists.length === 1 ? '' : 's'} available to manage` : `${lists.length} of your list${lists.length === 1 ? '' : 's'}`;
     }
     const escape = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
     const sectionHead = text => `<div class="teacher-zone-list-section-title"><span>${escape(text)}</span></div>`;
@@ -8612,8 +8614,9 @@ function renderTeacherOwnedVocabLists() {
       const context = school ? `${className} · ${school}` : className;
       const coverAction = `role="button" tabindex="0" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault();event.stopPropagation();navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"`;
       const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${escape(list.vocab_cover_image_url)}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
-      const owned = currentRole === 'teacher' && isOwnedByCurrentTeacher(list);
-      return `<article class="vocab-list-card teacher-zone-wordbank-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="teacher-zone-wordbank-heading"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name">${safeName}</span></div><p class="vocab-list-count teacher-zone-wordbank-context">${context}</p>${cover}<p class="vocab-list-count teacher-zone-wordbank-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode btn-primary" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div><div class="vocab-card-actions teacher-zone-wordbank-actions"><button type="button" class="vocab-card-edit btn-outline" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Edit</button>${owned ? `<button type="button" class="vocab-cover-button btn-secondary" onclick="openVocabCoverPicker('${safeId}','${safeName.replace(/'/g, "\\'")}')">Cover</button><button type="button" class="vocab-card-delete btn-danger" onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeName.replace(/'/g, "\\'")}',this)">Delete</button>` : ''}</div></article>`;
+      const canManageList = currentRole === 'teacher' && (adminCanManageAnyList || isOwnedByCurrentTeacher(list));
+      const ownerActions = isOwnedByCurrentTeacher(list) ? `<button type="button" class="vocab-cover-button btn-secondary" onclick="openVocabCoverPicker('${safeId}','${safeName.replace(/'/g, "\\'")}')">Cover</button>` : '';
+      return `<article class="vocab-list-card teacher-zone-wordbank-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="teacher-zone-wordbank-heading"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name">${safeName}</span></div><p class="vocab-list-count teacher-zone-wordbank-context">${context}</p>${cover}<p class="vocab-list-count teacher-zone-wordbank-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode btn-primary" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div>${canManageList ? `<div class="vocab-card-actions teacher-zone-wordbank-actions"><button type="button" class="vocab-card-edit btn-outline" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Edit</button>${ownerActions}<button type="button" class="vocab-card-delete btn-danger" onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeName.replace(/'/g, "\\'")}',this)">Delete</button></div>` : ''}</article>`;
     }).join('');
   } catch (error) { status.textContent = 'Could not load your vocabulary lists. Please refresh and try again.'; }
 }
@@ -16344,6 +16347,9 @@ async function unshareVocabListFromClass(listId, listName, button) {
 function openVocabListEditor(listId, listName) {
   const selectedList = allData.find(record => ['vocab_list', 'vocabulary_list'].includes(record.type) && (normalizeVocabId(record.__backendId) === normalizeVocabId(listId) || normalizeVocabId(record.vocab_list_id || record.list_id || record.vocabulary_list_id) === normalizeVocabId(listId)));
   if (!selectedList) { toast('This vocabulary list is no longer available. Refresh and try again.'); return; }
+  const myTeacherId = String(verifiedTeacherIdentity() || '').trim();
+  const ownedByCurrentTeacher = Boolean((myTeacherId && String(selectedList.teacher_id || '').trim() === myTeacherId) || (!selectedList.teacher_id && normalizeStudentIdentity(selectedList.teacher_name || selectedList.owner) === normalizeStudentIdentity(currentTeacher)));
+  if (currentRole !== 'teacher' || !myTeacherId || (!canAccessAdmin() && !ownedByCurrentTeacher)) { toast('Only the list owner or an admin can edit this vocabulary list.'); return; }
   const storageId = selectedList.__backendId;
   const canonicalListId = normalizeVocabId(selectedList.vocab_list_id || selectedList.list_id || selectedList.vocabulary_list_id || storageId);
   listId = canonicalListId;
@@ -16930,12 +16936,14 @@ async function deleteVocabList(listId, listName, options = {}) {
   if (!options.confirmed) { openTeacherOwnedVocabDeleteDialog(listId, listName); return; }
   const fail = message => { options.onError?.(message); return false; };
   if (deleteVocabList.busy) return fail('Another list is being deleted. Please wait.');
-  if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return fail('Sign in as the list owner to delete it.');
+  if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return fail('Sign in as a teacher or admin to delete it.');
   const requestedId = normalizeVocabId(listId);
   const list = getVocabLists().find(item => normalizeVocabId(item.vocab_list_id || item.__backendId) === requestedId)
     || allData.find(item => item.type === 'vocab_list' && normalizeVocabId(item.__backendId) === requestedId);
   if (!list) return fail('Could not verify this vocabulary list. Please refresh and try again.');
-  if (normalizeStudentIdentity(list.teacher_name || list.owner) !== normalizeStudentIdentity(currentTeacher)) return fail('Only the list owner can permanently delete it.');
+  const myTeacherId = String(verifiedTeacherIdentity() || '').trim();
+  const ownedByCurrentTeacher = Boolean((myTeacherId && String(list.teacher_id || '').trim() === myTeacherId) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === normalizeStudentIdentity(currentTeacher)));
+  if (!canAccessAdmin() && !ownedByCurrentTeacher) return fail('Only the list owner or an admin can permanently delete it.');
   const canonicalListId = normalizeVocabId(list.vocab_list_id || list.list_id || list.__backendId);
   if (!canonicalListId) return fail('Could not verify this vocabulary list. Please refresh and try again.');
   deleteVocabList.busy = true;
