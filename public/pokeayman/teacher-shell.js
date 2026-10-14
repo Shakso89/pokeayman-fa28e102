@@ -381,7 +381,7 @@
     const unread = g(() => window.teacherUnreadNotificationCount?.(), 0) || 0;
     $('ts-notification-count').textContent = unread > 99 ? '99+' : String(unread);
     $('ts-notification-count').hidden = unread === 0;
-    $('[data-ts="notifications"]').setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
+    document.querySelector('[data-ts="notifications"]')?.setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
       const st = g(() => window.teacherStreakState(), null);
       if (st) {
         const dots = Array.from({ length: 7 }, (_, i) => `<span class="${i < st.count ? 'on' : ''}">${i + 1}</span>`).join('');
