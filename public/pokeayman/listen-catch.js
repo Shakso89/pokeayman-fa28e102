@@ -374,11 +374,36 @@
     const goal = challenge(state); const unique = new Set(state.album.map(entry => Number(entry.pokemon_id))).size;
     return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p></div><div class="catchdex-goal"><b>${goal.unique} / ${goal.goal}</b><span>${goal.active ? `unique ${challengeCriteria(goal)} Pokémon` : 'weekly challenge inactive'}</span></div><button type="button" data-catchdex-profile>View Catchdex</button></section>`;
   }
+  function challengeBannerMarkup(record) {
+    const state = parseProgress(progressFor(record)); const goal = challenge(state);
+    if (!goal.active) return state.mysteryBoxes ? `<section class="lc-banner is-box"><div class="lc-banner-box" aria-hidden="true"><span></span><b>?</b></div><div class="lc-banner-copy"><span>MYSTERY BOX</span><h3>You have ${state.mysteryBoxes} Mystery Box${state.mysteryBoxes === 1 ? '' : 'es'}</h3><p>Open it to get a new Pokémon for your collection.</p></div><button type="button" class="lc-primary" data-lc-banner="boxes">Open box</button></section>` : '';
+    const have = Math.min(goal.unique, goal.goal); const left = Math.max(0, goal.goal - have); const pct = Math.round((have / goal.goal) * 100);
+    let action = '', note = `${left} more to go`;
+    if (goal.ready) { action = '<button type="button" class="lc-primary" data-lc-banner="claim">Claim Mystery Box</button>'; note = 'Challenge complete! Claim your box.'; }
+    else if (goal.claimed && state.mysteryBoxes) { action = '<button type="button" class="lc-primary" data-lc-banner="boxes">Open Mystery Box</button>'; note = 'Box claimed — open it to get your Pokémon!'; }
+    else if (goal.claimed) note = 'Completed — reward collected.';
+    const box = goal.ready || (goal.claimed && state.mysteryBoxes) ? '<div class="lc-banner-box" aria-hidden="true"><span></span><b>?</b></div>' : '';
+    return `<section class="lc-banner ${box ? 'is-box' : ''}">${box}<div class="lc-banner-copy"><span>WEEKLY CATCHDEX CHALLENGE · until ${esc(goal.end)}</span><h3>${esc(goal.title)}</h3><p>Catch ${goal.goal} different ${esc(challengeCriteria(goal))} Pokémon in Listen and Catch.</p><div class="lc-banner-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${goal.goal}" aria-valuenow="${have}"><i style="width:${pct}%"></i></div><p class="lc-banner-count"><b>${have} / ${goal.goal}</b> collected · ${note}</p></div>${action}</section>`;
+  }
+  function mountBanner() {
+    const record = currentRole === 'student' ? student() : null;
+    const nav = document.getElementById('student-navigation-groups');
+    let host = document.getElementById('lc-challenge-banner');
+    if (!record || !nav) { host?.remove(); return; }
+    if (!host) {
+      host = document.createElement('div'); host.id = 'lc-challenge-banner';
+      host.addEventListener('click', e => { const b = e.target.closest('[data-lc-banner]'); if (!b) return; const r = student(); if (b.dataset.lcBanner === 'claim') claimChallenge(r); else showBoxCountPopup(r); });
+    }
+    if (host.nextElementSibling !== nav) nav.parentElement.insertBefore(host, nav);
+    const html = challengeBannerMarkup(record);
+    if (host.dataset.html !== html) { host.innerHTML = html; host.dataset.html = html; }
+  }
   function mountCards() {
     const state = parseProgress(progressFor(student()));
     document.getElementById('catchdex-dashboard-card')?.remove();
     const tabRoot = document.getElementById('student-catchdex-root');
     if (currentRole === 'student' && tabRoot) renderCatchdexTab();
+    mountBanner();
     const profile = typeof profileStudent !== 'undefined' ? profileStudent : null;
     document.getElementById('catchdex-profile-card')?.remove();
     const profileRoot = document.getElementById('profile-catchdex-root');
