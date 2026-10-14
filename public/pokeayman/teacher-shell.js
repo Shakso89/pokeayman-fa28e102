@@ -372,6 +372,8 @@
     $('ts-name').title = $('ts-name').textContent;
     const accountBadge = $('ts-account-badge');
     const isAdmin = g(() => canAccessAdmin(), false);
+    const streakCard = document.querySelector('#ts-rail .ts-streak');
+    if (streakCard) streakCard.hidden = isAdmin;
     const isPro = g(() => findMyTeacherRecord()?.teacher_pro === true, false);
     accountBadge.textContent = isAdmin ? 'ADMIN' : 'PRO';
     accountBadge.hidden = !isAdmin && !isPro;

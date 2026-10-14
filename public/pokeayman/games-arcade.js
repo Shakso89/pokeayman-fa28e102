@@ -17,7 +17,7 @@
       const locked = Boolean(g.proOnly && !window.canUseProGames?.());
       const launch = g.fn === 'startVocabBattle' || g.fn === 'startListenCatch' ? `${g.fn}(selectedGameList)` : `chooseGamePlayers(selectedGameList, ${g.fn})`;
       return `
-      <button type="button" class="ga-cart ga-${g.accent}${locked ? ' ga-pro-locked' : ''}" onclick="${locked ? `window.requireProGame('${esc(g.name)}')` : launch}" aria-disabled="${locked}" aria-label="${locked ? `${g.name}, Pro access required` : `Play ${g.name}`}" ${locked ? 'title="Pro access required"' : ''}>
+      <button type="button" class="ga-cart ga-${g.accent}${g.proOnly ? ' ga-pro' : ''}${locked ? ' ga-pro-locked' : ''}" onclick="${locked ? `window.requireProGame('${esc(g.name)}')` : launch}" aria-disabled="${locked}" aria-label="${locked ? `${g.name}, Pro access required` : `Play ${g.name}`}" ${locked ? 'title="Pro access required"' : ''}>
         <span class="ga-cart-art" aria-hidden="true"><span>${g.icon}</span></span>
         <span class="ga-cart-body">
           <span class="ga-cart-name">${esc(g.name)}${g.proOnly ? '<span class="ga-pro-badge">PRO</span>' : ''}</span>

@@ -15433,7 +15433,6 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     if (firstCard.pairId === secondCard.pairId && firstCard.cardId !== secondCard.cardId) {
       // Correct match - keep the pair face-up, score once, and unlock the next selection.
       playGameSound('success');
-      showCorrectAnswerCelebration(modal);
       matched.add(idx1);
       matched.add(idx2);
       cards[idx1]?.style.setProperty('visibility', 'hidden');
@@ -15453,10 +15452,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       });
       flipped = [];
       mismatchLocked = false;
-      modal.querySelector('#memory-status').textContent = '✅ Correct!';
-      showCorrectAnswerCelebration();
-      modal.querySelector('#memory-status').style.color = '#4052d6';
-      modal.querySelector('#memory-status').style.fontSize = '20px';
+      modal.querySelector('#memory-status').textContent = '';
       
       flipped = [];
       
@@ -15476,15 +15472,12 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     } else {
       // Wrong match - pass the turn immediately, then shake and flip back
       playGameSound('wrong');
-      showWrongAnswerCelebration(modal);
       advanceGameTurn();
       updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
       cards[idx1].style.animation = 'shake 0.4s ease';
       cards[idx2].style.animation = 'shake 0.4s ease';
       
-      modal.querySelector('#memory-status').textContent = '❌ Wrong! Cards flipping back...';
-      modal.querySelector('#memory-status').style.color = '#dc2626';
-      modal.querySelector('#memory-status').style.fontSize = '20px';
+      modal.querySelector('#memory-status').textContent = '';
       
       clearMemoryRoundTimers();
       mismatchTimer = setTimeout(() => {
