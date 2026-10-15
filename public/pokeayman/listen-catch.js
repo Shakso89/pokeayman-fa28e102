@@ -22,9 +22,39 @@
     const id = identity(record);
     return (typeof allData === 'undefined' ? [] : allData).find(row => row.type === 'listen_catch_progress' && String(row.student_id || '') === id) || null;
   }
+  const progressMigrations = new Set();
   function parseProgress(record) {
-    try { const state = { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0, ...JSON.parse(record?.listen_catch_data || '{}') }; state.mysteryBoxes = Math.max(0, Number(state.mysteryBoxes) || 0); if (!state.challengeThrows || typeof state.challengeThrows !== 'object') state.challengeThrows = {}; return state; }
+    try {
+      const stored = JSON.parse(record?.listen_catch_data || '{}');
+      const isLegacyState = Object.keys(stored).length > 0 && !stored.legacyStickerBallsConverted;
+      const state = { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0, legacyStickerBallsConverted: true, ...stored };
+      state.mysteryBoxes = Math.max(0, Number(state.mysteryBoxes) || 0);
+      if (!Array.isArray(state.album)) state.album = [];
+      if (!state.challengeThrows || typeof state.challengeThrows !== 'object') state.challengeThrows = {};
+      // Legacy sticker rewards become usable Catch Balls one for one. This marker
+      // makes the conversion safe across reloads and repeated renders.
+      if (isLegacyState) {
+        state.balls = Math.max(0, Number(state.balls) || 0) + state.album.length;
+        state.album = [];
+        state.legacyStickerBallsConverted = true;
+      }
+      return state;
+    }
     catch (_) { return { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0 }; }
+  }
+  function stateFor(record) {
+    const source = progressFor(record) || record;
+    const state = parseProgress(source);
+    if (record && source && !progressMigrations.has(identity(record)) && hasUnmigratedProgress(source)) {
+      const id = identity(record);
+      progressMigrations.add(id);
+      Promise.resolve().then(() => save(record, state)).catch(() => progressMigrations.delete(id));
+    }
+    return state;
+  }
+  function hasUnmigratedProgress(source) {
+    try { const data = JSON.parse(source?.listen_catch_data || '{}'); return !data.legacyStickerBallsConverted && Array.isArray(data.album) && data.album.length > 0; }
+    catch (_) { return false; }
   }
   function localDayKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
   function ballsEarnedToday(state) { return state.dailyBallDate === localDayKey() ? Math.min(DAILY_BALL_LIMIT, Number(state.dailyBallsEarned) || 0) : 0; }
@@ -154,7 +184,7 @@
     if (!canManageCatchdex(record)) return;
     const recordId = identity(record);
     if (!recordId || openingBallIds.has(recordId)) return;
-    const state = parseProgress(progressFor(record));
+    const state = stateFor(record);
     if (!state.balls) return toast('No Catch Balls are available to open.');
     const item = randomPokemon(); if (!item) return toast('The Catchdex is loading. Try again in a moment.');
     const caught = state.album.some(entry => Number(entry.pokemon_id) === Number(item.id));
@@ -212,7 +242,7 @@
     if (!canManageCatchdex(record)) return;
     const recordId = identity(record);
     if (!recordId) return;
-    const state = parseProgress(progressFor(record)); const goal = challenge(state);
+    const state = stateFor(record); const goal = challenge(state);
     if (!goal.active || goal.claimed) return toast('This type-ball challenge has already been completed.');
     if (!state.balls) return toast('Play Listen and Catch to earn a Catch Ball for this challenge.');
     const throwKey = `${recordId}:${goal.id}`;
@@ -278,7 +308,7 @@
     if (!canManageCatchdex(record)) return;
     const recordId = identity(record);
     if (!recordId || openingBoxIds.has(recordId)) return;
-    const state = parseProgress(progressFor(record));
+    const state = stateFor(record);
     if (state.mysteryBoxes < 1) return toast('Claim a challenge Mystery Box before opening one.');
     const item = randomPokemon('mystery-box'); if (!item) return toast('The Pokémon collection is loading. Try again in a moment.');
     const alreadyOwned = studentAlreadyOwnsPokemon(item, record);
@@ -403,6 +433,9 @@
     else { const level = window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4'; const rates = { P4: .92, P5: 1, P6: 1.08 }; const utterance = new SpeechSynthesisUtterance(word); utterance.rate = rates[level] || .92; window.speechSynthesis?.speak(utterance); }
   }
   function gameWords(listName) {
+    // A previous teacher session can leave the global list source set to
+    // "my_lists". Students must always resolve vocabulary from their class.
+    if (currentRole === 'student' && typeof selectedGameSource !== 'undefined') selectedGameSource = 'class';
     return shuffle(getGameWords(listName, false).filter(word => String(word.vocab_word || '').trim())).slice(0, ROUNDS);
   }
   function studentClassListRefs(record) {
@@ -445,7 +478,7 @@
     setTimeout(() => { session.index += 1; session.index < session.words.length ? startRound() : finishGame(); }, 900);
   }
   async function finishGame() {
-    const record = student(); const state = parseProgress(progressFor(record));
+    const record = student(); const state = stateFor(record);
     const today = localDayKey(); const alreadyEarned = state.dailyBallDate === today ? Math.min(DAILY_BALL_LIMIT, Number(state.dailyBallsEarned) || 0) : 0;
     const awarded = Math.min(session.correct, DAILY_BALL_LIMIT - alreadyEarned);
     state.balls += awarded; state.dailyBallDate = today; state.dailyBallsEarned = alreadyEarned + awarded; await save(record, state);
@@ -459,7 +492,7 @@
     if (words.length < 2) return toast(currentRole === 'student' ? 'Your class needs at least two vocabulary words to play.' : 'This list needs at least two words.');
     closeGame();
     const root = document.createElement('div'); root.className = 'lc-stage'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Listen and Catch');
-    const saved = parseProgress(progressFor(record)); const dailyEarnedBefore = ballsEarnedToday(saved); const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
+    const saved = stateFor(record); const dailyEarnedBefore = ballsEarnedToday(saved); const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
     const dailyBefore = ballsEarnedToday(saved);
     const dailyAtLimit = dailyBefore >= DAILY_BALL_LIMIT;
     root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span>LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><span aria-hidden="true">🔊</span><span class="lc-listen-label">Hear the sentence</span></button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div><section class="lc-reward-panel" aria-label="Catch Balls earned during this game"><div class="lc-reward-icon"><img src="/pokeayman/assets/catch-ball.png" alt=""></div><div class="lc-reward-copy"><span>ROUND REWARDS</span><strong><b class="lc-balls">0</b> Catch Balls this game</strong><div class="lc-reward-track"><i class="lc-reward-fill"></i></div><small class="lc-reward-status">0 of ${words.length} rounds rewarded</small><small class="lc-daily-cap${dailyAtLimit ? ' is-limit' : ''}">${dailyAtLimit ? `Daily limit reached (${dailyBefore}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyBefore} / ${DAILY_BALL_LIMIT} Catch Balls`}</small></div></section></section></main>`;
@@ -481,7 +514,7 @@
     picker.addEventListener('click', event => { const button=event.target.closest('[data-lcpick]');if(!button)return;const choice=button.dataset.lcpick;picker.remove();if(choice==='close')return;const record=roster[Number(choice)];launchForStudent(listName,{...record,school_name:record.school_name||school,class_name:record.class_name||className}); });
   }
   window.startListenCatch = function (listName) {
-    if (!window.canUseProGames?.()) { window.requireProGame?.('Listen and Catch'); return; }
+    if (typeof window.canUseProGames === 'function' && !window.canUseProGames()) { window.requireProGame?.('Listen and Catch'); return; }
     if (currentRole === 'student') {
       const record = typeof getCurrentStudentRecord === 'function' ? getCurrentStudentRecord() : null;
       if (!record) return toast('Signed-in student was not found.');
@@ -495,7 +528,7 @@
     return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p></div><div class="catchdex-goal"><b>${goal.throws} / ${goal.guaranteedThrows}</b><span>${goal.active ? `${challengeCriteria(goal)} ball throws` : 'weekly challenge inactive'}</span></div><button type="button" data-catchdex-profile>View Catchdex</button></section>`;
   }
   function mountCards() {
-    const state = parseProgress(progressFor(student()));
+    const state = stateFor(student());
     document.getElementById('catchdex-dashboard-card')?.remove();
     const tabRoot = document.getElementById('student-catchdex-root');
     if (currentRole === 'student' && tabRoot) renderCatchdexTab();
@@ -503,7 +536,7 @@
     document.getElementById('catchdex-profile-card')?.remove();
     const profileRoot = document.getElementById('profile-catchdex-root');
     if (profile && profileRoot) {
-      const profileState = parseProgress(progressFor(profile)); const profileGoal = challenge(profileState);
+      const profileState = stateFor(profile); const profileGoal = challenge(profileState);
       const sig = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.title}:${profileGoal.start}:${profileGoal.end}:${profileGoal.type}:${profileGoal.guaranteedThrows}:${profileGoal.throws}:${profileGoal.claimed}:${profileState.last?.item?.id || ''}`;
       if (profileRoot.dataset.catchdexSig !== sig) {
         albumViewer = { record: profile, readOnly: true };
@@ -513,11 +546,20 @@
     }
   }
   function renderCatchdexContents(record, readOnly) {
-    const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    const cards = state.album.length ? state.album.map(entry => `<article class="cdx-sticker">
-        <img src="${art(entry.pokemon_id)}" alt="${esc(entry.pokemon_name)} sticker" loading="lazy">
-        <b>${esc(entry.pokemon_name)}</b><span>${esc(entry.pokemon_type)}</span>
-      </article>`).join('') : '<div class="cdx-empty"><span aria-hidden="true">🗂️</span><b>Your Catchdex is empty</b><p>Play Listen and Catch to earn Catch Balls, then use them to discover Pokémon.</p></div>';
+    const state = stateFor(record); const goal = challenge(state);
+    const collection = new Map();
+    state.album.forEach(entry => { const id = Number(entry.pokemon_id); if (id > 0) collection.set(id, { id, name: entry.pokemon_name, type: entry.pokemon_type }); });
+    ownedPokemonRows(record).forEach(row => {
+      const id = Number(row.pokemon_id); if (!(id > 0)) return;
+      const catalogEntry = catalog().find(item => Number(item.id) === id);
+      const types = catalogEntry && typeof getPokemonTypes === 'function' ? getPokemonTypes(catalogEntry) : [];
+      collection.set(id, { id, name: row.pokemon_name || catalogEntry?.name || `Pokémon #${id}`, type: row.pokemon_type || types[0] || row.pokemon_rarity || 'Pokémon' });
+    });
+    const entries = [...collection.values()];
+    const cards = entries.length ? entries.map(entry => `<article class="cdx-sticker">
+        <img src="${art(entry.id)}" alt="${esc(entry.name)}" loading="lazy">
+        <b>${esc(entry.name)}</b><span>${esc(entry.type)}</span>
+      </article>`).join('') : '<div class="cdx-empty"><span aria-hidden="true">🗂️</span><b>Your Pokédex is empty</b><p>Play Listen and Catch to earn Catch Balls, then use them to discover Pokémon.</p></div>';
     const progress = Math.min(goal.throws, goal.guaranteedThrows);
     const pct = goal.guaranteedThrows ? Math.min(100, progress / goal.guaranteedThrows * 100) : 0;
     const typeName = goal.types.length ? goal.types[0] : 'any';
@@ -537,7 +579,7 @@
       </section>
       ${state.last ? `<div class="cdx-discovery${state.last.duplicate ? ' is-duplicate' : ''}"><span aria-hidden="true">${state.last.duplicate ? '🪙' : '✨'}</span><div><b>${state.last.duplicate ? 'Sticker converted' : 'New discovery'}</b><span>${state.last.duplicate ? `${esc(state.last.item.name)} was already in your album · +${state.last.coins} coins` : esc(state.last.item.name)}</span></div></div>` : ''}
       ${challengeMarkup}
-      <section class="cdx-collection"><header class="cdx-collection-head"><div><span class="cdx-eyebrow">DISCOVERED POKÉMON</span><h3>Your collection</h3></div><span class="cdx-count">${state.album.length} ${state.album.length === 1 ? 'Pokémon' : 'Pokémon'}</span></header>
+      <section class="cdx-collection"><header class="cdx-collection-head"><div><span class="cdx-eyebrow">DISCOVERED POKÉMON</span><h3>Your collection</h3></div><span class="cdx-count">${entries.length} Pokémon</span></header>
         <div class="cdx-sticker-grid">${cards}</div>
       </section>
     </div>`;
@@ -549,12 +591,29 @@
     root.querySelector('[data-catchdex="boxes"]')?.addEventListener('click', () => showBoxCountPopup(record));
   }
   function renderCatchdexTab() {
-    const root = document.getElementById('student-catchdex-root'); const record = student(); if (!root || !record) return;
-    const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    const signature = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.title}:${goal.start}:${goal.end}:${goal.type}:${goal.guaranteedThrows}:${goal.throws}:${goal.claimed}:${state.last?.item?.id || ''}`;
+    const root = document.getElementById('student-catchdex-root'); const record = student(); if (!root) return;
+    if (!record) {
+      root.innerHTML = `<section class="catchdex-tab-card"><div class="cdx-empty"><b>${typeof currentStudentLoading !== 'undefined' && currentStudentLoading ? 'Loading your Catchdex…' : 'Student profile unavailable'}</b><p>${typeof currentStudentLoading !== 'undefined' && currentStudentLoading ? 'Your saved collection will appear here in a moment.' : 'Sign in again to load your Pokémon collection.'}</p></div></section>`;
+      root.dataset.catchdexSig = '';
+      return;
+    }
+    const state = stateFor(record); const goal = challenge(state);
+    const pokemonSignature = ownedPokemonRows(record).map(row => `${row.pokemon_id}:${row.pokemon_name || ''}`).join(',');
+    const signature = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.title}:${goal.start}:${goal.end}:${goal.type}:${goal.guaranteedThrows}:${goal.throws}:${goal.claimed}:${state.last?.item?.id || ''}:${pokemonSignature}`;
     if (root.dataset.catchdexSig === signature) return;
     root.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(record, false)}</section>`;
     root.dataset.catchdexSig = signature; bindCatchdexContents(root, record, false);
+  }
+  function ownedPokemonRows(record) {
+    const recordId = identity(record); const ownerName = String(record?.student_name || '').trim().toLocaleLowerCase();
+    return (typeof allData === 'undefined' ? [] : allData).filter(row => {
+      if (row.type !== 'pokemon') return false;
+      const rowOwnerId = String(row.student_id || row.canonical_student_id || '').trim();
+      if (rowOwnerId && recordId) return rowOwnerId === recordId;
+      return String(row.owner || row.student_name || '').trim().toLocaleLowerCase() === ownerName
+        && (!row.school_name || !record?.school_name || row.school_name === record.school_name)
+        && (!row.class_name || !record?.class_name || row.class_name === record.class_name);
+    });
   }
   function renderAlbumModal(record = albumViewer?.record || student(), readOnly = Boolean(albumViewer?.readOnly)) {
     const modal = document.getElementById('catchdex-modal'); if (!modal) return;
@@ -564,7 +623,7 @@
   }
   function showBoxCountPopup(record) {
     if (!canManageCatchdex(record)) return;
-    const count = parseProgress(progressFor(record)).mysteryBoxes;
+    const count = stateFor(record).mysteryBoxes;
     if (!count) return toast('No Mystery Boxes to open yet. Claim a completed challenge first.');
     document.getElementById('lc-box-inventory')?.remove();
     const overlay = document.createElement('div'); overlay.id = 'lc-box-inventory'; overlay.className = 'lc-box-inventory'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Mystery Box inventory');
@@ -576,7 +635,7 @@
   }
   function showBallCountPopup(record) {
     if (!canManageCatchdex(record)) return;
-    const count = parseProgress(progressFor(record)).balls;
+    const count = stateFor(record).balls;
     if (!count) return toast('No Catch Balls are available to open.');
     document.getElementById('lc-ball-inventory')?.remove();
     const overlay = document.createElement('div'); overlay.id = 'lc-ball-inventory'; overlay.className = 'lc-box-inventory'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Catch Ball inventory');
