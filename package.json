@@ -4,7 +4,9 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
+    "predev": "node scripts/sync-pokeayman-game-modules.mjs",
     "dev": "vite dev",
+    "prebuild": "node scripts/sync-pokeayman-game-modules.mjs",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
