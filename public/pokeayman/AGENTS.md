@@ -27,3 +27,4 @@
 
 - Schedule presentation uses workspace-refresh.css and scheduleEventCard for weekly and one-time entries; agenda clones preserve source action delegation. Why: keeps planner colours and icon actions consistent without changing schedule persistence.
 - Teacher notifications are persisted as recipient-specific `teacher_notification` records, surfaced through a teacher inbox with unread counts, and sent for class assignments, granted surprise boxes, battle claims, signup welcome guidance, or Admin Hub broadcasts. Teachers can open granted boxes from the collapsible Login Streak panel. Why: teachers need a durable place to receive access, reward and admin updates across devices.
+- Teacher right rail collapse mirrors the left sidebar: body.ts-rail-collapsed, locally persisted, toggle shown only when the rail is visible (>1280px). Why: consistent navigation and more workspace on demand.

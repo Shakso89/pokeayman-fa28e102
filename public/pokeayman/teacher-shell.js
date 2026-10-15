@@ -96,6 +96,18 @@
     sidebarToggle.id = 'ts-sidebar-toggle'; sidebarToggle.type = 'button'; sidebarToggle.setAttribute('aria-controls', 'ts-sidebar');
     sidebarToggle.addEventListener('click', () => { collapsed = !collapsed; g(() => localStorage.setItem('pokeayman-sidebar-collapsed', collapsed ? '1' : '0')); applySidebar(); });
     document.body.appendChild(sidebarToggle); applySidebar();
+    let railCollapsed = g(() => localStorage.getItem('pokeayman-rail-collapsed') === '1', false);
+    const railToggle = document.createElement('button');
+    railToggle.id = 'ts-rail-toggle'; railToggle.type = 'button'; railToggle.setAttribute('aria-controls', 'ts-rail');
+    const applyRail = () => {
+      document.body.classList.toggle('ts-rail-collapsed', railCollapsed);
+      railToggle.textContent = railCollapsed ? '‹' : '›';
+      railToggle.setAttribute('aria-expanded', String(!railCollapsed));
+      railToggle.setAttribute('aria-label', railCollapsed ? 'Open class tools' : 'Collapse class tools');
+      railToggle.title = railToggle.getAttribute('aria-label');
+    };
+    railToggle.addEventListener('click', () => { railCollapsed = !railCollapsed; g(() => localStorage.setItem('pokeayman-rail-collapsed', railCollapsed ? '1' : '0')); applyRail(); });
+    document.body.appendChild(railToggle); applyRail();
     const theme = document.createElement('button');
     theme.id = 'ts-theme-toggle';
     theme.type = 'button';
