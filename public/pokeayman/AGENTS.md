@@ -12,6 +12,7 @@
 - Coin adjustments and class gifts use one shared body-mounted celebration renderer with scoped coin-celebrations.css tokens. Why: keeps signed coin amounts and popup positioning consistent without changing balances or permissions.
 - Teacher 3-column layout lives in `public/pokeayman/teacher-shell.js/.css` and only drives existing tabs/forms (clicks hidden buttons, submits award-form). Why: new navigation without touching legacy logic or permissions.
 - Teacher sidebar collapse is locally persisted with a body-mounted reopen control and matching content offsets. Why: keeps navigation accessible without reserving empty sidebar space.
+- Teacher right-panel toggle occupies a dedicated outer lane: reserve rail-top space when open and a content-side gutter when collapsed. Why: prevents it covering the header Poké Ball or class actions in either state.
 - Teacher school/class navigation uses a body-mounted searchable dialog and collapsible sidebar groups, delegating to existing navigation functions. Why: keeps every class directly reachable without altering access rules or selected classroom tools.
 - Teacher display modes use shell tokens, a persisted switch, and study-theme.css for rankings, readers, finances and schedule. Hide legacy navigation only with the sidebar visible. Why: keeps contrast consistent without changing handlers or saves.
 - The mobile teacher bottom navigation includes its own display-mode switch; keep it synchronized with the sidebar switch and the persisted theme. Why: the sidebar is hidden on phone tabs other than Me.
