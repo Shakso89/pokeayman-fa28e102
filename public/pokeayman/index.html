@@ -12510,6 +12510,7 @@ document.querySelectorAll('.profile-tab-btn').forEach(btn => {
     btn.classList.remove('profile-tab-inactive'); btn.classList.add('profile-tab-active');
     document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.add('hidden'));
     document.getElementById('profile-tab-' + btn.dataset.tab).classList.remove('hidden');
+    if (btn.dataset.tab === 'catchdex') window.renderListenCatchProfile?.(profileStudent);
   });
 });
 

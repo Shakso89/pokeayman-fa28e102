@@ -436,23 +436,48 @@
     // A previous teacher session can leave the global list source set to
     // "my_lists". Students must always resolve vocabulary from their class.
     if (currentRole === 'student' && typeof selectedGameSource !== 'undefined') selectedGameSource = 'class';
-    return shuffle(getGameWords(listName, false).filter(word => String(word.vocab_word || '').trim())).slice(0, ROUNDS);
+    let words = [];
+    const refs = Array.isArray(listName) ? listName : listName ? [listName] : [];
+    const scopedRefs = currentRole === 'student' && refs.length && refs.every(ref => ref && typeof ref === 'object' && ref.school_name && ref.class_name);
+    if (scopedRefs) {
+      const groups = new Map();
+      refs.forEach(ref => {
+        const key = `${ref.school_name}||${ref.class_name}`;
+        if (!groups.has(key)) groups.set(key, { school: ref.school_name, className: ref.class_name, refs: [] });
+        groups.get(key).refs.push(ref);
+      });
+      const previousSchool = navSchool; const previousClass = navClass;
+      try {
+        groups.forEach(group => {
+          navSchool = group.school; navClass = group.className;
+          words.push(...getGameWords(group.refs, false));
+        });
+      } finally { navSchool = previousSchool; navClass = previousClass; }
+    } else words = getGameWords(listName, false);
+    const uniqueWords = new Map();
+    words.filter(word => String(word.vocab_word || '').trim()).forEach(word => {
+      const key = String(word.vocab_word).trim().toLocaleLowerCase();
+      if (!uniqueWords.has(key)) uniqueWords.set(key, word);
+    });
+    return shuffle([...uniqueWords.values()]).slice(0, ROUNDS);
   }
-  function studentClassListRefs(record) {
+  function studentClassListRefs(record, includeAllClasses = false) {
     const enrolled = typeof getStudentEnrolledClasses === 'function' ? getStudentEnrolledClasses() : [];
     const primaryKey = `${record?.school_name || ''}||${record?.class_name || ''}`;
-    const selectedKey = typeof selectedStudentGamesScope !== 'undefined' && selectedStudentGamesScope === 'class'
-      ? String(selectedStudentGamesClassKey || '') : primaryKey;
+    const selectedKey = String(selectedStudentGamesClassKey || primaryKey);
     const selected = enrolled.find(item => `${item.school_name}||${item.class_name}` === selectedKey)
       || enrolled.find(item => `${item.school_name}||${item.class_name}` === primaryKey)
       || enrolled[0];
-    if (!selected?.school_name || !selected?.class_name) return [];
-    navSchool = selected.school_name;
-    navClass = selected.class_name;
-    return getVocabLists(selected.school_name, selected.class_name).map(list => ({
+    const classes = includeAllClasses && typeof selectedStudentGamesScope !== 'undefined' && selectedStudentGamesScope === 'all'
+      ? enrolled : selected ? [selected] : [];
+    const refs = classes.flatMap(item => getVocabLists(item.school_name, item.class_name).map(list => ({
       vocab_list_id: list.vocab_list_id || list.__backendId,
       vocab_list_name: list.vocab_list_name,
-    }));
+      school_name: item.school_name,
+      class_name: item.class_name,
+    })));
+    if (selected?.school_name && selected?.class_name) { navSchool = selected.school_name; navClass = selected.class_name; }
+    return refs;
   }
   function startRound() {
     const word = session.words[session.index];
@@ -489,11 +514,16 @@
   function launchForStudent(listName, record) {
     if (currentRole === 'student') {
       const selectedLists = Array.isArray(listName) ? listName.filter(Boolean) : listName ? [listName] : [];
-      const classLists = studentClassListRefs(record);
+      let classLists = studentClassListRefs(record, !selectedLists.length);
       listName = selectedLists.length ? selectedLists : classLists;
       let selectedWords = gameWords(listName);
       if (selectedWords.length < 2 && selectedLists.length) {
+        classLists = studentClassListRefs(record, true);
         listName = classLists;
+        selectedWords = gameWords(listName);
+      }
+      if (selectedWords.length < 2 && !selectedLists.length && typeof selectedStudentGamesScope !== 'undefined' && selectedStudentGamesScope !== 'all') {
+        listName = studentClassListRefs(record, true);
         selectedWords = gameWords(listName);
       }
       if (selectedWords.length < 2) {
@@ -609,6 +639,20 @@
     root.querySelectorAll('[data-catchdex="throw"]').forEach(button => button.addEventListener('click', () => throwChallengeBall(record)));
     root.querySelector('[data-catchdex="boxes"]')?.addEventListener('click', () => showBoxCountPopup(record));
   }
+  function renderProfileCatchdex(record = typeof profileStudent !== 'undefined' ? profileStudent : null) {
+    const root = document.getElementById('profile-catchdex-root');
+    if (!root || !record) return;
+    try {
+      albumViewer = { record, readOnly: true };
+      root.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(record, true).replace('<button type="button" class="cdx-close" data-catchdex="close" aria-label="Close Catchdex">×</button>', '')}</section>`;
+      const state = stateFor(record); const goal = challenge(state);
+      root.dataset.catchdexSig = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.throws}:${ownedPokemonRows(record).map(row => `${row.pokemon_id}:${row.pokemon_name || ''}`).join(',')}`;
+      bindCatchdexContents(root, record, true);
+    } catch (error) {
+      console.error('Student profile Catchdex could not render:', error);
+      root.innerHTML = '<section class="catchdex-tab-card"><div class="cdx-empty" role="alert"><b>This Catchdex could not load</b><p>Return to the roster and reopen this student profile to try again.</p></div></section>';
+    }
+  }
   function renderCatchdexTab() {
     const root = document.getElementById('student-catchdex-root'); const record = student(); if (!root) return;
     if (!record) {
@@ -678,6 +722,7 @@
   window.openCatchdexFor = function (record, readOnly = true) { albumViewer = { record, readOnly }; let modal = document.getElementById('catchdex-modal'); if (!modal) { modal = document.createElement('div'); modal.id = 'catchdex-modal'; modal.className = 'catchdex-modal'; document.body.appendChild(modal); modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); }); } renderAlbumModal(record, readOnly); };
   window.listenCatchRefresh = mountCards;
   window.renderListenCatchTab = renderCatchdexTab;
+  window.renderListenCatchProfile = renderProfileCatchdex;
   window.listenCatchAdminRefresh = renderAdminChallenge;
   document.addEventListener('DOMContentLoaded', () => { mountCards(); renderAdminChallenge(); });
 })();
