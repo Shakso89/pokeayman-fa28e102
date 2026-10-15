@@ -10,7 +10,7 @@
   const identity = student => String(student?.__backendId || student?.student_id || '').trim();
   const shuffle = list => { const items = [...list]; for (let i = items.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [items[i], items[j]] = [items[j], items[i]]; } return items; };
   let session = null;
-  let albumViewer = null;
+  let catchdexViewer = null;
   let activeStudent = null;
 
   function student() {
@@ -26,21 +26,19 @@
   function parseProgress(record) {
     try {
       const stored = JSON.parse(record?.listen_catch_data || '{}');
-      const isLegacyState = Object.keys(stored).length > 0 && !stored.legacyStickerBallsConverted;
-      const state = { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0, legacyStickerBallsConverted: true, ...stored };
+      const oldCaughtPokemon = Array.isArray(stored.album) ? stored.album : [];
+      const state = { balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0, ...stored };
       state.mysteryBoxes = Math.max(0, Number(state.mysteryBoxes) || 0);
-      if (!Array.isArray(state.album)) state.album = [];
+      state.balls = Math.max(0, Number(state.balls) || 0) + (Number(stored.catchdexDataVersion) >= 2 ? 0 : oldCaughtPokemon.length);
       if (!state.challengeThrows || typeof state.challengeThrows !== 'object') state.challengeThrows = {};
-      // Legacy sticker rewards become usable Catch Balls one for one. This marker
-      // makes the conversion safe across reloads and repeated renders.
-      if (isLegacyState) {
-        state.balls = Math.max(0, Number(state.balls) || 0) + state.album.length;
-        state.album = [];
-        state.legacyStickerBallsConverted = true;
-      }
+      // Older Catchdex saves kept ball rewards in an album. Convert each entry
+      // into one usable Catch Ball, then drop that obsolete collection field.
+      delete state.album;
+      Object.keys(state).filter(key => key.startsWith('legacy')).forEach(key => delete state[key]);
+      state.catchdexDataVersion = 2;
       return state;
     }
-    catch (_) { return { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0 }; }
+    catch (_) { return { balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0, catchdexDataVersion: 2 }; }
   }
   function stateFor(record) {
     const source = progressFor(record) || record;
@@ -53,7 +51,7 @@
     return state;
   }
   function hasUnmigratedProgress(source) {
-    try { const data = JSON.parse(source?.listen_catch_data || '{}'); return !data.legacyStickerBallsConverted && Array.isArray(data.album) && data.album.length > 0; }
+    try { const data = JSON.parse(source?.listen_catch_data || '{}'); return Number(data.catchdexDataVersion) < 2 && Array.isArray(data.album); }
     catch (_) { return false; }
   }
   function localDayKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
@@ -187,20 +185,27 @@
     const state = stateFor(record);
     if (!state.balls) return toast('No Catch Balls are available to open.');
     const item = randomPokemon(); if (!item) return toast('The Catchdex is loading. Try again in a moment.');
-    const caught = state.album.some(entry => Number(entry.pokemon_id) === Number(item.id));
+    const caught = studentAlreadyOwnsPokemon(item, record);
+    const now = new Date().toISOString();
+    const pokemonRecord = { type: 'pokemon', student_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '', student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(item.id), pokemon_name: item.name, pokemon_rarity: item.rarity || 'common', pokemon_price: Number(item.price) || 0, pokemon_power: Number(item.power) || 0, current_hp: Number(item.hp) || (Number(item.power) || 0) + 30, last_battle_time: '', created_at: now, catch_ball_reward: true };
     state.balls -= 1;
     const coins = caught ? duplicateCoins(item) : 0;
-    if (caught) state.last = { item, duplicate: true, coins };
-    else { const types = typeof getPokemonTypes === 'function' ? getPokemonTypes(item).filter(value => value !== 'unknown') : [typeOf(item)]; state.album.push({ pokemon_id: Number(item.id), pokemon_name: item.name, rarity: item.rarity || 'common', pokemon_type: types[0] || typeOf(item), pokemon_types: types, caught_at: new Date().toISOString() }); state.last = { item, duplicate: false }; }
+    state.last = { item, duplicate: caught, coins };
     openingBallIds.add(recordId);
-    let coinsAwarded = false;
+    let createdPokemon = null; let coinsAwarded = false;
     try {
+      if (!caught) {
+        const result = await window.dataSdk.create(pokemonRecord);
+        if (!result?.isOk) throw new Error('pokemon create failed');
+        createdPokemon = result.data || result;
+      }
+      else { await addCoins(record, coins); coinsAwarded = true; }
       await save(record, state);
-      if (caught) { await addCoins(record, coins); coinsAwarded = true; }
+      if (createdPokemon && typeof allData !== 'undefined') allData.push({ ...pokemonRecord, __backendId: createdPokemon.__backendId || createdPokemon.id || '' });
     } catch (_) {
-      state.balls += 1;
-      if (!caught) state.album = state.album.filter(entry => Number(entry.pokemon_id) !== Number(item.id));
+      if (createdPokemon && (createdPokemon.__backendId || createdPokemon.id)) { try { await window.dataSdk.delete(createdPokemon); } catch (_) {} }
       if (coinsAwarded) { try { await addCoins(record, -coins); } catch (_) {} }
+      state.balls += 1;
       try { await save(record, state); } catch (_) {}
       openingBallIds.delete(recordId);
       return toast('Could not open the Catch Ball. It is still available; please try again.');
@@ -213,7 +218,7 @@
   function showReveal(item, duplicate, coins) {
     document.getElementById('lc-reveal')?.remove();
     const overlay = document.createElement('div'); overlay.id = 'lc-reveal'; overlay.className = 'lc-reveal'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Catch Ball reveal');
-    overlay.innerHTML = `<section class="lc-reveal-card"><button type="button" class="lc-reveal-close" data-reveal-close aria-label="Close">×</button><span class="lc-reveal-kicker">CATCH BALL</span><div class="lc-reveal-orb" aria-hidden="true"><span class="lc-reveal-pokeball">◓</span><img src="${art(item.id)}" alt="${esc(item.name)} sticker" loading="eager"></div><h2>${duplicate ? 'A duplicate!' : 'New sticker!'}</h2><p>${duplicate ? `${esc(item.name)} was already in your Catchdex, so you earned ${coins} coins.` : `${esc(item.name)} joined your Catchdex!`}</p><button type="button" class="lc-primary" data-reveal-close>Nice!</button></section>`;
+    overlay.innerHTML = `<section class="lc-reveal-card"><button type="button" class="lc-reveal-close" data-reveal-close aria-label="Close">×</button><span class="lc-reveal-kicker">CATCH BALL</span><div class="lc-reveal-orb" aria-hidden="true"><span class="lc-reveal-pokeball">◓</span><img src="${art(item.id)}" alt="${esc(item.name)}" loading="eager"></div><h2>${duplicate ? 'A duplicate!' : 'New Pokémon!'}</h2><p>${duplicate ? `${esc(item.name)} was already in your collection, so you earned ${coins} coins.` : `${esc(item.name)} was added to your Pokémon collection!`}</p><button type="button" class="lc-primary" data-reveal-close>Nice!</button></section>`;
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.classList.add('is-revealed'));
     overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-reveal-close]')) overlay.remove(); });
@@ -227,7 +232,7 @@
     return { ...active, active: true, throws, canThrow: !won && Number(state.balls) > 0, claimed: won };
   }
   function canManageCatchdex(record) {
-    return Boolean(record && ((currentRole === 'student' && identity(student()) === identity(record)) || (currentRole === 'teacher' && albumViewer?.readOnly && identity(albumViewer.record) === identity(record))));
+    return Boolean(record && ((currentRole === 'student' && identity(student()) === identity(record)) || (currentRole === 'teacher' && catchdexViewer?.readOnly && identity(catchdexViewer.record) === identity(record))));
   }
   function challengePokemonPool(goal) {
     const types = goal.types?.length ? goal.types : parseTypes(goal.type);
@@ -373,7 +378,7 @@
     if (!result?.isOk) return toast('Challenge could not be saved. Try again.');
     if (existing) Object.assign(existing, payload); else allData.push({ ...payload, __backendId: (result.data || result).__backendId || (result.data || result).id || '' });
     toast('Weekly Catchdex challenge saved.'); renderAdminChallenge(); mountCards();
-    const modal = document.getElementById('catchdex-modal'); if (modal && !modal.classList.contains('hidden')) renderAlbumModal();
+    const modal = document.getElementById('catchdex-modal'); if (modal && !modal.classList.contains('hidden')) renderCatchdexModal();
   }
 
   function renderAdminChallenge() {
@@ -423,7 +428,7 @@
   }
   function refreshViewer(record) {
     const modal = document.getElementById('catchdex-modal');
-    if (modal && !modal.classList.contains('hidden')) renderAlbumModal(record, true);
+    if (modal && !modal.classList.contains('hidden')) renderCatchdexModal(record, true);
     const root = document.getElementById('profile-catchdex-root'); if (root) root.dataset.catchdexSig = '';
   }
   function closeGame() { session?.root?.remove(); session = null; activeStudent = null; }
@@ -557,7 +562,7 @@
     const roster = school && className && typeof getStudents === 'function' ? getStudents(school, className).filter(record => record.student_name) : [];
     if (!roster.length) return toast('Open a class first to choose a student for Listen and Catch.');
     const picker = document.createElement('div'); picker.className = 'lc-stage'; picker.setAttribute('role', 'dialog'); picker.setAttribute('aria-modal', 'true'); picker.setAttribute('aria-label', 'Choose student');
-    picker.innerHTML = `<section class="lc-picker"><header><div><span>CLASS GAME</span><h2>Who is catching?</h2></div><button type="button" data-lcpick="close" aria-label="Close">×</button></header><p>Choose a student. Catch Balls and album progress will be saved to their account.</p><div class="lc-roster">${roster.map((record,index)=>`<button type="button" data-lcpick="${index}">${esc(record.student_name)}</button>`).join('')}</div></section>`;
+    picker.innerHTML = `<section class="lc-picker"><header><div><span>CLASS GAME</span><h2>Who is catching?</h2></div><button type="button" data-lcpick="close" aria-label="Close">×</button></header><p>Catch Ball rewards and Pokémon collection progress will be saved to their account.</p><div class="lc-roster">${roster.map((record,index)=>`<button type="button" data-lcpick="${index}">${esc(record.student_name)}</button>`).join('')}</div></section>`;
     document.body.appendChild(picker);
     picker.addEventListener('click', event => { const button=event.target.closest('[data-lcpick]');if(!button)return;const choice=button.dataset.lcpick;picker.remove();if(choice==='close')return;const record=roster[Number(choice)];launchForStudent(listName,{...record,school_name:record.school_name||school,class_name:record.class_name||className}); });
   }
@@ -572,8 +577,8 @@
     if (currentRole === 'teacher') return chooseStudent(listName);
     toast('Sign in as a student or teacher to play.');
   };
-  function albumCard(state, compact = false) {
-    const goal = challenge(state); const unique = new Set(state.album.map(entry => Number(entry.pokemon_id))).size;
+  function catchdexCard(state, compact = false) {
+    const goal = challenge(state); const unique = new Set(ownedPokemonRows(student()).map(entry => Number(entry.pokemon_id))).size;
     return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p></div><div class="catchdex-goal"><b>${goal.throws} / ${goal.guaranteedThrows}</b><span>${goal.active ? `${challengeCriteria(goal)} ball throws` : 'weekly challenge inactive'}</span></div><button type="button" data-catchdex-profile>View Catchdex</button></section>`;
   }
   function mountCards() {
@@ -586,9 +591,9 @@
     const profileRoot = document.getElementById('profile-catchdex-root');
     if (profile && profileRoot) {
       const profileState = stateFor(profile); const profileGoal = challenge(profileState);
-      const sig = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.title}:${profileGoal.start}:${profileGoal.end}:${profileGoal.type}:${profileGoal.guaranteedThrows}:${profileGoal.throws}:${profileGoal.claimed}:${profileState.last?.item?.id || ''}`;
+      const sig = `${identity(profile)}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.title}:${profileGoal.start}:${profileGoal.end}:${profileGoal.type}:${profileGoal.guaranteedThrows}:${profileGoal.throws}:${profileGoal.claimed}:${profileState.last?.item?.id || ''}`;
       if (profileRoot.dataset.catchdexSig !== sig) {
-        albumViewer = { record: profile, readOnly: true };
+        catchdexViewer = { record: profile, readOnly: true };
         profileRoot.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(profile, true).replace('<button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button>', '')}</section>`;
         profileRoot.dataset.catchdexSig = sig; bindCatchdexContents(profileRoot, profile, true);
       }
@@ -597,7 +602,6 @@
   function renderCatchdexContents(record, readOnly) {
     const state = stateFor(record); const goal = challenge(state);
     const collection = new Map();
-    state.album.forEach(entry => { const id = Number(entry.pokemon_id); if (id > 0) collection.set(id, { id, name: entry.pokemon_name, type: entry.pokemon_type }); });
     ownedPokemonRows(record).forEach(row => {
       const id = Number(row.pokemon_id); if (!(id > 0)) return;
       const catalogEntry = catalog().find(item => Number(item.id) === id);
@@ -605,7 +609,7 @@
       collection.set(id, { id, name: row.pokemon_name || catalogEntry?.name || `Pokémon #${id}`, type: row.pokemon_type || types[0] || row.pokemon_rarity || 'Pokémon' });
     });
     const entries = [...collection.values()];
-    const cards = entries.length ? entries.map(entry => `<article class="cdx-sticker">
+    const cards = entries.length ? entries.map(entry => `<article class="cdx-pokemon-card">
         <img src="${art(entry.id)}" alt="${esc(entry.name)}" loading="lazy">
         <b>${esc(entry.name)}</b><span>${esc(entry.type)}</span>
       </article>`).join('') : '<div class="cdx-empty"><span aria-hidden="true">🗂️</span><b>Your Pokédex is empty</b><p>Play Listen and Catch to earn Catch Balls, then use them to discover Pokémon.</p></div>';
@@ -617,19 +621,19 @@
           <div class="cdx-challenge-top"><div><span class="cdx-eyebrow">${goal.claimed ? 'CHALLENGE COMPLETE' : 'ACTIVE TYPE-BALL CHALLENGE'}</span><h3 id="cdx-challenge-title">${esc(goal.title)}</h3><p>Throw a <strong>${esc(challengeCriteria(goal))} Poké Ball</strong>. Each throw has a <strong>2% catch chance</strong>, with a guaranteed Pokémon by throw <strong>${goal.guaranteedThrows}</strong>.</p></div><span class="cdx-type-ball type-${esc(typeName)}" role="img" aria-label="${esc(typeName)} type Poké Ball"><i></i></span></div>
           <div class="cdx-progress-row"><div class="cdx-progress-label"><b>${progress}<span> / ${goal.guaranteedThrows} throws</span></b><span>${goal.claimed ? 'Pokémon caught' : `${Math.max(0, goal.guaranteedThrows - goal.throws)} throws until guaranteed`}</span></div><div class="cdx-progress-track" role="progressbar" aria-label="${esc(goal.title)} throws until guaranteed catch" aria-valuemin="0" aria-valuemax="${goal.guaranteedThrows}" aria-valuenow="${progress}"><span style="width:${pct}%"></span></div></div>
           <div class="cdx-challenge-foot"><small>${goal.end ? `Challenge ends ${esc(goal.end)}` : 'Limited-time challenge'}</small>${!goal.claimed && state.balls ? `<button type="button" class="cdx-button is-gold" data-catchdex="throw">Throw ${esc(typeName)} Ball · ${state.balls} ready</button>` : ''}</div>
-          ${goal.claimed ? '<p class="cdx-claimed">✓ Pokémon caught and added to your collection. Your Catchdex album stays untouched.</p>' : state.balls ? '<p class="cdx-hint">A Catch Ball is used for each attempt. Keep trying; the catch is guaranteed at the target.</p>' : '<p class="cdx-hint">You are out of Catch Balls. Play Listen and Catch to earn more throws.</p>'}
+          ${goal.claimed ? '<p class="cdx-claimed">✓ Pokémon caught and added to your collection.</p>' : state.balls ? '<p class="cdx-hint">A Catch Ball is used for each attempt. Keep trying; the catch is guaranteed at the target.</p>' : '<p class="cdx-hint">You are out of Catch Balls. Play Listen and Catch to earn more throws.</p>'}
         </section>`
       : '<section class="cdx-challenge is-inactive"><span class="cdx-challenge-mark" aria-hidden="true">🗓️</span><div><span class="cdx-eyebrow">WEEKLY CHALLENGE</span><h3>No active challenge</h3><p>Your next Catchdex challenge will appear here when the admin schedules it.</p></div></section>';
     return `<div class="cdx-view">
       <header class="cdx-header"><div><span class="cdx-eyebrow">YOUR GAME COLLECTION</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2><p>Every Pokémon you discover lives here.</p></div>${readOnly ? '<button type="button" class="cdx-close" data-catchdex="close" aria-label="Close Catchdex">×</button>' : ''}</header>
       <section class="cdx-wallet" aria-label="Catchdex inventory">
         <article class="cdx-stat${goal.active && !goal.claimed ? ' is-type-ball' : ''}"><span class="cdx-stat-icon"><span class="cdx-type-ball type-${esc(goal.active && !goal.claimed ? typeName : 'normal')}" role="img" aria-label="Poké Ball"></span></span><div><span class="cdx-stat-label">${goal.active && !goal.claimed ? `${esc(typeName.toUpperCase())} POKÉ BALLS` : 'CATCH BALLS'}</span><b>${state.balls}</b><small>${goal.active && !goal.claimed ? 'Challenge throws ready' : readOnly ? 'Ready to open' : `${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} earned today`}</small></div>${state.balls ? `<button type="button" class="cdx-button${goal.active && !goal.claimed ? ' is-gold' : ''}" data-catchdex="${goal.active && !goal.claimed ? 'throw' : 'balls'}">${goal.active && !goal.claimed ? `Throw ${esc(typeName)} Ball` : 'Open balls'}</button>` : ''}</article>
-        ${state.mysteryBoxes ? `<article class="cdx-stat is-box"><span class="cdx-stat-icon" aria-hidden="true">🎁</span><div><span class="cdx-stat-label">LEGACY MYSTERY BOXES</span><b>${state.mysteryBoxes}</b><small>Previously earned box rewards</small></div><button type="button" class="cdx-button is-gold" data-catchdex="boxes">Open box</button></article>` : ''}
+        ${state.mysteryBoxes ? `<article class="cdx-stat is-box"><span class="cdx-stat-icon" aria-hidden="true">🎁</span><div><span class="cdx-stat-label">MYSTERY BOXES</span><b>${state.mysteryBoxes}</b><small>Ready to open</small></div><button type="button" class="cdx-button is-gold" data-catchdex="boxes">Open box</button></article>` : ''}
       </section>
-      ${state.last ? `<div class="cdx-discovery${state.last.duplicate ? ' is-duplicate' : ''}"><span aria-hidden="true">${state.last.duplicate ? '🪙' : '✨'}</span><div><b>${state.last.duplicate ? 'Sticker converted' : 'New discovery'}</b><span>${state.last.duplicate ? `${esc(state.last.item.name)} was already in your album · +${state.last.coins} coins` : esc(state.last.item.name)}</span></div></div>` : ''}
+      ${state.last ? `<div class="cdx-discovery${state.last.duplicate ? ' is-duplicate' : ''}"><span aria-hidden="true">${state.last.duplicate ? '🪙' : '✨'}</span><div><b>${state.last.duplicate ? 'Duplicate Pokémon' : 'New Pokémon caught'}</b><span>${state.last.duplicate ? `${esc(state.last.item.name)} was already in your collection · +${state.last.coins} coins` : esc(state.last.item.name)}</span></div></div>` : ''}
       ${challengeMarkup}
       <section class="cdx-collection"><header class="cdx-collection-head"><div><span class="cdx-eyebrow">DISCOVERED POKÉMON</span><h3>Your collection</h3></div><span class="cdx-count">${entries.length} Pokémon</span></header>
-        <div class="cdx-sticker-grid">${cards}</div>
+        <div class="cdx-pokemon-grid">${cards}</div>
       </section>
     </div>`;
   }
@@ -643,10 +647,10 @@
     const root = document.getElementById('profile-catchdex-root');
     if (!root || !record) return;
     try {
-      albumViewer = { record, readOnly: true };
+      catchdexViewer = { record, readOnly: true };
       root.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(record, true).replace('<button type="button" class="cdx-close" data-catchdex="close" aria-label="Close Catchdex">×</button>', '')}</section>`;
       const state = stateFor(record); const goal = challenge(state);
-      root.dataset.catchdexSig = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.throws}:${ownedPokemonRows(record).map(row => `${row.pokemon_id}:${row.pokemon_name || ''}`).join(',')}`;
+      root.dataset.catchdexSig = `${identity(record)}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.throws}:${ownedPokemonRows(record).map(row => `${row.pokemon_id}:${row.pokemon_name || ''}`).join(',')}`;
       bindCatchdexContents(root, record, true);
     } catch (error) {
       console.error('Student profile Catchdex could not render:', error);
@@ -664,7 +668,7 @@
       const state = stateFor(record); const goal = challenge(state);
       const pokemonSignature = ownedPokemonRows(record).map(row => `${row.pokemon_id}:${row.pokemon_name || ''}`).join(',');
       root.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(record, false)}</section>`;
-      root.dataset.catchdexSig = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.throws}:${pokemonSignature}`;
+      root.dataset.catchdexSig = `${identity(record)}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.throws}:${pokemonSignature}`;
       bindCatchdexContents(root, record, false);
     } catch (error) {
       console.error('Catchdex could not render:', error);
@@ -688,7 +692,7 @@
         && (!row.class_name || !record?.class_name || row.class_name === record.class_name);
     });
   }
-  function renderAlbumModal(record = albumViewer?.record || student(), readOnly = Boolean(albumViewer?.readOnly)) {
+  function renderCatchdexModal(record = catchdexViewer?.record || student(), readOnly = Boolean(catchdexViewer?.readOnly)) {
     const modal = document.getElementById('catchdex-modal'); if (!modal) return;
     modal.innerHTML = `<div class="catchdex-modal-card">${renderCatchdexContents(record, readOnly)}</div>`;
     modal.classList.remove('hidden');
@@ -712,14 +716,14 @@
     if (!count) return toast('No Catch Balls are available to open.');
     document.getElementById('lc-ball-inventory')?.remove();
     const overlay = document.createElement('div'); overlay.id = 'lc-ball-inventory'; overlay.className = 'lc-box-inventory'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Catch Ball inventory');
-    overlay.innerHTML = `<section class="lc-box-inventory-card"><button type="button" class="lc-mystery-close" data-ball-close aria-label="Close">×</button><span class="lc-mystery-kicker">CATCHDEX REWARDS</span><h2>${esc(record.student_name || 'Student')} has ${count} Catch Ball${count === 1 ? '' : 's'}</h2><p>Open a ball to reveal a Pokémon sticker. Duplicates convert into coins for this student.</p><button type="button" class="lc-primary" data-ball-open>Open one Catch Ball</button></section>`;
+    overlay.innerHTML = `<section class="lc-box-inventory-card"><button type="button" class="lc-mystery-close" data-ball-close aria-label="Close">×</button><span class="lc-mystery-kicker">CATCHDEX REWARDS</span><h2>${esc(record.student_name || 'Student')} has ${count} Catch Ball${count === 1 ? '' : 's'}</h2><p>Open a ball to catch a random Pokémon. New Pokémon join the collection; duplicates convert into coins.</p><button type="button" class="lc-primary" data-ball-open>Open one Catch Ball</button></section>`;
     document.body.appendChild(overlay);
     const close = () => overlay.remove();
     overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-ball-close]')) close(); });
     overlay.querySelector('[data-ball-open]').addEventListener('click', () => { close(); openBall(record); });
   }
-  window.openCatchdex = function () { const tab = document.querySelector('.student-dashboard-tab[data-tab="catchdex"]'); if (currentRole === 'student' && tab) tab.click(); else if (albumViewer?.record) renderAlbumModal(albumViewer.record, true); };
-  window.openCatchdexFor = function (record, readOnly = true) { albumViewer = { record, readOnly }; let modal = document.getElementById('catchdex-modal'); if (!modal) { modal = document.createElement('div'); modal.id = 'catchdex-modal'; modal.className = 'catchdex-modal'; document.body.appendChild(modal); modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); }); } renderAlbumModal(record, readOnly); };
+  window.openCatchdex = function () { const tab = document.querySelector('.student-dashboard-tab[data-tab="catchdex"]'); if (currentRole === 'student' && tab) tab.click(); else if (catchdexViewer?.record) renderCatchdexModal(catchdexViewer.record, true); };
+  window.openCatchdexFor = function (record, readOnly = true) { catchdexViewer = { record, readOnly }; let modal = document.getElementById('catchdex-modal'); if (!modal) { modal = document.createElement('div'); modal.id = 'catchdex-modal'; modal.className = 'catchdex-modal'; document.body.appendChild(modal); modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); }); } renderCatchdexModal(record, readOnly); };
   window.listenCatchRefresh = mountCards;
   window.renderListenCatchTab = renderCatchdexTab;
   window.renderListenCatchProfile = renderProfileCatchdex;
