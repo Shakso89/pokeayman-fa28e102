@@ -81,12 +81,13 @@
     const setting = challengeSetting(); if (!setting) return null;
     const window = challengeWindow(setting); if (!window?.active) return null;
     const { start, end } = window;
-    const type = POKEMON_TYPES.includes(String(setting.challenge_type || '').toLowerCase()) ? String(setting.challenge_type).toLowerCase() : '';
+    const types = parseTypes(setting.challenge_type); const type = types.join(',');
     const tier = POKEMON_TIERS.includes(String(setting.challenge_tier || '').toLowerCase()) ? String(setting.challenge_tier).toLowerCase() : '';
     const goal = Math.max(1, Math.min(200, Number(setting.challenge_goal ?? setting.goal) || DEFAULT_CHALLENGE_GOAL));
     const startKey = dateInput(start);
-    return { id: String(setting.challenge_id || `week-${startKey}`), title: String(setting.challenge_title || setting.title || 'Weekly Catchdex Challenge'), type, tier, goal, start: startKey, end: dateInput(end), setting };
+    return { id: String(setting.challenge_id || `week-${startKey}`), title: String(setting.challenge_title || setting.title || 'Weekly Catchdex Challenge'), type, types, tier, goal, start: startKey, end: dateInput(end), setting };
   }
+  function parseTypes(value) { return [...new Set(String(value || '').toLowerCase().split(/[,|/ ]+/).filter(t => POKEMON_TYPES.includes(t)))].slice(0, 2); }
   function typeOf(item) {
     const type = typeof getPokemonTypes === 'function' ? getPokemonTypes(item).find(value => value !== 'unknown') : '';
     return type || 'normal';
@@ -97,10 +98,10 @@
     return POKEMON_TIERS.includes(tier) ? tier : 'common';
   }
   function matchesChallenge(entry, active) {
-    return (!active.type || hasType(entry, active.type)) && (!active.tier || tierOf(entry) === active.tier);
+    const types = active.types || parseTypes(active.type); return (!types.length || types.some(t => hasType(entry, t))) && (!active.tier || tierOf(entry) === active.tier);
   }
   function challengeCriteria(active) {
-    return [active.type && `${active.type} type`, active.tier && `${active.tier} tier`].filter(Boolean).join(' · ') || 'any type or tier';
+    const types = active.types || parseTypes(active.type); return [types.length && `${types.join(' or ')} type`, active.tier && `${active.tier} tier`].filter(Boolean).join(' · ') || 'any type or tier';
   }
   function hasClaimedChallenge(state, challengeId) {
     if (!challengeId) return false;
@@ -227,7 +228,7 @@
     const claimKey = `${identity(record)}:${goal.id}`;
     if (claimingChallengeIds.has(claimKey)) return;
     claimingChallengeIds.add(claimKey);
-    const consumed = recovery ? [] : goal.qualifying;
+    const seen = new Set(); const consumed = recovery ? [] : goal.qualifying.filter(e => { const id = Number(e.pokemon_id); if (seen.has(id) || seen.size >= goal.goal) return false; seen.add(id); return true; });
     if (!recovery) {
       const consumedIds = new Set(consumed.map(entry => Number(entry.pokemon_id)));
       state.album = state.album.filter(entry => !consumedIds.has(Number(entry.pokemon_id)));
@@ -302,8 +303,10 @@
     const existing = challengeSetting();
     const oldStart = challengeDate(challengeStartValue(existing));
     const sameChallengeWindow = oldStart && dateInput(oldStart) === start;
-    const challengeId = sameChallengeWindow && existing.challenge_id ? String(existing.challenge_id) : `week-${start}`;
-    const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_id: challengeId, challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_type: String(data.get('pokemonType') || ''), challenge_tier: String(data.get('pokemonTier') || ''), challenge_goal: Math.max(1, Math.min(200, Number(data.get('goal')) || DEFAULT_CHALLENGE_GOAL)), challenge_start: start, updated_at: new Date().toISOString() };
+    const newTypes = parseTypes([data.get('pokemonType'), data.get('pokemonType2')].join(',')).join(',');
+    const sameCriteria = existing && parseTypes(existing.challenge_type).join(',') === newTypes && String(existing.challenge_tier || '') === String(data.get('pokemonTier') || '') && Number(existing.challenge_goal) === Number(data.get('goal'));
+    const challengeId = sameChallengeWindow && sameCriteria && existing.challenge_id ? String(existing.challenge_id) : `ch-${start}-${Date.now().toString(36)}`;
+    const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_id: challengeId, challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_type: newTypes, challenge_tier: String(data.get('pokemonTier') || ''), challenge_goal: Math.max(1, Math.min(200, Number(data.get('goal')) || DEFAULT_CHALLENGE_GOAL)), challenge_start: start, updated_at: new Date().toISOString() };
     const button = form.querySelector('button[type="submit"]'); button.disabled = true;
     let result;
     try { result = existing ? await window.dataSdk.update({ ...payload, __backendId: existing.__backendId }) : await window.dataSdk.create(payload); }
@@ -322,14 +325,14 @@
     if (!panel) {
       panel = document.createElement('section'); panel.id = 'listen-catch-admin'; panel.className = 'lc-admin-panel';
       const start = dateInput(weekStart());
-      panel.innerHTML = `<header><span>LISTEN AND CATCH</span><h3>Weekly Catchdex challenge</h3><p>This is the single shared source for every student's Catchdex challenge. It runs for seven days from the selected start date. Choose a type, a tier, or both.</p></header><form class="lc-admin-form"><label>Challenge name<input name="title" maxlength="48" placeholder="Green Explorer" required></label><label>Pokémon type<select name="pokemonType"><option value="">Any type</option>${POKEMON_TYPES.map(type => `<option value="${type}">${type[0].toUpperCase()}${type.slice(1)}</option>`).join('')}</select></label><label>Pokémon tier<select name="pokemonTier"><option value="">Any tier</option>${POKEMON_TIERS.map(tier => `<option value="${tier}">${tier[0].toUpperCase()}${tier.slice(1)}</option>`).join('')}</select></label><label>Unique Pokémon needed<input name="goal" type="number" min="1" max="200" value="${DEFAULT_CHALLENGE_GOAL}" required></label><label>Week starts<input name="start" type="date" value="${start}" required></label><button type="submit" class="lc-primary">Save weekly challenge</button></form><p class="lc-admin-status" aria-live="polite"></p>`;
+      panel.innerHTML = `<header><span>LISTEN AND CATCH</span><h3>Weekly Catchdex challenge</h3><p>This is the single shared source for every student's Catchdex challenge. It runs for seven days from the selected start date. Choose up to two types (either counts), a tier, or both.</p></header><form class="lc-admin-form"><label>Challenge name<input name="title" maxlength="48" placeholder="Green Explorer" required></label><label>Pokémon type<select name="pokemonType"><option value="">Any type</option>${POKEMON_TYPES.map(type => `<option value="${type}">${type[0].toUpperCase()}${type.slice(1)}</option>`).join('')}</select></label><label>Second type (optional)<select name="pokemonType2"><option value="">None</option>${POKEMON_TYPES.map(type => `<option value="${type}">${type[0].toUpperCase()}${type.slice(1)}</option>`).join('')}</select></label><label>Pokémon tier<select name="pokemonTier"><option value="">Any tier</option>${POKEMON_TIERS.map(tier => `<option value="${tier}">${tier[0].toUpperCase()}${tier.slice(1)}</option>`).join('')}</select></label><label>Unique Pokémon needed<input name="goal" type="number" min="1" max="200" value="${DEFAULT_CHALLENGE_GOAL}" required></label><label>Week starts<input name="start" type="date" value="${start}" required></label><button type="submit" class="lc-primary">Save weekly challenge</button></form><p class="lc-admin-status" aria-live="polite"></p>`;
       panel.querySelector('form').addEventListener('submit', event => { event.preventDefault(); saveChallengeConfig(event.currentTarget); });
     }
     if (panel.parentElement !== host) host.appendChild(panel);
     const setting = challengeSetting(); const active = activeChallenge(); const form = panel.querySelector('form');
     if (!form.dataset.loaded) {
-      if (setting) { form.elements.title.value = setting.challenge_title || ''; form.elements.pokemonType.value = POKEMON_TYPES.includes(setting.challenge_type) ? setting.challenge_type : ''; form.elements.pokemonTier.value = POKEMON_TIERS.includes(setting.challenge_tier) ? setting.challenge_tier : ''; form.elements.goal.value = Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL; form.elements.start.value = challengeStartValue(setting) || dateInput(weekStart()); }
-      else { form.elements.title.value = ''; form.elements.pokemonType.value = ''; form.elements.pokemonTier.value = ''; form.elements.goal.value = DEFAULT_CHALLENGE_GOAL; form.elements.start.value = dateInput(weekStart()); }
+      if (setting) { form.elements.title.value = setting.challenge_title || ''; { const ts = parseTypes(setting.challenge_type); form.elements.pokemonType.value = ts[0] || ''; form.elements.pokemonType2.value = ts[1] || ''; } form.elements.pokemonTier.value = POKEMON_TIERS.includes(setting.challenge_tier) ? setting.challenge_tier : ''; form.elements.goal.value = Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL; form.elements.start.value = challengeStartValue(setting) || dateInput(weekStart()); }
+      else { form.elements.title.value = ''; form.elements.pokemonType.value = ''; form.elements.pokemonType2.value = ''; form.elements.pokemonTier.value = ''; form.elements.goal.value = DEFAULT_CHALLENGE_GOAL; form.elements.start.value = dateInput(weekStart()); }
       form.dataset.loaded = 'true';
     }
     const status = panel.querySelector('.lc-admin-status');
