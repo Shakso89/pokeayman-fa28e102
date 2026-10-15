@@ -147,6 +147,8 @@
     const root = list.parentElement;
     const next = modal.querySelector('#game-players-next');
     const cancel = modal.querySelector('#game-players-cancel');
+    const error = modal.querySelector('#game-player-error');
+    const requiresTwoPlayers = fnName === 'chooseBaamboozlePowerUps';
     const footer = next?.parentElement;
     if (!root || !footer) return;
     const players = document.createElement('section');
@@ -159,6 +161,17 @@
       const count = checks.filter(c => c.checked).length;
       bar.querySelector('.ga-player-count').textContent = `${count} / 4 selected · ${checks.length} in class`;
       if (next) next.textContent = count ? `Start game · ${count} player${count === 1 ? '' : 's'} →` : 'Start game →';
+      if (requiresTwoPlayers) {
+        const blocked = count < 2;
+        if (next) {
+          next.disabled = blocked;
+          next.setAttribute('aria-disabled', String(blocked));
+        }
+        if (error) {
+          error.textContent = blocked ? 'Surprise Boxes needs at least 2 students to start.' : '';
+          error.classList.toggle('hidden', !blocked);
+        }
+      }
     };
     const set = picks => { checks.forEach(c => { c.disabled = false; c.checked = picks.includes(c); }); refresh?.(); update(); };
     bar.addEventListener('click', e => {
@@ -196,7 +209,6 @@
     updateOptions();
     footer.classList.add('ga-lobby-footer');
     if (cancel) { cancel.textContent = '← Games'; footer.prepend(cancel); }
-    const error = modal.querySelector('#game-player-error');
     error?.setAttribute('role', 'alert');
     update();
   };
@@ -229,3 +241,4 @@
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) setTimeout(finish, 900);
   };
 })();
+
