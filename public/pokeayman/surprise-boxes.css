@@ -194,3 +194,21 @@ html body .baam-stage-portal .baam-question-card :is(.baam-power-name, .baam-pow
   html body .baam-stage-portal .baam-question-card #baam-answer-controls button { min-height: 52px !important; }
 }
 @media (prefers-reduced-motion: reduce) { html body .baam-stage-portal .baam-reveal-panel.baam-question-card { animation: none !important; } }
+
+/* Fix: opened lids stay inside their own tile; avatars keep compact size; status reads as text. */
+.surprise-boxes-game .baam-tile.baam-giftbox { overflow: hidden; isolation: isolate; }
+.surprise-boxes-game .baam-giftbox.is-opened .baam-box-lid { transform: translateY(-6%) rotate(-6deg); opacity: .55; }
+.surprise-boxes-game .baam-giftbox.is-opened .baam-box-lid::before,
+.surprise-boxes-game .baam-giftbox.is-opened .baam-box-lid::after { display: none; }
+.baam-reveal-panel #baam-picture img.baam-power-avatar,
+.baam-reveal-panel #baam-picture .baam-power-avatar,
+.baam-reveal-panel .baam-question-avatar {
+  width: 2rem !important; height: 2rem !important; max-height: 2rem !important; max-width: 2rem !important;
+  object-fit: contain; flex: 0 0 auto; border-radius: 999px;
+}
+.baam-power-player { display: inline-flex; align-items: center; gap: .5rem; padding: .3rem .75rem; border-radius: 999px; background: var(--pk-surface-2, rgba(255,255,255,.12)); font-weight: 800; }
+.baam-reveal-panel #baam-answer-status {
+  border: 0 !important; background: none !important; box-shadow: none !important;
+  padding: .25rem 0 !important; min-height: 1.5rem; text-align: center; font-weight: 800;
+}
+.baam-stage-float { top: auto !important; bottom: 18% !important; }

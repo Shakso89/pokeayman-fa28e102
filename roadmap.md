@@ -1,3 +1,6 @@
+# Right-hand controls
+- [x] Correct compact teacher rail geometry and click-through behavior; signed-in Test class saved-list setup dropdown, shuffle and round options checked at 390–1440px including both resize boundaries. Desktop Quick Award student/amount selection passed; no awards or saved records changed. Routing test and build passed.
+
 # Class overview and shared vocabulary
 - [x] Limit overview cards to two teachers without changing assignments; shared class lists expose flashcards only and block editor/cover entry points, while original-list editing remains available. Sample class/list browser checks passed at desktop/tablet/phone widths; shared words remain in game selection, routing test/build passed. Authenticated account navigation unverified; saved records unchanged.
 
