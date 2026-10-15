@@ -426,7 +426,7 @@
     if (modal && !modal.classList.contains('hidden')) renderAlbumModal(record, true);
     const root = document.getElementById('profile-catchdex-root'); if (root) root.dataset.catchdexSig = '';
   }
-  function closeGame() { session?.root?.remove(); session = null; }
+  function closeGame() { session?.root?.remove(); session = null; activeStudent = null; }
   function speak(word) {
     window.speechSynthesis?.cancel();
     if (typeof window.readNaturalVocabulary === 'function') window.readNaturalVocabulary(word, null, { level: window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4' });
@@ -487,9 +487,26 @@
     mountCards();
   }
   function launchForStudent(listName, record) {
-    if (currentRole === 'student') listName = studentClassListRefs(record);
+    if (currentRole === 'student') {
+      const selectedLists = Array.isArray(listName) ? listName.filter(Boolean) : listName ? [listName] : [];
+      const classLists = studentClassListRefs(record);
+      listName = selectedLists.length ? selectedLists : classLists;
+      let selectedWords = gameWords(listName);
+      if (selectedWords.length < 2 && selectedLists.length) {
+        listName = classLists;
+        selectedWords = gameWords(listName);
+      }
+      if (selectedWords.length < 2) {
+        window.__listenCatchDiagnostics = { role: currentRole, selectedListCount: selectedLists.length, classListCount: classLists.length, loadedWords: selectedWords.length, school: navSchool || '', className: navClass || '' };
+        return toast('Listen and Catch needs at least 2 words in your selected lists or class lists. Ask your teacher to add vocabulary.');
+      }
+      return launchGame(listName, selectedWords, record);
+    }
     const words = gameWords(listName);
-    if (words.length < 2) return toast(currentRole === 'student' ? 'Your class needs at least two vocabulary words to play.' : 'This list needs at least two words.');
+    if (words.length < 2) return toast('This list needs at least two words.');
+    return launchGame(listName, words, record);
+  }
+  function launchGame(listName, words, record) {
     closeGame();
     const root = document.createElement('div'); root.className = 'lc-stage'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Listen and Catch');
     const saved = stateFor(record); const dailyEarnedBefore = ballsEarnedToday(saved); const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
@@ -501,6 +518,7 @@
     if (gameMain && rewardPanel) gameMain.insertBefore(rewardPanel, gameMain.firstChild);
     document.body.appendChild(root); activeStudent = record; session = { root, listName, words, index: 0, earned: 0, correct: 0, dailyAllowance, dailyEarnedBefore, options: [], student: record };
     root.addEventListener('click', event => { const button = event.target.closest('button'); if (!button) return; if (button.dataset.lc === 'close') closeGame(); else if (button.dataset.lc === 'listen') { const word = session.words[session.index]; speak(String(word.vocab_sentence || word.vocab_word)); } else if (button.dataset.lc === 'open') { const playedStudent = session.student; closeGame(); if (currentRole === 'student') window.openCatchdex(); else window.openCatchdexFor?.(playedStudent, true); } else if (button.dataset.choice !== undefined) answer(Number(button.dataset.choice)); });
+    window.__listenCatchDiagnostics = { role: currentRole, selectedListCount: Array.isArray(listName) ? listName.length : 1, loadedWords: words.length, school: record.school_name || '', className: record.class_name || '', launched: true };
     startRound();
   }
   function chooseStudent(listName) {
@@ -518,7 +536,8 @@
     if (currentRole === 'student') {
       const record = typeof getCurrentStudentRecord === 'function' ? getCurrentStudentRecord() : null;
       if (!record) return toast('Signed-in student was not found.');
-      return launchForStudent(null, record);
+      try { return launchForStudent(listName, record); }
+      catch (error) { console.error('Listen and Catch could not start:', error); window.__listenCatchDiagnostics = { role: currentRole, error: String(error?.message || error), launched: false }; return toast('Listen and Catch could not start. Refresh the page and try again.'); }
     }
     if (currentRole === 'teacher') return chooseStudent(listName);
     toast('Sign in as a student or teacher to play.');
@@ -597,18 +616,28 @@
       root.dataset.catchdexSig = '';
       return;
     }
-    const state = stateFor(record); const goal = challenge(state);
-    const pokemonSignature = ownedPokemonRows(record).map(row => `${row.pokemon_id}:${row.pokemon_name || ''}`).join(',');
-    const signature = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.title}:${goal.start}:${goal.end}:${goal.type}:${goal.guaranteedThrows}:${goal.throws}:${goal.claimed}:${state.last?.item?.id || ''}:${pokemonSignature}`;
-    if (root.dataset.catchdexSig === signature) return;
-    root.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(record, false)}</section>`;
-    root.dataset.catchdexSig = signature; bindCatchdexContents(root, record, false);
+    try {
+      const state = stateFor(record); const goal = challenge(state);
+      const pokemonSignature = ownedPokemonRows(record).map(row => `${row.pokemon_id}:${row.pokemon_name || ''}`).join(',');
+      root.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(record, false)}</section>`;
+      root.dataset.catchdexSig = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.throws}:${pokemonSignature}`;
+      bindCatchdexContents(root, record, false);
+    } catch (error) {
+      console.error('Catchdex could not render:', error);
+      root.dataset.catchdexSig = '';
+      root.innerHTML = '<section class="catchdex-tab-card"><div class="cdx-empty" role="alert"><b>Your Catchdex could not load</b><p>Refresh the page to reconnect your student profile and Pokémon collection.</p></div></section>';
+    }
   }
   function ownedPokemonRows(record) {
+    // Use the same canonical ownership resolver as Collection, Shop, and the
+    // student avatar. Pokémon rows can retain an older backend/student ID after
+    // accounts are merged, so a direct ID comparison hides legitimately owned
+    // Pokémon from Catchdex.
+    if (typeof getOwnedPokemonForStudent === 'function') return getOwnedPokemonForStudent(record);
     const recordId = identity(record); const ownerName = String(record?.student_name || '').trim().toLocaleLowerCase();
     return (typeof allData === 'undefined' ? [] : allData).filter(row => {
       if (row.type !== 'pokemon') return false;
-      const rowOwnerId = String(row.student_id || row.canonical_student_id || '').trim();
+      const rowOwnerId = String(row.student_id || row.owner_id || row.canonical_student_id || '').trim();
       if (rowOwnerId && recordId) return rowOwnerId === recordId;
       return String(row.owner || row.student_name || '').trim().toLocaleLowerCase() === ownerName
         && (!row.school_name || !record?.school_name || row.school_name === record.school_name)
