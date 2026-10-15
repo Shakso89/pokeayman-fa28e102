@@ -4247,6 +4247,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   const ROUNDS = 5;
   const DAILY_BALL_LIMIT = 10;
   const POKEMON_TYPES = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
+  const BALL_TIERS = ['common', 'uncommon', 'rare', 'legendary'];
+  const BALL_ASSETS = { common: '1.png', uncommon: '11.png', rare: '4.png', legendary: '6.png' };
+  const BALL_WEIGHTS = { common: 80, uncommon: 15, rare: 4, legendary: 1 };
   const DEFAULT_GUARANTEED_THROWS = 20;
   const CHALLENGE_CATCH_CHANCE = 0.02;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -4271,9 +4274,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     try {
       const stored = JSON.parse(record?.listen_catch_data || '{}');
       const oldCaughtPokemon = Array.isArray(stored.album) ? stored.album : [];
-      const state = { balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0, ...stored };
+      const state = { balls: 0, ballTiers: null, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0, ...stored };
       state.mysteryBoxes = Math.max(0, Number(state.mysteryBoxes) || 0);
       state.balls = Math.max(0, Number(state.balls) || 0) + (Number(stored.catchdexDataVersion) >= 2 ? 0 : oldCaughtPokemon.length);
+      if (!state.ballTiers || typeof state.ballTiers !== 'object') state.ballTiers = { common: state.balls, uncommon: 0, rare: 0, legendary: 0 };
+      BALL_TIERS.forEach(tier => { state.ballTiers[tier] = Math.max(0, Number(state.ballTiers[tier]) || 0); });
+      state.balls = totalBalls(state);
       if (!state.challengeThrows || typeof state.challengeThrows !== 'object') state.challengeThrows = {};
       // Older Catchdex saves kept ball rewards in an album. Convert each entry
       // into one usable Catch Ball, then drop that obsolete collection field.
@@ -4300,6 +4306,19 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   }
   function localDayKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
   function ballsEarnedToday(state) { return state.dailyBallDate === localDayKey() ? Math.min(DAILY_BALL_LIMIT, Number(state.dailyBallsEarned) || 0) : 0; }
+  function totalBalls(state) { return BALL_TIERS.reduce((sum, tier) => sum + Math.max(0, Number(state.ballTiers?.[tier]) || 0), 0); }
+  function ballCount(state, tier) { return Math.max(0, Number(state.ballTiers?.[tier]) || 0); }
+  function addEarnedBalls(state, count) {
+    state.ballTiers ||= { common: Math.max(0, Number(state.balls) || 0), uncommon: 0, rare: 0, legendary: 0 };
+    for (let i = 0; i < count; i += 1) {
+      const roll = Math.random() * 100; let cursor = 0;
+      const tier = BALL_TIERS.find(name => (cursor += BALL_WEIGHTS[name]) > roll) || 'common';
+      state.ballTiers[tier] = ballCount(state, tier) + 1;
+    }
+    state.balls = totalBalls(state);
+  }
+  function ballArt(tier) { return `/pokeayman/assets/balls/${BALL_ASSETS[tier] || BALL_ASSETS.common}`; }
+  function rarityLabel(tier) { return `${String(tier || 'common').slice(0, 1).toUpperCase()}${String(tier || 'common').slice(1)}`; }
   function weekStart(date = new Date()) { const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()); day.setDate(day.getDate() - ((day.getDay() + 6) % 7)); return day; }
   function dateInput(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
   function challengeRows() {
@@ -4349,8 +4368,11 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const { start, end } = window;
     const types = parseTypes(setting.challenge_type); const type = types.join(',');
     const guaranteedThrows = Math.max(1, Math.min(100, Number(setting.challenge_max_throws ?? setting.challenge_goal ?? setting.goal) || DEFAULT_GUARANTEED_THROWS));
+    const pokemonId = Number(setting.challenge_pokemon_id) || 0;
+    const targetPokemon = pokemonId ? catalog().find(item => Number(item.id) === pokemonId) : null;
+    const tier = BALL_TIERS.includes(String(setting.challenge_tier || '').toLowerCase()) ? String(setting.challenge_tier).toLowerCase() : String(targetPokemon?.rarity || 'common').toLowerCase();
     const startKey = dateInput(start);
-    return { id: String(setting.challenge_id || `week-${startKey}`), title: String(setting.challenge_title || setting.title || 'Weekly Catchdex Challenge'), type, types, guaranteedThrows, start: startKey, end: dateInput(end), setting };
+    return { id: String(setting.challenge_id || `week-${startKey}`), title: String(setting.challenge_title || setting.title || 'Weekly Catchdex Challenge'), type, types, guaranteedThrows, pokemonId, pokemonName: String(setting.challenge_pokemon_name || targetPokemon?.name || ''), tier, start: startKey, end: dateInput(end), setting };
   }
   function parseTypes(value) { return [...new Set(String(value || '').toLowerCase().split(/[,|/ ]+/).filter(t => POKEMON_TYPES.includes(t)))].slice(0, 2); }
   function typeOf(item) {
@@ -4422,17 +4444,18 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (currentRole === 'student' && typeof renderStudentDashboard === 'function') renderStudentDashboard();
   }
   const openingBallIds = new Set();
-  async function openBall(record = student()) {
+  async function openBall(record = student(), tier = 'common') {
     if (!canManageCatchdex(record)) return;
     const recordId = identity(record);
     if (!recordId || openingBallIds.has(recordId)) return;
     const state = stateFor(record);
-    if (!state.balls) return toast('No Catch Balls are available to open.');
-    const item = randomPokemon(); if (!item) return toast('The Catchdex is loading. Try again in a moment.');
+    if (!ballCount(state, tier)) return toast(`No ${rarityLabel(tier)} Catch Balls are available.`);
+    const tierPool = catalog().filter(item => Number(item.id) > 0 && String(item.rarity || 'common').toLowerCase() === tier);
+    const item = tierPool.length ? tierPool[Math.floor(Math.random() * tierPool.length)] : null; if (!item) return toast(`No ${rarityLabel(tier)} Pokémon are available yet.`);
     const caught = studentAlreadyOwnsPokemon(item, record);
     const now = new Date().toISOString();
     const pokemonRecord = { type: 'pokemon', student_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '', student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(item.id), pokemon_name: item.name, pokemon_rarity: item.rarity || 'common', pokemon_price: Number(item.price) || 0, pokemon_power: Number(item.power) || 0, current_hp: Number(item.hp) || (Number(item.power) || 0) + 30, last_battle_time: '', created_at: now, catch_ball_reward: true };
-    state.balls -= 1;
+    state.ballTiers[tier] -= 1; state.balls = totalBalls(state);
     const coins = caught ? duplicateCoins(item) : 0;
     state.last = { item, duplicate: caught, coins };
     openingBallIds.add(recordId);
@@ -4449,7 +4472,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     } catch (_) {
       if (createdPokemon && (createdPokemon.__backendId || createdPokemon.id)) { try { await window.dataSdk.delete(createdPokemon); } catch (_) {} }
       if (coinsAwarded) { try { await addCoins(record, -coins); } catch (_) {} }
-      state.balls += 1;
+      state.ballTiers[tier] += 1; state.balls = totalBalls(state);
       try { await save(record, state); } catch (_) {}
       openingBallIds.delete(recordId);
       return toast('Could not open the Catch Ball. It is still available; please try again.');
@@ -4473,15 +4496,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const savedThrows = Number(state.challengeThrows?.[active.id]) || 0;
     const throws = Math.min(active.guaranteedThrows, Math.max(0, savedThrows));
     const won = (Array.isArray(state.challengeWins) && state.challengeWins.some(id => String(id) === active.id)) || hasClaimedChallenge(state, active.id);
-    return { ...active, active: true, throws, canThrow: !won && Number(state.balls) > 0, claimed: won };
+    return { ...active, active: true, throws, canThrow: !won && ballCount(state, active.tier) > 0, ballCount: ballCount(state, active.tier), claimed: won };
   }
   function canManageCatchdex(record) {
     return Boolean(record && ((currentRole === 'student' && identity(student()) === identity(record)) || (currentRole === 'teacher' && catchdexViewer?.readOnly && identity(catchdexViewer.record) === identity(record))));
   }
   function challengePokemonPool(goal) {
+    if (goal.pokemonId) return catalog().filter(item => Number(item.id) === Number(goal.pokemonId));
     const types = goal.types?.length ? goal.types : parseTypes(goal.type);
     return catalog().filter(item => {
       if (!(Number(item.id) > 0)) return false;
+      if (String(item.rarity || 'common').toLowerCase() !== goal.tier) return false;
       const itemTypes = typeof getPokemonTypes === 'function' ? getPokemonTypes(item) : [item.type || item.pokemon_type];
       return !types.length || itemTypes.some(type => types.includes(String(type || '').toLowerCase()));
     });
@@ -4493,7 +4518,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (!recordId) return;
     const state = stateFor(record); const goal = challenge(state);
     if (!goal.active || goal.claimed) return toast('This type-ball challenge has already been completed.');
-    if (!state.balls) return toast('Play Listen and Catch to earn a Catch Ball for this challenge.');
+    if (!ballCount(state, goal.tier)) return toast(`You need a ${rarityLabel(goal.tier)} ball for this challenge. Earn more Catch Balls by playing Listen and Catch.`);
     const throwKey = `${recordId}:${goal.id}`;
     if (throwingChallengeIds.has(throwKey)) return;
     const pool = challengePokemonPool(goal);
@@ -4501,7 +4526,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const candidate = pool[Math.floor(Math.random() * pool.length)];
     const attempt = goal.throws + 1;
     const guaranteed = attempt >= goal.guaranteedThrows;
-    const caught = guaranteed || Math.random() < CHALLENGE_CATCH_CHANCE;
+    const firstCatchAttempt = Math.max(1, Math.ceil(goal.guaranteedThrows * 0.95));
+    const caught = guaranteed || (attempt >= firstCatchAttempt && Math.random() < CHALLENGE_CATCH_CHANCE);
     const alreadyOwned = caught && studentAlreadyOwnsPokemon(candidate, record);
     const coins = alreadyOwned ? duplicateCoins(candidate) : 0;
     const originalData = JSON.stringify(state);
@@ -4511,9 +4537,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(candidate.id), pokemon_name: candidate.name,
       pokemon_rarity: candidate.rarity || 'common', pokemon_price: Number(candidate.price) || 0, pokemon_power: Number(candidate.power) || 0,
       current_hp: Number(candidate.hp) || (Number(candidate.power) || 0) + 30, last_battle_time: '', created_at: createdAt,
-      catchdex_challenge_id: goal.id, catchdex_challenge_type: goal.types.join(',')
+      catchdex_challenge_id: goal.id, catchdex_challenge_type: goal.types.join(','), catchdex_challenge_tier: goal.tier
     };
-    state.balls -= 1;
+    state.ballTiers[goal.tier] -= 1; state.balls = totalBalls(state);
     state.challengeThrows = { ...(state.challengeThrows || {}), [goal.id]: attempt };
     if (caught) state.challengeWins = [...new Set([...(Array.isArray(state.challengeWins) ? state.challengeWins : []), goal.id])];
     throwingChallengeIds.add(throwKey);
@@ -4537,7 +4563,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (currentRole === 'student') renderCatchdexTab(); else refreshViewer(record);
     mountCards();
     if (caught && currentRole === 'student' && typeof renderStudentDashboard === 'function') renderStudentDashboard();
-    showChallengeThrow(candidate, { caught, alreadyOwned, coins, attempt, target: goal.guaranteedThrows, type: goal.types[0] || 'pokemon' });
+    showChallengeThrow(candidate, { caught, alreadyOwned, coins, attempt, target: goal.guaranteedThrows, type: goal.tier, ballImage: ballArt(goal.tier) });
   }
   function showChallengeThrow(item, result) {
     document.getElementById('lc-challenge-throw')?.remove();
@@ -4546,8 +4572,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const title = result.caught ? (result.alreadyOwned ? 'A duplicate!' : `${esc(item.name)} caught!`) : 'It got away!';
     const description = result.caught
       ? result.alreadyOwned ? `${esc(item.name)} was already in the collection, so you earned ${result.coins} coins.` : `${esc(item.name)} was added to your Pokémon collection.`
-      : `Throw ${result.attempt} of ${result.target} used. The next ${esc(result.type)} Poké Ball could catch one!`;
-    overlay.innerHTML = `<section class="lc-throw-card is-animating"><button type="button" class="lc-mystery-close" data-throw-close aria-label="Close">×</button><span class="lc-mystery-kicker">${esc(result.type)} POKÉ BALL · THROW ${result.attempt}/${result.target}</span><div class="lc-throw-scene"><span class="lc-throw-target" aria-hidden="true">${result.caught ? `<img src="${art(item.id)}" alt="">` : `<span>${esc(item.name)}</span>`}</span><span class="lc-throw-ball type-${esc(result.type)}" aria-hidden="true"><i></i></span><span class="lc-throw-impact" aria-hidden="true">✦</span></div><h2>${title}</h2><p>${description}</p><button type="button" class="lc-primary" data-throw-close>${result.caught ? 'Awesome!' : 'Try another ball'}</button></section>`;
+      : `Throw ${result.attempt} of ${result.target} used. Catch chances begin after ${Math.max(1, Math.ceil(result.target * .95))} throws.`;
+    overlay.innerHTML = `<section class="lc-throw-card is-animating"><button type="button" class="lc-mystery-close" data-throw-close aria-label="Close">×</button><span class="lc-mystery-kicker">${rarityLabel(result.type).toUpperCase()} POKÉ BALL · THROW ${result.attempt}/${result.target}</span><div class="lc-throw-scene"><span class="lc-throw-target" aria-hidden="true">${result.caught ? `<img src="${art(item.id)}" alt="">` : `<span>${esc(item.name)}</span>`}</span><span class="lc-throw-ball" aria-hidden="true"><img src="${result.ballImage || ballArt(result.type)}" alt=""></span><span class="lc-throw-impact" aria-hidden="true">✦</span></div><h2>${title}</h2><p>${description}</p><button type="button" class="lc-primary" data-throw-close>${result.caught ? 'Awesome!' : 'Try another ball'}</button></section>`;
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.querySelector('.lc-throw-card')?.classList.add(result.caught ? 'is-caught' : 'is-missed'));
     overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-throw-close]')) overlay.remove(); });
@@ -4605,15 +4631,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (typeof canAccessAdmin !== 'function' || !canAccessAdmin()) return;
     const data = new FormData(form); const start = String(data.get('start') || '');
     if (!start || !Number.isFinite(new Date(`${start}T00:00:00`).getTime())) return toast('Choose a valid challenge start date.');
-    const selectedType = parseTypes(data.get('pokemonType'))[0] || '';
-    if (!selectedType) return toast('Choose a Pokémon type for the challenge ball.');
+    const selectedPokemon = catalog().find(item => Number(item.id) === Number(data.get('pokemonId')));
+    if (!selectedPokemon) return toast('Choose a Pokémon for the challenge.');
+    const selectedType = (typeof getPokemonTypes === 'function' ? getPokemonTypes(selectedPokemon)[0] : '') || selectedPokemon.type || selectedPokemon.pokemon_type || 'normal';
+    const selectedTier = BALL_TIERS.includes(String(selectedPokemon.rarity || '').toLowerCase()) ? String(selectedPokemon.rarity).toLowerCase() : 'common';
     const existing = challengeSetting();
     const oldStart = challengeDate(challengeStartValue(existing));
     const sameChallengeWindow = oldStart && dateInput(oldStart) === start;
     const guaranteedThrows = Math.max(1, Math.min(100, Number(data.get('maxThrows')) || DEFAULT_GUARANTEED_THROWS));
-    const sameCriteria = existing && existing.challenge_max_throws != null && parseTypes(existing.challenge_type).join(',') === selectedType && Number(existing.challenge_max_throws) === guaranteedThrows;
+    const sameCriteria = existing && existing.challenge_max_throws != null && Number(existing.challenge_pokemon_id) === Number(selectedPokemon.id) && Number(existing.challenge_max_throws) === guaranteedThrows;
     const challengeId = sameChallengeWindow && sameCriteria && existing.challenge_id ? String(existing.challenge_id) : `ch-${start}-${Date.now().toString(36)}`;
-    const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_id: challengeId, challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_type: selectedType, challenge_tier: '', challenge_goal: guaranteedThrows, challenge_max_throws: guaranteedThrows, challenge_start: start, updated_at: new Date().toISOString() };
+    const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_id: challengeId, challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_pokemon_id: Number(selectedPokemon.id), challenge_pokemon_name: selectedPokemon.name, challenge_type: selectedType, challenge_tier: selectedTier, challenge_goal: guaranteedThrows, challenge_max_throws: guaranteedThrows, challenge_start: start, updated_at: new Date().toISOString() };
     const button = form.querySelector('button[type="submit"]'); button.disabled = true;
     let result;
     try { result = existing ? await window.dataSdk.update({ ...payload, __backendId: existing.__backendId }) : await window.dataSdk.create(payload); }
@@ -4632,14 +4660,27 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (!panel) {
       panel = document.createElement('section'); panel.id = 'listen-catch-admin'; panel.className = 'lc-admin-panel';
       const start = dateInput(weekStart());
-      panel.innerHTML = `<header><span>LISTEN AND CATCH</span><h3>Weekly type-ball challenge</h3><p>Every student shares this seven-day challenge. Choose a Pokémon type and the maximum throws before a catch is guaranteed. Each throw has a small chance to catch early.</p></header><form class="lc-admin-form"><label>Challenge name<input name="title" maxlength="48" placeholder="Happy Halloween" required></label><label>Pokémon type<select name="pokemonType" required><option value="">Choose a type</option>${POKEMON_TYPES.map(type => `<option value="${type}">${type[0].toUpperCase()}${type.slice(1)}</option>`).join('')}</select></label><label>Guaranteed catch by throw<input name="maxThrows" type="number" min="1" max="100" value="${DEFAULT_GUARANTEED_THROWS}" required><small>Students have a 2% chance to catch one on earlier throws.</small></label><label>Challenge starts<input name="start" type="date" value="${start}" required></label><button type="submit" class="lc-primary">Save weekly challenge</button></form><p class="lc-admin-status" aria-live="polite"></p>`;
+      const options = catalog().filter(item => Number(item.id) > 0).map(item => `<option value="${esc(item.name)} (#${Number(item.id)})"></option>`).join('');
+      panel.innerHTML = `<header><span>LISTEN AND CATCH</span><h3>Weekly Catchdex challenge</h3><p>Choose one Pokémon. Students can throw only balls matching its rarity. Catch chances start at 95% of the target, and the Pokémon is guaranteed on the final throw.</p></header><form class="lc-admin-form"><label>Challenge name<input name="title" maxlength="48" placeholder="Happy Halloween" required></label><label>Challenge Pokémon<input name="pokemonSearch" list="lc-challenge-pokemon-list" placeholder="Search Pokémon by name" autocomplete="off" required><input name="pokemonId" type="hidden"><datalist id="lc-challenge-pokemon-list">${options}</datalist><small class="lc-admin-pokemon-meta">Choose a Pokémon to see its type and rarity.</small></label><label>Guaranteed catch by throw<input name="maxThrows" type="number" min="2" max="100" value="${DEFAULT_GUARANTEED_THROWS}" required><small>Early catch chance is only available after 95% of the target throws.</small></label><label>Challenge starts<input name="start" type="date" value="${start}" required></label><button type="submit" class="lc-primary">Save weekly challenge</button></form><p class="lc-admin-status" aria-live="polite"></p>`;
+      const form = panel.querySelector('form');
+      form.elements.pokemonSearch.addEventListener('input', () => {
+        const match = form.elements.pokemonSearch.value.match(/\(#(\d+)\)$/); const item = match && catalog().find(entry => Number(entry.id) === Number(match[1]));
+        form.elements.pokemonId.value = item ? item.id : '';
+        form.querySelector('.lc-admin-pokemon-meta').textContent = item ? `${(typeof getPokemonTypes === 'function' ? getPokemonTypes(item)[0] : item.type || item.pokemon_type || 'normal')} type · ${rarityLabel(item.rarity)} Poké Ball` : 'Choose a Pokémon to see its type and rarity.';
+      });
       panel.querySelector('form').addEventListener('submit', event => { event.preventDefault(); saveChallengeConfig(event.currentTarget); });
     }
     if (panel.parentElement !== host) host.appendChild(panel);
     const setting = challengeSetting(); const active = activeChallenge(); const form = panel.querySelector('form');
     if (!form.dataset.loaded) {
-      if (setting) { form.elements.title.value = setting.challenge_title || ''; form.elements.pokemonType.value = parseTypes(setting.challenge_type)[0] || ''; form.elements.maxThrows.value = Number(setting.challenge_max_throws ?? setting.challenge_goal) || DEFAULT_GUARANTEED_THROWS; form.elements.start.value = challengeStartValue(setting) || dateInput(weekStart()); }
-      else { form.elements.title.value = ''; form.elements.pokemonType.value = ''; form.elements.maxThrows.value = DEFAULT_GUARANTEED_THROWS; form.elements.start.value = dateInput(weekStart()); }
+      if (setting) {
+        const item = catalog().find(entry => Number(entry.id) === Number(setting.challenge_pokemon_id));
+        form.elements.title.value = setting.challenge_title || ''; form.elements.pokemonId.value = item?.id || '';
+        form.elements.pokemonSearch.value = item ? `${item.name} (#${item.id})` : '';
+        form.elements.maxThrows.value = Math.max(2, Number(setting.challenge_max_throws ?? setting.challenge_goal) || DEFAULT_GUARANTEED_THROWS); form.elements.start.value = challengeStartValue(setting) || dateInput(weekStart());
+        form.elements.pokemonSearch.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      else { form.elements.title.value = ''; form.elements.pokemonId.value = ''; form.elements.pokemonSearch.value = ''; form.elements.maxThrows.value = DEFAULT_GUARANTEED_THROWS; form.elements.start.value = dateInput(weekStart()); }
       form.dataset.loaded = 'true';
     }
     const status = panel.querySelector('.lc-admin-status');
@@ -4657,9 +4698,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       else if (active && playerChallenge.throws > 0) participants.push({ name, cls, throws: playerChallenge.throws });
     });
     const row = (s, tag) => `<li><b>${esc(s.name)}</b><span>${esc(s.cls)}</span><em>${tag}</em></li>`;
-    const crit = challengeCriteria({ type: setting.challenge_type, tier: setting.challenge_tier });
+    const crit = setting.challenge_pokemon_name || catalog().find(item => Number(item.id) === Number(setting.challenge_pokemon_id))?.name || challengeCriteria({ type: setting.challenge_type, tier: setting.challenge_tier });
     const maxThrows = Number(setting.challenge_max_throws ?? setting.challenge_goal) || DEFAULT_GUARANTEED_THROWS;
-    posted.innerHTML = `<header><div><span>${active ? 'LIVE NOW' : 'POSTED CHALLENGE'}</span><h4>${esc(setting.challenge_title || 'Weekly Type-Ball Challenge')}</h4><p>Catch a ${esc(crit)} Pokémon · ${maxThrows} throws maximum · starts ${esc(setting.challenge_start)}</p></div><button type="button" class="lc-admin-delete" data-lc-delete>Delete challenge</button></header><h5>Caught (${done.length})</h5>${done.length || participants.length ? `<ul>${done.map(s => row(s, 'Pokémon caught')).join('')}${participants.map(s => row(s, `${s.throws}/${maxThrows} throws`)).join('')}</ul>` : '<p class="lc-admin-empty">Students can use their Catch Balls to try the type challenge.</p>'}`;
+    posted.innerHTML = `<header><div><span>${active ? 'LIVE NOW' : 'POSTED CHALLENGE'}</span><h4>${esc(setting.challenge_title || 'Weekly Catchdex Challenge')}</h4><p>Catch ${esc(crit)} · ${rarityLabel(setting.challenge_tier).toLowerCase()} balls only · ${maxThrows} throws maximum · starts ${esc(setting.challenge_start)}</p></div><button type="button" class="lc-admin-delete" data-lc-delete>Delete challenge</button></header><h5>Caught (${done.length})</h5>${done.length || participants.length ? `<ul>${done.map(s => row(s, 'Pokémon caught')).join('')}${participants.map(s => row(s, `${s.throws}/${maxThrows} throws`)).join('')}</ul>` : '<p class="lc-admin-empty">Students can use matching rarity Catch Balls to try the challenge.</p>'}`;
   }
   async function deleteChallenge() {
     const setting = challengeSetting(); if (!setting || !canAccessAdmin()) return;
@@ -4755,9 +4796,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const record = student(); const state = stateFor(record);
     const today = localDayKey(); const alreadyEarned = state.dailyBallDate === today ? Math.min(DAILY_BALL_LIMIT, Number(state.dailyBallsEarned) || 0) : 0;
     const awarded = Math.min(session.correct, DAILY_BALL_LIMIT - alreadyEarned);
-    state.balls += awarded; state.dailyBallDate = today; state.dailyBallsEarned = alreadyEarned + awarded; await save(record, state);
+    addEarnedBalls(state, awarded); state.dailyBallDate = today; state.dailyBallsEarned = alreadyEarned + awarded; await save(record, state);
     session.earned = awarded;
-    session.root.querySelector('.lc-play').innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${awarded ? `${awarded} Catch Ball${awarded === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2><p>${awarded < session.correct ? `Daily limit reached. You have earned ${state.dailyBallsEarned} of ${DAILY_BALL_LIMIT} balls today. ` : ''}Open your balls now, or find them later in your Catchdex.</p><div class="lc-result-actions"><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
+    session.root.querySelector('.lc-play').innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${awarded ? `${awarded} Catch Ball${awarded === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2><p>${awarded ? 'Each ball has a rarity tier. Match its tier to the featured Pokémon in a Catchdex challenge.' : ''} ${awarded < session.correct ? `Daily limit reached. You have earned ${state.dailyBallsEarned} of ${DAILY_BALL_LIMIT} balls today. ` : ''}Open your balls now, or find them later in your Catchdex.</p><div class="lc-result-actions"><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
     mountCards();
   }
   function launchForStudent(listName, record) {
@@ -4823,7 +4864,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   };
   function catchdexCard(state, compact = false) {
     const goal = challenge(state); const unique = new Set(ownedPokemonRows(student()).map(entry => Number(entry.pokemon_id))).size;
-    return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p></div><div class="catchdex-goal"><b>${goal.throws} / ${goal.guaranteedThrows}</b><span>${goal.active ? `${challengeCriteria(goal)} ball throws` : 'weekly challenge inactive'}</span></div><button type="button" data-catchdex-profile>View Catchdex</button></section>`;
+    return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p></div><div class="catchdex-goal"><b>${goal.throws} / ${goal.guaranteedThrows}</b><span>${goal.active ? `${goal.pokemonName || challengeCriteria(goal)} · ${rarityLabel(goal.tier)} balls` : 'weekly challenge inactive'}</span></div><button type="button" data-catchdex-profile>View Catchdex</button></section>`;
   }
   function mountCards() {
     const state = stateFor(student());
@@ -4861,17 +4902,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const pct = goal.guaranteedThrows ? Math.min(100, progress / goal.guaranteedThrows * 100) : 0;
     const typeName = goal.types.length ? goal.types[0] : 'any';
     const challengeMarkup = goal.active
-      ? `<section class="cdx-challenge cdx-type-challenge${goal.claimed ? ' is-claimed' : ''}" aria-labelledby="cdx-challenge-title">
-          <div class="cdx-challenge-top"><div><span class="cdx-eyebrow">${goal.claimed ? 'CHALLENGE COMPLETE' : 'ACTIVE TYPE-BALL CHALLENGE'}</span><h3 id="cdx-challenge-title">${esc(goal.title)}</h3><p>Throw a <strong>${esc(challengeCriteria(goal))} Poké Ball</strong>. Each throw has a <strong>2% catch chance</strong>, with a guaranteed Pokémon by throw <strong>${goal.guaranteedThrows}</strong>.</p></div><span class="cdx-type-ball type-${esc(typeName)}" role="img" aria-label="${esc(typeName)} type Poké Ball"><i></i></span></div>
+      ? `<section class="cdx-challenge cdx-type-challenge cdx-tier-${esc(goal.tier)}${goal.claimed ? ' is-claimed' : ''}" aria-labelledby="cdx-challenge-title">
+          <div class="cdx-challenge-top"><div><span class="cdx-eyebrow">${goal.claimed ? 'CHALLENGE COMPLETE' : 'ACTIVE CATCH CHALLENGE'}</span><h3 id="cdx-challenge-title">${esc(goal.title)}</h3><p>Catch <strong>${esc(goal.pokemonName || challengeCriteria(goal))}</strong> · ${esc(rarityLabel(goal.tier))} balls only. Catch chance begins after <strong>${Math.max(1, Math.ceil(goal.guaranteedThrows * .95))} throws</strong>; guaranteed by throw <strong>${goal.guaranteedThrows}</strong>.</p><small class="cdx-challenge-type">${esc(typeName)} type · ${esc(rarityLabel(goal.tier))} tier</small></div><img class="cdx-challenge-ball" src="${ballArt(goal.tier)}" alt="${esc(rarityLabel(goal.tier))} Poké Ball"></div>
           <div class="cdx-progress-row"><div class="cdx-progress-label"><b>${progress}<span> / ${goal.guaranteedThrows} throws</span></b><span>${goal.claimed ? 'Pokémon caught' : `${Math.max(0, goal.guaranteedThrows - goal.throws)} throws until guaranteed`}</span></div><div class="cdx-progress-track" role="progressbar" aria-label="${esc(goal.title)} throws until guaranteed catch" aria-valuemin="0" aria-valuemax="${goal.guaranteedThrows}" aria-valuenow="${progress}"><span style="width:${pct}%"></span></div></div>
-          <div class="cdx-challenge-foot"><small>${goal.end ? `Challenge ends ${esc(goal.end)}` : 'Limited-time challenge'}</small>${!goal.claimed && state.balls ? `<button type="button" class="cdx-button is-gold" data-catchdex="throw">Throw ${esc(typeName)} Ball · ${state.balls} ready</button>` : ''}</div>
-          ${goal.claimed ? '<p class="cdx-claimed">✓ Pokémon caught and added to your collection.</p>' : state.balls ? '<p class="cdx-hint">A Catch Ball is used for each attempt. Keep trying; the catch is guaranteed at the target.</p>' : '<p class="cdx-hint">You are out of Catch Balls. Play Listen and Catch to earn more throws.</p>'}
+          <div class="cdx-challenge-foot"><small>${goal.end ? `Challenge ends ${esc(goal.end)}` : 'Limited-time challenge'} · ${goal.ballCount} matching balls available</small>${!goal.claimed && goal.ballCount ? `<button type="button" class="cdx-button is-gold" data-catchdex="throw">Throw ${esc(rarityLabel(goal.tier))} Ball · ${goal.ballCount} ready</button>` : ''}</div>
+          ${goal.claimed ? '<p class="cdx-claimed">✓ Pokémon caught and added to your collection.</p>' : goal.ballCount ? '<p class="cdx-hint">One matching ball is spent per attempt. Catch chance is locked until 95% of the target throws.</p>' : `<p class="cdx-hint">No ${esc(rarityLabel(goal.tier).toLowerCase())} balls available. Listen and Catch rewards balls of different rarity tiers.</p>`}
         </section>`
       : '<section class="cdx-challenge is-inactive"><span class="cdx-challenge-mark" aria-hidden="true">🗓️</span><div><span class="cdx-eyebrow">WEEKLY CHALLENGE</span><h3>No active challenge</h3><p>Your next Catchdex challenge will appear here when the admin schedules it.</p></div></section>';
     return `<div class="cdx-view">
       <header class="cdx-header"><div><span class="cdx-eyebrow">YOUR GAME COLLECTION</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2><p>Every Pokémon you discover lives here.</p></div>${readOnly ? '<button type="button" class="cdx-close" data-catchdex="close" aria-label="Close Catchdex">×</button>' : ''}</header>
       <section class="cdx-wallet" aria-label="Catchdex inventory">
-        <article class="cdx-stat${goal.active && !goal.claimed ? ' is-type-ball' : ''}"><span class="cdx-stat-icon"><span class="cdx-type-ball type-${esc(goal.active && !goal.claimed ? typeName : 'normal')}" role="img" aria-label="Poké Ball"></span></span><div><span class="cdx-stat-label">${goal.active && !goal.claimed ? `${esc(typeName.toUpperCase())} POKÉ BALLS` : 'CATCH BALLS'}</span><b>${state.balls}</b><small>${goal.active && !goal.claimed ? 'Challenge throws ready' : readOnly ? 'Ready to open' : `${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} earned today`}</small></div>${state.balls ? `<button type="button" class="cdx-button${goal.active && !goal.claimed ? ' is-gold' : ''}" data-catchdex="${goal.active && !goal.claimed ? 'throw' : 'balls'}">${goal.active && !goal.claimed ? `Throw ${esc(typeName)} Ball` : 'Open balls'}</button>` : ''}</article>
+        ${BALL_TIERS.map(tier => `<article class="cdx-stat cdx-tier-stat cdx-tier-${tier}${goal.active && goal.tier === tier && !goal.claimed ? ' is-challenge-tier' : ''}"><span class="cdx-stat-icon"><img src="${ballArt(tier)}" alt=""></span><div><span class="cdx-stat-label">${esc(rarityLabel(tier).toUpperCase())} BALLS</span><b>${ballCount(state, tier)}</b><small>${goal.active && goal.tier === tier && !goal.claimed ? 'Matches this challenge' : `${esc(rarityLabel(tier))} Pokémon`}</small></div>${ballCount(state, tier) ? `<button type="button" class="cdx-button" data-catchdex="open-ball" data-tier="${tier}">Open</button>` : ''}</article>`).join('')}
         ${state.mysteryBoxes ? `<article class="cdx-stat is-box"><span class="cdx-stat-icon" aria-hidden="true">🎁</span><div><span class="cdx-stat-label">MYSTERY BOXES</span><b>${state.mysteryBoxes}</b><small>Ready to open</small></div><button type="button" class="cdx-button is-gold" data-catchdex="boxes">Open box</button></article>` : ''}
       </section>
       ${state.last ? `<div class="cdx-discovery${state.last.duplicate ? ' is-duplicate' : ''}"><span aria-hidden="true">${state.last.duplicate ? '🪙' : '✨'}</span><div><b>${state.last.duplicate ? 'Duplicate Pokémon' : 'New Pokémon caught'}</b><span>${state.last.duplicate ? `${esc(state.last.item.name)} was already in your collection · +${state.last.coins} coins` : esc(state.last.item.name)}</span></div></div>` : ''}
@@ -4883,7 +4924,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   }
   function bindCatchdexContents(root, record, readOnly) {
     root.querySelector('[data-catchdex="close"]')?.addEventListener('click', () => document.getElementById('catchdex-modal')?.classList.add('hidden'));
-    root.querySelector('[data-catchdex="balls"]')?.addEventListener('click', () => showBallCountPopup(record));
+    root.querySelectorAll('[data-catchdex="open-ball"]').forEach(button => button.addEventListener('click', () => showBallCountPopup(record, button.dataset.tier)));
     root.querySelectorAll('[data-catchdex="throw"]').forEach(button => button.addEventListener('click', () => throwChallengeBall(record)));
     root.querySelector('[data-catchdex="boxes"]')?.addEventListener('click', () => showBoxCountPopup(record));
   }
@@ -4954,17 +4995,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-box-close]')) close(); });
     overlay.querySelector('[data-box-open]').addEventListener('click', () => { close(); openMysteryBox(record); });
   }
-  function showBallCountPopup(record) {
+  function showBallCountPopup(record, tier = 'common') {
     if (!canManageCatchdex(record)) return;
-    const count = stateFor(record).balls;
-    if (!count) return toast('No Catch Balls are available to open.');
+    const count = ballCount(stateFor(record), tier);
+    if (!count) return toast(`No ${rarityLabel(tier)} Catch Balls are available to open.`);
     document.getElementById('lc-ball-inventory')?.remove();
-    const overlay = document.createElement('div'); overlay.id = 'lc-ball-inventory'; overlay.className = 'lc-box-inventory'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Catch Ball inventory');
-    overlay.innerHTML = `<section class="lc-box-inventory-card"><button type="button" class="lc-mystery-close" data-ball-close aria-label="Close">×</button><span class="lc-mystery-kicker">CATCHDEX REWARDS</span><h2>${esc(record.student_name || 'Student')} has ${count} Catch Ball${count === 1 ? '' : 's'}</h2><p>Open a ball to catch a random Pokémon. New Pokémon join the collection; duplicates convert into coins.</p><button type="button" class="lc-primary" data-ball-open>Open one Catch Ball</button></section>`;
+    const overlay = document.createElement('div'); overlay.id = 'lc-ball-inventory'; overlay.className = 'lc-box-inventory'; overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', `${rarityLabel(tier)} Catch Ball inventory`);
+    overlay.innerHTML = `<section class="lc-box-inventory-card"><button type="button" class="lc-mystery-close" data-ball-close aria-label="Close">×</button><span class="lc-mystery-kicker">${esc(rarityLabel(tier).toUpperCase())} CATCH BALLS</span><img class="lc-inventory-ball-art" src="${ballArt(tier)}" alt=""><h2>${esc(record.student_name || 'Student')} has ${count} ${esc(rarityLabel(tier))} Ball${count === 1 ? '' : 's'}</h2><p>Open a ${esc(rarityLabel(tier).toLowerCase())} ball to catch a Pokémon of the same tier. New Pokémon join the collection; duplicates convert into coins.</p><button type="button" class="lc-primary" data-ball-open>Open one ${esc(rarityLabel(tier))} Ball</button></section>`;
     document.body.appendChild(overlay);
     const close = () => overlay.remove();
     overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-ball-close]')) close(); });
-    overlay.querySelector('[data-ball-open]').addEventListener('click', () => { close(); openBall(record); });
+    overlay.querySelector('[data-ball-open]').addEventListener('click', () => { close(); openBall(record, tier); });
   }
   window.openCatchdex = function () { const tab = document.querySelector('.student-dashboard-tab[data-tab="catchdex"]'); if (currentRole === 'student' && tab) tab.click(); else if (catchdexViewer?.record) renderCatchdexModal(catchdexViewer.record, true); };
   window.openCatchdexFor = function (record, readOnly = true) { catchdexViewer = { record, readOnly }; let modal = document.getElementById('catchdex-modal'); if (!modal) { modal = document.createElement('div'); modal.id = 'catchdex-modal'; modal.className = 'catchdex-modal'; document.body.appendChild(modal); modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); }); } renderCatchdexModal(record, readOnly); };

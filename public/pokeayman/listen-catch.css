@@ -139,6 +139,30 @@
 @media(max-width:560px){.lc-throw-card{padding:24px 16px 20px;border-radius:22px}.lc-throw-scene{height:190px}.lc-throw-target{width:108px;height:108px}.lc-throw-target img{width:98px;height:98px}}
 @media(prefers-reduced-motion:reduce){.lc-throw-card.is-animating .lc-throw-ball,.lc-throw-card.is-caught .lc-throw-target,.lc-throw-card.is-caught .lc-throw-impact{animation:none!important}.lc-throw-ball{transform:translateY(-38px)}.lc-throw-target{opacity:1}}
 
+/* Rarity-tier Catch Balls; each challenge accepts only its matching tier. */
+.cdx-wallet{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.cdx-tier-stat{grid-template-columns:auto minmax(0,1fr);gap:10px;padding:13px;border-color:var(--ball-tier-border,#526174);background:linear-gradient(145deg,var(--ball-tier-glow,rgba(148,163,184,.12)),#121b2d 74%)}
+.cdx-tier-stat .cdx-stat-icon{width:43px;height:43px;border-color:var(--ball-tier-border,#526174);background:rgba(8,14,28,.66)}
+.cdx-tier-stat .cdx-stat-icon img{width:36px;height:36px;filter:drop-shadow(0 3px 7px rgba(0,0,0,.42))}
+.cdx-tier-stat .cdx-stat-label{font-size:.59rem;letter-spacing:.1em}
+.cdx-tier-stat>div>b{font-size:1.55rem}
+.cdx-tier-stat .cdx-button{grid-column:1/-1;width:100%;min-height:34px;padding:0 8px}
+.cdx-tier-stat.is-challenge-tier{box-shadow:0 0 0 2px var(--ball-tier-border),0 0 22px var(--ball-tier-glow)}
+.cdx-tier-common{--ball-tier-border:#f26d5b;--ball-tier-glow:rgba(239,83,69,.19)}
+.cdx-tier-uncommon{--ball-tier-border:#aab4c2;--ball-tier-glow:rgba(148,163,184,.2)}
+.cdx-tier-rare{--ball-tier-border:#bb75ff;--ball-tier-glow:rgba(147,51,234,.22)}
+.cdx-tier-legendary{--ball-tier-border:#ffd447;--ball-tier-glow:rgba(250,204,21,.2)}
+.cdx-challenge-top .cdx-challenge-ball{flex:none;width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 8px 14px rgba(0,0,0,.38))}
+.cdx-challenge-type{display:inline-block;margin-top:8px;color:#aebbd0;font-size:.72rem;font-weight:800;text-transform:capitalize}
+.cdx-challenge.cdx-tier-common{border-color:rgba(242,109,91,.45)}.cdx-challenge.cdx-tier-uncommon{border-color:rgba(170,180,194,.55)}.cdx-challenge.cdx-tier-rare{border-color:rgba(187,117,255,.6)}.cdx-challenge.cdx-tier-legendary{border-color:rgba(255,212,71,.62)}
+.lc-inventory-ball-art{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.45))}
+.lc-throw-ball{width:64px;height:64px;border:0;background:transparent;box-shadow:none}
+.lc-throw-ball:before,.lc-throw-ball i{display:none}
+.lc-throw-ball img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 5px 8px rgba(0,0,0,.45))}
+@media(max-width:900px){.cdx-wallet{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.cdx-wallet{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.cdx-tier-stat{grid-template-columns:auto minmax(0,1fr);padding:10px;gap:8px}.cdx-tier-stat .cdx-stat-icon{width:38px;height:38px}.cdx-tier-stat .cdx-stat-icon img{width:32px;height:32px}.cdx-tier-stat .cdx-stat-label{font-size:.54rem}.cdx-tier-stat>div>b{font-size:1.35rem}.cdx-challenge-top .cdx-challenge-ball{width:56px;height:56px}}
+@media(max-width:380px){.cdx-tier-stat{grid-template-columns:1fr;justify-items:center;text-align:center}.cdx-tier-stat .cdx-stat-icon{width:42px;height:42px}.cdx-tier-stat>div{justify-items:center}}
+
 /* Listen & Catch: keep the main listening action on one line and make ball rewards part of play. */
 .lc-listen{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:clamp(10px,2vw,20px);width:min(100%,31rem);min-height:clamp(7rem,25vh,10rem);padding:1rem clamp(1rem,4vw,2rem);border-radius:22px}
 .lc-listen>span:first-child{flex:none;font-size:clamp(2.5rem,7vw,4.2rem);line-height:1}
