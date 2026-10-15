@@ -16,10 +16,12 @@
 #ts-rail .ts-streak-close:hover { color: var(--ts-ink, #f8fafc); border-color: var(--ts-yellow, #facc15); }
 #ts-rail .ts-streak-close:focus-visible { opacity: 1; pointer-events: auto; outline: 2px solid var(--ts-yellow, #facc15); outline-offset: 2px; }
 @media (max-width: 1280px) {
-  body.ts-on #ts-rail {
+  html body.ts-on #ts-rail {
     display: flex !important; position: fixed; inset: auto auto 16px 12px; width: min(260px, calc(100vw - 24px));
-    padding: 0; background: transparent; border: 0; box-shadow: none; z-index: 44; overflow: visible; flex-direction: column;
+    height: auto; padding: 0; background: transparent; border: 0; box-shadow: none; z-index: 44; overflow: visible; flex-direction: column;
+    pointer-events: none;
   }
+  html body.ts-on #ts-rail > .ts-streak:not([hidden]) { pointer-events: auto; }
   /* The floating rail is reduced to the streak card on compact screens. The
      class header already has Add student, so don't leave its rail shortcut
      stranded as a large yellow button at the viewport edge. */
