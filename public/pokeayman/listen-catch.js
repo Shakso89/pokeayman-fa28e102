@@ -3,8 +3,8 @@
   const ROUNDS = 5;
   const DAILY_BALL_LIMIT = 10;
   const POKEMON_TYPES = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
-  const POKEMON_TIERS = ['common', 'uncommon', 'rare', 'legendary'];
-  const DEFAULT_CHALLENGE_GOAL = 20;
+  const DEFAULT_GUARANTEED_THROWS = 20;
+  const CHALLENGE_CATCH_CHANCE = 0.02;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const art = id => `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${id}.png`;
   const identity = student => String(student?.__backendId || student?.student_id || '').trim();
@@ -23,17 +23,11 @@
     return (typeof allData === 'undefined' ? [] : allData).find(row => row.type === 'listen_catch_progress' && String(row.student_id || '') === id) || null;
   }
   function parseProgress(record) {
-    try { const state = { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], dailyBallDate: '', dailyBallsEarned: 0, ...JSON.parse(record?.listen_catch_data || '{}') }; state.mysteryBoxes = Math.max(0, Number(state.mysteryBoxes) || 0); return state; }
-    catch (_) { return { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], dailyBallDate: '', dailyBallsEarned: 0 }; }
+    try { const state = { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0, ...JSON.parse(record?.listen_catch_data || '{}') }; state.mysteryBoxes = Math.max(0, Number(state.mysteryBoxes) || 0); if (!state.challengeThrows || typeof state.challengeThrows !== 'object') state.challengeThrows = {}; return state; }
+    catch (_) { return { album: [], balls: 0, mysteryBoxes: 0, openedChallengeIds: [], claimedChallengeIds: [], mysteryBoxChallengeIds: [], openedBoxChallengeIds: [], challengeThrows: {}, challengeWins: [], dailyBallDate: '', dailyBallsEarned: 0 }; }
   }
   function localDayKey(date = new Date()) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
   function ballsEarnedToday(state) { return state.dailyBallDate === localDayKey() ? Math.min(DAILY_BALL_LIMIT, Number(state.dailyBallsEarned) || 0) : 0; }
-  function hasType(entry, type) {
-    const types = Array.isArray(entry.pokemon_types) ? [...entry.pokemon_types] : [entry.pokemon_type];
-    const species = catalog().find(item => Number(item.id) === Number(entry.pokemon_id));
-    if (species && typeof getPokemonTypes === 'function') types.push(...getPokemonTypes(species));
-    return types.some(value => String(value || '').toLowerCase() === type);
-  }
   function weekStart(date = new Date()) { const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()); day.setDate(day.getDate() - ((day.getDay() + 6) % 7)); return day; }
   function dateInput(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; }
   function challengeRows() {
@@ -82,26 +76,17 @@
     const window = challengeWindow(setting); if (!window?.active) return null;
     const { start, end } = window;
     const types = parseTypes(setting.challenge_type); const type = types.join(',');
-    const tier = POKEMON_TIERS.includes(String(setting.challenge_tier || '').toLowerCase()) ? String(setting.challenge_tier).toLowerCase() : '';
-    const goal = Math.max(1, Math.min(200, Number(setting.challenge_goal ?? setting.goal) || DEFAULT_CHALLENGE_GOAL));
+    const guaranteedThrows = Math.max(1, Math.min(100, Number(setting.challenge_max_throws ?? setting.challenge_goal ?? setting.goal) || DEFAULT_GUARANTEED_THROWS));
     const startKey = dateInput(start);
-    return { id: String(setting.challenge_id || `week-${startKey}`), title: String(setting.challenge_title || setting.title || 'Weekly Catchdex Challenge'), type, types, tier, goal, start: startKey, end: dateInput(end), setting };
+    return { id: String(setting.challenge_id || `week-${startKey}`), title: String(setting.challenge_title || setting.title || 'Weekly Catchdex Challenge'), type, types, guaranteedThrows, start: startKey, end: dateInput(end), setting };
   }
   function parseTypes(value) { return [...new Set(String(value || '').toLowerCase().split(/[,|/ ]+/).filter(t => POKEMON_TYPES.includes(t)))].slice(0, 2); }
   function typeOf(item) {
     const type = typeof getPokemonTypes === 'function' ? getPokemonTypes(item).find(value => value !== 'unknown') : '';
     return type || 'normal';
   }
-  function tierOf(entry) {
-    const species = catalog().find(item => Number(item.id) === Number(entry.pokemon_id));
-    const tier = String(entry.rarity || species?.rarity || '').toLowerCase();
-    return POKEMON_TIERS.includes(tier) ? tier : 'common';
-  }
-  function matchesChallenge(entry, active) {
-    const types = active.types || parseTypes(active.type); return (!types.length || types.some(t => hasType(entry, t))) && (!active.tier || tierOf(entry) === active.tier);
-  }
   function challengeCriteria(active) {
-    const types = active.types || parseTypes(active.type); return [types.length && `${types.join(' or ')} type`, active.tier && `${active.tier} tier`].filter(Boolean).join(' · ') || 'any type or tier';
+    const types = active.types || parseTypes(active.type); return types.length ? `${types.join(' or ')} type` : 'any type';
   }
   function hasClaimedChallenge(state, challengeId) {
     if (!challengeId) return false;
@@ -205,47 +190,88 @@
   }
   function challenge(state) {
     const active = activeChallenge();
-    if (!active) return { id: '', title: 'No challenge this week', type: '', goal: DEFAULT_CHALLENGE_GOAL, unique: 0, ready: false, claimed: false, active: null };
-    const qualifying = state.album.filter(entry => matchesChallenge(entry, active));
-    const unique = new Set(qualifying.map(entry => Number(entry.pokemon_id))).size;
-    const claimed = hasClaimedChallenge(state, active.id);
-    // The student Catchdex uses this flag to decide whether to render the live challenge.
-    // activeChallenge() has already applied the shared schedule window, so this result is live.
-    const pendingBoxes = Array.isArray(state.mysteryBoxChallengeIds) ? state.mysteryBoxChallengeIds : [];
-    const openedBoxes = Array.isArray(state.openedBoxChallengeIds) ? state.openedBoxChallengeIds : [];
-    const recoverable = claimed && !Number(state.mysteryBoxes) && !pendingBoxes.includes(active.id) && !openedBoxes.includes(active.id);
-    return { ...active, active: true, unique: claimed ? active.goal : unique, ready: unique >= active.goal && !claimed, claimed, recoverable, qualifying };
+    if (!active) return { id: '', title: 'No challenge this week', type: '', types: [], guaranteedThrows: DEFAULT_GUARANTEED_THROWS, throws: 0, canThrow: false, claimed: false, active: null };
+    const savedThrows = Number(state.challengeThrows?.[active.id]) || 0;
+    const throws = Math.min(active.guaranteedThrows, Math.max(0, savedThrows));
+    const won = (Array.isArray(state.challengeWins) && state.challengeWins.some(id => String(id) === active.id)) || hasClaimedChallenge(state, active.id);
+    return { ...active, active: true, throws, canThrow: !won && Number(state.balls) > 0, claimed: won };
   }
   function canManageCatchdex(record) {
     return Boolean(record && ((currentRole === 'student' && identity(student()) === identity(record)) || (currentRole === 'teacher' && albumViewer?.readOnly && identity(albumViewer.record) === identity(record))));
   }
-  const claimingChallengeIds = new Set();
-  async function claimChallenge(record = student()) {
+  function challengePokemonPool(goal) {
+    const types = goal.types?.length ? goal.types : parseTypes(goal.type);
+    return catalog().filter(item => {
+      if (!(Number(item.id) > 0)) return false;
+      const itemTypes = typeof getPokemonTypes === 'function' ? getPokemonTypes(item) : [item.type || item.pokemon_type];
+      return !types.length || itemTypes.some(type => types.includes(String(type || '').toLowerCase()));
+    });
+  }
+  const throwingChallengeIds = new Set();
+  async function throwChallengeBall(record = student()) {
     if (!canManageCatchdex(record)) return;
+    const recordId = identity(record);
+    if (!recordId) return;
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    const recovery = Boolean(goal.recoverable && goal.id);
-    if ((!goal.ready && !recovery) || !goal.id || (goal.claimed && !recovery) || (hasClaimedChallenge(state, goal.id) && !recovery)) return;
-    const claimKey = `${identity(record)}:${goal.id}`;
-    if (claimingChallengeIds.has(claimKey)) return;
-    claimingChallengeIds.add(claimKey);
-    const seen = new Set(); const consumed = recovery ? [] : goal.qualifying.filter(e => { const id = Number(e.pokemon_id); if (seen.has(id) || seen.size >= goal.goal) return false; seen.add(id); return true; });
-    if (!recovery) {
-      const consumedIds = new Set(consumed.map(entry => Number(entry.pokemon_id)));
-      state.album = state.album.filter(entry => !consumedIds.has(Number(entry.pokemon_id)));
-      state.claimedChallengeIds = [...new Set([...(Array.isArray(state.claimedChallengeIds) ? state.claimedChallengeIds : []), goal.id])];
-      // Keep the legacy claim marker in sync for older dashboard bundles.
-      state.openedChallengeIds = [...new Set([...(Array.isArray(state.openedChallengeIds) ? state.openedChallengeIds : []), goal.id])];
+    if (!goal.active || goal.claimed) return toast('This type-ball challenge has already been completed.');
+    if (!state.balls) return toast('Play Listen and Catch to earn a Catch Ball for this challenge.');
+    const throwKey = `${recordId}:${goal.id}`;
+    if (throwingChallengeIds.has(throwKey)) return;
+    const pool = challengePokemonPool(goal);
+    if (!pool.length) return toast(`No ${challengeCriteria(goal)} Pokémon are available yet.`);
+    const candidate = pool[Math.floor(Math.random() * pool.length)];
+    const attempt = goal.throws + 1;
+    const guaranteed = attempt >= goal.guaranteedThrows;
+    const caught = guaranteed || Math.random() < CHALLENGE_CATCH_CHANCE;
+    const alreadyOwned = caught && studentAlreadyOwnsPokemon(candidate, record);
+    const coins = alreadyOwned ? duplicateCoins(candidate) : 0;
+    const originalData = JSON.stringify(state);
+    const createdAt = new Date().toISOString();
+    const pokemonRecord = {
+      type: 'pokemon', student_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '',
+      student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(candidate.id), pokemon_name: candidate.name,
+      pokemon_rarity: candidate.rarity || 'common', pokemon_price: Number(candidate.price) || 0, pokemon_power: Number(candidate.power) || 0,
+      current_hp: Number(candidate.hp) || (Number(candidate.power) || 0) + 30, last_battle_time: '', created_at: createdAt,
+      catchdex_challenge_id: goal.id, catchdex_challenge_type: goal.types.join(',')
+    };
+    state.balls -= 1;
+    state.challengeThrows = { ...(state.challengeThrows || {}), [goal.id]: attempt };
+    if (caught) state.challengeWins = [...new Set([...(Array.isArray(state.challengeWins) ? state.challengeWins : []), goal.id])];
+    throwingChallengeIds.add(throwKey);
+    let createdPokemon = null; let coinsAwarded = false;
+    try {
+      if (caught && !alreadyOwned) {
+        const result = await window.dataSdk.create(pokemonRecord);
+        if (!result?.isOk) throw new Error('pokemon create failed');
+        createdPokemon = result.data || result;
+      } else if (alreadyOwned) { await addCoins(record, coins); coinsAwarded = true; }
+      await save(record, state);
+      if (createdPokemon && typeof allData !== 'undefined') allData.push({ ...pokemonRecord, __backendId: createdPokemon.__backendId || createdPokemon.id || '' });
+    } catch (_) {
+      if (createdPokemon && (createdPokemon.__backendId || createdPokemon.id)) { try { await window.dataSdk.delete(createdPokemon); } catch (_) {} }
+      if (coinsAwarded) { try { await addCoins(record, -coins); } catch (_) {} }
+      try { await save(record, JSON.parse(originalData)); } catch (_) {}
+      throwingChallengeIds.delete(throwKey);
+      return toast('The Poké Ball could not be saved. It is still available; please try again.');
     }
-    state.mysteryBoxChallengeIds = [...new Set([...(Array.isArray(state.mysteryBoxChallengeIds) ? state.mysteryBoxChallengeIds : []), goal.id])];
-    state.mysteryBoxes += 1;
-    state.lastChallengeReward = { ...(state.lastChallengeReward || {}), challengeId: goal.id, consumed: recovery ? (state.lastChallengeReward?.consumed || 0) : consumed.length, claimedAt: state.lastChallengeReward?.claimedAt || new Date().toISOString(), ...(recovery ? { recoveredAt: new Date().toISOString() } : {}) };
-    try { await save(record, state); }
-    catch (_) { claimingChallengeIds.delete(claimKey); return toast('Could not claim the Mystery Box. Your Catchdex stickers are safe; please try again.'); }
-    claimingChallengeIds.delete(claimKey);
-    if (currentRole === 'student') renderCatchdexTab();
-    else refreshViewer(record);
+    throwingChallengeIds.delete(throwKey);
+    if (currentRole === 'student') renderCatchdexTab(); else refreshViewer(record);
     mountCards();
-    toast(recovery ? 'Your missing Mystery Box has been restored.' : 'Mystery Box added to your Catchdex.');
+    if (caught && currentRole === 'student' && typeof renderStudentDashboard === 'function') renderStudentDashboard();
+    showChallengeThrow(candidate, { caught, alreadyOwned, coins, attempt, target: goal.guaranteedThrows, type: goal.types[0] || 'pokemon' });
+  }
+  function showChallengeThrow(item, result) {
+    document.getElementById('lc-challenge-throw')?.remove();
+    const overlay = document.createElement('div'); overlay.id = 'lc-challenge-throw'; overlay.className = 'lc-throw-overlay';
+    overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', `${result.type} Poké Ball throw`);
+    const title = result.caught ? (result.alreadyOwned ? 'A duplicate!' : `${esc(item.name)} caught!`) : 'It got away!';
+    const description = result.caught
+      ? result.alreadyOwned ? `${esc(item.name)} was already in the collection, so you earned ${result.coins} coins.` : `${esc(item.name)} was added to your Pokémon collection.`
+      : `Throw ${result.attempt} of ${result.target} used. The next ${esc(result.type)} Poké Ball could catch one!`;
+    overlay.innerHTML = `<section class="lc-throw-card is-animating"><button type="button" class="lc-mystery-close" data-throw-close aria-label="Close">×</button><span class="lc-mystery-kicker">${esc(result.type)} POKÉ BALL · THROW ${result.attempt}/${result.target}</span><div class="lc-throw-scene"><span class="lc-throw-target" aria-hidden="true">${result.caught ? `<img src="${art(item.id)}" alt="">` : `<span>${esc(item.name)}</span>`}</span><span class="lc-throw-ball type-${esc(result.type)}" aria-hidden="true"><i></i></span><span class="lc-throw-impact" aria-hidden="true">✦</span></div><h2>${title}</h2><p>${description}</p><button type="button" class="lc-primary" data-throw-close>${result.caught ? 'Awesome!' : 'Try another ball'}</button></section>`;
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.querySelector('.lc-throw-card')?.classList.add(result.caught ? 'is-caught' : 'is-missed'));
+    overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-throw-close]')) overlay.remove(); });
   }
   const openingBoxIds = new Set();
   async function openMysteryBox(record = student()) {
@@ -300,13 +326,15 @@
     if (typeof canAccessAdmin !== 'function' || !canAccessAdmin()) return;
     const data = new FormData(form); const start = String(data.get('start') || '');
     if (!start || !Number.isFinite(new Date(`${start}T00:00:00`).getTime())) return toast('Choose a valid challenge start date.');
+    const selectedType = parseTypes(data.get('pokemonType'))[0] || '';
+    if (!selectedType) return toast('Choose a Pokémon type for the challenge ball.');
     const existing = challengeSetting();
     const oldStart = challengeDate(challengeStartValue(existing));
     const sameChallengeWindow = oldStart && dateInput(oldStart) === start;
-    const newTypes = parseTypes([data.get('pokemonType'), data.get('pokemonType2')].join(',')).join(',');
-    const sameCriteria = existing && parseTypes(existing.challenge_type).join(',') === newTypes && String(existing.challenge_tier || '') === String(data.get('pokemonTier') || '') && Number(existing.challenge_goal) === Number(data.get('goal'));
+    const guaranteedThrows = Math.max(1, Math.min(100, Number(data.get('maxThrows')) || DEFAULT_GUARANTEED_THROWS));
+    const sameCriteria = existing && existing.challenge_max_throws != null && parseTypes(existing.challenge_type).join(',') === selectedType && Number(existing.challenge_max_throws) === guaranteedThrows;
     const challengeId = sameChallengeWindow && sameCriteria && existing.challenge_id ? String(existing.challenge_id) : `ch-${start}-${Date.now().toString(36)}`;
-    const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_id: challengeId, challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_type: newTypes, challenge_tier: String(data.get('pokemonTier') || ''), challenge_goal: Math.max(1, Math.min(200, Number(data.get('goal')) || DEFAULT_CHALLENGE_GOAL)), challenge_start: start, updated_at: new Date().toISOString() };
+    const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_id: challengeId, challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_type: selectedType, challenge_tier: '', challenge_goal: guaranteedThrows, challenge_max_throws: guaranteedThrows, challenge_start: start, updated_at: new Date().toISOString() };
     const button = form.querySelector('button[type="submit"]'); button.disabled = true;
     let result;
     try { result = existing ? await window.dataSdk.update({ ...payload, __backendId: existing.__backendId }) : await window.dataSdk.create(payload); }
@@ -325,14 +353,14 @@
     if (!panel) {
       panel = document.createElement('section'); panel.id = 'listen-catch-admin'; panel.className = 'lc-admin-panel';
       const start = dateInput(weekStart());
-      panel.innerHTML = `<header><span>LISTEN AND CATCH</span><h3>Weekly Catchdex challenge</h3><p>This is the single shared source for every student's Catchdex challenge. It runs for seven days from the selected start date. Choose up to two types (either counts), a tier, or both.</p></header><form class="lc-admin-form"><label>Challenge name<input name="title" maxlength="48" placeholder="Green Explorer" required></label><label>Pokémon type<select name="pokemonType"><option value="">Any type</option>${POKEMON_TYPES.map(type => `<option value="${type}">${type[0].toUpperCase()}${type.slice(1)}</option>`).join('')}</select></label><label>Second type (optional)<select name="pokemonType2"><option value="">None</option>${POKEMON_TYPES.map(type => `<option value="${type}">${type[0].toUpperCase()}${type.slice(1)}</option>`).join('')}</select></label><label>Pokémon tier<select name="pokemonTier"><option value="">Any tier</option>${POKEMON_TIERS.map(tier => `<option value="${tier}">${tier[0].toUpperCase()}${tier.slice(1)}</option>`).join('')}</select></label><label>Unique Pokémon needed<input name="goal" type="number" min="1" max="200" value="${DEFAULT_CHALLENGE_GOAL}" required></label><label>Week starts<input name="start" type="date" value="${start}" required></label><button type="submit" class="lc-primary">Save weekly challenge</button></form><p class="lc-admin-status" aria-live="polite"></p>`;
+      panel.innerHTML = `<header><span>LISTEN AND CATCH</span><h3>Weekly type-ball challenge</h3><p>Every student shares this seven-day challenge. Choose a Pokémon type and the maximum throws before a catch is guaranteed. Each throw has a small chance to catch early.</p></header><form class="lc-admin-form"><label>Challenge name<input name="title" maxlength="48" placeholder="Happy Halloween" required></label><label>Pokémon type<select name="pokemonType" required><option value="">Choose a type</option>${POKEMON_TYPES.map(type => `<option value="${type}">${type[0].toUpperCase()}${type.slice(1)}</option>`).join('')}</select></label><label>Guaranteed catch by throw<input name="maxThrows" type="number" min="1" max="100" value="${DEFAULT_GUARANTEED_THROWS}" required><small>Students have a 2% chance to catch one on earlier throws.</small></label><label>Challenge starts<input name="start" type="date" value="${start}" required></label><button type="submit" class="lc-primary">Save weekly challenge</button></form><p class="lc-admin-status" aria-live="polite"></p>`;
       panel.querySelector('form').addEventListener('submit', event => { event.preventDefault(); saveChallengeConfig(event.currentTarget); });
     }
     if (panel.parentElement !== host) host.appendChild(panel);
     const setting = challengeSetting(); const active = activeChallenge(); const form = panel.querySelector('form');
     if (!form.dataset.loaded) {
-      if (setting) { form.elements.title.value = setting.challenge_title || ''; { const ts = parseTypes(setting.challenge_type); form.elements.pokemonType.value = ts[0] || ''; form.elements.pokemonType2.value = ts[1] || ''; } form.elements.pokemonTier.value = POKEMON_TIERS.includes(setting.challenge_tier) ? setting.challenge_tier : ''; form.elements.goal.value = Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL; form.elements.start.value = challengeStartValue(setting) || dateInput(weekStart()); }
-      else { form.elements.title.value = ''; form.elements.pokemonType.value = ''; form.elements.pokemonType2.value = ''; form.elements.pokemonTier.value = ''; form.elements.goal.value = DEFAULT_CHALLENGE_GOAL; form.elements.start.value = dateInput(weekStart()); }
+      if (setting) { form.elements.title.value = setting.challenge_title || ''; form.elements.pokemonType.value = parseTypes(setting.challenge_type)[0] || ''; form.elements.maxThrows.value = Number(setting.challenge_max_throws ?? setting.challenge_goal) || DEFAULT_GUARANTEED_THROWS; form.elements.start.value = challengeStartValue(setting) || dateInput(weekStart()); }
+      else { form.elements.title.value = ''; form.elements.pokemonType.value = ''; form.elements.maxThrows.value = DEFAULT_GUARANTEED_THROWS; form.elements.start.value = dateInput(weekStart()); }
       form.dataset.loaded = 'true';
     }
     const status = panel.querySelector('.lc-admin-status');
@@ -341,15 +369,18 @@
     if (!posted) { posted = document.createElement('section'); posted.className = 'lc-admin-posted'; panel.appendChild(posted); posted.addEventListener('click', e => { if (e.target.closest('[data-lc-delete]')) deleteChallenge(); }); }
     if (!setting) { posted.innerHTML = ''; return; }
     const id = String(setting.challenge_id || `week-${challengeDate(setting.challenge_start) ? dateInput(challengeDate(setting.challenge_start)) : setting.challenge_start}`);
-    const done = []; const ready = [];
+    const done = []; const participants = [];
     (typeof allData === 'undefined' ? [] : allData).filter(r => r.type === 'listen_catch_progress').forEach(r => {
       const state = parseProgress(r); const rec = (typeof getStudentRecordByStableId === 'function' && getStudentRecordByStableId(r.student_id)) || r; const name = rec.student_name || r.student_name || 'Student';
       const cls = [rec.school_name || r.school_name, rec.class_name || r.class_name].filter(Boolean).join(' · ');
-      if (hasClaimedChallenge(state, id)) done.push({ name, cls }); else if (active && challenge(state).ready) ready.push({ name, cls });
+      const playerChallenge = challenge(state);
+      if (hasClaimedChallenge(state, id) || playerChallenge.claimed) done.push({ name, cls });
+      else if (active && playerChallenge.throws > 0) participants.push({ name, cls, throws: playerChallenge.throws });
     });
     const row = (s, tag) => `<li><b>${esc(s.name)}</b><span>${esc(s.cls)}</span><em>${tag}</em></li>`;
     const crit = challengeCriteria({ type: setting.challenge_type, tier: setting.challenge_tier });
-    posted.innerHTML = `<header><div><span>${active ? 'LIVE NOW' : 'POSTED CHALLENGE'}</span><h4>${esc(setting.challenge_title || 'Weekly Catchdex Challenge')}</h4><p>Collect ${Number(setting.challenge_goal) || DEFAULT_CHALLENGE_GOAL} unique Pokémon · ${esc(crit)} · starts ${esc(setting.challenge_start)}</p></div><button type="button" class="lc-admin-delete" data-lc-delete>Delete challenge</button></header><h5>Completed (${done.length + ready.length})</h5>${done.length + ready.length ? `<ul>${done.map(s => row(s, 'Box claimed')).join('')}${ready.map(s => row(s, 'Ready to claim')).join('')}</ul>` : '<p class="lc-admin-empty">No students have completed this challenge yet.</p>'}`;
+    const maxThrows = Number(setting.challenge_max_throws ?? setting.challenge_goal) || DEFAULT_GUARANTEED_THROWS;
+    posted.innerHTML = `<header><div><span>${active ? 'LIVE NOW' : 'POSTED CHALLENGE'}</span><h4>${esc(setting.challenge_title || 'Weekly Type-Ball Challenge')}</h4><p>Catch a ${esc(crit)} Pokémon · ${maxThrows} throws maximum · starts ${esc(setting.challenge_start)}</p></div><button type="button" class="lc-admin-delete" data-lc-delete>Delete challenge</button></header><h5>Caught (${done.length})</h5>${done.length || participants.length ? `<ul>${done.map(s => row(s, 'Pokémon caught')).join('')}${participants.map(s => row(s, `${s.throws}/${maxThrows} throws`)).join('')}</ul>` : '<p class="lc-admin-empty">Students can use their Catch Balls to try the type challenge.</p>'}`;
   }
   async function deleteChallenge() {
     const setting = challengeSetting(); if (!setting || !canAccessAdmin()) return;
@@ -357,7 +388,7 @@
     let result; try { result = await window.dataSdk.delete(setting); } catch (_) { result = null; }
     if (!result?.isOk) return toast('Challenge could not be deleted. Try again.');
     allData = allData.filter(r => r !== setting && r.type !== 'listen_catch_challenge');
-    const form = document.querySelector('#listen-catch-admin form'); if (form) { form.reset(); form.elements.goal.value = DEFAULT_CHALLENGE_GOAL; form.elements.start.value = dateInput(weekStart()); }
+    const form = document.querySelector('#listen-catch-admin form'); if (form) { form.reset(); form.elements.maxThrows.value = DEFAULT_GUARANTEED_THROWS; form.elements.start.value = dateInput(weekStart()); }
     toast('Challenge deleted. You can post a new one.'); renderAdminChallenge(); mountCards();
   }
   function refreshViewer(record) {
@@ -461,7 +492,7 @@
   };
   function albumCard(state, compact = false) {
     const goal = challenge(state); const unique = new Set(state.album.map(entry => Number(entry.pokemon_id))).size;
-    return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p></div><div class="catchdex-goal"><b>${goal.unique} / ${goal.goal}</b><span>${goal.active ? `unique ${challengeCriteria(goal)} Pokémon` : 'weekly challenge inactive'}</span></div><button type="button" data-catchdex-profile>View Catchdex</button></section>`;
+    return `<section class="catchdex-card ${compact ? 'catchdex-compact' : ''}"><div class="catchdex-copy"><span class="catchdex-kicker">LISTEN AND CATCH</span><h3>Catchdex</h3><p>${unique} Pokémon discovered · ${state.balls} Catch Ball${state.balls === 1 ? '' : 's'}</p></div><div class="catchdex-goal"><b>${goal.throws} / ${goal.guaranteedThrows}</b><span>${goal.active ? `${challengeCriteria(goal)} ball throws` : 'weekly challenge inactive'}</span></div><button type="button" data-catchdex-profile>View Catchdex</button></section>`;
   }
   function mountCards() {
     const state = parseProgress(progressFor(student()));
@@ -473,7 +504,7 @@
     const profileRoot = document.getElementById('profile-catchdex-root');
     if (profile && profileRoot) {
       const profileState = parseProgress(progressFor(profile)); const profileGoal = challenge(profileState);
-      const sig = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.title}:${profileGoal.start}:${profileGoal.end}:${profileGoal.type}:${profileGoal.tier}:${profileGoal.goal}:${profileGoal.unique}:${profileGoal.claimed}:${profileState.last?.item?.id || ''}`;
+      const sig = `${identity(profile)}:${profileState.album.length}:${profileState.balls}:${profileState.mysteryBoxes}:${profileGoal.id}:${profileGoal.title}:${profileGoal.start}:${profileGoal.end}:${profileGoal.type}:${profileGoal.guaranteedThrows}:${profileGoal.throws}:${profileGoal.claimed}:${profileState.last?.item?.id || ''}`;
       if (profileRoot.dataset.catchdexSig !== sig) {
         albumViewer = { record: profile, readOnly: true };
         profileRoot.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(profile, true).replace('<button type="button" data-catchdex="close" aria-label="Close Catchdex">×</button>', '')}</section>`;
@@ -483,47 +514,44 @@
   }
   function renderCatchdexContents(record, readOnly) {
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    const cards = state.album.length ? state.album.map(entry => {
-      const qualifies = goal.active && !goal.claimed && matchesChallenge(entry, goal);
-      return `<article class="cdx-sticker${qualifies ? ' is-match' : ''}"${qualifies ? ' aria-label="Matches the active challenge"' : ''}>
-        ${qualifies ? '<span class="cdx-match-tag" aria-label="Challenge sticker">✓ Needed</span>' : ''}
+    const cards = state.album.length ? state.album.map(entry => `<article class="cdx-sticker">
         <img src="${art(entry.pokemon_id)}" alt="${esc(entry.pokemon_name)} sticker" loading="lazy">
         <b>${esc(entry.pokemon_name)}</b><span>${esc(entry.pokemon_type)}</span>
-      </article>`;
-    }).join('') : '<div class="cdx-empty"><span aria-hidden="true">🗂️</span><b>Your sticker album is empty</b><p>Play Listen and Catch to earn Catch Balls, then open them to discover Pokémon stickers.</p></div>';
-    const progress = Math.min(goal.unique, goal.goal);
-    const pct = goal.goal ? Math.min(100, progress / goal.goal * 100) : 0;
+      </article>`).join('') : '<div class="cdx-empty"><span aria-hidden="true">🗂️</span><b>Your Catchdex is empty</b><p>Play Listen and Catch to earn Catch Balls, then use them to discover Pokémon.</p></div>';
+    const progress = Math.min(goal.throws, goal.guaranteedThrows);
+    const pct = goal.guaranteedThrows ? Math.min(100, progress / goal.guaranteedThrows * 100) : 0;
+    const typeName = goal.types.length ? goal.types[0] : 'any';
     const challengeMarkup = goal.active
-      ? `<section class="cdx-challenge${goal.ready ? ' is-ready' : ''}${goal.claimed ? ' is-claimed' : ''}" aria-labelledby="cdx-challenge-title">
-          <div class="cdx-challenge-top"><div><span class="cdx-eyebrow">${goal.claimed ? 'CHALLENGE COMPLETE' : 'ACTIVE COLLECTION CHALLENGE'}</span><h3 id="cdx-challenge-title">${esc(goal.title)}</h3><p>Collect <strong>${goal.goal} unique Pokémon</strong> matching <strong>${esc(challengeCriteria(goal))}</strong>.</p></div><span class="cdx-challenge-mark" aria-hidden="true">${goal.claimed ? '✓' : '🎯'}</span></div>
-          <div class="cdx-progress-row"><div class="cdx-progress-label"><b>${progress}<span> / ${goal.goal}</span></b><span>${goal.recoverable ? 'Mystery Box missing' : goal.claimed && state.mysteryBoxes ? 'Mystery Box ready to open' : goal.claimed ? 'Reward claimed' : goal.ready ? 'Ready to claim!' : `${Math.max(0, goal.goal - goal.unique)} more needed`}</span></div><div class="cdx-progress-track" role="progressbar" aria-label="${esc(goal.title)} progress" aria-valuemin="0" aria-valuemax="${goal.goal}" aria-valuenow="${progress}"><span style="width:${pct}%"></span></div></div>
-          <div class="cdx-challenge-foot"><small>${goal.end ? `Challenge ends ${esc(goal.end)}` : 'Limited-time challenge'}</small>${goal.ready ? '<button type="button" class="cdx-button is-gold" data-catchdex="claim">🎁 Claim Mystery Box</button>' : ''}${goal.recoverable ? '<button type="button" class="cdx-button is-gold" data-catchdex="claim">🎁 Restore Mystery Box</button>' : ''}${goal.claimed && state.mysteryBoxes ? '<button type="button" class="cdx-button is-gold" data-catchdex="boxes">🎁 Open a Mystery Box</button>' : ''}</div>
-          ${goal.recoverable ? '<p class="cdx-hint">Your challenge was marked complete, but no box is in your inventory. Restore the missing Mystery Box here.</p>' : goal.claimed ? '<p class="cdx-claimed">✓ Reward claimed. The challenge stickers have been removed from your album.</p>' : '<p class="cdx-hint">Stickers that count toward this challenge are highlighted in your album below.</p>'}
+      ? `<section class="cdx-challenge cdx-type-challenge${goal.claimed ? ' is-claimed' : ''}" aria-labelledby="cdx-challenge-title">
+          <div class="cdx-challenge-top"><div><span class="cdx-eyebrow">${goal.claimed ? 'CHALLENGE COMPLETE' : 'ACTIVE TYPE-BALL CHALLENGE'}</span><h3 id="cdx-challenge-title">${esc(goal.title)}</h3><p>Throw a <strong>${esc(challengeCriteria(goal))} Poké Ball</strong>. Each throw has a <strong>2% catch chance</strong>, with a guaranteed Pokémon by throw <strong>${goal.guaranteedThrows}</strong>.</p></div><span class="cdx-type-ball type-${esc(typeName)}" role="img" aria-label="${esc(typeName)} type Poké Ball"><i></i></span></div>
+          <div class="cdx-progress-row"><div class="cdx-progress-label"><b>${progress}<span> / ${goal.guaranteedThrows} throws</span></b><span>${goal.claimed ? 'Pokémon caught' : `${Math.max(0, goal.guaranteedThrows - goal.throws)} throws until guaranteed`}</span></div><div class="cdx-progress-track" role="progressbar" aria-label="${esc(goal.title)} throws until guaranteed catch" aria-valuemin="0" aria-valuemax="${goal.guaranteedThrows}" aria-valuenow="${progress}"><span style="width:${pct}%"></span></div></div>
+          <div class="cdx-challenge-foot"><small>${goal.end ? `Challenge ends ${esc(goal.end)}` : 'Limited-time challenge'}</small>${!goal.claimed && state.balls ? `<button type="button" class="cdx-button is-gold" data-catchdex="throw">Throw ${esc(typeName)} Ball · ${state.balls} ready</button>` : ''}</div>
+          ${goal.claimed ? '<p class="cdx-claimed">✓ Pokémon caught and added to your collection. Your Catchdex album stays untouched.</p>' : state.balls ? '<p class="cdx-hint">A Catch Ball is used for each attempt. Keep trying; the catch is guaranteed at the target.</p>' : '<p class="cdx-hint">You are out of Catch Balls. Play Listen and Catch to earn more throws.</p>'}
         </section>`
       : '<section class="cdx-challenge is-inactive"><span class="cdx-challenge-mark" aria-hidden="true">🗓️</span><div><span class="cdx-eyebrow">WEEKLY CHALLENGE</span><h3>No active challenge</h3><p>Your next Catchdex challenge will appear here when the admin schedules it.</p></div></section>';
     return `<div class="cdx-view">
-      <header class="cdx-header"><div><span class="cdx-eyebrow">YOUR GAME COLLECTION</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2><p>Every sticker you discover lives here.</p></div>${readOnly ? '<button type="button" class="cdx-close" data-catchdex="close" aria-label="Close Catchdex">×</button>' : ''}</header>
+      <header class="cdx-header"><div><span class="cdx-eyebrow">YOUR GAME COLLECTION</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2><p>Every Pokémon you discover lives here.</p></div>${readOnly ? '<button type="button" class="cdx-close" data-catchdex="close" aria-label="Close Catchdex">×</button>' : ''}</header>
       <section class="cdx-wallet" aria-label="Catchdex inventory">
-        <article class="cdx-stat"><span class="cdx-stat-icon"><img src="assets/catch-ball.png" alt="Catch Ball"></span><div><span class="cdx-stat-label">CATCH BALLS</span><b>${state.balls}</b><small>${readOnly ? 'Ready to open' : `${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} earned today`}</small></div>${state.balls ? '<button type="button" class="cdx-button" data-catchdex="balls">Open balls</button>' : ''}</article>
-        <article class="cdx-stat is-box"><span class="cdx-stat-icon" aria-hidden="true">🎁</span><div><span class="cdx-stat-label">MYSTERY BOXES</span><b>${state.mysteryBoxes}</b><small>${state.mysteryBoxes ? 'A surprise Pokémon awaits' : 'Earn one from a challenge'}</small></div>${state.mysteryBoxes ? '<button type="button" class="cdx-button is-gold" data-catchdex="boxes">Open box</button>' : ''}</article>
+        <article class="cdx-stat${goal.active && !goal.claimed ? ' is-type-ball' : ''}"><span class="cdx-stat-icon"><span class="cdx-type-ball type-${esc(goal.active && !goal.claimed ? typeName : 'normal')}" role="img" aria-label="Poké Ball"></span></span><div><span class="cdx-stat-label">${goal.active && !goal.claimed ? `${esc(typeName.toUpperCase())} POKÉ BALLS` : 'CATCH BALLS'}</span><b>${state.balls}</b><small>${goal.active && !goal.claimed ? 'Challenge throws ready' : readOnly ? 'Ready to open' : `${ballsEarnedToday(state)} / ${DAILY_BALL_LIMIT} earned today`}</small></div>${state.balls ? `<button type="button" class="cdx-button${goal.active && !goal.claimed ? ' is-gold' : ''}" data-catchdex="${goal.active && !goal.claimed ? 'throw' : 'balls'}">${goal.active && !goal.claimed ? `Throw ${esc(typeName)} Ball` : 'Open balls'}</button>` : ''}</article>
+        ${state.mysteryBoxes ? `<article class="cdx-stat is-box"><span class="cdx-stat-icon" aria-hidden="true">🎁</span><div><span class="cdx-stat-label">LEGACY MYSTERY BOXES</span><b>${state.mysteryBoxes}</b><small>Previously earned box rewards</small></div><button type="button" class="cdx-button is-gold" data-catchdex="boxes">Open box</button></article>` : ''}
       </section>
       ${state.last ? `<div class="cdx-discovery${state.last.duplicate ? ' is-duplicate' : ''}"><span aria-hidden="true">${state.last.duplicate ? '🪙' : '✨'}</span><div><b>${state.last.duplicate ? 'Sticker converted' : 'New discovery'}</b><span>${state.last.duplicate ? `${esc(state.last.item.name)} was already in your album · +${state.last.coins} coins` : esc(state.last.item.name)}</span></div></div>` : ''}
       ${challengeMarkup}
-      <section class="cdx-collection"><header class="cdx-collection-head"><div><span class="cdx-eyebrow">STICKER ALBUM</span><h3>Your collection</h3></div><span class="cdx-count">${state.album.length} ${state.album.length === 1 ? 'sticker' : 'stickers'}</span></header>
-        ${goal.active && !goal.claimed ? '<p class="cdx-legend"><span></span>Needed for this challenge</p>' : ''}<div class="cdx-sticker-grid">${cards}</div>
+      <section class="cdx-collection"><header class="cdx-collection-head"><div><span class="cdx-eyebrow">DISCOVERED POKÉMON</span><h3>Your collection</h3></div><span class="cdx-count">${state.album.length} ${state.album.length === 1 ? 'Pokémon' : 'Pokémon'}</span></header>
+        <div class="cdx-sticker-grid">${cards}</div>
       </section>
     </div>`;
   }
   function bindCatchdexContents(root, record, readOnly) {
     root.querySelector('[data-catchdex="close"]')?.addEventListener('click', () => document.getElementById('catchdex-modal')?.classList.add('hidden'));
     root.querySelector('[data-catchdex="balls"]')?.addEventListener('click', () => showBallCountPopup(record));
-    root.querySelector('[data-catchdex="claim"]')?.addEventListener('click', () => claimChallenge(record));
+    root.querySelectorAll('[data-catchdex="throw"]').forEach(button => button.addEventListener('click', () => throwChallengeBall(record)));
     root.querySelector('[data-catchdex="boxes"]')?.addEventListener('click', () => showBoxCountPopup(record));
   }
   function renderCatchdexTab() {
     const root = document.getElementById('student-catchdex-root'); const record = student(); if (!root || !record) return;
     const state = parseProgress(progressFor(record)); const goal = challenge(state);
-    const signature = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.title}:${goal.start}:${goal.end}:${goal.type}:${goal.tier}:${goal.goal}:${goal.unique}:${goal.claimed}:${goal.recoverable}:${state.last?.item?.id || ''}`;
+    const signature = `${identity(record)}:${state.album.length}:${state.balls}:${state.mysteryBoxes}:${goal.id}:${goal.title}:${goal.start}:${goal.end}:${goal.type}:${goal.guaranteedThrows}:${goal.throws}:${goal.claimed}:${state.last?.item?.id || ''}`;
     if (root.dataset.catchdexSig === signature) return;
     root.innerHTML = `<section class="catchdex-tab-card">${renderCatchdexContents(record, false)}</section>`;
     root.dataset.catchdexSig = signature; bindCatchdexContents(root, record, false);
