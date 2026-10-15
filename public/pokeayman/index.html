@@ -6481,7 +6481,7 @@ function getPokemons() {
   // Collapse duplicate source rows before any card, shop, collection, battle, or leaderboard render.
   const canonical = new Map();
   const teacherNames = new Set(getTeachers().map(teacher => normalizeStudentIdentity(teacher.teacher_name)));
-  allData.filter(r => r.type === 'pokemon' && !teacherNames.has(normalizeStudentIdentity(r.owner))).forEach(record => {
+  allData.filter(r => r.type === 'pokemon' && (r.student_id || r.owner_id || !teacherNames.has(normalizeStudentIdentity(r.owner)))).forEach(record => {
     const owner = normalizeStudentIdentity(record.owner);
     const id = Number(record.pokemon_id);
     const name = String(record.pokemon_name || '').trim().toLocaleLowerCase();
@@ -9359,7 +9359,7 @@ function renderStudentDashboard() {
   document.getElementById('my-coins').textContent = student ? (student.coins || 0) : 0;
   
   // Pokémon count
-  const myPokes = getPokemons().filter(p => p.owner === currentStudent);
+  const myPokes = getOwnedPokemonForStudent(student || currentStudent);
   document.getElementById('my-pokemon-count').textContent = myPokes.length;
   
   // Total Power (sum of all Pokémon power stats)
@@ -10898,12 +10898,27 @@ function gameStudentAvatarMarkup(student, className = 'game-player-avatar') {
   }
   return `<img class="${className}" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${id}.png" alt="${student.student_name}'s avatar Pokémon" loading="lazy">`;
 }
-function getOwnedPokemonForStudent(studentName, excludedPokemonId = null) {
+function getOwnedPokemonForStudent(studentOrName, excludedPokemonId = null) {
+  const student = studentOrName && typeof studentOrName === 'object'
+    ? studentOrName
+    : getAllStudents().find(record => normalizeStudentIdentity(record.student_name) === normalizeStudentIdentity(studentOrName));
+  const studentName = typeof studentOrName === 'string' ? studentOrName : studentOrName?.student_name;
+  const ownerKey = normalizeStudentIdentity(student?.student_name || studentName);
+  const canonicalId = student ? canonicalStudentKey(student) : '';
+  const studentIds = new Set([canonicalId, student?.student_id, student?.__backendId].filter(Boolean).map(value => String(value).trim()));
+  if (canonicalId) {
+    allData.filter(record => (record.type === 'student' || record.type === 'student_membership') && canonicalStudentKey(record) === canonicalId)
+      .forEach(record => [record.__backendId, record.student_id].filter(Boolean).forEach(value => studentIds.add(String(value).trim())));
+  }
   const excludedId = excludedPokemonId === null || excludedPokemonId === undefined ? null : Number(excludedPokemonId);
-  return getPokemons().filter(pokemon => pokemon.owner === studentName && (excludedId === null || Number(pokemon.pokemon_id) !== excludedId));
+  return getPokemons().filter(pokemon => {
+    const pokemonStudentId = String(pokemon.student_id || pokemon.owner_id || '').trim();
+    const belongsToStudent = pokemonStudentId ? studentIds.has(pokemonStudentId) : normalizeStudentIdentity(pokemon.owner) === ownerKey;
+    return belongsToStudent && (excludedId === null || Number(pokemon.pokemon_id) !== excludedId);
+  });
 }
 async function syncStudentAvatarAfterPokemonLoss(studentName, lostPokemonId) {
-  const student = getAllStudents().find(record => record.student_name === studentName);
+  const student = getAllStudents().find(record => normalizeStudentIdentity(record.student_name) === normalizeStudentIdentity(studentName));
   if (!student) return;
   const remaining = getOwnedPokemonForStudent(studentName, lostPokemonId);
   const nextAvatarId = Number(remaining[0]?.pokemon_id) || 0;
@@ -12609,7 +12624,7 @@ function renderStudentProfile(isViewOnly = false) {
   document.getElementById('profile-coins').textContent = profileStudent ? (profileStudent.coins || 0) : 0;
   
   // Pokémon count
-  const myPokes = getPokemons().filter(p => p.owner === profileStudent.student_name);
+  const myPokes = getOwnedPokemonForStudent(profileStudent);
   document.getElementById('profile-pokemon-count').textContent = myPokes.length;
   
   // Total Power (sum of all Pokémon power stats)
@@ -17966,7 +17981,7 @@ function openProfileAvatarSelector() {
   
   if (!isAuthorized) { toast('Not authorized to change avatar'); return; }
   
-  const myPokes = getPokemons().filter(p => p.owner === profileStudent.student_name);
+  const myPokes = getOwnedPokemonForStudent(profileStudent);
   if (!myPokes.length) { toast('No Pokémon in collection'); return; }
   
   const modal = document.createElement('div');
@@ -18011,7 +18026,7 @@ function openProfileAvatarSelector() {
 function openAvatarSelector() {
   const student = getAllStudents().find(s => s.student_name === currentStudent);
   if (!student) return;
-  const myPokes = getPokemons().filter(p => p.owner === currentStudent);
+  const myPokes = getOwnedPokemonForStudent(student);
   if (!myPokes.length) { toast('No Pokémon in collection'); return; }
   
   const modal = document.createElement('div');

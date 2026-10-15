@@ -211,7 +211,12 @@
     battle.currentWord = word;
     battle.slots = new Array(word.length).fill(null);
     battle.tiles = scrambleWord(word.toLowerCase()).map((letter, i) => ({ letter, used: false, key: i }));
-    battle.turnSeconds = rand(10, 22) + Math.min(6, Math.floor(word.length / 2));
+    const price = Math.max(0, Number(battle.foe.shop_pokemon_price) || 0);
+    const catalog = (typeof pokemonCatalog !== 'undefined' && Array.isArray(pokemonCatalog)) ? pokemonCatalog : [];
+    const maxPrice = Math.max(200, ...catalog.map((pokemon) => Number(pokemon.price) || 0));
+    const difficulty = Math.max(0, Math.min(1, price / maxPrice));
+    const wordBonus = Math.min(4, Math.floor(word.length / 3));
+    battle.turnSeconds = Math.max(8, 18 - Math.round(difficulty * 8) + wordBonus + rand(-1, 1));
     battle.deadline = Date.now() + battle.turnSeconds * 1000;
     renderWord();
     battle.timerId = setInterval(tickTimer, 100);
@@ -263,7 +268,7 @@
     if (guess.toLowerCase() === battle.currentWord.toLowerCase()) onSuccess();
     else {
       battle.root.querySelectorAll('.vb-slot').forEach((s) => s.classList.add('vb-wrong'));
-      later(() => { battle.slots.fill(null); battle.tiles.forEach((t) => { t.used = false; delete t._slot; }); renderWord(); }, 500);
+      onFail('❌ Wrong answer!');
     }
   }
 
@@ -297,7 +302,11 @@
   function onFail(reason) {
     stopTimer();
     battle.resolving = true;
-    const damage = rand(4, 8) + battle.failStreak * 2;
+    const price = Math.max(0, Number(battle.foe.shop_pokemon_price) || 0);
+    const catalog = (typeof pokemonCatalog !== 'undefined' && Array.isArray(pokemonCatalog)) ? pokemonCatalog : [];
+    const maxPrice = Math.max(200, ...catalog.map((pokemon) => Number(pokemon.price) || 0));
+    const difficulty = Math.max(0, Math.min(1, price / maxPrice));
+    const damage = rand(4, 7) + Math.round(difficulty * 6) + battle.failStreak * 2;
     battle.failStreak += 1;
     const meEl = battle.root.querySelector('.vb-me');
     setMessage(`${reason} ${battle.foe.shop_pokemon_name} is charging an attack!`);
