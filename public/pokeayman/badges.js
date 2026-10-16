@@ -88,6 +88,8 @@
   window.pkApplyBadgePins = function (root = document) {
     const battle = leader('battle_wins');
     const arcade = leader('game_wins');
+    const cwMap = new Map(); (window.pkChallengeWinnerRows?.() || []).forEach(r => { const k = norm(r.student_name); if (k) cwMap.set(k, (cwMap.get(k) || 0) + 1); });
+    let cmBest = null; cwMap.forEach((n, k) => { if (!cmBest || n > cmBest.count) cmBest = { key: k, count: n }; });
     const sel = '#students-list > .trainer-student-card, .student-classmate-card, #view-student-profile .cp-identity, #student-dashboard .global-profile-card, #classmate-profile-modal .global-profile-card';
     root.querySelectorAll(sel).forEach(card => {
       card.querySelectorAll(':scope > .pk-pins, :scope > .cp-name > .pk-pins').forEach(n => n.remove());
@@ -102,6 +104,7 @@
       const g = globalRank(key);
       if (g) pins.unshift(pin(...GLOBAL_PINS[g - 1], name));
       if (battle && battle.key === key) pins.push(pin('battle', '⚔️', 'Battle Master', `School record: ${battle.count} arena win${battle.count === 1 ? '' : 's'}`, name));
+      if (cmBest && cmBest.key === key) pins.push(pin('challenge', '🏆', 'Challenge Master', `Won ${cmBest.count} Catchdex challenge${cmBest.count === 1 ? '' : 's'}`, name));
       if (arcade && arcade.key === key) pins.push(pin('arcade', '🕹️', 'Arcade Prodigy', `School record: ${arcade.count} game win${arcade.count === 1 ? '' : 's'}`, name));
       if (!pins.length) return;
       const row = document.createElement('div');

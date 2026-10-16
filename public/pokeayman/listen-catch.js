@@ -263,13 +263,39 @@
     catchdexConversionTasks.set(recordId, task);
     return task;
   }
+  const BALL_AWARD_PRICES = { common: 2, uncommon: 5, rare: 10, legendary: 20 };
+  function winnerRows() {
+    return (typeof allData === 'undefined' ? [] : allData).filter(row => String(row.type || '') === 'listen_catch_winner');
+  }
+  function challengeWinner(challengeId) {
+    if (!challengeId) return null;
+    return winnerRows().filter(row => String(row.challenge_id) === String(challengeId))
+      .sort((a, b) => (Date.parse(a.won_at || a.created_at || '') || 0) - (Date.parse(b.won_at || b.created_at || '') || 0))[0] || null;
+  }
+  window.pkChallengeWinnerRows = winnerRows;
+  async function awardBall(record, tier) {
+    if (currentRole !== 'teacher' || !BALL_TIERS.includes(tier)) return;
+    const price = BALL_AWARD_PRICES[tier];
+    if (!confirm(`Give ${record.student_name || 'this student'} one ${rarityLabel(tier)} ball for ${price} credits?`)) return;
+    const paid = typeof deductTeacherCredits === 'function' ? await deductTeacherCredits(price) : false;
+    if (!paid) return;
+    const state = stateFor(record);
+    state.ballTiers[tier] = ballCount(state, tier) + 1; state.balls = totalBalls(state);
+    try { await save(record, state); }
+    catch (_) { if (typeof refundTeacherCredits === 'function') await refundTeacherCredits(price, currentTeacher); return toast('The ball could not be saved. Your credits were returned.'); }
+    if (typeof updateTeacherCreditBalance === 'function') updateTeacherCreditBalance();
+    toast(`${rarityLabel(tier)} ball given to ${record.student_name || 'student'}!`);
+    refreshViewer(record);
+  }
   function challenge(state) {
     const active = activeChallenge();
     if (!active) return { id: '', title: 'No challenge this week', type: '', types: [], guaranteedThrows: DEFAULT_GUARANTEED_THROWS, throws: 0, canThrow: false, claimed: false, active: null };
     const savedThrows = Number(state.challengeThrows?.[active.id]) || 0;
     const throws = Math.min(active.guaranteedThrows, Math.max(0, savedThrows));
     const won = (Array.isArray(state.challengeWins) && state.challengeWins.some(id => String(id) === active.id)) || hasClaimedChallenge(state, active.id);
-    return { ...active, active: true, throws, canThrow: !won && ballCount(state, active.tier) > 0, ballCount: ballCount(state, active.tier), claimed: won };
+    const winner = challengeWinner(active.id);
+    const lockedByOther = Boolean(winner && !won);
+    return { ...active, active: true, throws, winner, lockedByOther, canThrow: !won && !lockedByOther && ballCount(state, active.tier) > 0, ballCount: ballCount(state, active.tier), claimed: won };
   }
   function canManageCatchdex(record) {
     return Boolean(record && ((currentRole === 'student' && identity(student()) === identity(record)) || (currentRole === 'teacher' && catchdexViewer?.readOnly && identity(catchdexViewer.record) === identity(record))));
@@ -292,6 +318,7 @@
     await scheduleLegacyCatchdexConversion(record);
     const state = stateFor(record); const goal = challenge(state);
     if (!goal.active || goal.claimed) return toast('This type-ball challenge has already been completed.');
+    if (goal.lockedByOther) return toast(`${goal.winner.student_name || 'Another student'} already caught this Pokémon. Watch for the next challenge!`);
     if (!ballCount(state, goal.tier)) return toast(`You need a ${rarityLabel(goal.tier)} ball for this challenge. Earn more Catch Balls by playing Listen and Catch.`);
     const throwKey = `${recordId}:${goal.id}`;
     if (throwingChallengeIds.has(throwKey)) return;
@@ -324,6 +351,11 @@
         createdPokemon = result.data || result;
       } else if (alreadyOwned) { await addCoins(record, coins); coinsAwarded = true; }
       await save(record, state);
+      if (caught) {
+        const winnerRecord = { type: 'listen_catch_winner', challenge_id: goal.id, challenge_title: goal.title, student_id: recordId, student_name: record.student_name || '', class_name: record.class_name || '', school_name: record.school_name || '', pokemon_id: Number(candidate.id), pokemon_name: candidate.name, won_at: createdAt, created_at: createdAt };
+        try { const res = await window.dataSdk.create(winnerRecord); if (res?.isOk && typeof allData !== 'undefined' && !allData.some(r => r.__backendId && r.__backendId === (res.data?.__backendId))) allData.push({ ...winnerRecord, __backendId: res.data?.__backendId || res.data?.id || '' }); } catch (_) {}
+        window.pkApplyBadgePins?.();
+      }
       if (createdPokemon && typeof allData !== 'undefined') allData.push({ ...pokemonRecord, __backendId: createdPokemon.__backendId || createdPokemon.id || '' });
     } catch (_) {
       if (createdPokemon && (createdPokemon.__backendId || createdPokemon.id)) { try { await window.dataSdk.delete(createdPokemon); } catch (_) {} }
@@ -342,11 +374,11 @@
     document.getElementById('lc-challenge-throw')?.remove();
     const overlay = document.createElement('div'); overlay.id = 'lc-challenge-throw'; overlay.className = 'lc-throw-overlay';
     overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', `${result.type} Poké Ball throw`);
-    const title = result.caught ? `Yay! You caught ${esc(item.name)}!` : 'It got away!';
+    const title = result.caught ? `Gotcha! You caught ${esc(item.name)} and won the challenge!` : `${esc(item.name)} dodged it!`;
     const description = result.caught
       ? result.alreadyOwned ? `${esc(item.name)} is already yours. The Catchdex challenge is complete.` : `${esc(item.name)} was added to your Pokémon collection.`
       : `Throw ${result.attempt} of ${result.target} missed. There is a 95% chance to miss before the guaranteed final throw.`;
-    overlay.innerHTML = `<section class="lc-throw-card lc-tier-${esc(result.type)} is-animating${result.caught ? ' result-caught' : ' result-missed'}"><button type="button" class="lc-mystery-close" data-throw-close aria-label="Close">×</button><span class="lc-mystery-kicker">${rarityLabel(result.type).toUpperCase()} POKÉ BALL · THROW ${result.attempt}/${result.target}</span><div class="lc-throw-scene"><span class="lc-throw-target" aria-label="${esc(item.name)}"><img src="${art(item.id)}" alt="${esc(item.name)}" loading="eager"></span><span class="lc-throw-ball" aria-hidden="true"><img src="${result.ballImage || ballArt(result.type)}" alt=""></span><span class="lc-throw-impact" aria-hidden="true">✦</span></div><h2>${title}</h2><p>${description}</p><button type="button" class="lc-primary" data-throw-close>${result.caught ? 'Awesome!' : 'Try another ball'}</button></section>`;
+    overlay.innerHTML = `<section class="lc-throw-card lc-tier-${esc(result.type)} is-animating${result.caught ? ' result-caught' : ' result-missed'}"><button type="button" class="lc-mystery-close" data-throw-close aria-label="Close">×</button><span class="lc-mystery-kicker">${rarityLabel(result.type).toUpperCase()} POKÉ BALL · THROW ${result.attempt}/${result.target}</span><div class="lc-throw-scene"><span class="lc-throw-target" aria-label="${esc(item.name)}"><img src="${art(item.id)}" alt="${esc(item.name)}" loading="eager"></span><span class="lc-throw-ball" aria-hidden="true"><img src="${result.ballImage || ballArt(result.type)}" alt=""></span><span class="lc-throw-impact" aria-hidden="true">✦</span>${result.caught ? '<span class="lc-confetti" aria-hidden="true">' + Array.from({ length: 18 }, (_, i) => `<i style="--i:${i}"></i>`).join('') + '</span><span class="lc-gotcha" aria-hidden="true">Gotcha!</span>' : '<span class="lc-dust" aria-hidden="true"></span><span class="lc-broke" aria-hidden="true">Broke free!</span>'}</div><h2>${title}</h2><p>${description}</p><button type="button" class="lc-primary" data-throw-close>${result.caught ? 'Awesome!' : 'Try another ball'}</button></section>`;
     document.body.appendChild(overlay);
     requestAnimationFrame(() => overlay.querySelector('.lc-throw-card')?.classList.add(result.caught ? 'is-caught' : 'is-missed'));
     overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-throw-close]')) overlay.remove(); });
@@ -379,6 +411,11 @@
       state.mysteryBoxChallengeIds = pendingChallengeBoxes;
       if (openedChallengeId) state.openedBoxChallengeIds = [...new Set([...(Array.isArray(state.openedBoxChallengeIds) ? state.openedBoxChallengeIds : []), openedChallengeId])];
       await save(record, state);
+      if (caught) {
+        const winnerRecord = { type: 'listen_catch_winner', challenge_id: goal.id, challenge_title: goal.title, student_id: recordId, student_name: record.student_name || '', class_name: record.class_name || '', school_name: record.school_name || '', pokemon_id: Number(candidate.id), pokemon_name: candidate.name, won_at: createdAt, created_at: createdAt };
+        try { const res = await window.dataSdk.create(winnerRecord); if (res?.isOk && typeof allData !== 'undefined' && !allData.some(r => r.__backendId && r.__backendId === (res.data?.__backendId))) allData.push({ ...winnerRecord, __backendId: res.data?.__backendId || res.data?.id || '' }); } catch (_) {}
+        window.pkApplyBadgePins?.();
+      }
       if (createdPokemon && typeof allData !== 'undefined') allData.push({ ...pokemonRecord, __backendId: createdPokemon.__backendId || createdPokemon.id || '' });
     } catch (_) {
       if (createdPokemon && (createdPokemon.__backendId || createdPokemon.id)) { try { await window.dataSdk.delete(createdPokemon); } catch (_) {} }
@@ -474,7 +511,7 @@
     const row = (s, tag) => `<li><b>${esc(s.name)}</b><span>${esc(s.cls)}</span><em>${tag}</em></li>`;
     const crit = setting.challenge_pokemon_name || catalog().find(item => Number(item.id) === Number(setting.challenge_pokemon_id))?.name || challengeCriteria({ type: setting.challenge_type, tier: setting.challenge_tier });
     const maxThrows = Number(setting.challenge_max_throws ?? setting.challenge_goal) || DEFAULT_GUARANTEED_THROWS;
-    posted.innerHTML = `<header><div><span>${active ? 'LIVE NOW' : 'POSTED CHALLENGE'}</span><h4>${esc(setting.challenge_title || 'Weekly Catchdex Challenge')}</h4><p>Catch ${esc(crit)} · ${rarityLabel(setting.challenge_tier).toLowerCase()} balls only · ${maxThrows} throws maximum · starts ${esc(setting.challenge_start)}</p></div><button type="button" class="lc-admin-delete" data-lc-delete>Delete challenge</button></header><h5>Caught (${done.length})</h5>${done.length || participants.length ? `<ul>${done.map(s => row(s, 'Pokémon caught')).join('')}${participants.map(s => row(s, `${s.throws}/${maxThrows} throws`)).join('')}</ul>` : '<p class="lc-admin-empty">Students can use matching rarity Catch Balls to try the challenge.</p>'}`;
+    posted.innerHTML = `<header><div><span>${active ? 'LIVE NOW' : 'POSTED CHALLENGE'}</span><h4>${esc(setting.challenge_title || 'Weekly Catchdex Challenge')}</h4><p>Catch ${esc(crit)} · ${rarityLabel(setting.challenge_tier).toLowerCase()} balls only · ${maxThrows} throws maximum · starts ${esc(setting.challenge_start)}</p></div><button type="button" class="lc-admin-delete" data-lc-delete>Delete challenge</button></header>${(() => { const w = challengeWinner(setting.challenge_id || activeChallenge()?.id); return w ? `<p class="lc-admin-winner">🏆 Won by <strong>${esc(w.student_name)}</strong>${w.class_name ? ` (${esc(w.class_name)})` : ''}</p>` : ''; })()}<h5>Caught (${done.length})</h5>${done.length || participants.length ? `<ul>${done.map(s => row(s, 'Pokémon caught')).join('')}${participants.map(s => row(s, `${s.throws}/${maxThrows} throws`)).join('')}</ul>` : '<p class="lc-admin-empty">Students can use matching rarity Catch Balls to try the challenge.</p>'}${winnerRows().length ? `<h5>Hall of Fame</h5><ul class="lc-hall">${winnerRows().slice().sort((a, b) => String(b.won_at || '').localeCompare(String(a.won_at || ''))).map(w => `<li><img src="${art(w.pokemon_id)}" alt=""><span><b>${esc(w.student_name)}</b> caught ${esc(w.pokemon_name)}</span><small>${esc(String(w.won_at || '').slice(0, 10))}</small></li>`).join('')}</ul>` : ''}`;
   }
   async function deleteChallenge() {
     const setting = challengeSetting(); if (!setting || !canAccessAdmin()) return;
@@ -666,7 +703,8 @@
     const typeName = goal.types.length ? goal.types[0] : 'any';
     const challengeMarkup = goal.active
       ? `<section class="cdx-challenge cdx-type-challenge cdx-tier-${esc(goal.tier)}${goal.claimed ? ' is-claimed' : ''}" aria-labelledby="cdx-challenge-title">
-          <div class="cdx-challenge-top"><div><span class="cdx-eyebrow">${goal.claimed ? 'CHALLENGE COMPLETE' : 'ACTIVE CATCH CHALLENGE'}</span><h3 id="cdx-challenge-title">${esc(goal.title)}</h3><p>Catch <strong>${esc(goal.pokemonName || challengeCriteria(goal))}</strong> · ${esc(rarityLabel(goal.tier))} balls only. Each throw has a <strong>95% chance to miss</strong>; the Pokémon is guaranteed on throw <strong>${goal.guaranteedThrows}</strong>.</p><small class="cdx-challenge-type">${esc(typeName)} type · ${esc(rarityLabel(goal.tier))} tier</small></div><img class="cdx-challenge-ball" src="${ballArt(goal.tier)}" alt="${esc(rarityLabel(goal.tier))} Poké Ball"></div>
+          <div class="cdx-challenge-top"><div><span class="cdx-eyebrow">${goal.claimed ? 'CHALLENGE COMPLETE' : 'ACTIVE CATCH CHALLENGE'}</span><h3 id="cdx-challenge-title">${esc(goal.title)}</h3><p>Catch <strong>${esc(goal.pokemonName || challengeCriteria(goal))}</strong> · ${esc(rarityLabel(goal.tier))} balls only. Each throw has a <strong>95% chance to miss</strong>; the Pokémon is guaranteed on throw <strong>${goal.guaranteedThrows}</strong>.</p><small class="cdx-challenge-type">${esc(typeName)} type · ${esc(rarityLabel(goal.tier))} tier</small></div><figure class="cdx-reward cdx-reward-${esc(goal.tier)}">${goal.pokemonId ? `<img src="${art(goal.pokemonId)}" alt="${esc(goal.pokemonName)}">` : `<img src="${ballArt(goal.tier)}" alt="">`}<figcaption>Reward: ${esc(goal.pokemonName || 'Mystery Pokémon')}<small>${esc(rarityLabel(goal.tier))} tier</small></figcaption></figure></div>
+          ${goal.winner ? `<div class="cdx-winner-banner">🏆 ${goal.claimed ? 'You caught this Pokémon and won the challenge!' : `Challenge over — caught by <strong>${esc(goal.winner.student_name || 'a student')}</strong>${goal.winner.class_name ? ` from ${esc(goal.winner.class_name)}` : ''}!`}</div>` : ''}
           <div class="cdx-progress-row"><div class="cdx-progress-label"><b>${progress}<span> / ${goal.guaranteedThrows} throws</span></b><span>${goal.claimed ? 'Pokémon caught' : `${Math.max(0, goal.guaranteedThrows - goal.throws)} throws until guaranteed`}</span></div><div class="cdx-progress-track" role="progressbar" aria-label="${esc(goal.title)} throws until guaranteed catch" aria-valuemin="0" aria-valuemax="${goal.guaranteedThrows}" aria-valuenow="${progress}"><span style="width:${pct}%"></span></div></div>
           <div class="cdx-challenge-foot"><small>${goal.end ? `Challenge ends ${esc(goal.end)}` : 'Limited-time challenge'} · ${goal.ballCount} matching balls available</small></div>
           ${goal.claimed ? '<p class="cdx-claimed">✓ Pokémon caught and added to your Collection.</p>' : goal.ballCount ? '<p class="cdx-hint">Choose the matching ball below to throw at this Pokémon.</p>' : `<p class="cdx-hint">No ${esc(rarityLabel(goal.tier).toLowerCase())} balls available. Listen and Catch rewards balls of different rarity tiers.</p>`}
@@ -675,15 +713,17 @@
     return `<div class="cdx-view">
       <header class="cdx-header"><div><span class="cdx-eyebrow">CATCHDEX CHALLENGE</span><h2>${readOnly ? `${esc(record?.student_name || 'Student')}'s Catchdex` : 'Catchdex'}</h2><p>Use matching rarity balls to catch the featured Pokémon.</p></div>${readOnly ? '<button type="button" class="cdx-close" data-catchdex="close" aria-label="Close Catchdex">×</button>' : ''}</header>
       <section class="cdx-wallet" aria-label="Catchdex inventory">
-        ${BALL_TIERS.map(tier => { const matches = goal.active && !goal.claimed && goal.tier === tier; return `<article class="cdx-stat cdx-tier-stat cdx-tier-${tier}${matches ? ' is-challenge-tier' : ''}"><span class="cdx-stat-icon"><img src="${ballArt(tier)}" alt=""></span><div><span class="cdx-stat-label">${esc(rarityLabel(tier).toUpperCase())} BALLS</span><b>${ballCount(state, tier)}</b><small>${matches ? `Throw at ${esc(goal.pokemonName || 'Pokémon')}` : goal.active && !goal.claimed ? 'Not for this challenge' : 'Ready for a challenge'}</small></div>${matches && ballCount(state, tier) ? `<button type="button" class="cdx-button is-gold" data-catchdex="throw" aria-label="Throw a ${esc(rarityLabel(tier))} ball at ${esc(goal.pokemonName || 'Pokémon')}">Throw ball</button>` : ''}</article>`; }).join('')}
+        ${BALL_TIERS.map(tier => { const matches = goal.active && !goal.claimed && !goal.lockedByOther && goal.tier === tier; return `<article class="cdx-stat cdx-tier-stat cdx-tier-${tier}${matches ? ' is-challenge-tier' : ''}"><span class="cdx-stat-icon"><img src="${ballArt(tier)}" alt=""></span><div><span class="cdx-stat-label">${esc(rarityLabel(tier).toUpperCase())} BALLS</span><b>${ballCount(state, tier)}</b><small>${matches ? `Throw at ${esc(goal.pokemonName || 'Pokémon')}` : goal.active && !goal.claimed ? 'Not for this challenge' : 'Ready for a challenge'}</small></div>${matches && ballCount(state, tier) ? `<button type="button" class="cdx-button is-gold" data-catchdex="throw" aria-label="Throw a ${esc(rarityLabel(tier))} ball at ${esc(goal.pokemonName || 'Pokémon')}">Throw ball</button>` : ''}</article>`; }).join('')}
         ${state.mysteryBoxes ? `<article class="cdx-stat is-box"><span class="cdx-stat-icon" aria-hidden="true">🎁</span><div><span class="cdx-stat-label">MYSTERY BOXES</span><b>${state.mysteryBoxes}</b><small>Ready to open</small></div><button type="button" class="cdx-button is-gold" data-catchdex="boxes">Open box</button></article>` : ''}
       </section>
       ${challengeMarkup}
+      ${readOnly && currentRole === 'teacher' ? `<section class="cdx-award" aria-label="Award Catch Balls"><h3>Award Catch Balls</h3><div>${BALL_TIERS.map(tier => `<button type="button" class="cdx-award-btn cdx-tier-${tier}" data-award-ball="${tier}"><img src="${ballArt(tier)}" alt=""><span>${rarityLabel(tier)}</span><small>${BALL_AWARD_PRICES[tier]} credits</small></button>`).join('')}</div></section>` : ''}
     </div>`;
   }
   function bindCatchdexContents(root, record, readOnly) {
     root.querySelector('[data-catchdex="close"]')?.addEventListener('click', () => document.getElementById('catchdex-modal')?.classList.add('hidden'));
     root.querySelectorAll('[data-catchdex="throw"]').forEach(button => button.addEventListener('click', () => throwChallengeBall(record)));
+    root.querySelectorAll('[data-award-ball]').forEach(button => button.addEventListener('click', () => awardBall(record, button.dataset.awardBall)));
     root.querySelector('[data-catchdex="boxes"]')?.addEventListener('click', () => showBoxCountPopup(record));
   }
   function renderProfileCatchdex(record = typeof profileStudent !== 'undefined' ? profileStudent : null) {
