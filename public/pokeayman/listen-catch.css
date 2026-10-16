@@ -215,3 +215,16 @@
 .lc-dust{position:absolute;left:50%;bottom:20%;width:80px;height:30px;margin-left:-40px;border-radius:50%;background:radial-gradient(rgba(220,200,170,.8),transparent 70%);opacity:0;animation:lcDust .9s .6s ease-out forwards}
 @keyframes lcDust{30%{opacity:1}100%{opacity:0;transform:scale(2)}}
 @media (prefers-reduced-motion:reduce){.cdx-reward img,.lc-confetti i,.lc-throw-card .lc-throw-target img{animation:none}}
+
+/* Won challenge: one cheerful "caught by" celebration replaces rules and progress. */
+.cdx-caught-celebration{position:relative;overflow:hidden;display:grid;justify-items:center;gap:.3rem;margin:.9rem 0 .2rem;padding:1.4rem 1rem;border-radius:20px;background:radial-gradient(circle at 50% 0,rgba(255,255,255,.35),transparent 60%),linear-gradient(120deg,#ffcb05,#ff9f1c 55%,#ff5e7e);color:#1b1b2f;text-align:center;box-shadow:0 12px 34px rgba(255,159,28,.35);animation:cdxCaughtIn .7s cubic-bezier(.3,1.5,.5,1) both}
+.cdx-caught-kicker{font-weight:900;letter-spacing:.18em;font-size:.8rem}
+.cdx-caught-celebration strong{font:800 1.1rem Outfit,sans-serif}
+.cdx-caught-name{font:900 clamp(2rem,5vw,3rem)/1 Outfit,sans-serif;color:#fff;text-shadow:0 3px 0 #3b4cca,0 0 18px rgba(255,255,255,.6);animation:cdxNameBounce 1.6s ease-in-out infinite}
+.cdx-caught-celebration small{font-weight:700;opacity:.8}
+.cdx-caught-confetti{position:absolute;inset:0;pointer-events:none}
+.cdx-caught-confetti i{position:absolute;top:-12px;left:calc(var(--i)*7.2%);width:8px;height:13px;border-radius:2px;background:hsl(calc(var(--i)*47) 90% 60%);animation:cdxFall 2.8s calc(var(--i)*.18s) linear infinite}
+@keyframes cdxFall{to{transform:translateY(190px) rotate(540deg)}}
+@keyframes cdxCaughtIn{from{transform:scale(.7);opacity:0}}
+@keyframes cdxNameBounce{50%{transform:translateY(-5px) scale(1.04)}}
+@media(prefers-reduced-motion:reduce){.cdx-caught-celebration,.cdx-caught-name,.cdx-caught-confetti i{animation:none}}
