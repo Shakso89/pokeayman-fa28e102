@@ -12534,6 +12534,8 @@ async function buyPokemon(id, name, rarity, price, power) {
   }
   const existing = getPokemons().find(item => item.student_id === stableId && Number(item.pokemon_id) === Number(id));
   if (existing) { toast('This Pokémon is already in your collection.'); return; }
+  const takenBy = getPokemons().find(item => Number(item.pokemon_id) === Number(id));
+  if (takenBy) { toast(`${name} already belongs to ${takenBy.owner || 'another student'}. Each Pokémon can have only one owner.`); return; }
   if ((Number(student.coins) || 0) < Number(price)) { toast('Not enough coins!'); return; }
   if (allData.length >= 999) { toast('Storage limit reached!'); return; }
   const purchaseId = `purchase-${stableId}-${id}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
@@ -12563,6 +12565,8 @@ async function buyPokemon(id, name, rarity, price, power) {
 async function buyPokemonFromProfile(id, name, rarity, price, power) {
   ensureCatchSoundContext();
   if (!profileStudent || (profileStudent.coins || 0) < price) { toast('Not enough coins!'); return; }
+  const takenByOther = getPokemons().find(item => Number(item.pokemon_id) === Number(id));
+  if (takenByOther) { toast(`${name} already belongs to ${takenByOther.owner || 'another student'}. Each Pokémon can have only one owner.`); return; }
   if (allData.length >= 999) { toast('Storage limit reached!'); return; }
   const latestProfile = getStudentRecordByStableId(profileStudent.__backendId) || profileStudent;
   const nextProfile = { ...latestProfile, coins: (Number(latestProfile.coins) || 0) - price };
