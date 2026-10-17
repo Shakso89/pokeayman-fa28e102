@@ -324,7 +324,6 @@
 @media (max-width: 640px) {
   #contact-pricing-float { right: max(.75rem, env(safe-area-inset-right)); bottom: max(.75rem, env(safe-area-inset-bottom)); }
   #contact-pricing-float .home-contact-dock { width: 3.25rem; min-width: 3.25rem; min-height: 3.25rem; padding: .5rem; justify-content: center; }
-  #contact-pricing-float #contact-pricing-dock-close { left: 50%; opacity: 1; pointer-events: auto; }
   .home-contact-label { display: none; }
 }
 

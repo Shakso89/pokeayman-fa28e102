@@ -105,7 +105,11 @@ body > #contact-pricing-float > #contact-pricing-btn {
     justify-content: center;
   }
   body > #contact-pricing-float .home-contact-label { display: none; }
-  body > #contact-pricing-float #contact-pricing-dock-close { opacity: 1; pointer-events: auto; }
+}
+/* The dismiss pill above the contact ball is a mouse-only affordance: on phones
+   and tablets it sat permanently over the ball, so it stays hidden there. */
+@media (max-width: 1024px), (hover: none), (pointer: coarse) {
+  body > #contact-pricing-float > #contact-pricing-dock-close { display: none !important; }
 }
 @media (max-width: 640px) {
   body > #contact-pricing-float {
