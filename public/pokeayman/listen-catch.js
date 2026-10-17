@@ -403,6 +403,12 @@
       return toast('The Poké Ball could not be saved. It is still available; please try again.');
     }
     throwingChallengeIds.delete(throwKey);
+    if (caught && (typeof currentRole === 'undefined' || currentRole === 'student')) {
+      try {
+        const challengeLabel = goal && goal.title ? goal.title : 'a Catchdex challenge';
+        Promise.resolve(window.notifyClassManagers?.(record.school_name, record.class_name, 'Challenge completed', `${record.student_name || 'A student'} completed ${challengeLabel} and caught ${candidate.name}.`, 'challenge')).catch(() => {});
+      } catch (_) {}
+    }
     if (currentRole === 'student') renderCatchdexTab(); else refreshViewer(record);
     mountCards();
     if (caught && currentRole === 'student' && typeof renderStudentDashboard === 'function') renderStudentDashboard();
@@ -491,6 +497,7 @@
     const sameCriteria = existing && existing.challenge_max_throws != null && Number(existing.challenge_pokemon_id) === Number(selectedPokemon.id) && Number(existing.challenge_max_throws) === guaranteedThrows;
     const challengeId = sameChallengeWindow && sameCriteria && existing.challenge_id ? String(existing.challenge_id) : `ch-${start}-${Date.now().toString(36)}`;
     const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_id: challengeId, challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_pokemon_id: Number(selectedPokemon.id), challenge_pokemon_name: selectedPokemon.name, challenge_type: selectedType, challenge_tier: selectedTier, challenge_goal: guaranteedThrows, challenge_max_throws: guaranteedThrows, challenge_start: start, updated_at: new Date().toISOString() };
+    const challengeIsNew = !existing || String(existing.challenge_id || '') !== String(challengeId);
     const button = form.querySelector('button[type="submit"]'); button.disabled = true;
     let result;
     try { result = existing ? await window.dataSdk.update({ ...payload, __backendId: existing.__backendId }) : await window.dataSdk.create(payload); }
@@ -498,6 +505,10 @@
     button.disabled = false;
     if (!result?.isOk) return toast('Challenge could not be saved. Try again.');
     if (existing) Object.assign(existing, payload); else allData.push({ ...payload, __backendId: (result.data || result).__backendId || (result.data || result).id || '' });
+    if (challengeIsNew) {
+      const challengeRecipients = (typeof getTeachers === 'function' ? getTeachers() : []).filter(teacher => teacher.teacher_pro === true && String(teacher.teacher_role || '') !== 'admin');
+      Promise.resolve(window.sendTeacherNotifications?.(challengeRecipients, 'New Catchdex challenge', `${payload.challenge_title} is live from ${payload.challenge_start}. Catch ${payload.challenge_pokemon_name} with ${rarityLabel(payload.challenge_tier)} Poké Balls — the catch is guaranteed by throw ${payload.challenge_max_throws}.`, 'challenge')).catch(() => {});
+    }
     toast('Weekly Catchdex challenge saved.'); renderAdminChallenge(); mountCards();
     const modal = document.getElementById('catchdex-modal'); if (modal && !modal.classList.contains('hidden')) renderCatchdexModal();
   }

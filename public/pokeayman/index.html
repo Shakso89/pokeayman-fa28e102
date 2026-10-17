@@ -7699,6 +7699,55 @@ window.sendTeacherNotifications = async function (recipients, title, message, ca
   }
   return sent;
 };
+
+// Who should hear about something that happened in a class or school: the main
+// class manager plus every teacher assigned to that class or to the whole school.
+function teacherManagersForClass(school, className) {
+  const rows = typeof allData !== 'undefined' && Array.isArray(allData) ? allData : [];
+  const schoolName = String(school || '').trim();
+  const name = String(className || '').trim();
+  const ids = new Set();
+  const names = new Set();
+  const addTeacherRow = row => {
+    const id = String(row.assigned_teacher_id || '').trim();
+    const label = String(row.assigned_teacher || '').trim();
+    if (id) ids.add(id);
+    if (label) names.add(normalizeStudentIdentity(label));
+  };
+  if (name) rows.filter(row => row.type === 'class' && String(row.school_name || '').trim() === schoolName && String(row.class_name || '').trim() === name).forEach(row => {
+    if (row.main_manager_id) ids.add(String(row.main_manager_id));
+    [row.main_manager_name, row.teacher_name, row.created_by].forEach(value => { const clean = String(value || '').trim(); if (clean) names.add(normalizeStudentIdentity(clean)); });
+  });
+  if (name) rows.filter(row => row.type === 'teacher_class_assignment' && String(row.assigned_school || '').trim() === schoolName && String(row.assigned_class || '').trim() === name).forEach(addTeacherRow);
+  if (schoolName) rows.filter(row => row.type === 'teacher_school_assignment' && String(row.assigned_school || '').trim() === schoolName).forEach(addTeacherRow);
+  return getTeachers().filter(teacher => ids.has(String(teacher.__backendId || '')) || names.has(normalizeStudentIdentity(teacher.teacher_name)));
+}
+window.teacherManagersForClass = teacherManagersForClass;
+// One inbox item per class event; the acting teacher is skipped so they never
+// notify themselves about their own edits.
+window.notifyClassManagers = async function (school, className, title, message, category = 'class', options = {}) {
+  const skipId = String(options.skipId || '');
+  const recipients = teacherManagersForClass(school, className).filter(teacher => String(teacher.__backendId || '') && String(teacher.__backendId) !== skipId);
+  if (!recipients.length) return 0;
+  return window.sendTeacherNotifications(recipients, title, message, category);
+};
+function quizQuestionSnippet(text) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  return clean.length > 90 ? `${clean.slice(0, 89)}…` : clean;
+}
+const quizNotificationKeys = new Set();
+window.notifyQuizAnswered = function (quiz, studentName) {
+  if (!quiz) return Promise.resolve(0);
+  // A student who taps the same quiz twice must not fill the inbox with duplicates:
+  // skip when it is already solved for them, or when this session already reported
+  // that student's answer.
+  const liveQuiz = (typeof allData !== 'undefined' && Array.isArray(allData) && quiz.__backendId ? allData.find(row => row.__backendId === quiz.__backendId) : null) || quiz;
+  if (liveQuiz.quiz_solved_by && String(liveQuiz.quiz_solved_by) === String(studentName || '')) return Promise.resolve(0);
+  const quizKey = `${quiz.__backendId || quiz.quiz_question || ''}|${String(studentName || '')}`;
+  if (quizNotificationKeys.has(quizKey)) return Promise.resolve(0);
+  quizNotificationKeys.add(quizKey);
+  return window.notifyClassManagers(quiz.school_name, quiz.class_name || quiz.quiz_class, 'Quiz answered', `${studentName || 'A student'} answered "${quizQuestionSnippet(quiz.quiz_question)}" correctly and earned ${Number(quiz.quiz_reward || 0)} coins.`, 'quiz');
+};
 window.openTeacherNotificationCenter = function () {
   const overlay = document.createElement('div'); overlay.className = 'fixed inset-0 z-[2147483000] grid place-items-center bg-black/75 p-4';
   const close = () => { overlay.remove(); document.removeEventListener('keydown', closeOnEscape); };
@@ -11303,6 +11352,7 @@ function renderQuizzes() {
         await window.dataSdk.update({ ...quiz, quiz_solved_by: currentStudent });
         const student = getAllStudents().find(s => s.student_name === currentStudent);
         if (student) await window.dataSdk.update({ ...student, coins: (student.coins || 0) + (quiz.quiz_reward || 0) });
+        Promise.resolve(window.notifyQuizAnswered?.(quiz, currentStudent)).catch(() => {});
         toast('Correct! +' + quiz.quiz_reward + ' coins!');
       } else {
         let attempts = {}; let answers = {};
@@ -11326,6 +11376,7 @@ function renderQuizzes() {
         await window.dataSdk.update({ ...quiz, quiz_solved_by: currentStudent });
         const student = getAllStudents().find(s => s.student_name === currentStudent);
         if (student) await window.dataSdk.update({ ...student, coins: (student.coins || 0) + (quiz.quiz_reward || 0) });
+        Promise.resolve(window.notifyQuizAnswered?.(quiz, currentStudent)).catch(() => {});
         toast('Correct! +' + quiz.quiz_reward + ' coins!');
       } else {
         let attempts = {}; let answers = {};
@@ -13171,12 +13222,19 @@ function openEditTeacherModal(teacherId) {
   modal.querySelector('form').addEventListener('submit', async e => { 
     e.preventDefault(); 
     const newName = modal.querySelector('#et-name').value.trim();
+    const previousCredits = Number((allData.find(item => item.__backendId === teacher.__backendId) || teacher).teacher_credits || 0);
     const newCredits = parseInt(modal.querySelector('#et-credits').value);
     const teacherZoneAccess = modal.querySelector('#et-zone-access').checked ? 'allow' : 'hide';
     const teacherPro = isAdminRow ? true : modal.querySelector('#et-pro-access').checked;
     const saved = await window.dataSdk.update({ ...(allData.find(t => t.__backendId === teacher.__backendId) || teacher), teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess, teacher_pro: teacherPro });
     if (!saved?.isOk) { toast('Could not save teacher settings. Please try again.'); return; }
     allData = allData.map(row => row.__backendId === teacher.__backendId ? { ...row, teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess, teacher_pro: teacherPro } : row);
+    // Adding credits is worth an inbox item; lowering a balance is not, so admins
+    // can correct a mistake without sending an alert.
+    if (!isAdminRow && Number.isFinite(newCredits) && newCredits > previousCredits) {
+      const toppedUp = allData.find(row => row.__backendId === teacher.__backendId) || { ...teacher, teacher_name: newName, teacher_credits: newCredits };
+      await window.sendTeacherNotifications?.([toppedUp], 'Credits added to your balance', `${currentTeacher || 'An admin'} added ${newCredits - previousCredits} credits to your account. Your balance is now ${newCredits} credits.`, 'reward');
+    }
     if (currentRole === 'teacher' && currentTeacherRecordId === teacher.__backendId) {
       if (!canAccessTeacherZone() && activeMainTab === 'teacher-zone') showMainTab('dashboard');
       updateRoleUI();
@@ -13254,11 +13312,16 @@ function openEditTeacherModal(teacherId) {
         }
       }
       
+      const newlyAssignedSchools = [...selectedSchoolIds].filter(name => !currentSchoolAssignments.some(assignment => assignment.assigned_school === name));
       // If teacher name changed, update all existing assignments with new teacher name
       await relinkTeacherAssignments(teacher, teacher.teacher_name, newName);
       if (newlyAssignedClasses.length) {
         const classList = newlyAssignedClasses.map(item => `${item.className} (${item.schoolName})`).join(', ');
         await window.sendTeacherNotifications?.([getTeachers().find(item => item.__backendId === teacher.__backendId) || { ...teacher, teacher_name:newName }], 'New class access', `You have been assigned to: ${classList}. Sign in to view your classes.`, 'class');
+      }
+      if (newlyAssignedSchools.length) {
+        const schoolList = newlyAssignedSchools.join(', ');
+        await window.sendTeacherNotifications?.([getTeachers().find(item => item.__backendId === teacher.__backendId) || { ...teacher, teacher_name:newName }], 'New school access', `You now manage ${schoolList}. Every class in ${newlyAssignedSchools.length === 1 ? 'that school' : 'those schools'} is available from your dashboard.`, 'class');
       }
     }
     
@@ -13361,6 +13424,12 @@ async function openEditSchoolModal(schoolId, schoolName) {
       if (!teacher || allData.length >= 999) { saveButton.disabled = false; errorEl.textContent = 'One selected teacher is no longer available.'; errorEl.classList.remove('hidden'); return; }
       const result = await window.dataSdk.create({ type: 'teacher_school_assignment', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', assigned_teacher: teacher.teacher_name, assigned_teacher_id: teacherId, assigned_school: newName, assigned_class: '' });
       if (!result?.isOk) { saveButton.disabled = false; errorEl.textContent = 'Could not save all teacher assignments. Please try again.'; errorEl.classList.remove('hidden'); return; }
+    }
+    const newlyAssignedSchoolTeachers = uniqueTeacherIds.filter(teacherId => !assignedTeacherIds.has(teacherId));
+    for (const teacherId of newlyAssignedSchoolTeachers) {
+      const assignedTeacherRecord = getTeachers().find(record => String(record.__backendId || '').trim() === teacherId);
+      if (!assignedTeacherRecord) continue;
+      await window.sendTeacherNotifications?.([assignedTeacherRecord], 'New school access', `You now manage ${newName}. Every class in the school is available from your dashboard.`, 'class');
     }
     allData = allData.filter(record => !(record.type === 'teacher_school_assignment' && record.assigned_school === schoolName));
     allData.push(...uniqueTeacherIds.map(teacherId => { const teacher = getTeachers().find(record => String(record.__backendId || '').trim() === teacherId); return { type: 'teacher_school_assignment', assigned_teacher: teacher?.teacher_name || '', assigned_teacher_id: teacherId, assigned_school: newName, assigned_class: '' }; }));
@@ -14262,6 +14331,7 @@ async function createVocabListForClass({ listName: rawName, school: rawSchool, c
     if (input) input.value = '';
     renderVocabLists();
     renderGamesList();
+    Promise.resolve(window.notifyClassManagers?.(school, className, 'New vocabulary list', `${currentTeacher || 'A teacher'} added "${listName}" to ${className}, ready for quizzes, games and Vocab Battles.`, 'list', { skipId: currentTeacherRecordId })).catch(() => {});
     toast(`Vocabulary list "${listName}" created!`);
     return true;
   } finally { button.dataset.busy = 'false'; button.disabled = false; button.removeAttribute('aria-busy'); }
