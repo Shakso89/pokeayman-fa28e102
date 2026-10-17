@@ -278,18 +278,49 @@
       .sort((a, b) => (Date.parse(a.won_at || a.created_at || '') || 0) - (Date.parse(b.won_at || b.created_at || '') || 0))[0] || null;
   }
   window.pkChallengeWinnerRows = winnerRows;
+  function askBallQuantity(record, tier, price) {
+    return new Promise(resolve => {
+      document.querySelector('.cdx-gift-overlay')?.remove();
+      const name = String(record.student_name || 'this student').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      const overlay = document.createElement('div');
+      overlay.className = 'cdx-gift-overlay';
+      overlay.innerHTML = `<div class="cdx-gift-card cdx-tier-${tier}" role="dialog" aria-modal="true" aria-label="Gift Catch Balls">
+        <img class="cdx-gift-ball" src="${ballArt(tier)}" alt="">
+        <h2>Gift ${rarityLabel(tier)} Balls</h2>
+        <p>To <strong>${name}</strong> · ${price} credits each</p>
+        <div class="cdx-gift-stepper"><button type="button" data-step="-1" aria-label="Fewer">−</button><input type="number" min="1" max="99" value="1" aria-label="Number of balls"><button type="button" data-step="1" aria-label="More">+</button></div>
+        <div class="cdx-gift-quick">${[1, 3, 5, 10].map(n => `<button type="button" data-set="${n}">${n}</button>`).join('')}</div>
+        <p class="cdx-gift-total"></p>
+        <div class="cdx-gift-actions"><button type="button" class="cdx-gift-cancel">Cancel</button><button type="button" class="cdx-gift-ok">Gift</button></div>
+      </div>`;
+      document.body.appendChild(overlay);
+      const input = overlay.querySelector('input'); const total = overlay.querySelector('.cdx-gift-total');
+      const qty = () => Math.max(1, Math.min(99, Math.floor(Number(input.value) || 1)));
+      const update = () => { const q = qty(); total.textContent = `${q} × ${price} = ${q * price} credits`; overlay.querySelectorAll('[data-set]').forEach(b => b.classList.toggle('is-active', Number(b.dataset.set) === q)); };
+      const close = value => { overlay.remove(); resolve(value); };
+      overlay.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => { input.value = Math.max(1, Math.min(99, qty() + Number(b.dataset.step))); update(); }));
+      overlay.querySelectorAll('[data-set]').forEach(b => b.addEventListener('click', () => { input.value = b.dataset.set; update(); }));
+      input.addEventListener('input', update);
+      input.addEventListener('blur', () => { input.value = qty(); update(); });
+      overlay.querySelector('.cdx-gift-cancel').addEventListener('click', () => close(0));
+      overlay.querySelector('.cdx-gift-ok').addEventListener('click', () => close(qty()));
+      update(); input.focus(); input.select();
+    });
+  }
   async function awardBall(record, tier) {
     if (currentRole !== 'teacher' || !BALL_TIERS.includes(tier)) return;
     const price = BALL_AWARD_PRICES[tier];
-    if (!confirm(`Give ${record.student_name || 'this student'} one ${rarityLabel(tier)} ball for ${price} credits?`)) return;
-    const paid = typeof deductTeacherCredits === 'function' ? await deductTeacherCredits(price) : false;
+    const quantity = await askBallQuantity(record, tier, price);
+    if (!quantity) return;
+    const cost = price * quantity;
+    const paid = typeof deductTeacherCredits === 'function' ? await deductTeacherCredits(cost) : false;
     if (!paid) return;
     const state = stateFor(record);
-    state.ballTiers[tier] = ballCount(state, tier) + 1; state.balls = totalBalls(state);
+    state.ballTiers[tier] = ballCount(state, tier) + quantity; state.balls = totalBalls(state);
     try { await save(record, state); }
-    catch (_) { if (typeof refundTeacherCredits === 'function') await refundTeacherCredits(price, currentTeacher); return toast('The ball could not be saved. Your credits were returned.'); }
+    catch (_) { if (typeof refundTeacherCredits === 'function') await refundTeacherCredits(cost, currentTeacher); return toast('The balls could not be saved. Your credits were returned.'); }
     if (typeof updateTeacherCreditBalance === 'function') updateTeacherCreditBalance();
-    toast(`${rarityLabel(tier)} ball given to ${record.student_name || 'student'}!`);
+    toast(`${quantity} ${rarityLabel(tier)} ball${quantity > 1 ? 's' : ''} given to ${record.student_name || 'student'}!`);
     refreshViewer(record);
   }
   function challenge(state) {

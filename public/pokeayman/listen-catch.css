@@ -245,3 +245,19 @@ body.ts-bright .catchdex-tab-card{background:var(--pk-surface,#fff);border-color
 body.ts-bright .catchdex-tab-card :is(.cdx-view,h2,h3,strong,.cdx-tag,.cdx-award-btn,.cdx-reward figcaption){color:var(--pk-ink,#0f172a)}
 body.ts-bright .catchdex-tab-card :is(.cdx-stat,.cdx-challenge,.cdx-award-btn){background:var(--pk-surface-2,#f1f5f9)}
 body.ts-bright .catchdex-tab-card :is(.cdx-stat small,.cdx-stat-label,.cdx-header p,.cdx-award-btn small,.cdx-challenge p){color:#475569}
+/* Gift Catch Balls popup */
+.cdx-gift-overlay{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;padding:16px;background:rgba(3,9,22,.72);backdrop-filter:blur(8px)}
+.cdx-gift-card{width:min(100%,380px);display:grid;justify-items:center;gap:.7rem;text-align:center;padding:1.5rem;border-radius:18px;background:var(--pk-surface,#121a45);color:var(--pk-ink,#f5f7ff);border:1px solid var(--pk-border,rgba(255,255,255,.16));border-top:3px solid var(--ball-tier-border,#ffcb05);box-shadow:0 24px 70px rgba(0,0,0,.5)}
+.cdx-gift-card h2{margin:0;font:800 1.4rem 'Outfit',sans-serif;color:inherit}
+.cdx-gift-card p{margin:0;opacity:.85}
+.cdx-gift-ball{width:4rem;height:4rem;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
+.cdx-gift-stepper{display:flex;gap:.5rem;align-items:center}
+.cdx-gift-stepper button,.cdx-gift-quick button{min-width:2.6rem;height:2.6rem;border-radius:10px;border:1px solid var(--pk-border,rgba(255,255,255,.2));background:var(--pk-surface-2,rgba(255,255,255,.06));color:inherit;font-weight:800;font-size:1.1rem;cursor:pointer}
+.cdx-gift-stepper input{width:4.5rem;height:2.6rem;text-align:center;border-radius:10px;border:1px solid var(--pk-border,rgba(255,255,255,.2));background:var(--pk-surface-2,rgba(255,255,255,.06))!important;color:inherit!important;font-size:1.2rem;font-weight:800}
+.cdx-gift-quick{display:flex;gap:.4rem}
+.cdx-gift-quick button{font-size:.9rem}
+.cdx-gift-quick button.is-active,.cdx-gift-stepper button:hover,.cdx-gift-quick button:hover{border-color:#ffcb05;color:#ffcb05}
+.cdx-gift-total{font-weight:800;font-size:1.05rem;opacity:1!important}
+.cdx-gift-actions{display:flex;gap:.6rem;width:100%}
+.cdx-gift-actions button{flex:1;min-height:2.8rem;border-radius:10px;font-weight:800;cursor:pointer;border:1px solid var(--pk-border,rgba(255,255,255,.2));background:transparent;color:inherit}
+.cdx-gift-actions .cdx-gift-ok{background:#ffcb05;border-color:#ffcb05;color:#0c1232}
