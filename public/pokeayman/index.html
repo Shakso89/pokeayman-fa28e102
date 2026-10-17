@@ -14903,21 +14903,36 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
       });
     };
     updateTeamScores();
-    // Big animated +/- on the reveal stage for the current player (player cards animate via updateGamePlayerHud).
-    const stagePanel = baamQ('#baam-reveal .baam-reveal-panel');
-    const myImpact = impacts[current] || 0;
-    if (stagePanel) {
-      const sf = document.createElement('span');
-      sf.className = `baam-float baam-stage-float ${myImpact > 0 ? 'is-plus' : myImpact < 0 ? 'is-minus' : 'is-zero'}`;
-      sf.textContent = myImpact > 0 ? `+${myImpact}` : myImpact < 0 ? `−${Math.abs(myImpact)}` : '0';
-      stagePanel.appendChild(sf); setTimeout(() => sf.remove(), 1900);
+    // Show every student the power-up changed, not just the current player:
+    // one staggered chip per score change, laid out in the panel's own flow
+    // after the card so it can never cover the player pill, and used instead of
+    // repeating the same numbers as plain text in the status line.
+    const changedEntries = impacts.map((impact, index) => ({ impact, index })).filter(entry => entry.impact);
+    const scoreStage = baamQ('#baam-reveal .baam-reveal-panel');
+    scoreStage?.querySelector('.baam-impact-stack')?.remove();
+    if (changedEntries.length && scoreStage) {
+      const impactStack = document.createElement('div');
+      impactStack.className = 'baam-impact-stack';
+      impactStack.setAttribute('aria-hidden', 'true');
+      changedEntries.forEach((entry, order) => {
+        const impactPlayer = baamPlayers[entry.index];
+        const chip = document.createElement('div');
+        chip.className = `baam-impact-chip ${entry.impact > 0 ? 'is-plus' : 'is-minus'}`;
+        chip.style.setProperty('--baam-impact-order', String(order));
+        chip.innerHTML = `${impactPlayer ? gameStudentAvatarMarkup(impactPlayer, 'baam-impact-avatar') : ''}<span class="baam-impact-name"></span><strong class="baam-impact-value">${entry.impact > 0 ? '+' : '−'}${Math.abs(entry.impact)}</strong>`;
+        chip.querySelector('.baam-impact-name').textContent = impactPlayer?.student_name || `Player ${entry.index + 1}`;
+        impactStack.appendChild(chip);
+      });
+      const statusEl = baamQ('#baam-answer-status');
+      scoreStage.insertBefore(impactStack, statusEl && statusEl.parentElement === scoreStage ? statusEl : null);
     }
     if (power === 'Bomb') { const shakeEl = modal.querySelector('#baam-board'); shakeEl?.classList.remove('baam-shake'); void modal.offsetWidth; shakeEl?.classList.add('baam-shake'); }
     advanceGameTurn();
     updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
     if (power === 'Trap') return 'Trapped! No points this turn.';
-    const changedPlayers = impacts.map((impact, index) => impact ? `${baamPlayers[index]?.student_name || `Player ${index + 1}`} ${impact > 0 ? '+' : '−'}${Math.abs(impact)}` : '').filter(Boolean);
-    return changedPlayers.join(' · ') || 'No score change';
+    // The chips above already show who gained or lost what; repeating it here
+    // would print the same numbers twice.
+    return changedEntries.length ? '' : 'No score change';
   };
   const endBaamboozle = async () => {
     if (roundEnded || chosenCards.size < deck.length) return;
@@ -14979,6 +14994,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
       playerChip.appendChild(playerName);
     }
     revealPanel.classList.remove('hidden'); word.classList.add('hidden'); status.textContent = '';
+    revealPanel.querySelector('.baam-impact-stack')?.remove();
     revealPanel.classList.remove('baam-powerup-reveal');
     if (w.powerUp) {
       const info = BAAM_POWER_INFO[w.powerUp] || { name: w.powerUp, emoji: '✨', desc: '' };

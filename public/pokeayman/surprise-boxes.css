@@ -126,7 +126,7 @@
 .baam-stage-portal .baam-reveal-overlay.hidden { display: none !important; }
 .baam-stage-portal .baam-reveal-panel { overflow: hidden !important; max-height: calc(100vh - 3rem) !important; animation: baamStageIn .55s cubic-bezier(.2,.9,.3,1.3) both; }
 .baam-stage-portal #baam-picture img { max-height: min(220px, 34vh) !important; object-fit: contain; }
-.baam-stage-float { top: 42% !important; font-size: clamp(3rem, 9vw, 5.5rem) !important; z-index: 10 !important; }
+
 .game-player-card { position: relative; }
 .game-player-card { overflow: visible !important; }
 
@@ -211,7 +211,6 @@ html body .baam-stage-portal .baam-question-card :is(.baam-power-name, .baam-pow
   border: 0 !important; background: none !important; box-shadow: none !important;
   padding: .25rem 0 !important; min-height: 1.5rem; text-align: center; font-weight: 800;
 }
-.baam-stage-float { top: auto !important; bottom: 18% !important; }
 
 /* Power-up reveals keep a compact player pill and fit badge, name, description and pill inside the picture box. */
 html body .baam-stage-portal .baam-question-card #baam-picture img.baam-power-avatar,
@@ -220,8 +219,48 @@ html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-playe
   object-fit: contain !important; flex: 0 0 auto !important; border-radius: 999px;
 }
 html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-player { flex: 0 0 auto; max-width: 100%; }
-html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-stage { width: 100%; max-height: 100%; overflow: hidden; }
+html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-stage { width: 100%; max-height: 100%; padding: .45rem 0; }
 html body .baam-stage-portal .baam-question-card #baam-picture .baam-powerup-icon { min-height: 0; margin-top: 0; }
 html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-badge {
   width: min(6rem, 14vh); height: min(6rem, 14vh); font-size: min(3.2rem, 7vh); border-width: 3px;
+}
+
+/* Power-up reveals: one chip per student whose score changed, laid out in the
+   panel's own flow under the card, so swaps, gifts and steals that move several
+   students read one after another without covering the player pill, and the
+   numbers no longer repeat in the status line. */
+.baam-impact-stack {
+  position: relative; z-index: 3;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: .45rem; width: 100%; max-width: min(100%, 26rem); margin: .55rem auto 1.2rem;
+  pointer-events: none;
+}
+.baam-impact-chip {
+  display: inline-flex; align-items: center; gap: .45rem; white-space: nowrap;
+  max-width: 100%; min-width: 0;
+  padding: .3rem .85rem .3rem .35rem; border-radius: 999px;
+  background: rgba(2,6,23,.94); border: 1px solid rgba(148,163,184,.45);
+  box-shadow: 0 10px 26px rgba(2,6,23,.6);
+  font-size: .95rem; font-weight: 900; color: #f8fafc;
+  animation: baamImpactChip .55s cubic-bezier(.2,.9,.3,1.5) both;
+  animation-delay: calc(var(--baam-impact-order, 0) * .22s);
+}
+.baam-impact-chip .baam-impact-avatar {
+  width: 1.75rem !important; height: 1.75rem !important; max-width: 1.75rem !important; max-height: 1.75rem !important;
+  object-fit: contain; border-radius: 999px; flex: 0 0 auto;
+}
+.baam-impact-chip .baam-impact-name { overflow: hidden; text-overflow: ellipsis; }
+.baam-impact-chip .baam-impact-value { font-size: 1.15rem; flex: 0 0 auto; animation: baamImpactValuePulse 1.8s ease-in-out 1s infinite; }
+.baam-impact-chip.is-plus .baam-impact-value { color: #4ade80; text-shadow: 0 0 12px rgba(74,222,128,.6); }
+.baam-impact-chip.is-minus .baam-impact-value { color: #f87171; text-shadow: 0 0 12px rgba(248,113,113,.6); }
+@keyframes baamImpactChip {
+  0% { opacity: 0; transform: translateY(12px) scale(.55); }
+  55% { opacity: 1; transform: translateY(-3px) scale(1.1); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes baamImpactValuePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .baam-impact-chip, .baam-impact-chip .baam-impact-value { animation: none !important; } }
+@media (max-height: 600px) {
+  html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-badge { width: 4.5rem; height: 4.5rem; font-size: 2.4rem; }
+  html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-name { font-size: 1.3rem; }
 }
