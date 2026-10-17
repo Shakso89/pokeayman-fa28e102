@@ -160,7 +160,7 @@ html body .baam-stage-portal .baam-question-card #baam-picture {
   background: var(--ts-deep); border: 1px solid var(--ts-border); border-radius: 6px;
   display: flex; align-items: center; justify-content: center; overflow: hidden;
 }
-html body .baam-stage-portal .baam-question-card #baam-picture img {
+html body .baam-stage-portal .baam-question-card #baam-picture img:not(.baam-power-avatar) {
   width: 100% !important; height: 100% !important; max-width: 100% !important;
   max-height: 100% !important; object-fit: contain !important; filter: none !important; border-radius: 3px;
 }
@@ -212,3 +212,16 @@ html body .baam-stage-portal .baam-question-card :is(.baam-power-name, .baam-pow
   padding: .25rem 0 !important; min-height: 1.5rem; text-align: center; font-weight: 800;
 }
 .baam-stage-float { top: auto !important; bottom: 18% !important; }
+
+/* Power-up reveals keep a compact player pill and fit badge, name, description and pill inside the picture box. */
+html body .baam-stage-portal .baam-question-card #baam-picture img.baam-power-avatar,
+html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-player img {
+  width: 2rem !important; height: 2rem !important; max-width: 2rem !important; max-height: 2rem !important;
+  object-fit: contain !important; flex: 0 0 auto !important; border-radius: 999px;
+}
+html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-player { flex: 0 0 auto; max-width: 100%; }
+html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-stage { width: 100%; max-height: 100%; overflow: hidden; }
+html body .baam-stage-portal .baam-question-card #baam-picture .baam-powerup-icon { min-height: 0; margin-top: 0; }
+html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-badge {
+  width: min(6rem, 14vh); height: min(6rem, 14vh); font-size: min(3.2rem, 7vh); border-width: 3px;
+}

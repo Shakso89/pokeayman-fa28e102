@@ -14738,7 +14738,7 @@ function chooseBaamboozlePowerUps(listName) {
   });
   modal.querySelector('#baam-cancel').addEventListener('click', () => modal.remove());
   modal.querySelector('#baam-start').addEventListener('click', () => { const enabled = powerUpsEnabled ? baamboozlePowerUps : []; modal.remove(); openBaamboozle(listName, enabled, selectedCardCount); });
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the setup. */ });
 }
 function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSeconds = 0) {
   setGameReplay(() => { resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount, timerSeconds); });
@@ -14957,7 +14957,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
     const closeResult = () => { overlay.remove(); modal.remove(); returnToGamesTab(); };
     overlay.querySelector('#baam-final-close').addEventListener('click', closeResult);
     overlay.querySelector('#baam-final-replay').addEventListener('click', () => { overlay.remove(); modal.remove(); resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount); });
-    overlay.addEventListener('click', event => { if (event.target === overlay) closeResult(); });
+    overlay.addEventListener('click', event => { /* Result popup closes only through its Replay/Close buttons. */ });
     overlay.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); closeResult(); } });
     overlay.querySelector('.game-celebration-card').focus();
   };
@@ -15045,7 +15045,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
   const baamPortalWatch = setInterval(() => { if (!modal.isConnected) { baamPortal.remove(); clearInterval(baamPortalWatch); } }, 1000);
   baamQ('#baam-reveal-close').addEventListener('click', closeBaamRevealAsWrong);
   baamQ('#baam-reveal').addEventListener('click', event => {
-    if (event.target === baamQ('#baam-reveal')) closeBaamRevealAsWrong();
+    /* Clicks outside the question card intentionally do not dismiss or mark it wrong. */
   });
   baamQ('#baam-correct').addEventListener('click', () => markAnswer(true));
   baamQ('#baam-wrong').addEventListener('click', () => markAnswer(false));
@@ -15787,7 +15787,7 @@ function chooseGamePlayers(listName, nextStep) {
     } else showFirstPlayerReveal(nextStep, listName);
   });
   modal.querySelector('#game-players-cancel').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  modal.addEventListener('click', e => { if (e.target === modal && !e.target.querySelector('#shared-baam-powerups')) modal.remove(); });
 }
 
 // Find Me: picture clue plus moving word choices, using the shared player HUD and timer.
