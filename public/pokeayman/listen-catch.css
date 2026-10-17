@@ -228,3 +228,20 @@
 @keyframes cdxCaughtIn{from{transform:scale(.7);opacity:0}}
 @keyframes cdxNameBounce{50%{transform:translateY(-5px) scale(1.04)}}
 @media(prefers-reduced-motion:reduce){.cdx-caught-celebration,.cdx-caught-name,.cdx-caught-confetti i{animation:none}}
+
+/* Compact challenge tags, dimmed non-matching balls, readable dark-mode surfaces. */
+.cdx-challenge-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cdx-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(255,255,255,.07);color:#f8fafc;font-size:.8rem;font-weight:800;text-transform:capitalize}
+.cdx-tag-ball{border-color:var(--ball-tier-border);background:var(--ball-tier-glow)}.cdx-tag img{width:20px;height:20px;object-fit:contain}
+.cdx-tier-stat.is-dimmed{opacity:.35;filter:grayscale(.7);box-shadow:none}
+.catchdex-tab-card,.catchdex-tab-card .cdx-view{color:#f8fafc}
+.catchdex-tab-card :is(h2,h3,strong){color:#f8fafc}
+.catchdex-tab-card .cdx-award h3{font:800 1rem Outfit,sans-serif}
+.catchdex-tab-card .cdx-award-btn{border-color:var(--ball-tier-border);background:linear-gradient(145deg,var(--ball-tier-glow),#121b2d 80%);color:#f8fafc}
+.catchdex-tab-card .cdx-award-btn small{color:#cbd5e1}
+.catchdex-tab-card .cdx-reward figcaption{color:#f8fafc}
+.catchdex-tab-card .cdx-caught-celebration :is(strong,b,small,span){color:#1b1b2f}
+body.ts-bright .catchdex-tab-card{background:var(--pk-surface,#fff);border-color:var(--pk-border,#e2e8f0)}
+body.ts-bright .catchdex-tab-card :is(.cdx-view,h2,h3,strong,.cdx-tag,.cdx-award-btn,.cdx-reward figcaption){color:var(--pk-ink,#0f172a)}
+body.ts-bright .catchdex-tab-card :is(.cdx-stat,.cdx-challenge,.cdx-award-btn){background:var(--pk-surface-2,#f1f5f9)}
+body.ts-bright .catchdex-tab-card :is(.cdx-stat small,.cdx-stat-label,.cdx-header p,.cdx-award-btn small,.cdx-challenge p){color:#475569}
