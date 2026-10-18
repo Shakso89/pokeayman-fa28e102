@@ -7727,8 +7727,12 @@ function openGlobalLeaderboard() {
 }
 document.getElementById('global-leaderboard-trigger')?.addEventListener('click', openGlobalLeaderboard);
 
-function animateAnswerResult(gameModal, isCorrect) {
-  const card = gameModal?.querySelector('.game-player-card.is-active') || document.querySelector('.game-player-card.is-active');
+function animateAnswerResult(gameModal, isCorrect, targetPlayerIndex) {
+  const resolvedIndex = targetPlayerIndex !== undefined ? targetPlayerIndex : activeGamePlayerIndex;
+  const card = (resolvedIndex !== undefined && gameModal?.querySelector(`.game-player-card[data-player-index="${resolvedIndex}"]`)) ||
+               gameModal?.querySelector('.game-player-card.is-active') ||
+               (resolvedIndex !== undefined && document.querySelector(`.game-player-card[data-player-index="${resolvedIndex}"]`)) ||
+               document.querySelector('.game-player-card.is-active');
   if (!card) return;
   card.classList.remove('answer-correct', 'answer-wrong');
   void card.offsetWidth;
@@ -7736,15 +7740,15 @@ function animateAnswerResult(gameModal, isCorrect) {
   clearTimeout(card._answerFeedbackTimer);
   card._answerFeedbackTimer = setTimeout(() => {
     card.classList.remove('answer-correct', 'answer-wrong');
-  }, 3000);
+  }, 2200);
 }
 
-function showCorrectAnswerCelebration(gameModal) {
-  animateAnswerResult(gameModal, true);
+function showCorrectAnswerCelebration(gameModal, playerIndex) {
+  animateAnswerResult(gameModal, true, playerIndex);
 }
 
-function showWrongAnswerCelebration(gameModal) {
-  animateAnswerResult(gameModal, false);
+function showWrongAnswerCelebration(gameModal, playerIndex) {
+  animateAnswerResult(gameModal, false, playerIndex);
 }
 
 function showMotivationalPopup(name) {
@@ -17338,6 +17342,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       cards[idx2]?.style.setProperty('pointer-events', 'none');
       if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
       updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
+      showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
       cards.forEach((card, i) => {
         if (i === idx1 || i === idx2) {
           card.classList.add('memory-card-matched');
@@ -17369,8 +17374,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     } else {
       // Wrong match - pass the turn immediately, then shake and flip back
       playGameSound('wrong');
+      const prevTurnIndex = activeGamePlayerIndex;
       advanceGameTurn();
       updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
+      showWrongAnswerCelebration(modal, prevTurnIndex);
       cards[idx1].style.animation = 'shake 0.4s ease';
       cards[idx2].style.animation = 'shake 0.4s ease';
       
@@ -17860,6 +17867,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
       // answer and its picture are shown immediately; only a correct retry
       // may advance a makeover round, and no makeover retry awards points.
       playGameSound('wrong');
+      showWrongAnswerCelebration(modal, activeGamePlayerIndex);
       const isMakeoverAttempt = awaitingMakeup || phase === 'retrying';
       const practiceHint = modal.querySelector('#scramble-practice-hint');
       if (practiceHint) {
@@ -18113,8 +18121,10 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
             btn.classList.add('animate-shake');
             btn.style.backgroundColor = '#fee2e2';
             btn.style.borderColor = '#ef4444';
+            const prevPlayerIndex = activeGamePlayerIndex;
             advanceGameTurn();
             updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
+            showWrongAnswerCelebration(modal, prevPlayerIndex);
             setTimeout(() => {
               btn.style.backgroundColor = '';
               btn.style.borderColor = '';
