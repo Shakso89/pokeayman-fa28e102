@@ -396,6 +396,35 @@ html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboar
 html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard #quiz-empty,
 html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard #student-classes-empty { color: var(--color-text-secondary) !important; }
 html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard #student-theme-toggle { background: var(--color-surface-raised); border-color: var(--color-border-strong); color: var(--color-text-primary); }
+/* Stat cards dark mode - bright colors for dark background */
+html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard .stat-card-glass {
+  background: var(--color-surface) !important; border: 1px solid var(--color-border) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard .stat-card-glass > h2 {
+  color: var(--color-text-primary) !important;
+}
+html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard .stat-card-glass > .grid.grid-cols-2 > div {
+  background: var(--color-surface) !important; border: 1px solid var(--color-border) !important;
+}
+html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard #my-coins { color: var(--color-warning) !important; }
+html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard #my-pokemon-count { color: var(--color-info) !important; }
+html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard #my-total-power { color: var(--color-brand) !important; }
+html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard #my-total-value { color: var(--color-success) !important; }
+html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard .stat-card-glass > .grid.grid-cols-2 > div > p:last-child {
+  color: var(--color-text-secondary) !important;
+}
+/* Stat cards bright mode - keep existing colors */
+ts-bright #student-dashboard .stat-card-glass {
+  --ds-surface: #ffffff;
+  --ds-border: #e2e8f0;
+  --ds-ink: #0f172a;
+  --ds-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+ts-bright #student-dashboard #my-coins { color: #CA8A04 !important; }
+ts-bright #student-dashboard #my-pokemon-count { color: #0284C7 !important; }
+ts-bright #student-dashboard #my-total-power { color: #9333EA !important; }
+ts-bright #student-dashboard #my-total-value { color: #059669 !important; }
 html body #student-dashboard#student-dashboard #student-tab-shop .stc-dot::before {
   content: ''; position: absolute; width: 8px; height: 8px; top: 12px; left: 5px;
   border-radius: 50%; background: var(--kid-sky-300);
