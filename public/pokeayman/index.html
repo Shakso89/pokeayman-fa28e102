@@ -15826,16 +15826,17 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
   const markAnswer = (isCorrect) => {
     if (!selectedCard || selectedCard.powerUp) return;
     const word = baamQ('#baam-word');
+    const currentPlayer = activeGamePlayerIndex;
     if (isCorrect) {
-      showCorrectAnswerCelebration(modal);
-      activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 10;
+      showCorrectAnswerCelebration(modal, currentPlayer);
+      activeGameScores[currentPlayer] = (activeGameScores[currentPlayer] || 0) + 10;
       updateTeamScores();
       word.textContent = selectedCard.vocab_word;
       word.classList.remove('hidden');
       advanceGameTurn();
       updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
     } else {
-      showWrongAnswerCelebration(modal);
+      showWrongAnswerCelebration(modal, currentPlayer);
       advanceGameTurn();
       updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
     }
@@ -16712,7 +16713,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   };
   let findMeTarget = null;
   const updateFindMeProgress = () => { modal.querySelector('#find-me-progress').textContent = `${getFindMePlayerScore()}/${findMeTargetScore}`; };
-  function renderRound() { locked = false; const setting = findMeDifficulties[findMeDifficulty]; const roundWords = words.slice().sort(() => Math.random() - 0.5); const target = (findMeTarget = currentRole === 'student' ? words[getFindMePlayerScore()] : roundWords[0]); const choices = getFindMeRoundItems(target, setting.itemCount); modal.querySelector('#find-me-picture').src = target.vocab_image; modal.querySelector('#find-me-picture').alt = `Picture clue for ${target.vocab_word}`; updateFindMeProgress(); feedback.textContent = ''; box.innerHTML = choices.map(w=>`<button type="button" class="find-me-word absolute px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold text-orange-700 shadow-md transition hover:bg-orange-100" data-word="${w.vocab_word}">${w.vocab_word}</button>`).join(''); updateFindMeWordSize(); cancelAnimationFrame(findMeAnimationId); findMeAnimationId = requestAnimationFrame(moveFindMeWords); box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{ if(locked) return; locked=true; const correct=btn.dataset.word===target.vocab_word; if(correct){ activeGameScores[activeGamePlayerIndex]=(activeGameScores[activeGamePlayerIndex]||0)+1; updateFindMeProgress(); feedback.textContent='✅ Correct!'; feedback.className='min-h-8 mt-4 text-lg font-bold text-green-600'; btn.classList.add('find-me-word--correct'); const pop=document.createElement('span'); pop.className='find-me-score-pop'; pop.textContent='+1'; btn.appendChild(pop); showCorrectAnswerCelebration(modal);} else {feedback.textContent=`❌ Not quite — the answer is ${target.vocab_word}`; feedback.className='min-h-8 mt-4 text-lg font-bold text-red-600'; btn.classList.add('find-me-word--wrong'); box.querySelectorAll('button').forEach(b=>{ if(b.dataset.word===target.vocab_word) b.classList.add('find-me-word--hint'); }); showWrongAnswerCelebration(modal); advanceGameTurn();} updateGamePlayerHud(modal, 1, activeGamePlayerIndex); if(getFindMePlayerScore() >= findMeTargetScore){ locked = true; setTimeout(()=>showGameCelebration(modal,'Find Me champion!',target.vocab_word,null,target.vocab_image),500); } else setTimeout(()=>{round++; renderRound();},900);})); }
+  function renderRound() { locked = false; const setting = findMeDifficulties[findMeDifficulty]; const roundWords = words.slice().sort(() => Math.random() - 0.5); const target = (findMeTarget = currentRole === 'student' ? words[getFindMePlayerScore()] : roundWords[0]); const choices = getFindMeRoundItems(target, setting.itemCount); modal.querySelector('#find-me-picture').src = target.vocab_image; modal.querySelector('#find-me-picture').alt = `Picture clue for ${target.vocab_word}`; updateFindMeProgress(); feedback.textContent = ''; box.innerHTML = choices.map(w=>`<button type="button" class="find-me-word absolute px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold text-orange-700 shadow-md transition hover:bg-orange-100" data-word="${w.vocab_word}">${w.vocab_word}</button>`).join(''); updateFindMeWordSize(); cancelAnimationFrame(findMeAnimationId); findMeAnimationId = requestAnimationFrame(moveFindMeWords); box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{ if(locked) return; locked=true; const correct=btn.dataset.word===target.vocab_word; if(correct){ activeGameScores[activeGamePlayerIndex]=(activeGameScores[activeGamePlayerIndex]||0)+1; updateFindMeProgress(); feedback.textContent='✅ Correct!'; feedback.className='min-h-8 mt-4 text-lg font-bold text-green-600'; btn.classList.add('find-me-word--correct'); const pop=document.createElement('span'); pop.className='find-me-score-pop'; pop.textContent='+1'; btn.appendChild(pop); showCorrectAnswerCelebration(modal, activeGamePlayerIndex);} else {feedback.textContent=`❌ Not quite — the answer is ${target.vocab_word}`; feedback.className='min-h-8 mt-4 text-lg font-bold text-red-600'; btn.classList.add('find-me-word--wrong'); box.querySelectorAll('button').forEach(b=>{ if(b.dataset.word===target.vocab_word) b.classList.add('find-me-word--hint'); }); const prevPlayerIndex = activeGamePlayerIndex; advanceGameTurn(); showWrongAnswerCelebration(modal, prevPlayerIndex);} updateGamePlayerHud(modal, 1, activeGamePlayerIndex); if(getFindMePlayerScore() >= findMeTargetScore){ locked = true; setTimeout(()=>showGameCelebration(modal,'Find Me champion!',target.vocab_word,null,target.vocab_image),500); } else setTimeout(()=>{round++; renderRound();},900);})); }
   wordCountDecrease?.addEventListener('click', () => { findMeWordCount = Math.max(2, findMeWordCount - 1); updateFindMeWordCountControls(); renderRound(); });
   wordCountIncrease?.addEventListener('click', () => { findMeWordCount = Math.min(Math.min(15, words.length), findMeWordCount + 1); updateFindMeWordCountControls(); renderRound(); });
   updateFindMeWordCountControls();
@@ -16886,20 +16887,21 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
         if (correctAnswers === totalWords) {
           playGameSound('complete');
-          showCorrectAnswerCelebration(modal);
+          showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
           clearSelection();
           setTimeout(() => showGameCelebration(modal, 'Perfect match!'), 520);
         } else {
-          showCorrectAnswerCelebration();
+          showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
           clearSelection();
           setTimeout(() => renderGame(), 520);
         }
       } else {
         // A wrong match ends the turn and passes play to the next player.
         playGameSound('wrong');
-        showWrongAnswerCelebration(modal);
+        const prevPlayerIndex = activeGamePlayerIndex;
         advanceGameTurn();
         updateGamePlayerHud(modal, Math.round((correctAnswers / totalWords) * 100), activeGamePlayerIndex);
+        showWrongAnswerCelebration(modal, prevPlayerIndex);
         statusEl.textContent = '❌ Wrong match!';
         wordBtn.classList.add('is-wrong');
         imageBtn.classList.add('is-wrong');
@@ -17798,28 +17800,31 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   const checkAnswer = () => {
     if (submissionGuard || phase === 'evaluating' || phase === 'retry-complete' || phase === 'turn-ended') return;
     if (!selectedLetters.every(Boolean)) return;
+    const answeringPlayerIndex = activeGamePlayerIndex;
+    const isMakeupAttempt = awaitingMakeup || phase === 'retrying';
     submissionGuard = true;
     phase = 'evaluating';
     const answer = selectedLetters.map(letter => letter?.letter || '').join('');
     const normalizeEntry = value => String(value || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
-    const isMakeupAttempt = phase === 'retrying' || awaitingMakeup;
     if (normalizeEntry(answer) === normalizeEntry(correctWord)) {
       unlockGameSound();
       playScrambleSound('correct');
       if (isMakeupAttempt) {
         phase = 'retry-complete';
         awaitingMakeup = false;
-        advanceGameTurn();
-        updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
-        setTimeout(() => { phase = 'turn-ended'; }, 0);
       } else {
-        activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+        activeGameScores[answeringPlayerIndex] = (activeGameScores[answeringPlayerIndex] || 0) + 1;
         updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
         updateNextWordAvailability();
       }
       animateScrambleResult('correct', 'Correct answer.');
-      showCorrectAnswerCelebration();
+      showCorrectAnswerCelebration(modal, answeringPlayerIndex);
       setTimeout(() => {
+        if (isMakeupAttempt) {
+          advanceGameTurn();
+          updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
+          phase = 'turn-ended';
+        }
         const playerKey = getPlayerKey();
         const completedAllWords = (scrambleSession.playerWords[playerKey] || []).length >= words.length;
         if (activeGameScores[activeGamePlayerIndex] < scrambleSession.winningScore && !completedAllWords) {
@@ -17867,7 +17872,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
       // answer and its picture are shown immediately; only a correct retry
       // may advance a makeover round, and no makeover retry awards points.
       playGameSound('wrong');
-      showWrongAnswerCelebration(modal, activeGamePlayerIndex);
+      showWrongAnswerCelebration(modal, answeringPlayerIndex);
       const isMakeoverAttempt = awaitingMakeup || phase === 'retrying';
       const practiceHint = modal.querySelector('#scramble-practice-hint');
       if (practiceHint) {
@@ -18133,7 +18138,7 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
             }, 400);
             return;
           } else {
-            showCorrectAnswerCelebration(modal);
+            showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
             // Regular letters award 1 point; the final completing letter awards 3.
             const completesWord = word.split('').every(l => guessed.includes(l));
             const letterPoints = completesWord ? 3 : 1;
@@ -18168,7 +18173,7 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
             modal.querySelector('#hangman-game-body').classList.add('justify-center');
             modal.querySelector('#hangman-content').classList.remove('flex-1');
             modal.querySelector('#hangman-content').classList.add('w-full', 'max-w-md');
-            showCorrectAnswerCelebration();
+            showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
             modal.querySelector('#hangman-feedback').classList.add('text-green-600');
             const rankedPlayers = activeGamePlayers.map((player, index) => ({
               player,
