@@ -390,3 +390,28 @@ html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
     & #schedule-agenda .schedule-event-actions button { width: 36px; height: 36px; }
   }
 }
+
+/* Student cards follow the active theme on teacher roster and student classmate grids (global top-3 medal cards keep their own frames). */
+html body #app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card:not(.global-rank-card),
+html body #student-dashboard#student-dashboard#student-dashboard #student-classes-grid .student-classmate-card:not(.global-rank-card) {
+  background: var(--color-surface) !important; background-image: none !important;
+  color: var(--color-text-primary) !important; border: 1px solid var(--color-border) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+html body #app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card.class-rank-1:not(.global-rank-card),
+html body #student-dashboard#student-dashboard#student-dashboard #student-classes-grid .student-classmate-card.rank-1:not(.global-rank-card) {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand) 16%, var(--color-surface)), var(--color-surface) 65%) !important;
+  border-color: color-mix(in srgb, var(--color-brand) 55%, transparent) !important;
+}
+html body #app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card:not(.global-rank-card) :is(p, .student-roster-name),
+html body #student-dashboard#student-dashboard#student-dashboard #student-classes-grid .student-classmate-card:not(.global-rank-card) :is(p, .student-classmate-name) {
+  color: var(--color-text-primary) !important; text-shadow: none !important;
+}
+html body #app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card:not(.global-rank-card) :is(.student-roster-count, .student-roster-coins span),
+html body #student-dashboard#student-dashboard#student-dashboard #student-classes-grid .student-classmate-card:not(.global-rank-card) .student-classmate-stat {
+  color: var(--color-text-secondary) !important;
+}
+html body #app-screen#app-screen#app-screen #view-students #students-list > .trainer-student-card:not(.global-rank-card) .student-roster-coins,
+html body #student-dashboard#student-dashboard#student-dashboard #student-classes-grid .student-classmate-card:not(.global-rank-card) .student-classmate-coins {
+  color: var(--color-warning) !important;
+}
