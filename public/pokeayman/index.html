@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -4049,17 +4049,18 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   window.pendingChosenGame = null;
+  window.arcadeOpen = true;
 
   window.gaBackToArcade = function () {
-    arcadeOpen = true;
-    renderGamesList();
+    window.arcadeOpen = true;
+    if (typeof renderGamesList === 'function') renderGamesList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   window.gaShowListSelection = function (game) {
     if (game) window.pendingChosenGame = game;
-    arcadeOpen = false;
-    renderGamesList();
+    window.arcadeOpen = false;
+    if (typeof renderGamesList === 'function') renderGamesList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -4073,8 +4074,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       return;
     }
     window.pendingChosenGame = g;
-    arcadeOpen = false;
-    renderGamesList();
+    window.arcadeOpen = false;
+    if (typeof renderGamesList === 'function') renderGamesList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -4117,22 +4118,21 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <span class="ga-cart-desc">${esc(g.desc)}</span>
           <span class="ga-cart-tags">${g.tags.map(t => `<span>${esc(t)}</span>`).join('')}</span>
         </span>
-        <span class="ga-cart-play">${locked ? (isTeacher ? 'Upgrade to Pro' : 'Locked for class') : 'Choose â–¶'}</span>
+        <span class="ga-cart-play">${locked ? (isTeacher ? 'Upgrade to Pro' : 'Locked for class') : 'Choose ▶'}</span>
       </button>`;
     }).join('');
     return `<section class="ga-hub" aria-label="Game arcade">
       <header class="ga-hub-head">
         <div>
           <span class="ga-hub-kicker">STEP 1</span>
-          <h2 class="arena-title text-xl sm:text-2xl font-black text-white">Choose a Game</h2>
-          <p class="text-xs text-amber-200/80 mt-1">Select any game below, then pick the vocabulary lists you want to play with.</p>
+          <h2 class="arena-title text-xl sm:text-2xl font-black text-white">Choose a Game to Play</h2>
+          <p class="text-xs text-amber-200/80 mt-1">Select any game below, then pick the vocabulary lists for the game content.</p>
         </div>
       </header>
       <div class="ga-grid" role="group" aria-label="Choose a vocabulary game">${cards}</div>
     </section>`;
   };
 
-  let arcadeOpen = true;
   window.gaStudentSetup = function (listName, fnName) {
     const game = GAMES.find(item => item.fn === fnName && !item.teacherOnly);
     if (!game) return;
@@ -4148,7 +4148,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const panel = document.createElement('section');
     panel.className = 'game-inline-view ga-student-setup ga-hub';
     panel.setAttribute('aria-label', `${game.name} word count`);
-    panel.innerHTML = `<header class="ga-hub-head"><h2>${game.icon} ${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">â†</button></header><div class="ga-student-counts" role="group" aria-label="Number of words">${[5, 10, 15].map(count => `<button type="button" class="btn-primary" data-count="${count}" ${words.length < count ? 'disabled' : ''}><strong>${count}</strong><span>words</span></button>`).join('')}</div>`;
+    panel.innerHTML = `<header class="ga-hub-head"><h2>${game.icon} ${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of words">${[5, 10, 15].map(count => `<button type="button" class="btn-primary" data-count="${count}" ${words.length < count ? 'disabled' : ''}><strong>${count}</strong><span>words</span></button>`).join('')}</div>`;
     panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
     panel.querySelectorAll('[data-count]').forEach(button => button.addEventListener('click', () => {
       const count = Number(button.dataset.count);
@@ -4168,9 +4168,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
   window.gaListStep = function (selector, container, count) {
     if (!selector || !container) return;
-    selector.hidden = arcadeOpen;
-    container.hidden = !arcadeOpen;
-    if (arcadeOpen) return;
+    const isArcade = Boolean(window.arcadeOpen);
+    selector.hidden = isArcade;
+    container.hidden = !isArcade;
+    if (isArcade) return;
 
     selector.querySelectorAll('.ga-continue').forEach(el => el.remove());
     const next = document.createElement('button');
@@ -4178,7 +4179,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     next.className = 'ga-continue';
     const gameName = window.pendingChosenGame ? window.pendingChosenGame.name : 'Game';
     next.disabled = !count;
-    next.textContent = count ? `Play ${gameName} â–¶ (${count} list${count === 1 ? '' : 's'})` : `Choose a list to play ${gameName} â†’`;
+    next.textContent = count ? `Next: Game Settings for ${gameName} ▶ (${count} list${count === 1 ? '' : 's'})` : `Choose a vocabulary list to play ${gameName} →`;
     next.addEventListener('click', () => {
       if (!selectedGameList.length) { toast('Please choose at least one vocabulary list'); return; }
       if (getGameWords(selectedGameList).length < 2) { toast('Choose lists with at least two words.'); return; }
@@ -4186,6 +4187,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     });
     selector.appendChild(next);
   };
+
   window.gaMountStage = function (view) {
     const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters');
     if (!board || view.querySelector('#game-player-list') || view.classList.contains('ga-stage')) return;
@@ -4344,8 +4346,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) setTimeout(finish, 900);
   };
 })();
-
-
 </script>
 <script src="/pokeayman/vocab-battle.js"></script>
 <script data-pokeayman-inline="listen-catch">
@@ -5985,7 +5985,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       <div id="student-tab-games" class="student-dashboard-content hidden flex-1 overflow-y-auto">
        <div class="glass-container rounded-xl p-6 mb-6">
         
-        <p class="text-sm text-gray-200 mb-4">Choose a list with at least 2 words. Select more than one to combine lists.</p>
+        
         <div id="student-games-list-selector" class="space-y-2 mb-4"></div>
         <div id="student-games-options-container"></div>
        </div>
@@ -9525,7 +9525,7 @@ function openStudentDashboardTab(btn) {
   if (btn.dataset.tab === 'classes') renderStudentClasses();
   if (btn.dataset.tab === 'catchdex') window.renderListenCatchTab?.();
   if (btn.dataset.tab === 'vocabulary') renderStudentVocabulary();
-  if (btn.dataset.tab === 'games') renderGamesList();
+  if (btn.dataset.tab === 'games') { window.arcadeOpen = true; renderGamesList(); }
 }
 document.querySelectorAll('.student-nav-group-button').forEach(button => button.addEventListener('click', () => {
   const menu = document.getElementById(button.getAttribute('aria-controls'));
@@ -10288,7 +10288,7 @@ document.querySelectorAll('.class-view-tab').forEach(btn => {
     document.getElementById('class-subtab-' + btn.dataset.classtab).classList.remove('hidden');
     if (btn.dataset.classtab === 'quiz') { renderQuickAnswerStudents(); renderOngoingQuizzes(); renderQuizHistory(); }
     if (btn.dataset.classtab === 'battle') populateBattleSelects();
-    if (btn.dataset.classtab === 'games') renderGamesList();
+    if (btn.dataset.classtab === 'games') { window.arcadeOpen = true; renderGamesList(); }
   });
 });
 
@@ -15076,15 +15076,24 @@ function renderGamesList() {
   const selector = document.getElementById(isStudentGames ? 'student-games-list-selector' : 'games-list-selector');
   const gamesContainer = document.getElementById(isStudentGames ? 'student-games-options-container' : 'games-options-container');
   if (!selector) return;
+
+  if (typeof window.arcadeOpen === 'undefined') {
+    window.arcadeOpen = true;
+  }
+
+  if (gamesContainer && window.gaRenderHub) {
+    const listLabel = (selectedGameList && selectedGameList.length) ? selectedGameList.map(item => typeof item === 'object' ? item.vocab_list_name : item).join(', ') : '';
+    gamesContainer.innerHTML = window.gaRenderHub(listLabel, !isStudentGames);
+  }
+
   // Re-render the selector in place so repeated data refreshes never stack duplicate VB cards.
   selector.replaceChildren();
-  if (!arcadeOpen && window.pendingChosenGame) {
+  if (!window.arcadeOpen && window.pendingChosenGame) {
     const banner = document.createElement('div');
     banner.className = 'flex items-center justify-between p-3.5 mb-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-indigo-600/20 border border-amber-300/30 text-white shadow-sm';
     banner.innerHTML = '<div class="flex items-center gap-3"><span class="text-3xl">' + (window.pendingChosenGame.icon || '🎮') + '</span><div><span class="text-[11px] font-black uppercase tracking-wider text-amber-300">Step 2: Choose Vocabulary Lists</span><h3 class="text-base sm:text-lg font-black text-white leading-tight">' + window.pendingChosenGame.name + '</h3></div></div><button type="button" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-amber-200 border border-amber-300/40 transition flex items-center gap-1.5" onclick="window.gaBackToArcade()">&#x2190; Change Game</button>';
     selector.appendChild(banner);
   }
-  if (gamesContainer) gamesContainer.replaceChildren();
   if (currentRole === 'teacher' && (!navSchool || !navClass)) {
     const firstAssigned = getAssignedClasses(currentTeacher)[0];
     if (firstAssigned) { navSchool = firstAssigned.assigned_school; navClass = firstAssigned.assigned_class; }
@@ -15103,7 +15112,12 @@ function renderGamesList() {
   if (currentRole === 'teacher' && !renderGamesList.teacherTabInitialized) { renderGamesList.teacherTabInitialized = true; selectedGameSource = 'my_lists'; }
   const teacherMyLists = currentRole === 'teacher' && selectedGameSource === 'my_lists' && Array.isArray(selectedGameList) && selectedGameList.some(item => item && typeof item === 'object' && item.vocab_list_id);
   if (currentRole === 'teacher') {
-    selector.innerHTML = `<div class="teacher-list-source-tabs flex w-full gap-2 mb-3 overflow-x-auto" role="tablist" aria-label="Vocabulary list source"><button type="button" class="teacher-list-source-tab ${selectedGameSource === 'my_lists' ? 'is-active' : ''}" role="tab" aria-selected="${selectedGameSource === 'my_lists'}">My lists</button><button type="button" class="teacher-list-source-tab ${selectedGameSource === 'class_lists' ? 'is-active' : ''}" role="tab" aria-selected="${selectedGameSource === 'class_lists'}">Class lists</button></div>`;
+    const teacherTabs = document.createElement('div');
+    teacherTabs.className = 'teacher-list-source-tabs flex w-full gap-2 mb-3 overflow-x-auto';
+    teacherTabs.setAttribute('role', 'tablist');
+    teacherTabs.setAttribute('aria-label', 'Vocabulary list source');
+    teacherTabs.innerHTML = `<button type="button" class="teacher-list-source-tab ${selectedGameSource === 'my_lists' ? 'is-active' : ''}" role="tab" aria-selected="${selectedGameSource === 'my_lists'}">My lists</button><button type="button" class="teacher-list-source-tab ${selectedGameSource === 'class_lists' ? 'is-active' : ''}" role="tab" aria-selected="${selectedGameSource === 'class_lists'}">Class lists</button>`;
+    selector.appendChild(teacherTabs);
     const sourceTabs = selector.querySelectorAll('.teacher-list-source-tab');
     sourceTabs[0].addEventListener('click', () => { selectedGameList = []; selectedGameSource = 'my_lists'; selectedGameSession = null; renderGamesList(); });
     sourceTabs[1].addEventListener('click', () => { selectedGameList = []; selectedGameSource = 'class_lists'; selectedGameSession = null; renderGamesList(); });
@@ -15120,14 +15134,10 @@ function renderGamesList() {
   if (!validLists.length && currentRole !== 'teacher') {
     listArea.innerHTML = (isStudentGames && enrolledClasses.length > 1 ? getStudentClassFilterMarkup('games', selectedStudentGamesClassKey) : '') + '<div class="student-games-empty rounded-xl border border-indigo-200/30 bg-indigo-950/50 p-5 text-center"><p class="text-sm font-semibold text-indigo-100">No vocabulary lists are available for this class yet.</p><p class="mt-1 text-xs text-indigo-200">Add at least 2 words to a vocabulary list to play.</p></div>';
     if (isStudentGames && enrolledClasses.length > 1) attachGamesClassFilterListeners(listArea);
-    if (gamesContainer) gamesContainer.innerHTML = '';
+    window.gaListStep?.(selector, gamesContainer, selectedGameList.length);
     return;
   }
-  if (!validLists.length && currentRole !== 'teacher') {
-    listArea.innerHTML = '<div class="student-games-empty rounded-xl border border-indigo-200/30 bg-indigo-950/50 p-5 text-center"><p class="text-sm font-semibold text-indigo-100">No vocabulary lists are available yet.</p><p class="mt-1 text-xs text-indigo-200">Add at least 2 words to a vocabulary list to play.</p></div>';
-    if (gamesContainer) gamesContainer.innerHTML = '';
-    return;
-  }
+
 
   // Group lists by class for student view
   const groupedByClass = {};
