@@ -283,6 +283,28 @@
     return winnerRows().filter(row => String(row.challenge_id) === String(challengeId))
       .sort((a, b) => (Date.parse(a.won_at || a.created_at || '') || 0) - (Date.parse(b.won_at || b.created_at || '') || 0))[0] || null;
   }
+  function getStudentChallengeThrows(state, challengeId) {
+    if (!state || !state.challengeThrows) return 0;
+    if (challengeId && state.challengeThrows[challengeId] != null) return Number(state.challengeThrows[challengeId]) || 0;
+    const keys = Object.keys(state.challengeThrows);
+    if (!keys.length) return 0;
+    if (challengeId) {
+      const match = keys.find(k => String(k).includes(String(challengeId)) || String(challengeId).includes(String(k)));
+      if (match && state.challengeThrows[match] != null) return Number(state.challengeThrows[match]) || 0;
+    }
+    if (keys.length === 1) return Number(state.challengeThrows[keys[0]]) || 0;
+    return 0;
+  }
+  function winnerThrowsCount(w, challengeId) {
+    if (!w) return 0;
+    if (Number(w.throws) > 0) return Number(w.throws);
+    const progress = (typeof allData === 'undefined' ? [] : allData).find(r => r.type === 'listen_catch_progress' && (String(r.student_id || '') === String(w.student_id || '') || String(r.student_name || '').toLowerCase() === String(w.student_name || '').toLowerCase()));
+    if (progress) {
+      const state = parseProgress(progress);
+      return getStudentChallengeThrows(state, challengeId || w.challenge_id);
+    }
+    return 0;
+  }
   window.pkChallengeWinnerRows = winnerRows;
   function askBallQuantity(record, tier, price) {
     return new Promise(resolve => {
@@ -396,7 +418,7 @@
       } else if (alreadyOwned) { await addCoins(record, coins); coinsAwarded = true; }
       await save(record, state);
       if (caught) {
-        const winnerRecord = { type: 'listen_catch_winner', challenge_id: goal.id, challenge_title: goal.title, student_id: recordId, student_name: record.student_name || '', class_name: record.class_name || '', school_name: record.school_name || '', pokemon_id: Number(candidate.id), pokemon_name: candidate.name, won_at: createdAt, created_at: createdAt };
+        const winnerRecord = { type: 'listen_catch_winner', challenge_id: goal.id, challenge_title: goal.title, student_id: recordId, student_name: record.student_name || '', class_name: record.class_name || '', school_name: record.school_name || '', pokemon_id: Number(candidate.id), pokemon_name: candidate.name, throws: attempt, max_throws: goal.guaranteedThrows, won_at: createdAt, created_at: createdAt };
         try { const res = await window.dataSdk.create(winnerRecord); if (res?.isOk && typeof allData !== 'undefined' && !allData.some(r => r.__backendId && r.__backendId === (res.data?.__backendId))) allData.push({ ...winnerRecord, __backendId: res.data?.__backendId || res.data?.id || '' }); } catch (_) {}
         window.pkApplyBadgePins?.();
       }
@@ -560,13 +582,23 @@
       const state = parseProgress(r); const rec = (typeof getStudentRecordByStableId === 'function' && getStudentRecordByStableId(r.student_id)) || r; const name = rec.student_name || r.student_name || 'Student';
       const cls = [rec.school_name || r.school_name, rec.class_name || r.class_name].filter(Boolean).join(' · ');
       const playerChallenge = challenge(state);
-      if (hasClaimedChallenge(state, id) || playerChallenge.claimed) done.push({ name, cls });
+      const wRow = winnerRows().find(wr => String(wr.challenge_id) === String(id) && (String(wr.student_id) === String(r.student_id) || String(wr.student_name || '').toLowerCase() === String(name).toLowerCase()));
+      const studentThrows = Number(wRow?.throws) || Number(state.challengeThrows?.[id]) || Number(state.challengeThrows?.[playerChallenge.id]) || getStudentChallengeThrows(state, id) || playerChallenge.throws || 0;
+      if (hasClaimedChallenge(state, id) || playerChallenge.claimed) done.push({ name, cls, throws: studentThrows });
       else if (active && playerChallenge.throws > 0) participants.push({ name, cls, throws: playerChallenge.throws });
+    });
+    winnerRows().filter(wr => String(wr.challenge_id) === String(id)).forEach(wr => {
+      if (!done.some(d => d.name === wr.student_name)) {
+        done.push({ name: wr.student_name, cls: [wr.school_name, wr.class_name].filter(Boolean).join(' · '), throws: Number(wr.throws) || winnerThrowsCount(wr, id) || 0 });
+      }
     });
     const row = (s, tag) => `<li><b>${esc(s.name)}</b><span>${esc(s.cls)}</span><em>${tag}</em></li>`;
     const crit = setting.challenge_pokemon_name || catalog().find(item => Number(item.id) === Number(setting.challenge_pokemon_id))?.name || challengeCriteria({ type: setting.challenge_type, tier: setting.challenge_tier });
     const maxThrows = Number(setting.challenge_max_throws ?? setting.challenge_goal) || DEFAULT_GUARANTEED_THROWS;
-    posted.innerHTML = `<header><div><span>${active ? 'LIVE NOW' : 'POSTED CHALLENGE'}</span><h4>${esc(setting.challenge_title || 'Weekly Catchdex Challenge')}</h4><p>Catch ${esc(crit)} · ${rarityLabel(setting.challenge_tier).toLowerCase()} balls only · ${maxThrows} throws maximum · starts ${esc(setting.challenge_start)}</p></div><button type="button" class="lc-admin-delete" data-lc-delete>Delete challenge</button></header>${(() => { const w = challengeWinner(setting.challenge_id || activeChallenge()?.id); return w ? `<p class="lc-admin-winner">🏆 Won by <strong>${esc(w.student_name)}</strong>${w.class_name ? ` (${esc(w.class_name)})` : ''}</p>` : ''; })()}<h5>Caught (${done.length})</h5>${done.length || participants.length ? `<ul>${done.map(s => row(s, 'Pokémon caught')).join('')}${participants.map(s => row(s, `${s.throws}/${maxThrows} throws`)).join('')}</ul>` : '<p class="lc-admin-empty">Students can use matching rarity Catch Balls to try the challenge.</p>'}${winnerRows().length ? `<h5>Hall of Fame</h5><ul class="lc-hall">${winnerRows().slice().sort((a, b) => String(b.won_at || '').localeCompare(String(a.won_at || ''))).map(w => `<li><img src="${art(w.pokemon_id)}" alt=""><span><b>${esc(w.student_name)}</b> caught ${esc(w.pokemon_name)}</span><small>${esc(String(w.won_at || '').slice(0, 10))}</small></li>`).join('')}</ul>` : ''}`;
+    const w = challengeWinner(setting.challenge_id || activeChallenge()?.id);
+    const wThrows = Number(w?.throws) || done.find(d => d.name === w?.student_name)?.throws || (w ? winnerThrowsCount(w, id) : 0);
+    const winnerBanner = w ? `<p class="lc-admin-winner">🏆 Won by <strong>${esc(w.student_name)}</strong>${w.class_name ? ` (${esc(w.class_name)})` : ''}${wThrows ? ` · <span>caught in ${wThrows} throw${wThrows === 1 ? '' : 's'} (${wThrows}/${maxThrows})</span>` : ''}</p>` : '';
+    posted.innerHTML = `<header><div><span>${active ? 'LIVE NOW' : 'POSTED CHALLENGE'}</span><h4>${esc(setting.challenge_title || 'Weekly Catchdex Challenge')}</h4><p>Catch ${esc(crit)} · ${rarityLabel(setting.challenge_tier).toLowerCase()} balls only · ${maxThrows} throws maximum · starts ${esc(setting.challenge_start)}</p></div><button type="button" class="lc-admin-delete" data-lc-delete>Delete challenge</button></header>${winnerBanner}<h5>Caught (${done.length})</h5>${done.length || participants.length ? `<ul>${done.map(s => row(s, s.throws ? `Caught in ${s.throws} throw${s.throws === 1 ? '' : 's'} (${s.throws}/${maxThrows})` : 'Pokémon caught')).join('')}${participants.map(s => row(s, `${s.throws}/${maxThrows} throws`)).join('')}</ul>` : '<p class="lc-admin-empty">Students can use matching rarity Catch Balls to try the challenge.</p>'}${winnerRows().length ? `<h5>Hall of Fame</h5><ul class="lc-hall">${winnerRows().slice().sort((a, b) => String(b.won_at || '').localeCompare(String(a.won_at || ''))).map(w => { const wt = Number(w.throws) || winnerThrowsCount(w, w.challenge_id); return `<li><img src="${art(w.pokemon_id)}" alt=""><span><b>${esc(w.student_name)}</b> caught ${esc(w.pokemon_name)}${wt ? ` <small>(${wt} throw${wt === 1 ? '' : 's'})</small>` : ''}</span><small>${esc(String(w.won_at || '').slice(0, 10))}</small></li>`; }).join('')}</ul>` : ''}`;
   }
   async function deleteChallenge() {
     const setting = challengeSetting(); if (!setting || !canAccessAdmin()) return;
@@ -787,7 +819,7 @@
     const challengeMarkup = goal.active
       ? `<section class="cdx-challenge cdx-type-challenge cdx-tier-${esc(goal.tier)}${goal.claimed ? ' is-claimed' : ''}" aria-labelledby="cdx-challenge-title">
           <div class="cdx-challenge-top"><div><span class="cdx-eyebrow">${goal.claimed ? 'CHALLENGE COMPLETE' : 'ACTIVE CATCH CHALLENGE'}</span><h3 id="cdx-challenge-title">${esc(goal.title)}</h3><div class="cdx-challenge-tags"${goal.winner ? ' hidden' : ''}><span class="cdx-tag">${esc(goal.types.length ? goal.types.join(' / ') : 'Any')} type</span><span class="cdx-tag cdx-tag-ball cdx-tier-${esc(goal.tier)}"><img src="${ballArt(goal.tier)}" alt="">${esc(rarityLabel(goal.tier))} ball</span></div></div><figure class="cdx-reward cdx-reward-${esc(goal.tier)}">${goal.pokemonId ? `<img src="${art(goal.pokemonId)}" alt="${esc(goal.pokemonName)}">` : `<img src="${ballArt(goal.tier)}" alt="">`}<figcaption>Reward: ${esc(goal.pokemonName || 'Mystery Pokémon')}<small>${esc(rarityLabel(goal.tier))} tier</small></figcaption></figure></div>
-          ${goal.winner ? `<div class="cdx-caught-celebration" role="status"><span class="cdx-caught-confetti" aria-hidden="true">${Array.from({length:14},(_,k)=>`<i style="--i:${k}"></i>`).join('')}</span><span class="cdx-caught-kicker">🎉 GOTCHA! 🎉</span><strong>${esc(goal.winner.pokemon_name || goal.pokemonName || 'Pokémon')} was caught by</strong><b class="cdx-caught-name">${goal.claimed ? 'You!' : esc(goal.winner.student_name || 'a student')}</b>${goal.winner.class_name && !goal.claimed ? `<small>from ${esc(goal.winner.class_name)}</small>` : ''}</div>` : `
+          ${goal.winner ? `<div class="cdx-caught-celebration" role="status"><span class="cdx-caught-confetti" aria-hidden="true">${Array.from({length:14},(_,k)=>`<i style="--i:${k}"></i>`).join('')}</span><span class="cdx-caught-kicker">🎉 GOTCHA! 🎉</span><strong>${esc(goal.winner.pokemon_name || goal.pokemonName || 'Pokémon')} was caught by</strong><b class="cdx-caught-name">${goal.claimed ? 'You!' : esc(goal.winner.student_name || 'a student')}</b>${goal.winner.class_name && !goal.claimed ? `<small>from ${esc(goal.winner.class_name)}</small>` : ''}${(() => { const wt = Number(goal.winner?.throws) || goal.throws || winnerThrowsCount(goal.winner, goal.id); return wt ? `<small style="font-weight:800;margin-top:4px">Caught in ${wt} throw${wt === 1 ? '' : 's'} (${wt}/${goal.guaranteedThrows})</small>` : ''; })()}</div>` : `
           <div class="cdx-progress-row"><div class="cdx-progress-label"><b>${progress}<span> / ${goal.guaranteedThrows} throws</span></b><span>${Math.max(0, goal.guaranteedThrows - goal.throws)} throws until guaranteed</span></div><div class="cdx-progress-track" role="progressbar" aria-label="${esc(goal.title)} throws until guaranteed catch" aria-valuemin="0" aria-valuemax="${goal.guaranteedThrows}" aria-valuenow="${progress}"><span style="width:${pct}%"></span></div></div>
           <div class="cdx-challenge-foot"><small>${goal.end ? `Challenge ends ${esc(goal.end)}` : 'Limited-time challenge'} · ${goal.ballCount} matching balls available</small></div>
           ${goal.ballCount ? '<p class="cdx-hint">Choose the matching ball below to throw at this Pokémon.</p>' : `<p class="cdx-hint">No ${esc(rarityLabel(goal.tier).toLowerCase())} balls available. Listen and Catch rewards balls of different rarity tiers.</p>`}`}
