@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -981,34 +981,33 @@
     #view-students #battle-right {
       position: relative;
       isolation: isolate;
-      overflow: hidden;
+      overflow: visible;
       min-height: 14rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      border: 1px solid rgba(255, 248, 230, .24) !important;
-      border-radius: 1rem !important;
-      background: linear-gradient(145deg, rgba(25, 43, 45, .94), rgba(9, 27, 31, .96)) !important;
+      border: none !important;
+      border-radius: 0 !important;
+      background: transparent !important;
       color: #fff8e7 !important;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -14px 30px rgba(2,12,16,.28), 0 14px 30px rgba(2,6,23,.32);
-      backdrop-filter: blur(12px);
-      transition: border-color .25s ease, box-shadow .25s ease, background .25s ease;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      transition: none;
     }
-    #view-students #battle-right { background: linear-gradient(145deg, rgba(29, 45, 46, .94), rgba(11, 29, 32, .96)) !important; }
+    #view-students #battle-right { background: transparent !important; }
     #view-students #battle-left::before,
-    #view-students #battle-right::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(115deg, transparent 18%, rgba(255,248,230,.09) 46%, transparent 68%); opacity: .7; }
+    #view-students #battle-right::before { display: none !important; }
     #view-students #battle-left::after,
-    #view-students #battle-right::after { content: ''; position: absolute; left: 50%; bottom: 1.05rem; width: 42%; height: 1px; transform: translateX(-50%); background: rgba(251,191,36,.55); box-shadow: 0 0 12px rgba(251,191,36,.22); opacity: .65; pointer-events: none; }
+    #view-students #battle-right::after { display: none !important; }
     #view-students #battle-left > *, #view-students #battle-right > * { position: relative; z-index: 1; }
-    #view-students #battle-left img, #view-students #battle-right img { display: block; object-fit: contain; margin: .35rem auto .5rem; filter: drop-shadow(0 10px 10px rgba(0,0,0,.32)); }
+    #view-students #battle-left img, #view-students #battle-right img { display: block; object-fit: contain; margin: .35rem auto .5rem; filter: drop-shadow(0 14px 18px rgba(0,0,0,.45)); }
     #view-students #battle-left-hp-bar, #view-students #battle-right-hp-bar { transition: width .55s cubic-bezier(.22,.8,.25,1), background-color .25s ease; position: relative; overflow: visible; background: linear-gradient(90deg,#e7d7af,#f59e0b) !important; }
-    #view-students #battle-left > div:has(> #battle-left-hp-bar), #view-students #battle-right > div:has(> #battle-right-hp-bar) { position: relative; background: rgba(2,12,16,.62) !important; border: 1px solid rgba(255,248,230,.18); box-shadow: inset 0 1px 3px rgba(0,0,0,.38); }
+    #view-students #battle-left > div:has(> #battle-left-hp-bar), #view-students #battle-right > div:has(> #battle-right-hp-bar) { position: relative; background: rgba(2,12,16,.62) !important; border: 1px solid rgba(255,248,230,.18); box-shadow: inset 0 1px 3px rgba(0,0,0,.38); border-radius: .5rem; }
     #view-students .battle-hp-trail { position: absolute; inset: 0 auto 0 0; width: var(--trail-width); border-radius: inherit; background: rgba(245,158,11,.34); filter: blur(2px); opacity: .8; pointer-events: none; transition: width .9s cubic-bezier(.22,.8,.25,1); }
     #view-students .battle-hp-ripple { position: absolute; top: 50%; left: var(--ripple-x); width: .7rem; height: .7rem; border: 1px solid rgba(255,248,230,.8); border-radius: 999px; transform: translate(-50%,-50%) scale(.4); opacity: 0; pointer-events: none; animation: battleGlassRipple .65s ease-out both; }
-    #view-students #battle-left.battle-impact, #view-students #battle-right.battle-impact { border-color: rgba(251,191,36,.62) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 0 0 2px rgba(245,158,11,.12), 0 16px 34px rgba(2,6,23,.4), 0 0 20px rgba(245,158,11,.18); }
-    @keyframes battleGlassRipple { 0% { opacity: .75; transform: translate(-50%,-50%) scale(.35); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(3.2); } }
-    @media (prefers-reduced-motion: reduce) { #view-students #battle-left, #view-students #battle-right { transition: none; } #view-students #battle-left-hp-bar, #view-students #battle-right-hp-bar { transition: width .35s ease, opacity .2s ease; } #view-students .battle-hp-ripple { animation: none; opacity: 0; } #view-students #battle-left.battle-impact, #view-students #battle-right.battle-impact { box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 14px 30px rgba(2,6,23,.32); } }
+    #view-students #battle-left.battle-impact, #view-students #battle-right.battle-impact { filter: drop-shadow(0 0 18px rgba(245,158,11,.55)); }
+    @media (prefers-reduced-motion: reduce) { #view-students #battle-left, #view-students #battle-right { transition: none; } #view-students #battle-left-hp-bar, #view-students #battle-right-hp-bar { transition: width .35s ease, opacity .2s ease; } #view-students .battle-hp-ripple { animation: none; opacity: 0; } #view-students #battle-left.battle-impact, #view-students #battle-right.battle-impact { filter: none; } }
 
     .battle-winner-final { position: relative; animation: battleWinnerEntrance .75s cubic-bezier(.2,.85,.25,1) both, battleWinnerHalo 2.8s ease-in-out .75s 1, battleWinnerCheer 2.8s ease-in-out 1.75s infinite; border-color: rgba(251,191,36,.8) !important; box-shadow: 0 0 0 2px rgba(251,191,36,.3), 0 0 24px rgba(245,158,11,.34), inset 0 1px 0 rgba(255,248,230,.28) !important; }
 .battle-winner-final::before { content: '✦  ·  ✧  ·  ✦'; position: absolute; inset: .2rem; z-index: 0; color: rgba(255,248,230,.78); font-size: .7rem; letter-spacing: .7rem; pointer-events: none; animation: battleWinnerSparkle 2.2s ease-out .2s 1, battleWinnerSparkleBreathe 2.8s ease-in-out 2.4s infinite; }
@@ -5462,19 +5461,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             <div id="battle-selected-s1" data-student="" data-pokemon-id=""></div>
             <div id="battle-selected-s2" data-student="" data-pokemon-id=""></div>
            </div>
-           <div id="battle-left" class="bg-green-800 rounded-xl p-4 text-center">
-            <p id="battle-left-name" class="text-white font-bold text-sm mb-2"></p><img id="battle-left-img" src="" class="w-24 h-24 mx-auto mb-2" alt="">
+           <div id="battle-left" class="p-2 text-center">
+            <p id="battle-left-name" class="text-white font-bold text-sm mb-2"></p><img id="battle-left-img" src="" class="w-32 h-32 mx-auto mb-2" alt="">
             <p id="battle-left-pokemon" class="text-white text-xs font-semibold mb-1"></p>
-            <div class="w-full bg-gray-700 rounded-full h-2 mb-1">
-             <div id="battle-left-hp-bar" class="bg-green-400 h-2 rounded-full" style="width:100%"></div>
+            <div class="w-full rounded-full h-2 mb-1" style="background:rgba(2,12,16,.55);border:1px solid rgba(255,248,230,.15)">  <div id="battle-left-hp-bar" class="bg-green-400 h-2 rounded-full" style="width:100%"></div>
             </div>
             <p id="battle-left-hp" class="text-green-300 text-xs"></p>
            </div>
-           <div id="battle-right" class="bg-purple-800 rounded-xl p-4 text-center">
-            <p id="battle-right-name" class="text-white font-bold text-sm mb-2"></p><img id="battle-right-img" src="" class="w-24 h-24 mx-auto mb-2" alt="">
+           <div id="battle-right" class="p-2 text-center">
+            <p id="battle-right-name" class="text-white font-bold text-sm mb-2"></p><img id="battle-right-img" src="" class="w-32 h-32 mx-auto mb-2" alt="">
             <p id="battle-right-pokemon" class="text-white text-xs font-semibold mb-1"></p>
-            <div class="w-full bg-gray-700 rounded-full h-2 mb-1">
-             <div id="battle-right-hp-bar" class="bg-green-400 h-2 rounded-full" style="width:100%"></div>
+            <div class="w-full rounded-full h-2 mb-1" style="background:rgba(2,12,16,.55);border:1px solid rgba(255,248,230,.15)">  <div id="battle-right-hp-bar" class="bg-green-400 h-2 rounded-full" style="width:100%"></div>
             </div>
             <p id="battle-right-hp" class="text-green-300 text-xs"></p>
            </div>
