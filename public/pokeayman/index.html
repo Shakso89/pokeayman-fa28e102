@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -7767,7 +7767,7 @@ function getSafePokemonRarity(pokemonOrId) {
 function getCreditLogs() { return allData.filter(r => r.type === 'credit_log'); }
 function getFolders() { return allData.filter(r => r.type === 'quiz_folder'); }
 function getQuizzesInFolder(folderName) { return allData.filter(r => r.type === 'quiz' && r.quiz_folder === folderName && r.archived === true); }
-function getActiveQuizzes(cls) { return allData.filter(r => r.type === 'quiz' && (!r.archived || r.archived === false) && !r.quiz_solved_by && (!cls || r.quiz_class === cls)); }
+function getActiveQuizzes(cls) { return allData.filter(r => r.type === 'quiz' && (!r.archived || r.archived === false) && (!cls || r.quiz_class === cls)); }
 function getSolvedQuizzes(cls) { return allData.filter(r => r.type === 'quiz' && r.quiz_solved_by && (!r.archived || r.archived === false) && (!cls || r.quiz_class === cls)); }
 
 function populateHomeStudents() {
