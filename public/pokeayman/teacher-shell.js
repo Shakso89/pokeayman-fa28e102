@@ -71,7 +71,7 @@
         <div id="ts-zone"><button type="button" class="ts-section-toggle" data-ts-toggle="zone" aria-expanded="false" aria-controls="ts-zone-content"><span>Teacher Zone</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-zone-content" hidden>
         ${ZONE_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-zone="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
         <div id="ts-admin" hidden><button type="button" class="ts-section-toggle" data-ts-toggle="admin" aria-expanded="false" aria-controls="ts-admin-content"><span>Admin Hub</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-admin-content" hidden>
-        <button type="button" class="ts-item" data-ts="admin-users">Users</button><button type="button" class="ts-item" data-ts="admin-controls">Controls</button></div></div>
+        <button type="button" class="ts-item" data-ts="admin-users">Users</button><button type="button" class="ts-item" data-ts="admin-controls">Controls</button><button type="button" class="ts-item" data-ts="admin-analytics">📊 Analytics</button></div></div>
       </nav>
 `;
     const rail = document.createElement('aside');
@@ -167,10 +167,12 @@
     const cls = b.dataset.tsClass, zone = b.dataset.tsZone, act = b.dataset.ts;
     if (act === 'switch') return togglePop();
     if (act === 'notifications') { if (window.matchMedia('(max-width: 1024px)').matches) closeSheet(); g(() => window.openTeacherNotificationCenter?.()); return; }
-    if (act === 'admin-users' || act === 'admin-controls') {
+    if (act === 'admin-users' || act === 'admin-controls' || act === 'admin-analytics') {
       if (!g(() => canAccessAdmin(), false)) return;
       g(() => showMainTab('admin'));
-      document.querySelector(`.admin-sub-tab[data-subtab="${act === 'admin-users' ? 'users' : 'controls'}"]`)?.click();
+      const sub = act === 'admin-users' ? 'users' : act === 'admin-controls' ? 'controls' : 'analytics';
+      document.querySelector(`.admin-sub-tab[data-subtab="${sub}"]`)?.click();
+      if (sub === 'analytics') g(() => window.selectAnalyticsSubtab?.());
     }
     if (cls) {
       if (needClass()) return;
@@ -365,6 +367,7 @@
       else if (b.dataset.tsZone) a = tab === 'teacher-zone' && zoneTab === b.dataset.tsZone;
       else if (b.dataset.ts === 'admin-users') a = tab === 'admin' && document.querySelector('.admin-sub-tab[data-subtab="users"]')?.classList.contains('admin-sub-tab-active');
       else if (b.dataset.ts === 'admin-controls') a = tab === 'admin' && document.querySelector('.admin-sub-tab[data-subtab="controls"]')?.classList.contains('admin-sub-tab-active');
+      else if (b.dataset.ts === 'admin-analytics') a = tab === 'admin' && document.querySelector('.admin-sub-tab[data-subtab="analytics"]')?.classList.contains('admin-sub-tab-active');
       else if (b.dataset.ts === 'admin') a = tab === 'admin';
       else if (b.dataset.ts === 'schools') a = tab === 'dashboard' && !inClass;
       b.classList.toggle('active', a);

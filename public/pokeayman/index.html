@@ -4354,6 +4354,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) setTimeout(finish, 900);
   };
 })();
+
 </script>
 <script src="/pokeayman/vocab-battle.js"></script>
 <script data-pokeayman-inline="listen-catch">
@@ -4762,6 +4763,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       return toast('The Poké Ball could not be saved. It is still available; please try again.');
     }
     throwingChallengeIds.delete(throwKey);
+    if (caught && (typeof currentRole === 'undefined' || currentRole === 'student')) {
+      try {
+        const challengeLabel = goal && goal.title ? goal.title : 'a Catchdex challenge';
+        Promise.resolve(window.notifyClassManagers?.(record.school_name, record.class_name, 'Challenge completed', `${record.student_name || 'A student'} completed ${challengeLabel} and caught ${candidate.name}.`, 'challenge', { target: 'catchdex', studentId: String(record.__backendId || ''), studentName: String(record.student_name || '') })).catch(() => {});
+      } catch (_) {}
+    }
     if (currentRole === 'student') renderCatchdexTab(); else refreshViewer(record);
     mountCards();
     if (caught && currentRole === 'student' && typeof renderStudentDashboard === 'function') renderStudentDashboard();
@@ -4850,6 +4857,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const sameCriteria = existing && existing.challenge_max_throws != null && Number(existing.challenge_pokemon_id) === Number(selectedPokemon.id) && Number(existing.challenge_max_throws) === guaranteedThrows;
     const challengeId = sameChallengeWindow && sameCriteria && existing.challenge_id ? String(existing.challenge_id) : `ch-${start}-${Date.now().toString(36)}`;
     const payload = { ...(existing || {}), type: 'listen_catch_challenge', challenge_id: challengeId, challenge_title: String(data.get('title') || '').trim() || 'Weekly Catchdex Challenge', challenge_pokemon_id: Number(selectedPokemon.id), challenge_pokemon_name: selectedPokemon.name, challenge_type: selectedType, challenge_tier: selectedTier, challenge_goal: guaranteedThrows, challenge_max_throws: guaranteedThrows, challenge_start: start, updated_at: new Date().toISOString() };
+    const challengeIsNew = !existing || String(existing.challenge_id || '') !== String(challengeId);
     const button = form.querySelector('button[type="submit"]'); button.disabled = true;
     let result;
     try { result = existing ? await window.dataSdk.update({ ...payload, __backendId: existing.__backendId }) : await window.dataSdk.create(payload); }
@@ -4857,6 +4865,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     button.disabled = false;
     if (!result?.isOk) return toast('Challenge could not be saved. Try again.');
     if (existing) Object.assign(existing, payload); else allData.push({ ...payload, __backendId: (result.data || result).__backendId || (result.data || result).id || '' });
+    if (challengeIsNew) {
+      const challengeRecipients = (typeof getTeachers === 'function' ? getTeachers() : []).filter(teacher => teacher.teacher_pro === true && String(teacher.teacher_role || '') !== 'admin');
+      Promise.resolve(window.sendTeacherNotifications?.(challengeRecipients, 'New Catchdex challenge', `${payload.challenge_title} is live from ${payload.challenge_start}. Catch ${payload.challenge_pokemon_name} with ${rarityLabel(payload.challenge_tier)} Poké Balls — the catch is guaranteed by throw ${payload.challenge_max_throws}.`, 'challenge', { target: 'catchdex' })).catch(() => {});
+    }
     toast('Weekly Catchdex challenge saved.'); renderAdminChallenge(); mountCards();
     const modal = document.getElementById('catchdex-modal'); if (modal && !modal.classList.contains('hidden')) renderCatchdexModal();
   }
@@ -5641,7 +5653,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
    <div class="max-w-5xl w-full">
     <h2 data-template-id="admin-title" class="canva-text heading-font text-2xl mb-4 hidden" aria-hidden="true" style="display:none;color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 24px;"></h2>
     <div class="mb-6 flex gap-2 flex-wrap" aria-hidden="true" style="display:none">
-     <button class="admin-sub-tab admin-sub-tab-active px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="users">Users</button> <button class="admin-sub-tab admin-sub-tab-inactive px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="controls">Controls</button>
+     <button class="admin-sub-tab admin-sub-tab-active px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="users">Users</button> <button class="admin-sub-tab admin-sub-tab-inactive px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="controls">Controls</button> <button class="admin-sub-tab admin-sub-tab-inactive px-4 py-2 text-sm font-medium rounded-full transition" data-subtab="analytics">Analytics</button>
     </div>
     <div id="admin-subtab-users" class="admin-subtab-content">
      <div class="users-subtab-header" role="tablist" aria-label="User management sections">
@@ -5870,6 +5882,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      </div>
     </div>
     <div id="admin-subtab-challenges" class="admin-subtab-content hidden"></div>
+    <div id="admin-subtab-analytics" class="admin-subtab-content hidden"></div>
    </div>
   </section>
    </main>
@@ -10205,6 +10218,7 @@ document.querySelectorAll('.admin-sub-tab').forEach(btn => {
     if (btn.dataset.subtab === 'pricing-plans') { renderPricingPlans(); }
     if (btn.dataset.subtab === 'home-arch') { renderHomeArchConfig(); }
     if (btn.dataset.subtab === 'teacher-zone') { renderTeacherZone(); }
+    if (btn.dataset.subtab === 'analytics') { window.renderAdminAnalytics?.(); }
   });
 });
 
@@ -11955,6 +11969,7 @@ function renderAdminPanel() {
   teachersList.innerHTML = teachers.length ? teachers.map(t => `<div class="teachers-inventory-card" tabindex="0" role="button" aria-label="Open teacher ${t.teacher_name}" onclick="if(!event.target.closest('button')) openEditTeacherModal('${t.__backendId}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openEditTeacherModal('${t.__backendId}');}"><span class="teacher-inventory-avatar" aria-hidden="true">${(() => { const avatarSrc = teacherAvatarSrc(t.teacher_avatar); return avatarSrc ? `<img src="${avatarSrc}" class="w-full h-full object-contain" alt="${String(t.teacher_name || 'Teacher').replace(/"/g, '&quot;')}'s Pokémon avatar" loading="lazy">` : (String(t.teacher_name || '?').trim().charAt(0).toUpperCase() || '?'); })()}</span><p class="teacher-inventory-name" title="${t.teacher_name}">${t.teacher_name}</p><p class="teacher-inventory-detail">Credits: ${t.teacher_credits === -1 ? '∞' : (t.teacher_credits || 0)} 💳</p><p class="teacher-inventory-detail">${t.teacher_name === 'Ayman' ? 'Admin' : (t.teacher_pro === true ? 'Pro teacher' : 'Teacher')}</p><div class="teachers-inventory-actions">${t.teacher_name === 'Ayman' ? '<span class="text-xs bg-yellow-300 text-slate-900 px-2 py-1 rounded font-black" title="Administrator">Admin</span>' : `<button type="button" class="text-blue-200 bg-blue-900/70 hover:bg-blue-700" aria-label="Edit ${t.teacher_name}" title="Edit teacher" onclick="event.stopPropagation();openEditTeacherModal('${t.__backendId}')">✎</button><button type="button" class="text-red-200 bg-red-900/70 hover:bg-red-700" aria-label="Delete ${t.teacher_name}" title="Delete teacher" onclick="event.stopPropagation();deleteTeacher('${t.__backendId}','${t.teacher_name}')">×</button>`}</div></div>`).join('') : `<p class="text-gray-400 text-sm text-center py-8">${teacherQuery ? 'No teachers match your search.' : 'No teachers yet.'}</p>`;
   renderAdminClassManagers();
   renderAdminAllStudents(); renderAdminShop(); renderCreditLog();
+  if (!document.getElementById('admin-subtab-analytics')?.classList.contains('hidden')) window.renderAdminAnalytics?.();
 }
 
 function renderAdminNotificationRecipients() {
@@ -20474,4 +20489,4 @@ lucide.createIcons();
 if(document.readyState!=='loading')mv();else document.addEventListener('DOMContentLoaded',mv);})();
 </script>
 <script src="/pokeayman/sentence-generator.js"></script>
-<link rel="stylesheet" href="/pokeayman/responsive.css"><link rel="stylesheet" href="/pokeayman/theme-bridge.css"><link rel="stylesheet" href="/pokeayman/bright-fixes.css"><script src="/pokeayman/bright-fixes.js"></script><link rel="stylesheet" href="/pokeayman/workspace-refresh.css"><script src="/pokeayman/responsive.js"></script><script src="/pokeayman/home-light-rays.js"></script></body></html>
+<link rel="stylesheet" href="/pokeayman/responsive.css"><link rel="stylesheet" href="/pokeayman/theme-bridge.css"><link rel="stylesheet" href="/pokeayman/bright-fixes.css"><script src="/pokeayman/bright-fixes.js"></script><link rel="stylesheet" href="/pokeayman/workspace-refresh.css"><link rel="stylesheet" href="/pokeayman/admin-analytics.css"><script src="/pokeayman/admin-analytics.js"></script><script src="/pokeayman/responsive.js"></script><script src="/pokeayman/home-light-rays.js"></script></body></html>
