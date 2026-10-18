@@ -1,20 +1,22 @@
-/* Hangman uses the same semantic palette as the teacher and student shell. */
-html body .hangman-game-shell #hangman-drawing {
-  background: var(--ts-deep) !important;
-  border: 1px solid var(--ts-border) !important;
-  border-radius: 8px;
+/* Hangman arcade drawing canvas - dark high-contrast display in all modes */
+html body .hangman-game-shell #hangman-drawing,
+html body #hangman-drawing,
+body > .ga-stage #hangman-drawing {
+  background: #0b1220 !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px !important;
   overflow: hidden;
-  color: var(--ts-ink);
+  color: #f8fafc;
 }
-#hangman-drawing .hm-platform { fill: var(--ts-surface); stroke: var(--ts-border); }
-#hangman-drawing .hm-scaffold { stroke: var(--ts-muted); }
-#hangman-drawing .hm-character { stroke: var(--ts-yellow); }
-#hangman-drawing .hm-face { stroke: var(--ts-red); }
+#hangman-drawing .hm-platform { fill: #1e293b; stroke: #475569; }
+#hangman-drawing .hm-scaffold { stroke: #94a3b8; }
+#hangman-drawing .hm-character { stroke: #ffcb05; }
+#hangman-drawing .hm-face { stroke: #ef4444; }
 #hangman-drawing .hm-line { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
-#hangman-drawing .hm-grid { fill: none; stroke: var(--ts-border); stroke-width: 1; opacity: .45; }
-#hangman-drawing .hm-life { fill: var(--ts-yellow); transition: fill .2s; }
-#hangman-drawing .hm-life.is-lost { fill: var(--ts-red); }
-#hangman-drawing .hm-caption { fill: var(--ts-ink); font: 700 12px 'DM Sans', sans-serif; }
+#hangman-drawing .hm-grid { fill: none; stroke: rgba(255, 255, 255, 0.08); stroke-width: 1; opacity: .45; }
+#hangman-drawing .hm-life { fill: #ffcb05; transition: fill .2s; }
+#hangman-drawing .hm-life.is-lost { fill: #ef4444; }
+#hangman-drawing .hm-caption { fill: #94a3b8; font: 700 12px 'DM Sans', sans-serif; }
 #hangman-drawing .hm-new .hm-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: hm-ink .55s cubic-bezier(.22,1,.36,1) forwards; }
 #hangman-drawing .hm-impact { fill: none; stroke: var(--ts-red); stroke-width: 3; transform-box: fill-box; transform-origin: center; animation: hm-impact .65s ease-out forwards; }
 #hangman-drawing .hm-miss { fill: var(--ts-red); font: 900 15px 'DM Sans', sans-serif; animation: hm-miss .85s ease-out forwards; }

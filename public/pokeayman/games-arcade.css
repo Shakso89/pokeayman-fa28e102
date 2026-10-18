@@ -361,6 +361,136 @@ body > .ga-stage .game-player-card.answer-wrong .game-player-turn:empty::before 
   content: '✕ MISSED' !important;
   color: #f87171 !important;
 }
+
+/* ==========================================================================
+   Bright Mode Score Box HUD Overrides (All Games)
+   ========================================================================== */
+body.ts-bright .ga-stage .game-player-card,
+body.ts-bright > .ga-stage .game-player-card,
+html[data-theme="light"] .ga-stage .game-player-card {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08) !important;
+  color: #0f172a !important;
+}
+body.ts-bright .ga-stage .game-player-avatar-wrap,
+body.ts-bright > .ga-stage .game-player-avatar-wrap,
+html[data-theme="light"] .ga-stage .game-player-avatar-wrap {
+  background: #f1f5f9 !important;
+  border: 2px solid #cbd5e1 !important;
+}
+body.ts-bright .ga-stage .game-player-name,
+body.ts-bright > .ga-stage .game-player-name,
+html[data-theme="light"] .ga-stage .game-player-name {
+  color: #0f172a !important;
+}
+body.ts-bright .ga-stage .game-player-turn,
+body.ts-bright > .ga-stage .game-player-turn,
+html[data-theme="light"] .ga-stage .game-player-turn {
+  color: #64748b !important;
+}
+body.ts-bright .ga-stage .game-player-score,
+body.ts-bright > .ga-stage .game-player-score,
+html[data-theme="light"] .ga-stage .game-player-score {
+  color: #0f172a !important;
+  text-shadow: none !important;
+}
+body.ts-bright .ga-stage .game-player-score::after,
+body.ts-bright > .ga-stage .game-player-score::after,
+html[data-theme="light"] .ga-stage .game-player-score::after {
+  color: #64748b !important;
+}
+
+/* Active Player in Bright Mode */
+body.ts-bright .ga-stage .game-player-card.is-active,
+body.ts-bright > .ga-stage .game-player-card.is-active,
+html[data-theme="light"] .ga-stage .game-player-card.is-active {
+  background: linear-gradient(135deg, #fef3c7, #ffffff) !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px #f59e0b, 0 4px 16px rgba(217, 119, 6, 0.18) !important;
+}
+body.ts-bright .ga-stage .game-player-card.is-active .game-player-avatar-wrap,
+body.ts-bright > .ga-stage .game-player-card.is-active .game-player-avatar-wrap,
+html[data-theme="light"] .ga-stage .game-player-card.is-active .game-player-avatar-wrap {
+  border-color: #d97706 !important;
+  background: #fde68a !important;
+  box-shadow: 0 0 10px rgba(217, 119, 6, 0.3) !important;
+}
+body.ts-bright .ga-stage .game-player-card.is-active .game-player-name,
+body.ts-bright > .ga-stage .game-player-card.is-active .game-player-name,
+html[data-theme="light"] .ga-stage .game-player-card.is-active .game-player-name {
+  color: #78350f !important;
+}
+body.ts-bright .ga-stage .game-player-card.is-active .game-player-turn,
+body.ts-bright > .ga-stage .game-player-card.is-active .game-player-turn,
+html[data-theme="light"] .ga-stage .game-player-card.is-active .game-player-turn {
+  color: #b45309 !important;
+}
+body.ts-bright .ga-stage .game-player-card.is-active .game-player-turn:empty::before,
+body.ts-bright > .ga-stage .game-player-card.is-active .game-player-turn:empty::before,
+html[data-theme="light"] .ga-stage .game-player-card.is-active .game-player-turn:empty::before {
+  color: #b45309 !important;
+}
+body.ts-bright .ga-stage .game-player-card.is-active .game-player-score,
+body.ts-bright > .ga-stage .game-player-card.is-active .game-player-score,
+html[data-theme="light"] .ga-stage .game-player-card.is-active .game-player-score {
+  color: #92400e !important;
+  text-shadow: none !important;
+}
+body.ts-bright .ga-stage .game-player-card.is-active .game-player-score::after,
+body.ts-bright > .ga-stage .game-player-card.is-active .game-player-score::after,
+html[data-theme="light"] .ga-stage .game-player-card.is-active .game-player-score::after {
+  color: #b45309 !important;
+}
+
+/* Bright Mode Correct / Wrong Animations */
+body.ts-bright .ga-stage .game-player-card.answer-correct,
+body.ts-bright > .ga-stage .game-player-card.answer-correct,
+html[data-theme="light"] .ga-stage .game-player-card.answer-correct {
+  background: linear-gradient(135deg, #d1fae5, #ffffff) !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px #10b981, 0 6px 20px rgba(16, 185, 129, 0.22) !important;
+}
+body.ts-bright .ga-stage .game-player-card.answer-correct .game-player-name,
+body.ts-bright > .ga-stage .game-player-card.answer-correct .game-player-name,
+html[data-theme="light"] .ga-stage .game-player-card.answer-correct .game-player-name {
+  color: #065f46 !important;
+}
+body.ts-bright .ga-stage .game-player-card.answer-correct .game-player-score,
+body.ts-bright > .ga-stage .game-player-card.answer-correct .game-player-score,
+html[data-theme="light"] .ga-stage .game-player-card.answer-correct .game-player-score {
+  color: #047857 !important;
+  text-shadow: none !important;
+}
+body.ts-bright .ga-stage .game-player-card.answer-correct .game-player-turn:empty::before,
+body.ts-bright > .ga-stage .game-player-card.answer-correct .game-player-turn:empty::before,
+html[data-theme="light"] .ga-stage .game-player-card.answer-correct .game-player-turn:empty::before {
+  color: #047857 !important;
+}
+
+body.ts-bright .ga-stage .game-player-card.answer-wrong,
+body.ts-bright > .ga-stage .game-player-card.answer-wrong,
+html[data-theme="light"] .ga-stage .game-player-card.answer-wrong {
+  background: linear-gradient(135deg, #fee2e2, #ffffff) !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px #ef4444, 0 6px 20px rgba(239, 68, 68, 0.22) !important;
+}
+body.ts-bright .ga-stage .game-player-card.answer-wrong .game-player-name,
+body.ts-bright > .ga-stage .game-player-card.answer-wrong .game-player-name,
+html[data-theme="light"] .ga-stage .game-player-card.answer-wrong .game-player-name {
+  color: #991b1b !important;
+}
+body.ts-bright .ga-stage .game-player-card.answer-wrong .game-player-score,
+body.ts-bright > .ga-stage .game-player-card.answer-wrong .game-player-score,
+html[data-theme="light"] .ga-stage .game-player-card.answer-wrong .game-player-score {
+  color: #b91c1c !important;
+  text-shadow: none !important;
+}
+body.ts-bright .ga-stage .game-player-card.answer-wrong .game-player-turn:empty::before,
+body.ts-bright > .ga-stage .game-player-card.answer-wrong .game-player-turn:empty::before,
+html[data-theme="light"] .ga-stage .game-player-card.answer-wrong .game-player-turn:empty::before {
+  color: #b91c1c !important;
+}
 body > .ga-stage .game-turn-timer { position: absolute !important; left: 0 !important; right: 0 !important; bottom: 0 !important; height: 4px !important; margin: 0 !important; padding: 0 !important; width: 100% !important; border-radius: 0 0 12px 12px !important; overflow: hidden !important; z-index: 5 !important; }
 body > .ga-stage .game-turn-timer.hidden { display: none !important; }
 body > .ga-stage .game-turn-timer .game-turn-timer-track { width: 100% !important; height: 100% !important; background: rgba(255, 255, 255, 0.1) !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; }
@@ -497,50 +627,175 @@ body > .ga-stage .hangman-letter {
   box-sizing: border-box !important;
   transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease !important;
 }
-body > .ga-stage .hangman-letter.is-available {
+/* Letter Char Text Color Guard against modal span overrides */
+body > .ga-stage .hangman-letter .letter-char,
+html body:not(.ts-bright) .ga-stage .hangman-letter .letter-char,
+html body.ts-bright .ga-stage .hangman-letter .letter-char,
+html body .modal-content .hangman-letter .letter-char,
+html body [role="dialog"] .hangman-letter .letter-char {
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+/* Hangman Letter Keys - Dark Mode (Default Arcade) */
+body > .ga-stage .hangman-letter.is-available,
+html body:not(.ts-bright) .ga-stage .hangman-letter.is-available {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border: 1.5px solid #3b4d66 !important;
+  box-shadow: 0 3px 0 #0f172a !important;
+  cursor: pointer !important;
+}
+body > .ga-stage .hangman-letter.is-available .letter-char,
+html body:not(.ts-bright) .ga-stage .hangman-letter.is-available .letter-char {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+body > .ga-stage .hangman-letter.is-available:hover,
+html body:not(.ts-bright) .ga-stage .hangman-letter.is-available:hover {
+  background: #334155 !important;
+  color: #ffcb05 !important;
+  border-color: #ffcb05 !important;
+  box-shadow: 0 4px 0 #ca8a04 !important;
+  transform: translateY(-2px) !important;
+}
+body > .ga-stage .hangman-letter.is-available:hover .letter-char,
+html body:not(.ts-bright) .ga-stage .hangman-letter.is-available:hover .letter-char {
+  color: #ffcb05 !important;
+  -webkit-text-fill-color: #ffcb05 !important;
+}
+body > .ga-stage .hangman-letter.is-available:active,
+html body:not(.ts-bright) .ga-stage .hangman-letter.is-available:active {
+  transform: translateY(2px) !important;
+  box-shadow: 0 1px 0 #ca8a04 !important;
+}
+
+/* Hangman Letter Keys - Bright Mode */
+body.ts-bright .ga-stage .hangman-letter.is-available,
+body.ts-bright > .ga-stage .hangman-letter.is-available,
+html[data-theme="light"] .ga-stage .hangman-letter.is-available {
   background: #ffffff !important;
   color: #0f172a !important;
   border: 1.5px solid #cbd5e1 !important;
   box-shadow: 0 3px 0 #94a3b8 !important;
   cursor: pointer !important;
 }
-body > .ga-stage .hangman-letter.is-available:hover {
+body.ts-bright .ga-stage .hangman-letter.is-available .letter-char,
+body.ts-bright > .ga-stage .hangman-letter.is-available .letter-char,
+html[data-theme="light"] .ga-stage .hangman-letter.is-available .letter-char {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+body.ts-bright .ga-stage .hangman-letter.is-available:hover,
+body.ts-bright > .ga-stage .hangman-letter.is-available:hover,
+html[data-theme="light"] .ga-stage .hangman-letter.is-available:hover {
   background: #fef08a !important;
   color: #713f12 !important;
   border-color: #eab308 !important;
   box-shadow: 0 4px 0 #ca8a04 !important;
   transform: translateY(-2px) !important;
 }
-body > .ga-stage .hangman-letter.is-available:active {
+body.ts-bright .ga-stage .hangman-letter.is-available:hover .letter-char,
+body.ts-bright > .ga-stage .hangman-letter.is-available:hover .letter-char,
+html[data-theme="light"] .ga-stage .hangman-letter.is-available:hover .letter-char {
+  color: #713f12 !important;
+  -webkit-text-fill-color: #713f12 !important;
+}
+body.ts-bright .ga-stage .hangman-letter.is-available:active,
+body.ts-bright > .ga-stage .hangman-letter.is-available:active,
+html[data-theme="light"] .ga-stage .hangman-letter.is-available:active {
   transform: translateY(2px) !important;
   box-shadow: 0 1px 0 #ca8a04 !important;
 }
+
+/* Hangman Wrong / Blocked Letter Keys (Dark Mode) */
 body > .ga-stage .hangman-letter.is-wrong,
-body > .ga-stage .hangman-letter:disabled.is-wrong {
-  background: rgba(239, 68, 68, 0.12) !important;
+body > .ga-stage .hangman-letter:disabled.is-wrong,
+html body:not(.ts-bright) .ga-stage .hangman-letter.is-wrong,
+html body:not(.ts-bright) .ga-stage .hangman-letter:disabled.is-wrong {
+  background: rgba(239, 68, 68, 0.14) !important;
   color: #ef4444 !important;
   border: 1.5px solid rgba(239, 68, 68, 0.45) !important;
   box-shadow: none !important;
   transform: none !important;
   cursor: not-allowed !important;
   pointer-events: none !important;
-  opacity: 0.42 !important;
+  opacity: 0.5 !important;
 }
-body > .ga-stage .hangman-letter.is-wrong .letter-char {
+body > .ga-stage .hangman-letter.is-wrong .letter-char,
+html body:not(.ts-bright) .ga-stage .hangman-letter.is-wrong .letter-char {
+  color: #ef4444 !important;
+  -webkit-text-fill-color: #ef4444 !important;
   text-decoration: line-through 2.5px #ef4444 !important;
 }
+
+/* Hangman Wrong / Blocked Letter Keys (Bright Mode) */
+body.ts-bright .ga-stage .hangman-letter.is-wrong,
+body.ts-bright .ga-stage .hangman-letter:disabled.is-wrong,
+body.ts-bright > .ga-stage .hangman-letter.is-wrong,
+body.ts-bright > .ga-stage .hangman-letter:disabled.is-wrong,
+html[data-theme="light"] .ga-stage .hangman-letter.is-wrong {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border: 1.5px solid #fca5a5 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  opacity: 0.55 !important;
+}
+body.ts-bright .ga-stage .hangman-letter.is-wrong .letter-char,
+body.ts-bright > .ga-stage .hangman-letter.is-wrong .letter-char,
+html[data-theme="light"] .ga-stage .hangman-letter.is-wrong .letter-char {
+  color: #dc2626 !important;
+  -webkit-text-fill-color: #dc2626 !important;
+  text-decoration: line-through 2.5px #dc2626 !important;
+}
+
+/* Hangman Correct Letter Keys (Dark Mode) */
 body > .ga-stage .hangman-letter.is-correct,
-body > .ga-stage .hangman-letter:disabled.is-correct {
+body > .ga-stage .hangman-letter:disabled.is-correct,
+html body:not(.ts-bright) .ga-stage .hangman-letter.is-correct,
+html body:not(.ts-bright) .ga-stage .hangman-letter:disabled.is-correct {
   background: rgba(16, 185, 129, 0.22) !important;
   color: #10b981 !important;
   border: 1.5px solid #10b981 !important;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35) !important;
   font-weight: 900 !important;
   transform: none !important;
   cursor: default !important;
   pointer-events: none !important;
   opacity: 0.95 !important;
 }
+body > .ga-stage .hangman-letter.is-correct .letter-char,
+html body:not(.ts-bright) .ga-stage .hangman-letter.is-correct .letter-char {
+  color: #10b981 !important;
+  -webkit-text-fill-color: #10b981 !important;
+}
+
+/* Hangman Correct Letter Keys (Bright Mode) */
+body.ts-bright .ga-stage .hangman-letter.is-correct,
+body.ts-bright .ga-stage .hangman-letter:disabled.is-correct,
+body.ts-bright > .ga-stage .hangman-letter.is-correct,
+body.ts-bright > .ga-stage .hangman-letter:disabled.is-correct,
+html[data-theme="light"] .ga-stage .hangman-letter.is-correct {
+  background: #d1fae5 !important;
+  color: #059669 !important;
+  border: 1.5px solid #34d399 !important;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.25) !important;
+  font-weight: 900 !important;
+  transform: none !important;
+  cursor: default !important;
+  pointer-events: none !important;
+  opacity: 0.95 !important;
+}
+body.ts-bright .ga-stage .hangman-letter.is-correct .letter-char,
+body.ts-bright > .ga-stage .hangman-letter.is-correct .letter-char,
+html[data-theme="light"] .ga-stage .hangman-letter.is-correct .letter-char {
+  color: #059669 !important;
+  -webkit-text-fill-color: #059669 !important;
+}
+
 body > .ga-stage .hangman-letter .letter-badge {
   position: absolute !important;
   top: 2px !important;
@@ -554,6 +809,39 @@ body > .ga-stage .hangman-letter .letter-badge-wrong {
 }
 body > .ga-stage .hangman-letter .letter-badge-correct {
   color: #10b981 !important;
+}
+
+/* ==========================================================================
+   Bright Mode Hangman Panels & Word Overrides
+   ========================================================================== */
+body.ts-bright .ga-stage #hangman-drawing-panel,
+body.ts-bright > .ga-stage #hangman-drawing-panel,
+html[data-theme="light"] .ga-stage #hangman-drawing-panel,
+body.ts-bright .ga-stage #hangman-content,
+body.ts-bright > .ga-stage #hangman-content,
+html[data-theme="light"] .ga-stage #hangman-content {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
+}
+body.ts-bright .ga-stage #hangman-clue,
+body.ts-bright > .ga-stage #hangman-clue,
+html[data-theme="light"] .ga-stage #hangman-clue {
+  background: #f8fafc !important;
+  border: 1.5px solid #cbd5e1 !important;
+}
+body.ts-bright .ga-stage #hangman-word,
+body.ts-bright > .ga-stage #hangman-word,
+html[data-theme="light"] .ga-stage #hangman-word {
+  color: #b45309 !important;
+  text-shadow: none !important;
+}
+body.ts-bright .ga-stage #hangman-drawing-panel > p:last-child,
+body.ts-bright > .ga-stage #hangman-drawing-panel > p:last-child,
+html[data-theme="light"] .ga-stage #hangman-drawing-panel > p:last-child {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #991b1b !important;
 }
 @media (max-width: 860px) {
   body > .ga-stage .game-player-hud { gap: 0.45rem !important; margin-bottom: 0.5rem !important; padding: 0 0.4rem !important; }
