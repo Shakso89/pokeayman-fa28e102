@@ -5477,7 +5477,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     </div>
     <div id="admin-subtab-teacher-zone" class="admin-subtab-content hidden">
      <div class="flex gap-2 mb-4" role="tablist" aria-label="Teacher Zone sections">
-      <button id="teacher-zone-schedule-tab" type="button" class="teacher-zone-tab btn-primary text-sm" role="tab" aria-selected="true" aria-controls="teacher-zone-schedule-panel">Schedule</button><button id="teacher-zone-financial-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-financial-panel">Financial</button><button id="teacher-zone-history-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-history-panel">History</button><button id="teacher-zone-vb-lists-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-vb-lists-panel">Word Bank</button><button id="teacher-zone-battle-claims-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-battle-claims-panel">Battle Claims</button><button id="teacher-zone-profile-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-profile-panel">Profile</button>
+      <button id="teacher-zone-schedule-tab" type="button" class="teacher-zone-tab btn-primary text-sm" role="tab" aria-selected="true" aria-controls="teacher-zone-schedule-panel">Schedule</button><button id="teacher-zone-financial-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-financial-panel">Financial</button><button id="teacher-zone-history-tab" type="button" class="teacher-zone-tab btn-outline text-sm hidden" role="tab" aria-selected="false" aria-controls="teacher-zone-history-panel" style="display:none !important">History</button><button id="teacher-zone-vb-lists-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-vb-lists-panel">Word Bank</button><button id="teacher-zone-battle-claims-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-battle-claims-panel">Battle Claims</button><button id="teacher-zone-profile-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-profile-panel">Profile</button>
      </div>
      <section id="teacher-zone-profile-panel" class="hidden" role="tabpanel" aria-labelledby="teacher-zone-profile-tab"><div id="tab-trainer"></div></section>
      <div id="teacher-zone-schedule-panel" role="tabpanel" aria-labelledby="teacher-zone-schedule-tab">
@@ -5595,6 +5595,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         </section>
        </div>
       </section>
+       <section id="teacher-zone-history-panel" class="teacher-zone-content-panel glass-container rounded-xl p-4 mb-6" role="region" aria-labelledby="teacher-zone-history-title">
+        <div class="teacher-zone-content-card">
+         <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">🕘</span><div><p class="teacher-zone-page-kicker">FINANCIAL &amp; SCHEDULE HISTORY</p><h3 id="teacher-zone-history-title">Saved history</h3><p>Restore a previous schedule and its financial settings.</p></div><button id="teacher-zone-save-snapshot-btn" type="button" class="btn-primary">Save snapshot</button></header>
+         <div id="teacher-zone-history-list" class="teacher-zone-history-list"></div>
+         <p id="teacher-zone-history-empty" class="pk-empty"><span aria-hidden="true">🗂️</span><span>No snapshots saved yet.</span><small>Save a snapshot to keep a restore point for your schedule and finance settings.</small></p>
+        </div>
+       </section>
      </section>
      <section id="teacher-zone-battle-claims-panel" class="hidden teacher-zone-content-panel" role="tabpanel" aria-labelledby="teacher-zone-battle-claims-tab">
       <div class="teacher-zone-content-card">
@@ -5613,13 +5620,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
        <div id="teacher-vb-lists-grid"></div>
       </div>
      </section>
-     <section id="teacher-zone-history-panel" class="hidden teacher-zone-content-panel" role="tabpanel" aria-labelledby="teacher-zone-history-tab">
-      <div class="teacher-zone-content-card">
-       <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">🕘</span><div><p class="teacher-zone-page-kicker">TEACHER ZONE</p><h3>Saved history</h3><p>Restore a previous schedule and its financial settings.</p></div><button id="teacher-zone-save-snapshot-btn" type="button" class="btn-primary">Save snapshot</button></header>
-       <div id="teacher-zone-history-list" class="teacher-zone-history-list"></div>
-       <p id="teacher-zone-history-empty" class="pk-empty"><span aria-hidden="true">🗂️</span><span>No snapshots saved yet.</span><small>Save a snapshot to keep a restore point for your schedule and finance settings.</small></p>
-      </div>
-     </section>
+
     </div>
     <div id="admin-subtab-teachers" class="admin-subtab-content">
      <div class="glass-container rounded-xl p-5 mb-6">
@@ -9553,7 +9554,7 @@ document.getElementById('financial-month')?.setAttribute('value', new Date().toI
 document.getElementById('financial-hourly-rate')?.addEventListener('input', event => { const value = Number(event.target.value); if (Number.isFinite(value) && value >= 0) { saveTeacherWorkspace(); localStorage.setItem(teacherWorkspaceKey ? `${teacherWorkspaceKey}:rate` : 'teacherHourlyRate', String(value)); } renderFinancialCalculator(); });
 document.getElementById('financial-month')?.addEventListener('change', renderFinancialCalculator);
 document.getElementById('teacher-zone-schedule-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-schedule-panel','teacher-zone-schedule-tab'); });
-document.getElementById('teacher-zone-financial-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-financial-panel','teacher-zone-financial-tab'); renderFinancialExtras(); });
+document.getElementById('teacher-zone-financial-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-financial-panel','teacher-zone-financial-tab'); renderFinancialExtras(); renderTeacherZoneHistory(); });
 renderFinancialCalculator();
 
 // Financial-only exclusions and deductions persist locally and never touch dashboard schools.
@@ -9944,9 +9945,11 @@ function openVocabSharePopupFor(listId, listName) {
 function setTeacherZonePanel(panelId, tabId) {
   const scope = currentTeacherZoneOwnerScope();
   if (!scope || scope !== teacherZoneOwnerScope) return;
+  if (panelId === 'teacher-zone-history-panel') { panelId = 'teacher-zone-financial-panel'; tabId = 'teacher-zone-financial-tab'; }
   teacherZoneInternalTab = panelId;
-  ['teacher-zone-schedule-panel','teacher-zone-financial-panel','teacher-zone-history-panel','teacher-zone-vb-lists-panel','teacher-zone-battle-claims-panel','teacher-zone-profile-panel'].forEach(id => document.getElementById(id)?.classList.toggle('hidden', id !== panelId));
-  ['teacher-zone-schedule-tab','teacher-zone-financial-tab','teacher-zone-history-tab','teacher-zone-vb-lists-tab','teacher-zone-battle-claims-tab','teacher-zone-profile-tab'].forEach(id => { const el=document.getElementById(id); if(el) { const active=id===tabId; el.className=`teacher-zone-tab ${active?'btn-primary':'btn-outline'} text-sm`; el.setAttribute('aria-selected',String(active)); } });
+  ['teacher-zone-schedule-panel','teacher-zone-financial-panel','teacher-zone-vb-lists-panel','teacher-zone-battle-claims-panel','teacher-zone-profile-panel'].forEach(id => document.getElementById(id)?.classList.toggle('hidden', id !== panelId));
+  ['teacher-zone-schedule-tab','teacher-zone-financial-tab','teacher-zone-vb-lists-tab','teacher-zone-battle-claims-tab','teacher-zone-profile-tab'].forEach(id => { const el=document.getElementById(id); if(el) { const active=id===tabId; el.className=`teacher-zone-tab ${active?'btn-primary':'btn-outline'} text-sm`; el.setAttribute('aria-selected',String(active)); } });
+  if (panelId === 'teacher-zone-financial-panel') renderTeacherZoneHistory();
 }
 document.getElementById('teacher-zone-profile-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-profile-panel','teacher-zone-profile-tab'); renderTrainerTab(); });
 document.getElementById('teacher-zone-vb-lists-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-vb-lists-panel','teacher-zone-vb-lists-tab'); renderTeacherOwnedVocabLists(); });

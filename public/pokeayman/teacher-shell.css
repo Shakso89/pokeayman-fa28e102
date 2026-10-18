@@ -142,9 +142,35 @@ body.ts-on .ts-card, body.ts-on .ts-switch, body.ts-on .ts-me { background: var(
 .ts-switch { width: 100%; }
 #ts-sidebar .ts-switch { display: grid !important; }
 #ts-sidebar .ts-switch-label { overflow-wrap: anywhere; text-transform: none; letter-spacing: 0; }
-#ts-sidebar .ts-section-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 12px; padding: 10px 12px; background: transparent; color: var(--ts-muted); border: 0; border-radius: 8px; text-align: left; font-size: 13px; font-weight: 700; }
-#ts-sidebar .ts-section-toggle:hover, #ts-sidebar .ts-section-toggle.current { color: var(--ts-yellow); background: color-mix(in srgb, var(--ts-yellow) 8%, transparent); }
-.ts-chevron { font-size: 22px; line-height: 1; transition: transform .18s; }
+#ts-sidebar .ts-section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 14px;
+  margin-bottom: 4px;
+  padding: 9px 12px;
+  background: color-mix(in srgb, var(--ts-yellow) 8%, transparent);
+  color: var(--ts-yellow);
+  border: 1.5px solid color-mix(in srgb, var(--ts-yellow) 65%, transparent);
+  border-radius: 12px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--ts-yellow) 10%, transparent);
+  transition: all .18s ease;
+}
+#ts-sidebar .ts-section-toggle:hover,
+#ts-sidebar .ts-section-toggle.current,
+#ts-sidebar .ts-section-toggle[aria-expanded="true"] {
+  color: #fff7cc;
+  border-color: var(--ts-yellow);
+  background: color-mix(in srgb, var(--ts-yellow) 18%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--ts-yellow) 24%, transparent);
+}
+.ts-chevron { font-size: 20px; line-height: 1; transition: transform .18s; color: inherit; }
 [aria-expanded="true"] > .ts-chevron { transform: rotate(90deg); }
 #ts-sidebar [hidden] { display: none !important; }
 .ts-section-toggle:focus-visible { outline: 2px solid var(--ts-yellow); outline-offset: 2px; }
@@ -267,7 +293,18 @@ body.ts-on.ts-bright #app-screen { color: var(--ts-ink) !important; }
 body.ts-on.ts-bright .ts-brand, body.ts-on.ts-bright .ts-hero h2,
 body.ts-on.ts-bright #ts-chooser h2, body.ts-on.ts-bright .ts-pop-all,
 body.ts-on.ts-bright .ts-theme-icon { color: var(--ts-blue); }
-body.ts-on.ts-bright #ts-sidebar .ts-section-toggle:is(:hover,.current),
+body.ts-on.ts-bright #ts-sidebar .ts-section-toggle {
+  background: color-mix(in srgb, #f59e0b 10%, var(--ts-surface)) !important;
+  border: 1.5px solid #d97706 !important;
+  color: #78350f !important;
+  box-shadow: 0 1px 4px rgba(217, 119, 6, 0.12) !important;
+}
+body.ts-on.ts-bright #ts-sidebar .ts-section-toggle:is(:hover,.current,[aria-expanded="true"]) {
+  background: color-mix(in srgb, #f59e0b 20%, var(--ts-surface)) !important;
+  border-color: #b45309 !important;
+  color: #451a03 !important;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.22) !important;
+}
 body.ts-on.ts-bright .ts-amounts button.on { color: var(--ts-ink); }
 body.ts-on.ts-bright .ts-hero { border-left: 5px solid var(--ts-blue); }
 body.ts-on.ts-bright #ts-rail .ts-card:nth-child(2) { background: var(--ts-mint); }

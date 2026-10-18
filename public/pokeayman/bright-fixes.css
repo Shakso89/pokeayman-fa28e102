@@ -297,3 +297,33 @@ html body.ts-bright .school-summary-total :is(span, strong) {
   color: var(--color-text-primary, #0f172a) !important;
 }
 
+/* Sidebar main section toggles in bright mode */
+html body.ts-bright #ts-sidebar .ts-section-toggle {
+  background: color-mix(in srgb, #f59e0b 10%, var(--color-surface, #ffffff)) !important;
+  border: 1.5px solid #d97706 !important;
+  color: #78350f !important;
+  font-weight: 800 !important;
+  box-shadow: 0 1px 4px rgba(217, 119, 6, 0.12) !important;
+}
+html body.ts-bright #ts-sidebar .ts-section-toggle:is(:hover, .current, [aria-expanded="true"]) {
+  background: color-mix(in srgb, #f59e0b 20%, var(--color-surface, #ffffff)) !important;
+  border-color: #b45309 !important;
+  color: #451a03 !important;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.22) !important;
+}
+
+/* Teacher Zone history panel in bright mode */
+html body.ts-bright .teacher-zone-content-card,
+html body.ts-bright .teacher-zone-history-item {
+  background: var(--color-surface, #ffffff) !important;
+  border-color: var(--color-border, #e2e8f0) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .teacher-zone-history-copy strong {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .teacher-zone-history-copy span {
+  color: var(--color-text-secondary, #64748b) !important;
+}
+
+

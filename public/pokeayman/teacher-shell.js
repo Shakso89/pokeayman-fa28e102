@@ -52,7 +52,7 @@
     ['games', '🎁', 'Games'], ['battle', '⚔️', 'Battle Arena'],
   ];
   const ZONE_ITEMS = [
-    ['schedule', '🗓️', 'Schedule'], ['financial', '💰', 'Financial'], ['history', '🕘', 'History'],
+    ['schedule', '🗓️', 'Schedule'], ['financial', '💰', 'Financial'],
     ['vb-lists', '🔖', 'Word Bank'], ['battle-claims', '⚔️', 'Battle Claims'], ['leaders', '🏆', 'Global Top 10'], ['profile', '🎓', 'Teacher Card'],
   ];
 
@@ -374,10 +374,11 @@
     $('ts-admin').hidden = !g(() => canAccessAdmin(), false);
     document.querySelector('[data-ts-toggle="zone"]').classList.toggle('current', tab === 'teacher-zone');
     document.querySelector('[data-ts-toggle="admin"]').classList.toggle('current', tab === 'admin');
-    ['financial', 'history'].forEach((k) => {
+    ['financial'].forEach((k) => {
       const src = $(`teacher-zone-${k}-tab`);
       const hide = !src || src.classList.contains('hidden') || src.style.display === 'none';
-      document.querySelector(`[data-ts-zone="${k}"]`).hidden = hide;
+      const el = document.querySelector(`[data-ts-zone="${k}"]`);
+      if (el) el.hidden = hide;
     });
 
     $('ts-name').textContent = $('logged-in-name-nav')?.textContent || g(() => currentTeacher, '') || 'Teacher';
