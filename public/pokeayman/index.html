@@ -3839,6 +3839,13 @@
   window.dataSdk = {
     async init(handler) { listener = handler; notify(); await firstLoad(); if (!window.__pokeaymanPollTimer) window.__pokeaymanPollTimer = setInterval(pull, 5000); return {isOk:true}; },
     async refresh() { await pull(); return records.map(row => ({...row})); },
+    async rpc(name, args) {
+      const auth = window.parent && window.parent.pokeaymanAuth;
+      const token = auth ? await auth.getToken() : null;
+      const r = await fetch(URL_.replace('/app_records', '/rpc/' + name), {method: 'POST', headers: {...H, ...(token ? {Authorization: 'Bearer ' + token} : {})}, body: JSON.stringify(args)});
+      if (!r.ok) throw new Error(await r.text());
+      const out = await r.json(); await pull(); return out;
+    },
     snapshot() { return records.map(row => ({...row})); },
     async create(value, options = {}) {
       const row = {...value, __backendId: value.__backendId || crypto.randomUUID()};
