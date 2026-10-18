@@ -129,7 +129,7 @@
     tag.textContent = text;
     tag.style.left = `${rect.left + rect.width / 2}px`;
     tag.style.top = `${rect.top + rect.height * .35}px`;
-    battle.root.appendChild(tag);
+    (battle.root || document.body).appendChild(tag);
     setTimeout(() => tag.remove(), 1400);
   }
 
@@ -159,41 +159,52 @@
     layer.className = `vb-attack-layer vb-fire vb-element${retaliation ? ' vb-counter' : ''}`;
     layer.dataset.type = attackType;
     layer.setAttribute('aria-hidden', 'true');
-    root.appendChild(layer);
-    const bounds = root.getBoundingClientRect();
-    const a = source.getBoundingClientRect(); const b = target.getBoundingClientRect();
-    const start = { x: a.left + a.width / 2 - bounds.left, y: a.top + a.height / 2 - bounds.top + root.scrollTop };
-    const end = { x: b.left + b.width / 2 - bounds.left, y: b.top + b.height / 2 - bounds.top + root.scrollTop };
+    (root || document.body).appendChild(layer);
+    const a = source.getBoundingClientRect();
+    const b = target.getBoundingClientRect();
+    const start = { x: a.left + a.width / 2, y: a.top + a.height / 2 };
+    const end = { x: b.left + b.width / 2, y: b.top + b.height / 2 };
     const bolt = document.createElement('i'); bolt.className = 'vb-energy-bolt';
     bolt.style.left = `${start.x}px`; bolt.style.top = `${start.y}px`; layer.appendChild(bolt);
     const travel = reduced ? 0 : 420;
     if (!reduced) {
-      source.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)', offset: .5 }, { transform: 'scale(1)' }], { duration: 260 });
-      bolt.animate([
-        { transform: 'translate(-50%, -50%) scale(.2)', opacity: 0 },
-        { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: .2 },
-        { transform: `translate(calc(-50% + ${end.x - start.x}px), calc(-50% + ${end.y - start.y}px)) scale(.8)`, opacity: 1 },
-      ], { duration: travel, easing: 'cubic-bezier(.5,0,.85,.5)', fill: 'forwards' });
+      try {
+        source.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.12)', offset: .5 }, { transform: 'scale(1)' }], { duration: 260 });
+        bolt.animate([
+          { transform: 'translate(-50%, -50%) scale(.2)', opacity: 0 },
+          { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: .2 },
+          { transform: `translate(calc(-50% + ${end.x - start.x}px), calc(-50% + ${end.y - start.y}px)) scale(.8)`, opacity: 1 },
+        ], { duration: travel, easing: 'cubic-bezier(.5,0,.85,.5)', fill: 'forwards' });
+      } catch (_) {}
     }
     later(() => {
-      bolt.remove();
-      if (dodged) {
-        window.pokeSfx?.play('whoosh');
-        target.classList.add('vb-dodge');
-        floatDamage('DODGED', target, 'vb-dmg-dodge');
-        later(() => target.classList.remove('vb-dodge'), 650);
-      } else {
-        window.pokeSfx?.play('hit', attackType);
-        const burst = document.createElement('div'); burst.className = 'vb-impact-burst';
-        burst.style.left = `${end.x}px`; burst.style.top = `${end.y}px`;
-        burst.innerHTML = '<b></b>' + Array.from({ length: 10 }, (_, i) => `<i style="--spark-angle:${i * 36}deg"></i>`).join('')
-          + Array.from({ length: 7 }, (_, i) => `<em class="vb-ember" style="--ember-angle:${i * 51 + 12}deg;--ember-delay:${i * 45}ms"></em>`).join('');
-        layer.appendChild(burst);
-        target.classList.add('vb-hit');
-        later(() => target.classList.remove('vb-hit'), 600);
+      try {
+        bolt.remove();
+        if (dodged) {
+          window.pokeSfx?.play('whoosh');
+          target.classList.add('vb-dodge');
+          floatDamage('DODGED', target, 'vb-dmg-dodge');
+          later(() => target.classList.remove('vb-dodge'), 650);
+        } else {
+          window.pokeSfx?.play('hit', attackType);
+          const burst = document.createElement('div'); burst.className = 'vb-impact-burst';
+          burst.style.left = `${end.x}px`; burst.style.top = `${end.y}px`;
+          burst.innerHTML = '<b></b>' + Array.from({ length: 10 }, (_, i) => `<i style="--spark-angle:${i * 36}deg"></i>`).join('')
+            + Array.from({ length: 7 }, (_, i) => `<em class="vb-ember" style="--ember-angle:${i * 51 + 12}deg;--ember-delay:${i * 45}ms"></em>`).join('');
+          layer.appendChild(burst);
+          target.classList.add('vb-hit');
+          later(() => target.classList.remove('vb-hit'), 600);
+        }
+      } catch (err) {
+        console.warn('Attack visual effect error:', err);
       }
-      impact();
-      later(() => layer.remove(), 900);
+      try {
+        impact();
+      } catch (err) {
+        console.error('Attack impact error:', err);
+      } finally {
+        later(() => layer.remove(), 900);
+      }
     }, travel);
   }
 
@@ -456,6 +467,7 @@
     stopTimer();
     battle.timeouts.forEach(clearTimeout);
     battle.root.querySelectorAll('.vb-hp').forEach((el) => cancelAnimationFrame(el._hpFrame));
+    document.querySelectorAll('.vb-attack-layer, .vb-damage').forEach((el) => el.remove());
     battle.root.remove();
     battle = null;
   }

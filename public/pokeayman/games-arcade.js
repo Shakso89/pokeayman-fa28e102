@@ -77,21 +77,12 @@
       const isProListen = g.fn === 'startListenCatch';
       const isProBattle = g.fn === 'startVocabBattle';
       const proCardClass = isProListen ? ' ga-pro ga-pro-listen' : (isProBattle ? ' ga-pro ga-pro-battle' : (g.proOnly ? ' ga-pro' : ''));
-      const proRibbon = g.proOnly ? `<span class="ga-pro-ribbon" aria-hidden="true"><span>👑</span> PRO</span>` : '';
-      let playText = 'Choose ▶';
-      if (locked) {
-        playText = isTeacher ? 'Upgrade to Pro' : 'Locked for class';
-      } else if (isProListen) {
-        playText = 'Play Quest ⚡';
-      } else if (isProBattle) {
-        playText = 'Enter Arena ⚔️';
-      }
+      const playText = locked ? (isTeacher ? 'Upgrade to Pro' : 'Locked for class') : 'Choose ▶';
       return `
       <button type="button" class="ga-cart ga-${g.accent}${proCardClass}${locked ? ' ga-pro-locked' : ''}" onclick="${locked ? `window.requireProGame('${esc(g.name)}')` : `window.selectGameToPlay('${g.fn}')`}" aria-disabled="${locked}" aria-label="${locked ? `${g.name}, Pro access required` : `Choose ${g.name}`}" ${locked ? 'title="Pro access required"' : ''}>
-        ${proRibbon}
         <span class="ga-cart-art" aria-hidden="true"><span>${g.icon}</span></span>
         <span class="ga-cart-body">
-          <span class="ga-cart-name">${esc(g.name)}${g.proOnly ? '<span class="ga-pro-badge">★ PRO</span>' : ''}</span>
+          <span class="ga-cart-name">${esc(g.name)}${g.proOnly ? '<span class="ga-pro-badge">👑 PRO</span>' : ''}</span>
           <span class="ga-cart-desc">${esc(g.desc)}</span>
           <span class="ga-cart-tags">${g.tags.map(t => `<span>${esc(t)}</span>`).join('')}</span>
         </span>

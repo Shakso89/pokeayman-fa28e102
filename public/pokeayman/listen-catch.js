@@ -769,7 +769,15 @@
     </div>`;
   }
   function bindCatchdexContents(root, record, readOnly) {
-    root.querySelector('[data-catchdex="close"]')?.addEventListener('click', () => document.getElementById('catchdex-modal')?.classList.add('hidden'));
+    root.querySelector('[data-catchdex="close"]')?.addEventListener('click', () => {
+      const modal = document.getElementById('catchdex-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.hidden = true;
+        modal.setAttribute('hidden', 'true');
+        modal.style.display = 'none';
+      }
+    });
     root.querySelectorAll('[data-catchdex="throw"]').forEach(button => button.addEventListener('click', () => throwChallengeBall(record)));
     root.querySelectorAll('[data-award-ball]').forEach(button => button.addEventListener('click', () => awardBall(record, button.dataset.awardBall)));
     root.querySelector('[data-catchdex="boxes"]')?.addEventListener('click', () => showBoxCountPopup(record));
@@ -806,10 +814,28 @@
       root.innerHTML = '<section class="catchdex-tab-card"><div class="cdx-empty" role="alert"><b>Your Catchdex could not load</b><p>Refresh the page to reconnect your student profile and Pokémon collection.</p></div></section>';
     }
   }
-  function renderCatchdexModal(record = catchdexViewer?.record || student(), readOnly = Boolean(catchdexViewer?.readOnly)) {
-    const modal = document.getElementById('catchdex-modal'); if (!modal) return;
+  function renderCatchdexModal(record = catchdexViewer?.record || (typeof student === 'function' ? student() : null), readOnly = Boolean(catchdexViewer?.readOnly)) {
+    if (!record) return;
+    let modal = document.getElementById('catchdex-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'catchdex-modal';
+      modal.className = 'catchdex-modal';
+      document.body.appendChild(modal);
+      modal.addEventListener('click', event => {
+        if (event.target === modal) {
+          modal.classList.add('hidden');
+          modal.hidden = true;
+          modal.setAttribute('hidden', 'true');
+          modal.style.display = 'none';
+        }
+      });
+    }
     modal.innerHTML = `<div class="catchdex-modal-card">${renderCatchdexContents(record, readOnly)}</div>`;
     modal.classList.remove('hidden');
+    modal.hidden = false;
+    modal.removeAttribute('hidden');
+    modal.style.display = 'grid';
     bindCatchdexContents(modal, record, readOnly);
   }
   function showBoxCountPopup(record) {
@@ -824,8 +850,45 @@
     overlay.addEventListener('click', event => { if (event.target === overlay || event.target.closest('[data-box-close]')) close(); });
     overlay.querySelector('[data-box-open]').addEventListener('click', () => { close(); openMysteryBox(record); });
   }
-  window.openCatchdex = function () { const tab = document.querySelector('.student-dashboard-tab[data-tab="catchdex"]'); if (currentRole === 'student' && tab) tab.click(); else if (catchdexViewer?.record) renderCatchdexModal(catchdexViewer.record, true); };
-  window.openCatchdexFor = function (record, readOnly = true) { catchdexViewer = { record, readOnly }; let modal = document.getElementById('catchdex-modal'); if (!modal) { modal = document.createElement('div'); modal.id = 'catchdex-modal'; modal.className = 'catchdex-modal'; document.body.appendChild(modal); modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); }); } renderCatchdexModal(record, readOnly); };
+  window.openCatchdex = function (record) {
+    const tab = document.querySelector('.student-dashboard-tab[data-tab="catchdex"]');
+    if (currentRole === 'student' && tab) {
+      tab.click();
+      return;
+    }
+    const target = record
+      || catchdexViewer?.record
+      || (typeof student === 'function' ? student() : null)
+      || (typeof profileStudent !== 'undefined' ? profileStudent : null)
+      || (typeof currentStudentRecordId !== 'undefined' && typeof allData !== 'undefined' ? allData.find(r => r.type === 'student' && String(r.__backendId) === String(currentStudentRecordId)) : null)
+      || (typeof getStudents === 'function' && typeof navSchool !== 'undefined' && typeof navClass !== 'undefined' ? (getStudents(navSchool, navClass)?.[0] || null) : null)
+      || (typeof allData !== 'undefined' ? allData.find(r => r.type === 'student') : null);
+    if (target) {
+      window.openCatchdexFor(target, currentRole !== 'student');
+    } else if (tab) {
+      tab.click();
+    }
+  };
+  window.openCatchdexFor = function (record, readOnly = true) {
+    if (!record) return;
+    catchdexViewer = { record, readOnly };
+    let modal = document.getElementById('catchdex-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'catchdex-modal';
+      modal.className = 'catchdex-modal';
+      document.body.appendChild(modal);
+      modal.addEventListener('click', event => {
+        if (event.target === modal) {
+          modal.classList.add('hidden');
+          modal.hidden = true;
+          modal.setAttribute('hidden', 'true');
+          modal.style.display = 'none';
+        }
+      });
+    }
+    renderCatchdexModal(record, readOnly);
+  };
   window.listenCatchRefresh = mountCards;
   window.renderListenCatchTab = renderCatchdexTab;
   window.renderListenCatchProfile = renderProfileCatchdex;
