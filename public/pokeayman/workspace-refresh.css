@@ -90,14 +90,14 @@ html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
   & #class-subtab-quiz .glass-container::before, & #class-subtab-quiz .glass-container::after,
   & #tab-admin .admin-subtab-content > .glass-container::before,
   & #tab-admin .admin-subtab-content > .glass-container::after { display: none !important; }
-  & #class-subtab-quiz { gap: 24px !important; align-items: flex-start; }
-  & #class-subtab-quiz > .flex.flex-col {
-    width: 170px !important; padding: 0 16px 0 0 !important; background: transparent !important;
-    border: 0 !important; border-right: 1px solid var(--color-border) !important;
-    border-radius: 0 !important; box-shadow: none !important; gap: 8px !important;
+  & #class-subtab-quiz {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 16px !important;
+    align-items: stretch !important;
   }
-  & #class-subtab-quiz > .flex-1 { padding: 0 !important; }
-  & #class-subtab-quiz :is(#quiz-form-container,.quiz-subtab-content > .glass-container,.quiz-subtab-content > div:not(.hidden)),
   & #tab-admin .admin-subtab-content > .glass-container,
   & #tab-admin :is(.teachers-inventory-panel,.teachers-inventory-toolbar,.admin-students-scroll,#admin-shop-container) {
     background: transparent !important; border: 0 !important; border-radius: 0 !important;
@@ -153,10 +153,8 @@ html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
 }
 @media(max-width:640px) {
   html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
-    & #class-subtab-quiz { flex-direction: column !important; gap: 20px !important; }
-    & #class-subtab-quiz > .flex.flex-col { width: 100% !important; flex-direction: row !important; flex-wrap: wrap; padding: 0 0 16px !important; border-right: 0 !important; border-bottom: 1px solid var(--color-border) !important; }
-    & #class-subtab-quiz .quiz-sub-tab { flex: 1 1 120px; text-align: center; }
-    & #class-subtab-quiz > .flex-1 { width: 100%; }
+    & #class-subtab-quiz { flex-direction: column !important; gap: 14px !important; }
+    & #class-subtab-quiz .quiz-sub-tab { flex: 1 1 auto; text-align: center; }
   }
 }
 /* List-source segmented control: solid selected state in both display modes. */

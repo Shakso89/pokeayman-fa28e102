@@ -326,4 +326,73 @@ html body.ts-bright .teacher-zone-history-copy span {
   color: var(--color-text-secondary, #64748b) !important;
 }
 
+/* Quiz tab in bright mode */
+html body.ts-bright #class-subtab-quiz .quiz-sub-tab-active {
+  background: #f59e0b !important;
+  color: #0f172a !important;
+  border: 1px solid #d97706 !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25) !important;
+}
+html body.ts-bright #class-subtab-quiz .quiz-sub-tab-inactive {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+html body.ts-bright #class-subtab-quiz .quiz-sub-tab-inactive:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+html body.ts-bright #class-subtab-quiz .quiz-card-surface,
+html body.ts-bright #class-subtab-quiz .quiz-panel-card,
+html body.ts-bright #class-subtab-quiz .glass-container {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+  color: #0f172a !important;
+}
+html body.ts-bright #class-subtab-quiz .quiz-panel-card :is(h2, h3, h4) {
+  color: #0f172a !important;
+}
+html body.ts-bright #class-subtab-quiz .quiz-panel-card p {
+  color: #475569 !important;
+}
+html body.ts-bright #class-subtab-quiz .quiz-input {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+html body.ts-bright #class-subtab-quiz .quiz-input:focus {
+  border-color: #d97706 !important;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2) !important;
+}
+html body.ts-bright #class-subtab-quiz .quiz-type-btn {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+html body.ts-bright #class-subtab-quiz #quiz-filter-group {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+html body.ts-bright #class-subtab-quiz .quiz-filter-pill:not(.bg-amber-400) {
+  color: #475569 !important;
+}
+html body.ts-bright #class-subtab-quiz .quiz-filter-pill:not(.bg-amber-400):hover {
+  color: #0f172a !important;
+}
+html body.ts-bright #class-subtab-quiz :is(#ongoing-quiz-list, #quiz-history-list, #archived-quiz-list) > div {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  color: #0f172a !important;
+}
+html body.ts-bright #class-subtab-quiz :is(#ongoing-quiz-list, #quiz-history-list, #archived-quiz-list) p {
+  color: #334155 !important;
+}
+html body.ts-bright #class-subtab-quiz :is(#ongoing-quiz-list, #quiz-history-list, #archived-quiz-list) p.font-bold,
+html body.ts-bright #class-subtab-quiz :is(#ongoing-quiz-list, #quiz-history-list, #archived-quiz-list) p.font-medium {
+  color: #0f172a !important;
+}
+
+
 
