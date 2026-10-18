@@ -257,8 +257,8 @@ html body:is(body, #pk-refresh):is(body, #pk-refresh):is(body, #pk-refresh) {
   & #manual-battle-btn { background: var(--ui-gold) !important; color: var(--ui-on-gold) !important; }
   & #random-battle-btn { background: var(--ui-soft) !important; color: var(--ui-ink) !important; }
   & #battle-area { --arena-bg: var(--color-surface-hover); --arena-surface: var(--ui-surface); --arena-ink: var(--ui-ink); --arena-muted: var(--ui-muted); --arena-line: var(--ui-line); --arena-shadow: none; }
-  & #arena-stage { background: var(--ui-soft) !important; padding: 28px 20px !important; border-color: var(--ui-line) !important; }
-  & #battle-area :is(#battle-left,#battle-right) { background: var(--ui-surface) !important; border-color: var(--ui-line) !important; border-top: 3px solid var(--ui-blue) !important; box-shadow: none !important; }
+  & #arena-stage { background: transparent !important; padding: 28px 20px !important; border-color: var(--ui-line) !important; }
+  & #battle-area :is(#battle-left,#battle-right) { background: transparent !important; border: none !important; box-shadow: none !important; }
   & #battle-area :is(#battle-left-name,#battle-right-name,#battle-left-pokemon,#battle-right-pokemon,#battle-left-hp,#battle-right-hp,.arena-title,.arena-trainer-label) { color: var(--ui-ink) !important; text-shadow: none !important; }
   & #battle-area .arena-type { color: var(--ui-ink) !important; background: var(--ui-soft) !important; }
   & #battle-area #start-battle-btn { background: var(--ui-gold) !important; color: var(--ui-on-gold) !important; }
