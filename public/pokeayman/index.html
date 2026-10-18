@@ -15107,9 +15107,10 @@ function renderGamesList() {
     attachGamesClassFilterListeners(selector);
   }
   
-  // Display game options if a list is selected
-  if (selectedGameList.length && gamesContainer) {
-    gamesContainer.innerHTML = window.gaRenderHub ? window.gaRenderHub(selectedGameList.map(item => typeof item === 'object' ? item.vocab_list_name : item).join(', '), !isStudentGames) : '';
+  // Always render the game arcade hub so it shows even before a list is selected
+  if (gamesContainer && window.gaRenderHub) {
+    const listLabel = selectedGameList.length ? selectedGameList.map(item => typeof item === 'object' ? item.vocab_list_name : item).join(', ') : '';
+    gamesContainer.innerHTML = window.gaRenderHub(listLabel, !isStudentGames);
   } else if (gamesContainer) {
     gamesContainer.innerHTML = '';
   }
