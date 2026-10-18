@@ -17590,9 +17590,6 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     </div>
   </div>`;
   document.body.appendChild(modal);
-  const hangmanLayoutStyle = document.createElement('style');
-  hangmanLayoutStyle.textContent = `.hangman-game-shell{position:relative;z-index:1;width:min(100%,64rem);height:calc(100 * min(var(--vh, 1vh), 1vh) - 1rem);max-height:calc(100 * min(var(--vh, 1vh), 1vh) - 1rem);overflow:hidden;display:flex;flex-direction:column}.hangman-game-shell .game-player-hud-slot{width:min(100%,52rem);margin:0 auto;padding:.35rem .75rem .15rem}.hangman-game-shell .game-player-hud{grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;max-width:52rem;margin:0 auto}.hangman-game-shell .game-player-card{min-height:7rem;padding:.65rem .8rem .75rem}.hangman-game-shell #hangman-game-body{position:relative;z-index:2;min-height:0;flex:1 1 auto;display:grid;grid-template-columns:minmax(12rem,.85fr) minmax(0,1.15fr);gap:clamp(.65rem,2vw,1.25rem);align-items:center;width:min(100%,52rem);margin:0 auto;padding:clamp(.5rem,1.4vh,.9rem)!important;overflow-y:auto;overflow-x:hidden}.hangman-game-shell #hangman-drawing-panel{min-width:0;min-height:0;gap:.35rem;padding:.75rem;border:1px solid rgba(255,255,255,.2);border-radius:1rem;background:rgba(16,20,73,.35)}.hangman-game-shell #hangman-content{position:relative;z-index:3;min-width:0;min-height:0;width:100%;max-width:none;overflow:visible;gap:.55rem!important;padding:.75rem;border:1px solid rgba(255,255,255,.2);border-radius:1rem;background:rgba(16,20,73,.25)}.hangman-game-shell #hangman-clue{width:min(100%,7rem);height:clamp(3rem,8vh,5rem);margin-bottom:.15rem!important}.hangman-game-shell #hangman-word{font-size:clamp(1.35rem,3.5vw,2.25rem)!important;margin-bottom:.2rem!important}.hangman-game-shell #hangman-drawing{width:min(100%,9.5rem)!important;height:auto!important;max-height:clamp(8rem,27vh,13rem)!important}.hangman-game-shell #hangman-letters{position:relative;z-index:4;display:grid!important;grid-template-columns:repeat(6,minmax(2.15rem,1fr));gap:.45rem!important;width:100%;max-height:none;overflow:visible;align-items:center;justify-items:center;margin:.25rem auto 0!important;padding-top:.65rem;border-top:1px solid rgba(255,255,255,.2)}.hangman-game-shell .hangman-letter{position:relative;z-index:5;width:clamp(2.15rem,5vw,2.75rem)!important;height:clamp(2.15rem,5vw,2.75rem)!important;min-width:0;min-height:0;display:inline-flex!important;align-items:center;justify-content:center;padding:0!important;visibility:visible!important;opacity:1;border-radius:.55rem!important}.hangman-game-shell .hangman-letter:disabled{opacity:.5}.hangman-game-shell #hangman-feedback{min-height:1.5rem!important;margin-bottom:0!important}.game-fullscreen-active .hangman-game-shell{width:100%;height:100%;max-height:none;overflow:hidden}.game-fullscreen-active .hangman-game-shell #hangman-game-body{grid-template-columns:minmax(12rem,.72fr) minmax(0,1.28fr);gap:.65rem;align-items:center}.game-fullscreen-active .hangman-game-shell #hangman-letters{grid-template-columns:repeat(6,minmax(2.1rem,1fr))}@media(max-width:700px){.hangman-game-shell{height:calc(100 * min(var(--vh, 1vh), 1vh) - .5rem);max-height:calc(100 * min(var(--vh, 1vh), 1vh) - .5rem)}.hangman-game-shell #hangman-game-body,.game-fullscreen-active .hangman-game-shell #hangman-game-body{grid-template-columns:minmax(7rem,.55fr) minmax(0,1.45fr);gap:.4rem;padding:.35rem!important}.hangman-game-shell #hangman-drawing{width:min(100%,7rem)!important;max-height:clamp(7rem,23vh,10rem)!important}.hangman-game-shell #hangman-clue{width:min(100%,5.5rem);height:clamp(2.5rem,7vh,4rem)}.hangman-game-shell #hangman-letters,.game-fullscreen-active .hangman-game-shell #hangman-letters{grid-template-columns:repeat(5,minmax(1.85rem,1fr));gap:.25rem!important}.hangman-game-shell .hangman-letter{width:clamp(1.75rem,7vw,2.25rem)!important;height:clamp(1.75rem,7vw,2.25rem)!important;font-size:clamp(.75rem,3vw,1rem)!important}}@media(max-width:430px){.hangman-game-shell{height:calc(100 * min(var(--vh, 1vh), 1vh) - .5rem);max-height:calc(100 * min(var(--vh, 1vh), 1vh) - .5rem)}.hangman-game-shell .game-player-hud{grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem}.hangman-game-shell .game-player-card{min-height:5.8rem;padding:.45rem}.hangman-game-shell #hangman-game-body,.game-fullscreen-active .hangman-game-shell #hangman-game-body{grid-template-columns:1fr;grid-template-rows:auto auto;overflow-y:auto;gap:.55rem;padding:.4rem!important}.hangman-game-shell #hangman-drawing-panel{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;align-items:center;column-gap:.55rem}.hangman-game-shell #hangman-clue{grid-column:1;grid-row:1;width:5.5rem;height:4rem}.hangman-game-shell #hangman-word{grid-column:2;grid-row:1;margin:0!important}.hangman-game-shell #hangman-drawing{grid-column:1;grid-row:2;width:5.5rem!important;max-height:7.5rem!important}.hangman-game-shell #hangman-wrong{grid-column:2;grid-row:2}.hangman-game-shell #hangman-content{overflow:visible}.hangman-game-shell #hangman-letters,.game-fullscreen-active .hangman-game-shell #hangman-letters{grid-template-columns:repeat(6,minmax(2rem,1fr));gap:.35rem!important;padding-top:.5rem}}`;
-  document.head.appendChild(hangmanLayoutStyle);
   attachGameFullscreen(modal);
   renderGamePlayerHud(modal, Math.min(wordCount, words.length), 0);
   startPlayerTurnTimer(modal, timerSeconds);
@@ -17961,7 +17958,7 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
       <!-- Compact centered hangman board -->
       <div id="hangman-drawing-panel" class="flex flex-col items-center justify-center min-w-0">
         <div id="hangman-clue" class="mb-3 flex h-24 w-36 items-center justify-center overflow-hidden rounded-xl border-2 border-red-200 bg-red-50" aria-label="Picture clue"></div>
-        <p id="hangman-word" class="text-3xl sm:text-4xl font-bold text-red-600 mb-3 font-mono text-center break-words" style="letter-spacing: -0.15em;"></p>
+        <p id="hangman-word" class="font-mono text-center break-words"></p>
         <div id="hangman-solved-image" class="hidden mb-3 flex justify-center"></div>
         <svg id="hangman-drawing" width="220" height="260" viewBox="0 0 220 260" role="img" aria-label="Hangman: no wrong guesses">
           <path class="hm-grid" d="M20 60 H200 M20 110 H200 M20 160 H200 M20 210 H200 M60 20 V210 M110 20 V210 M160 20 V210"/>
@@ -17989,17 +17986,15 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
   attachGameFullscreen(modal);
   renderGamePlayerHud(modal, Math.min(wordCount, words.length), 0);
   startPlayerTurnTimer(modal, timerSeconds);
-  let hangmanLetterSize = 40;
+  let hangmanLetterSize = 48;
   const updateHangmanLetterSize = () => {
     modal.querySelectorAll('.hangman-letter').forEach(button => {
-      button.style.width = `${hangmanLetterSize}px`;
       button.style.height = `${hangmanLetterSize}px`;
-      button.style.fontSize = `${Math.max(24, Math.round(hangmanLetterSize * 0.35))}px`;
-      button.style.padding = '0';
+      button.style.fontSize = `${Math.max(16, Math.round(hangmanLetterSize * 0.44))}px`;
     });
   };
-  modal.querySelector('#hangman-letter-decrease').addEventListener('click', () => { hangmanLetterSize = Math.max(28, hangmanLetterSize - 4); updateHangmanLetterSize(); });
-  modal.querySelector('#hangman-letter-increase').addEventListener('click', () => { hangmanLetterSize = Math.min(72, hangmanLetterSize + 4); updateHangmanLetterSize(); });
+  modal.querySelector('#hangman-letter-decrease').addEventListener('click', () => { hangmanLetterSize = Math.max(36, hangmanLetterSize - 4); updateHangmanLetterSize(); });
+  modal.querySelector('#hangman-letter-increase').addEventListener('click', () => { hangmanLetterSize = Math.min(68, hangmanLetterSize + 4); updateHangmanLetterSize(); });
   
   function drawHangman() {
     const svg = modal.querySelector('#hangman-drawing');
@@ -18052,9 +18047,22 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
     drawHangman();
     
     const letters = modal.querySelector('#hangman-letters');
-    letters.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l => `
-      <button type="button" class="hangman-letter bg-red-100 text-red-700 font-bold py-2 px-2 text-sm rounded hover:bg-red-200 transition ${guessed.includes(l) ? 'opacity-50 pointer-events-none' : ''}" data-letter="${l}">${l}</button>
-    `).join('');
+    letters.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l => {
+      const isGuessed = guessed.includes(l);
+      const isCorrect = isGuessed && word.includes(l);
+      const isWrong = isGuessed && !word.includes(l);
+      const colStyle = l === 'V' ? 'style="grid-column-start: 2;"' : '';
+      let statusClass = 'is-available';
+      let badge = '';
+      if (isCorrect) {
+        statusClass = 'is-correct';
+        badge = '<span class="letter-badge letter-badge-correct" aria-hidden="true">✓</span>';
+      } else if (isWrong) {
+        statusClass = 'is-wrong';
+        badge = '<span class="letter-badge letter-badge-wrong" aria-hidden="true">✕</span>';
+      }
+      return `<button type="button" class="hangman-letter ${statusClass}" ${colStyle} data-letter="${l}" ${isGuessed ? 'disabled aria-disabled="true"' : ''} title="${isWrong ? `${l} (Wrong - blocked)` : isCorrect ? `${l} (Correct)` : `Guess ${l}`}"><span class="letter-char">${l}</span>${badge}</button>`;
+    }).join('');
     updateHangmanLetterSize();
     
     letters.querySelectorAll('.hangman-letter').forEach(btn => {
@@ -18123,31 +18131,28 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
               return;
             }
             // Wrong letter ends the turn while preserving shared guesses and blocked letters.
-            btn.classList.add('animate-shake');
-            btn.style.backgroundColor = '#fee2e2';
-            btn.style.borderColor = '#ef4444';
+            btn.classList.add('animate-shake', 'is-wrong');
+            btn.disabled = true;
+            btn.setAttribute('aria-disabled', 'true');
             const prevPlayerIndex = activeGamePlayerIndex;
             advanceGameTurn();
             updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
             showWrongAnswerCelebration(modal, prevPlayerIndex);
             setTimeout(() => {
-              btn.style.backgroundColor = '';
-              btn.style.borderColor = '';
               btn.classList.remove('animate-shake');
               render();
             }, 400);
             return;
           } else {
+            btn.classList.add('animate-bounce', 'is-correct');
+            btn.disabled = true;
+            btn.setAttribute('aria-disabled', 'true');
             showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
             // Regular letters award 1 point; the final completing letter awards 3.
             const completesWord = word.split('').every(l => guessed.includes(l));
             const letterPoints = completesWord ? 3 : 1;
             if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += letterPoints;
             updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
-            // Correct letter animation
-            btn.classList.add('animate-bounce');
-            btn.style.backgroundColor = '#d1fae5';
-            btn.style.color = '#4152d7';
             setTimeout(() => {
               btn.classList.remove('animate-bounce');
             }, 600);
