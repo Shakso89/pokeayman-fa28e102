@@ -11707,6 +11707,50 @@ function isQuizSolvedByStudent(q, studentName) {
   return solvedList.includes(studentName.trim().toLowerCase());
 }
 
+const quizSolvesInFlight = new Set();
+async function solveStudentQuiz(quiz, answer, trigger) {
+  if (isQuizSolvedByStudent(quiz, currentStudent)) { toast('You already solved this quiz!'); renderQuizzes(); return; }
+  if (quizSolvesInFlight.has(quiz.__backendId)) return;
+  quizSolvesInFlight.add(quiz.__backendId);
+  if (trigger) trigger.disabled = true;
+  const student = getCurrentStudentRecord() || getAllStudents().find(s => s.student_name === currentStudent);
+  try {
+    // Saved server-side in one step so coins and the solved mark can never be rolled back by a refresh.
+    const result = await window.dataSdk.rpc('solve_quiz', { _quiz_id: quiz.__backendId, _student_id: student?.__backendId || currentStudentRecordId, _student_name: currentStudent, _answer: answer });
+    if (!result?.ok) {
+      if (result?.reason === 'already') { toast('You already solved this quiz!'); renderQuizzes(); return; }
+      toast('Could not save your answer. Please try again.'); if (trigger) trigger.disabled = false; return;
+    }
+    renderQuizzes();
+    showQuizCorrectCelebration(quiz, Number(result.reward) || 0);
+    Promise.resolve(window.notifyQuizAnswered?.(quiz, currentStudent)).catch(() => {});
+  } catch (error) {
+    console.error(error); toast('Could not save your answer. Please try again.'); if (trigger) trigger.disabled = false;
+  } finally { quizSolvesInFlight.delete(quiz.__backendId); }
+}
+function showQuizCorrectCelebration(quiz, reward) {
+  document.querySelector('.quiz-win-overlay')?.remove();
+  const safe = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const cheers = ['Correct!', 'Super smart!', 'You nailed it!', 'Brilliant!', 'Way to go!'];
+  const overlay = document.createElement('div');
+  overlay.className = 'quiz-win-overlay';
+  overlay.innerHTML = `<section class="quiz-win-card" role="dialog" aria-modal="true" aria-labelledby="quiz-win-title">
+    <div class="quiz-win-confetti" aria-hidden="true">${Array.from({ length: 24 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div>
+    <img class="quiz-win-pikachu" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="">
+    <h2 id="quiz-win-title">${cheers[Math.floor(Math.random() * cheers.length)]}</h2>
+    <p class="quiz-win-answer">The answer was <strong>${safe(quiz.quiz_answer)}</strong></p>
+    <p class="quiz-win-coins">+${reward} coins</p>
+    <button type="button" class="quiz-win-close">Yay!</button>
+  </section>`;
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  overlay.querySelector('.quiz-win-close').addEventListener('click', close);
+  document.body.appendChild(overlay);
+  overlay.querySelector('.quiz-win-close').focus({ preventScroll: true });
+  window.pokeSfx?.play('correct'); window.pokeSfx?.play('coin');
+  setTimeout(close, 6000);
+}
+
 function renderQuizzes() {
   if (currentRole !== 'student') return;
   const studentRec = getAllStudents().find(s => s.student_name === currentStudent && (!navClass || s.class_name === navClass && s.school_name === navSchool));
