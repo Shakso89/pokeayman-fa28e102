@@ -95,6 +95,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      solve_quiz: {
+        Args: {
+          _answer: string
+          _quiz_id: string
+          _student_id: string
+          _student_name: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "teacher" | "user"
