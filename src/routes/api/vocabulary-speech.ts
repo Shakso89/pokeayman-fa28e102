@@ -37,12 +37,12 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
         if (limit && limit.reset > now && limit.count >= 30) return Response.json({ message: "Please wait a minute before reading more words." }, { status: 429, headers: { "Retry-After": "60" } });
         requests.set(ip, limit && limit.reset > now ? { ...limit, count: limit.count + 1 } : { count: 1, reset: now + 60000 });
         let text: string;
-        let level = "P3";
+        let level = "P4";
         try {
           const input = await request.json();
           if (typeof input.text !== "string" || !input.text.trim() || input.text.length > 600) throw new Error("Invalid text");
           text = input.text.trim();
-          level = typeof input.level === "string" && /^P[1-6]$/.test(input.level) ? input.level : "P3";
+          level = typeof input.level === "string" && /^P[1-6]$/.test(input.level) ? input.level : "P4";
         } catch {
           return Response.json({ message: "Choose a saved vocabulary word or sentence to read." }, { status: 400 });
         }
@@ -69,8 +69,16 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
         if (word.error || sentence.error) return Response.json({ message: "Could not load this vocabulary. Please try again later." }, { status: 503 });
         if (!word.data?.length && !sentence.data?.length) return Response.json({ message: "This word or sentence must be saved in a vocabulary list first." }, { status: 400 });
 
-        const pacing: Record<string, string> = { P1: "Speak slowly and clearly, with a little space between words.", P2: "Speak slowly and clearly, with a little space between words.", P3: "Speak at a gentle, clear classroom pace.", P4: "Speak at a steady, natural classroom pace.", P5: "Speak at a confident, natural pace.", P6: "Speak at a fluent, natural pace." };
-        const prompt = `Read only the text below in warm, natural, clear English for a child learning vocabulary. ${pacing[level]} Use accurate pronunciation and no introduction or extra words.\n\n${text}`;
+        // Map reading levels: P4 = Beginner, P5 = Good, P6 = Confident
+        const pacing: Record<string, string> = {
+          P1: "Speak slowly, distinctly, and clearly at a gentle beginner classroom pace, with a small pause between words.",
+          P2: "Speak slowly, distinctly, and clearly at a gentle beginner classroom pace, with a small pause between words.",
+          P3: "Speak at a gentle, clear classroom pace.",
+          P4: "Speak slowly, distinctly, and clearly at a gentle beginner classroom pace, with brief pauses between words.",
+          P5: "Speak at a steady, natural, clear classroom pace.",
+          P6: "Speak at a fluent, lively, confident natural pace.",
+        };
+        const prompt = `Read only the text below in warm, natural, clear English for a child learning vocabulary. ${pacing[level] || pacing.P4} Use accurate pronunciation and no introduction or extra words.\n\n${text}`;
 
         // 1. Direct Google Gemini API (zero Lovable credits)
         if (geminiApiKey) {

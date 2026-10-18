@@ -10493,7 +10493,8 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(String(text).trim());
-      utterance.rate = 0.95;
+      const rates = { P4: 0.88, P5: 1.0, P6: 1.08 };
+      utterance.rate = rates[level] || 0.92;
       window.speechSynthesis.speak(utterance);
     } else {
       toast(error?.message || 'The reading voice is unavailable right now.');
