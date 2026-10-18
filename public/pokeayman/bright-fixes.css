@@ -1,4 +1,30 @@
 /* Bright-mode readability fixes + Poké Battle player picker. Loaded last. */
+
+/* Leaderboard modal bright mode: replace hardcoded dark navy backgrounds with light surfaces */
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-yellow-400),
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-gray-300),
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-orange-400) {
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
+}
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-yellow-400) {
+  box-shadow: var(--shadow-card) !important;
+}
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-gray-300) {
+  box-shadow: var(--shadow-card) !important;
+}
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-orange-400) {
+  box-shadow: var(--shadow-card) !important;
+}
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-yellow-400) p,
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-gray-300) p,
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-orange-400) p { color: var(--color-text-primary) !important; }
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-yellow-400) img,
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-gray-300) img,
+html body.ts-bright #leaderboard-modal-content > div:has(.bg-orange-400) img { filter: none !important; }
+
+/* Bright-mode readability fixes + Poké Battle player picker. Loaded last. */
 html body.ts-bright .ga-cart,
 html body.ts-bright .game-vocab-list-card,
 html body.ts-bright .battle-arena-panel,

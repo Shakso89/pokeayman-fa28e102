@@ -2333,12 +2333,12 @@
     /* Unified premium tier system for every Rare and Legendary card surface. */
     :root { --tier-rare-border:#8b5cf6; --tier-rare-surface:linear-gradient(145deg,rgba(39,35,82,.98),rgba(23,31,65,.98)); --tier-legendary-border:#fbbf24; --tier-legendary-surface:linear-gradient(145deg,rgba(116,75,12,.99),rgba(57,42,12,.99) 58%,rgba(30,30,18,.99)); }
     .pokemon-card-rare,.pokemon-card-legendary { position:relative; isolation:isolate; overflow:hidden; display:flex; flex-direction:column; align-items:center; gap:.28rem; min-width:0; border-radius:1.1rem !important; padding:.8rem !important; transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease,filter .22s ease; }
-    .pokemon-card-rare::before,.pokemon-card-legendary::before { content:''; position:absolute; inset:0; z-index:-1; pointer-events:none; background:linear-gradient(120deg,transparent 18%,rgba(255,255,255,.14) 45%,transparent 68%); transform:translateX(-120%); transition:transform .6s ease; }
+    .pokemon-card-rare::before,.pokemon-card-legendary::before { content:none; position:absolute; inset:0; z-index:-1; pointer-events:none; }
     .pokemon-card-rare::after,.pokemon-card-legendary::after { content:attr(data-tier-label); position:absolute; top:.55rem; right:.55rem; padding:.18rem .48rem; border-radius:999px; font-size:.58rem; font-weight:900; letter-spacing:.08em; line-height:1.2; text-transform:uppercase; white-space:nowrap; pointer-events:none; }
     .pokemon-card-rare { border:1px solid var(--tier-rare-border) !important; background:var(--tier-rare-surface) !important; box-shadow:0 0 0 1px rgba(129,140,248,.28),0 12px 28px rgba(30,27,75,.42),0 0 24px rgba(139,92,246,.28),inset 0 1px 0 rgba(255,255,255,.18) !important; color:#f5f3ff !important; }
     .pokemon-card-rare::after { content:'RARE'; color:#ede9fe; background:linear-gradient(135deg,#4c1d95,#7c3aed); border:1px solid #c4b5fd; box-shadow:0 3px 10px rgba(76,29,149,.35); }
     .pokemon-card-legendary { border:2px solid var(--tier-legendary-border) !important; background:var(--tier-legendary-surface) !important; box-shadow:0 0 0 1px rgba(253,224,71,.38),0 14px 32px rgba(92,54,8,.48),0 0 28px rgba(245,158,11,.42),inset 0 1px 0 rgba(255,255,255,.42) !important; color:#fff7cc !important; animation:premiumLegendaryGlow 3.2s ease-in-out infinite; }
-    .pokemon-card-legendary::after { content:'LEGENDARY'; color:#78350f; background:linear-gradient(135deg,#fef3c7,#fbbf24 55%,#d97706); border:1px solid #fff7cc; box-shadow:0 3px 12px rgba(120,53,15,.42),inset 0 1px 0 rgba(255,255,255,.7); }
+    .pokemon-card-legendary::after { content:'LEGENDARY'; color:#78350f; background:linear-gradient(135deg,#fef3c7,#fbbf24 55%,#d97706); border:1px solid #fff7cc; box-shadow:0 3px 12px rgba(120,53,15,.42),inset 0 1px 0 rgba(255,255,255,.7); display: none !important; }
     .pokemon-card-rare:hover,.pokemon-card-legendary:hover { transform:translateY(-5px); filter:brightness(1.08) saturate(1.08); }
     .pokemon-card-rare:hover::before,.pokemon-card-legendary:hover::before { transform:translateX(120%); }
     @keyframes premiumLegendaryGlow { 0%,100% { filter:brightness(1); } 50% { filter:brightness(1.12) saturate(1.12); } }
@@ -2595,12 +2595,12 @@
   /* Shared contained premium rarity treatment across every dashboard card surface. */
   :root { --rare-surface:linear-gradient(145deg,#15143b,#2b236f 52%,#101b46); --rare-edge:rgba(165,180,252,.85); --legendary-surface:linear-gradient(145deg,#281a07,#70470d 52%,#211a0a); --legendary-edge:rgba(253,224,71,.92); }
   .pokemon-card-rare,.pokemon-card-legendary { isolation:isolate; overflow:hidden!important; position:relative; background-clip:padding-box!important; transform:translateZ(0); will-change:transform,box-shadow; }
-  .pokemon-card-rare::before,.pokemon-card-legendary::before { content:''; position:absolute; inset:1px; z-index:-1; pointer-events:none; border-radius:inherit; opacity:.62; background:linear-gradient(115deg,transparent 18%,rgba(255,255,255,.18) 44%,transparent 62%); background-size:220% 100%; animation:rarityIdleSheen 9s ease-in-out infinite; }
+  .pokemon-card-rare::before,.pokemon-card-legendary::before { content:none; position:absolute; inset:1px; z-index:-1; pointer-events:none; border-radius:inherit; opacity:.62; background:linear-gradient(115deg,transparent 18%,rgba(255,255,255,.18) 44%,transparent 62%); background-size:220% 100%; animation:rarityIdleSheen 9s ease-in-out infinite; }
   .pokemon-card-rare::after,.pokemon-card-legendary::after { z-index:2; pointer-events:none; animation:rarityBadgeGleam 8s ease-in-out infinite; }
   .pokemon-card-rare { background:var(--rare-surface)!important; border-color:var(--rare-edge)!important; box-shadow:inset 0 0 0 1px rgba(224,231,255,.16),inset 0 0 20px rgba(99,102,241,.2),0 12px 28px rgba(15,23,42,.45),0 0 22px rgba(99,102,241,.35)!important; }
   .pokemon-card-rare::before { background-image:linear-gradient(115deg,transparent 18%,rgba(191,219,254,.2) 44%,transparent 62%),radial-gradient(circle at 18% 22%,#e0e7ff 0 1px,transparent 1.7px),radial-gradient(circle at 82% 68%,#c4b5fd 0 1px,transparent 1.7px); background-size:220% 100%,100% 100%,100% 100%; }
   .pokemon-card-legendary { background:var(--legendary-surface)!important; border-color:var(--legendary-edge)!important; box-shadow:inset 0 0 0 1px rgba(255,247,204,.24),inset 0 0 22px rgba(251,191,36,.2),0 14px 32px rgba(30,20,5,.52),0 0 26px rgba(245,158,11,.4)!important; }
-  .pokemon-card-legendary::before { background-image:linear-gradient(115deg,transparent 18%,rgba(255,247,204,.23) 44%,transparent 62%),radial-gradient(circle at 20% 24%,#fef3c7 0 1px,transparent 1.8px),radial-gradient(circle at 80% 68%,#fbbf24 0 1px,transparent 1.8px); background-size:220% 100%,100% 100%,100% 100%; }
+  .pokemon-card-legendary::before { content:none; }
   .pokemon-card-rare:hover,.pokemon-card-rare:focus-visible,.pokemon-card-legendary:hover,.pokemon-card-legendary:focus-visible { transform:translateY(-5px)!important; }
   .pokemon-card-rare:hover,.pokemon-card-rare:focus-visible { box-shadow:inset 0 0 0 1px rgba(224,231,255,.28),inset 0 0 24px rgba(129,140,248,.3),0 18px 36px rgba(15,23,42,.54),0 0 34px rgba(99,102,241,.58)!important; }
   .pokemon-card-legendary:hover,.pokemon-card-legendary:focus-visible { box-shadow:inset 0 0 0 1px rgba(255,247,204,.38),inset 0 0 26px rgba(251,191,36,.32),0 20px 40px rgba(30,20,5,.62),0 0 38px rgba(245,158,11,.66)!important; }
@@ -6169,11 +6169,11 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       .pokemon-card-rare, .pokemon-card-legendary { position:relative; isolation:isolate; overflow:hidden !important; background-clip:padding-box !important; transform:translateZ(0); }
       .pokemon-card-rare { background:linear-gradient(145deg,#11183d 0%,#29236b 52%,#101b46 100%) !important; border:1px solid #8b5cf6 !important; box-shadow:inset 0 0 0 1px rgba(224,231,255,.22),inset 0 0 18px rgba(99,102,241,.24),0 12px 28px rgba(15,23,42,.48),0 0 20px rgba(96,165,250,.28) !important; color:#f5f3ff !important; }
       .pokemon-card-legendary { background:radial-gradient(circle at 50% 38%,rgba(251,191,36,.18),transparent 43%),linear-gradient(145deg,#211506 0%,#70470d 54%,#211a0a 100%) !important; border:2px solid #fbbf24 !important; box-shadow:inset 0 0 0 1px rgba(255,247,204,.38),inset 0 0 20px rgba(251,191,36,.22),0 14px 32px rgba(30,20,5,.54),0 0 24px rgba(245,158,11,.4) !important; color:#fff7cc !important; }
-      .pokemon-card-rare::before, .pokemon-card-legendary::before { content:''; position:absolute; inset:2px; z-index:-1; pointer-events:none; border-radius:inherit; opacity:.55; background:linear-gradient(115deg,transparent 20%,rgba(255,255,255,.2) 44%,transparent 62%),radial-gradient(circle at 18% 22%,rgba(224,231,255,.9) 0 1px,transparent 1.8px),radial-gradient(circle at 82% 68%,rgba(196,181,253,.8) 0 1px,transparent 1.8px); background-size:220% 100%,100% 100%,100% 100%; }
-      .pokemon-card-legendary::before { background:linear-gradient(115deg,transparent 20%,rgba(255,247,204,.25) 44%,transparent 62%),radial-gradient(circle at 20% 24%,rgba(254,243,199,.95) 0 1px,transparent 1.8px),radial-gradient(circle at 80% 68%,rgba(251,191,36,.85) 0 1px,transparent 1.8px); }
+      .pokemon-card-rare::before, .pokemon-card-legendary::before { content:none; position:absolute; inset:2px; z-index:-1; pointer-events:none; border-radius:inherit; opacity:.55; background:linear-gradient(115deg,transparent 20%,rgba(255,255,255,.2) 44%,transparent 62%),radial-gradient(circle at 18% 22%,rgba(224,231,255,.9) 0 1px,transparent 1.8px),radial-gradient(circle at 82% 68%,rgba(196,181,253,.8) 0 1px,transparent 1.8px); background-size:220% 100%,100% 100%,100% 100%; }
+      .pokemon-card-legendary::before { content:none; }
       .pokemon-card-rare::after,.pokemon-card-legendary::after { position:absolute; top:.55rem; right:.55rem; z-index:3; padding:.18rem .48rem; border-radius:999px; font-size:.58rem; font-weight:900; letter-spacing:.08em; line-height:1.2; text-transform:uppercase; white-space:nowrap; pointer-events:none; }
       .pokemon-card-rare::after { content:'RARE'; color:#ede9fe; background:linear-gradient(135deg,#3730a3,#7c3aed); border:1px solid #c4b5fd; box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 10px rgba(76,29,149,.35); }
-      .pokemon-card-legendary::after { content:'LEGENDARY'; color:#78350f; background:linear-gradient(135deg,#fef3c7,#fbbf24 55%,#d97706); border:1px solid #fff7cc; box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 3px 12px rgba(120,53,15,.42); }
+      .pokemon-card-legendary::after { content:'LEGENDARY'; color:#78350f; background:linear-gradient(135deg,#fef3c7,#fbbf24 55%,#d97706); border:1px solid #fff7cc; box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 3px 12px rgba(120,53,15,.42); display: none !important; }
       .pokemon-card-rare:hover,.pokemon-card-rare:focus-visible,.pokemon-card-legendary:hover,.pokemon-card-legendary:focus-visible { transform:translateY(-4px) !important; }
       .pokemon-card-rare:hover::before,.pokemon-card-rare:focus-visible::before,.pokemon-card-legendary:hover::before,.pokemon-card-legendary:focus-visible::before { animation:collectibleSheen .85s ease-out 1; }
       .pokemon-card-rare:hover { box-shadow:inset 0 0 0 1px rgba(224,231,255,.35),inset 0 0 22px rgba(99,102,241,.3),0 17px 34px rgba(15,23,42,.55),0 0 30px rgba(96,165,250,.48) !important; }
@@ -6351,8 +6351,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       }
       #my-shop-grid > div.pokemon-card-rare::before,
       #profile-shop-grid > div.pokemon-card-rare::before,
-      #my-shop-grid > div.pokemon-card-legendary::before,
-      #profile-shop-grid > div.pokemon-card-legendary::before {
+#my-shop-grid > div.pokemon-card-legendary::before,
+#profile-shop-grid > div.pokemon-card-legendary::before { content: none !important; 
         content: '';
         position: absolute;
         inset: .35rem;
@@ -6368,8 +6368,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       #profile-shop-grid > div.pokemon-card-rare::before {
         background: radial-gradient(circle, rgba(139,92,246,.72), rgba(59,130,246,.22) 48%, transparent 76%);
       }
-      #my-shop-grid > div.pokemon-card-legendary::before,
-      #profile-shop-grid > div.pokemon-card-legendary::before {
+#my-shop-grid > div.pokemon-card-legendary::before,
+#profile-shop-grid > div.pokemon-card-legendary::before { content: none !important; 
         background: radial-gradient(circle, rgba(251,191,36,.76), rgba(245,158,11,.24) 48%, transparent 76%);
         animation-duration: 4.2s;
       }
@@ -6466,7 +6466,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       #my-pokemon-list > div.pokemon-card-common::before { content: 'COMMON'; color: #cbd5e1; background: rgba(15,23,42,.7); border: 1px solid rgba(203,213,225,.5); }
       #my-pokemon-list > div.pokemon-card-uncommon::before { content: 'UNCOMMON'; color: #d9f5ff; background: rgba(67,85,222,.7); border: 1px solid rgba(125,211,252,.75); }
       #my-pokemon-list > div.pokemon-card-rare::before { content: 'RARE'; color: #ede9fe; background: linear-gradient(135deg,#4c1d95,#7c3aed); border: 1px solid #c4b5fd; }
-      #my-pokemon-list > div.pokemon-card-legendary::before { content: 'LEGENDARY'; color: #78350f; background: linear-gradient(135deg,#fef3c7,#fbbf24 55%,#d97706); border: 1px solid #fff7cc; }
+      #my-pokemon-list > div.pokemon-card-legendary::before { content: none !important; display: none !important; }
       #my-pokemon-list > div.pokemon-card-common::after,
       #my-pokemon-list > div.pokemon-card-uncommon::after,
       #my-pokemon-list > div.pokemon-card-rare::after,
@@ -6499,7 +6499,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         box-sizing: border-box;
       }
       #my-pokemon-list > div.pokemon-card-rare::before { color: #ede9fe; background: linear-gradient(135deg,#4c1d95,#7c3aed); border: 1px solid #c4b5fd; box-shadow: 0 3px 10px rgba(76,29,149,.35); }
-      #my-pokemon-list > div.pokemon-card-legendary::before { color: #78350f; background: linear-gradient(135deg,#fef3c7,#fbbf24 55%,#d97706); border: 1px solid #fff7cc; box-shadow: 0 3px 12px rgba(120,53,15,.42), inset 0 1px 0 rgba(255,255,255,.7); }
+      #my-pokemon-list > div.pokemon-card-legendary::before { content: none !important; color: #78350f; background: linear-gradient(135deg,#fef3c7,#fbbf24 55%,#d97706); border: 1px solid #fff7cc; box-shadow: 0 3px 12px rgba(120,53,15,.42), inset 0 1px 0 rgba(255,255,255,.7); display: none !important; }
       #my-pokemon-list > div.pokemon-card-rare::after,
       #my-pokemon-list > div.pokemon-card-legendary::after { content: none !important; display: none !important; }
       #my-pokemon-list > div.pokemon-card-rare,
@@ -6584,7 +6584,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       @keyframes studentCollectionShimmer { 0%, 100% { background-position: -120% 0; opacity: .35; } 48%, 62% { background-position: 120% 0; opacity: .78; } }
       @media (prefers-reduced-motion: reduce) {
         #student-dashboard #my-pokemon-list > div.pokemon-card-rare::before,
-        #student-dashboard #my-pokemon-list > div.pokemon-card-legendary::before { animation: none; opacity: .2; }
+        #student-dashboard #my-pokemon-list > div.pokemon-card-legendary::before { animation: none; opacity: .2; content: none; display: none !important; }
         #student-dashboard #my-pokemon-list > div.pokemon-card-rare:hover,
         #student-dashboard #my-pokemon-list > div.pokemon-card-legendary:hover,
         #student-dashboard #my-pokemon-list > div.pokemon-card-rare:focus-visible,
@@ -13688,6 +13688,7 @@ function openEditTeacherModal(teacherId) {
     const newCredits = parseInt(modal.querySelector('#et-credits').value);
     const teacherZoneAccess = modal.querySelector('#et-zone-access').checked ? 'allow' : 'hide';
     const teacherPro = isAdminRow ? true : modal.querySelector('#et-pro-access').checked;
+    const previousTeacherPro = allData.find(t => t.__backendId === teacher.__backendId)?.teacher_pro;
     const saved = await window.dataSdk.update({ ...(allData.find(t => t.__backendId === teacher.__backendId) || teacher), teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess, teacher_pro: teacherPro });
     if (!saved?.isOk) { toast('Could not save teacher settings. Please try again.'); return; }
     allData = allData.map(row => row.__backendId === teacher.__backendId ? { ...row, teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess, teacher_pro: teacherPro } : row);
@@ -13696,6 +13697,10 @@ function openEditTeacherModal(teacherId) {
     if (!isAdminRow && Number.isFinite(newCredits) && newCredits > previousCredits) {
       const toppedUp = allData.find(row => row.__backendId === teacher.__backendId) || { ...teacher, teacher_name: newName, teacher_credits: newCredits };
       await window.sendTeacherNotifications?.([toppedUp], 'Credits added to your balance', `${currentTeacher || 'An admin'} added ${newCredits - previousCredits} credits to your account. Your balance is now ${newCredits} credits.`, 'reward', { target: 'profile' });
+    }
+    // Notify when teacher is upgraded to Pro
+    if (!isAdminRow && previousTeacherPro !== teacherPro && teacherPro === true) {
+      await window.sendTeacherNotifications?.([allData.find(t => t.__backendId === teacher.__backendId) || { ...teacher, teacher_pro: teacherPro }], 'Pro teacher status unlocked', `${currentTeacher || 'An admin'} upgraded your teacher status to Pro. New features are now available!`, 'pro', { target: 'profile' });
     }
     if (currentRole === 'teacher' && currentTeacherRecordId === teacher.__backendId) {
       if (!canAccessTeacherZone() && activeMainTab === 'teacher-zone') showMainTab('dashboard');
