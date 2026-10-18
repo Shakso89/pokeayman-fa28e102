@@ -16,9 +16,48 @@ html body.ts-bright :is(.tsb-card, .ts-streak, #ts-streak, .ts-rail-card, [class
 html body.ts-bright :is(.tsb-card, .ts-streak, #ts-streak) :is(h1,h2,h3,h4,p,span,strong,small) { color: var(--color-text-primary) !important; text-shadow: none !important; }
 html body.ts-bright :is(.btn-primary, .tsb-btn, .ts-award-go) { background: var(--color-brand) !important; color: var(--color-text-on-brand) !important; }
 html body.ts-bright :is(.bg-white, .glass-container, .card, .modal-content, [role="dialog"] > div):not(.pk-login-overlay *) { background-color: var(--color-surface) !important; color: var(--color-text-primary); border-color: var(--color-border) !important; }
-html body.ts-bright :is(.text-white, .text-gray-100, .text-gray-200, .text-slate-200, .text-indigo-100, .text-indigo-200, .text-amber-100) { color: var(--color-text-primary) !important; }
-html body.ts-bright :is(.text-gray-300, .text-gray-400, .text-slate-300, .text-slate-400) { color: var(--color-text-secondary) !important; }
-html body.ts-bright :is(input, select, textarea) { background-color: var(--color-surface) !important; color: var(--color-text-primary) !important; border-color: var(--color-border-strong) !important; }
-html body :is(input, select, textarea, button, a):focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+
+/* Dark mode: when ts-bright is absent, ensure popups/modals use dark surface/ink/muted colors
+   This applies to all modals/dialogs on both student and teacher dashboards */
+html body:not(.ts-bright) :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup):not(.pk-login-overlay *) {
+  background-color: var(--color-bg) !important; color: var(--color-text-primary) !important; border-color: var(--color-border) !important; box-shadow: var(--shadow-card) !important;
+}
+html body:not(.ts-bright) :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup) h1, .modal-content h2, .modal-content h3, [role="dialog"] > div h1, [role="dialog"] > div h2, [role="dialog"] > div h3, .pk-popup h1, .pk-popup h2, .pk-popup h3, .teacher-popup h1, .teacher-popup h2, .teacher-popup h3, .student-popup h1, .student-popup h2, .student-popup h3 {
+  color: var(--color-text-primary) !important;
+}
+html body:not(.ts-bright) :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup) p, .modal-content p, [role="dialog"] > div p, .pk-popup p, .teacher-popup p, .student-popup p {
+  color: var(--color-text-primary) !important;
+}
+html body:not(.ts-bright) :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup) span, .modal-content span, [role="dialog"] > div span, .pk-popup span, .teacher-popup span, .student-popup span {
+  color: var(--color-text-primary) !important;
+}
+html body:not(.ts-bright) :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup) small, .modal-content small, [role="dialog"] > div small, .pk-popup small, .teacher-popup small, .student-popup small {
+  color: var(--color-text-secondary) !important;
+}
+html body:not(.ts-bright) :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup) .text-gray-*, .modal-content .text-gray-*, [role="dialog"] > div .text-gray-*, .pk-popup .text-gray-*, .teacher-popup .text-gray-*, .student-popup .text-gray-* {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Bright mode: when ts-bright is present, ensure popups/modals use proper surface/ink colors
+   This applies to all modals/dialogs on both student and teacher dashboards */
+html body.ts-bright :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup):not(.pk-login-overlay *) {
+  background-color: var(--color-surface) !important; color: var(--color-text-primary) !important; border-color: var(--color-border) !important; box-shadow: var(--shadow-card) !important;
+}
+html body.ts-bright :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup) h1, .modal-content h2, .modal-content h3, [role="dialog"] > div h1, [role="dialog"] > div h2, [role="dialog"] > div h3, .pk-popup h1, .pk-popup h2, .pk-popup h3, .teacher-popup h1, .teacher-popup h2, .teacher-popup h3, .student-popup h1, .student-popup h2, .student-popup h3 {
+  color: var(--color-text-primary) !important;
+}
+html body.ts-bright :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup) p, .modal-content p, [role="dialog"] > div p, .pk-popup p, .teacher-popup p, .student-popup p {
+  color: var(--color-text-primary) !important;
+}
+html body.ts-bright :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup) span, .modal-content span, [role="dialog"] > div span, .pk-popup span, .teacher-popup span, .student-popup span {
+  color: var(--color-text-primary) !important;
+}
+html body.ts-bright :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup) small, .modal-content small, [role="dialog"] > div small, .pk-popup small, .teacher-popup small, .student-popup small {
+  color: var(--color-text-secondary) !important;
+}
+html body.ts-bright :is(.modal-content, [role="dialog"] > div, .pk-popup, .teacher-popup, .student-popup) .text-gray-*, .modal-content .text-gray-*, [role="dialog"] > div .text-gray-*, .pk-popup .text-gray-*, .teacher-popup .text-gray-*, .student-popup .text-gray-* {
+  color: var(--color-text-primary) !important;
+}
+
 /* Keep the theme switch clickable above the right utility column. */
 #ts-theme-toggle { position: relative; z-index: 5; }
