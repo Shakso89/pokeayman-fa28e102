@@ -14407,7 +14407,8 @@ function renderProfileShopPage() {
 }
 
 function renderProfileQuizzes() {
-  const quizzes = getActiveQuizzes(navClass);
+  const studentName = profileStudent?.student_name || '';
+  const quizzes = getActiveQuizzes(navClass).filter(q => !isQuizSolvedByStudent(q, studentName));
   const quizContainer = document.getElementById('profile-quiz-list'); const quizEmpty = document.getElementById('profile-quiz-empty');
   if (!quizzes.length) { quizContainer.innerHTML = ''; quizEmpty.classList.remove('hidden'); return; }
   quizEmpty.classList.add('hidden');
@@ -14416,11 +14417,36 @@ function renderProfileQuizzes() {
     const imageDisplay = q.quiz_image ? `<img src="${q.quiz_image}" alt="Quiz image" class="w-full h-64 object-contain bg-gray-50 rounded-lg mb-3" onerror="this.style.display='none'">` : '';
     return `<div class="bg-white rounded-xl p-4 shadow-sm border">${imageDisplay}<p class="font-medium">${q.quiz_question}</p><p class="text-xs text-amber-500 mt-1">Reward: ${q.quiz_reward} coins</p>${qType === 'mcq' ? `<div class="flex items-start justify-center gap-5 sm:gap-8 mt-4 py-2">${options.map(opt => `<button type="button" class="profile-quiz-mcq-btn rounded-xl border-2 border-pink-200 bg-pink-50/40 px-4 py-3 text-center text-sm font-bold text-slate-700 shadow-sm transition-all hover:-translate-y-1 hover:border-pink-400 hover:bg-pink-50 hover:shadow-md focus:outline-none focus-visible:ring-4 focus-visible:ring-pink-200 active:scale-95" data-id="${q.__backendId}" data-answer="${opt}" aria-label="Answer: ${opt}">${opt}</button>`).join('')}</div>` : `<form class="profile-quiz-answer-form flex gap-2 mt-2" data-id="${q.__backendId}"><input type="text" placeholder="Answer" class="flex-1 border rounded px-2 py-1 text-sm" required><button type="submit" class="bg-green-500 text-white px-3 py-1 rounded text-sm">Submit</button></form>`}</div>`;
   }).join('');
+  const recordWrong = async (quiz, answer) => {
+    let attempts = {}; let answers = {}; try { attempts = JSON.parse(quiz.quiz_attempts || '{}'); } catch(e) {} try { answers = JSON.parse(quiz.quiz_submitted_answers || '{}'); } catch(e) {}
+    attempts[studentName] = (attempts[studentName] || 0) + 1; if (!answers[studentName]) answers[studentName] = []; answers[studentName].push(answer);
+    await window.dataSdk.update({ ...quiz, quiz_attempts: JSON.stringify(attempts), quiz_submitted_answers: JSON.stringify(answers) }); toast('Wrong!');
+  };
+  const submit = async (quizId, answer, triggers) => {
+    const quiz = allData.find(r => r.__backendId === quizId); if (!quiz || !profileStudent) return;
+    if (isQuizSolvedByStudent(quiz, studentName)) { toast('Already solved!'); renderProfileQuizzes(); return; }
+    if (answer.trim().toLowerCase() !== String(quiz.quiz_answer || '').trim().toLowerCase()) { await recordWrong(quiz, answer.trim()); return; }
+    const key = 'p:' + quizId + ':' + studentName;
+    if (quizSolvesInFlight.has(key)) return;
+    quizSolvesInFlight.add(key); triggers.forEach(b => { b.disabled = true; });
+    try {
+      const result = await window.dataSdk.rpc('solve_quiz', { _quiz_id: quizId, _student_id: profileStudent.__backendId, _student_name: studentName, _answer: answer });
+      if (!result?.ok) {
+        if (result?.reason === 'already') { toast('Already solved!'); renderProfileQuizzes(); return; }
+        toast('Could not save the answer. Please try again.'); triggers.forEach(b => { b.disabled = false; }); return;
+      }
+      const fresh = allData.find(r => r.__backendId === profileStudent.__backendId); if (fresh) profileStudent = fresh;
+      try { renderStudentProfile?.(); } catch (e) {}
+      renderProfileQuizzes();
+      showQuizCorrectCelebration(quiz, Number(result.reward) || 0);
+    } catch (error) { console.error(error); toast('Could not save the answer. Please try again.'); triggers.forEach(b => { b.disabled = false; }); }
+    finally { quizSolvesInFlight.delete(key); }
+  };
   quizContainer.querySelectorAll('.profile-quiz-answer-form').forEach(form => {
-    form.addEventListener('submit', async e => { e.preventDefault(); const quiz = allData.find(r => r.__backendId === form.dataset.id); if (!quiz) return; if (form.querySelector('input').value.trim().toLowerCase() === (quiz.quiz_answer||'').toLowerCase()) { await window.dataSdk.update({ ...quiz, quiz_solved_by: profileStudent.student_name }); await window.dataSdk.update({ ...profileStudent, coins: (profileStudent.coins||0) + (quiz.quiz_reward||0) }); toast('Correct!'); } else { let attempts = {}; let answers = {}; try { attempts = JSON.parse(quiz.quiz_attempts || '{}'); } catch(e) {} try { answers = JSON.parse(quiz.quiz_submitted_answers || '{}'); } catch(e) {} attempts[profileStudent.student_name] = (attempts[profileStudent.student_name] || 0) + 1; if (!answers[profileStudent.student_name]) answers[profileStudent.student_name] = []; answers[profileStudent.student_name].push(form.querySelector('input').value.trim()); await window.dataSdk.update({ ...quiz, quiz_attempts: JSON.stringify(attempts), quiz_submitted_answers: JSON.stringify(answers) }); toast('Wrong!'); } });
+    form.addEventListener('submit', e => { e.preventDefault(); submit(form.dataset.id, form.querySelector('input').value, [...form.querySelectorAll('button,input')]); });
   });
   quizContainer.querySelectorAll('.profile-quiz-mcq-btn').forEach(btn => {
-    btn.addEventListener('click', async () => { const quiz = allData.find(r => r.__backendId === btn.dataset.id); if (!quiz) return; if (btn.dataset.answer.trim().toLowerCase() === (quiz.quiz_answer||'').toLowerCase()) { await window.dataSdk.update({ ...quiz, quiz_solved_by: profileStudent.student_name }); await window.dataSdk.update({ ...profileStudent, coins: (profileStudent.coins||0) + (quiz.quiz_reward||0) }); toast('Correct!'); } else { let attempts = {}; let answers = {}; try { attempts = JSON.parse(quiz.quiz_attempts || '{}'); } catch(e) {} try { answers = JSON.parse(quiz.quiz_submitted_answers || '{}'); } catch(e) {} attempts[profileStudent.student_name] = (attempts[profileStudent.student_name] || 0) + 1; if (!answers[profileStudent.student_name]) answers[profileStudent.student_name] = []; answers[profileStudent.student_name].push(btn.dataset.answer.trim()); await window.dataSdk.update({ ...quiz, quiz_attempts: JSON.stringify(attempts), quiz_submitted_answers: JSON.stringify(answers) }); toast('Wrong!'); } });
+    btn.addEventListener('click', () => submit(btn.dataset.id, btn.dataset.answer, [...btn.parentElement.querySelectorAll('button')]));
   });
 }
 function openAdminStudentMembershipEditor(studentId) {
