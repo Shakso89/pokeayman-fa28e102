@@ -129,3 +129,171 @@ html body:is(#pk-ds, body).ts-bright .pk-login-overlay .pk-login-card.pk-login-t
   border-color: transparent !important;
   color: #1a1300 !important;
 }
+
+/* Financial & Salary bright-mode readability fixes */
+html body.ts-bright .financial-disclosure {
+  background: var(--color-surface, #ffffff) !important;
+  border-color: var(--color-border, #e2e8f0) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+}
+html body.ts-bright .financial-disclosure > summary {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .financial-disclosure > summary::after {
+  color: var(--color-text-secondary, #64748b) !important;
+}
+html body.ts-bright .financial-disclosure-hint {
+  color: var(--color-text-secondary, #64748b) !important;
+}
+html body.ts-bright .financial-disclosure-content {
+  border-top-color: var(--color-border, #e2e8f0) !important;
+}
+html body.ts-bright .monthly-school-label {
+  color: var(--color-text-primary, #0f172a) !important;
+  font-weight: 800 !important;
+}
+html body.ts-bright .monthly-school-legend {
+  color: var(--color-text-secondary, #64748b) !important;
+}
+html body.ts-bright :is(.monthly-school-trigger, .school-summary-interactive) {
+  background: var(--color-surface-hover, #f1f5f9) !important;
+  border: 1px solid var(--color-border, #cbd5e1) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+}
+html body.ts-bright :is(.monthly-school-trigger, .school-summary-interactive):hover {
+  background: var(--color-surface, #ffffff) !important;
+  border-color: var(--color-brand, #3b82f6) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+}
+html body.ts-bright :is(.monthly-school-trigger, .school-summary-interactive) :is(span, strong) {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .monthly-school-trigger-meta {
+  color: var(--color-text-secondary, #64748b) !important;
+}
+html body.ts-bright .monthly-school-section {
+  background: var(--color-surface, #ffffff) !important;
+  border: 1px solid var(--color-border, #e2e8f0) !important;
+  box-shadow: none !important;
+}
+html body.ts-bright .monthly-school-heading {
+  background: var(--color-surface-hover, #f1f5f9) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+  border-bottom: 1px solid var(--color-border, #e2e8f0) !important;
+}
+html body.ts-bright .monthly-school-table {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .monthly-school-table th {
+  background: var(--color-surface-hover, #f1f5f9) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+  border-bottom: 1px solid var(--color-border, #e2e8f0) !important;
+}
+html body.ts-bright .monthly-school-table td {
+  color: var(--color-text-primary, #0f172a) !important;
+  border-top: 1px solid var(--color-border, #e2e8f0) !important;
+}
+html body.ts-bright .monthly-school-table td:first-child {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .monthly-school-table td::before {
+  color: var(--color-text-secondary, #64748b) !important;
+}
+html body.ts-bright .monthly-school-total,
+html body.ts-bright .monthly-school-total td {
+  background: var(--color-surface-hover, #f1f5f9) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+  border-top: 2px solid var(--color-border, #cbd5e1) !important;
+}
+html body.ts-bright .monthly-school-total :is(span, strong) {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .school-breakdown-panel {
+  background: var(--color-surface, #ffffff) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+  border: 1px solid var(--color-border, #e2e8f0) !important;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18) !important;
+}
+html body.ts-bright .school-breakdown-header {
+  border-bottom: 1px solid var(--color-border, #e2e8f0) !important;
+}
+html body.ts-bright .school-breakdown-header h3 {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .school-breakdown-month {
+  color: var(--color-text-secondary, #64748b) !important;
+}
+html body.ts-bright .school-breakdown-close {
+  background: var(--color-surface-hover, #f1f5f9) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+  border: 1px solid var(--color-border, #cbd5e1) !important;
+}
+html body.ts-bright .financial-breakdown-scroll {
+  border: 1px solid var(--color-border, #e2e8f0) !important;
+  background: var(--color-surface, #ffffff) !important;
+}
+html body.ts-bright .financial-breakdown-table {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .financial-breakdown-table th {
+  background: var(--color-surface-hover, #f1f5f9) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+  border-color: var(--color-border, #e2e8f0) !important;
+}
+html body.ts-bright .financial-breakdown-table td {
+  color: var(--color-text-primary, #0f172a) !important;
+  border-color: var(--color-border, #e2e8f0) !important;
+}
+html body.ts-bright .financial-breakdown-table .financial-total-row td {
+  background: var(--color-surface-hover, #f1f5f9) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+  border-top: 2px solid var(--color-border, #cbd5e1) !important;
+  font-weight: 800 !important;
+}
+html body.ts-bright :is(.financial-unpaid-card, .financial-insurance-card) {
+  background: var(--color-surface, #ffffff) !important;
+  border-color: var(--color-border, #e2e8f0) !important;
+}
+html body.ts-bright :is(.financial-unpaid-card, .financial-insurance-card) :is(strong, p, span) {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright :is(.financial-unpaid-card, .financial-insurance-card) p {
+  color: var(--color-text-secondary, #64748b) !important;
+}
+html body.ts-bright .financial-adjustment-column {
+  background: var(--color-surface, #ffffff) !important;
+  border-color: var(--color-border, #e2e8f0) !important;
+}
+html body.ts-bright .financial-dashboard .financial-period-input {
+  background: var(--color-surface, #ffffff) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+  border-color: var(--color-border, #cbd5e1) !important;
+}
+html body.ts-bright .school-summary-row {
+  background: var(--color-surface, #ffffff) !important;
+  border-color: var(--color-border, #e2e8f0) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .school-summary-header {
+  background: var(--color-surface-hover, #f1f5f9) !important;
+  color: var(--color-text-secondary, #64748b) !important;
+}
+html body.ts-bright .school-summary-name {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .school-summary-value > strong {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .school-summary-label {
+  color: var(--color-text-secondary, #64748b) !important;
+}
+html body.ts-bright .school-summary-total {
+  background: var(--color-surface-hover, #f1f5f9) !important;
+  border-color: var(--color-border, #cbd5e1) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+}
+html body.ts-bright .school-summary-total :is(span, strong) {
+  color: var(--color-text-primary, #0f172a) !important;
+}
+
