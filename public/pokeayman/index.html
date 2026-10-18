@@ -6980,7 +6980,9 @@ function canonicalIdentityFromRecord(record) {
 }
 function rebuildCanonicalStudentIndex() {
   canonicalStudentAccounts.clear(); canonicalStudentAliases.clear();
-  allData.filter(record => record.type === 'student' || record.type === 'student_membership').forEach(record => {
+  // Pass 1: Index all primary 'student' records first so their aliases and full profiles are established
+  const studentRows = allData.filter(record => record.type === 'student');
+  studentRows.forEach(record => {
     const explicit = canonicalIdentityFromRecord(record);
     const key = explicit || studentStableIdentity(record);
     if (!key) return;
@@ -6988,24 +6990,43 @@ function rebuildCanonicalStudentIndex() {
     const previousBackendId = String(previous?.__backendId || '').trim();
     const recordBackendId = String(record.__backendId || '').trim();
     const authoritativeRow = previous && previousBackendId && recordBackendId === previousBackendId;
-    const merged = record.type === 'student_membership'
-      ? { ...(previous || {}), student_id: explicit || previous?.student_id || record.student_id, school_name: record.school_name || previous?.school_name || '', class_name: record.class_name || previous?.class_name || '' }
-      : (authoritativeRow ? { ...record } : (previous ? { ...previous, ...record } : { ...record }));
-    // Keep one stable write target for the canonical account; membership rows
-    // are views and must never overwrite a verified canonical balance.
+    const merged = authoritativeRow ? { ...record } : (previous ? { ...previous, ...record } : { ...record });
     merged.__backendId = previousBackendId || recordBackendId;
     merged.student_id = key;
     if (authoritativeRow || !previous || studentCompletenessScore(record) > studentCompletenessScore(previous) || (studentCompletenessScore(record) === studentCompletenessScore(previous) && !previousBackendId)) canonicalStudentAccounts.set(key, merged);
     [record.__backendId, explicit, record.user_id, record.profile_id, record.account_id, record.student_id].filter(Boolean).forEach(alias => canonicalStudentAliases.set(String(alias), key));
   });
+
+  // Pass 2: Index 'student_membership' and auxiliary class link records
+  const membershipRows = allData.filter(record => record.type === 'student_membership' || record.type === 'class_student' || record.type === 'class_membership');
+  membershipRows.forEach(record => {
+    const explicit = canonicalIdentityFromRecord(record);
+    const linkedKey = explicit && (canonicalStudentAliases.get(explicit) || explicit);
+    const key = linkedKey || studentStableIdentity(record);
+    if (!key) return;
+    if (record.__backendId) canonicalStudentAliases.set(String(record.__backendId), key);
+    if (explicit) canonicalStudentAliases.set(String(explicit), key);
+    const previous = canonicalStudentAccounts.get(key);
+    if (previous) {
+      // Retain canonical profile; do not let empty membership attributes overwrite student profile fields
+      const merged = {
+        ...previous,
+        student_id: previous.student_id || key
+      };
+      canonicalStudentAccounts.set(key, merged);
+    } else {
+      const merged = { ...record, student_id: key };
+      canonicalStudentAccounts.set(key, merged);
+    }
+  });
+
   // Older class rows can lack student_id and carry different class PINs. When
-  // their durable membership metadata identifies the same joined account,
+  // their durable membership metadata or name identifies the same joined account,
   // collapse them into one canonical balance before any card is rendered.
   const linkedByName = new Map();
   allData.filter(record => record.type === 'student').forEach(record => {
     const name = normalizeStudentIdentity(record.student_name);
-    const memberships = normalizeStudentMembershipValues(record.class_memberships, []);
-    if (!name || !memberships.length) return;
+    if (!name) return;
     const existingKey = linkedByName.get(name);
     const candidate = canonicalIdentityFromRecord(record) || record.__backendId || studentStableIdentity(record);
     const key = canonicalStudentAliases.get(String(candidate || '').trim()) || String(candidate || '').trim();
@@ -7025,7 +7046,18 @@ function canonicalStudentKey(recordOrId) {
   if (canonicalStudentIndexData !== allData) rebuildCanonicalStudentIndex();
   const raw = typeof recordOrId === 'object' ? recordOrId : null;
   const candidate = raw ? canonicalIdentityFromRecord(raw) || raw.__backendId : recordOrId;
-  return canonicalStudentAliases.get(String(candidate || '').trim()) || String(candidate || '').trim() || studentStableIdentity(raw || {});
+  const strCandidate = String(candidate || '').trim();
+  const aliasKey = canonicalStudentAliases.get(strCandidate);
+  if (aliasKey) return aliasKey;
+  if (raw) {
+    const rawName = normalizeStudentIdentity(raw.student_name);
+    if (rawName) {
+      for (const [key, acc] of canonicalStudentAccounts.entries()) {
+        if (normalizeStudentIdentity(acc.student_name) === rawName) return key;
+      }
+    }
+  }
+  return strCandidate || studentStableIdentity(raw || {});
 }
 function canonicalStudentRows(key) { return allData.filter(record => record.type === 'student' && canonicalStudentKey(record) === key); }
 function updateVisibleStudentCoinLabels(student) {
@@ -7467,48 +7499,71 @@ window.getClassReadingLevel = function(schoolName, className) {
   return /^P[4-6]$/.test(record?.class_level || '') ? record.class_level : 'P4';
 };
 function getStudents(schoolName, className) {
-  const membershipRows = allData.filter(r => (r.type === 'student' || r.type === 'student_membership') && r.school_name === schoolName && r.class_name === className);
-  // Also include students whose saved class list names this class (multi-class edits from Admin).
-  const wanted = `${String(schoolName || '').trim().toLocaleLowerCase()} / ${String(className || '').trim().toLocaleLowerCase()}`;
-  const seenKeys = new Set(membershipRows.map(r => canonicalStudentKey(r)));
-  const seenNames = new Set(membershipRows.map(r => normalizeStudentIdentity(r.student_name)).filter(Boolean));
-  allData.forEach(r => {
-    if (r.type !== 'student' || typeof r.class_memberships !== 'string' || !r.class_memberships) return;
-    if (!r.class_memberships.split('||').some(seg => seg.trim().toLocaleLowerCase() === wanted)) return;
-    const k = canonicalStudentKey(r);
-    const nameKey = normalizeStudentIdentity(r.student_name);
-    if (seenKeys.has(k) || (nameKey && seenNames.has(nameKey))) return;
-    seenKeys.add(k);
-    if (nameKey) seenNames.add(nameKey);
-    membershipRows.push({ ...r, school_name: schoolName, class_name: className });
+  if (canonicalStudentIndexData !== allData) rebuildCanonicalStudentIndex();
+  const targetSchool = String(schoolName || '').trim();
+  const targetClass = String(className || '').trim();
+  const targetSchoolNorm = targetSchool.toLocaleLowerCase();
+  const targetClassNorm = targetClass.toLocaleLowerCase();
+  const wanted = `${targetSchoolNorm} / ${targetClassNorm}`;
+
+  // Gather candidate rows directly or indirectly associated with this class
+  const classRows = allData.filter(r => {
+    const type = String(r.type || '').toLowerCase();
+    const isStudentType = (type === 'student' || type === 'student_membership' || type === 'class_student' || type === 'class_membership');
+    if (!isStudentType) return false;
+    const rSchoolNorm = String(r.school_name || '').trim().toLocaleLowerCase();
+    const rClassNorm = String(r.class_name || '').trim().toLocaleLowerCase();
+    if (rSchoolNorm === targetSchoolNorm && rClassNorm === targetClassNorm) return true;
+    if (typeof r.class_memberships === 'string' && r.class_memberships) {
+      return r.class_memberships.split('||').some(seg => seg.trim().toLocaleLowerCase() === wanted);
+    }
+    return false;
   });
-  // Legacy imports can contain a class row and a linked-account row for the
-  // same pupil. A class roster must render one card for that name, even while
-  // the canonical index is being rebuilt after a save or poll.
-  const uniqueRows = new Map();
-  membershipRows.forEach(row => {
-    const nameKey = normalizeStudentIdentity(row.student_name);
-    const key = nameKey ? `name:${nameKey}` : `id:${canonicalStudentKey(row)}`;
-    const previous = uniqueRows.get(key);
-    const score = studentCompletenessScore(row) + (row.type === 'student' ? 1000 : 0) + (canonicalIdentityFromRecord(row) ? 100 : 0);
-    if (!previous || score > previous.score) uniqueRows.set(key, { row, score });
+
+  // Also include any canonical students whose normalized memberships include this class
+  getAllStudents().forEach(st => {
+    const memberships = normalizeStudentMembershipValues(st.class_memberships, []);
+    const inClass = memberships.some(m => String(m).trim().toLocaleLowerCase() === wanted) ||
+      (String(st.school_name || '').trim().toLocaleLowerCase() === targetSchoolNorm &&
+       String(st.class_name || '').trim().toLocaleLowerCase() === targetClassNorm);
+    if (inClass) classRows.push(st);
   });
-  return [...uniqueRows.values()].map(({ row }) => {
+
+  // Deduplicate strictly by canonical identity and normalized student name
+  const uniqueStudents = new Map();
+  classRows.forEach(row => {
     const canonicalId = canonicalStudentKey(row);
-    const canonical = canonicalStudentAccounts.get(canonicalId);
-    // Membership rows provide only the selected class context. Every shared
-    // profile field comes from the verified canonical account at render time.
-    if (!canonical) return { ...row, __canonicalStudentId: canonicalId, __membershipBackendId: row.__backendId };
-    return {
-      ...row,
-      ...canonical,
-      __canonicalStudentId: canonicalId,
-      __membershipBackendId: row.__backendId,
-      __backendId: canonical.__backendId || row.__backendId,
-      school_name: row.school_name,
-      class_name: row.class_name
-    };
+    const canonical = (canonicalId ? canonicalStudentAccounts.get(canonicalId) : null) || (row.type === 'student' ? row : null) || {};
+    const studentName = normalizeStudentDisplayName(canonical.student_name || row.student_name);
+    const nameKey = normalizeStudentIdentity(studentName);
+    if (!nameKey && !canonicalId) return;
+
+    // A student is uniquely identified by their normalized name or canonical ID
+    const dedupKey = nameKey ? `name:${nameKey}` : `id:${canonicalId}`;
+    const previous = uniqueStudents.get(dedupKey);
+
+    const score = (row.type === 'student' ? 1000 : 0) + studentCompletenessScore(row) + (canonical.student_name ? 500 : 0);
+    const membershipBackendId = row.type === 'student_membership' ? row.__backendId : (previous?.merged?.__membershipBackendId || row.__backendId);
+
+    if (!previous || score > previous.score) {
+      const merged = {
+        ...row,
+        ...canonical,
+        __canonicalStudentId: canonicalId || canonical.__backendId || row.student_id || row.__backendId,
+        __membershipBackendId: membershipBackendId,
+        __backendId: canonical.__backendId || (row.type === 'student' ? row.__backendId : row.student_id) || row.__backendId,
+        student_name: studentName,
+        coins: Number(canonical.coins ?? row.coins) || 0,
+        school_name: targetSchool,
+        class_name: targetClass
+      };
+      uniqueStudents.set(dedupKey, { merged, score });
+    } else if (row.type === 'student_membership' && row.__backendId) {
+      previous.merged.__membershipBackendId = row.__backendId;
+    }
   });
+
+  return [...uniqueStudents.values()].map(entry => entry.merged);
 }
 function normalizeStudentDisplayName(value) { return String(value ?? '').trim().replace(/\s+/g, ' '); }
 function studentStableIdentity(record) {
@@ -7531,29 +7586,36 @@ function getAllStudents() {
   // avatar, or collection state.
   if (canonicalStudentIndexData !== allData) rebuildCanonicalStudentIndex();
   if (canonicalStudentViewsData === allData) return canonicalStudentViewsCache.slice();
-  const byCanonicalId = new Map();
+  const byIdentity = new Map();
   allData.filter(record => record.type === 'student' || record.type === 'student_membership').forEach(record => {
     const canonicalId = canonicalStudentKey(record);
     if (!canonicalId) return;
     const canonical = canonicalStudentAccounts.get(canonicalId) || record;
-    const previous = byCanonicalId.get(canonicalId) || {};
+    const studentName = normalizeStudentDisplayName(canonical.student_name || record.student_name);
+    const nameKey = normalizeStudentIdentity(studentName);
+    const dedupKey = nameKey ? `name:${nameKey}` : `id:${canonicalId}`;
+    const previous = byIdentity.get(dedupKey) || {};
     const memberships = new Set([
       ...normalizeStudentMembershipValues(previous.class_memberships, []),
       ...normalizeStudentMembershipValues(canonical.class_memberships, []),
       ...normalizeStudentMembershipValues(record.class_memberships, []),
       ...(record.school_name && record.class_name ? [`${record.school_name} / ${record.class_name}`] : [])
     ]);
-    byCanonicalId.set(canonicalId, {
-      ...canonical,
-      __backendId: canonical.__backendId || record.__backendId,
-      student_id: canonicalId,
-      student_name: normalizeStudentDisplayName(canonical.student_name || record.student_name),
-      coins: Number(canonical.coins) || 0,
-      class_memberships: [...memberships].join('||')
+    const score = (record.type === 'student' ? 1000 : 0) + studentCompletenessScore(record) + (canonical.student_name ? 500 : 0);
+    const prevScore = previous.__score || 0;
+    const primary = score >= prevScore ? { ...record, ...canonical } : { ...canonical, ...record, ...previous };
+    byIdentity.set(dedupKey, {
+      ...primary,
+      __backendId: canonical.__backendId || previous.__backendId || record.__backendId,
+      student_id: canonicalId || previous.student_id,
+      student_name: studentName || previous.student_name || '',
+      coins: Number(canonical.coins ?? previous.coins ?? record.coins) || 0,
+      class_memberships: [...memberships].join('||'),
+      __score: Math.max(score, prevScore)
     });
   });
   canonicalStudentViewsData = allData;
-  canonicalStudentViewsCache = [...byCanonicalId.values()];
+  canonicalStudentViewsCache = [...byIdentity.values()].filter(s => s.student_name);
   return canonicalStudentViewsCache.slice();
 }
 function getPokemons() {
