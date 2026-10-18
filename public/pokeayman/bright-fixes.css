@@ -28,10 +28,10 @@ html body.ts-bright #leaderboard-modal-content > div:has(.bg-orange-400) img { f
 html body.ts-bright .ga-cart,
 html body.ts-bright .game-vocab-list-card,
 html body.ts-bright .battle-arena-panel,
-html body.ts-bright .battle-arena-panel > .flex:first-child,
-html body.ts-bright .ga-cd-stage {
+html body.ts-bright .battle-arena-panel > .flex:first-child {
   background: var(--color-surface) !important; border-color: var(--color-border) !important; color: var(--color-text-primary) !important;
 }
+html body.ts-bright .ga-cd-stage { background: transparent !important; border: none !important; }
 html body.ts-bright .ga-cart-name,
 html body.ts-bright .game-vocab-list-card *,
 html body.ts-bright .battle-arena-panel h3,
@@ -42,8 +42,6 @@ html body.ts-bright .vocab-list-card [class*="byline"] *,
 html body.ts-bright .game-player-name,
 html body.ts-bright .game-player-score,
 html body.ts-bright .game-player-score *,
-html body.ts-bright .ga-cd-player span,
-html body.ts-bright .ga-cd-num,
 html body.ts-bright [style*="color:#fef3c7"] { color: var(--color-text-primary) !important; -webkit-text-fill-color: currentColor; }
 html body.ts-bright .ga-cart-desc,
 html body.ts-bright .vocab-list-card .vocab-list-count { color: var(--color-text-secondary) !important; }

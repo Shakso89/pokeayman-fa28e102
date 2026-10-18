@@ -165,8 +165,8 @@
 @media (max-width: 560px) { .ga-lobby { padding: .85rem !important; } .ga-options-body { grid-template-columns: 1fr; } .ga-lobby .ga-lobby-footer { flex-wrap: wrap; } .ga-lobby #game-players-next { margin-left: auto; } }
 
 /* Countdown */
-.ga-countdown { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: radial-gradient(circle at center, rgba(30,41,90,.92), rgba(5,8,20,.97)); color: #fff; font-family: 'Outfit', sans-serif; animation: ga-fade .25s ease; }
-.ga-cd-stage { text-align: center; padding: 1.5rem; }
+.ga-countdown { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; background: rgba(3, 8, 23, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; font-family: 'Outfit', sans-serif; animation: ga-fade .25s ease; }
+.ga-cd-stage { text-align: center; padding: 1.5rem; background: transparent !important; }
 .ga-cd-players { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 1rem; }
 .ga-cd-player { display: flex; flex-direction: column; align-items: center; gap: .4rem; font-weight: 800; animation: ga-slide .5s calc(var(--i) * .12s) both; }
 .ga-cd-player .ga-cd-avatar, .ga-cd-player img { width: 84px; height: 84px; object-fit: contain; border-radius: 50%; background: rgba(255,255,255,.08); padding: 6px; border: 3px solid rgba(255,255,255,.2); }
@@ -175,7 +175,7 @@
 .ga-cd-first { color: #ffcb05; font-size: 1.4rem; font-weight: 900; margin: .5rem 0 1rem; }
 .ga-cd-num { font-size: clamp(5rem, 18vw, 9rem); font-weight: 900; line-height: 1; text-shadow: 0 8px 30px rgba(79,163,255,.6); animation: ga-pop .8s ease; }
 .ga-cd-num.is-go { color: #ffcb05; text-shadow: 0 8px 40px rgba(255,203,5,.8); }
-.ga-cd-skip { margin-top: 1.2rem; background: transparent; border: 1px solid rgba(255,255,255,.3); color: #fff; border-radius: 999px; padding: .35rem 1rem; font-weight: 700; }
+.ga-cd-skip { margin-top: 1.2rem; background: transparent; border: 1px solid rgba(255,255,255,.3); color: #fff; border-radius: 999px; padding: .35rem 1rem; font-weight: 700; cursor: pointer; }
 @keyframes ga-pop { 0% { transform: scale(2.2); opacity: 0; } 35% { transform: scale(.9); opacity: 1; } 100% { transform: scale(1); } }
 @keyframes ga-slide { from { transform: translateY(30px) scale(.8); opacity: 0; } }
 @keyframes ga-fade { from { opacity: 0; } }
