@@ -79,3 +79,62 @@ html body #app-screen#app-screen#app-screen #view-student-profile .cp-overview >
 }
 @keyframes cp-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { html body #app-screen #view-student-profile .cp-overview { animation: none; } }
+
+/* Navigation back buttons */
+html body #app-screen #view-student-profile .profile-header-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0;
+  width: 100%;
+}
+
+html body #app-screen #view-student-profile .profile-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 18px;
+  font: 700 14px Outfit, sans-serif;
+  border-radius: 9999px;
+  background: var(--profile-surface) !important;
+  color: var(--profile-ink) !important;
+  border: 1px solid var(--profile-border) !important;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  box-shadow: none !important;
+  width: fit-content;
+  user-select: none;
+}
+
+html body #app-screen #view-student-profile .profile-back-btn:hover {
+  border-color: var(--ts-yellow) !important;
+  color: var(--ts-yellow) !important;
+  background: color-mix(in srgb, var(--ts-yellow) 8%, var(--profile-surface)) !important;
+  transform: translateX(-3px);
+}
+
+html body #app-screen #view-student-profile .profile-back-btn:active {
+  transform: translateX(-1px) scale(0.98);
+}
+
+html body #app-screen #view-student-profile .profile-back-btn:focus-visible {
+  outline: 2px solid var(--ts-yellow);
+  outline-offset: 3px;
+}
+
+html body #app-screen #view-student-profile .profile-back-btn svg {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+html body #app-screen #view-student-profile .profile-back-btn:hover svg {
+  transform: translateX(-3px);
+}
+
+html body #app-screen #view-student-profile .cp-tabs .profile-tab-back-btn {
+  margin-left: auto;
+  border-radius: 6px;
+  min-height: 44px;
+}
