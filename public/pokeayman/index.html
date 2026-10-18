@@ -11745,23 +11745,7 @@ function renderQuizzes() {
       const quiz = allData.find(r => r.__backendId === form.dataset.id);
       if (!quiz) return;
       if (answer.toLowerCase() === (quiz.quiz_answer || '').toLowerCase()) {
-        // Guard: prevent duplicate coin claim
-        if (isQuizSolvedByStudent(quiz, currentStudent)) { toast('You already solved this quiz!'); renderQuizzes(); return; }
-        const prevSolved = String(quiz.quiz_solved_by || '').trim();
-        const newSolvedBy = prevSolved ? prevSolved + ',' + currentStudent : currentStudent;
-        const updatedQuiz = { ...quiz, quiz_solved_by: newSolvedBy };
-        const student = getAllStudents().find(s => s.student_name === currentStudent);
-        const updatedStudent = student ? { ...student, coins: (student.coins || 0) + (quiz.quiz_reward || 0) } : null;
-        allData = allData.map(r => {
-          if (r.__backendId === updatedQuiz.__backendId) return updatedQuiz;
-          if (updatedStudent && r.__backendId === updatedStudent.__backendId) return updatedStudent;
-          return r;
-        });
-        renderQuizzes();
-        toast('Correct! +' + quiz.quiz_reward + ' coins!');
-        window.dataSdk.update(updatedQuiz).catch(() => {});
-        if (updatedStudent) window.dataSdk.update(updatedStudent).catch(() => {});
-        Promise.resolve(window.notifyQuizAnswered?.(quiz, currentStudent)).catch(() => {});
+        await solveStudentQuiz(quiz, answer, form.querySelector('button[type="submit"]'));
       } else {
         let attempts = {}; let answers = {};
         try { attempts = JSON.parse(quiz.quiz_attempts || '{}'); } catch(e) {}
@@ -11781,23 +11765,7 @@ function renderQuizzes() {
       const quiz = allData.find(r => r.__backendId === btn.dataset.id);
       if (!quiz) return;
       if (btn.dataset.answer.trim().toLowerCase() === (quiz.quiz_answer || '').toLowerCase()) {
-        // Guard: prevent duplicate coin claim
-        if (isQuizSolvedByStudent(quiz, currentStudent)) { toast('You already solved this quiz!'); renderQuizzes(); return; }
-        const prevSolved2 = String(quiz.quiz_solved_by || '').trim();
-        const newSolvedBy2 = prevSolved2 ? prevSolved2 + ',' + currentStudent : currentStudent;
-        const updatedQuiz2 = { ...quiz, quiz_solved_by: newSolvedBy2 };
-        const student2 = getAllStudents().find(s => s.student_name === currentStudent);
-        const updatedStudent2 = student2 ? { ...student2, coins: (student2.coins || 0) + (quiz.quiz_reward || 0) } : null;
-        allData = allData.map(r => {
-          if (r.__backendId === updatedQuiz2.__backendId) return updatedQuiz2;
-          if (updatedStudent2 && r.__backendId === updatedStudent2.__backendId) return updatedStudent2;
-          return r;
-        });
-        renderQuizzes();
-        toast('Correct! +' + quiz.quiz_reward + ' coins!');
-        window.dataSdk.update(updatedQuiz2).catch(() => {});
-        if (updatedStudent2) window.dataSdk.update(updatedStudent2).catch(() => {});
-        Promise.resolve(window.notifyQuizAnswered?.(quiz, currentStudent)).catch(() => {});
+        await solveStudentQuiz(quiz, btn.dataset.answer.trim(), btn);
       } else {
         let attempts = {}; let answers = {};
         try { attempts = JSON.parse(quiz.quiz_attempts || '{}'); } catch(e) {}
