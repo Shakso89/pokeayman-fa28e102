@@ -170,3 +170,17 @@ html body #app-screen #view-student-profile .cp-tabs .profile-tab-back-btn {
   border-radius: 6px;
   min-height: 44px;
 }
+/* Classmate profile popup: themed surfaces in both modes; rank-card headers keep their medal styling. */
+html body #classmate-profile-modal#classmate-profile-modal { background: color-mix(in srgb, var(--color-bg) 72%, transparent) !important; backdrop-filter: blur(6px); }
+html body #classmate-profile-modal#classmate-profile-modal > div { background: var(--color-surface) !important; color: var(--color-text-primary) !important; border: 1px solid var(--color-border) !important; border-radius: 16px !important; box-shadow: 0 24px 60px color-mix(in srgb, var(--color-bg) 45%, transparent) !important; }
+html body #classmate-profile-modal#classmate-profile-modal .global-profile-card:not(.global-rank-card) { background: var(--color-surface-raised) !important; border-bottom: 3px solid var(--color-brand) !important; border-radius: 16px 16px 0 0 !important; }
+html body #classmate-profile-modal#classmate-profile-modal .global-profile-card:not(.global-rank-card) h2 { color: var(--color-text-primary) !important; }
+html body #classmate-profile-modal#classmate-profile-modal .global-profile-card:not(.global-rank-card) h2 + p { color: var(--color-brand) !important; font-weight: 700; }
+html body #classmate-profile-modal#classmate-profile-modal #profile-close { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 999px; font-size: 24px !important; line-height: 1; color: var(--color-text-primary) !important; background: var(--color-surface) !important; border: 1px solid var(--color-border) !important; }
+html body #classmate-profile-modal#classmate-profile-modal #profile-close:hover { border-color: var(--color-brand) !important; color: var(--color-brand) !important; }
+html body #classmate-profile-modal#classmate-profile-modal .p-6 > .grid > div { background: var(--color-surface-raised) !important; border: 1px solid var(--color-border) !important; border-radius: 12px !important; box-shadow: none !important; }
+html body #classmate-profile-modal#classmate-profile-modal .p-6 > .grid > div:first-child > p:first-child { color: var(--color-brand) !important; }
+html body #classmate-profile-modal#classmate-profile-modal .p-6 > .grid > div:last-child > p:first-child { color: var(--color-success) !important; }
+html body #classmate-profile-modal#classmate-profile-modal .p-6 > .grid > div > p:last-child { color: var(--color-text-secondary) !important; }
+html body #classmate-profile-modal#classmate-profile-modal .p-6 > h3 { color: var(--color-text-primary) !important; font-family: Outfit, sans-serif; }
+html body #classmate-profile-modal#classmate-profile-modal #classmate-pokemon-empty { color: var(--color-text-secondary) !important; }
