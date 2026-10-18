@@ -32,13 +32,78 @@
 .ga-cart-tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .2rem; }
 .ga-cart-tags span { font-size: .68rem; font-weight: 800; padding: .15rem .5rem; border-radius: 999px; background: color-mix(in srgb, var(--a) 20%, transparent); color: var(--ga-ink); }
 .ga-cart-play { margin: .55rem .9rem .9rem; align-self: flex-start; font-weight: 900; font-size: .8rem; padding: .35rem .85rem; border-radius: 999px; background: var(--a); color: #111827; }
-.ga-pro-badge { display: inline-flex; vertical-align: middle; margin-left: .45rem; padding: .12rem .42rem; border: 1px solid rgba(255,221,90,.55); border-radius: 999px; background: rgba(255,203,5,.16); color: #ffe58a; font: 900 .58rem/1.2 'Figtree',sans-serif; letter-spacing: .1em; }
-.ga-cart.ga-pro-locked { background: color-mix(in srgb, var(--ga-surface) 94%, #080d18); border-color: color-mix(in srgb, var(--ga-border) 72%, #64748b); }
-.ga-cart.ga-pro-locked .ga-cart-art { filter: grayscale(.82) brightness(.62); }
-.ga-cart.ga-pro-locked .ga-cart-name, .ga-cart.ga-pro-locked .ga-cart-desc, .ga-cart.ga-pro-locked .ga-cart-tags { opacity: .58; }
-.ga-cart.ga-pro-locked .ga-pro-badge { opacity: .78; }
-.ga-cart.ga-pro-locked .ga-cart-play { background: color-mix(in srgb, var(--ga-yellow) 82%, #9ca3af); color: #252016; }
-.ga-cart.ga-pro-locked:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--ga-border) 50%, #ffcb05); }
+.ga-pro-badge { display: inline-flex; vertical-align: middle; margin-left: .45rem; padding: .12rem .46rem; border: 1px solid rgba(255,203,5,.65); border-radius: 999px; background: linear-gradient(135deg, rgba(255,203,5,.25), rgba(245,158,11,.15)); color: #fde047; font: 900 .58rem/1.2 'Figtree',sans-serif; letter-spacing: .08em; text-shadow: 0 0 8px rgba(253,224,71,.4); }
+.ga-pro-ribbon { position: absolute; top: 10px; right: 10px; z-index: 4; display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; background: linear-gradient(135deg, #ffd700, #ffaa00); color: #1a1200; font: 900 0.65rem/1 'Outfit', sans-serif; letter-spacing: 0.08em; box-shadow: 0 2px 10px rgba(255, 203, 5, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.6); pointer-events: none; }
+.ga-cart.ga-pro { position: relative; border-width: 2px; }
+
+/* Listen and Catch: Cosmic Electric Aura */
+.ga-cart.ga-pro-listen {
+  --a: #8b5cf6;
+  border-color: rgba(167, 139, 250, 0.55);
+  background: linear-gradient(165deg, rgba(46, 30, 95, 0.45) 0%, rgba(19, 28, 46, 0.98) 100%);
+  box-shadow: 0 6px 24px -6px rgba(139, 92, 246, 0.35);
+}
+.ga-cart.ga-pro-listen .ga-cart-art {
+  background: radial-gradient(circle at 40% 30%, #a78bfa 0%, #6366f1 45%, #1e1b4b 100%);
+}
+.ga-cart.ga-pro-listen .ga-cart-art span {
+  filter: drop-shadow(0 0 16px rgba(167, 139, 250, 0.8)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.4));
+}
+.ga-cart.ga-pro-listen:hover {
+  border-color: #c084fc;
+  box-shadow: 0 16px 36px -8px rgba(168, 85, 247, 0.6), 0 0 20px rgba(139, 92, 246, 0.35);
+}
+.ga-cart.ga-pro-listen .ga-cart-play {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(147, 51, 234, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.02em;
+}
+.ga-cart.ga-pro-listen .ga-cart-tags span {
+  background: rgba(167, 139, 250, 0.2);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  color: #e9d5ff;
+}
+
+/* Poké Battle: Fiery Crimson Arena */
+.ga-cart.ga-pro-battle {
+  --a: #ef4444;
+  border-color: rgba(248, 113, 113, 0.55);
+  background: linear-gradient(165deg, rgba(80, 20, 25, 0.45) 0%, rgba(19, 28, 46, 0.98) 100%);
+  box-shadow: 0 6px 24px -6px rgba(239, 68, 68, 0.35);
+}
+.ga-cart.ga-pro-battle .ga-cart-art {
+  background: radial-gradient(circle at 40% 30%, #f87171 0%, #dc2626 45%, #450a0a 100%);
+}
+.ga-cart.ga-pro-battle .ga-cart-art span {
+  filter: drop-shadow(0 0 16px rgba(248, 113, 113, 0.8)) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.4));
+}
+.ga-cart.ga-pro-battle:hover {
+  border-color: #f87171;
+  box-shadow: 0 16px 36px -8px rgba(239, 68, 68, 0.6), 0 0 20px rgba(245, 158, 11, 0.35);
+}
+.ga-cart.ga-pro-battle .ga-cart-play {
+  background: linear-gradient(135deg, #ef4444, #f59e0b);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.02em;
+}
+.ga-cart.ga-pro-battle .ga-cart-tags span {
+  background: rgba(248, 113, 113, 0.2);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: #fecaca;
+}
+
+.ga-cart.ga-pro-locked { background: color-mix(in srgb, var(--ga-surface) 94%, #080d18) !important; border-color: color-mix(in srgb, var(--ga-border) 72%, #64748b) !important; box-shadow: none !important; }
+.ga-cart.ga-pro-locked .ga-cart-art { filter: grayscale(.82) brightness(.62) !important; }
+.ga-cart.ga-pro-locked .ga-cart-name, .ga-cart.ga-pro-locked .ga-cart-desc, .ga-cart.ga-pro-locked .ga-cart-tags { opacity: .58 !important; }
+.ga-cart.ga-pro-locked .ga-pro-badge { opacity: .78 !important; }
+.ga-cart.ga-pro-locked .ga-pro-ribbon { filter: grayscale(.8) opacity(.6); }
+.ga-cart.ga-pro-locked .ga-cart-play { background: color-mix(in srgb, var(--ga-yellow) 82%, #9ca3af) !important; color: #252016 !important; box-shadow: none !important; }
+.ga-cart.ga-pro-locked:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--ga-border) 50%, #ffcb05) !important; }
+
 
 /* Lobby */
 .ga-student-setup { max-width: 620px; margin: 1rem auto; }

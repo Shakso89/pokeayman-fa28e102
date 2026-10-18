@@ -1,13 +1,26 @@
 /* Poké Battle: fullscreen vocabulary battle stage. Scoped to .vb-stage and .vb-claims. */
 .vb-stage {
   position: fixed; inset: 0; z-index: 40000; display: flex; flex-direction: column;
-  background: radial-gradient(120% 90% at 50% 0%, #1e2a6e 0%, #0f173a 55%, #0a1028 100%);
+  background: radial-gradient(ellipse at 50% 12%, rgba(220, 38, 38, 0.28) 0%, transparent 55%),
+              radial-gradient(120% 90% at 50% 0%, #1e2a6e 0%, #0f173a 55%, #0a1028 100%);
   color: #f8fafc; overflow-y: auto; -webkit-overflow-scrolling: touch;
   font-family: inherit; touch-action: manipulation;
 }
 body.ts-bright .vb-stage { background: radial-gradient(120% 90% at 50% 0%, #dbe7ff 0%, #f4f7ff 55%, #e8eeff 100%); color: #0f173a; }
 .vb-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .8rem 1rem; position: sticky; top: 0; z-index: 2; background: rgba(10, 16, 40, .55); backdrop-filter: blur(8px); }
 body.ts-bright .vb-head { background: rgba(255, 255, 255, .6); }
+.vb-title-wrap { display: flex; align-items: center; gap: .6rem; }
+.vb-pro-pill {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 203, 5, 0.25), rgba(239, 68, 68, 0.25));
+  border: 1px solid rgba(255, 203, 5, 0.65); color: #fde047;
+  font: 900 0.68rem/1.2 'Outfit', sans-serif; letter-spacing: 0.1em;
+  text-shadow: 0 0 10px rgba(253, 224, 71, 0.5);
+}
+body.ts-bright .vb-pro-pill {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(220, 38, 38, 0.15));
+  border-color: rgba(180, 83, 9, 0.6); color: #b45309; text-shadow: none;
+}
 .vb-title { font-weight: 900; letter-spacing: .12em; text-transform: uppercase; font-size: .85rem; color: #fde047; }
 body.ts-bright .vb-title { color: #b45309; }
 .vb-close { border: 2px solid rgba(248, 250, 252, .35); background: transparent; color: inherit; border-radius: 999px; padding: .35rem .9rem; font-weight: 800; cursor: pointer; }
@@ -56,9 +69,22 @@ body.ts-bright .vb-slot.is-filled { border-color: #b45309; color: #b45309; }
 .vb-slot.vb-wrong { border-color: #f87171; color: #f87171; animation: vb-shake .4s ease; }
 @keyframes vb-pop { from { transform: scale(.6); } to { transform: scale(1); } }
 .vb-tiles { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; }
-.vb-tile { width: 2.9rem; height: 2.9rem; border-radius: .7rem; border: none; font-size: 1.35rem; font-weight: 900; text-transform: uppercase; cursor: pointer; color: #0f173a; background: linear-gradient(160deg, #fde047, #f59e0b); box-shadow: 0 4px 0 #b45309, 0 8px 16px rgba(0, 0, 0, .35); transition: transform .12s ease, opacity .12s ease; }
-.vb-tile:hover:not(:disabled) { transform: translateY(-3px); }
-.vb-tile:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 2px 0 #b45309; }
+.vb-tile {
+  width: 2.9rem; height: 2.9rem; border-radius: .7rem; border: 1px solid rgba(255, 245, 150, 0.6);
+  font-size: 1.35rem; font-weight: 900; text-transform: uppercase; cursor: pointer; color: #0f173a;
+  background: linear-gradient(160deg, #fff275 0%, #fde047 30%, #f59e0b 80%, #d97706 100%);
+  box-shadow: 0 5px 0 #92400e, 0 10px 20px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4); letter-spacing: 0.04em;
+  transition: transform .12s ease, opacity .12s ease, box-shadow .12s ease;
+}
+.vb-tile:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 7px 0 #92400e, 0 14px 24px rgba(245, 158, 11, 0.45);
+}
+.vb-tile:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #92400e, 0 4px 8px rgba(0, 0, 0, 0.3);
+}
 .vb-tile:disabled { opacity: .25; cursor: default; box-shadow: none; }
 
 .vb-me { display: flex; flex-direction: column; align-items: center; gap: .3rem; padding-bottom: 1.2rem; }
@@ -67,7 +93,13 @@ body.ts-bright .vb-slot.is-filled { border-color: #b45309; color: #b45309; }
 
 /* Owned partner and wild opponent share an unframed, stable battlefield. */
 .vb-stage .vb-matchup { display: grid; grid-template-columns: minmax(0,1fr) 38px minmax(0,1fr); align-items: start; gap: 12px; width: 100%; }
-.vb-stage .vb-matchup :is(.vb-me,.vb-foe) { min-width: 0; width: 100%; padding-bottom: 0; gap: 6px; text-align: center; }
+.vb-stage .vb-matchup :is(.vb-me,.vb-foe) { min-width: 0; width: 100%; padding-bottom: 0; gap: 6px; text-align: center; position: relative; }
+.vb-stage .vb-matchup :is(.vb-me,.vb-foe)::after {
+  content: ''; display: block; width: min(150px, 75%); height: 16px; margin: -10px auto 4px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(255, 203, 5, 0.4) 0%, rgba(239, 68, 68, 0.2) 50%, transparent 80%);
+  box-shadow: 0 0 18px rgba(255, 203, 5, 0.35); filter: blur(1px); pointer-events: none;
+}
 .vb-stage .vb-matchup :is(.vb-me-art,.vb-foe-art) { display: block; width: min(100%,190px); height: 190px; object-fit: contain; flex: none; filter: var(--detail-art-shadow); }
 .vb-stage .vb-matchup :is(.vb-partner-name,.vb-foe-name) { font-weight: 900; font-size: 1.05rem; overflow-wrap: anywhere; margin: 0; }
 .vb-stage .vb-matchup :is(.vb-me-name,.vb-foe-rarity) { min-height: 32px; display: grid; align-items: center; margin: 0; overflow-wrap: anywhere; font-size: .75rem; color: var(--color-text-secondary); letter-spacing: 0; }

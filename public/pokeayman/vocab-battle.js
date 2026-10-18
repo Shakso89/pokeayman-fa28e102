@@ -490,7 +490,7 @@
     const foeMaxHp = Number(foe.shop_pokemon_hp) || (Number(foe.shop_pokemon_power) || 20) + 30;
     const partner = battlePartner(student);
     root.innerHTML = `
-      <header class="vb-head"><span class="vb-title">⚔️ Poké Battle</span><button type="button" class="vb-close" data-vb="close">✕ Leave battle</button></header>
+      <header class="vb-head"><div class="vb-title-wrap"><span class="vb-pro-pill">👑 PRO ARENA</span><span class="vb-title">⚔️ Poké Battle</span></div><button type="button" class="vb-close" data-vb="close">✕ Leave battle</button></header>
       <div class="vb-arena">
         <div class="vb-hud">
           <div class="vb-hud-side vb-hud-me"><p class="vb-hud-name">${esc(student.student_name)}</p><div class="vb-hp vb-me-hp"><div class="vb-hp-label"><span>HP</span><span class="vb-hp-num"></span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div></div>
