@@ -5579,7 +5579,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </div>
           <div class="cp-name">
            <h2 id="profile-student-name"></h2>
-           <p class="cp-label" id="profile-student-classes">Pokémon Trainer</p>
+           <p class="cp-label" id="profile-student-classes" style="white-space: normal; overflow-wrap: anywhere;"></p>
+           <p class="cp-label" id="profile-student-school" style="white-space: normal; overflow-wrap: anywhere;"></p>
            <div id="profile-top3-badge" class="hidden flex flex-wrap items-center gap-1">
             <div id="profile-rank-badge"><span id="profile-medal-emoji"></span> <span id="profile-rank-text"></span></div>
             <span id="profile-quiz-solver-badge" class="hidden">🏆 Good Job</span>
@@ -14124,13 +14125,21 @@ function handleProfileBackToClass() {
     navigateTo('schools');
   }
 }
-window.handleProfileBackToClass = handleProfileBackToClass;
-
-function renderStudentProfile(isViewOnly = false) {
+window.handleProfileBackToClass = handleProfileBackToClass;function renderStudentProfile(isViewOnly = false) {
   if (!profileStudent) return;
   const targetClassName = navClass || profileStudent?.class_name || '';
   const backLabelText = targetClassName ? 'Back to ' + targetClassName : 'Back to Class';
   document.querySelectorAll('.profile-back-to-class-label').forEach(el => { el.textContent = backLabelText; });
+  
+  // Populate class and school info in the profile header
+  const profileStudentClass = document.getElementById('profile-student-classes');
+  const profileStudentSchool = document.getElementById('profile-student-school');
+  if (profileStudentClass) {
+    profileStudentClass.textContent = targetClassName || 'Pokémon Trainer';
+  }
+  if (profileStudentSchool && profileStudentSchool.style) {
+    profileStudentSchool.textContent = profileStudent?.school_name || '';
+  }
   
   // Show tabs and controls for authorized teachers; hide only for completely unassigned teachers
   if (isViewOnly) {
@@ -14138,10 +14147,11 @@ function renderStudentProfile(isViewOnly = false) {
     profileTabs.forEach(tab => tab.style.display = 'none');
     const adjustmentForm = document.getElementById('profile-adjust-form');
     if (adjustmentForm) adjustmentForm.style.display = 'none';
-    
+
     // Show only collection tab content
     const collectionTab = document.getElementById('profile-tab-collection');
     if (collectionTab) collectionTab.classList.remove('hidden');
+
     const shopTab = document.getElementById('profile-tab-shop');
     if (shopTab) shopTab.classList.add('hidden');
     const quizTab = document.getElementById('profile-tab-quiz');
