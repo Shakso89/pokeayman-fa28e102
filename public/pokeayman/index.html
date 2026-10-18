@@ -10490,7 +10490,14 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
     const level = /^P[4-6]$/.test(options?.level || '') ? options.level : (window.getClassReadingLevel?.(currentRole === 'student' ? currentStudentSchool : navSchool, currentRole === 'student' ? currentStudentClass : navClass) || 'P4');
     await window.parent.pokeaymanSpeak(String(text).trim(), level);
   } catch (error) {
-    toast(error?.message || 'The reading voice is unavailable right now.');
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(String(text).trim());
+      utterance.rate = 0.95;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      toast(error?.message || 'The reading voice is unavailable right now.');
+    }
   } finally {
     window._vocabularyReading = false;
     if (button) { button.textContent = original; button.disabled = false; button.setAttribute('aria-busy', 'false'); }

@@ -2,6 +2,28 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const requests = new Map<string, { count: number; reset: number }>();
 
+function extractPCMFromWav(wavBytes: Uint8Array): Uint8Array {
+  if (
+    wavBytes.length > 44 &&
+    wavBytes[0] === 0x52 && // R
+    wavBytes[1] === 0x49 && // I
+    wavBytes[2] === 0x46 && // F
+    wavBytes[3] === 0x46    // F
+  ) {
+    for (let i = 12; i < Math.min(wavBytes.length - 8, 200); i++) {
+      if (
+        wavBytes[i] === 0x64 &&     // d
+        wavBytes[i + 1] === 0x61 && // a
+        wavBytes[i + 2] === 0x74 && // t
+        wavBytes[i + 3] === 0x61    // a
+      ) {
+        return wavBytes.slice(i + 8);
+      }
+    }
+  }
+  return wavBytes;
+}
+
 export const Route = createFileRoute("/api/vocabulary-speech")({
   server: {
     handlers: {
@@ -24,8 +46,9 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
         } catch {
           return Response.json({ message: "Choose a saved vocabulary word or sentence to read." }, { status: 400 });
         }
-        const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey) return Response.json({ message: "The natural voice service is not configured yet." }, { status: 401 });
+        const geminiApiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || process.env["VITE_GEMINI_API_KEY"];
+        const lovableApiKey = process.env["LOVABLE_API_KEY"];
+        if (!geminiApiKey && !lovableApiKey) return Response.json({ message: "The natural voice service is not configured yet." }, { status: 401 });
         // Students use the existing public classroom access; never allow arbitrary paid synthesis.
         const { createClient } = await import("@supabase/supabase-js");
         const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
@@ -45,13 +68,72 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
         ]);
         if (word.error || sentence.error) return Response.json({ message: "Could not load this vocabulary. Please try again later." }, { status: 503 });
         if (!word.data?.length && !sentence.data?.length) return Response.json({ message: "This word or sentence must be saved in a vocabulary list first." }, { status: 400 });
-        const { requestSpeech } = await import("@/lib/speech-request.server");
+
         const pacing: Record<string, string> = { P1: "Speak slowly and clearly, with a little space between words.", P2: "Speak slowly and clearly, with a little space between words.", P3: "Speak at a gentle, clear classroom pace.", P4: "Speak at a steady, natural classroom pace.", P5: "Speak at a confident, natural pace.", P6: "Speak at a fluent, natural pace." };
-        const upstream = await requestSpeech({ baseURL: "https://ai.gateway.lovable.dev", apiKey, model: "google/gemini-3.1-flash-tts-preview", format: "gemini", voice: "Kore" }, `Read only the text below in warm, natural, clear English for a child learning vocabulary. ${pacing[level]} Use accurate pronunciation and no introduction or extra words.\n\n${text}`);
-        return new Response(upstream.body, {
-          status: upstream.status,
-          headers: { "Content-Type": upstream.headers.get("Content-Type") || "text/event-stream", "Cache-Control": "no-cache", ...(upstream.headers.has("Retry-After") ? { "Retry-After": upstream.headers.get("Retry-After") || "60" } : {}) },
-        });
+        const prompt = `Read only the text below in warm, natural, clear English for a child learning vocabulary. ${pacing[level]} Use accurate pronunciation and no introduction or extra words.\n\n${text}`;
+
+        // 1. Direct Google Gemini API (zero Lovable credits)
+        if (geminiApiKey) {
+          try {
+            const googleRes = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${geminiApiKey}`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  contents: [{ parts: [{ text: prompt }] }],
+                  generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                      voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName: "Kore" }
+                      }
+                    }
+                  }
+                })
+              }
+            );
+
+            if (googleRes.ok) {
+              const data = await googleRes.json();
+              const b64Audio = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+              if (b64Audio) {
+                const wavBytes = Uint8Array.from(atob(b64Audio), c => c.charCodeAt(0));
+                const pcmBytes = extractPCMFromWav(wavBytes);
+                let binary = "";
+                for (let i = 0; i < pcmBytes.byteLength; i++) {
+                  binary += String.fromCharCode(pcmBytes[i]);
+                }
+                const pcmBase64 = btoa(binary);
+                const ssePayload = `data: ${JSON.stringify({ type: "speech.audio.delta", audio: pcmBase64 })}\n\ndata: ${JSON.stringify({ type: "speech.audio.done" })}\n\n`;
+
+                return new Response(ssePayload, {
+                  status: 200,
+                  headers: {
+                    "Content-Type": "text/event-stream",
+                    "Cache-Control": "no-cache",
+                  },
+                });
+              }
+            } else {
+              console.warn("Direct Gemini TTS returned error status:", googleRes.status);
+            }
+          } catch (geminiErr) {
+            console.error("Direct Gemini TTS error:", geminiErr);
+          }
+        }
+
+        // 2. Fallback to Lovable Gateway if configured
+        if (lovableApiKey) {
+          const { requestSpeech } = await import("@/lib/speech-request.server");
+          const upstream = await requestSpeech({ baseURL: "https://ai.gateway.lovable.dev", apiKey: lovableApiKey, model: "google/gemini-3.1-flash-tts-preview", format: "gemini", voice: "Kore" }, prompt);
+          return new Response(upstream.body, {
+            status: upstream.status,
+            headers: { "Content-Type": upstream.headers.get("Content-Type") || "text/event-stream", "Cache-Control": "no-cache", ...(upstream.headers.has("Retry-After") ? { "Retry-After": upstream.headers.get("Retry-After") || "60" } : {}) },
+          });
+        }
+
+        return Response.json({ message: "Speech synthesis temporarily unavailable." }, { status: 503 });
       },
     },
   },
