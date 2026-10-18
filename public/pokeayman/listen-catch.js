@@ -406,7 +406,7 @@
     if (caught && (typeof currentRole === 'undefined' || currentRole === 'student')) {
       try {
         const challengeLabel = goal && goal.title ? goal.title : 'a Catchdex challenge';
-        Promise.resolve(window.notifyClassManagers?.(record.school_name, record.class_name, 'Challenge completed', `${record.student_name || 'A student'} completed ${challengeLabel} and caught ${candidate.name}.`, 'challenge')).catch(() => {});
+        Promise.resolve(window.notifyClassManagers?.(record.school_name, record.class_name, 'Challenge completed', `${record.student_name || 'A student'} completed ${challengeLabel} and caught ${candidate.name}.`, 'challenge', { target: 'catchdex', studentId: String(record.__backendId || ''), studentName: String(record.student_name || '') })).catch(() => {});
       } catch (_) {}
     }
     if (currentRole === 'student') renderCatchdexTab(); else refreshViewer(record);
@@ -507,7 +507,7 @@
     if (existing) Object.assign(existing, payload); else allData.push({ ...payload, __backendId: (result.data || result).__backendId || (result.data || result).id || '' });
     if (challengeIsNew) {
       const challengeRecipients = (typeof getTeachers === 'function' ? getTeachers() : []).filter(teacher => teacher.teacher_pro === true && String(teacher.teacher_role || '') !== 'admin');
-      Promise.resolve(window.sendTeacherNotifications?.(challengeRecipients, 'New Catchdex challenge', `${payload.challenge_title} is live from ${payload.challenge_start}. Catch ${payload.challenge_pokemon_name} with ${rarityLabel(payload.challenge_tier)} Poké Balls — the catch is guaranteed by throw ${payload.challenge_max_throws}.`, 'challenge')).catch(() => {});
+      Promise.resolve(window.sendTeacherNotifications?.(challengeRecipients, 'New Catchdex challenge', `${payload.challenge_title} is live from ${payload.challenge_start}. Catch ${payload.challenge_pokemon_name} with ${rarityLabel(payload.challenge_tier)} Poké Balls — the catch is guaranteed by throw ${payload.challenge_max_throws}.`, 'challenge', { target: 'catchdex' })).catch(() => {});
     }
     toast('Weekly Catchdex challenge saved.'); renderAdminChallenge(); mountCards();
     const modal = document.getElementById('catchdex-modal'); if (modal && !modal.classList.contains('hidden')) renderCatchdexModal();

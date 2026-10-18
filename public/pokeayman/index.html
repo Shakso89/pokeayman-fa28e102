@@ -7654,10 +7654,23 @@ function teacherStreakState() {
   return { count: Number(rec.streak_count || 0), boxes: Number(rec.surprise_boxes || 0), last: rec.streak_last_day || '' };
 }
 function teacherNotificationEscape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character])); }
+// Read state also lives on this device: the shared key may only insert and select,
+// so a server-side "mark read" can answer OK while changing no rows. Keeping a
+// local set means the inbox always reflects what the teacher has already opened.
+function teacherReadStorageKey() { return `pokeayman-read-notifications:${String(currentTeacherRecordId || currentTeacher || 'anonymous')}`; }
+function teacherLocalReadIds() {
+  try { const list = JSON.parse(localStorage.getItem(teacherReadStorageKey()) || '[]'); return new Set(Array.isArray(list) ? list.map(String) : []); } catch (_) { return new Set(); }
+}
+function rememberTeacherLocalRead(id) {
+  if (!id) return;
+  try { const ids = teacherLocalReadIds(); ids.add(String(id)); localStorage.setItem(teacherReadStorageKey(), JSON.stringify([...ids].slice(-300))); } catch (_) {}
+}
 function teacherNotificationsFor(record = currentTeacherRec()) {
   if (!record) return [];
   const id = String(record.__backendId || currentTeacherRecordId || '');
+  const localRead = teacherLocalReadIds();
   return (allData || []).filter(item => item.type === 'teacher_notification' && String(item.notification_recipient_id || '') === id)
+    .map(item => (item.notification_read || localRead.has(String(item.__backendId || ''))) ? { ...item, notification_read: true } : item)
     .sort((a,b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
 }
 window.teacherUnreadNotificationCount = () => teacherNotificationsFor().filter(item => !item.notification_read).length;
@@ -7668,12 +7681,15 @@ function refreshTeacherNotificationCount() {
   document.querySelector('[data-ts="notifications"]')?.setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
 }
 async function markTeacherNotificationRead(item) {
-  if (!item || item.notification_read) return Boolean(item);
-  const updated = { ...item, notification_read: true, notification_read_at: new Date().toISOString() };
-  const result = await window.dataSdk.update(updated);
-  if (!result?.isOk) return false;
-  const saved = { ...updated, ...(result.data || {}), notification_read: true, notification_read_at: updated.notification_read_at };
-  allData = (allData || []).map(row => row.__backendId === item.__backendId ? saved : row);
+  if (!item) return false;
+  if (item.notification_read) return true;
+  const id = String(item.__backendId || '');
+  if (!id) return false;
+  const readAt = new Date().toISOString();
+  // Apply it locally first so the click always lands, then try to persist it.
+  allData = (allData || []).map(row => row.__backendId === id ? { ...row, notification_read: true, notification_read_at: readAt } : row);
+  rememberTeacherLocalRead(id);
+  try { await window.dataSdk.update({ ...item, notification_read: true, notification_read_at: readAt }); } catch (_) {}
   return true;
 }
 async function pruneTeacherReadNotifications() {
@@ -7683,7 +7699,7 @@ async function pruneTeacherReadNotifications() {
     if (result?.isOk) allData = (allData || []).filter(row => row.__backendId !== item.__backendId);
   }
 }
-window.sendTeacherNotifications = async function (recipients, title, message, category = 'announcement') {
+window.sendTeacherNotifications = async function (recipients, title, message, category = 'announcement', options = {}) {
   const unique = [...new Map((recipients || []).filter(Boolean).map(record => [String(record.__backendId || ''), record])).values()];
   let sent = 0;
   for (const recipient of unique) {
@@ -7693,7 +7709,10 @@ window.sendTeacherNotifications = async function (recipients, title, message, ca
       notification_recipient_id: String(recipient.__backendId), notification_recipient_name: recipient.teacher_name || '',
       notification_title: String(title || '').trim(), notification_message: String(message || '').trim(),
       notification_category: category, notification_read: false, notification_read_at: '',
-      notification_sender: currentTeacher || 'PokéAyman Admin', created_at: new Date().toISOString()
+      notification_sender: currentTeacher || 'PokéAyman Admin',
+      notification_target: String(options.target || ''), notification_school: String(options.school || ''),
+      notification_class: String(options.className || options.class || ''), notification_student_id: String(options.studentId || ''),
+      notification_student_name: String(options.studentName || ''), created_at: new Date().toISOString()
     });
     if (result?.isOk) sent++;
   }
@@ -7729,7 +7748,7 @@ window.notifyClassManagers = async function (school, className, title, message, 
   const skipId = String(options.skipId || '');
   const recipients = teacherManagersForClass(school, className).filter(teacher => String(teacher.__backendId || '') && String(teacher.__backendId) !== skipId);
   if (!recipients.length) return 0;
-  return window.sendTeacherNotifications(recipients, title, message, category);
+  return window.sendTeacherNotifications(recipients, title, message, category, { school, className, ...options });
 };
 function quizQuestionSnippet(text) {
   const clean = String(text || '').replace(/\s+/g, ' ').trim();
@@ -7746,7 +7765,65 @@ window.notifyQuizAnswered = function (quiz, studentName) {
   const quizKey = `${quiz.__backendId || quiz.quiz_question || ''}|${String(studentName || '')}`;
   if (quizNotificationKeys.has(quizKey)) return Promise.resolve(0);
   quizNotificationKeys.add(quizKey);
-  return window.notifyClassManagers(quiz.school_name, quiz.class_name || quiz.quiz_class, 'Quiz answered', `${studentName || 'A student'} answered "${quizQuestionSnippet(quiz.quiz_question)}" correctly and earned ${Number(quiz.quiz_reward || 0)} coins.`, 'quiz');
+  return window.notifyClassManagers(quiz.school_name, quiz.class_name || quiz.quiz_class, 'Quiz answered', `${studentName || 'A student'} answered "${quizQuestionSnippet(quiz.quiz_question)}" correctly and earned ${Number(quiz.quiz_reward || 0)} coins.`, 'quiz', { target: 'quiz', studentName: String(studentName || '') });
+};
+// Each notification knows which screen it belongs to; older rows fall back to a
+// sensible destination for their category.
+function teacherNotificationTargetFor(item) {
+  const stored = String(item && item.notification_target || '').trim();
+  if (stored) return stored;
+  const category = String(item && item.notification_category || '').toLowerCase();
+  const title = String(item && item.notification_title || '').toLowerCase();
+  if (title.includes('streak box')) return 'streak';
+  if (title.includes('credit')) return 'profile';
+  if (category === 'reward') return 'profile';
+  if (category === 'battle') return 'battle-claims';
+  if (category === 'list') return 'vb-lists';
+  if (category === 'challenge') return 'catchdex';
+  if (category === 'quiz') return 'quiz';
+  if (category === 'class') return 'class';
+  return '';
+}
+window.teacherNotificationTargetFor = teacherNotificationTargetFor;
+function teacherNotificationStudentFor(item) {
+  const id = String(item && item.notification_student_id || '').trim();
+  const name = String(item && item.notification_student_name || '').trim();
+  const students = getAllStudents();
+  if (id) { const byId = students.find(student => String(student.__backendId || '') === id); if (byId) return byId; }
+  if (name) return students.find(student => normalizeStudentIdentity(student.student_name) === normalizeStudentIdentity(name)) || null;
+  return null;
+}
+window.followTeacherNotification = function (item) {
+  if (!item) return;
+  const target = teacherNotificationTargetFor(item);
+  if (!target) return;
+  const school = String(item.notification_school || '').trim();
+  const className = String(item.notification_class || '').trim();
+  const student = teacherNotificationStudentFor(item);
+  try {
+    if (target === 'profile' || target === 'streak') {
+      showMainTab('trainer');
+      if (target === 'streak') {
+        document.querySelector('.th-tab[data-th="profile"]')?.click();
+        const toggle = document.querySelector('[data-th-editor="teacher-streak-panel"]');
+        if (toggle && toggle.getAttribute('aria-expanded') !== 'true') toggle.click();
+        setTimeout(() => document.getElementById('teacher-streak-panel')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 150);
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
+    if (target === 'vb-lists') { showMainTab('teacher-zone'); document.getElementById('teacher-zone-vb-lists-tab')?.click(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    if (target === 'battle-claims') { showMainTab('teacher-zone'); document.getElementById('teacher-zone-battle-claims-tab')?.click(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    showMainTab('dashboard');
+    // A school name that is not on file (for example a comma-joined list) is
+    // not a destination; the dashboard is.
+    const schoolKnown = Boolean(school) && (allData || []).some(row => (row.type === 'class' || row.type === 'school') && String(row.school_name || '').trim() === school);
+    if (schoolKnown && className) navigateTo('students', school, className);
+    else if (schoolKnown) navigateTo('classes', school);
+    if (target === 'catchdex' && student) window.openCatchdexFor?.(student, true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (_) {}
 };
 window.openTeacherNotificationCenter = function () {
   const overlay = document.createElement('div'); overlay.className = 'fixed inset-0 z-[2147483000] grid place-items-center bg-black/75 p-4';
@@ -7768,12 +7845,25 @@ window.openTeacherNotificationCenter = function () {
     await pruneTeacherReadNotifications(); refreshTeacherNotificationCount(); render();
     if (failed) toast('Some notifications could not be marked as read. Please try again.');
   };
+  const openNotificationItem = id => {
+    const item = teacherNotificationsFor().find(row => String(row.__backendId) === String(id));
+    if (!item) return;
+    const pending = item.notification_read ? Promise.resolve(true) : markTeacherNotificationRead(item);
+    close();
+    window.followTeacherNotification?.(item);
+    Promise.resolve(pending).then(() => refreshTeacherNotificationCount()).catch(() => {});
+  };
   const render = () => {
     const current = teacherNotificationsFor();
-    overlay.innerHTML = `<section class="w-full max-w-xl max-h-[88vh] overflow-hidden rounded-2xl border border-amber-300/40 bg-slate-900 text-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="teacher-notifications-title"><header class="flex items-start justify-between gap-3 border-b border-white/10 p-5"><div><p class="text-xs font-black tracking-widest text-amber-300">TEACHER INBOX</p><h2 id="teacher-notifications-title" class="heading-font text-xl font-bold">Notifications</h2><p class="mt-1 text-sm text-slate-300">${current.filter(item => !item.notification_read).length} unread</p></div><div class="flex gap-2"><button type="button" data-notices-readall class="btn-outline text-xs" ${current.some(item => !item.notification_read) ? '' : 'disabled'}>Mark all read</button><button type="button" data-notices-close class="btn-outline" aria-label="Close notifications">×</button></div></header><div class="max-h-[65vh] space-y-2 overflow-y-auto p-4">${current.length ? current.map(item => `<article class="rounded-xl border ${item.notification_read ? 'border-white/10 bg-white/5' : 'border-amber-300/40 bg-amber-300/10'} p-4"><div class="flex items-start justify-between gap-3"><div><span class="text-[10px] font-black uppercase tracking-wider text-amber-300">${teacherNotificationEscape(item.notification_category || 'update')}</span><h3 class="mt-1 font-bold">${teacherNotificationEscape(item.notification_title)}</h3></div>${item.notification_read ? '<span class="text-xs text-slate-400">Read</span>' : `<button type="button" class="btn-outline shrink-0 text-xs" data-notice-read="${teacherNotificationEscape(item.__backendId)}">Mark read</button>`}</div><p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">${teacherNotificationEscape(item.notification_message)}</p><time class="mt-3 block text-xs text-slate-400">${teacherNotificationEscape(new Date(item.created_at).toLocaleString())}</time></article>`).join('') : '<p class="rounded-xl border border-dashed border-white/20 p-8 text-center text-slate-300">You’re all caught up. New class, reward, and admin updates will appear here.</p>'}</div></section>`;
+    overlay.innerHTML = `<section class="w-full max-w-xl max-h-[88vh] overflow-hidden rounded-2xl border border-amber-300/40 bg-slate-900 text-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="teacher-notifications-title"><header class="flex items-start justify-between gap-3 border-b border-white/10 p-5"><div><p class="text-xs font-black tracking-widest text-amber-300">TEACHER INBOX</p><h2 id="teacher-notifications-title" class="heading-font text-xl font-bold">Notifications</h2><p class="mt-1 text-sm text-slate-300">${current.filter(item => !item.notification_read).length} unread</p></div><div class="flex gap-2"><button type="button" data-notices-readall class="btn-outline text-xs" ${current.some(item => !item.notification_read) ? '' : 'disabled'}>Mark all read</button><button type="button" data-notices-close class="btn-outline" aria-label="Close notifications">×</button></div></header><div class="max-h-[65vh] space-y-2 overflow-y-auto p-4">${current.length ? current.map(item => `<article class="rounded-xl border ${item.notification_read ? 'border-white/10 bg-white/5' : 'border-amber-300/40 bg-amber-300/10'} p-4 ${teacherNotificationTargetFor(item) ? 'cursor-pointer transition hover:border-amber-300/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300' : ''}" ${teacherNotificationTargetFor(item) ? `role="button" tabindex="0" data-notice-open="${teacherNotificationEscape(item.__backendId)}"` : ''}><div class="flex items-start justify-between gap-3"><div><span class="text-[10px] font-black uppercase tracking-wider text-amber-300">${teacherNotificationEscape(item.notification_category || 'update')}</span><h3 class="mt-1 font-bold">${teacherNotificationEscape(item.notification_title)}</h3></div>${item.notification_read ? '<span class="text-xs text-slate-400">Read</span>' : `<button type="button" class="btn-outline shrink-0 text-xs" data-notice-read="${teacherNotificationEscape(item.__backendId)}">Mark read</button>`}</div><p class="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">${teacherNotificationEscape(item.notification_message)}</p><time class="mt-1 block text-xs text-slate-400">${teacherNotificationEscape(new Date(item.created_at).toLocaleString())}</time>${teacherNotificationTargetFor(item) ? '<span class="mt-2 block text-[10px] font-black uppercase tracking-wider text-amber-300">Open ↗</span>' : ''}</article>`).join('') : '<p class="rounded-xl border border-dashed border-white/20 p-8 text-center text-slate-300">You’re all caught up. New class, reward, and admin updates will appear here.</p>'}</div></section>`;
     overlay.querySelector('[data-notices-close]').onclick = close;
     overlay.querySelector('[data-notices-readall]')?.addEventListener('click', event => markAll(event.currentTarget));
     overlay.querySelectorAll('[data-notice-read]').forEach(button => button.addEventListener('click', event => markOne(event.currentTarget)));
+    overlay.querySelectorAll('[data-notice-open]').forEach(card => {
+      const openCard = () => openNotificationItem(card.dataset.noticeOpen);
+      card.addEventListener('click', event => { if (event.target.closest('[data-notice-read]')) return; openCard(); });
+      card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openCard(); } });
+    });
   };
   render(); document.body.appendChild(overlay); overlay.addEventListener('click', event => { if (event.target === overlay) close(); });
   document.addEventListener('keydown', closeOnEscape);
@@ -13215,7 +13305,7 @@ function openEditTeacherModal(teacherId) {
     const saved = await saveTeacherPatch(latest, { surprise_boxes: boxes });
     if (!saved) { toast('Could not grant the box.'); return; }
     teacher.surprise_boxes = boxes; modal.querySelector('#et-box-count').textContent = boxes;
-    await window.sendTeacherNotifications?.([latest], 'Streak Box granted', 'An admin granted you a Streak Box. Open it from your Login Streak card to reveal your free credits.', 'reward');
+    await window.sendTeacherNotifications?.([latest], 'Streak Box granted', 'An admin granted you a Streak Box. Open it from your Login Streak card to reveal your free credits.', 'reward', { target: 'streak' });
     toast(`🎁 Streak Box sent to ${latest.teacher_name}!`);
   });
   modal.querySelector('#et-reset')?.addEventListener('click', async () => { const r = await window.parent.pokeaymanAuth?.resetPassword(teacher.teacher_email); toast(r && r.error ? 'Could not send reset email.' : 'Password reset email sent to ' + teacher.teacher_email); });
@@ -13233,7 +13323,7 @@ function openEditTeacherModal(teacherId) {
     // can correct a mistake without sending an alert.
     if (!isAdminRow && Number.isFinite(newCredits) && newCredits > previousCredits) {
       const toppedUp = allData.find(row => row.__backendId === teacher.__backendId) || { ...teacher, teacher_name: newName, teacher_credits: newCredits };
-      await window.sendTeacherNotifications?.([toppedUp], 'Credits added to your balance', `${currentTeacher || 'An admin'} added ${newCredits - previousCredits} credits to your account. Your balance is now ${newCredits} credits.`, 'reward');
+      await window.sendTeacherNotifications?.([toppedUp], 'Credits added to your balance', `${currentTeacher || 'An admin'} added ${newCredits - previousCredits} credits to your account. Your balance is now ${newCredits} credits.`, 'reward', { target: 'profile' });
     }
     if (currentRole === 'teacher' && currentTeacherRecordId === teacher.__backendId) {
       if (!canAccessTeacherZone() && activeMainTab === 'teacher-zone') showMainTab('dashboard');
@@ -13317,11 +13407,11 @@ function openEditTeacherModal(teacherId) {
       await relinkTeacherAssignments(teacher, teacher.teacher_name, newName);
       if (newlyAssignedClasses.length) {
         const classList = newlyAssignedClasses.map(item => `${item.className} (${item.schoolName})`).join(', ');
-        await window.sendTeacherNotifications?.([getTeachers().find(item => item.__backendId === teacher.__backendId) || { ...teacher, teacher_name:newName }], 'New class access', `You have been assigned to: ${classList}. Sign in to view your classes.`, 'class');
+        await window.sendTeacherNotifications?.([getTeachers().find(item => item.__backendId === teacher.__backendId) || { ...teacher, teacher_name:newName }], 'New class access', `You have been assigned to: ${classList}. Sign in to view your classes.`, 'class', { target: 'class' });
       }
       if (newlyAssignedSchools.length) {
         const schoolList = newlyAssignedSchools.join(', ');
-        await window.sendTeacherNotifications?.([getTeachers().find(item => item.__backendId === teacher.__backendId) || { ...teacher, teacher_name:newName }], 'New school access', `You now manage ${schoolList}. Every class in ${newlyAssignedSchools.length === 1 ? 'that school' : 'those schools'} is available from your dashboard.`, 'class');
+        await window.sendTeacherNotifications?.([getTeachers().find(item => item.__backendId === teacher.__backendId) || { ...teacher, teacher_name:newName }], 'New school access', `You now manage ${schoolList}. Every class in ${newlyAssignedSchools.length === 1 ? 'that school' : 'those schools'} is available from your dashboard.`, 'class', { target: 'class', school: newlyAssignedSchools.length === 1 ? newlyAssignedSchools[0] : '' });
       }
     }
     
@@ -13429,7 +13519,7 @@ async function openEditSchoolModal(schoolId, schoolName) {
     for (const teacherId of newlyAssignedSchoolTeachers) {
       const assignedTeacherRecord = getTeachers().find(record => String(record.__backendId || '').trim() === teacherId);
       if (!assignedTeacherRecord) continue;
-      await window.sendTeacherNotifications?.([assignedTeacherRecord], 'New school access', `You now manage ${newName}. Every class in the school is available from your dashboard.`, 'class');
+      await window.sendTeacherNotifications?.([assignedTeacherRecord], 'New school access', `You now manage ${newName}. Every class in the school is available from your dashboard.`, 'class', { target: 'class', school: newName });
     }
     allData = allData.filter(record => !(record.type === 'teacher_school_assignment' && record.assigned_school === schoolName));
     allData.push(...uniqueTeacherIds.map(teacherId => { const teacher = getTeachers().find(record => String(record.__backendId || '').trim() === teacherId); return { type: 'teacher_school_assignment', assigned_teacher: teacher?.teacher_name || '', assigned_teacher_id: teacherId, assigned_school: newName, assigned_class: '' }; }));
@@ -14331,7 +14421,7 @@ async function createVocabListForClass({ listName: rawName, school: rawSchool, c
     if (input) input.value = '';
     renderVocabLists();
     renderGamesList();
-    Promise.resolve(window.notifyClassManagers?.(school, className, 'New vocabulary list', `${currentTeacher || 'A teacher'} added "${listName}" to ${className}, ready for quizzes, games and Vocab Battles.`, 'list', { skipId: currentTeacherRecordId })).catch(() => {});
+    Promise.resolve(window.notifyClassManagers?.(school, className, 'New vocabulary list', `${currentTeacher || 'A teacher'} added "${listName}" to ${className}, ready for quizzes, games and Vocab Battles.`, 'list', { skipId: currentTeacherRecordId, target: 'vb-lists' })).catch(() => {});
     toast(`Vocabulary list "${listName}" created!`);
     return true;
   } finally { button.dataset.busy = 'false'; button.disabled = false; button.removeAttribute('aria-busy'); }
