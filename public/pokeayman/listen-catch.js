@@ -63,14 +63,20 @@
   function ballsEarnedToday(state) { return state.dailyBallDate === localDayKey() ? Math.min(DAILY_BALL_LIMIT, Number(state.dailyBallsEarned) || 0) : 0; }
   function totalBalls(state) { return BALL_TIERS.reduce((sum, tier) => sum + Math.max(0, Number(state.ballTiers?.[tier]) || 0), 0); }
   function ballCount(state, tier) { return Math.max(0, Number(state.ballTiers?.[tier]) || 0); }
-  function addEarnedBalls(state, count) {
+  const BALL_NAMES = { common: 'Poké Ball', uncommon: 'Great Ball', rare: 'Ultra Ball', legendary: 'Master Ball' };
+  function ballName(tier) { return BALL_NAMES[tier] || `${rarityLabel(tier)} Ball`; }
+  function rollBallTier() {
+    const roll = Math.random() * 100; let cursor = 0;
+    return BALL_TIERS.find(name => (cursor += BALL_WEIGHTS[name]) > roll) || 'common';
+  }
+  function addEarnedBalls(state, countOrTiers) {
     state.ballTiers ||= { common: Math.max(0, Number(state.balls) || 0), uncommon: 0, rare: 0, legendary: 0 };
-    for (let i = 0; i < count; i += 1) {
-      const roll = Math.random() * 100; let cursor = 0;
-      const tier = BALL_TIERS.find(name => (cursor += BALL_WEIGHTS[name]) > roll) || 'common';
+    const tiers = Array.isArray(countOrTiers) ? countOrTiers : Array.from({ length: Number(countOrTiers) || 0 }, () => rollBallTier());
+    for (const tier of tiers) {
       state.ballTiers[tier] = ballCount(state, tier) + 1;
     }
     state.balls = totalBalls(state);
+    return tiers;
   }
   function ballArt(tier) { return `/pokeayman/assets/balls/${BALL_ASSETS[tier] || BALL_ASSETS.common}`; }
   function rarityLabel(tier) { return `${String(tier || 'common').slice(0, 1).toUpperCase()}${String(tier || 'common').slice(1)}`; }
@@ -648,17 +654,45 @@
     const option = session.options[index]; const correct = session.words[session.index]; const buttons = [...session.root.querySelectorAll('.lc-option')];
     buttons.forEach(button => button.disabled = true);
     const selected = buttons[index]; const ok = String(option.vocab_word).trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase();
-    if (ok) { selected.classList.add('is-correct'); session.correct += 1; if (session.earned < session.dailyAllowance) { session.earned += 1; const ballCount = session.root.querySelector('.lc-balls'); if (ballCount) ballCount.textContent = session.earned; const rewardFill = session.root.querySelector('.lc-reward-fill'); if (rewardFill) rewardFill.style.width = `${Math.min(100, session.earned / session.words.length * 100)}%`; const rewardStatus = session.root.querySelector('.lc-reward-status'); if (rewardStatus) rewardStatus.textContent = `${session.earned} of ${session.words.length} round${session.words.length === 1 ? '' : 's'} rewarded`; const dailyTotal = session.dailyEarnedBefore + session.earned; const dailyCap = session.root.querySelector('.lc-daily-cap'); dailyCap.textContent = dailyTotal >= DAILY_BALL_LIMIT ? `Daily limit reached (${DAILY_BALL_LIMIT}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyTotal} / ${DAILY_BALL_LIMIT} Catch Balls`; dailyCap.classList.toggle('is-limit', dailyTotal >= DAILY_BALL_LIMIT); session.root.querySelector('.lc-prompt').textContent = 'Caught it! You earned a Catch Ball.'; } else session.root.querySelector('.lc-prompt').textContent = 'Correct! You have reached today’s 10-ball limit.'; }
+    if (ok) {
+      selected.classList.add('is-correct'); session.correct += 1;
+      if (session.earned < session.dailyAllowance) {
+        session.earned += 1;
+        const tier = rollBallTier();
+        session.earnedTiers.push(tier);
+        const ballCountEl = session.root.querySelector('.lc-balls'); if (ballCountEl) ballCountEl.textContent = session.earned;
+        const rewardFill = session.root.querySelector('.lc-reward-fill'); if (rewardFill) rewardFill.style.width = `${Math.min(100, session.earned / session.words.length * 100)}%`;
+        const rewardStatus = session.root.querySelector('.lc-reward-status'); if (rewardStatus) rewardStatus.textContent = `${session.earned} of ${session.words.length} round${session.words.length === 1 ? '' : 's'} rewarded`;
+        const rewardIconImg = session.root.querySelector('.lc-reward-icon img');
+        if (rewardIconImg) { rewardIconImg.src = ballArt(tier); rewardIconImg.alt = ballName(tier); }
+        const dailyTotal = session.dailyEarnedBefore + session.earned;
+        const dailyCap = session.root.querySelector('.lc-daily-cap');
+        dailyCap.textContent = dailyTotal >= DAILY_BALL_LIMIT ? `Daily limit reached (${DAILY_BALL_LIMIT}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyTotal} / ${DAILY_BALL_LIMIT} Catch Balls`;
+        dailyCap.classList.toggle('is-limit', dailyTotal >= DAILY_BALL_LIMIT);
+        session.root.querySelector('.lc-prompt').innerHTML = `Caught it! You earned a <span class="lc-caught-ball-badge"><img src="${ballArt(tier)}" alt=""><strong>${esc(ballName(tier))}</strong> <small>(${esc(rarityLabel(tier))})</small></span>!`;
+      } else {
+        session.root.querySelector('.lc-prompt').textContent = 'Correct! You have reached today’s 10-ball limit.';
+      }
+    }
     else { selected.classList.add('is-wrong'); buttons.find(button => button.textContent.trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase())?.classList.add('is-correct'); session.root.querySelector('.lc-prompt').textContent = `The answer was “${correct.vocab_word}”.`; }
-    setTimeout(() => { session.index += 1; session.index < session.words.length ? startRound() : finishGame(); }, 900);
+    setTimeout(() => { session.index += 1; session.index < session.words.length ? startRound() : finishGame(); }, 1400);
   }
   async function finishGame() {
     const record = student(); const state = stateFor(record);
     const today = localDayKey(); const alreadyEarned = state.dailyBallDate === today ? Math.min(DAILY_BALL_LIMIT, Number(state.dailyBallsEarned) || 0) : 0;
     const awarded = Math.min(session.correct, DAILY_BALL_LIMIT - alreadyEarned);
-    addEarnedBalls(state, awarded); state.dailyBallDate = today; state.dailyBallsEarned = alreadyEarned + awarded; await save(record, state);
+    const tiersToAdd = (session.earnedTiers || []).slice(0, awarded);
+    while (tiersToAdd.length < awarded) { tiersToAdd.push(rollBallTier()); }
+    addEarnedBalls(state, tiersToAdd); state.dailyBallDate = today; state.dailyBallsEarned = alreadyEarned + awarded; await save(record, state);
     session.earned = awarded;
-    session.root.querySelector('.lc-play').innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${awarded ? `${awarded} Catch Ball${awarded === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2><p>${awarded ? 'Each ball has a rarity tier. Match its tier to the featured Pokémon in a Catchdex challenge.' : ''} ${awarded < session.correct ? `Daily limit reached. You have earned ${state.dailyBallsEarned} of ${DAILY_BALL_LIMIT} balls today. ` : ''}Open your balls now, or find them later in your Catchdex.</p><div class="lc-result-actions"><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
+    const breakdownHtml = awarded ? `<div class="lc-result-summary-balls">${
+      BALL_TIERS.map(tier => {
+        const count = tiersToAdd.filter(t => t === tier).length;
+        if (!count) return '';
+        return `<span class="lc-summary-tier-chip"><img src="${ballArt(tier)}" alt=""> <strong>${count}× ${esc(ballName(tier))}</strong> <small>(${esc(rarityLabel(tier))})</small></span>`;
+      }).filter(Boolean).join('')
+    }</div>` : '';
+    session.root.querySelector('.lc-play').innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${awarded ? `${awarded} Catch Ball${awarded === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2>${breakdownHtml}<p>${awarded ? 'Each ball has a rarity tier. Match its tier to the featured Pokémon in a Catchdex challenge.' : ''} ${awarded < session.correct ? `Daily limit reached. You have earned ${state.dailyBallsEarned} of ${DAILY_BALL_LIMIT} balls today. ` : ''}Open your balls now, or find them later in your Catchdex.</p><div class="lc-result-actions"><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
     mountCards();
   }
   function launchForStudent(listName, record) {
@@ -696,7 +730,7 @@
     const gameMain = root.querySelector('.lc-main');
     const rewardPanel = gameMain?.querySelector('.lc-reward-panel');
     if (gameMain && rewardPanel) gameMain.insertBefore(rewardPanel, gameMain.firstChild);
-    document.body.appendChild(root); activeStudent = record; session = { root, listName, words, index: 0, earned: 0, correct: 0, dailyAllowance, dailyEarnedBefore, options: [], student: record };
+    document.body.appendChild(root); activeStudent = record; session = { root, listName, words, index: 0, earned: 0, correct: 0, dailyAllowance, dailyEarnedBefore, options: [], student: record, earnedTiers: [] };
     root.addEventListener('click', event => { const button = event.target.closest('button'); if (!button) return; if (button.dataset.lc === 'close') closeGame(); else if (button.dataset.lc === 'listen') { const word = session.words[session.index]; speak(String(word.vocab_sentence || word.vocab_word)); } else if (button.dataset.lc === 'open') { const playedStudent = session.student; closeGame(); if (currentRole === 'student') window.openCatchdex(); else window.openCatchdexFor?.(playedStudent, true); } else if (button.dataset.choice !== undefined) answer(Number(button.dataset.choice)); });
     window.__listenCatchDiagnostics = { role: currentRole, selectedListCount: Array.isArray(listName) ? listName.length : 1, loadedWords: words.length, school: record.school_name || '', className: record.class_name || '', launched: true };
     startRound();
