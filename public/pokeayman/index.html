@@ -3839,6 +3839,13 @@
   window.dataSdk = {
     async init(handler) { listener = handler; notify(); await firstLoad(); if (!window.__pokeaymanPollTimer) window.__pokeaymanPollTimer = setInterval(pull, 5000); return {isOk:true}; },
     async refresh() { await pull(); return records.map(row => ({...row})); },
+    async rpc(name, args) {
+      const auth = window.parent && window.parent.pokeaymanAuth;
+      const token = auth ? await auth.getToken() : null;
+      const r = await fetch(URL_.replace('/app_records', '/rpc/' + name), {method: 'POST', headers: {...H, ...(token ? {Authorization: 'Bearer ' + token} : {})}, body: JSON.stringify(args)});
+      if (!r.ok) throw new Error(await r.text());
+      const out = await r.json(); await pull(); return out;
+    },
     snapshot() { return records.map(row => ({...row})); },
     async create(value, options = {}) {
       const row = {...value, __backendId: value.__backendId || crypto.randomUUID()};
@@ -11700,6 +11707,50 @@ function isQuizSolvedByStudent(q, studentName) {
   return solvedList.includes(studentName.trim().toLowerCase());
 }
 
+const quizSolvesInFlight = new Set();
+async function solveStudentQuiz(quiz, answer, trigger) {
+  if (isQuizSolvedByStudent(quiz, currentStudent)) { toast('You already solved this quiz!'); renderQuizzes(); return; }
+  if (quizSolvesInFlight.has(quiz.__backendId)) return;
+  quizSolvesInFlight.add(quiz.__backendId);
+  if (trigger) trigger.disabled = true;
+  const student = getCurrentStudentRecord() || getAllStudents().find(s => s.student_name === currentStudent);
+  try {
+    // Saved server-side in one step so coins and the solved mark can never be rolled back by a refresh.
+    const result = await window.dataSdk.rpc('solve_quiz', { _quiz_id: quiz.__backendId, _student_id: student?.__backendId || currentStudentRecordId, _student_name: currentStudent, _answer: answer });
+    if (!result?.ok) {
+      if (result?.reason === 'already') { toast('You already solved this quiz!'); renderQuizzes(); return; }
+      toast('Could not save your answer. Please try again.'); if (trigger) trigger.disabled = false; return;
+    }
+    renderQuizzes();
+    showQuizCorrectCelebration(quiz, Number(result.reward) || 0);
+    Promise.resolve(window.notifyQuizAnswered?.(quiz, currentStudent)).catch(() => {});
+  } catch (error) {
+    console.error(error); toast('Could not save your answer. Please try again.'); if (trigger) trigger.disabled = false;
+  } finally { quizSolvesInFlight.delete(quiz.__backendId); }
+}
+function showQuizCorrectCelebration(quiz, reward) {
+  document.querySelector('.quiz-win-overlay')?.remove();
+  const safe = t => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const cheers = ['Correct!', 'Super smart!', 'You nailed it!', 'Brilliant!', 'Way to go!'];
+  const overlay = document.createElement('div');
+  overlay.className = 'quiz-win-overlay';
+  overlay.innerHTML = `<section class="quiz-win-card" role="dialog" aria-modal="true" aria-labelledby="quiz-win-title">
+    <div class="quiz-win-confetti" aria-hidden="true">${Array.from({ length: 24 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div>
+    <img class="quiz-win-pikachu" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="">
+    <h2 id="quiz-win-title">${cheers[Math.floor(Math.random() * cheers.length)]}</h2>
+    <p class="quiz-win-answer">The answer was <strong>${safe(quiz.quiz_answer)}</strong></p>
+    <p class="quiz-win-coins">+${reward} coins</p>
+    <button type="button" class="quiz-win-close">Yay!</button>
+  </section>`;
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  overlay.querySelector('.quiz-win-close').addEventListener('click', close);
+  document.body.appendChild(overlay);
+  overlay.querySelector('.quiz-win-close').focus({ preventScroll: true });
+  window.pokeSfx?.play('correct'); window.pokeSfx?.play('coin');
+  setTimeout(close, 6000);
+}
+
 function renderQuizzes() {
   if (currentRole !== 'student') return;
   const studentRec = getAllStudents().find(s => s.student_name === currentStudent && (!navClass || s.class_name === navClass && s.school_name === navSchool));
@@ -11738,23 +11789,7 @@ function renderQuizzes() {
       const quiz = allData.find(r => r.__backendId === form.dataset.id);
       if (!quiz) return;
       if (answer.toLowerCase() === (quiz.quiz_answer || '').toLowerCase()) {
-        // Guard: prevent duplicate coin claim
-        if (isQuizSolvedByStudent(quiz, currentStudent)) { toast('You already solved this quiz!'); renderQuizzes(); return; }
-        const prevSolved = String(quiz.quiz_solved_by || '').trim();
-        const newSolvedBy = prevSolved ? prevSolved + ',' + currentStudent : currentStudent;
-        const updatedQuiz = { ...quiz, quiz_solved_by: newSolvedBy };
-        const student = getAllStudents().find(s => s.student_name === currentStudent);
-        const updatedStudent = student ? { ...student, coins: (student.coins || 0) + (quiz.quiz_reward || 0) } : null;
-        allData = allData.map(r => {
-          if (r.__backendId === updatedQuiz.__backendId) return updatedQuiz;
-          if (updatedStudent && r.__backendId === updatedStudent.__backendId) return updatedStudent;
-          return r;
-        });
-        renderQuizzes();
-        toast('Correct! +' + quiz.quiz_reward + ' coins!');
-        window.dataSdk.update(updatedQuiz).catch(() => {});
-        if (updatedStudent) window.dataSdk.update(updatedStudent).catch(() => {});
-        Promise.resolve(window.notifyQuizAnswered?.(quiz, currentStudent)).catch(() => {});
+        await solveStudentQuiz(quiz, answer, form.querySelector('button[type="submit"]'));
       } else {
         let attempts = {}; let answers = {};
         try { attempts = JSON.parse(quiz.quiz_attempts || '{}'); } catch(e) {}
@@ -11774,23 +11809,7 @@ function renderQuizzes() {
       const quiz = allData.find(r => r.__backendId === btn.dataset.id);
       if (!quiz) return;
       if (btn.dataset.answer.trim().toLowerCase() === (quiz.quiz_answer || '').toLowerCase()) {
-        // Guard: prevent duplicate coin claim
-        if (isQuizSolvedByStudent(quiz, currentStudent)) { toast('You already solved this quiz!'); renderQuizzes(); return; }
-        const prevSolved2 = String(quiz.quiz_solved_by || '').trim();
-        const newSolvedBy2 = prevSolved2 ? prevSolved2 + ',' + currentStudent : currentStudent;
-        const updatedQuiz2 = { ...quiz, quiz_solved_by: newSolvedBy2 };
-        const student2 = getAllStudents().find(s => s.student_name === currentStudent);
-        const updatedStudent2 = student2 ? { ...student2, coins: (student2.coins || 0) + (quiz.quiz_reward || 0) } : null;
-        allData = allData.map(r => {
-          if (r.__backendId === updatedQuiz2.__backendId) return updatedQuiz2;
-          if (updatedStudent2 && r.__backendId === updatedStudent2.__backendId) return updatedStudent2;
-          return r;
-        });
-        renderQuizzes();
-        toast('Correct! +' + quiz.quiz_reward + ' coins!');
-        window.dataSdk.update(updatedQuiz2).catch(() => {});
-        if (updatedStudent2) window.dataSdk.update(updatedStudent2).catch(() => {});
-        Promise.resolve(window.notifyQuizAnswered?.(quiz, currentStudent)).catch(() => {});
+        await solveStudentQuiz(quiz, btn.dataset.answer.trim(), btn);
       } else {
         let attempts = {}; let answers = {};
         try { attempts = JSON.parse(quiz.quiz_attempts || '{}'); } catch(e) {}
