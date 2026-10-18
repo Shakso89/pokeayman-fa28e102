@@ -159,11 +159,13 @@
     layer.className = `vb-attack-layer vb-fire vb-element${retaliation ? ' vb-counter' : ''}`;
     layer.dataset.type = attackType;
     layer.setAttribute('aria-hidden', 'true');
-    (root || document.body).appendChild(layer);
+    const container = root.querySelector('.vb-arena') || root;
+    container.appendChild(layer);
+    const bounds = container.getBoundingClientRect();
     const a = source.getBoundingClientRect();
     const b = target.getBoundingClientRect();
-    const start = { x: a.left + a.width / 2, y: a.top + a.height / 2 };
-    const end = { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+    const start = { x: a.left + a.width / 2 - bounds.left, y: a.top + a.height / 2 - bounds.top };
+    const end = { x: b.left + b.width / 2 - bounds.left, y: b.top + b.height / 2 - bounds.top };
     const bolt = document.createElement('i'); bolt.className = 'vb-energy-bolt';
     bolt.style.left = `${start.x}px`; bolt.style.top = `${start.y}px`; layer.appendChild(bolt);
     const travel = reduced ? 0 : 420;

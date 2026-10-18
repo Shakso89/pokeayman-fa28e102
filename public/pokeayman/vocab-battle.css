@@ -128,7 +128,7 @@ body.ts-bright .vb-btn.vb-btn-ghost { border-color: rgba(15, 23, 58, .35); }
 .vb-btn:disabled { opacity: .5; cursor: default; }
 
 /* Cinematic feedback: token colours follow both display modes. */
-.vb-attack-layer { position: fixed; inset: 0; pointer-events: none; z-index: 40010; overflow: hidden; --vb-energy: var(--color-brand); --vb-impact: var(--color-info); }
+.vb-attack-layer { position: absolute; inset: 0; pointer-events: none; z-index: 20; overflow: hidden; background: transparent !important; --vb-energy: var(--color-brand); --vb-impact: var(--color-info); }
 .vb-attack-layer.vb-counter { --vb-energy: var(--color-error); --vb-impact: var(--color-warning); }
 .vb-energy-bolt { position: absolute; width: 38px; height: 38px; border-radius: 50%; background: var(--vb-energy); border: 5px solid var(--color-text-primary); box-shadow: 0 0 0 8px color-mix(in srgb,var(--vb-energy) 25%,transparent), 0 0 28px var(--vb-energy); }
 .vb-energy-bolt::after { content: ''; position: absolute; left: 6px; top: 18px; width: 16px; height: 85px; background: linear-gradient(var(--vb-energy),transparent); border-radius: 50%; }
