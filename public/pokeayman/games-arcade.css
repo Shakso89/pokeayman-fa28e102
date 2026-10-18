@@ -265,32 +265,55 @@ body > .ga-stage .ga-stage-header [hidden] { display: none !important; }
 body > .ga-stage .ga-stage-header > div:not(.ga-stage-controls), body > .ga-stage .ga-stage-header > div:not(.ga-stage-controls) > div { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
 body > .ga-stage .ga-stage-shell > :not(.ga-stage-header):not(.game-celebration-overlay) { flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important; background: var(--ga-stage-bg) !important; color: var(--ga-stage-ink); }
 body > .ga-stage .surprise-boxes-body { display: flex !important; flex-direction: column !important; overflow: hidden !important; padding: 1rem 1.5rem !important; }
-body > .ga-stage .game-player-hud-slot { flex: 0 0 auto !important; min-height: 0 !important; background: transparent !important; padding: 0 !important; }
-body > .ga-stage .game-player-hud { display: grid !important; width: min(100%, 1000px) !important; max-width: 1000px !important; gap: .75rem !important; flex: 0 0 auto !important; margin: 0 auto 1rem !important; }
-body > .ga-stage .game-player-card { position: relative !important; display: grid !important; grid-template-columns: 52px minmax(0, 1fr) auto !important; grid-template-rows: auto auto !important; align-items: center !important; gap: .1rem .65rem !important; min-height: 80px !important; padding: .65rem .85rem !important; background: var(--ga-stage-surface) !important; border: 1px solid var(--ga-stage-line) !important; border-radius: 8px !important; box-shadow: none !important; transform: none !important; color: var(--ga-stage-ink) !important; overflow: visible !important; }
-body > .ga-stage .game-player-card.is-active { border-color: var(--ga-stage-yellow) !important; background: color-mix(in srgb, var(--ga-stage-yellow) 10%, var(--ga-stage-surface)) !important; }
+body > .ga-stage .game-player-hud-slot { flex: 0 0 auto !important; min-height: 0 !important; background: transparent !important; padding: 0 !important; width: 100% !important; }
+body > .ga-stage .game-player-hud { display: grid !important; grid-auto-flow: column !important; grid-auto-columns: minmax(0, 1fr) !important; justify-content: center !important; align-items: center !important; width: min(100%, 960px) !important; max-width: 960px !important; margin: 0 auto 0.75rem !important; gap: clamp(0.4rem, 1.2vw, 0.75rem) !important; flex: 0 0 auto !important; box-sizing: border-box !important; padding: 0 0.5rem !important; }
+body > .ga-stage .game-player-hud:has(> :only-child) { max-width: 320px !important; }
+body > .ga-stage .game-player-hud:has(> :nth-child(2):last-child) { max-width: 620px !important; }
+body > .ga-stage .game-player-hud:has(> :nth-child(3):last-child) { max-width: 840px !important; }
+body > .ga-stage .game-player-hud:has(> :nth-child(4)) { max-width: 980px !important; }
+body > .ga-stage .game-player-card { position: relative !important; display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto !important; grid-template-rows: auto auto !important; align-items: center !important; gap: 0.15rem 0.65rem !important; min-height: 0 !important; height: 60px !important; max-height: 64px !important; padding: 0.45rem 0.85rem !important; box-sizing: border-box !important; background: var(--ga-stage-surface, #131c2e) !important; border: 1.5px solid var(--ga-stage-line, #344058) !important; border-radius: 12px !important; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important; transform: none !important; color: var(--ga-stage-ink, #f5f7ff) !important; overflow: hidden !important; transition: border-color .2s ease, box-shadow .2s ease, background .2s ease, transform .2s ease !important; }
+body > .ga-stage .game-player-card.is-active { border-color: var(--ga-stage-yellow, #ffcb05) !important; background: linear-gradient(135deg, rgba(255, 203, 5, 0.12), var(--ga-stage-surface, #131c2e)) !important; box-shadow: 0 0 0 1.5px rgba(255, 203, 5, 0.35), 0 4px 18px rgba(255, 203, 5, 0.16) !important; }
 body > .ga-stage .game-player-card::before, body > .ga-stage .game-player-card::after { display: none !important; }
-body > .ga-stage .game-player-avatar-wrap { grid-column: 1; grid-row: 1 / 3; min-height: 0 !important; margin: 0 !important; }
-body > .ga-stage .game-player-avatar { width: 52px !important; height: 52px !important; object-fit: contain; }
-body > .ga-stage .game-player-name { grid-column: 2; grid-row: 1; color: var(--ga-stage-ink) !important; font: 800 .9rem 'Figtree', sans-serif !important; text-align: left !important; margin: 0 !important; overflow-wrap: anywhere; letter-spacing: 0 !important; }
-body > .ga-stage .game-player-turn { grid-column: 2; grid-row: 2; color: var(--ga-stage-yellow) !important; font-size: .7rem !important; text-align: left !important; margin: 0 !important; }
-body > .ga-stage .game-player-score { grid-column: 3; grid-row: 1 / 3; font: 900 2rem 'Outfit', sans-serif !important; color: var(--ga-stage-ink) !important; margin: 0 !important; padding: 0 !important; background: transparent !important; border: 0 !important; text-shadow: none !important; }
-body > .ga-stage .game-player-score::after { content: 'PTS'; display: block; font: 700 .6rem 'Figtree', sans-serif; color: var(--ga-stage-muted); text-align: right; }
-body > .ga-stage .game-turn-timer { grid-column: 1 / -1; grid-row: 3; width: 100%; }
+body > .ga-stage .game-player-avatar-wrap { grid-column: 1 !important; grid-row: 1 / 3 !important; align-self: center !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 44px !important; height: 44px !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; border-radius: 50% !important; background: rgba(255, 255, 255, 0.06) !important; border: 2px solid rgba(255, 255, 255, 0.14) !important; flex-shrink: 0 !important; overflow: visible !important; transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease !important; }
+body > .ga-stage .game-player-card.is-active .game-player-avatar-wrap { border-color: #ffcb05 !important; background: rgba(255, 203, 5, 0.14) !important; box-shadow: 0 0 10px rgba(255, 203, 5, 0.4) !important; }
+body > .ga-stage .game-player-avatar { width: 36px !important; height: 36px !important; max-width: 36px !important; max-height: 36px !important; object-fit: contain !important; margin: 0 auto !important; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35)) !important; }
+body > .ga-stage .game-player-card.is-active .game-player-avatar { transform: scale(1.08) !important; filter: drop-shadow(0 0 8px rgba(255, 203, 5, 0.55)) !important; }
+body > .ga-stage .game-player-name { grid-column: 2 !important; grid-row: 1 !important; align-self: center !important; color: var(--ga-stage-ink, #f5f7ff) !important; font-family: 'Outfit', 'Figtree', sans-serif !important; font-weight: 800 !important; font-size: clamp(0.85rem, 1.8vw, 1rem) !important; line-height: 1.2 !important; text-align: left !important; margin: 0 !important; padding: 0 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; letter-spacing: -0.01em !important; }
+body > .ga-stage .game-player-turn { grid-column: 2 !important; grid-row: 2 !important; align-self: start !important; color: #ffcb05 !important; font-size: 0.65rem !important; font-weight: 800 !important; text-transform: uppercase !important; letter-spacing: 0.05em !important; line-height: 1 !important; margin: 0 !important; padding: 0 !important; }
+body > .ga-stage .game-player-card.is-active .game-player-turn:empty::before { content: '✦ ACTIVE' !important; display: inline-block !important; color: #ffcb05 !important; font-size: 0.62rem !important; font-weight: 800 !important; letter-spacing: 0.05em !important; text-transform: uppercase !important; }
+body > .ga-stage .game-player-score { grid-column: 3 !important; grid-row: 1 / 3 !important; align-self: center !important; justify-self: end !important; display: flex !important; flex-direction: column !important; align-items: flex-end !important; justify-content: center !important; font-family: 'Outfit', sans-serif !important; font-weight: 900 !important; font-size: clamp(1.4rem, 2.4vw, 1.85rem) !important; line-height: 1 !important; color: var(--ga-stage-ink, #f5f7ff) !important; margin: 0 !important; padding: 0 0.1rem !important; background: transparent !important; border: 0 !important; text-shadow: none !important; min-width: 2.2rem !important; text-align: right !important; }
+body > .ga-stage .game-player-card.is-active .game-player-score { color: #ffcb05 !important; text-shadow: 0 0 10px rgba(255, 203, 5, 0.4) !important; }
+body > .ga-stage .game-player-score::after { content: 'PTS'; display: block; font-family: 'Figtree', sans-serif; font-weight: 800; font-size: 0.58rem; letter-spacing: 0.08em; color: var(--ga-stage-muted, #a5b0cc); margin-top: 2px; line-height: 1; text-align: right; }
+body > .ga-stage .game-player-card.is-active .game-player-score::after { color: rgba(255, 203, 5, 0.8); }
+body > .ga-stage .game-turn-timer { position: absolute !important; left: 0 !important; right: 0 !important; bottom: 0 !important; height: 4px !important; margin: 0 !important; padding: 0 !important; width: 100% !important; border-radius: 0 0 12px 12px !important; overflow: hidden !important; z-index: 5 !important; }
+body > .ga-stage .game-turn-timer.hidden { display: none !important; }
+body > .ga-stage .game-turn-timer .game-turn-timer-track { width: 100% !important; height: 100% !important; background: rgba(255, 255, 255, 0.1) !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; }
+body > .ga-stage .game-turn-timer .game-turn-timer-fill { height: 100% !important; border-radius: 0 !important; background: linear-gradient(90deg, #ffcb05, #f59e0b) !important; box-shadow: 0 0 8px rgba(255, 203, 5, 0.7) !important; }
+body > .ga-stage .game-turn-timer .game-turn-timer-number { position: absolute !important; right: 6px !important; bottom: 6px !important; font-size: 0.62rem !important; font-weight: 800 !important; color: #ffcb05 !important; background: rgba(10, 15, 30, 0.85) !important; padding: 1px 5px !important; border-radius: 4px !important; border: 1px solid rgba(255, 203, 5, 0.3) !important; z-index: 6 !important; }
 body > .ga-stage #baam-board { flex: 1 1 auto !important; min-height: 0 !important; }
 body > .ga-stage .memory-game-body { min-height: 0 !important; }
-@media (max-width: 650px) {
-  body > .ga-stage .ga-stage-header { padding: .5rem .65rem !important; gap: .35rem !important; flex-wrap: wrap; }
-  body > .ga-stage .ga-stage-header h2 { font-size: 1.1rem !important; }
+@media (max-width: 860px) {
+  body > .ga-stage .game-player-hud { gap: 0.45rem !important; margin-bottom: 0.5rem !important; padding: 0 0.4rem !important; }
+  body > .ga-stage .game-player-hud:has(> :nth-child(4)) { grid-auto-flow: row !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; max-width: 580px !important; }
+  body > .ga-stage .game-player-card { height: 54px !important; max-height: 58px !important; padding: 0.38rem 0.65rem !important; gap: 0.1rem 0.5rem !important; border-radius: 10px !important; }
+  body > .ga-stage .game-player-avatar-wrap { width: 38px !important; height: 38px !important; }
+  body > .ga-stage .game-player-avatar { width: 30px !important; height: 30px !important; max-width: 30px !important; max-height: 30px !important; }
+  body > .ga-stage .game-player-name { font-size: 0.85rem !important; }
+  body > .ga-stage .game-player-score { font-size: 1.55rem !important; }
+}
+@media (max-width: 580px) {
+  body > .ga-stage .ga-stage-header { padding: .45rem .65rem !important; gap: .35rem !important; flex-wrap: wrap; }
+  body > .ga-stage .ga-stage-header h2 { font-size: 1.05rem !important; }
   body > .ga-stage .ga-stage-header button { width: 32px !important; min-width: 32px; height: 32px !important; }
-  body > .ga-stage .surprise-boxes-body { padding: .65rem !important; }
-  body > .ga-stage .game-player-hud { gap: .35rem !important; }
-  body > .ga-stage .game-player-card { grid-template-columns: 1fr !important; grid-template-rows: 32px auto auto auto !important; text-align: center; padding: .4rem !important; gap: .15rem !important; }
-  body > .ga-stage .game-player-avatar-wrap { grid-column: 1; grid-row: 1; }
-  body > .ga-stage .game-player-avatar { width: 32px !important; height: 32px !important; }
-  body > .ga-stage .game-player-name { grid-column: 1; grid-row: 2; text-align: center !important; font-size: .7rem !important; }
-  body > .ga-stage .game-player-turn { grid-column: 1; grid-row: 3; text-align: center !important; }
-  body > .ga-stage .game-player-score { grid-column: 1; grid-row: 4; font-size: 1.5rem !important; }
-  body > .ga-stage .game-player-score::after { display: none; }
-  body > .ga-stage .game-turn-timer { grid-row: 5; }
+  body > .ga-stage .surprise-boxes-body { padding: .45rem .5rem !important; }
+  body > .ga-stage .game-player-hud { gap: 0.35rem !important; margin-bottom: 0.35rem !important; padding: 0 0.25rem !important; width: 100% !important; }
+  body > .ga-stage .game-player-hud:has(> :nth-child(3)) { grid-auto-flow: row !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; max-width: 480px !important; }
+  body > .ga-stage .game-player-card { height: 48px !important; max-height: 50px !important; padding: 0.25rem 0.5rem !important; gap: 0.05rem 0.4rem !important; border-radius: 8px !important; border-width: 1px !important; }
+  body > .ga-stage .game-player-avatar-wrap { width: 32px !important; height: 32px !important; border-width: 1.5px !important; }
+  body > .ga-stage .game-player-avatar { width: 25px !important; height: 25px !important; max-width: 25px !important; max-height: 25px !important; }
+  body > .ga-stage .game-player-name { font-size: 0.78rem !important; }
+  body > .ga-stage .game-player-turn { font-size: 0.58rem !important; }
+  body > .ga-stage .game-player-card.is-active .game-player-turn:empty::before { font-size: 0.55rem !important; content: 'TURN' !important; }
+  body > .ga-stage .game-player-score { font-size: 1.35rem !important; min-width: 2rem !important; }
+  body > .ga-stage .game-player-score::after { font-size: 0.52rem !important; margin-top: 1px !important; }
 }
