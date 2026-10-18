@@ -4064,12 +4064,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       </button>`;
     }).join('');
     return `<section class="ga-hub" aria-label="Game arcade">
-      <header class="ga-hub-head"><div><span class="ga-hub-kicker">Game Arcade</span><div class="ga-hub-list">Playing with <b>${esc(listLabel)}</b></div></div><button type="button" class="ga-change-lists" onclick="gaShowListSelection()">← Change lists</button></header>
+      <header class="ga-hub-head"><div><span class="ga-hub-kicker">Game Arcade</span><div class="ga-hub-list">${listLabel ? "Playing with <b>" + esc(listLabel) + "</b>" : "<span style='color:#fbbf24;font-weight:700'>No list selected yet \u2014 click \u201cChoose VB lists\u201d first</span>"}</div></div><button type="button" class="ga-change-lists" onclick="gaShowListSelection()">← Change lists</button></header>
       <div class="ga-grid" role="group" aria-label="Choose a vocabulary game">${cards}</div>
     </section>`;
   };
 
-  let arcadeOpen = false;
+  let arcadeOpen = true;
   window.gaStudentSetup = function (listName, fnName) {
     const game = GAMES.find(item => item.fn === fnName && !item.teacherOnly);
     if (!game) return;
@@ -4105,13 +4105,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   window.gaShowListSelection = function () { arcadeOpen = false; renderGamesList(); };
   window.gaListStep = function (selector, container, count) {
     if (!selector || !container) return;
-    if (!count) arcadeOpen = false;
+    // list count does not force arcade closed
     selector.hidden = arcadeOpen;
     container.hidden = !arcadeOpen;
     if (arcadeOpen) return;
     const next = document.createElement('button');
     next.type = 'button'; next.className = 'ga-continue'; next.disabled = !count;
-    next.textContent = count ? `Next · Game Arcade → (${count} list${count === 1 ? '' : 's'})` : 'Next · Game Arcade →';
+    next.textContent = count ? ("Use " + count + " list" + (count === 1 ? "" : "s") + " \u2192 Back to Arcade") : "\u2190 Back to Game Arcade";
     next.addEventListener('click', () => {
       if (getGameWords(selectedGameList).length < 2) { toast('Choose lists with at least two words.'); return; }
       arcadeOpen = true; renderGamesList();
