@@ -149,26 +149,26 @@ body.ts-on .ts-card, body.ts-on .ts-switch, body.ts-on .ts-me { background: var(
   width: 100%;
   margin-top: 14px;
   margin-bottom: 4px;
-  padding: 9px 12px;
-  background: color-mix(in srgb, var(--ts-yellow) 8%, transparent);
-  color: var(--ts-yellow);
-  border: 1.5px solid color-mix(in srgb, var(--ts-yellow) 65%, transparent);
+  padding: 10px 12px;
+  background: var(--ts-surface);
+  color: var(--ts-ink);
+  border: 1px solid var(--ts-border);
   border-radius: 12px;
   text-align: left;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: .05em;
   text-transform: uppercase;
-  box-shadow: 0 0 10px color-mix(in srgb, var(--ts-yellow) 10%, transparent);
+  box-shadow: none;
   transition: all .18s ease;
 }
 #ts-sidebar .ts-section-toggle:hover,
 #ts-sidebar .ts-section-toggle.current,
 #ts-sidebar .ts-section-toggle[aria-expanded="true"] {
-  color: #fff7cc;
-  border-color: var(--ts-yellow);
-  background: color-mix(in srgb, var(--ts-yellow) 18%, transparent);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--ts-yellow) 24%, transparent);
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--ts-border) 50%, #ffffff);
+  background: color-mix(in srgb, var(--ts-surface) 85%, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 .ts-chevron { font-size: 20px; line-height: 1; transition: transform .18s; color: inherit; }
 [aria-expanded="true"] > .ts-chevron { transform: rotate(90deg); }

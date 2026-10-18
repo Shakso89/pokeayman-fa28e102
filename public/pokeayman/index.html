@@ -5239,12 +5239,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         </div>
         <div id="students-list" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
        </div><!-- Quiz sub-tab -->
-       <div id="class-subtab-quiz" class="class-subtab-content hidden flex gap-2 w-full">
-        <!-- Left sidebar with vertical sub-tabs -->
-        <div class="flex flex-col gap-2 w-40 flex-shrink-0">
-         <button class="quiz-sub-tab quiz-sub-tab-active px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="post">Post Quiz</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="quick">Quick Answer</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="ongoing">Ongoing</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="history">History</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-3 text-sm font-medium rounded-lg transition text-left" data-subtab="archive">Archive</button>
-        </div><!-- Right content area -->
-        <div class="flex-1 min-w-0 flex flex-col">
+       <div id="class-subtab-quiz" class="class-subtab-content hidden flex flex-col gap-4 w-full">
+        <!-- Top horizontal segmented sub-tabs -->
+        <div class="flex items-center gap-2 pb-2 border-b border-white/10 flex-wrap">
+         <button class="quiz-sub-tab quiz-sub-tab-active px-4 py-2.5 text-sm font-bold rounded-xl transition" data-subtab="post">📝 Create Quiz</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-2.5 text-sm font-bold rounded-xl transition" data-subtab="quizzes">📋 Quizzes &amp; History</button> <button class="quiz-sub-tab quiz-sub-tab-inactive px-4 py-2.5 text-sm font-bold rounded-xl transition" data-subtab="quick">⚡ Quick Award</button>
+        </div><!-- Content area -->
+        <div class="w-full flex flex-col">
          <!-- Create Quiz Form -->
          <div id="quiz-form-container" class="glass-container rounded-xl p-5 mb-6">
           <h3 data-template-id="create-quiz-title" class="canva-text font-semibold mb-3" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 19px;">Create a Quiz</h3>
@@ -5287,38 +5287,56 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
          <div id="quiz-subtab-quick" class="quiz-subtab-content hidden flex flex-col">
           <div id="quick-answer-students-grid" class="flex w-full flex-wrap items-center justify-center gap-4 sm:gap-6"></div>
           <p id="quick-answer-empty" class="text-center text-gray-400 py-8 text-sm hidden">No students in this class.</p>
-         </div><!-- Ongoing -->
-         <div id="quiz-subtab-ongoing" class="quiz-subtab-content hidden flex flex-col">
-          <div id="ongoing-quiz-list" class="space-y-3"></div>
-          <p id="ongoing-quiz-empty" class="text-center text-gray-400 py-12">No ongoing quizzes.</p>
-         </div><!-- History -->
-         <div id="quiz-subtab-history" class="quiz-subtab-content hidden flex flex-col">
-          <div class="glass-container solved-results-panel rounded-2xl p-4 sm:p-5 mb-4">
-           <div class="solved-results-header flex items-center justify-between gap-3 mb-3">
+         <!-- Unified Quizzes & History subtab -->
+         <div id="quiz-subtab-quizzes" class="quiz-subtab-content hidden flex flex-col space-y-4">
+          <div class="glass-container rounded-2xl p-4 sm:p-5">
+           <div class="flex items-center justify-between gap-3 flex-wrap">
             <div>
-             <h3 class="font-semibold text-sm text-white">🏆 Top Solvers</h3>
-             <p class="text-[11px] text-slate-300 mt-0.5">Students with the most completed quizzes</p>
-            </div><button id="archive-all-btn" class="solved-results-archive btn-primary text-xs px-3 py-2" type="button">Archive All</button>
-           </div>
-           <div id="top-solvers-list" class="solved-results-list"></div>
-          </div>
-          <div id="quiz-history-list" class="space-y-3"></div>
-          <p id="quiz-history-empty" class="text-center text-gray-400 py-12">No quiz history yet.</p>
-         </div><!-- Archive -->
-         <div id="quiz-subtab-archive" class="quiz-subtab-content hidden flex flex-col">
-          <div class="glass-container rounded-xl p-4 mb-4">
-           <div class="flex gap-2 mb-4"><input id="new-folder-name" type="text" placeholder="New folder name" class="flex-1 border rounded-lg px-3 py-2 text-sm"> <button id="create-folder-btn" class="btn-primary">Create Folder</button>
+             <h3 class="font-bold text-base text-white">Class Quizzes</h3>
+             <p class="text-xs text-slate-300 mt-0.5">Track active questions, review solved submissions, and view archives</p>
+            </div>
+            <div class="flex gap-1.5 bg-slate-900/70 p-1 rounded-xl border border-white/10" id="quiz-filter-group" role="tablist">
+             <button type="button" class="quiz-filter-pill px-3 py-1.5 rounded-lg text-xs font-bold transition bg-amber-400 text-slate-900 shadow-sm" data-filter="active">🟢 Active (<span id="active-quiz-pill-count">0</span>)</button>
+             <button type="button" class="quiz-filter-pill px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white" data-filter="solved">🏆 Solved (<span id="solved-quiz-pill-count">0</span>)</button>
+             <button type="button" class="quiz-filter-pill px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white" data-filter="archive">📁 Archive</button>
+            </div>
            </div>
           </div>
-          <div id="folders-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4"></div>
-          <div id="quiz-view-folder" class="hidden">
-           <div class="mb-4 flex items-center justify-between">
-            <div><button id="folder-back-btn" class="canva-button" type="button" aria-label="Back to archive folders"><span aria-hidden="true">←</span><span>Back</span></button>
-             <h3 id="folder-title" class="heading-font"></h3>
-            </div><button id="delete-folder-btn" class="btn-secondary text-xs">Delete Folder</button>
+          <!-- Section: Active / Ongoing Quizzes -->
+          <div id="quiz-view-active" class="quiz-filter-section space-y-3">
+           <div id="ongoing-quiz-list" class="space-y-3"></div>
+           <p id="ongoing-quiz-empty" class="text-center text-gray-400 py-12">No ongoing quizzes.</p>
+          </div>
+          <!-- Section: Solved / History -->
+          <div id="quiz-view-solved" class="quiz-filter-section hidden space-y-4">
+           <div class="glass-container solved-results-panel rounded-2xl p-4 sm:p-5">
+            <div class="solved-results-header flex items-center justify-between gap-3 mb-3">
+             <div>
+              <h3 class="font-semibold text-sm text-white">🏆 Top Solvers</h3>
+              <p class="text-[11px] text-slate-300 mt-0.5">Students with the most completed quizzes</p>
+             </div><button id="archive-all-btn" class="solved-results-archive btn-primary text-xs px-3 py-2" type="button">Archive All</button>
+            </div>
+            <div id="top-solvers-list" class="solved-results-list"></div>
            </div>
-           <div id="archived-quiz-list" class="space-y-3"></div>
-           <p id="archived-quiz-empty" class="text-center text-gray-400 py-12">No quizzes in this folder.</p>
+           <div id="quiz-history-list" class="space-y-3"></div>
+           <p id="quiz-history-empty" class="text-center text-gray-400 py-12">No quiz history yet.</p>
+          </div>
+          <!-- Section: Archive -->
+          <div id="quiz-view-archive" class="quiz-filter-section hidden space-y-4">
+           <div class="glass-container rounded-xl p-4">
+            <div class="flex gap-2"><input id="new-folder-name" type="text" placeholder="New folder name" class="flex-1 border rounded-lg px-3 py-2 text-sm"> <button id="create-folder-btn" class="btn-primary">Create Folder</button>
+            </div>
+           </div>
+           <div id="folders-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4"></div>
+           <div id="quiz-view-folder" class="hidden">
+            <div class="mb-4 flex items-center justify-between">
+             <div><button id="folder-back-btn" class="canva-button" type="button" aria-label="Back to archive folders"><span aria-hidden="true">←</span><span>Back</span></button>
+              <h3 id="folder-title" class="heading-font"></h3>
+             </div><button id="delete-folder-btn" class="btn-secondary text-xs">Delete Folder</button>
+            </div>
+            <div id="archived-quiz-list" class="space-y-3"></div>
+            <p id="archived-quiz-empty" class="text-center text-gray-400 py-12">No quizzes in this folder.</p>
+           </div>
           </div>
          </div>
         </div>
@@ -10140,32 +10158,58 @@ function attachQuizSubTabListeners() {
       
       // Hide all content panels and the form container
       document.querySelectorAll('.quiz-subtab-content').forEach(c => c.classList.add('hidden'));
-      document.getElementById('quiz-form-container').classList.add('hidden');
-      document.getElementById('quiz-view-folder').classList.add('hidden');
+      document.getElementById('quiz-form-container')?.classList.add('hidden');
+      document.getElementById('quiz-view-folder')?.classList.add('hidden');
       
       // Show selected content panel based on subtab
       if (subtab === 'post') {
-        document.getElementById('quiz-form-container').classList.remove('hidden');
+        document.getElementById('quiz-form-container')?.classList.remove('hidden');
       } else if (subtab === 'quick') {
         const quickPanel = document.getElementById('quiz-subtab-quick');
         if (quickPanel) quickPanel.classList.remove('hidden');
         renderQuickAnswerStudents();
-      } else if (subtab === 'ongoing') {
-        const ongoingPanel = document.getElementById('quiz-subtab-ongoing');
-        if (ongoingPanel) ongoingPanel.classList.remove('hidden');
+      } else if (subtab === 'quizzes' || subtab === 'ongoing' || subtab === 'history' || subtab === 'archive') {
+        const quizzesPanel = document.getElementById('quiz-subtab-quizzes');
+        if (quizzesPanel) quizzesPanel.classList.remove('hidden');
         renderOngoingQuizzes();
-      } else if (subtab === 'history') {
-        const historyPanel = document.getElementById('quiz-subtab-history');
-        if (historyPanel) historyPanel.classList.remove('hidden');
         renderQuizHistory();
-      } else if (subtab === 'archive') {
-        const archivePanel = document.getElementById('quiz-subtab-archive');
-        if (archivePanel) archivePanel.classList.remove('hidden');
-        document.getElementById('folders-list').classList.remove('hidden');
         renderFolders();
+        if (subtab === 'history') setQuizFilter('solved');
+        else if (subtab === 'archive') setQuizFilter('archive');
+        else setQuizFilter('active');
       }
     });
   });
+
+  // Attach filter pill listeners inside Quizzes & History
+  document.querySelectorAll('.quiz-filter-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      setQuizFilter(pill.dataset.filter);
+    });
+  });
+}
+
+function setQuizFilter(filterName) {
+  document.querySelectorAll('.quiz-filter-pill').forEach(p => {
+    const isTarget = p.dataset.filter === filterName;
+    p.classList.toggle('bg-amber-400', isTarget);
+    p.classList.toggle('text-slate-900', isTarget);
+    p.classList.toggle('shadow-sm', isTarget);
+    p.classList.toggle('text-slate-300', !isTarget);
+  });
+  document.querySelectorAll('.quiz-filter-section').forEach(s => s.classList.add('hidden'));
+  if (filterName === 'active') {
+    document.getElementById('quiz-view-active')?.classList.remove('hidden');
+    renderOngoingQuizzes();
+  } else if (filterName === 'solved') {
+    document.getElementById('quiz-view-solved')?.classList.remove('hidden');
+    renderQuizHistory();
+  } else if (filterName === 'archive') {
+    document.getElementById('quiz-view-archive')?.classList.remove('hidden');
+    document.getElementById('folders-list')?.classList.remove('hidden');
+    document.getElementById('quiz-view-folder')?.classList.add('hidden');
+    renderFolders();
+  }
 }
 
 // Call on initial load
@@ -11557,6 +11601,8 @@ function renderOngoingQuizzes() {
   const quizzes = getActiveQuizzes(navClass);
   const container = document.getElementById('ongoing-quiz-list');
   const empty = document.getElementById('ongoing-quiz-empty');
+  const activeCount = document.getElementById('active-quiz-pill-count');
+  if (activeCount) activeCount.textContent = quizzes.length;
   if (!quizzes.length) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
   container.innerHTML = quizzes.map(q => {
@@ -11637,6 +11683,8 @@ function renderQuizHistory() {
   const solved = getSolvedQuizzes(navClass).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
   const container = document.getElementById('quiz-history-list');
   const empty = document.getElementById('quiz-history-empty');
+  const solvedCount = document.getElementById('solved-quiz-pill-count');
+  if (solvedCount) solvedCount.textContent = solved.length;
   const solverCounts = {};
   solved.forEach(q => { solverCounts[q.quiz_solved_by] = (solverCounts[q.quiz_solved_by] || 0) + 1; });
   const topSolvers = Object.entries(solverCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
