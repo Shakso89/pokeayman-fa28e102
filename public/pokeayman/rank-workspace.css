@@ -151,3 +151,17 @@ html body #app-screen#app-screen#app-screen .class-top3-card:not(.global-rank-ca
 
 html body #classmate-profile-modal .global-profile-card.global-rank-card { border-radius: 16px 16px 0 0 !important; }
 html body #classmate-profile-modal#classmate-profile-modal#classmate-profile-modal .global-profile-card ~ .p-6 > .grid > div > p:last-child { color: var(--rank-ink) !important; }
+
+/* Classmate profile header: name left, badges centred, close top-right. */
+html body #classmate-profile-modal#classmate-profile-modal .global-profile-card { position: sticky; display: grid !important; grid-template-columns: 1fr; justify-items: start; gap: 10px; padding-right: 64px !important; }
+html body #classmate-profile-modal#classmate-profile-modal .global-profile-card.global-rank-card { justify-items: center; text-align: center; padding-left: 64px !important; }
+html body #classmate-profile-modal#classmate-profile-modal .global-profile-card > .pk-pins { justify-self: center; justify-content: center; width: 100%; margin: 0; }
+html body #classmate-profile-modal#classmate-profile-modal .global-profile-card { padding-left: 24px; }
+html body #classmate-profile-modal#classmate-profile-modal .global-profile-card:has(> .pk-pins) { justify-items: center; text-align: center; padding-left: 64px !important; }
+html body #classmate-profile-modal#classmate-profile-modal #profile-close { position: absolute !important; top: 14px; right: 14px; z-index: 7; }
+
+/* Global Top 3 classmate cards: readable chips and class pill in dark mode. */
+html body #student-dashboard#student-dashboard#student-dashboard .student-classmate-card.global-rank-card > p:first-of-type { background: color-mix(in srgb, var(--rank-edge) 22%, transparent) !important; color: var(--rank-text) !important; border: 1px solid color-mix(in srgb, var(--rank-edge) 45%, transparent); }
+html body #student-dashboard#student-dashboard#student-dashboard .student-classmate-card.global-rank-card [aria-label$="Pokémon"] > span { background: color-mix(in srgb, var(--rank-night) 70%, transparent) !important; border: 1px solid color-mix(in srgb, var(--rank-edge) 40%, transparent); color: var(--rank-text) !important; font-weight: 700; opacity: 1 !important; }
+html body #student-dashboard#student-dashboard#student-dashboard .student-classmate-card.global-rank-card .student-classmate-value { color: var(--rank-text) !important; }
+html body #student-dashboard#student-dashboard#student-dashboard .student-classmate-card.global-rank-card .global-rank-marker { left: 50% !important; transform: translateX(-50%) !important; }
