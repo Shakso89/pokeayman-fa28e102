@@ -90,13 +90,16 @@ html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
   & #class-subtab-quiz .glass-container::before, & #class-subtab-quiz .glass-container::after,
   & #tab-admin .admin-subtab-content > .glass-container::before,
   & #tab-admin .admin-subtab-content > .glass-container::after { display: none !important; }
-  & #class-subtab-quiz {
+  & #class-subtab-quiz:not(.hidden) {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
     max-width: 100% !important;
     gap: 16px !important;
     align-items: stretch !important;
+  }
+  & #class-subtab-quiz.hidden {
+    display: none !important;
   }
   & #tab-admin .admin-subtab-content > .glass-container,
   & #tab-admin :is(.teachers-inventory-panel,.teachers-inventory-toolbar,.admin-students-scroll,#admin-shop-container) {
