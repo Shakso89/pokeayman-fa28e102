@@ -7441,7 +7441,7 @@ function showCoinCelebration(student, amount, classCount = 0) {
   document.body.appendChild(overlay);
   document.body.style.overflow = 'hidden';
   overlay.querySelector('button')?.focus({ preventScroll: true });
-  window.pokeSfx?.play(negative ? 'minus' : 'star');
+  window.pokeSfx?.play(negative ? 'minus' : 'coin');
   const number = overlay.querySelector('.coin-celebration-number');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const start = performance.now();
@@ -16443,6 +16443,7 @@ async function playCatchSound() {
 }
 let transactionSoundLastPlayed = 0;
 function playTransactionSound(kind = 'reward') {
+  if (window.pokeSfx) { window.pokeSfx.play(kind === 'deduction' ? 'minus' : 'coin'); return; }
   if (catchSoundState.muted) return;
   const now = performance.now(); if (now - transactionSoundLastPlayed < 700) return;
   transactionSoundLastPlayed = now;
