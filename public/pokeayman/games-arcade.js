@@ -618,7 +618,16 @@
           <rect x="78" y="54" width="28" height="20" rx="3" fill="#10b981"/><text x="92" y="68">9</text>
         </g>
       </svg>`,
-      cardBackSvg: '',
+      cardBackSvg: `<svg class="ga-card-back-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="200" height="200" rx="22" fill="#1e3a8a"/>
+        <rect x="8" y="8" width="184" height="184" rx="16" fill="#0f172a" stroke="#3b82f6" stroke-width="4"/>
+        <circle cx="100" cy="100" r="62" fill="#f8fafc" stroke="#0b1220" stroke-width="8"/>
+        <path d="M38 100 A62 62 0 0 1 162 100 Z" fill="#ef4444"/>
+        <path d="M38 100 H162" stroke="#0b1220" stroke-width="10"/>
+        <circle cx="100" cy="100" r="20" fill="#f8fafc" stroke="#0b1220" stroke-width="8"/>
+        <circle cx="100" cy="100" r="8" fill="#e2e8f0"/>
+        <ellipse cx="78" cy="66" rx="14" ry="7" transform="rotate(-30 78 66)" fill="#ffffff" opacity="0.5"/>
+      </svg>`,
       backdropSvg: ''
     }
   ];
@@ -693,7 +702,7 @@
     });
     const btnLabel = target.querySelector('.ga-stage-theme-current');
     if (btnLabel) btnLabel.textContent = theme.name;
-    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    // No synthetic window resize here: it re-ran every game's layout code and caused theme-switch lag.
   };
 
   window.gaSetTheme = function (themeId) {
