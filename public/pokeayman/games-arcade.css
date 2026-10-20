@@ -1794,6 +1794,20 @@ html body[data-ga-active-theme="classroom"] .baam-stage-portal .baam-question-he
 html body[data-ga-active-theme="classroom"] .baam-stage-portal .baam-question-player {
   color: #fffbeb !important;
 }
+html body[data-ga-active-theme="classroom"] .baam-stage-portal .baam-choice-btn {
+  background: #173625 !important;
+  border-color: #b5804c !important;
+  color: #fffbeb !important;
+}
+html body[data-ga-active-theme="classroom"] .baam-stage-portal .baam-choice-btn:hover:not(:disabled) {
+  border-color: #facc15 !important;
+  background: #1e3f2c !important;
+}
+html body[data-ga-active-theme="classroom"] .baam-stage-portal .baam-choice-badge {
+  background: rgba(181, 128, 76, 0.28) !important;
+  border-color: #b5804c !important;
+  color: #fde68a !important;
+}
 
 /* Classroom: Listen and Catch & Poké Battle */
 html body > .ga-stage[data-ga-theme="classroom"].lc-stage {
@@ -2303,6 +2317,20 @@ html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-reveal-panel.b
 html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-question-header h3,
 html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-question-player {
   color: #fef3c7 !important;
+}
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-choice-btn {
+  background: #0f291b !important;
+  border-color: #eab308 !important;
+  color: #fef3c7 !important;
+}
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-choice-btn:hover:not(:disabled) {
+  border-color: #fde047 !important;
+  background: #153b26 !important;
+}
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-choice-badge {
+  background: rgba(234, 179, 8, 0.25) !important;
+  border-color: #eab308 !important;
+  color: #fde047 !important;
 }
 
 /* Jungle: Listen and Catch & Poké Battle */
@@ -2830,6 +2858,21 @@ html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-reveal-panel.b
 html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-question-header h3,
 html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-question-player {
   color: #1e1b4b !important;
+}
+html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-choice-btn {
+  background: #ffffff !important;
+  border-color: #6366f1 !important;
+  color: #1e1b4b !important;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.15) !important;
+}
+html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-choice-btn:hover:not(:disabled) {
+  border-color: #4f46e5 !important;
+  background: #f5f3ff !important;
+}
+html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-choice-badge {
+  background: #e0e7ff !important;
+  border-color: #6366f1 !important;
+  color: #4338ca !important;
 }
 
 /* Toybox: Listen and Catch & Poké Battle */
@@ -4185,4 +4228,21 @@ html body.ts-bright .ga-stage.lc-stage:not([data-ga-theme="classic"]):not([data-
 html body.ts-bright .ga-stage.vb-stage .vb-title {
   color: #b45309 !important;
 }
+
+html body.ts-bright .baam-stage-portal .baam-choice-btn {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+html body.ts-bright .baam-stage-portal .baam-choice-btn:hover:not(:disabled) {
+  border-color: #f59e0b !important;
+  background: #f8fafc !important;
+}
+html body.ts-bright .baam-stage-portal .baam-choice-badge {
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  color: #334155 !important;
+}
+
 
