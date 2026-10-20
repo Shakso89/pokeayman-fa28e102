@@ -1683,13 +1683,65 @@ html body > .ga-stage[data-ga-theme="classroom"] .find-me-word {
   border-radius: 10px !important;
   box-shadow: 0 4px 0 #292524 !important;
 }
-html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-body {
-  background: linear-gradient(90deg, transparent 42%, #facc15 42%, #eab308 58%, transparent 58%), linear-gradient(160deg, #dc2626, #991b1b 78%) !important;
+html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-body,
+html body[data-ga-active-theme="classroom"] .baam-giftbox .baam-box-body,
+[data-ga-theme="classroom"] .baam-giftbox .baam-box-body {
+  background:
+    linear-gradient(90deg, transparent 42%, #b45309 42%, #fef08a 44%, #eab308 50%, #fef08a 56%, #b45309 58%, transparent 58%),
+    repeating-linear-gradient(180deg, transparent 0, transparent 12px, rgba(255,255,255,0.07) 12px, rgba(255,255,255,0.07) 14px),
+    linear-gradient(160deg, #234832, #142d20 78%) !important;
   border: 2.5px solid #292524 !important;
+  box-shadow: inset 0 -6px 0 rgba(10,25,18,.5), inset 0 2px 0 rgba(255,255,255,.2), inset 0 0 0 2px #d97706, 0 10px 18px rgba(10,25,18,.5) !important;
 }
-html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-lid {
-  background: linear-gradient(90deg, transparent 42%, #fde047 42%, #facc15 58%, transparent 58%), linear-gradient(180deg, #ef4444, #b91c1c) !important;
+html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-body::before,
+html body[data-ga-active-theme="classroom"] .baam-giftbox .baam-box-body::before,
+[data-ga-theme="classroom"] .baam-giftbox .baam-box-body::before {
+  content: '' !important; position: absolute !important; inset: 3px !important; border-radius: 7px !important;
+  border: 1.5px dashed rgba(254, 240, 138, 0.45) !important;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.3) !important;
+  pointer-events: none !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-lid,
+html body[data-ga-active-theme="classroom"] .baam-giftbox .baam-box-lid,
+[data-ga-theme="classroom"] .baam-giftbox .baam-box-lid {
+  background:
+    linear-gradient(90deg, transparent 42%, #b45309 42%, #fef08a 44%, #eab308 50%, #fef08a 56%, #b45309 58%, transparent 58%),
+    linear-gradient(180deg, #2f5e41, #1b3b28) !important;
   border: 2.5px solid #292524 !important;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.25), 0 4px 8px rgba(10,25,18,.45) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-lid::before,
+html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-lid::after,
+html body[data-ga-active-theme="classroom"] .baam-giftbox .baam-box-lid::before,
+html body[data-ga-active-theme="classroom"] .baam-giftbox .baam-box-lid::after,
+[data-ga-theme="classroom"] .baam-giftbox .baam-box-lid::before,
+[data-ga-theme="classroom"] .baam-giftbox .baam-box-lid::after {
+  border: 3.5px solid #eab308 !important;
+  box-shadow: inset 0 0 0 1px #78350f, 0 2px 4px rgba(0,0,0,.35) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-seal,
+html body[data-ga-active-theme="classroom"] .baam-giftbox .baam-box-seal,
+[data-ga-theme="classroom"] .baam-giftbox .baam-box-seal {
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255,255,255,.45) 0%, transparent 40%),
+    linear-gradient(180deg, #dc2626 0%, #991b1b 44%, #292524 44%, #292524 56%, #fef9c3 56%, #f5f5f4 100%) !important;
+  border: 3px solid #292524 !important;
+  box-shadow: 0 0 0 1.5px #eab308, 0 3px 8px rgba(0,0,0,.5), inset 0 2px 3px rgba(255,255,255,.4) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-seal::after,
+html body[data-ga-active-theme="classroom"] .baam-giftbox .baam-box-seal::after,
+[data-ga-theme="classroom"] .baam-giftbox .baam-box-seal::after {
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #fef08a 65%, #ca8a04 100%) !important;
+  border: 2px solid #292524 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35), inset 0 0 0 1px #fff !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-num,
+html body[data-ga-active-theme="classroom"] .baam-giftbox .baam-box-num,
+[data-ga-theme="classroom"] .baam-giftbox .baam-box-num {
+  background: linear-gradient(135deg, #fef08a, #eab308) !important;
+  color: #1c1917 !important;
+  border: 2px solid #b45309 !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,.45) !important;
 }
 html body[data-ga-active-theme="classroom"] .baam-stage-portal .baam-reveal-panel.baam-question-card {
   background: radial-gradient(circle at 50% 40%, #315e43 0%, #1e3f2c 100%) !important;
@@ -1927,13 +1979,73 @@ html body > .ga-stage[data-ga-theme="jungle"] .find-me-word {
   border-radius: 10px !important;
   box-shadow: 0 4px 0 #271202 !important;
 }
-html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-body {
-  background: linear-gradient(90deg, transparent 42%, #fbbf24 42%, #d97706 58%, transparent 58%), linear-gradient(160deg, #78350f, #451a03 78%) !important;
+html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-body,
+html body[data-ga-active-theme="jungle"] .baam-giftbox .baam-box-body,
+[data-ga-theme="jungle"] .baam-giftbox .baam-box-body {
+  background:
+    linear-gradient(90deg, transparent 41%, #78350f 41%, #fbbf24 45%, #d97706 50%, #f59e0b 55%, #78350f 59%, transparent 59%),
+    repeating-linear-gradient(90deg, transparent 0, transparent 16%, rgba(0,0,0,0.25) 16%, rgba(0,0,0,0.25) 20%),
+    linear-gradient(135deg, rgba(34,197,94,0.18) 0%, transparent 55%),
+    linear-gradient(160deg, #78350f, #451a03 75%) !important;
   border: 2.5px solid #271202 !important;
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.15), inset 0 0 0 2px #d97706, 0 10px 20px rgba(0,0,0,.6) !important;
 }
-html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-lid {
-  background: linear-gradient(90deg, transparent 42%, #fde047 42%, #f59e0b 58%, transparent 58%), linear-gradient(180deg, #92400e, #5c2808) !important;
+html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-body::before,
+html body[data-ga-active-theme="jungle"] .baam-giftbox .baam-box-body::before,
+[data-ga-theme="jungle"] .baam-giftbox .baam-box-body::before {
+  content: '' !important; position: absolute !important; inset: 3px !important; border-radius: 7px !important;
+  border: 1.5px solid rgba(251, 191, 36, 0.4) !important;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4) !important;
+  background:
+    radial-gradient(circle at 10% 10%, #fbbf24 2px, transparent 3px),
+    radial-gradient(circle at 90% 10%, #fbbf24 2px, transparent 3px),
+    radial-gradient(circle at 10% 90%, #fbbf24 2px, transparent 3px),
+    radial-gradient(circle at 90% 90%, #fbbf24 2px, transparent 3px) !important;
+  pointer-events: none !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-lid,
+html body[data-ga-active-theme="jungle"] .baam-giftbox .baam-box-lid,
+[data-ga-theme="jungle"] .baam-giftbox .baam-box-lid {
+  background:
+    linear-gradient(90deg, transparent 41%, #78350f 41%, #fde047 45%, #f59e0b 50%, #d97706 55%, #78350f 59%, transparent 59%),
+    linear-gradient(180deg, #92400e, #5c2808) !important;
   border: 2.5px solid #271202 !important;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.2), 0 5px 8px rgba(0,0,0,.5) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-lid::before,
+html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-lid::after,
+html body[data-ga-active-theme="jungle"] .baam-giftbox .baam-box-lid::before,
+html body[data-ga-active-theme="jungle"] .baam-giftbox .baam-box-lid::after,
+[data-ga-theme="jungle"] .baam-giftbox .baam-box-lid::before,
+[data-ga-theme="jungle"] .baam-giftbox .baam-box-lid::after {
+  border: 4px solid #f59e0b !important;
+  box-shadow: inset 0 0 0 1.5px #78350f, 0 3px 6px rgba(0,0,0,.5) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-seal,
+html body[data-ga-active-theme="jungle"] .baam-giftbox .baam-box-seal,
+[data-ga-theme="jungle"] .baam-giftbox .baam-box-seal {
+  background:
+    radial-gradient(circle at 35% 20%, #ca8a04 0%, #ca8a04 22%, transparent 24%),
+    radial-gradient(circle at 68% 26%, #ca8a04 0%, #ca8a04 18%, transparent 20%),
+    radial-gradient(circle at 35% 25%, rgba(255,255,255,.4) 0%, transparent 40%),
+    linear-gradient(180deg, #16a34a 0%, #15803d 44%, #1c1917 44%, #1c1917 56%, #fef3c7 56%, #e2e8f0 100%) !important;
+  border: 3px solid #1c1917 !important;
+  box-shadow: 0 0 0 1.5px #f59e0b, 0 3px 8px rgba(0,0,0,.6), inset 0 2px 3px rgba(255,255,255,.35) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-seal::after,
+html body[data-ga-active-theme="jungle"] .baam-giftbox .baam-box-seal::after,
+[data-ga-theme="jungle"] .baam-giftbox .baam-box-seal::after {
+  background: radial-gradient(circle at 35% 35%, #fef3c7 0%, #fde047 60%, #ca8a04 100%) !important;
+  border: 2px solid #1c1917 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.45), inset 0 0 0 1px #fff7d6 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-num,
+html body[data-ga-active-theme="jungle"] .baam-giftbox .baam-box-num,
+[data-ga-theme="jungle"] .baam-giftbox .baam-box-num {
+  background: linear-gradient(135deg, #fde047, #d97706) !important;
+  color: #451a03 !important;
+  border: 2px solid #78350f !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,.55) !important;
 }
 html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-reveal-panel.baam-question-card {
   background: radial-gradient(circle at 50% 38%, #1e4b32 0%, #0f291b 100%) !important;
@@ -2193,13 +2305,67 @@ html body > .ga-stage[data-ga-theme="toybox"] .find-me-word {
   border-radius: 999px !important;
   box-shadow: 0 4px 0 #4338ca !important;
 }
-html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-body {
-  background: linear-gradient(90deg, transparent 42%, #38bdf8 42%, #0284c7 58%, transparent 58%), linear-gradient(160deg, #6366f1, #3730a3 78%) !important;
+html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-body,
+html body[data-ga-active-theme="toybox"] .baam-giftbox .baam-box-body,
+[data-ga-theme="toybox"] .baam-giftbox .baam-box-body {
+  background:
+    linear-gradient(90deg, transparent 40%, #0284c7 40%, #38bdf8 44%, #ec4899 50%, #38bdf8 56%, #0284c7 60%, transparent 60%),
+    radial-gradient(circle, rgba(56,189,248,0.3) 1.5px, transparent 2.5px) 0 0 / 11px 11px,
+    linear-gradient(160deg, #4f46e5, #312e81 78%) !important;
   border: 2.5px solid #1e1b4b !important;
+  box-shadow: inset 0 -6px 0 rgba(15,23,42,.6), inset 0 2px 0 rgba(255,255,255,.3), inset 0 0 0 1.5px #38bdf8, 0 0 16px rgba(56,189,248,.35), 0 10px 20px rgba(15,23,42,.55) !important;
 }
-html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-lid {
-  background: linear-gradient(90deg, transparent 42%, #7dd3fc 42%, #38bdf8 58%, transparent 58%), linear-gradient(180deg, #818cf8, #4f46e5) !important;
+html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-body::before,
+html body[data-ga-active-theme="toybox"] .baam-giftbox .baam-box-body::before,
+[data-ga-theme="toybox"] .baam-giftbox .baam-box-body::before {
+  content: '' !important; position: absolute !important; inset: 3px !important; border-radius: 7px !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: inset 0 0 8px rgba(56,189,248,0.2) !important;
+  pointer-events: none !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-lid,
+html body[data-ga-active-theme="toybox"] .baam-giftbox .baam-box-lid,
+[data-ga-theme="toybox"] .baam-giftbox .baam-box-lid {
+  background:
+    linear-gradient(90deg, transparent 40%, #0284c7 40%, #7dd3fc 44%, #f472b6 50%, #7dd3fc 56%, #0284c7 60%, transparent 60%),
+    linear-gradient(180deg, #6366f1, #4338ca) !important;
   border: 2.5px solid #1e1b4b !important;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.4), 0 0 12px rgba(56,189,248,.4), 0 4px 8px rgba(15,23,42,.45) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-lid::before,
+html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-lid::after,
+html body[data-ga-active-theme="toybox"] .baam-giftbox .baam-box-lid::before,
+html body[data-ga-active-theme="toybox"] .baam-giftbox .baam-box-lid::after,
+[data-ga-theme="toybox"] .baam-giftbox .baam-box-lid::before,
+[data-ga-theme="toybox"] .baam-giftbox .baam-box-lid::after {
+  border: 3.5px solid #38bdf8 !important;
+  box-shadow: 0 0 10px rgba(56,189,248,0.8), inset 0 0 6px rgba(56,189,248,0.6) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-seal,
+html body[data-ga-active-theme="toybox"] .baam-giftbox .baam-box-seal,
+[data-ga-theme="toybox"] .baam-giftbox .baam-box-seal {
+  background:
+    radial-gradient(circle at 30% 24%, #facc15 0%, #facc15 14%, transparent 15%),
+    radial-gradient(circle at 70% 24%, #facc15 0%, #facc15 14%, transparent 15%),
+    radial-gradient(circle at 35% 25%, rgba(255,255,255,.45) 0%, transparent 40%),
+    linear-gradient(180deg, #1e1b4b 0%, #0f172a 44%, #020617 44%, #020617 56%, #ffffff 56%, #cbd5e1 100%) !important;
+  border: 3px solid #0f172a !important;
+  box-shadow: 0 0 10px rgba(56,189,248,0.8), 0 3px 8px rgba(0,0,0,0.6), inset 0 2px 3px rgba(255,255,255,0.4) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-seal::after,
+html body[data-ga-active-theme="toybox"] .baam-giftbox .baam-box-seal::after,
+[data-ga-theme="toybox"] .baam-giftbox .baam-box-seal::after {
+  background: radial-gradient(circle at 40% 40%, #ffffff 0%, #38bdf8 65%, #0284c7 100%) !important;
+  border: 2px solid #0f172a !important;
+  box-shadow: 0 0 8px rgba(56,189,248,0.9), 0 1px 3px rgba(0,0,0,.5) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-num,
+html body[data-ga-active-theme="toybox"] .baam-giftbox .baam-box-num,
+[data-ga-theme="toybox"] .baam-giftbox .baam-box-num {
+  background: linear-gradient(135deg, #38bdf8, #818cf8) !important;
+  color: #0f172a !important;
+  border: 2px solid #a5f3fc !important;
+  box-shadow: 0 0 10px rgba(56,189,248,0.6), 0 3px 8px rgba(0,0,0,0.4) !important;
 }
 html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-reveal-panel.baam-question-card {
   background: linear-gradient(180deg, #ffffff 0%, #eef2ff 100%) !important;
@@ -2396,6 +2562,67 @@ html body > .ga-stage[data-ga-theme] .hangman-letter.is-wrong {
 html body > .ga-stage[data-ga-theme] .hangman-letter.is-wrong .letter-char {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Classic Theme - Surprise Boxes */
+html body > .ga-stage[data-ga-theme="classic"] .baam-giftbox .baam-box-body,
+html body[data-ga-active-theme="classic"] .baam-giftbox .baam-box-body,
+[data-ga-theme="classic"] .baam-giftbox .baam-box-body {
+  background:
+    linear-gradient(90deg, transparent 42%, #b45309 42%, #fde047 45%, #ffcb05 50%, #f59e0b 55%, #b45309 58%, transparent 58%),
+    repeating-linear-gradient(180deg, transparent 0, transparent 14px, rgba(0,0,0,0.08) 14px, rgba(0,0,0,0.08) 16px),
+    linear-gradient(160deg, #ef4444, #b91c1c 72%) !important;
+  border: 2px solid #991b1b !important;
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.35), inset 0 0 0 1.5px rgba(255,203,5,.45), 0 10px 18px rgba(2,6,23,.5) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .baam-giftbox .baam-box-body::before,
+html body[data-ga-active-theme="classic"] .baam-giftbox .baam-box-body::before,
+[data-ga-theme="classic"] .baam-giftbox .baam-box-body::before {
+  content: '' !important; position: absolute !important; inset: 3px !important; border-radius: 7px !important;
+  border: 1px solid rgba(255, 203, 5, 0.35) !important;
+  pointer-events: none !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .baam-giftbox .baam-box-lid,
+html body[data-ga-active-theme="classic"] .baam-giftbox .baam-box-lid,
+[data-ga-theme="classic"] .baam-giftbox .baam-box-lid {
+  background:
+    linear-gradient(90deg, transparent 42%, #b45309 42%, #fde047 45%, #ffd84d 50%, #f59e0b 55%, #b45309 58%, transparent 58%),
+    linear-gradient(180deg, #f87171, #dc2626) !important;
+  border: 2px solid #991b1b !important;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.4), 0 4px 7px rgba(0,0,0,.35) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .baam-giftbox .baam-box-lid::before,
+html body > .ga-stage[data-ga-theme="classic"] .baam-giftbox .baam-box-lid::after,
+html body[data-ga-active-theme="classic"] .baam-giftbox .baam-box-lid::before,
+html body[data-ga-active-theme="classic"] .baam-giftbox .baam-box-lid::after,
+[data-ga-theme="classic"] .baam-giftbox .baam-box-lid::before,
+[data-ga-theme="classic"] .baam-giftbox .baam-box-lid::after {
+  border: 4px solid #ffcb05 !important;
+  box-shadow: inset 0 0 0 1px #b45309, 0 2px 5px rgba(0,0,0,.3) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .baam-giftbox .baam-box-seal,
+html body[data-ga-active-theme="classic"] .baam-giftbox .baam-box-seal,
+[data-ga-theme="classic"] .baam-giftbox .baam-box-seal {
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255,255,255,.5) 0%, transparent 40%),
+    linear-gradient(180deg, #ef4444 0%, #dc2626 44%, #1e293b 44%, #1e293b 56%, #f8fafc 56%, #e2e8f0 100%) !important;
+  border: 3px solid #1e293b !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,.45), inset 0 2px 3px rgba(255,255,255,.5) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .baam-giftbox .baam-box-seal::after,
+html body[data-ga-active-theme="classic"] .baam-giftbox .baam-box-seal::after,
+[data-ga-theme="classic"] .baam-giftbox .baam-box-seal::after {
+  background: radial-gradient(circle at 38% 38%, #ffffff 0%, #f1f5f9 60%, #cbd5e1 100%) !important;
+  border: 2.5px solid #1e293b !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.9) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .baam-giftbox .baam-box-num,
+html body[data-ga-active-theme="classic"] .baam-giftbox .baam-box-num,
+[data-ga-theme="classic"] .baam-giftbox .baam-box-num {
+  background: linear-gradient(135deg, #fde68a, #f59e0b) !important;
+  color: #1e1b4b !important;
+  border: 2px solid #fff7d6 !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,.4) !important;
 }
 
 /* Classic Theme & Universal Flip Memory Cards */

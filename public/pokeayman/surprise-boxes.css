@@ -9,36 +9,55 @@
 .baam-giftbox .baam-box-body {
   position: absolute; left: 6%; right: 6%; top: 30%; bottom: 4%; border-radius: 10px;
   background:
-    linear-gradient(90deg, transparent 44%, #ffcb05 44%, #ffcb05 56%, transparent 56%),
-    linear-gradient(160deg, #ef4444, #b91c1c 70%);
-  box-shadow: inset 0 -6px 0 rgba(0,0,0,.25), inset 0 2px 0 rgba(255,255,255,.25), 0 10px 18px rgba(2,6,23,.45);
+    linear-gradient(90deg, transparent 42%, #b45309 42%, #fde047 45%, #ffcb05 50%, #f59e0b 55%, #b45309 58%, transparent 58%),
+    repeating-linear-gradient(180deg, transparent 0, transparent 14px, rgba(0,0,0,0.08) 14px, rgba(0,0,0,0.08) 16px),
+    linear-gradient(160deg, #ef4444, #b91c1c 72%);
+  border: 2px solid #991b1b;
+  box-shadow: inset 0 -6px 0 rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.35), inset 0 0 0 1.5px rgba(255,203,5,.4), 0 10px 18px rgba(2,6,23,.5);
+}
+.baam-giftbox .baam-box-body::before {
+  content: ''; position: absolute; inset: 2px; border-radius: 7px; pointer-events: none;
+  border: 1px solid rgba(255, 203, 5, 0.35);
 }
 .baam-giftbox .baam-box-lid {
   position: absolute; left: 0; right: 0; top: 12%; height: 24%; border-radius: 8px; z-index: 2;
   background:
-    linear-gradient(90deg, transparent 44%, #ffd84d 44%, #ffd84d 56%, transparent 56%),
+    linear-gradient(90deg, transparent 42%, #b45309 42%, #fde047 45%, #ffd84d 50%, #f59e0b 55%, #b45309 58%, transparent 58%),
     linear-gradient(180deg, #f87171, #dc2626);
-  box-shadow: inset 0 2px 0 rgba(255,255,255,.35), 0 4px 6px rgba(0,0,0,.3);
+  border: 2px solid #991b1b;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.4), 0 4px 7px rgba(0,0,0,.35);
   transform-origin: 10% 100%; transition: transform .45s cubic-bezier(.2,.9,.3,1.4);
 }
 .baam-giftbox .baam-box-lid::before, .baam-giftbox .baam-box-lid::after {
   content: ''; position: absolute; top: -55%; width: 26%; height: 70%;
   border: 4px solid #ffcb05; border-radius: 50% 50% 0 50%; left: 24%;
+  box-shadow: inset 0 0 0 1px #b45309, 0 2px 5px rgba(0,0,0,.3);
 }
 .baam-giftbox .baam-box-lid::after { left: auto; right: 24%; border-radius: 50% 50% 50% 0; }
 .baam-giftbox .baam-box-seal {
   position: absolute; left: 50%; top: 54%; width: 34%; aspect-ratio: 1; max-width: 46px;
   transform: translate(-50%, -50%); border-radius: 50%;
-  background: linear-gradient(#f8fafc 0 46%, #111827 46% 54%, #f8fafc 54%);
-  border: 3px solid #111827; box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255,255,255,.45) 0%, transparent 40%),
+    linear-gradient(180deg, #ef4444 0%, #dc2626 44%, #1e293b 44%, #1e293b 56%, #f8fafc 56%, #e2e8f0 100%);
+  border: 3px solid #1e293b;
+  box-shadow: 0 3px 8px rgba(0,0,0,.45), inset 0 -2px 4px rgba(0,0,0,.25), inset 0 2px 3px rgba(255,255,255,.5);
+  overflow: hidden;
+}
+.baam-giftbox .baam-box-seal::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 50% 18%, rgba(255,255,255,0.4) 0%, transparent 52%);
 }
 .baam-giftbox .baam-box-seal::after {
-  content: ''; position: absolute; inset: 34%; border-radius: 50%; background: #fff; border: 2px solid #111827;
+  content: ''; position: absolute; inset: 28%; border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #ffffff 0%, #f1f5f9 60%, #cbd5e1 100%);
+  border: 2.5px solid #1e293b;
+  box-shadow: 0 1px 3px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.9);
 }
 .baam-giftbox .baam-box-num {
   position: absolute; z-index: 3; top: 2%; right: 4%; min-width: 1.9rem; height: 1.9rem; padding: 0 .4rem;
   display: grid; place-items: center; border-radius: 999px;
-  background: linear-gradient(#fde68a, #f59e0b); color: #1e1b4b; font-weight: 950; font-size: 1rem;
+  background: linear-gradient(135deg, #fde68a, #f59e0b); color: #1e1b4b; font-weight: 950; font-size: 1rem;
   border: 2px solid #fff7d6; box-shadow: 0 3px 8px rgba(0,0,0,.4);
 }
 .surprise-boxes-game .baam-giftbox:hover:not(:disabled) { transform: translateY(-4px) scale(1.04); filter: drop-shadow(0 0 14px rgba(255,203,5,.55)); }
