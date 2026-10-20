@@ -17396,7 +17396,6 @@ function chooseGamePlayers(listName, nextStep) {
     if (best) best.click();
     else {
       selectedMemoryDifficulty = null;
-      modal.querySelector('.memory-level-option')?.insertAdjacentHTML('afterend', '');
       showToast?.(`This list has only ${memoryWordCount} words. Memory Flip needs at least 5.`, 'error');
     }
   }
