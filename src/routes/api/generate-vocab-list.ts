@@ -222,13 +222,13 @@ ${promptList}`;
               let sentence = "";
 
               if (/^(cat|dog|bird|fish|lion|tiger|bear|horse|monkey|cow|pig|rabbit|duck|frog|elephant|giraffe|zebra|puppy|kitten|wolf|fox|deer|sheep|mouse|turtle)$/.test(lw)) {
-                sentence = animalTemplates[idx % animalTemplates.length](w);
+                sentence = animalTemplates[idx % animalTemplates.length]!(w);
               } else if (/^(apple|banana|orange|grape|fruit|bread|pizza|cake|cookie|milk|water|rice|cheese|berry|mango|soup|sandwich|juice|egg|meat)$/.test(lw)) {
-                sentence = foodTemplates[idx % foodTemplates.length](w);
+                sentence = foodTemplates[idx % foodTemplates.length]!(w);
               } else if (/^(red|blue|green|yellow|pink|purple|orange|white|black|brown|golden|gray|grey)$/.test(lw)) {
-                sentence = colorTemplates[idx % colorTemplates.length](w);
+                sentence = colorTemplates[idx % colorTemplates.length]!(w);
               } else {
-                sentence = objectTemplates[idx % objectTemplates.length](w);
+                sentence = objectTemplates[idx % objectTemplates.length]!(w);
               }
               return { word: w, sentence };
             });
