@@ -819,20 +819,41 @@
     const className = typeof navClass !== 'undefined' ? navClass : '';
     const roster = school && className && typeof getStudents === 'function' ? getStudents(school, className).filter(record => record.student_name) : [];
     if (!roster.length) return toast('Open a class first to choose a student for Listen and Catch.');
+    const selectedThemeId = window.gaGetTheme?.() || 'classroom';
+    const themes = window.gaThemes || [];
+    const selectedTheme = themes.find(t => t.id === selectedThemeId) || { name: 'Classroom', subtitle: 'Poké Academy & chalkboard' };
     const picker = document.createElement('div'); picker.className = 'lc-stage'; picker.setAttribute('role', 'dialog'); picker.setAttribute('aria-modal', 'true'); picker.setAttribute('aria-label', 'Choose student');
-    picker.innerHTML = `<section class="lc-picker"><header><div><span>CLASS GAME</span><h2>Who is catching?</h2></div><button type="button" data-lcpick="close" aria-label="Close">×</button></header><p>Catch Ball rewards and Pokémon collection progress will be saved to their account.</p><div class="lc-roster">${roster.map((record,index)=>`<button type="button" data-lcpick="${index}">${esc(record.student_name)}</button>`).join('')}</div></section>`;
+    picker.innerHTML = `<section class="lc-picker"><header><div><span>CLASS GAME</span><h2>Who is catching?</h2></div><button type="button" data-lcpick="close" aria-label="Close">×</button></header><p>Catch Ball rewards and Pokémon collection progress will be saved to their account.</p>
+    ${typeof window.renderThemeCardsMarkup === 'function' ? `<div class="ga-theme-picker ga-round-setting" aria-label="Visual style" style="margin: 12px 0 16px;"><div class="ga-theme-picker-head"><h3>Visual style</h3><span class="ga-theme-active-label">${esc(selectedTheme.name)} · ${esc(selectedTheme.subtitle)}</span></div><div class="ga-theme-grid ga-theme-grid-compact" role="radiogroup" aria-label="Choose visual style">${window.renderThemeCardsMarkup(selectedThemeId)}</div></div>` : ''}
+    <div class="lc-roster">${roster.map((record,index)=>`<button type="button" data-lcpick="${index}">${esc(record.student_name)}</button>`).join('')}</div></section>`;
     document.body.appendChild(picker);
-    picker.addEventListener('click', event => { const button=event.target.closest('[data-lcpick]');if(!button)return;const choice=button.dataset.lcpick;picker.remove();if(choice==='close')return;const record=roster[Number(choice)];launchForStudent(listName,{...record,school_name:record.school_name||school,class_name:record.class_name||className}); });
+    picker.addEventListener('click', event => {
+      const card = event.target.closest('[data-ga-theme-choice]');
+      if (card) {
+        window.gaSetTheme?.(card.dataset.gaThemeChoice);
+        return;
+      }
+      const button=event.target.closest('[data-lcpick]');if(!button)return;const choice=button.dataset.lcpick;picker.remove();if(choice==='close')return;const record=roster[Number(choice)];launchForStudent(listName,{...record,school_name:record.school_name||school,class_name:record.class_name||className});
+    });
   }
-  window.startListenCatch = function (listName) {
+  window.startListenCatch = function startListenCatch(listName, studentRecord) {
     if (typeof window.canUseProGames === 'function' && !window.canUseProGames()) { window.requireProGame?.('Listen and Catch'); return; }
+    if (studentRecord) {
+      return launchForStudent(listName, studentRecord);
+    }
     if (currentRole === 'student') {
       const record = typeof getCurrentStudentRecord === 'function' ? getCurrentStudentRecord() : null;
       if (!record) return toast('Signed-in student was not found.');
       try { return launchForStudent(listName, record); }
       catch (error) { console.error('Listen and Catch could not start:', error); window.__listenCatchDiagnostics = { role: currentRole, error: String(error?.message || error), launched: false }; return toast('Listen and Catch could not start. Refresh the page and try again.'); }
     }
-    if (currentRole === 'teacher') return chooseStudent(listName);
+    if (currentRole === 'teacher') {
+      const activeStudent = (typeof activeGamePlayers !== 'undefined' && activeGamePlayers?.[0]) ? activeGamePlayers[0] : null;
+      if (activeStudent) {
+        return launchForStudent(listName, { ...activeStudent, school_name: activeStudent.school_name || (typeof navSchool !== 'undefined' ? navSchool : ''), class_name: activeStudent.class_name || (typeof navClass !== 'undefined' ? navClass : '') });
+      }
+      return chooseStudent(listName);
+    }
     toast('Sign in as a student or teacher to play.');
   };
   function catchdexCard(state, compact = false) {

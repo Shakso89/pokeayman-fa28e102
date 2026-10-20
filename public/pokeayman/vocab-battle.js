@@ -444,15 +444,24 @@
     root.className = 'vb-stage vb-picker-stage';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', 'Choose a player');
+    const selectedThemeId = window.gaGetTheme?.() || 'classroom';
+    const themes = window.gaThemes || [];
+    const selectedTheme = themes.find(t => t.id === selectedThemeId) || { name: 'Classroom', subtitle: 'Poké Academy & chalkboard' };
     root.innerHTML = `
       <header class="vb-head"><span class="vb-title">⚔️ Choose who battles</span><button type="button" class="vb-close" data-pick="close">✕ Close</button></header>
       <div class="vb-picker">
         <p class="vb-picker-sub">${roster.length ? `Students in ${esc(cls)}. If they win, you approve or deny the Pokémon (your credits pay for it).` : 'No students in the current class. Open a class first, or practise on your own.'}</p>
+        ${typeof window.renderThemeCardsMarkup === 'function' ? `<div class="ga-theme-picker ga-round-setting" aria-label="Visual style" style="margin: 12px 0 16px;"><div class="ga-theme-picker-head"><h3>Visual style</h3><span class="ga-theme-active-label">${esc(selectedTheme.name)} · ${esc(selectedTheme.subtitle)}</span></div><div class="ga-theme-grid ga-theme-grid-compact" role="radiogroup" aria-label="Choose visual style">${window.renderThemeCardsMarkup(selectedThemeId)}</div></div>` : ''}
         <div class="vb-picker-grid">${roster.map((st, i) => `<button type="button" class="vb-picker-btn" data-pick="${i}">${esc(st.student_name)}</button>`).join('')}</div>
         <button type="button" class="vb-btn vb-btn-ghost" data-pick="practice">Practise myself (no claim)</button>
       </div>`;
     document.body.appendChild(root);
     root.addEventListener('click', (e) => {
+      const card = e.target.closest('[data-ga-theme-choice]');
+      if (card) {
+        window.gaSetTheme?.(card.dataset.gaThemeChoice);
+        return;
+      }
       const b = e.target.closest('[data-pick]');
       if (!b) return;
       const v = b.dataset.pick;
@@ -475,9 +484,18 @@
   }
   window.closeVocabBattle = closeBattle;
 
-  window.startVocabBattle = function (listName) {
+  window.startVocabBattle = function startVocabBattle(listName, studentRecord) {
     if (!window.canUseProGames?.()) { window.requireProGame?.('Poké Battle'); return; }
-    if (currentRole !== 'student') return openPlayerPicker(listName);
+    if (studentRecord) {
+      return launchBattle(listName, studentRecord);
+    }
+    if (currentRole !== 'student') {
+      const activeStudent = (typeof activeGamePlayers !== 'undefined' && activeGamePlayers?.[0]) ? activeGamePlayers[0] : null;
+      if (activeStudent) {
+        return launchBattle(listName, { ...activeStudent, school_name: activeStudent.school_name || (typeof navSchool !== 'undefined' ? navSchool : ''), class_name: activeStudent.class_name || (typeof navClass !== 'undefined' ? navClass : ''), __teacherLed: true });
+      }
+      return openPlayerPicker(listName);
+    }
     const student = ((typeof getStudentRecordByStableId === 'function' && currentStudentRecordId && getStudentRecordByStableId(currentStudentRecordId))
       || getAllStudents().find((s) => s.student_name === currentStudent));
     if (!student) { toast('Signed-in student was not found.'); return; }

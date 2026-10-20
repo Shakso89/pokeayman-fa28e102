@@ -743,6 +743,7 @@
       </button>`;
     }).join('');
   }
+  window.renderThemeCardsMarkup = renderThemeCardsMarkup;
 
   window.pendingChosenGame = null;
   window.arcadeOpen = true;
@@ -786,20 +787,14 @@
       else toast(g.name + ' requires Pro access');
       return;
     }
-    if (g.fn === 'startVocabBattle') {
-      window.startVocabBattle(list);
-    } else if (g.fn === 'startListenCatch') {
-      window.startListenCatch(list);
+    let fn = window[g.fn];
+    if (typeof fn !== 'function') {
+      try { fn = eval(g.fn); } catch (e) {}
+    }
+    if (typeof fn === 'function') {
+      chooseGamePlayers(list, fn);
     } else {
-      let fn = window[g.fn];
-      if (typeof fn !== 'function') {
-        try { fn = eval(g.fn); } catch (e) {}
-      }
-      if (typeof fn === 'function') {
-        chooseGamePlayers(list, fn);
-      } else {
-        toast('Cannot launch ' + g.name);
-      }
+      toast('Cannot launch ' + g.name);
     }
   };
 
@@ -834,10 +829,46 @@
   };
 
   window.gaStudentSetup = function (listName, fnName) {
-    const game = GAMES.find(item => item.fn === fnName && !item.teacherOnly);
+    const resolvedFnName = fnName || (window.pendingChosenGame ? window.pendingChosenGame.fn : '');
+    const game = GAMES.find(item => item.fn === resolvedFnName && !item.teacherOnly);
     if (!game) return;
-    if (fnName === 'startVocabBattle') { window.startVocabBattle(listName); return; }
-    if (fnName === 'startListenCatch') { window.startListenCatch(listName); return; }
+    if (resolvedFnName === 'startVocabBattle' || resolvedFnName === 'startListenCatch') {
+      const area = document.getElementById('student-tab-games');
+      if (!area) return;
+      area.querySelectorAll(':scope > .game-inline-view').forEach(view => view.remove());
+      const hub = area.querySelector(':scope > .glass-container');
+      if (hub) hub.hidden = true;
+      const selectedThemeId = window.gaGetTheme();
+      const selectedTheme = GAME_THEMES.find(t => t.id === selectedThemeId) || GAME_THEMES[0];
+      const panel = document.createElement('section');
+      panel.className = 'game-inline-view ga-student-setup ga-hub';
+      panel.setAttribute('aria-label', `${game.name} visual style and setup`);
+      panel.innerHTML = `<header class="ga-hub-head"><h2>${game.icon} ${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header>
+        <section class="ga-theme-picker ga-round-setting" aria-label="Visual style">
+          <div class="ga-theme-picker-head">
+            <h3>Visual style</h3>
+            <span class="ga-theme-active-label" aria-live="polite">${esc(selectedTheme.name)} · ${esc(selectedTheme.subtitle)}</span>
+          </div>
+          <div class="ga-theme-grid" role="radiogroup" aria-label="Choose visual style">${renderThemeCardsMarkup(selectedTheme.id)}</div>
+        </section>
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+          <button type="button" class="btn-primary ga-student-start-btn" style="padding: 0.75rem 1.75rem; font-size: 1rem; font-weight: 800;">Start ${esc(game.name)} →</button>
+        </div>`;
+      panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
+      panel.addEventListener('click', event => {
+        const card = event.target.closest('[data-ga-theme-choice]');
+        if (card) {
+          window.gaSetTheme(card.dataset.gaThemeChoice);
+        }
+      });
+      panel.querySelector('.ga-student-start-btn').addEventListener('click', () => {
+        panel.remove();
+        if (resolvedFnName === 'startVocabBattle') window.startVocabBattle(listName);
+        else window.startListenCatch(listName);
+      });
+      area.appendChild(panel);
+      return;
+    }
     const pictured = fnName === 'chooseMatchWordCount' || fnName === 'chooseFindMeScore';
     const words = getGameWords(listName, true).filter(word => String(word.vocab_word || '').trim() && (!pictured || String(word.vocab_image || '').trim()));
     const area = document.getElementById('student-tab-games');
@@ -999,7 +1030,8 @@
 
   window.gaEnhanceLobby = function (modal, fnName, refresh) {
     if (modal.classList.contains('ga-lobby')) return;
-    const game = GAMES.find(g => g.fn === fnName);
+    const resolvedFnName = fnName || (window.pendingChosenGame ? window.pendingChosenGame.fn : '');
+    const game = GAMES.find(g => g.fn === resolvedFnName);
     modal.classList.add('ga-lobby');
     const h2 = modal.querySelector('h2');
     if (h2 && game) h2.innerHTML = `<span class="ga-lobby-icon" aria-hidden="true">${game.icon}</span> ${esc(game.name)}`;
@@ -1012,17 +1044,38 @@
     const next = modal.querySelector('#game-players-next');
     const cancel = modal.querySelector('#game-players-cancel');
     const error = modal.querySelector('#game-player-error');
-    const requiresTwoPlayers = fnName === 'chooseBaamboozlePowerUps';
+    const requiresTwoPlayers = resolvedFnName === 'chooseBaamboozlePowerUps';
+    const isSoloGame = resolvedFnName === 'startListenCatch' || resolvedFnName === 'startVocabBattle';
     const footer = next?.parentElement;
     if (!root || !footer) return;
     const players = document.createElement('section');
     players.className = 'ga-players-section';
     const bar = document.createElement('div');
     bar.className = 'ga-quick';
-    bar.innerHTML = `<div class="ga-player-heading"><h3>Players</h3><span class="ga-player-count" aria-live="polite">0 / 4 selected</span></div>
-      <div class="ga-pick-tools"><select aria-label="Random player count">${[1, 2, 3, 4].filter(n => n <= checks.length).map(n => `<option value="${n}" ${n === Math.min(2, checks.length) ? 'selected' : ''}>Random ${n}</option>`).join('')}</select><button type="button" data-q="random" aria-label="Pick random players" title="Pick random players">⤨</button><button type="button" data-q="clear" aria-label="Clear players" title="Clear players">×</button></div>`;
+    if (isSoloGame) {
+      bar.innerHTML = `<div class="ga-player-heading"><h3>Player</h3><span class="ga-player-count" aria-live="polite">0 / 1 selected</span></div>
+        <div class="ga-pick-tools"><button type="button" data-q="random" aria-label="Pick random student" title="Pick random student">⤨ Random</button><button type="button" data-q="clear" aria-label="Clear player" title="Clear player">×</button></div>`;
+    } else {
+      bar.innerHTML = `<div class="ga-player-heading"><h3>Players</h3><span class="ga-player-count" aria-live="polite">0 / 4 selected</span></div>
+        <div class="ga-pick-tools"><select aria-label="Random player count">${[1, 2, 3, 4].filter(n => n <= checks.length).map(n => `<option value="${n}" ${n === Math.min(2, checks.length) ? 'selected' : ''}>Random ${n}</option>`).join('')}</select><button type="button" data-q="random" aria-label="Pick random players" title="Pick random players">⤨</button><button type="button" data-q="clear" aria-label="Clear players" title="Clear players">×</button></div>`;
+    }
     const update = () => {
       const count = checks.filter(c => c.checked).length;
+      if (isSoloGame) {
+        const sel = checks.find(c => c.checked);
+        bar.querySelector('.ga-player-count').textContent = sel ? `1 / 1 selected · ${sel.value}` : `0 / 1 selected · ${checks.length} in class`;
+        if (next) next.textContent = sel ? `Start game · ${sel.value} →` : 'Select a student to play →';
+        const blocked = !sel;
+        if (next) {
+          next.disabled = blocked;
+          next.setAttribute('aria-disabled', String(blocked));
+        }
+        if (error) {
+          error.textContent = blocked ? 'Select a student to play.' : '';
+          error.classList.toggle('hidden', !blocked);
+        }
+        return;
+      }
       bar.querySelector('.ga-player-count').textContent = `${count} / 4 selected · ${checks.length} in class`;
       if (next) next.textContent = count ? `Start game · ${count} player${count === 1 ? '' : 's'} →` : 'Start game →';
       if (requiresTwoPlayers) {
@@ -1037,12 +1090,37 @@
         }
       }
     };
-    const set = picks => { checks.forEach(c => { c.disabled = false; c.checked = picks.includes(c); }); refresh?.(); update(); };
+    const set = picks => {
+      checks.forEach(c => {
+        c.disabled = false;
+        c.checked = picks.includes(c);
+      });
+      refresh?.();
+      update();
+    };
+    if (isSoloGame) {
+      checks.forEach(c => {
+        c.addEventListener('change', () => {
+          if (c.checked) {
+            checks.forEach(other => { if (other !== c) other.checked = false; });
+            refresh?.();
+            update();
+          }
+        });
+      });
+      if (!checks.some(c => c.checked) && checks[0]) {
+        checks[0].checked = true;
+      }
+    }
     bar.addEventListener('click', e => {
       const q = e.target.closest('button')?.dataset.q; if (!q) return;
       const shuffled = [...checks];
       for (let i = shuffled.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
-      set(q === 'random' ? shuffled.slice(0, Number(bar.querySelector('select').value)) : []);
+      if (isSoloGame) {
+        set(q === 'random' && shuffled[0] ? [shuffled[0]] : []);
+      } else {
+        set(q === 'random' ? shuffled.slice(0, Number(bar.querySelector('select')?.value || 1)) : []);
+      }
     });
     list.before(players);
     players.append(bar, list);
@@ -1090,7 +1168,11 @@
     modal.addEventListener('click', () => queueMicrotask(updateOptions));
     updateOptions();
     footer.classList.add('ga-lobby-footer');
-    if (cancel) { cancel.textContent = '← Games'; footer.prepend(cancel); }
+    if (cancel) {
+      cancel.textContent = '← Games';
+      footer.prepend(cancel);
+      cancel.addEventListener('click', () => { window.gaBackToArcade?.(); });
+    }
     error?.setAttribute('role', 'alert');
     update();
   };
