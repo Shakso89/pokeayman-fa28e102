@@ -2,11 +2,12 @@
 (function () {
   const PAIRS = [['new-vocab-sentence', 'new-vocab-word'], ['edit-word-sentence', 'edit-word-text']];
   const style = document.createElement('style');
-  style.textContent = `.sg-wrap{display:flex;gap:6px;align-items:stretch}.sg-wrap>input{flex:1;min-width:0}
-  .sg-btn{flex:none;padding:0 12px;border-radius:6px;font-weight:800;font-size:13px;white-space:nowrap;cursor:pointer;
-  background:var(--ts-yellow,#facc15);color:var(--ts-action-ink,#1e1b4b);border:1px solid transparent;margin-top:6px}
+  style.textContent = `.sg-wrap{display:flex;gap:8px;align-items:stretch;width:100%}.sg-wrap>input{flex:1 1 0%;min-width:0}
+  .sg-btn{flex:none;padding:0 16px;border-radius:0.75rem;font-weight:800;font-size:13px;white-space:nowrap;cursor:pointer;
+  background:#ffcb05;color:#0f172a;border:1px solid transparent;margin-top:0;display:inline-flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 6px rgba(0,0,0,0.2);transition:all 0.15s ease}
   #edit-word-sentence + .sg-btn,.sg-wrap .sg-btn.sg-edit{margin-top:0}
-  .sg-btn:disabled{opacity:.6;cursor:wait}.sg-btn:hover:not(:disabled){filter:brightness(1.08)}`;
+  .sg-btn:disabled{opacity:.6;cursor:wait}.sg-btn:hover:not(:disabled){background:#ffd84d;filter:brightness(1.05);transform:translateY(-1px)}`;
   document.head.appendChild(style);
 
   async function generate(input, wordInput, btn) {
