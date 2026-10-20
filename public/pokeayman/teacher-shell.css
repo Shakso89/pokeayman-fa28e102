@@ -12,6 +12,11 @@
 }
 #ts-sidebar, #ts-rail { display: none; }
 #ts-sidebar-toggle { display: none; }
+body.ga-playing #ts-sidebar,
+body.ga-playing #ts-rail,
+body.ga-playing #ts-sidebar-toggle {
+  display: none !important;
+}
 @media (min-width: 901px) {
   body.ts-on #ts-sidebar-toggle { display: grid; place-items: center; position: fixed; top: 16px; left: calc(var(--ts-w) - 14px); z-index: 60; width: 30px; height: 34px; border: 1px solid var(--ts-border); border-radius: 6px; background: var(--ts-surface); color: var(--ts-ink); font-size: 24px; cursor: pointer; }
   body.ts-on.ts-collapsed #ts-sidebar { display: none; }

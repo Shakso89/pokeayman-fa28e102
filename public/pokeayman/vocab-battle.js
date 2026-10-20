@@ -442,6 +442,7 @@
     }).sort((a, b) => String(a.student_name).localeCompare(String(b.student_name)));
     const root = document.createElement('div');
     root.className = 'vb-stage vb-picker-stage';
+    root.dataset.inGamesHub = 'true';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', 'Choose a player');
     const selectedThemeId = window.gaGetTheme?.() || 'classroom';
@@ -517,8 +518,10 @@
     if (!foe) { toast('No affordable Pokémon in the shop right now. Ask your teacher to stock the shop!'); return; }
     closeBattle();
     const root = document.createElement('div');
-    root.className = 'vb-stage game-popup-modal';
+    root.className = 'vb-stage ga-stage';
+    root.dataset.inGamesHub = 'true';
     root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-modal', 'true');
     root.setAttribute('aria-label', 'Poké Battle');
     const foeMaxHp = Number(foe.shop_pokemon_hp) || (Number(foe.shop_pokemon_power) || 20) + 30;
     const partner = battlePartner(student);

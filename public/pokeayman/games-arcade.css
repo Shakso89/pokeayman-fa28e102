@@ -250,6 +250,22 @@ body { --ga-stage-bg: var(--ts-bg, #0b1220); --ga-stage-surface: var(--ts-surfac
 [id$="games-list-selector"][hidden], [id$="games-options-container"][hidden] { display: none !important; }
 body.ga-playing { overflow: hidden !important; }
 body.ga-playing > .sfx-toggle { display: none !important; }
+body.ga-playing #ts-sidebar,
+body.ga-playing #ts-rail,
+body.ga-playing #ts-sidebar-toggle {
+  display: none !important;
+}
+.ga-stage.lc-stage,
+.ga-stage.vb-stage,
+.ga-stage.cdx-stage {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147482000 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  display: block !important;
+  overflow: hidden !important;
+}
 body > .ga-stage .ga-stage-wrapper { display: flex !important; flex-direction: column !important; width: 100% !important; height: 100% !important; min-height: 0 !important; }
 body > .ga-stage .game-player-score { display: block !important; }
 body > .ga-stage .game-player-card > * { order: initial !important; }

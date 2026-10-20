@@ -6056,7 +6056,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   function launchGame(listName, words, record) {
     closeGame();
     const root = document.createElement('div');
-    root.className = 'lc-stage game-popup-modal';
+    root.className = 'lc-stage ga-stage';
+    root.dataset.inGamesHub = 'true';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-modal', 'true');
     root.setAttribute('aria-label', 'Listen and Catch');
@@ -6127,7 +6128,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       try { return launchForStudent(listName, record); }
       catch (error) { console.error('Listen and Catch could not start:', error); window.__listenCatchDiagnostics = { role: currentRole, error: String(error?.message || error), launched: false }; return toast('Listen and Catch could not start. Refresh the page and try again.'); }
     }
-    if (currentRole === 'teacher') {
+    if (currentRole === 'teacher' || currentRole === 'admin' || (typeof activeGamePlayers !== 'undefined' && activeGamePlayers?.[0])) {
       const activeStudent = (typeof activeGamePlayers !== 'undefined' && activeGamePlayers?.[0]) ? activeGamePlayers[0] : null;
       if (activeStudent) {
         return launchForStudent(listName, { ...activeStudent, school_name: activeStudent.school_name || (typeof navSchool !== 'undefined' ? navSchool : ''), class_name: activeStudent.class_name || (typeof navClass !== 'undefined' ? navClass : '') });
@@ -6232,7 +6233,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
     const stage = document.createElement('div');
     stage.id = 'catchdex-modal';
-    stage.className = 'cdx-stage';
+    stage.className = 'cdx-stage ga-stage';
+    stage.dataset.inGamesHub = 'true';
     stage.setAttribute('role', 'dialog');
     stage.setAttribute('aria-modal', 'true');
     stage.setAttribute('aria-label', 'Catchdex');
@@ -17056,7 +17058,7 @@ inlineGamePinnedLayoutStyle.textContent = `
 document.head.appendChild(inlineGamePinnedLayoutStyle);
 const gamesAreaObserver = new MutationObserver(records => {
   for (const record of records) for (const node of record.addedNodes) {
-    if (!(node instanceof HTMLElement) || node.dataset.inGamesHub === 'true') continue;
+    if (!(node instanceof HTMLElement) || node.dataset.inGamesHub === 'true' || node.matches('.ga-stage, .lc-stage, .vb-stage, .cdx-stage') || node.querySelector?.('.lc-stage, .vb-stage, .cdx-stage, .lc-main, .vb-arena, .cdx-main')) continue;
     const isGame = node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .fixed.inset-0') && (node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell') || node.querySelector('#words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #find-me-box, #baam-board'));
     if (!isGame) continue;
     const area = document.getElementById(currentRole === 'student' ? 'student-tab-games' : 'class-subtab-games');

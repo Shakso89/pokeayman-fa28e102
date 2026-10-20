@@ -776,7 +776,8 @@
   function launchGame(listName, words, record) {
     closeGame();
     const root = document.createElement('div');
-    root.className = 'lc-stage game-popup-modal';
+    root.className = 'lc-stage ga-stage';
+    root.dataset.inGamesHub = 'true';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-modal', 'true');
     root.setAttribute('aria-label', 'Listen and Catch');
@@ -847,7 +848,7 @@
       try { return launchForStudent(listName, record); }
       catch (error) { console.error('Listen and Catch could not start:', error); window.__listenCatchDiagnostics = { role: currentRole, error: String(error?.message || error), launched: false }; return toast('Listen and Catch could not start. Refresh the page and try again.'); }
     }
-    if (currentRole === 'teacher') {
+    if (currentRole === 'teacher' || currentRole === 'admin' || (typeof activeGamePlayers !== 'undefined' && activeGamePlayers?.[0])) {
       const activeStudent = (typeof activeGamePlayers !== 'undefined' && activeGamePlayers?.[0]) ? activeGamePlayers[0] : null;
       if (activeStudent) {
         return launchForStudent(listName, { ...activeStudent, school_name: activeStudent.school_name || (typeof navSchool !== 'undefined' ? navSchool : ''), class_name: activeStudent.class_name || (typeof navClass !== 'undefined' ? navClass : '') });
@@ -952,7 +953,8 @@
 
     const stage = document.createElement('div');
     stage.id = 'catchdex-modal';
-    stage.className = 'cdx-stage';
+    stage.className = 'cdx-stage ga-stage';
+    stage.dataset.inGamesHub = 'true';
     stage.setAttribute('role', 'dialog');
     stage.setAttribute('aria-modal', 'true');
     stage.setAttribute('aria-label', 'Catchdex');
