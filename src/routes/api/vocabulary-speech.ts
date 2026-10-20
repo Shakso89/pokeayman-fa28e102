@@ -78,7 +78,7 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
           P5: "Speak at a steady, natural, clear classroom pace.",
           P6: "Speak at a fluent, lively, confident natural pace.",
         };
-        const prompt = `Read only the text below in warm, natural, clear English for a child learning vocabulary. ${pacing[level] || pacing.P4} Use accurate pronunciation and no introduction or extra words.\n\n${text}`;
+        const prompt = `Read only the text below in warm, natural, clear English for a child learning vocabulary. ${pacing[level] || pacing["P4"]} Use accurate pronunciation and no introduction or extra words.\n\n${text}`;
 
         // 1. Direct Google Gemini API (zero Lovable credits)
         if (geminiApiKey) {
@@ -110,7 +110,7 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
                 const pcmBytes = extractPCMFromWav(wavBytes);
                 let binary = "";
                 for (let i = 0; i < pcmBytes.byteLength; i++) {
-                  binary += String.fromCharCode(pcmBytes[i]);
+                  binary += String.fromCharCode(pcmBytes[i]!);
                 }
                 const pcmBase64 = btoa(binary);
                 const ssePayload = `data: ${JSON.stringify({ type: "speech.audio.delta", audio: pcmBase64 })}\n\ndata: ${JSON.stringify({ type: "speech.audio.done" })}\n\n`;
