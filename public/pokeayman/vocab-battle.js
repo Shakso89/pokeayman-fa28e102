@@ -473,6 +473,7 @@
     battle.root.remove();
     battle = null;
   }
+  window.closeVocabBattle = closeBattle;
 
   window.startVocabBattle = function (listName) {
     if (!window.canUseProGames?.()) { window.requireProGame?.('Poké Battle'); return; }
@@ -498,35 +499,37 @@
     if (!foe) { toast('No affordable Pokémon in the shop right now. Ask your teacher to stock the shop!'); return; }
     closeBattle();
     const root = document.createElement('div');
-    root.className = 'vb-stage';
+    root.className = 'vb-stage game-popup-modal';
     root.setAttribute('role', 'dialog');
     root.setAttribute('aria-label', 'Poké Battle');
     const foeMaxHp = Number(foe.shop_pokemon_hp) || (Number(foe.shop_pokemon_power) || 20) + 30;
     const partner = battlePartner(student);
     root.innerHTML = `
-      <header class="vb-head"><div class="vb-title-wrap"><span class="vb-pro-pill">👑 PRO ARENA</span><span class="vb-title">⚔️ Poké Battle</span></div><button type="button" class="vb-close" data-vb="close">✕ Leave battle</button></header>
-      <div class="vb-arena">
-        <div class="vb-hud">
-          <div class="vb-hud-side vb-hud-me"><p class="vb-hud-name">${esc(student.student_name)}</p><div class="vb-hp vb-me-hp"><div class="vb-hp-label"><span>HP</span><span class="vb-hp-num"></span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div></div>
-          <span class="vb-hud-vs" aria-hidden="true">VS</span>
-          <div class="vb-hud-side vb-hud-foe"><p class="vb-hud-name">${esc(foe.shop_pokemon_name)}</p><div class="vb-hp vb-foe-hp"><div class="vb-hp-label"><span class="vb-hp-num"></span><span>HP</span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div></div>
+      <main class="vb-shell">
+        <header class="vb-head"><div class="vb-title-wrap"><span class="vb-pro-pill">👑 PRO ARENA</span><span class="vb-title">⚔️ Poké Battle</span></div><button type="button" class="vb-close" data-vb="close">✕ Leave battle</button></header>
+        <div class="vb-arena">
+          <div class="vb-hud">
+            <div class="vb-hud-side vb-hud-me"><p class="vb-hud-name">${esc(student.student_name)}</p><div class="vb-hp vb-me-hp"><div class="vb-hp-label"><span>HP</span><span class="vb-hp-num"></span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div></div>
+            <span class="vb-hud-vs" aria-hidden="true">VS</span>
+            <div class="vb-hud-side vb-hud-foe"><p class="vb-hud-name">${esc(foe.shop_pokemon_name)}</p><div class="vb-hp vb-foe-hp"><div class="vb-hp-label"><span class="vb-hp-num"></span><span>HP</span></div><div class="vb-hp-track"><div class="vb-hp-fill"></div></div></div></div>
+          </div>
+          <div class="vb-matchup">
+          <div class="vb-me">
+            ${partner ? `<img class="vb-me-art" src="${sprite(Number(partner.pokemon_id))}" alt="${esc(student.student_name)}'s ${esc(partner.pokemon_name)}"><p class="vb-partner-name">${esc(partner.pokemon_name || `Pokémon ${partner.pokemon_id}`)}</p>` : '<span class="vb-me-art vb-trainer-fallback" role="img" aria-label="Trainer">' + esc(String(student.student_name || '?').charAt(0).toUpperCase()) + '</span>'}
+            <p class="vb-me-name">${esc(student.student_name)}</p>
+          </div>
+          <span class="vb-versus" aria-hidden="true">VS</span>
+          <div class="vb-foe">
+            <img class="vb-foe-art" src="${sprite(foe.shop_pokemon_id)}" alt="Wild ${esc(foe.shop_pokemon_name)}">
+            <p class="vb-foe-name">Wild ${esc(foe.shop_pokemon_name)}</p>
+            <p class="vb-foe-rarity">${esc(foe.shop_pokemon_rarity || 'common')} · wins cost ${Number(foe.shop_pokemon_price) || 0} credits</p>
+          </div>
+          </div>
+          <p class="vb-message" aria-live="polite">Unscramble the word to attack!</p>
+          <div class="vb-timer"><div class="vb-timer-track"><div class="vb-timer-fill"></div></div><p class="vb-timer-text"></p></div>
+          <div class="vb-word"><div class="vb-slots"></div><div class="vb-tiles"></div></div>
         </div>
-        <div class="vb-matchup">
-        <div class="vb-me">
-          ${partner ? `<img class="vb-me-art" src="${sprite(Number(partner.pokemon_id))}" alt="${esc(student.student_name)}'s ${esc(partner.pokemon_name)}"><p class="vb-partner-name">${esc(partner.pokemon_name || `Pokémon ${partner.pokemon_id}`)}</p>` : '<span class="vb-me-art vb-trainer-fallback" role="img" aria-label="Trainer">' + esc(String(student.student_name || '?').charAt(0).toUpperCase()) + '</span>'}
-          <p class="vb-me-name">${esc(student.student_name)}</p>
-        </div>
-        <span class="vb-versus" aria-hidden="true">VS</span>
-        <div class="vb-foe">
-          <img class="vb-foe-art" src="${sprite(foe.shop_pokemon_id)}" alt="Wild ${esc(foe.shop_pokemon_name)}">
-          <p class="vb-foe-name">Wild ${esc(foe.shop_pokemon_name)}</p>
-          <p class="vb-foe-rarity">${esc(foe.shop_pokemon_rarity || 'common')} · wins cost ${Number(foe.shop_pokemon_price) || 0} credits</p>
-        </div>
-        </div>
-        <p class="vb-message" aria-live="polite">Unscramble the word to attack!</p>
-        <div class="vb-timer"><div class="vb-timer-track"><div class="vb-timer-fill"></div></div><p class="vb-timer-text"></p></div>
-        <div class="vb-word"><div class="vb-slots"></div><div class="vb-tiles"></div></div>
-      </div>`;
+      </main>`;
     document.body.appendChild(root);
     battle = {
       root, student, partner, studentId: String(student.__teacherLed ? (student.__backendId || '') : (currentStudentRecordId || student.__backendId || '')),
@@ -535,10 +538,15 @@
     };
     renderHp(root.querySelector('.vb-foe-hp'), battle.foeHp, foeMaxHp);
     renderHp(root.querySelector('.vb-me-hp'), STUDENT_HP, STUDENT_HP);
+    window.gaMountStage?.(root);
     root.addEventListener('click', (event) => {
       const btn = event.target.closest('button');
       if (!btn || !battle) return;
-      if (btn.dataset.vb === 'close') return closeBattle();
+      if (btn.dataset.vb === 'close') {
+        closeBattle();
+        if (typeof endActiveGames === 'function') endActiveGames();
+        return;
+      }
       if (btn.dataset.vb === 'claim') return requestClaim(btn);
       if (btn.dataset.vb === 'approve') return teacherDecide(true, btn);
       if (btn.dataset.vb === 'deny') return teacherDecide(false, btn);

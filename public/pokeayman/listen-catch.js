@@ -614,7 +614,14 @@
     if (modal && !modal.classList.contains('hidden')) renderCatchdexModal(record, true);
     const root = document.getElementById('profile-catchdex-root'); if (root) root.dataset.catchdexSig = '';
   }
-  function closeGame() { session?.root?.remove(); session = null; activeStudent = null; }
+  function closeGame() {
+    if (session?.timer) clearTimeout(session.timer);
+    window.speechSynthesis?.cancel();
+    session?.root?.remove();
+    session = null;
+    activeStudent = null;
+  }
+  window.closeListenCatch = closeGame;
   function speak(word) {
     window.speechSynthesis?.cancel();
     if (typeof window.readNaturalVocabulary === 'function') window.readNaturalVocabulary(word, null, { level: window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4' });
@@ -754,16 +761,42 @@
   }
   function launchGame(listName, words, record) {
     closeGame();
-    const root = document.createElement('div'); root.className = 'lc-stage'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Listen and Catch');
-    const saved = stateFor(record); const dailyEarnedBefore = ballsEarnedToday(saved); const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
+    const root = document.createElement('div');
+    root.className = 'lc-stage game-popup-modal';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-modal', 'true');
+    root.setAttribute('aria-label', 'Listen and Catch');
+    const saved = stateFor(record);
+    const dailyEarnedBefore = ballsEarnedToday(saved);
+    const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
     const dailyBefore = ballsEarnedToday(saved);
     const dailyAtLimit = dailyEarnedBefore >= DAILY_BALL_LIMIT;
-    root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span class="lc-pro-tag">👑 PRO FEATURE • LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><span aria-hidden="true">🔊</span><span class="lc-listen-label">Hear the sentence</span></button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div><section class="lc-reward-panel" aria-label="Catch Balls earned during this game"><div class="lc-reward-icon"><img src="/pokeayman/assets/catch-ball.png" alt=""></div><div class="lc-reward-copy"><span>ROUND REWARDS</span><strong><b class="lc-balls">0</b> Catch Balls this game</strong><div class="lc-reward-track"><i class="lc-reward-fill"></i></div><small class="lc-reward-status">0 of ${words.length} rounds rewarded</small><small class="lc-daily-cap${dailyAtLimit ? ' is-limit' : ''}">${dailyAtLimit ? `Daily limit reached (${dailyBefore}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyBefore} / ${DAILY_BALL_LIMIT} Catch Balls`}</small></div></section></section></main>`;
+    root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span class="lc-pro-tag">👑 PRO FEATURE • LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><span aria-hidden="true">🔊</span><span class="lc-listen-label">Hear the sentence</span></button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div><section class="lc-reward-panel" aria-label="Catch Balls earned during this game"><div class="lc-reward-icon"><img src="/pokeayman/assets/catch-ball.png" alt="" onerror="this.onerror=null;this.src='/pokeayman/assets/balls/1.png';"></div><div class="lc-reward-copy"><span>ROUND REWARDS</span><strong><b class="lc-balls">0</b> Catch Balls this game</strong><div class="lc-reward-track"><i class="lc-reward-fill"></i></div><small class="lc-reward-status">0 of ${words.length} rounds rewarded</small><small class="lc-daily-cap${dailyAtLimit ? ' is-limit' : ''}">${dailyAtLimit ? `Daily limit reached (${dailyBefore}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyBefore} / ${DAILY_BALL_LIMIT} Catch Balls`}</small></div></section></section></main>`;
     const gameMain = root.querySelector('.lc-main');
     const rewardPanel = gameMain?.querySelector('.lc-reward-panel');
     if (gameMain && rewardPanel) gameMain.insertBefore(rewardPanel, gameMain.firstChild);
-    document.body.appendChild(root); activeStudent = record; session = { root, listName, words, index: 0, earned: 0, correct: 0, dailyAllowance, dailyEarnedBefore, options: [], student: record, earnedTiers: [] };
-    root.addEventListener('click', event => { const button = event.target.closest('button'); if (!button) return; if (button.dataset.lc === 'close') closeGame(); else if (button.dataset.lc === 'listen') { const word = session.words[session.index]; speak(String(word.vocab_sentence || word.vocab_word)); } else if (button.dataset.lc === 'open') { const playedStudent = session.student; closeGame(); if (currentRole === 'student') window.openCatchdex(); else window.openCatchdexFor?.(playedStudent, true); } else if (button.dataset.choice !== undefined) answer(Number(button.dataset.choice)); });
+    document.body.appendChild(root);
+    activeStudent = record;
+    session = { root, listName, words, index: 0, earned: 0, correct: 0, dailyAllowance, dailyEarnedBefore, options: [], student: record, earnedTiers: [] };
+    root.addEventListener('click', event => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      if (button.dataset.lc === 'close') {
+        closeGame();
+        if (typeof endActiveGames === 'function') endActiveGames();
+      } else if (button.dataset.lc === 'listen') {
+        const word = session.words[session.index];
+        speak(String(word.vocab_sentence || word.vocab_word));
+      } else if (button.dataset.lc === 'open') {
+        const playedStudent = session.student;
+        closeGame();
+        if (currentRole === 'student') window.openCatchdex();
+        else window.openCatchdexFor?.(playedStudent, true);
+      } else if (button.dataset.choice !== undefined) {
+        answer(Number(button.dataset.choice));
+      }
+    });
+    window.gaMountStage?.(root);
     window.__listenCatchDiagnostics = { role: currentRole, selectedListCount: Array.isArray(listName) ? listName.length : 1, loadedWords: words.length, school: record.school_name || '', className: record.class_name || '', launched: true };
     startRound();
   }

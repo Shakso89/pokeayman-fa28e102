@@ -16808,6 +16808,8 @@ function endActiveGames({ returnToList = true } = {}) {
   if (endActiveGames.running) return;
   endActiveGames.running = true;
   try {
+    window.closeListenCatch?.();
+    window.closeVocabBattle?.();
     document.querySelectorAll('body > .ga-stage').forEach(view => {
       view.querySelectorAll('.game-popup-modal, .memory-game-shell, .hangman-game-shell, .cipher-lab-shell').forEach(game => stopGameFinishedActivity(game));
       stopGameFinishedActivity(view);

@@ -1,12 +1,46 @@
 /* Poké Battle: fullscreen vocabulary battle stage. Scoped to .vb-stage and .vb-claims. */
-.vb-stage {
+.vb-stage:not(.ga-stage) {
   position: fixed; inset: 0; z-index: 40000; display: flex; flex-direction: column;
   background: radial-gradient(ellipse at 50% 12%, rgba(220, 38, 38, 0.28) 0%, transparent 55%),
               radial-gradient(120% 90% at 50% 0%, #1e2a6e 0%, #0f173a 55%, #0a1028 100%);
   color: #f8fafc; overflow-y: auto; -webkit-overflow-scrolling: touch;
   font-family: inherit; touch-action: manipulation;
 }
-body.ts-bright .vb-stage { background: radial-gradient(120% 90% at 50% 0%, #dbe7ff 0%, #f4f7ff 55%, #e8eeff 100%); color: #0f173a; }
+body > .ga-stage.vb-stage {
+  position: fixed !important; inset: 0 !important; z-index: 2147482000 !important;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  display: flex !important; flex-direction: column !important;
+  padding: 0 !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important;
+  background: transparent !important;
+  overflow: hidden !important; color: var(--ga-stage-ink, #f8fafc) !important;
+  font-family: inherit !important; touch-action: manipulation !important;
+}
+body > .ga-stage.vb-stage .vb-shell,
+body > .ga-stage.vb-stage .ga-stage-shell {
+  width: 100% !important; max-width: 68rem !important; height: 100% !important; max-height: 100% !important;
+  margin: 0 auto !important; border: 0 !important; border-radius: 0 !important;
+  background: transparent !important; box-shadow: none !important;
+  display: flex !important; flex-direction: column !important;
+  overflow: hidden !important; position: relative !important; z-index: 1 !important;
+}
+body > .ga-stage.vb-stage .vb-head,
+body > .ga-stage.vb-stage .ga-stage-header {
+  flex: 0 0 auto !important;
+  display: flex !important; align-items: center !important; justify-content: space-between !important;
+  padding: .85rem 1.4rem !important;
+  border-bottom: 1px solid var(--ga-stage-line, rgba(255,255,255,.15)) !important;
+  background: var(--ga-stage-header-bg, rgba(15, 23, 42, 0.7)) !important;
+  backdrop-filter: blur(12px) !important;
+  z-index: 10 !important;
+}
+body > .ga-stage.vb-stage .vb-arena {
+  flex: 1 1 auto !important; min-height: 0 !important;
+  overflow-y: auto !important; -webkit-overflow-scrolling: touch !important;
+  display: flex !important; flex-direction: column !important; align-items: center !important;
+  padding: clamp(0.75rem, 2vw, 1.5rem) 1rem !important;
+  gap: 0.85rem !important; max-width: 52rem !important; width: 100% !important;
+}
+body.ts-bright .vb-stage:not(.ga-stage) { background: radial-gradient(120% 90% at 50% 0%, #dbe7ff 0%, #f4f7ff 55%, #e8eeff 100%); color: #0f173a; }
 .vb-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .8rem 1rem; position: sticky; top: 0; z-index: 2; background: rgba(10, 16, 40, .55); backdrop-filter: blur(8px); }
 body.ts-bright .vb-head { background: rgba(255, 255, 255, .6); }
 .vb-title-wrap { display: flex; align-items: center; gap: .6rem; }

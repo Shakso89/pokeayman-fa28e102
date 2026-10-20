@@ -634,7 +634,7 @@
 
   window.gaThemes = GAME_THEMES;
   window.gaIsTeacherThemeEnabled = function () {
-    return typeof currentRole === 'undefined' || currentRole !== 'student';
+    return true;
   };
 
   window.gaGetTheme = function () {
@@ -881,15 +881,15 @@
   };
 
   window.gaMountStage = function (view) {
-    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters');
+    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, .lc-main, .vb-arena');
     if (!board || view.querySelector('#game-player-list') || view.classList.contains('ga-stage')) return;
     view.classList.add('ga-stage');
-    const shell = view.matches('.game-popup-modal') ? view.firstElementChild : view.querySelector('.game-popup-modal > div, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell') || view.firstElementChild;
+    const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .lc-play, .vb-shell, .vb-arena') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
     if (!shell) return;
     shell.classList.add('ga-stage-shell');
     let parent = shell.parentElement;
     while (parent && parent !== view) { parent.classList.add('ga-stage-wrapper'); parent = parent.parentElement; }
-    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .hangman-game-shell > div:first-child, .sticky.top-0') || shell.firstElementChild;
+    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .hangman-game-shell > div:first-child, .lc-head, .vb-head, .sticky.top-0') || shell.firstElementChild;
     if (header) {
       header.classList.add('ga-stage-header');
       header.querySelector('[data-games-back]')?.remove();
@@ -938,9 +938,15 @@
       });
       const expand = document.createElement('button'); expand.type = 'button'; expand.textContent = '⛶'; expand.setAttribute('aria-label', 'Expand to browser fullscreen'); expand.title = 'Browser fullscreen';
       expand.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await view.requestFullscreen(); } catch (_) {} });
-      const close = view.querySelector('#baam-close, #find-me-close, #game-close, #scramble-close, #hangman-close') || document.createElement('button');
+      const close = view.querySelector('#baam-close, #find-me-close, #game-close, #scramble-close, #hangman-close, [data-lc="close"], [data-vb="close"]') || document.createElement('button');
       close.type = 'button'; close.textContent = '×'; close.classList.add('ga-stage-exit'); close.setAttribute('aria-label', 'Close game'); close.title = 'Close game';
-      close.addEventListener('click', event => { event.preventDefault(); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); endActiveGames(); });
+      close.addEventListener('click', event => {
+        event.preventDefault();
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        window.closeListenCatch?.();
+        window.closeVocabBattle?.();
+        endActiveGames();
+      });
       controls.append(sound, expand, close); header.appendChild(controls);
       header.querySelectorAll('.game-sound-controls, #scramble-sound-mute').forEach(node => { node.hidden = true; });
     }
@@ -962,12 +968,14 @@
         return;
       }
       event.preventDefault();
+      window.closeListenCatch?.();
+      window.closeVocabBattle?.();
       endActiveGames();
     }
   });
   const observeStages = () => new MutationObserver(() => {
     document.querySelectorAll('#class-subtab-games > .game-inline-view, #student-tab-games > .game-inline-view').forEach(view => window.gaMountStage(view));
-    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters')) view.remove(); });
+    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, .lc-main, .vb-arena')) view.remove(); });
     if (!document.querySelector('.ga-stage') && document.body.classList.contains('ga-playing')) {
       document.body.classList.remove('ga-playing');
       delete document.body.dataset.gaActiveTheme;
