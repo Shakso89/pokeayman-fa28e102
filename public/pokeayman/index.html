@@ -18007,14 +18007,17 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       position: relative;
       width: 100%;
       height: 100%;
-      transition: transform 0.6s ease-out;
+      transition: transform 0.36s cubic-bezier(0.34, 1.25, 0.64, 1);
       transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      will-change: transform;
     }
     .memory-card-inner.flipped {
       transform: rotateY(180deg);
     }
     .memory-card-front, .memory-card-back {
       position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       display: flex;
@@ -18022,9 +18025,17 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       justify-content: center;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      border-radius: inherit;
+    }
+    .memory-card-front {
+      transform: rotateY(0deg) translateZ(1px);
+      z-index: 2;
     }
     .memory-card-back {
-      transform: rotateY(180deg);
+      transform: rotateY(180deg) translateZ(1px);
+      z-index: 1;
     }
     html:has(.ga-stage), body.ga-playing { overflow: hidden !important; box-sizing: border-box; }
     *, *::before, *::after { box-sizing: border-box; }
@@ -18038,13 +18049,15 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     .memory-game-header, .memory-game-body, .memory-game-hud, .memory-game-status, .memory-game-grid { overflow: hidden; min-height: 0; }
     .memory-game-body { flex: 1 1 auto; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: clamp(4px, 1vh, 12px); padding: clamp(6px, 1.5vh, 16px); }
     .memory-game-grid { width: 100%; height: 100%; min-width: 0; min-height: 0; display: grid; align-content: center; justify-content: center; align-items: center; justify-items: center; gap: var(--memory-gap, 8px); grid-template-columns: repeat(var(--memory-cols, 4), minmax(0, 1fr)); grid-template-rows: repeat(var(--memory-rows, 4), minmax(0, 1fr)); overflow: hidden; box-sizing: border-box; }
-    .memory-game-grid .memory-card { width: 100%; height: 100%; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; aspect-ratio: 1 / 1; box-sizing: border-box; overflow: hidden; position: relative; margin: 0; }
+    .memory-game-grid .memory-card { width: 100%; height: 100%; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; box-sizing: border-box; overflow: hidden; position: relative; margin: 0; }
     .memory-game-status { min-height: 1.25rem; line-height: 1.1; }
     @supports not (height: 100dvh) { .memory-game-shell { height: 100vh; max-height: 100vh; } }
   `;
   document.head.appendChild(style);
   
   const cardBackUrl = document.querySelector('[data-template-id="memory-card-back"]')?.src || '';
+  const activeMemoryThemeId = modal.dataset.gaTheme || (typeof window.gaGetTheme === 'function' ? window.gaGetTheme() : 'classroom');
+  const activeMemoryTheme = (window.gaThemes || []).find(t => t.id === activeMemoryThemeId) || (window.gaThemes || [])[0];
   const grid = modal.querySelector('#memory-grid');
   let memoryGridColumns = levelConfig.columns;
   const updateMemoryGridDensity = () => {
@@ -18061,9 +18074,12 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     const revealedContent = p.type === 'word'
       ? `<p class="memory-word-content font-bold text-white text-center whitespace-nowrap overflow-hidden text-ellipsis bg-black/50 px-2 py-1 rounded max-w-full max-h-full leading-tight" style="font-size:clamp(.75rem,18cqw,2rem);">${String(p.word.vocab_word || '').trim().split(/\\s+/).map(part => `<span class="memory-word-part">${part}</span>`).join(' ')}</p>`
       : `<img src="${p.word.vocab_image}" class="w-full h-full object-contain rounded" alt="${p.word.vocab_word}" onerror="this.src='https://via.placeholder.com/160?text=Image+Not+Found'; this.style.backgroundColor='#e9d5ff';">`;
-    return isMatched ? `<div class="memory-card memory-card-placeholder" aria-hidden="true" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" style="visibility:hidden; pointer-events:none;"></div>` : `<div class="memory-card relative rounded-lg shadow-lg h-48 overflow-hidden cursor-pointer" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" data-type="${p.type}" data-word="${p.word.vocab_word}" aria-label="${p.type === 'word' ? 'Word card' : 'Picture card'}" aria-pressed="${flipped.includes(idx)}" tabindex="0" role="button" style="perspective: 1000px; container-type: size;">
+    const cardBackHtml = activeMemoryTheme?.cardBackSvg ? `<div class="ga-card-back-art" data-theme-id="${activeMemoryTheme.id}" aria-hidden="true">${activeMemoryTheme.cardBackSvg}</div>` : '';
+    return isMatched ? `<div class="memory-card memory-card-placeholder" aria-hidden="true" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" style="visibility:hidden; pointer-events:none;"></div>` : `<div class="memory-card relative rounded-xl shadow-xl overflow-hidden cursor-pointer" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" data-type="${p.type}" data-word="${p.word.vocab_word}" aria-label="${p.type === 'word' ? 'Word card' : 'Picture card'}" aria-pressed="${flipped.includes(idx)}" tabindex="0" role="button" style="perspective: 1000px; container-type: size;">
       <div class="memory-card-inner w-full h-full">
-        <div class="memory-card-front bg-cover bg-center" style="background-image: url('${cardBackUrl}');"></div>
+        <div class="memory-card-front bg-cover bg-center" style="${cardBackUrl ? `background-image: url('${cardBackUrl}');` : ''}">
+          ${cardBackHtml}
+        </div>
         <div class="memory-card-back bg-cover bg-center p-2">
           ${revealedContent}
         </div>
@@ -18138,27 +18154,28 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       playGameSound('success');
       matched.add(idx1);
       matched.add(idx2);
-      cards[idx1]?.style.setProperty('visibility', 'hidden');
-      cards[idx1]?.style.setProperty('pointer-events', 'none');
-      cards[idx2]?.style.setProperty('visibility', 'hidden');
-      cards[idx2]?.style.setProperty('pointer-events', 'none');
       if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
       updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
       showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
       cards.forEach((card, i) => {
         if (i === idx1 || i === idx2) {
           card.classList.add('memory-card-matched');
-          card.style.animation = 'bounce 0.6s ease';
+          card.style.animation = 'bounce 0.48s cubic-bezier(0.34, 1.56, 0.64, 1)';
           card.style.pointerEvents = 'none';
           card.setAttribute('aria-pressed', 'true');
-          card.querySelector('.memory-card-inner').style.filter = 'brightness(1.2)';
+          const inner = card.querySelector('.memory-card-inner');
+          if (inner) inner.style.filter = 'brightness(1.15) drop-shadow(0 0 12px rgba(74, 222, 128, 0.75))';
         }
       });
+      setTimeout(() => {
+        cards[idx1]?.style.setProperty('visibility', 'hidden');
+        cards[idx1]?.style.setProperty('pointer-events', 'none');
+        cards[idx2]?.style.setProperty('visibility', 'hidden');
+        cards[idx2]?.style.setProperty('pointer-events', 'none');
+      }, 480);
       flipped = [];
       mismatchLocked = false;
       modal.querySelector('#memory-status').textContent = '';
-      
-      flipped = [];
       
       if (matched.size === pairs.length) {
         playGameSound('complete');
@@ -18180,8 +18197,8 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       advanceGameTurn();
       updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
       showWrongAnswerCelebration(modal, prevTurnIndex);
-      cards[idx1].style.animation = 'shake 0.4s ease';
-      cards[idx2].style.animation = 'shake 0.4s ease';
+      cards[idx1].style.animation = 'shake 0.35s ease';
+      cards[idx2].style.animation = 'shake 0.35s ease';
       
       modal.querySelector('#memory-status').textContent = '';
       
@@ -18198,7 +18215,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
         mismatchLocked = false;
         mismatchTimer = null;
         modal.querySelector('#memory-status').textContent = '';
-      }, 800);
+      }, 520);
     }
   }
   
@@ -18214,7 +18231,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       flipped.push(idx);
       
       if (flipped.length === 2) {
-        setTimeout(checkMatch, 600);
+        setTimeout(checkMatch, 340);
       }
     });
   });
@@ -18674,7 +18691,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
       const practiceHint = modal.querySelector('#scramble-practice-hint');
       if (practiceHint) {
         const image = word?.vocab_image ? `<img src="${word.vocab_image}" class="w-28 h-20 rounded-lg object-contain bg-white/10" alt="Picture for ${word.vocab_word}">` : '';
-        practiceHint.innerHTML = `<p class="text-red-300 font-bold">Correct answer: <span class="text-amber-200">${correctWord}</span></p>${image}`;
+        practiceHint.innerHTML = `<p class="scramble-practice-lead">Correct answer: <span class="scramble-practice-word">${correctWord}</span></p>${image}`;
         practiceHint.classList.remove('hidden');
       }
       animateScrambleResult('wrong', isMakeoverAttempt ? 'Incorrect. Keep trying this same word. No points are awarded for this retry.' : 'Incorrect. Try the same word again.');

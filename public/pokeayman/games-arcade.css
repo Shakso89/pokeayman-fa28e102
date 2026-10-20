@@ -1260,12 +1260,13 @@ body > .ga-stage .ga-stage-header .ga-stage-theme-wrap.is-open button.ga-stage-t
   display: block;
   object-fit: cover;
 }
-html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .memory-card-front {
+html body > .ga-stage[data-ga-theme] .memory-card-front {
   background-image: none !important;
+  background-color: transparent !important;
   overflow: hidden !important;
   padding: 0 !important;
 }
-html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .memory-card:hover:not(.flipped):not(.matched) .memory-card-inner {
+html body > .ga-stage[data-ga-theme] .memory-card:hover:not(.flipped):not(.matched) .memory-card-inner {
   transform: translateY(-4px) scale(1.02);
 }
 
@@ -1335,39 +1336,58 @@ html body > .ga-stage #scramble-practice-hint:not(.hidden) {
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: 0.5rem !important;
-  margin: 0.15rem auto !important;
-  padding: 0.65rem 1.2rem !important;
-  border-radius: 18px !important;
-  background: linear-gradient(180deg, #fffdf9 0%, #fef3c7 100%) !important;
-  border: 3px solid #d97706 !important;
-  box-shadow: inset 0 2px 0 #ffffff, 0 5px 0 #92400e, 0 12px 24px rgba(0, 0, 0, 0.3) !important;
+  gap: 0.55rem !important;
+  margin: 0.25rem auto !important;
+  padding: 0.85rem 1.4rem !important;
+  border-radius: 20px !important;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 3.5px solid #f59e0b !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 0 #78350f, 0 16px 32px rgba(0, 0, 0, 0.45) !important;
+  width: min(92%, 560px) !important;
+  box-sizing: border-box !important;
 }
-html body > .ga-stage #scramble-practice-hint #scramble-practice-word {
-  color: #78350f !important;
+html body > .ga-stage #scramble-practice-hint p,
+html body > .ga-stage #scramble-practice-hint .scramble-practice-lead {
+  display: inline-flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.45rem !important;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
   font-family: 'Outfit', sans-serif !important;
-  font-size: 0.92rem !important;
+  font-size: 1rem !important;
   font-weight: 900 !important;
-  letter-spacing: 0.04em !important;
+  letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
-  text-shadow: none !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6) !important;
+  margin: 0 !important;
 }
-html body > .ga-stage #scramble-practice-hint #scramble-practice-word span {
+html body > .ga-stage #scramble-practice-hint p span,
+html body > .ga-stage #scramble-practice-hint .scramble-practice-word {
   display: inline-block !important;
-  margin-left: 0.3rem !important;
-  padding: 0.14rem 0.65rem !important;
+  margin-left: 0.35rem !important;
+  padding: 0.24rem 1rem !important;
   border-radius: 999px !important;
   background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%) !important;
   color: #ffffff !important;
-  border: 2px solid #14532d !important;
-  box-shadow: 0 2px 0 #14532d !important;
-  letter-spacing: 0.08em !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 2.5px solid #14532d !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 3px 0 #14532d, 0 0 16px rgba(34, 197, 94, 0.6) !important;
+  font-size: 1.15rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.12em !important;
+  text-shadow: 0 1px 2px rgba(5, 46, 22, 0.8) !important;
 }
-html body > .ga-stage #scramble-practice-hint #scramble-practice-image {
+html body > .ga-stage #scramble-practice-hint img {
   background: #ffffff !important;
-  border: 3px solid #b45309 !important;
-  border-radius: 14px !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18) !important;
+  border: 3.5px solid #f59e0b !important;
+  border-radius: 16px !important;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.4) !important;
+  max-width: 130px !important;
+  max-height: 90px !important;
+  object-fit: contain !important;
+  padding: 4px !important;
 }
 
 /* Tactile 3D Arcade Buttons for Unscramble (Reset vs Next Word vs Disabled) */
@@ -1633,7 +1653,9 @@ html body > .ga-stage[data-ga-theme="classroom"] .memory-card {
 html body > .ga-stage[data-ga-theme="classroom"] .memory-card-front {
   border: 3px solid #1c1917 !important;
   border-radius: 14px !important;
-  background-color: #b8864b !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: hidden !important;
 }
 html body > .ga-stage[data-ga-theme="classroom"] .memory-card-back {
   background: linear-gradient(180deg, #fffdf7 0%, #f3e8d2 100%) !important;
@@ -1876,7 +1898,9 @@ html body > .ga-stage[data-ga-theme="jungle"] .memory-card {
 html body > .ga-stage[data-ga-theme="jungle"] .memory-card-front {
   border: 3px solid #eab308 !important;
   border-radius: 14px !important;
-  background-color: #5c310c !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: hidden !important;
 }
 html body > .ga-stage[data-ga-theme="jungle"] .memory-card-back {
   background: linear-gradient(180deg, #fff8e7 0%, #f3ddb3 100%) !important;
@@ -2140,7 +2164,9 @@ html body > .ga-stage[data-ga-theme="toybox"] .memory-card {
 html body > .ga-stage[data-ga-theme="toybox"] .memory-card-front {
   border: 3px solid #312e81 !important;
   border-radius: 14px !important;
-  background-color: #3730a3 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: hidden !important;
 }
 html body > .ga-stage[data-ga-theme="toybox"] .memory-card-back {
   border: 3.5px solid #4f46e5 !important;
@@ -2368,5 +2394,33 @@ html body > .ga-stage[data-ga-theme] .hangman-letter.is-wrong {
 html body > .ga-stage[data-ga-theme] .hangman-letter.is-wrong .letter-char {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Classic Theme & Universal Flip Memory Cards */
+html body > .ga-stage[data-ga-theme="classic"] .memory-card,
+html body > .ga-stage:not([data-ga-theme]) .memory-card {
+  border-radius: 14px !important;
+  box-shadow: 0 6px 0 #0f172a, 0 10px 22px rgba(0, 0, 0, 0.45) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .memory-card-front,
+html body > .ga-stage:not([data-ga-theme]) .memory-card-front {
+  border: 3px solid #3b82f6 !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  overflow: hidden !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .memory-card-back,
+html body > .ga-stage:not([data-ga-theme]) .memory-card-back {
+  border: 3.5px solid #1e3a8a !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  box-shadow: inset 0 0 0 3px #3b82f6 !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .memory-card .memory-word-content,
+html body > .ga-stage:not([data-ga-theme]) .memory-card .memory-word-content {
+  background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%) !important;
+  color: #f8fafc !important;
+  border: 2px solid #3b82f6 !important;
 }
 
