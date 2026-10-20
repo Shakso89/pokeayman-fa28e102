@@ -18248,11 +18248,14 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
         if (inner2) inner2.classList.remove('flipped');
         if (cards[idx1]) cards[idx1].style.animation = 'none';
         if (cards[idx2]) cards[idx2].style.animation = 'none';
-        flipped = [];
-        mismatchLocked = false;
-        mismatchTimer = null;
         modal.querySelector('#memory-status').textContent = '';
-      }, 520);
+        // Keep input locked until the flip-back transition has finished so taps cannot interrupt it.
+        mismatchTimer = setTimeout(() => {
+          flipped = [];
+          mismatchLocked = false;
+          mismatchTimer = null;
+        }, 380);
+      }, 620);
     }
   }
   
@@ -18264,11 +18267,13 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       // Flip the card
       const inner = card.querySelector('.memory-card-inner');
       if (inner) inner.classList.add('flipped');
+      card.setAttribute('aria-pressed', 'true');
       unlockGameSound(); playGameSound('select');
       flipped.push(idx);
       
       if (flipped.length === 2) {
-        setTimeout(checkMatch, 340);
+        mismatchLocked = true;
+        setTimeout(runMemoryCheck, 380);
       }
     });
   });
