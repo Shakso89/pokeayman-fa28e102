@@ -1,29 +1,40 @@
-/* Admin Hub Analytics: Smart Active Timer, Feature Tracker, Historical Backfill & Week/Month/Year Charts */
+/* Admin Hub Analytics: Smart Active Timer, Feature Tracker, Historical Backfill & SaaS SVG Charts */
 (function () {
-  const IDLE_LIMIT_MS = 120 * 1000; // 2 minutes idle cutoff
-  const FLUSH_INTERVAL_MS = 30 * 1000; // sync to dataSdk every 30s
+  const IDLE_LIMIT_MS = 120 * 1000;
+  const FLUSH_INTERVAL_MS = 30 * 1000;
   const LOCAL_CACHE_KEY = 'pokeayman-analytics-buffer-v1';
 
   const TEACHER_FEATURES = [
-    { key: 'roster', icon: '👩‍🎓', label: 'Class Roster & Awards' },
-    { key: 'quiz', icon: '📝', label: 'Quizzes' },
-    { key: 'vocab', icon: '📚', label: 'Class Vocabulary' },
-    { key: 'games', icon: '🎮', label: 'Classroom Games' },
-    { key: 'battle', icon: '⚔️', label: 'Battle Arena' },
-    { key: 'schedule', icon: '🗓️', label: 'Teacher Zone · Schedule' },
-    { key: 'financial', icon: '💰', label: 'Teacher Zone · Financial' },
-    { key: 'vb', icon: '🔖', label: 'Teacher Zone · Word Bank (VB)' },
-    { key: 'claims', icon: '🛡️', label: 'Teacher Zone · Battle Claims' },
+    { key: 'roster', label: 'Class Roster & Awards' },
+    { key: 'quiz', label: 'Quizzes' },
+    { key: 'vocab', label: 'Class Vocabulary' },
+    { key: 'games', label: 'Classroom Games' },
+    { key: 'battle', label: 'Battle Arena' },
+    { key: 'schedule', label: 'Teacher Zone · Schedule' },
+    { key: 'financial', label: 'Teacher Zone · Financial' },
+    { key: 'vb', label: 'Teacher Zone · Word Bank (VB)' },
+    { key: 'claims', label: 'Teacher Zone · Battle Claims' },
   ];
 
   const STUDENT_FEATURES = [
-    { key: 'collection', icon: '📚', label: 'Pokémon Collection' },
-    { key: 'shop', icon: '🛍️', label: 'Pokémon Shop' },
-    { key: 'catchdex', icon: '🎯', label: 'Catchdex (Listen & Catch)' },
-    { key: 'quizzes', icon: '❓', label: 'Class Quizzes' },
-    { key: 'vocabulary', icon: '📖', label: 'Vocabulary Flashcards' },
-    { key: 'games', icon: '🎮', label: 'Games & Poké Battle' },
+    { key: 'collection', label: 'Pokémon Collection' },
+    { key: 'shop', label: 'Pokémon Shop' },
+    { key: 'catchdex', label: 'Catchdex (Listen & Catch)' },
+    { key: 'quizzes', label: 'Class Quizzes' },
+    { key: 'vocabulary', label: 'Vocabulary Flashcards' },
+    { key: 'games', label: 'Games & Poké Battle' },
   ];
+
+  const ICONS = {
+    clock:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    credit:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
+    layers:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
+    users:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  };
 
   const esc = (v) =>
     String(v ?? '').replace(/[&<>"']/g, (c) => ({
@@ -70,13 +81,20 @@
     return remMins > 0 ? `${hrs}h ${remMins}m` : `${hrs}h`;
   }
 
-  function formatShortDuration(totalSeconds) {
+  function formatAxisDuration(totalSeconds) {
     const secs = Math.max(0, Math.round(Number(totalSeconds) || 0));
-    if (secs === 0) return '';
-    const mins = Math.max(1, Math.round(secs / 60));
+    if (secs === 0) return '0m';
+    const mins = Math.round(secs / 60);
     if (mins < 60) return `${mins}m`;
     const hrs = (mins / 60).toFixed(1).replace(/\.0$/, '');
     return `${hrs}h`;
+  }
+
+  function formatAxisNumber(val) {
+    const n = Math.round(Number(val) || 0);
+    if (n === 0) return '0';
+    if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`;
+    return String(n);
   }
 
   function normalizeIdentity(val) {
@@ -274,13 +292,12 @@
       }
       saveLocalStore();
     } catch (_) {
-      // Keep dirtyKeys for next retry
+      // Retry on next flush cycle
     } finally {
       syncInFlight = false;
     }
   }
 
-  // Interaction listeners for Smart Active Timer
   ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach((evt) => {
     window.addEventListener(
       evt,
@@ -368,7 +385,7 @@
       for (let i = 29; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
         const key = toDayKey(d);
-        const label = i % 3 === 0 || i === 0 ? `${d.getMonth() + 1}/${d.getDate()}` : `${d.getDate()}`;
+        const label = i % 5 === 0 || i === 0 ? `${d.getMonth() + 1}/${d.getDate()}` : '';
         const fullLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         buckets.push({ key, label, fullLabel, mode: 'day' });
       }
@@ -431,19 +448,18 @@
       return item;
     };
 
-    // Seed directory with known Teachers or Students
     if (role === 'teacher') {
       const teachers = safe(() => getTeachers(), []) || [];
       teachers.forEach((t) => {
         if (!t.teacher_name) return;
-        const roleTag = t.teacher_name === 'Ayman' ? 'Admin' : t.teacher_pro ? 'Pro Teacher' : 'Teacher';
+        const roleTag = t.teacher_name === 'Ayman' ? 'Administrator' : t.teacher_pro ? 'Pro Teacher' : 'Teacher';
         ensureUserSummary(t.teacher_name, t.teacher_name, roleTag);
       });
     } else {
       const students = safe(() => getAllStudents(), []) || [];
       students.forEach((s) => {
         if (!s.student_name) return;
-        const meta = [s.school_name, s.class_name].filter(Boolean).join(' · ') || 'Student';
+        const meta = [s.school_name, s.class_name].filter(Boolean).join(' / ') || 'Student';
         ensureUserSummary(s.student_name, s.student_name, meta);
       });
     }
@@ -462,7 +478,6 @@
       return bucketMap.get(dayKey) || null;
     };
 
-    // 1. Collect persisted + local `user_analytics` daily maps per user
     const combinedUserDaily = new Map();
     rows
       .filter((r) => r.type === 'user_analytics' && r.role === role)
@@ -482,7 +497,6 @@
       combinedUserDaily.set(uKey, mergeDailyMaps(combinedUserDaily.get(uKey), entry.daily));
     });
 
-    // Apply tracked daily data
     combinedUserDaily.forEach((dailyMap, uKey) => {
       const uSummary = ensureUserSummary(uKey, uKey);
       Object.entries(dailyMap || {}).forEach(([dayKey, dayData]) => {
@@ -514,8 +528,7 @@
       });
     });
 
-    // Helper to record historical backfill activity when live telemetry isn't recorded for that event
-    const addHistoricalActivity = (uKey, uName, dayKey, fKey, estSeconds, trackedFlag) => {
+    const addHistoricalActivity = (uKey, uName, dayKey, fKey, estSeconds) => {
       const b = matchBucketForDayKey(dayKey);
       if (!b) return;
       const uSummary = ensureUserSummary(uKey, uName || uKey);
@@ -542,7 +555,6 @@
       }
     };
 
-    // 2. Scan existing records in `allData` for Credits / Coins & Historical Feature Backfill
     rows.forEach((r) => {
       const type = String(r.type || '');
       const ts = extractRecordTimestamp(r);
@@ -601,7 +613,6 @@
           addHistoricalActivity(tKey, tName, dayKey, 'claims', 120);
         }
       } else {
-        // STUDENT ANALYTICS
         if (type === 'credit_log' || type === 'credit_transaction') {
           const target = String(r.log_target || r.student_name || '').trim();
           if (!target || !b || /\(\d+\s*students\)/i.test(target)) return;
@@ -699,7 +710,7 @@
             const meta = featureMetaList.find((m) => m.key === fKey);
             topFeat = {
               key: fKey,
-              label: meta ? `${meta.icon} ${meta.label}` : fKey,
+              label: meta ? meta.label : fKey,
               score,
             };
           }
@@ -707,7 +718,7 @@
         return {
           ...u,
           activeDaysCount: u.activeDays.size,
-          topFeatureLabel: topFeat ? topFeat.label : 'No activity yet',
+          topFeatureLabel: topFeat ? topFeat.label : '—',
         };
       })
       .sort(
@@ -729,10 +740,132 @@
     };
   }
 
+  // ---- SVG Precision Chart Builder ----
+  function buildSvgChart(timeline, mode, isTeacher) {
+    const width = 540;
+    const height = 192;
+    const padLeft = 42;
+    const padRight = 10;
+    const padTop = 14;
+    const plotBottom = 160;
+    const plotHeight = plotBottom - padTop;
+    const plotWidth = width - padLeft - padRight;
+
+    const rawMax =
+      mode === 'time'
+        ? Math.max(1800, ...timeline.map((b) => b.seconds))
+        : Math.max(
+            50,
+            ...timeline.map((b) => (isTeacher ? b.creditsSpent : Math.max(b.coinsSpent, b.coinsEarned)))
+          );
+
+    // Nice upper bound for 4 ticks
+    const step = Math.ceil(rawMax / 4 / 10) * 10 || 1;
+    const maxVal = step * 4;
+
+    const ticks = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+      const val = Math.round(maxVal * ratio);
+      const y = Math.round(plotBottom - ratio * plotHeight);
+      const label = mode === 'time' ? formatAxisDuration(val) : formatAxisNumber(val);
+      return { y, label, isBase: ratio === 0 };
+    });
+
+    const n = Math.max(1, timeline.length);
+    const slotW = plotWidth / n;
+    const barMaxW = n > 15 ? Math.max(4, Math.floor(slotW * 0.62)) : Math.min(24, Math.floor(slotW * 0.52));
+
+    const gridSvg = ticks
+      .map(
+        (t) => `
+        <line x1="${padLeft}" y1="${t.y}" x2="${width - padRight}" y2="${t.y}" class="${
+          t.isBase ? 'pk-an-svg-baseline' : 'pk-an-svg-gridline'
+        }" />
+        <text x="${padLeft - 8}" y="${t.y + 3}" text-anchor="end" class="pk-an-svg-axis-text">${esc(t.label)}</text>
+      `
+      )
+      .join('');
+
+    const colsSvg = timeline
+      .map((b, i) => {
+        const cx = padLeft + i * slotW + slotW / 2;
+        if (mode === 'time') {
+          const h = b.seconds > 0 ? Math.max(3, Math.round((b.seconds / maxVal) * plotHeight)) : 2;
+          const y = plotBottom - h;
+          const x = Math.round(cx - barMaxW / 2);
+          return `
+            <g class="pk-an-svg-col-group">
+              <title>${esc(b.fullLabel)}: ${esc(formatDuration(b.seconds))}</title>
+              <rect x="${x}" y="${y}" width="${barMaxW}" height="${h}" rx="2.5" class="${
+            b.seconds > 0 ? 'pk-an-svg-bar-time' : 'pk-an-svg-bar-empty'
+          }" />
+              ${
+                b.label
+                  ? `<text x="${Math.round(cx)}" y="${height - 8}" text-anchor="middle" class="pk-an-svg-axis-text">${esc(
+                      b.label
+                    )}</text>`
+                  : ''
+              }
+            </g>
+          `;
+        }
+
+        if (isTeacher) {
+          const h = b.creditsSpent > 0 ? Math.max(3, Math.round((b.creditsSpent / maxVal) * plotHeight)) : 2;
+          const y = plotBottom - h;
+          const x = Math.round(cx - barMaxW / 2);
+          return `
+            <g class="pk-an-svg-col-group">
+              <title>${esc(b.fullLabel)}: ${b.creditsSpent.toLocaleString()} credits spent</title>
+              <rect x="${x}" y="${y}" width="${barMaxW}" height="${h}" rx="2.5" class="${
+            b.creditsSpent > 0 ? 'pk-an-svg-bar-spent' : 'pk-an-svg-bar-empty'
+          }" />
+              ${
+                b.label
+                  ? `<text x="${Math.round(cx)}" y="${height - 8}" text-anchor="middle" class="pk-an-svg-axis-text">${esc(
+                      b.label
+                    )}</text>`
+                  : ''
+              }
+            </g>
+          `;
+        }
+
+        // Student dual bar: Spent vs Earned
+        const pairW = Math.max(3, Math.floor((barMaxW - 2) / 2));
+        const hSpent = b.coinsSpent > 0 ? Math.max(3, Math.round((b.coinsSpent / maxVal) * plotHeight)) : 2;
+        const hEarned = b.coinsEarned > 0 ? Math.max(3, Math.round((b.coinsEarned / maxVal) * plotHeight)) : 2;
+        const xSpent = Math.round(cx - pairW - 1);
+        const xEarned = Math.round(cx + 1);
+        return `
+          <g class="pk-an-svg-col-group">
+            <title>${esc(b.fullLabel)} — Spent: ${b.coinsSpent.toLocaleString()} | Earned: +${b.coinsEarned.toLocaleString()}</title>
+            <rect x="${xSpent}" y="${plotBottom - hSpent}" width="${pairW}" height="${hSpent}" rx="2" class="${
+          b.coinsSpent > 0 ? 'pk-an-svg-bar-spent' : 'pk-an-svg-bar-empty'
+        }" />
+            <rect x="${xEarned}" y="${plotBottom - hEarned}" width="${pairW}" height="${hEarned}" rx="2" class="${
+          b.coinsEarned > 0 ? 'pk-an-svg-bar-earned' : 'pk-an-svg-bar-empty'
+        }" />
+            ${
+              b.label
+                ? `<text x="${Math.round(cx)}" y="${height - 8}" text-anchor="middle" class="pk-an-svg-axis-text">${esc(
+                    b.label
+                  )}</text>`
+                : ''
+            }
+          </g>
+        `;
+      })
+      .join('');
+
+    return `<svg viewBox="0 0 ${width} ${height}" class="pk-an-svg-chart" role="img" aria-label="${
+      mode === 'time' ? 'Time spent chart' : 'Credits and coins usage chart'
+    }">${gridSvg}${colsSvg}</svg>`;
+  }
+
   // ---- UI State & Rendering ----
   const uiState = {
-    role: 'teacher', // 'teacher' | 'student'
-    period: 'week', // 'week' | 'month' | 'year'
+    role: 'teacher',
+    period: 'week',
     selectedUser: '__all__',
     searchQuery: '',
   };
@@ -776,371 +909,342 @@
       (u) => u.seconds > 0 || u.creditsSpent > 0 || u.coinsEarned > 0 || u.coinsSpent > 0
     ).length;
 
-    const maxTimeVal = Math.max(60, ...data.timeline.map((b) => b.seconds));
-    const maxCreditVal = Math.max(
-      10,
-      ...data.timeline.map((b) => (isTeacher ? b.creditsSpent : Math.max(b.coinsEarned, b.coinsSpent)))
-    );
     const maxFeatureScore = Math.max(
       1,
       ...data.rankedFeatures.map((f) => f.seconds + f.visits * 60)
     );
 
-    const actionChipsHtml = Object.entries(data.creditActions)
+    const ledgerItemsHtml = Object.entries(data.creditActions)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
+      .slice(0, 5)
       .map(
         ([act, val]) =>
-          `<span class="pk-credit-chip"><span>${esc(act)}</span><strong>${Number(val).toLocaleString()} ${
-            isTeacher ? '💳' : '🪙'
-          }</strong></span>`
+          `<span class="pk-an-ledger-item"><span>${esc(act)}:</span><strong>${Number(val).toLocaleString()}</strong></span>`
       )
       .join('');
 
+    const teacherCount = safe(() => getTeachers().length, 0);
+    const studentCount = safe(() => getAllStudents().length, 0);
+
     host.innerHTML = `
-      <div class="pk-analytics-shell">
-        <header class="pk-analytics-toolbar">
-          <div class="pk-analytics-toolbar-top">
-            <div class="pk-analytics-title-group">
-              <span class="pk-analytics-kicker">ADMIN INTELLIGENCE · ${esc(periodLabel.toUpperCase())}</span>
-              <h3 class="pk-analytics-heading">
+      <div class="pk-an-workspace">
+        <header class="pk-an-header">
+          <div class="pk-an-header-top">
+            <div class="pk-an-title-stack">
+              <p class="pk-an-eyebrow">Admin Hub · Usage &amp; Credit Telemetry · ${esc(periodLabel)}</p>
+              <h3 class="pk-an-title">
                 ${
                   selectedUserObj
-                    ? `${isTeacher ? '👨‍🏫' : '👩‍🎓'} ${esc(selectedUserObj.name)} — Analytics`
-                    : `${isTeacher ? '👨‍🏫 Teacher' : '👩‍🎓 Student'} Engagement & Credit Analytics`
+                    ? `${esc(selectedUserObj.name)} — ${isTeacher ? 'Teacher' : 'Student'} Analytics`
+                    : `${isTeacher ? 'Teacher' : 'Student'} Analytics Overview`
                 }
               </h3>
-              <p class="pk-analytics-subtitle">
-                Track active time spent, ${isTeacher ? 'credits used' : 'coins earned & spent'}, and top features across Week, Month, and Year.
-              </p>
             </div>
-            <div class="pk-analytics-segmented pk-analytics-period-group" role="tablist" aria-label="Analytics time range">
-              <button type="button" class="pk-analytics-seg-btn ${uiState.period === 'week' ? 'is-active' : ''}" data-an-period="week">Last Week</button>
-              <button type="button" class="pk-analytics-seg-btn ${uiState.period === 'month' ? 'is-active' : ''}" data-an-period="month">Last Month</button>
-              <button type="button" class="pk-analytics-seg-btn ${uiState.period === 'year' ? 'is-active' : ''}" data-an-period="year">Last Year</button>
+
+            <div class="pk-an-segmented" role="tablist" aria-label="Time range">
+              <button type="button" class="pk-an-seg-btn ${uiState.period === 'week' ? 'is-active' : ''}" data-an-period="week" aria-selected="${uiState.period === 'week'}">7D</button>
+              <button type="button" class="pk-an-seg-btn ${uiState.period === 'month' ? 'is-active' : ''}" data-an-period="month" aria-selected="${uiState.period === 'month'}">30D</button>
+              <button type="button" class="pk-an-seg-btn ${uiState.period === 'year' ? 'is-active' : ''}" data-an-period="year" aria-selected="${uiState.period === 'year'}">12M</button>
             </div>
           </div>
 
-          <div class="pk-analytics-controls-row">
-            <div class="pk-analytics-segmented" role="tablist" aria-label="Select user role">
-              <button type="button" class="pk-analytics-seg-btn ${isTeacher ? 'is-active' : ''}" data-an-role="teacher">👨‍🏫 Teachers (${
-      safe(() => getTeachers().length, 0)
-    })</button>
-              <button type="button" class="pk-analytics-seg-btn ${!isTeacher ? 'is-active' : ''}" data-an-role="student">👩‍🎓 Students (${
-      safe(() => getAllStudents().length, 0)
-    })</button>
-            </div>
+          <div class="pk-an-toolbar">
+            <div class="pk-an-toolbar-left">
+              <div class="pk-an-segmented" role="tablist" aria-label="Account type">
+                <button type="button" class="pk-an-seg-btn ${isTeacher ? 'is-active' : ''}" data-an-role="teacher" aria-selected="${isTeacher}">
+                  <span>Teachers</span>
+                  <span class="pk-an-seg-count">${teacherCount}</span>
+                </button>
+                <button type="button" class="pk-an-seg-btn ${!isTeacher ? 'is-active' : ''}" data-an-role="student" aria-selected="${!isTeacher}">
+                  <span>Students</span>
+                  <span class="pk-an-seg-count">${studentCount}</span>
+                </button>
+              </div>
 
-            <div class="pk-analytics-user-filter">
-              <input
-                type="search"
-                id="pk-analytics-search"
-                class="pk-analytics-search-input"
-                placeholder="Filter ${isTeacher ? 'teacher' : 'student'}..."
-                value="${esc(uiState.searchQuery)}"
-                aria-label="Filter ${isTeacher ? 'teachers' : 'students'}"
-              >
-              <select id="pk-analytics-user-select" class="pk-analytics-user-select" aria-label="Select specific ${
-                isTeacher ? 'teacher' : 'student'
-              }">
-                <option value="__all__" ${uiState.selectedUser === '__all__' ? 'selected' : ''}>
-                  All ${isTeacher ? 'Teachers' : 'Students'} (${filteredUsers.length})
-                </option>
-                ${filteredUsers
-                  .map(
-                    (u) =>
-                      `<option value="${esc(u.key)}" ${uiState.selectedUser === u.key ? 'selected' : ''}>${esc(
-                        u.name
-                      )}${u.meta ? ` (${esc(u.meta)})` : ''}</option>`
-                  )
-                  .join('')}
-              </select>
+              <div class="pk-an-filter-group">
+                <input
+                  type="search"
+                  id="pk-analytics-search"
+                  class="pk-an-input"
+                  placeholder="Filter by name..."
+                  value="${esc(uiState.searchQuery)}"
+                  aria-label="Filter ${isTeacher ? 'teachers' : 'students'}"
+                >
+                <select id="pk-analytics-user-select" class="pk-an-select" aria-label="Select specific ${isTeacher ? 'teacher' : 'student'}">
+                  <option value="__all__" ${uiState.selectedUser === '__all__' ? 'selected' : ''}>
+                    All ${isTeacher ? 'Teachers' : 'Students'} (${filteredUsers.length})
+                  </option>
+                  ${filteredUsers
+                    .map(
+                      (u) =>
+                        `<option value="${esc(u.key)}" ${uiState.selectedUser === u.key ? 'selected' : ''}>${esc(
+                          u.name
+                        )}${u.meta ? ` · ${esc(u.meta)}` : ''}</option>`
+                    )
+                    .join('')}
+                </select>
+              </div>
             </div>
 
             ${
               selectedUserObj
-                ? `<button type="button" class="pk-analytics-seg-btn is-active" data-an-reset-user="1">← Show All ${
-                    isTeacher ? 'Teachers' : 'Students'
-                  }</button>`
+                ? `<div class="pk-an-toolbar-right">
+                     <button type="button" class="pk-an-reset-btn" data-an-reset-user="1">All ${
+                       isTeacher ? 'Teachers' : 'Students'
+                     }</button>
+                   </div>`
                 : ''
             }
           </div>
         </header>
 
-        <!-- KPI Summary Row -->
-        <section class="pk-analytics-kpi-grid" aria-label="Key metrics summary">
-          <article class="pk-analytics-kpi-card">
-            <div class="pk-analytics-kpi-head">
-              <span class="pk-analytics-kpi-label">Time Spent (${esc(periodLabel)})</span>
-              <span class="pk-analytics-kpi-icon" aria-hidden="true">⏱️</span>
-            </div>
-            <div class="pk-analytics-kpi-value">${formatDuration(data.totalSeconds)}</div>
-            <div class="pk-analytics-kpi-sub">
+        <!-- Unified 4-Column KPI Strip -->
+        <section class="pk-an-kpi-strip" aria-label="Summary metrics">
+          <div class="pk-an-kpi-cell">
+            <p class="pk-an-kpi-label"><span>Active Time</span>${ICONS.clock}</p>
+            <div class="pk-an-kpi-value">${formatDuration(data.totalSeconds)}</div>
+            <p class="pk-an-kpi-meta">
               Avg ${formatDuration(
-                Math.round(data.totalSeconds / Math.max(1, uiState.period === 'week' ? 7 : uiState.period === 'month' ? 30 : 12))
-              )} per ${uiState.period === 'year' ? 'month' : 'day'}
-            </div>
-          </article>
+                Math.round(
+                  data.totalSeconds /
+                    Math.max(1, uiState.period === 'week' ? 7 : uiState.period === 'month' ? 30 : 12)
+                )
+              )} / ${uiState.period === 'year' ? 'mo' : 'day'}
+            </p>
+          </div>
 
-          <article class="pk-analytics-kpi-card">
-            <div class="pk-analytics-kpi-head">
-              <span class="pk-analytics-kpi-label">${
-                isTeacher ? 'Credits Used' : 'Coins Spent / Earned'
-              }</span>
-              <span class="pk-analytics-kpi-icon" aria-hidden="true">${isTeacher ? '💳' : '🪙'}</span>
-            </div>
-            <div class="pk-analytics-kpi-value">
+          <div class="pk-an-kpi-cell">
+            <p class="pk-an-kpi-label">
+              <span>${isTeacher ? 'Credits Spent' : 'Coins Spent / Earned'}</span>
+              ${ICONS.credit}
+            </p>
+            <div class="pk-an-kpi-value">
               ${
                 isTeacher
-                  ? `${data.totalCreditsSpent.toLocaleString()} 💳`
+                  ? data.totalCreditsSpent.toLocaleString()
                   : `${data.totalCoinsSpent.toLocaleString()} / +${data.totalCoinsEarned.toLocaleString()}`
               }
             </div>
-            <div class="pk-analytics-kpi-sub">
+            <p class="pk-an-kpi-meta">
               ${
                 isTeacher
-                  ? `Spent across classroom rewards & quizzes`
-                  : `Spent in Shop & Claims vs. Earned`
+                  ? `${Object.keys(data.creditActions).length} active categories`
+                  : 'Shop & claims vs. classroom rewards'
               }
-            </div>
-          </article>
+            </p>
+          </div>
 
-          <article class="pk-analytics-kpi-card">
-            <div class="pk-analytics-kpi-head">
-              <span class="pk-analytics-kpi-label">Most Used Feature</span>
-              <span class="pk-analytics-kpi-icon" aria-hidden="true">${topFeature ? topFeature.icon : '🔥'}</span>
-            </div>
-            <div class="pk-analytics-kpi-value" style="font-size:1.18rem;">
-              ${topFeature && (topFeature.seconds > 0 || topFeature.visits > 0) ? esc(topFeature.label) : 'No feature data yet'}
-            </div>
-            <div class="pk-analytics-kpi-sub">
+          <div class="pk-an-kpi-cell">
+            <p class="pk-an-kpi-label"><span>Top Feature</span>${ICONS.layers}</p>
+            <div class="pk-an-kpi-value is-text">
               ${
                 topFeature && (topFeature.seconds > 0 || topFeature.visits > 0)
-                  ? `${formatDuration(topFeature.seconds)} spent · ${topFeature.visits} uses`
-                  : 'Opens & active time will appear here'
+                  ? esc(topFeature.label)
+                  : 'No activity recorded'
               }
             </div>
-          </article>
+            <p class="pk-an-kpi-meta">
+              ${
+                topFeature && (topFeature.seconds > 0 || topFeature.visits > 0)
+                  ? `${formatDuration(topFeature.seconds)} · ${topFeature.visits} sessions`
+                  : 'Awaiting session telemetry'
+              }
+            </p>
+          </div>
 
-          <article class="pk-analytics-kpi-card">
-            <div class="pk-analytics-kpi-head">
-              <span class="pk-analytics-kpi-label">${
-                selectedUserObj ? 'Active Days' : `Active ${isTeacher ? 'Teachers' : 'Students'}`
-              }</span>
-              <span class="pk-analytics-kpi-icon" aria-hidden="true">📈</span>
-            </div>
-            <div class="pk-analytics-kpi-value">
+          <div class="pk-an-kpi-cell">
+            <p class="pk-an-kpi-label">
+              <span>${selectedUserObj ? 'Active Days' : `Active ${isTeacher ? 'Teachers' : 'Students'}`}</span>
+              ${ICONS.users}
+            </p>
+            <div class="pk-an-kpi-value">
               ${
                 selectedUserObj
-                  ? `${selectedUserObj.activeDaysCount} day${selectedUserObj.activeDaysCount === 1 ? '' : 's'}`
+                  ? `${selectedUserObj.activeDaysCount}d`
                   : `${activeUsersCount} / ${data.userDirectory.length}`
               }
             </div>
-            <div class="pk-analytics-kpi-sub">
+            <p class="pk-an-kpi-meta">
               ${
                 selectedUserObj
-                  ? esc(selectedUserObj.meta || 'Tracked in selected range')
-                  : `With recorded activity in ${esc(periodLabel.toLowerCase())}`
+                  ? esc(selectedUserObj.meta || 'Tracked in window')
+                  : `${
+                      data.userDirectory.length
+                        ? Math.round((activeUsersCount / data.userDirectory.length) * 100)
+                        : 0
+                    }% active in ${esc(periodLabel.toLowerCase())}`
               }
-            </div>
-          </article>
+            </p>
+          </div>
         </section>
 
-        <!-- Charts Grid -->
-        <div class="pk-analytics-charts-grid">
-          <!-- Chart 1: Time Spent Graph -->
-          <section class="pk-analytics-card" aria-label="Time spent chart">
-            <div class="pk-analytics-card-header">
+        <!-- 2-Column SVG Charts Grid -->
+        <div class="pk-an-charts-grid">
+          <section class="pk-an-panel" aria-label="Time spent chart">
+            <div class="pk-an-panel-head">
               <div>
-                <h4 class="pk-analytics-card-title"><span>⏱️</span><span>Time Spent on App (${esc(periodLabel)})</span></h4>
-                <p class="pk-analytics-card-desc">Active time tracked while using features (pauses automatically when idle).</p>
+                <h4 class="pk-an-panel-title">Time Spent (${esc(periodLabel)})</h4>
+                <p class="pk-an-panel-sub">Active session duration (auto-pauses after 2m idle)</p>
               </div>
-              <div class="pk-analytics-legend">
-                <span class="pk-analytics-legend-item"><span class="pk-analytics-legend-dot" style="background:#38bdf8"></span>Active Time</span>
+              <div class="pk-an-legend">
+                <span class="pk-an-legend-item">
+                  <span class="pk-an-legend-swatch" style="background:var(--color-brand-secondary, #5b8def)"></span>
+                  <span>Duration</span>
+                </span>
               </div>
             </div>
-            <div class="pk-chart-timeline">
-              <div class="pk-chart-bars-wrap">
-                ${data.timeline
-                  .map((b) => {
-                    const pct = b.seconds > 0 ? Math.max(8, Math.round((b.seconds / maxTimeVal) * 100)) : 3;
-                    const topVal = formatShortDuration(b.seconds);
-                    return `
-                      <div class="pk-chart-col" title="${esc(b.fullLabel)}: ${formatDuration(b.seconds)}">
-                        <span class="pk-chart-val-top">${esc(topVal)}</span>
-                        <div class="pk-chart-col-bars">
-                          <div class="pk-chart-bar ${b.seconds > 0 ? 'is-time' : 'is-zero'}" style="height:${pct}%"></div>
-                        </div>
-                        <span class="pk-chart-label">${esc(b.label)}</span>
-                      </div>
-                    `;
-                  })
-                  .join('')}
-              </div>
+            <div class="pk-an-chart-body">
+              ${buildSvgChart(data.timeline, 'time', isTeacher)}
             </div>
           </section>
 
-          <!-- Chart 2: Credit / Coin Usage Graph -->
-          <section class="pk-analytics-card" aria-label="Credit usage chart">
-            <div class="pk-analytics-card-header">
+          <section class="pk-an-panel" aria-label="Credit usage chart">
+            <div class="pk-an-panel-head">
               <div>
-                <h4 class="pk-analytics-card-title">
-                  <span>${isTeacher ? '💳' : '🪙'}</span>
-                  <span>${isTeacher ? 'Credits Used' : 'Coins Spent vs. Earned'} (${esc(periodLabel)})</span>
+                <h4 class="pk-an-panel-title">
+                  ${isTeacher ? 'Credits Spent' : 'Coins Spent vs. Earned'} (${esc(periodLabel)})
                 </h4>
-                <p class="pk-analytics-card-desc">
+                <p class="pk-an-panel-sub">
                   ${
                     isTeacher
-                      ? 'Teacher credits spent on student awards, class gifts, and quizzes.'
-                      : 'Comparison of coins spent in the Shop/Claims vs. coins earned from classes.'
+                      ? 'Credits deducted for awards, gifts, and quizzes'
+                      : 'Shop & battle claim spend vs. earned rewards'
                   }
                 </p>
               </div>
-              <div class="pk-analytics-legend">
+              <div class="pk-an-legend">
                 ${
                   isTeacher
-                    ? `<span class="pk-analytics-legend-item"><span class="pk-analytics-legend-dot" style="background:#fbbf24"></span>Credits Spent</span>`
-                    : `<span class="pk-analytics-legend-item"><span class="pk-analytics-legend-dot" style="background:#fbbf24"></span>Spent</span>
-                       <span class="pk-analytics-legend-item"><span class="pk-analytics-legend-dot" style="background:#34d399"></span>Earned</span>`
+                    ? `<span class="pk-an-legend-item">
+                         <span class="pk-an-legend-swatch" style="background:var(--color-brand, #f4c542)"></span>
+                         <span>Spent</span>
+                       </span>`
+                    : `<span class="pk-an-legend-item">
+                         <span class="pk-an-legend-swatch" style="background:var(--color-brand, #f4c542)"></span>
+                         <span>Spent</span>
+                       </span>
+                       <span class="pk-an-legend-item">
+                         <span class="pk-an-legend-swatch" style="background:var(--color-success, #42c98a)"></span>
+                         <span>Earned</span>
+                       </span>`
                 }
               </div>
             </div>
-            <div class="pk-chart-timeline">
-              <div class="pk-chart-bars-wrap">
-                ${data.timeline
-                  .map((b) => {
-                    if (isTeacher) {
-                      const pct =
-                        b.creditsSpent > 0 ? Math.max(8, Math.round((b.creditsSpent / maxCreditVal) * 100)) : 3;
-                      return `
-                        <div class="pk-chart-col" title="${esc(b.fullLabel)}: ${b.creditsSpent.toLocaleString()} credits spent">
-                          <span class="pk-chart-val-top">${b.creditsSpent > 0 ? b.creditsSpent.toLocaleString() : ''}</span>
-                          <div class="pk-chart-col-bars">
-                            <div class="pk-chart-bar ${b.creditsSpent > 0 ? 'is-spent' : 'is-zero'}" style="height:${pct}%"></div>
-                          </div>
-                          <span class="pk-chart-label">${esc(b.label)}</span>
-                        </div>
-                      `;
-                    }
-                    const spentPct =
-                      b.coinsSpent > 0 ? Math.max(8, Math.round((b.coinsSpent / maxCreditVal) * 100)) : 3;
-                    const earnedPct =
-                      b.coinsEarned > 0 ? Math.max(8, Math.round((b.coinsEarned / maxCreditVal) * 100)) : 3;
-                    const topLabel =
-                      b.coinsSpent > 0 || b.coinsEarned > 0
-                        ? `${b.coinsSpent || 0}/${b.coinsEarned || 0}`
-                        : '';
-                    return `
-                      <div class="pk-chart-col" title="${esc(b.fullLabel)} — Spent: ${b.coinsSpent.toLocaleString()} 🪙 | Earned: +${b.coinsEarned.toLocaleString()} 🪙">
-                        <span class="pk-chart-val-top">${esc(topLabel)}</span>
-                        <div class="pk-chart-col-bars">
-                          <div class="pk-chart-bar ${b.coinsSpent > 0 ? 'is-spent' : 'is-zero'}" style="height:${spentPct}%"></div>
-                          <div class="pk-chart-bar ${b.coinsEarned > 0 ? 'is-earned' : 'is-zero'}" style="height:${earnedPct}%"></div>
-                        </div>
-                        <span class="pk-chart-label">${esc(b.label)}</span>
-                      </div>
-                    `;
-                  })
-                  .join('')}
-              </div>
-              ${actionChipsHtml ? `<div class="pk-credit-breakdown">${actionChipsHtml}</div>` : ''}
-            </div>
-          </section>
-
-          <!-- Chart 3: Most Used Features Breakdown -->
-          <section class="pk-analytics-card is-full" aria-label="Most used features">
-            <div class="pk-analytics-card-header">
-              <div>
-                <h4 class="pk-analytics-card-title"><span>🔥</span><span>Most Used Features (${esc(periodLabel)})</span></h4>
-                <p class="pk-analytics-card-desc">
-                  Ranked by active time spent and number of visits/actions across ${
-                    isTeacher
-                      ? 'Classroom & Teacher Zone (Financial, Word Bank/VB, Schedule, Games, Quizzes)'
-                      : 'Student Dashboard (Shop, Collection, Catchdex, Vocabulary, Quizzes, Games)'
-                  }.
-                </p>
-              </div>
-            </div>
-            <div class="pk-feature-list">
-              ${data.rankedFeatures
-                .map((f, idx) => {
-                  const score = f.seconds + f.visits * 60;
-                  const pct = score > 0 ? Math.max(4, Math.min(100, Math.round((score / maxFeatureScore) * 100))) : 0;
-                  const sharePct =
-                    data.totalSeconds > 0 ? Math.round((f.seconds / data.totalSeconds) * 100) : 0;
-                  return `
-                    <div class="pk-feature-row">
-                      <div class="pk-feature-row-top">
-                        <span class="pk-feature-name">
-                          <span class="pk-feature-rank-badge">#${idx + 1}</span>
-                          <span aria-hidden="true">${f.icon}</span>
-                          <span>${esc(f.label)}</span>
-                        </span>
-                        <span class="pk-feature-metrics">
-                          <span>⏱️ ${formatDuration(f.seconds)}</span>
-                          <span class="pk-feature-pill">${f.visits} ${f.visits === 1 ? 'use' : 'uses'}</span>
-                          ${sharePct > 0 ? `<span>${sharePct}% of time</span>` : ''}
-                        </span>
-                      </div>
-                      <div class="pk-feature-track" aria-hidden="true">
-                        <div class="pk-feature-fill" style="width:${pct}%"></div>
-                      </div>
-                    </div>
-                  `;
-                })
-                .join('')}
-            </div>
-          </section>
-
-          <!-- Per-User Breakdown / Quick Drilldown Directory -->
-          <section class="pk-analytics-card is-full" aria-label="${isTeacher ? 'Teacher' : 'Student'} breakdown">
-            <div class="pk-analytics-card-header">
-              <div>
-                <h4 class="pk-analytics-card-title">
-                  <span>${isTeacher ? '👨‍🏫' : '👩‍🎓'}</span>
-                  <span>${isTeacher ? 'Teachers' : 'Students'} Breakdown (${esc(periodLabel)})</span>
-                </h4>
-                <p class="pk-analytics-card-desc">Click any ${
-                  isTeacher ? 'teacher' : 'student'
-                } below to drill down into their individual graphs.</p>
-              </div>
-            </div>
-            <div class="pk-analytics-roster-list">
-              ${
-                filteredUsers.length
-                  ? filteredUsers
-                      .map(
-                        (u) => `
-                    <button type="button" class="pk-analytics-user-row" data-an-pick-user="${esc(u.key)}">
-                      <div class="pk-analytics-user-row-main">
-                        <span class="pk-analytics-user-row-name">${esc(u.name)}</span>
-                        <span class="pk-analytics-user-row-meta">${esc(u.meta)} · Top: ${esc(u.topFeatureLabel)}</span>
-                      </div>
-                      <div class="pk-analytics-user-row-stats">
-                        <span class="pk-analytics-user-row-time">⏱️ ${formatDuration(u.seconds)}</span>
-                        <span class="pk-analytics-user-row-credits">
-                          ${
-                            isTeacher
-                              ? `${u.creditsSpent.toLocaleString()} 💳 spent`
-                              : `${u.coinsSpent.toLocaleString()} spent · +${u.coinsEarned.toLocaleString()} 🪙`
-                          }
-                        </span>
-                      </div>
-                    </button>
-                  `
-                      )
-                      .join('')
-                  : `<p class="text-sm text-slate-400 py-4">No ${
-                      isTeacher ? 'teachers' : 'students'
-                    } match your filter.</p>`
-              }
+            <div class="pk-an-chart-body">
+              ${buildSvgChart(data.timeline, 'credit', isTeacher)}
+              ${ledgerItemsHtml ? `<div class="pk-an-ledger-strip">${ledgerItemsHtml}</div>` : ''}
             </div>
           </section>
         </div>
+
+        <!-- Structured Feature Utilization Table -->
+        <section class="pk-an-panel" aria-label="Feature utilization breakdown">
+          <div class="pk-an-panel-head">
+            <div>
+              <h4 class="pk-an-panel-title">Feature Utilization (${esc(periodLabel)})</h4>
+              <p class="pk-an-panel-sub">
+                Ranked by active duration and session count across ${
+                  isTeacher ? 'Classroom & Teacher Zone modules' : 'Student Dashboard modules'
+                }
+              </p>
+            </div>
+          </div>
+          <div class="pk-an-table-wrap">
+            <table class="pk-an-table">
+              <thead>
+                <tr>
+                  <th style="width:48px">#</th>
+                  <th>Feature Module</th>
+                  <th style="width:220px">Share of Time</th>
+                  <th class="is-num" style="width:120px">Active Time</th>
+                  <th class="is-num" style="width:110px">Sessions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.rankedFeatures
+                  .map((f, idx) => {
+                    const score = f.seconds + f.visits * 60;
+                    const barPct =
+                      score > 0 ? Math.max(3, Math.min(100, Math.round((score / maxFeatureScore) * 100))) : 0;
+                    const sharePct =
+                      data.totalSeconds > 0 ? Math.round((f.seconds / data.totalSeconds) * 100) : 0;
+                    return `
+                      <tr>
+                        <td><span class="pk-an-rank-num">${String(idx + 1).padStart(2, '0')}</span></td>
+                        <td><span class="pk-an-feat-name">${esc(f.label)}</span></td>
+                        <td>
+                          <div class="pk-an-share-cell">
+                            <div class="pk-an-bar-track" aria-hidden="true">
+                              <div class="pk-an-bar-fill" style="width:${barPct}%"></div>
+                            </div>
+                            <span class="pk-an-share-pct">${sharePct}%</span>
+                          </div>
+                        </td>
+                        <td class="is-num">${formatDuration(f.seconds)}</td>
+                        <td class="is-num pk-an-muted">${f.visits.toLocaleString()}</td>
+                      </tr>
+                    `;
+                  })
+                  .join('')}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Structured Per-User Directory Table -->
+        <section class="pk-an-panel" aria-label="${isTeacher ? 'Teacher' : 'Student'} breakdown">
+          <div class="pk-an-panel-head">
+            <div>
+              <h4 class="pk-an-panel-title">${isTeacher ? 'Teacher' : 'Student'} Directory (${esc(periodLabel)})</h4>
+              <p class="pk-an-panel-sub">Select any row to filter all charts to that individual account</p>
+            </div>
+          </div>
+          <div class="pk-an-table-wrap">
+            <table class="pk-an-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>${isTeacher ? 'Role' : 'School / Class'}</th>
+                  <th>Top Feature</th>
+                  <th class="is-num">Active Days</th>
+                  <th class="is-num">Active Time</th>
+                  <th class="is-num">${isTeacher ? 'Credits Spent' : 'Spent / Earned'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${
+                  filteredUsers.length
+                    ? filteredUsers
+                        .map(
+                          (u) => `
+                        <tr class="is-interactive" data-an-pick-user="${esc(u.key)}" tabindex="0" role="button" aria-label="Inspect ${esc(u.name)}">
+                          <td><span class="pk-an-feat-name">${esc(u.name)}</span></td>
+                          <td><span class="pk-an-badge">${esc(u.meta || '—')}</span></td>
+                          <td class="pk-an-muted">${esc(u.topFeatureLabel)}</td>
+                          <td class="is-num pk-an-muted">${u.activeDaysCount}d</td>
+                          <td class="is-num">${formatDuration(u.seconds)}</td>
+                          <td class="is-num">
+                            ${
+                              isTeacher
+                                ? u.creditsSpent.toLocaleString()
+                                : `${u.coinsSpent.toLocaleString()} / +${u.coinsEarned.toLocaleString()}`
+                            }
+                          </td>
+                        </tr>
+                      `
+                        )
+                        .join('')
+                    : `<tr><td colspan="6" class="pk-an-muted" style="text-align:center;padding:24px;">No matching ${
+                        isTeacher ? 'teachers' : 'students'
+                      } found.</td></tr>`
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
       </div>
     `;
 
-    // Wire up interactive controls inside `#admin-subtab-analytics`
     host.querySelectorAll('[data-an-period]').forEach((btn) => {
       btn.addEventListener('click', () => {
         uiState.period = btn.dataset.anPeriod;
@@ -1180,11 +1284,18 @@
       renderAdminAnalytics();
     });
 
-    host.querySelectorAll('[data-an-pick-user]').forEach((rowBtn) => {
-      rowBtn.addEventListener('click', () => {
-        uiState.selectedUser = rowBtn.dataset.anPickUser;
+    host.querySelectorAll('[data-an-pick-user]').forEach((row) => {
+      const activate = () => {
+        uiState.selectedUser = row.dataset.anPickUser;
         renderAdminAnalytics();
         host.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+      row.addEventListener('click', activate);
+      row.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          activate();
+        }
       });
     });
   }

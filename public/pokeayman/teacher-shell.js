@@ -71,7 +71,7 @@
         <div id="ts-zone"><button type="button" class="ts-section-toggle" data-ts-toggle="zone" aria-expanded="false" aria-controls="ts-zone-content"><span>Teacher Zone</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-zone-content" hidden>
         ${ZONE_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-zone="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
         <div id="ts-admin" hidden><button type="button" class="ts-section-toggle" data-ts-toggle="admin" aria-expanded="false" aria-controls="ts-admin-content"><span>Admin Hub</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-admin-content" hidden>
-        <button type="button" class="ts-item" data-ts="admin-users">Users</button><button type="button" class="ts-item" data-ts="admin-controls">Controls</button><button type="button" class="ts-item" data-ts="admin-analytics">📊 Analytics</button></div></div>
+        <button type="button" class="ts-item" data-ts="admin-users">Users</button><button type="button" class="ts-item" data-ts="admin-controls">Controls</button><button type="button" class="ts-item" data-ts="admin-analytics">Analytics</button></div></div>
       </nav>
 `;
     const rail = document.createElement('aside');
