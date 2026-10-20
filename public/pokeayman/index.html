@@ -18170,9 +18170,16 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       wordEl.style.marginInline = 'auto';
     });
   
+  // Input is locked by the click handler as soon as the second card flips; checkMatch always releases it.
+  function runMemoryCheck() {
+    try { checkMatch(); } catch (error) {
+      console.error('Memory check failed', error);
+      grid.querySelectorAll('.memory-card-inner.flipped').forEach(inner => { const i = Number(inner.closest('.memory-card')?.dataset.index); if (!matched.has(i)) inner.classList.remove('flipped'); });
+      flipped = []; mismatchLocked = false;
+    }
+  }
   function checkMatch() {
-    if (flipped.length !== 2 || mismatchLocked) return;
-    mismatchLocked = true;
+    if (flipped.length !== 2) { flipped = []; mismatchLocked = false; return; }
     const turnTokenAtCheck = roundToken;
     const [idx1, idx2] = flipped;
     const firstCard = pairs[idx1];
