@@ -49,7 +49,7 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
               .slice(0, 30);
           } else if (typeof input.words === "string") {
             words = input.words
-              .split(/[\n,]+/)
+              .split(/[\s,]+/)
               .map((w: string) => w.trim())
               .filter((w: string) => w.length > 0 && w.length <= 60)
               .slice(0, 30);

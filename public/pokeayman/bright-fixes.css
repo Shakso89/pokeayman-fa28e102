@@ -646,3 +646,63 @@ html body.ts-bright .vocab-word-edit-del-confirm {
 }
 html body.ts-bright .vocab-word-edit-del-confirm h3 { color: #0f172a !important; }
 html body.ts-bright .vocab-word-edit-del-confirm p { color: #475569 !important; }
+
+/* Teacher VB Create Modal & Generate Modal - Bright Mode Support */
+html body.ts-bright .teacher-vb-create-modal {
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+html body.ts-bright .teacher-vb-create-dialog {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22) !important;
+}
+
+html body.ts-bright .teacher-vb-create-heading h4 {
+  color: #0f172a !important;
+}
+
+html body.ts-bright .teacher-vb-create-heading button {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+html body.ts-bright .teacher-vb-create-field span {
+  color: #334155 !important;
+}
+
+html body.ts-bright .teacher-vb-create-field input,
+html body.ts-bright .teacher-vb-create-field textarea,
+html body.ts-bright .teacher-vb-create-field select {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html body.ts-bright .vocab-gen-count-btn {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+html body.ts-bright .vocab-gen-count-btn.is-selected {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+  border-color: #6366f1 !important;
+}
+
+html body.ts-bright .vocab-gen-tab-btn {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+html body.ts-bright .vocab-gen-tab-btn.active {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+  border-color: #6366f1 !important;
+}

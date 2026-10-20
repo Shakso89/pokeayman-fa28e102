@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/vocabulary-sentence")({
           const models = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-flash-latest"];
 
           if (mode === "words") {
-            const rawWords = Array.isArray(input.words) ? input.words : String(input.words || "").split(/[\n,]+/);
+            const rawWords = Array.isArray(input.words) ? input.words : String(input.words || "").split(/[\s,]+/);
             const words = rawWords.map((w: any) => String(w || "").trim()).filter((w: string) => w.length > 0 && w.length <= 60).slice(0, 30);
             if (!words.length) return Response.json({ message: "Please provide words." }, { status: 400 });
 

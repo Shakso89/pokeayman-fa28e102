@@ -1,12 +1,20 @@
 // AI Vocabulary List Generator for PokéAyman
-// Generates complete vocabulary lists from either words or uploaded photos using Gemini AI
-// Context-aware image search + 1 credit per word charged ONLY upon success.
+// Opens a simplified, native popup (like creating a list) with options for words (space-separated) or photo.
+// 1 credit per main word in generated list, charged strictly after creation succeeds.
 
 (function () {
   let isGenerating = false;
-  let activeTab = 'words';
+  let activeMode = 'words'; // 'words' | 'photo'
   let uploadedPhotoBase64 = '';
-  let selectedPhotoWordCount = 5;
+  let selectedPhotoCount = 5;
+
+  function parseWordsFromText(text) {
+    return String(text || '')
+      .trim()
+      .split(/[\s,]+/)
+      .map(w => w.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim())
+      .filter(w => w.length > 0 && w.length <= 60);
+  }
 
   function getTeacherBalance() {
     if (typeof window.getTeacherCredits === 'function') {
@@ -23,7 +31,6 @@
   }
 
   async function searchContextImageForSentence(sentence, word) {
-    // 1. Search using the full generated sentence context (e.g. "A red ball rolls across the grass")
     if (sentence && typeof window.pexelsFetch === 'function') {
       try {
         const cleanQuery = sentence.replace(/[.!?,"']/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
@@ -38,11 +45,10 @@
           }
         }
       } catch (err) {
-        console.warn('Sentence context image search error:', err);
+        console.warn('Sentence image search failed:', err);
       }
     }
 
-    // 2. Fallback to searching the main word if full sentence returns 0 results
     if (word && typeof window.pexelsFetch === 'function') {
       try {
         const res = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(word.trim())}&per_page=6`, {
@@ -56,184 +62,195 @@
           }
         }
       } catch (err) {
-        console.warn('Word fallback image search error:', err);
+        console.warn('Word fallback search failed:', err);
       }
     }
 
     return '';
   }
 
-  function openGenerateModal() {
-    if (document.getElementById('vocab-generate-modal')) return;
+  function getTargetClassInfo() {
+    let school = String(window.navSchool || '').trim();
+    let className = String(window.navClass || '').trim();
 
-    const school = window.navSchool;
-    const className = window.navClass;
-
-    if (!school || !className || (window.currentRole === 'teacher' && typeof window.canManageClass === 'function' && !window.canManageClass(school, className))) {
-      if (typeof window.toast === 'function') {
-        window.toast('Choose one of your managed classes before generating a vocabulary list.');
-      } else {
-        alert('Choose one of your managed classes before generating a vocabulary list.');
+    if (!school || !className) {
+      const classRow = (window.allData || []).find(r => r.type === 'class' && r.class_name);
+      if (classRow) {
+        school = school || classRow.school_name || '';
+        className = className || classRow.class_name || '';
       }
-      return;
     }
 
-    // Pre-fill list name from input if present
-    const existingName = document.getElementById('new-vocab-list-name')?.value?.trim() || '';
+    return { school, className };
+  }
 
-    activeTab = 'words';
+  function openGenerateModal() {
+    const existingModal = document.getElementById('vocab-gen-popup-modal');
+    if (existingModal) existingModal.remove();
+
+    // Read list name from current input field if teacher already typed one
+    const inputListName = document.getElementById('new-vocab-list-name')?.value?.trim() || '';
+
+    const { school, className } = getTargetClassInfo();
+    activeMode = 'words';
     uploadedPhotoBase64 = '';
-    selectedPhotoWordCount = 5;
+    selectedPhotoCount = 5;
     isGenerating = false;
 
+    // Available classes if needed
+    const allClasses = typeof window.getAllTeacherClasses === 'function' ? window.getAllTeacherClasses() : [];
+    const classOptionsHtml = allClasses.map(c => 
+      `<option value="${c.school_name}||${c.class_name}" ${c.school_name === school && c.class_name === className ? 'selected' : ''}>${c.class_name} (${c.school_name})</option>`
+    ).join('');
+
     const modal = document.createElement('div');
-    modal.id = 'vocab-generate-modal';
-    modal.className = 'vocab-generate-backdrop';
+    modal.id = 'vocab-gen-popup-modal';
+    modal.className = 'teacher-vb-create-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+
     modal.innerHTML = `
-      <div class="vocab-generate-card">
-        <!-- Header -->
-        <div class="vocab-generate-header flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl shadow-inner">
-              ⚡
-            </div>
-            <div>
-              <h2 class="text-base font-bold tracking-tight">Generate Vocab List with AI</h2>
-              <p class="text-xs text-muted">Create simple, child-friendly sentences & matching pictures</p>
-            </div>
-          </div>
-          <button type="button" id="vocab-gen-close-btn" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 text-muted hover:text-white transition cursor-pointer text-lg">&times;</button>
+      <div class="teacher-vb-create-dialog" style="max-width:38rem; width:100%;">
+        <div class="teacher-vb-create-heading">
+          <h4 style="display:flex; align-items:center; gap:8px;">
+            <span>⚡</span> Generate Vocabulary List
+          </h4>
+          <button id="vocab-gen-popup-close" type="button" aria-label="Close" style="cursor:pointer;">&times;</button>
         </div>
 
-        <!-- Scrollable Body -->
-        <div class="p-6 overflow-y-auto space-y-5 flex-1">
+        <form id="vocab-gen-popup-form" style="display:flex; flex-direction:column; gap:14px;" onsubmit="return false;">
           <!-- List Name -->
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider mb-1.5 opacity-90">List Name *</label>
-            <input type="text" id="vocab-gen-name" class="quiz-input w-full px-3.5 py-2.5 text-sm rounded-lg" placeholder="e.g., 'Unit 5 Animals' or 'Kitchen Objects'" value="${existingName ? existingName.replace(/"/g, '&quot;') : ''}" required>
-          </div>
+          <label class="teacher-vb-create-field">
+            <span>List name</span>
+            <input id="vocab-gen-name-input" type="text" maxlength="80" placeholder="e.g. Unit 5 Verbs or Animals" value="${inputListName.replace(/"/g, '&quot;')}" required>
+          </label>
 
-          <!-- Mode Selector Tabs -->
+          <!-- Class info / selector (only if not already in a class, or let user verify) -->
+          ${school && className ? `
+            <div style="font-size:12px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px;">
+              <span>Class:</span> <strong style="color:#fde047;">${className}</strong> <span style="opacity:0.7;">(${school})</span>
+            </div>
+          ` : `
+            <label class="teacher-vb-create-field">
+              <span>Class</span>
+              <select id="vocab-gen-class-select" required>
+                <option value="">Choose a class</option>
+                ${classOptionsHtml}
+              </select>
+            </label>
+          `}
+
+          <!-- Generation Mode Switcher (Words vs Photo) -->
           <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider mb-2 opacity-90">Generation Source</label>
-            <div class="grid grid-cols-2 gap-2 p-1 bg-black/25 rounded-xl border border-white/10">
-              <button type="button" id="vocab-gen-tab-words" class="vocab-gen-tab-btn py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 active">
-                <span>📝</span> Enter Words
+            <span style="display:block; font-size:12px; font-weight:700; color:var(--pk-ink, #f8fafc); margin-bottom:6px;">How do you want to generate?</span>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <button type="button" id="vocab-gen-mode-words" class="vocab-gen-tab-btn active" style="padding:10px 12px; border-radius:8px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
+                <span>📝</span> Write Words
               </button>
-              <button type="button" id="vocab-gen-tab-photo" class="vocab-gen-tab-btn py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2">
+              <button type="button" id="vocab-gen-mode-photo" class="vocab-gen-tab-btn" style="padding:10px 12px; border-radius:8px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
                 <span>📷</span> Upload Photo
               </button>
             </div>
           </div>
 
-          <!-- Words Section -->
-          <div id="vocab-gen-panel-words" class="space-y-2">
-            <label class="block text-xs font-semibold uppercase tracking-wider opacity-90">Words to Include</label>
-            <textarea id="vocab-gen-words-input" rows="4" class="quiz-input w-full px-3.5 py-2.5 text-sm rounded-lg resize-none" placeholder="Type words separated by commas or lines, e.g.:&#10;lion, elephant, giraffe, zebra, monkey"></textarea>
-            <div class="text-xs text-muted flex items-center justify-between">
-              <span id="vocab-gen-words-counter">0 words entered</span>
-              <span class="text-indigo-400 font-medium">1 credit per word</span>
+          <!-- Mode 1: Words with spaces between -->
+          <div id="vocab-gen-section-words" style="display:flex; flex-direction:column; gap:6px;">
+            <label class="teacher-vb-create-field">
+              <span>Enter words with spaces between (or commas)</span>
+              <textarea id="vocab-gen-text-input" rows="3" placeholder="e.g. lion tiger elephant giraffe zebra monkey" style="width:100%; border-radius:8px; padding:10px 12px; background:var(--pk-surface, #0b1220); color:#fff; border:1px solid rgba(148,163,184,.35); font-size:14px; resize:none;"></textarea>
+            </label>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:rgba(255,255,255,0.7);">
+              <span id="vocab-gen-words-count-label">0 words detected</span>
+              <span style="color:#fde047; font-weight:700;">1 credit per word</span>
             </div>
           </div>
 
-          <!-- Photo Section -->
-          <div id="vocab-gen-panel-photo" class="space-y-4 hidden">
-            <div>
-              <label class="block text-xs font-semibold uppercase tracking-wider mb-1.5 opacity-90">Upload Photo</label>
-              <div id="vocab-gen-dropzone" class="rounded-xl p-5 text-center cursor-pointer transition flex flex-col items-center justify-center min-h-[140px]">
-                <input type="file" id="vocab-gen-file-input" accept="image/*" class="hidden">
-                <div id="vocab-gen-dropzone-prompt" class="space-y-1">
-                  <div class="text-3xl mb-1">📸</div>
-                  <p class="text-xs font-bold">Click or drag & drop a photo here</p>
-                  <p class="text-[11px] text-muted">Classroom scene, textbook page, flashcard, or real object</p>
-                </div>
-                <div id="vocab-gen-preview-container" class="hidden relative w-full flex items-center justify-center">
-                  <img id="vocab-gen-preview-img" src="" alt="Photo preview" class="max-h-44 max-w-full rounded-lg object-contain shadow-md">
-                  <button type="button" id="vocab-gen-remove-photo" class="absolute top-2 right-2 bg-red-600/90 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded-md shadow cursor-pointer font-bold">✕ Remove</button>
-                </div>
+          <!-- Mode 2: Photo Upload -->
+          <div id="vocab-gen-section-photo" style="display:none; flex-direction:column; gap:10px;">
+            <div id="vocab-gen-photo-dropzone" style="border:2px dashed rgba(148,163,184,.4); border-radius:10px; padding:16px; text-align:center; cursor:pointer; background:rgba(255,255,255,0.02); transition:all 0.2s ease;">
+              <input type="file" id="vocab-gen-photo-file" accept="image/*" style="display:none;">
+              <div id="vocab-gen-photo-prompt">
+                <div style="font-size:28px; margin-bottom:4px;">📸</div>
+                <div style="font-weight:700; font-size:13px;">Click or drop a photo here</div>
+                <div style="font-size:11px; opacity:0.7; margin-top:2px;">Textbook page, real scene, flashcard, etc.</div>
+              </div>
+              <div id="vocab-gen-photo-preview-wrap" style="display:none; position:relative;">
+                <img id="vocab-gen-photo-preview-img" src="" alt="Photo preview" style="max-height:140px; margin:0 auto; border-radius:6px; object-fit:contain;">
+                <button type="button" id="vocab-gen-photo-remove" style="position:absolute; top:4px; right:4px; background:rgba(220,38,38,0.9); color:#fff; border:none; border-radius:4px; padding:2px 8px; font-size:11px; cursor:pointer; font-weight:700;">✕ Remove</button>
               </div>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold uppercase tracking-wider mb-2 opacity-90">Words to Extract from Photo</label>
-              <div class="flex flex-wrap gap-2">
-                <button type="button" class="vocab-gen-count-pill px-3 py-1.5 text-xs font-bold" data-count="3">3 words</button>
-                <button type="button" class="vocab-gen-count-pill px-3 py-1.5 text-xs font-bold is-selected" data-count="5">5 words (recommended)</button>
-                <button type="button" class="vocab-gen-count-pill px-3 py-1.5 text-xs font-bold" data-count="8">8 words</button>
-                <button type="button" class="vocab-gen-count-pill px-3 py-1.5 text-xs font-bold" data-count="10">10 words</button>
+              <span style="display:block; font-size:12px; font-weight:700; color:var(--pk-ink, #f8fafc); margin-bottom:4px;">Extract how many words?</span>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="vocab-gen-count-btn" data-count="3" style="flex:1; padding:6px 0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">3 words</button>
+                <button type="button" class="vocab-gen-count-btn is-selected" data-count="5" style="flex:1.4; padding:6px 0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">5 words (best)</button>
+                <button type="button" class="vocab-gen-count-btn" data-count="8" style="flex:1; padding:6px 0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">8 words</button>
+                <button type="button" class="vocab-gen-count-btn" data-count="10" style="flex:1; padding:6px 0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">10 words</button>
               </div>
             </div>
           </div>
 
-          <!-- Credit Cost & Balance Status Banner -->
-          <div id="vocab-gen-credit-banner" class="p-3.5 rounded-xl flex items-center justify-between text-xs">
-            <div class="flex items-center gap-2.5">
-              <span class="text-lg">💳</span>
-              <div>
-                <div class="font-bold flex items-center gap-1.5">
-                  <span>Cost: <span id="vocab-gen-cost-amount">0</span> credits</span>
-                  <span class="text-[11px] font-normal text-muted">(1 credit / main word)</span>
-                </div>
-                <div class="text-muted text-[11px]">Your balance: <span id="vocab-gen-balance-display">...</span></div>
-              </div>
+          <!-- Status & Balance Banner -->
+          <div style="padding:10px 12px; border-radius:8px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+            <div>
+              <div style="font-weight:700; color:#fff;">Cost: <span id="vocab-gen-cost-label" style="color:#fde047;">0</span> credits</div>
+              <div style="opacity:0.7; font-size:11px;">Your balance: <span id="vocab-gen-balance-label">...</span></div>
             </div>
-            <div id="vocab-gen-credit-badge" class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-500/20 text-emerald-300">
+            <div id="vocab-gen-badge" style="padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; background:rgba(16,185,129,0.2); color:#6ee7b7;">
               Ready
             </div>
           </div>
 
-          <!-- Error message container -->
-          <div id="vocab-gen-error" class="hidden p-3 rounded-lg bg-red-500/20 border border-red-500/40 text-red-200 text-xs font-medium"></div>
+          <!-- Error Alert Banner -->
+          <div id="vocab-gen-error-banner" style="display:none; padding:10px 12px; border-radius:8px; background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-size:12px; font-weight:600;"></div>
 
-          <!-- Progress / Loading state -->
-          <div id="vocab-gen-progress-panel" class="hidden space-y-3 p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30">
-            <div class="flex items-center gap-3">
-              <div class="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
-              <p id="vocab-gen-status-text" class="text-xs font-bold text-indigo-200">Starting generation...</p>
+          <!-- Loading Progress Bar -->
+          <div id="vocab-gen-progress-wrap" style="display:none; flex-direction:column; gap:6px; padding:10px 12px; border-radius:8px; background:rgba(79,70,229,0.2); border:1px solid rgba(99,102,241,0.4);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:16px; height:16px; border:2px solid #818cf8; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+              <span id="vocab-gen-status-text" style="font-size:12px; font-weight:700; color:#c7d2fe;">Generating simple sentences with Gemini...</span>
             </div>
-            <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-              <div id="vocab-gen-progress-bar" class="bg-indigo-400 h-1.5 rounded-full transition-all duration-300" style="width: 15%"></div>
+            <div style="width:100%; height:4px; background:rgba(255,255,255,0.15); border-radius:2px; overflow:hidden;">
+              <div id="vocab-gen-progress-fill" style="width:25%; height:100%; background:#818cf8; transition:width 0.3s ease;"></div>
             </div>
           </div>
-        </div>
 
-        <!-- Footer -->
-        <div class="vocab-generate-footer flex items-center justify-end gap-3">
-          <button type="button" id="vocab-gen-cancel-btn" class="px-4 py-2.5 rounded-lg text-xs font-semibold cursor-pointer transition">Cancel</button>
-          <button type="button" id="vocab-gen-submit-btn" class="px-5 py-2.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer">
+          <!-- Submit Button -->
+          <button id="vocab-gen-submit-button" type="button" class="btn-primary" style="margin-top:4px; width:100%; height:44px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer;">
             <span>⚡</span> Generate List
           </button>
-        </div>
+        </form>
       </div>
     `;
 
     document.body.appendChild(modal);
 
-    // Elements
-    const closeBtn = modal.querySelector('#vocab-gen-close-btn');
-    const cancelBtn = modal.querySelector('#vocab-gen-cancel-btn');
-    const submitBtn = modal.querySelector('#vocab-gen-submit-btn');
-    const nameInput = modal.querySelector('#vocab-gen-name');
-    const tabWords = modal.querySelector('#vocab-gen-tab-words');
-    const tabPhoto = modal.querySelector('#vocab-gen-tab-photo');
-    const panelWords = modal.querySelector('#vocab-gen-panel-words');
-    const panelPhoto = modal.querySelector('#vocab-gen-panel-photo');
-    const wordsInput = modal.querySelector('#vocab-gen-words-input');
-    const wordsCounter = modal.querySelector('#vocab-gen-words-counter');
-    const dropzone = modal.querySelector('#vocab-gen-dropzone');
-    const fileInput = modal.querySelector('#vocab-gen-file-input');
-    const dropzonePrompt = modal.querySelector('#vocab-gen-dropzone-prompt');
-    const previewContainer = modal.querySelector('#vocab-gen-preview-container');
-    const previewImg = modal.querySelector('#vocab-gen-preview-img');
-    const removePhotoBtn = modal.querySelector('#vocab-gen-remove-photo');
-    const costAmountEl = modal.querySelector('#vocab-gen-cost-amount');
-    const balanceDisplayEl = modal.querySelector('#vocab-gen-balance-display');
-    const creditBadge = modal.querySelector('#vocab-gen-credit-badge');
-    const errorEl = modal.querySelector('#vocab-gen-error');
-    const progressPanel = modal.querySelector('#vocab-gen-progress-panel');
-    const statusText = modal.querySelector('#vocab-gen-status-text');
-    const progressBar = modal.querySelector('#vocab-gen-progress-bar');
-    const countPills = modal.querySelectorAll('.vocab-gen-count-pill');
+    // References
+    const closeBtn = modal.querySelector('#vocab-gen-popup-close');
+    const nameInput = modal.querySelector('#vocab-gen-name-input');
+    const modeWordsBtn = modal.querySelector('#vocab-gen-mode-words');
+    const modePhotoBtn = modal.querySelector('#vocab-gen-mode-photo');
+    const sectionWords = modal.querySelector('#vocab-gen-section-words');
+    const sectionPhoto = modal.querySelector('#vocab-gen-section-photo');
+    const textInput = modal.querySelector('#vocab-gen-text-input');
+    const wordsCountLabel = modal.querySelector('#vocab-gen-words-count-label');
+    const photoDropzone = modal.querySelector('#vocab-gen-photo-dropzone');
+    const photoFileInput = modal.querySelector('#vocab-gen-photo-file');
+    const photoPrompt = modal.querySelector('#vocab-gen-photo-prompt');
+    const photoPreviewWrap = modal.querySelector('#vocab-gen-photo-preview-wrap');
+    const photoPreviewImg = modal.querySelector('#vocab-gen-photo-preview-img');
+    const photoRemoveBtn = modal.querySelector('#vocab-gen-photo-remove');
+    const costLabel = modal.querySelector('#vocab-gen-cost-label');
+    const balanceLabel = modal.querySelector('#vocab-gen-balance-label');
+    const badgeEl = modal.querySelector('#vocab-gen-badge');
+    const errorBanner = modal.querySelector('#vocab-gen-error-banner');
+    const progressWrap = modal.querySelector('#vocab-gen-progress-wrap');
+    const statusTextEl = modal.querySelector('#vocab-gen-status-text');
+    const progressFillEl = modal.querySelector('#vocab-gen-progress-fill');
+    const submitBtn = modal.querySelector('#vocab-gen-submit-button');
+    const countBtns = modal.querySelectorAll('.vocab-gen-count-btn');
+    const classSelect = modal.querySelector('#vocab-gen-class-select');
 
     function closeModal() {
       if (isGenerating) return;
@@ -241,219 +258,220 @@
     }
 
     closeBtn.addEventListener('click', closeModal);
-    cancelBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
       if (e.target === modal && !isGenerating) closeModal();
     });
 
-    function getParsedWords() {
-      const raw = wordsInput.value || '';
-      return raw.split(/[\n,]+/).map(w => w.trim()).filter(Boolean);
+    function getEnteredWords() {
+      return parseWordsFromText(textInput.value);
     }
 
-    function calculateCost() {
-      if (activeTab === 'words') {
-        const words = getParsedWords();
-        return words.length;
+    function getWordCost() {
+      if (activeMode === 'words') {
+        return getEnteredWords().length;
       } else {
-        return uploadedPhotoBase64 ? selectedPhotoWordCount : 0;
+        return uploadedPhotoBase64 ? selectedPhotoCount : 0;
       }
     }
 
-    function updateCreditUI() {
+    function updateModalUI() {
       const balance = getTeacherBalance();
-      const cost = calculateCost();
+      const cost = getWordCost();
 
-      balanceDisplayEl.textContent = formatBalance(balance);
-      costAmountEl.textContent = String(cost);
+      balanceLabel.textContent = formatBalance(balance);
+      costLabel.textContent = String(cost);
 
-      if (activeTab === 'words') {
-        const count = getParsedWords().length;
-        wordsCounter.textContent = `${count} word${count === 1 ? '' : 's'} entered`;
+      if (activeMode === 'words') {
+        const count = getEnteredWords().length;
+        wordsCountLabel.textContent = `${count} word${count === 1 ? '' : 's'} detected`;
       }
 
       if (balance !== Infinity && balance < cost) {
-        creditBadge.textContent = 'Insufficient credits';
-        creditBadge.className = 'px-2.5 py-1 rounded-md text-[11px] font-semibold bg-red-500/20 text-red-300';
+        badgeEl.textContent = 'Insufficient credits';
+        badgeEl.style.background = 'rgba(239,68,68,0.2)';
+        badgeEl.style.color = '#fca5a5';
         submitBtn.disabled = true;
       } else {
-        creditBadge.textContent = cost > 0 ? `${cost} credit${cost === 1 ? '' : 's'}` : 'Ready';
-        creditBadge.className = 'px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-500/20 text-emerald-300';
+        badgeEl.textContent = cost > 0 ? `${cost} credit${cost === 1 ? '' : 's'}` : 'Ready';
+        badgeEl.style.background = 'rgba(16,185,129,0.2)';
+        badgeEl.style.color = '#6ee7b7';
         submitBtn.disabled = cost === 0;
       }
     }
 
-    // Tab switching
-    tabWords.addEventListener('click', () => {
+    // Mode toggling
+    modeWordsBtn.addEventListener('click', () => {
       if (isGenerating) return;
-      activeTab = 'words';
-      tabWords.classList.add('active');
-      tabPhoto.classList.remove('active');
-      panelWords.classList.remove('hidden');
-      panelPhoto.classList.add('hidden');
-      errorEl.classList.add('hidden');
-      updateCreditUI();
+      activeMode = 'words';
+      modeWordsBtn.classList.add('active');
+      modePhotoBtn.classList.remove('active');
+      sectionWords.style.display = 'flex';
+      sectionPhoto.style.display = 'none';
+      errorBanner.style.display = 'none';
+      updateModalUI();
     });
 
-    tabPhoto.addEventListener('click', () => {
+    modePhotoBtn.addEventListener('click', () => {
       if (isGenerating) return;
-      activeTab = 'photo';
-      tabPhoto.classList.add('active');
-      tabWords.classList.remove('active');
-      panelPhoto.classList.remove('hidden');
-      panelWords.classList.add('hidden');
-      errorEl.classList.add('hidden');
-      updateCreditUI();
+      activeMode = 'photo';
+      modePhotoBtn.classList.add('active');
+      modeWordsBtn.classList.remove('active');
+      sectionPhoto.style.display = 'flex';
+      sectionWords.style.display = 'none';
+      errorBanner.style.display = 'none';
+      updateModalUI();
     });
 
-    // Word count pills for photo mode
-    countPills.forEach(pill => {
-      pill.addEventListener('click', () => {
+    // Word count buttons for photo mode
+    countBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
         if (isGenerating) return;
-        countPills.forEach(p => p.classList.remove('is-selected'));
-        pill.classList.add('is-selected');
-        selectedPhotoWordCount = Number(pill.dataset.count) || 5;
-        updateCreditUI();
+        countBtns.forEach(b => b.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+        selectedPhotoCount = Number(btn.dataset.count) || 5;
+        updateModalUI();
       });
     });
 
-    // Words input listener
-    wordsInput.addEventListener('input', () => {
-      errorEl.classList.add('hidden');
-      updateCreditUI();
+    // Text input typing (space-separated or commas)
+    textInput.addEventListener('input', () => {
+      errorBanner.style.display = 'none';
+      updateModalUI();
     });
 
-    // Dropzone / File upload
-    dropzone.addEventListener('click', (e) => {
-      if (isGenerating || e.target === removePhotoBtn) return;
-      fileInput.click();
+    // Photo drag & drop
+    photoDropzone.addEventListener('click', (e) => {
+      if (isGenerating || e.target === photoRemoveBtn) return;
+      photoFileInput.click();
     });
 
-    dropzone.addEventListener('dragover', (e) => {
+    photoDropzone.addEventListener('dragover', (e) => {
       e.preventDefault();
-      dropzone.style.borderColor = '#818cf8';
+      photoDropzone.style.borderColor = '#fde047';
     });
 
-    dropzone.addEventListener('dragleave', () => {
-      dropzone.style.borderColor = '';
+    photoDropzone.addEventListener('dragleave', () => {
+      photoDropzone.style.borderColor = '';
     });
 
-    dropzone.addEventListener('drop', (e) => {
+    photoDropzone.addEventListener('drop', (e) => {
       e.preventDefault();
-      dropzone.style.borderColor = '';
+      photoDropzone.style.borderColor = '';
       if (isGenerating) return;
       const file = e.dataTransfer?.files?.[0];
       if (file && file.type.startsWith('image/')) {
-        handlePhotoFile(file);
+        loadPhotoFile(file);
       }
     });
 
-    fileInput.addEventListener('change', () => {
-      const file = fileInput.files?.[0];
-      if (file) handlePhotoFile(file);
+    photoFileInput.addEventListener('change', () => {
+      const file = photoFileInput.files?.[0];
+      if (file) loadPhotoFile(file);
     });
 
-    function handlePhotoFile(file) {
+    function loadPhotoFile(file) {
       if (file.size > 8 * 1024 * 1024) {
-        errorEl.textContent = 'Photo must be under 8MB.';
-        errorEl.classList.remove('hidden');
+        errorBanner.textContent = 'Photo must be under 8MB.';
+        errorBanner.style.display = 'block';
         return;
       }
       const reader = new FileReader();
       reader.onload = (e) => {
         uploadedPhotoBase64 = e.target.result;
-        previewImg.src = uploadedPhotoBase64;
-        dropzonePrompt.classList.add('hidden');
-        previewContainer.classList.remove('hidden');
-        errorEl.classList.add('hidden');
-        updateCreditUI();
+        photoPreviewImg.src = uploadedPhotoBase64;
+        photoPrompt.style.display = 'none';
+        photoPreviewWrap.style.display = 'block';
+        errorBanner.style.display = 'none';
+        updateModalUI();
       };
       reader.readAsDataURL(file);
     }
 
-    removePhotoBtn.addEventListener('click', (e) => {
+    photoRemoveBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       uploadedPhotoBase64 = '';
-      previewImg.src = '';
-      fileInput.value = '';
-      dropzonePrompt.classList.remove('hidden');
-      previewContainer.classList.add('hidden');
-      updateCreditUI();
+      photoPreviewImg.src = '';
+      photoFileInput.value = '';
+      photoPrompt.style.display = 'block';
+      photoPreviewWrap.style.display = 'none';
+      updateModalUI();
     });
 
-    function setGeneratingState(generating, status = '', progressPercent = 0) {
+    function setGenerating(generating, text = '', pct = 0) {
       isGenerating = generating;
       nameInput.disabled = generating;
-      wordsInput.disabled = generating;
-      tabWords.disabled = generating;
-      tabPhoto.disabled = generating;
+      textInput.disabled = generating;
       submitBtn.disabled = generating;
-      cancelBtn.disabled = generating;
       closeBtn.disabled = generating;
+      modeWordsBtn.disabled = generating;
+      modePhotoBtn.disabled = generating;
+      if (classSelect) classSelect.disabled = generating;
 
       if (generating) {
-        progressPanel.classList.remove('hidden');
-        statusText.textContent = status;
-        progressBar.style.width = `${progressPercent}%`;
+        progressWrap.style.display = 'flex';
+        statusTextEl.textContent = text;
+        progressFillEl.style.width = `${pct}%`;
         submitBtn.innerHTML = `<span>⏳</span> Generating...`;
       } else {
-        progressPanel.classList.add('hidden');
+        progressWrap.style.display = 'none';
         submitBtn.innerHTML = `<span>⚡</span> Generate List`;
       }
     }
 
-    // Submit / Generation Handler
+    // Submit handler
     submitBtn.addEventListener('click', async () => {
       if (isGenerating) return;
 
       const listName = nameInput.value.trim().replace(/\s+/g, ' ');
       if (!listName) {
-        errorEl.textContent = 'Please enter a name for the vocabulary list.';
-        errorEl.classList.remove('hidden');
+        errorBanner.textContent = 'Please enter a name for the vocabulary list.';
+        errorBanner.style.display = 'block';
         nameInput.focus();
         return;
       }
 
-      const existingLists = typeof window.getVocabLists === 'function' ? window.getVocabLists(school, className) : [];
-      if (existingLists.some(l => l.vocab_list_name.toLocaleLowerCase() === listName.toLocaleLowerCase())) {
-        errorEl.textContent = 'A vocabulary list with this name already exists in this class.';
-        errorEl.classList.remove('hidden');
-        return;
+      // Determine class and school
+      let targetSchool = school;
+      let targetClass = className;
+      if (classSelect && classSelect.value) {
+        const parts = classSelect.value.split('||');
+        targetSchool = parts[0] || targetSchool;
+        targetClass = parts[1] || targetClass;
       }
 
       let words = [];
-      if (activeTab === 'words') {
-        words = getParsedWords();
-        if (words.length === 0) {
-          errorEl.textContent = 'Please enter at least one vocabulary word.';
-          errorEl.classList.remove('hidden');
-          wordsInput.focus();
+      if (activeMode === 'words') {
+        words = getEnteredWords();
+        if (!words.length) {
+          errorBanner.textContent = 'Please enter at least one word (with spaces between).';
+          errorBanner.style.display = 'block';
+          textInput.focus();
           return;
         }
       } else {
         if (!uploadedPhotoBase64) {
-          errorEl.textContent = 'Please choose or drop a photo first.';
-          errorEl.classList.remove('hidden');
+          errorBanner.textContent = 'Please choose or drop a photo to analyze.';
+          errorBanner.style.display = 'block';
           return;
         }
       }
 
-      const expectedCount = activeTab === 'words' ? words.length : selectedPhotoWordCount;
+      const expectedCount = activeMode === 'words' ? words.length : selectedPhotoCount;
       const balance = getTeacherBalance();
       if (balance !== Infinity && balance < expectedCount) {
-        errorEl.textContent = `Insufficient credits! You need ${expectedCount} credits, but you have ${balance}.`;
-        errorEl.classList.remove('hidden');
+        errorBanner.textContent = `Insufficient credits! You need ${expectedCount} credits, but you have ${balance}.`;
+        errorBanner.style.display = 'block';
         return;
       }
 
-      errorEl.classList.add('hidden');
-      setGeneratingState(true, '1/3 Generating simple, child-friendly sentences with Gemini...', 30);
+      errorBanner.style.display = 'none';
+      setGenerating(true, '1/3 Generating simple sentences with Gemini...', 30);
 
       let generatedItems = [];
       try {
-        const payload = activeTab === 'words'
+        const payload = activeMode === 'words'
           ? { mode: 'words', words }
-          : { mode: 'photo', image: uploadedPhotoBase64, count: selectedPhotoWordCount };
+          : { mode: 'photo', image: uploadedPhotoBase64, count: selectedPhotoCount };
 
         let res;
         try {
@@ -463,7 +481,7 @@
             body: JSON.stringify(payload)
           });
         } catch (fetchErr) {
-          console.warn('generate-vocab-list failed, trying vocabulary-sentence endpoint:', fetchErr);
+          console.warn('generate-vocab-list failed, trying vocabulary-sentence fallback:', fetchErr);
         }
 
         if (!res || !res.ok) {
@@ -481,32 +499,32 @@
 
         const data = await res.json();
         generatedItems = Array.isArray(data.items) ? data.items : [];
-        if (generatedItems.length === 0) {
+        if (!generatedItems.length) {
           throw new Error('No vocabulary words could be generated.');
         }
       } catch (err) {
-        console.error('AI Generation error:', err);
-        setGeneratingState(false);
-        errorEl.textContent = err.message || 'Generation failed. No credits were deducted.';
-        errorEl.classList.remove('hidden');
-        updateCreditUI();
+        console.error('Generation error:', err);
+        setGenerating(false);
+        errorBanner.textContent = err.message || 'Generation failed. No credits were deducted.';
+        errorBanner.style.display = 'block';
+        updateModalUI();
         return;
       }
 
-      // Step 2: Context image search using full sentence
-      setGeneratingState(true, '2/3 Searching context-matched images for each sentence...', 65);
+      // Step 2: Context-aware image search
+      setGenerating(true, '2/3 Finding context-matched images for each sentence...', 65);
       const itemsWithImages = [];
 
       for (let i = 0; i < generatedItems.length; i++) {
         const item = generatedItems[i];
-        setGeneratingState(
+        setGenerating(
           true,
           `2/3 Finding context image for "${item.word}" (${i + 1}/${generatedItems.length})...`,
           65 + Math.round(((i + 1) / generatedItems.length) * 20)
         );
 
         let imageUrl = await searchContextImageForSentence(item.sentence, item.word);
-        if (!imageUrl && activeTab === 'photo' && uploadedPhotoBase64) {
+        if (!imageUrl && activeMode === 'photo' && uploadedPhotoBase64) {
           imageUrl = uploadedPhotoBase64;
         }
 
@@ -517,8 +535,8 @@
         });
       }
 
-      // Step 3: Database creation
-      setGeneratingState(true, '3/3 Saving vocabulary list and words...', 90);
+      // Step 3: Save to database
+      setGenerating(true, '3/3 Saving vocabulary list...', 90);
 
       const listId = `vocab-list-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const firstValidImage = itemsWithImages.find(it => it.imageUrl)?.imageUrl || uploadedPhotoBase64 || '';
@@ -527,18 +545,18 @@
         type: 'vocab_list',
         vocab_list_id: listId,
         vocab_list_name: listName,
-        vocab_list_school: school,
-        vocab_list_class: className,
-        school_name: school,
-        class_name: className,
-        owner: window.currentTeacher,
-        teacher_name: window.currentTeacher,
+        vocab_list_school: targetSchool,
+        vocab_list_class: targetClass,
+        school_name: targetSchool,
+        class_name: targetClass,
+        owner: window.currentTeacher || 'Teacher',
+        teacher_name: window.currentTeacher || 'Teacher',
         teacher_id: window.currentTeacherRecordId || '',
         created_at: new Date().toISOString(),
         vocab_word: '',
         vocab_image: '',
         vocab_cover_image_id: '',
-        vocab_cover_image_url: firstValidImage, // Cover is one of the pictures inside the list
+        vocab_cover_image_url: firstValidImage,
         student_name: '',
         coins: 0,
         pokemon_id: 0,
@@ -570,8 +588,8 @@
         folder_name: '',
         archived: false,
         quiz_attempts: '',
-        quiz_created_by: window.currentTeacher,
-        quiz_class: className,
+        quiz_created_by: window.currentTeacher || 'Teacher',
+        quiz_class: targetClass,
         quiz_submitted_answers: ''
       };
 
@@ -582,7 +600,7 @@
 
         const listResult = await window.dataSdk.create(listRecord);
         if (!listResult?.isOk) {
-          throw new Error('Could not save the vocabulary list to the database.');
+          throw new Error('Could not save the vocabulary list.');
         }
 
         for (const item of itemsWithImages) {
@@ -592,10 +610,10 @@
             vocab_list_id: listId,
             list_id: listId,
             vocabulary_list_id: listId,
-            school_name: school,
-            class_name: className,
-            vocab_list_school: school,
-            vocab_list_class: className,
+            school_name: targetSchool,
+            class_name: targetClass,
+            vocab_list_school: targetSchool,
+            vocab_list_class: targetClass,
             vocab_list_name: listName,
             vocab_word_id: wordId,
             word_id: wordId,
@@ -603,22 +621,18 @@
             vocab_image: item.imageUrl,
             vocab_sentence: item.sentence,
             created_at: new Date().toISOString(),
-            teacher_name: window.currentTeacher,
-            owner: window.currentTeacher
+            teacher_name: window.currentTeacher || 'Teacher',
+            owner: window.currentTeacher || 'Teacher'
           };
 
-          const wordResult = await window.dataSdk.create(wordPayload, { notify: false });
-          if (!wordResult?.isOk) {
-            console.warn(`Could not save word item "${item.word}"`);
-          }
+          await window.dataSdk.create(wordPayload, { notify: false });
         }
 
-        // Refresh dataSdk to populate allData and views
         if (typeof window.dataSdk.init === 'function' && window.handler) {
           await window.dataSdk.init(window.handler);
         }
 
-        // Step 4: Deduct credits strictly AFTER successful creation
+        // Step 4: Charge credits ONLY after successful saving
         const finalWordCount = itemsWithImages.length;
         if (typeof window.deductTeacherCredits === 'function') {
           await window.deductTeacherCredits(finalWordCount);
@@ -630,47 +644,51 @@
           window.updateTeacherCreditBalance();
         }
 
-        // Clear create input
+        // Clear create list input
         const mainInput = document.getElementById('new-vocab-list-name');
         if (mainInput) mainInput.value = '';
 
-        // Success UI updates
         isGenerating = false;
         modal.remove();
 
         if (typeof window.renderVocabLists === 'function') window.renderVocabLists();
         if (typeof window.renderGamesList === 'function') window.renderGamesList();
+        if (typeof window.renderTeacherOwnedVocabLists === 'function') window.renderTeacherOwnedVocabLists();
 
         if (typeof window.toast === 'function') {
           window.toast(`🎉 Generated "${listName}" with ${finalWordCount} words! (-${finalWordCount} credits)`);
         }
       } catch (saveErr) {
         console.error('Saving vocabulary list error:', saveErr);
-        setGeneratingState(false);
-        errorEl.textContent = saveErr.message || 'Failed to save list to database. No credits were deducted.';
-        errorEl.classList.remove('hidden');
-        updateCreditUI();
+        setGenerating(false);
+        errorBanner.textContent = saveErr.message || 'Failed to save list to database. No credits were deducted.';
+        errorBanner.style.display = 'block';
+        updateModalUI();
       }
     });
 
-    updateCreditUI();
+    updateModalUI();
     nameInput.focus();
   }
 
-  // Bind click event to Generate button
-  function initGenerateButton() {
+  function bindGenerateBtn() {
     const btn = document.getElementById('generate-vocab-list-btn');
-    if (btn && !btn.dataset.bound) {
-      btn.dataset.bound = 'true';
+    if (btn && !btn.dataset.generatorBound) {
+      btn.dataset.generatorBound = 'true';
       btn.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         openGenerateModal();
       });
     }
   }
 
-  // MutationObserver to ensure button stays bound across DOM updates
-  const observer = new MutationObserver(initGenerateButton);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-  initGenerateButton();
+  // Ensure button is bound and stays bound
+  if (document.readyState !== 'loading') {
+    bindGenerateBtn();
+  } else {
+    document.addEventListener('DOMContentLoaded', bindGenerateBtn);
+  }
+
+  new MutationObserver(bindGenerateBtn).observe(document.documentElement, { childList: true, subtree: true });
 })();
