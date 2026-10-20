@@ -4687,7 +4687,16 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <rect x="78" y="54" width="28" height="20" rx="3" fill="#10b981"/><text x="92" y="68">9</text>
         </g>
       </svg>`,
-      cardBackSvg: '',
+      cardBackSvg: `<svg class="ga-card-back-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="200" height="200" rx="22" fill="#1e3a8a"/>
+        <rect x="8" y="8" width="184" height="184" rx="16" fill="#0f172a" stroke="#3b82f6" stroke-width="4"/>
+        <circle cx="100" cy="100" r="62" fill="#f8fafc" stroke="#0b1220" stroke-width="8"/>
+        <path d="M38 100 A62 62 0 0 1 162 100 Z" fill="#ef4444"/>
+        <path d="M38 100 H162" stroke="#0b1220" stroke-width="10"/>
+        <circle cx="100" cy="100" r="20" fill="#f8fafc" stroke="#0b1220" stroke-width="8"/>
+        <circle cx="100" cy="100" r="8" fill="#e2e8f0"/>
+        <ellipse cx="78" cy="66" rx="14" ry="7" transform="rotate(-30 78 66)" fill="#ffffff" opacity="0.5"/>
+      </svg>`,
       backdropSvg: ''
     }
   ];
@@ -4745,7 +4754,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         }
         if (art.dataset.themeId !== currentTheme.id) {
           art.dataset.themeId = currentTheme.id;
-          art.innerHTML = currentTheme.cardBackSvg;
+          // Parse each theme's SVG once, then clone it (parsing 30 large SVG strings froze theme switches).
+          const cache = window.gaCardBackCache || (window.gaCardBackCache = {});
+          if (!cache[currentTheme.id]) { const tpl = document.createElement('template'); tpl.innerHTML = currentTheme.cardBackSvg; cache[currentTheme.id] = tpl.content; }
+          art.replaceChildren(cache[currentTheme.id].cloneNode(true));
         }
       });
     };
@@ -4762,7 +4774,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     });
     const btnLabel = target.querySelector('.ga-stage-theme-current');
     if (btnLabel) btnLabel.textContent = theme.name;
-    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    // No synthetic window resize here: it re-ran every game's layout code and caused theme-switch lag.
   };
 
   window.gaSetTheme = function (themeId) {
@@ -18081,6 +18093,8 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     .memory-game-grid { width: 100%; height: 100%; min-width: 0; min-height: 0; display: grid; align-content: center; justify-content: center; align-items: center; justify-items: center; gap: var(--memory-gap, 8px); grid-template-columns: repeat(var(--memory-cols, 4), minmax(0, 1fr)); grid-template-rows: repeat(var(--memory-rows, 4), minmax(0, 1fr)); overflow: hidden; box-sizing: border-box; }
     .memory-game-grid .memory-card { width: 100%; height: 100%; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; box-sizing: border-box; overflow: hidden; position: relative; margin: 0; }
     .memory-game-status { min-height: 1.25rem; line-height: 1.1; }
+    .memory-card { touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .memory-card .memory-card-inner, .memory-card .memory-card-front, .memory-card .memory-card-back { pointer-events: none; }
     @supports not (height: 100dvh) { .memory-game-shell { height: 100vh; max-height: 100vh; } }
   `;
   document.head.appendChild(style);
@@ -18090,13 +18104,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   const activeMemoryTheme = (window.gaThemes || []).find(t => t.id === activeMemoryThemeId) || (window.gaThemes || [])[0];
   const grid = modal.querySelector('#memory-grid');
   let memoryGridColumns = levelConfig.columns;
-  const updateMemoryGridDensity = () => {
-    grid.style.setProperty('--memory-cols', levelConfig.columns);
-    grid.style.setProperty('--memory-rows', levelConfig.rows);
-    grid.style.gridTemplateColumns = `repeat(${levelConfig.columns}, minmax(0, 1fr))`;
-    grid.style.gridTemplateRows = `repeat(${levelConfig.rows}, minmax(0, 1fr))`;
-    requestAnimationFrame(() => requestAnimationFrame(fitMemoryBoard));
-  };
+  const updateMemoryGridDensity = () => { delete grid.dataset.fitKey; requestAnimationFrame(fitMemoryBoard); };
   modal.querySelector('#memory-size-decrease').addEventListener('click', () => { updateMemoryGridDensity(); });
   modal.querySelector('#memory-size-increase').addEventListener('click', () => { updateMemoryGridDensity(); });
   grid.innerHTML = pairs.map((p, idx) => {
@@ -18129,17 +18137,23 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     const inlineMode = !modal.classList.contains('game-fullscreen-active') && !document.fullscreenElement;
     const measuredBodyHeight = body.clientHeight || (inlineMode ? Math.min(680, Math.max(420, availableWidth * .9)) : 0);
     const availableHeight = Math.max(1, measuredBodyHeight - (hud?.offsetHeight || 0) - (status?.offsetHeight || 0) - 24);
+    // Pick the column count that gives the largest square cards for this screen (never thin 10x3 slivers).
     let best = { size: 0, cols: 1, rows: count, gap: 4 };
-    for (let cols = levelConfig.columns; cols <= levelConfig.columns; cols++) {
-      const rows = levelConfig.rows;
-      const gap = Math.max(3, Math.min(12, Math.floor(Math.min(availableWidth / Math.max(cols, 1), availableHeight / Math.max(rows, 1)) * .08)));
+    for (let cols = 2; cols <= Math.min(count, 8); cols++) {
+      const rows = Math.ceil(count / cols);
+      const gap = Math.max(4, Math.min(12, Math.floor(Math.min(availableWidth / cols, availableHeight / rows) * .08)));
       const size = Math.min((availableWidth - gap * (cols - 1)) / cols, (availableHeight - gap * (rows - 1)) / rows);
-      if (size > best.size) best = { size, cols, rows, gap };
+      if (size > best.size + 0.5) best = { size, cols, rows, gap };
     }
-    grid.style.setProperty('--memory-cols', levelConfig.columns);
-    grid.style.setProperty('--memory-rows', levelConfig.rows);
+    const cardSize = `${Math.floor(Math.max(44, Math.min(220, best.size)))}px`;
+    if (grid.dataset.fitKey === `${best.cols}|${cardSize}|${best.gap}`) return;
+    grid.dataset.fitKey = `${best.cols}|${cardSize}|${best.gap}`;
+    grid.style.setProperty('--memory-cols', best.cols);
+    grid.style.setProperty('--memory-rows', best.rows);
     grid.style.setProperty('--memory-gap', `${best.gap}px`);
-    grid.querySelectorAll('.memory-card').forEach(card => { card.style.width = `${Math.max(36, best.size)}px`; card.style.height = `${Math.max(36, best.size)}px`; });
+    grid.style.setProperty('--memory-card-size', cardSize);
+    grid.style.gridTemplateColumns = `repeat(${best.cols}, ${cardSize})`;
+    grid.style.gridTemplateRows = `repeat(${best.rows}, ${cardSize})`;
   };
   const scheduleMemoryFit = () => requestAnimationFrame(() => requestAnimationFrame(fitMemoryBoard));
   scheduleMemoryFit();
@@ -18170,9 +18184,16 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       wordEl.style.marginInline = 'auto';
     });
   
+  // Input is locked by the click handler as soon as the second card flips; checkMatch always releases it.
+  function runMemoryCheck() {
+    try { checkMatch(); } catch (error) {
+      console.error('Memory check failed', error);
+      grid.querySelectorAll('.memory-card-inner.flipped').forEach(inner => { const i = Number(inner.closest('.memory-card')?.dataset.index); if (!matched.has(i)) inner.classList.remove('flipped'); });
+      flipped = []; mismatchLocked = false;
+    }
+  }
   function checkMatch() {
-    if (flipped.length !== 2 || mismatchLocked) return;
-    mismatchLocked = true;
+    if (flipped.length !== 2) { flipped = []; mismatchLocked = false; return; }
     const turnTokenAtCheck = roundToken;
     const [idx1, idx2] = flipped;
     const firstCard = pairs[idx1];
@@ -18241,11 +18262,14 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
         if (inner2) inner2.classList.remove('flipped');
         if (cards[idx1]) cards[idx1].style.animation = 'none';
         if (cards[idx2]) cards[idx2].style.animation = 'none';
-        flipped = [];
-        mismatchLocked = false;
-        mismatchTimer = null;
         modal.querySelector('#memory-status').textContent = '';
-      }, 520);
+        // Keep input locked until the flip-back transition has finished so taps cannot interrupt it.
+        mismatchTimer = setTimeout(() => {
+          flipped = [];
+          mismatchLocked = false;
+          mismatchTimer = null;
+        }, 380);
+      }, 620);
     }
   }
   
@@ -18257,11 +18281,13 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       // Flip the card
       const inner = card.querySelector('.memory-card-inner');
       if (inner) inner.classList.add('flipped');
+      card.setAttribute('aria-pressed', 'true');
       unlockGameSound(); playGameSound('select');
       flipped.push(idx);
       
       if (flipped.length === 2) {
-        setTimeout(checkMatch, 340);
+        mismatchLocked = true;
+        setTimeout(runMemoryCheck, 380);
       }
     });
   });
