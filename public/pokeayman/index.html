@@ -10963,6 +10963,22 @@ teacherVbCardLayoutStyles.textContent = `
 `;
 document.head.appendChild(teacherVbCardLayoutStyles);
 
+
+function isAiGeneratedVocabList(list) {
+  if (!list) return false;
+  return Boolean(
+    list.is_ai_generated ||
+    list.ai_generated ||
+    list.generation_source === 'ai' ||
+    String(list.vocab_list_id || '').startsWith('vocab-ai-') ||
+    String(list.list_id || '').startsWith('vocab-ai-') ||
+    String(list.__backendId || '').startsWith('vocab-ai-')
+  );
+}
+function getAiGeneratedBadgeHtml() {
+  return '<span class="ai-generated-badge" style="display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:9999px; font-size:10px; font-weight:800; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; box-shadow:0 2px 6px rgba(99,102,241,0.35); flex-shrink:0; vertical-align:middle; margin-left:6px;">⚡ AI Generated</span>';
+}
+
 function renderTeacherOwnedVocabLists() {
   const grid = document.getElementById('teacher-vb-lists-grid');
   const status = document.getElementById('teacher-vb-lists-status');
@@ -11028,7 +11044,7 @@ function renderTeacherOwnedVocabLists() {
       const name = escape(rec?.teacher_name || list.teacher_name || list.owner || 'Another teacher');
       const src = rec ? teacherAvatarSrc(rec.teacher_avatar) : '';
       const avatar = src ? `<img src="${src}" alt="${name}'s avatar" loading="lazy" class="teacher-zone-list-avatar">` : `<span class="teacher-zone-list-avatar-fallback" aria-hidden="true">🎓</span>`;
-      return `<span class="teacher-zone-list-author">${avatar}<span>By ${name}</span></span>`;
+      const aiBadge = isAiGeneratedVocabList(list) ? getAiGeneratedBadgeHtml() : ''; return `<span class="teacher-zone-list-author">${avatar}<span>By ${name}</span>${aiBadge}</span>`;
     };
     const schoolCard = list => {
       const words = list.words || [];
@@ -11053,7 +11069,7 @@ function renderTeacherOwnedVocabLists() {
       const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${escape(list.vocab_cover_image_url)}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
       const canManageList = currentRole === 'teacher' && (adminCanManageAnyList || isOwnedByCurrentTeacher(list));
       const ownerActions = isOwnedByCurrentTeacher(list) ? `<button type="button" class="vocab-cover-button btn-secondary" onclick="openVocabCoverPicker('${safeId}','${safeName.replace(/'/g, "\\'")}')">Cover</button>` : '';
-      return `<article class="vocab-list-card teacher-zone-wordbank-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="teacher-zone-wordbank-heading"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name">${safeName}</span></div><p class="vocab-list-count teacher-zone-wordbank-context">${context}</p>${cover}<p class="vocab-list-count teacher-zone-wordbank-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode btn-primary" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div>${canManageList ? `<div class="vocab-card-actions teacher-zone-wordbank-actions"><button type="button" class="vocab-card-edit btn-outline" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Edit</button>${ownerActions}<button type="button" class="vocab-card-delete btn-danger" onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeName.replace(/'/g, "\\'")}',this)">Delete</button></div>` : ''}</article>`;
+      return `<article class="vocab-list-card teacher-zone-wordbank-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="teacher-zone-wordbank-heading"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name">${safeName}</span>${isAiGeneratedVocabList(list) ? getAiGeneratedBadgeHtml() : ""}</div><p class="vocab-list-count teacher-zone-wordbank-context">${context}</p>${cover}<p class="vocab-list-count teacher-zone-wordbank-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode btn-primary" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div>${canManageList ? `<div class="vocab-card-actions teacher-zone-wordbank-actions"><button type="button" class="vocab-card-edit btn-outline" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Edit</button>${ownerActions}<button type="button" class="vocab-card-delete btn-danger" onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeName.replace(/'/g, "\\'")}',this)">Delete</button></div>` : ''}</article>`;
     }).join('');
   } catch (error) { status.textContent = 'Could not load your vocabulary lists. Please refresh and try again.'; }
 }
@@ -19062,7 +19078,7 @@ function renderVocabLists() {
       <div class="flex items-start gap-3 mb-1">
         <span class="vocab-list-emblem" aria-hidden="true">📚</span>
         <div class="flex-1 min-w-0">
-          <h4 class="vocab-list-name text-sm sm:text-base truncate">${list.vocab_list_name}</h4>
+          <h4 class="vocab-list-name text-sm sm:text-base truncate flex items-center gap-1.5">${list.vocab_list_name} ${isAiGeneratedVocabList(list) ? getAiGeneratedBadgeHtml() : ""}</h4>
           <p class="vocab-list-count mt-1">${words.length} word${words.length !== 1 ? 's' : ''}</p>${sharedLabel}
         </div>
       </div>

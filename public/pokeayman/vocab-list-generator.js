@@ -1,7 +1,9 @@
 // AI Vocabulary List Generator for PokéAyman
 // Step 1: Picks high quality picture for each word (animal, food, color, etc.)
 // Step 2: Generates simple, vivid, non-shallow sentence directly related to that picture
-// Step 3: Saves list and words, charges 1 credit/word strictly upon success.
+// Step 3: Ensures 100% sentence uniqueness (no duplicate sentence frames in the same list)
+// Step 4: Saves list with creator teacher name + marks list with AI Generated badge
+// Step 5: Charges 1 credit/word strictly upon success.
 
 (function () {
   let isGenerating = false;
@@ -67,6 +69,76 @@
     }
 
     return { school, className };
+  }
+
+  // Generates a varied, unique sentence for a word ensuring no duplicate frames in the list
+  function createUniqueSentence(word, index, usedFrames) {
+    const w = word.trim();
+    const lw = w.toLowerCase();
+
+    const objectFrames = [
+      () => `She writes her spelling words with the ${w}.`,
+      () => `The student placed the ${w} on the wooden desk.`,
+      () => `I packed my favorite ${w} into my school backpack.`,
+      () => `He drew a beautiful picture using his ${w}.`,
+      () => `We found a clean ${w} inside the classroom cabinet.`,
+      () => `The bright new ${w} sits on the table.`,
+      () => `She borrowed a sharp ${w} from her classmate.`,
+      () => `He pointed toward the ${w} across the room.`,
+      () => `The teacher showed the children how to use the ${w}.`,
+      () => `We always keep our ${w} neat and organized.`
+    ];
+
+    const animalFrames = [
+      () => `The furry ${w} naps peacefully in the warm sun.`,
+      () => `A playful ${w} runs quickly through the green yard.`,
+      () => `We watched the little ${w} drink fresh clean water.`,
+      () => `The energetic ${w} jumps happily over the low fence.`,
+      () => `A gentle ${w} rests under the shady green tree.`,
+      () => `The curious ${w} explores the garden with its friends.`
+    ];
+
+    const foodFrames = [
+      () => `The sweet ${w} tastes crisp and refreshing today.`,
+      () => `I packed a juicy ${w} for my school lunch.`,
+      () => `My mother sliced the fresh ${w} on the board.`,
+      () => `The delicious ${w} smells wonderful in the sunny kitchen.`,
+      () => `We shared a healthy ${w} together during recess.`,
+      () => `He enjoyed eating a ripe ${w} after soccer practice.`
+    ];
+
+    const colorFrames = [
+      () => `A vibrant ${w} balloon floats high into the clouds.`,
+      () => `She painted a lovely ${w} stripe on her paper.`,
+      () => `The bright ${w} flower blooms in the garden.`,
+      () => `He wore a neat ${w} cap to school today.`,
+      () => `We spotted a beautiful ${w} bird in the tall tree.`
+    ];
+
+    let pool = objectFrames;
+    if (/^(cat|dog|bird|fish|lion|tiger|bear|horse|monkey|cow|pig|rabbit|duck|frog|elephant|giraffe|zebra|puppy|kitten|wolf|fox|deer|sheep|mouse|turtle)$/.test(lw)) {
+      pool = animalFrames;
+    } else if (/^(apple|banana|orange|grape|fruit|bread|pizza|cake|cookie|milk|water|rice|cheese|berry|mango|soup|sandwich|juice|egg|meat)$/.test(lw)) {
+      pool = foodFrames;
+    } else if (/^(red|blue|green|yellow|pink|purple|orange|white|black|brown|golden|gray|grey)$/.test(lw)) {
+      pool = colorFrames;
+    }
+
+    // Find first frame in pool that has not been used yet
+    for (let i = 0; i < pool.length; i++) {
+      const idx = (index + i) % pool.length;
+      const candidate = pool[idx]();
+      const frameKey = candidate.toLowerCase().replace(lw, '{w}');
+      if (!usedFrames.has(frameKey)) {
+        usedFrames.add(frameKey);
+        return candidate;
+      }
+    }
+
+    // Fallback if all pool frames used
+    const fallback = `The child happily used the ${w} in class today.`;
+    usedFrames.add(fallback.toLowerCase().replace(lw, '{w}'));
+    return fallback;
   }
 
   function openGenerateModal() {
@@ -142,7 +214,7 @@
           <div id="vocab-gen-section-words" style="display:flex; flex-direction:column; gap:6px;">
             <label class="teacher-vb-create-field">
               <span>Enter words with spaces between (or commas)</span>
-              <textarea id="vocab-gen-text-input" rows="3" placeholder="e.g. cat dog apple blue run jump lion" style="width:100%; border-radius:8px; padding:10px 12px; background:var(--pk-surface, #0b1220); color:#fff; border:1px solid rgba(148,163,184,.35); font-size:14px; resize:none;"></textarea>
+              <textarea id="vocab-gen-text-input" rows="3" placeholder="e.g. pencil cat apple blue book dog lion" style="width:100%; border-radius:8px; padding:10px 12px; background:var(--pk-surface, #0b1220); color:#fff; border:1px solid rgba(148,163,184,.35); font-size:14px; resize:none;"></textarea>
             </label>
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:rgba(255,255,255,0.7);">
               <span id="vocab-gen-words-count-label">0 words detected</span>
@@ -449,7 +521,7 @@
       let itemsWithImages = [];
 
       if (activeMode === 'words') {
-        // STEP 1: Choose pictures for each word first (animals, colors, food, etc.)
+        // STEP 1: Choose picture for each word first (animals, colors, food, tools, etc.)
         setGenerating(true, '1/3 Finding pictures for your vocabulary words...', 25);
         const preparedItems = [];
 
@@ -464,7 +536,7 @@
           });
         }
 
-        // STEP 2: Generate sentences directly tailored to the chosen pictures
+        // STEP 2: Generate unique, vivid sentences directly related to each picture
         setGenerating(true, '2/3 Writing vivid sentences related to each picture with Gemini...', 60);
         let generatedMap = new Map();
 
@@ -503,24 +575,23 @@
             });
           }
         } catch (apiErr) {
-          console.warn('AI sentence generation error, using smart templates:', apiErr);
+          console.warn('AI sentence generation error, using variety generator:', apiErr);
         }
 
-        // Combine photos and sentences (with smart fallback if ever needed)
-        itemsWithImages = preparedItems.map(p => {
+        // Combine photos and sentences, strictly enforcing 100% uniqueness (no duplicate frames)
+        const usedFramesInList = new Set();
+        itemsWithImages = preparedItems.map((p, idx) => {
           let sentence = generatedMap.get(p.word.toLowerCase());
-          if (!sentence || /^Look at/i.test(sentence)) {
-            const lw = p.word.toLowerCase();
-            if (/^(cat|dog|bird|fish|lion|tiger|bear|horse|monkey|cow|pig|rabbit|duck|frog|elephant|giraffe|zebra|puppy|kitten|wolf|fox|deer|sheep|mouse|turtle)$/.test(lw)) {
-              sentence = `The friendly ${p.word} plays happily in the warm sun.`;
-            } else if (/^(apple|banana|orange|grape|fruit|bread|pizza|cake|cookie|milk|water|rice|cheese|berry|mango|soup|sandwich|juice|egg|meat)$/.test(lw)) {
-              sentence = `The sweet ${p.word} tastes fresh and delicious today.`;
-            } else if (/^(red|blue|green|yellow|pink|purple|orange|white|black|brown|golden|gray|grey)$/.test(lw)) {
-              sentence = `A lovely ${p.word} bird flies across the sunny garden.`;
-            } else {
-              sentence = `The wonderful ${p.word} brings a bright smile to everyone.`;
-            }
+          const lw = p.word.toLowerCase();
+          const frameKey = sentence ? sentence.toLowerCase().replace(lw, '{w}') : '';
+
+          // If empty, shallow ("Look at..."), or duplicate frame, generate a unique sentence
+          if (!sentence || /^Look at/i.test(sentence) || usedFramesInList.has(frameKey)) {
+            sentence = createUniqueSentence(p.word, idx, usedFramesInList);
+          } else {
+            usedFramesInList.add(frameKey);
           }
+
           return {
             word: p.word,
             imageUrl: p.imageUrl,
@@ -569,14 +640,25 @@
           return;
         }
 
-        // Attach images
+        // Attach images and ensure uniqueness
         setGenerating(true, '2/3 Matching photos for each word...', 65);
+        const usedPhotoFrames = new Set();
         for (let i = 0; i < photoItems.length; i++) {
           const it = photoItems[i];
           const photoData = await fetchPhotoForWord(it.word);
+          let sentence = it.sentence;
+          const lw = it.word.toLowerCase();
+          const frameKey = sentence ? sentence.toLowerCase().replace(lw, '{w}') : '';
+
+          if (!sentence || /^Look at/i.test(sentence) || usedPhotoFrames.has(frameKey)) {
+            sentence = createUniqueSentence(it.word, i, usedPhotoFrames);
+          } else {
+            usedPhotoFrames.add(frameKey);
+          }
+
           itemsWithImages.push({
             word: it.word,
-            sentence: it.sentence,
+            sentence,
             imageUrl: photoData.url || uploadedPhotoBase64
           });
         }
@@ -590,11 +672,12 @@
         return;
       }
 
-      // STEP 3: Save to database
+      // STEP 3: Save to database (marking as AI-generated while keeping the creator teacher name)
       setGenerating(true, '3/3 Saving vocabulary list to classroom...', 90);
 
-      const listId = `vocab-list-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const listId = `vocab-ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const firstValidImage = itemsWithImages.find(it => it.imageUrl)?.imageUrl || uploadedPhotoBase64 || '';
+      const teacherName = window.currentTeacher || 'Teacher';
 
       const listRecord = {
         type: 'vocab_list',
@@ -604,9 +687,12 @@
         vocab_list_class: targetClass,
         school_name: targetSchool,
         class_name: targetClass,
-        owner: window.currentTeacher || 'Teacher',
-        teacher_name: window.currentTeacher || 'Teacher',
+        owner: teacherName,
+        teacher_name: teacherName,
         teacher_id: window.currentTeacherRecordId || '',
+        is_ai_generated: true,
+        ai_generated: true,
+        generation_source: 'ai',
         created_at: new Date().toISOString(),
         vocab_word: '',
         vocab_image: '',
@@ -643,7 +729,7 @@
         folder_name: '',
         archived: false,
         quiz_attempts: '',
-        quiz_created_by: window.currentTeacher || 'Teacher',
+        quiz_created_by: teacherName,
         quiz_class: targetClass,
         quiz_submitted_answers: ''
       };
@@ -675,9 +761,10 @@
             vocab_word: item.word,
             vocab_image: item.imageUrl,
             vocab_sentence: item.sentence,
+            is_ai_generated: true,
             created_at: new Date().toISOString(),
-            teacher_name: window.currentTeacher || 'Teacher',
-            owner: window.currentTeacher || 'Teacher'
+            teacher_name: teacherName,
+            owner: teacherName
           };
 
           await window.dataSdk.create(wordPayload, { notify: false });
