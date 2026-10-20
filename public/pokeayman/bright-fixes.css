@@ -418,5 +418,123 @@ html body.ts-bright #class-subtab-quiz :is(#ongoing-quiz-list, #quiz-history-lis
   color: #0f172a !important;
 }
 
+/* =========================================================
+   Modal Backdrop Overlays (Dark blur in both modes)
+   ========================================================= */
+html body.ts-bright :is(
+  .pk-badge-explanation,
+  .vocab-editor-overlay,
+  .vocab-cover-popover,
+  .vocab-photo-picker,
+  .game-popup-modal,
+  .pk-login-overlay,
+  .quiz-image-picker-modal,
+  .fixed.inset-0,
+  [class*="fixed inset-0"],
+  [class*="fixed"][class*="inset-0"]
+) {
+  background: rgba(3, 8, 20, 0.72) !important;
+  background-color: rgba(3, 8, 20, 0.72) !important;
+  background-image: none !important;
+  backdrop-filter: blur(8px) saturate(0.8) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(0.8) !important;
+}
 
+/* Badge explanation popup card in bright mode */
+html body.ts-bright .pk-badge-explanation > section {
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 203, 5, 0.75) !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25) !important;
+}
+html body.ts-bright .pk-badge-explanation h2 {
+  color: #0f172a !important;
+}
+html body.ts-bright .pk-badge-explanation p {
+  color: #334155 !important;
+}
+html body.ts-bright .pk-badge-explanation-close {
+  background: rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #334155 !important;
+}
+html body.ts-bright .pk-badge-explanation-close:hover {
+  background: rgba(0, 0, 0, 0.12) !important;
+  color: #0f172a !important;
+}
 
+/* =========================================================
+   Edit Word Modal - Dual Mode Instant (Zero-flash) Styles
+   ========================================================= */
+.vocab-word-edit-card {
+  box-shadow: 0 25px 60px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.12) !important;
+}
+html body.ts-bright .vocab-word-edit-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22) !important;
+}
+html body.ts-bright .vocab-word-edit-header {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+html body.ts-bright .vocab-word-edit-header h2 { color: #0f172a !important; }
+html body.ts-bright .vocab-word-edit-header p { color: #64748b !important; }
+html body.ts-bright .vocab-word-edit-close {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: #475569 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+html body.ts-bright .vocab-word-edit-close:hover {
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: #0f172a !important;
+}
+html body.ts-bright .vocab-word-edit-label { color: #475569 !important; }
+html body.ts-bright .vocab-word-edit-input {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+html body.ts-bright .vocab-word-edit-input::placeholder { color: #94a3b8 !important; }
+html body.ts-bright .vocab-word-edit-input:focus {
+  border-color: #f59e0b !important;
+  outline: 2px solid #f59e0b !important;
+  background: #ffffff !important;
+}
+html body.ts-bright .vocab-word-edit-preview-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html body.ts-bright .vocab-word-edit-preview-bay {
+  background: #ffffff !important;
+  border: 1px dashed #cbd5e1 !important;
+}
+html body.ts-bright .vocab-word-edit-results {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html body.ts-bright .vocab-word-edit-photo-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html body.ts-bright .vocab-word-edit-footer {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+html body.ts-bright .vocab-word-edit-cancel-btn {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+html body.ts-bright .vocab-word-edit-cancel-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+html body.ts-bright .vocab-word-edit-del-confirm {
+  background: #ffffff !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  color: #0f172a !important;
+}
+html body.ts-bright .vocab-word-edit-del-confirm h3 { color: #0f172a !important; }
+html body.ts-bright .vocab-word-edit-del-confirm p { color: #475569 !important; }
