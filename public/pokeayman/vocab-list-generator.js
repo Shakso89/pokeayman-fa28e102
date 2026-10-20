@@ -1,6 +1,7 @@
 // AI Vocabulary List Generator for PokéAyman
-// Opens a simplified, native popup (like creating a list) with options for words (space-separated) or photo.
-// 1 credit per main word in generated list, charged strictly after creation succeeds.
+// Step 1: Picks high quality picture for each word (animal, food, color, etc.)
+// Step 2: Generates simple, vivid, non-shallow sentence directly related to that picture
+// Step 3: Saves list and words, charges 1 credit/word strictly upon success.
 
 (function () {
   let isGenerating = false;
@@ -30,43 +31,27 @@
     return bal === Infinity ? 'Unlimited' : `${bal} credit${bal === 1 ? '' : 's'}`;
   }
 
-  async function searchContextImageForSentence(sentence, word) {
-    if (sentence && typeof window.pexelsFetch === 'function') {
-      try {
-        const cleanQuery = sentence.replace(/[.!?,"']/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
-        const res = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(cleanQuery)}&per_page=6`, {
-          headers: { 'Authorization': '' }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const photo = data.photos?.[0];
-          if (photo?.src?.large || photo?.src?.medium) {
-            return photo.src.large || photo.src.medium;
-          }
+  // Choose a top quality photo of that word first, returning URL and photo description/tags
+  async function fetchPhotoForWord(word) {
+    if (!word || typeof window.pexelsFetch !== 'function') return { url: '', tags: '' };
+    try {
+      const res = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(word.trim())}&per_page=6`, {
+        headers: { 'Authorization': '' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const photo = data.photos?.[0];
+        if (photo?.src?.large || photo?.src?.medium) {
+          return {
+            url: photo.src.large || photo.src.medium,
+            tags: String(photo.alt || photo.photographer || '').slice(0, 150)
+          };
         }
-      } catch (err) {
-        console.warn('Sentence image search failed:', err);
       }
+    } catch (err) {
+      console.warn(`Could not fetch photo for "${word}":`, err);
     }
-
-    if (word && typeof window.pexelsFetch === 'function') {
-      try {
-        const res = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(word.trim())}&per_page=6`, {
-          headers: { 'Authorization': '' }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const photo = data.photos?.[0];
-          if (photo?.src?.large || photo?.src?.medium) {
-            return photo.src.large || photo.src.medium;
-          }
-        }
-      } catch (err) {
-        console.warn('Word fallback search failed:', err);
-      }
-    }
-
-    return '';
+    return { url: '', tags: '' };
   }
 
   function getTargetClassInfo() {
@@ -88,7 +73,7 @@
     const existingModal = document.getElementById('vocab-gen-popup-modal');
     if (existingModal) existingModal.remove();
 
-    // Read list name from current input field if teacher already typed one
+    // Read list name from current input field if teacher already typed one (e.g. "tester")
     const inputListName = document.getElementById('new-vocab-list-name')?.value?.trim() || '';
 
     const { school, className } = getTargetClassInfo();
@@ -125,7 +110,7 @@
             <input id="vocab-gen-name-input" type="text" maxlength="80" placeholder="e.g. Unit 5 Verbs or Animals" value="${inputListName.replace(/"/g, '&quot;')}" required>
           </label>
 
-          <!-- Class info / selector (only if not already in a class, or let user verify) -->
+          <!-- Class info / selector -->
           ${school && className ? `
             <div style="font-size:12px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px;">
               <span>Class:</span> <strong style="color:#fde047;">${className}</strong> <span style="opacity:0.7;">(${school})</span>
@@ -157,7 +142,7 @@
           <div id="vocab-gen-section-words" style="display:flex; flex-direction:column; gap:6px;">
             <label class="teacher-vb-create-field">
               <span>Enter words with spaces between (or commas)</span>
-              <textarea id="vocab-gen-text-input" rows="3" placeholder="e.g. lion tiger elephant giraffe zebra monkey" style="width:100%; border-radius:8px; padding:10px 12px; background:var(--pk-surface, #0b1220); color:#fff; border:1px solid rgba(148,163,184,.35); font-size:14px; resize:none;"></textarea>
+              <textarea id="vocab-gen-text-input" rows="3" placeholder="e.g. cat dog apple blue run jump lion" style="width:100%; border-radius:8px; padding:10px 12px; background:var(--pk-surface, #0b1220); color:#fff; border:1px solid rgba(148,163,184,.35); font-size:14px; resize:none;"></textarea>
             </label>
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:rgba(255,255,255,0.7);">
               <span id="vocab-gen-words-count-label">0 words detected</span>
@@ -209,7 +194,7 @@
           <div id="vocab-gen-progress-wrap" style="display:none; flex-direction:column; gap:6px; padding:10px 12px; border-radius:8px; background:rgba(79,70,229,0.2); border:1px solid rgba(99,102,241,0.4);">
             <div style="display:flex; align-items:center; gap:8px;">
               <div style="width:16px; height:16px; border:2px solid #818cf8; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
-              <span id="vocab-gen-status-text" style="font-size:12px; font-weight:700; color:#c7d2fe;">Generating simple sentences with Gemini...</span>
+              <span id="vocab-gen-status-text" style="font-size:12px; font-weight:700; color:#c7d2fe;">Finding pictures and generating vivid sentences...</span>
             </div>
             <div style="width:100%; height:4px; background:rgba(255,255,255,0.15); border-radius:2px; overflow:hidden;">
               <div id="vocab-gen-progress-fill" style="width:25%; height:100%; background:#818cf8; transition:width 0.3s ease;"></div>
@@ -299,7 +284,6 @@
       }
     }
 
-    // Mode toggling
     modeWordsBtn.addEventListener('click', () => {
       if (isGenerating) return;
       activeMode = 'words';
@@ -322,7 +306,6 @@
       updateModalUI();
     });
 
-    // Word count buttons for photo mode
     countBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         if (isGenerating) return;
@@ -333,13 +316,11 @@
       });
     });
 
-    // Text input typing (space-separated or commas)
     textInput.addEventListener('input', () => {
       errorBanner.style.display = 'none';
       updateModalUI();
     });
 
-    // Photo drag & drop
     photoDropzone.addEventListener('click', (e) => {
       if (isGenerating || e.target === photoRemoveBtn) return;
       photoFileInput.click();
@@ -430,7 +411,6 @@
         return;
       }
 
-      // Determine class and school
       let targetSchool = school;
       let targetClass = className;
       if (classSelect && classSelect.value) {
@@ -465,78 +445,153 @@
       }
 
       errorBanner.style.display = 'none';
-      setGenerating(true, '1/3 Generating simple sentences with Gemini...', 30);
 
-      let generatedItems = [];
-      try {
-        const payload = activeMode === 'words'
-          ? { mode: 'words', words }
-          : { mode: 'photo', image: uploadedPhotoBase64, count: selectedPhotoCount };
+      let itemsWithImages = [];
 
-        let res;
+      if (activeMode === 'words') {
+        // STEP 1: Choose pictures for each word first (animals, colors, food, etc.)
+        setGenerating(true, '1/3 Finding pictures for your vocabulary words...', 25);
+        const preparedItems = [];
+
+        for (let i = 0; i < words.length; i++) {
+          const w = words[i];
+          setGenerating(true, `1/3 Choosing picture for "${w}" (${i + 1}/${words.length})...`, 25 + Math.round((i / words.length) * 20));
+          const photoData = await fetchPhotoForWord(w);
+          preparedItems.push({
+            word: w,
+            imageUrl: photoData.url || '',
+            picture: photoData.tags || ''
+          });
+        }
+
+        // STEP 2: Generate sentences directly tailored to the chosen pictures
+        setGenerating(true, '2/3 Writing vivid sentences related to each picture with Gemini...', 60);
+        let generatedMap = new Map();
+
         try {
-          res = await fetch('/api/generate-vocab-list', {
+          const payload = {
+            mode: 'words',
+            items: preparedItems.map(p => ({ word: p.word, picture: p.picture }))
+          };
+
+          let res;
+          try {
+            res = await fetch('/api/generate-vocab-list', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+          } catch (fetchErr) {
+            console.warn('generate-vocab-list failed, trying vocabulary-sentence fallback:', fetchErr);
+          }
+
+          if (!res || !res.ok) {
+            res = await fetch('/api/vocabulary-sentence', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+          }
+
+          if (res && res.ok) {
+            const data = await res.json();
+            const list = Array.isArray(data.items) ? data.items : [];
+            list.forEach(it => {
+              if (it.word && it.sentence) {
+                generatedMap.set(it.word.toLowerCase(), it.sentence);
+              }
+            });
+          }
+        } catch (apiErr) {
+          console.warn('AI sentence generation error, using smart templates:', apiErr);
+        }
+
+        // Combine photos and sentences (with smart fallback if ever needed)
+        itemsWithImages = preparedItems.map(p => {
+          let sentence = generatedMap.get(p.word.toLowerCase());
+          if (!sentence || /^Look at/i.test(sentence)) {
+            const lw = p.word.toLowerCase();
+            if (/^(cat|dog|bird|fish|lion|tiger|bear|horse|monkey|cow|pig|rabbit|duck|frog|elephant|giraffe|zebra|puppy|kitten|wolf|fox|deer|sheep|mouse|turtle)$/.test(lw)) {
+              sentence = `The friendly ${p.word} plays happily in the warm sun.`;
+            } else if (/^(apple|banana|orange|grape|fruit|bread|pizza|cake|cookie|milk|water|rice|cheese|berry|mango|soup|sandwich|juice|egg|meat)$/.test(lw)) {
+              sentence = `The sweet ${p.word} tastes fresh and delicious today.`;
+            } else if (/^(red|blue|green|yellow|pink|purple|orange|white|black|brown|golden|gray|grey)$/.test(lw)) {
+              sentence = `A lovely ${p.word} bird flies across the sunny garden.`;
+            } else {
+              sentence = `The wonderful ${p.word} brings a bright smile to everyone.`;
+            }
+          }
+          return {
+            word: p.word,
+            imageUrl: p.imageUrl,
+            sentence
+          };
+        });
+      } else {
+        // Photo upload mode
+        setGenerating(true, '1/3 Analyzing your photo with Gemini AI...', 35);
+        let photoItems = [];
+
+        try {
+          const payload = {
+            mode: 'photo',
+            image: uploadedPhotoBase64,
+            count: selectedPhotoCount
+          };
+
+          let res = await fetch('/api/generate-vocab-list', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
+          }).catch(() => null);
+
+          if (!res || !res.ok) {
+            res = await fetch('/api/vocabulary-sentence', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+          }
+
+          if (!res || !res.ok) {
+            const errData = await res?.json().catch(() => ({}));
+            throw new Error(errData?.message || 'Could not analyze photo.');
+          }
+
+          const data = await res.json();
+          photoItems = Array.isArray(data.items) ? data.items : [];
+        } catch (err) {
+          console.error('Photo mode AI error:', err);
+          setGenerating(false);
+          errorBanner.textContent = err.message || 'Photo analysis failed. No credits were deducted.';
+          errorBanner.style.display = 'block';
+          updateModalUI();
+          return;
+        }
+
+        // Attach images
+        setGenerating(true, '2/3 Matching photos for each word...', 65);
+        for (let i = 0; i < photoItems.length; i++) {
+          const it = photoItems[i];
+          const photoData = await fetchPhotoForWord(it.word);
+          itemsWithImages.push({
+            word: it.word,
+            sentence: it.sentence,
+            imageUrl: photoData.url || uploadedPhotoBase64
           });
-        } catch (fetchErr) {
-          console.warn('generate-vocab-list failed, trying vocabulary-sentence fallback:', fetchErr);
         }
+      }
 
-        if (!res || !res.ok) {
-          res = await fetch('/api/vocabulary-sentence', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-        }
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.message || 'Sentence generation failed. Please try again.');
-        }
-
-        const data = await res.json();
-        generatedItems = Array.isArray(data.items) ? data.items : [];
-        if (!generatedItems.length) {
-          throw new Error('No vocabulary words could be generated.');
-        }
-      } catch (err) {
-        console.error('Generation error:', err);
+      if (!itemsWithImages.length) {
         setGenerating(false);
-        errorBanner.textContent = err.message || 'Generation failed. No credits were deducted.';
+        errorBanner.textContent = 'Could not generate vocabulary items. No credits deducted.';
         errorBanner.style.display = 'block';
         updateModalUI();
         return;
       }
 
-      // Step 2: Context-aware image search
-      setGenerating(true, '2/3 Finding context-matched images for each sentence...', 65);
-      const itemsWithImages = [];
-
-      for (let i = 0; i < generatedItems.length; i++) {
-        const item = generatedItems[i];
-        setGenerating(
-          true,
-          `2/3 Finding context image for "${item.word}" (${i + 1}/${generatedItems.length})...`,
-          65 + Math.round(((i + 1) / generatedItems.length) * 20)
-        );
-
-        let imageUrl = await searchContextImageForSentence(item.sentence, item.word);
-        if (!imageUrl && activeMode === 'photo' && uploadedPhotoBase64) {
-          imageUrl = uploadedPhotoBase64;
-        }
-
-        itemsWithImages.push({
-          word: item.word,
-          sentence: item.sentence,
-          imageUrl: imageUrl || ''
-        });
-      }
-
-      // Step 3: Save to database
-      setGenerating(true, '3/3 Saving vocabulary list...', 90);
+      // STEP 3: Save to database
+      setGenerating(true, '3/3 Saving vocabulary list to classroom...', 90);
 
       const listId = `vocab-list-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const firstValidImage = itemsWithImages.find(it => it.imageUrl)?.imageUrl || uploadedPhotoBase64 || '';
@@ -556,7 +611,7 @@
         vocab_word: '',
         vocab_image: '',
         vocab_cover_image_id: '',
-        vocab_cover_image_url: firstValidImage,
+        vocab_cover_image_url: firstValidImage, // Cover is one of the pictures inside the list
         student_name: '',
         coins: 0,
         pokemon_id: 0,
@@ -632,7 +687,7 @@
           await window.dataSdk.init(window.handler);
         }
 
-        // Step 4: Charge credits ONLY after successful saving
+        // STEP 4: Deduct credits strictly AFTER successful creation
         const finalWordCount = itemsWithImages.length;
         if (typeof window.deductTeacherCredits === 'function') {
           await window.deductTeacherCredits(finalWordCount);
@@ -683,7 +738,6 @@
     }
   }
 
-  // Ensure button is bound and stays bound
   if (document.readyState !== 'loading') {
     bindGenerateBtn();
   } else {

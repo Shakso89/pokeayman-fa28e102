@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/vocabulary-sentence")({
           return Response.json({ message: "Invalid request payload." }, { status: 400 });
         }
 
-        const geminiApiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || process.env["VITE_GEMINI_API_KEY"];
+                const geminiApiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || process.env["VITE_GEMINI_API_KEY"];
         const lovableApiKey = process.env["LOVABLE_API_KEY"];
         if (!geminiApiKey && !lovableApiKey) return Response.json({ message: "Sentence generator is not configured yet." }, { status: 401 });
 
@@ -133,7 +133,7 @@ For each item:
         word = input.word.trim();
         if (typeof input.avoid === "string") avoid = input.avoid.slice(0, 200);
 
-        const promptText = `Word: ${word}${avoid ? `\nDo not repeat this sentence: ${avoid}` : ""}\nYou write one short, simple, natural example sentence (6-12 words) for children learning English vocabulary. Use the given word exactly as written. Reply with only the sentence, no quotes.`;
+        const promptText = `Word: ${word}${avoid ? `\nDo not repeat this sentence: ${avoid}` : ""}\nYou write one short, simple, natural example sentence (6-12 words) for children learning English vocabulary. Use the given word exactly as written. Make the sentence engaging, meaningful, and child-friendly (6 to 9 words). NEVER write shallow sentences like "Look at the...", "This is a...", "Here is...". Reply with only the sentence, no quotes.`;
 
         // 1. Direct Google Gemini API (gemini-3.5-flash-lite first, then gemini-3.8-flash)
         if (geminiApiKey) {
