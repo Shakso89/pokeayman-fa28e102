@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
         const geminiApiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || process.env["VITE_GEMINI_API_KEY"] || FALLBACK_GEMINI_KEY;
         const lovableApiKey = process.env["LOVABLE_API_KEY"];
 
-        const models = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
+        const models = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-flash-latest"];
 
         if (mode === "words") {
           let rawItems: Array<{ word: string; picture: string }> = [];
@@ -326,7 +326,7 @@ For each item:
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableApiKey}` },
                 body: JSON.stringify({
-                  model: "google/gemini-2.5-flash",
+                  model: "google/gemini-3.8-flash",
                   messages: [{
                     role: "user",
                     content: [
