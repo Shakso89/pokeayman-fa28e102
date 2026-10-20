@@ -144,8 +144,10 @@
 .ga-lobby h3, .ga-lobby legend, .ga-lobby label, .ga-lobby .game-setting-control > span { color: var(--ga-ink) !important; font-size: .85rem; }
 .ga-lobby .ga-round-setting h3 { margin-bottom: .45rem; }
 .ga-lobby .ga-core-settings { display: block !important; }
-.ga-lobby .game-setting-control { padding: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; min-width: 0; }
-.ga-lobby .game-setting-control p { color: var(--ga-muted) !important; font-size: .75rem; }
+.ga-lobby .game-setting-control,
+.ga-lobby .game-timer-setting-slot { display: flex !important; flex-direction: column !important; justify-content: flex-start !important; align-items: stretch !important; height: auto !important; min-height: 0 !important; padding: 0 !important; border: none !important; background: transparent !important; box-shadow: none !important; min-width: 0 !important; margin: 0 !important; }
+.ga-lobby .game-setting-control > :is(legend, label, span) { display: block !important; margin-bottom: .5rem !important; line-height: 1.25 !important; }
+.ga-lobby .game-setting-control p { color: var(--ga-muted) !important; font-size: .75rem; margin-top: .45rem !important; margin-bottom: 0 !important; line-height: 1.35 !important; }
 .ga-lobby :is(.game-timer-option, .game-reward-option, .shared-baam-count, .memory-level-option, .match-word-count-option) { min-height: 38px; padding: .45rem .35rem !important; border-radius: 6px !important; border: 1px solid var(--ga-border) !important; background: var(--ga-chip) !important; color: var(--ga-ink) !important; font-size: .8rem !important; box-shadow: none !important; line-height: 1.3; }
 .ga-lobby :is(.game-timer-option, .game-reward-option, .shared-baam-count, .memory-level-option, .match-word-count-option).is-selected { border-color: var(--ga-accent) !important; background: color-mix(in srgb, var(--ga-accent) 15%, var(--ga-surface)) !important; color: var(--ga-ink) !important; }
 .ga-lobby input[type=number] { max-width: 150px; background: var(--ga-chip) !important; color: var(--ga-ink) !important; border: 1px solid var(--ga-border) !important; }
@@ -156,7 +158,7 @@
 .ga-round-options summary::after { content: '+'; font-size: 1.2rem; }
 .ga-round-options[open] summary::after { content: '−'; }
 .ga-options-summary { margin-left: auto; color: var(--ga-muted); font-size: .75rem; font-weight: 500; text-align: right; }
-.ga-options-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding-bottom: .85rem; }
+.ga-options-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding-bottom: .85rem; align-items: start !important; }
 .ga-lobby .ga-lobby-footer { display: flex; align-items: center; justify-content: space-between; gap: .75rem; border-top: 1px solid var(--ga-border); padding-top: 1rem; }
 .ga-lobby #game-players-next { flex: 0 1 auto !important; min-height: 42px; padding: .65rem 1.15rem; background: var(--ga-accent) !important; color: var(--ga-action-ink) !important; border: none !important; border-radius: 6px !important; font-weight: 800; }
 .ga-lobby #game-players-cancel { flex: 0 0 auto !important; border: none !important; background: transparent !important; color: var(--ga-muted) !important; padding: .5rem 0; box-shadow: none !important; }
