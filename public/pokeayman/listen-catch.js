@@ -744,7 +744,8 @@
         return `<span class="lc-summary-tier-chip"><img src="${ballArt(tier)}" alt=""> <strong>${count}× ${esc(ballName(tier))}</strong> <small>(${esc(rarityLabel(tier))})</small></span>`;
       }).filter(Boolean).join('')
     }</div>` : '';
-    session.root.querySelector('.lc-play').innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${awarded ? `${awarded} Catch Ball${awarded === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2>${breakdownHtml}<p>${awarded ? 'Each ball has a rarity tier. Match its tier to the featured Pokémon in a Catchdex challenge.' : ''} ${awarded < session.correct ? `Daily limit reached. You have earned ${state.dailyBallsEarned} of ${DAILY_BALL_LIMIT} balls today. ` : ''}Open your balls now, or find them later in your Catchdex.</p><div class="lc-result-actions"><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
+    const resultTarget = session.root.querySelector('.lc-main') || session.root.querySelector('.lc-play');
+    resultTarget.innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${awarded ? `${awarded} Catch Ball${awarded === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2>${breakdownHtml}<p>${awarded ? 'Each ball has a rarity tier. Match its tier to the featured Pokémon in a Catchdex challenge.' : ''} ${awarded < session.correct ? `Daily limit reached. You have earned ${state.dailyBallsEarned} of ${DAILY_BALL_LIMIT} balls today. ` : ''}Open your balls now, or find them later in your Catchdex.</p><div class="lc-result-actions"><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
     mountCards();
   }
   function launchForStudent(listName, record) {

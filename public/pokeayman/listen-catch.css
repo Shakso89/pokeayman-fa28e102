@@ -84,7 +84,7 @@ body > .ga-stage.lc-stage {
   width: 100vw !important; height: 100vh !important; height: 100dvh !important;
   display: flex !important; flex-direction: column !important;
   padding: 0 !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important;
-  background: transparent !important; backdrop-filter: none !important;
+  background: radial-gradient(circle at 50% 30%, #172554 0%, #0f172a 60%, #020617 100%) !important; backdrop-filter: none !important;
   overflow: hidden !important; color: var(--ga-stage-ink, #f8fafc) !important;
   font-family: Figtree, sans-serif !important;
 }

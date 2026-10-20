@@ -4703,7 +4703,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
   window.gaThemes = GAME_THEMES;
   window.gaIsTeacherThemeEnabled = function () {
-    return typeof currentRole === 'undefined' || currentRole !== 'student';
+    return true;
   };
 
   window.gaGetTheme = function () {
@@ -4950,15 +4950,15 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   };
 
   window.gaMountStage = function (view) {
-    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters');
+    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, .lc-main, .vb-arena, .cdx-main');
     if (!board || view.querySelector('#game-player-list') || view.classList.contains('ga-stage')) return;
     view.classList.add('ga-stage');
-    const shell = view.matches('.game-popup-modal') ? view.firstElementChild : view.querySelector('.game-popup-modal > div, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell') || view.firstElementChild;
+    const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
     if (!shell) return;
     shell.classList.add('ga-stage-shell');
     let parent = shell.parentElement;
     while (parent && parent !== view) { parent.classList.add('ga-stage-wrapper'); parent = parent.parentElement; }
-    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .hangman-game-shell > div:first-child, .sticky.top-0') || shell.firstElementChild;
+    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .hangman-game-shell > div:first-child, .lc-head, .vb-head, .cdx-head, .sticky.top-0') || shell.firstElementChild;
     if (header) {
       header.classList.add('ga-stage-header');
       header.querySelector('[data-games-back]')?.remove();
@@ -5007,9 +5007,16 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       });
       const expand = document.createElement('button'); expand.type = 'button'; expand.textContent = '⛶'; expand.setAttribute('aria-label', 'Expand to browser fullscreen'); expand.title = 'Browser fullscreen';
       expand.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await view.requestFullscreen(); } catch (_) {} });
-      const close = view.querySelector('#baam-close, #find-me-close, #game-close, #scramble-close, #hangman-close') || document.createElement('button');
+      const close = view.querySelector('#baam-close, #find-me-close, #game-close, #scramble-close, #hangman-close, [data-lc="close"], [data-vb="close"], [data-cdx="close"]') || document.createElement('button');
       close.type = 'button'; close.textContent = '×'; close.classList.add('ga-stage-exit'); close.setAttribute('aria-label', 'Close game'); close.title = 'Close game';
-      close.addEventListener('click', event => { event.preventDefault(); if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); endActiveGames(); });
+      close.addEventListener('click', event => {
+        event.preventDefault();
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        window.closeListenCatch?.();
+        window.closeVocabBattle?.();
+        window.closeCatchdex?.();
+        endActiveGames();
+      });
       controls.append(sound, expand, close); header.appendChild(controls);
       header.querySelectorAll('.game-sound-controls, #scramble-sound-mute').forEach(node => { node.hidden = true; });
     }
@@ -5031,12 +5038,15 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         return;
       }
       event.preventDefault();
+      window.closeListenCatch?.();
+      window.closeVocabBattle?.();
+      window.closeCatchdex?.();
       endActiveGames();
     }
   });
   const observeStages = () => new MutationObserver(() => {
     document.querySelectorAll('#class-subtab-games > .game-inline-view, #student-tab-games > .game-inline-view').forEach(view => window.gaMountStage(view));
-    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters')) view.remove(); });
+    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, .lc-main, .vb-arena, .cdx-main')) view.remove(); });
     if (!document.querySelector('.ga-stage') && document.body.classList.contains('ga-playing')) {
       document.body.classList.remove('ga-playing');
       delete document.body.dataset.gaActiveTheme;
@@ -5789,11 +5799,31 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     toast('Challenge deleted. You can post a new one.'); renderAdminChallenge(); mountCards();
   }
   function refreshViewer(record) {
-    const modal = document.getElementById('catchdex-modal');
-    if (modal && !modal.classList.contains('hidden')) renderCatchdexModal(record, true);
+    const stage = document.getElementById('catchdex-modal');
+    if (stage && stage.classList.contains('cdx-stage')) {
+      // Re-render the main content area in-place without destroying the stage
+      const main = stage.querySelector('.cdx-main');
+      if (main) {
+        const ro = Boolean(catchdexViewer?.readOnly);
+        main.innerHTML = renderCatchdexContents(record, ro);
+        bindCatchdexContents(stage, record, ro);
+      }
+    }
     const root = document.getElementById('profile-catchdex-root'); if (root) root.dataset.catchdexSig = '';
   }
-  function closeGame() { session?.root?.remove(); session = null; activeStudent = null; }
+  function closeGame() {
+    if (session?.timer) clearTimeout(session.timer);
+    window.speechSynthesis?.cancel();
+    session?.root?.remove();
+    session = null;
+    activeStudent = null;
+  }
+  window.closeListenCatch = closeGame;
+  window.closeCatchdex = function () {
+    const stage = document.getElementById('catchdex-modal');
+    if (stage) stage.remove();
+    catchdexViewer = null;
+  };
   function speak(word) {
     window.speechSynthesis?.cancel();
     if (typeof window.readNaturalVocabulary === 'function') window.readNaturalVocabulary(word, null, { level: window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4' });
@@ -5903,7 +5933,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         return `<span class="lc-summary-tier-chip"><img src="${ballArt(tier)}" alt=""> <strong>${count}× ${esc(ballName(tier))}</strong> <small>(${esc(rarityLabel(tier))})</small></span>`;
       }).filter(Boolean).join('')
     }</div>` : '';
-    session.root.querySelector('.lc-play').innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${awarded ? `${awarded} Catch Ball${awarded === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2>${breakdownHtml}<p>${awarded ? 'Each ball has a rarity tier. Match its tier to the featured Pokémon in a Catchdex challenge.' : ''} ${awarded < session.correct ? `Daily limit reached. You have earned ${state.dailyBallsEarned} of ${DAILY_BALL_LIMIT} balls today. ` : ''}Open your balls now, or find them later in your Catchdex.</p><div class="lc-result-actions"><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
+    const resultTarget = session.root.querySelector('.lc-main') || session.root.querySelector('.lc-play');
+    resultTarget.innerHTML = `<section class="lc-result"><div class="lc-result-ball">◓</div><h2>${awarded ? `${awarded} Catch Ball${awarded === 1 ? '' : 's'} earned!` : 'Keep listening — you will catch the next one.'}</h2>${breakdownHtml}<p>${awarded ? 'Each ball has a rarity tier. Match its tier to the featured Pokémon in a Catchdex challenge.' : ''} ${awarded < session.correct ? `Daily limit reached. You have earned ${state.dailyBallsEarned} of ${DAILY_BALL_LIMIT} balls today. ` : ''}Open your balls now, or find them later in your Catchdex.</p><div class="lc-result-actions"><button type="button" class="lc-primary" data-lc="open">Open Catchdex</button><button type="button" class="lc-secondary" data-lc="close">Back to games</button></div></section>`;
     mountCards();
   }
   function launchForStudent(listName, record) {
@@ -5933,16 +5964,42 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   }
   function launchGame(listName, words, record) {
     closeGame();
-    const root = document.createElement('div'); root.className = 'lc-stage'; root.setAttribute('role', 'dialog'); root.setAttribute('aria-modal', 'true'); root.setAttribute('aria-label', 'Listen and Catch');
-    const saved = stateFor(record); const dailyEarnedBefore = ballsEarnedToday(saved); const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
+    const root = document.createElement('div');
+    root.className = 'lc-stage game-popup-modal';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-modal', 'true');
+    root.setAttribute('aria-label', 'Listen and Catch');
+    const saved = stateFor(record);
+    const dailyEarnedBefore = ballsEarnedToday(saved);
+    const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
     const dailyBefore = ballsEarnedToday(saved);
     const dailyAtLimit = dailyEarnedBefore >= DAILY_BALL_LIMIT;
-    root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span class="lc-pro-tag">👑 PRO FEATURE • LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><span aria-hidden="true">🔊</span><span class="lc-listen-label">Hear the sentence</span></button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div><section class="lc-reward-panel" aria-label="Catch Balls earned during this game"><div class="lc-reward-icon"><img src="/pokeayman/assets/catch-ball.png" alt=""></div><div class="lc-reward-copy"><span>ROUND REWARDS</span><strong><b class="lc-balls">0</b> Catch Balls this game</strong><div class="lc-reward-track"><i class="lc-reward-fill"></i></div><small class="lc-reward-status">0 of ${words.length} rounds rewarded</small><small class="lc-daily-cap${dailyAtLimit ? ' is-limit' : ''}">${dailyAtLimit ? `Daily limit reached (${dailyBefore}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyBefore} / ${DAILY_BALL_LIMIT} Catch Balls`}</small></div></section></section></main>`;
+    root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span class="lc-pro-tag">👑 PRO FEATURE • LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><span aria-hidden="true">🔊</span><span class="lc-listen-label">Hear the sentence</span></button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div><section class="lc-reward-panel" aria-label="Catch Balls earned during this game"><div class="lc-reward-icon"><img src="/pokeayman/assets/catch-ball.png" alt="" onerror="this.onerror=null;this.src='/pokeayman/assets/balls/1.png';"></div><div class="lc-reward-copy"><span>ROUND REWARDS</span><strong><b class="lc-balls">0</b> Catch Balls this game</strong><div class="lc-reward-track"><i class="lc-reward-fill"></i></div><small class="lc-reward-status">0 of ${words.length} rounds rewarded</small><small class="lc-daily-cap${dailyAtLimit ? ' is-limit' : ''}">${dailyAtLimit ? `Daily limit reached (${dailyBefore}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyBefore} / ${DAILY_BALL_LIMIT} Catch Balls`}</small></div></section></section></main>`;
     const gameMain = root.querySelector('.lc-main');
     const rewardPanel = gameMain?.querySelector('.lc-reward-panel');
     if (gameMain && rewardPanel) gameMain.insertBefore(rewardPanel, gameMain.firstChild);
-    document.body.appendChild(root); activeStudent = record; session = { root, listName, words, index: 0, earned: 0, correct: 0, dailyAllowance, dailyEarnedBefore, options: [], student: record, earnedTiers: [] };
-    root.addEventListener('click', event => { const button = event.target.closest('button'); if (!button) return; if (button.dataset.lc === 'close') closeGame(); else if (button.dataset.lc === 'listen') { const word = session.words[session.index]; speak(String(word.vocab_sentence || word.vocab_word)); } else if (button.dataset.lc === 'open') { const playedStudent = session.student; closeGame(); if (currentRole === 'student') window.openCatchdex(); else window.openCatchdexFor?.(playedStudent, true); } else if (button.dataset.choice !== undefined) answer(Number(button.dataset.choice)); });
+    document.body.appendChild(root);
+    activeStudent = record;
+    session = { root, listName, words, index: 0, earned: 0, correct: 0, dailyAllowance, dailyEarnedBefore, options: [], student: record, earnedTiers: [] };
+    root.addEventListener('click', event => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      if (button.dataset.lc === 'close') {
+        closeGame();
+        if (typeof endActiveGames === 'function') endActiveGames();
+      } else if (button.dataset.lc === 'listen') {
+        const word = session.words[session.index];
+        speak(String(word.vocab_sentence || word.vocab_word));
+      } else if (button.dataset.lc === 'open') {
+        const playedStudent = session.student;
+        closeGame();
+        if (currentRole === 'student') window.openCatchdex();
+        else window.openCatchdexFor?.(playedStudent, true);
+      } else if (button.dataset.choice !== undefined) {
+        answer(Number(button.dataset.choice));
+      }
+    });
+    window.gaMountStage?.(root);
     window.__listenCatchDiagnostics = { role: currentRole, selectedListCount: Array.isArray(listName) ? listName.length : 1, loadedWords: words.length, school: record.school_name || '', className: record.class_name || '', launched: true };
     startRound();
   }
@@ -6016,13 +6073,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   }
   function bindCatchdexContents(root, record, readOnly) {
     root.querySelector('[data-catchdex="close"]')?.addEventListener('click', () => {
-      const modal = document.getElementById('catchdex-modal');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.hidden = true;
-        modal.setAttribute('hidden', 'true');
-        modal.style.display = 'none';
-      }
+      window.closeCatchdex?.();
+      if (typeof endActiveGames === 'function') endActiveGames();
     });
     root.querySelectorAll('[data-catchdex="throw"]').forEach(button => button.addEventListener('click', () => throwChallengeBall(record)));
     root.querySelectorAll('[data-award-ball]').forEach(button => button.addEventListener('click', () => awardBall(record, button.dataset.awardBall)));
@@ -6062,27 +6114,30 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   }
   function renderCatchdexModal(record = catchdexViewer?.record || (typeof student === 'function' ? student() : null), readOnly = Boolean(catchdexViewer?.readOnly)) {
     if (!record) return;
-    let modal = document.getElementById('catchdex-modal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'catchdex-modal';
-      modal.className = 'catchdex-modal';
-      document.body.appendChild(modal);
-      modal.addEventListener('click', event => {
-        if (event.target === modal) {
-          modal.classList.add('hidden');
-          modal.hidden = true;
-          modal.setAttribute('hidden', 'true');
-          modal.style.display = 'none';
-        }
-      });
-    }
-    modal.innerHTML = `<div class="catchdex-modal-card">${renderCatchdexContents(record, readOnly)}</div>`;
-    modal.classList.remove('hidden');
-    modal.hidden = false;
-    modal.removeAttribute('hidden');
-    modal.style.display = 'grid';
-    bindCatchdexContents(modal, record, readOnly);
+    // Remove any old floating modal or existing full-screen Catchdex stage
+    const oldModal = document.getElementById('catchdex-modal');
+    if (oldModal) { oldModal.remove(); }
+
+    const stage = document.createElement('div');
+    stage.id = 'catchdex-modal';
+    stage.className = 'cdx-stage';
+    stage.setAttribute('role', 'dialog');
+    stage.setAttribute('aria-modal', 'true');
+    stage.setAttribute('aria-label', 'Catchdex');
+    stage.innerHTML = `<main class="cdx-shell"><header class="cdx-head"><div><span style="display:block;color:var(--ga-stage-yellow,#ffcb05);font-size:.68rem;font-weight:900;letter-spacing:.13em">LISTEN AND CATCH</span><h1 style="margin:4px 0 0;font:800 clamp(1.2rem,2.5vw,1.65rem)/1 Outfit,sans-serif">Catchdex</h1></div><button type="button" data-cdx="close" aria-label="Close Catchdex" style="width:38px;height:38px;border:1px solid var(--ga-stage-line,#344058);border-radius:10px;background:transparent;color:inherit;font-size:1.5rem;cursor:pointer">×</button></header><div class="cdx-main">${renderCatchdexContents(record, readOnly)}</div></main>`;
+    document.body.appendChild(stage);
+
+    stage.querySelector('[data-cdx="close"]')?.addEventListener('click', () => {
+      window.closeCatchdex?.();
+      if (typeof endActiveGames === 'function') endActiveGames();
+    });
+    stage.querySelector('[data-catchdex="close"]')?.addEventListener('click', () => {
+      window.closeCatchdex?.();
+      if (typeof endActiveGames === 'function') endActiveGames();
+    });
+
+    bindCatchdexContents(stage, record, readOnly);
+    window.gaMountStage?.(stage);
   }
   function showBoxCountPopup(record) {
     if (!canManageCatchdex(record)) return;
@@ -6118,21 +6173,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   window.openCatchdexFor = function (record, readOnly = true) {
     if (!record) return;
     catchdexViewer = { record, readOnly };
-    let modal = document.getElementById('catchdex-modal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'catchdex-modal';
-      modal.className = 'catchdex-modal';
-      document.body.appendChild(modal);
-      modal.addEventListener('click', event => {
-        if (event.target === modal) {
-          modal.classList.add('hidden');
-          modal.hidden = true;
-          modal.setAttribute('hidden', 'true');
-          modal.style.display = 'none';
-        }
-      });
-    }
+    // Remove any stale stage
+    document.getElementById('catchdex-modal')?.remove();
     renderCatchdexModal(record, readOnly);
   };
   window.listenCatchRefresh = mountCards;
