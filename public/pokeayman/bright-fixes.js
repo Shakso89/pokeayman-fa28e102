@@ -2,9 +2,9 @@
 // high-specificity rules. In bright mode we detect those at runtime and tag them so
 // bright-fixes.css can repaint them with the bright tokens. Dark mode is untouched.
 (function () {
-  // These surfaces have their own intentional dark palette even in bright mode.
-  // The legacy contrast sweep must not recolour the home hero or login dialogs.
-  const SKIP = '#home-screen, #home-screen *, .pk-login-overlay, .pk-login-overlay *, .pk-badge-explanation, .vocab-editor-overlay, .vocab-cover-popover, .vocab-photo-picker, .game-popup-modal, .vocab-word-edit-card, .vocab-word-edit-card *, [class*="fixed inset-0"], [class*="fixed"][class*="inset-0"], .fixed.inset-0, .vb-stage .vb-arena *, .ga-stage[data-ga-theme], .ga-stage[data-ga-theme] *, .ga-theme-picker, .ga-theme-picker *, .ga-stage-theme-popover, .ga-stage-theme-popover *, img, svg, canvas, video, .ga-cart-art, .ga-cart-play, [class*="holo"], [class*="rarity"], [class*="tier-"], .coin-celebration, [class*="celebrat"], .pokeball, [class*="pokeball"], [class*="hp-fill"], [class*="timer-fill"], .hangman-figure *';
+  // These surfaces have their own intentional styling even in bright mode.
+  // Overlays, celebration cards, confettis, and word editors must never be recoloured by sweep.
+  const SKIP = '#home-screen, #home-screen *, .pk-login-overlay, .pk-login-overlay *, .pk-badge-explanation, .pk-badge-explanation *, .vocab-editor-overlay, .vocab-editor-overlay *, .ve-workspace, .ve-workspace *, .vocab-cover-popover, .vocab-cover-popover *, .vocab-photo-picker, .vocab-photo-picker *, .game-popup-modal, .game-popup-modal *, .vocab-word-edit-card, .vocab-word-edit-card *, .vocab-word-edit-del-confirm, .vocab-word-edit-del-confirm *, .quiz-win-overlay, .quiz-win-overlay *, .quiz-win-card, .quiz-win-card *, .coin-celebration-overlay, .coin-celebration-overlay *, .coin-celebration-card, .coin-celebration-card *, .game-celebration-overlay, .game-celebration-overlay *, .game-celebration-card, .game-celebration-card *, [class*="celebrat"], [class*="celebrat"] *, [class*="confetti"], [class*="confetti"] *, .coin-particles, .coin-particles *, .coin-medallion, .coin-medallion *, [class*="fixed inset-0"], [class*="fixed"][class*="inset-0"], .fixed.inset-0, .vb-stage .vb-arena *, .ga-stage[data-ga-theme], .ga-stage[data-ga-theme] *, .ga-theme-picker, .ga-theme-picker *, .ga-stage-theme-popover, .ga-stage-theme-popover *, img, svg, canvas, video, .ga-cart-art, .ga-cart-play, [class*="holo"], [class*="rarity"], [class*="tier-"], .coin-celebration, .pokeball, [class*="pokeball"], [class*="hp-fill"], [class*="timer-fill"], .hangman-figure *';
   // Modern computed colours can be oklch()/color(srgb ...), not just rgb().
   const colorCache = new Map();
   const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
@@ -33,8 +33,8 @@
     }
     const all = document.body.querySelectorAll('div,section,article,aside,header,nav,label,button,span,p,li,form,a,h1,h2,h3,h4,table,td,th,tr');
     for (const el of all) {
-            if (el.matches(SKIP)) { el.classList.remove('pk-bf-dark', 'pk-bf-ink'); continue; }
-      if (el.matches('.pk-badge-explanation, .vocab-editor-overlay, .vocab-cover-popover, .vocab-photo-picker, .game-popup-modal, .pk-login-overlay, [class*="fixed inset-0"], [class*="fixed"][class*="inset-0"], .fixed.inset-0')) {
+      if (el.matches(SKIP)) { el.classList.remove('pk-bf-dark', 'pk-bf-ink'); continue; }
+      if (el.matches('.pk-badge-explanation, .vocab-editor-overlay, .ve-workspace, .vocab-cover-popover, .vocab-photo-picker, .game-popup-modal, .pk-login-overlay, .quiz-win-overlay, .coin-celebration-overlay, .game-celebration-overlay, [class*="fixed inset-0"], [class*="fixed"][class*="inset-0"], .fixed.inset-0, [class*="confetti"]')) {
         el.classList.remove('pk-bf-dark', 'pk-bf-ink');
         continue;
       }
@@ -59,8 +59,13 @@
       if (!bg || lum(bg) > 0.45) el.classList.add('pk-bf-ink');
     }
   }
-  let t = null;
-  const schedule = () => { clearTimeout(t); t = setTimeout(sweep, 180); };
+  let raf = null;
+  const schedule = () => {
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      sweep();
+    });
+  };
   new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
   window.addEventListener('load', schedule);
   schedule();

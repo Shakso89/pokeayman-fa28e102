@@ -419,9 +419,12 @@ html body.ts-bright #class-subtab-quiz :is(#ongoing-quiz-list, #quiz-history-lis
 }
 
 /* =========================================================
-   Modal Backdrop Overlays (Dark blur in both modes)
+   Modal Backdrop Overlays (Universal Dark Translucent Blur in Both Modes)
    ========================================================= */
-html body.ts-bright :is(
+:is(
+  .quiz-win-overlay,
+  .coin-celebration-overlay,
+  .game-celebration-overlay,
   .pk-badge-explanation,
   .vocab-editor-overlay,
   .vocab-cover-popover,
@@ -429,6 +432,15 @@ html body.ts-bright :is(
   .game-popup-modal,
   .pk-login-overlay,
   .quiz-image-picker-modal,
+  .global-leaderboard-overlay,
+  .student-collection-overlay,
+  .student-activity-overlay,
+  .monthly-school-popup-portal,
+  .salary-school-detail-dialog,
+  .school-breakdown-modal,
+  #pokemon-modal,
+  #contact-pricing-modal,
+  #classmate-profile-modal,
   .fixed.inset-0,
   [class*="fixed inset-0"],
   [class*="fixed"][class*="inset-0"]
@@ -436,8 +448,51 @@ html body.ts-bright :is(
   background: rgba(3, 8, 20, 0.72) !important;
   background-color: rgba(3, 8, 20, 0.72) !important;
   background-image: none !important;
-  backdrop-filter: blur(8px) saturate(0.8) !important;
-  -webkit-backdrop-filter: blur(8px) saturate(0.8) !important;
+  backdrop-filter: blur(8px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(1.1) !important;
+}
+
+html body.ts-bright :is(
+  .quiz-win-overlay,
+  .coin-celebration-overlay,
+  .game-celebration-overlay,
+  .pk-badge-explanation,
+  .vocab-editor-overlay,
+  .vocab-cover-popover,
+  .vocab-photo-picker,
+  .game-popup-modal,
+  .pk-login-overlay,
+  .quiz-image-picker-modal,
+  .global-leaderboard-overlay,
+  .student-collection-overlay,
+  .student-activity-overlay,
+  .monthly-school-popup-portal,
+  .salary-school-detail-dialog,
+  .school-breakdown-modal,
+  #pokemon-modal,
+  #contact-pricing-modal,
+  #classmate-profile-modal,
+  .fixed.inset-0,
+  [class*="fixed inset-0"],
+  [class*="fixed"][class*="inset-0"]
+) {
+  background: rgba(3, 8, 20, 0.72) !important;
+  background-color: rgba(3, 8, 20, 0.72) !important;
+  background-image: none !important;
+  backdrop-filter: blur(8px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(1.1) !important;
+}
+
+/* Confetti, bursts, and particle layers must remain transparent */
+.quiz-win-confetti,
+.gc2 .gc2-burst,
+.coin-particles,
+html body.ts-bright .quiz-win-confetti,
+html body.ts-bright .gc2 .gc2-burst,
+html body.ts-bright .coin-particles {
+  background: transparent !important;
+  background-color: transparent !important;
+  pointer-events: none !important;
 }
 
 /* Badge explanation popup card in bright mode */
@@ -464,8 +519,61 @@ html body.ts-bright .pk-badge-explanation-close:hover {
 }
 
 /* =========================================================
-   Edit Word Modal - Dual Mode Instant (Zero-flash) Styles
+   Vocabulary List Editor & Word Editor (Instant Zero-Flash Styles)
    ========================================================= */
+html body.ts-bright .ve-workspace {
+  --ve-bg: #f8fafc;
+  --ve-surface: #ffffff;
+  --ve-ink: #0f172a;
+  --ve-muted: #64748b;
+  --ve-border: #e2e8f0;
+  --ve-accent: #f59e0b;
+}
+html body.ts-bright .ve-workspace .vocab-editor-modal {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.22) !important;
+}
+html body.ts-bright .ve-workspace .vocab-editor-header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+html body.ts-bright .ve-workspace h2,
+html body.ts-bright .ve-workspace h3 {
+  color: #0f172a !important;
+}
+html body.ts-bright .ve-workspace input.vocab-editor-input,
+html body.ts-bright .ve-workspace input.vocab-editor-title-input {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+html body.ts-bright .ve-workspace .vocab-editor-word-list > .ve-word {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html body.ts-bright .ve-workspace .ve-word p {
+  color: #0f172a !important;
+}
+html body.ts-bright .ve-workspace .ve-word small {
+  color: #64748b !important;
+}
+html body.ts-bright .ve-workspace .ve-word-actions button {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+html body.ts-bright .ve-workspace .ve-word-actions button:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+html body.ts-bright .ve-workspace .ve-footer {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+/* Edit Word Modal - Dual Mode Instant (Zero-flash) Styles */
 .vocab-word-edit-card {
   box-shadow: 0 25px 60px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.12) !important;
 }

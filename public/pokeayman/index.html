@@ -12236,11 +12236,12 @@ function showQuizCorrectCelebration(quiz, reward) {
   const cheers = ['Correct!', 'Super smart!', 'You nailed it!', 'Brilliant!', 'Way to go!'];
   const overlay = document.createElement('div');
   overlay.className = 'quiz-win-overlay';
-  overlay.innerHTML = `<section class="quiz-win-card" role="dialog" aria-modal="true" aria-labelledby="quiz-win-title">
-    <div class="quiz-win-confetti" aria-hidden="true">${Array.from({ length: 24 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div>
+  overlay.innerHTML = `<div class="quiz-win-confetti" aria-hidden="true">${Array.from({ length: 24 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div>
+  <section class="quiz-win-card" role="dialog" aria-modal="true" aria-labelledby="quiz-win-title">
+
     <img class="quiz-win-pikachu" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="">
     <h2 id="quiz-win-title">${cheers[Math.floor(Math.random() * cheers.length)]}</h2>
-    <p class="quiz-win-answer">The answer was <strong>${safe(quiz.quiz_answer)}</strong></p>
+    <p class="quiz-win-answer">The answer was <strong>${safe(quiz?.quiz_answer ?? '')}</strong></p>
     <p class="quiz-win-coins">+${reward} coins</p>
     <button type="button" class="quiz-win-close">Yay!</button>
   </section>`;

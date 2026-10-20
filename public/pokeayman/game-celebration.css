@@ -52,3 +52,43 @@
   .gc2 .game-celebration-card > .flex.gap-3 { gap: 8px; width: 100%; }
   .gc2 .game-celebration-card button { min-width: 0; padding-inline: 10px; font-size: 14px !important; }
 }
+
+/* Bright mode overrides for game celebration */
+body.ts-bright .game-celebration-overlay.gc2 {
+  background: rgba(3, 9, 24, 0.72) !important;
+  backdrop-filter: blur(8px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(8px) saturate(1.1) !important;
+}
+body.ts-bright .gc2 .game-celebration-card {
+  background: #ffffff !important;
+  border: 3px solid #f59e0b !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25), 0 0 40px rgba(245, 158, 11, 0.3) !important;
+}
+body.ts-bright .gc2 #celebration-title,
+body.ts-bright .gc2 #battle-celebration-title {
+  color: #b45309 !important;
+  text-shadow: none !important;
+}
+body.ts-bright .gc2 .game-celebration-card p {
+  color: #334155 !important;
+}
+body.ts-bright .gc2 .game-celebration-card .rounded-xl {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+body.ts-bright .gc2 .game-celebration-card .rounded-xl p {
+  color: #0f172a !important;
+}
+body.ts-bright .gc2 #celebration-again,
+body.ts-bright .gc2 #battle-celebration-again {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 0 #b45309 !important;
+}
+body.ts-bright .gc2 #celebration-close,
+body.ts-bright .gc2 #battle-celebration-close {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
