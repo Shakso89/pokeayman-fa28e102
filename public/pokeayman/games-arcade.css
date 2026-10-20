@@ -2426,3 +2426,5 @@ html body > .ga-stage:not([data-ga-theme]) .memory-card .memory-word-content {
   border: 2px solid #3b82f6 !important;
 }
 
+
+.memory-card .memory-card-inner *, .ga-card-back-art, .ga-card-back-art * { pointer-events: none !important; }
