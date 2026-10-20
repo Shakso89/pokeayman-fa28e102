@@ -610,8 +610,16 @@
     toast('Challenge deleted. You can post a new one.'); renderAdminChallenge(); mountCards();
   }
   function refreshViewer(record) {
-    const modal = document.getElementById('catchdex-modal');
-    if (modal && !modal.classList.contains('hidden')) renderCatchdexModal(record, true);
+    const stage = document.getElementById('catchdex-modal');
+    if (stage && stage.classList.contains('cdx-stage')) {
+      // Re-render the main content area in-place without destroying the stage
+      const main = stage.querySelector('.cdx-main');
+      if (main) {
+        const ro = Boolean(catchdexViewer?.readOnly);
+        main.innerHTML = renderCatchdexContents(record, ro);
+        bindCatchdexContents(stage, record, ro);
+      }
+    }
     const root = document.getElementById('profile-catchdex-root'); if (root) root.dataset.catchdexSig = '';
   }
   function closeGame() {
@@ -622,6 +630,11 @@
     activeStudent = null;
   }
   window.closeListenCatch = closeGame;
+  window.closeCatchdex = function () {
+    const stage = document.getElementById('catchdex-modal');
+    if (stage) stage.remove();
+    catchdexViewer = null;
+  };
   function speak(word) {
     window.speechSynthesis?.cancel();
     if (typeof window.readNaturalVocabulary === 'function') window.readNaturalVocabulary(word, null, { level: window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4' });
@@ -870,13 +883,8 @@
   }
   function bindCatchdexContents(root, record, readOnly) {
     root.querySelector('[data-catchdex="close"]')?.addEventListener('click', () => {
-      const modal = document.getElementById('catchdex-modal');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.hidden = true;
-        modal.setAttribute('hidden', 'true');
-        modal.style.display = 'none';
-      }
+      window.closeCatchdex?.();
+      if (typeof endActiveGames === 'function') endActiveGames();
     });
     root.querySelectorAll('[data-catchdex="throw"]').forEach(button => button.addEventListener('click', () => throwChallengeBall(record)));
     root.querySelectorAll('[data-award-ball]').forEach(button => button.addEventListener('click', () => awardBall(record, button.dataset.awardBall)));
@@ -916,27 +924,30 @@
   }
   function renderCatchdexModal(record = catchdexViewer?.record || (typeof student === 'function' ? student() : null), readOnly = Boolean(catchdexViewer?.readOnly)) {
     if (!record) return;
-    let modal = document.getElementById('catchdex-modal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'catchdex-modal';
-      modal.className = 'catchdex-modal';
-      document.body.appendChild(modal);
-      modal.addEventListener('click', event => {
-        if (event.target === modal) {
-          modal.classList.add('hidden');
-          modal.hidden = true;
-          modal.setAttribute('hidden', 'true');
-          modal.style.display = 'none';
-        }
-      });
-    }
-    modal.innerHTML = `<div class="catchdex-modal-card">${renderCatchdexContents(record, readOnly)}</div>`;
-    modal.classList.remove('hidden');
-    modal.hidden = false;
-    modal.removeAttribute('hidden');
-    modal.style.display = 'grid';
-    bindCatchdexContents(modal, record, readOnly);
+    // Remove any old floating modal or existing full-screen Catchdex stage
+    const oldModal = document.getElementById('catchdex-modal');
+    if (oldModal) { oldModal.remove(); }
+
+    const stage = document.createElement('div');
+    stage.id = 'catchdex-modal';
+    stage.className = 'cdx-stage';
+    stage.setAttribute('role', 'dialog');
+    stage.setAttribute('aria-modal', 'true');
+    stage.setAttribute('aria-label', 'Catchdex');
+    stage.innerHTML = `<main class="cdx-shell"><header class="cdx-head"><div><span style="display:block;color:var(--ga-stage-yellow,#ffcb05);font-size:.68rem;font-weight:900;letter-spacing:.13em">LISTEN AND CATCH</span><h1 style="margin:4px 0 0;font:800 clamp(1.2rem,2.5vw,1.65rem)/1 Outfit,sans-serif">Catchdex</h1></div><button type="button" data-cdx="close" aria-label="Close Catchdex" style="width:38px;height:38px;border:1px solid var(--ga-stage-line,#344058);border-radius:10px;background:transparent;color:inherit;font-size:1.5rem;cursor:pointer">×</button></header><div class="cdx-main">${renderCatchdexContents(record, readOnly)}</div></main>`;
+    document.body.appendChild(stage);
+
+    stage.querySelector('[data-cdx="close"]')?.addEventListener('click', () => {
+      window.closeCatchdex?.();
+      if (typeof endActiveGames === 'function') endActiveGames();
+    });
+    stage.querySelector('[data-catchdex="close"]')?.addEventListener('click', () => {
+      window.closeCatchdex?.();
+      if (typeof endActiveGames === 'function') endActiveGames();
+    });
+
+    bindCatchdexContents(stage, record, readOnly);
+    window.gaMountStage?.(stage);
   }
   function showBoxCountPopup(record) {
     if (!canManageCatchdex(record)) return;
@@ -972,21 +983,8 @@
   window.openCatchdexFor = function (record, readOnly = true) {
     if (!record) return;
     catchdexViewer = { record, readOnly };
-    let modal = document.getElementById('catchdex-modal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'catchdex-modal';
-      modal.className = 'catchdex-modal';
-      document.body.appendChild(modal);
-      modal.addEventListener('click', event => {
-        if (event.target === modal) {
-          modal.classList.add('hidden');
-          modal.hidden = true;
-          modal.setAttribute('hidden', 'true');
-          modal.style.display = 'none';
-        }
-      });
-    }
+    // Remove any stale stage
+    document.getElementById('catchdex-modal')?.remove();
     renderCatchdexModal(record, readOnly);
   };
   window.listenCatchRefresh = mountCards;

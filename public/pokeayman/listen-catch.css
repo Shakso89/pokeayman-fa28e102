@@ -1,5 +1,83 @@
 /* Listen and Catch / Catchdex: contained, mobile-first game surfaces. */
 .catchdex-modal{position:fixed;inset:0;z-index:2147482400;display:grid;place-items:center;padding:clamp(12px,3vw,28px);background:rgba(3,8,23,.8);backdrop-filter:blur(10px);color:var(--ga-stage-ink,#f8fafc);font-family:Figtree,sans-serif}
+
+/* ========== Catchdex Full-Screen Stage ========== */
+body > .ga-stage.cdx-stage {
+  position: fixed !important; inset: 0 !important; z-index: 2147482000 !important;
+  width: 100vw !important; height: 100vh !important; height: 100dvh !important;
+  display: flex !important; flex-direction: column !important;
+  padding: 0 !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important;
+  background: radial-gradient(circle at 50% 20%, #172554 0%, #0f172a 55%, #020617 100%) !important;
+  overflow: hidden !important; color: var(--ga-stage-ink, #f8fafc) !important;
+  font-family: Figtree, sans-serif !important;
+}
+body > .ga-stage.cdx-stage .cdx-shell,
+body > .ga-stage.cdx-stage .ga-stage-shell {
+  width: 100% !important; max-width: 72rem !important; height: 100% !important; max-height: 100% !important;
+  margin: 0 auto !important; border: 0 !important; border-radius: 0 !important;
+  background: transparent !important; box-shadow: none !important;
+  display: flex !important; flex-direction: column !important;
+  overflow: hidden !important; position: relative !important; z-index: 1 !important;
+}
+body > .ga-stage.cdx-stage .cdx-head,
+body > .ga-stage.cdx-stage .ga-stage-header {
+  flex: 0 0 auto !important;
+  display: flex !important; align-items: center !important; justify-content: space-between !important;
+  padding: .85rem 1.4rem !important;
+  border-bottom: 1px solid var(--ga-stage-line, rgba(255,255,255,.15)) !important;
+  background: var(--ga-stage-header-bg, rgba(15,23,42,.7)) !important;
+  backdrop-filter: blur(12px) !important;
+  z-index: 10 !important;
+}
+body > .ga-stage.cdx-stage .cdx-main {
+  flex: 1 1 auto !important; min-height: 0 !important;
+  overflow-y: auto !important; -webkit-overflow-scrolling: touch !important;
+  display: flex !important; flex-direction: column !important; align-items: center !important;
+  padding: clamp(1rem, 2.5vw, 1.8rem) 1.25rem !important;
+  gap: 1.25rem !important; width: 100% !important;
+}
+body > .ga-stage.cdx-stage .cdx-main .cdx-view {
+  width: 100% !important; max-width: 68rem !important;
+}
+body > .ga-stage.cdx-stage .catchdex-tab-card {
+  max-width: 100% !important; border: none !important; background: transparent !important;
+  box-shadow: none !important; padding: 0 !important;
+}
+/* Catchdex stat tiles */
+body > .ga-stage.cdx-stage .cdx-stat {
+  background: linear-gradient(145deg, #17243a, #121b2d) !important;
+  border: 1.5px solid var(--ga-stage-line, #2b3b55) !important;
+}
+body > .ga-stage.cdx-stage .cdx-stat-icon {
+  background: #0d1627 !important; border: 1px solid #3b4c69 !important;
+}
+body > .ga-stage.cdx-stage .cdx-challenge {
+  background: radial-gradient(ellipse at 100% 0, rgba(255,203,5,.11), transparent 42%), linear-gradient(135deg, #1b2845, #121a2b 70%) !important;
+  border: 1px solid rgba(255,203,5,.42) !important;
+}
+body > .ga-stage.cdx-stage .cdx-button {
+  background: #1c2a42 !important; border: 1px solid #3b4d69 !important;
+}
+body > .ga-stage.cdx-stage .cdx-button.is-gold {
+  background: linear-gradient(135deg, #ffdc58, #f6b91b) !important;
+  border-color: #f4c52b !important; color: #182034 !important;
+}
+body > .ga-stage.cdx-stage .cdx-progress-track {
+  background: #0c1423 !important;
+}
+body > .ga-stage.cdx-stage .cdx-award {
+  margin-top: 0.5rem; padding: 1rem 0;
+}
+body > .ga-stage.cdx-stage .cdx-award-btn {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 10px 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,.22);
+  background: rgba(255,255,255,.08); color: inherit; cursor: pointer;
+  font: 750 .8rem Outfit, sans-serif; transition: transform .15s, border-color .15s;
+}
+body > .ga-stage.cdx-stage .cdx-award-btn:hover { transform: translateY(-2px); border-color: var(--ga-stage-yellow, #ffcb05); }
+body > .ga-stage.cdx-stage .cdx-award-btn img { width: 36px; height: 36px; object-fit: contain; }
+body > .ga-stage.cdx-stage .cdx-award-btn span { font-weight: 900; }
+body > .ga-stage.cdx-stage .cdx-award-btn small { color: var(--ga-stage-muted, #94a3b8); font-size: .7rem; }
 .lc-stage:not(.ga-stage){position:fixed;inset:0;z-index:2147482400;display:grid;place-items:center;padding:clamp(12px,3vw,28px);background:rgba(3,8,23,.8);backdrop-filter:blur(10px);color:var(--ga-stage-ink,#f8fafc);font-family:Figtree,sans-serif}
 body > .ga-stage.lc-stage {
   position: fixed !important; inset: 0 !important; z-index: 2147482000 !important;

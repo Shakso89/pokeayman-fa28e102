@@ -3517,3 +3517,244 @@ html body[data-ga-active-theme="classic"] .vb-result {
 
 
 .memory-card .memory-card-inner *, .ga-card-back-art, .ga-card-back-art * { pointer-events: none !important; }
+
+/* ==========================================================================
+   CATCHDEX FULL-SCREEN STAGE THEMES
+   ========================================================================== */
+
+/* --- Classroom Chalkboard --- */
+html body > .ga-stage[data-ga-theme="classroom"].cdx-stage {
+  background: radial-gradient(circle at 50% 25%, #244b35 0%, #173625 65%, #0e2217 100%) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-stat,
+html body[data-ga-active-theme="classroom"] .cdx-stat {
+  background: linear-gradient(180deg, #2a563d 0%, #1d3f2c 100%) !important;
+  border: 2.5px solid #b5804c !important;
+  color: #fffbeb !important;
+  box-shadow: inset 0 0 0 1.5px #142e20, 0 4px 0 #6e4522 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-stat-icon,
+html body[data-ga-active-theme="classroom"] .cdx-stat-icon {
+  background: #142e20 !important; border: 1.5px solid #b5804c !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-stat b,
+html body[data-ga-active-theme="classroom"] .cdx-stat b {
+  color: #fde68a !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-stat-label,
+html body[data-ga-active-theme="classroom"] .cdx-stat-label {
+  color: #d9e8dc !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-challenge,
+html body[data-ga-active-theme="classroom"] .cdx-challenge {
+  background: radial-gradient(circle at 50% 40%, #2a563d 0%, #1d3f2c 100%) !important;
+  border: 3px solid #b5804c !important;
+  box-shadow: inset 0 0 0 2px #142e20, 0 6px 0 #6e4522 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-challenge .cdx-eyebrow,
+html body[data-ga-active-theme="classroom"] .cdx-challenge .cdx-eyebrow { color: #facc15 !important; }
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-progress-track,
+html body[data-ga-active-theme="classroom"] .cdx-progress-track {
+  background: #142e20 !important; border: 1px solid #b5804c !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-progress-track > span,
+html body[data-ga-active-theme="classroom"] .cdx-progress-track > span {
+  background: linear-gradient(90deg, #facc15, #f59e0b) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-button,
+html body[data-ga-active-theme="classroom"] .cdx-button {
+  background: linear-gradient(180deg, #2a563d 0%, #1d3f2c 100%) !important;
+  border: 2px solid #b5804c !important; color: #fffbeb !important;
+  box-shadow: 0 3px 0 #6e4522 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-button.is-gold,
+html body[data-ga-active-theme="classroom"] .cdx-button.is-gold {
+  background: linear-gradient(180deg, #fef08a 0%, #facc15 100%) !important;
+  border: 2.5px solid #44372c !important; color: #292524 !important;
+  box-shadow: 0 3px 0 #44372c !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-header h2,
+html body[data-ga-active-theme="classroom"] .cdx-header h2 {
+  color: #fffbeb !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cdx-award-btn,
+html body[data-ga-active-theme="classroom"] .cdx-award-btn {
+  background: linear-gradient(180deg, #2a563d 0%, #1d3f2c 100%) !important;
+  border: 2.5px solid #b5804c !important; color: #fffbeb !important;
+  box-shadow: 0 3px 0 #6e4522 !important;
+}
+
+/* --- Jungle Expedition --- */
+html body > .ga-stage[data-ga-theme="jungle"].cdx-stage {
+  background: radial-gradient(circle at 50% 25%, #133a25 0%, #0a2316 60%, #04120b 100%) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-stat,
+html body[data-ga-active-theme="jungle"] .cdx-stat {
+  background: linear-gradient(180deg, #5c340e 0%, #3b1f06 100%) !important;
+  border: 2.5px solid #d97706 !important; color: #fef3c7 !important;
+  box-shadow: inset 0 0 0 1.5px #78350f, 0 4px 0 #231102 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-stat-icon,
+html body[data-ga-active-theme="jungle"] .cdx-stat-icon {
+  background: #231102 !important; border: 1.5px solid #d97706 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-stat b,
+html body[data-ga-active-theme="jungle"] .cdx-stat b { color: #fbbf24 !important; }
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-stat-label,
+html body[data-ga-active-theme="jungle"] .cdx-stat-label { color: #a7f3d0 !important; }
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-challenge,
+html body[data-ga-active-theme="jungle"] .cdx-challenge {
+  background: linear-gradient(180deg, #5c340e 0%, #3b1f06 100%) !important;
+  border: 3px solid #d97706 !important; box-shadow: 0 6px 0 #231102 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-challenge .cdx-eyebrow,
+html body[data-ga-active-theme="jungle"] .cdx-challenge .cdx-eyebrow { color: #fbbf24 !important; }
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-progress-track,
+html body[data-ga-active-theme="jungle"] .cdx-progress-track {
+  background: #231102 !important; border: 1px solid #d97706 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-progress-track > span,
+html body[data-ga-active-theme="jungle"] .cdx-progress-track > span {
+  background: linear-gradient(90deg, #fbbf24, #d97706) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-button,
+html body[data-ga-active-theme="jungle"] .cdx-button {
+  background: linear-gradient(180deg, #5c340e 0%, #3b1f06 100%) !important;
+  border: 2px solid #d97706 !important; color: #fef3c7 !important;
+  box-shadow: 0 3px 0 #231102 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-button.is-gold,
+html body[data-ga-active-theme="jungle"] .cdx-button.is-gold {
+  background: linear-gradient(180deg, #fde68a 0%, #d97706 100%) !important;
+  border: 2.5px solid #271202 !important; color: #271202 !important;
+  box-shadow: 0 3px 0 #271202 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-header h2,
+html body[data-ga-active-theme="jungle"] .cdx-header h2 { color: #fef3c7 !important; }
+html body > .ga-stage[data-ga-theme="jungle"] .cdx-award-btn,
+html body[data-ga-active-theme="jungle"] .cdx-award-btn {
+  background: linear-gradient(180deg, #5c340e 0%, #3b1f06 100%) !important;
+  border: 2.5px solid #d97706 !important; color: #fef3c7 !important;
+  box-shadow: 0 3px 0 #231102 !important;
+}
+
+/* --- Toybox Studio --- */
+html body > .ga-stage[data-ga-theme="toybox"].cdx-stage {
+  background: radial-gradient(circle at 50% 25%, #23195c 0%, #140f3d 60%, #0a0724 100%) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-stat,
+html body[data-ga-active-theme="toybox"] .cdx-stat {
+  background: linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%) !important;
+  border: 2.5px solid #6366f1 !important; color: #1e1b4b !important;
+  box-shadow: 0 4px 0 #3730a3 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-stat-icon,
+html body[data-ga-active-theme="toybox"] .cdx-stat-icon {
+  background: #e0e7ff !important; border: 1.5px solid #818cf8 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-stat b,
+html body[data-ga-active-theme="toybox"] .cdx-stat b { color: #4f46e5 !important; }
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-stat-label,
+html body[data-ga-active-theme="toybox"] .cdx-stat-label { color: #4f46e5 !important; }
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-challenge,
+html body[data-ga-active-theme="toybox"] .cdx-challenge {
+  background: linear-gradient(180deg, #ffffff 0%, #e0e7ff 100%) !important;
+  border: 3px solid #6366f1 !important; box-shadow: 0 6px 0 #3730a3 !important;
+  color: #1e1b4b !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-challenge .cdx-eyebrow,
+html body[data-ga-active-theme="toybox"] .cdx-challenge .cdx-eyebrow { color: #4f46e5 !important; }
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-challenge h3,
+html body[data-ga-active-theme="toybox"] .cdx-challenge h3 { color: #1e1b4b !important; }
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-challenge p,
+html body[data-ga-active-theme="toybox"] .cdx-challenge p { color: #4f46e5 !important; }
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-progress-track,
+html body[data-ga-active-theme="toybox"] .cdx-progress-track {
+  background: #e0e7ff !important; border: 1.5px solid #6366f1 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-progress-track > span,
+html body[data-ga-active-theme="toybox"] .cdx-progress-track > span {
+  background: linear-gradient(90deg, #38bdf8, #f43f5e) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-button,
+html body[data-ga-active-theme="toybox"] .cdx-button {
+  background: linear-gradient(180deg, #ffffff 0%, #e0e7ff 100%) !important;
+  border: 2px solid #6366f1 !important; color: #1e1b4b !important;
+  box-shadow: 0 3px 0 #3730a3 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-button.is-gold,
+html body[data-ga-active-theme="toybox"] .cdx-button.is-gold {
+  background: linear-gradient(180deg, #f43f5e 0%, #e11d48 100%) !important;
+  border: 2.5px solid #881337 !important; color: #ffffff !important;
+  box-shadow: 0 3px 0 #881337 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-header h2,
+html body[data-ga-active-theme="toybox"] .cdx-header h2 { color: #1e1b4b !important; }
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-wallet,
+html body[data-ga-active-theme="toybox"] .cdx-wallet { color: #1e1b4b !important; }
+html body > .ga-stage[data-ga-theme="toybox"] .cdx-award-btn,
+html body[data-ga-active-theme="toybox"] .cdx-award-btn {
+  background: linear-gradient(180deg, #ffffff 0%, #e0e7ff 100%) !important;
+  border: 2.5px solid #6366f1 !important; color: #1e1b4b !important;
+  box-shadow: 0 3px 0 #3730a3 !important;
+}
+
+/* --- Classic Tournament (default) --- */
+html body > .ga-stage[data-ga-theme="classic"].cdx-stage,
+html body > .ga-stage:not([data-ga-theme]).cdx-stage {
+  background: radial-gradient(circle at 50% 25%, #172554 0%, #0f172a 55%, #020617 100%) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .cdx-stat,
+html body > .ga-stage:not([data-ga-theme]) .cdx-stat,
+html body[data-ga-active-theme="classic"] .cdx-stat {
+  background: linear-gradient(145deg, #17243a, #121b2d) !important;
+  border: 2px solid #3b82f6 !important; color: #f8fafc !important;
+  box-shadow: inset 0 0 0 1.5px #1e3a8a, 0 4px 0 #172554 !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .cdx-stat-icon,
+html body > .ga-stage:not([data-ga-theme]) .cdx-stat-icon,
+html body[data-ga-active-theme="classic"] .cdx-stat-icon {
+  background: #0d1627 !important; border: 1px solid #3b4c69 !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .cdx-stat b,
+html body > .ga-stage:not([data-ga-theme]) .cdx-stat b,
+html body[data-ga-active-theme="classic"] .cdx-stat b { color: #ffcb05 !important; }
+html body > .ga-stage[data-ga-theme="classic"] .cdx-stat-label,
+html body > .ga-stage:not([data-ga-theme]) .cdx-stat-label,
+html body[data-ga-active-theme="classic"] .cdx-stat-label { color: #94a3b8 !important; }
+html body > .ga-stage[data-ga-theme="classic"] .cdx-challenge,
+html body > .ga-stage:not([data-ga-theme]) .cdx-challenge,
+html body[data-ga-active-theme="classic"] .cdx-challenge {
+  background: radial-gradient(ellipse at 100% 0, rgba(255,203,5,.11), transparent 42%), linear-gradient(135deg, #1b2845, #121a2b 70%) !important;
+  border: 2px solid rgba(255,203,5,.42) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .cdx-progress-track,
+html body > .ga-stage:not([data-ga-theme]) .cdx-progress-track,
+html body[data-ga-active-theme="classic"] .cdx-progress-track {
+  background: #0c1423 !important; border: 1px solid #3b82f6 !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .cdx-progress-track > span,
+html body > .ga-stage:not([data-ga-theme]) .cdx-progress-track > span,
+html body[data-ga-active-theme="classic"] .cdx-progress-track > span {
+  background: linear-gradient(90deg, #ffcb05, #f59e0b) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .cdx-button,
+html body > .ga-stage:not([data-ga-theme]) .cdx-button,
+html body[data-ga-active-theme="classic"] .cdx-button {
+  background: #1c2a42 !important; border: 1.5px solid #3b82f6 !important;
+  color: #f8fafc !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .cdx-button.is-gold,
+html body > .ga-stage:not([data-ga-theme]) .cdx-button.is-gold,
+html body[data-ga-active-theme="classic"] .cdx-button.is-gold {
+  background: linear-gradient(160deg, #fde047, #f59e0b) !important;
+  border: 2px solid #b45309 !important; color: #0f173a !important;
+  box-shadow: 0 3px 0 #b45309 !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .cdx-award-btn,
+html body > .ga-stage:not([data-ga-theme]) .cdx-award-btn,
+html body[data-ga-active-theme="classic"] .cdx-award-btn {
+  background: linear-gradient(145deg, #17243a, #121b2d) !important;
+  border: 2px solid #3b82f6 !important; color: #f8fafc !important;
+  box-shadow: 0 3px 0 #172554 !important;
+}
