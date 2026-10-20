@@ -1269,7 +1269,7 @@ html body > .ga-stage[data-ga-theme] .memory-card-front {
   padding: 0 !important;
 }
 html body > .ga-stage[data-ga-theme] .memory-card:hover:not(.flipped):not(.matched) .memory-card-inner {
-  transform: translateY(-4px) scale(1.02);
+  transform: none !important;
 }
 
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-wrapper,

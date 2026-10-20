@@ -18057,25 +18057,67 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   
   const style = document.createElement('style');
   style.textContent = `
-    @keyframes cardFlip { 
-      0% { transform: rotateY(0deg); } 
-      100% { transform: rotateY(180deg); } 
+    @keyframes shutterBallPulse {
+      0% {
+        transform: scale(1) rotate(0deg);
+      }
+      32% {
+        transform: scale(0.91) rotate(-3.5deg);
+      }
+      68% {
+        transform: scale(1.09) rotate(2deg);
+      }
+      100% {
+        transform: scale(1.02) rotate(0deg);
+      }
     }
-    @keyframes cardFlipReverse { 
-      0% { transform: rotateY(180deg); } 
-      100% { transform: rotateY(0deg); } 
+    @keyframes gaShutterIrisRing {
+      0% {
+        width: 0%;
+        height: 0%;
+        opacity: 0.95;
+        border-width: 4px;
+      }
+      50% {
+        opacity: 0.85;
+      }
+      100% {
+        width: 220%;
+        height: 220%;
+        opacity: 0;
+        border-width: 1.5px;
+      }
+    }
+    .memory-card:hover,
+    .memory-card:hover .memory-card-inner {
+      transform: none !important;
     }
     .memory-card-inner {
       position: relative;
       width: 100%;
       height: 100%;
-      transition: transform 0.36s cubic-bezier(0.34, 1.25, 0.64, 1);
-      transform-style: preserve-3d;
-      -webkit-transform-style: preserve-3d;
-      will-change: transform;
+      border-radius: inherit;
+      overflow: hidden;
+      transform: none !important;
     }
-    .memory-card-inner.flipped {
-      transform: rotateY(180deg);
+    .memory-card-inner::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 0 14px rgba(96, 165, 250, 0.85), inset 0 0 10px rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 4;
+      will-change: width, height, opacity;
+    }
+    .memory-card-inner.flipped::after {
+      animation: gaShutterIrisRing 0.38s cubic-bezier(0.16, 1, 0.3, 1) 0.04s forwards;
     }
     .memory-card-front, .memory-card-back {
       position: absolute;
@@ -18085,19 +18127,41 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       display: flex;
       align-items: center;
       justify-content: center;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      transform-style: preserve-3d;
-      -webkit-transform-style: preserve-3d;
       border-radius: inherit;
     }
     .memory-card-front {
-      transform: rotateY(0deg) translateZ(1px);
-      z-index: 2;
+      z-index: 1;
+      transform: scale(1);
+      transition: transform 0.24s cubic-bezier(0.25, 1, 0.5, 1);
+      will-change: transform;
+    }
+    .memory-card-inner.flipped .memory-card-front {
+      animation: shutterBallPulse 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
     .memory-card-back {
-      transform: rotateY(180deg) translateZ(1px);
-      z-index: 1;
+      z-index: 2;
+      background: #0f172a;
+      clip-path: circle(0% at 50% 50%);
+      -webkit-clip-path: circle(0% at 50% 50%);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: clip-path 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+                  -webkit-clip-path 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 0.16s ease-in,
+                  visibility 0.24s;
+      will-change: clip-path, opacity;
+    }
+    .memory-card-inner.flipped .memory-card-back {
+      clip-path: circle(135% at 50% 50%);
+      -webkit-clip-path: circle(135% at 50% 50%);
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: clip-path 0.36s cubic-bezier(0.16, 1, 0.3, 1) 0.04s,
+                  -webkit-clip-path 0.36s cubic-bezier(0.16, 1, 0.3, 1) 0.04s,
+                  opacity 0.12s ease-out 0.02s,
+                  visibility 0s;
     }
     html:has(.ga-stage), body.ga-playing { overflow: hidden !important; box-sizing: border-box; }
     *, *::before, *::after { box-sizing: border-box; }
