@@ -685,7 +685,10 @@
         }
         if (art.dataset.themeId !== currentTheme.id) {
           art.dataset.themeId = currentTheme.id;
-          art.innerHTML = currentTheme.cardBackSvg;
+          // Parse each theme's SVG once, then clone it (parsing 30 large SVG strings froze theme switches).
+          const cache = window.gaCardBackCache || (window.gaCardBackCache = {});
+          if (!cache[currentTheme.id]) { const tpl = document.createElement('template'); tpl.innerHTML = currentTheme.cardBackSvg; cache[currentTheme.id] = tpl.content; }
+          art.replaceChildren(cache[currentTheme.id].cloneNode(true));
         }
       });
     };
