@@ -57,17 +57,8 @@
   }
 
   function getTargetClassInfo() {
-    let school = String(window.navSchool || '').trim();
-    let className = String(window.navClass || '').trim();
-
-    if (!school || !className) {
-      const classRow = (window.allData || []).find(r => r.type === 'class' && r.class_name);
-      if (classRow) {
-        school = school || classRow.school_name || '';
-        className = className || classRow.class_name || '';
-      }
-    }
-
+    const school = String(window.navSchool || '').trim();
+    const className = String(window.navClass || '').trim();
     return { school, className };
   }
 
@@ -89,13 +80,28 @@
       () => `We always keep our ${w} neat and organized.`
     ];
 
-    const animalFrames = [
-      () => `The furry ${w} naps peacefully in the warm sun.`,
-      () => `A playful ${w} runs quickly through the green yard.`,
-      () => `We watched the little ${w} drink fresh clean water.`,
-      () => `The energetic ${w} jumps happily over the low fence.`,
-      () => `A gentle ${w} rests under the shady green tree.`,
-      () => `The curious ${w} explores the garden with its friends.`
+    const landAnimalFrames = [
+      () => `The playful ${w} runs quickly through the green grass.`,
+      () => `A gentle ${w} rests quietly under the shady tree.`,
+      () => `The friendly ${w} looks up with curious bright eyes.`,
+      () => `An energetic ${w} jumps happily across the wide yard.`,
+      () => `We watched the little ${w} explore the sunny meadow.`,
+      () => `The quiet ${w} naps peacefully in the afternoon sunlight.`
+    ];
+
+    const aquaticFrames = [
+      () => `The colorful ${w} swims gracefully through the clear water.`,
+      () => `A little ${w} darts quickly between the smooth river stones.`,
+      () => `We watched the bright ${w} glide across the calm blue pond.`,
+      () => `The gentle ${w} swims peacefully near the green sea plants.`,
+      () => `A shiny ${w} splashes softly in the cool pond water.`
+    ];
+
+    const birdFrames = [
+      () => `The cheerful ${w} sings a sweet song from the tree branch.`,
+      () => `A colorful ${w} flies high across the sunny blue sky.`,
+      () => `We spotted a gentle ${w} resting quietly near its nest.`,
+      () => `The lively ${w} flaps its bright wings in the warm breeze.`
     ];
 
     const foodFrames = [
@@ -112,12 +118,16 @@
       () => `She painted a lovely ${w} stripe on her paper.`,
       () => `The bright ${w} flower blooms in the garden.`,
       () => `He wore a neat ${w} cap to school today.`,
-      () => `We spotted a beautiful ${w} bird in the tall tree.`
+      () => `We spotted a beautiful ${w} butterfly in the tall tree.`
     ];
 
     let pool = objectFrames;
-    if (/^(cat|dog|bird|fish|lion|tiger|bear|horse|monkey|cow|pig|rabbit|duck|frog|elephant|giraffe|zebra|puppy|kitten|wolf|fox|deer|sheep|mouse|turtle)$/.test(lw)) {
-      pool = animalFrames;
+    if (/^(fish|shark|whale|dolphin|turtle|frog|octopus|crab|seahorse|jellyfish|goldfish|starfish|shrimp|seal|otter)$/.test(lw)) {
+      pool = aquaticFrames;
+    } else if (/^(bird|duck|owl|eagle|parrot|crow|robin|penguin|flamingo|swan|goose)$/.test(lw)) {
+      pool = birdFrames;
+    } else if (/^(cat|dog|lion|tiger|bear|horse|monkey|cow|pig|rabbit|elephant|giraffe|zebra|puppy|kitten|wolf|fox|deer|sheep|mouse|hamster|panda|koala)$/.test(lw)) {
+      pool = landAnimalFrames;
     } else if (/^(apple|banana|orange|grape|fruit|bread|pizza|cake|cookie|milk|water|rice|cheese|berry|mango|soup|sandwich|juice|egg|meat)$/.test(lw)) {
       pool = foodFrames;
     } else if (/^(red|blue|green|yellow|pink|purple|orange|white|black|brown|golden|gray|grey)$/.test(lw)) {
@@ -136,7 +146,13 @@
     }
 
     // Fallback if all pool frames used
-    const fallback = `The child happily used the ${w} in class today.`;
+    let fallback = `The child happily used the ${w} in class today.`;
+    if (pool === aquaticFrames) fallback = `The bright ${w} swims peacefully in the clear water.`;
+    else if (pool === birdFrames) fallback = `The little ${w} flies happily through the sunny sky.`;
+    else if (pool === landAnimalFrames) fallback = `The friendly ${w} rests comfortably in the warm sunshine.`;
+    else if (pool === foodFrames) fallback = `Everyone enjoyed sharing the fresh ${w} at lunch.`;
+    else if (pool === colorFrames) fallback = `She chose the nice ${w} crayon for her drawing.`;
+
     usedFrames.add(fallback.toLowerCase().replace(lw, '{w}'));
     return fallback;
   }
@@ -154,10 +170,11 @@
     selectedPhotoCount = 5;
     isGenerating = false;
 
-    // Available classes if needed
+    // Available classes (mandatory selection)
     const allClasses = typeof window.getAllTeacherClasses === 'function' ? window.getAllTeacherClasses() : [];
-    const classOptionsHtml = allClasses.map(c => 
-      `<option value="${c.school_name}||${c.class_name}" ${c.school_name === school && c.class_name === className ? 'selected' : ''}>${c.class_name} (${c.school_name})</option>`
+    const resolvedClasses = allClasses.length ? allClasses : (window.allData || []).filter(r => r.type === 'class' && r.class_name);
+    const classOptionsHtml = resolvedClasses.map(c => 
+      `<option value="${c.school_name || ''}||${c.class_name}" ${c.school_name === school && c.class_name === className ? 'selected' : ''}>${c.class_name}${c.school_name ? ` (${c.school_name})` : ''}</option>`
     ).join('');
 
     const modal = document.createElement('div');
@@ -182,20 +199,14 @@
             <input id="vocab-gen-name-input" type="text" maxlength="80" placeholder="e.g. Unit 5 Verbs or Animals" value="${inputListName.replace(/"/g, '&quot;')}" required>
           </label>
 
-          <!-- Class info / selector -->
-          ${school && className ? `
-            <div style="font-size:12px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:6px;">
-              <span>Class:</span> <strong style="color:#fde047;">${className}</strong> <span style="opacity:0.7;">(${school})</span>
-            </div>
-          ` : `
-            <label class="teacher-vb-create-field">
-              <span>Class</span>
-              <select id="vocab-gen-class-select" required>
-                <option value="">Choose a class</option>
-                ${classOptionsHtml}
-              </select>
-            </label>
-          `}
+          <!-- Class selector (mandatory) -->
+          <label class="teacher-vb-create-field">
+            <span>Class <strong style="color:#ef4444;">*</strong></span>
+            <select id="vocab-gen-class-select" required>
+              <option value="">Choose a class (required)</option>
+              ${classOptionsHtml}
+            </select>
+          </label>
 
           <!-- Generation Mode Switcher (Words vs Photo) -->
           <div>
@@ -334,6 +345,7 @@
     function updateModalUI() {
       const balance = getTeacherBalance();
       const cost = getWordCost();
+      const hasClass = classSelect ? Boolean(classSelect.value) : Boolean(className);
 
       balanceLabel.textContent = formatBalance(balance);
       costLabel.textContent = String(cost);
@@ -348,12 +360,25 @@
         badgeEl.style.background = 'rgba(239,68,68,0.2)';
         badgeEl.style.color = '#fca5a5';
         submitBtn.disabled = true;
+      } else if (!hasClass) {
+        badgeEl.textContent = 'Choose a class';
+        badgeEl.style.background = 'rgba(234,179,8,0.2)';
+        badgeEl.style.color = '#fde047';
+        submitBtn.disabled = true;
       } else {
         badgeEl.textContent = cost > 0 ? `${cost} credit${cost === 1 ? '' : 's'}` : 'Ready';
         badgeEl.style.background = 'rgba(16,185,129,0.2)';
         badgeEl.style.color = '#6ee7b7';
         submitBtn.disabled = cost === 0;
       }
+    }
+
+    if (classSelect) {
+      classSelect.addEventListener('change', () => {
+        classSelect.style.borderColor = '';
+        errorBanner.style.display = 'none';
+        updateModalUI();
+      });
     }
 
     modeWordsBtn.addEventListener('click', () => {
@@ -485,10 +510,27 @@
 
       let targetSchool = school;
       let targetClass = className;
-      if (classSelect && classSelect.value) {
+      if (classSelect) {
+        if (!classSelect.value) {
+          errorBanner.textContent = 'Selecting a class is required. Please choose a class before generating the list.';
+          errorBanner.style.display = 'block';
+          classSelect.focus();
+          classSelect.style.borderColor = '#ef4444';
+          return;
+        }
         const parts = classSelect.value.split('||');
         targetSchool = parts[0] || targetSchool;
         targetClass = parts[1] || targetClass;
+      }
+
+      if (!targetClass) {
+        errorBanner.textContent = 'Selecting a class is required. Please choose a class before generating the list.';
+        errorBanner.style.display = 'block';
+        if (classSelect) {
+          classSelect.focus();
+          classSelect.style.borderColor = '#ef4444';
+        }
+        return;
       }
 
       let words = [];

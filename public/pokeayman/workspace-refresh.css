@@ -209,9 +209,9 @@ html body:is(body, #pk-refresh):is(body, #pk-refresh):is(body, #pk-refresh) {
   & #new-vocab-list-name { background: var(--ui-surface) !important; border: 1px solid var(--ui-line) !important; color: var(--ui-ink) !important; height: 48px; border-radius: 8px !important; box-shadow: none; }
   & #create-vocab-list-btn { background: var(--ui-gold) !important; color: var(--ui-on-gold) !important; border: 0 !important; border-radius: 8px !important; min-height: 48px; padding: 0 24px; box-shadow: none !important; }
   & #generate-vocab-list-btn {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-    color: #ffffff !important;
-    border: 0 !important;
+    background: var(--ui-soft) !important;
+    color: var(--ui-ink) !important;
+    border: 1px solid var(--ui-line) !important;
     border-radius: 8px !important;
     min-height: 48px;
     padding: 0 20px;
@@ -220,14 +220,18 @@ html body:is(body, #pk-refresh):is(body, #pk-refresh):is(body, #pk-refresh) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     cursor: pointer;
-    transition: transform .18s ease, filter .18s ease;
+    transition: all .18s ease;
   }
   & #generate-vocab-list-btn:hover {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+    background: var(--color-surface-hover) !important;
+    border-color: var(--ui-gold) !important;
+    color: var(--ui-gold) !important;
     transform: translateY(-1px);
-    filter: brightness(1.05);
+  }
+  & #generate-vocab-list-btn :is(span, svg) {
+    color: var(--ui-gold) !important;
   }
   & :is(#vocab-lists-container, #teacher-vb-lists-grid) { display: grid !important; grid-template-columns: repeat(auto-fill,minmax(min(100%,260px),1fr)) !important; gap: 20px !important; align-items: stretch; }
   & .vocab-list-card {

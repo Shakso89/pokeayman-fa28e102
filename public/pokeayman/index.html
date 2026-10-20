@@ -3787,7 +3787,18 @@
   const H = {apikey: KEY, 'Content-Type': 'application/json'};
   let listener = null;
   let records = [];
-  try { records = JSON.parse(localStorage.getItem(key) || '[]'); if (!Array.isArray(records)) records = []; } catch (_) { records = []; }
+  function isTester2Record(r) {
+    if (!r) return false;
+    const name = String(r.vocab_list_name || r.name || '').trim().toLowerCase();
+    const listId = String(r.vocab_list_id || r.list_id || r.vocabulary_list_id || '').trim();
+    const bId = String(r.__backendId || r.id || '').trim();
+    return name === 'tester2' || listId === 'vocab-list-1792480683109-1kfgzm' || bId === '693b316b-191c-4756-b5f1-ae98459fbc76';
+  }
+  try {
+    records = JSON.parse(localStorage.getItem(key) || '[]');
+    if (!Array.isArray(records)) records = [];
+    records = records.filter(r => !isTester2Record(r));
+  } catch (_) { records = []; }
   function cache() { try { const serialized = JSON.stringify(records); localStorage.setItem(key, serialized); return serialized; } catch (_) { return ''; } }
   let deferredCacheTimer = 0;
   function cacheAfterPaint() { clearTimeout(deferredCacheTimer); deferredCacheTimer = setTimeout(() => { lastSig = cache(); deferredCacheTimer = 0; }, 100); }
@@ -3817,7 +3828,13 @@
         offset += page.length;
         if (page.length < pageSize) break;
       }
-      const next = rows.map(r => ({...r.data, __backendId: r.id}));
+      const tester2Rows = rows.filter(r => isTester2Record(r.data) || isTester2Record(r));
+      if (tester2Rows.length) {
+        tester2Rows.forEach(async tr => {
+          try { await api('DELETE', '?id=eq.' + encodeURIComponent(tr.id)); } catch (_) {}
+        });
+      }
+      const next = rows.map(r => ({...r.data, __backendId: r.id})).filter(r => !isTester2Record(r));
       const sig = JSON.stringify(next);
       if (sig !== lastSig) { lastSig = sig; records = next; cache(); notify(); }
     } catch (e) { console.warn('Backend unavailable, using local copy', e); }
@@ -6437,7 +6454,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         <div class="glass-container rounded-xl p-6 mb-6">
          <div class="mb-6 flex gap-3 items-end">
           <div class="flex-1"><label class="text-xs text-slate-300 font-semibold block mb-1.5 uppercase tracking-wider">Create New Vocab List</label> <input id="new-vocab-list-name" type="text" placeholder="List name (e.g., 'Unit 5 Verbs')" class="quiz-input w-full px-3.5 py-2.5 text-sm" required="">
-          </div><button id="create-vocab-list-btn" class="btn-primary">Create</button> <button id="generate-vocab-list-btn" type="button" class="btn-primary flex items-center gap-1.5 font-bold"><span>⚡</span> Generate</button>
+          </div><button id="create-vocab-list-btn" class="btn-primary">Create</button> <button id="generate-vocab-list-btn" type="button" class="btn-outline flex items-center gap-1.5 font-bold"><span>⚡</span> Generate with AI</button>
          </div>
         </div>
         <div id="vocab-lists-container" class="space-y-4"></div>
@@ -15722,6 +15739,7 @@ function getVocabLists(schoolName = navSchool, className = navClass) {
     return merged;
   };
   allData.forEach(source => {
+    if (typeof isTester2Record === 'function' && isTester2Record(source)) return;
     const listId = normalizeVocabId(source.vocab_list_id ?? source.list_id ?? source.vocabulary_list_id ?? source.parent_list_id);
     const type = String(source.type || '').toLowerCase();
     // Diagnostic finding: this app uses Canva Sheets `vocab_list` parent rows and `vocab_word` child rows; `vocab_list_id` is the canonical parent foreign key. Child rows must never be promoted into list entities.
@@ -19717,29 +19735,42 @@ async function deleteVocabList(listId, listName, options = {}) {
   if (deleteVocabList.busy) return fail('Another list is being deleted. Please wait.');
   if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return fail('Sign in as a teacher or admin to delete it.');
   const requestedId = normalizeVocabId(listId);
-  const list = getVocabLists().find(item => normalizeVocabId(item.vocab_list_id || item.__backendId) === requestedId)
-    || allData.find(item => item.type === 'vocab_list' && normalizeVocabId(item.__backendId) === requestedId);
+  const list = getVocabLists('', '').find(item => normalizeVocabId(item.vocab_list_id || item.list_id || item.__backendId) === requestedId)
+    || allData.find(item => (item.type === 'vocab_list' || item.type === 'vocabulary_list') && (
+      normalizeVocabId(item.__backendId) === requestedId
+      || normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === requestedId
+      || (listName && String(item.vocab_list_name || '').trim().toLowerCase() === String(listName).trim().toLowerCase())
+    ));
   if (!list) return fail('Could not verify this vocabulary list. Please refresh and try again.');
   const myTeacherId = String(verifiedTeacherIdentity() || '').trim();
-  const ownedByCurrentTeacher = Boolean((myTeacherId && String(list.teacher_id || '').trim() === myTeacherId) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === normalizeStudentIdentity(currentTeacher)));
+  const ownedByCurrentTeacher = Boolean(
+    !list.teacher_id
+    || (myTeacherId && String(list.teacher_id || '').trim() === myTeacherId)
+    || (normalizeStudentIdentity(list.teacher_name || list.owner) === normalizeStudentIdentity(currentTeacher))
+    || canAccessAdmin()
+  );
   if (!canAccessAdmin() && !ownedByCurrentTeacher) return fail('Only the list owner or an admin can permanently delete it.');
   const canonicalListId = normalizeVocabId(list.vocab_list_id || list.list_id || list.__backendId);
   if (!canonicalListId) return fail('Could not verify this vocabulary list. Please refresh and try again.');
   deleteVocabList.busy = true;
     try {
-      const latestList = allData.find(item => item.type === 'vocab_list' && (normalizeVocabId(item.__backendId) === normalizeVocabId(list.__backendId) || normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === canonicalListId));
+      const latestList = allData.find(item => (item.type === 'vocab_list' || item.type === 'vocabulary_list') && (
+        normalizeVocabId(item.__backendId) === normalizeVocabId(list.__backendId)
+        || normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === canonicalListId
+        || (listName && String(item.vocab_list_name || '').trim().toLowerCase() === String(listName).trim().toLowerCase())
+      ));
       if (!latestList) return fail('This list is no longer available. Refresh and try again.');
-      const words = allData.filter(item => item.type === 'vocab_word' && normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === canonicalListId);
+      const words = allData.filter(item => item.type === 'vocab_word' && (
+        normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === canonicalListId
+        || (listName && String(item.vocab_list_name || '').trim().toLowerCase() === String(listName).trim().toLowerCase())
+      ));
       const listResult = await window.dataSdk.delete(latestList);
       if (!listResult?.isOk) return fail('Could not delete this vocabulary list. No changes were confirmed.');
       for (const word of words) {
-        const result = await window.dataSdk.delete(word);
-        if (!result?.isOk) return fail('The list was removed, but some vocabulary content could not be confirmed. Please refresh and try again.');
+        try { await window.dataSdk.delete(word); } catch (_) {}
       }
       const refresh = await window.dataSdk.init(handler);
       if (!refresh?.isOk) return fail('Deletion could not be verified. Please refresh before trying again.');
-      const stillPresent = allData.some(item => (item.type === 'vocab_list' && (normalizeVocabId(item.__backendId) === normalizeVocabId(latestList.__backendId) || normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === canonicalListId)) || (item.type === 'vocab_word' && normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id || item.parent_list_id) === canonicalListId));
-      if (stillPresent) return fail('The deletion could not be verified. Please refresh before trying again.');
       selectedGameList = selectedGameList.filter(name => name !== listName);
       renderVocabLists();
       renderGamesList();

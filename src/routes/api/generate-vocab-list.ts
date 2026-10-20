@@ -91,7 +91,7 @@ CRITICAL REQUIREMENTS:
 1. EVERY SINGLE SENTENCE MUST BE COMPLETELY UNIQUE! Never repeat the same sentence structure or pattern twice in the same list.
 2. NEVER write shallow, lazy sentences like "Look at the...", "This is a...", "Here is...", "I see a...", or "The lovely [word] brings...".
 3. For objects and tools (like pencil, book, car, ball): describe someone holding, using, drawing, opening, or moving it (e.g. "She writes her spelling words with the pencil.", "The student packed the heavy book into his bag.").
-4. For animals: describe diverse lively actions (e.g. "The furry cat naps peacefully on the warm sofa.", "A playful dog fetches the ball across the park.").
+4. For animals: make sure the action is biologically accurate and sensible (e.g., fish and sea creatures SWIM, glide or splash in clear water; birds fly or sing in trees; land animals run, rest, or play). NEVER write nonsensical actions like "the fish drinks water" or describe impossible behavior.
 5. For food: describe tasting, eating, slicing, or smelling it (e.g. "The crisp red apple tastes juicy and sweet.").
 6. For colors: describe a vivid real-world object (e.g. "A bright blue butterfly flutters over the flowers.").
 7. The target word MUST be used exactly as given.
