@@ -385,23 +385,25 @@
   position: absolute; top: 12%; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
   width: clamp(10rem, 18vw, 16rem); aspect-ratio: 5 / 7; padding: .9rem .7rem 1rem; overflow: hidden;
   border: 1px solid rgba(255,255,255,.35); border-radius: .6rem; color: var(--home-ink); cursor: pointer;
-  box-shadow: 0 30px 70px rgba(0,0,0,.6), inset 0 0 0 5px rgba(3,4,7,.25);
-  transition: transform .45s cubic-bezier(.34,1.56,.64,1), box-shadow .35s, filter .35s;
+  box-shadow: 0 30px 70px rgba(0,0,0,.6);
+  transform: rotate(var(--rot));
+  transition: transform .48s cubic-bezier(.22, 1, .36, 1), box-shadow .38s ease, border-color .3s ease;
   animation: hscFloat 6s ease-in-out infinite;
 }
-.home-showcase .home-side-left { left: -2%; --rot: 12deg; --reveal-x: 2rem; background: linear-gradient(145deg, rgba(255,255,255,.28), transparent 35%), linear-gradient(160deg, #f97316, var(--home-red) 55%, #3b0a0f); }
-.home-showcase .home-side-right { right: -2%; --rot: -12deg; --reveal-x: -2rem; animation-delay: -3s; background: linear-gradient(145deg, rgba(255,255,255,.25), transparent 35%), linear-gradient(160deg, #8b5cf6, #4c1d95 55%, #120726); }
-.home-showcase .home-side-card img { flex: 1; width: 92%; min-height: 0; object-fit: contain; filter: drop-shadow(0 12px 18px rgba(0,0,0,.5)); transition: transform .45s cubic-bezier(.34,1.56,.64,1); }
+.home-showcase .home-side-left { left: -2%; --rot: 12deg; --reveal-x: 1.1rem; background: linear-gradient(145deg, rgba(255,255,255,.28), transparent 35%), linear-gradient(160deg, #f97316, var(--home-red) 55%, #3b0a0f); }
+.home-showcase .home-side-right { right: -2%; --rot: -12deg; --reveal-x: -1.1rem; animation-delay: -3s; background: linear-gradient(145deg, rgba(255,255,255,.25), transparent 35%), linear-gradient(160deg, #8b5cf6, #4c1d95 55%, #120726); }
+.home-showcase .home-side-card img { flex: 1; width: 92%; min-height: 0; object-fit: contain; filter: drop-shadow(0 12px 18px rgba(0,0,0,.5)); pointer-events: none; }
 .home-showcase .hsc-name { font-weight: 900; text-transform: uppercase; font-size: .9rem; letter-spacing: .06em; }
 .home-showcase .home-side-card small { font-size: .62rem; opacity: .8; }
-.home-showcase .hsc-shine { position: absolute; inset: -40%; pointer-events: none; background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.45) 50%, transparent 60%); transform: translateX(-60%); transition: transform .8s ease; }
+.home-showcase .hsc-shine { position: absolute; inset: -40%; z-index: 2; pointer-events: none; background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,.42) 50%, transparent 58%); transform: translateX(-65%); transition: transform .75s cubic-bezier(.22, 1, .36, 1); }
 .home-showcase .home-side-card:hover, .home-showcase .home-side-card:focus-visible {
-  animation-play-state: paused; transform: rotate(var(--rot)) translateX(var(--reveal-x, 0)) translateY(-8px) scale(1.025); outline: none;
-  box-shadow: 0 40px 80px rgba(0,0,0,.65), 0 0 40px rgba(255,203,5,.35), inset 0 0 0 5px rgba(3,4,7,.25);
+  transform: rotate(calc(var(--rot) * .55)) translate3d(var(--reveal-x, 0px), -10px, 0) scale(1.035); outline: none;
+  border-color: var(--home-yellow);
+  box-shadow: 0 28px 56px rgba(0,0,0,.55), 0 0 28px rgba(255,203,5,.22);
 }
-.home-showcase .home-side-card:hover img { transform: scale(1.12) translateY(-6px); }
-.home-showcase .home-side-card:hover .hsc-shine { transform: translateX(60%); }
-@keyframes hscFloat { 0%,100% { transform: rotate(var(--rot)) translateY(0); } 50% { transform: rotate(var(--rot)) translateY(-10px); } }
+.home-showcase .home-side-card:hover .hsc-shine, .home-showcase .home-side-card:focus-visible .hsc-shine { transform: translateX(65%); }
+@keyframes hscFloat { 0%,100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+/* Float uses CSS translate so whole-card hover transform transitions cleanly */
 @media (max-width: 1100px) { .home-showcase .home-side-left { left: -7%; } .home-showcase .home-side-right { right: -7%; } }
 
 /* Mobile: tidy vertical flow, no overlaps */
