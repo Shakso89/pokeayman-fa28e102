@@ -18302,6 +18302,11 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   grid.querySelectorAll('.memory-card').forEach(card => {
     card.addEventListener('click', () => {
       const idx = parseInt(card.dataset.index);
+      // Watchdog: if a lock outlived any animation (interrupted timer), release it.
+      if ((mismatchLocked || flipped.length >= 2) && grid._memoryLockAt && Date.now() - grid._memoryLockAt > 1600) {
+        grid.querySelectorAll('.memory-card').forEach(c => { const i = Number(c.dataset.index); if (!matched.has(i)) c.querySelector('.memory-card-inner')?.classList.remove('flipped'); });
+        flipped = []; mismatchLocked = false;
+      }
       if (mismatchLocked || flipped.includes(idx) || matched.has(idx) || flipped.length >= 2 || !pairs[idx]) return;
       
       // Flip the card
