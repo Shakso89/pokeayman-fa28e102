@@ -9,6 +9,11 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
+> [!IMPORTANT]
+> **TEAM COLLABORATION & MANDATORY AUTO-PULL**:
+> Multiple developers and collaborators work concurrently on this repository (via GitHub & Lovable).
+> **ALWAYS execute git pull origin main before starting ANY task, reading files, or editing code** in this codebase to ensure the local environment is 100% synchronized with latest remote changes.
+
 - Preserve the uploaded PokéAyman HTML under `public/pokeayman/index.html` and display it from the index route in an iframe; this keeps its large original DOM and scripts isolated from TanStack's React hydration.
 - PokéAyman data saves to the shared Cloud table `app_records` (id + jsonb data) via a dataSdk shim in the iframe HTML; localStorage is only an offline cache. Why: keeps the original Canva code unchanged.
 - Backend admin roles: user_roles table; admins enter the PokéAyman iframe as the built-in "Ayman" Admin identity (reserved name blocked for non-admins). Why: reuses all existing Admin permission checks unchanged.
