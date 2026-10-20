@@ -18057,68 +18057,116 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   
   const style = document.createElement('style');
   style.textContent = `
-    @keyframes shutterBallPulse {
+    /* Creative Holographic 3D Flip & Vanish Animations */
+    @keyframes cardHoloSweep {
       0% {
-        transform: scale(1) rotate(0deg);
+        transform: translateX(-140%) rotate(25deg);
+        opacity: 0;
       }
-      32% {
-        transform: scale(0.91) rotate(-3.5deg);
+      20% {
+        opacity: 0.95;
       }
-      68% {
-        transform: scale(1.09) rotate(2deg);
+      80% {
+        opacity: 0.8;
       }
       100% {
-        transform: scale(1.02) rotate(0deg);
+        transform: translateX(140%) rotate(25deg);
+        opacity: 0;
       }
     }
-    @keyframes gaShutterIrisRing {
+    @keyframes cardMatchBurst {
       0% {
-        width: 0%;
-        height: 0%;
-        opacity: 0.95;
-        border-width: 4px;
+        transform: scale(1);
+        filter: brightness(1);
       }
-      50% {
-        opacity: 0.85;
+      40% {
+        transform: scale(1.1) translateY(-6px);
+        filter: brightness(1.25) drop-shadow(0 0 20px rgba(74, 222, 128, 0.95));
       }
       100% {
-        width: 220%;
-        height: 220%;
-        opacity: 0;
-        border-width: 1.5px;
+        transform: scale(1.04) translateY(-2px);
+        filter: brightness(1.18) drop-shadow(0 0 14px rgba(74, 222, 128, 0.8));
       }
+    }
+    @keyframes cardVanishDisappear {
+      0% {
+        transform: scale(1.04) rotate(0deg);
+        opacity: 1;
+        filter: brightness(1.3) drop-shadow(0 0 20px rgba(74, 222, 128, 0.9));
+      }
+      35% {
+        transform: scale(1.12) rotate(4deg);
+        opacity: 0.9;
+      }
+      100% {
+        transform: scale(0.05) rotate(-16deg);
+        opacity: 0;
+        filter: brightness(2) blur(6px);
+      }
+    }
+    @keyframes cardMismatchWobble {
+      0%, 100% { transform: rotateY(180deg) translateX(0) rotateZ(0deg); }
+      20% { transform: rotateY(180deg) translateX(-7px) rotateZ(-2.5deg); }
+      40% { transform: rotateY(180deg) translateX(7px) rotateZ(2.5deg); }
+      60% { transform: rotateY(180deg) translateX(-4px) rotateZ(-1.5deg); }
+      80% { transform: rotateY(180deg) translateX(4px) rotateZ(1.5deg); }
+    }
+    
+    .memory-card {
+      perspective: 1200px;
+      -webkit-perspective: 1200px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      cursor: pointer;
+      position: relative;
+      border-radius: 14px;
+      overflow: visible !important;
+      transition: transform 0.15s ease-out;
+    }
+    .memory-card:active:not(.memory-card-matched):not(.memory-card-disappeared) {
+      transform: scale(0.96);
     }
     .memory-card:hover,
     .memory-card:hover .memory-card-inner {
       transform: none !important;
     }
+    .memory-card.memory-card-mismatch .memory-card-inner {
+      animation: cardMismatchWobble 0.38s ease forwards;
+    }
+    .memory-card.memory-card-matched {
+      animation: cardMatchBurst 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      pointer-events: none !important;
+    }
+    .memory-card.memory-card-disappearing {
+      animation: cardVanishDisappear 0.36s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+      pointer-events: none !important;
+    }
+    .memory-card.memory-card-disappeared,
+    .memory-card.memory-card-disappeared *,
+    .memory-card.memory-card-disappeared .memory-card-inner,
+    .memory-card.memory-card-disappeared .memory-card-front,
+    .memory-card.memory-card-disappeared .memory-card-back {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      transform: scale(0) !important;
+    }
+    
     .memory-card-inner {
       position: relative;
       width: 100%;
       height: 100%;
       border-radius: inherit;
-      overflow: hidden;
-      transform: none !important;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform 0.44s cubic-bezier(0.34, 1.28, 0.64, 1);
+      will-change: transform;
     }
-    .memory-card-inner::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      border: 3px solid rgba(255, 255, 255, 0.95);
-      box-shadow: 0 0 14px rgba(96, 165, 250, 0.85), inset 0 0 10px rgba(255, 255, 255, 0.5);
-      opacity: 0;
-      pointer-events: none;
-      z-index: 4;
-      will-change: width, height, opacity;
+    .memory-card-inner.flipped {
+      transform: rotateY(180deg) scale(1.02);
     }
-    .memory-card-inner.flipped::after {
-      animation: gaShutterIrisRing 0.38s cubic-bezier(0.16, 1, 0.3, 1) 0.04s forwards;
-    }
+    
     .memory-card-front, .memory-card-back {
       position: absolute;
       inset: 0;
@@ -18128,40 +18176,46 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       align-items: center;
       justify-content: center;
       border-radius: inherit;
+      overflow: hidden !important;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
     }
     .memory-card-front {
-      z-index: 1;
-      transform: scale(1);
-      transition: transform 0.24s cubic-bezier(0.25, 1, 0.5, 1);
-      will-change: transform;
-    }
-    .memory-card-inner.flipped .memory-card-front {
-      animation: shutterBallPulse 0.34s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      transform: rotateY(0deg) translateZ(1px);
+      z-index: 2;
     }
     .memory-card-back {
-      z-index: 2;
+      transform: rotateY(180deg) translateZ(1px);
+      z-index: 1;
       background: #0f172a;
-      clip-path: circle(0% at 50% 50%);
-      -webkit-clip-path: circle(0% at 50% 50%);
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: clip-path 0.24s cubic-bezier(0.4, 0, 0.2, 1),
-                  -webkit-clip-path 0.24s cubic-bezier(0.4, 0, 0.2, 1),
-                  opacity 0.16s ease-in,
-                  visibility 0.24s;
-      will-change: clip-path, opacity;
+      position: relative;
     }
-    .memory-card-inner.flipped .memory-card-back {
-      clip-path: circle(135% at 50% 50%);
-      -webkit-clip-path: circle(135% at 50% 50%);
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transition: clip-path 0.36s cubic-bezier(0.16, 1, 0.3, 1) 0.04s,
-                  -webkit-clip-path 0.36s cubic-bezier(0.16, 1, 0.3, 1) 0.04s,
-                  opacity 0.12s ease-out 0.02s,
-                  visibility 0s;
+    /* Holographic Prismatic Sheen Sweep */
+    .memory-card-back::after {
+      content: '';
+      position: absolute;
+      inset: -60%;
+      background: linear-gradient(
+        115deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0) 36%,
+        rgba(255, 255, 255, 0.35) 44%,
+        rgba(147, 197, 253, 0.85) 49%,
+        rgba(255, 255, 255, 0.95) 51%,
+        rgba(255, 255, 255, 0.35) 56%,
+        rgba(255, 255, 255, 0) 64%,
+        transparent 100%
+      );
+      transform: translateX(-140%) rotate(25deg);
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0;
+    }
+    .memory-card-inner.flipped .memory-card-back::after {
+      animation: cardHoloSweep 0.58s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s forwards;
     }
     html:has(.ga-stage), body.ga-playing { overflow: hidden !important; box-sizing: border-box; }
     *, *::before, *::after { box-sizing: border-box; }
@@ -18175,7 +18229,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     .memory-game-header, .memory-game-body, .memory-game-hud, .memory-game-status, .memory-game-grid { overflow: hidden; min-height: 0; }
     .memory-game-body { flex: 1 1 auto; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: clamp(4px, 1vh, 12px); padding: clamp(6px, 1.5vh, 16px); }
     .memory-game-grid { width: 100%; height: 100%; min-width: 0; min-height: 0; display: grid; align-content: center; justify-content: center; align-items: center; justify-items: center; gap: var(--memory-gap, 8px); grid-template-columns: repeat(var(--memory-cols, 4), minmax(0, 1fr)); grid-template-rows: repeat(var(--memory-rows, 4), minmax(0, 1fr)); overflow: hidden; box-sizing: border-box; }
-    .memory-game-grid .memory-card { width: 100%; height: 100%; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; box-sizing: border-box; overflow: hidden; position: relative; margin: 0; }
+    .memory-game-grid .memory-card { width: 100%; height: 100%; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; box-sizing: border-box; overflow: visible; position: relative; margin: 0; }
     .memory-game-status { min-height: 1.25rem; line-height: 1.1; }
     .memory-card { touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
     .memory-card .memory-card-inner, .memory-card .memory-card-front, .memory-card .memory-card-back { pointer-events: none; }
@@ -18197,7 +18251,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       ? `<p class="memory-word-content font-bold text-white text-center whitespace-nowrap overflow-hidden text-ellipsis bg-black/50 px-2 py-1 rounded max-w-full max-h-full leading-tight" style="font-size:clamp(.75rem,18cqw,2rem);">${String(p.word.vocab_word || '').trim().split(/\\s+/).map(part => `<span class="memory-word-part">${part}</span>`).join(' ')}</p>`
       : `<img src="${p.word.vocab_image}" class="w-full h-full object-contain rounded" alt="${p.word.vocab_word}" onerror="this.src='https://via.placeholder.com/160?text=Image+Not+Found'; this.style.backgroundColor='#e9d5ff';">`;
     const cardBackHtml = activeMemoryTheme?.cardBackSvg ? `<div class="ga-card-back-art" data-theme-id="${activeMemoryTheme.id}" aria-hidden="true">${activeMemoryTheme.cardBackSvg}</div>` : '';
-    return isMatched ? `<div class="memory-card memory-card-placeholder" aria-hidden="true" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" style="visibility:hidden; pointer-events:none;"></div>` : `<div class="memory-card relative rounded-xl shadow-xl overflow-hidden cursor-pointer" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" data-type="${p.type}" data-word="${p.word.vocab_word}" aria-label="${p.type === 'word' ? 'Word card' : 'Picture card'}" aria-pressed="${flipped.includes(idx)}" tabindex="0" role="button" style="perspective: 1000px; container-type: size;">
+    return isMatched ? `<div class="memory-card memory-card-placeholder" aria-hidden="true" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" style="visibility:hidden; pointer-events:none;"></div>` : `<div class="memory-card relative rounded-xl shadow-xl cursor-pointer" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" data-type="${p.type}" data-word="${p.word.vocab_word}" aria-label="${p.type === 'word' ? 'Word card' : 'Picture card'}" aria-pressed="${flipped.includes(idx)}" tabindex="0" role="button" style="perspective: 1200px; container-type: size;">
       <div class="memory-card-inner w-full h-full">
         <div class="memory-card-front bg-cover bg-center" style="${cardBackUrl ? `background-image: url('${cardBackUrl}');` : ''}">
           ${cardBackHtml}
@@ -18292,22 +18346,38 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
       updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
       showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
-      cards.forEach((card, i) => {
-        if (i === idx1 || i === idx2) {
-          card.classList.add('memory-card-matched');
-          card.style.animation = 'bounce 0.48s cubic-bezier(0.34, 1.56, 0.64, 1)';
-          card.style.pointerEvents = 'none';
-          card.setAttribute('aria-pressed', 'true');
-          const inner = card.querySelector('.memory-card-inner');
-          if (inner) inner.style.filter = 'brightness(1.15) drop-shadow(0 0 12px rgba(74, 222, 128, 0.75))';
-        }
+      const card1 = grid.querySelector('.memory-card[data-index="' + idx1 + '"]');
+      const card2 = grid.querySelector('.memory-card[data-index="' + idx2 + '"]');
+      [card1, card2].forEach(c => {
+        if (!c) return;
+        c.classList.add('memory-card-matched');
+        c.setAttribute('aria-pressed', 'true');
+        c.style.pointerEvents = 'none';
       });
       setTimeout(() => {
-        cards[idx1]?.style.setProperty('visibility', 'hidden');
-        cards[idx1]?.style.setProperty('pointer-events', 'none');
-        cards[idx2]?.style.setProperty('visibility', 'hidden');
-        cards[idx2]?.style.setProperty('pointer-events', 'none');
-      }, 480);
+        if (turnTokenAtCheck !== roundToken || !document.body.contains(modal)) return;
+        [card1, card2].forEach(c => {
+          if (!c) return;
+          c.classList.remove('memory-card-matched');
+          c.classList.add('memory-card-disappearing');
+        });
+        setTimeout(() => {
+          if (turnTokenAtCheck !== roundToken || !document.body.contains(modal)) return;
+          [card1, card2].forEach(c => {
+            if (!c) return;
+            c.classList.remove('memory-card-disappearing');
+            c.classList.add('memory-card-disappeared');
+            c.style.setProperty('visibility', 'hidden', 'important');
+            c.style.setProperty('opacity', '0', 'important');
+            c.style.setProperty('pointer-events', 'none', 'important');
+            c.querySelectorAll('*').forEach(child => {
+              child.style.setProperty('visibility', 'hidden', 'important');
+              child.style.setProperty('opacity', '0', 'important');
+              child.style.setProperty('pointer-events', 'none', 'important');
+            });
+          });
+        }, 360);
+      }, 500);
       flipped = [];
       mismatchLocked = false;
       modal.querySelector('#memory-status').textContent = '';
@@ -18332,8 +18402,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       advanceGameTurn();
       updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
       showWrongAnswerCelebration(modal, prevTurnIndex);
-      cards[idx1].style.animation = 'shake 0.35s ease';
-      cards[idx2].style.animation = 'shake 0.35s ease';
+      const card1 = grid.querySelector('.memory-card[data-index="' + idx1 + '"]');
+      const card2 = grid.querySelector('.memory-card[data-index="' + idx2 + '"]');
+      if (card1) card1.classList.add('memory-card-mismatch');
+      if (card2) card2.classList.add('memory-card-mismatch');
       
       modal.querySelector('#memory-status').textContent = '';
       
@@ -18344,6 +18416,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
           const c = cardAt(i);
           if (!c || matched.has(i)) return;
           c.querySelector('.memory-card-inner')?.classList.remove('flipped');
+          c.classList.remove('memory-card-mismatch');
           c.style.animation = 'none';
           c.setAttribute('aria-pressed', 'false');
         });
