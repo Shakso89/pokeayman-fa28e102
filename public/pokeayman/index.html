@@ -17379,6 +17379,27 @@ function chooseGamePlayers(listName, nextStep) {
       button.setAttribute('aria-pressed', String(active));
     });
   }));
+  if (isMemory) {
+    const memoryWordCount = getGameWords(listName).filter(w => w && String(w.vocab_word || '').trim()).length;
+    const needs = { easy: 5, medium: 9, hard: 15 };
+    let best = null;
+    modal.querySelectorAll('.memory-level-option').forEach(button => {
+      const need = needs[button.dataset.level] || 5;
+      const blocked = memoryWordCount < need;
+      button.disabled = blocked;
+      button.setAttribute('aria-disabled', String(blocked));
+      button.classList.toggle('opacity-40', blocked);
+      button.classList.toggle('cursor-not-allowed', blocked);
+      if (blocked) button.insertAdjacentHTML('beforeend', `<span class="block text-xs font-semibold mt-1">(Needs ${need} words)</span>`);
+      else best = button;
+    });
+    if (best) best.click();
+    else {
+      selectedMemoryDifficulty = null;
+      modal.querySelector('.memory-level-option')?.insertAdjacentHTML('afterend', '');
+      showToast?.(`This list has only ${memoryWordCount} words. Memory Flip needs at least 5.`, 'error');
+    }
+  }
   let selectedBaamCardCount = 8;
   modal.querySelectorAll('.shared-baam-count').forEach(option => option.addEventListener('click', () => { selectedBaamCardCount = Number(option.dataset.count); modal.querySelectorAll('.shared-baam-count').forEach(button => button.classList.toggle('is-selected', button === option)); }));
   modal.querySelectorAll('.match-word-count-option').forEach(option => option.addEventListener('click', () => {
@@ -18254,22 +18275,28 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       modal.querySelector('#memory-status').textContent = '';
       
       clearMemoryRoundTimers();
+      const cardAt = i => grid.querySelector('.memory-card[data-index="' + i + '"]');
+      const releaseMismatch = () => {
+        [idx1, idx2].forEach(i => {
+          const c = cardAt(i);
+          if (!c || matched.has(i)) return;
+          c.querySelector('.memory-card-inner')?.classList.remove('flipped');
+          c.style.animation = 'none';
+          c.setAttribute('aria-pressed', 'false');
+        });
+        flipped = [];
+        mismatchLocked = false;
+        mismatchTimer = null;
+      };
       mismatchTimer = setTimeout(() => {
-        if (turnTokenAtCheck !== roundToken || !document.body.contains(modal)) return;
-        const inner1 = cards[idx1]?.querySelector('.memory-card-inner');
-        const inner2 = cards[idx2]?.querySelector('.memory-card-inner');
-        if (inner1) inner1.classList.remove('flipped');
-        if (inner2) inner2.classList.remove('flipped');
-        if (cards[idx1]) cards[idx1].style.animation = 'none';
-        if (cards[idx2]) cards[idx2].style.animation = 'none';
-        modal.querySelector('#memory-status').textContent = '';
-        // Keep input locked until the flip-back transition has finished so taps cannot interrupt it.
-        mismatchTimer = setTimeout(() => {
-          flipped = [];
-          mismatchLocked = false;
-          mismatchTimer = null;
-        }, 380);
-      }, 620);
+        try {
+          if (turnTokenAtCheck !== roundToken || !document.body.contains(modal)) return;
+          [idx1, idx2].forEach(i => cardAt(i)?.querySelector('.memory-card-inner')?.classList.remove('flipped'));
+          const status = modal.querySelector('#memory-status'); if (status) status.textContent = '';
+        } finally {
+          mismatchTimer = setTimeout(releaseMismatch, 260);
+        }
+      }, 520);
     }
   }
   
