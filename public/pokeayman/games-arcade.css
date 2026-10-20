@@ -903,3 +903,913 @@ html[data-theme="light"] .ga-stage #hangman-drawing-panel > p:last-child {
     font-size: 1.05rem !important;
   }
 }
+
+/* ==========================================================================
+   Game Visual Style (Themes) Picker — Round Setup Lobby & Live Header Switcher
+   ========================================================================== */
+.ga-theme-picker {
+  border-top: 1px solid var(--ga-border, #344058);
+  padding-top: 0.85rem;
+  margin-top: 0.75rem;
+}
+.ga-theme-picker-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+.ga-theme-picker-head h3 {
+  margin: 0 !important;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem !important;
+  color: var(--ga-ink, #f5f7ff) !important;
+}
+.ga-theme-active-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ga-muted, #a5b0cc);
+}
+.ga-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+.ga-lobby .ga-theme-card,
+body > .ga-stage .ga-stage-header .ga-stage-theme-popover button.ga-theme-card {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0.38rem !important;
+  border-radius: 10px !important;
+  border: 2px solid var(--ga-border, #344058) !important;
+  background: var(--ga-chip, #202b42) !important;
+  color: var(--ga-ink, #f5f7ff) !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease !important;
+}
+.ga-lobby .ga-theme-card:hover,
+body > .ga-stage .ga-stage-header .ga-stage-theme-popover button.ga-theme-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: color-mix(in srgb, var(--ga-accent, #ffcb05) 65%, var(--ga-border, #344058)) !important;
+}
+.ga-lobby .ga-theme-card.is-selected,
+body > .ga-stage .ga-stage-header .ga-stage-theme-popover button.ga-theme-card.is-selected {
+  border-color: #38bdf8 !important;
+  background: color-mix(in srgb, #38bdf8 16%, var(--ga-surface, #131c2e)) !important;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.32), 0 8px 18px rgba(2, 6, 23, 0.28) !important;
+}
+.ga-theme-card.is-selected::after {
+  content: '✓';
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: #38bdf8;
+  color: #082f49;
+  font: 900 0.72rem/1.25rem 'Outfit', sans-serif;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.ga-theme-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 120 / 82;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0f172a;
+}
+.ga-theme-thumb svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.ga-theme-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  padding: 0.38rem 0.15rem 0.12rem;
+}
+.ga-theme-name {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.82rem;
+  line-height: 1.15;
+  color: inherit;
+}
+.ga-theme-sub {
+  font-size: 0.66rem;
+  line-height: 1.15;
+  color: var(--ga-muted, #a5b0cc);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Live Header Switcher */
+.ga-stage-theme-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+body > .ga-stage .ga-stage-header button.ga-stage-theme-btn {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 40px !important;
+  padding: 0 0.75rem !important;
+  gap: 0.4rem !important;
+  border-radius: 8px !important;
+  font: 800 0.82rem/1 'Outfit', sans-serif !important;
+  white-space: nowrap !important;
+}
+body > .ga-stage .ga-stage-header .ga-stage-theme-wrap.is-open button.ga-stage-theme-btn {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35) !important;
+}
+.ga-stage-theme-popover {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 200;
+  width: min(390px, calc(100vw - 1.5rem));
+  padding: 0.75rem !important;
+  border-radius: 14px !important;
+  background: #131c2e !important;
+  border: 1.5px solid #334155 !important;
+  box-shadow: 0 20px 48px rgba(2, 6, 23, 0.65) !important;
+  color: #f8fafc !important;
+}
+.ga-stage-theme-popover[hidden] {
+  display: none !important;
+}
+.ga-stage-theme-popover-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.55rem;
+  padding: 0 0.15rem;
+}
+.ga-stage-theme-popover-head strong {
+  font: 800 0.85rem/1.2 'Outfit', sans-serif;
+  color: #f8fafc;
+}
+.ga-stage-theme-popover-head span {
+  font: 600 0.7rem/1.2 'Figtree', sans-serif;
+  color: #94a3b8;
+}
+.ga-theme-grid-compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+@media (max-width: 580px) {
+  .ga-theme-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  body > .ga-stage .ga-stage-header button.ga-stage-theme-btn .ga-stage-theme-current {
+    display: none;
+  }
+  body > .ga-stage .ga-stage-header button.ga-stage-theme-btn {
+    width: 40px !important;
+    padding: 0 !important;
+  }
+}
+
+/* ==========================================================================
+   Scenic Stage Backdrop & Shared Themed Stage Architecture
+   ========================================================================== */
+.ga-theme-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ga-theme-backdrop[hidden] {
+  display: none !important;
+}
+.ga-theme-backdrop-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-wrapper,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-shell,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) > .game-popup-modal,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-shell > :not(.ga-stage-header):not(.game-celebration-overlay):not(.ga-theme-backdrop),
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .match-game-shell,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .memory-game-shell,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .cipher-lab-shell,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .hangman-game-shell,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .surprise-boxes-game {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .cipher-lab-shell::before {
+  display: none !important;
+}
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-wrapper,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-shell {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* ==========================================================================
+   THEME 1: CLASSROOM CHALKBOARD (data-ga-theme="classroom")
+   ========================================================================== */
+html body > .ga-stage[data-ga-theme="classroom"] {
+  --ga-stage-bg: #dec49a;
+  --ga-stage-surface: #274f37;
+  --ga-stage-ink: #fffbeb;
+  --ga-stage-muted: #d9e8dc;
+  --ga-stage-line: #b07d4f;
+  --ga-stage-yellow: #facc15;
+  --ga-stage-chip: #356347;
+  background: #dec49a !important;
+}
+/* Classroom Header */
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header {
+  background: linear-gradient(180deg, #9c6b3f 0%, #7d522b 100%) !important;
+  border-bottom: 4px solid #59381b !important;
+  box-shadow: 0 6px 18px rgba(45, 28, 12, 0.28) !important;
+  color: #fffbeb !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header h2,
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header .cipher-lab-progress,
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header p {
+  color: #fffbeb !important;
+  text-shadow: 0 2px 0 rgba(45, 28, 12, 0.55) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header button:not(.ga-stage-exit):not(.ga-theme-card) {
+  background: #f5efe6 !important;
+  color: #292524 !important;
+  border: 2px solid #44372c !important;
+  box-shadow: 0 3px 0 #44372c !important;
+}
+/* Classroom Student Score HUD */
+html body > .ga-stage[data-ga-theme="classroom"] .game-player-card {
+  background: #274f37 !important;
+  border: 3px solid #b07d4f !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 0 0 1.5px #1b3826, 0 5px 0 #6e4826, 0 8px 18px rgba(45, 28, 12, 0.25) !important;
+  color: #fffbeb !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .game-player-card .game-player-name {
+  color: #fffbeb !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .game-player-card .game-player-score {
+  color: #fde68a !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .game-player-card .game-player-score::after {
+  color: #d9e8dc !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .game-player-card .game-player-avatar-wrap {
+  background: #f5efe6 !important;
+  border: 2px solid #b07d4f !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .game-player-card.is-active {
+  background: linear-gradient(135deg, #326346, #234731) !important;
+  border-color: #facc15 !important;
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.45), 0 5px 0 #854d0e, 0 10px 22px rgba(45, 28, 12, 0.32) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .game-player-card.is-active .game-player-turn,
+html body > .ga-stage[data-ga-theme="classroom"] .game-player-card.is-active .game-player-turn:empty::before {
+  color: #fde047 !important;
+}
+/* Classroom Chalkboard Centerpiece Panels */
+html body > .ga-stage[data-ga-theme="classroom"] .cipher-lab-panel,
+html body > .ga-stage[data-ga-theme="classroom"] #hangman-drawing-panel,
+html body > .ga-stage[data-ga-theme="classroom"] #hangman-content,
+html body > .ga-stage[data-ga-theme="classroom"] #find-me-box,
+html body > .ga-stage[data-ga-theme="classroom"] .match-game-board,
+html body > .ga-stage[data-ga-theme="classroom"] .memory-game-grid,
+html body > .ga-stage[data-ga-theme="classroom"] #baam-board {
+  background: radial-gradient(circle at 50% 38%, #346347 0%, #264c35 68%, #1d3c29 100%) !important;
+  border: 9px solid #b07d4f !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 0 3px #855830, inset 0 8px 28px rgba(0, 0, 0, 0.38), 0 16px 36px rgba(45, 28, 12, 0.3) !important;
+  padding: clamp(0.85rem, 2vw, 1.5rem) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .match-game-progress {
+  background: #274f37 !important;
+  border: 3px solid #b07d4f !important;
+  color: #fffbeb !important;
+  box-shadow: 0 4px 0 #6e4826 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .match-game-progress-copy,
+html body > .ga-stage[data-ga-theme="classroom"] .match-game-progress-copy #match-status {
+  color: #fffbeb !important;
+}
+/* Classroom Unscramble Tiles & Reference Slot Boxes */
+html body > .ga-stage[data-ga-theme="classroom"] #scramble-tiles .scramble-tile {
+  background: linear-gradient(180deg, #b8aba0 0%, #96887c 100%) !important;
+  color: #1c1917 !important;
+  border: 3px solid #292524 !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #292524, 0 8px 14px rgba(0, 0, 0, 0.3) !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 900 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] #scramble-tiles .scramble-tile:hover:not(:disabled) {
+  background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%) !important;
+  transform: translateY(-3px) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer .scramble-answer-slot {
+  position: relative !important;
+  background: #ffffff !important;
+  color: #1c1917 !important;
+  border: 3px solid #292524 !important;
+  border-radius: 12px !important;
+  min-width: 1.32em !important;
+  min-height: 1.42em !important;
+  padding: 0.05em 0.18em 0.16em !important;
+  box-shadow: 0 5px 0 rgba(28, 25, 23, 0.45) !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer .scramble-answer-slot::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 10%;
+  height: 4px;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer .scramble-answer-slot.is-filled {
+  background: #fef9c3 !important;
+  color: #1c1917 !important;
+  border-color: #292524 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .cipher-lab-reset,
+html body > .ga-stage[data-ga-theme="classroom"] .cipher-lab-next {
+  background: linear-gradient(180deg, #e9c46a, #d4a038) !important;
+  color: #1c1917 !important;
+  border: 2.5px solid #292524 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 0 #292524 !important;
+}
+/* Classroom Hangman */
+html body > .ga-stage[data-ga-theme="classroom"] #hangman-word {
+  color: #fffbeb !important;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] #hangman-clue {
+  background: #fffbeb !important;
+  border: 3px solid #292524 !important;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .hangman-letter.is-available {
+  background: linear-gradient(180deg, #b8aba0 0%, #96887c 100%) !important;
+  color: #1c1917 !important;
+  border: 2.5px solid #292524 !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 4px 0 #292524 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .hangman-letter.is-available .letter-char {
+  color: #1c1917 !important;
+  -webkit-text-fill-color: #1c1917 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .hangman-letter.is-available:hover {
+  background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%) !important;
+  color: #1c1917 !important;
+  border-color: #292524 !important;
+  box-shadow: 0 5px 0 #292524 !important;
+}
+/* Classroom Match Words, Memory, Find Me & Surprise Boxes */
+html body > .ga-stage[data-ga-theme="classroom"] .match-tile {
+  background: linear-gradient(180deg, #f5efe6 0%, #e6dcd1 100%) !important;
+  color: #1c1917 !important;
+  border: 3px solid #292524 !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7), 0 5px 0 #292524, 0 8px 16px rgba(0, 0, 0, 0.25) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .match-tile .match-tile-kind {
+  color: #57534e !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .match-tile.is-selected {
+  background: linear-gradient(180deg, #fef08a 0%, #facc15 100%) !important;
+  border-color: #292524 !important;
+  box-shadow: 0 0 0 3px #fde047, 0 5px 0 #292524 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .memory-card {
+  border-radius: 12px !important;
+  box-shadow: 0 5px 0 #292524, 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .memory-card-front {
+  border: 3px solid #292524 !important;
+  border-radius: 12px !important;
+  background-color: #e9c46a !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .memory-card-back {
+  background: #fffbeb !important;
+  border: 3px solid #292524 !important;
+  border-radius: 12px !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .memory-card .memory-word-content {
+  background: #274f37 !important;
+  color: #fffbeb !important;
+  border: 2px solid #b07d4f !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] #find-me-picture {
+  background: #fffbeb !important;
+  border: 8px solid #b07d4f !important;
+  box-shadow: 0 10px 24px rgba(45, 28, 12, 0.28) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .find-me-word {
+  background: linear-gradient(180deg, #f5efe6 0%, #dfd4c7 100%) !important;
+  color: #1c1917 !important;
+  border: 2.5px solid #292524 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 0 #292524 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-body {
+  background: linear-gradient(90deg, transparent 43%, #e9c46a 43%, #e9c46a 57%, transparent 57%), linear-gradient(160deg, #d97757, #9a472c 75%) !important;
+  border: 2.5px solid #292524 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .baam-giftbox .baam-box-lid {
+  background: linear-gradient(90deg, transparent 43%, #f4d58d 43%, #f4d58d 57%, transparent 57%), linear-gradient(180deg, #e58d6e, #b8583a) !important;
+  border: 2.5px solid #292524 !important;
+}
+html body[data-ga-active-theme="classroom"] .baam-stage-portal .baam-reveal-panel.baam-question-card {
+  background: #274f37 !important;
+  border: 8px solid #b07d4f !important;
+  border-radius: 18px !important;
+  color: #fffbeb !important;
+}
+html body[data-ga-active-theme="classroom"] .baam-stage-portal .baam-question-header h3,
+html body[data-ga-active-theme="classroom"] .baam-stage-portal .baam-question-player {
+  color: #fffbeb !important;
+}
+
+/* ==========================================================================
+   THEME 2: JUNGLE EXPEDITION (data-ga-theme="jungle")
+   ========================================================================== */
+html body > .ga-stage[data-ga-theme="jungle"] {
+  --ga-stage-bg: #0d2619;
+  --ga-stage-surface: #1b432c;
+  --ga-stage-ink: #fef3c7;
+  --ga-stage-muted: #a7f3d0;
+  --ga-stage-line: #c68634;
+  --ga-stage-yellow: #fbbf24;
+  --ga-stage-chip: #24583b;
+  background: #0d2619 !important;
+}
+/* Jungle Header */
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header {
+  background: linear-gradient(180deg, #5c340e 0%, #3d2107 100%) !important;
+  border-bottom: 4px solid #c68634 !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45) !important;
+  color: #fef3c7 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header h2,
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header .cipher-lab-progress,
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header p {
+  color: #fde68a !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.65) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header button:not(.ga-stage-exit):not(.ga-theme-card) {
+  background: linear-gradient(180deg, #dca055, #b57326) !important;
+  color: #2b1503 !important;
+  border: 2px solid #3d2107 !important;
+  box-shadow: 0 3px 0 #2b1503 !important;
+}
+/* Jungle Student Score HUD */
+html body > .ga-stage[data-ga-theme="jungle"] .game-player-card {
+  background: linear-gradient(180deg, #5c340e 0%, #432408 100%) !important;
+  border: 3px solid #c68634 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 5px 0 #261303, 0 10px 20px rgba(0, 0, 0, 0.4) !important;
+  color: #fef3c7 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .game-player-card .game-player-name {
+  color: #fef3c7 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .game-player-card .game-player-score {
+  color: #fbbf24 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .game-player-card .game-player-score::after {
+  color: #fcd34d !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .game-player-card .game-player-avatar-wrap {
+  background: #1b432c !important;
+  border: 2px solid #c68634 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .game-player-card.is-active {
+  background: linear-gradient(135deg, #784312, #4d2908) !important;
+  border-color: #4ade80 !important;
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.4), 0 5px 0 #14532d, 0 10px 24px rgba(0, 0, 0, 0.5) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .game-player-card.is-active .game-player-turn,
+html body > .ga-stage[data-ga-theme="jungle"] .game-player-card.is-active .game-player-turn:empty::before {
+  color: #4ade80 !important;
+}
+/* Jungle Temple Centerpiece Panels */
+html body > .ga-stage[data-ga-theme="jungle"] .cipher-lab-panel,
+html body > .ga-stage[data-ga-theme="jungle"] #hangman-drawing-panel,
+html body > .ga-stage[data-ga-theme="jungle"] #hangman-content,
+html body > .ga-stage[data-ga-theme="jungle"] #find-me-box,
+html body > .ga-stage[data-ga-theme="jungle"] .match-game-board,
+html body > .ga-stage[data-ga-theme="jungle"] .memory-game-grid,
+html body > .ga-stage[data-ga-theme="jungle"] #baam-board {
+  background: radial-gradient(circle at 50% 35%, #235338 0%, #163826 70%, #0f291b 100%) !important;
+  border: 9px solid #c68634 !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 0 0 3px #6b3e0e, inset 0 10px 30px rgba(0, 0, 0, 0.5), 0 20px 44px rgba(0, 0, 0, 0.5) !important;
+  padding: clamp(0.85rem, 2vw, 1.5rem) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .match-game-progress {
+  background: #432408 !important;
+  border: 3px solid #c68634 !important;
+  color: #fef3c7 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .match-game-progress-copy,
+html body > .ga-stage[data-ga-theme="jungle"] .match-game-progress-copy #match-status {
+  color: #fef3c7 !important;
+}
+/* Jungle Unscramble Carved Wood Tiles & Parchment Slots */
+html body > .ga-stage[data-ga-theme="jungle"] #scramble-tiles .scramble-tile {
+  background: linear-gradient(180deg, #e5b26d 0%, #bd7b30 100%) !important;
+  color: #2b1503 !important;
+  border: 3px solid #4a2606 !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 2px 0 rgba(255, 247, 220, 0.65), 0 5px 0 #3b1d04, 0 8px 16px rgba(0, 0, 0, 0.4) !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 900 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] #scramble-tiles .scramble-tile:hover:not(:disabled) {
+  background: linear-gradient(180deg, #fde68a 0%, #eab308 100%) !important;
+  transform: translateY(-3px) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] #scramble-answer .scramble-answer-slot {
+  position: relative !important;
+  background: #fdf3dc !important;
+  color: #3b1d04 !important;
+  border: 3px solid #5c340e !important;
+  border-radius: 12px !important;
+  min-width: 1.32em !important;
+  min-height: 1.42em !important;
+  padding: 0.05em 0.18em 0.16em !important;
+  box-shadow: 0 5px 0 #3b1d04 !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] #scramble-answer .scramble-answer-slot::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 10%;
+  height: 4px;
+  border-radius: 999px;
+  background: #b4844c;
+}
+html body > .ga-stage[data-ga-theme="jungle"] #scramble-answer .scramble-answer-slot.is-filled {
+  background: #fef08a !important;
+  color: #2b1503 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .cipher-lab-reset,
+html body > .ga-stage[data-ga-theme="jungle"] .cipher-lab-next {
+  background: linear-gradient(180deg, #4ade80, #16a34a) !important;
+  color: #052e16 !important;
+  border: 2.5px solid #052e16 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 0 #052e16 !important;
+}
+/* Jungle Hangman */
+html body > .ga-stage[data-ga-theme="jungle"] #hangman-word {
+  color: #fde68a !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] #hangman-clue {
+  background: #fdf3dc !important;
+  border: 3px solid #c68634 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .hangman-letter.is-available {
+  background: linear-gradient(180deg, #e5b26d 0%, #bd7b30 100%) !important;
+  color: #2b1503 !important;
+  border: 2.5px solid #4a2606 !important;
+  box-shadow: inset 0 2px 0 rgba(255, 247, 220, 0.55), 0 4px 0 #3b1d04 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .hangman-letter.is-available .letter-char {
+  color: #2b1503 !important;
+  -webkit-text-fill-color: #2b1503 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .hangman-letter.is-available:hover {
+  background: linear-gradient(180deg, #bef264 0%, #65a30d 100%) !important;
+  color: #1a2e05 !important;
+  border-color: #1a2e05 !important;
+}
+/* Jungle Match Words, Memory, Find Me & Surprise Boxes */
+html body > .ga-stage[data-ga-theme="jungle"] .match-tile {
+  background: linear-gradient(180deg, #fdf3dc 0%, #f3dfb6 100%) !important;
+  color: #2b1503 !important;
+  border: 3px solid #5c340e !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 5px 0 #3b1d04, 0 8px 18px rgba(0, 0, 0, 0.35) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .match-tile.match-word-card {
+  background: linear-gradient(180deg, #e5b26d 0%, #c68634 100%) !important;
+  color: #2b1503 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .match-tile .match-tile-kind {
+  color: #5c340e !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .match-tile.is-selected {
+  background: linear-gradient(180deg, #bef264 0%, #84cc16 100%) !important;
+  border-color: #1a2e05 !important;
+  box-shadow: 0 0 0 3px #4ade80, 0 5px 0 #1a2e05 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .memory-card {
+  border-radius: 12px !important;
+  box-shadow: 0 5px 0 #3b1d04, 0 8px 16px rgba(0, 0, 0, 0.4) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .memory-card-front {
+  border: 3px solid #c68634 !important;
+  border-radius: 12px !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .memory-card-back {
+  background: #fdf3dc !important;
+  border: 3px solid #c68634 !important;
+  border-radius: 12px !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .memory-card .memory-word-content {
+  background: #432408 !important;
+  color: #fef3c7 !important;
+  border: 2px solid #c68634 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] #find-me-picture {
+  background: #fdf3dc !important;
+  border: 8px solid #c68634 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .find-me-word {
+  background: linear-gradient(180deg, #e5b26d 0%, #c68634 100%) !important;
+  color: #2b1503 !important;
+  border: 2.5px solid #3b1d04 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 0 #3b1d04 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-body {
+  background: linear-gradient(90deg, transparent 43%, #fbbf24 43%, #fbbf24 57%, transparent 57%), linear-gradient(160deg, #92400e, #5c2808 75%) !important;
+  border: 2.5px solid #3b1d04 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .baam-giftbox .baam-box-lid {
+  background: linear-gradient(90deg, transparent 43%, #fde047 43%, #fde047 57%, transparent 57%), linear-gradient(180deg, #b45309, #78350f) !important;
+  border: 2.5px solid #3b1d04 !important;
+}
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-reveal-panel.baam-question-card {
+  background: #163826 !important;
+  border: 8px solid #c68634 !important;
+  border-radius: 18px !important;
+  color: #fef3c7 !important;
+}
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-question-header h3,
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-question-player {
+  color: #fef3c7 !important;
+}
+
+/* ==========================================================================
+   THEME 3: TOYBOX STUDIO (data-ga-theme="toybox")
+   ========================================================================== */
+html body > .ga-stage[data-ga-theme="toybox"] {
+  --ga-stage-bg: #1e1b4b;
+  --ga-stage-surface: #ffffff;
+  --ga-stage-ink: #1e1b4b;
+  --ga-stage-muted: #4f46e5;
+  --ga-stage-line: #6366f1;
+  --ga-stage-yellow: #f43f5e;
+  --ga-stage-chip: #e0e7ff;
+  background: #1e1b4b !important;
+}
+/* Toybox Header */
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header {
+  background: linear-gradient(90deg, #4338ca 0%, #6366f1 50%, #4f46e5 100%) !important;
+  border-bottom: 4px solid #312e81 !important;
+  box-shadow: 0 8px 24px rgba(15, 12, 48, 0.45) !important;
+  color: #ffffff !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header h2,
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header .cipher-lab-progress,
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header p {
+  color: #ffffff !important;
+  text-shadow: 0 2px 0 rgba(30, 27, 75, 0.5) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header button:not(.ga-stage-exit):not(.ga-theme-card) {
+  background: #ffffff !important;
+  color: #312e81 !important;
+  border: 2px solid #312e81 !important;
+  box-shadow: 0 3px 0 #312e81 !important;
+}
+/* Toybox Student Score HUD */
+html body > .ga-stage[data-ga-theme="toybox"] .game-player-card {
+  background: #ffffff !important;
+  border: 3px solid #6366f1 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 5px 0 #4338ca, 0 10px 20px rgba(15, 12, 48, 0.35) !important;
+  color: #1e1b4b !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .game-player-card .game-player-name {
+  color: #1e1b4b !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .game-player-card .game-player-score {
+  color: #4f46e5 !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .game-player-card .game-player-score::after {
+  color: #6366f1 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .game-player-card .game-player-avatar-wrap {
+  background: #e0e7ff !important;
+  border: 2px solid #818cf8 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .game-player-card.is-active {
+  background: linear-gradient(135deg, #fff1f2, #ffffff) !important;
+  border-color: #f43f5e !important;
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.35), 0 5px 0 #be123c, 0 12px 24px rgba(15, 12, 48, 0.4) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .game-player-card.is-active .game-player-score,
+html body > .ga-stage[data-ga-theme="toybox"] .game-player-card.is-active .game-player-turn,
+html body > .ga-stage[data-ga-theme="toybox"] .game-player-card.is-active .game-player-turn:empty::before {
+  color: #e11d48 !important;
+}
+/* Toybox Studio Playmat Centerpiece Panels */
+html body > .ga-stage[data-ga-theme="toybox"] .cipher-lab-panel,
+html body > .ga-stage[data-ga-theme="toybox"] #hangman-drawing-panel,
+html body > .ga-stage[data-ga-theme="toybox"] #hangman-content,
+html body > .ga-stage[data-ga-theme="toybox"] #find-me-box,
+html body > .ga-stage[data-ga-theme="toybox"] .match-game-board,
+html body > .ga-stage[data-ga-theme="toybox"] .memory-game-grid,
+html body > .ga-stage[data-ga-theme="toybox"] #baam-board {
+  background: linear-gradient(180deg, #ffffff 0%, #eef2ff 100%) !important;
+  border: 8px solid #6366f1 !important;
+  border-radius: 24px !important;
+  box-shadow: inset 0 0 0 3px #c7d2fe, 0 10px 0 #3730a3, 0 22px 48px rgba(15, 12, 48, 0.5) !important;
+  padding: clamp(0.85rem, 2vw, 1.5rem) !important;
+  color: #1e1b4b !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .cipher-lab-panel > p:first-child,
+html body > .ga-stage[data-ga-theme="toybox"] #find-me-progress {
+  color: #4338ca !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .match-game-progress {
+  background: #ffffff !important;
+  border: 3px solid #6366f1 !important;
+  box-shadow: 0 4px 0 #4338ca !important;
+  color: #1e1b4b !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .match-game-progress-copy,
+html body > .ga-stage[data-ga-theme="toybox"] .match-game-progress-copy #match-status {
+  color: #1e1b4b !important;
+}
+/* Toybox 3D Glossy Keycaps & Recessed Tray Slots */
+html body > .ga-stage[data-ga-theme="toybox"] #scramble-tiles .scramble-tile {
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%) !important;
+  color: #ffffff !important;
+  border: 3px solid #0369a1 !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.55), 0 5px 0 #075985, 0 8px 16px rgba(2, 132, 199, 0.32) !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 900 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #scramble-tiles .scramble-tile:nth-child(3n+1):not(:disabled) {
+  background: linear-gradient(180deg, #fb7185 0%, #e11d48 100%) !important;
+  border-color: #9f1239 !important;
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.55), 0 5px 0 #881337, 0 8px 16px rgba(225, 29, 72, 0.3) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #scramble-tiles .scramble-tile:nth-child(3n+2):not(:disabled) {
+  background: linear-gradient(180deg, #facc15 0%, #eab308 100%) !important;
+  color: #1e1b4b !important;
+  border-color: #a16207 !important;
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.65), 0 5px 0 #854d0e, 0 8px 16px rgba(234, 179, 8, 0.3) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #scramble-answer .scramble-answer-slot {
+  position: relative !important;
+  background: #e0e7ff !important;
+  color: #1e1b4b !important;
+  border: 3px solid #6366f1 !important;
+  border-radius: 14px !important;
+  min-width: 1.32em !important;
+  min-height: 1.42em !important;
+  padding: 0.05em 0.18em 0.16em !important;
+  box-shadow: inset 0 3px 6px rgba(67, 56, 202, 0.16), 0 4px 0 #a5b4fc !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #scramble-answer .scramble-answer-slot::after {
+  content: '';
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 10%;
+  height: 4px;
+  border-radius: 999px;
+  background: #818cf8;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #scramble-answer .scramble-answer-slot.is-filled {
+  background: #fef08a !important;
+  color: #1e1b4b !important;
+  border-color: #eab308 !important;
+  box-shadow: 0 4px 0 #ca8a04 !important;
+}
+/* Toybox Hangman */
+html body > .ga-stage[data-ga-theme="toybox"] #hangman-word {
+  color: #312e81 !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #hangman-drawing .hm-line {
+  stroke: #4338ca !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #hangman-drawing .hm-platform {
+  fill: #6366f1 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .hangman-letter.is-available {
+  background: linear-gradient(180deg, #ffffff 0%, #e0e7ff 100%) !important;
+  color: #1e1b4b !important;
+  border: 2.5px solid #6366f1 !important;
+  box-shadow: inset 0 2px 0 #ffffff, 0 4px 0 #4338ca !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .hangman-letter.is-available .letter-char {
+  color: #1e1b4b !important;
+  -webkit-text-fill-color: #1e1b4b !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .hangman-letter.is-available:hover {
+  background: linear-gradient(180deg, #fb7185 0%, #e11d48 100%) !important;
+  color: #ffffff !important;
+  border-color: #9f1239 !important;
+  box-shadow: 0 5px 0 #881337 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .hangman-letter.is-available:hover .letter-char {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+/* Toybox Match Words, Memory, Find Me & Surprise Boxes */
+html body > .ga-stage[data-ga-theme="toybox"] .match-tile {
+  background: #ffffff !important;
+  color: #1e1b4b !important;
+  border: 3px solid #6366f1 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 6px 0 #4338ca, 0 10px 18px rgba(67, 56, 202, 0.18) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .match-tile.match-word-card {
+  background: linear-gradient(180deg, #f5f3ff 0%, #e0e7ff 100%) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .match-tile .match-tile-kind {
+  color: #6366f1 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .match-tile.is-selected {
+  background: linear-gradient(180deg, #fef08a 0%, #facc15 100%) !important;
+  border-color: #ca8a04 !important;
+  box-shadow: 0 0 0 3px #fde047, 0 6px 0 #a16207 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .memory-card {
+  border-radius: 14px !important;
+  box-shadow: 0 6px 0 #4338ca, 0 10px 18px rgba(67, 56, 202, 0.22) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .memory-card-front,
+html body > .ga-stage[data-ga-theme="toybox"] .memory-card-back {
+  border: 3px solid #6366f1 !important;
+  border-radius: 14px !important;
+  background-color: #ffffff !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .memory-card .memory-word-content {
+  background: #4f46e5 !important;
+  color: #ffffff !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #find-me-picture {
+  background: #ffffff !important;
+  border: 6px solid #6366f1 !important;
+  box-shadow: 0 8px 0 #4338ca !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .find-me-word {
+  background: linear-gradient(180deg, #ffffff 0%, #e0e7ff 100%) !important;
+  color: #1e1b4b !important;
+  border: 2.5px solid #6366f1 !important;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 0 #4338ca !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-body {
+  background: linear-gradient(90deg, transparent 43%, #38bdf8 43%, #38bdf8 57%, transparent 57%), linear-gradient(160deg, #6366f1, #4338ca 75%) !important;
+  border: 2.5px solid #312e81 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .baam-giftbox .baam-box-lid {
+  background: linear-gradient(90deg, transparent 43%, #7dd3fc 43%, #7dd3fc 57%, transparent 57%), linear-gradient(180deg, #818cf8, #4f46e5) !important;
+  border: 2.5px solid #312e81 !important;
+}
+html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-reveal-panel.baam-question-card {
+  background: #ffffff !important;
+  border: 6px solid #6366f1 !important;
+  border-radius: 22px !important;
+  color: #1e1b4b !important;
+}
+html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-question-header h3,
+html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-question-player {
+  color: #1e1b4b !important;
+}

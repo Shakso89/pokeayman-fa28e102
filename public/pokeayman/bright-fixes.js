@@ -4,7 +4,7 @@
 (function () {
   // These surfaces have their own intentional dark palette even in bright mode.
   // The legacy contrast sweep must not recolour the home hero or login dialogs.
-  const SKIP = '#home-screen, #home-screen *, .pk-login-overlay, .pk-login-overlay *, .pk-badge-explanation, .vocab-editor-overlay, .vocab-cover-popover, .vocab-photo-picker, .game-popup-modal, .vocab-word-edit-card, .vocab-word-edit-card *, [class*="fixed inset-0"], [class*="fixed"][class*="inset-0"], .fixed.inset-0, .vb-stage .vb-arena *, img, svg, canvas, video, .ga-cart-art, .ga-cart-play, [class*="holo"], [class*="rarity"], [class*="tier-"], .coin-celebration, [class*="celebrat"], .pokeball, [class*="pokeball"], [class*="hp-fill"], [class*="timer-fill"], .hangman-figure *';
+  const SKIP = '#home-screen, #home-screen *, .pk-login-overlay, .pk-login-overlay *, .pk-badge-explanation, .vocab-editor-overlay, .vocab-cover-popover, .vocab-photo-picker, .game-popup-modal, .vocab-word-edit-card, .vocab-word-edit-card *, [class*="fixed inset-0"], [class*="fixed"][class*="inset-0"], .fixed.inset-0, .vb-stage .vb-arena *, .ga-stage[data-ga-theme], .ga-stage[data-ga-theme] *, .ga-theme-picker, .ga-theme-picker *, .ga-stage-theme-popover, .ga-stage-theme-popover *, img, svg, canvas, video, .ga-cart-art, .ga-cart-play, [class*="holo"], [class*="rarity"], [class*="tier-"], .coin-celebration, [class*="celebrat"], .pokeball, [class*="pokeball"], [class*="hp-fill"], [class*="timer-fill"], .hangman-figure *';
   // Modern computed colours can be oklch()/color(srgb ...), not just rgb().
   const colorCache = new Map();
   const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1;
