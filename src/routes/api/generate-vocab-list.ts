@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
         const geminiApiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || process.env["VITE_GEMINI_API_KEY"] || FALLBACK_GEMINI_KEY;
         const lovableApiKey = process.env["LOVABLE_API_KEY"];
 
-        const models = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-flash-latest"];
+        const models = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-flash-lite"];
 
         if (mode === "words") {
           let rawItems: Array<{ word: string; picture: string }> = [];
@@ -317,6 +317,46 @@ For each item:
               } catch (err) {
                 console.warn(`Model ${model} failed in photo mode:`, err);
               }
+            }
+          }
+
+          if (items.length === 0 && lovableApiKey) {
+            try {
+              const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableApiKey}` },
+                body: JSON.stringify({
+                  model: "google/gemini-2.5-flash",
+                  messages: [{
+                    role: "user",
+                    content: [
+                      { type: "text", text: prompt + "\nRespond with the JSON array only, no markdown." },
+                      { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Data}` } },
+                    ],
+                  }],
+                }),
+              });
+              if (upstream.ok) {
+                const data = await upstream.json();
+                let text = String(data?.choices?.[0]?.message?.content || "").trim();
+                text = text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+                const start = text.indexOf("["), end = text.lastIndexOf("]");
+                if (start >= 0 && end > start) {
+                  const parsed = JSON.parse(text.slice(start, end + 1));
+                  if (Array.isArray(parsed)) {
+                    items = parsed
+                      .map((it: any) => ({
+                        word: String(it.word || "").trim(),
+                        sentence: String(it.sentence || "").trim().replace(/^["']|["']$/g, ""),
+                      }))
+                      .filter((it) => it.word && it.sentence);
+                  }
+                }
+              } else {
+                console.warn("Gateway photo fallback status:", upstream.status, await upstream.text());
+              }
+            } catch (err) {
+              console.warn("Gateway photo fallback failed:", err);
             }
           }
 
