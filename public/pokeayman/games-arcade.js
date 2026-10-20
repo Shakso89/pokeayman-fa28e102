@@ -646,7 +646,7 @@
   };
 
   window.gaApplyThemeToStage = function (stage, themeId) {
-    const target = stage || document.querySelector('body > .ga-stage');
+    const target = stage || document.querySelector('.ga-stage');
     if (!window.gaIsTeacherThemeEnabled()) {
       if (target) {
         delete target.dataset.gaTheme;
@@ -720,7 +720,7 @@
         btn.setAttribute('aria-checked', String(active));
       });
     });
-    document.querySelectorAll('body > .ga-stage').forEach(stage => {
+    document.querySelectorAll('.ga-stage').forEach(stage => {
       window.gaApplyThemeToStage(stage, theme.id);
       stage.querySelectorAll('.ga-stage-theme-current').forEach(el => { el.textContent = theme.name; });
       stage.querySelectorAll('.ga-stage-theme-popover [data-ga-theme-choice]').forEach(btn => {
@@ -921,7 +921,7 @@
 
   window.gaMountStage = function (view) {
     const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, .lc-main, .vb-arena, .cdx-main');
-    if (!board || view.querySelector('#game-player-list') || view.classList.contains('ga-stage')) return;
+    if (!board || view.querySelector('#game-player-list') || (view.classList.contains('ga-stage') && view.querySelector('.ga-stage-controls'))) return;
     view.classList.add('ga-stage');
     const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
     if (!shell) return;

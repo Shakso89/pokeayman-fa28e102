@@ -9,15 +9,26 @@
 body > .ga-stage.vb-stage {
   position: fixed !important; inset: 0 !important; z-index: 2147482000 !important;
   width: 100vw !important; height: 100vh !important; height: 100dvh !important;
-  display: flex !important; flex-direction: column !important;
+  display: block !important;
   padding: 0 !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important;
-  background: transparent !important;
+  background: var(--ga-stage-bg, #0b1220) !important;
   overflow: hidden !important; color: var(--ga-stage-ink, #f8fafc) !important;
   font-family: inherit !important; touch-action: manipulation !important;
 }
+body > .ga-stage.vb-stage .ga-theme-backdrop {
+  position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;
+  z-index: 0 !important; pointer-events: none !important; overflow: hidden !important;
+}
+body > .ga-stage.vb-stage .ga-theme-backdrop[hidden] {
+  display: none !important;
+}
+body > .ga-stage.vb-stage .ga-theme-backdrop-svg {
+  width: 100% !important; height: 100% !important; display: block !important; object-fit: cover !important;
+  pointer-events: none !important;
+}
 body > .ga-stage.vb-stage .vb-shell,
 body > .ga-stage.vb-stage .ga-stage-shell {
-  width: 100% !important; max-width: 68rem !important; height: 100% !important; max-height: 100% !important;
+  width: 100% !important; max-width: 68rem !important; height: 100% !important; height: 100dvh !important; max-height: 100% !important;
   margin: 0 auto !important; border: 0 !important; border-radius: 0 !important;
   background: transparent !important; box-shadow: none !important;
   display: flex !important; flex-direction: column !important;
@@ -31,7 +42,9 @@ body > .ga-stage.vb-stage .ga-stage-header {
   border-bottom: 1px solid var(--ga-stage-line, rgba(255,255,255,.15)) !important;
   background: var(--ga-stage-header-bg, rgba(15, 23, 42, 0.7)) !important;
   backdrop-filter: blur(12px) !important;
-  z-index: 10 !important;
+  z-index: 20 !important;
+  overflow: visible !important;
+  position: relative !important;
 }
 body > .ga-stage.vb-stage .vb-arena {
   flex: 1 1 auto !important; min-height: 0 !important;
@@ -39,6 +52,8 @@ body > .ga-stage.vb-stage .vb-arena {
   display: flex !important; flex-direction: column !important; align-items: center !important;
   padding: clamp(0.75rem, 2vw, 1.5rem) 1rem !important;
   gap: 0.85rem !important; max-width: 52rem !important; width: 100% !important;
+  background: transparent !important;
+  position: relative !important; z-index: 1 !important;
 }
 body.ts-bright .vb-stage:not(.ga-stage) { background: radial-gradient(120% 90% at 50% 0%, #dbe7ff 0%, #f4f7ff 55%, #e8eeff 100%); color: #0f173a; }
 .vb-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .8rem 1rem; position: sticky; top: 0; z-index: 2; background: rgba(10, 16, 40, .55); backdrop-filter: blur(8px); }
