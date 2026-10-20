@@ -720,7 +720,15 @@
         btn.setAttribute('aria-checked', String(active));
       });
     });
-    document.querySelectorAll('body > .ga-stage').forEach(stage => window.gaApplyThemeToStage(stage, theme.id));
+    document.querySelectorAll('body > .ga-stage').forEach(stage => {
+      window.gaApplyThemeToStage(stage, theme.id);
+      stage.querySelectorAll('.ga-stage-theme-current').forEach(el => { el.textContent = theme.name; });
+      stage.querySelectorAll('.ga-stage-theme-popover [data-ga-theme-choice]').forEach(btn => {
+        const active = btn.dataset.gaThemeChoice === theme.id;
+        btn.classList.toggle('is-selected', active);
+        btn.setAttribute('aria-checked', String(active));
+      });
+    });
   };
 
   function renderThemeCardsMarkup(selectedId) {
@@ -921,6 +929,7 @@
           const card = event.target.closest('[data-ga-theme-choice]');
           if (!card) return;
           window.gaSetTheme(card.dataset.gaThemeChoice);
+          setPopoverOpen(false);
         });
         view.addEventListener('click', event => {
           if (!popover.hidden && !themeWrap.contains(event.target)) setPopoverOpen(false);
