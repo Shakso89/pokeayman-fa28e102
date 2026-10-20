@@ -18318,6 +18318,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       
       if (flipped.length === 2) {
         mismatchLocked = true;
+        grid._memoryLockAt = Date.now();
         setTimeout(runMemoryCheck, 380);
       }
     });
