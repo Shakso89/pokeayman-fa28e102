@@ -263,16 +263,22 @@ body > .ga-stage .ga-stage-header button.ga-stage-exit { background: var(--ga-st
 body > .ga-stage .ga-stage-header [hidden] { display: none !important; }
 .ga-stage-controls { display: flex; align-items: center; gap: .4rem; margin-left: auto; flex: 0 0 auto; }
 body > .ga-stage .ga-stage-header > div:not(.ga-stage-controls), body > .ga-stage .ga-stage-header > div:not(.ga-stage-controls) > div { background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
-body > .ga-stage .ga-stage-shell > :not(.ga-stage-header):not(.game-celebration-overlay) { flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important; background: var(--ga-stage-bg) !important; color: var(--ga-stage-ink); width: 100% !important; max-width: 1200px !important; margin: 0 auto !important; box-sizing: border-box !important; }
+body > .ga-stage .ga-stage-shell > :not(.ga-stage-header):not(.game-celebration-overlay):not(.ga-theme-backdrop):not(.cipher-lab-contestants) { flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; background: var(--ga-stage-bg) !important; color: var(--ga-stage-ink); width: 100% !important; max-width: none !important; margin: 0 !important; padding-left: max(1rem, calc((100% - 1180px) / 2)) !important; padding-right: max(1rem, calc((100% - 1180px) / 2)) !important; box-sizing: border-box !important; scrollbar-width: none !important; -ms-overflow-style: none !important; }
+body > .ga-stage .ga-stage-shell > :not(.ga-stage-header):not(.game-celebration-overlay):not(.ga-theme-backdrop)::-webkit-scrollbar,
+body > .ga-stage #hangman-game-body::-webkit-scrollbar,
+body > .ga-stage *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
+body > .ga-stage * { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+body > .ga-stage .cipher-lab-contestants { flex: 0 0 auto !important; overflow: visible !important; width: 100% !important; max-width: 1180px !important; margin: 0 auto !important; padding: 0.75rem 1rem 0.15rem !important; box-sizing: border-box !important; }
 body > .ga-stage .surprise-boxes-body { display: flex !important; flex-direction: column !important; overflow: hidden !important; padding: 1rem 1.5rem !important; }
 body > .ga-stage .game-player-hud-slot { flex: 0 0 auto !important; min-height: 0 !important; background: transparent !important; padding: 0 !important; width: 100% !important; }
-body > .ga-stage .game-player-hud { display: grid !important; grid-auto-flow: column !important; grid-auto-columns: minmax(0, 1fr) !important; justify-content: center !important; align-items: center !important; width: min(100%, 960px) !important; max-width: 960px !important; margin: 0 auto 0.75rem !important; gap: clamp(0.4rem, 1.2vw, 0.75rem) !important; flex: 0 0 auto !important; box-sizing: border-box !important; padding: 0 0.5rem !important; }
-body > .ga-stage .game-player-hud:has(> :only-child) { max-width: 320px !important; }
-body > .ga-stage .game-player-hud:has(> :nth-child(2):last-child) { max-width: 620px !important; }
-body > .ga-stage .game-player-hud:has(> :nth-child(3):last-child) { max-width: 840px !important; }
+body > .ga-stage .game-player-hud { display: grid !important; grid-auto-flow: column !important; grid-auto-columns: minmax(0, 1fr) !important; justify-content: center !important; align-items: stretch !important; width: min(100%, 960px) !important; max-width: 960px !important; margin: 0 auto 0.75rem !important; gap: clamp(0.45rem, 1.2vw, 0.8rem) !important; flex: 0 0 auto !important; box-sizing: border-box !important; padding: 0.15rem 0.5rem !important; }
+body > .ga-stage .game-player-hud:has(> :only-child) { max-width: 340px !important; }
+body > .ga-stage .game-player-hud:has(> :nth-child(2):last-child) { max-width: 640px !important; }
+body > .ga-stage .game-player-hud:has(> :nth-child(3):last-child) { max-width: 860px !important; }
 body > .ga-stage .game-player-hud:has(> :nth-child(4)) { max-width: 980px !important; }
-body > .ga-stage .game-player-card { position: relative !important; display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto !important; grid-template-rows: auto auto !important; align-items: center !important; gap: 0.15rem 0.65rem !important; min-height: 0 !important; height: 60px !important; max-height: 64px !important; padding: 0.45rem 0.85rem !important; box-sizing: border-box !important; background: var(--ga-stage-surface, #131c2e) !important; border: 1.5px solid var(--ga-stage-line, #344058) !important; border-radius: 12px !important; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important; transform: none !important; color: var(--ga-stage-ink, #f5f7ff) !important; overflow: hidden !important; transition: border-color .2s ease, box-shadow .2s ease, background .2s ease, transform .2s ease !important; }
-body > .ga-stage .game-player-card.is-active { border-color: var(--ga-stage-yellow, #ffcb05) !important; background: linear-gradient(135deg, rgba(255, 203, 5, 0.12), var(--ga-stage-surface, #131c2e)) !important; box-shadow: 0 0 0 1.5px rgba(255, 203, 5, 0.35), 0 4px 18px rgba(255, 203, 5, 0.16) !important; }
+body > .ga-stage .game-player-card { position: relative !important; display: grid !important; grid-template-columns: auto minmax(0, 1fr) auto !important; grid-template-rows: auto auto !important; align-items: center !important; gap: 0.15rem 0.65rem !important; min-height: 62px !important; height: auto !important; max-height: none !important; padding: 0.45rem 0.85rem !important; box-sizing: border-box !important; background: var(--ga-stage-surface, #131c2e) !important; border: 2px solid var(--ga-stage-line, #344058) !important; border-radius: 14px !important; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important; transform: none !important; color: var(--ga-stage-ink, #f5f7ff) !important; overflow: visible !important; transition: border-color .2s ease, box-shadow .2s ease, background .2s ease, transform .2s ease !important; }
+body > .ga-stage .game-player-card:has(.game-turn-timer:not(.hidden)) { grid-template-rows: auto auto auto !important; min-height: 88px !important; padding: 0.48rem 0.85rem 0.52rem !important; }
+body > .ga-stage .game-player-card.is-active { border-color: var(--ga-stage-yellow, #ffcb05) !important; background: linear-gradient(135deg, rgba(255, 203, 5, 0.12), var(--ga-stage-surface, #131c2e)) !important; box-shadow: 0 0 0 2px rgba(255, 203, 5, 0.35), 0 6px 18px rgba(255, 203, 5, 0.16) !important; }
 body > .ga-stage .game-player-card::before, body > .ga-stage .game-player-card::after { display: none !important; }
 body > .ga-stage .game-player-avatar-wrap { grid-column: 1 !important; grid-row: 1 / 3 !important; align-self: center !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 44px !important; height: 44px !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; border-radius: 50% !important; background: rgba(255, 255, 255, 0.06) !important; border: 2px solid rgba(255, 255, 255, 0.14) !important; flex-shrink: 0 !important; overflow: visible !important; transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease !important; }
 body > .ga-stage .game-player-card.is-active .game-player-avatar-wrap { border-color: #ffcb05 !important; background: rgba(255, 203, 5, 0.14) !important; box-shadow: 0 0 10px rgba(255, 203, 5, 0.4) !important; }
@@ -491,11 +497,142 @@ body.ts-bright > .ga-stage .game-player-card.answer-wrong .game-player-turn:empt
 html[data-theme="light"] .ga-stage .game-player-card.answer-wrong .game-player-turn:empty::before {
   color: #b91c1c !important;
 }
-body > .ga-stage .game-turn-timer { position: absolute !important; left: 0 !important; right: 0 !important; bottom: 0 !important; height: 4px !important; margin: 0 !important; padding: 0 !important; width: 100% !important; border-radius: 0 0 12px 12px !important; overflow: hidden !important; z-index: 5 !important; }
+/* ==========================================================================
+   Animated Burning Bomb Fuse Turn Timer (Inside Active Player Score Card)
+   ========================================================================== */
+@keyframes gaBombWobble {
+  0%, 100% { transform: translateY(-50%) rotate(-6deg) scale(1); }
+  50% { transform: translateY(-50%) rotate(8deg) scale(1.08); }
+}
+@keyframes gaBombPanic {
+  0%, 100% { transform: translateY(-50%) rotate(-12deg) scale(1.12); }
+  50% { transform: translateY(-50%) rotate(12deg) scale(1.22); }
+}
+@keyframes gaFuseSparkle {
+  0% { transform: translateY(-50%) scale(0.85) rotate(0deg); filter: brightness(1); }
+  100% { transform: translateY(-50%) scale(1.25) rotate(25deg); filter: brightness(1.35); }
+}
+@keyframes gaTimerPulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.08); }
+}
+body > .ga-stage .game-turn-timer {
+  grid-column: 1 / -1 !important;
+  grid-row: 3 !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  height: 26px !important;
+  width: 100% !important;
+  margin: 0.28rem 0 0 !important;
+  padding: 3px 6px 3px 32px !important;
+  border-radius: 999px !important;
+  background: #0f172a !important;
+  border: 2px solid rgba(250, 204, 21, 0.65) !important;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.7), 0 3px 8px rgba(0, 0, 0, 0.28) !important;
+  overflow: visible !important;
+  z-index: 6 !important;
+}
 body > .ga-stage .game-turn-timer.hidden { display: none !important; }
-body > .ga-stage .game-turn-timer .game-turn-timer-track { width: 100% !important; height: 100% !important; background: rgba(255, 255, 255, 0.1) !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; }
-body > .ga-stage .game-turn-timer .game-turn-timer-fill { height: 100% !important; border-radius: 0 !important; background: linear-gradient(90deg, #ffcb05, #f59e0b) !important; box-shadow: 0 0 8px rgba(255, 203, 5, 0.7) !important; }
-body > .ga-stage .game-turn-timer .game-turn-timer-number { position: absolute !important; right: 6px !important; bottom: 6px !important; font-size: 0.62rem !important; font-weight: 800 !important; color: #ffcb05 !important; background: rgba(10, 15, 30, 0.85) !important; padding: 1px 5px !important; border-radius: 4px !important; border: 1px solid rgba(255, 203, 5, 0.3) !important; z-index: 6 !important; }
+body > .ga-stage .game-turn-timer::before {
+  content: '💣' !important;
+  position: absolute !important;
+  left: -3px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 35% 30%, #475569, #0f172a 75%) !important;
+  border: 2.5px solid #facc15 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.45), 0 0 10px rgba(250, 204, 21, 0.45) !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: 0.95rem !important;
+  line-height: 1 !important;
+  z-index: 8 !important;
+  animation: gaBombWobble 0.85s ease-in-out infinite !important;
+}
+body > .ga-stage .game-turn-timer.is-danger {
+  border-color: #ef4444 !important;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.75), 0 0 14px rgba(239, 68, 68, 0.55) !important;
+}
+body > .ga-stage .game-turn-timer.is-danger::before {
+  border-color: #ef4444 !important;
+  background: radial-gradient(circle at 35% 30%, #dc2626, #450a0a 78%) !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.9) !important;
+  animation: gaBombPanic 0.26s ease-in-out infinite !important;
+}
+body > .ga-stage .game-turn-timer .game-turn-timer-track {
+  position: relative !important;
+  flex: 1 1 auto !important;
+  width: auto !important;
+  height: 10px !important;
+  background: repeating-linear-gradient(60deg, #1e293b 0 5px, #334155 5px 10px) !important;
+  border: 1.5px solid #090d16 !important;
+  border-radius: 999px !important;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.65) !important;
+  overflow: visible !important;
+}
+body > .ga-stage .game-turn-timer .game-turn-timer-fill {
+  position: relative !important;
+  display: block !important;
+  height: 100% !important;
+  border-radius: 999px !important;
+  background:
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.28) 0 5px, transparent 5px 10px),
+    linear-gradient(90deg, #22c55e 0%, #eab308 58%, #f97316 100%) !important;
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.75) !important;
+  overflow: visible !important;
+  transition: width 0.14s linear !important;
+}
+body > .ga-stage .game-turn-timer.is-danger .game-turn-timer-fill {
+  background:
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.35) 0 5px, transparent 5px 10px),
+    linear-gradient(90deg, #ef4444 0%, #f97316 65%, #fde047 100%) !important;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.9) !important;
+}
+body > .ga-stage .game-turn-timer .game-turn-timer-fill::after {
+  content: '' !important;
+  position: absolute !important;
+  right: -8px !important;
+  top: 50% !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle, #ffffff 0%, #fef08a 34%, #f97316 68%, rgba(239, 68, 68, 0) 100%) !important;
+  box-shadow: 0 0 10px 2px #facc15, 0 0 18px 5px rgba(249, 115, 22, 0.8) !important;
+  transform: translateY(-50%) !important;
+  animation: gaFuseSparkle 0.2s ease-in-out infinite alternate !important;
+  pointer-events: none !important;
+  z-index: 9 !important;
+}
+body > .ga-stage .game-turn-timer .game-turn-timer-number {
+  position: static !important;
+  right: auto !important;
+  bottom: auto !important;
+  flex: 0 0 auto !important;
+  min-width: 2.9rem !important;
+  font: 900 0.72rem/1.25 'Outfit', sans-serif !important;
+  color: #fde047 !important;
+  background: #090d16 !important;
+  padding: 1px 7px !important;
+  border-radius: 999px !important;
+  border: 1.5px solid rgba(250, 204, 21, 0.55) !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  z-index: 7 !important;
+}
+body > .ga-stage .game-turn-timer.is-danger .game-turn-timer-number {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #fecaca !important;
+  animation: gaTimerPulse 0.35s ease-in-out infinite alternate !important;
+}
 body > .ga-stage #baam-board { flex: 1 1 auto !important; min-height: 0 !important; }
 body > .ga-stage .memory-game-body { min-height: 0 !important; }
 /* Hangman Arcade Stage Layout & Keyboard */
@@ -516,12 +653,13 @@ body > .ga-stage #hangman-game-body {
   gap: clamp(0.75rem, 2vw, 1.5rem) !important;
   align-items: center !important;
   justify-content: center !important;
-  width: min(100%, 1040px) !important;
-  max-width: 1040px !important;
-  margin: 0 auto !important;
-  padding: clamp(0.5rem, 1.5vh, 1.25rem) 1rem !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: clamp(0.5rem, 1.5vh, 1.25rem) max(1rem, calc((100% - 1040px) / 2)) !important;
   box-sizing: border-box !important;
   overflow-y: auto !important;
+  scrollbar-width: none !important;
 }
 body > .ga-stage #hangman-drawing-panel {
   display: flex !important;
@@ -846,7 +984,8 @@ html[data-theme="light"] .ga-stage #hangman-drawing-panel > p:last-child {
 @media (max-width: 860px) {
   body > .ga-stage .game-player-hud { gap: 0.45rem !important; margin-bottom: 0.5rem !important; padding: 0 0.4rem !important; }
   body > .ga-stage .game-player-hud:has(> :nth-child(4)) { grid-auto-flow: row !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; max-width: 580px !important; }
-  body > .ga-stage .game-player-card { height: 54px !important; max-height: 58px !important; padding: 0.38rem 0.65rem !important; gap: 0.1rem 0.5rem !important; border-radius: 10px !important; }
+  body > .ga-stage .game-player-card { min-height: 54px !important; height: auto !important; max-height: none !important; padding: 0.38rem 0.65rem !important; gap: 0.1rem 0.5rem !important; border-radius: 10px !important; }
+  body > .ga-stage .game-player-card:has(.game-turn-timer:not(.hidden)) { min-height: 82px !important; padding: 0.4rem 0.65rem 0.48rem !important; }
   body > .ga-stage .game-player-avatar-wrap { width: 38px !important; height: 38px !important; }
   body > .ga-stage .game-player-avatar { width: 30px !important; height: 30px !important; max-width: 30px !important; max-height: 30px !important; }
   body > .ga-stage .game-player-name { font-size: 0.85rem !important; }
@@ -854,8 +993,8 @@ html[data-theme="light"] .ga-stage #hangman-drawing-panel > p:last-child {
   body > .ga-stage #hangman-game-body {
     grid-template-columns: 1fr !important;
     gap: 0.65rem !important;
-    padding: 0.5rem 0.65rem !important;
-    max-width: 560px !important;
+    padding: 0.5rem max(0.65rem, calc((100% - 560px) / 2)) !important;
+    max-width: none !important;
   }
   body > .ga-stage #hangman-drawing-panel {
     padding: 0.55rem 0.85rem !important;
@@ -887,7 +1026,8 @@ html[data-theme="light"] .ga-stage #hangman-drawing-panel > p:last-child {
   body > .ga-stage .surprise-boxes-body { padding: .45rem .5rem !important; }
   body > .ga-stage .game-player-hud { gap: 0.35rem !important; margin-bottom: 0.35rem !important; padding: 0 0.25rem !important; width: 100% !important; }
   body > .ga-stage .game-player-hud:has(> :nth-child(3)) { grid-auto-flow: row !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; max-width: 480px !important; }
-  body > .ga-stage .game-player-card { height: 48px !important; max-height: 50px !important; padding: 0.25rem 0.5rem !important; gap: 0.05rem 0.4rem !important; border-radius: 8px !important; border-width: 1px !important; }
+  body > .ga-stage .game-player-card { min-height: 48px !important; height: auto !important; max-height: none !important; padding: 0.25rem 0.5rem !important; gap: 0.05rem 0.4rem !important; border-radius: 8px !important; border-width: 1.5px !important; }
+  body > .ga-stage .game-player-card:has(.game-turn-timer:not(.hidden)) { min-height: 76px !important; padding: 0.3rem 0.5rem 0.42rem !important; }
   body > .ga-stage .game-player-avatar-wrap { width: 32px !important; height: 32px !important; border-width: 1.5px !important; }
   body > .ga-stage .game-player-avatar { width: 25px !important; height: 25px !important; max-width: 25px !important; max-height: 25px !important; }
   body > .ga-stage .game-player-name { font-size: 0.78rem !important; }
@@ -1136,12 +1276,16 @@ html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-sh
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .match-game-shell,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .memory-game-shell,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .cipher-lab-shell,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .cipher-lab-panel,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .hangman-game-shell,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .surprise-boxes-game {
   background: transparent !important;
   background-image: none !important;
+  border: none !important;
   border-color: transparent !important;
   box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .cipher-lab-shell::before {
   display: none !important;
@@ -1150,6 +1294,139 @@ html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-wr
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-shell {
   position: relative !important;
   z-index: 1 !important;
+}
+
+/* Open-Stage Unscramble Layout & High-Contrast Badges */
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .cipher-lab-panel {
+  padding: 0.35rem 0 0.75rem !important;
+  gap: 0.75rem !important;
+}
+html body > .ga-stage .cipher-lab-panel > p:first-child {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  margin: 0 auto 0.15rem !important;
+  padding: 0.38rem 1rem !important;
+  border-radius: 999px !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 0.82rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
+  color: #fef08a !important;
+  border: 2.5px solid #475569 !important;
+  box-shadow: 0 4px 0 #020617, 0 8px 18px rgba(0, 0, 0, 0.28) !important;
+}
+html body > .ga-stage .cipher-lab-panel > p:first-child #scramble-win-score {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 1.8rem !important;
+  padding: 0.1rem 0.48rem !important;
+  border-radius: 999px !important;
+  background: #facc15 !important;
+  color: #1c1917 !important;
+  font-weight: 900 !important;
+  box-shadow: inset 0 1px 0 #fef9c3 !important;
+}
+html body > .ga-stage #scramble-practice-hint:not(.hidden) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  margin: 0.15rem auto !important;
+  padding: 0.65rem 1.2rem !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, #fffdf9 0%, #fef3c7 100%) !important;
+  border: 3px solid #d97706 !important;
+  box-shadow: inset 0 2px 0 #ffffff, 0 5px 0 #92400e, 0 12px 24px rgba(0, 0, 0, 0.3) !important;
+}
+html body > .ga-stage #scramble-practice-hint #scramble-practice-word {
+  color: #78350f !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 0.92rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage #scramble-practice-hint #scramble-practice-word span {
+  display: inline-block !important;
+  margin-left: 0.3rem !important;
+  padding: 0.14rem 0.65rem !important;
+  border-radius: 999px !important;
+  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%) !important;
+  color: #ffffff !important;
+  border: 2px solid #14532d !important;
+  box-shadow: 0 2px 0 #14532d !important;
+  letter-spacing: 0.08em !important;
+}
+html body > .ga-stage #scramble-practice-hint #scramble-practice-image {
+  background: #ffffff !important;
+  border: 3px solid #b45309 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* Tactile 3D Arcade Buttons for Unscramble (Reset vs Next Word vs Disabled) */
+html body > .ga-stage .cipher-lab-actions {
+  gap: 0.85rem !important;
+  margin-top: 0.35rem !important;
+}
+html body > .ga-stage .cipher-lab-reset,
+html body > .ga-stage .cipher-lab-next {
+  min-width: 142px !important;
+  padding: 0.68rem 1.45rem !important;
+  border-radius: 14px !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 0.92rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.14s ease, filter 0.14s ease !important;
+}
+html body > .ga-stage .cipher-lab-reset {
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
+  color: #1e293b !important;
+  border: 3px solid #1e293b !important;
+  box-shadow: inset 0 2px 0 #ffffff, 0 5px 0 #0f172a, 0 10px 18px rgba(0, 0, 0, 0.25) !important;
+}
+html body > .ga-stage .cipher-lab-reset:hover:not(:disabled) {
+  background: linear-gradient(180deg, #fef08a 0%, #facc15 100%) !important;
+  color: #1c1917 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: inset 0 2px 0 #fef9c3, 0 7px 0 #0f172a, 0 12px 22px rgba(0, 0, 0, 0.3) !important;
+}
+html body > .ga-stage .cipher-lab-reset:active:not(:disabled) {
+  transform: translateY(3px) !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 2px 0 #0f172a !important;
+}
+html body > .ga-stage .cipher-lab-next:not(:disabled) {
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%) !important;
+  color: #ffffff !important;
+  border: 3px solid #052e16 !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 5px 0 #052e16, 0 10px 22px rgba(22, 163, 74, 0.4) !important;
+  text-shadow: 0 1px 2px rgba(5, 46, 22, 0.6) !important;
+}
+html body > .ga-stage .cipher-lab-next:hover:not(:disabled) {
+  background: linear-gradient(180deg, #86efac 0%, #22c55e 100%) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.65), 0 7px 0 #052e16, 0 14px 26px rgba(22, 163, 74, 0.5) !important;
+}
+html body > .ga-stage .cipher-lab-next:active:not(:disabled) {
+  transform: translateY(3px) !important;
+  box-shadow: 0 2px 0 #052e16 !important;
+}
+html body > .ga-stage .cipher-lab-next:disabled {
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%) !important;
+  color: #e2e8f0 !important;
+  border: 3px solid #334155 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 0 #1e293b !important;
+  opacity: 0.72 !important;
+  cursor: not-allowed !important;
+  text-shadow: none !important;
 }
 
 /* ==========================================================================
@@ -1223,7 +1500,6 @@ html body > .ga-stage[data-ga-theme="classroom"] .game-player-card.is-active .ga
   color: #fde047 !important;
 }
 /* Classroom Chalkboard Centerpiece Panels (3D Mitered Oak Frame + Slate Dust Texture) */
-html body > .ga-stage[data-ga-theme="classroom"] .cipher-lab-panel,
 html body > .ga-stage[data-ga-theme="classroom"] #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="classroom"] #hangman-content,
 html body > .ga-stage[data-ga-theme="classroom"] #find-me-box,
@@ -1297,13 +1573,11 @@ html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer .scramble-answ
   color: #1c1917 !important;
   border-color: #292524 !important;
 }
-html body > .ga-stage[data-ga-theme="classroom"] .cipher-lab-reset,
-html body > .ga-stage[data-ga-theme="classroom"] .cipher-lab-next {
-  background: linear-gradient(180deg, #fde047, #eab308) !important;
-  color: #1c1917 !important;
-  border: 2.5px solid #292524 !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 0 #292524 !important;
+html body > .ga-stage[data-ga-theme="classroom"] .cipher-lab-panel > p:first-child {
+  background: linear-gradient(180deg, #2a563d 0%, #1d3f2c 100%) !important;
+  color: #fffbeb !important;
+  border-color: #b5804c !important;
+  box-shadow: 0 4px 0 #4a2c12, 0 8px 18px rgba(45, 28, 12, 0.3) !important;
 }
 /* Classroom Hangman */
 html body > .ga-stage[data-ga-theme="classroom"] #hangman-word {
@@ -1475,7 +1749,6 @@ html body > .ga-stage[data-ga-theme="jungle"] .game-player-card.is-active .game-
   color: #4ade80 !important;
 }
 /* Jungle Temple Centerpiece Panels (Carved Gold & Timber Sanctuary Frame) */
-html body > .ga-stage[data-ga-theme="jungle"] .cipher-lab-panel,
 html body > .ga-stage[data-ga-theme="jungle"] #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="jungle"] #hangman-content,
 html body > .ga-stage[data-ga-theme="jungle"] #find-me-box,
@@ -1547,13 +1820,11 @@ html body > .ga-stage[data-ga-theme="jungle"] #scramble-answer .scramble-answer-
   background: #fef08a !important;
   color: #2b1503 !important;
 }
-html body > .ga-stage[data-ga-theme="jungle"] .cipher-lab-reset,
-html body > .ga-stage[data-ga-theme="jungle"] .cipher-lab-next {
-  background: linear-gradient(180deg, #4ade80, #16a34a) !important;
-  color: #052e16 !important;
-  border: 2.5px solid #052e16 !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 0 #052e16 !important;
+html body > .ga-stage[data-ga-theme="jungle"] .cipher-lab-panel > p:first-child {
+  background: linear-gradient(180deg, #5c340e 0%, #3b1f06 100%) !important;
+  color: #fef3c7 !important;
+  border-color: #d97706 !important;
+  box-shadow: 0 4px 0 #231102, 0 8px 18px rgba(0, 0, 0, 0.45) !important;
 }
 /* Jungle Hangman */
 html body > .ga-stage[data-ga-theme="jungle"] #hangman-word {
@@ -1722,7 +1993,6 @@ html body > .ga-stage[data-ga-theme="toybox"] .game-player-card.is-active .game-
   color: #e11d48 !important;
 }
 /* Toybox Studio Playmat Centerpiece Panels */
-html body > .ga-stage[data-ga-theme="toybox"] .cipher-lab-panel,
 html body > .ga-stage[data-ga-theme="toybox"] #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="toybox"] #hangman-content,
 html body > .ga-stage[data-ga-theme="toybox"] #find-me-box,
@@ -1745,7 +2015,12 @@ html body > .ga-stage[data-ga-theme="toybox"] #baam-board {
   padding: clamp(0.95rem, 2vw, 1.55rem) !important;
   color: #1e1b4b !important;
 }
-html body > .ga-stage[data-ga-theme="toybox"] .cipher-lab-panel > p:first-child,
+html body > .ga-stage[data-ga-theme="toybox"] .cipher-lab-panel > p:first-child {
+  background: linear-gradient(180deg, #ffffff 0%, #eef2ff 100%) !important;
+  color: #312e81 !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 4px 0 #3730a3, 0 8px 18px rgba(15, 12, 48, 0.4) !important;
+}
 html body > .ga-stage[data-ga-theme="toybox"] #find-me-progress {
   color: #4338ca !important;
 }
@@ -1908,3 +2183,190 @@ html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-question-heade
 html body[data-ga-active-theme="toybox"] .baam-stage-portal .baam-question-player {
   color: #1e1b4b !important;
 }
+
+/* ==========================================================================
+   UNIVERSAL HIGH-SPECIFICITY ANSWER FEEDBACK JUICE & FIND ME CONTROLS
+   (Never overridden by theme surfaces — guarantees instant visual feedback)
+   ========================================================================== */
+@keyframes gaFeedbackCorrectPop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.12) translateY(-3px); }
+  100% { transform: scale(1.04) translateY(-1px); }
+}
+@keyframes gaFeedbackWrongShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px) rotate(-2deg); }
+  40% { transform: translateX(6px) rotate(2deg); }
+  60% { transform: translateX(-4px) rotate(-1deg); }
+  80% { transform: translateX(4px) rotate(1deg); }
+}
+
+/* Find Me: Progress Pill, Difficulty Toggle Buttons & Feedback Banner */
+html body > .ga-stage[data-ga-theme] #find-me-progress {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0.35rem 0.9rem !important;
+  border-radius: 999px !important;
+  background: rgba(15, 23, 42, 0.72) !important;
+  color: #fef08a !important;
+  border: 2px solid rgba(250, 204, 21, 0.45) !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 900 !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.04em !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #find-me-progress {
+  background: #e0e7ff !important;
+  color: #312e81 !important;
+  border-color: #6366f1 !important;
+}
+html body > .ga-stage[data-ga-theme] .find-me-difficulty-btn {
+  padding: 0.36rem 0.82rem !important;
+  border-radius: 999px !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 900 !important;
+  font-size: 0.76rem !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%) !important;
+  color: #1e293b !important;
+  border: 2.5px solid #1e293b !important;
+  box-shadow: 0 3px 0 #0f172a !important;
+  transition: transform 0.14s ease, box-shadow 0.14s ease !important;
+}
+html body > .ga-stage[data-ga-theme] .find-me-difficulty-btn[aria-pressed="true"],
+html body > .ga-stage[data-ga-theme] .find-me-difficulty-btn.is-active {
+  background: linear-gradient(180deg, #fde047 0%, #eab308 100%) !important;
+  color: #1c1917 !important;
+  border-color: #713f12 !important;
+  box-shadow: 0 3px 0 #713f12, 0 0 12px rgba(250, 204, 21, 0.45) !important;
+}
+html body > .ga-stage[data-ga-theme] #find-me-feedback:not(:empty) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0.25rem auto 0 !important;
+  padding: 0.38rem 1.1rem !important;
+  border-radius: 999px !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 2px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28) !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 900 !important;
+  font-size: 0.9rem !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Find Me: Word Option Correct / Wrong / Hint States (Overrides all themes) */
+html body > .ga-stage[data-ga-theme] .find-me-word.find-me-word--correct,
+html body > .ga-stage .find-me-word.find-me-word--correct {
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%) !important;
+  color: #ffffff !important;
+  border: 3px solid #fef08a !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.55),
+    0 0 0 3px #15803d,
+    0 5px 0 #052e16,
+    0 0 24px rgba(74, 222, 128, 0.75) !important;
+  text-shadow: 0 1px 2px rgba(5, 46, 22, 0.75) !important;
+  animation: gaFeedbackCorrectPop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+  z-index: 5 !important;
+}
+html body > .ga-stage[data-ga-theme] .find-me-word.find-me-word--wrong,
+html body > .ga-stage .find-me-word.find-me-word--wrong {
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 100%) !important;
+  color: #ffffff !important;
+  border: 3px solid #7f1d1d !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    0 4px 0 #450a0a,
+    0 0 20px rgba(239, 68, 68, 0.65) !important;
+  text-shadow: 0 1px 2px rgba(69, 10, 10, 0.75) !important;
+  text-decoration: line-through !important;
+  animation: gaFeedbackWrongShake 0.38s ease !important;
+  z-index: 4 !important;
+}
+html body > .ga-stage[data-ga-theme] .find-me-word.find-me-word--hint,
+html body > .ga-stage .find-me-word.find-me-word--hint {
+  background: linear-gradient(180deg, #fef08a 0%, #f59e0b 100%) !important;
+  color: #1c1917 !important;
+  border: 3px solid #ffffff !important;
+  box-shadow:
+    0 0 0 3px #d97706,
+    0 5px 0 #78350f,
+    0 0 26px rgba(250, 204, 21, 0.85) !important;
+  animation: gaFeedbackCorrectPop 0.45s ease infinite alternate !important;
+  z-index: 5 !important;
+}
+
+/* Unscramble: Answer Slots Correct / Wrong Result Burst (Overrides all themes) */
+html body > .ga-stage[data-ga-theme] #scramble-answer.scramble-result-correct .scramble-answer-slot.is-filled,
+html body > .ga-stage #scramble-answer.scramble-result-correct .scramble-answer-slot.is-filled {
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%) !important;
+  color: #ffffff !important;
+  border-color: #fef08a !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    0 5px 0 #052e16,
+    0 0 20px rgba(74, 222, 128, 0.65) !important;
+  text-shadow: 0 1px 2px rgba(5, 46, 22, 0.7) !important;
+}
+html body > .ga-stage[data-ga-theme] #scramble-answer.scramble-result-correct .scramble-answer-slot::after,
+html body > .ga-stage #scramble-answer.scramble-result-correct .scramble-answer-slot::after {
+  background: rgba(255, 255, 255, 0.75) !important;
+}
+html body > .ga-stage[data-ga-theme] #scramble-answer.scramble-result-wrong .scramble-answer-slot.is-filled,
+html body > .ga-stage #scramble-answer.scramble-result-wrong .scramble-answer-slot.is-filled {
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 100%) !important;
+  color: #ffffff !important;
+  border-color: #7f1d1d !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    0 5px 0 #450a0a,
+    0 0 20px rgba(239, 68, 68, 0.6) !important;
+  text-shadow: 0 1px 2px rgba(69, 10, 10, 0.7) !important;
+}
+html body > .ga-stage[data-ga-theme] #scramble-answer.scramble-result-wrong .scramble-answer-slot::after,
+html body > .ga-stage #scramble-answer.scramble-result-wrong .scramble-answer-slot::after {
+  background: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Match Words: Tile Correct / Matched / Wrong States (Overrides all themes) */
+html body > .ga-stage[data-ga-theme] .match-tile.is-correct,
+html body > .ga-stage[data-ga-theme] .match-tile.is-matched {
+  background: linear-gradient(180deg, #dcfce7 0%, #4ade80 100%) !important;
+  color: #052e16 !important;
+  border-color: #16a34a !important;
+  box-shadow: inset 0 2px 0 #ffffff, 0 5px 0 #15803d, 0 0 20px rgba(74, 222, 128, 0.55) !important;
+}
+html body > .ga-stage[data-ga-theme] .match-tile.is-wrong {
+  background: linear-gradient(180deg, #fee2e2 0%, #f87171 100%) !important;
+  color: #450a0a !important;
+  border-color: #dc2626 !important;
+  box-shadow: inset 0 2px 0 #ffffff, 0 5px 0 #991b1b, 0 0 20px rgba(239, 68, 68, 0.55) !important;
+  animation: gaFeedbackWrongShake 0.38s ease !important;
+}
+
+/* Hangman: Keyboard Letter Correct / Wrong States (Overrides all themes) */
+html body > .ga-stage[data-ga-theme] .hangman-letter.is-correct {
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%) !important;
+  color: #ffffff !important;
+  border: 2.5px solid #052e16 !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 3px 0 #052e16 !important;
+}
+html body > .ga-stage[data-ga-theme] .hangman-letter.is-correct .letter-char {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+html body > .ga-stage[data-ga-theme] .hangman-letter.is-wrong {
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 100%) !important;
+  color: #ffffff !important;
+  border: 2.5px solid #7f1d1d !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 0 #450a0a !important;
+  opacity: 0.78 !important;
+}
+html body > .ga-stage[data-ga-theme] .hangman-letter.is-wrong .letter-char {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+

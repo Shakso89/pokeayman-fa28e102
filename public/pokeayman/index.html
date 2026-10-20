@@ -17115,6 +17115,11 @@ function startPlayerTurnTimer(modal, seconds) {
     const remaining = Math.ceil(modal._playerTimerRemaining[activeIndex] || 0);
     const configuredSeconds = Math.max(1, Number(seconds));
     const percent = Math.max(0, Math.min(100, (modal._playerTimerRemaining[activeIndex] / configuredSeconds) * 100));
+    if (timer) {
+      const isDanger = percent <= 25 || (remaining > 0 && remaining <= 5);
+      timer.classList.toggle('is-danger', isDanger);
+      timer.classList.toggle('is-warn', !isDanger && percent <= 55);
+    }
     if (countdown) {
       countdown.textContent = `⏱ ${remaining}s`;
       countdown.classList.remove('countdown-tick');
