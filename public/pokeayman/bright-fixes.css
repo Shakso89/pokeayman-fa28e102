@@ -441,9 +441,9 @@ html body.ts-bright #class-subtab-quiz :is(#ongoing-quiz-list, #quiz-history-lis
   #pokemon-modal,
   #contact-pricing-modal,
   #classmate-profile-modal,
-  .fixed.inset-0,
-  [class*="fixed inset-0"],
-  [class*="fixed"][class*="inset-0"]
+  .fixed.inset-0:not(#home-screen):not(#home-screen *),
+  [class*="fixed inset-0"]:not(#home-screen):not(#home-screen *),
+  [class*="fixed"][class*="inset-0"]:not(#home-screen):not(#home-screen *)
 ) {
   background: rgba(3, 8, 20, 0.72) !important;
   background-color: rgba(3, 8, 20, 0.72) !important;
@@ -472,15 +472,40 @@ html body.ts-bright :is(
   #pokemon-modal,
   #contact-pricing-modal,
   #classmate-profile-modal,
-  .fixed.inset-0,
-  [class*="fixed inset-0"],
-  [class*="fixed"][class*="inset-0"]
+  .fixed.inset-0:not(#home-screen):not(#home-screen *),
+  [class*="fixed inset-0"]:not(#home-screen):not(#home-screen *),
+  [class*="fixed"][class*="inset-0"]:not(#home-screen):not(#home-screen *)
 ) {
   background: rgba(3, 8, 20, 0.72) !important;
   background-color: rgba(3, 8, 20, 0.72) !important;
   background-image: none !important;
   backdrop-filter: blur(8px) saturate(1.1) !important;
   -webkit-backdrop-filter: blur(8px) saturate(1.1) !important;
+}
+
+/* Home page must NEVER have a white overlay or backdrop blur in bright mode */
+#home-screen,
+#home-screen.home-showcase,
+html body.ts-bright #home-screen,
+html body.ts-bright #home-screen.home-showcase {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: var(--home-night, #030407) !important;
+  background-image:
+    radial-gradient(ellipse at 12% 18%, rgba(50,104,178,.24), transparent 45%),
+    radial-gradient(ellipse at 88% 28%, rgba(239,51,64,.09), transparent 42%),
+    linear-gradient(90deg, transparent 49.8%, rgba(255,255,255,.025) 50%, transparent 50.2%),
+    linear-gradient(0deg, transparent 49.8%, rgba(255,255,255,.02) 50%, transparent 50.2%),
+    linear-gradient(180deg, #0a1020 0%, #030407 62%, #060914 100%) !important;
+  background-size: auto, auto, 120px 120px, 120px 120px, auto !important;
+  background-position: center, center, center, center, center !important;
+  background-attachment: fixed, fixed, fixed, fixed, fixed !important;
+}
+
+#home-screen :not(.pk-login-overlay):not(.pk-login-overlay *),
+html body.ts-bright #home-screen :not(.pk-login-overlay):not(.pk-login-overlay *) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* Confetti, bursts, and particle layers must remain transparent */
