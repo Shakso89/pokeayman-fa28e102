@@ -18080,41 +18080,25 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
         filter: brightness(1);
       }
       40% {
-        transform: scale(1.1) translateY(-6px);
-        filter: brightness(1.25) drop-shadow(0 0 20px rgba(74, 222, 128, 0.95));
+        transform: scale(1.08) translateY(-4px);
+        filter: brightness(1.25) drop-shadow(0 0 18px rgba(74, 222, 128, 0.95));
       }
       100% {
-        transform: scale(1.04) translateY(-2px);
-        filter: brightness(1.18) drop-shadow(0 0 14px rgba(74, 222, 128, 0.8));
-      }
-    }
-    @keyframes cardVanishDisappear {
-      0% {
-        transform: scale(1.04) rotate(0deg);
-        opacity: 1;
-        filter: brightness(1.3) drop-shadow(0 0 20px rgba(74, 222, 128, 0.9));
-      }
-      35% {
-        transform: scale(1.12) rotate(4deg);
-        opacity: 0.9;
-      }
-      100% {
-        transform: scale(0.05) rotate(-16deg);
-        opacity: 0;
-        filter: brightness(2) blur(6px);
+        transform: scale(1.03) translateY(-1px);
+        filter: brightness(1.15) drop-shadow(0 0 12px rgba(74, 222, 128, 0.8));
       }
     }
     @keyframes cardMismatchWobble {
-      0%, 100% { transform: rotateY(180deg) translateX(0) rotateZ(0deg); }
-      20% { transform: rotateY(180deg) translateX(-7px) rotateZ(-2.5deg); }
-      40% { transform: rotateY(180deg) translateX(7px) rotateZ(2.5deg); }
-      60% { transform: rotateY(180deg) translateX(-4px) rotateZ(-1.5deg); }
-      80% { transform: rotateY(180deg) translateX(4px) rotateZ(1.5deg); }
+      0%, 100% { transform: rotateY(180deg) translateX(0); }
+      20% { transform: rotateY(180deg) translateX(-6px); }
+      40% { transform: rotateY(180deg) translateX(6px); }
+      60% { transform: rotateY(180deg) translateX(-3px); }
+      80% { transform: rotateY(180deg) translateX(3px); }
     }
     
     .memory-card {
-      perspective: 1200px;
-      -webkit-perspective: 1200px;
+      perspective: 1000px;
+      -webkit-perspective: 1000px;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
@@ -18122,7 +18106,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       position: relative;
       border-radius: 14px;
       overflow: visible !important;
-      transition: transform 0.15s ease-out;
+      transition: transform 0.12s ease-out;
     }
     .memory-card:active:not(.memory-card-matched):not(.memory-card-disappeared) {
       transform: scale(0.96);
@@ -18132,14 +18116,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       transform: none !important;
     }
     .memory-card.memory-card-mismatch .memory-card-inner {
-      animation: cardMismatchWobble 0.38s ease forwards;
+      animation: cardMismatchWobble 0.35s ease forwards;
     }
     .memory-card.memory-card-matched {
-      animation: cardMatchBurst 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-      pointer-events: none !important;
-    }
-    .memory-card.memory-card-disappearing {
-      animation: cardVanishDisappear 0.36s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+      animation: cardMatchBurst 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
       pointer-events: none !important;
     }
     .memory-card.memory-card-disappeared,
@@ -18160,38 +18140,46 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       border-radius: inherit;
       transform-style: preserve-3d;
       -webkit-transform-style: preserve-3d;
-      transition: transform 0.44s cubic-bezier(0.34, 1.28, 0.64, 1);
+      transition: transform 0.36s cubic-bezier(0.34, 1.25, 0.64, 1);
       will-change: transform;
     }
     .memory-card-inner.flipped {
-      transform: rotateY(180deg) scale(1.02);
+      transform: rotateY(180deg);
     }
     
     .memory-card-front, .memory-card-back {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: inherit;
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: inherit !important;
       overflow: hidden !important;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      transform-style: preserve-3d;
-      -webkit-transform-style: preserve-3d;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+      backface-visibility: hidden !important;
+      -webkit-backface-visibility: hidden !important;
+      transform-style: preserve-3d !important;
+      -webkit-transform-style: preserve-3d !important;
+      box-sizing: border-box !important;
     }
     .memory-card-front {
-      transform: rotateY(0deg) translateZ(1px);
-      z-index: 2;
+      transform: rotateY(0deg) !important;
+      z-index: 2 !important;
     }
     .memory-card-back {
-      transform: rotateY(180deg) translateZ(1px);
-      z-index: 1;
+      transform: rotateY(180deg) !important;
+      z-index: 1 !important;
       background: #0f172a;
-      position: relative;
+    }
+    /* When flipped, promote the back face on top */
+    .memory-card-inner.flipped .memory-card-front {
+      z-index: 1 !important;
+      pointer-events: none !important;
+    }
+    .memory-card-inner.flipped .memory-card-back {
+      z-index: 6 !important;
+      pointer-events: auto !important;
     }
     /* Holographic Prismatic Sheen Sweep */
     .memory-card-back::after {
@@ -18215,7 +18203,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       opacity: 0;
     }
     .memory-card-inner.flipped .memory-card-back::after {
-      animation: cardHoloSweep 0.58s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s forwards;
+      animation: cardHoloSweep 0.52s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
     }
     html:has(.ga-stage), body.ga-playing { overflow: hidden !important; box-sizing: border-box; }
     *, *::before, *::after { box-sizing: border-box; }
@@ -18330,58 +18318,77 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       flipped = []; mismatchLocked = false;
     }
   }
+  function runMemoryCheck() {
+    try {
+      checkMatch();
+    } catch (error) {
+      console.error('Memory check failed', error);
+      grid.querySelectorAll('.memory-card-inner.flipped').forEach(inner => {
+        const i = Number(inner.closest('.memory-card')?.dataset.index);
+        if (!matched.has(i)) inner.classList.remove('flipped');
+      });
+      flipped = [];
+      mismatchLocked = false;
+    }
+  }
+
   function checkMatch() {
-    if (flipped.length !== 2) { flipped = []; mismatchLocked = false; return; }
-    const turnTokenAtCheck = roundToken;
+    if (flipped.length !== 2) {
+      flipped = [];
+      mismatchLocked = false;
+      return;
+    }
     const [idx1, idx2] = flipped;
     const firstCard = pairs[idx1];
     const secondCard = pairs[idx2];
-    const cards = grid.querySelectorAll('.memory-card');
+    if (!firstCard || !secondCard) {
+      flipped = [];
+      mismatchLocked = false;
+      return;
+    }
     
+    const card1 = grid.querySelector('.memory-card[data-index="' + idx1 + '"]');
+    const card2 = grid.querySelector('.memory-card[data-index="' + idx2 + '"]');
+
     if (firstCard.pairId === secondCard.pairId && firstCard.cardId !== secondCard.cardId) {
-      // Correct match - keep the pair face-up, score once, and unlock the next selection.
+      // Correct match - celebration and immediate unlock
       playGameSound('success');
       matched.add(idx1);
       matched.add(idx2);
       if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
       updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
       showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
-      const card1 = grid.querySelector('.memory-card[data-index="' + idx1 + '"]');
-      const card2 = grid.querySelector('.memory-card[data-index="' + idx2 + '"]');
+
       [card1, card2].forEach(c => {
         if (!c) return;
         c.classList.add('memory-card-matched');
         c.setAttribute('aria-pressed', 'true');
         c.style.pointerEvents = 'none';
       });
-      setTimeout(() => {
-        if (turnTokenAtCheck !== roundToken || !document.body.contains(modal)) return;
-        [card1, card2].forEach(c => {
-          if (!c) return;
-          c.classList.remove('memory-card-matched');
-          c.classList.add('memory-card-disappearing');
-        });
-        setTimeout(() => {
-          if (turnTokenAtCheck !== roundToken || !document.body.contains(modal)) return;
-          [card1, card2].forEach(c => {
-            if (!c) return;
-            c.classList.remove('memory-card-disappearing');
-            c.classList.add('memory-card-disappeared');
-            c.style.setProperty('visibility', 'hidden', 'important');
-            c.style.setProperty('opacity', '0', 'important');
-            c.style.setProperty('pointer-events', 'none', 'important');
-            c.querySelectorAll('*').forEach(child => {
-              child.style.setProperty('visibility', 'hidden', 'important');
-              child.style.setProperty('opacity', '0', 'important');
-              child.style.setProperty('pointer-events', 'none', 'important');
-            });
-          });
-        }, 360);
-      }, 500);
+
+      // Clear flip buffer immediately so player is never stuck waiting
       flipped = [];
       mismatchLocked = false;
       modal.querySelector('#memory-status').textContent = '';
-      
+
+      // Both cards vanish completely after celebration pulse
+      setTimeout(() => {
+        if (!document.body.contains(modal)) return;
+        [card1, card2].forEach(c => {
+          if (!c) return;
+          c.classList.remove('memory-card-matched');
+          c.classList.add('memory-card-disappeared');
+          c.style.setProperty('visibility', 'hidden', 'important');
+          c.style.setProperty('opacity', '0', 'important');
+          c.style.setProperty('pointer-events', 'none', 'important');
+          c.querySelectorAll('*').forEach(child => {
+            child.style.setProperty('visibility', 'hidden', 'important');
+            child.style.setProperty('opacity', '0', 'important');
+            child.style.setProperty('pointer-events', 'none', 'important');
+          });
+        });
+      }, 420);
+
       if (matched.size === pairs.length) {
         playGameSound('complete');
         setTimeout(() => {
@@ -18392,71 +18399,74 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
         }, 500);
       } else {
         setTimeout(() => {
-          modal.querySelector('#memory-status').textContent = '';
+          const status = modal.querySelector('#memory-status');
+          if (status) status.textContent = '';
         }, 1000);
       }
     } else {
-      // Wrong match - pass the turn immediately, then shake and flip back
+      // Wrong match - pass turn and flip back cleanly
       playGameSound('wrong');
       const prevTurnIndex = activeGamePlayerIndex;
       advanceGameTurn();
       updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
       showWrongAnswerCelebration(modal, prevTurnIndex);
-      const card1 = grid.querySelector('.memory-card[data-index="' + idx1 + '"]');
-      const card2 = grid.querySelector('.memory-card[data-index="' + idx2 + '"]');
+
       if (card1) card1.classList.add('memory-card-mismatch');
       if (card2) card2.classList.add('memory-card-mismatch');
-      
-      modal.querySelector('#memory-status').textContent = '';
-      
+
+      const status = modal.querySelector('#memory-status');
+      if (status) status.textContent = '';
+
       clearMemoryRoundTimers();
-      const cardAt = i => grid.querySelector('.memory-card[data-index="' + i + '"]');
-      const releaseMismatch = () => {
-        [idx1, idx2].forEach(i => {
-          const c = cardAt(i);
-          if (!c || matched.has(i)) return;
-          c.querySelector('.memory-card-inner')?.classList.remove('flipped');
-          c.classList.remove('memory-card-mismatch');
-          c.style.animation = 'none';
-          c.setAttribute('aria-pressed', 'false');
-        });
-        flipped = [];
-        mismatchLocked = false;
-        mismatchTimer = null;
-      };
       mismatchTimer = setTimeout(() => {
         try {
-          if (turnTokenAtCheck !== roundToken || !document.body.contains(modal)) return;
-          [idx1, idx2].forEach(i => cardAt(i)?.querySelector('.memory-card-inner')?.classList.remove('flipped'));
-          const status = modal.querySelector('#memory-status'); if (status) status.textContent = '';
+          [card1, card2].forEach(c => {
+            if (!c) return;
+            c.querySelector('.memory-card-inner')?.classList.remove('flipped');
+            c.classList.remove('memory-card-mismatch');
+            c.style.animation = 'none';
+            c.setAttribute('aria-pressed', 'false');
+          });
         } finally {
-          mismatchTimer = setTimeout(releaseMismatch, 260);
+          flipped = [];
+          mismatchLocked = false;
+          mismatchTimer = null;
         }
-      }, 520);
+      }, 480);
     }
   }
   
   grid.querySelectorAll('.memory-card').forEach(card => {
     card.addEventListener('click', () => {
       const idx = parseInt(card.dataset.index);
-      // Watchdog: if a lock outlived any animation (interrupted timer), release it.
-      if ((mismatchLocked || flipped.length >= 2) && grid._memoryLockAt && Date.now() - grid._memoryLockAt > 1600) {
-        grid.querySelectorAll('.memory-card').forEach(c => { const i = Number(c.dataset.index); if (!matched.has(i)) c.querySelector('.memory-card-inner')?.classList.remove('flipped'); });
-        flipped = []; mismatchLocked = false;
+
+      // Watchdog failsafe: if locked for more than 700ms, force release immediately
+      if (mismatchLocked && grid._memoryLockAt && Date.now() - grid._memoryLockAt > 700) {
+        grid.querySelectorAll('.memory-card').forEach(c => {
+          const i = Number(c.dataset.index);
+          if (!matched.has(i)) {
+            c.querySelector('.memory-card-inner')?.classList.remove('flipped');
+            c.classList.remove('memory-card-mismatch');
+          }
+        });
+        flipped = [];
+        mismatchLocked = false;
       }
+
       if (mismatchLocked || flipped.includes(idx) || matched.has(idx) || flipped.length >= 2 || !pairs[idx]) return;
       
       // Flip the card
       const inner = card.querySelector('.memory-card-inner');
       if (inner) inner.classList.add('flipped');
       card.setAttribute('aria-pressed', 'true');
-      unlockGameSound(); playGameSound('select');
+      unlockGameSound();
+      playGameSound('select');
       flipped.push(idx);
       
       if (flipped.length === 2) {
         mismatchLocked = true;
         grid._memoryLockAt = Date.now();
-        setTimeout(runMemoryCheck, 380);
+        setTimeout(runMemoryCheck, 340);
       }
     });
   });
