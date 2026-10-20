@@ -28,8 +28,8 @@ body > .ga-stage.vb-stage .ga-theme-backdrop-svg {
 }
 body > .ga-stage.vb-stage .vb-shell,
 body > .ga-stage.vb-stage .ga-stage-shell {
-  width: 100% !important; max-width: 68rem !important; height: 100% !important; height: 100dvh !important; max-height: 100% !important;
-  margin: 0 auto !important; border: 0 !important; border-radius: 0 !important;
+  width: 100% !important; max-width: none !important; height: 100% !important; height: 100dvh !important; max-height: 100% !important;
+  margin: 0 !important; border: 0 !important; border-radius: 0 !important;
   background: transparent !important; box-shadow: none !important;
   display: flex !important; flex-direction: column !important;
   overflow: hidden !important; position: relative !important; z-index: 1 !important;
@@ -38,10 +38,9 @@ body > .ga-stage.vb-stage .vb-head,
 body > .ga-stage.vb-stage .ga-stage-header {
   flex: 0 0 auto !important;
   display: flex !important; align-items: center !important; justify-content: space-between !important;
-  padding: .85rem 1.4rem !important;
+  padding: .65rem 1.5rem !important;
+  width: 100% !important; box-sizing: border-box !important;
   border-bottom: 1px solid var(--ga-stage-line, rgba(255,255,255,.15)) !important;
-  background: var(--ga-stage-header-bg, rgba(15, 23, 42, 0.7)) !important;
-  backdrop-filter: blur(12px) !important;
   z-index: 20 !important;
   overflow: visible !important;
   position: relative !important;
@@ -52,6 +51,7 @@ body > .ga-stage.vb-stage .vb-arena {
   display: flex !important; flex-direction: column !important; align-items: center !important;
   padding: clamp(0.75rem, 2vw, 1.5rem) 1rem !important;
   gap: 0.85rem !important; max-width: 52rem !important; width: 100% !important;
+  margin: 0 auto !important;
   background: transparent !important;
   position: relative !important; z-index: 1 !important;
 }

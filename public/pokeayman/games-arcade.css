@@ -3799,3 +3799,390 @@ html body[data-ga-active-theme="classic"] .cdx-award-btn {
   border: 2px solid #3b82f6 !important; color: #f8fafc !important;
   box-shadow: 0 3px 0 #172554 !important;
 }
+
+
+/* ==========================================================================
+   Full-Width Edge-to-Edge Stage Headers & Universal Theme Typography
+   (Listen and Catch, Poké Battle, Catchdex)
+   ========================================================================== */
+body > .ga-stage.lc-stage .ga-stage-shell,
+body > .ga-stage.vb-stage .ga-stage-shell,
+body > .ga-stage.cdx-stage .ga-stage-shell,
+body > .ga-stage.lc-stage .lc-play,
+body > .ga-stage.vb-stage .vb-shell,
+body > .ga-stage.cdx-stage .cdx-shell {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+body > .ga-stage.lc-stage .ga-stage-header,
+body > .ga-stage.vb-stage .ga-stage-header,
+body > .ga-stage.cdx-stage .ga-stage-header,
+body > .ga-stage.lc-stage .lc-head,
+body > .ga-stage.vb-stage .vb-head,
+body > .ga-stage.cdx-stage .cdx-head {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+body > .ga-stage .ga-stage-header :is(h1, h2) {
+  text-align: left !important;
+  font: 800 1.35rem 'Outfit', sans-serif !important;
+  color: var(--ga-stage-ink) !important;
+  text-shadow: none !important;
+  min-width: 0;
+  margin: 0 !important;
+  letter-spacing: 0 !important;
+}
+
+/* ==========================================================================
+   Classroom Theme: Poké Battle & Listen and Catch text colors
+   ========================================================================== */
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header :is(h1, h2),
+html body[data-ga-active-theme="classroom"] .ga-stage-header :is(h1, h2) {
+  color: #fffbeb !important;
+  text-shadow: 0 2px 0 rgba(45, 28, 12, 0.65) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header .lc-pro-tag,
+html body[data-ga-active-theme="classroom"] .ga-stage-header .lc-pro-tag {
+  color: #fde047 !important;
+  text-shadow: 0 1px 2px rgba(45, 28, 12, 0.6) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header .lc-hud b,
+html body[data-ga-active-theme="classroom"] .ga-stage-header .lc-hud b {
+  background: #356347 !important;
+  color: #fffbeb !important;
+  border: 1.5px solid #b5804c !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header .vb-title,
+html body[data-ga-active-theme="classroom"] .ga-stage-header .vb-title {
+  color: #fffbeb !important;
+  text-shadow: 0 2px 0 rgba(45, 28, 12, 0.65) !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header .vb-pro-pill,
+html body[data-ga-active-theme="classroom"] .ga-stage-header .vb-pro-pill {
+  background: rgba(53, 99, 71, 0.85) !important;
+  border-color: #b5804c !important;
+  color: #fde047 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .vb-matchup :is(.vb-partner-name, .vb-foe-name),
+html body[data-ga-active-theme="classroom"] .vb-matchup :is(.vb-partner-name, .vb-foe-name) {
+  color: #292524 !important;
+  font-weight: 900 !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .vb-matchup :is(.vb-me-name, .vb-foe-rarity),
+html body[data-ga-active-theme="classroom"] .vb-matchup :is(.vb-me-name, .vb-foe-rarity) {
+  color: #573a21 !important;
+  font-weight: 800 !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .vb-versus,
+html body[data-ga-active-theme="classroom"] .vb-versus {
+  color: #b45309 !important;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.85) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .vb-message,
+html body[data-ga-active-theme="classroom"] .vb-message {
+  color: #292524 !important;
+  background: rgba(255, 253, 249, 0.94) !important;
+  border: 2.5px solid #b5804c !important;
+  border-radius: 999px !important;
+  padding: 4px 18px !important;
+  box-shadow: 0 3px 0 #6e4522, 0 6px 14px rgba(45, 28, 12, 0.22) !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .vb-timer-text,
+html body[data-ga-active-theme="classroom"] .vb-timer-text {
+  color: #451a03 !important;
+  font-weight: 800 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .lc-prompt,
+html body[data-ga-active-theme="classroom"] .lc-prompt {
+  color: #292524 !important;
+  background: rgba(255, 253, 249, 0.94) !important;
+  border: 2px solid #b5804c !important;
+  border-radius: 12px !important;
+  padding: 6px 18px !important;
+  box-shadow: 0 3px 0 #6e4522, 0 6px 14px rgba(45, 28, 12, 0.18) !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .lc-daily-cap:not(.is-limit),
+html body[data-ga-active-theme="classroom"] .lc-daily-cap:not(.is-limit) {
+  color: #d9e8dc !important;
+}
+
+/* ==========================================================================
+   Jungle Theme: Poké Battle & Listen and Catch text colors
+   ========================================================================== */
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header :is(h1, h2),
+html body[data-ga-active-theme="jungle"] .ga-stage-header :is(h1, h2) {
+  color: #fef3c7 !important;
+  text-shadow: 0 2px 0 #1b0e02 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header .lc-pro-tag,
+html body[data-ga-active-theme="jungle"] .ga-stage-header .lc-pro-tag {
+  color: #fbbf24 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header .lc-hud b,
+html body[data-ga-active-theme="jungle"] .ga-stage-header .lc-hud b {
+  background: #271202 !important;
+  color: #fef3c7 !important;
+  border: 1.5px solid #d97706 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header .vb-title,
+html body[data-ga-active-theme="jungle"] .ga-stage-header .vb-title {
+  color: #fef3c7 !important;
+  text-shadow: 0 2px 0 #1b0e02 !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header .vb-pro-pill,
+html body[data-ga-active-theme="jungle"] .ga-stage-header .vb-pro-pill {
+  background: rgba(39, 18, 2, 0.85) !important;
+  border-color: #d97706 !important;
+  color: #fbbf24 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .vb-matchup :is(.vb-partner-name, .vb-foe-name),
+html body[data-ga-active-theme="jungle"] .vb-matchup :is(.vb-partner-name, .vb-foe-name) {
+  color: #fef3c7 !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.75) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .vb-matchup :is(.vb-me-name, .vb-foe-rarity),
+html body[data-ga-active-theme="jungle"] .vb-matchup :is(.vb-me-name, .vb-foe-rarity) {
+  color: #fde68a !important;
+  font-weight: 800 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .vb-versus,
+html body[data-ga-active-theme="jungle"] .vb-versus {
+  color: #fbbf24 !important;
+  text-shadow: 2px 2px 0 #451a03 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .vb-message,
+html body[data-ga-active-theme="jungle"] .vb-message {
+  color: #fef3c7 !important;
+  background: rgba(39, 18, 2, 0.92) !important;
+  border: 2px solid #d97706 !important;
+  border-radius: 999px !important;
+  padding: 4px 18px !important;
+  box-shadow: 0 3px 0 #231102, 0 6px 14px rgba(0, 0, 0, 0.4) !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .vb-timer-text,
+html body[data-ga-active-theme="jungle"] .vb-timer-text {
+  color: #fde68a !important;
+  font-weight: 800 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .lc-prompt,
+html body[data-ga-active-theme="jungle"] .lc-prompt {
+  color: #fef3c7 !important;
+  background: rgba(39, 18, 2, 0.92) !important;
+  border: 2px solid #d97706 !important;
+  border-radius: 12px !important;
+  padding: 6px 18px !important;
+  box-shadow: 0 3px 0 #231102, 0 6px 14px rgba(0, 0, 0, 0.4) !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .lc-daily-cap:not(.is-limit),
+html body[data-ga-active-theme="jungle"] .lc-daily-cap:not(.is-limit) {
+  color: #bbf7d0 !important;
+}
+
+/* ==========================================================================
+   Toybox Theme: Poké Battle & Listen and Catch text colors
+   ========================================================================== */
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header :is(h1, h2),
+html body[data-ga-active-theme="toybox"] .ga-stage-header :is(h1, h2) {
+  color: #ffffff !important;
+  text-shadow: 0 2px 0 #3730a3 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header .lc-pro-tag,
+html body[data-ga-active-theme="toybox"] .ga-stage-header .lc-pro-tag {
+  color: #fef08a !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header .lc-hud b,
+html body[data-ga-active-theme="toybox"] .ga-stage-header .lc-hud b {
+  background: #312e81 !important;
+  color: #ffffff !important;
+  border: 1.5px solid #6366f1 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header .vb-title,
+html body[data-ga-active-theme="toybox"] .ga-stage-header .vb-title {
+  color: #ffffff !important;
+  text-shadow: 0 2px 0 #3730a3 !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header .vb-pro-pill,
+html body[data-ga-active-theme="toybox"] .ga-stage-header .vb-pro-pill {
+  background: rgba(49, 46, 129, 0.85) !important;
+  border-color: #6366f1 !important;
+  color: #fef08a !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .vb-matchup :is(.vb-partner-name, .vb-foe-name),
+html body[data-ga-active-theme="toybox"] .vb-matchup :is(.vb-partner-name, .vb-foe-name) {
+  color: #1e1b4b !important;
+  font-weight: 900 !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .vb-matchup :is(.vb-me-name, .vb-foe-rarity),
+html body[data-ga-active-theme="toybox"] .vb-matchup :is(.vb-me-name, .vb-foe-rarity) {
+  color: #4338ca !important;
+  font-weight: 800 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .vb-versus,
+html body[data-ga-active-theme="toybox"] .vb-versus {
+  color: #f43f5e !important;
+  text-shadow: 1px 1px 0 #ffffff !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .vb-message,
+html body[data-ga-active-theme="toybox"] .vb-message {
+  color: #be123c !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 2.5px solid #6366f1 !important;
+  border-radius: 999px !important;
+  padding: 4px 18px !important;
+  box-shadow: 0 3px 0 #3730a3, 0 6px 14px rgba(30, 27, 75, 0.16) !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .vb-timer-text,
+html body[data-ga-active-theme="toybox"] .vb-timer-text {
+  color: #1e1b4b !important;
+  font-weight: 800 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .lc-prompt,
+html body[data-ga-active-theme="toybox"] .lc-prompt {
+  color: #1e1b4b !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 2px solid #6366f1 !important;
+  border-radius: 12px !important;
+  padding: 6px 18px !important;
+  box-shadow: 0 3px 0 #3730a3, 0 6px 14px rgba(30, 27, 75, 0.16) !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .lc-daily-cap:not(.is-limit),
+html body[data-ga-active-theme="toybox"] .lc-daily-cap:not(.is-limit) {
+  color: #4338ca !important;
+}
+
+/* ==========================================================================
+   Classic Theme / Dark Mode: Poké Battle & Listen and Catch text colors
+   ========================================================================== */
+html body > .ga-stage[data-ga-theme="classic"] .ga-stage-header :is(h1, h2),
+html body > .ga-stage:not([data-ga-theme]) .ga-stage-header :is(h1, h2),
+html body[data-ga-active-theme="classic"] .ga-stage-header :is(h1, h2) {
+  color: #f8fafc !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .ga-stage-header .lc-pro-tag,
+html body > .ga-stage:not([data-ga-theme]) .ga-stage-header .lc-pro-tag,
+html body[data-ga-active-theme="classic"] .ga-stage-header .lc-pro-tag {
+  color: #fde047 !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .ga-stage-header .lc-hud b,
+html body > .ga-stage:not([data-ga-theme]) .ga-stage-header .lc-hud b,
+html body[data-ga-active-theme="classic"] .ga-stage-header .lc-hud b {
+  background: #202b42 !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .ga-stage-header .vb-title,
+html body > .ga-stage:not([data-ga-theme]) .ga-stage-header .vb-title,
+html body[data-ga-active-theme="classic"] .ga-stage-header .vb-title {
+  color: #fde047 !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .vb-matchup :is(.vb-partner-name, .vb-foe-name),
+html body > .ga-stage:not([data-ga-theme]) .vb-matchup :is(.vb-partner-name, .vb-foe-name),
+html body[data-ga-active-theme="classic"] .vb-matchup :is(.vb-partner-name, .vb-foe-name) {
+  color: #f8fafc !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.75) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .vb-matchup :is(.vb-me-name, .vb-foe-rarity),
+html body > .ga-stage:not([data-ga-theme]) .vb-matchup :is(.vb-me-name, .vb-foe-rarity),
+html body[data-ga-active-theme="classic"] .vb-matchup :is(.vb-me-name, .vb-foe-rarity) {
+  color: #cbd5e1 !important;
+  font-weight: 800 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75) !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .vb-versus,
+html body > .ga-stage:not([data-ga-theme]) .vb-versus,
+html body[data-ga-active-theme="classic"] .vb-versus {
+  color: #fde047 !important;
+  text-shadow: 2px 2px 0 #dc2626 !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .vb-message,
+html body > .ga-stage:not([data-ga-theme]) .vb-message,
+html body[data-ga-active-theme="classic"] .vb-message {
+  color: #fde047 !important;
+  background: rgba(15, 23, 62, 0.88) !important;
+  border: 2px solid rgba(253, 224, 71, 0.45) !important;
+  border-radius: 999px !important;
+  padding: 4px 18px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .vb-timer-text,
+html body > .ga-stage:not([data-ga-theme]) .vb-timer-text,
+html body[data-ga-active-theme="classic"] .vb-timer-text {
+  color: #cbd5e1 !important;
+  font-weight: 800 !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .lc-prompt,
+html body > .ga-stage:not([data-ga-theme]) .lc-prompt,
+html body[data-ga-active-theme="classic"] .lc-prompt {
+  color: #f8fafc !important;
+  background: rgba(15, 23, 62, 0.88) !important;
+  border: 2px solid rgba(167, 139, 250, 0.45) !important;
+  border-radius: 12px !important;
+  padding: 6px 18px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .lc-daily-cap:not(.is-limit),
+html body > .ga-stage:not([data-ga-theme]) .lc-daily-cap:not(.is-limit),
+html body[data-ga-active-theme="classic"] .lc-daily-cap:not(.is-limit) {
+  color: #cbd5e1 !important;
+}
+
+/* ==========================================================================
+   Teacher Shell Bright Mode (body.ts-bright) Overrides
+   ========================================================================== */
+html body.ts-bright .ga-stage.vb-stage:not([data-ga-theme="classic"]):not([data-ga-theme="jungle"]) .vb-matchup :is(.vb-partner-name, .vb-foe-name),
+html body.ts-bright .ga-stage.vb-stage:not([data-ga-theme="classic"]):not([data-ga-theme="jungle"]) .vb-hud-name {
+  color: #0f172a !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75) !important;
+}
+html body.ts-bright .ga-stage.vb-stage:not([data-ga-theme="classic"]):not([data-ga-theme="jungle"]) .vb-matchup :is(.vb-me-name, .vb-foe-rarity) {
+  color: #475569 !important;
+  text-shadow: none !important;
+}
+html body.ts-bright .ga-stage.vb-stage:not([data-ga-theme="classic"]):not([data-ga-theme="jungle"]) .vb-message {
+  color: #92400e !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+}
+html body.ts-bright .ga-stage.vb-stage:not([data-ga-theme="classic"]):not([data-ga-theme="jungle"]) .vb-timer-text {
+  color: #334155 !important;
+}
+html body.ts-bright .ga-stage.lc-stage:not([data-ga-theme="classic"]):not([data-ga-theme="jungle"]) .lc-prompt {
+  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+}
+html body.ts-bright .ga-stage.vb-stage .vb-title {
+  color: #b45309 !important;
+}
+
