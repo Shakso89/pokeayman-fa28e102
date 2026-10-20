@@ -222,13 +222,13 @@ ${promptList}`;
               let sentence = "";
 
               if (/^(cat|dog|bird|fish|lion|tiger|bear|horse|monkey|cow|pig|rabbit|duck|frog|elephant|giraffe|zebra|puppy|kitten|wolf|fox|deer|sheep|mouse|turtle)$/.test(lw)) {
-                sentence = animalTemplates[idx % animalTemplates.length](w);
+                sentence = animalTemplates[idx % animalTemplates.length]!(w);
               } else if (/^(apple|banana|orange|grape|fruit|bread|pizza|cake|cookie|milk|water|rice|cheese|berry|mango|soup|sandwich|juice|egg|meat)$/.test(lw)) {
-                sentence = foodTemplates[idx % foodTemplates.length](w);
+                sentence = foodTemplates[idx % foodTemplates.length]!(w);
               } else if (/^(red|blue|green|yellow|pink|purple|orange|white|black|brown|golden|gray|grey)$/.test(lw)) {
-                sentence = colorTemplates[idx % colorTemplates.length](w);
+                sentence = colorTemplates[idx % colorTemplates.length]!(w);
               } else {
-                sentence = objectTemplates[idx % objectTemplates.length](w);
+                sentence = objectTemplates[idx % objectTemplates.length]!(w);
               }
               return { word: w, sentence };
             });
@@ -317,6 +317,46 @@ For each item:
               } catch (err) {
                 console.warn(`Model ${model} failed in photo mode:`, err);
               }
+            }
+          }
+
+          if (items.length === 0 && lovableApiKey) {
+            try {
+              const upstream = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableApiKey}` },
+                body: JSON.stringify({
+                  model: "google/gemini-3.8-flash",
+                  messages: [{
+                    role: "user",
+                    content: [
+                      { type: "text", text: prompt + "\nRespond with the JSON array only, no markdown." },
+                      { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Data}` } },
+                    ],
+                  }],
+                }),
+              });
+              if (upstream.ok) {
+                const data = await upstream.json();
+                let text = String(data?.choices?.[0]?.message?.content || "").trim();
+                text = text.replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+                const start = text.indexOf("["), end = text.lastIndexOf("]");
+                if (start >= 0 && end > start) {
+                  const parsed = JSON.parse(text.slice(start, end + 1));
+                  if (Array.isArray(parsed)) {
+                    items = parsed
+                      .map((it: any) => ({
+                        word: String(it.word || "").trim(),
+                        sentence: String(it.sentence || "").trim().replace(/^["']|["']$/g, ""),
+                      }))
+                      .filter((it) => it.word && it.sentence);
+                  }
+                }
+              } else {
+                console.warn("Gateway photo fallback status:", upstream.status, await upstream.text());
+              }
+            } catch (err) {
+              console.warn("Gateway photo fallback failed:", err);
             }
           }
 
