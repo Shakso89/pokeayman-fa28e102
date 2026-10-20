@@ -15,6 +15,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ApiVocabularySentenceRouteImport } from './routes/api/vocabulary-sentence'
 import { Route as ApiVocabularySpeechRouteImport } from './routes/api/vocabulary-speech'
 import { Route as ApiPublicPexelsRouteImport } from './routes/api/public/pexels'
+import { Route as ApiGenerateVocabListRouteImport } from './routes/api/generate-vocab-list'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const ApiPublicPexelsRoute = ApiPublicPexelsRouteImport.update({
   path: '/api/public/pexels',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGenerateVocabListRoute = ApiGenerateVocabListRouteImport.update({
+  id: '/api/generate-vocab-list',
+  path: '/api/generate-vocab-list',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/api/vocabulary-sentence': typeof ApiVocabularySentenceRoute
   '/api/vocabulary-speech': typeof ApiVocabularySpeechRoute
   '/api/public/pexels': typeof ApiPublicPexelsRoute
+  '/api/generate-vocab-list': typeof ApiGenerateVocabListRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/api/vocabulary-sentence': typeof ApiVocabularySentenceRoute
   '/api/vocabulary-speech': typeof ApiVocabularySpeechRoute
   '/api/public/pexels': typeof ApiPublicPexelsRoute
+  '/api/generate-vocab-list': typeof ApiGenerateVocabListRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/api/vocabulary-sentence': typeof ApiVocabularySentenceRoute
   '/api/vocabulary-speech': typeof ApiVocabularySpeechRoute
   '/api/public/pexels': typeof ApiPublicPexelsRoute
+  '/api/generate-vocab-list': typeof ApiGenerateVocabListRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/api/vocabulary-sentence'
     | '/api/vocabulary-speech'
     | '/api/public/pexels'
+    | '/api/generate-vocab-list'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/api/vocabulary-sentence'
     | '/api/vocabulary-speech'
     | '/api/public/pexels'
+    | '/api/generate-vocab-list'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/api/vocabulary-sentence'
     | '/api/vocabulary-speech'
     | '/api/public/pexels'
+    | '/api/generate-vocab-list'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   ApiVocabularySentenceRoute: typeof ApiVocabularySentenceRoute
   ApiVocabularySpeechRoute: typeof ApiVocabularySpeechRoute
   ApiPublicPexelsRoute: typeof ApiPublicPexelsRoute
+  ApiGenerateVocabListRoute: typeof ApiGenerateVocabListRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPexelsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/generate-vocab-list': {
+      id: '/api/generate-vocab-list'
+      path: '/api/generate-vocab-list'
+      fullPath: '/api/generate-vocab-list'
+      preLoaderRoute: typeof ApiGenerateVocabListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiVocabularySentenceRoute: ApiVocabularySentenceRoute,
   ApiVocabularySpeechRoute: ApiVocabularySpeechRoute,
   ApiPublicPexelsRoute: ApiPublicPexelsRoute,
+  ApiGenerateVocabListRoute: ApiGenerateVocabListRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

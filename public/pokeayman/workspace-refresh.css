@@ -208,6 +208,27 @@ html body:is(body, #pk-refresh):is(body, #pk-refresh):is(body, #pk-refresh) {
   & #class-subtab-vocab label { font-size: 14px; font-weight: 700; color: var(--ui-ink) !important; }
   & #new-vocab-list-name { background: var(--ui-surface) !important; border: 1px solid var(--ui-line) !important; color: var(--ui-ink) !important; height: 48px; border-radius: 8px !important; box-shadow: none; }
   & #create-vocab-list-btn { background: var(--ui-gold) !important; color: var(--ui-on-gold) !important; border: 0 !important; border-radius: 8px !important; min-height: 48px; padding: 0 24px; box-shadow: none !important; }
+  & #generate-vocab-list-btn {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    min-height: 48px;
+    padding: 0 20px;
+    font-weight: 700;
+    box-shadow: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: transform .18s ease, filter .18s ease;
+  }
+  & #generate-vocab-list-btn:hover {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
   & :is(#vocab-lists-container, #teacher-vb-lists-grid) { display: grid !important; grid-template-columns: repeat(auto-fill,minmax(min(100%,260px),1fr)) !important; gap: 20px !important; align-items: stretch; }
   & .vocab-list-card {
     display: flex !important; flex-direction: column !important; gap: 12px !important; aspect-ratio: auto !important; height: auto !important;
@@ -283,7 +304,7 @@ html body:is(body, #pk-refresh):is(body, #pk-refresh):is(body, #pk-refresh) {
   html body:is(body,#pk-refresh):is(body,#pk-refresh):is(body,#pk-refresh) {
     & #class-subtab-vocab > .glass-container > div { flex-wrap: wrap; }
     & #class-subtab-vocab > .glass-container .flex-1 { flex-basis: 100%; }
-    & #create-vocab-list-btn { width: 100%; }
+    & :is(#create-vocab-list-btn, #generate-vocab-list-btn) { width: 100%; }
     & .ga-grid { grid-template-columns: 1fr; }
     & .ga-cart { min-height: 210px !important; }
     & .battle-arena-panel { padding: 12px !important; }

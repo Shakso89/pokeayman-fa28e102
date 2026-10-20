@@ -37,3 +37,183 @@ html body .ve-workspace .vocab-editor-primary, html body .ve-workspace .vocab-ed
 .ve-status[data-error=true] { color: var(--ts-red); }
 .ve-workspace .ve-footer { display: flex; justify-content: flex-end; padding: 12px 24px; border-top: 1px solid var(--ve-border); background: var(--ve-surface); }
 @media(max-width:640px) { .ve-workspace { padding: 8px !important; } .ve-workspace .vocab-editor-header { flex-wrap: wrap; gap: 12px; padding: 16px; } .ve-workspace .vocab-editor-header > :first-child { flex-basis: 100%; } .ve-workspace .vocab-editor-content { padding: 16px; } .ve-name-row { align-items: end; } }
+
+/* AI Vocab List Generator Modal Styles */
+.vocab-generate-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(2, 8, 18, 0.76) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.vocab-generate-card {
+  width: min(100%, 36rem);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #18225e, #0e152f);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #f5f7ff;
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.65);
+}
+
+.vocab-generate-header {
+  padding: 1.1rem 1.35rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.vocab-generate-footer {
+  padding: 1rem 1.35rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.vocab-gen-tab-btn {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.vocab-gen-tab-btn.active {
+  background: rgba(99, 102, 241, 0.35);
+  color: #f8fafc;
+  border-color: rgba(129, 140, 248, 0.5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.vocab-gen-count-pill {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.vocab-gen-count-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+}
+
+.vocab-gen-count-pill.is-selected {
+  background: rgba(99, 102, 241, 0.35);
+  color: #f8fafc;
+  border-color: rgba(129, 140, 248, 0.6);
+  box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.4);
+}
+
+#vocab-gen-dropzone {
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+}
+
+#vocab-gen-dropzone:hover {
+  border-color: rgba(129, 140, 248, 0.6);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+#vocab-gen-credit-banner {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Bright Mode Overrides */
+html body.ts-bright .vocab-generate-backdrop {
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+html body.ts-bright .vocab-generate-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22) !important;
+}
+
+html body.ts-bright .vocab-generate-header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+html body.ts-bright .vocab-generate-header h2 {
+  color: #0f172a !important;
+}
+
+html body.ts-bright .vocab-generate-header p {
+  color: #64748b !important;
+}
+
+html body.ts-bright .vocab-generate-footer {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+html body.ts-bright .vocab-gen-tab-btn {
+  color: #64748b !important;
+}
+
+html body.ts-bright .vocab-gen-tab-btn.active {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+  border-color: #a5b4fc !important;
+}
+
+html body.ts-bright .vocab-gen-count-pill {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: #cbd5e1 !important;
+}
+
+html body.ts-bright .vocab-gen-count-pill.is-selected {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+  border-color: #6366f1 !important;
+}
+
+html body.ts-bright #vocab-gen-dropzone {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html body.ts-bright #vocab-gen-dropzone:hover {
+  border-color: #6366f1 !important;
+  background: #eef2ff !important;
+}
+
+html body.ts-bright #vocab-gen-credit-banner {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html body.ts-bright #vocab-gen-credit-banner span,
+html body.ts-bright #vocab-gen-credit-banner div {
+  color: #0f172a !important;
+}
+
+html body.ts-bright #vocab-gen-credit-banner .text-muted {
+  color: #64748b !important;
+}
+
+html body.ts-bright #vocab-gen-cancel-btn {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+html body.ts-bright #vocab-gen-cancel-btn:hover {
+  background: #e2e8f0 !important;
+}
+
