@@ -7000,43 +7000,44 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
    </div>
   </div><!-- Toast -->
   <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg text-sm hidden z-50"></div><!-- Contact & Pricing Modal -->
-  <div id="contact-pricing-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden p-4">
-   <div class="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl" style="background: rgba(73,92,239, 0.12); border: 1px solid rgba(73,92,239, 0.25); backdrop-filter: blur(10px); box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.25), inset 0 -2px 6px rgba(0, 0, 0, 0.15), 0 20px 60px rgba(0, 0, 0, 0.3);"><!-- Glass effect background layer -->
-    <div class="absolute inset-0 rounded-2xl" style="background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 60%); backdrop-filter: blur(12px); pointer-events: none; z-index: 0;"></div><!-- Header with Tab Buttons -->
-    <div class="sticky top-0 px-6 py-5 flex items-center justify-between rounded-t-2xl relative z-10" style="background: rgba(73,92,239, 0.25); border-bottom: 2px solid rgba(73,92,239, 0.4); backdrop-filter: blur(8px);">
+  <div id="contact-pricing-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden p-3 sm:p-4">
+   <div class="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-2xl">
+    <div class="sticky top-0 px-5 sm:px-6 py-4 flex items-center justify-between rounded-t-2xl relative z-10 pk-modal-header">
      <div>
-      <h2 class="heading-font text-2xl font-bold text-white">Contact &amp; Pricing</h2>
-      <p class="text-blue-100 text-xs mt-0.5">Get in touch with us or choose a credit plan that fits your needs.</p>
-     </div><button id="contact-pricing-close" class="text-white hover:text-blue-200 text-2xl font-bold transition">×</button>
+      <h2 class="heading-font text-xl sm:text-2xl font-bold">Contact &amp; Pricing</h2>
+      <p class="text-xs mt-0.5">Get in touch with us or choose a credit plan that fits your needs.</p>
+     </div><button id="contact-pricing-close" type="button" aria-label="Close modal">×</button>
     </div><!-- Tab Button Bar -->
-    <div class="flex gap-2 px-6 py-3 relative z-10" style="background: rgba(73,92,239, 0.15); border-bottom: 2px solid rgba(73,92,239, 0.3); backdrop-filter: blur(8px);"><button id="contact-tab-btn" class="px-5 py-2 rounded-lg font-bold text-sm text-white transition" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.8)); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); border: 1px solid rgba(59, 130, 246, 0.5);" data-tab="contact">Contact Us</button> <button id="pricing-tab-btn" class="px-5 py-2 rounded-lg font-bold text-sm text-white transition" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.6), rgba(37, 99, 235, 0.6)); border: 1px solid rgba(59, 130, 246, 0.4); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);" data-tab="pricing">Pricing Plans</button>
+    <div class="flex gap-2 px-5 sm:px-6 py-2.5 relative z-10 pk-tab-bar">
+      <button id="contact-tab-btn" type="button" class="px-5 py-1.5 rounded-full font-bold text-sm transition" data-tab="contact">Contact Us</button>
+      <button id="pricing-tab-btn" type="button" class="px-5 py-1.5 rounded-full font-bold text-sm transition" data-tab="pricing">Pricing Plans</button>
     </div><!-- Tab Content -->
-    <div class="p-6 space-y-6"><!-- Contact Tab -->
+    <div class="p-4 sm:p-6"><!-- Contact Tab -->
      <div id="contact-tab-content" class="space-y-5">
-      <div class="bg-gradient-to-br from-purple-500/30 to-purple-600/30 rounded-xl p-6 shadow-md border border-purple-400/40 backdrop-blur">
+      <div>
        <div class="space-y-5"><!-- Email -->
-        <div class="flex items-start gap-4 pb-5 border-b border-purple-400/20">
+        <div class="flex items-start gap-4">
          <div class="text-3xl flex-shrink-0">
           📧
          </div>
          <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Email</p><a href="mailto:ayman.soliman.tr@gmail.com" class="text-base font-semibold text-white hover:text-yellow-300 transition break-all">ayman.soliman.tr@gmail.com</a>
+          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Email</p><a href="mailto:ayman.soliman.tr@gmail.com" class="text-base font-semibold transition break-all">ayman.soliman.tr@gmail.com</a>
          </div>
         </div><!-- Instagram -->
-        <div class="flex items-start gap-4 pb-5 border-b border-purple-400/20">
+        <div class="flex items-start gap-4">
          <div class="text-3xl flex-shrink-0">
           📷
          </div>
          <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Instagram</p><a href="https://instagram.com/shakso" target="_blank" rel="noopener noreferrer" class="text-base font-semibold text-white hover:text-yellow-300 transition">@shakso</a>
+          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Instagram</p><a href="https://instagram.com/shakso" target="_blank" rel="noopener noreferrer" class="text-base font-semibold transition">@shakso</a>
          </div>
         </div><!-- Phone -->
-        <div class="flex items-start gap-4 pb-5 border-b border-purple-400/20">
+        <div class="flex items-start gap-4">
          <div class="text-3xl flex-shrink-0">
           📱
          </div>
          <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Phone</p><a href="tel:+886900170038" class="text-base font-semibold text-white hover:text-yellow-300 transition">+886 900 170 038</a>
+          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Phone</p><a href="tel:+886900170038" class="text-base font-semibold transition">+886 900 170 038</a>
          </div>
         </div><!-- LINE -->
         <div class="flex items-start gap-4">
@@ -7044,61 +7045,15 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           💬
          </div>
          <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Line</p><a href="https://line.me/ti/p/~ayman.soliman" target="_blank" rel="noopener noreferrer" class="text-base font-semibold text-white hover:text-yellow-300 transition">Connect on LINE</a>
+          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Line</p><a href="https://line.me/ti/p/~ayman.soliman" target="_blank" rel="noopener noreferrer" class="text-base font-semibold transition">Connect on LINE</a>
          </div>
         </div>
        </div>
       </div>
       <p class="text-center text-purple-100 text-sm italic">We're happy to help with any questions or to discuss custom plans for your school!</p>
      </div><!-- Pricing Tab -->
-     <div id="pricing-tab-content" class="hidden space-y-6">
-      <div class="text-center mb-6">
-       <h3 class="heading-font text-2xl font-bold text-white mb-1">💳 Credit Purchase Plans (NTD)</h3>
-       <p class="text-purple-100 text-sm">Choose the perfect plan for your classroom needs</p>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5"><!-- Starter Plan -->
-       <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 shadow-lg border-2 border-blue-400 transform hover:scale-105 transition">
-        <div class="text-center mb-4">
-         <p class="heading-font text-3xl font-bold text-yellow-300">NT$99</p>
-         <p class="text-lg font-bold text-white mt-2">Starter</p>
-         <p class="text-sm text-blue-100 mt-1">750 Credits</p>
-        </div><button class="w-full bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold py-2.5 rounded-lg transition mb-4 text-sm" onclick="window.open('https://line.me/ti/p/~ayman.soliman', '_blank', 'noopener noreferrer')">💳 Purchase Plan</button>
-        <div class="space-y-2 text-xs text-blue-100">
-         <p class="flex items-center gap-2"><span class="text-green-300">✓</span> Instant credit delivery</p>
-         <p class="flex items-center gap-2"><span class="text-green-300">✓</span> No expiration date</p>
-         <p class="flex items-center gap-2"><span class="text-green-300">✓</span> 24/7 support included</p>
-        </div>
-       </div><!-- Professional Plan (Best Value) -->
-       <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-5 shadow-lg border-3 border-indigo-400 transform hover:scale-105 transition relative md:scale-110 md:z-10 md:-my-3">
-        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2"><span class="bg-yellow-400 text-indigo-900 font-bold py-1 px-3 rounded-full text-xs whitespace-nowrap">Best Value</span>
-        </div>
-        <div class="text-center mb-4 pt-2">
-         <p class="heading-font text-3xl font-bold text-white">NT$199</p>
-         <p class="text-lg font-bold text-white mt-2">Professional</p>
-         <p class="text-sm text-indigo-100 mt-1">2000 Credits</p>
-        </div><button class="w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-900 font-bold py-2.5 rounded-lg transition mb-4 text-sm" onclick="window.open('https://line.me/ti/p/~ayman.soliman', '_blank', 'noopener noreferrer')">💳 Purchase Plan</button>
-        <div class="space-y-2 text-xs text-indigo-100">
-         <p class="flex items-center gap-2"><span class="text-green-300">✓</span> Instant credit delivery</p>
-         <p class="flex items-center gap-2"><span class="text-green-300">✓</span> No expiration date</p>
-         <p class="flex items-center gap-2"><span class="text-green-300">✓</span> 24/7 support included</p>
-        </div>
-       </div><!-- School Plan (Enterprise) -->
-       <div class="bg-gradient-to-br from-amber-600 to-orange-700 rounded-xl p-5 shadow-lg border-2 border-amber-500 transform hover:scale-105 transition">
-        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2"><span class="bg-yellow-400 text-amber-900 font-bold py-1 px-3 rounded-full text-xs whitespace-nowrap">Enterprise</span>
-        </div>
-        <div class="text-center mb-4 pt-5">
-         <p class="heading-font text-3xl font-bold text-yellow-200">NT$1,199</p>
-         <p class="text-lg font-bold text-amber-100 mt-2">School</p>
-         <p class="text-sm text-amber-200 mt-1">15000 Credits</p>
-        </div><button class="w-full bg-yellow-400 hover:bg-yellow-300 text-amber-900 font-bold py-2.5 rounded-lg transition mb-4 text-sm" onclick="window.open('https://line.me/ti/p/~ayman.soliman', '_blank', 'noopener noreferrer')">💳 Purchase Plan</button>
-        <div class="space-y-2 text-xs text-amber-100">
-         <p class="flex items-center gap-2"><span class="text-green-300">✓</span> Instant credit delivery</p>
-         <p class="flex items-center gap-2"><span class="text-green-300">✓</span> No expiration date</p>
-         <p class="flex items-center gap-2"><span class="text-green-300">✓</span> 24/7 support included</p>
-        </div>
-       </div>
-      </div>
-     </div>
+     <div id="pricing-tab-content" class="hidden"></div>
+    </div>
     </div>
     <style>
       /* Electric Border-inspired pricing card edge treatment. */
@@ -9529,41 +9484,48 @@ if (contactPricingButton) {
   }, { once: true });
 }
 
-contactPricingButton?.addEventListener('click', () => {
-  document.getElementById('contact-pricing-modal').classList.remove('hidden');
-});
-
-document.getElementById('contact-pricing-close').addEventListener('click', () => {
-  document.getElementById('contact-pricing-modal').classList.add('hidden');
-});
-
-document.getElementById('contact-pricing-modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('contact-pricing-modal')) {
-    document.getElementById('contact-pricing-modal').classList.add('hidden');
+function openContactPricingModal(tab = 'contact') {
+  const modal = document.getElementById('contact-pricing-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+  document.body.style.overflow = 'hidden';
+  document.documentElement.style.overflow = 'hidden';
+  if (tab === 'pricing') {
+    document.getElementById('pricing-tab-btn')?.click();
+  } else {
+    document.getElementById('contact-tab-btn')?.click();
   }
+}
+window.openContactPricingModal = openContactPricingModal;
+
+function closeContactPricingModal() {
+  const modal = document.getElementById('contact-pricing-modal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  if (!document.querySelector('.game-popup-modal:not(.hidden), [class*="fixed inset-0"]:not(.hidden):not(#contact-pricing-modal):not(#home-screen)')) {
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }
+}
+window.closeContactPricingModal = closeContactPricingModal;
+
+contactPricingButton?.addEventListener('click', () => openContactPricingModal('contact'));
+document.getElementById('contact-pricing-close')?.addEventListener('click', closeContactPricingModal);
+document.getElementById('contact-pricing-modal')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('contact-pricing-modal')) closeContactPricingModal();
 });
 
 // Contact & Pricing modal tabs
-document.getElementById('contact-tab-btn').addEventListener('click', () => {
-  document.getElementById('contact-tab-content').classList.remove('hidden');
-  document.getElementById('pricing-tab-content').classList.add('hidden');
-  document.getElementById('contact-tab-btn').style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.8))';
-  document.getElementById('contact-tab-btn').style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
-  document.getElementById('contact-tab-btn').style.border = '1px solid rgba(59, 130, 246, 0.5)';
-  document.getElementById('pricing-tab-btn').style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.6), rgba(37, 99, 235, 0.6))';
-  document.getElementById('pricing-tab-btn').style.border = '1px solid rgba(59, 130, 246, 0.4)';
-  document.getElementById('pricing-tab-btn').style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.2)';
+document.getElementById('contact-tab-btn')?.addEventListener('click', () => {
+  document.getElementById('contact-tab-content')?.classList.remove('hidden');
+  document.getElementById('pricing-tab-content')?.classList.add('hidden');
 });
 
-document.getElementById('pricing-tab-btn').addEventListener('click', () => {
-  document.getElementById('pricing-tab-content').classList.remove('hidden');
-  document.getElementById('contact-tab-content').classList.add('hidden');
-  document.getElementById('pricing-tab-btn').style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.8))';
-  document.getElementById('pricing-tab-btn').style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
-  document.getElementById('pricing-tab-btn').style.border = '1px solid rgba(59, 130, 246, 0.5)';
-  document.getElementById('contact-tab-btn').style.background = 'linear-gradient(135deg, rgba(59, 130, 246, 0.6), rgba(37, 99, 235, 0.6))';
-  document.getElementById('contact-tab-btn').style.border = '1px solid rgba(59, 130, 246, 0.4)';
-  document.getElementById('contact-tab-btn').style.boxShadow = '0 2px 8px rgba(59, 130, 246, 0.2)';
+document.getElementById('pricing-tab-btn')?.addEventListener('click', () => {
+  document.getElementById('pricing-tab-content')?.classList.remove('hidden');
+  document.getElementById('contact-tab-content')?.classList.add('hidden');
   renderPricingPlansModal();
 });
 
@@ -13291,61 +13253,111 @@ async function deletePricingPlan(idx) {
 }
 
 function renderPricingPlansModal() {
-  const plansData = window.pricingPlans || [];
+  const plansData = (window.pricingPlans && window.pricingPlans.length) ? window.pricingPlans : (DEFAULT_PUBLISHED_CONFIG.pricingPlans || []);
   const container = document.getElementById('pricing-tab-content');
-  const planGrid = container.querySelector('div') || document.createElement('div');
-  
-  // Teaching-themed icons for each tier
-  const icons = {
-    'Starter': '📝',
-    'Professional': '✈️',
-    'School': '🚀'
-  };
-  
-  // Tier-specific colors
-  const tierColors = {
-    'Starter': { bg: 'bg-gradient-to-br from-indigo-500 to-indigo-600', border: 'border-indigo-400', text: 'text-white', lightText: 'text-indigo-100' },
-    'Professional': { bg: 'bg-gradient-to-br from-orange-500 to-orange-600', border: 'border-orange-400', text: 'text-white', lightText: 'text-orange-100' },
-    'School': { bg: 'bg-gradient-to-br from-purple-600 to-purple-700', border: 'border-purple-500', text: 'text-white', lightText: 'text-purple-200' }
-  };
-  
+  if (!container) return;
+
   const planCards = plansData.map((plan, idx) => {
-    const colors = tierColors[plan.name] || tierColors['Starter'];
-    const isPromo = plan.badge === 'Best Value';
-    const isBest = plan.badge === 'Enterprise';
-    const icon = icons[plan.name] || '💳';
-    const scaleClass = isPromo ? 'md:scale-105 md:z-10' : '';
-    
-    return `<div class="electric-pricing-card ${isPromo ? 'electric-pricing-featured' : ''} ${colors.bg} rounded-2xl overflow-hidden shadow-lg border-2 ${colors.border} transform hover:scale-105 transition ${scaleClass}">
-      ${plan.badge && plan.badge !== 'None' ? `<div class="absolute -top-3 left-1/2 transform -translate-x-1/2"><span class="bg-yellow-400 ${isPromo ? 'text-orange-900' : isBest ? 'text-purple-900' : 'text-indigo-900'} font-bold py-1 px-4 rounded-full text-xs whitespace-nowrap shadow-lg">${plan.badge}</span></div>` : ''}
-      <div class="bg-white/10 backdrop-blur p-6 flex flex-col items-center justify-center h-32">
-        <p class="text-white font-black text-2xl tracking-tight mt-0">${plan.name}</p>
-      </div>
-      <div class="p-6">
-        <div class="text-center mb-4">
-          <p class="heading-font text-3xl font-bold text-white">NT$${plan.price}</p>
-          <p class="text-sm ${colors.lightText} mt-1">${plan.credits} Credits</p>
+    const isStarter = plan.name === 'Starter' || idx === 0;
+    const isPro = plan.name === 'Professional' || plan.badge === 'Best Value' || idx === 1;
+    const isSchool = plan.name === 'School' || plan.badge === 'Enterprise' || idx === 2;
+
+    let tierClass = 'pk-tier-starter';
+    let badgeHtml = '<span class="pk-tier-badge">📘 Trainer Tier</span>';
+    let icon = '⚡';
+    let tierSubtitle = 'Great for individual teachers';
+    let bullet1 = `${Number(plan.credits || 0).toLocaleString()} AI Credits`;
+    let bullet2 = 'Instant credit delivery';
+    let bullet3 = 'No expiration date';
+    let bullet4 = 'Great for trying AI lists';
+    let btnText = 'Purchase Starter';
+    let btnClass = 'pk-plan-btn-starter';
+
+    if (isPro) {
+      tierClass = 'pk-tier-pro';
+      badgeHtml = '<span class="pk-tier-badge">⭐ Most Popular</span>';
+      icon = '🔥';
+      tierSubtitle = 'Best value for active classrooms';
+      bullet1 = `${Number(plan.credits || 0).toLocaleString()} AI Credits`;
+      bullet2 = 'Instant credit delivery';
+      bullet3 = 'No expiration date';
+      bullet4 = '⚡ 25% extra credit value';
+      btnText = 'Purchase Professional';
+      btnClass = 'pk-plan-btn-pro';
+    } else if (isSchool) {
+      tierClass = 'pk-tier-school';
+      badgeHtml = '<span class="pk-tier-badge">👑 Enterprise</span>';
+      icon = '🏫';
+      tierSubtitle = 'For entire school or department';
+      bullet1 = `${Number(plan.credits || 0).toLocaleString()} AI Credits`;
+      bullet2 = 'Instant delivery & priority support';
+      bullet3 = 'Shared across all school teachers';
+      bullet4 = '💎 Maximum bulk savings (60% off)';
+      btnText = 'Purchase School Plan';
+      btnClass = 'pk-plan-btn-school';
+    }
+
+    if (plan.badge && plan.badge !== 'None') {
+      if (plan.badge === 'Best Value') {
+        badgeHtml = '<span class="pk-tier-badge">⭐ Best Value</span>';
+      } else if (plan.badge === 'Enterprise') {
+        badgeHtml = '<span class="pk-tier-badge">👑 Enterprise</span>';
+      } else {
+        badgeHtml = `<span class="pk-tier-badge">${plan.badge}</span>`;
+      }
+    }
+
+    return `
+      <div class="pk-pricing-card ${tierClass}">
+        <div>
+          <div class="pk-card-top-bar">
+            ${badgeHtml}
+          </div>
+          <div class="pk-card-hero">
+            <div class="pk-tier-icon-wrap"><span class="pk-tier-icon">${icon}</span></div>
+            <h4 class="pk-tier-title">${plan.name}</h4>
+            <p class="pk-tier-sub">${tierSubtitle}</p>
+          </div>
+          <div class="pk-card-price-section">
+            <div class="pk-tier-price-row">
+              <span class="pk-tier-currency">NT$</span>
+              <span class="pk-tier-price">${plan.price}</span>
+            </div>
+            <div class="pk-tier-credits-chip">
+              <span class="pk-credits-num">${Number(plan.credits || 0).toLocaleString()}</span> Credits
+            </div>
+          </div>
         </div>
-        <button class="w-full bg-yellow-400 hover:bg-yellow-300 ${isPromo ? 'text-orange-900' : isBest ? 'text-purple-900' : 'text-indigo-900'} font-bold py-2.5 rounded-lg transition mb-4 text-sm" onclick="window.open('https://line.me/ti/p/~ayman.soliman', '_blank', 'noopener noreferrer')">Purchase Plan</button>
-        <div class="space-y-2 text-xs ${colors.lightText}">
-          <p>Instant delivery</p>
-          <p>No expiration</p>
-          <p>${plan.name === 'Professional' ? 'Most popular choice' : plan.name === 'School' ? 'For entire school' : 'Perfect for trying it out'}</p>
+        <div>
+          <button type="button" class="pk-plan-btn ${btnClass}" onclick="window.open('https://line.me/ti/p/~ayman.soliman', '_blank', 'noopener noreferrer')">
+            💳 ${btnText}
+          </button>
+          <div class="pk-card-features">
+            <p class="pk-feature-item"><span class="pk-check">✓</span> <span>${bullet1}</span></p>
+            <p class="pk-feature-item"><span class="pk-check">✓</span> <span>${bullet2}</span></p>
+            <p class="pk-feature-item"><span class="pk-check">✓</span> <span>${bullet3}</span></p>
+            <p class="pk-feature-item"><span class="pk-check">✓</span> <span>${bullet4}</span></p>
+          </div>
         </div>
       </div>
-    </div>`;
+    `;
   }).join('');
-  
-  container.innerHTML = `<div class="text-center mb-8">
-    <h3 class="heading-font text-2xl font-bold text-white mb-1">💳 Credit Purchase Plans (NTD)</h3>
-    <p class="text-purple-100 text-sm">Choose the perfect plan for your classroom needs</p>
-    <div class="mt-4 bg-green-500/20 border-2 border-green-400 rounded-lg p-4">
-      <p class="text-green-100 text-sm font-semibold">🎁 Welcome Bonus: Every teacher receives <span class="text-green-300 font-bold">500 free credits</span> to get started!</p>
+
+  container.innerHTML = `
+    <div class="pk-pricing-header-wrap">
+      <h3 class="pk-pricing-title">💳 Credit Purchase Plans (NTD)</h3>
+      <p class="pk-pricing-subtitle">Choose the perfect plan for your classroom needs</p>
+      <div class="pk-welcome-bonus-box">
+        <span class="pk-bonus-icon">🎁</span>
+        <div class="pk-bonus-text">
+          <strong>Welcome Bonus:</strong> Every teacher receives <span class="pk-bonus-highlight">500 free credits</span> to get started!
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    ${planCards}
-  </div>`;
+    <div class="pk-pricing-grid">
+      ${planCards}
+    </div>
+  `;
 }
 
 let homeArchDraft = null;
@@ -21517,11 +21529,16 @@ lucide.createIcons();
         }
       });
       const activeGame = [...document.querySelectorAll('.game-popup-modal, .memory-game-shell, .hangman-game-shell, .cipher-lab-shell')].find(visible);
-      if (activeGame) {
+      const anyPopupVisible = Boolean(document.querySelector(`${popupSelector}:not(.hidden)`));
+      if (activeGame || anyPopupVisible) {
         document.body.style.overflow = 'hidden';
-        const gameBody = activeGame.querySelector('.surprise-boxes-body, .p-3, .memory-game-body, #hangman-game-body, .cipher-lab-panel');
-        if (gameBody) { gameBody.style.minHeight = '0'; gameBody.style.maxHeight = `${Math.max(1, viewport.height - headerHeight - safeTop - safeBottom)}px`; gameBody.style.overflowY = gameBody.scrollHeight > gameBody.clientHeight && viewport.height < 420 ? 'auto' : 'hidden'; }
-      } else if (!document.querySelector(`${popupSelector}:not(.hidden)`)) document.body.style.overflow = '';
+        if (activeGame) {
+          const gameBody = activeGame.querySelector('.surprise-boxes-body, .p-3, .memory-game-body, #hangman-game-body, .cipher-lab-panel');
+          if (gameBody) { gameBody.style.minHeight = '0'; gameBody.style.maxHeight = `${Math.max(1, viewport.height - headerHeight - safeTop - safeBottom)}px`; gameBody.style.overflowY = gameBody.scrollHeight > gameBody.clientHeight && viewport.height < 420 ? 'auto' : 'hidden'; }
+        }
+      } else {
+        document.body.style.overflow = '';
+      }
     }));
   };
   let main;

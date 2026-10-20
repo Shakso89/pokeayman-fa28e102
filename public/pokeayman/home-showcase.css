@@ -327,57 +327,631 @@
   .home-contact-label { display: none; }
 }
 
-/* Contact & pricing modal restyle */
-#contact-pricing-modal { background: rgba(3,4,7,.78) !important; backdrop-filter: blur(6px); }
-#contact-pricing-modal > div {
-  background: linear-gradient(160deg, rgba(94,231,242,.08), transparent 40%), #0b0d14 !important;
-  border: 1px solid rgba(255,255,255,.14) !important; border-radius: 1.25rem !important;
-  box-shadow: 0 40px 90px rgba(0,0,0,.7) !important; color: var(--home-ink);
+/* Contact & pricing modal restyle - Dual Mode & Distinct Tiers */
+body:has(#contact-pricing-modal:not(.hidden)),
+html:has(#contact-pricing-modal:not(.hidden)) {
+  overflow: hidden !important;
 }
+body:has(#contact-pricing-modal:not(.hidden)) #home-screen {
+  overflow: hidden !important;
+}
+
+#contact-pricing-modal {
+  background: rgba(3, 4, 7, 0.82) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+#contact-pricing-modal > div {
+  background: linear-gradient(160deg, rgba(30, 41, 59, 0.7), rgba(11, 13, 20, 0.98)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.75) !important;
+  color: var(--home-ink, #f8fafc);
+  max-width: 58rem !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 203, 5, 0.4) transparent;
+}
+#contact-pricing-modal > div::-webkit-scrollbar {
+  width: 7px;
+}
+#contact-pricing-modal > div::-webkit-scrollbar-track {
+  background: transparent;
+}
+#contact-pricing-modal > div::-webkit-scrollbar-thumb {
+  background: rgba(255, 203, 5, 0.35);
+  border-radius: 999px;
+}
+#contact-pricing-modal > div::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 203, 5, 0.7);
+}
+
 #contact-pricing-modal > div > .absolute.inset-0 { display: none; }
 #contact-pricing-modal > div > .sticky {
-  background: rgba(11,13,20,.95) !important; border-bottom: 1px solid rgba(255,255,255,.1) !important;
+  background: rgba(11, 13, 20, 0.95) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
-#contact-pricing-modal h2 { color: var(--home-ink) !important; }
-#contact-pricing-modal h2 + p { color: var(--home-muted) !important; }
-#contact-pricing-close { width: 2.2rem; height: 2.2rem; border-radius: 50%; border: 1px solid rgba(255,255,255,.16); line-height: 1; }
-#contact-pricing-close:hover { color: var(--home-yellow) !important; border-color: var(--home-yellow); }
+#contact-pricing-modal h2 { color: var(--home-ink, #f8fafc) !important; }
+#contact-pricing-modal h2 + p { color: var(--home-muted, #a9b5d3) !important; }
+#contact-pricing-close {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+#contact-pricing-close:hover {
+  color: var(--home-yellow, #ffcb05) !important;
+  border-color: var(--home-yellow, #ffcb05);
+  background: rgba(255, 203, 5, 0.12);
+}
+
 #contact-pricing-modal > div > .flex.gap-2 {
-  background: transparent !important; border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  background: rgba(11, 13, 20, 0.6) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 #contact-pricing-modal #contact-tab-btn, #contact-pricing-modal #pricing-tab-btn {
-  background: rgba(255,255,255,.05) !important; border: 1px solid rgba(255,255,255,.12) !important;
-  box-shadow: none !important; border-radius: 999px !important; color: var(--home-muted) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+  color: var(--home-muted, #a9b5d3) !important;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s ease;
 }
 #contact-pricing-modal:has(#pricing-tab-content.hidden) #contact-tab-btn,
 #contact-pricing-modal:has(#contact-tab-content.hidden) #pricing-tab-btn {
-  background: var(--home-yellow) !important; border-color: var(--home-yellow) !important; color: #10121a !important;
+  background: var(--home-yellow, #ffcb05) !important;
+  border-color: var(--home-yellow, #ffcb05) !important;
+  color: #10121a !important;
+  box-shadow: 0 4px 14px rgba(255, 203, 5, 0.35) !important;
 }
+
+/* Contact Tab Content */
 #contact-tab-content > div:first-child {
-  background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
-#contact-tab-content > div:first-child > .space-y-5 { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .9rem; }
+#contact-tab-content > div:first-child > .space-y-5 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.85rem;
+}
 #contact-tab-content > div:first-child > .space-y-5 > * { margin: 0 !important; }
 #contact-tab-content .flex.items-start {
-  padding: 1rem !important; border: 1px solid rgba(255,255,255,.1) !important; border-radius: 1rem;
-  background: rgba(255,255,255,.04); transition: border-color .2s, transform .2s;
+  padding: 0.9rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04) !important;
+  transition: border-color .2s, transform .2s, background .2s;
 }
-#contact-tab-content .flex.items-start:hover { border-color: var(--home-yellow) !important; transform: translateY(-2px); }
+#contact-tab-content .flex.items-start:hover {
+  border-color: var(--home-yellow, #ffcb05) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  transform: translateY(-2px);
+}
 #contact-tab-content .text-3xl {
-  display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: .8rem;
-  background: rgba(94,231,242,.1); font-size: 1.35rem !important;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.8rem;
+  background: rgba(94, 231, 242, 0.12) !important;
+  font-size: 1.35rem !important;
 }
-#contact-tab-content .text-purple-200 { color: var(--home-yellow) !important; }
-#contact-tab-content a:hover { color: var(--home-cyan) !important; }
-#contact-pricing-modal .text-purple-100 { color: var(--home-muted) !important; }
-#pricing-tab-content .grid > div {
-  background: rgba(255,255,255,.04) !important; border: 1px solid rgba(255,255,255,.12) !important;
-  border-radius: 1rem !important;
+#contact-tab-content .text-purple-200 { color: var(--home-yellow, #ffcb05) !important; font-size: 0.72rem; letter-spacing: 0.06em; }
+#contact-tab-content a {
+  color: #f8fafc !important;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color .2s;
 }
-#pricing-tab-content .grid > div:nth-child(2) { border-color: var(--home-yellow) !important; box-shadow: 0 0 0 1px var(--home-yellow), 0 20px 50px rgba(255,203,5,.12) !important; }
-#pricing-tab-content .grid > div:nth-child(3) { border-color: rgba(239,51,64,.6) !important; }
-#pricing-tab-content .grid > div p[class*="text-"][class*="-100"] { color: var(--home-muted) !important; }
-#pricing-tab-content .grid > div .heading-font { color: var(--home-yellow) !important; }
+#contact-tab-content a:hover { color: var(--home-cyan, #5ee7f2) !important; }
+#contact-pricing-modal .text-purple-100 { color: var(--home-muted, #a9b5d3) !important; }
+
+/* Pricing Plans Component System */
+.pk-pricing-header-wrap {
+  text-align: center;
+  margin-bottom: 1.15rem;
+}
+.pk-pricing-title {
+  font-family: inherit;
+  font-size: 1.45rem;
+  font-weight: 850;
+  color: #ffffff;
+  margin: 0 0 0.25rem 0;
+}
+.pk-pricing-subtitle {
+  font-size: 0.85rem;
+  color: var(--home-muted, #a9b5d3);
+  margin: 0;
+}
+.pk-welcome-bonus-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.85rem;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: #a7f3d0;
+  font-size: 0.85rem;
+}
+.pk-bonus-icon { font-size: 1.15rem; }
+.pk-bonus-highlight {
+  color: #34d399;
+  font-weight: 850;
+}
+
+.pk-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.15rem;
+  align-items: stretch;
+}
+@media (max-width: 768px) {
+  .pk-pricing-grid { grid-template-columns: 1fr; gap: 1rem; }
+}
+
+.pk-pricing-card {
+  position: relative;
+  border-radius: 1.15rem;
+  padding: 1.1rem 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.pk-pricing-card:hover {
+  transform: translateY(-4px);
+}
+
+.pk-card-top-bar {
+  min-height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.4rem;
+}
+.pk-tier-badge {
+  display: inline-block;
+  padding: 0.22rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pk-card-hero {
+  text-align: center;
+  margin-bottom: 0.65rem;
+}
+.pk-tier-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  margin-bottom: 0.35rem;
+  font-size: 1.35rem;
+}
+.pk-tier-title {
+  font-size: 1.35rem;
+  font-weight: 850;
+  margin: 0;
+  line-height: 1.2;
+}
+.pk-tier-sub {
+  font-size: 0.75rem;
+  margin: 0.2rem 0 0 0;
+}
+
+.pk-card-price-section {
+  text-align: center;
+  padding: 0.6rem 0;
+  margin-bottom: 0.75rem;
+  border-top: 1px solid;
+  border-bottom: 1px solid;
+}
+.pk-tier-price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2rem;
+}
+.pk-tier-currency {
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+.pk-tier-price {
+  font-size: 2.15rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.pk-tier-credits-chip {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin-top: 0.35rem;
+}
+
+.pk-plan-btn {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
+  margin-bottom: 0.75rem;
+}
+.pk-plan-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+.pk-plan-btn:active {
+  transform: translateY(1px);
+}
+
+.pk-card-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.32rem;
+  font-size: 0.77rem;
+  text-align: left;
+}
+.pk-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  line-height: 1.35;
+}
+.pk-check {
+  font-weight: 900;
+  font-size: 0.85rem;
+}
+
+/* Tier 1: Starter (Electric Blue / Trainer) */
+.pk-tier-starter {
+  background: linear-gradient(175deg, rgba(30, 58, 138, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%) !important;
+  border: 2px solid #3b82f6 !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.5), 0 0 16px rgba(59, 130, 246, 0.15) !important;
+}
+.pk-tier-starter .pk-tier-badge {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid #60a5fa;
+  color: #93c5fd;
+}
+.pk-tier-starter .pk-tier-icon-wrap {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+}
+.pk-tier-starter .pk-tier-title { color: #ffffff; }
+.pk-tier-starter .pk-tier-sub { color: #93c5fd; }
+.pk-tier-starter .pk-card-price-section { border-color: rgba(59, 130, 246, 0.25); }
+.pk-tier-starter .pk-tier-currency { color: #93c5fd; }
+.pk-tier-starter .pk-tier-price { color: #60a5fa; }
+.pk-tier-starter .pk-tier-credits-chip {
+  background: rgba(59, 130, 246, 0.22);
+  color: #bfdbfe;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+}
+.pk-plan-btn-starter {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  border: 1px solid #60a5fa;
+}
+.pk-tier-starter .pk-check { color: #60a5fa; }
+.pk-tier-starter .pk-feature-item { color: #cbd5e1; }
+
+/* Tier 2: Professional (Radiant PokéAyman Gold / Most Popular) */
+.pk-tier-pro {
+  background: linear-gradient(175deg, rgba(120, 53, 15, 0.5) 0%, rgba(28, 19, 8, 0.98) 100%) !important;
+  border: 2px solid #ffcb05 !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 28px rgba(255, 203, 5, 0.28), inset 0 0 20px rgba(255, 203, 5, 0.08) !important;
+}
+.pk-tier-pro .pk-tier-badge {
+  background: linear-gradient(135deg, #ffcb05, #f59e0b);
+  color: #1e1302;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.45);
+}
+.pk-tier-pro .pk-tier-icon-wrap {
+  background: rgba(255, 203, 5, 0.2);
+  border: 1px solid rgba(255, 203, 5, 0.45);
+}
+.pk-tier-pro .pk-tier-title { color: #ffffff; }
+.pk-tier-pro .pk-tier-sub { color: #fde047; }
+.pk-tier-pro .pk-card-price-section { border-color: rgba(255, 203, 5, 0.3); }
+.pk-tier-pro .pk-tier-currency { color: #fde047; }
+.pk-tier-pro .pk-tier-price {
+  color: #ffcb05;
+  text-shadow: 0 0 16px rgba(255, 203, 5, 0.45);
+}
+.pk-tier-pro .pk-tier-credits-chip {
+  background: rgba(255, 203, 5, 0.22);
+  border: 1px solid rgba(255, 203, 5, 0.5);
+  color: #fef08a;
+}
+.pk-plan-btn-pro {
+  background: linear-gradient(135deg, #ffcb05, #eab308);
+  color: #1e1302;
+  box-shadow: 0 4px 16px rgba(255, 203, 5, 0.45);
+  border: 1px solid #fef08a;
+}
+.pk-tier-pro .pk-check { color: #ffcb05; }
+.pk-tier-pro .pk-feature-item { color: #fef3c7; }
+
+/* Tier 3: School (Royal Enterprise / Purple & Amethyst) */
+.pk-tier-school {
+  background: linear-gradient(175deg, rgba(88, 28, 135, 0.5) 0%, rgba(20, 10, 35, 0.98) 100%) !important;
+  border: 2px solid #a855f7 !important;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 28px rgba(168, 85, 247, 0.24) !important;
+}
+.pk-tier-school .pk-tier-badge {
+  background: linear-gradient(135deg, #9333ea, #7c3aed);
+  color: #faf5ff;
+  border: 1px solid #c084fc;
+  box-shadow: 0 2px 10px rgba(147, 51, 234, 0.45);
+}
+.pk-tier-school .pk-tier-icon-wrap {
+  background: rgba(168, 85, 247, 0.22);
+  border: 1px solid rgba(192, 132, 252, 0.4);
+}
+.pk-tier-school .pk-tier-title { color: #ffffff; }
+.pk-tier-school .pk-tier-sub { color: #c084fc; }
+.pk-tier-school .pk-card-price-section { border-color: rgba(168, 85, 247, 0.28); }
+.pk-tier-school .pk-tier-currency { color: #e9d5ff; }
+.pk-tier-school .pk-tier-price {
+  color: #c084fc;
+  text-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+}
+.pk-tier-school .pk-tier-credits-chip {
+  background: rgba(168, 85, 247, 0.25);
+  border: 1px solid rgba(192, 132, 252, 0.45);
+  color: #f3e8ff;
+}
+.pk-plan-btn-school {
+  background: linear-gradient(135deg, #9333ea, #7c3aed);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.4);
+  border: 1px solid #c084fc;
+}
+.pk-tier-school .pk-check { color: #c084fc; }
+.pk-tier-school .pk-feature-item { color: #e9d5ff; }
+
+/* =========================================================
+   Bright Mode Specific Overrides for Contact & Pricing Modal
+   ========================================================= */
+html body.ts-bright #contact-pricing-modal {
+  background: rgba(15, 23, 42, 0.55) !important;
+}
+html body.ts-bright #contact-pricing-modal > div {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.22) !important;
+  color: #0f172a !important;
+  scrollbar-color: rgba(15, 23, 42, 0.25) transparent !important;
+}
+html body.ts-bright #contact-pricing-modal > div::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.25) !important;
+}
+html body.ts-bright #contact-pricing-modal > div::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.5) !important;
+}
+html body.ts-bright #contact-pricing-modal > div > .sticky {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+html body.ts-bright #contact-pricing-modal h2 {
+  color: #0f172a !important;
+}
+html body.ts-bright #contact-pricing-modal h2 + p {
+  color: #64748b !important;
+}
+html body.ts-bright #contact-pricing-close {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+html body.ts-bright #contact-pricing-close:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+html body.ts-bright #contact-pricing-modal > div > .flex.gap-2 {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+html body.ts-bright #contact-pricing-modal #contact-tab-btn,
+html body.ts-bright #contact-pricing-modal #pricing-tab-btn {
+  background: #ffffff !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: none !important;
+}
+html body.ts-bright #contact-pricing-modal:has(#pricing-tab-content.hidden) #contact-tab-btn,
+html body.ts-bright #contact-pricing-modal:has(#contact-tab-content.hidden) #pricing-tab-btn {
+  background: #ffcb05 !important;
+  border-color: #eab308 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35) !important;
+}
+
+/* Contact Tab Bright Mode */
+html body.ts-bright #contact-tab-content .flex.items-start {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+html body.ts-bright #contact-tab-content .flex.items-start:hover {
+  background: #ffffff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.12) !important;
+}
+html body.ts-bright #contact-tab-content .text-3xl {
+  background: #eff6ff !important;
+  border: 1px solid #dbeafe !important;
+}
+html body.ts-bright #contact-tab-content .text-purple-200 {
+  color: #64748b !important;
+}
+html body.ts-bright #contact-tab-content a {
+  color: #0f172a !important;
+}
+html body.ts-bright #contact-tab-content a:hover {
+  color: #2563eb !important;
+}
+html body.ts-bright #contact-pricing-modal .text-purple-100 {
+  color: #64748b !important;
+}
+
+/* Pricing Plans Bright Mode */
+html body.ts-bright .pk-pricing-title {
+  color: #0f172a !important;
+}
+html body.ts-bright .pk-pricing-subtitle {
+  color: #64748b !important;
+}
+html body.ts-bright .pk-welcome-bonus-box {
+  background: #ecfdf5 !important;
+  border: 1px solid #6ee7b7 !important;
+  color: #065f46 !important;
+}
+html body.ts-bright .pk-bonus-highlight {
+  color: #047857 !important;
+}
+
+/* Starter Bright Mode */
+html body.ts-bright .pk-tier-starter {
+  background: linear-gradient(175deg, #f0f9ff 0%, #ffffff 100%) !important;
+  border: 2px solid #38bdf8 !important;
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.12) !important;
+}
+html body.ts-bright .pk-tier-starter .pk-tier-badge {
+  background: #e0f2fe !important;
+  border: 1px solid #7dd3fc !important;
+  color: #0369a1 !important;
+}
+html body.ts-bright .pk-tier-starter .pk-tier-icon-wrap {
+  background: #e0f2fe !important;
+  border: 1px solid #bae6fd !important;
+}
+html body.ts-bright .pk-tier-starter .pk-tier-title { color: #0f172a !important; }
+html body.ts-bright .pk-tier-starter .pk-tier-sub { color: #64748b !important; }
+html body.ts-bright .pk-tier-starter .pk-card-price-section { border-color: #e0f2fe !important; }
+html body.ts-bright .pk-tier-starter .pk-tier-currency { color: #0284c7 !important; }
+html body.ts-bright .pk-tier-starter .pk-tier-price { color: #0284c7 !important; }
+html body.ts-bright .pk-tier-starter .pk-tier-credits-chip {
+  background: #e0f2fe !important;
+  border: 1px solid #bae6fd !important;
+  color: #0369a1 !important;
+}
+html body.ts-bright .pk-plan-btn-starter {
+  background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+  border: none !important;
+}
+html body.ts-bright .pk-tier-starter .pk-check { color: #0284c7 !important; }
+html body.ts-bright .pk-tier-starter .pk-feature-item { color: #334155 !important; }
+
+/* Professional Bright Mode */
+html body.ts-bright .pk-tier-pro {
+  background: linear-gradient(175deg, #fffbeb 0%, #ffffff 100%) !important;
+  border: 2px solid #f59e0b !important;
+  box-shadow: 0 10px 28px rgba(245, 158, 11, 0.22), 0 0 0 1px #f59e0b !important;
+}
+html body.ts-bright .pk-tier-pro .pk-tier-badge {
+  background: linear-gradient(135deg, #ffcb05, #f59e0b) !important;
+  color: #451a03 !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35) !important;
+  border: none !important;
+}
+html body.ts-bright .pk-tier-pro .pk-tier-icon-wrap {
+  background: #fef3c7 !important;
+  border: 1px solid #fde68a !important;
+}
+html body.ts-bright .pk-tier-pro .pk-tier-title { color: #0f172a !important; }
+html body.ts-bright .pk-tier-pro .pk-tier-sub { color: #854d0e !important; }
+html body.ts-bright .pk-tier-pro .pk-card-price-section { border-color: #fde68a !important; }
+html body.ts-bright .pk-tier-pro .pk-tier-currency { color: #b45309 !important; }
+html body.ts-bright .pk-tier-pro .pk-tier-price {
+  color: #d97706 !important;
+  text-shadow: none !important;
+}
+html body.ts-bright .pk-tier-pro .pk-tier-credits-chip {
+  background: #fef3c7 !important;
+  border: 1px solid #fde68a !important;
+  color: #92400e !important;
+}
+html body.ts-bright .pk-plan-btn-pro {
+  background: linear-gradient(135deg, #ffcb05, #f59e0b) !important;
+  color: #451a03 !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35) !important;
+  border: none !important;
+}
+html body.ts-bright .pk-tier-pro .pk-check { color: #d97706 !important; }
+html body.ts-bright .pk-tier-pro .pk-feature-item { color: #334155 !important; }
+
+/* School Bright Mode */
+html body.ts-bright .pk-tier-school {
+  background: linear-gradient(175deg, #faf5ff 0%, #ffffff 100%) !important;
+  border: 2px solid #a855f7 !important;
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.18) !important;
+}
+html body.ts-bright .pk-tier-school .pk-tier-badge {
+  background: linear-gradient(135deg, #9333ea, #7c3aed) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3) !important;
+  border: none !important;
+}
+html body.ts-bright .pk-tier-school .pk-tier-icon-wrap {
+  background: #f3e8ff !important;
+  border: 1px solid #e9d5ff !important;
+}
+html body.ts-bright .pk-tier-school .pk-tier-title { color: #0f172a !important; }
+html body.ts-bright .pk-tier-school .pk-tier-sub { color: #6b21a8 !important; }
+html body.ts-bright .pk-tier-school .pk-card-price-section { border-color: #e9d5ff !important; }
+html body.ts-bright .pk-tier-school .pk-tier-currency { color: #7e22ce !important; }
+html body.ts-bright .pk-tier-school .pk-tier-price {
+  color: #7e22ce !important;
+  text-shadow: none !important;
+}
+html body.ts-bright .pk-tier-school .pk-tier-credits-chip {
+  background: #f3e8ff !important;
+  border: 1px solid #e9d5ff !important;
+  color: #6b21a8 !important;
+}
+html body.ts-bright .pk-plan-btn-school {
+  background: linear-gradient(135deg, #9333ea, #7c3aed) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(147, 51, 234, 0.3) !important;
+  border: none !important;
+}
+html body.ts-bright .pk-tier-school .pk-check { color: #7e22ce !important; }
+html body.ts-bright .pk-tier-school .pk-feature-item { color: #334155 !important; }
 
 /* Animated Pokémon side cards (replace static flank shapes) */
 .home-showcase .home-stage::before, .home-showcase .home-stage::after { content: none !important; }
