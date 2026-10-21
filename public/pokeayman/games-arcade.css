@@ -4389,8 +4389,8 @@ body > .ga-stage.game-find-me-root,
 body > .ga-stage:has(#match-board) .ga-stage-shell,
 body > .ga-stage:has(#find-me-box) .ga-stage-shell,
 body > .ga-stage:has(#find-me-box) > div,
-body > .ga-stage div:has(> #find-me-box),
-body > .ga-stage div:has(#find-me-box) {
+body > .ga-stage div:has(> #find-me-box):not(.find-me-board-layout),
+body > .ga-stage div:has(#find-me-box):not(.find-me-board-layout) {
   width: 100% !important;
   max-width: none !important;
   height: 100% !important;
@@ -4511,12 +4511,18 @@ body > .ga-stage .find-me-board-layout,
 html body .find-me-board-layout {
   display: grid !important;
   grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.62fr) !important;
+  grid-auto-flow: row !important;
   gap: clamp(0.75rem, 1.8vw, 1.25rem) !important;
   align-items: center !important;
   justify-content: center !important;
   width: 100% !important;
-  max-width: 58rem !important;
+  max-width: min(100%, 72rem) !important;
   margin: 0.5rem auto 0 !important;
+}
+
+body > .ga-stage .find-me-board-layout > *,
+html body .find-me-board-layout > * {
+  min-width: 0 !important;
 }
 
 body > .ga-stage .find-me-board-layout > div:first-child,
