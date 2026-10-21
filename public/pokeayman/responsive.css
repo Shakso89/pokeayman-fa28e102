@@ -126,29 +126,30 @@ body > #contact-pricing-float > #contact-pricing-btn {
   .flashcard-popup-shell #flashcard-sentence, .flashcard-popup-shell #student-vocab-sentence { font-size: 1.35rem !important; }
 }
 
-/* Find Me: side-by-side layout with compact reference photo and large word box */
+/* Find Me: side-by-side layout with exact ratios (.72fr : 1.62fr) and vertical centering */
 @media (max-width: 700px) {
   .find-me-board-layout {
-    grid-template-columns: minmax(100px, 150px) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.62fr) !important;
     gap: .75rem !important;
+    align-items: center !important;
   }
   .find-me-board-layout > div:first-child {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    width: 100% !important;
   }
   .find-me-board-layout > div:first-child .find-me-square,
   #find-me-picture {
     width: 100% !important;
-    max-width: 150px !important;
-    max-height: 150px !important;
     aspect-ratio: 1 / 1 !important;
     object-fit: contain !important;
     margin: 0 auto !important;
   }
   #find-me-box {
-    aspect-ratio: auto !important;
-    min-height: 20rem !important;
+    aspect-ratio: 1.35 / 1 !important;
+    min-height: 14rem !important;
+    padding: .75rem !important;
   }
   #find-me-box .find-me-word {
     padding: .3rem .6rem !important;
@@ -158,16 +159,15 @@ body > #contact-pricing-float > #contact-pricing-btn {
 
 @media (max-width: 480px) {
   .find-me-board-layout {
-    grid-template-columns: minmax(75px, 105px) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.62fr) !important;
     gap: .5rem !important;
+    align-items: center !important;
   }
-  .find-me-board-layout > div:first-child .find-me-square,
   #find-me-picture {
-    max-width: 105px !important;
-    max-height: 105px !important;
+    border-width: 4px !important;
   }
   #find-me-box {
-    min-height: 16rem !important;
+    min-height: 12rem !important;
     padding: .45rem !important;
   }
 }

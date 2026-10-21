@@ -189,13 +189,12 @@
     .game-popup-modal.game-fullscreen-active { inset: 0 !important; width: 100% !important; height: calc(100 * min(var(--vh, 1vh), 1vh)) !important; min-height: 0 !important; padding: 0 !important; overflow: hidden !important; background: #020812 !important; }
     .game-popup-modal.game-fullscreen-active > :first-child { width: 100% !important; min-width: 0 !important; max-width: none !important; height: 100% !important; min-height: 0 !important; max-height: none !important; margin: 0 !important; border-radius: 0 !important; overflow: hidden !important; }
     .game-popup-modal.game-fullscreen-active .game-fullscreen-btn { z-index: 20 !important; }
-    .game-popup-modal.game-fullscreen-active .surprise-boxes-game,
-    .game-popup-modal.game-fullscreen-active .find-me-board-layout { max-width: none !important; }
+    .game-popup-modal.game-fullscreen-active .surprise-boxes-game { max-width: none !important; }
     .game-popup-modal.game-fullscreen-active .surprise-boxes-game { width: 100% !important; height: 100% !important; min-height: 0 !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; box-sizing: border-box !important; }
     .game-popup-modal.game-fullscreen-active .surprise-boxes-header { position: relative !important; top: auto !important; flex: 0 0 auto !important; width: 100% !important; min-height: 0 !important; }
     .game-popup-modal.game-fullscreen-active .surprise-boxes-body { flex: 1 1 auto !important; min-height: 0 !important; width: 100% !important; overflow-y: auto !important; overflow-x: hidden !important; overscroll-behavior: contain; box-sizing: border-box !important; padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important; }
     .game-popup-modal.game-fullscreen-active .surprise-boxes-body > * { min-width: 0 !important; max-width: 100% !important; }
-    .game-popup-modal.game-fullscreen-active .find-me-board-layout { width: min(100%, 76rem) !important; }
+    .game-popup-modal.game-fullscreen-active .find-me-board-layout { width: min(100%, 58rem) !important; max-width: 58rem !important; margin: 0 auto !important; }
     @media (max-width: 640px) {
       .game-popup-modal.game-fullscreen-active { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left) !important; }
       .game-popup-modal.game-fullscreen-active .find-me-board-layout { width: 100% !important; }
@@ -2210,12 +2209,12 @@
     #find-me-speed-value { min-width: 1.7rem; color: #fde68a; font-size: .78rem; font-weight: 900; text-align: center; }
     @media (max-width: 700px) { .find-me-header-controls { position: relative; left: auto; top: auto; flex: 1 0 100%; order: 3; transform: none; } }
     @media (max-width: 520px) { .find-me-header-controls { order: 3; flex: 1 0 100%; } }
-    .find-me-board-layout { display: grid; grid-template-columns: minmax(130px, 200px) minmax(0, 1fr); gap: 1.25rem; align-items: stretch; width: 100%; max-width: min(100%, 72rem); margin: 0 auto; }
-    .find-me-square { width: 100%; min-height: 0; }
-    #find-me-picture { width: 100%; max-width: 200px; max-height: 200px; aspect-ratio: 1 / 1; object-fit: contain; }
-    #find-me-box { aspect-ratio: auto; min-height: 20rem; padding: 1rem; }
-    @media (max-width: 700px) { .find-me-board-layout { grid-template-columns: minmax(100px, 150px) minmax(0, 1fr); gap: .75rem; } #find-me-picture { max-width: 150px; max-height: 150px; } #find-me-box { min-height: 18rem; padding: .75rem; } }
-    @media (max-width: 520px) { .find-me-header-controls { order: 3; flex: 1 0 100%; justify-content: center; } .find-me-board-layout { grid-template-columns: minmax(75px, 105px) minmax(0, 1fr); gap: .5rem; max-width: 100%; } #find-me-picture { max-width: 105px; max-height: 105px; } #find-me-box { min-height: 16rem; padding: .45rem; } }
+    .find-me-board-layout { display: grid; grid-template-columns: minmax(0, .72fr) minmax(0, 1.62fr); gap: 1.25rem; align-items: center; width: 100%; max-width: 58rem; margin: 0 auto; }
+    .find-me-square { width: 100%; aspect-ratio: 1 / 1; min-height: 0; }
+    #find-me-picture { width: 100%; aspect-ratio: 1 / 1; object-fit: contain; }
+    #find-me-box { width: 100%; aspect-ratio: 1.35 / 1; min-height: 18rem; padding: 1rem; position: relative; overflow: hidden; }
+    @media (max-width: 700px) { .find-me-board-layout { gap: .75rem; align-items: center; } #find-me-box { min-height: 14rem; padding: .75rem; } }
+    @media (max-width: 520px) { .find-me-header-controls { order: 3; flex: 1 0 100%; justify-content: center; } .find-me-board-layout { gap: .5rem; align-items: center; } #find-me-box { aspect-ratio: 1.35 / 1; min-height: 12rem; padding: .5rem; } }
     .find-me-control-group { display: flex; align-items: center; gap: .45rem; min-height: 2.75rem; padding: .4rem .55rem; border: 1px solid rgba(129,140,248,.34); border-radius: .9rem; background: linear-gradient(145deg, rgba(30,41,59,.96), rgba(23,32,51,.94)); box-shadow: 0 7px 16px rgba(2,6,23,.28), inset 0 1px 0 rgba(255,255,255,.08); }
     .find-me-control-label { color: #f8fafc; font-size: .72rem; font-weight: 800; letter-spacing: .02em; white-space: nowrap; }
     .find-me-control-value { min-width: 2.4rem; color: #fde68a; font-size: .9rem; font-weight: 900; text-align: center; }
@@ -3209,60 +3208,50 @@
     .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) .find-me-board-layout {
       flex: 1 1 auto !important;
       min-height: 0 !important;
-      width: min(100%, 72rem) !important;
-      max-width: none !important;
-      gap: clamp(.55rem, 1.5vw, 1.25rem) !important;
-      grid-template-columns: minmax(130px, 200px) minmax(0, 1fr) !important;
+      width: min(100%, 58rem) !important;
+      max-width: 58rem !important;
+      gap: 1.25rem !important;
+      align-items: center !important;
+      justify-content: center !important;
+      grid-template-columns: minmax(0, .72fr) minmax(0, 1.62fr) !important;
     }
     .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) .find-me-board-layout > div:first-child {
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
-      height: 100% !important;
+      width: 100% !important;
     }
-    .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) #find-me-box,
-    .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) .find-me-square { min-height: 0 !important; height: 100% !important; }
-    .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) #find-me-box { aspect-ratio: auto !important; padding: .75rem !important; position: relative !important; }
     .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) #find-me-picture {
       width: 100% !important;
-      max-width: 200px !important;
-      max-height: 200px !important;
       aspect-ratio: 1 / 1 !important;
       object-fit: contain !important;
     }
+    .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) #find-me-box {
+      width: 100% !important;
+      aspect-ratio: 1.35 / 1 !important;
+      min-height: 18rem !important;
+      padding: 1rem !important;
+      position: relative !important;
+      overflow: hidden !important;
+    }
     @media (max-width: 700px) {
       .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) .find-me-board-layout {
-        grid-template-columns: minmax(100px, 150px) minmax(0, 1fr) !important;
-        gap: .65rem !important;
+        gap: .75rem !important;
+        align-items: center !important;
       }
-      .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) #find-me-picture {
-        max-width: 150px !important;
-        max-height: 150px !important;
+      .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) #find-me-box {
+        min-height: 14rem !important;
+        padding: .75rem !important;
       }
     }
     @media (max-width: 520px) {
       .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) .find-me-board-layout {
-        grid-template-columns: minmax(75px, 105px) minmax(0, 1fr) !important;
         gap: .5rem !important;
-        align-items: stretch !important;
-      }
-      .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) .find-me-square { width: 100% !important; }
-      .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) #find-me-picture {
-        width: 100% !important;
-        max-width: 105px !important;
-        max-height: 105px !important;
-        aspect-ratio: 1 / 1 !important;
-        margin: 0 auto !important;
-        object-fit: contain !important;
+        align-items: center !important;
       }
       .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) #find-me-box {
-        width: 100% !important;
-        height: 100% !important;
-        min-height: 15rem !important;
-        aspect-ratio: auto !important;
+        min-height: 12rem !important;
         padding: .5rem !important;
-        display: block !important;
-        position: relative !important;
       }
       .game-popup-modal.game-fullscreen-active > div:has(#find-me-box) #find-me-box .find-me-word {
         min-width: 3.5rem !important;
