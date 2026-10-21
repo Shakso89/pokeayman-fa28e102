@@ -601,6 +601,182 @@
       </svg>`
     },
     {
+      id: 'halloween',
+      name: 'Halloween',
+      subtitle: 'Haunted grove & pumpkin glow',
+      thumbSvg: `<svg viewBox="0 0 120 82" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="th-hlw-bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#090314"/><stop offset="100%" stop-color="#24103e"/>
+          </linearGradient>
+          <linearGradient id="th-hlw-board" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#241240"/><stop offset="100%" stop-color="#0a0414"/>
+          </linearGradient>
+          <radialGradient id="th-hlw-moon" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fffbeb"/><stop offset="60%" stop-color="#fef08a"/><stop offset="100%" stop-color="#f59e0b"/>
+          </radialGradient>
+        </defs>
+        <rect width="120" height="82" fill="url(#th-hlw-bg)"/>
+        <circle cx="102" cy="18" r="12" fill="url(#th-hlw-moon)" opacity="0.95"/>
+        <circle cx="102" cy="18" r="16" fill="#fde047" opacity="0.15"/>
+        <path d="M78 12 Q82 8 85 11 Q88 8 92 12 Q85 15 78 12 Z" fill="#3b1766"/>
+        <path d="M64 20 Q67 17 70 19 Q73 17 76 20 Q70 22 64 20 Z" fill="#3b1766"/>
+        <rect y="68" width="120" height="14" fill="#0c051a"/>
+        <rect y="67" width="120" height="2" fill="#7c2d12"/>
+        <rect x="11" y="12" width="98" height="53" rx="5" fill="url(#th-hlw-board)" stroke="#ea580c" stroke-width="3"/>
+        <rect x="13" y="14" width="94" height="49" rx="3" fill="none" stroke="#581c87" stroke-width="1"/>
+        <g transform="translate(18, 20)">
+          <rect width="24" height="25" rx="5" fill="#1e0b38" stroke="#ea580c" stroke-width="1.6"/>
+          <circle cx="12" cy="12.5" r="7.5" fill="#f97316" stroke="#1e0d36" stroke-width="1.2"/>
+          <path d="M4.5 12.5 A7.5 7.5 0 0 1 19.5 12.5 Z" fill="#ea580c"/>
+          <line x1="4.5" y1="12.5" x2="19.5" y2="12.5" stroke="#1e0d36" stroke-width="1.4"/>
+          <polygon points="9,9.5 11,11.5 8,11.5" fill="#fef08a"/>
+          <polygon points="15,9.5 16,11.5 13,11.5" fill="#fef08a"/>
+          <path d="M8.5 14.5 Q12 17 15.5 14.5" stroke="#fef08a" stroke-width="1.2" fill="none"/>
+          <circle cx="12" cy="12.5" r="2.2" fill="#fef08a" stroke="#1e0d36" stroke-width="1"/>
+        </g>
+        <rect x="47.5" y="20" width="24" height="25" rx="5" fill="#2a124a" stroke="#f97316" stroke-width="1.6"/>
+        <text x="59.5" y="37" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="900" font-size="13" fill="#fef08a">A</text>
+        <rect x="76.5" y="20" width="24" height="25" rx="5" fill="#ea580c" stroke="#581c87" stroke-width="1.6"/>
+        <text x="88.5" y="37" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="900" font-size="13" fill="#fff7ed">B</text>
+        <rect x="24" y="50" width="72" height="8" rx="2.5" fill="#140726" stroke="#ea580c" stroke-width="1.2"/>
+        <circle cx="30" cy="54" r="2" fill="#4ade80"/><circle cx="36" cy="54" r="2" fill="#facc15"/>
+      </svg>`,
+      cardBackSvg: `<svg class="ga-card-back-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="cb-hlw-bg" cx="50%" cy="45%" r="65%">
+            <stop offset="0%" stop-color="#3b1766"/>
+            <stop offset="55%" stop-color="#1f0a38"/>
+            <stop offset="100%" stop-color="#0c0418"/>
+          </radialGradient>
+          <linearGradient id="cb-hlw-wood" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ea580c"/>
+            <stop offset="50%" stop-color="#c2410c"/>
+            <stop offset="100%" stop-color="#581c87"/>
+          </linearGradient>
+          <radialGradient id="cb-hlw-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#facc15" stop-opacity="0.8"/>
+            <stop offset="50%" stop-color="#ea580c" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="200" height="200" rx="22" fill="url(#cb-hlw-wood)"/>
+        <rect x="8" y="8" width="184" height="184" rx="16" fill="url(#cb-hlw-bg)" stroke="#1a062e" stroke-width="3"/>
+        <rect x="15" y="15" width="170" height="170" rx="12" fill="none" stroke="#ea580c" stroke-width="1.8" stroke-dasharray="6 4" opacity="0.85"/>
+        <path d="M16 16 L42 16 M16 16 L16 42 M16 16 L38 38 M22 16 Q30 24 38 16 M16 22 Q24 30 16 38" stroke="#c084fc" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <path d="M184 16 L158 16 M184 16 L184 42 M184 16 L162 38 M178 16 Q170 24 162 16 M184 22 Q176 30 184 38" stroke="#c084fc" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <path d="M16 184 L42 184 M16 184 L16 158 M16 184 L38 162 M22 184 Q30 176 38 184 M16 178 Q24 170 16 162" stroke="#c084fc" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <path d="M184 184 L158 184 M184 184 L184 158 M184 184 L162 162 M178 184 Q170 176 162 184 M184 178 Q176 170 184 162" stroke="#c084fc" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <circle cx="100" cy="98" r="54" fill="url(#cb-hlw-glow)"/>
+        <g fill="#18092c" stroke="#581c87" stroke-width="1.5" opacity="0.9">
+          <path d="M52 98 Q32 80 18 90 Q28 98 22 108 Q38 102 52 98 Z"/>
+          <path d="M148 98 Q168 80 182 90 Q172 98 178 108 Q162 102 148 98 Z"/>
+        </g>
+        <g transform="translate(100, 98)">
+          <circle cx="0" cy="0" r="38" fill="#140624" stroke="#1a062e" stroke-width="4"/>
+          <path d="M -38 0 A 38 38 0 0 1 38 0 Z" fill="#ea580c"/>
+          <path d="M -22 0 A 38 38 0 0 1 22 0 Z" fill="#f97316" opacity="0.6"/>
+          <path d="M -38 0 A 38 38 0 0 0 38 0 Z" fill="#2d1254"/>
+          <line x1="-38" y1="0" x2="38" y2="0" stroke="#0f041c" stroke-width="5.5"/>
+          <polygon points="-16,-16 -8,-10 -18,-8" fill="#fef08a"/>
+          <polygon points="16,-16 8,-10 18,-8" fill="#fef08a"/>
+          <polygon points="-4,-14 0,-9 4,-14" fill="#fef08a"/>
+          <path d="M-20,-3 Q-10 -7 0 -3 Q10 -7 20 -3 Q14 2 0 -1 Q-14 2 -20 -3 Z" fill="#fde047"/>
+          <circle cx="0" cy="0" r="13" fill="#1a062e" stroke="#ea580c" stroke-width="3"/>
+          <circle cx="0" cy="0" r="8" fill="#fef08a" stroke="#f97316" stroke-width="2"/>
+          <circle cx="0" cy="0" r="3.5" fill="#ffffff"/>
+        </g>
+        <path d="M38 52 Q44 46 48 50 Q52 46 58 52 Q48 56 38 52 Z" fill="#f97316" opacity="0.8"/>
+        <path d="M142 146 Q148 140 152 144 Q156 140 162 146 Q152 150 142 146 Z" fill="#f97316" opacity="0.8"/>
+      </svg>`,
+      backdropSvg: `<svg class="ga-theme-backdrop-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="bg-hlw-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#07020d"/>
+            <stop offset="40%" stop-color="#140624"/>
+            <stop offset="75%" stop-color="#220b3b"/>
+            <stop offset="100%" stop-color="#10041d"/>
+          </linearGradient>
+          <radialGradient id="bg-hlw-moon" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="40%" stop-color="#fef08a"/>
+            <stop offset="70%" stop-color="#fde047"/>
+            <stop offset="92%" stop-color="#f59e0b"/>
+            <stop offset="100%" stop-color="#ea580c"/>
+          </radialGradient>
+          <radialGradient id="bg-hlw-moonglow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fde047" stop-opacity="0.35"/>
+            <stop offset="45%" stop-color="#ea580c" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#07020d" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="bg-hlw-wisp" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#4ade80" stop-opacity="0.9"/>
+            <stop offset="40%" stop-color="#22c55e" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="1440" height="900" fill="url(#bg-hlw-sky)"/>
+        <circle cx="1080" cy="180" r="160" fill="url(#bg-hlw-moonglow)"/>
+        <circle cx="1080" cy="180" r="88" fill="url(#bg-hlw-moon)"/>
+        <circle cx="1055" cy="160" r="18" fill="#facc15" opacity="0.35"/>
+        <circle cx="1095" cy="205" r="26" fill="#facc15" opacity="0.25"/>
+        <circle cx="1120" cy="155" r="12" fill="#facc15" opacity="0.2"/>
+        <path d="M 860 170 Q 980 145 1060 160 Q 1160 140 1280 165 Q 1170 185 1070 175 Q 960 195 860 170 Z" fill="#17072a" opacity="0.75"/>
+        <path d="M 940 215 Q 1040 195 1130 210 Q 1200 195 1260 215 Q 1160 230 1060 220 Q 980 235 940 215 Z" fill="#17072a" opacity="0.6"/>
+        <path d="M 0 680 Q 360 620 720 660 Q 1080 610 1440 670 L 1440 900 L 0 900 Z" fill="#0c0417"/>
+        <g fill="#18092c" opacity="0.8">
+          <rect x="220" y="628" width="16" height="28" rx="8 8 0 0"/>
+          <path d="M 280 635 L 292 635 M 286 626 L 286 648" stroke="#18092c" stroke-width="4"/>
+          <rect x="1180" y="620" width="18" height="32" rx="9 9 0 0"/>
+          <rect x="1260" y="632" width="14" height="24" rx="4"/>
+        </g>
+        <path d="M 0 760 Q 320 720 720 750 Q 1120 715 1440 755 L 1440 900 L 0 900 Z" fill="#06010a"/>
+        <g fill="#07020d">
+          <path d="M -40 900 L -20 620 Q 20 540 60 480 Q 100 420 120 320 Q 140 240 170 180 L 150 185 Q 110 260 90 340 Q 60 440 0 540 Q -30 640 -40 900 Z"/>
+          <path d="M 120 330 Q 180 300 240 280 Q 290 265 340 270 Q 280 280 230 305 Q 170 330 120 330 Z"/>
+          <path d="M 210 310 Q 250 360 290 390 Q 260 365 210 325 Z"/>
+          <path d="M 75 430 Q 140 420 200 440 Q 150 435 85 450 Z"/>
+          <path d="M 150 220 Q 200 170 250 150 Q 210 180 155 235 Z"/>
+        </g>
+        <g fill="#07020d">
+          <path d="M 1480 900 L 1450 600 Q 1410 520 1370 450 Q 1320 370 1300 280 Q 1280 210 1250 140 L 1270 145 Q 1310 220 1330 300 Q 1360 400 1410 500 Q 1450 620 1480 900 Z"/>
+          <path d="M 1310 290 Q 1240 260 1170 250 Q 1230 270 1295 305 Z"/>
+          <path d="M 1245 260 Q 1190 220 1140 200 Q 1180 230 1235 270 Z"/>
+          <path d="M 1360 420 Q 1280 390 1210 400 Q 1270 410 1345 435 Z"/>
+        </g>
+        <g transform="translate(80, 750)">
+          <circle cx="0" cy="0" r="32" fill="#ea580c" stroke="#5c1d06" stroke-width="3"/>
+          <circle cx="0" cy="0" r="36" fill="#f97316" opacity="0.15"/>
+          <path d="M -4 -32 Q 0 -42 8 -40" stroke="#365314" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <polygon points="-14,-8 -6,0 -16,4" fill="#fef08a"/>
+          <polygon points="14,-8 6,0 16,4" fill="#fef08a"/>
+          <polygon points="-3,-2 0,3 3,-2" fill="#fef08a"/>
+          <path d="M-18,12 Q-9 6 0 12 Q9 6 18 12 Q10 22 0 18 Q-10 22 -18 12 Z" fill="#fde047"/>
+        </g>
+        <g transform="translate(1360, 770) scale(0.85)">
+          <circle cx="0" cy="0" r="32" fill="#ea580c" stroke="#5c1d06" stroke-width="3"/>
+          <circle cx="0" cy="0" r="36" fill="#f97316" opacity="0.15"/>
+          <path d="M -2 -32 Q 4 -40 10 -38" stroke="#365314" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <polygon points="-14,-8 -6,0 -16,4" fill="#fef08a"/>
+          <polygon points="14,-8 6,0 16,4" fill="#fef08a"/>
+          <path d="M-16,12 Q-8 8 0 13 Q8 8 16 12 Q8 20 0 17 Q-8 20 -16 12 Z" fill="#fde047"/>
+        </g>
+        <circle cx="280" cy="520" r="18" fill="url(#bg-hlw-wisp)"/>
+        <circle cx="280" cy="520" r="4" fill="#dcfce7"/>
+        <circle cx="380" cy="610" r="14" fill="url(#bg-hlw-wisp)"/>
+        <circle cx="380" cy="610" r="3" fill="#dcfce7"/>
+        <circle cx="1160" cy="560" r="20" fill="url(#bg-hlw-wisp)"/>
+        <circle cx="1160" cy="560" r="4" fill="#dcfce7"/>
+        <circle cx="1240" cy="480" r="16" fill="url(#bg-hlw-wisp)"/>
+        <circle cx="1240" cy="480" r="3.5" fill="#dcfce7"/>
+        <g fill="#16062b">
+          <path d="M 520 220 Q 536 200 550 215 Q 564 200 580 220 Q 550 236 520 220 Z"/>
+          <path d="M 640 160 Q 652 145 662 156 Q 672 145 684 160 Q 662 172 640 160 Z" transform="scale(0.85) translate(100, 30)"/>
+          <path d="M 780 250 Q 792 235 802 246 Q 812 235 824 250 Q 802 262 780 250 Z" transform="scale(0.7) translate(300, 80)"/>
+        </g>
+      </svg>`
+    },
+    {
       id: 'classic',
       name: 'Classic',
       subtitle: 'Default arcade',
