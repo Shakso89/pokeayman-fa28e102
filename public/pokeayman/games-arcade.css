@@ -1312,6 +1312,9 @@ html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-sh
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) > .game-popup-modal,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-shell > :not(.ga-stage-header):not(.game-celebration-overlay):not(.ga-theme-backdrop),
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .match-game-shell,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .find-me-game-shell,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .game-match-root,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .game-find-me-root,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .memory-game-shell,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .cipher-lab-shell,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .cipher-lab-panel,
@@ -4138,19 +4141,36 @@ html body[data-ga-active-theme="classic"] .cdx-award-btn {
 
 /* ==========================================================================
    Full-Width Edge-to-Edge Stage Headers & Universal Theme Typography
-   (Listen and Catch, Poké Battle, Catchdex)
+   (Listen and Catch, Poké Battle, Catchdex, Match Words, Find Me)
    ========================================================================== */
 body > .ga-stage.lc-stage .ga-stage-shell,
 body > .ga-stage.vb-stage .ga-stage-shell,
 body > .ga-stage.cdx-stage .ga-stage-shell,
 body > .ga-stage.lc-stage .lc-play,
 body > .ga-stage.vb-stage .vb-shell,
-body > .ga-stage.cdx-stage .cdx-shell {
+body > .ga-stage.cdx-stage .cdx-shell,
+body > .ga-stage .match-game-shell,
+body > .ga-stage .find-me-game-shell,
+body > .ga-stage .game-match-root,
+body > .ga-stage.game-match-root,
+body > .ga-stage .game-find-me-root,
+body > .ga-stage.game-find-me-root,
+body > .ga-stage:has(#match-board) .ga-stage-shell,
+body > .ga-stage:has(#find-me-box) .ga-stage-shell,
+body > .ga-stage:has(#find-me-box) > div,
+body > .ga-stage div:has(> #find-me-box),
+body > .ga-stage div:has(#find-me-box) {
   width: 100% !important;
   max-width: none !important;
+  height: 100% !important;
+  max-height: none !important;
   margin: 0 !important;
   padding: 0 !important;
   border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 body > .ga-stage.lc-stage .ga-stage-header,
@@ -4158,10 +4178,98 @@ body > .ga-stage.vb-stage .ga-stage-header,
 body > .ga-stage.cdx-stage .ga-stage-header,
 body > .ga-stage.lc-stage .lc-head,
 body > .ga-stage.vb-stage .vb-head,
-body > .ga-stage.cdx-stage .cdx-head {
+body > .ga-stage.cdx-stage .cdx-head,
+body > .ga-stage .match-game-header,
+body > .ga-stage .find-me-game-header,
+body > .ga-stage:has(#match-board) .ga-stage-header,
+body > .ga-stage:has(#find-me-box) .ga-stage-header,
+body > .ga-stage .game-popup-modal:has(#find-me-box) .sticky.top-0 {
+  position: relative !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
   width: 100% !important;
   max-width: none !important;
   margin: 0 !important;
+  border-radius: 0 !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  box-sizing: border-box !important;
+  flex: 0 0 auto !important;
+  min-height: 64px !important;
+  padding: .65rem 1.5rem !important;
+  z-index: 20 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: .75rem !important;
+}
+
+body > .ga-stage :is(.match-game-heading, .find-me-game-heading) {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+}
+
+body > .ga-stage :is(.match-game-heading, .find-me-game-heading) :is(h1, h2) {
+  margin: 0 !important;
+  font: 800 1.35rem 'Outfit', sans-serif !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+}
+
+body > .ga-stage :is(.match-game-heading, .find-me-game-heading) p {
+  margin: .15rem 0 0 !important;
+  font: 600 .8rem/1.2 'Figtree', sans-serif !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+body > .ga-stage :is(.match-game-tools, .find-me-game-tools) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.45rem !important;
+  flex: 0 0 auto !important;
+}
+
+body > .ga-stage .ga-stage-header :is(.match-game-density, .find-me-density) {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body > .ga-stage .ga-stage-header :is(.match-game-density, .find-me-density) button {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  border-radius: 8px !important;
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+}
+
+body > .ga-stage :is(.match-game-content, .find-me-game-content, .game-popup-modal:has(#find-me-box) > div > .p-3) {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding-left: max(1rem, calc((100% - 1180px) / 2)) !important;
+  padding-right: max(1rem, calc((100% - 1180px) / 2)) !important;
   box-sizing: border-box !important;
 }
 
@@ -4182,6 +4290,11 @@ html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header :is(h1, h2),
 html body[data-ga-active-theme="classroom"] .ga-stage-header :is(h1, h2) {
   color: #fffbeb !important;
   text-shadow: 0 2px 0 rgba(45, 28, 12, 0.65) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header p,
+html body[data-ga-active-theme="classroom"] .ga-stage-header p {
+  color: #fef3c7 !important;
+  text-shadow: 0 1px 2px rgba(45, 28, 12, 0.6) !important;
 }
 html body > .ga-stage[data-ga-theme="classroom"] .ga-stage-header .lc-pro-tag,
 html body[data-ga-active-theme="classroom"] .ga-stage-header .lc-pro-tag {
@@ -4262,6 +4375,11 @@ html body[data-ga-active-theme="jungle"] .ga-stage-header :is(h1, h2) {
   color: #fef3c7 !important;
   text-shadow: 0 2px 0 #1b0e02 !important;
 }
+html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header p,
+html body[data-ga-active-theme="jungle"] .ga-stage-header p {
+  color: #fde68a !important;
+  text-shadow: 0 1px 2px #1b0e02 !important;
+}
 html body > .ga-stage[data-ga-theme="jungle"] .ga-stage-header .lc-pro-tag,
 html body[data-ga-active-theme="jungle"] .ga-stage-header .lc-pro-tag {
   color: #fbbf24 !important;
@@ -4340,6 +4458,11 @@ html body[data-ga-active-theme="toybox"] .ga-stage-header :is(h1, h2) {
   color: #ffffff !important;
   text-shadow: 0 2px 0 #3730a3 !important;
 }
+html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header p,
+html body[data-ga-active-theme="toybox"] .ga-stage-header p {
+  color: #e0e7ff !important;
+  text-shadow: 0 1px 2px #3730a3 !important;
+}
 html body > .ga-stage[data-ga-theme="toybox"] .ga-stage-header .lc-pro-tag,
 html body[data-ga-active-theme="toybox"] .ga-stage-header .lc-pro-tag {
   color: #fef08a !important;
@@ -4416,6 +4539,11 @@ html body > .ga-stage[data-ga-theme="classic"] .ga-stage-header :is(h1, h2),
 html body > .ga-stage:not([data-ga-theme]) .ga-stage-header :is(h1, h2),
 html body[data-ga-active-theme="classic"] .ga-stage-header :is(h1, h2) {
   color: #f8fafc !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .ga-stage-header p,
+html body > .ga-stage:not([data-ga-theme]) .ga-stage-header p,
+html body[data-ga-active-theme="classic"] .ga-stage-header p {
+  color: #cbd5e1 !important;
 }
 html body > .ga-stage[data-ga-theme="classic"] .ga-stage-header .lc-pro-tag,
 html body > .ga-stage:not([data-ga-theme]) .ga-stage-header .lc-pro-tag,
