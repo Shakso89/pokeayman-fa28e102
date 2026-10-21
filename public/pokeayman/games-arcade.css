@@ -3601,304 +3601,353 @@ html body[data-ga-active-theme="classic"] .vb-result {
   box-shadow: 0 8px 0 #172554, 0 16px 36px rgba(0, 0, 0, 0.5) !important;
   color: #f8fafc !important;
 }
-
 /* ==========================================================================
    THEME 5: HALLOWEEN (data-ga-theme="halloween")
-   Haunted Poké Manor & Jack-o'-lanterns
+   Sticker-sheet night: glossy pumpkins, cream ghosts, thick ink outlines.
+   Palette + shapes follow the Canva Halloween whiteboard reference:
+   pumpkin #f97316/#fdba74, cream #fdf6e8, ink #0b0417, moon #fbbf24,
+   purple #7c3aed, mint #4ade80.
    ========================================================================== */
 html body > .ga-stage[data-ga-theme="halloween"] {
-  --ga-stage-bg: #0c051a;
-  --ga-stage-surface: #1e0d36;
-  --ga-stage-ink: #fff7ed;
-  --ga-stage-muted: #c084fc;
-  --ga-stage-line: #ea580c;
-  --ga-stage-yellow: #f97316;
-  --ga-stage-chip: #2d144d;
-  background: #0c051a !important;
+  --ga-stage-bg: #120722;
+  --ga-stage-surface: #1d0f33;
+  --ga-stage-ink: #fdf6e8;
+  --ga-stage-muted: #c4b5fd;
+  --ga-stage-line: #0b0417;
+  --ga-stage-yellow: #fbbf24;
+  --ga-stage-chip: #2a1547;
+  --hlw-night: #120722;
+  --hlw-night-2: #1d0f33;
+  --hlw-plum: #2a1547;
+  --hlw-ink: #0b0417;
+  --hlw-cream: #fdf6e8;
+  --hlw-cream-dim: #e6dbc7;
+  --hlw-pump: #f97316;
+  --hlw-pump-light: #fdba74;
+  --hlw-pump-deep: #c2410c;
+  --hlw-violet: #a78bfa;
+  --hlw-gold: #fbbf24;
+  --hlw-mint: #4ade80;
+  --hlw-glare: rgba(253, 246, 232, 0.16);
+  background: #0b0417 !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .ga-stage-header {
-  background: linear-gradient(180deg, rgba(30, 13, 54, 0.96) 0%, rgba(12, 5, 26, 0.94) 100%) !important;
-  border-bottom: 2.5px solid #ea580c !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 16px rgba(234, 88, 12, 0.3) !important;
+  background: linear-gradient(180deg, rgba(26, 13, 46, 0.94) 0%, rgba(11, 4, 23, 0.9) 100%) !important;
+  border-bottom: 3px solid var(--hlw-ink) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.55), inset 0 -2px 0 rgba(249, 115, 22, 0.35) !important;
 }
-
 html body > .ga-stage[data-ga-theme="halloween"] .ga-stage-header p {
-  color: #fed7aa !important;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.8) !important;
+  color: #f3d9b8 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7) !important;
 }
+/* Cream sticker lettering with an ink outline, like the Canva word art. */
 html body > .ga-stage[data-ga-theme="halloween"] .ga-stage-header :is(h1, h2) {
-  color: #fef08a !important;
-  text-shadow: 0 0 12px rgba(249, 115, 22, 0.7), 0 2px 4px rgba(0,0,0,0.8) !important;
+  color: var(--hlw-cream) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.01em !important;
+  text-shadow:
+    0 2px 0 var(--hlw-pump-deep),
+    2px 0 0 var(--hlw-ink), -2px 0 0 var(--hlw-ink),
+    0 2px 0 var(--hlw-ink), 0 -2px 0 var(--hlw-ink),
+    0 5px 14px rgba(0, 0, 0, 0.55) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .ga-stage-theme-btn {
-  background: #2a124a !important;
-  border: 2px solid #ea580c !important;
-  color: #fed7aa !important;
-  box-shadow: 0 0 10px rgba(234, 88, 12, 0.35) !important;
+  background: linear-gradient(180deg, #fffdf7 0%, #f3e7d2 100%) !important;
+  border: 2.5px solid var(--hlw-ink) !important;
+  color: #26143a !important;
+  font-weight: 800 !important;
+  box-shadow: 0 3px 0 var(--hlw-ink), 0 8px 16px rgba(0, 0, 0, 0.4) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .game-player-card {
-  background: linear-gradient(160deg, #241142 0%, #150829 100%) !important;
-  border: 2px solid #581c87 !important;
-  color: #fff7ed !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(192, 132, 252, 0.2) !important;
+  background: linear-gradient(180deg, #291343 0%, #180b2c 100%) !important;
+  border: 2.5px solid var(--hlw-ink) !important;
+  color: var(--hlw-cream) !important;
+  box-shadow: 0 3px 0 var(--hlw-ink), 0 12px 26px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(253, 246, 232, 0.1) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .game-player-card.is-active {
-  border-color: #f97316 !important;
-  background: linear-gradient(160deg, #35165c 0%, #1e0b38 100%) !important;
-  box-shadow: 0 0 0 1.5px #ea580c, 0 0 20px rgba(249, 115, 22, 0.6), inset 0 1px 0 rgba(254, 240, 138, 0.3) !important;
+  border-color: var(--hlw-ink) !important;
+  background: linear-gradient(180deg, #3d1a5f 0%, #241040 100%) !important;
+  box-shadow: 0 0 0 2.5px var(--hlw-pump), 0 3px 0 var(--hlw-ink), 0 14px 30px rgba(249, 115, 22, 0.28) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .game-player-turn {
-  color: #f97316 !important;
+  color: var(--hlw-pump-light) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .game-player-card.is-active .game-player-turn,
 html body > .ga-stage[data-ga-theme="halloween"] .game-player-card.is-active .game-player-turn:empty::before {
-  color: #4ade80 !important;
+  color: var(--hlw-mint) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .game-player-score strong {
-  color: #fef08a !important;
-  text-shadow: 0 0 10px rgba(234, 88, 12, 0.5) !important;
+  color: var(--hlw-gold) !important;
+  text-shadow: 0 2px 0 rgba(11, 4, 23, 0.6) !important;
 }
 
-/* Halloween Centerpiece Panels (Gothic Crypt Frame + Pumpkin Orange & Spectral Green Trim) */
+/* Centerpiece panels: deep plum card with an ink outline and a pumpkin hairline. */
 html body > .ga-stage[data-ga-theme="halloween"] #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="halloween"] #hangman-content,
 html body > .ga-stage[data-ga-theme="halloween"] #find-me-box,
 html body > .ga-stage[data-ga-theme="halloween"] .match-game-board,
 html body > .ga-stage[data-ga-theme="halloween"] .memory-game-grid {
   background:
-    radial-gradient(ellipse at 50% 25%, rgba(192, 132, 252, 0.12) 0%, transparent 60%),
-    radial-gradient(circle at 50% 40%, #241240 0%, #150926 70%, #0a0414 100%) !important;
-  border-top: 10px solid #7c2d12 !important;
-  border-left: 10px solid #581c87 !important;
-  border-right: 10px solid #581c87 !important;
-  border-bottom: 14px solid #3b0764 !important;
-  border-radius: 22px !important;
+    radial-gradient(120% 80% at 50% 0%, rgba(124, 58, 237, 0.22) 0%, transparent 60%),
+    linear-gradient(180deg, #241141 0%, #190c2d 55%, #120722 100%) !important;
+  border: 3px solid var(--hlw-ink) !important;
+  border-radius: 24px !important;
   box-shadow:
-    inset 0 0 0 2.5px #ea580c,
-    inset 0 12px 30px rgba(0, 0, 0, 0.65),
-    0 8px 0 #120621,
-    0 20px 48px rgba(0, 0, 0, 0.75),
-    0 0 24px rgba(234, 88, 12, 0.25) !important;
+    inset 0 0 0 2px rgba(249, 115, 22, 0.28),
+    inset 0 1px 0 var(--hlw-glare),
+    0 4px 0 var(--hlw-ink),
+    0 20px 44px rgba(0, 0, 0, 0.55) !important;
   padding: clamp(0.95rem, 2vw, 1.55rem) !important;
 }
 
-/* Halloween Hangman Elements */
+/* Hangman: cream tiles and keys read like the ghost stickers. */
 html body > .ga-stage[data-ga-theme="halloween"] .hangman-status-pill {
-  background: #2a124a !important;
-  border: 1.5px solid #ea580c !important;
-  color: #fef08a !important;
+  background: linear-gradient(180deg, #fffdf7 0%, #f0e3cd 100%) !important;
+  border: 2px solid var(--hlw-ink) !important;
+  color: #2a1207 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 2px 0 var(--hlw-ink) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .hangman-word-char {
-  background: #1e0d36 !important;
-  border-bottom: 4px solid #f97316 !important;
-  color: #fff7ed !important;
+  background: linear-gradient(180deg, #fffdf7 0%, #efe2cc 100%) !important;
+  border: 2.5px solid var(--hlw-ink) !important;
+  border-bottom-width: 4px !important;
+  color: #26143a !important;
+  box-shadow: 0 3px 0 var(--hlw-ink) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .hangman-keyboard button {
-  background: linear-gradient(180deg, #2c144e 0%, #1a0a30 100%) !important;
-  border: 2px solid #581c87 !important;
-  color: #fef08a !important;
-  box-shadow: 0 3px 0 #3b0764 !important;
+  background: linear-gradient(180deg, #fffdf7 0%, #eee0ca 100%) !important;
+  border: 2.5px solid var(--hlw-ink) !important;
+  color: #26143a !important;
+  box-shadow: 0 3px 0 var(--hlw-ink) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .hangman-keyboard button:hover:not(:disabled) {
-  border-color: #f97316 !important;
-  background: #3b1766 !important;
-  box-shadow: 0 0 10px rgba(249, 115, 22, 0.5) !important;
+  background: linear-gradient(180deg, #fdba74 0%, #f97316 100%) !important;
+  border-color: var(--hlw-ink) !important;
+  color: #2a1207 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 0 var(--hlw-ink), 0 0 0 2px rgba(251, 191, 36, 0.4) !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .hangman-keyboard button:disabled {
+  opacity: 0.42 !important;
 }
 
-/* Halloween Find Me Elements */
+/* Find Me */
 html body > .ga-stage[data-ga-theme="halloween"] #find-me-picture {
-  background: #140726 !important;
-  border: 8px solid #ea580c !important;
-  box-shadow: inset 0 0 0 2px #581c87, 0 8px 0 #3b0764, 0 0 20px rgba(234, 88, 12, 0.3) !important;
+  background: linear-gradient(180deg, #2a1547 0%, #150a26 100%) !important;
+  border: 3px solid var(--hlw-ink) !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 0 2px rgba(249, 115, 22, 0.35), 0 4px 0 var(--hlw-ink) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .find-me-word {
-  background: linear-gradient(180deg, #2a124a 0%, #18092c 100%) !important;
-  color: #fef08a !important;
-  border: 2.5px solid #ea580c !important;
+  background: linear-gradient(180deg, #fffdf7 0%, #efe2cc 100%) !important;
+  color: #26143a !important;
+  border: 2.5px solid var(--hlw-ink) !important;
   border-radius: 999px !important;
-  box-shadow: 0 4px 0 #7c2d12, 0 0 10px rgba(234, 88, 12, 0.3) !important;
+  font-weight: 800 !important;
+  box-shadow: 0 3px 0 var(--hlw-ink) !important;
 }
 
-/* Halloween Surprise Boxes (BAAM): Haunted Jack-o'-Lantern Treasure Crypt */
+/* Surprise Boxes (BAAM): the gift box becomes a glossy jack-o'-lantern. */
 html body[data-ga-active-theme="halloween"] .baam-tile.baam-giftbox:hover:not(:disabled),
 html body > .ga-stage[data-ga-theme="halloween"] .baam-tile.baam-giftbox:hover:not(:disabled),
 html body .game-popup-modal[data-ga-theme="halloween"] .baam-tile.baam-giftbox:hover:not(:disabled) {
-  filter: drop-shadow(0 0 18px rgba(249, 115, 22, 0.85)) !important;
+  filter: drop-shadow(0 0 14px rgba(249, 115, 22, 0.8)) !important;
+  transform: translateY(-3px) !important;
 }
 html body[data-ga-active-theme="halloween"] .baam-giftbox .baam-box-body,
 html body > .ga-stage[data-ga-theme="halloween"] .baam-giftbox .baam-box-body,
 html body .game-popup-modal[data-ga-theme="halloween"] .baam-giftbox .baam-box-body {
   background:
-    radial-gradient(circle at 12% 16%, #fbbf24 0%, #ea580c 45%, transparent 65%),
-    radial-gradient(circle at 88% 16%, #fbbf24 0%, #ea580c 45%, transparent 65%),
-    radial-gradient(circle at 12% 84%, #a855f7 0%, #581c87 50%, transparent 65%),
-    radial-gradient(circle at 88% 84%, #a855f7 0%, #581c87 50%, transparent 65%),
-    linear-gradient(90deg, transparent 40%, #f97316 43%, #fbbf24 50%, #f97316 57%, transparent 60%),
-    repeating-linear-gradient(180deg, #2b1448 0px, #1a0b2e 13px, #0e051a 14px, #07020d 15px) !important;
-  border: 2.5px solid #ea580c !important;
-  border-radius: 12px !important;
+    radial-gradient(ellipse at 30% 20%, rgba(255, 253, 247, 0.6) 0%, transparent 40%),
+    linear-gradient(90deg, transparent 0 10%, rgba(124, 45, 18, 0.16) 10% 20%, transparent 20% 40%, rgba(124, 45, 18, 0.13) 40% 50%, transparent 50% 70%, rgba(124, 45, 18, 0.16) 70% 80%, transparent 80%),
+    linear-gradient(160deg, #fdba74 0%, #fb923c 42%, #f97316 68%, #c2410c 100%) !important;
+  border: 3px solid var(--hlw-ink) !important;
+  border-radius: 14px !important;
   box-shadow:
-    inset 0 0 0 2px #9333ea,
-    inset 0 -8px 14px rgba(0, 0, 0, 0.75),
-    0 10px 22px rgba(10, 4, 20, 0.65),
-    0 0 16px rgba(234, 88, 12, 0.35) !important;
+    inset 0 -10px 18px rgba(124, 45, 18, 0.45),
+    0 6px 0 var(--hlw-ink),
+    0 14px 26px rgba(0, 0, 0, 0.55) !important;
 }
 html body[data-ga-active-theme="halloween"] .baam-giftbox .baam-box-lid,
 html body > .ga-stage[data-ga-theme="halloween"] .baam-giftbox .baam-box-lid,
 html body .game-popup-modal[data-ga-theme="halloween"] .baam-giftbox .baam-box-lid {
   background:
-    linear-gradient(90deg, transparent 40%, #fbbf24 43%, #f97316 50%, #ea580c 57%, transparent 60%),
-    linear-gradient(180deg, #ea580c 0%, #c2410c 55%, #7c2d12 100%) !important;
-  border: 2.5px solid #ea580c !important;
-  border-radius: 10px !important;
-  box-shadow: inset 0 2px 0 rgba(254, 240, 138, 0.5), 0 4px 8px rgba(0, 0, 0, 0.55), 0 0 12px rgba(249, 115, 22, 0.4) !important;
+    linear-gradient(90deg, transparent 0 12%, rgba(124, 45, 18, 0.18) 12% 22%, transparent 22% 42%, rgba(124, 45, 18, 0.14) 42% 52%, transparent 52% 72%, rgba(124, 45, 18, 0.18) 72% 82%, transparent 82%),
+    linear-gradient(180deg, #fb923c 0%, #ea580c 55%, #b7430b 100%) !important;
+  border: 3px solid var(--hlw-ink) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 2px 0 rgba(255, 253, 247, 0.5), 0 4px 0 var(--hlw-ink), 0 10px 18px rgba(0, 0, 0, 0.5) !important;
 }
+/* Two cream stem-lobes above the lid, like the curl on a Canva pumpkin. */
 html body[data-ga-active-theme="halloween"] .baam-giftbox .baam-box-lid::before,
 html body[data-ga-active-theme="halloween"] .baam-giftbox .baam-box-lid::after,
 html body > .ga-stage[data-ga-theme="halloween"] .baam-giftbox .baam-box-lid::before,
 html body > .ga-stage[data-ga-theme="halloween"] .baam-giftbox .baam-box-lid::after,
 html body .game-popup-modal[data-ga-theme="halloween"] .baam-giftbox .baam-box-lid::before,
 html body .game-popup-modal[data-ga-theme="halloween"] .baam-giftbox .baam-box-lid::after {
-  top: -48% !important; width: 24% !important; height: 58% !important;
-  border: 3.5px solid #ea580c !important;
-  background: radial-gradient(circle, #fde047 10%, #f97316 60%, #9a3412 100%) !important;
-  border-radius: 50% 50% 10% 10% !important;
-  box-shadow: 0 0 12px rgba(249, 115, 22, 0.7) !important;
+  top: -38% !important; width: 20% !important; height: 46% !important;
+  border: 2.5px solid var(--hlw-ink) !important;
+  background: linear-gradient(180deg, #c2410c 0%, #7c2d12 100%) !important;
+  border-radius: 60% 60% 24% 24% !important;
+  box-shadow: inset 0 2px 0 rgba(253, 186, 116, 0.6), 0 2px 0 var(--hlw-ink) !important;
 }
 html body[data-ga-active-theme="halloween"] .baam-giftbox .baam-box-seal,
 html body > .ga-stage[data-ga-theme="halloween"] .baam-giftbox .baam-box-seal,
 html body .game-popup-modal[data-ga-theme="halloween"] .baam-giftbox .baam-box-seal {
-  border: 3.5px solid #a855f7 !important;
-  background: radial-gradient(circle, #c084fc 0%, #581c87 60%, #1e0d36 100%) !important;
-  box-shadow: 0 0 16px rgba(168, 85, 247, 0.8), 0 4px 10px rgba(0, 0, 0, 0.7) !important;
+  border: 3px solid var(--hlw-ink) !important;
+  background: radial-gradient(circle at 38% 32%, #c4b5fd 0%, #7c3aed 55%, #4c1d95 100%) !important;
+  box-shadow: 0 0 0 2.5px var(--hlw-cream), 0 4px 10px rgba(0, 0, 0, 0.55) !important;
 }
 html body[data-ga-active-theme="halloween"] .baam-giftbox .baam-box-num,
 html body > .ga-stage[data-ga-theme="halloween"] .baam-giftbox .baam-box-num,
 html body .game-popup-modal[data-ga-theme="halloween"] .baam-giftbox .baam-box-num {
-  background: linear-gradient(180deg, #fbbf24 0%, #f97316 60%, #c2410c 100%) !important;
-  color: #1e0d36 !important;
+  background: linear-gradient(180deg, #fffdf7 0%, #f0e3cd 100%) !important;
+  color: #2a1207 !important;
   font-family: 'Outfit', 'Trebuchet MS', sans-serif !important;
   font-weight: 950 !important;
-  border: 2px solid #fef08a !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px #fff, 0 0 12px rgba(249, 115, 22, 0.6) !important;
+  border: 2.5px solid var(--hlw-ink) !important;
+  box-shadow: 0 2px 0 var(--hlw-ink) !important;
 }
 
-/* Halloween BAAM 4-choice question card */
+/* BAAM 4-choice question card */
 html body[data-ga-active-theme="halloween"] .baam-stage-portal .baam-reveal-panel.baam-question-card {
   background:
-    radial-gradient(circle at 50% 30%, rgba(192, 132, 242, 0.15) 0%, transparent 65%),
-    linear-gradient(180deg, #241240 0%, #140924 100%) !important;
-  border: 8px solid #ea580c !important;
-  border-radius: 22px !important;
-  box-shadow: 0 0 30px rgba(234, 88, 12, 0.4), 0 20px 50px rgba(0, 0, 0, 0.8) !important;
-  color: #fff7ed !important;
+    radial-gradient(90% 70% at 50% 0%, rgba(124, 58, 237, 0.3) 0%, transparent 62%),
+    linear-gradient(180deg, #241141 0%, #150a26 100%) !important;
+  border: 3px solid var(--hlw-ink) !important;
+  border-radius: 24px !important;
+  box-shadow: inset 0 0 0 2px rgba(249, 115, 22, 0.3), 0 20px 46px rgba(0, 0, 0, 0.7) !important;
+  color: var(--hlw-cream) !important;
 }
 html body[data-ga-active-theme="halloween"] .baam-stage-portal .baam-question-header h3,
 html body[data-ga-active-theme="halloween"] .baam-stage-portal .baam-question-player {
-  color: #fed7aa !important;
+  color: #fdf6e8 !important;
+  text-shadow: 0 2px 0 rgba(11, 4, 23, 0.55) !important;
 }
 html body[data-ga-active-theme="halloween"] .baam-stage-portal .baam-choice-btn {
-  background: #1c0e33 !important;
-  border-color: #ea580c !important;
-  color: #fff7ed !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+  background: linear-gradient(180deg, #fffdf7 0%, #eee0ca 100%) !important;
+  border: 2.5px solid var(--hlw-ink) !important;
+  color: #26143a !important;
+  font-weight: 800 !important;
+  box-shadow: 0 3px 0 var(--hlw-ink) !important;
 }
 html body[data-ga-active-theme="halloween"] .baam-stage-portal .baam-choice-btn:hover:not(:disabled) {
-  border-color: #f97316 !important;
-  background: #2a154c !important;
-  box-shadow: 0 0 14px rgba(249, 115, 22, 0.45) !important;
+  background: linear-gradient(180deg, #fdba74 0%, #f97316 100%) !important;
+  border-color: var(--hlw-ink) !important;
+  color: #2a1207 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 0 var(--hlw-ink), 0 0 0 2px rgba(251, 191, 36, 0.45) !important;
 }
 html body[data-ga-active-theme="halloween"] .baam-stage-portal .baam-choice-badge {
-  background: rgba(234, 88, 12, 0.25) !important;
-  border-color: #ea580c !important;
-  color: #fbbf24 !important;
+  background: linear-gradient(180deg, #fdba74 0%, #f97316 100%) !important;
+  border: 2px solid var(--hlw-ink) !important;
+  color: #2a1207 !important;
+  font-weight: 900 !important;
 }
 
-/* Halloween Listen and Catch & Poké Battle */
+/* Listen and Catch */
 html body > .ga-stage[data-ga-theme="halloween"].lc-stage {
-  background: radial-gradient(circle at 50% 25%, #2a154c 0%, #150926 70%, #0a0414 100%) !important;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(251, 191, 36, 0.16) 0%, transparent 45%),
+    linear-gradient(180deg, #1b0c31 0%, #120722 60%, #0b0417 100%) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .lc-hud {
-  background: linear-gradient(180deg, #2a124a 0%, #18092c 100%) !important;
-  border: 3.5px solid #ea580c !important;
-  color: #fff7ed !important;
+  background: linear-gradient(180deg, #291343 0%, #180b2c 100%) !important;
+  border: 3px solid var(--hlw-ink) !important;
+  color: var(--hlw-cream) !important;
+  box-shadow: 0 4px 0 var(--hlw-ink), 0 12px 26px rgba(0, 0, 0, 0.45) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .lc-primary {
-  background: linear-gradient(180deg, #f97316 0%, #ea580c 100%) !important;
-  border: 2px solid #fef08a !important;
-  box-shadow: 0 4px 0 #7c2d12 !important;
-  color: #1e0d36 !important;
+  background: linear-gradient(180deg, #fdba74 0%, #f97316 60%, #ea580c 100%) !important;
+  border: 2.5px solid var(--hlw-ink) !important;
+  box-shadow: 0 4px 0 var(--hlw-ink) !important;
+  color: #2a1207 !important;
+  font-weight: 900 !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .lc-secondary {
-  border: 2px solid #ea580c !important;
-  color: #fed7aa !important;
+  border: 2.5px solid var(--hlw-cream) !important;
+  color: var(--hlw-cream) !important;
+  background: rgba(253, 246, 232, 0.06) !important;
+  font-weight: 800 !important;
 }
 
+/* Poké Battle */
 html body > .ga-stage[data-ga-theme="halloween"].vb-stage {
-  background: radial-gradient(circle at 50% 30%, #2b124a 0%, #150926 65%, #080312 100%) !important;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(251, 191, 36, 0.16) 0%, transparent 45%),
+    linear-gradient(180deg, #1b0c31 0%, #120722 60%, #0b0417 100%) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .vb-hud,
 html body[data-ga-active-theme="halloween"] .vb-hud {
-  background: linear-gradient(180deg, #2a124a 0%, #170929 100%) !important;
-  border: 3.5px solid #ea580c !important;
-  box-shadow: inset 0 0 0 1.5px #581c87, 0 5px 0 #3b0764, 0 12px 24px rgba(0, 0, 0, 0.6) !important;
-  color: #fff7ed !important;
+  background: linear-gradient(180deg, #291343 0%, #170929 100%) !important;
+  border: 3px solid var(--hlw-ink) !important;
+  box-shadow: inset 0 0 0 2px rgba(249, 115, 22, 0.3), 0 4px 0 var(--hlw-ink), 0 14px 28px rgba(0, 0, 0, 0.5) !important;
+  color: var(--hlw-cream) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .vb-hud-vs,
 html body[data-ga-active-theme="halloween"] .vb-hud-vs {
-  color: #fef08a !important;
-  text-shadow: 2px 2px 0 #ea580c !important;
+  color: var(--hlw-gold) !important;
+  text-shadow: 0 2px 0 var(--hlw-ink) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .vb-slots .vb-slot,
 html body[data-ga-active-theme="halloween"] .vb-slots .vb-slot {
-  background: rgba(30, 13, 54, 0.65) !important;
-  border: 2.5px dashed #ea580c !important;
-  color: #fff7ed !important;
-  border-radius: 12px !important;
+  background: rgba(253, 246, 232, 0.05) !important;
+  border: 2.5px dashed rgba(253, 246, 232, 0.55) !important;
+  color: var(--hlw-cream) !important;
+  border-radius: 14px !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .vb-slots .vb-slot.is-filled,
 html body[data-ga-active-theme="halloween"] .vb-slots .vb-slot.is-filled {
   border-style: solid !important;
-  border-color: #f97316 !important;
-  color: #fef08a !important;
-  background: rgba(59, 23, 102, 0.85) !important;
+  border-color: var(--hlw-ink) !important;
+  color: #2a1207 !important;
+  background: linear-gradient(180deg, #fdba74 0%, #f97316 100%) !important;
+  box-shadow: 0 3px 0 var(--hlw-ink) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .vb-tiles .vb-tile,
 html body[data-ga-active-theme="halloween"] .vb-tiles .vb-tile {
-  background: linear-gradient(180deg, #2a124a 0%, #19092c 100%) !important;
-  border: 2.5px solid #ea580c !important;
-  box-shadow: 0 4px 0 #7c2d12, 0 8px 16px rgba(0, 0, 0, 0.5) !important;
-  color: #fff7ed !important;
+  background: linear-gradient(180deg, #fdba74 0%, #fb923c 45%, #f97316 100%) !important;
+  border: 2.5px solid var(--hlw-ink) !important;
+  color: #2a1207 !important;
+  font-weight: 900 !important;
+  box-shadow: inset 0 2px 0 rgba(255, 253, 247, 0.55), 0 4px 0 var(--hlw-ink), 0 10px 18px rgba(0, 0, 0, 0.4) !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .vb-tiles .vb-tile:hover:not(:disabled),
+html body[data-ga-active-theme="halloween"] .vb-tiles .vb-tile:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: inset 0 2px 0 rgba(255, 253, 247, 0.6), 0 6px 0 var(--hlw-ink), 0 14px 24px rgba(249, 115, 22, 0.35) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .vb-result,
 html body[data-ga-active-theme="halloween"] .vb-result {
-  background: linear-gradient(180deg, #2a124a 0%, #150826 100%) !important;
-  border: 4px solid #ea580c !important;
-  border-radius: 20px !important;
-  box-shadow: 0 8px 0 #7c2d12, 0 16px 36px rgba(0, 0, 0, 0.7) !important;
-  color: #fff7ed !important;
+  background: linear-gradient(180deg, #241141 0%, #150a26 100%) !important;
+  border: 3px solid var(--hlw-ink) !important;
+  border-radius: 22px !important;
+  box-shadow: inset 0 0 0 2px rgba(253, 246, 232, 0.5), 0 5px 0 var(--hlw-ink), 0 18px 38px rgba(0, 0, 0, 0.6) !important;
+  color: var(--hlw-cream) !important;
 }
 
-/* Halloween Catchdex Stage */
+/* Catchdex stage */
 html body > .ga-stage[data-ga-theme="halloween"].cdx-stage {
-  background: radial-gradient(circle at 50% 25%, #2a124a 0%, #150926 65%, #080312 100%) !important;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(251, 191, 36, 0.16) 0%, transparent 45%),
+    linear-gradient(180deg, #1b0c31 0%, #120722 60%, #0b0417 100%) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .cdx-stat,
 html body[data-ga-active-theme="halloween"] .cdx-stat {
-  background: linear-gradient(180deg, #2a124a 0%, #1a0a30 100%) !important;
-  border: 2.5px solid #ea580c !important;
-  color: #fff7ed !important;
-  box-shadow: inset 0 0 0 1.5px #581c87, 0 4px 0 #7c2d12 !important;
+  background: linear-gradient(180deg, #fffdf7 0%, #eee0ca 100%) !important;
+  border: 2.5px solid var(--hlw-ink) !important;
+  color: #3a2440 !important;
+  box-shadow: 0 3px 0 var(--hlw-ink), 0 10px 20px rgba(0, 0, 0, 0.4) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .cdx-stat b,
 html body[data-ga-active-theme="halloween"] .cdx-stat b {
-  color: #fef08a !important;
+  color: #b7430b !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"] .cdx-stat-label,
 html body[data-ga-active-theme="halloween"] .cdx-stat-label {
-  color: #fed7aa !important;
+  color: #6b4a86 !important;
 }
-
 
 .memory-card .memory-card-inner *, .ga-card-back-art, .ga-card-back-art * { pointer-events: none !important; }
 
