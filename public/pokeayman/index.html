@@ -12621,11 +12621,17 @@ function getStudentTotalValue(student) {
 
 const SHOP_PAGE_SIZE = 15;
 const shopPager = {};
-function shopOwnerIndex(shopOwnerName) {
+function shopOwnerIndex(shopOwnerName = '') {
   const m = new Map();
-  const ownerKey = normalizeStudentIdentity(shopOwnerName);
-  if (!ownerKey) return m;
-  for (const r of getPokemons()) if (normalizeStudentIdentity(r.owner) === ownerKey && !m.has(r.pokemon_id)) m.set(r.pokemon_id, r);
+  for (const r of getPokemons()) {
+    const rawId = r.pokemon_id ?? r.id;
+    const id = Number(rawId);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    if (!m.has(id)) {
+      m.set(id, r);
+      m.set(String(id), r);
+    }
+  }
   return m;
 }
 function shopPageSlice(key, list) {
@@ -12734,7 +12740,9 @@ function renderShopStaircase(key, container, items, ownIdx, cardFn) {
 }
 
 function renderShopPokemonCard(p, ownerRecord, collection = null) {
-  const owner = ownerRecord ? (ownerRecord.owner_display_name || ownerRecord.displayName || ownerRecord.username || ownerRecord.owner || '') : '';
+  const pokemonId = Number(p.id ?? p.pokemon_id);
+  const record = ownerRecord || (!collection ? getPokemons().find(r => Number(r.pokemon_id ?? r.id) === pokemonId) : null);
+  const owner = record ? (record.owner_display_name || record.displayName || record.username || record.owner || '') : '';
   const rarity = ['common', 'uncommon', 'rare', 'legendary'].includes(p.rarity) ? p.rarity : 'common';
   const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const types = getPokemonTypes(p);
@@ -12743,7 +12751,14 @@ function renderShopPokemonCard(p, ownerRecord, collection = null) {
   const ownerArg = safe(JSON.stringify(owner));
   const elementalBackground = getPokemonAvatarCardStyle(p).split(";", 1)[0] + ";";
   const frameDetails = rarity === "rare" || rarity === "legendary" ? '<span class="shop-card-corners" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="shop-card-foil" aria-hidden="true"></span>' : "";
-  return `<div class="shop-pokemon-card pokemon-card-${rarity}${owner && !collection ? ' is-owned' : ''}${collection ? ' collection-pokemon-card' : ''}" style="${elementalBackground}" data-rarity="${rarity}" role="button" tabindex="0" aria-label="${safe(p.name)}, ${rarity}, ${p.price} coins${owner && !collection ? ', already owned' : ''}" onclick="openPokemonModal(${args},${Boolean(owner)},${ownerArg})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">${frameDetails}<div class="shop-card-heading">${owner && !collection ? '<span class="shop-card-sold" aria-label="Already owned">SOLD</span>' : `<span class="shop-card-number">#${String(p.id).padStart(3,'0')}</span>`}<span class="shop-card-rarity">${rarity === 'legendary' ? '✦ ' : rarity === 'rare' ? '◇ ' : ''}${rarity}</span></div><img class="shop-card-art" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png" width="104" height="104" loading="lazy" decoding="async" alt="${safe(p.name)}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><div class="shop-card-footer"><p class="shop-card-name">${safe(p.name)}</p><div class="shop-card-types">${badges}</div><div class="shop-card-stats"><span class="shop-card-price">${p.price} <span aria-label="coins">◈</span></span><span class="shop-card-power">${p.power} PWR</span></div>${collection ? `<div class="collection-health"><progress max="${collection.maxHP}" value="${collection.currentHP}" aria-label="Health"></progress><span>${collection.currentHP}/${collection.maxHP} HP</span></div>${collection.recovery ? `<p class="collection-recovery">Recovers in ${safe(collection.recovery)}</p>` : ''}${collection.removeId ? `<button type="button" class="collection-remove btn-outline" title="Remove Pokémon" aria-label="Remove ${safe(p.name)}" onclick="event.stopPropagation();removeStudentPokemon(${safe(JSON.stringify(collection.removeId))})">×</button>` : ''}` : owner ? `<p class="shop-card-owner">Owned by ${safe(owner)}</p>` : ''}</div></div>`;
+
+  const activeStudentName = (typeof currentRole !== 'undefined' && currentRole === 'student')
+    ? (typeof currentStudent !== 'undefined' ? currentStudent : '')
+    : (typeof profileStudent !== 'undefined' && profileStudent ? profileStudent.student_name : '');
+  const isOwned = Boolean(owner && !collection);
+  const isOwnedByOther = Boolean(isOwned && activeStudentName && normalizeStudentIdentity(owner) !== normalizeStudentIdentity(activeStudentName));
+
+  return `<div class="shop-pokemon-card pokemon-card-${rarity}${isOwned ? ' is-owned' : ''}${collection ? ' collection-pokemon-card' : ''}" style="${elementalBackground}" data-rarity="${rarity}" role="button" tabindex="0" aria-label="${safe(p.name)}, ${rarity}, ${p.price} coins${isOwned ? (isOwnedByOther ? `, sold to other student, owned by ${safe(owner)}` : ', already owned') : ''}" onclick="openPokemonModal(${args},${Boolean(owner)},${ownerArg})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">${frameDetails}<div class="shop-card-heading">${isOwned ? `<span class="shop-card-sold" aria-label="Sold to ${safe(owner)}">SOLD</span>` : `<span class="shop-card-number">#${String(p.id).padStart(3,'0')}</span>`}<span class="shop-card-rarity">${rarity === 'legendary' ? '✦ ' : rarity === 'rare' ? '◇ ' : ''}${rarity}</span></div><img class="shop-card-art" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.id}.png" width="104" height="104" loading="lazy" decoding="async" alt="${safe(p.name)}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><div class="shop-card-footer"><p class="shop-card-name">${safe(p.name)}</p><div class="shop-card-types">${badges}</div><div class="shop-card-stats"><span class="shop-card-price">${p.price} <span aria-label="coins">◈</span></span><span class="shop-card-power">${p.power} PWR</span></div>${collection ? `<div class="collection-health"><progress max="${collection.maxHP}" value="${collection.currentHP}" aria-label="Health"></progress><span>${collection.currentHP}/${collection.maxHP} HP</span></div>${collection.recovery ? `<p class="collection-recovery">Recovers in ${safe(collection.recovery)}</p>` : ''}${collection.removeId ? `<button type="button" class="collection-remove btn-outline" title="Remove Pokémon" aria-label="Remove ${safe(p.name)}" onclick="event.stopPropagation();removeStudentPokemon(${safe(JSON.stringify(collection.removeId))})">×</button>` : ''}` : owner ? `<p class="shop-card-owner">${isOwnedByOther ? '<span class="shop-card-sold-tag">Sold</span> ' : ''}Owned by ${safe(owner)}</p>` : ''}</div></div>`;
 }
 function renderCollectionPokemonCard(record, studentName, editable = false) {
   const maxHP = Math.max(1, Number(getMaxHP(record)) || 1);
@@ -13982,6 +13997,7 @@ function showCatchCelebration(pokemonName, pokemonId) {
 
 // Pokemon modal
 function openPokemonModal(pokemonData, isOwned = false, owner = '') {
+  const safe = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const modal = document.getElementById('pokemon-modal');
   const card = document.getElementById('modal-card');
   // Keep the detail overlay in the document root so no parent stacking context can place it behind the app.
@@ -13989,8 +14005,13 @@ function openPokemonModal(pokemonData, isOwned = false, owner = '') {
   if (modal) modal.style.zIndex = '2147483647';
   const header = document.getElementById('modal-header');
   const imgContainer = document.getElementById('modal-img-container');
-  const storedPokemon = getPokemons().find(item => Number(item.pokemon_id) === Number(pokemonData?.id) && (!owner || item.owner === owner));
-  const detailData = { ...(storedPokemon || {}), ...pokemonData };
+  const pokemonId = Number(pokemonData?.id ?? pokemonData?.pokemon_id);
+  const storedPokemon = getPokemons().find(item => Number(item.pokemon_id ?? item.id) === pokemonId && (!owner || item.owner === owner));
+  const fallbackRecord = getPokemons().find(item => Number(item.pokemon_id ?? item.id) === pokemonId);
+  const resolvedOwnerRecord = storedPokemon || fallbackRecord;
+  const resolvedOwner = (owner || resolvedOwnerRecord?.owner_display_name || resolvedOwnerRecord?.displayName || resolvedOwnerRecord?.username || resolvedOwnerRecord?.owner || '').trim();
+  const resolvedIsOwned = Boolean(isOwned || resolvedOwner);
+  const detailData = { ...(resolvedOwnerRecord || storedPokemon || {}), ...pokemonData };
   const rarity = getPokemonDetailTier(detailData);
   const canonical = getCanonicalPokemon(detailData, detailData);
   const canonicalTypes = getPokemonDetailTypes(canonical);
@@ -14101,17 +14122,34 @@ function openPokemonModal(pokemonData, isOwned = false, owner = '') {
   const hpFill = document.getElementById('modal-hp-fill');
   if (hpFill) hpFill.style.width = `${Math.max(0, Math.min(100, Number(pokemonData.hp) / Math.max(1, Number(pokemonData.hp)) * 100))}%`;
   
+  const activeStudentName = (typeof currentRole !== 'undefined' && currentRole === 'student')
+    ? (typeof currentStudent !== 'undefined' ? currentStudent : '')
+    : (typeof profileStudent !== 'undefined' && profileStudent ? profileStudent.student_name : '');
+  const isOwnedByViewer = Boolean(resolvedOwner && activeStudentName && normalizeStudentIdentity(resolvedOwner) === normalizeStudentIdentity(activeStudentName));
+  const isOwnedByOther = Boolean(resolvedIsOwned && (!activeStudentName || !isOwnedByViewer));
+
   const statusEl = document.getElementById('modal-pokemon-status');
-  statusEl.innerHTML = isOwned ? `<p class="text-sm font-bold" role="status">Owned by <span class="font-bold">${owner}</span></p>` : '';
-  statusEl.classList.toggle('hidden', !isOwned);
+  if (resolvedIsOwned) {
+    statusEl.innerHTML = `<div class="flex items-center justify-center gap-2 text-sm font-bold" role="status"><span class="px-2 py-0.5 rounded bg-red-600 text-white text-xs font-black uppercase tracking-wider shadow">SOLD</span><span>${isOwnedByOther ? 'Sold to other student · ' : ''}Owned by <strong class="underline decoration-amber-400 decoration-2 underline-offset-2">${safe(resolvedOwner)}</strong></span></div>`;
+    statusEl.classList.remove('hidden');
+  } else {
+    statusEl.innerHTML = '';
+    statusEl.classList.add('hidden');
+  }
   
   const actionsEl = document.getElementById('modal-pokemon-actions');
   actionsEl.innerHTML = '';
-  if (currentRole === 'student' && !isOwned) {
+  if (resolvedIsOwned) {
+    if (isOwnedByOther) {
+      actionsEl.innerHTML = `<button type="button" disabled class="btn-primary detail-action opacity-60 cursor-not-allowed" style="background:#475569 !important; border-color:#64748b !important; color:#cbd5e1 !important;" title="Sold to other student (${safe(resolvedOwner)})">Sold to other student (${safe(resolvedOwner)})</button>`;
+    } else {
+      actionsEl.innerHTML = `<button type="button" disabled class="btn-primary detail-action opacity-60 cursor-not-allowed" style="background:#1e293b !important; border-color:#334155 !important; color:#94a3b8 !important;" title="Already in your collection">Already in your collection</button>`;
+    }
+  } else if (currentRole === 'student') {
     const student = getAllStudents().find(s => s.student_name === currentStudent);
     const canAfford = student && (student.coins || 0) >= pokemonData.price;
     actionsEl.innerHTML = canAfford ? `<button class="btn-primary detail-action" onclick="buyPokemon(${pokemonData.id},'${pokemonData.name}','${rarity}',${pokemonData.price},${pokemonData.power});document.getElementById('pokemon-modal').classList.add('hidden')">Buy for ${pokemonData.price} 🪙</button>` : `<button disabled class="btn-primary detail-action">Not Enough Coins</button>`;
-  } else if (currentRole === 'teacher' && !isOwned && profileStudent) {
+  } else if (currentRole === 'teacher' && profileStudent) {
     const canAfford = (profileStudent.coins || 0) >= pokemonData.price;
     actionsEl.innerHTML = canAfford ? `<button class="btn-primary detail-action" onclick="buyPokemonFromProfile(${pokemonData.id},'${pokemonData.name}','${rarity}',${pokemonData.price},${pokemonData.power});document.getElementById('pokemon-modal').classList.add('hidden')">Award to ${profileStudent.student_name}</button>` : `<button disabled class="btn-primary detail-action">Insufficient Coins</button>`;
   }
