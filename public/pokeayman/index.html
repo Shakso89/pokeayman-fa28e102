@@ -16640,16 +16640,18 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
   let baamGridRows = baamGridConfig.rows;
   const fitBaamBoard = () => {
     const body = modal.querySelector('.surprise-boxes-body');
-    if (!body) return;
+    if (!body || !board) return;
     const hud = playerHud?.offsetHeight || 0;
     const availableWidth = Math.max(1, body.clientWidth - 24);
-    const availableHeight = Math.max(1, body.clientHeight - hud - 28);
-    const gap = Math.max(4, Math.min(12, Math.floor(Math.min(availableWidth / baamGridColumns, availableHeight / baamGridRows) * .06)));
-    const cardWidth = (availableWidth - gap * (baamGridColumns - 1)) / baamGridColumns;
-    const cardHeight = (availableHeight - gap * (baamGridRows - 1)) / baamGridRows;
-    const cardSize = Math.max(42, Math.min(cardWidth, cardHeight));
-    board.style.gridTemplateColumns = `repeat(${baamGridColumns}, minmax(0, ${cardSize}px))`;
-    board.style.gridTemplateRows = `repeat(${baamGridRows}, minmax(0, ${cardSize}px))`;
+    const availableHeight = Math.max(1, body.clientHeight - hud - 24);
+    const gap = Math.max(6, Math.min(14, Math.floor(Math.min(availableWidth / baamGridColumns, availableHeight / baamGridRows) * .07)));
+    const boxRatio = 1.25; // Locked gift box aspect ratio: width = height * 1.25
+    const maxBoxWidth = (availableWidth - gap * (baamGridColumns - 1)) / baamGridColumns;
+    const maxBoxHeight = (availableHeight - gap * (baamGridRows - 1)) / baamGridRows;
+    const boxWidth = Math.max(54, Math.min(maxBoxWidth, maxBoxHeight * boxRatio));
+    const boxHeight = boxWidth / boxRatio;
+    board.style.gridTemplateColumns = `repeat(${baamGridColumns}, ${Math.floor(boxWidth)}px)`;
+    board.style.gridTemplateRows = `repeat(${baamGridRows}, ${Math.floor(boxHeight)}px)`;
     board.style.gap = `${gap}px`;
     board.style.justifyContent = 'center';
     board.style.alignContent = 'center';
@@ -16682,7 +16684,16 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
   updateBaamDensityControls();
   window.addEventListener('resize', fitBaamBoard);
   window.visualViewport?.addEventListener('resize', fitBaamBoard);
-  board.innerHTML = tileNumbers.map(n => blankTiles.has(n) ? `<button type="button" class="aspect-[1.7] rounded-lg bg-slate-50 text-slate-300 text-3xl font-black shadow-sm" disabled>×</button>` : `<button type="button" class="baam-tile baam-giftbox" data-tile="${n}" aria-label="Open box ${n}" style="--d:${(n % 8) * 0.18}s"><span class="baam-box-lid" aria-hidden="true"></span><span class="baam-box-body" aria-hidden="true"><span class="baam-box-seal"></span></span><span class="baam-box-num">${n}</span></button>`).join('');
+  const activeBaamThemeId = modal.dataset.gaTheme || (typeof window.gaGetTheme === 'function' ? window.gaGetTheme() : (document.body.dataset.gaActiveTheme || 'classic'));
+  modal.dataset.gaTheme = activeBaamThemeId;
+  const getThemeBallSrc = (themeId) => {
+    if (themeId === 'jungle') return '/pokeayman/assets/balls/6.png';
+    if (themeId === 'toybox') return '/pokeayman/assets/balls/11.png';
+    if (themeId === 'halloween') return '/pokeayman/assets/balls/4.png';
+    return '/pokeayman/assets/balls/1.png';
+  };
+  const baamBallSrc = getThemeBallSrc(activeBaamThemeId);
+  board.innerHTML = tileNumbers.map(n => blankTiles.has(n) ? `<button type="button" class="aspect-[1.25] rounded-lg bg-slate-50 text-slate-300 text-3xl font-black shadow-sm" disabled>×</button>` : `<button type="button" class="baam-tile baam-giftbox" data-tile="${n}" aria-label="Open box ${n}" style="--d:${(n % 8) * 0.18}s"><span class="baam-box-lid" aria-hidden="true"></span><span class="baam-box-body" aria-hidden="true"><span class="baam-box-seal"><img class="baam-seal-ball" src="${baamBallSrc}" alt="Poké Ball" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('is-fallback')"></span></span><span class="baam-box-num">${n}</span></button>`).join('');
   updateBaamGridDensity();
   let selectedCard = null;
   const updateTeamScores = () => {

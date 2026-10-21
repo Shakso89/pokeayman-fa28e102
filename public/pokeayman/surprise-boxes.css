@@ -1,7 +1,14 @@
 /* Surprise Boxes: 3D gift crates, power-up stage, floating points. */
-.surprise-boxes-game #baam-board { perspective: 900px; }
+.surprise-boxes-game #baam-board {
+  perspective: 900px;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
 .surprise-boxes-game .baam-tile.baam-giftbox {
-  position: relative; width: 100%; height: 100%; min-height: 64px; padding: 0;
+  position: relative; width: 100%; height: 100%; aspect-ratio: 1.25 / 1 !important; min-height: 60px; padding: 0;
   background: transparent !important; border: 0 !important; box-shadow: none !important;
   cursor: pointer; animation: baamBoxFloat 3.2s ease-in-out var(--d, 0s) infinite;
   transition: transform .2s ease, filter .2s ease;
@@ -35,24 +42,42 @@
 }
 .baam-giftbox .baam-box-lid::after { left: auto; right: 24%; border-radius: 50% 50% 50% 0; }
 .baam-giftbox .baam-box-seal {
-  position: absolute; left: 50%; top: 54%; width: 34%; aspect-ratio: 1; max-width: 46px;
+  position: absolute; left: 50%; top: 54%; width: 34%; aspect-ratio: 1; max-width: 48px;
   transform: translate(-50%, -50%); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; z-index: 3;
+}
+.baam-giftbox .baam-box-seal:not(:has(.baam-seal-ball)),
+.baam-giftbox .baam-box-seal.is-fallback {
   background:
     radial-gradient(circle at 35% 25%, rgba(255,255,255,.45) 0%, transparent 40%),
-    linear-gradient(180deg, #ef4444 0%, #dc2626 44%, #1e293b 44%, #1e293b 56%, #f8fafc 56%, #e2e8f0 100%);
-  border: 3px solid #1e293b;
-  box-shadow: 0 3px 8px rgba(0,0,0,.45), inset 0 -2px 4px rgba(0,0,0,.25), inset 0 2px 3px rgba(255,255,255,.5);
+    linear-gradient(180deg, #ef4444 0%, #dc2626 44%, #1e293b 44%, #1e293b 56%, #f8fafc 56%, #e2e8f0 100%) !important;
+  border: 3px solid #1e293b !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,.45), inset 0 -2px 4px rgba(0,0,0,.25), inset 0 2px 3px rgba(255,255,255,.5) !important;
   overflow: hidden;
 }
-.baam-giftbox .baam-box-seal::before {
+.baam-giftbox .baam-box-seal:not(:has(.baam-seal-ball))::before,
+.baam-giftbox .baam-box-seal.is-fallback::before {
   content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle at 50% 18%, rgba(255,255,255,0.4) 0%, transparent 52%);
 }
-.baam-giftbox .baam-box-seal::after {
+.baam-giftbox .baam-box-seal:not(:has(.baam-seal-ball))::after,
+.baam-giftbox .baam-box-seal.is-fallback::after {
   content: ''; position: absolute; inset: 28%; border-radius: 50%;
   background: radial-gradient(circle at 38% 38%, #ffffff 0%, #f1f5f9 60%, #cbd5e1 100%);
   border: 2.5px solid #1e293b;
   box-shadow: 0 1px 3px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.9);
+}
+.baam-giftbox .baam-box-seal:has(.baam-seal-ball)::before,
+.baam-giftbox .baam-box-seal:has(.baam-seal-ball)::after {
+  display: none !important;
+}
+.baam-seal-ball {
+  width: 100%; height: 100%; object-fit: contain; display: block;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5)); position: relative; z-index: 2;
+  transition: transform 0.25s ease;
+}
+.surprise-boxes-game .baam-giftbox:hover:not(:disabled) .baam-seal-ball {
+  transform: scale(1.08) rotate(4deg);
 }
 .baam-giftbox .baam-box-num {
   position: absolute; z-index: 3; top: 2%; right: 4%; min-width: 1.9rem; height: 1.9rem; padding: 0 .4rem;
