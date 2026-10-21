@@ -4278,6 +4278,89 @@ body > .ga-stage :is(.match-game-content, .find-me-game-content, .game-popup-mod
   box-sizing: border-box !important;
 }
 
+/* ==========================================================================
+   Find Me Game Board Layout: Side-by-side with small clue photo & big word box
+   ========================================================================== */
+body > .ga-stage .find-me-board-layout,
+html body .find-me-board-layout {
+  display: grid !important;
+  grid-template-columns: minmax(130px, 200px) minmax(0, 1fr) !important;
+  gap: clamp(0.75rem, 1.8vw, 1.5rem) !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  max-width: min(100%, 72rem) !important;
+  margin: 0.5rem auto 0 !important;
+}
+
+body > .ga-stage .find-me-board-layout > div:first-child,
+html body .find-me-board-layout > div:first-child {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+body > .ga-stage #find-me-picture,
+html body #find-me-picture {
+  width: 100% !important;
+  max-width: 200px !important;
+  max-height: 200px !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: contain !important;
+  border-radius: 1rem !important;
+  flex: 0 0 auto !important;
+}
+
+body > .ga-stage #find-me-box,
+html body #find-me-box {
+  width: 100% !important;
+  min-height: clamp(20rem, 52vh, 36rem) !important;
+  height: 100% !important;
+  aspect-ratio: auto !important;
+  flex: 1 1 auto !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border-radius: 1.25rem !important;
+}
+
+@media (max-width: 700px) {
+  body > .ga-stage .find-me-board-layout,
+  html body .find-me-board-layout {
+    grid-template-columns: minmax(100px, 150px) minmax(0, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+  body > .ga-stage #find-me-picture,
+  html body #find-me-picture {
+    max-width: 150px !important;
+    max-height: 150px !important;
+  }
+  body > .ga-stage #find-me-box,
+  html body #find-me-box {
+    min-height: 20rem !important;
+    padding: 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  body > .ga-stage .find-me-board-layout,
+  html body .find-me-board-layout {
+    grid-template-columns: minmax(75px, 105px) minmax(0, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  body > .ga-stage #find-me-picture,
+  html body #find-me-picture {
+    max-width: 105px !important;
+    max-height: 105px !important;
+    border-width: 4px !important;
+  }
+  body > .ga-stage #find-me-box,
+  html body #find-me-box {
+    min-height: 16rem !important;
+    padding: 0.45rem !important;
+  }
+}
+
 body > .ga-stage .ga-stage-header :is(h1, h2) {
   text-align: left !important;
   font: 800 1.35rem 'Outfit', sans-serif !important;
