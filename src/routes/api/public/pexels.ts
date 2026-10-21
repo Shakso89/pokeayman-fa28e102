@@ -30,21 +30,34 @@ export const Route = createFileRoute("/api/public/pexels")({
             if (res.ok) {
               const data = await res.json();
               const hits = Array.isArray(data?.hits) ? data.hits : [];
-              const photos = hits.map((hit: any) => ({
-                id: hit.id,
-                photographer: hit.user || "Pixabay Artist",
-                photographer_url: hit.pageURL || "",
-                url: hit.pageURL || "",
-                src: {
-                  original: hit.largeImageURL || hit.webformatURL || hit.previewURL,
-                  large: hit.largeImageURL || hit.webformatURL || hit.previewURL,
-                  medium: hit.webformatURL || hit.previewURL,
-                  small: hit.previewURL || hit.webformatURL,
-                  tiny: hit.previewURL || hit.webformatURL,
-                },
-                alt: hit.tags || query,
-                type: hit.type || "photo",
-              }));
+              const photos = hits.map((hit: any) => {
+                const preview = hit.previewURL || "";
+                let permanent640 = preview;
+                let permanent1280 = preview;
+                if (preview.includes("cdn.pixabay.com")) {
+                  const ext = preview.slice(preview.lastIndexOf("."));
+                  const base = preview.slice(0, preview.lastIndexOf("_"));
+                  if (base && ext) {
+                    permanent640 = `${base}_640${ext}`;
+                    permanent1280 = `${base}_1280${ext}`;
+                  }
+                }
+                return {
+                  id: hit.id,
+                  photographer: hit.user || "Pixabay Artist",
+                  photographer_url: hit.pageURL || "",
+                  url: hit.pageURL || "",
+                  src: {
+                    original: permanent1280 || hit.largeImageURL || preview,
+                    large: permanent1280 || hit.largeImageURL || preview,
+                    medium: permanent640 || hit.webformatURL || preview,
+                    small: permanent640 || preview,
+                    tiny: preview || permanent640,
+                  },
+                  alt: hit.tags || query,
+                  type: hit.type || "photo",
+                };
+              });
 
               const totalHits = Number(data?.totalHits) || hits.length;
               const hasNext = page * perPage < totalHits;
