@@ -3621,7 +3621,12 @@ html body > .ga-stage[data-ga-theme="halloween"] .ga-stage-header {
   border-bottom: 2.5px solid #ea580c !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 16px rgba(234, 88, 12, 0.3) !important;
 }
-html body > .ga-stage[data-ga-theme="halloween"] .ga-stage-title-wrap h2 {
+
+html body > .ga-stage[data-ga-theme="halloween"] .ga-stage-header p {
+  color: #fed7aa !important;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8) !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .ga-stage-header :is(h1, h2) {
   color: #fef08a !important;
   text-shadow: 0 0 12px rgba(249, 115, 22, 0.7), 0 2px 4px rgba(0,0,0,0.8) !important;
 }
