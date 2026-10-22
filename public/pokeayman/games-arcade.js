@@ -603,49 +603,35 @@
     {
       id: 'halloween',
       name: 'Halloween',
-      subtitle: 'Sticker moon & pumpkin glow',
+      subtitle: 'Friendly pumpkins & ghosts',
       thumbSvg: `<svg viewBox="0 0 120 82" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
-          <linearGradient id="th-hlw-bg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#0b0418"/><stop offset="55%" stop-color="#1d0b34"/><stop offset="100%" stop-color="#2b1145"/>
-          </linearGradient>
-          <radialGradient id="th-hlw-moon" cx="42%" cy="38%" r="62%">
-            <stop offset="0%" stop-color="#fffdf5"/><stop offset="55%" stop-color="#fde68a"/><stop offset="100%" stop-color="#fbbf24"/>
-          </radialGradient>
-          <linearGradient id="th-hlw-pump" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#fdba74"/><stop offset="55%" stop-color="#f97316"/><stop offset="100%" stop-color="#c2410c"/>
-          </linearGradient>
+          <linearGradient id="th-hlw-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#5b3aa8"/><stop offset="70%" stop-color="#9a4f9c"/><stop offset="100%" stop-color="#e2768a"/></linearGradient>
+          <linearGradient id="th-hlw-pump" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fdba74"/><stop offset="60%" stop-color="#fb923c"/><stop offset="100%" stop-color="#ea580c"/></linearGradient>
         </defs>
         <rect width="120" height="82" fill="url(#th-hlw-bg)"/>
-        <circle cx="94" cy="22" r="19" fill="#fbbf24" opacity="0.18"/>
-        <circle cx="94" cy="22" r="14" fill="url(#th-hlw-moon)"/>
-        <g fill="#0d0619">
-          <path d="M74 34 L82 30 L80 35 L88 33 L82 40 L72 40 Z"/>
-          <path d="M0 46 L8 43 L6 47 L14 45 L8 51 L-2 50 Z" transform="translate(6,-10)"/>
+        <rect x="4" y="4" width="112" height="74" rx="9" fill="none" stroke="#fde68a" stroke-width="2.5"/>
+        <circle cx="96" cy="20" r="10" fill="#fde68a"/><circle cx="92" cy="17" r="2" fill="#fbbf24" opacity=".6"/>
+        <g fill="#fff7d6"><circle cx="18" cy="16" r="1.4"/><circle cx="34" cy="10" r="1"/><circle cx="62" cy="14" r="1.3"/><circle cx="76" cy="26" r="1"/></g>
+        <path d="M0 66 Q30 58 60 63 Q92 57 120 63 L120 82 L0 82 Z" fill="#4c2a7a"/>
+        <g transform="translate(42 56)">
+          <ellipse cx="0" cy="0" rx="17" ry="14" fill="url(#th-hlw-pump)" stroke="#3b1d5e" stroke-width="2"/>
+          <path d="M-7 -13 C-9 -3 -9 6 -6 13 M7 -13 C9 -3 9 6 6 13" stroke="#ea580c" stroke-width="1.4" fill="none"/>
+          <path d="M0 -14 C1 -19 5 -20 8 -18" stroke="#65a30d" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          <circle cx="-6" cy="-2" r="2.4" fill="#3b1d5e"/><circle cx="6" cy="-2" r="2.4" fill="#3b1d5e"/>
+          <circle cx="-5.3" cy="-2.8" r=".8" fill="#fff"/><circle cx="6.7" cy="-2.8" r=".8" fill="#fff"/>
+          <path d="M-6 4 Q0 9 6 4" stroke="#3b1d5e" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <ellipse cx="-11" cy="3" rx="3" ry="1.8" fill="#f9a8d4" opacity=".7"/><ellipse cx="11" cy="3" rx="3" ry="1.8" fill="#f9a8d4" opacity=".7"/>
         </g>
-        <g stroke="#fdf6e8" stroke-opacity="0.4" stroke-width="1" fill="none">
-          <path d="M0 0 L34 0 M0 0 L0 30 M0 0 L24 24"/>
-          <path d="M6 0 Q14 14 0 22 M18 0 Q26 12 8 30"/>
+        <g transform="translate(78 46)">
+          <path d="M-11 14 L-11 0 C-11 -9 11 -9 11 0 L11 14 L7 11 L3 14 L-1 11 L-5 14 L-8 11 Z" fill="#ffffff" stroke="#3b1d5e" stroke-width="1.8"/>
+          <circle cx="-4" cy="0" r="1.8" fill="#3b1d5e"/><circle cx="4" cy="0" r="1.8" fill="#3b1d5e"/>
+          <path d="M-2 4 Q0 6 2 4" stroke="#3b1d5e" stroke-width="1.4" fill="none" stroke-linecap="round"/>
         </g>
-        <path d="M60 40 C66 34 74 34 78 40 L76 44 L70 40 L66 44 L60 40 Z" fill="#fdf6e8" stroke="#14081f" stroke-width="1.6"/>
-        <ellipse cx="66" cy="39" rx="1.8" ry="2.6" fill="#14081f"/>
-        <ellipse cx="72" cy="39" rx="1.8" ry="2.6" fill="#14081f"/>
-        <path d="M0 66 Q 30 60 60 64 Q 92 58 120 64 L 120 82 L 0 82 Z" fill="#08030f"/>
-        <g transform="translate(24, 66)">
-          <ellipse cx="0" cy="0" rx="15" ry="12.5" fill="url(#th-hlw-pump)" stroke="#14081f" stroke-width="2"/>
-          <path d="M-8 -11 C -10 -2 -10 6 -7 11 M8 -11 C 10 -2 10 6 7 11" stroke="#c2410c" stroke-width="1.4" fill="none"/>
-          <path d="M0 -12 C 1 -17 5 -18 8 -16" stroke="#4d7c0f" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-          <path d="M-7 -3 L-2 2 L-8 3 Z" fill="#14081f"/>
-          <path d="M4 -3 L9 2 L3 3 Z" fill="#14081f"/>
-          <path d="M-8 6 L-4 3 L-1 7 L3 3 L6 7 L9 5 L7 10 L-6 10 Z" fill="#14081f"/>
+        <g transform="translate(100 66)">
+          <circle r="7" fill="#fff" stroke="#3b1d5e" stroke-width="1.6"/><path d="M-7 0 A7 7 0 0 1 7 0 Z" fill="#a855f7"/>
+          <rect x="-7" y="-1" width="14" height="2" fill="#3b1d5e"/><circle r="2.2" fill="#fff" stroke="#3b1d5e" stroke-width="1.2"/>
         </g>
-        <g fill="#fdf6e8" stroke="#14081f" stroke-width="1.6">
-          <path d="M38 62 C36 56 40 52 44 53 C48 51 52 55 51 60 L50 64 C48 62 46 66 44 63 C42 66 39 63 38 62 Z"/>
-          <path d="M88 61 C86 56 90 52 94 53 C98 51 102 55 101 59 L100 63 C98 61 96 64 94 62 C92 64 89 62 88 61 Z"/>
-        </g>
-        <circle cx="43" cy="56" r="1.6" fill="#14081f"/><circle cx="48" cy="56" r="1.6" fill="#14081f"/>
-        <circle cx="93" cy="56" r="1.5" fill="#14081f"/><circle cx="98" cy="56" r="1.5" fill="#14081f"/>
-        <path d="M0 72 Q 34 68 68 71 Q 96 67 120 71 L 120 82 L 0 82 Z" fill="#05010a"/>
       </svg>`,
       cardBackSvg: `<svg class="ga-card-back-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
@@ -697,10 +683,10 @@
       backdropSvg: `<svg class="ga-theme-backdrop-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
           <linearGradient id="bg-hlw-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#08040f"/>
-            <stop offset="38%" stop-color="#150826"/>
-            <stop offset="72%" stop-color="#26103f"/>
-            <stop offset="100%" stop-color="#12071f"/>
+            <stop offset="0%" stop-color="#2b1a5c"/>
+            <stop offset="45%" stop-color="#4a2a86"/>
+            <stop offset="78%" stop-color="#7a3f8f"/>
+            <stop offset="100%" stop-color="#c2547a"/>
           </linearGradient>
           <radialGradient id="bg-hlw-glow" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.16"/>
@@ -772,18 +758,6 @@
           <circle cx="1044" cy="166" r="13"/><circle cx="1108" cy="206" r="19"/>
           <circle cx="1052" cy="232" r="10"/><circle cx="1116" cy="158" r="7"/>
         </g>
-        <!-- witch on a broom, crossing the moon -->
-        <g transform="translate(1072 204) scale(1.12)">
-          <path d="M-74 30 L64 8" stroke="#14081f" stroke-width="5.5" stroke-linecap="round"/>
-          <path d="M-74 30 L-104 40 L-100 50 L-68 38 Z" fill="#14081f"/>
-          <path d="M50 -6 C 66 4 82 22 84 34 C 68 30 52 22 42 12 Z" fill="#14081f"/>
-          <path d="M-18 6 C -26 16 -24 30 -12 34 L 12 28 C 14 16 6 6 -18 6 Z" fill="#14081f"/>
-          <path d="M-14 8 C 4 10 20 16 30 26 L 8 30 Z" fill="#14081f" opacity="0.9"/>
-          <path d="M-10 6 L10 4 L-4 -22 Z" fill="#14081f"/>
-          <path d="M-18 6 L14 3 L13 10 L-17 13 Z" fill="#14081f"/>
-          <path d="M-4 -20 L2 -26 L6 -18 Z" fill="#14081f"/>
-        </g>
-
         <!-- bats -->
         <g fill="#0d0619">
           <use href="#bg-hlw-bat" transform="translate(930 126) scale(0.95)"/>
@@ -793,54 +767,9 @@
           <use href="#bg-hlw-bat" transform="translate(200 156) scale(0.42)"/>
         </g>
 
-        <!-- bare tree, bottom-left -->
-        <g fill="#07020e">
-          <path d="M40 900 L58 690 Q 62 610 74 560 Q 84 500 96 470 L 110 476 Q 96 520 90 578 Q 82 650 84 900 Z"/>
-          <path d="M80 585 Q 130 545 186 528 Q 148 552 96 596 Z"/>
-          <path d="M112 500 Q 168 470 222 462 Q 176 486 122 516 Z"/>
-          <path d="M150 536 Q 186 586 214 612 Q 176 588 140 548 Z"/>
-          <path d="M84 660 Q 44 646 12 652 Q 52 664 88 676 Z"/>
-          <path d="M92 600 Q 62 560 34 540 Q 70 566 98 610 Z"/>
-          <path d="M176 470 Q 196 434 216 420 Q 200 448 188 480 Z"/>
-        </g>
-
-        <!-- haunted manor on the horizon, windows lit -->
-        <g transform="translate(596 690)">
-          <path d="M0 70 L0 34 L18 34 L18 12 L30 12 L30 0 L42 0 L42 12 L54 12 L54 34 L70 34 L70 18 L84 18 L84 2 L96 2 L96 18 L112 18 L112 70 Z" fill="#0a0413"/>
-          <path d="M-6 70 L-6 44 L0 44 L0 36 L6 36 L6 70 Z" fill="#0a0413"/>
-          <path d="M104 70 L104 40 L110 40 L110 32 L118 32 L118 70 Z" fill="#0a0413"/>
-          <path d="M30 0 L36 -12 L42 0 Z" fill="#0a0413"/>
-          <path d="M84 2 L90 -10 L96 2 Z" fill="#0a0413"/>
-          <g fill="#fdba74" opacity="0.92">
-            <rect x="22" y="44" width="7" height="11" rx="1"/>
-            <rect x="36" y="22" width="6" height="10" rx="1"/>
-            <rect x="44" y="22" width="6" height="10" rx="1"/>
-            <rect x="60" y="43" width="7" height="11" rx="1"/>
-            <rect x="88" y="28" width="6" height="10" rx="1"/>
-            <rect x="44" y="52" width="9" height="18" rx="4"/>
-          </g>
-          <path d="M96 30 L104 30 L104 46 L96 46 Z" fill="#0a0413"/>
-        </g>
-
-        <!-- gravestones -->
-        <g fill="#0a0413">
-          <path d="M212 828 L212 786 Q 212 762 232 762 Q 252 762 252 786 L252 828 Z"/>
-          <path d="M280 838 L280 800 Q 280 780 296 780 Q 312 780 312 800 L312 838 Z"/>
-        </g>
-        <g stroke="#fdf6e8" stroke-opacity="0.18" stroke-width="2" fill="none">
-          <path d="M218 790 L246 790 M232 776 L232 806"/>
-          <path d="M288 802 L306 802"/>
-        </g>
-
         <!-- ground -->
-        <path d="M0 758 Q 240 726 480 746 Q 760 774 1020 744 Q 1240 720 1440 750 L 1440 900 L 0 900 Z" fill="#08030f"/>
-        <path d="M0 826 Q 300 798 620 818 Q 980 844 1440 810 L 1440 900 L 0 900 Z" fill="#05010a"/>
-
-        <!-- zombie hand -->
-        <g transform="translate(742 800)" fill="#4ade80" stroke="#14081f" stroke-width="3.2">
-          <path d="M-14 46 L-14 6 Q -14 -2 -6 -2 Q 2 -2 2 6 L 2 18 L 6 -6 Q 7 -14 14 -13 Q 21 -12 20 -4 L 18 20 L 23 0 Q 24 -8 31 -7 Q 38 -6 36 2 L 32 26 L 37 12 Q 39 4 45 6 Q 51 8 48 16 L 40 44 Q 32 58 12 58 Q -6 58 -14 46 Z"/>
-          <path d="M-30 58 Q -16 50 0 54 Q 18 58 32 54 L 40 68 L -38 68 Z" fill="#0a0413" stroke="#0a0413"/>
-        </g>
+        <path d="M0 758 Q 240 726 480 746 Q 760 774 1020 744 Q 1240 720 1440 750 L 1440 900 L 0 900 Z" fill="#3b1f5e"/>
+        <path d="M0 826 Q 300 798 620 818 Q 980 844 1440 810 L 1440 900 L 0 900 Z" fill="#2a1546"/>
 
         <!-- ghosts: trio peeking over the hillside, plus one floating right -->
         <use href="#bg-hlw-ghostart" transform="translate(392 716) scale(0.62)"/>

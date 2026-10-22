@@ -3629,7 +3629,7 @@ html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) 
   --hlw-gold: #fbbf24;
   --hlw-mint: #4ade80;
   --hlw-glare: rgba(253, 246, 232, 0.16);
-  background: #0b0417 !important;
+  background: #3a2270 !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .ga-stage-header {
   background: linear-gradient(180deg, rgba(26, 13, 46, 0.94) 0%, rgba(11, 4, 23, 0.9) 100%) !important;
@@ -3698,6 +3698,7 @@ html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) 
     0 4px 0 var(--hlw-ink),
     0 20px 44px rgba(0, 0, 0, 0.55) !important;
   padding: clamp(0.95rem, 2vw, 1.55rem) !important;
+}
 /* Find Me: Word feedback animations for Halloween theme */
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .find-me-word.find-me-word--correct,
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .find-me-word.find-me-word--wrong,
@@ -5023,3 +5024,29 @@ html body.ts-bright .baam-stage-portal .baam-choice-badge {
 }
 
 
+
+/* Halloween: friendlier twilight surfaces + Find Me header/score box polish. */
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) { --ga-stage-surface: #3a2270; --ga-stage-chip: #4b2d8a; --ga-stage-line: #6d4bb8; }
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .ga-stage-header {
+  width: 100% !important; box-sizing: border-box !important; align-self: stretch !important;
+  background: linear-gradient(180deg, rgba(74, 42, 134, .96), rgba(52, 28, 100, .96)) !important;
+  border-bottom: 3px solid #fb923c !important; box-shadow: 0 6px 18px rgba(20, 8, 40, .35) !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .ga-stage-header :is(h1,h2) {
+  color: #fff7e6 !important; text-shadow: 0 2px 0 #c2410c, 0 4px 10px rgba(20,8,40,.4) !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .ga-stage-header button:not(.ga-stage-theme-btn) {
+  background: #5b3aa8 !important; border: 2px solid #8b6fd6 !important; border-radius: 12px !important; color: #fff7e6 !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .ga-stage-header button:not(.ga-stage-theme-btn):hover { background: #fb923c !important; border-color: #fdba74 !important; color: #2a1207 !important; }
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .game-player-card {
+  background: linear-gradient(180deg, #5b3aa8 0%, #43277f 100%) !important; border: 2.5px solid #8b6fd6 !important; border-radius: 18px !important;
+  box-shadow: 0 4px 0 #2a1546, 0 12px 24px rgba(20,8,40,.35) !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .game-player-card.is-active {
+  background: linear-gradient(180deg, #6a43c0 0%, #4b2d8a 100%) !important; border-color: #fb923c !important;
+  box-shadow: 0 0 0 3px rgba(251,146,60,.35), 0 4px 0 #2a1546, 0 14px 28px rgba(251,146,60,.25) !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .game-player-card :is(.game-player-name, .game-player-score, .game-player-score *) { color: #fff7e6 !important; }
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .game-player-card .game-player-score strong { color: #fde68a !important; }
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .game-player-card .game-player-avatar { border-color: #fde68a !important; background: #fff7e6 !important; }
