@@ -5076,6 +5076,47 @@ html body[data-ga-active-theme="classic"] .lc-daily-cap:not(.is-limit) {
   color: #cbd5e1 !important;
 }
 
+
+/* ==========================================================================
+   Classic Theme - Unscramble (Empty boxes instead of empty lines)
+   ========================================================================== */
+html body > .ga-stage[data-ga-theme="classic"] #scramble-answer .scramble-answer-slot,
+html body > .ga-stage:not([data-ga-theme]) #scramble-answer .scramble-answer-slot,
+html body[data-ga-active-theme="classic"] #scramble-answer .scramble-answer-slot,
+.cipher-lab-shell #scramble-answer .scramble-answer-slot {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 1.18em !important;
+  min-height: 1.34em !important;
+  padding: 0.05em 0.16em 0.1em !important;
+  margin: 0 0.12em !important;
+  background: rgba(14, 22, 64, 0.75) !important;
+  border: 2.5px solid rgba(147, 197, 253, 0.55) !important;
+  border-bottom: 2.5px solid rgba(147, 197, 253, 0.55) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), 0 3px 8px rgba(2, 6, 23, 0.3) !important;
+  line-height: 1 !important;
+  text-shadow: none !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] #scramble-answer .scramble-answer-slot::after,
+html body > .ga-stage:not([data-ga-theme]) #scramble-answer .scramble-answer-slot::after,
+html body[data-ga-active-theme="classic"] #scramble-answer .scramble-answer-slot::after,
+.cipher-lab-shell #scramble-answer .scramble-answer-slot::after {
+  display: none !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] #scramble-answer .scramble-answer-slot.is-filled,
+html body > .ga-stage:not([data-ga-theme]) #scramble-answer .scramble-answer-slot.is-filled,
+html body[data-ga-active-theme="classic"] #scramble-answer .scramble-answer-slot.is-filled,
+.cipher-lab-shell #scramble-answer .scramble-answer-slot.is-filled {
+  border-color: #fde047 !important;
+  background: linear-gradient(145deg, rgba(37, 99, 235, 0.55), rgba(30, 64, 175, 0.75)) !important;
+  color: #fde047 !important;
+  text-shadow: 0 0 18px rgba(255, 203, 5, 0.6) !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
 /* ==========================================================================
    Teacher Shell Bright Mode (body.ts-bright) Overrides
    ========================================================================== */

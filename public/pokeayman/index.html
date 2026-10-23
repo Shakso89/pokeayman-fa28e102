@@ -2743,8 +2743,8 @@
     .cipher-lab-progress { color:#bae6fd; font-size:.72rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
     .cipher-lab-panel { position:relative; background:rgba(21,27,88,.74); border:1px solid rgba(125,211,252,.28); border-radius:1.25rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 18px 40px rgba(2,6,23,.3); backdrop-filter:blur(12px); }
     .cipher-lab-answer { min-height:6rem; color:#f5f7ff !important; letter-spacing:0 !important; text-shadow:0 0 20px rgba(255,203,5,.35); gap:.22em; flex-wrap:wrap; }
-    .scramble-answer-slot { display:inline-flex; align-items:center; justify-content:center; min-width:.78em; min-height:1.15em; border-bottom:.07em solid rgba(186,230,253,.6); border-radius:.1em; line-height:1; }
-    .scramble-answer-slot.is-filled { border-bottom-color:transparent; color:#fde047; text-shadow:0 0 18px rgba(255,203,5,.55); animation:scramble-slot-pop .22s ease; }
+    .scramble-answer-slot { position:relative; display:inline-flex; align-items:center; justify-content:center; min-width:1.18em; min-height:1.34em; padding:0.05em 0.16em 0.1em; margin:0 0.12em; background:rgba(14,22,64,.75); border:2.5px solid rgba(147,197,253,.55); border-radius:12px; box-shadow:inset 0 2px 6px rgba(0,0,0,.4), 0 3px 8px rgba(2,6,23,.3); line-height:1; transition:all .2s ease; }
+    .scramble-answer-slot.is-filled { border-color:#fde047; background:linear-gradient(145deg, rgba(37,99,235,.55), rgba(30,64,175,.75)); color:#fde047; text-shadow:0 0 18px rgba(255,203,5,.6); box-shadow:0 4px 14px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.25); animation:scramble-slot-pop .22s ease; }
     @keyframes scramble-slot-pop { from { transform:scale(.55); } to { transform:scale(1); } }
     .cipher-lab-answer.scramble-result-correct .scramble-answer-slot.is-filled { color:#86efac; text-shadow:0 0 20px rgba(74,222,128,.9); animation:scramble-letter-correct .52s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--slot-index, 0) * 55ms); }
     .cipher-lab-answer.scramble-result-wrong .scramble-answer-slot.is-filled { color:#fca5a5; text-shadow:0 0 16px rgba(248,113,113,.7); animation:scramble-letter-wrong .42s ease both; animation-delay:calc(var(--slot-index, 0) * 28ms); }
@@ -4400,7 +4400,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/leaderboard-views.css">
 <link rel="stylesheet" href="/pokeayman/profile-workspace.css">
 <link rel="stylesheet" href="/pokeayman/vocab-editor.css">
-<link rel="stylesheet" href="/pokeayman/games-arcade.css">
+<link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261023-classic-boxes-v1">
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/vocab-battle.css">
 <link rel="stylesheet" href="/pokeayman/study-theme.css">
