@@ -131,7 +131,7 @@ function Index() {
   }
 
   if (!ready) return null;
-  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html" allowFullScreen onLoad={(event) => {
+  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html?v=20261023-halloween" allowFullScreen onLoad={(event) => {
     event.currentTarget.contentDocument?.documentElement.style.setProperty("--home-habitat-image", `url("${new URL(homeHabitat, window.location.href).href}")`);
   }} />;
 }
