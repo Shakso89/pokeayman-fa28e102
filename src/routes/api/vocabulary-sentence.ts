@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { askSentenceModel, normalizeWord, sentenceHasWord } from "@/lib/vocab-sentences";
+import { SentenceAiError, askSentenceModel, normalizeWord, sentenceHasWord } from "@/lib/vocab-sentences";
 
 const requests = new Map<string, { count: number; reset: number }>();
 
@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/vocabulary-sentence")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      POST: async ({ request }) => {
+      POST: async ({ request }) => { try { return await (async () => {
         const ip = request.headers.get("cf-connecting-ip") || "preview";
         const now = Date.now();
         if (requests.size > 1000) for (const [k, e] of requests) if (e.reset < now) requests.delete(k);
@@ -160,6 +160,12 @@ Reply with JSON only: {"sentence": "<sentence>"}`;
           { message: `Gemini could not write a sentence that uses "${word}". Please try again.` },
           { status: 502, headers: CORS }
         );
+        })();
+        } catch (err) {
+          const message = err instanceof SentenceAiError ? err.message : "Sentence generation failed. Please try again.";
+          console.warn("[vocab] generation error:", err);
+          return Response.json({ message }, { status: 502, headers: CORS });
+        }
       },
     },
   },
