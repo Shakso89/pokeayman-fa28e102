@@ -51,7 +51,7 @@ export function sentenceHasWord(sentence: string, word: string): boolean {
 type GeminiPart = { text?: string; inlineData?: { mimeType: string; data: string } };
 type GeminiBody = {
   contents: Array<{ parts: GeminiPart[] }>;
-  generationConfig?: { temperature?: number; maxOutputTokens?: number };
+  generationConfig?: { temperature?: number; maxOutputTokens?: number; responseMimeType?: string };
 };
 
 /**
@@ -87,7 +87,7 @@ export async function askSentenceModel(body: GeminiBody): Promise<string> {
       method: "POST",
       headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-3.8-flash",
         messages: [{ role: "user", content }],
         temperature: body.generationConfig?.temperature,
       }),
