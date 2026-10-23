@@ -126,12 +126,50 @@ body > #contact-pricing-float > #contact-pricing-btn {
   .flashcard-popup-shell #flashcard-sentence, .flashcard-popup-shell #student-vocab-sentence { font-size: 1.35rem !important; }
 }
 
-/* Find Me: a taller board and smaller word tiles so words don't pile on top of each other. */
+/* Find Me: side-by-side layout with exact ratios (.72fr : 1.62fr) and vertical centering */
 @media (max-width: 700px) {
-  .find-me-board-layout { grid-template-columns: 1fr !important; }
-  .find-me-board-layout > div:first-child .find-me-square { width: min(100%, 14rem); aspect-ratio: 4 / 3; margin: 0 auto; }
-  #find-me-box { aspect-ratio: auto !important; min-height: 24rem !important; }
-  #find-me-box .find-me-word { padding: .3rem .6rem !important; font-size: min(1em, 15px); }
+  .find-me-board-layout {
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.62fr) !important;
+    gap: .75rem !important;
+    align-items: center !important;
+  }
+  .find-me-board-layout > div:first-child {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+  .find-me-board-layout > div:first-child .find-me-square,
+  #find-me-picture {
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    object-fit: contain !important;
+    margin: 0 auto !important;
+  }
+  #find-me-box {
+    aspect-ratio: 1.35 / 1 !important;
+    min-height: 14rem !important;
+    padding: .75rem !important;
+  }
+  #find-me-box .find-me-word {
+    padding: .3rem .6rem !important;
+    font-size: min(1em, 15px);
+  }
+}
+
+@media (max-width: 480px) {
+  .find-me-board-layout {
+    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.62fr) !important;
+    gap: .5rem !important;
+    align-items: center !important;
+  }
+  #find-me-picture {
+    border-width: 4px !important;
+  }
+  #find-me-box {
+    min-height: 12rem !important;
+    padding: .45rem !important;
+  }
 }
 
 /* Game score boxes: compact row on phones so the board stays visible. */

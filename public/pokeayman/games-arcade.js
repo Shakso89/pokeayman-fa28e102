@@ -601,6 +601,304 @@
       </svg>`
     },
     {
+      id: 'halloween',
+      name: 'Halloween',
+      subtitle: 'Haunted manor & lanterns',
+      thumbSvg: `<svg viewBox="0 0 120 82" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="th-hlw-bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0f0720"/>
+            <stop offset="55%" stop-color="#26124c"/>
+            <stop offset="100%" stop-color="#4c1d95"/>
+          </linearGradient>
+          <radialGradient id="th-hlw-moon" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fffbeb"/>
+            <stop offset="65%" stop-color="#fde047"/>
+            <stop offset="100%" stop-color="#f59e0b"/>
+          </radialGradient>
+          <linearGradient id="th-hlw-pump" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fdba74"/>
+            <stop offset="45%" stop-color="#fb923c"/>
+            <stop offset="100%" stop-color="#c2410c"/>
+          </linearGradient>
+        </defs>
+        <rect width="120" height="82" fill="url(#th-hlw-bg)"/>
+        <rect x="3" y="3" width="114" height="76" rx="8" fill="none" stroke="#f97316" stroke-width="2.5"/>
+        <!-- Harvest Moon & Glow -->
+        <circle cx="92" cy="24" r="19" fill="#fbbf24" opacity="0.18"/>
+        <circle cx="92" cy="24" r="13" fill="url(#th-hlw-moon)"/>
+        <!-- Stars -->
+        <g fill="#fef08a">
+          <circle cx="18" cy="15" r="1.3"/><circle cx="38" cy="11" r="1"/><circle cx="62" cy="16" r="1.4"/>
+        </g>
+        <!-- Manor Silhouette & Hills -->
+        <polygon points="14,62 14,38 22,26 30,38 30,62" fill="#140826"/>
+        <polygon points="26,62 26,32 36,18 46,32 46,62" fill="#190b30"/>
+        <rect x="33" y="36" width="6" height="9" rx="3" fill="#fde047"/>
+        <path d="M0 62 Q34 54 68 60 Q96 55 120 61 L120 82 L0 82 Z" fill="#16092b"/>
+        <!-- Carved Jack-o'-Lantern -->
+        <g transform="translate(56 57)">
+          <ellipse cx="0" cy="0" rx="16" ry="13" fill="url(#th-hlw-pump)" stroke="#090312" stroke-width="2"/>
+          <path d="M-6 -12 C-9 -3 -9 6 -5 12 M6 -12 C9 -3 9 6 5 12" stroke="#9a3412" stroke-width="1.3" fill="none"/>
+          <path d="M0 -13 C1 -18 5 -19 8 -17" stroke="#22c55e" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          <polygon points="-8,-4 -2,-1 -9,1" fill="#fef08a"/>
+          <polygon points="8,-4 2,-1 9,1" fill="#fef08a"/>
+          <path d="M-8 4 L-4 2 L0 5 L4 2 L8 4 L5 8 L-5 8 Z" fill="#fef08a"/>
+        </g>
+        <!-- Dusk/Master Poké-Orb Accent -->
+        <g transform="translate(94 60)">
+          <circle r="9" fill="#f8fafc" stroke="#090312" stroke-width="2"/>
+          <path d="M-9 0 A9 9 0 0 1 9 0 Z" fill="#7e22ce"/>
+          <circle cx="-4.5" cy="-3.5" r="2" fill="#ec4899"/>
+          <circle cx="4.5" cy="-3.5" r="2" fill="#ec4899"/>
+          <rect x="-9" y="-1.2" width="18" height="2.4" fill="#090312"/>
+          <circle r="2.8" fill="#fde047" stroke="#090312" stroke-width="1.5"/>
+        </g>
+      </svg>`,
+      cardBackSvg: `<svg class="ga-card-back-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="cb-hlw-border" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#fdba74"/>
+            <stop offset="50%" stop-color="#f97316"/>
+            <stop offset="100%" stop-color="#9a3412"/>
+          </linearGradient>
+          <radialGradient id="cb-hlw-bg" cx="50%" cy="50%" r="65%">
+            <stop offset="0%" stop-color="#3b176b"/>
+            <stop offset="60%" stop-color="#1e0b3b"/>
+            <stop offset="100%" stop-color="#0d041c"/>
+          </radialGradient>
+          <linearGradient id="cb-hlw-top" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fdba74"/>
+            <stop offset="45%" stop-color="#f97316"/>
+            <stop offset="100%" stop-color="#c2410c"/>
+          </linearGradient>
+          <linearGradient id="cb-hlw-bot" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#581c87"/>
+            <stop offset="100%" stop-color="#2e1065"/>
+          </linearGradient>
+        </defs>
+        <!-- Outer Pumpkin-Gold Bezel -->
+        <rect width="200" height="200" rx="24" fill="url(#cb-hlw-border)"/>
+        <!-- Deep Midnight Velvet Core -->
+        <rect x="8" y="8" width="184" height="184" rx="18" fill="url(#cb-hlw-bg)" stroke="#090312" stroke-width="3.5"/>
+        <!-- Inner Ornate Frame & Corner Gems -->
+        <rect x="16" y="16" width="168" height="168" rx="13" fill="none" stroke="#fb923c" stroke-width="1.8" stroke-opacity="0.55"/>
+        <circle cx="24" cy="24" r="3.5" fill="#fde047"/>
+        <circle cx="176" cy="24" r="3.5" fill="#fde047"/>
+        <circle cx="24" cy="176" r="3.5" fill="#fde047"/>
+        <circle cx="176" cy="176" r="3.5" fill="#fde047"/>
+        <!-- Subtle Concentric Web Filigree -->
+        <g stroke="#c4b5fd" stroke-width="1.2" opacity="0.18" fill="none">
+          <circle cx="100" cy="102" r="76"/>
+          <circle cx="100" cy="102" r="64" stroke-dasharray="6 6"/>
+          <line x1="100" y1="18" x2="100" y2="186"/>
+          <line x1="18" y1="102" x2="182" y2="102"/>
+          <line x1="42" y1="44" x2="158" y2="160"/>
+          <line x1="158" y1="44" x2="42" y2="160"/>
+        </g>
+        <!-- Bat Wing Crest Behind Poké-Lantern -->
+        <path d="M100 96 C 72 68, 36 66, 18 82 C 30 92, 34 104, 24 114 C 42 112, 54 120, 50 130 C 68 122, 84 126, 100 116 Z" fill="#090312" stroke="#a855f7" stroke-width="2"/>
+        <path d="M100 96 C 128 68, 164 66, 182 82 C 170 92, 166 104, 176 114 C 158 112, 146 120, 150 130 C 132 122, 116 126, 100 116 Z" fill="#090312" stroke="#a855f7" stroke-width="2"/>
+        <!-- Ambient Aura -->
+        <circle cx="100" cy="104" r="56" fill="#f97316" opacity="0.22"/>
+        <!-- Emerald Vine Stem -->
+        <path d="M98 52 C 99 36, 112 31, 121 37" fill="none" stroke="#090312" stroke-width="9" stroke-linecap="round"/>
+        <path d="M98 52 C 99 36, 112 31, 121 37" fill="none" stroke="#22c55e" stroke-width="5" stroke-linecap="round"/>
+        <!-- Center Jack-o'-Lantern Poké-Ball -->
+        <circle cx="100" cy="104" r="48" fill="url(#cb-hlw-bot)" stroke="#090312" stroke-width="5"/>
+        <path d="M52 104 A48 48 0 0 1 148 104 Z" fill="url(#cb-hlw-top)" stroke="#090312" stroke-width="5"/>
+        <!-- Pumpkin Rib Grooves on Top Half -->
+        <path d="M74 60 C 66 76, 66 92, 68 104" fill="none" stroke="#9a3412" stroke-width="2.5" opacity="0.65"/>
+        <path d="M126 60 C 134 76, 134 92, 132 104" fill="none" stroke="#9a3412" stroke-width="2.5" opacity="0.65"/>
+        <!-- Glowing Jack-o'-Lantern Eyes on Top Half -->
+        <polygon points="73,88 87,76 90,91" fill="#090312"/>
+        <polygon points="75,87 86,78 88,90" fill="#fef08a"/>
+        <polygon points="127,88 113,76 110,91" fill="#090312"/>
+        <polygon points="125,87 114,78 112,90" fill="#fef08a"/>
+        <!-- Glowing Carved Grin on Bottom Half -->
+        <path d="M72 120 L84 114 L92 122 L100 114 L108 122 L116 114 L128 120 L120 134 L108 128 L100 135 L92 128 L80 134 Z" fill="#fef08a" stroke="#090312" stroke-width="2"/>
+        <!-- Equator Seam & Glowing Core Button -->
+        <path d="M52 104 H148" stroke="#090312" stroke-width="7"/>
+        <circle cx="100" cy="104" r="15" fill="#1e0b3b" stroke="#090312" stroke-width="4.5"/>
+        <circle cx="100" cy="104" r="8" fill="#fde047"/>
+        <circle cx="97" cy="101" r="3" fill="#ffffff"/>
+        <!-- Gloss Highlight -->
+        <ellipse cx="78" cy="70" rx="11" ry="5" transform="rotate(-28 78 70)" fill="#ffffff" opacity="0.38"/>
+      </svg>`,
+      backdropSvg: `<svg class="ga-theme-backdrop-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <!-- Velvety Midnight Indigo-Violet Sky -->
+          <linearGradient id="bg-hlw-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0b0418"/>
+            <stop offset="38%" stop-color="#190b33"/>
+            <stop offset="72%" stop-color="#2e1559"/>
+            <stop offset="100%" stop-color="#461d7c"/>
+          </linearGradient>
+          <!-- Luminous Harvest Moon -->
+          <radialGradient id="bg-hlw-moon" cx="42%" cy="38%" r="60%">
+            <stop offset="0%" stop-color="#fffef5"/>
+            <stop offset="55%" stop-color="#fef08a"/>
+            <stop offset="85%" stop-color="#fbbf24"/>
+            <stop offset="100%" stop-color="#d97706"/>
+          </radialGradient>
+          <radialGradient id="bg-hlw-moonglow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.32"/>
+            <stop offset="50%" stop-color="#f97316" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="#190b33" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Mist & Courtyard Gradients -->
+          <linearGradient id="bg-hlw-mist" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#a855f7" stop-opacity="0"/>
+            <stop offset="50%" stop-color="#c084fc" stop-opacity="0.16"/>
+            <stop offset="100%" stop-color="#3b0764" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="bg-hlw-pump" x1="0" y1="0" x2="0.15" y2="1">
+            <stop offset="0%" stop-color="#fdba74"/>
+            <stop offset="45%" stop-color="#f97316"/>
+            <stop offset="100%" stop-color="#9a3412"/>
+          </linearGradient>
+          <radialGradient id="bg-hlw-lantern-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fef08a" stop-opacity="0.65"/>
+            <stop offset="55%" stop-color="#f97316" stop-opacity="0.22"/>
+            <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+          </radialGradient>
+          <!-- Reusable Crisp Bat Silhouette -->
+          <g id="bg-hlw-bat">
+            <path d="M0 -4 C -6 -12 -16 -14 -26 -9 C -19 -3 -18 2 -24 7 C -15 5 -9 8 -6 14 L 0 9 L 6 14 C 9 8 15 5 24 7 C 18 2 19 -3 26 -9 C 16 -14 6 -12 0 -4 Z"/>
+            <polygon points="-4,-4 -6,-11 -1,-6"/>
+            <polygon points="4,-4 6,-11 1,-6"/>
+          </g>
+          <!-- Reusable Carved Jack-o'-Lantern -->
+          <g id="bg-hlw-jack">
+            <ellipse cx="0" cy="36" rx="54" ry="12" fill="#05020a" opacity="0.55"/>
+            <path d="M-2 -34 C 2 -48 12 -52 20 -47" stroke="#15803d" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <path d="M-2 -34 C 2 -48 12 -52 20 -47" stroke="#4ade80" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <ellipse cx="0" cy="4" rx="46" ry="36" fill="url(#bg-hlw-pump)" stroke="#090312" stroke-width="4"/>
+            <path d="M-24 -26 C -34 -2 -34 24 -22 36" stroke="#7c2d12" stroke-width="2.8" fill="none" opacity="0.6"/>
+            <path d="M24 -26 C 34 -2 34 24 22 36" stroke="#7c2d12" stroke-width="2.8" fill="none" opacity="0.6"/>
+            <path d="M-9 -31 C -12 -2 -12 24 -7 39" stroke="#7c2d12" stroke-width="2.2" fill="none" opacity="0.45"/>
+            <path d="M9 -31 C 12 -2 12 24 7 39" stroke="#7c2d12" stroke-width="2.2" fill="none" opacity="0.45"/>
+            <ellipse cx="-16" cy="-10" rx="13" ry="7" fill="#ffffff" opacity="0.22" transform="rotate(-18 -16 -10)"/>
+            <!-- Glowing Eyes & Grin -->
+            <polygon points="-24,-4 -9,-15 -6,0" fill="#090312"/>
+            <polygon points="-22,-5 -10,-13 -8,-1" fill="#fef08a"/>
+            <polygon points="24,-4 9,-15 6,0" fill="#090312"/>
+            <polygon points="22,-5 10,-13 8,-1" fill="#fef08a"/>
+            <polygon points="0,-2 -5,6 5,6" fill="#fef08a" stroke="#090312" stroke-width="1.5"/>
+            <path d="M-26 12 L-16 7 L-8 14 L0 7 L8 14 L16 7 L26 12 L19 25 L8 20 L0 26 L-8 20 L-19 25 Z" fill="#090312"/>
+            <path d="M-22 13 L-15 9 L-8 15 L0 9 L8 15 L15 9 L22 13 L17 22 L8 18 L0 23 L-8 18 L-17 22 Z" fill="#fde047"/>
+          </g>
+          <!-- Reusable Hanging Wrought-Iron Lantern -->
+          <g id="bg-hlw-lantern">
+            <circle cx="0" cy="24" r="46" fill="url(#bg-hlw-lantern-glow)"/>
+            <line x1="0" y1="-28" x2="0" y2="0" stroke="#090312" stroke-width="3"/>
+            <polygon points="-14,6 14,6 20,14 -20,14" fill="#1e1b4b" stroke="#090312" stroke-width="2.5"/>
+            <polygon points="-16,14 16,14 12,40 -12,40" fill="#fef08a" stroke="#090312" stroke-width="3"/>
+            <line x1="-6" y1="14" x2="-4" y2="40" stroke="#090312" stroke-width="2"/>
+            <line x1="6" y1="14" x2="4" y2="40" stroke="#090312" stroke-width="2"/>
+            <polygon points="-14,40 14,40 8,46 -8,46" fill="#1e1b4b" stroke="#090312" stroke-width="2.5"/>
+          </g>
+        </defs>
+
+        <!-- 1. Sky & Starfield -->
+        <rect width="1440" height="900" fill="url(#bg-hlw-sky)"/>
+        <g fill="#fef9c3">
+          <circle cx="140" cy="88" r="1.8" opacity="0.7"/><circle cx="290" cy="54" r="1.4" opacity="0.5"/>
+          <circle cx="460" cy="108" r="2" opacity="0.65"/><circle cx="640" cy="64" r="1.5" opacity="0.45"/>
+          <circle cx="820" cy="96" r="1.8" opacity="0.6"/><circle cx="960" cy="52" r="1.4" opacity="0.5"/>
+          <circle cx="1310" cy="82" r="2" opacity="0.7"/><circle cx="1380" cy="180" r="1.5" opacity="0.5"/>
+          <!-- 4-Point Twinkling Stars -->
+          <path d="M370 68 L373 76 L381 79 L373 82 L370 90 L367 82 L359 79 L367 76 Z" opacity="0.75"/>
+          <path d="M890 118 L892 124 L898 126 L892 128 L890 134 L888 128 L882 126 L888 124 Z" opacity="0.65"/>
+        </g>
+
+        <!-- 2. Giant Harvest Moon (Top Right) -->
+        <circle cx="1130" cy="188" r="240" fill="url(#bg-hlw-moonglow)"/>
+        <circle cx="1130" cy="188" r="102" fill="url(#bg-hlw-moon)"/>
+        <g fill="#d97706" opacity="0.16">
+          <circle cx="1095" cy="152" r="16"/><circle cx="1162" cy="204" r="22"/><circle cx="1106" cy="226" r="11"/>
+        </g>
+
+        <!-- 3. Distant Haunted Manor & Spires Silhouette -->
+        <g fill="#16092c">
+          <path d="M0 640 Q 220 575 470 615 Q 740 650 1020 595 Q 1240 560 1440 610 L 1440 900 L 0 900 Z"/>
+          <!-- Left Distant Gothic Manor -->
+          <g transform="translate(155, 405)">
+            <rect x="20" y="95" width="130" height="120"/>
+            <polygon points="10,95 85,25 160,95"/>
+            <rect x="48" y="35" width="36" height="80"/>
+            <polygon points="42,35 66,-18 90,35"/>
+            <rect x="115" y="55" width="32" height="75"/>
+            <polygon points="110,55 131,12 152,55"/>
+            <!-- Glowing Manor Windows -->
+            <path d="M58 58 A8 8 0 0 1 74 58 V76 H58 Z" fill="#fde047"/>
+            <path d="M125 74 A6 6 0 0 1 137 74 V88 H125 Z" fill="#fb923c"/>
+            <rect x="42" y="118" width="16" height="24" rx="2" fill="#fde047" opacity="0.85"/>
+            <rect x="74" y="118" width="16" height="24" rx="2" fill="#fde047" opacity="0.85"/>
+          </g>
+        </g>
+
+        <!-- 4. Atmospheric Lavender Mist Ribbon -->
+        <rect x="0" y="540" width="1440" height="160" fill="url(#bg-hlw-mist)"/>
+
+        <!-- 5. Midground Hills & Wrought-Iron Manor Fence -->
+        <path d="M0 710 Q 260 660 560 695 Q 880 730 1160 680 Q 1320 655 1440 685 L 1440 900 L 0 900 Z" fill="#120624"/>
+        <!-- Left & Right Wrought-Iron Fence Spikes -->
+        <g stroke="#090312" stroke-width="4" fill="#1e0d38">
+          <rect x="52" y="610" width="18" height="110" rx="2"/>
+          <polygon points="48,610 61,590 74,610"/>
+          <line x1="70" y1="638" x2="260" y2="652" stroke-width="5"/>
+          <line x1="70" y1="686" x2="260" y2="700" stroke-width="5"/>
+          <line x1="105" y1="620" x2="105" y2="705"/>
+          <line x1="140" y1="623" x2="140" y2="708"/>
+          <line x1="175" y1="626" x2="175" y2="710"/>
+          <line x1="210" y1="629" x2="210" y2="712"/>
+          <rect x="1360" y="600" width="18" height="110" rx="2"/>
+          <polygon points="1356,600 1369,580 1382,600"/>
+          <line x1="1180" y1="648" x2="1360" y2="630" stroke-width="5"/>
+          <line x1="1180" y1="694" x2="1360" y2="678" stroke-width="5"/>
+          <line x1="1220" y1="625" x2="1220" y2="705"/>
+          <line x1="1265" y1="620" x2="1265" y2="700"/>
+          <line x1="1310" y1="615" x2="1310" y2="695"/>
+        </g>
+
+        <!-- 6. Framing Twisted Oak Branches & Hanging Iron Lanterns (Left & Right Edges) -->
+        <g fill="#070210">
+          <!-- Left Ancient Oak Branch -->
+          <path d="M-20 180 Q 85 205 185 260 Q 250 295 295 335 L 282 346 Q 225 305 160 278 Q 75 245 -20 235 Z"/>
+          <path d="M110 235 Q 145 190 175 165 L 184 174 Q 155 202 128 242 Z"/>
+          <!-- Right Ancient Oak Branch -->
+          <path d="M1460 220 Q 1345 245 1255 295 Q 1200 325 1165 360 L 1178 370 Q 1225 335 1285 310 Q 1365 280 1460 270 Z"/>
+        </g>
+        <use href="#bg-hlw-lantern" transform="translate(182, 286) scale(0.95)"/>
+        <use href="#bg-hlw-lantern" transform="translate(278, 358) scale(0.76)"/>
+        <use href="#bg-hlw-lantern" transform="translate(1258, 322) scale(0.88)"/>
+
+        <!-- 7. Flying Bats Across the Harvest Moon -->
+        <g fill="#090312">
+          <use href="#bg-hlw-bat" transform="translate(1055, 148) rotate(-14) scale(1.05)"/>
+          <use href="#bg-hlw-bat" transform="translate(1185, 122) rotate(12) scale(0.78)"/>
+          <use href="#bg-hlw-bat" transform="translate(965, 215) rotate(-8) scale(0.68)"/>
+          <use href="#bg-hlw-bat" transform="translate(310, 155) rotate(15) scale(0.82)"/>
+          <use href="#bg-hlw-bat" transform="translate(235, 118) rotate(8) scale(0.55)"/>
+        </g>
+
+        <!-- 8. Foreground Courtyard & Glowing Jack-o'-Lantern Clusters (Bottom Left & Right) -->
+        <path d="M0 785 Q 360 745 720 775 Q 1080 800 1440 760 L 1440 900 L 0 900 Z" fill="#090312"/>
+        <!-- Cobblestone Highlights -->
+        <g fill="#1e0d38" opacity="0.75">
+          <ellipse cx="180" cy="835" rx="38" ry="10"/><ellipse cx="265" cy="852" rx="44" ry="11"/>
+          <ellipse cx="1160" cy="842" rx="42" ry="10"/><ellipse cx="1255" cy="825" rx="36" ry="9"/>
+        </g>
+        <!-- Bottom-Left Pumpkin Cluster -->
+        <use href="#bg-hlw-jack" transform="translate(118, 768) rotate(-5) scale(1.08)"/>
+        <use href="#bg-hlw-jack" transform="translate(222, 796) rotate(6) scale(0.78)"/>
+        <!-- Bottom-Right Pumpkin Cluster -->
+        <use href="#bg-hlw-jack" transform="translate(1312, 762) rotate(5) scale(1.12)"/>
+        <use href="#bg-hlw-jack" transform="translate(1202, 794) rotate(-6) scale(0.82)"/>
+      </svg>`
+    },
+    {
       id: 'classic',
       name: 'Classic',
       subtitle: 'Default arcade',
@@ -629,154 +927,6 @@
         <ellipse cx="78" cy="66" rx="14" ry="7" transform="rotate(-30 78 66)" fill="#ffffff" opacity="0.5"/>
       </svg>`,
       backdropSvg: ''
-    },
-    {
-      id: 'halloween',
-      name: 'Halloween',
-      subtitle: "Haunted Poké Manor & Jack-o'-lanterns",
-      thumbSvg: `<svg viewBox="0 0 120 82" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <linearGradient id="th-hw-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#0b031a"/>
-            <stop offset="55%" stop-color="#1e0b3b"/>
-            <stop offset="100%" stop-color="#3b1254"/>
-          </linearGradient>
-        </defs>
-        <rect width="120" height="82" fill="url(#th-hw-sky)"/>
-        <circle cx="92" cy="22" r="13" fill="#fef08a" opacity="0.92"/>
-        <circle cx="96" cy="19" r="11" fill="#1e0b3b" opacity="0.25"/>
-        <!-- Haunted Manor Silhouette -->
-        <polygon points="18,64 18,36 28,22 38,36 38,64" fill="#090214"/>
-        <polygon points="34,64 34,28 48,12 62,28 62,64" fill="#0d041c"/>
-        <rect x="44" y="34" width="8" height="11" rx="4" fill="#f97316"/>
-        <rect x="25" y="42" width="6" height="8" rx="3" fill="#fbbf24"/>
-        <!-- Spooky hill -->
-        <path d="M0 64 Q40 54 80 62 T120 60 L120 82 L0 82 Z" fill="#07020f"/>
-        <!-- Glowing Jack-o'-lantern -->
-        <ellipse cx="86" cy="63" rx="14" ry="11" fill="#f97316" stroke="#7c2d12" stroke-width="1.5"/>
-        <path d="M84 52 Q86 48 89 50" stroke="#15803d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <polygon points="80,60 83,56 85,60" fill="#fef08a"/>
-        <polygon points="87,60 89,56 92,60" fill="#fef08a"/>
-        <path d="M79 65 L82 67 L85 65 L88 67 L91 65 L93 66" stroke="#fef08a" stroke-width="2" fill="none" stroke-linecap="round"/>
-      </svg>`,
-      cardBackSvg: `<svg class="ga-card-back-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <radialGradient id="cb-hw-bg" cx="50%" cy="50%" r="70%">
-            <stop offset="0%" stop-color="#3b0764"/>
-            <stop offset="65%" stop-color="#1e0538"/>
-            <stop offset="100%" stop-color="#090114"/>
-          </radialGradient>
-        </defs>
-        <rect width="200" height="200" rx="22" fill="#090114"/>
-        <rect x="6" y="6" width="188" height="188" rx="18" fill="url(#cb-hw-bg)" stroke="#f97316" stroke-width="4"/>
-        <rect x="14" y="14" width="172" height="172" rx="13" fill="none" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.65"/>
-        <!-- Corner cobweb accents -->
-        <path d="M14 44 Q28 28 44 14 M14 30 Q22 22 30 14" stroke="#c084fc" stroke-width="1.5" fill="none" opacity="0.45"/>
-        <path d="M186 44 Q172 28 156 14 M186 30 Q178 22 170 14" stroke="#c084fc" stroke-width="1.5" fill="none" opacity="0.45"/>
-        <!-- Dusk/Jack-o'-Ball emblem -->
-        <circle cx="100" cy="104" r="56" fill="#1e0b36" stroke="#090114" stroke-width="7"/>
-        <path d="M44 104 A56 56 0 0 1 156 104 Z" fill="#f97316"/>
-        <path d="M62 64 Q100 92 138 64" stroke="#7c2d12" stroke-width="3" fill="none" opacity="0.55"/>
-        <!-- Stem -->
-        <path d="M96 48 Q100 34 110 39" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round"/>
-        <!-- Glowing Jack-o'-lantern eyes on top half -->
-        <polygon points="72,84 82,68 90,84" fill="#fef08a"/>
-        <polygon points="110,84 118,68 128,84" fill="#fef08a"/>
-        <!-- Center clasp -->
-        <path d="M44 104 H156" stroke="#090114" stroke-width="10"/>
-        <circle cx="100" cy="104" r="19" fill="#a855f7" stroke="#090114" stroke-width="7"/>
-        <circle cx="100" cy="104" r="8" fill="#fef08a"/>
-        <!-- Stitched grin on bottom half -->
-        <path d="M68 128 Q100 146 132 128" stroke="#fef08a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-        <path d="M80 129 V137 M93 133 V141 M107 133 V141 M120 129 V137" stroke="#fef08a" stroke-width="2.5" stroke-linecap="round"/>
-      </svg>`,
-      backdropSvg: `<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <linearGradient id="hw-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#070210"/>
-            <stop offset="40%" stop-color="#16072b"/>
-            <stop offset="78%" stop-color="#2e0f4c"/>
-            <stop offset="100%" stop-color="#1a0826"/>
-          </linearGradient>
-          <radialGradient id="hw-moon-glow" cx="78%" cy="22%" r="32%">
-            <stop offset="0%" stop-color="#fef08a" stop-opacity="0.55"/>
-            <stop offset="35%" stop-color="#f97316" stop-opacity="0.22"/>
-            <stop offset="100%" stop-color="#16072b" stop-opacity="0"/>
-          </radialGradient>
-          <radialGradient id="hw-mist" cx="50%" cy="88%" r="55%">
-            <stop offset="0%" stop-color="#a855f7" stop-opacity="0.24"/>
-            <stop offset="60%" stop-color="#ea580c" stop-opacity="0.1"/>
-            <stop offset="100%" stop-color="#070210" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <rect width="1600" height="900" fill="url(#hw-sky)"/>
-        <rect width="1600" height="900" fill="url(#hw-moon-glow)"/>
-        <!-- Stars & Eerie Sparkles -->
-        <g fill="#fef08a" opacity="0.65">
-          <circle cx="140" cy="96" r="2"/><circle cx="290" cy="140" r="1.5"/><circle cx="480" cy="78" r="2.2"/>
-          <circle cx="670" cy="128" r="1.6"/><circle cx="890" cy="84" r="2"/><circle cx="1040" cy="148" r="1.8"/>
-          <circle cx="1450" cy="104" r="2.2"/><circle cx="1520" cy="190" r="1.5"/>
-        </g>
-        <!-- Giant Harvest Full Moon -->
-        <g transform="translate(1248, 195)">
-          <circle cx="0" cy="0" r="96" fill="#fef9c3" opacity="0.95"/>
-          <circle cx="-24" cy="-18" r="18" fill="#fde047" opacity="0.35"/>
-          <circle cx="28" cy="22" r="24" fill="#fde047" opacity="0.3"/>
-          <circle cx="14" cy="-34" r="12" fill="#fde047" opacity="0.3"/>
-          <!-- Flying Zubat-inspired silhouettes across the moon -->
-          <path d="M-70 -10 Q-52 -28 -38 -8 Q-28 -22 -18 -6 Q-34 -4 -44 6 Q-54 -4 -70 -10 Z" fill="#1b0733"/>
-          <path d="M18 -24 Q32 -38 44 -22 Q54 -34 64 -18 Q50 -16 42 -8 Q32 -16 18 -24 Z" fill="#1b0733"/>
-          <path d="M-20 34 Q-10 22 0 34 Q10 22 20 34 Q8 36 0 42 Q-8 36 -20 34 Z" fill="#1b0733"/>
-        </g>
-        <!-- Distant Haunted Poké-Manor Silhouette on Left Hill -->
-        <g fill="#0c031a" stroke="#2d124d" stroke-width="1.5">
-          <polygon points="90,620 90,410 145,310 200,410 200,620"/>
-          <polygon points="180,620 180,350 260,230 340,350 340,620"/>
-          <polygon points="320,620 320,420 370,330 420,420 420,620"/>
-          <!-- Spires & Iron Crosses -->
-          <path d="M145 310 V275 M133 290 H157" stroke="#4c1d95" stroke-width="3"/>
-          <path d="M260 230 V188 M244 206 H276" stroke="#4c1d95" stroke-width="3.5"/>
-          <path d="M370 330 V298 M358 312 H382" stroke="#4c1d95" stroke-width="3"/>
-        </g>
-        <!-- Glowing Manor Windows -->
-        <g fill="#f97316" opacity="0.9">
-          <rect x="236" y="365" width="20" height="36" rx="10"/>
-          <rect x="266" y="365" width="20" height="36" rx="10"/>
-          <rect x="132" y="430" width="24" height="34" rx="12" fill="#fbbf24"/>
-          <rect x="358" y="440" width="22" height="32" rx="11" fill="#fbbf24"/>
-          <circle cx="260" cy="315" r="15" fill="#fef08a"/>
-        </g>
-        <!-- Rolling Haunted Hills -->
-        <path d="M0 640 Q260 555 560 625 T1160 610 T1600 635 L1600 900 L0 900 Z" fill="#120524"/>
-        <rect width="1600" height="900" fill="url(#hw-mist)"/>
-        <path d="M0 725 Q380 660 820 720 T1600 700 L1600 900 L0 900 Z" fill="#080211"/>
-        <!-- Twisted Spooky Trees (Left & Right Framing) -->
-        <path d="M0 900 L0 480 Q45 450 75 390 Q50 450 95 445 Q65 480 48 560 L68 900 Z" fill="#05010a"/>
-        <path d="M1600 900 L1600 500 Q1540 465 1500 395 Q1525 460 1475 455 Q1515 495 1535 585 L1515 900 Z" fill="#05010a"/>
-        <!-- Foreground Glowing Jack-o'-Lanterns (Left & Right) -->
-        <g transform="translate(155, 745)">
-          <ellipse cx="0" cy="0" rx="52" ry="40" fill="#ea580c" stroke="#431407" stroke-width="4"/>
-          <ellipse cx="0" cy="0" rx="34" ry="40" fill="#f97316"/>
-          <path d="M-6 -40 Q0 -58 14 -50" stroke="#15803d" stroke-width="7" fill="none" stroke-linecap="round"/>
-          <polygon points="-24,-6 -12,-22 -2,-6" fill="#fef08a"/>
-          <polygon points="4,-6 14,-22 26,-6" fill="#fef08a"/>
-          <path d="M-26 12 L-14 20 L-4 12 L6 20 L16 12 L26 18" stroke="#fef08a" stroke-width="5" fill="none" stroke-linecap="round"/>
-        </g>
-        <g transform="translate(1435, 755)">
-          <ellipse cx="0" cy="0" rx="46" ry="36" fill="#ea580c" stroke="#431407" stroke-width="4"/>
-          <ellipse cx="0" cy="0" rx="28" ry="36" fill="#f97316"/>
-          <path d="M-5 -36 Q2 -52 12 -45" stroke="#15803d" stroke-width="6" fill="none" stroke-linecap="round"/>
-          <polygon points="-20,-5 -10,-19 -2,-5" fill="#fef08a"/>
-          <polygon points="4,-5 12,-19 22,-5" fill="#fef08a"/>
-          <path d="M-22 10 Q0 26 22 10" stroke="#fef08a" stroke-width="5" fill="none" stroke-linecap="round"/>
-        </g>
-        <!-- Floating Will-o'-the-Wisp Spectral Orbs -->
-        <g opacity="0.8">
-          <circle cx="460" cy="520" r="10" fill="#c084fc"/><circle cx="460" cy="520" r="20" fill="#a855f7" opacity="0.3"/>
-          <circle cx="1140" cy="490" r="12" fill="#4ade80"/><circle cx="1140" cy="490" r="24" fill="#22c55e" opacity="0.28"/>
-          <circle cx="1320" cy="590" r="8" fill="#fb923c"/><circle cx="1320" cy="590" r="17" fill="#f97316" opacity="0.3"/>
-        </g>
-      </svg>`
     }
   ];
 
@@ -841,25 +991,19 @@
       });
     };
     syncMemoryCardBacks();
-    const syncBaamBoxSeals = () => {
-      const currentThemeId = target.dataset.gaTheme || theme.id;
-      const ballSrc = currentThemeId === 'jungle'
-        ? '/pokeayman/assets/balls/6.png'
-        : currentThemeId === 'toybox'
-        ? '/pokeayman/assets/balls/11.png'
-        : currentThemeId === 'halloween'
-        ? '/pokeayman/assets/balls/4.png'
-        : '/pokeayman/assets/balls/1.png';
-      target.querySelectorAll('.baam-box-seal img.baam-seal-ball').forEach(img => {
-        if (img.getAttribute('src') !== ballSrc) img.setAttribute('src', ballSrc);
-      });
-    };
-    syncBaamBoxSeals();
     const memoryGrid = target.querySelector('#memory-grid');
-    if (memoryGrid && !memoryGrid._gaCardBackObserved) {
-      memoryGrid._gaCardBackObserved = true;
-      new MutationObserver(syncMemoryCardBacks).observe(memoryGrid, { childList: true });
+    if (memoryGrid) {
+      if (!memoryGrid._gaCardBackObserved) {
+        memoryGrid._gaCardBackObserved = true;
+        new MutationObserver(syncMemoryCardBacks).observe(memoryGrid, { childList: true });
+      }
+      delete memoryGrid.dataset.fitKey;
     }
+    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+    const ballSrc = theme.id === 'jungle' ? '/pokeayman/assets/balls/6.png' : theme.id === 'toybox' ? '/pokeayman/assets/balls/11.png' : theme.id === 'halloween' ? '/pokeayman/assets/balls/4.png' : '/pokeayman/assets/balls/1.png';
+    target.querySelectorAll('.baam-seal-ball').forEach(img => {
+      if (img.getAttribute('src') !== ballSrc) img.setAttribute('src', ballSrc);
+    });
     target.querySelectorAll('[data-ga-theme-choice]').forEach(btn => {
       const active = btn.dataset.gaThemeChoice === theme.id;
       btn.classList.toggle('is-selected', active);
@@ -867,7 +1011,6 @@
     });
     const btnLabel = target.querySelector('.ga-stage-theme-current');
     if (btnLabel) btnLabel.textContent = theme.name;
-    // No synthetic window resize here: it re-ran every game's layout code and caused theme-switch lag.
   };
 
   window.gaSetTheme = function (themeId) {
@@ -1085,7 +1228,8 @@
     const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, .lc-main, .vb-arena, .cdx-main');
     if (!board || view.querySelector('#game-player-list') || (view.classList.contains('ga-stage') && view.querySelector('.ga-stage-controls'))) return;
     view.classList.add('ga-stage');
-    const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
+    view.classList.remove('fixed', 'inset-0', 'bg-black/50', 'bg-black/60', 'z-50', 'p-4');
+    const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .match-game-shell, .find-me-game-shell, .surprise-boxes-game, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
     if (!shell) return;
     shell.classList.add('ga-stage-shell');
     let parent = shell.parentElement;
