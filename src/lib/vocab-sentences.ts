@@ -165,5 +165,18 @@ export async function askSentenceModel(body: GeminiBody): Promise<string> {
       ],
     };
   }
-  throw new SentenceAiError("The sentences did not pass the ChatGPT check after several tries. Please try again.");
+  // Still not approved: have Gemini replace the sentences with very simple,
+  // obviously sensible ones (subject + verb + object, literal meaning) and use them.
+  console.warn("[vocab] using Gemini simple replacement after failed reviews");
+  return await callGemini({
+    ...body,
+    contents: [
+      {
+        parts: [
+          ...(body.contents[0]?.parts || []),
+          { text: "\n\nPrevious sentences were judged unclear. Replace every sentence with a very short, simple, literal sentence a young child understands, that clearly shows the real everyday meaning of the target word and contains the exact word. Follow every original rule and the same JSON format." },
+        ],
+      },
+    ],
+  });
 }
