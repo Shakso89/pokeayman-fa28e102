@@ -629,6 +629,154 @@
         <ellipse cx="78" cy="66" rx="14" ry="7" transform="rotate(-30 78 66)" fill="#ffffff" opacity="0.5"/>
       </svg>`,
       backdropSvg: ''
+    },
+    {
+      id: 'halloween',
+      name: 'Halloween',
+      subtitle: "Haunted Poké Manor & Jack-o'-lanterns",
+      thumbSvg: `<svg viewBox="0 0 120 82" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="th-hw-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#0b031a"/>
+            <stop offset="55%" stop-color="#1e0b3b"/>
+            <stop offset="100%" stop-color="#3b1254"/>
+          </linearGradient>
+        </defs>
+        <rect width="120" height="82" fill="url(#th-hw-sky)"/>
+        <circle cx="92" cy="22" r="13" fill="#fef08a" opacity="0.92"/>
+        <circle cx="96" cy="19" r="11" fill="#1e0b3b" opacity="0.25"/>
+        <!-- Haunted Manor Silhouette -->
+        <polygon points="18,64 18,36 28,22 38,36 38,64" fill="#090214"/>
+        <polygon points="34,64 34,28 48,12 62,28 62,64" fill="#0d041c"/>
+        <rect x="44" y="34" width="8" height="11" rx="4" fill="#f97316"/>
+        <rect x="25" y="42" width="6" height="8" rx="3" fill="#fbbf24"/>
+        <!-- Spooky hill -->
+        <path d="M0 64 Q40 54 80 62 T120 60 L120 82 L0 82 Z" fill="#07020f"/>
+        <!-- Glowing Jack-o'-lantern -->
+        <ellipse cx="86" cy="63" rx="14" ry="11" fill="#f97316" stroke="#7c2d12" stroke-width="1.5"/>
+        <path d="M84 52 Q86 48 89 50" stroke="#15803d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <polygon points="80,60 83,56 85,60" fill="#fef08a"/>
+        <polygon points="87,60 89,56 92,60" fill="#fef08a"/>
+        <path d="M79 65 L82 67 L85 65 L88 67 L91 65 L93 66" stroke="#fef08a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>`,
+      cardBackSvg: `<svg class="ga-card-back-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="cb-hw-bg" cx="50%" cy="50%" r="70%">
+            <stop offset="0%" stop-color="#3b0764"/>
+            <stop offset="65%" stop-color="#1e0538"/>
+            <stop offset="100%" stop-color="#090114"/>
+          </radialGradient>
+        </defs>
+        <rect width="200" height="200" rx="22" fill="#090114"/>
+        <rect x="6" y="6" width="188" height="188" rx="18" fill="url(#cb-hw-bg)" stroke="#f97316" stroke-width="4"/>
+        <rect x="14" y="14" width="172" height="172" rx="13" fill="none" stroke="#a855f7" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.65"/>
+        <!-- Corner cobweb accents -->
+        <path d="M14 44 Q28 28 44 14 M14 30 Q22 22 30 14" stroke="#c084fc" stroke-width="1.5" fill="none" opacity="0.45"/>
+        <path d="M186 44 Q172 28 156 14 M186 30 Q178 22 170 14" stroke="#c084fc" stroke-width="1.5" fill="none" opacity="0.45"/>
+        <!-- Dusk/Jack-o'-Ball emblem -->
+        <circle cx="100" cy="104" r="56" fill="#1e0b36" stroke="#090114" stroke-width="7"/>
+        <path d="M44 104 A56 56 0 0 1 156 104 Z" fill="#f97316"/>
+        <path d="M62 64 Q100 92 138 64" stroke="#7c2d12" stroke-width="3" fill="none" opacity="0.55"/>
+        <!-- Stem -->
+        <path d="M96 48 Q100 34 110 39" stroke="#22c55e" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <!-- Glowing Jack-o'-lantern eyes on top half -->
+        <polygon points="72,84 82,68 90,84" fill="#fef08a"/>
+        <polygon points="110,84 118,68 128,84" fill="#fef08a"/>
+        <!-- Center clasp -->
+        <path d="M44 104 H156" stroke="#090114" stroke-width="10"/>
+        <circle cx="100" cy="104" r="19" fill="#a855f7" stroke="#090114" stroke-width="7"/>
+        <circle cx="100" cy="104" r="8" fill="#fef08a"/>
+        <!-- Stitched grin on bottom half -->
+        <path d="M68 128 Q100 146 132 128" stroke="#fef08a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M80 129 V137 M93 133 V141 M107 133 V141 M120 129 V137" stroke="#fef08a" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>`,
+      backdropSvg: `<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="hw-sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#070210"/>
+            <stop offset="40%" stop-color="#16072b"/>
+            <stop offset="78%" stop-color="#2e0f4c"/>
+            <stop offset="100%" stop-color="#1a0826"/>
+          </linearGradient>
+          <radialGradient id="hw-moon-glow" cx="78%" cy="22%" r="32%">
+            <stop offset="0%" stop-color="#fef08a" stop-opacity="0.55"/>
+            <stop offset="35%" stop-color="#f97316" stop-opacity="0.22"/>
+            <stop offset="100%" stop-color="#16072b" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="hw-mist" cx="50%" cy="88%" r="55%">
+            <stop offset="0%" stop-color="#a855f7" stop-opacity="0.24"/>
+            <stop offset="60%" stop-color="#ea580c" stop-opacity="0.1"/>
+            <stop offset="100%" stop-color="#070210" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="1600" height="900" fill="url(#hw-sky)"/>
+        <rect width="1600" height="900" fill="url(#hw-moon-glow)"/>
+        <!-- Stars & Eerie Sparkles -->
+        <g fill="#fef08a" opacity="0.65">
+          <circle cx="140" cy="96" r="2"/><circle cx="290" cy="140" r="1.5"/><circle cx="480" cy="78" r="2.2"/>
+          <circle cx="670" cy="128" r="1.6"/><circle cx="890" cy="84" r="2"/><circle cx="1040" cy="148" r="1.8"/>
+          <circle cx="1450" cy="104" r="2.2"/><circle cx="1520" cy="190" r="1.5"/>
+        </g>
+        <!-- Giant Harvest Full Moon -->
+        <g transform="translate(1248, 195)">
+          <circle cx="0" cy="0" r="96" fill="#fef9c3" opacity="0.95"/>
+          <circle cx="-24" cy="-18" r="18" fill="#fde047" opacity="0.35"/>
+          <circle cx="28" cy="22" r="24" fill="#fde047" opacity="0.3"/>
+          <circle cx="14" cy="-34" r="12" fill="#fde047" opacity="0.3"/>
+          <!-- Flying Zubat-inspired silhouettes across the moon -->
+          <path d="M-70 -10 Q-52 -28 -38 -8 Q-28 -22 -18 -6 Q-34 -4 -44 6 Q-54 -4 -70 -10 Z" fill="#1b0733"/>
+          <path d="M18 -24 Q32 -38 44 -22 Q54 -34 64 -18 Q50 -16 42 -8 Q32 -16 18 -24 Z" fill="#1b0733"/>
+          <path d="M-20 34 Q-10 22 0 34 Q10 22 20 34 Q8 36 0 42 Q-8 36 -20 34 Z" fill="#1b0733"/>
+        </g>
+        <!-- Distant Haunted Poké-Manor Silhouette on Left Hill -->
+        <g fill="#0c031a" stroke="#2d124d" stroke-width="1.5">
+          <polygon points="90,620 90,410 145,310 200,410 200,620"/>
+          <polygon points="180,620 180,350 260,230 340,350 340,620"/>
+          <polygon points="320,620 320,420 370,330 420,420 420,620"/>
+          <!-- Spires & Iron Crosses -->
+          <path d="M145 310 V275 M133 290 H157" stroke="#4c1d95" stroke-width="3"/>
+          <path d="M260 230 V188 M244 206 H276" stroke="#4c1d95" stroke-width="3.5"/>
+          <path d="M370 330 V298 M358 312 H382" stroke="#4c1d95" stroke-width="3"/>
+        </g>
+        <!-- Glowing Manor Windows -->
+        <g fill="#f97316" opacity="0.9">
+          <rect x="236" y="365" width="20" height="36" rx="10"/>
+          <rect x="266" y="365" width="20" height="36" rx="10"/>
+          <rect x="132" y="430" width="24" height="34" rx="12" fill="#fbbf24"/>
+          <rect x="358" y="440" width="22" height="32" rx="11" fill="#fbbf24"/>
+          <circle cx="260" cy="315" r="15" fill="#fef08a"/>
+        </g>
+        <!-- Rolling Haunted Hills -->
+        <path d="M0 640 Q260 555 560 625 T1160 610 T1600 635 L1600 900 L0 900 Z" fill="#120524"/>
+        <rect width="1600" height="900" fill="url(#hw-mist)"/>
+        <path d="M0 725 Q380 660 820 720 T1600 700 L1600 900 L0 900 Z" fill="#080211"/>
+        <!-- Twisted Spooky Trees (Left & Right Framing) -->
+        <path d="M0 900 L0 480 Q45 450 75 390 Q50 450 95 445 Q65 480 48 560 L68 900 Z" fill="#05010a"/>
+        <path d="M1600 900 L1600 500 Q1540 465 1500 395 Q1525 460 1475 455 Q1515 495 1535 585 L1515 900 Z" fill="#05010a"/>
+        <!-- Foreground Glowing Jack-o'-Lanterns (Left & Right) -->
+        <g transform="translate(155, 745)">
+          <ellipse cx="0" cy="0" rx="52" ry="40" fill="#ea580c" stroke="#431407" stroke-width="4"/>
+          <ellipse cx="0" cy="0" rx="34" ry="40" fill="#f97316"/>
+          <path d="M-6 -40 Q0 -58 14 -50" stroke="#15803d" stroke-width="7" fill="none" stroke-linecap="round"/>
+          <polygon points="-24,-6 -12,-22 -2,-6" fill="#fef08a"/>
+          <polygon points="4,-6 14,-22 26,-6" fill="#fef08a"/>
+          <path d="M-26 12 L-14 20 L-4 12 L6 20 L16 12 L26 18" stroke="#fef08a" stroke-width="5" fill="none" stroke-linecap="round"/>
+        </g>
+        <g transform="translate(1435, 755)">
+          <ellipse cx="0" cy="0" rx="46" ry="36" fill="#ea580c" stroke="#431407" stroke-width="4"/>
+          <ellipse cx="0" cy="0" rx="28" ry="36" fill="#f97316"/>
+          <path d="M-5 -36 Q2 -52 12 -45" stroke="#15803d" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <polygon points="-20,-5 -10,-19 -2,-5" fill="#fef08a"/>
+          <polygon points="4,-5 12,-19 22,-5" fill="#fef08a"/>
+          <path d="M-22 10 Q0 26 22 10" stroke="#fef08a" stroke-width="5" fill="none" stroke-linecap="round"/>
+        </g>
+        <!-- Floating Will-o'-the-Wisp Spectral Orbs -->
+        <g opacity="0.8">
+          <circle cx="460" cy="520" r="10" fill="#c084fc"/><circle cx="460" cy="520" r="20" fill="#a855f7" opacity="0.3"/>
+          <circle cx="1140" cy="490" r="12" fill="#4ade80"/><circle cx="1140" cy="490" r="24" fill="#22c55e" opacity="0.28"/>
+          <circle cx="1320" cy="590" r="8" fill="#fb923c"/><circle cx="1320" cy="590" r="17" fill="#f97316" opacity="0.3"/>
+        </g>
+      </svg>`
     }
   ];
 
@@ -693,6 +841,20 @@
       });
     };
     syncMemoryCardBacks();
+    const syncBaamBoxSeals = () => {
+      const currentThemeId = target.dataset.gaTheme || theme.id;
+      const ballSrc = currentThemeId === 'jungle'
+        ? '/pokeayman/assets/balls/6.png'
+        : currentThemeId === 'toybox'
+        ? '/pokeayman/assets/balls/11.png'
+        : currentThemeId === 'halloween'
+        ? '/pokeayman/assets/balls/4.png'
+        : '/pokeayman/assets/balls/1.png';
+      target.querySelectorAll('.baam-box-seal img.baam-seal-ball').forEach(img => {
+        if (img.getAttribute('src') !== ballSrc) img.setAttribute('src', ballSrc);
+      });
+    };
+    syncBaamBoxSeals();
     const memoryGrid = target.querySelector('#memory-grid');
     if (memoryGrid && !memoryGrid._gaCardBackObserved) {
       memoryGrid._gaCardBackObserved = true;

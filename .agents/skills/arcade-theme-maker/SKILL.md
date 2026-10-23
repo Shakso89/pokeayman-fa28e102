@@ -15,8 +15,9 @@ This skill provides an authoritative, step-by-step engineering and design framew
 ## 1. Theme Architecture Overview
 
 In PokéAyman, a theme is defined through a coordinated system of:
-1. **Metadata & Vectors (`GAME_THEMES` in `public/pokeayman/index.html`)**:
-   - `id`: Unique identifier slug (e.g. `classroom`, `jungle`, `toybox`, `halloween`).
+1. **Metadata & Vectors (`GAME_THEMES` in `public/pokeayman/games-arcade.js` — Source of Truth)**:
+   - **CRITICAL**: Always edit `GAME_THEMES` and `gaApplyThemeToStage` in `public/pokeayman/games-arcade.js`, then run `node scripts/sync-pokeayman-game-modules.mjs` to sync the inline `<script data-pokeayman-inline="games-arcade">` block into `public/pokeayman/index.html`. Editing `index.html` directly without updating `games-arcade.js` will be overwritten on build!
+   - `id`: Unique identifier slug (e.g. `classroom`, `jungle`, `toybox`, `classic`, `halloween`).
    - `name`: Human-readable title displayed in headers and tooltips.
    - `subtitle`: Descriptive one-liner shown in pickers and popovers.
    - `thumbSvg`: 120×82 inline SVG preview card for theme selection grids.
