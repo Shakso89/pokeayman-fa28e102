@@ -76,8 +76,9 @@
   }
 
   function getTargetClassInfo() {
-    const school = String(window.navSchool || '').trim();
-    const className = String(window.navClass || '').trim();
+    const ctx = typeof window.getNavClassContext === 'function' ? window.getNavClassContext() : {};
+    const school = String(ctx.school || window.navSchool || '').trim();
+    const className = String(ctx.className || window.navClass || '').trim();
     return { school, className };
   }
 
@@ -788,8 +789,12 @@
     nameInput.focus();
   }
 
+  window.openVocabGenerateModal = openGenerateModal;
   function bindGenerateBtn() {
-    const btn = document.getElementById('generate-vocab-list-btn');
+    ['generate-vocab-list-btn', 'teacher-vb-open-ai'].forEach(bindOne);
+  }
+  function bindOne(id) {
+    const btn = document.getElementById(id);
     if (btn && !btn.dataset.generatorBound) {
       btn.dataset.generatorBound = 'true';
       btn.addEventListener('click', (e) => {
