@@ -2,6 +2,7 @@ import { createParser } from "eventsource-parser";
 
 // Purge any stale audio caches that may have recorded prompt text or conversational chatter.
 if (typeof caches !== "undefined") {
+  caches.delete("pokeayman-natural-voice-v3").catch(() => {});
   caches.delete("pokeayman-natural-voice-v2").catch(() => {});
   caches.delete("pokeayman-natural-voice-v1").catch(() => {});
 }
@@ -28,6 +29,9 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
   if (!cleanText) return;
 
   const context = new AudioContext({ sampleRate: 24000 });
+  const masterGain = context.createGain();
+  masterGain.connect(context.destination);
+
   const sources = new Set<AudioBufferSourceNode>();
   let playhead = 0;
   let pending = new Uint8Array(0);
@@ -36,6 +40,10 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
   const controller = new AbortController();
   const abort = () => {
     controller.abort(signal?.reason);
+    try {
+      masterGain.gain.setValueAtTime(masterGain.gain.value, context.currentTime);
+      masterGain.gain.linearRampToValueAtTime(0, context.currentTime + 0.01);
+    } catch {}
     for (const source of sources) {
       try { source.stop(); } catch {}
     }
@@ -46,8 +54,8 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
   try {
     if (context.state === "suspended") await context.resume();
     const normalizedLevel = /^P[1-6]$/.test(level) ? level : "P3";
-    const cacheKey = new Request(`${location.origin}/__vocabulary_audio/kore-v3/${normalizedLevel}/${encodeURIComponent(cleanText)}`);
-    const cache = await caches.open("pokeayman-natural-voice-v3").catch(() => null);
+    const cacheKey = new Request(`${location.origin}/__vocabulary_audio/kore-v4/${normalizedLevel}/${encodeURIComponent(cleanText)}`);
+    const cache = await caches.open("pokeayman-natural-voice-v4").catch(() => null);
     const cached = await cache?.match(cacheKey);
     const response = cached || await fetch(endpoint, {
       method: "POST",
@@ -86,7 +94,7 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
         buffer.copyToChannel(decoded.samples, 0);
         const source = context.createBufferSource();
         source.buffer = buffer;
-        source.connect(context.destination);
+        source.connect(masterGain);
         sources.add(source);
         playback = new Promise<void>((resolve) => {
           source.onended = () => {
@@ -113,8 +121,18 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
     }
     if (!completed || !samplesPlayed || pending.length) throw new Error("Incomplete speech stream");
     if (cache && reusable) await cache.put(cacheKey, reusable).catch(() => {});
+
+    // Smooth de-click fade at the end of the scheduled audio to prevent DC offset clicks
+    if (playhead > context.currentTime) {
+      const fadeStart = Math.max(context.currentTime, playhead - 0.02);
+      masterGain.gain.setValueAtTime(1, fadeStart);
+      masterGain.gain.linearRampToValueAtTime(0, playhead);
+    }
+
     await playback;
     signal?.throwIfAborted();
+    // Allow hardware audio ring buffers (e.g. WASAPI / CoreAudio) to fully flush before tearing down audio context
+    await new Promise((r) => setTimeout(r, 60));
   } catch (err) {
     if (signal?.aborted) return;
     throw err;

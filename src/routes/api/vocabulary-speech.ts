@@ -10,18 +10,30 @@ function extractPCMFromWav(wavBytes: Uint8Array): Uint8Array {
     wavBytes[2] === 0x46 && // F
     wavBytes[3] === 0x46    // F
   ) {
-    for (let i = 12; i < Math.min(wavBytes.length - 8, 200); i++) {
-      if (
-        wavBytes[i] === 0x64 &&     // d
-        wavBytes[i + 1] === 0x61 && // a
-        wavBytes[i + 2] === 0x74 && // t
-        wavBytes[i + 3] === 0x61    // a
-      ) {
-        return wavBytes.slice(i + 8);
+    const view = new DataView(wavBytes.buffer, wavBytes.byteOffset, wavBytes.byteLength);
+    let offset = 12;
+    while (offset + 8 <= wavBytes.length) {
+      const chunkId = String.fromCharCode(
+        wavBytes[offset],
+        wavBytes[offset + 1],
+        wavBytes[offset + 2],
+        wavBytes[offset + 3]
+      );
+      const chunkSize = view.getUint32(offset + 4, true);
+      const chunkDataStart = offset + 8;
+      if (chunkId === "data") {
+        // Extract strictly the audio PCM data declared in data chunk, ignoring trailing metadata/C2PA signatures.
+        const chunkDataEnd = Math.min(wavBytes.length, chunkDataStart + chunkSize);
+        const pcm = wavBytes.subarray(chunkDataStart, chunkDataEnd);
+        const evenLength = pcm.byteLength - (pcm.byteLength % 2);
+        return pcm.subarray(0, evenLength);
       }
+      // Chunks are 2-byte aligned in RIFF
+      offset = chunkDataStart + chunkSize + (chunkSize % 2);
     }
   }
-  return wavBytes;
+  const evenLength = wavBytes.byteLength - (wavBytes.byteLength % 2);
+  return wavBytes.subarray(0, evenLength);
 }
 
 const GEMINI_TTS_MODELS = [
@@ -116,11 +128,17 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
                 if (b64Audio) {
                   const wavBytes = Uint8Array.from(atob(b64Audio), c => c.charCodeAt(0));
                   const pcmBytes = extractPCMFromWav(wavBytes);
-                  let binary = "";
-                  for (let i = 0; i < pcmBytes.byteLength; i++) {
-                    binary += String.fromCharCode(pcmBytes[i]!);
+                  let pcmBase64: string;
+                  if (typeof Buffer !== "undefined") {
+                    pcmBase64 = Buffer.from(pcmBytes.buffer, pcmBytes.byteOffset, pcmBytes.byteLength).toString("base64");
+                  } else {
+                    let binary = "";
+                    const chunkSize = 8192;
+                    for (let i = 0; i < pcmBytes.byteLength; i += chunkSize) {
+                      binary += String.fromCharCode.apply(null, Array.from(pcmBytes.subarray(i, i + chunkSize)));
+                    }
+                    pcmBase64 = btoa(binary);
                   }
-                  const pcmBase64 = btoa(binary);
                   const ssePayload = `data: ${JSON.stringify({ type: "speech.audio.delta", audio: pcmBase64 })}\n\ndata: ${JSON.stringify({ type: "speech.audio.done" })}\n\n`;
 
                   return new Response(ssePayload, {
