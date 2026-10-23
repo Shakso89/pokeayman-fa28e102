@@ -7553,7 +7553,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       <div class="teacher-zone-content-card">
        <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">📚</span><div><p class="teacher-zone-page-kicker">WORD BANK</p><h3 id="teacher-vb-lists-title">My Lists</h3><p id="teacher-vb-lists-description">Review, edit, or delete the word banks you created.</p></div></header>
        <div class="teacher-vb-list-modes" role="group" aria-label="Vocabulary list view"><button id="teacher-vb-mode-mine" type="button" class="btn-primary" aria-pressed="true">My Lists</button><button id="teacher-vb-mode-school" type="button" class="btn-secondary" aria-pressed="false">School Lists</button></div>
-       <button id="teacher-vb-open-create" type="button" class="btn-primary teacher-vb-open-create">+ Create list</button>
+       <div class="teacher-vb-create-actions"><button id="teacher-vb-open-create" type="button" class="btn-primary teacher-vb-open-create">+ Create list</button><button id="teacher-vb-open-ai" type="button" class="btn-outline teacher-vb-open-create teacher-vb-open-ai">⚡ Generate with AI</button></div>
        <div id="teacher-vb-create-modal" class="teacher-vb-create-modal hidden" role="dialog" aria-modal="true" aria-labelledby="teacher-vb-create-title"><div class="teacher-vb-create-dialog"><div class="teacher-vb-create-heading"><h4 id="teacher-vb-create-title">Create vocabulary list</h4><button id="teacher-vb-create-close" type="button" aria-label="Close">×</button></div><form id="teacher-vb-create-form" class="teacher-vb-create-form"><label class="teacher-vb-create-field"><span>List name</span><input id="teacher-vb-create-name" type="text" maxlength="80" placeholder="e.g. Unit 5 Verbs" required></label><label class="teacher-vb-create-field"><span>Class</span><select id="teacher-vb-create-class" required><option value="">Choose a class</option></select></label><button id="teacher-vb-create-submit" type="submit" class="btn-primary">Create list</button></form></div></div>
        <div class="teacher-vb-search"><label for="teacher-vb-search-field">Search lists</label><select id="teacher-vb-search-field" aria-label="Search filter"><option value="all">All fields</option><option value="list">List name</option><option value="teacher">Teacher name</option><option value="word">Word</option><option value="class">Class or school</option></select><input id="teacher-vb-search-query" type="search" placeholder="Search by list, teacher, word, class…" autocomplete="off"></div>
        <p id="teacher-vb-lists-status" class="teacher-zone-status" aria-live="polite">Loading your lists…</p>
@@ -9229,6 +9229,7 @@ function canSeeTeacherFinance() {
 }
 let navSchool = null;
 let navClass = null;
+window.getNavClassContext = () => ({ school: String(navSchool || '').trim(), className: String(navClass || '').trim() });
 let profileStudent = null;
 let profileTarget = { canonicalId: '', school: '', className: '', loading: false };
 
@@ -11733,7 +11734,7 @@ renderTeacherZoneHistory();
 document.getElementById('teacher-zone-history-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-history-panel', 'teacher-zone-history-tab'); renderTeacherZoneHistory(); });
 const teacherVbCardLayoutStyles = document.createElement('style');
 teacherVbCardLayoutStyles.textContent = `
-  .teacher-vb-open-create{display:block;width:100%;margin:1rem 0}.teacher-vb-open-create[hidden]{display:none}
+  .teacher-vb-create-actions{display:flex;gap:.65rem;margin:1rem 0}.teacher-vb-create-actions .teacher-vb-open-create{flex:1 1 0;margin:0}.teacher-vb-open-create{display:block;width:100%;margin:1rem 0}.teacher-vb-open-create[hidden]{display:none}
   .teacher-vb-search{display:grid;grid-template-columns:auto minmax(9rem,12rem) minmax(12rem,1fr);align-items:center;gap:.65rem;margin:1rem 0;padding:.9rem;border:1px solid rgba(148,163,184,.22);border-radius:1rem;background:rgba(15,23,42,.55);color:#f8fafc}
   .teacher-vb-search label{font-weight:800}.teacher-vb-search input,.teacher-vb-search select{width:100%;min-width:0;min-height:2.8rem;padding:.65rem .8rem;border:1px solid rgba(148,163,184,.35);border-radius:.7rem;background:#111c30;color:#f8fafc}
   .teacher-vb-create-modal{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(2,6,23,.78);backdrop-filter:blur(5px)}
@@ -11792,6 +11793,7 @@ function renderTeacherOwnedVocabLists() {
   const classSelect = document.getElementById('teacher-vb-create-class');
   const createButton = document.getElementById('teacher-vb-open-create');
   if (createButton) createButton.hidden = schoolMode;
+  const aiButton = document.getElementById('teacher-vb-open-ai'); if (aiButton) aiButton.hidden = schoolMode;
   if (classSelect) {
     const escOption = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const classes = getAllTeacherClasses().filter(cls => canManageClass(cls.school_name, cls.class_name)).sort((a,b) => `${a.school_name} ${a.class_name}`.localeCompare(`${b.school_name} ${b.class_name}`));
