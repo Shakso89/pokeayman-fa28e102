@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GEMINI_MODELS, normalizeWord, sentenceHasWord } from "@/lib/vocab-sentences";
+import { askSentenceModel, normalizeWord, sentenceHasWord } from "@/lib/vocab-sentences";
 
 const requests = new Map<string, { count: number; reset: number }>();
 
@@ -9,7 +9,6 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, Cache-Control",
 };
 
-const NO_KEY_MESSAGE = "Gemini is not configured. Add GEMINI_API_KEY to the project secrets.";
 
 export const Route = createFileRoute("/api/vocabulary-sentence")({
   server: {
@@ -32,29 +31,7 @@ export const Route = createFileRoute("/api/vocabulary-sentence")({
           return Response.json({ message: "Invalid request payload." }, { status: 400, headers: CORS });
         }
 
-        const geminiApiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || process.env["VITE_GEMINI_API_KEY"];
-        if (!geminiApiKey) return Response.json({ message: NO_KEY_MESSAGE }, { status: 503, headers: CORS });
-
-        const askGemini = async (body: unknown): Promise<string> => {
-          for (const model of GEMINI_MODELS) {
-            try {
-              const res = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
-                { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
-              );
-              if (!res.ok) {
-                console.warn(`[vocab] ${model} -> HTTP ${res.status}`);
-                continue;
-              }
-              const data = await res.json();
-              const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (text) return String(text);
-            } catch (err) {
-              console.warn(`[vocab] ${model} failed:`, err);
-            }
-          }
-          return "";
-        };
+        const askGemini = askSentenceModel;
 
         const parseJson = (text: string): unknown => {
           const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
