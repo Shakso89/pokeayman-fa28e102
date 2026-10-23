@@ -741,7 +741,7 @@
         <ellipse cx="1140" cy="220" rx="430" ry="330" fill="url(#bg-hlw-glow)"/>
         <ellipse cx="260" cy="720" rx="300" ry="220" fill="url(#bg-hlw-glow)" opacity="0.35"/>
 
-        <g fill="#fdf6e8">
+        <g class="hlw-stars" fill="#fdf6e8">
           <circle cx="180" cy="110" r="1.8" opacity="0.5"/><circle cx="340" cy="70" r="1.4" opacity="0.35"/>
           <circle cx="470" cy="150" r="2" opacity="0.4"/><circle cx="620" cy="60" r="1.3" opacity="0.3"/>
           <circle cx="760" cy="130" r="1.7" opacity="0.45"/><circle cx="880" cy="80" r="1.4" opacity="0.32"/>
@@ -752,7 +752,7 @@
         </g>
 
         <!-- golden moon -->
-        <circle cx="1076" cy="198" r="158" fill="#fbbf24" opacity="0.1"/>
+        <circle class="hlw-moon-glow" cx="1076" cy="198" r="158" fill="#fbbf24" opacity="0.1"/>
         <circle cx="1076" cy="198" r="96" fill="url(#bg-hlw-moon)"/>
         <g fill="#f59e0b" opacity="0.15">
           <circle cx="1044" cy="166" r="13"/><circle cx="1108" cy="206" r="19"/>
@@ -760,11 +760,11 @@
         </g>
         <!-- bats -->
         <g fill="#0d0619">
-          <use href="#bg-hlw-bat" transform="translate(930 126) scale(0.95)"/>
-          <use href="#bg-hlw-bat" transform="translate(1246 306) scale(0.72)"/>
-          <use href="#bg-hlw-bat" transform="translate(1180 108) scale(0.5)"/>
-          <use href="#bg-hlw-bat" transform="translate(288 210) scale(0.62)"/>
-          <use href="#bg-hlw-bat" transform="translate(200 156) scale(0.42)"/>
+          <g class="hlw-bat hlw-bat--1" transform="translate(930 126) scale(0.95)"><g class="hlw-bat-drift"><use class="hlw-bat-flap" href="#bg-hlw-bat"/></g></g>
+          <g class="hlw-bat hlw-bat--2" transform="translate(1246 306) scale(0.72)"><g class="hlw-bat-drift"><use class="hlw-bat-flap" href="#bg-hlw-bat"/></g></g>
+          <g class="hlw-bat hlw-bat--3" transform="translate(1180 108) scale(0.5)"><g class="hlw-bat-drift"><use class="hlw-bat-flap" href="#bg-hlw-bat"/></g></g>
+          <g class="hlw-bat hlw-bat--4" transform="translate(288 210) scale(0.62)"><g class="hlw-bat-drift"><use class="hlw-bat-flap" href="#bg-hlw-bat"/></g></g>
+          <g class="hlw-bat hlw-bat--5" transform="translate(200 156) scale(0.42)"><g class="hlw-bat-drift"><use class="hlw-bat-flap" href="#bg-hlw-bat"/></g></g>
         </g>
 
         <!-- ground -->
@@ -772,10 +772,10 @@
         <path d="M0 826 Q 300 798 620 818 Q 980 844 1440 810 L 1440 900 L 0 900 Z" fill="#2a1546"/>
 
         <!-- ghosts: trio peeking over the hillside, plus one floating right -->
-        <use href="#bg-hlw-ghostart" transform="translate(392 716) scale(0.62)"/>
-        <use href="#bg-hlw-ghostart" transform="translate(470 700) scale(0.78)"/>
-        <use href="#bg-hlw-ghostart" transform="translate(556 720) scale(0.58)"/>
-        <use href="#bg-hlw-ghostart" transform="translate(1244 500) scale(0.72) rotate(6)"/>
+        <g class="hlw-ghost-slot hlw-ghost--1" transform="translate(392 716) scale(0.62)"><g class="hlw-ghost"><use href="#bg-hlw-ghostart"/></g></g>
+        <g class="hlw-ghost-slot hlw-ghost--2" transform="translate(470 700) scale(0.78)"><g class="hlw-ghost"><use href="#bg-hlw-ghostart"/></g></g>
+        <g class="hlw-ghost-slot hlw-ghost--3" transform="translate(556 720) scale(0.58)"><g class="hlw-ghost"><use href="#bg-hlw-ghostart"/></g></g>
+        <g class="hlw-ghost-slot hlw-ghost--4" transform="translate(1244 500) scale(0.72) rotate(6)"><g class="hlw-ghost"><use href="#bg-hlw-ghostart"/></g></g>
 
         <!-- lantern branch on the left edge -->
         <g>
@@ -786,19 +786,19 @@
             <path d="M258 444 L258 490"/>
             <path d="M146 318 L146 366"/>
           </g>
-          <g transform="translate(196 476) scale(0.52)">
+          <g class="hlw-lantern-slot hlw-lantern--1" transform="translate(196 476) scale(0.52)">
             <use href="#bg-hlw-pumpart"/>
           </g>
-          <g transform="translate(258 514) scale(0.44)">
+          <g class="hlw-lantern-slot hlw-lantern--2" transform="translate(258 514) scale(0.44)">
             <use href="#bg-hlw-pumpart"/>
           </g>
-          <g transform="translate(146 390) scale(0.38)">
+          <g class="hlw-lantern-slot hlw-lantern--3" transform="translate(146 390) scale(0.38)">
             <use href="#bg-hlw-pumpart"/>
           </g>
         </g>
 
         <!-- glossy pumpkin totem, bottom-right -->
-        <g transform="translate(1204 762) scale(0.92)">
+        <g class="hlw-totem" transform="translate(1204 762) scale(0.92)">
           <ellipse cx="0" cy="34" rx="80" ry="16" fill="#04010a" opacity="0.6"/>
           <use href="#bg-hlw-pumpart" transform="scale(1.02)"/>
           <use href="#bg-hlw-pumpart" transform="translate(4 -52) scale(0.82)"/>
