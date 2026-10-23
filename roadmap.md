@@ -99,3 +99,6 @@
 - [x] Avatar picker restyle; tier-themed shop filters
 - [x] Poké Battle game: student-only arcade card; rarity-weighted affordable shop opponent (no Legendaries); 20s scramble turns; escalating fail-streak damage; dodge chance; win/loss states; teacher-approved claim (Battle Claims tab in Teacher Zone + sidebar, badge count); approve = deduct credits + grant Pokémon + remove shop item with rollback; decline keeps shop item; verified win/claim/approve/decline/unaffordable flows and mobile layout with mocked data layer.
 - [ ] Verify Poké Battle claim approval with a signed-in teacher in the real preview (test used an in-memory data layer; real backend writes were not exercised).
+
+# AI Word Bank
+- [x] Gemini writes, ChatGPT reviews (max 2 revisions), no other sentence source; Word Bank Generate with AI button pre-selects the open class. Blocked: OpenAI account has no credits, so generation fails until topped up.
