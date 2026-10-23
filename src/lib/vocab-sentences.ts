@@ -47,3 +47,59 @@ export function sentenceHasWord(sentence: string, word: string): boolean {
   const tokens = text.match(/[a-z0-9']+/g) || [];
   return tokens.some((token) => variants.has(token));
 }
+
+type GeminiPart = { text?: string; inlineData?: { mimeType: string; data: string } };
+type GeminiBody = {
+  contents: Array<{ parts: GeminiPart[] }>;
+  generationConfig?: { temperature?: number; maxOutputTokens?: number; responseMimeType?: string };
+};
+
+/**
+ * Ask Gemini directly when GEMINI_API_KEY is set; otherwise use the built-in
+ * Lovable AI Gateway (Gemini models). Returns "" when nothing usable came back.
+ */
+export async function askSentenceModel(body: GeminiBody): Promise<string> {
+  const geminiApiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"];
+  if (geminiApiKey) {
+    for (const model of GEMINI_MODELS) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
+          { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, generationConfig: { ...body.generationConfig, responseMimeType: "application/json" } }) }
+        );
+        if (!res.ok) continue;
+        const data: any = await res.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return String(text);
+      } catch {}
+    }
+  }
+
+  const lovableKey = process.env["LOVABLE_API_KEY"];
+  if (!lovableKey) return "";
+  const content = (body.contents[0]?.parts || []).map((p) =>
+    p.inlineData
+      ? { type: "image_url", image_url: { url: `data:${p.inlineData.mimeType};base64,${p.inlineData.data}` } }
+      : { type: "text", text: p.text || "" }
+  );
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3.8-flash",
+        messages: [{ role: "user", content }],
+        temperature: body.generationConfig?.temperature,
+      }),
+    });
+    if (!res.ok) {
+      console.warn(`[vocab] AI gateway -> HTTP ${res.status}`);
+      return "";
+    }
+    const data: any = await res.json();
+    return String(data?.choices?.[0]?.message?.content || "");
+  } catch (err) {
+    console.warn("[vocab] AI gateway failed:", err);
+    return "";
+  }
+}
