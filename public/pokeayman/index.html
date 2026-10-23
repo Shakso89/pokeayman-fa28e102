@@ -20781,6 +20781,13 @@ function editVocabWord(wordId, currentWord, currentImage) {
             const url = data.photos[idx].src.large;
             selectedImageUrl = url;
             imageInput.value = url;
+            // Remember what the chosen photo shows so "Generate" writes a sentence
+            // about that picture instead of a generic one about the word.
+            const sentenceField = modal.querySelector('#edit-word-sentence');
+            if (sentenceField) {
+              const photoContext = String(data.photos[idx].alt || searchInput.value || '').trim().slice(0, 200);
+              if (photoContext) sentenceField.dataset.pictureContext = photoContext;
+            }
             const preview = modal.querySelector('#selected-image-preview-container');
             preview.innerHTML = `<img id="selected-image-preview" src="${escape(url)}" class="max-h-52 w-auto max-w-full object-contain rounded-lg shadow-sm" alt="Selected">`;
             resultsContainer.innerHTML = `<p class="col-span-3 text-center text-xs py-3 font-semibold ${isBright ? 'text-amber-600' : 'text-amber-300'}">Image selected! Click Save to apply.</p>`;

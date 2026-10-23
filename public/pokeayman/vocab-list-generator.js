@@ -19,6 +19,25 @@
       .filter(w => w.length > 0 && w.length <= 60);
   }
 
+  // Mirrors the server rule: a sentence is only usable when it actually uses the
+  // teacher's word (or the plural of it), never a different word.
+  function sentenceUsesWord(sentence, word) {
+    const text = String(sentence || '').toLowerCase();
+    const target = String(word || '').trim().toLowerCase();
+    if (!text || !target) return false;
+    if (target.includes(' ')) {
+      return new RegExp(`(^|[^a-z])${target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z]|$)`).test(text);
+    }
+    const variants = new Set([target, target + 's', target + 'es', target + 'ed', target + 'ing']);
+    if (target.length > 2 && target.endsWith('y')) {
+      variants.add(target.slice(0, -1) + 'ies');
+      variants.add(target.slice(0, -1) + 'ied');
+    }
+    if (target.length > 2 && target.endsWith('e')) variants.add(target.slice(0, -1) + 'ing');
+    const tokens = text.match(/[a-z0-9']+/g) || [];
+    return tokens.some(token => variants.has(token));
+  }
+
   function getTeacherBalance() {
     if (typeof window.getTeacherCredits === 'function') {
       return window.getTeacherCredits();
@@ -60,101 +79,6 @@
     const school = String(window.navSchool || '').trim();
     const className = String(window.navClass || '').trim();
     return { school, className };
-  }
-
-  // Generates a varied, unique sentence for a word ensuring no duplicate frames in the list
-  function createUniqueSentence(word, index, usedFrames) {
-    const w = word.trim();
-    const lw = w.toLowerCase();
-
-    const objectFrames = [
-      () => `She writes her spelling words with the ${w}.`,
-      () => `The student placed the ${w} on the wooden desk.`,
-      () => `I packed my favorite ${w} into my school backpack.`,
-      () => `He drew a beautiful picture using his ${w}.`,
-      () => `We found a clean ${w} inside the classroom cabinet.`,
-      () => `The bright new ${w} sits on the table.`,
-      () => `She borrowed a sharp ${w} from her classmate.`,
-      () => `He pointed toward the ${w} across the room.`,
-      () => `The teacher showed the children how to use the ${w}.`,
-      () => `We always keep our ${w} neat and organized.`
-    ];
-
-    const landAnimalFrames = [
-      () => `The playful ${w} runs quickly through the green grass.`,
-      () => `A gentle ${w} rests quietly under the shady tree.`,
-      () => `The friendly ${w} looks up with curious bright eyes.`,
-      () => `An energetic ${w} jumps happily across the wide yard.`,
-      () => `We watched the little ${w} explore the sunny meadow.`,
-      () => `The quiet ${w} naps peacefully in the afternoon sunlight.`
-    ];
-
-    const aquaticFrames = [
-      () => `The colorful ${w} swims gracefully through the clear water.`,
-      () => `A little ${w} darts quickly between the smooth river stones.`,
-      () => `We watched the bright ${w} glide across the calm blue pond.`,
-      () => `The gentle ${w} swims peacefully near the green sea plants.`,
-      () => `A shiny ${w} splashes softly in the cool pond water.`
-    ];
-
-    const birdFrames = [
-      () => `The cheerful ${w} sings a sweet song from the tree branch.`,
-      () => `A colorful ${w} flies high across the sunny blue sky.`,
-      () => `We spotted a gentle ${w} resting quietly near its nest.`,
-      () => `The lively ${w} flaps its bright wings in the warm breeze.`
-    ];
-
-    const foodFrames = [
-      () => `The sweet ${w} tastes crisp and refreshing today.`,
-      () => `I packed a juicy ${w} for my school lunch.`,
-      () => `My mother sliced the fresh ${w} on the board.`,
-      () => `The delicious ${w} smells wonderful in the sunny kitchen.`,
-      () => `We shared a healthy ${w} together during recess.`,
-      () => `He enjoyed eating a ripe ${w} after soccer practice.`
-    ];
-
-    const colorFrames = [
-      () => `A vibrant ${w} balloon floats high into the clouds.`,
-      () => `She painted a lovely ${w} stripe on her paper.`,
-      () => `The bright ${w} flower blooms in the garden.`,
-      () => `He wore a neat ${w} cap to school today.`,
-      () => `We spotted a beautiful ${w} butterfly in the tall tree.`
-    ];
-
-    let pool = objectFrames;
-    if (/^(fish|shark|whale|dolphin|turtle|frog|octopus|crab|seahorse|jellyfish|goldfish|starfish|shrimp|seal|otter)$/.test(lw)) {
-      pool = aquaticFrames;
-    } else if (/^(bird|duck|owl|eagle|parrot|crow|robin|penguin|flamingo|swan|goose)$/.test(lw)) {
-      pool = birdFrames;
-    } else if (/^(cat|dog|lion|tiger|bear|horse|monkey|cow|pig|rabbit|elephant|giraffe|zebra|puppy|kitten|wolf|fox|deer|sheep|mouse|hamster|panda|koala)$/.test(lw)) {
-      pool = landAnimalFrames;
-    } else if (/^(apple|banana|orange|grape|fruit|bread|pizza|cake|cookie|milk|water|rice|cheese|berry|mango|soup|sandwich|juice|egg|meat)$/.test(lw)) {
-      pool = foodFrames;
-    } else if (/^(red|blue|green|yellow|pink|purple|orange|white|black|brown|golden|gray|grey)$/.test(lw)) {
-      pool = colorFrames;
-    }
-
-    // Find first frame in pool that has not been used yet
-    for (let i = 0; i < pool.length; i++) {
-      const idx = (index + i) % pool.length;
-      const candidate = pool[idx]();
-      const frameKey = candidate.toLowerCase().replace(lw, '{w}');
-      if (!usedFrames.has(frameKey)) {
-        usedFrames.add(frameKey);
-        return candidate;
-      }
-    }
-
-    // Fallback if all pool frames used
-    let fallback = `The child happily used the ${w} in class today.`;
-    if (pool === aquaticFrames) fallback = `The bright ${w} swims peacefully in the clear water.`;
-    else if (pool === birdFrames) fallback = `The little ${w} flies happily through the sunny sky.`;
-    else if (pool === landAnimalFrames) fallback = `The friendly ${w} rests comfortably in the warm sunshine.`;
-    else if (pool === foodFrames) fallback = `Everyone enjoyed sharing the fresh ${w} at lunch.`;
-    else if (pool === colorFrames) fallback = `She chose the nice ${w} crayon for her drawing.`;
-
-    usedFrames.add(fallback.toLowerCase().replace(lw, '{w}'));
-    return fallback;
   }
 
   function openGenerateModal() {
@@ -615,24 +539,26 @@
                 generatedMap.set(it.word.toLowerCase(), it.sentence);
               }
             });
+          } else {
+            const errData = await res?.json().catch(() => ({}));
+            throw new Error(errData?.message || 'Gemini could not write the sentences. Please try again.');
           }
         } catch (apiErr) {
-          console.warn('AI sentence generation error, using variety generator:', apiErr);
+          setGenerating(false);
+          errorBanner.textContent = apiErr.message || 'Gemini could not write the sentences. Please try again.';
+          errorBanner.style.display = 'block';
+          updateModalUI();
+          return;
         }
 
-        // Combine photos and sentences, strictly enforcing 100% uniqueness (no duplicate frames)
-        const usedFramesInList = new Set();
-        itemsWithImages = preparedItems.map((p, idx) => {
-          let sentence = generatedMap.get(p.word.toLowerCase());
+        // Every sentence comes from Gemini; a sentence that is missing or talks
+        // about a different word is an error, never replaced with local text.
+        const missingWords = [];
+        itemsWithImages = preparedItems.map(p => {
           const lw = p.word.toLowerCase();
-          const frameKey = sentence ? sentence.toLowerCase().replace(lw, '{w}') : '';
-
-          // If empty, shallow ("Look at..."), or duplicate frame, generate a unique sentence
-          if (!sentence || /^Look at/i.test(sentence) || usedFramesInList.has(frameKey)) {
-            sentence = createUniqueSentence(p.word, idx, usedFramesInList);
-          } else {
-            usedFramesInList.add(frameKey);
-          }
+          let sentence = String(generatedMap.get(lw) || '').trim();
+          if (sentence && !sentenceUsesWord(sentence, p.word)) sentence = '';
+          if (!sentence) missingWords.push(p.word);
 
           return {
             word: p.word,
@@ -640,6 +566,14 @@
             sentence
           };
         });
+
+        if (missingWords.length) {
+          setGenerating(false);
+          errorBanner.textContent = `Gemini did not return a usable sentence for ${missingWords.map(w => `"${w}"`).join(', ')}. Please try again.`;
+          errorBanner.style.display = 'block';
+          updateModalUI();
+          return;
+        }
       } else {
         // Photo upload mode
         setGenerating(true, '1/3 Analyzing your photo with Gemini AI...', 35);
@@ -682,20 +616,19 @@
           return;
         }
 
-        // Attach images and ensure uniqueness
+        // Attach images; every sentence must be Gemini's and use its own word.
         setGenerating(true, '2/3 Matching photos for each word...', 65);
-        const usedPhotoFrames = new Set();
         for (let i = 0; i < photoItems.length; i++) {
           const it = photoItems[i];
           const photoData = await fetchPhotoForWord(it.word);
-          let sentence = it.sentence;
-          const lw = it.word.toLowerCase();
-          const frameKey = sentence ? sentence.toLowerCase().replace(lw, '{w}') : '';
+          const sentence = String(it.sentence || '').trim();
 
-          if (!sentence || /^Look at/i.test(sentence) || usedPhotoFrames.has(frameKey)) {
-            sentence = createUniqueSentence(it.word, i, usedPhotoFrames);
-          } else {
-            usedPhotoFrames.add(frameKey);
+          if (!sentence || !sentenceUsesWord(sentence, it.word)) {
+            setGenerating(false);
+            errorBanner.textContent = `Gemini did not return a usable sentence for "${it.word}". Please try again.`;
+            errorBanner.style.display = 'block';
+            updateModalUI();
+            return;
           }
 
           itemsWithImages.push({

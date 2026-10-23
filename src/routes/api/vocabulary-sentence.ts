@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { GEMINI_MODELS, normalizeWord, sentenceHasWord } from "@/lib/vocab-sentences";
 
 const requests = new Map<string, { count: number; reset: number }>();
 
@@ -8,10 +9,7 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, Cache-Control",
 };
 
-const FALLBACK_GEMINI_KEY = Buffer.from(
-  "QVEuQWI4Uk42S3hqMnNyRVI4YmhkWVBKR190WUEyZ1A5YVFKckZBQ0NTYU83dmNqZHRXRnc=",
-  "base64"
-).toString("utf-8");
+const NO_KEY_MESSAGE = "Gemini is not configured. Add GEMINI_API_KEY to the project secrets.";
 
 export const Route = createFileRoute("/api/vocabulary-sentence")({
   server: {
@@ -22,7 +20,9 @@ export const Route = createFileRoute("/api/vocabulary-sentence")({
         const now = Date.now();
         if (requests.size > 1000) for (const [k, e] of requests) if (e.reset < now) requests.delete(k);
         const limit = requests.get(ip);
-        if (limit && limit.reset > now && limit.count >= 40) return Response.json({ message: "Please wait a minute before generating more sentences." }, { status: 429, headers: { ...CORS, "Retry-After": "60" } });
+        if (limit && limit.reset > now && limit.count >= 40) {
+          return Response.json({ message: "Please wait a minute before generating more sentences." }, { status: 429, headers: { ...CORS, "Retry-After": "60" } });
+        }
         requests.set(ip, limit && limit.reset > now ? { ...limit, count: limit.count + 1 } : { count: 1, reset: now + 60000 });
 
         let input: any;
@@ -32,107 +32,157 @@ export const Route = createFileRoute("/api/vocabulary-sentence")({
           return Response.json({ message: "Invalid request payload." }, { status: 400, headers: CORS });
         }
 
-        const geminiApiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || process.env["VITE_GEMINI_API_KEY"] || FALLBACK_GEMINI_KEY;
-        const lovableApiKey = process.env["LOVABLE_API_KEY"];
+        const geminiApiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || process.env["VITE_GEMINI_API_KEY"];
+        if (!geminiApiKey) return Response.json({ message: NO_KEY_MESSAGE }, { status: 503, headers: CORS });
 
-        // Support batch or photo mode if requested here
-        if (input.mode === "photo" || Array.isArray(input.words) || Array.isArray(input.items) || (typeof input.words === "string" && input.words.includes(","))) {
-          const mode = input.mode === "photo" ? "photo" : "words";
-          const models = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-flash-latest"];
-
-          if (mode === "words") {
-            let rawItems: Array<{ word: string; picture: string }> = [];
-            if (Array.isArray(input.items)) {
-              rawItems = input.items.map((it: any) => ({ word: String(it.word || "").trim(), picture: String(it.picture || it.context || "").trim() })).filter((it: any) => it.word);
-            } else {
-              const rawWords = Array.isArray(input.words) ? input.words : String(input.words || "").split(/[\s,]+/);
-              rawItems = rawWords.map((w: any) => ({ word: (typeof w === "object" ? String(w.word || "") : String(w || "")).trim(), picture: "" })).filter((it: any) => it.word);
-            }
-
-            if (!rawItems.length) return Response.json({ message: "Please provide words." }, { status: 400, headers: CORS });
-
-            const promptList = rawItems.map((item, idx) => `${idx + 1}. word: "${item.word}"${item.picture ? `, picture context: "${item.picture}"` : ""}`).join("\n");
-            const prompt = `You are an ESL teacher for young elementary students learning English.
-For each word and picture below, write one simple, vivid, and natural example sentence (6 to 9 words).
-CRITICAL RULES:
-1. Every sentence must have a unique structure and verb. Never repeat the same sentence structure twice in the list.
-2. NEVER start with "Look at...", "This is a...", "Here is...", or "The lovely [word] brings...".
-3. For objects and tools: show someone holding, using, drawing, opening, or moving it.
-4. For animals: show diverse actions (sleeping, hopping, running, swimming).
-5. For foods: describe tasting, eating, slicing, or smelling it.
-
-Words & pictures:
-${promptList}`;
-
-            if (geminiApiKey) {
-              for (const model of models) {
-                try {
-                  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      contents: [{ parts: [{ text: prompt }] }],
-                      generationConfig: { temperature: 0.5, responseMimeType: "application/json", maxOutputTokens: 1500 },
-                    }),
-                  });
-                  if (res.ok) {
-                    const data = await res.json();
-                    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (text) {
-                      const items = JSON.parse(text.trim());
-                      if (Array.isArray(items) && items.length > 0) return Response.json({ items, count: items.length }, { headers: CORS });
-                    }
-                  }
-                } catch (err) {
-                  console.warn(`Model ${model} error:`, err);
-                }
+        const askGemini = async (body: unknown): Promise<string> => {
+          for (const model of GEMINI_MODELS) {
+            try {
+              const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
+                { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+              );
+              if (!res.ok) {
+                console.warn(`[vocab] ${model} -> HTTP ${res.status}`);
+                continue;
               }
+              const data = await res.json();
+              const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text) return String(text);
+            } catch (err) {
+              console.warn(`[vocab] ${model} failed:`, err);
             }
-            return Response.json({ items: rawItems.map((it: any) => ({ word: it.word, sentence: `She used the ${it.word} during class today.` })), count: rawItems.length }, { headers: CORS });
           }
+          return "";
+        };
+
+        const parseJson = (text: string): unknown => {
+          const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
+          const start = Math.min(...[cleaned.indexOf("["), cleaned.indexOf("{")].filter((i) => i >= 0));
+          const end = Math.max(cleaned.lastIndexOf("]"), cleaned.lastIndexOf("}"));
+          const slice = start >= 0 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+          try {
+            return JSON.parse(slice);
+          } catch {
+            return null;
+          }
+        };
+
+        // Batch mode: identical guarantees to /api/generate-vocab-list.
+        if (Array.isArray(input.items) || Array.isArray(input.words) || (typeof input.words === "string" && input.words.includes(","))) {
+          let rawItems: Array<{ word: string; picture: string }> = [];
+          if (Array.isArray(input.items)) {
+            rawItems = input.items.map((it: any) => ({
+              word: String(it.word || "").trim(),
+              picture: String(it.picture || it.context || "").trim().slice(0, 150),
+            }));
+          } else {
+            const rawWords = Array.isArray(input.words) ? input.words : String(input.words || "").split(/[\s,]+/);
+            rawItems = rawWords.map((w: any) => ({
+              word: (typeof w === "object" ? String(w.word || "") : String(w || "")).trim(),
+              picture: "",
+            }));
+          }
+          rawItems = rawItems.filter((it) => it.word && it.word.length <= 60).slice(0, 30);
+          if (!rawItems.length) return Response.json({ message: "Please provide words." }, { status: 400, headers: CORS });
+
+          const sentences = new Map<number, string>();
+          const collectSentences = (parsed: unknown) => {
+            if (!Array.isArray(parsed)) return;
+            parsed.forEach((entry: any, position: number) => {
+              if (!entry || typeof entry !== "object") return;
+              const numbered = Number(entry.i ?? entry.index ?? entry.n);
+              let index =
+                Number.isInteger(numbered) && numbered >= 1 && numbered <= rawItems.length ? numbered - 1 : position;
+              const saidWord = normalizeWord(entry.word);
+              if (saidWord) {
+                const matched = rawItems.findIndex((item) => normalizeWord(item.word) === saidWord);
+                if (matched >= 0) index = matched;
+              }
+              if (index < 0 || index >= rawItems.length || sentences.has(index)) return;
+              const sentence = String(entry.sentence || "").trim().replace(/^["']|["']$/g, "");
+              if (sentence && sentenceHasWord(sentence, rawItems[index]!.word)) sentences.set(index, sentence);
+            });
+          };
+
+          const buildPrompt = (indexes: number[]) =>
+            `You are an ESL teacher for young elementary students.
+Write one simple, natural example sentence (6 to 9 words) for every numbered item below.
+
+RULES:
+1. Use the exact word given for that item. Never pluralise it or swap it for another word.
+2. If a picture description is given, the sentence must match that picture.
+3. Every sentence must have a different structure and verb.
+4. Reply with JSON only: an array of {"i": <item number>, "sentence": "<sentence>"}.
+
+Items:
+${indexes.map((i) => `${i + 1}. word: "${rawItems[i]!.word}"${rawItems[i]!.picture ? ` | picture: "${rawItems[i]!.picture}"` : ""}`).join("\n")}`;
+
+          const askForIndexes = async (indexes: number[], maxOutputTokens: number) => {
+            const text = await askGemini({
+              contents: [{ parts: [{ text: buildPrompt(indexes) }] }],
+              generationConfig: { temperature: 0.5, responseMimeType: "application/json", maxOutputTokens },
+            });
+            if (text) collectSentences(parseJson(text));
+          };
+
+          const allIndexes = rawItems.map((_, i) => i);
+          await askForIndexes(allIndexes, 1500);
+
+          let missing = allIndexes.filter((i) => !sentences.has(i));
+          if (missing.length > 0 && missing.length < allIndexes.length) {
+            await askForIndexes(missing, 900);
+            missing = allIndexes.filter((i) => !sentences.has(i));
+          }
+
+          if (missing.length > 0) {
+            const names = missing.map((i) => `"${rawItems[i]!.word}"`).join(", ");
+            return Response.json(
+              { message: `Gemini could not write a sentence that uses ${names}. Please try again.` },
+              { status: 502, headers: CORS }
+            );
+          }
+
+          const items = allIndexes.map((i) => ({ word: rawItems[i]!.word, sentence: sentences.get(i)! }));
+          return Response.json({ items, count: items.length, source: "ai" }, { headers: CORS });
         }
 
-        let word: string;
-        let avoid = "";
+        // Single word mode: the "✨ Generate" button beside a sentence field.
         if (typeof input.word !== "string" || !input.word.trim() || input.word.length > 60) {
           return Response.json({ message: "Type a word first." }, { status: 400, headers: CORS });
         }
-        word = input.word.trim();
-        if (typeof input.avoid === "string") avoid = input.avoid.slice(0, 200);
+        const word = input.word.trim();
+        const context = typeof input.context === "string" ? input.context.slice(0, 200) : "";
+        const avoid = typeof input.avoid === "string" ? input.avoid.slice(0, 200) : "";
 
-        const promptText = `Word: ${word}${avoid ? `\nDo not repeat this sentence: ${avoid}` : ""}\nYou write one short, simple, natural example sentence (6-9 words) for children learning English vocabulary. Use the given word exactly as written. Make the sentence engaging, meaningful, and child-friendly. NEVER write shallow sentences like "Look at the...", "This is a...", "Here is...". Reply with only the sentence, no quotes.`;
+        const buildPrompt = (strict: boolean) => `Word: ${word}
+${context ? `The sentence must describe this picture: ${context}` : ""}
+${avoid ? `Do not repeat this sentence: ${avoid}` : ""}
+You write one short, simple, natural example sentence (6-9 words) for children learning English.
+Rules:
+- The sentence MUST contain the word "${word}" exactly as written. Never pluralise it, never replace it with another word.
+- If a picture is described, the sentence must match what the picture shows.
+- Never write shallow sentences like "Look at the...", "This is a...", "Here is...".
+${strict ? `- Your previous answer was rejected for not containing "${word}". Include "${word}" this time.` : ""}
+Reply with JSON only: {"sentence": "<sentence>"}`;
 
-        if (geminiApiKey) {
-          const singleModels = ["gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-flash-latest"];
-          for (const model of singleModels) {
-            try {
-              const googleRes = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    contents: [{ parts: [{ text: promptText }] }],
-                    generationConfig: { temperature: 0.7, maxOutputTokens: 60 }
-                  })
-                }
-              );
-
-              if (googleRes.ok) {
-                const data = await googleRes.json();
-                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                const sentence = String(text || "").trim().replace(/^["']|["']$/g, "");
-                if (sentence) {
-                  return Response.json({ sentence }, { headers: CORS });
-                }
-              }
-            } catch (geminiErr) {
-              console.warn(`Direct Gemini model ${model} error:`, geminiErr);
-            }
+        for (const strict of [false, true]) {
+          const text = await askGemini({
+            contents: [{ parts: [{ text: buildPrompt(strict) }] }],
+            generationConfig: { temperature: strict ? 0.4 : 0.7, responseMimeType: "application/json", maxOutputTokens: 120 },
+          });
+          if (!text) continue;
+          const parsed = parseJson(text) as any;
+          const candidate = String(parsed?.sentence ?? parsed ?? "").trim().replace(/^["']|["']$/g, "");
+          if (candidate && sentenceHasWord(candidate, word)) {
+            return Response.json({ sentence: candidate, source: "ai" }, { headers: CORS });
           }
         }
 
-        return Response.json({ message: "Could not generate a sentence. Please try again." }, { status: 502, headers: CORS });
+        return Response.json(
+          { message: `Gemini could not write a sentence that uses "${word}". Please try again.` },
+          { status: 502, headers: CORS }
+        );
       },
     },
   },

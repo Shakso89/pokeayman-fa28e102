@@ -15,7 +15,12 @@
     if (!word) { wordInput?.focus(); window.showToast?.('Type the word first', 'error'); return; }
     btn.disabled = true; const label = btn.textContent; btn.textContent = '…';
     try {
-      const res = await fetch('/api/vocabulary-sentence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ word, avoid: input.value }) });
+      const context = String(input.dataset.pictureContext || '').trim();
+      const res = await fetch('/api/vocabulary-sentence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ word, avoid: input.value, context: context || undefined }),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.sentence) throw new Error(data.message || 'Could not generate a sentence.');
       input.value = data.sentence;

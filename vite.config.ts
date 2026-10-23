@@ -5,6 +5,27 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { readFileSync } from "node:fs";
+
+// Server routes read secrets from process.env. Vite only exposes VITE_* vars to
+// the client, so load the local (git-ignored) env file here for `vite dev`.
+// In production the platform injects real environment variables instead.
+function loadLocalEnv(file: string) {
+  try {
+    for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+      const match = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/);
+      if (!match) continue;
+      const [, key, rawValue] = match;
+      if (!key || !rawValue || process.env[key]) continue;
+      process.env[key] = rawValue.replace(/^["']|["']$/g, "");
+    }
+  } catch {
+    // No local env file: nothing to load.
+  }
+}
+
+loadLocalEnv(".env.local");
+loadLocalEnv(".env");
 
 export default defineConfig({
   tanstackStart: {
