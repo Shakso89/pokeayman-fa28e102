@@ -314,15 +314,23 @@ body { --ga-stage-bg: var(--ts-bg, #0b1220); --ga-stage-surface: var(--ts-surfac
   color: #fff;
 }
 
-.ga-lobby .ga-pick-tools .ga-pick-exit-btn {
-  border-color: rgba(255, 203, 5, 0.4) !important;
-  color: #fde047 !important;
+.ga-lobby .ga-pick-tools .ga-pick-clear-btn {
+  width: auto !important;
+  min-width: 44px;
+  padding: 0 0.65rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+  color: var(--ga-muted) !important;
+  border-color: var(--ga-border) !important;
+  background: var(--ga-chip) !important;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-.ga-lobby .ga-pick-tools .ga-pick-exit-btn:hover {
-  background: rgba(239, 68, 68, 0.3) !important;
-  border-color: #ef4444 !important;
+.ga-lobby .ga-pick-tools .ga-pick-clear-btn:hover {
   color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 @media (max-width: 640px) {

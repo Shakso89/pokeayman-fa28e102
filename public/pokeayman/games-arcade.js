@@ -1423,10 +1423,10 @@
     bar.className = 'ga-quick';
     if (isSoloGame) {
       bar.innerHTML = `<div class="ga-player-heading"><h3>Player</h3><span class="ga-player-count" aria-live="polite">0 / 1 selected</span></div>
-        <div class="ga-pick-tools"><button type="button" data-q="random" aria-label="Pick random student" title="Pick random student">⤨ Random</button><button type="button" data-q="exit" class="ga-pick-exit-btn" aria-label="Close setup and return to games" title="Close setup">✕</button></div>`;
+        <div class="ga-pick-tools"><button type="button" data-q="random" aria-label="Pick random student" title="Pick random student">⤨ Random</button><button type="button" data-q="clear" class="ga-pick-clear-btn" aria-label="Clear selected student" title="Clear selected student">Clear</button></div>`;
     } else {
       bar.innerHTML = `<div class="ga-player-heading"><h3>Players</h3><span class="ga-player-count" aria-live="polite">0 / 4 selected</span></div>
-        <div class="ga-pick-tools"><select aria-label="Random player count">${[1, 2, 3, 4].filter(n => n <= checks.length).map(n => `<option value="${n}" ${n === Math.min(2, checks.length) ? 'selected' : ''}>Random ${n}</option>`).join('')}</select><button type="button" data-q="random" aria-label="Pick random players" title="Pick random players">⤨</button><button type="button" data-q="exit" class="ga-pick-exit-btn" aria-label="Close setup and return to games" title="Close setup">✕</button></div>`;
+        <div class="ga-pick-tools"><select aria-label="Random player count">${[1, 2, 3, 4].filter(n => n <= checks.length).map(n => `<option value="${n}" ${n === Math.min(2, checks.length) ? 'selected' : ''}>Random ${n}</option>`).join('')}</select><button type="button" data-q="random" aria-label="Pick random players" title="Pick random players">⤨</button><button type="button" data-q="clear" class="ga-pick-clear-btn" aria-label="Clear selected players" title="Clear selected players">Clear</button></div>`;
     }
     const update = () => {
       const count = checks.filter(c => c.checked).length;
@@ -1483,8 +1483,8 @@
     }
     bar.addEventListener('click', e => {
       const q = e.target.closest('button')?.dataset.q; if (!q) return;
-      if (q === 'exit' || q === 'clear') {
-        window.gaExitSetupToArcade?.();
+      if (q === 'clear') {
+        set([]);
         return;
       }
       const shuffled = [...checks];
