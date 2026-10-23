@@ -194,7 +194,8 @@ For each item:
 3. The sentence must contain the vocabulary word exactly as you wrote it.
 4. Every sentence MUST be unique! NEVER repeat the same sentence structure or pattern.
 5. NEVER write lazy or shallow sentences like "Look at the...", "This is a...", "Here is...", "I see a...".
-6. Return ONLY a valid JSON array of objects with keys "word" and "sentence".`;
+6. Also give "picture": a 2-4 word stock-image search phrase naming the concrete thing in your sentence.
+7. Return ONLY a valid JSON array of objects with keys "word", "sentence" and "picture".`;
 
           const text = await askGemini({
             contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType, data: base64Data } }] }],
@@ -207,6 +208,7 @@ For each item:
                 .map((item: any) => ({
                   word: String(item.word || "").trim(),
                   sentence: String(item.sentence || "").trim().replace(/^["']|["']$/g, ""),
+                  picture: String(item.picture || "").replace(/[^a-zA-Z\s-]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60),
                 }))
                 .filter((item: any) => item.word && item.sentence && sentenceHasWord(item.sentence, item.word))
             : [];

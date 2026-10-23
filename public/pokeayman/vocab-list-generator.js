@@ -60,36 +60,58 @@
       .filter(t => t.length > 2 && !PHOTO_STOP.has(t) && !t.startsWith(target.slice(0, 4))).slice(0, 2);
   }
 
-  // Picture search uses the word plus key words from its sentence; falls back to the word alone.
-  async function fetchPhotoForWord(word, sentence) {
+  // Picture search: AI phrase written with the FINAL sentence first, then word + sentence
+  // keywords, then the word alone. Results are checked against tags, illustrations preferred.
+  async function fetchPhotoForWord(word, sentence, picture) {
     if (!word) return { url: '', tags: '' };
+    const w = word.trim();
+    const queries = [];
+    const pic = String(picture || '').trim();
+    if (pic) queries.push(pic);
     const extra = sentenceKeywords(word, sentence);
-    if (extra.length) {
-      const hit = await searchPhoto(`${word.trim()} ${extra.join(' ')}`);
-      if (hit.url) return hit;
+    if (extra.length) queries.push(`${w} ${extra.join(' ')}`);
+    queries.push(w);
+    const seen = new Set();
+    let fallback = null;
+    for (const q of queries) {
+      if (seen.has(q.toLowerCase())) continue;
+      seen.add(q.toLowerCase());
+      for (const type of ['illustration', 'all']) {
+        const hit = await searchPhoto(q, w, type);
+        if (hit.url && hit.matched) return hit;
+        if (hit.url && !fallback) fallback = hit;
+      }
     }
-    return searchPhoto(word.trim());
+    return fallback || { url: '', tags: '' };
   }
 
-  async function searchPhoto(query) {
+  function tagsMatch(tags, word) {
+    const t = String(tags || '').toLowerCase();
+    const root = String(word || '').toLowerCase().trim();
+    if (!t || !root) return false;
+    return t.includes(root) || (root.length > 4 && t.includes(root.slice(0, root.length - 1)));
+  }
+
+  async function searchPhoto(query, word, imageType) {
     if (!query || typeof window.pexelsFetch !== 'function') return { url: '', tags: '' };
-    const word = query;
     try {
-      const res = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=6`, {
+      const res = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=10&image_type=${imageType || 'all'}`, {
         headers: { 'Authorization': '' }
       });
       if (res.ok) {
         const data = await res.json();
-        const photo = data.photos?.[0];
-        if (photo?.src?.large || photo?.src?.medium) {
+        const photos = (data.photos || []).filter(p => p?.src?.large || p?.src?.medium);
+        const photo = photos.find(p => tagsMatch(p.alt, word)) || photos[0];
+        if (photo) {
           return {
             url: photo.src.large || photo.src.medium,
-            tags: String(photo.alt || photo.photographer || '').slice(0, 150)
+            tags: String(photo.alt || photo.photographer || '').slice(0, 150),
+            matched: tagsMatch(photo.alt, word)
           };
         }
       }
     } catch (err) {
-      console.warn(`Could not fetch photo for "${word}":`, err);
+      console.warn(`Could not fetch photo for "${query}":`, err);
     }
     return { url: '', tags: '' };
   }
@@ -510,6 +532,7 @@
         // STEP 1: Gemini writes a sentence for every word first (ChatGPT checks it).
         setGenerating(true, '1/3 Writing sentences with Gemini...', 30);
         const generatedMap = new Map();
+        const pictureMap = new Map();
         try {
           const payload = { mode: 'words', items: words.map(w => ({ word: w, picture: '' })) };
           let res;
@@ -528,7 +551,7 @@
           if (res && res.ok) {
             const data = await res.json();
             (Array.isArray(data.items) ? data.items : []).forEach(it => {
-              if (it.word && it.sentence) generatedMap.set(it.word.toLowerCase(), it.sentence);
+              if (it.word && it.sentence) { generatedMap.set(it.word.toLowerCase(), it.sentence); if (it.picture) pictureMap.set(it.word.toLowerCase(), it.picture); }
             });
           } else {
             const errData = await res?.json().catch(() => ({}));
@@ -548,7 +571,7 @@
           let sentence = String(generatedMap.get(w.toLowerCase()) || '').trim();
           if (sentence && !sentenceUsesWord(sentence, w)) sentence = '';
           if (!sentence) missingWords.push(w);
-          itemsWithImages.push({ word: w, imageUrl: '', sentence });
+          itemsWithImages.push({ word: w, imageUrl: '', sentence, picture: pictureMap.get(w.toLowerCase()) || '' });
         }
 
         // STEP 2: find a picture that matches each finished sentence.
@@ -556,7 +579,7 @@
           for (let i = 0; i < itemsWithImages.length; i++) {
             const it = itemsWithImages[i];
             setGenerating(true, `2/3 Finding a picture for "${it.word}" (${i + 1}/${itemsWithImages.length})...`, 55 + Math.round((i / itemsWithImages.length) * 20));
-            const photoData = await fetchPhotoForWord(it.word, it.sentence);
+            const photoData = await fetchPhotoForWord(it.word, it.sentence, it.picture);
             it.imageUrl = photoData.url || '';
           }
         }
@@ -615,7 +638,7 @@
         for (let i = 0; i < photoItems.length; i++) {
           const it = photoItems[i];
           const sentence = String(it.sentence || '').trim();
-          const photoData = await fetchPhotoForWord(it.word, sentence);
+          const photoData = await fetchPhotoForWord(it.word, sentence, it.picture);
 
           if (!sentence || !sentenceUsesWord(sentence, it.word)) {
             setGenerating(false);
