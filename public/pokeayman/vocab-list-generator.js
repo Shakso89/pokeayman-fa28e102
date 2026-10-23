@@ -53,10 +53,29 @@
   }
 
   // Choose a top quality photo of that word first, returning URL and photo description/tags
-  async function fetchPhotoForWord(word) {
-    if (!word || typeof window.pexelsFetch !== 'function') return { url: '', tags: '' };
+  const PHOTO_STOP = new Set('a an the is are was were be been am i you he she it we they my your his her its our their this that these those of in on at to for with and or but from by up down over under into out very so too can will has have had do does did not no yes some any one two three red blue green big small little'.split(' '));
+  function sentenceKeywords(word, sentence) {
+    const target = String(word || '').toLowerCase();
+    return String(sentence || '').toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/)
+      .filter(t => t.length > 2 && !PHOTO_STOP.has(t) && !t.startsWith(target.slice(0, 4))).slice(0, 2);
+  }
+
+  // Picture search uses the word plus key words from its sentence; falls back to the word alone.
+  async function fetchPhotoForWord(word, sentence) {
+    if (!word) return { url: '', tags: '' };
+    const extra = sentenceKeywords(word, sentence);
+    if (extra.length) {
+      const hit = await searchPhoto(`${word.trim()} ${extra.join(' ')}`);
+      if (hit.url) return hit;
+    }
+    return searchPhoto(word.trim());
+  }
+
+  async function searchPhoto(query) {
+    if (!query || typeof window.pexelsFetch !== 'function') return { url: '', tags: '' };
+    const word = query;
     try {
-      const res = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(word.trim())}&per_page=6`, {
+      const res = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=6`, {
         headers: { 'Authorization': '' }
       });
       if (res.ok) {
@@ -488,85 +507,59 @@
       let itemsWithImages = [];
 
       if (activeMode === 'words') {
-        // STEP 1: Choose picture for each word first (animals, colors, food, tools, etc.)
-        setGenerating(true, '1/3 Finding pictures for your vocabulary words...', 25);
-        const preparedItems = [];
-
-        for (let i = 0; i < words.length; i++) {
-          const w = words[i];
-          setGenerating(true, `1/3 Choosing picture for "${w}" (${i + 1}/${words.length})...`, 25 + Math.round((i / words.length) * 20));
-          const photoData = await fetchPhotoForWord(w);
-          preparedItems.push({
-            word: w,
-            imageUrl: photoData.url || '',
-            picture: photoData.tags || ''
-          });
-        }
-
-        // STEP 2: Generate unique, vivid sentences directly related to each picture
-        setGenerating(true, '2/3 Writing vivid sentences related to each picture with Gemini...', 60);
-        let generatedMap = new Map();
-
+        // STEP 1: Gemini writes a sentence for every word first (ChatGPT checks it).
+        setGenerating(true, '1/3 Writing sentences with Gemini...', 30);
+        const generatedMap = new Map();
         try {
-          const payload = {
-            mode: 'words',
-            items: preparedItems.map(p => ({ word: p.word, picture: p.picture }))
-          };
-
+          const payload = { mode: 'words', items: words.map(w => ({ word: w, picture: '' })) };
           let res;
           try {
             res = await fetch('/api/generate-vocab-list', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
           } catch (fetchErr) {
-            console.warn('generate-vocab-list failed, trying vocabulary-sentence fallback:', fetchErr);
+            console.warn('generate-vocab-list failed, trying vocabulary-sentence:', fetchErr);
           }
-
-          if (!res || !res.ok) {
+          if (!res || (!res.ok && res.status >= 500 && res.status !== 502)) {
             res = await fetch('/api/vocabulary-sentence', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
             });
           }
-
           if (res && res.ok) {
             const data = await res.json();
-            const list = Array.isArray(data.items) ? data.items : [];
-            list.forEach(it => {
-              if (it.word && it.sentence) {
-                generatedMap.set(it.word.toLowerCase(), it.sentence);
-              }
+            (Array.isArray(data.items) ? data.items : []).forEach(it => {
+              if (it.word && it.sentence) generatedMap.set(it.word.toLowerCase(), it.sentence);
             });
           } else {
             const errData = await res?.json().catch(() => ({}));
-            throw new Error(errData?.message || 'Gemini could not write the sentences. Please try again.');
+            throw new Error(errData?.message || 'The sentences could not be written. Please try again.');
           }
         } catch (apiErr) {
           setGenerating(false);
-          errorBanner.textContent = apiErr.message || 'Gemini could not write the sentences. Please try again.';
+          errorBanner.textContent = apiErr.message || 'The sentences could not be written. Please try again.';
           errorBanner.style.display = 'block';
           updateModalUI();
           return;
         }
 
-        // Every sentence comes from Gemini; a sentence that is missing or talks
-        // about a different word is an error, never replaced with local text.
         const missingWords = [];
-        itemsWithImages = preparedItems.map(p => {
-          const lw = p.word.toLowerCase();
-          let sentence = String(generatedMap.get(lw) || '').trim();
-          if (sentence && !sentenceUsesWord(sentence, p.word)) sentence = '';
-          if (!sentence) missingWords.push(p.word);
+        itemsWithImages = [];
+        for (const w of words) {
+          let sentence = String(generatedMap.get(w.toLowerCase()) || '').trim();
+          if (sentence && !sentenceUsesWord(sentence, w)) sentence = '';
+          if (!sentence) missingWords.push(w);
+          itemsWithImages.push({ word: w, imageUrl: '', sentence });
+        }
 
-          return {
-            word: p.word,
-            imageUrl: p.imageUrl,
-            sentence
-          };
-        });
+        // STEP 2: find a picture that matches each finished sentence.
+        if (!missingWords.length) {
+          for (let i = 0; i < itemsWithImages.length; i++) {
+            const it = itemsWithImages[i];
+            setGenerating(true, `2/3 Finding a picture for "${it.word}" (${i + 1}/${itemsWithImages.length})...`, 55 + Math.round((i / itemsWithImages.length) * 20));
+            const photoData = await fetchPhotoForWord(it.word, it.sentence);
+            it.imageUrl = photoData.url || '';
+          }
+        }
 
         if (missingWords.length) {
           setGenerating(false);
@@ -621,8 +614,8 @@
         setGenerating(true, '2/3 Matching photos for each word...', 65);
         for (let i = 0; i < photoItems.length; i++) {
           const it = photoItems[i];
-          const photoData = await fetchPhotoForWord(it.word);
           const sentence = String(it.sentence || '').trim();
+          const photoData = await fetchPhotoForWord(it.word, sentence);
 
           if (!sentence || !sentenceUsesWord(sentence, it.word)) {
             setGenerating(false);
