@@ -1053,15 +1053,47 @@
   window.pendingChosenGame = null;
   window.arcadeOpen = true;
 
-  window.gaBackToArcade = function () {
+  window.gaExitSetupToArcade = function () {
+    // 1. Remove all active inline game setup modals and lobbies
+    document.querySelectorAll('.game-inline-view, .game-setup-panel, .ga-lobby, .ga-student-setup, .ga-continue-bar').forEach(el => el.remove());
+
+    // 2. Unhide the arcade games hub in both teacher and student dashboard areas
+    const teacherArea = document.getElementById('class-subtab-games');
+    const studentArea = document.getElementById('student-tab-games');
+    const teacherHub = teacherArea?.querySelector(':scope > .glass-container');
+    const studentHub = studentArea?.querySelector(':scope > .glass-container');
+    if (teacherHub) teacherHub.hidden = false;
+    if (studentHub) studentHub.hidden = false;
+
+    // 3. Clear temporary selections and pending game state
+    window.pendingChosenGame = null;
+    if (typeof selectedGameList !== 'undefined') selectedGameList = [];
+    if (typeof selectedGameSession !== 'undefined') selectedGameSession = null;
+    if (typeof pendingGamePlayers !== 'undefined') pendingGamePlayers = 0;
+    if (typeof activeGamePlayers !== 'undefined') activeGamePlayers = [];
+    if (typeof pendingGameTimerSeconds !== 'undefined') pendingGameTimerSeconds = 0;
+    if (typeof pendingGameReward !== 'undefined') pendingGameReward = 0;
+    if (typeof activeGameReward !== 'undefined') activeGameReward = 0;
+    if (typeof activeGameRewardClaimed !== 'undefined') activeGameRewardClaimed = false;
+    if (typeof resetGameTurnState === 'function') resetGameTurnState();
+
+    // 4. Default to Class lists for next selection
+    if (typeof selectedGameSource !== 'undefined') selectedGameSource = 'class_lists';
+
+    // 5. Open arcade hub and re-render
     window.arcadeOpen = true;
     if (typeof renderGamesList === 'function') renderGamesList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  window.gaBackToArcade = window.gaExitSetupToArcade;
+
   window.gaShowListSelection = function (game) {
     if (game) window.pendingChosenGame = game;
     window.arcadeOpen = false;
+    if (typeof selectedGameSource !== 'undefined') selectedGameSource = 'class_lists';
+    if (typeof selectedGameList !== 'undefined') selectedGameList = [];
+    if (typeof selectedGameSession !== 'undefined') selectedGameSession = null;
     if (typeof renderGamesList === 'function') renderGamesList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1077,6 +1109,9 @@
     }
     window.pendingChosenGame = g;
     window.arcadeOpen = false;
+    if (typeof selectedGameSource !== 'undefined') selectedGameSource = 'class_lists';
+    if (typeof selectedGameList !== 'undefined') selectedGameList = [];
+    if (typeof selectedGameSession !== 'undefined') selectedGameSession = null;
     if (typeof renderGamesList === 'function') renderGamesList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1207,21 +1242,38 @@
     const isArcade = Boolean(window.arcadeOpen);
     selector.hidden = isArcade;
     container.hidden = !isArcade;
-    if (isArcade) return;
+    if (isArcade) {
+      document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
+      return;
+    }
 
+    document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
     selector.querySelectorAll('.ga-continue').forEach(el => el.remove());
+
+    const bar = document.createElement('div');
+    bar.className = 'ga-continue-bar';
+
+    const hint = document.createElement('div');
+    hint.className = 'ga-continue-hint';
+    hint.innerHTML = count
+      ? `<span class="ga-continue-badge">${count}</span> <span class="ga-continue-label">list${count === 1 ? '' : 's'} selected</span>`
+      : `<span class="ga-continue-empty">Select a vocabulary list to proceed</span>`;
+
     const next = document.createElement('button');
     next.type = 'button';
     next.className = 'ga-continue';
     const gameName = window.pendingChosenGame ? window.pendingChosenGame.name : 'Game';
     next.disabled = !count;
     next.textContent = count ? `Next: Game Settings for ${gameName} ▶ (${count} list${count === 1 ? '' : 's'})` : `Choose a vocabulary list to play ${gameName} →`;
+    next.setAttribute('aria-label', count ? `Next: Game Settings for ${gameName}, ${count} lists selected` : `Choose a vocabulary list to play ${gameName}`);
     next.addEventListener('click', () => {
       if (!selectedGameList.length) { toast('Please choose at least one vocabulary list'); return; }
       if (getGameWords(selectedGameList).length < 2) { toast('Choose lists with at least two words.'); return; }
       window.gaLaunchChosenGame(window.pendingChosenGame, selectedGameList);
     });
-    selector.appendChild(next);
+
+    bar.append(hint, next);
+    selector.appendChild(bar);
   };
 
   window.gaMountStage = function (view) {
@@ -1339,6 +1391,17 @@
     const resolvedFnName = fnName || (window.pendingChosenGame ? window.pendingChosenGame.fn : '');
     const game = GAMES.find(g => g.fn === resolvedFnName);
     modal.classList.add('ga-lobby');
+
+    if (!modal.querySelector('.ga-lobby-close')) {
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'ga-lobby-close';
+      closeBtn.setAttribute('aria-label', 'Close setup and return to games');
+      closeBtn.title = 'Close setup';
+      closeBtn.textContent = '✕';
+      closeBtn.addEventListener('click', () => window.gaExitSetupToArcade?.());
+      modal.prepend(closeBtn);
+    }
     const h2 = modal.querySelector('h2');
     if (h2 && game) h2.innerHTML = `<span class="ga-lobby-icon" aria-hidden="true">${game.icon}</span> ${esc(game.name)}`;
     const p = h2?.nextElementSibling;
@@ -1360,10 +1423,10 @@
     bar.className = 'ga-quick';
     if (isSoloGame) {
       bar.innerHTML = `<div class="ga-player-heading"><h3>Player</h3><span class="ga-player-count" aria-live="polite">0 / 1 selected</span></div>
-        <div class="ga-pick-tools"><button type="button" data-q="random" aria-label="Pick random student" title="Pick random student">⤨ Random</button><button type="button" data-q="clear" aria-label="Clear player" title="Clear player">×</button></div>`;
+        <div class="ga-pick-tools"><button type="button" data-q="random" aria-label="Pick random student" title="Pick random student">⤨ Random</button><button type="button" data-q="exit" class="ga-pick-exit-btn" aria-label="Close setup and return to games" title="Close setup">✕</button></div>`;
     } else {
       bar.innerHTML = `<div class="ga-player-heading"><h3>Players</h3><span class="ga-player-count" aria-live="polite">0 / 4 selected</span></div>
-        <div class="ga-pick-tools"><select aria-label="Random player count">${[1, 2, 3, 4].filter(n => n <= checks.length).map(n => `<option value="${n}" ${n === Math.min(2, checks.length) ? 'selected' : ''}>Random ${n}</option>`).join('')}</select><button type="button" data-q="random" aria-label="Pick random players" title="Pick random players">⤨</button><button type="button" data-q="clear" aria-label="Clear players" title="Clear players">×</button></div>`;
+        <div class="ga-pick-tools"><select aria-label="Random player count">${[1, 2, 3, 4].filter(n => n <= checks.length).map(n => `<option value="${n}" ${n === Math.min(2, checks.length) ? 'selected' : ''}>Random ${n}</option>`).join('')}</select><button type="button" data-q="random" aria-label="Pick random players" title="Pick random players">⤨</button><button type="button" data-q="exit" class="ga-pick-exit-btn" aria-label="Close setup and return to games" title="Close setup">✕</button></div>`;
     }
     const update = () => {
       const count = checks.filter(c => c.checked).length;
@@ -1420,6 +1483,10 @@
     }
     bar.addEventListener('click', e => {
       const q = e.target.closest('button')?.dataset.q; if (!q) return;
+      if (q === 'exit' || q === 'clear') {
+        window.gaExitSetupToArcade?.();
+        return;
+      }
       const shuffled = [...checks];
       for (let i = shuffled.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
       if (isSoloGame) {
@@ -1477,7 +1544,7 @@
     if (cancel) {
       cancel.textContent = '← Games';
       footer.prepend(cancel);
-      cancel.addEventListener('click', () => { window.gaBackToArcade?.(); });
+      cancel.addEventListener('click', () => { window.gaExitSetupToArcade?.(); });
     }
     error?.setAttribute('role', 'alert');
     update();

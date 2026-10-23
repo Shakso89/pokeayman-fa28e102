@@ -185,10 +185,161 @@
 
 /* List → arcade → edge-to-edge play. All stage colours follow the shared theme. */
 body { --ga-stage-bg: var(--ts-bg, #0b1220); --ga-stage-surface: var(--ts-surface, #131c2e); --ga-stage-ink: var(--ts-ink, #f5f7ff); --ga-stage-muted: var(--ts-muted, #a5b0cc); --ga-stage-line: var(--ts-border, #344058); --ga-stage-yellow: var(--ts-yellow, #ffcb05); --ga-stage-red: var(--ts-red, #ff5a5f); --ga-stage-chip: var(--ts-chip, #202b42); --ga-stage-action-ink: var(--ts-action-ink, #111827); --ga-stage-blue: var(--ts-blue, #4fa3ff); }
-.ga-continue, .ga-change-lists { border-radius: 6px; padding: .75rem 1rem; font-family: 'Figtree', sans-serif; font-weight: 800; border: 1px solid var(--ga-stage-line); }
-.ga-continue { display: block; margin: 1rem 0 0 auto; background: var(--ga-stage-yellow); color: var(--ga-stage-action-ink); }
-.ga-continue:disabled { opacity: .4; cursor: not-allowed; }
-.ga-change-lists { background: var(--ga-stage-chip); color: var(--ga-stage-ink); }
+/* Sticky bottom navigation bar for vocabulary list selection */
+.ga-continue-bar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 35;
+  margin-top: 1.5rem;
+  padding: 0.85rem 1.25rem;
+  background: linear-gradient(180deg, rgba(11, 18, 32, 0.9) 0%, rgba(11, 18, 32, 0.98) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 1rem 1rem 0 0;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 -8px 30px rgba(2, 6, 23, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+#games-list-selector,
+#student-games-list-selector {
+  padding-bottom: 5.5rem !important;
+}
+
+.ga-continue-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Figtree', sans-serif;
+  font-size: 0.85rem;
+  color: var(--ga-stage-muted);
+}
+
+.ga-continue-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  background: var(--ga-stage-yellow);
+  color: var(--ga-stage-action-ink);
+  font-weight: 900;
+  font-size: 0.8rem;
+}
+
+.ga-continue-label {
+  color: #f1f5f9;
+  font-weight: 700;
+}
+
+.ga-continue-empty {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.ga-continue, .ga-change-lists {
+  border-radius: 9999px;
+  padding: 0.8rem 1.5rem;
+  font-family: 'Figtree', sans-serif;
+  font-weight: 800;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.ga-continue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  background: var(--ga-stage-yellow);
+  color: var(--ga-stage-action-ink);
+  font-size: 0.95rem;
+  box-shadow: 0 4px 16px rgba(255, 203, 5, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.ga-continue:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 203, 5, 0.5);
+}
+
+.ga-continue:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.ga-change-lists {
+  background: var(--ga-stage-chip);
+  color: var(--ga-stage-ink);
+}
+
+.ga-lobby {
+  position: relative !important;
+}
+
+.ga-lobby-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ga-lobby-close:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #f87171;
+  color: #fff;
+}
+
+.ga-lobby .ga-pick-tools .ga-pick-exit-btn {
+  border-color: rgba(255, 203, 5, 0.4) !important;
+  color: #fde047 !important;
+}
+
+.ga-lobby .ga-pick-tools .ga-pick-exit-btn:hover {
+  background: rgba(239, 68, 68, 0.3) !important;
+  border-color: #ef4444 !important;
+  color: #fff !important;
+}
+
+@media (max-width: 640px) {
+  .ga-continue-bar {
+    padding: 0.75rem 0.85rem;
+    justify-content: center;
+  }
+  .ga-continue-hint {
+    display: none;
+  }
+  .ga-continue {
+    width: 100%;
+    font-size: 0.88rem;
+    padding: 0.75rem 1rem;
+    text-align: center;
+  }
+}
 
 /* Match Words: one mixed, touch-friendly board for words and pictures. */
 .game-match-root { width: 100%; color: var(--ga-stage-ink); }

@@ -5462,15 +5462,47 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   window.pendingChosenGame = null;
   window.arcadeOpen = true;
 
-  window.gaBackToArcade = function () {
+  window.gaExitSetupToArcade = function () {
+    // 1. Remove all active inline game setup modals and lobbies
+    document.querySelectorAll('.game-inline-view, .game-setup-panel, .ga-lobby, .ga-student-setup, .ga-continue-bar').forEach(el => el.remove());
+
+    // 2. Unhide the arcade games hub in both teacher and student dashboard areas
+    const teacherArea = document.getElementById('class-subtab-games');
+    const studentArea = document.getElementById('student-tab-games');
+    const teacherHub = teacherArea?.querySelector(':scope > .glass-container');
+    const studentHub = studentArea?.querySelector(':scope > .glass-container');
+    if (teacherHub) teacherHub.hidden = false;
+    if (studentHub) studentHub.hidden = false;
+
+    // 3. Clear temporary selections and pending game state
+    window.pendingChosenGame = null;
+    if (typeof selectedGameList !== 'undefined') selectedGameList = [];
+    if (typeof selectedGameSession !== 'undefined') selectedGameSession = null;
+    if (typeof pendingGamePlayers !== 'undefined') pendingGamePlayers = 0;
+    if (typeof activeGamePlayers !== 'undefined') activeGamePlayers = [];
+    if (typeof pendingGameTimerSeconds !== 'undefined') pendingGameTimerSeconds = 0;
+    if (typeof pendingGameReward !== 'undefined') pendingGameReward = 0;
+    if (typeof activeGameReward !== 'undefined') activeGameReward = 0;
+    if (typeof activeGameRewardClaimed !== 'undefined') activeGameRewardClaimed = false;
+    if (typeof resetGameTurnState === 'function') resetGameTurnState();
+
+    // 4. Default to Class lists for next selection
+    if (typeof selectedGameSource !== 'undefined') selectedGameSource = 'class_lists';
+
+    // 5. Open arcade hub and re-render
     window.arcadeOpen = true;
     if (typeof renderGamesList === 'function') renderGamesList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  window.gaBackToArcade = window.gaExitSetupToArcade;
+
   window.gaShowListSelection = function (game) {
     if (game) window.pendingChosenGame = game;
     window.arcadeOpen = false;
+    if (typeof selectedGameSource !== 'undefined') selectedGameSource = 'class_lists';
+    if (typeof selectedGameList !== 'undefined') selectedGameList = [];
+    if (typeof selectedGameSession !== 'undefined') selectedGameSession = null;
     if (typeof renderGamesList === 'function') renderGamesList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -5486,6 +5518,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     }
     window.pendingChosenGame = g;
     window.arcadeOpen = false;
+    if (typeof selectedGameSource !== 'undefined') selectedGameSource = 'class_lists';
+    if (typeof selectedGameList !== 'undefined') selectedGameList = [];
+    if (typeof selectedGameSession !== 'undefined') selectedGameSession = null;
     if (typeof renderGamesList === 'function') renderGamesList();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -5616,21 +5651,38 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const isArcade = Boolean(window.arcadeOpen);
     selector.hidden = isArcade;
     container.hidden = !isArcade;
-    if (isArcade) return;
+    if (isArcade) {
+      document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
+      return;
+    }
 
+    document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
     selector.querySelectorAll('.ga-continue').forEach(el => el.remove());
+
+    const bar = document.createElement('div');
+    bar.className = 'ga-continue-bar';
+
+    const hint = document.createElement('div');
+    hint.className = 'ga-continue-hint';
+    hint.innerHTML = count
+      ? `<span class="ga-continue-badge">${count}</span> <span class="ga-continue-label">list${count === 1 ? '' : 's'} selected</span>`
+      : `<span class="ga-continue-empty">Select a vocabulary list to proceed</span>`;
+
     const next = document.createElement('button');
     next.type = 'button';
     next.className = 'ga-continue';
     const gameName = window.pendingChosenGame ? window.pendingChosenGame.name : 'Game';
     next.disabled = !count;
     next.textContent = count ? `Next: Game Settings for ${gameName} ▶ (${count} list${count === 1 ? '' : 's'})` : `Choose a vocabulary list to play ${gameName} →`;
+    next.setAttribute('aria-label', count ? `Next: Game Settings for ${gameName}, ${count} lists selected` : `Choose a vocabulary list to play ${gameName}`);
     next.addEventListener('click', () => {
       if (!selectedGameList.length) { toast('Please choose at least one vocabulary list'); return; }
       if (getGameWords(selectedGameList).length < 2) { toast('Choose lists with at least two words.'); return; }
       window.gaLaunchChosenGame(window.pendingChosenGame, selectedGameList);
     });
-    selector.appendChild(next);
+
+    bar.append(hint, next);
+    selector.appendChild(bar);
   };
 
   window.gaMountStage = function (view) {
@@ -5748,6 +5800,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const resolvedFnName = fnName || (window.pendingChosenGame ? window.pendingChosenGame.fn : '');
     const game = GAMES.find(g => g.fn === resolvedFnName);
     modal.classList.add('ga-lobby');
+
+    if (!modal.querySelector('.ga-lobby-close')) {
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'ga-lobby-close';
+      closeBtn.setAttribute('aria-label', 'Close setup and return to games');
+      closeBtn.title = 'Close setup';
+      closeBtn.textContent = '✕';
+      closeBtn.addEventListener('click', () => window.gaExitSetupToArcade?.());
+      modal.prepend(closeBtn);
+    }
     const h2 = modal.querySelector('h2');
     if (h2 && game) h2.innerHTML = `<span class="ga-lobby-icon" aria-hidden="true">${game.icon}</span> ${esc(game.name)}`;
     const p = h2?.nextElementSibling;
@@ -5769,10 +5832,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     bar.className = 'ga-quick';
     if (isSoloGame) {
       bar.innerHTML = `<div class="ga-player-heading"><h3>Player</h3><span class="ga-player-count" aria-live="polite">0 / 1 selected</span></div>
-        <div class="ga-pick-tools"><button type="button" data-q="random" aria-label="Pick random student" title="Pick random student">⤨ Random</button><button type="button" data-q="clear" aria-label="Clear player" title="Clear player">×</button></div>`;
+        <div class="ga-pick-tools"><button type="button" data-q="random" aria-label="Pick random student" title="Pick random student">⤨ Random</button><button type="button" data-q="exit" class="ga-pick-exit-btn" aria-label="Close setup and return to games" title="Close setup">✕</button></div>`;
     } else {
       bar.innerHTML = `<div class="ga-player-heading"><h3>Players</h3><span class="ga-player-count" aria-live="polite">0 / 4 selected</span></div>
-        <div class="ga-pick-tools"><select aria-label="Random player count">${[1, 2, 3, 4].filter(n => n <= checks.length).map(n => `<option value="${n}" ${n === Math.min(2, checks.length) ? 'selected' : ''}>Random ${n}</option>`).join('')}</select><button type="button" data-q="random" aria-label="Pick random players" title="Pick random players">⤨</button><button type="button" data-q="clear" aria-label="Clear players" title="Clear players">×</button></div>`;
+        <div class="ga-pick-tools"><select aria-label="Random player count">${[1, 2, 3, 4].filter(n => n <= checks.length).map(n => `<option value="${n}" ${n === Math.min(2, checks.length) ? 'selected' : ''}>Random ${n}</option>`).join('')}</select><button type="button" data-q="random" aria-label="Pick random players" title="Pick random players">⤨</button><button type="button" data-q="exit" class="ga-pick-exit-btn" aria-label="Close setup and return to games" title="Close setup">✕</button></div>`;
     }
     const update = () => {
       const count = checks.filter(c => c.checked).length;
@@ -5829,6 +5892,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     }
     bar.addEventListener('click', e => {
       const q = e.target.closest('button')?.dataset.q; if (!q) return;
+      if (q === 'exit' || q === 'clear') {
+        window.gaExitSetupToArcade?.();
+        return;
+      }
       const shuffled = [...checks];
       for (let i = shuffled.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
       if (isSoloGame) {
@@ -5886,7 +5953,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (cancel) {
       cancel.textContent = '← Games';
       footer.prepend(cancel);
-      cancel.addEventListener('click', () => { window.gaBackToArcade?.(); });
+      cancel.addEventListener('click', () => { window.gaExitSetupToArcade?.(); });
     }
     error?.setAttribute('role', 'alert');
     update();
@@ -17070,7 +17137,7 @@ function renderGamesList() {
   if (!window.arcadeOpen && window.pendingChosenGame) {
     const banner = document.createElement('div');
     banner.className = 'flex items-center justify-between p-3.5 mb-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-indigo-600/20 border border-amber-300/30 text-white shadow-sm';
-    banner.innerHTML = '<div class="flex items-center gap-3"><span class="text-3xl">' + (window.pendingChosenGame.icon || '🎮') + '</span><div><span class="text-[11px] font-black uppercase tracking-wider text-amber-300">Step 2: Choose Vocabulary Lists</span><h3 class="text-base sm:text-lg font-black text-white leading-tight">' + window.pendingChosenGame.name + '</h3></div></div><button type="button" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-amber-200 border border-amber-300/40 transition flex items-center gap-1.5" onclick="window.gaBackToArcade()">&#x2190; Change Game</button>';
+    banner.innerHTML = '<div class="flex items-center gap-3"><span class="text-3xl">' + (window.pendingChosenGame.icon || '🎮') + '</span><div><span class="text-[11px] font-black uppercase tracking-wider text-amber-300">Step 2: Choose Vocabulary Lists</span><h3 class="text-base sm:text-lg font-black text-white leading-tight">' + window.pendingChosenGame.name + '</h3></div></div><div class="flex items-center gap-2"><button type="button" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-amber-200 border border-amber-300/40 transition flex items-center gap-1.5" onclick="window.gaExitSetupToArcade()">&#x2190; Change Game</button><button type="button" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-rose-500/30 text-base font-bold text-amber-200 hover:text-white border border-amber-300/40 transition flex items-center justify-center" onclick="window.gaExitSetupToArcade()" aria-label="Close setup and return to games" title="Close setup">✕</button></div>';
     selector.appendChild(banner);
   }
   if (currentRole === 'teacher' && (!navSchool || !navClass)) {
@@ -17088,18 +17155,18 @@ function renderGamesList() {
   }
   const teacherOwnLists = currentRole === 'teacher' ? getVocabLists('', '').filter(list => normalizeStudentIdentity(list.teacher_name || list.owner) === normalizeStudentIdentity(currentTeacher)).map(list => ({ ...list, __gamesClassKey: `${list.vocab_list_school || ''}||${list.vocab_list_class || ''}` })) : [];
   const classLists = currentRole === 'teacher' ? getVocabLists(navSchool, navClass).map(list => ({ ...list, __gamesClassKey: `${navSchool}||${navClass}` })) : enrolledClasses.flatMap(classItem => getVocabLists(classItem.school_name, classItem.class_name).map(list => ({ ...list, __gamesClassKey: `${classItem.school_name}||${classItem.class_name}` })));
-  if (currentRole === 'teacher' && !renderGamesList.teacherTabInitialized) { renderGamesList.teacherTabInitialized = true; selectedGameSource = 'my_lists'; }
+  if (currentRole === 'teacher' && !renderGamesList.teacherTabInitialized) { renderGamesList.teacherTabInitialized = true; selectedGameSource = 'class_lists'; }
   const teacherMyLists = currentRole === 'teacher' && selectedGameSource === 'my_lists' && Array.isArray(selectedGameList) && selectedGameList.some(item => item && typeof item === 'object' && item.vocab_list_id);
   if (currentRole === 'teacher') {
     const teacherTabs = document.createElement('div');
     teacherTabs.className = 'teacher-list-source-tabs flex w-full gap-2 mb-3 overflow-x-auto';
     teacherTabs.setAttribute('role', 'tablist');
     teacherTabs.setAttribute('aria-label', 'Vocabulary list source');
-    teacherTabs.innerHTML = `<button type="button" class="teacher-list-source-tab ${selectedGameSource === 'my_lists' ? 'is-active' : ''}" role="tab" aria-selected="${selectedGameSource === 'my_lists'}">My lists</button><button type="button" class="teacher-list-source-tab ${selectedGameSource === 'class_lists' ? 'is-active' : ''}" role="tab" aria-selected="${selectedGameSource === 'class_lists'}">Class lists</button>`;
+    teacherTabs.innerHTML = `<button type="button" class="teacher-list-source-tab ${selectedGameSource === 'class_lists' ? 'is-active' : ''}" role="tab" aria-selected="${selectedGameSource === 'class_lists'}">Class lists</button><button type="button" class="teacher-list-source-tab ${selectedGameSource === 'my_lists' ? 'is-active' : ''}" role="tab" aria-selected="${selectedGameSource === 'my_lists'}">My lists</button>`;
     selector.appendChild(teacherTabs);
     const sourceTabs = selector.querySelectorAll('.teacher-list-source-tab');
-    sourceTabs[0].addEventListener('click', () => { selectedGameList = []; selectedGameSource = 'my_lists'; selectedGameSession = null; renderGamesList(); });
-    sourceTabs[1].addEventListener('click', () => { selectedGameList = []; selectedGameSource = 'class_lists'; selectedGameSession = null; renderGamesList(); });
+    sourceTabs[0].addEventListener('click', () => { selectedGameList = []; selectedGameSource = 'class_lists'; selectedGameSession = null; renderGamesList(); });
+    sourceTabs[1].addEventListener('click', () => { selectedGameList = []; selectedGameSource = 'my_lists'; selectedGameSession = null; renderGamesList(); });
   }
   if (isStudentGames && !selectedStudentGamesClassKey && enrolledClasses.length) { selectedStudentGamesClassKey = `${enrolledClasses[0].school_name}||${enrolledClasses[0].class_name}`; navSchool = enrolledClasses[0].school_name; navClass = enrolledClasses[0].class_name; }
   const classListsBlocked = currentRole === 'teacher' && selectedGameSource !== 'my_lists' && !teacherClassAuthorized;
@@ -18486,8 +18553,8 @@ function chooseGamePlayers(listName, nextStep) {
       showFirstPlayerReveal(() => openBaamboozle(listName, enabled, selectedBaamCardCount, selectedTimerSeconds), listName);
     } else showFirstPlayerReveal(nextStep, listName);
   });
-  modal.querySelector('#game-players-cancel').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (e.target === modal && !e.target.querySelector('#shared-baam-powerups')) modal.remove(); });
+  modal.querySelector('#game-players-cancel').addEventListener('click', () => { window.gaExitSetupToArcade?.(); });
+  modal.addEventListener('click', e => { if (e.target === modal && !e.target.querySelector('#shared-baam-powerups')) window.gaExitSetupToArcade?.(); });
 }
 
 // Find Me: picture clue plus moving word choices, using the shared player HUD and timer.
