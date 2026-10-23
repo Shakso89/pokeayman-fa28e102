@@ -4772,19 +4772,27 @@ body > .ga-stage :is(.match-game-tools, .find-me-game-tools) {
 body > .ga-stage .ga-stage-header :is(.match-game-density, .find-me-density) {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 0.25rem !important;
+  gap: 0.4rem !important;
   padding: 0 !important;
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
 }
 
 body > .ga-stage .ga-stage-header :is(.match-game-density, .find-me-density) button {
-  width: 38px !important;
-  height: 38px !important;
-  min-width: 38px !important;
-  min-height: 38px !important;
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid var(--ga-stage-line) !important;
   border-radius: 8px !important;
+  background: var(--ga-stage-chip) !important;
+  color: var(--ga-stage-ink) !important;
+  box-shadow: none !important;
+  font-family: 'Figtree', sans-serif !important;
   font-size: 1.25rem !important;
   font-weight: 800 !important;
   line-height: 1 !important;
@@ -4792,6 +4800,31 @@ body > .ga-stage .ga-stage-header :is(.match-game-density, .find-me-density) but
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease !important;
+}
+
+body > .ga-stage .ga-stage-header :is(.match-game-density, .find-me-density) button:hover {
+  border-color: var(--ga-stage-yellow) !important;
+  background: color-mix(in srgb, var(--ga-stage-yellow) 14%, var(--ga-stage-chip)) !important;
+  transform: translateY(-1px) !important;
+}
+
+body > .ga-stage .ga-stage-header :is(.match-game-density, .find-me-density) button:focus-visible {
+  outline: 2px solid var(--ga-stage-yellow) !important;
+  outline-offset: 2px !important;
+}
+
+@media (max-width: 640px) {
+  body > .ga-stage .ga-stage-header :is(.match-game-density, .find-me-density) {
+    gap: 0.25rem !important;
+  }
+  body > .ga-stage .ga-stage-header :is(.match-game-density, .find-me-density) button {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    font-size: 1.1rem !important;
+  }
 }
 
 body > .ga-stage :is(.match-game-content, .find-me-game-content, .game-popup-modal:has(#find-me-box) > div > .p-3) {

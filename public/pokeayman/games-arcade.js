@@ -1325,6 +1325,11 @@
         });
         controls.appendChild(themeWrap);
       }
+      // For Match Words, place density (+ and -) buttons directly next to the theme-changing button
+      const matchDensity = view.querySelector('.match-game-density');
+      if (matchDensity) {
+        controls.appendChild(matchDensity);
+      }
       const sound = document.createElement('button'); sound.type = 'button'; sound.className = 'ga-stage-sound';
       const syncSound = () => { const muted = window.pokeSfx?.isMuted() || false; sound.textContent = muted ? '🔇' : '🔊'; sound.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off'); sound.title = sound.getAttribute('aria-label'); };
       syncSound(); sound.addEventListener('click', () => {
@@ -1348,6 +1353,7 @@
       });
       controls.append(sound, expand, close); header.appendChild(controls);
       header.querySelectorAll('.game-sound-controls, #scramble-sound-mute').forEach(node => { node.hidden = true; });
+      header.querySelectorAll('.match-game-tools').forEach(tools => { tools.remove(); });
     }
     document.body.appendChild(view);
     document.body.classList.add('ga-playing');

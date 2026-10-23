@@ -5734,6 +5734,11 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         });
         controls.appendChild(themeWrap);
       }
+      // For Match Words, place density (+ and -) buttons directly next to the theme-changing button
+      const matchDensity = view.querySelector('.match-game-density');
+      if (matchDensity) {
+        controls.appendChild(matchDensity);
+      }
       const sound = document.createElement('button'); sound.type = 'button'; sound.className = 'ga-stage-sound';
       const syncSound = () => { const muted = window.pokeSfx?.isMuted() || false; sound.textContent = muted ? '🔇' : '🔊'; sound.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off'); sound.title = sound.getAttribute('aria-label'); };
       syncSound(); sound.addEventListener('click', () => {
@@ -5757,6 +5762,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       });
       controls.append(sound, expand, close); header.appendChild(controls);
       header.querySelectorAll('.game-sound-controls, #scramble-sound-mute').forEach(node => { node.hidden = true; });
+      header.querySelectorAll('.match-game-tools').forEach(tools => { tools.remove(); });
     }
     document.body.appendChild(view);
     document.body.classList.add('ga-playing');
@@ -19121,7 +19127,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   modal.innerHTML = `<div class="memory-game-shell bg-white rounded-2xl shadow-2xl">
     <div class="memory-game-header bg-gradient-to-r from-purple-500 to-purple-600 p-4 flex items-center justify-between rounded-t-2xl">
       <h2 class="heading-font text-2xl font-bold text-white text-center flex-1">🧠 Memory Game</h2>
-      <div class="flex items-center gap-2 flex-wrap justify-end">${gameSoundControls()}<div class="flex items-center gap-1.5 rounded-2xl border border-white/20 bg-white/10 p-1 shadow-lg shadow-purple-950/10 backdrop-blur-md"><button type="button" id="memory-size-decrease" class="text-white hover:bg-white/20 hover:text-yellow-200 text-sm font-bold w-9 h-9 rounded-xl bg-white/10 transition-all duration-200 shadow-inner" aria-label="Show fewer cards per row" title="Fewer cards">−</button><button type="button" id="memory-size-increase" class="text-white hover:bg-white/20 hover:text-yellow-200 text-sm font-bold w-9 h-9 rounded-xl bg-white/10 transition-all duration-200 shadow-inner" aria-label="Show more cards per row" title="More cards">+</button></div><button id="game-close" class="text-white hover:bg-white/20 hover:text-yellow-200 text-2xl font-bold w-10 h-9 rounded-xl bg-white/10 border border-white/10 transition-all duration-200 shadow-lg shadow-purple-950/10" aria-label="Close game" title="Close">×</button></div>
+      <div class="flex items-center gap-2 flex-wrap justify-end">${gameSoundControls()}<button id="game-close" class="text-white hover:bg-white/20 hover:text-yellow-200 text-2xl font-bold w-10 h-9 rounded-xl bg-white/10 border border-white/10 transition-all duration-200 shadow-lg shadow-purple-950/10" aria-label="Close game" title="Close">×</button></div>
     </div>
     <div class="memory-game-body">
       <div class="game-player-hud-slot memory-game-hud flex justify-center w-full"></div>
@@ -19350,8 +19356,8 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   const grid = modal.querySelector('#memory-grid');
   let memoryGridColumns = levelConfig.columns;
   const updateMemoryGridDensity = () => { delete grid.dataset.fitKey; requestAnimationFrame(fitMemoryBoard); };
-  modal.querySelector('#memory-size-decrease').addEventListener('click', () => { updateMemoryGridDensity(); });
-  modal.querySelector('#memory-size-increase').addEventListener('click', () => { updateMemoryGridDensity(); });
+  modal.querySelector('#memory-size-decrease')?.addEventListener('click', () => { updateMemoryGridDensity(); });
+  modal.querySelector('#memory-size-increase')?.addEventListener('click', () => { updateMemoryGridDensity(); });
   grid.innerHTML = pairs.map((p, idx) => {
     const isMatched = matched.has(idx);
     const wordText = String(p.word.vocab_word || '').trim();
@@ -20125,10 +20131,6 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
     <div class="bg-gradient-to-r from-red-500 to-red-600 p-4 flex items-center justify-between rounded-t-2xl">
       <h2 class="heading-font text-3xl font-bold text-white text-center flex-1">🎮 Hangman</h2>
       <div class="flex items-center gap-2">
-        <div class="flex items-center gap-1 rounded-xl border border-white/20 bg-white/10 p-1">
-          <button type="button" id="hangman-letter-decrease" class="text-white hover:bg-white/20 rounded-lg w-8 h-8 font-bold" aria-label="Make letter buttons smaller" title="Smaller letters">−</button>
-          <button type="button" id="hangman-letter-increase" class="text-white hover:bg-white/20 rounded-lg w-8 h-8 font-bold" aria-label="Make letter buttons bigger" title="Bigger letters">+</button>
-        </div>
         <button type="button" class="game-fullscreen-btn text-white hover:bg-white/20 rounded-lg w-9 h-8 font-bold" aria-label="Enter fullscreen" title="Fullscreen">⛶</button>
         <button id="game-close" class="text-white hover:text-gray-200 text-3xl font-bold" aria-label="Close game">×</button>
       </div>
@@ -20173,8 +20175,8 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
       button.style.fontSize = `${Math.max(16, Math.round(hangmanLetterSize * 0.44))}px`;
     });
   };
-  modal.querySelector('#hangman-letter-decrease').addEventListener('click', () => { hangmanLetterSize = Math.max(36, hangmanLetterSize - 4); updateHangmanLetterSize(); });
-  modal.querySelector('#hangman-letter-increase').addEventListener('click', () => { hangmanLetterSize = Math.min(68, hangmanLetterSize + 4); updateHangmanLetterSize(); });
+  modal.querySelector('#hangman-letter-decrease')?.addEventListener('click', () => { hangmanLetterSize = Math.max(36, hangmanLetterSize - 4); updateHangmanLetterSize(); });
+  modal.querySelector('#hangman-letter-increase')?.addEventListener('click', () => { hangmanLetterSize = Math.min(68, hangmanLetterSize + 4); updateHangmanLetterSize(); });
   
   function drawHangman() {
     const svg = modal.querySelector('#hangman-drawing');
