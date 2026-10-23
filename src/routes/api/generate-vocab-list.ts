@@ -84,6 +84,7 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
           }
 
           const sentences = new Map<number, string>();
+          const pictures = new Map<number, string>();
 
           const collectSentences = (parsed: unknown) => {
             if (!Array.isArray(parsed)) return;
@@ -99,7 +100,11 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
               }
               if (index < 0 || index >= rawItems.length || sentences.has(index)) return;
               const sentence = String(entry.sentence || "").trim().replace(/^["']|["']$/g, "");
-              if (sentence && sentenceHasWord(sentence, rawItems[index]!.word)) sentences.set(index, sentence);
+              if (sentence && sentenceHasWord(sentence, rawItems[index]!.word)) {
+                sentences.set(index, sentence);
+                const pic = String(entry.picture || entry.image_query || "").replace(/[^a-zA-Z\s-]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+                if (pic) pictures.set(index, pic);
+              }
             });
           };
 
@@ -116,7 +121,8 @@ RULES:
 3. Every sentence needs a different structure and verb. Never repeat a pattern inside one list.
 4. Never start with "Look at...", "This is a...", "Here is...", "I see a...".
 5. Animals only do what they can really do. Food is cooked, served, tasted or eaten, never used as a tool.
-6. Reply with JSON only: an array of {"i": <item number>, "sentence": "<sentence>"} using the numbers below.
+6. For every item also give "picture": a 2-4 word English stock-image search phrase naming the concrete visible thing in YOUR FINAL sentence (e.g. "child writing pencil", "sliced yellow mango"). It must include the target word or the obvious object it names. Whenever you rewrite a sentence, rewrite its picture phrase too.
+7. Reply with JSON only: an array of {"i": <item number>, "sentence": "<sentence>", "picture": "<search phrase>"} using the numbers below.
 
 Items:
 ${list}`;
@@ -156,7 +162,7 @@ ${list}`;
             );
           }
 
-          const items = allIndexes.map((i) => ({ word: rawItems[i]!.word, sentence: sentences.get(i)! }));
+          const items = allIndexes.map((i) => ({ word: rawItems[i]!.word, sentence: sentences.get(i)!, picture: pictures.get(i) || "" }));
           return Response.json({ items, count: items.length, source: "ai" }, { headers: CORS });
         }
 
@@ -188,7 +194,8 @@ For each item:
 3. The sentence must contain the vocabulary word exactly as you wrote it.
 4. Every sentence MUST be unique! NEVER repeat the same sentence structure or pattern.
 5. NEVER write lazy or shallow sentences like "Look at the...", "This is a...", "Here is...", "I see a...".
-6. Return ONLY a valid JSON array of objects with keys "word" and "sentence".`;
+6. Also give "picture": a 2-4 word stock-image search phrase naming the concrete thing in your sentence.
+7. Return ONLY a valid JSON array of objects with keys "word", "sentence" and "picture".`;
 
           const text = await askGemini({
             contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType, data: base64Data } }] }],
@@ -201,6 +208,7 @@ For each item:
                 .map((item: any) => ({
                   word: String(item.word || "").trim(),
                   sentence: String(item.sentence || "").trim().replace(/^["']|["']$/g, ""),
+                  picture: String(item.picture || "").replace(/[^a-zA-Z\s-]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60),
                 }))
                 .filter((item: any) => item.word && item.sentence && sentenceHasWord(item.sentence, item.word))
             : [];
