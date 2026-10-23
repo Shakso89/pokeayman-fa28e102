@@ -87,29 +87,46 @@ type Review = { ok: boolean; feedback: string };
 
 /** ChatGPT checks Gemini's answer for meaning, context, grammar and natural wording. */
 async function reviewWithChatGpt(task: string, answer: string): Promise<Review> {
-  const key = process.env["OPENAI_API_KEY"];
-  if (!key) throw new SentenceAiError("ChatGPT checking is not set up yet. Please add the OpenAI key.");
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  // ChatGPT review runs through Lovable's AI Gateway (billed to workspace credits).
+  const key = process.env["LOVABLE_API_KEY"];
+  if (!key) throw new SentenceAiError("ChatGPT checking is not set up yet.");
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
-      temperature: 0,
-      response_format: { type: "json_object" },
+      model: "openai/gpt-6-astra",
+      reasoning_effort: "low",
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "review",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: { ok: { type: "boolean" }, feedback: { type: "string" } },
+            required: ["ok", "feedback"],
+            additionalProperties: false,
+          },
+        },
+      },
       messages: [
         {
           role: "system",
           content:
-            "You review example sentences written for young ESL students. For every sentence check: it makes logical real-world sense; the target word is used in the correct context and intended meaning; grammar and structure are correct; it sounds natural, not artificial. Reply JSON only: {\"ok\": true} when every sentence passes, otherwise {\"ok\": false, \"feedback\": \"<which item numbers or words fail and exactly why>\"}.",
+            "You review example sentences written for young ESL students. For every sentence check: it makes logical real-world sense; the target word is used in the correct context and intended meaning; grammar and structure are correct; it sounds natural, not artificial. Reply JSON: ok=true with empty feedback when every sentence passes, otherwise ok=false and feedback naming which items fail and exactly why.",
         },
         { role: "user", content: `TASK GIVEN TO THE WRITER:\n${task}\n\nWRITER'S ANSWER:\n${answer}` },
       ],
     }),
   });
   if (!res.ok) {
-    console.warn(`[vocab] ChatGPT review -> HTTP ${res.status}`);
+    console.warn(`[vocab] ChatGPT review -> HTTP ${res.status}`, (await res.text().catch(() => "")).slice(0, 300));
     throw new SentenceAiError(
-      res.status === 429 ? "ChatGPT checking is out of credits or busy. Please check the OpenAI account and try again." : "ChatGPT could not check the sentences. Please try again."
+      res.status === 402
+        ? "AI credits have run out. Add credits in Settings → Plans & credits."
+        : res.status === 429
+          ? "ChatGPT checking is busy right now. Please try again in a minute."
+          : "ChatGPT could not check the sentences. Please try again."
     );
   }
   const data: any = await res.json();
