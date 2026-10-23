@@ -11,6 +11,7 @@ type Result = { error?: string; name?: string; signedIn?: boolean };
 declare global {
   interface Window {
     pokeaymanSpeak?: (text: string, level?: string) => Promise<void>;
+    pokeaymanStop?: () => void;
     pokeaymanAuth?: {
       userId: string | null;
       getToken: () => Promise<string | null>;
@@ -55,6 +56,8 @@ async function profileName(): Promise<string> {
   return /^(teacher\s+)?ayman$/i.test(name.trim()) ? `${name.trim()} (Teacher)` : name;
 }
 
+let activeSpeechController: AbortController | null = null;
+
 function Index() {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
@@ -71,7 +74,19 @@ function Index() {
 
   // Bridge read by the same-origin PokéAyman iframe for teacher accounts and saves.
   if (typeof window !== "undefined") {
-    window.pokeaymanSpeak = (text, level = "P3") => streamSpeech("/api/vocabulary-speech", text, level);
+    window.pokeaymanStop = () => {
+      if (activeSpeechController) {
+        activeSpeechController.abort();
+        activeSpeechController = null;
+      }
+    };
+    window.pokeaymanSpeak = (text, level = "P3") => {
+      if (activeSpeechController) {
+        activeSpeechController.abort();
+      }
+      activeSpeechController = new AbortController();
+      return streamSpeech("/api/vocabulary-speech", text, level, activeSpeechController.signal);
+    };
     window.pokeaymanAuth = {
       userId: user?.id ?? null,
       getToken: async () => (await supabase.auth.getSession()).data.session?.access_token ?? null,
@@ -131,7 +146,7 @@ function Index() {
   }
 
   if (!ready) return null;
-  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html?v=20261023-halloween-theme-v1" allowFullScreen onLoad={(event) => {
+  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html?v=20261023-clean-speech-v1" allowFullScreen onLoad={(event) => {
     event.currentTarget.contentDocument?.documentElement.style.setProperty("--home-habitat-image", `url("${new URL(homeHabitat, window.location.href).href}")`);
   }} />;
 }

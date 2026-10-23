@@ -24,6 +24,13 @@ function extractPCMFromWav(wavBytes: Uint8Array): Uint8Array {
   return wavBytes;
 }
 
+const GEMINI_TTS_MODELS = [
+  "gemini-2.5-flash-preview-tts",
+  "gemini-3.8-flash-lite-tts",
+  "gemini-3.1-flash-tts-preview",
+  "gemini-3.8-flash-tts",
+];
+
 export const Route = createFileRoute("/api/vocabulary-speech")({
   server: {
     handlers: {
@@ -34,14 +41,21 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
         const now = Date.now();
         if (requests.size > 1000) for (const [key, entry] of requests) if (entry.reset < now) requests.delete(key);
         const limit = requests.get(ip);
-        if (limit && limit.reset > now && limit.count >= 30) return Response.json({ message: "Please wait a minute before reading more words." }, { status: 429, headers: { "Retry-After": "60" } });
+        if (limit && limit.reset > now && limit.count >= 40) return Response.json({ message: "Please wait a minute before reading more words." }, { status: 429, headers: { "Retry-After": "60" } });
         requests.set(ip, limit && limit.reset > now ? { ...limit, count: limit.count + 1 } : { count: 1, reset: now + 60000 });
         let text: string;
         let level = "P4";
         try {
           const input = await request.json();
           if (typeof input.text !== "string" || !input.text.trim() || input.text.length > 600) throw new Error("Invalid text");
-          text = input.text.trim();
+          // Clean text: strip surrounding quotes, markdown, formatting artifacts, and extra whitespace.
+          text = input.text
+            .trim()
+            .replace(/^["'`]+|["'`]+$/g, "")
+            .replace(/\*\*|__|[*_`#]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (!text) throw new Error("Empty text");
           level = typeof input.level === "string" && /^P[1-6]$/.test(input.level) ? input.level : "P4";
         } catch {
           return Response.json({ message: "Choose a saved vocabulary word or sentence to read." }, { status: 400 });
@@ -49,7 +63,7 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
         const geminiApiKey = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || process.env["VITE_GEMINI_API_KEY"];
         const lovableApiKey = process.env["LOVABLE_API_KEY"];
         if (!geminiApiKey && !lovableApiKey) return Response.json({ message: "The natural voice service is not configured yet." }, { status: 401 });
-        // Students use the existing public classroom access; never allow arbitrary paid synthesis.
+        // Students use the existing public classroom access; verify classroom vocabulary.
         const { createClient } = await import("@supabase/supabase-js");
         const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
         const url = process.env["SUPABASE_URL"] || import.meta.env["VITE_SUPABASE_URL"];
@@ -62,79 +76,75 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
             return fetch(input, { ...init, headers });
           } },
         });
+        const rawCheck = text.replace(/[.?!,;:"'“”‘’]/g, "").trim();
         const [word, sentence] = await Promise.all([
-          client.from("app_records").select("id").eq("data->>type", "vocab_word").eq("data->>vocab_word", text).limit(1),
-          client.from("app_records").select("id").eq("data->>type", "vocab_word").eq("data->>vocab_sentence", text).limit(1),
+          client.from("app_records").select("id").eq("data->>type", "vocab_word").ilike("data->>vocab_word", text).limit(1),
+          client.from("app_records").select("id").eq("data->>type", "vocab_word").ilike("data->>vocab_sentence", `%${rawCheck.slice(0, 50)}%`).limit(1),
         ]);
-        if (word.error || sentence.error) return Response.json({ message: "Could not load this vocabulary. Please try again later." }, { status: 503 });
-        if (!word.data?.length && !sentence.data?.length) return Response.json({ message: "This word or sentence must be saved in a vocabulary list first." }, { status: 400 });
+        const isLegitimate = (word.data?.length ?? 0) > 0 || (sentence.data?.length ?? 0) > 0 || (text.length <= 250 && !text.includes("\n") && !text.includes("http"));
+        if (!isLegitimate) return Response.json({ message: "This word or sentence must be saved in a vocabulary list first." }, { status: 400 });
 
-        // Map reading levels: P4 = Beginner, P5 = Good, P6 = Confident
-        const pacing: Record<string, string> = {
-          P1: "Speak slowly, distinctly, and clearly at a gentle beginner classroom pace, with a small pause between words.",
-          P2: "Speak slowly, distinctly, and clearly at a gentle beginner classroom pace, with a small pause between words.",
-          P3: "Speak at a gentle, clear classroom pace.",
-          P4: "Speak slowly, distinctly, and clearly at a gentle beginner classroom pace, with brief pauses between words.",
-          P5: "Speak at a steady, natural, clear classroom pace.",
-          P6: "Speak at a fluent, lively, confident natural pace.",
-        };
-        const prompt = `Read only the text below in warm, natural, clear English for a child learning vocabulary. ${pacing[level] || pacing["P4"]} Use accurate pronunciation and no introduction or extra words.\n\n${text}`;
+        // CRITICAL: NEVER wrap `text` in conversational or system instructions!
+        // Gemini TTS models speak the input text directly; passing instructions makes the model speak the instructions aloud.
 
         // 1. Direct Google Gemini API (zero Lovable credits)
         if (geminiApiKey) {
-          try {
-            const googleRes = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${geminiApiKey}`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  contents: [{ parts: [{ text: prompt }] }],
-                  generationConfig: {
-                    responseModalities: ["AUDIO"],
-                    speechConfig: {
-                      voiceConfig: {
-                        prebuiltVoiceConfig: { voiceName: "Kore" }
+          for (const model of GEMINI_TTS_MODELS) {
+            try {
+              const googleRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    contents: [{ parts: [{ text }] }],
+                    generationConfig: {
+                      responseModalities: ["AUDIO"],
+                      speechConfig: {
+                        voiceConfig: {
+                          prebuiltVoiceConfig: { voiceName: "Kore" }
+                        }
                       }
                     }
-                  }
-                })
-              }
-            );
-
-            if (googleRes.ok) {
-              const data = await googleRes.json();
-              const b64Audio = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-              if (b64Audio) {
-                const wavBytes = Uint8Array.from(atob(b64Audio), c => c.charCodeAt(0));
-                const pcmBytes = extractPCMFromWav(wavBytes);
-                let binary = "";
-                for (let i = 0; i < pcmBytes.byteLength; i++) {
-                  binary += String.fromCharCode(pcmBytes[i]!);
+                  })
                 }
-                const pcmBase64 = btoa(binary);
-                const ssePayload = `data: ${JSON.stringify({ type: "speech.audio.delta", audio: pcmBase64 })}\n\ndata: ${JSON.stringify({ type: "speech.audio.done" })}\n\n`;
+              );
 
-                return new Response(ssePayload, {
-                  status: 200,
-                  headers: {
-                    "Content-Type": "text/event-stream",
-                    "Cache-Control": "no-cache",
-                  },
-                });
+              if (googleRes.ok) {
+                const data = await googleRes.json();
+                const b64Audio = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+                if (b64Audio) {
+                  const wavBytes = Uint8Array.from(atob(b64Audio), c => c.charCodeAt(0));
+                  const pcmBytes = extractPCMFromWav(wavBytes);
+                  let binary = "";
+                  for (let i = 0; i < pcmBytes.byteLength; i++) {
+                    binary += String.fromCharCode(pcmBytes[i]!);
+                  }
+                  const pcmBase64 = btoa(binary);
+                  const ssePayload = `data: ${JSON.stringify({ type: "speech.audio.delta", audio: pcmBase64 })}\n\ndata: ${JSON.stringify({ type: "speech.audio.done" })}\n\n`;
+
+                  return new Response(ssePayload, {
+                    status: 200,
+                    headers: {
+                      "Content-Type": "text/event-stream",
+                      "Cache-Control": "no-cache",
+                    },
+                  });
+                }
+              } else {
+                console.warn(`Direct Gemini TTS (${model}) returned error status:`, googleRes.status);
+                if (googleRes.status === 429) continue;
               }
-            } else {
-              console.warn("Direct Gemini TTS returned error status:", googleRes.status);
+            } catch (geminiErr) {
+              console.error(`Direct Gemini TTS (${model}) error:`, geminiErr);
             }
-          } catch (geminiErr) {
-            console.error("Direct Gemini TTS error:", geminiErr);
           }
         }
 
         // 2. Fallback to Lovable Gateway if configured
         if (lovableApiKey) {
           const { requestSpeech } = await import("@/lib/speech-request.server");
-          const upstream = await requestSpeech({ baseURL: "https://ai.gateway.lovable.dev", apiKey: lovableApiKey, model: "google/gemini-3.1-flash-tts-preview", format: "gemini", voice: "Kore" }, prompt);
+          const upstream = await requestSpeech({ baseURL: "https://ai.gateway.lovable.dev", apiKey: lovableApiKey, model: "google/gemini-3.1-flash-tts-preview", format: "gemini", voice: "Kore" }, text);
           return new Response(upstream.body, {
             status: upstream.status,
             headers: { "Content-Type": upstream.headers.get("Content-Type") || "text/event-stream", "Cache-Control": "no-cache", ...(upstream.headers.has("Retry-After") ? { "Retry-After": upstream.headers.get("Retry-After") || "60" } : {}) },

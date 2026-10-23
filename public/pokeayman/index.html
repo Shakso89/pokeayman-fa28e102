@@ -12211,28 +12211,93 @@ function navigateTo(level, school, cls, studentName) {
 
 // Achievement state is earned data, not a rank approximation. Accept the legacy
 // shapes used by older Sheet rows without granting badges to unearned students.
+window.stopNaturalVocabulary = () => {
+  window._vocabularyReading = false;
+  if (typeof window.parent?.pokeaymanStop === 'function') {
+    try { window.parent.pokeaymanStop(); } catch {}
+  }
+  if (window.speechSynthesis) {
+    try { window.speechSynthesis.cancel(); } catch {}
+  }
+  if (window._currentReadingButton) {
+    try {
+      window._currentReadingButton.textContent = window._currentReadingOriginalText || '🔊 Read';
+      window._currentReadingButton.disabled = false;
+      window._currentReadingButton.removeAttribute('aria-busy');
+    } catch {}
+    window._currentReadingButton = null;
+  }
+};
+
 window.readNaturalVocabulary = async (text, button, options = {}) => {
-  if (!String(text || '').trim() || window._vocabularyReading) return;
+  const clean = String(text || '')
+    .trim()
+    .replace(/^["'`]+|["'`]+$/g, '')
+    .replace(/\*\*|__|[*_`#]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!clean) {
+    if (typeof toast === 'function') toast('No sentence to read for this word.');
+    return;
+  }
+
+  // Cancel any ongoing audio playback so sentences never overlap or play from a stale card
+  if (window._vocabularyReading) {
+    window.stopNaturalVocabulary();
+  }
+
   window._vocabularyReading = true;
+  window._currentReadingButton = button || null;
   const original = button?.textContent;
-  if (button) { button.textContent = '🔊 …'; button.disabled = true; button.setAttribute('aria-busy', 'true'); }
+  window._currentReadingOriginalText = original;
+
+  if (button) {
+    button.textContent = '🔊 …';
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+  }
+
+  const level = /^P[1-6]$/.test(options?.level || '')
+    ? options.level
+    : (window.getClassReadingLevel?.(currentRole === 'student' ? currentStudentSchool : navSchool, currentRole === 'student' ? currentStudentClass : navClass) || 'P4');
+
   try {
-    if (!window.parent.pokeaymanSpeak) throw new Error('The natural voice is not ready yet. Please reopen the app.');
-    const level = /^P[4-6]$/.test(options?.level || '') ? options.level : (window.getClassReadingLevel?.(currentRole === 'student' ? currentStudentSchool : navSchool, currentRole === 'student' ? currentStudentClass : navClass) || 'P4');
-    await window.parent.pokeaymanSpeak(String(text).trim(), level);
+    if (typeof window.parent?.pokeaymanSpeak === 'function') {
+      await window.parent.pokeaymanSpeak(clean, level);
+    } else {
+      throw new Error('The natural voice is not ready yet. Please reopen the app.');
+    }
   } catch (error) {
+    if (error?.name === 'AbortError' || !window._vocabularyReading) {
+      return;
+    }
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(String(text).trim());
-      const rates = { P4: 0.88, P5: 1.0, P6: 1.08 };
+      const utterance = new SpeechSynthesisUtterance(clean);
+      const rates = { P1: 0.82, P2: 0.85, P3: 0.9, P4: 0.88, P5: 1.0, P6: 1.08 };
       utterance.rate = rates[level] || 0.92;
+      utterance.onend = () => {
+        window._vocabularyReading = false;
+        if (button) { button.textContent = original; button.disabled = false; button.removeAttribute('aria-busy'); }
+      };
+      utterance.onerror = () => {
+        window._vocabularyReading = false;
+        if (button) { button.textContent = original; button.disabled = false; button.removeAttribute('aria-busy'); }
+      };
       window.speechSynthesis.speak(utterance);
+      return;
     } else {
-      toast(error?.message || 'The reading voice is unavailable right now.');
+      if (typeof toast === 'function') toast(error?.message || 'The reading voice is unavailable right now.');
     }
   } finally {
     window._vocabularyReading = false;
-    if (button) { button.textContent = original; button.disabled = false; button.setAttribute('aria-busy', 'false'); }
+    if (button) {
+      button.textContent = original;
+      button.disabled = false;
+      button.removeAttribute('aria-busy');
+    }
+    window._currentReadingButton = null;
   }
 };
 
@@ -13073,7 +13138,7 @@ function openStudentVocabularyFlashcards(listName, trigger = null) {
   document.body.appendChild(modal);
   const previousBodyOverflow = document.body.style.overflow;
   document.body.style.overflow = 'hidden';
-  const closeStudentFlashcards = () => { modal.remove(); document.body.style.overflow = previousBodyOverflow; };
+  const closeStudentFlashcards = () => { window.stopNaturalVocabulary?.(); modal.remove(); document.body.style.overflow = previousBodyOverflow; };
   if (card) {
     card.dataset.opening = 'false';
     card.setAttribute('aria-busy', 'false');
@@ -13092,7 +13157,7 @@ function openStudentVocabularyFlashcards(listName, trigger = null) {
     sentence.innerHTML = sentenceText ? sentenceText.replace(new RegExp(escapedWord, 'gi'), match => `<strong class="text-blue-600 font-bold">${match}</strong>`) : '';
     const sentenceReadBtn = modal.querySelector('#student-vocab-read-sentence');
     sentenceReadBtn.classList.toggle('hidden', !sentenceText);
-    sentenceReadBtn.onclick = () => speakVocabularyText(sentenceText, sentenceReadBtn);
+    sentenceReadBtn.onclick = (e) => { e?.stopPropagation?.(); speakVocabularyText(sentenceText, sentenceReadBtn); };
     back.style.background = word.vocab_image ? `url('${word.vocab_image}') center / contain no-repeat` : 'none';
     back.innerHTML = word.vocab_image ? '' : '<p class="text-gray-400 italic text-sm">No image</p>';
     // Word size remains adjustable without displaying a numeric value.
@@ -13106,7 +13171,7 @@ function openStudentVocabularyFlashcards(listName, trigger = null) {
   modal.querySelector('#student-vocab-size-increase').addEventListener('click', () => { popupScale = Math.min(1.2, +(popupScale + 0.1).toFixed(2)); updatePopupScale(); });
   updatePopupScale();
   const updateFontSize = () => { const word = modal.querySelector('#student-vocab-word'); if (word) word.style.fontSize = `${fontSize}px`; modal.querySelector('#student-vocab-font-size').textContent = `${fontSize}px`; };
-  const flip = () => { flipped = !flipped; modal.querySelector('#student-vocab-card-inner').style.transform = flipped ? 'rotateY(180deg)' : 'rotateY(0deg)'; };
+  const flip = () => { window.stopNaturalVocabulary?.(); flipped = !flipped; modal.querySelector('#student-vocab-card-inner').style.transform = flipped ? 'rotateY(180deg)' : 'rotateY(0deg)'; };
   modal.querySelector('#student-vocab-card').addEventListener('click', flip);
   if (!window.pickNaturalVoice) {
     window.pickNaturalVoice = language => {
@@ -13147,11 +13212,11 @@ function openStudentVocabularyFlashcards(listName, trigger = null) {
   };
   const speakVocabularyText = (text, button) => window.readNaturalVocabulary(text, button);
   const readBtn = modal.querySelector('#student-vocab-read');
-  readBtn.addEventListener('click', () => speakVocabularyText(words[index]?.vocab_word, readBtn));
+  readBtn.addEventListener('click', (e) => { e?.stopPropagation?.(); speakVocabularyText(words[index]?.vocab_word, readBtn); });
   modal.querySelector('#student-vocab-font-decrease').addEventListener('click', () => { fontSize = Math.max(24, fontSize - 8); updateFontSize(); });
   modal.querySelector('#student-vocab-font-increase').addEventListener('click', () => { fontSize = Math.min(120, fontSize + 8); updateFontSize(); });
-  modal.querySelector('#student-vocab-prev').addEventListener('click', () => { index = (index - 1 + words.length) % words.length; flipped = false; modal.querySelector('#student-vocab-card-inner').style.transform = 'rotateY(0deg)'; render(); updateFontSize(); });
-  modal.querySelector('#student-vocab-next').addEventListener('click', () => { index = (index + 1) % words.length; flipped = false; modal.querySelector('#student-vocab-card-inner').style.transform = 'rotateY(0deg)'; render(); updateFontSize(); });
+  modal.querySelector('#student-vocab-prev').addEventListener('click', () => { window.stopNaturalVocabulary?.(); index = (index - 1 + words.length) % words.length; flipped = false; modal.querySelector('#student-vocab-card-inner').style.transform = 'rotateY(0deg)'; render(); updateFontSize(); });
+  modal.querySelector('#student-vocab-next').addEventListener('click', () => { window.stopNaturalVocabulary?.(); index = (index + 1) % words.length; flipped = false; modal.querySelector('#student-vocab-card-inner').style.transform = 'rotateY(0deg)'; render(); updateFontSize(); });
   modal.querySelector('#student-vocab-back').addEventListener('click', closeStudentFlashcards);
   modal.addEventListener('click', event => { event.stopPropagation(); });
   render();
@@ -21022,7 +21087,7 @@ function openVocabFlashcards(listName) {
       sentence.innerHTML = sentenceText ? sentenceText.replace(new RegExp(escapedWord, 'gi'), match => `<strong class="text-blue-600 font-bold">${match}</strong>`) : '';
       const sentenceReadBtn = modal.querySelector('#flashcard-read-sentence');
       sentenceReadBtn.classList.toggle('hidden', !sentenceText);
-      sentenceReadBtn.onclick = () => speakFlashcardText(sentenceText, sentenceReadBtn);
+      sentenceReadBtn.onclick = (e) => { e?.stopPropagation?.(); speakFlashcardText(sentenceText, sentenceReadBtn); };
       if (w.vocab_image) {
         back.style.background = `url('${w.vocab_image}') center / contain no-repeat`;
         back.innerHTML = '';
@@ -21055,7 +21120,7 @@ function openVocabFlashcards(listName) {
   document.body.appendChild(modal);
   const previousBodyOverflow = document.body.style.overflow;
   document.body.style.overflow = 'hidden';
-  const closeTeacherFlashcards = () => { modal.remove(); document.body.style.overflow = previousBodyOverflow; };
+  const closeTeacherFlashcards = () => { window.stopNaturalVocabulary?.(); modal.remove(); document.body.style.overflow = previousBodyOverflow; };
   
   let isFlipped = false;
   let flashcardFontSize = 64;
@@ -21089,16 +21154,18 @@ function openVocabFlashcards(listName) {
   updatePopupScale();
   
   card.addEventListener('click', () => {
+    window.stopNaturalVocabulary?.();
     isFlipped = !isFlipped;
     inner.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
   });
   const speakFlashcardText = (text, button) => window.readNaturalVocabulary(text, button);
   const flashReadBtn = modal.querySelector('#flashcard-read');
-  flashReadBtn.addEventListener('click', () => speakFlashcardText(words[currentIdx]?.vocab_word, flashReadBtn));
+  flashReadBtn.addEventListener('click', (e) => { e?.stopPropagation?.(); speakFlashcardText(words[currentIdx]?.vocab_word, flashReadBtn); });
   
   renderCard();
   
   modal.querySelector('#flashcard-prev').addEventListener('click', () => {
+    window.stopNaturalVocabulary?.();
     currentIdx = (currentIdx - 1 + words.length) % words.length;
     isFlipped = false;
     inner.style.transform = 'rotateY(0deg)';
@@ -21106,6 +21173,7 @@ function openVocabFlashcards(listName) {
   });
   
   modal.querySelector('#flashcard-next').addEventListener('click', () => {
+    window.stopNaturalVocabulary?.();
     currentIdx = (currentIdx + 1) % words.length;
     isFlipped = false;
     inner.style.transform = 'rotateY(0deg)';

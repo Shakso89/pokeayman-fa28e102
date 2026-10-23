@@ -1,5 +1,11 @@
 import { createParser } from "eventsource-parser";
 
+// Purge any stale audio caches that may have recorded prompt text or conversational chatter.
+if (typeof caches !== "undefined") {
+  caches.delete("pokeayman-natural-voice-v2").catch(() => {});
+  caches.delete("pokeayman-natural-voice-v1").catch(() => {});
+}
+
 export function decodePCM(pending: Uint8Array, incoming: Uint8Array) {
   const bytes = new Uint8Array(pending.length + incoming.length);
   bytes.set(pending);
@@ -13,6 +19,14 @@ export function decodePCM(pending: Uint8Array, incoming: Uint8Array) {
 
 export async function streamSpeech(endpoint: string, text: string, level = "P3", signal?: AbortSignal): Promise<void> {
   signal?.throwIfAborted();
+  const cleanText = text
+    .trim()
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .replace(/\*\*|__|[*_`#]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleanText) return;
+
   const context = new AudioContext({ sampleRate: 24000 });
   const sources = new Set<AudioBufferSourceNode>();
   let playhead = 0;
@@ -22,20 +36,23 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
   const controller = new AbortController();
   const abort = () => {
     controller.abort(signal?.reason);
-    for (const source of sources) source.stop();
+    for (const source of sources) {
+      try { source.stop(); } catch {}
+    }
   };
   signal?.addEventListener("abort", abort, { once: true });
   let playback: Promise<void> = Promise.resolve();
+
   try {
     if (context.state === "suspended") await context.resume();
     const normalizedLevel = /^P[1-6]$/.test(level) ? level : "P3";
-    const cacheKey = new Request(`${location.origin}/__vocabulary_audio/kore-v2/${normalizedLevel}/${encodeURIComponent(text)}`);
-    const cache = await caches.open("pokeayman-natural-voice-v2").catch(() => null);
+    const cacheKey = new Request(`${location.origin}/__vocabulary_audio/kore-v3/${normalizedLevel}/${encodeURIComponent(cleanText)}`);
+    const cache = await caches.open("pokeayman-natural-voice-v3").catch(() => null);
     const cached = await cache?.match(cacheKey);
     const response = cached || await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, level: normalizedLevel }),
+      body: JSON.stringify({ text: cleanText, level: normalizedLevel }),
       signal: controller.signal,
     });
     if (!response.ok || !response.body) {
@@ -98,10 +115,15 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
     if (cache && reusable) await cache.put(cacheKey, reusable).catch(() => {});
     await playback;
     signal?.throwIfAborted();
+  } catch (err) {
+    if (signal?.aborted) return;
+    throw err;
   } finally {
     signal?.removeEventListener("abort", abort);
     controller.abort();
-    for (const source of sources) source.stop();
-    await context.close();
+    for (const source of sources) {
+      try { source.stop(); } catch {}
+    }
+    await context.close().catch(() => {});
   }
 }
