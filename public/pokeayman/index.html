@@ -5407,8 +5407,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         new MutationObserver(syncMemoryCardBacks).observe(memoryGrid, { childList: true });
       }
       delete memoryGrid.dataset.fitKey;
-      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
     }
+    requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
     const ballSrc = theme.id === 'jungle' ? '/pokeayman/assets/balls/6.png' : theme.id === 'toybox' ? '/pokeayman/assets/balls/11.png' : theme.id === 'halloween' ? '/pokeayman/assets/balls/4.png' : '/pokeayman/assets/balls/1.png';
     target.querySelectorAll('.baam-seal-ball').forEach(img => {
       if (img.getAttribute('src') !== ballSrc) img.setAttribute('src', ballSrc);
