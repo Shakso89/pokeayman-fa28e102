@@ -13293,6 +13293,10 @@ document.querySelectorAll('.admin-sub-tab[data-subtab="controls"]').forEach(tab 
 // Class view tabs (Students, Quiz, Gift All, Battle Arena)
 document.querySelectorAll('.class-view-tab').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (btn.dataset.classtab !== 'students' && currentRole === 'teacher' && navSchool && navClass && !canOpenClass(navSchool, navClass)) {
+      if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${navClass}.`);
+      return;
+    }
     const activeClasses = { students: 'class-tab-students-active', quiz: 'class-tab-quiz-active', vocab: 'class-tab-vocab-active', games: 'class-tab-games-active', gift: 'class-tab-gift-active', battle: 'class-tab-battle-active' };
     document.querySelectorAll('.class-view-tab').forEach(b => { b.className = 'class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition'; });
     btn.className = `class-view-tab ${activeClasses[btn.dataset.classtab]} px-4 py-2 text-sm font-semibold rounded-full transition`;
@@ -13817,7 +13821,7 @@ function renderTeacherDashboard() {
     const renderUnassignedCard = c => {
       const roster = getStudents(navSchool, c.class_name);
       const totalCoins = roster.reduce((a, s) => a + (Number(s.coins) || 0), 0);
-      return `<div class="gym-card gym-card-view-only group relative" role="button" tabindex="0" onclick="handleClassCardClick('${escJs(navSchool)}','${escJs(c.class_name)}')" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}" title="View ${escJs(c.class_name)} (View Only)"><span class="gym-view-only-badge" title="View Only">👁 View Only</span><div class="gym-head"><p class="gym-name">${escHtml(c.class_name)}</p></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}</div>`;
+      return `<div class="gym-card gym-card-view-only group relative" role="button" tabindex="0" onclick="handleClassCardClick('${escJs(navSchool)}','${escJs(c.class_name)}')" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}" title="View ${escJs(c.class_name)} (View Only)"><span class="gym-view-only-badge" title="View Only">View Only</span><div class="gym-head"><p class="gym-name">${escHtml(c.class_name)}</p></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}</div>`;
     };
 
     if (!unassignedClasses.length) {
@@ -13828,7 +13832,7 @@ function renderTeacherDashboard() {
         html += `
           <div style="grid-column: 1 / -1;" class="col-span-full mb-1 flex items-center justify-between">
             <h4 class="text-sm font-bold text-slate-100 uppercase tracking-wider flex items-center gap-2">
-              <span class="text-amber-400">⭐</span> My Classes <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-amber-500/30 font-semibold">${assignedClasses.length}</span>
+              My Classes <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-amber-500/30 font-semibold">${assignedClasses.length}</span>
             </h4>
           </div>
         `;
@@ -13846,7 +13850,7 @@ function renderTeacherDashboard() {
           <div class="flex items-center justify-between flex-wrap gap-2">
             <div>
               <h4 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                <span class="text-indigo-400">🏫</span> Other Classes in ${escHtml(navSchool)}
+                Other Classes in ${escHtml(navSchool)}
                 <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-700/60 font-bold uppercase tracking-wider">View Only</span>
               </h4>
               <p class="text-xs text-slate-400 mt-0.5">Explore students and managing teachers in other classroom rosters.</p>
@@ -13874,7 +13878,7 @@ function renderTeacherDashboard() {
     banner.innerHTML = `
       <div class="flex items-center gap-3">
         <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 flex items-center gap-1.5">
-          <span>👁</span> View Only
+          View Only
         </span>
         <span class="text-sm text-slate-200">
           Viewing <strong>${navClass}</strong> (${students.length} ${students.length === 1 ? 'student' : 'students'}) in <em>${navSchool}</em>.
@@ -13896,6 +13900,14 @@ function renderTeacherDashboard() {
     
     const actionConsole = document.querySelector('.class-action-console');
     if (actionConsole) actionConsole.style.display = 'none';
+
+    // Strictly lock down unassigned class: hide class tabs so teacher cannot access Quizzes, Vocab, Games, or Battle Arena
+    const tabsContainer = document.getElementById('class-tabs-container');
+    if (tabsContainer) tabsContainer.style.display = 'none';
+
+    // Ensure non-student subtab containers are hidden
+    document.querySelectorAll('.class-subtab-content').forEach(c => c.classList.add('hidden'));
+    document.getElementById('class-subtab-students')?.classList.remove('hidden');
 
     const classTabs = document.querySelectorAll('.class-view-tab');
     classTabs.forEach(tab => {
@@ -16703,6 +16715,10 @@ document.getElementById('award-form').addEventListener('submit', async e => {
 // Gift All
 document.getElementById('gift-all-form').addEventListener('submit', async e => {
   e.preventDefault();
+  if (currentRole === 'teacher' && !canOpenClass(navSchool, navClass)) {
+    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${navClass}.`);
+    return;
+  }
   const rawAmount = document.getElementById('gift-all-amount').value.trim();
   const amount = Number(rawAmount);
   if (!/^\d+$/.test(rawAmount) || amount < 1 || amount > 1000) { toast('Value must be an integer between 1 and 1,000 coins.'); return; }
@@ -16734,6 +16750,10 @@ document.getElementById('gift-all-form').addEventListener('submit', async e => {
 // Quiz form
 document.getElementById('quiz-form').addEventListener('submit', async e => {
   e.preventDefault();
+  if (currentRole === 'teacher' && !canOpenClass(navSchool, navClass)) {
+    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${navClass}.`);
+    return;
+  }
   if (allData.length >= 999) { toast('Storage limit reached!'); return; }
   const q = document.getElementById('quiz-q').value.trim();
   const qType = document.getElementById('quiz-type').value || 'open';
@@ -18635,17 +18655,14 @@ function openLeaderboardStudentCollection(studentName) {
       <div class="student-collection-header">
         <div class="min-w-0">
           <div class="student-collection-kicker">
-            <span class="collection-kicker-icon">🎴</span>
             <span>Trainer Portfolio</span>
           </div>
           <h2 id="collection-title" class="student-collection-title">${escape(student.student_name)}'s Collection</h2>
           <div class="student-collection-stats">
             <span class="student-collection-coin-chip">
-              <span>🪙</span>
               <span>${Number(student.coins || 0).toLocaleString()} coins</span>
             </span>
             <span class="student-collection-count-chip">
-              <span>📦</span>
               <span>${pokemons.length} ${pokemons.length === 1 ? 'card' : 'cards'}</span>
             </span>
           </div>

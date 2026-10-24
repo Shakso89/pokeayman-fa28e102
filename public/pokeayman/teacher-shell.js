@@ -235,6 +235,10 @@
     }
     if (cls) {
       if (needClass()) return;
+      if (cls !== 'students' && !g(() => canManageClass(navSchool, navClass) || canOpenClass(navSchool, navClass), false)) {
+        g(() => toast('View only: You do not have access to manage this class.'));
+        return;
+      }
       if (g(() => activeMainTab) !== 'dashboard') { const s = navSchool, c = navClass; showMainTab('dashboard'); navigateTo('students', s, c); }
       if ($('view-students')?.classList.contains('hidden')) navigateTo('students', navSchool, navClass);
       document.querySelector(`#class-tabs-container [data-classtab="${cls}"]`)?.click();
@@ -320,7 +324,7 @@
             return `<button type="button" class="ts-class-card ${isCur ? 'on' : ''}" data-ts-go='${esc(JSON.stringify([c.school_name, c.class_name]))}'>
               <div class="ts-class-card-left">
                 <div class="ts-class-card-title-row">
-                  <span class="ts-class-card-school">🏫 ${esc(c.school_name)}</span>
+                  <span class="ts-class-card-school">${esc(c.school_name)}</span>
                   <span class="ts-class-card-level" data-level="${esc(level)}">${esc(level)}</span>
                 </div>
                 <strong class="ts-class-card-name">${esc(c.class_name)}</strong>
@@ -344,7 +348,7 @@
       const isCurNavSchool = sc === curSchool;
       return `<button type="button" class="ts-school-item ${isSelected ? 'is-selected' : ''} ${isCurNavSchool ? 'is-current-school' : ''}" data-ts-select-school="${esc(sc)}">
         <div class="ts-school-item-text">
-          <div class="ts-school-item-name">🏫 ${esc(sc)}</div>
+          <div class="ts-school-item-name">${esc(sc)}</div>
           ${isCurNavSchool ? '<small class="ts-school-item-sub">Active School</small>' : ''}
         </div>
         <span class="ts-school-item-count">${count}</span>
@@ -435,6 +439,11 @@
   }
   function onHero(e) {
     const b = e.target.closest('[data-hero],[data-ts-add-student]'); if (!b) return;
+    if (!g(() => canManageClass(navSchool, navClass) || canOpenClass(navSchool, navClass), false)) {
+      e.preventDefault();
+      g(() => toast('View only: You do not have access to manage this class.'));
+      return;
+    }
     if (b.dataset.tsAddStudent !== undefined) { e.preventDefault(); return openHeroActionDialog('add', b); }
     if (b.dataset.hero === 'assign-teachers') {
       e.preventDefault();
@@ -444,6 +453,10 @@
     openHeroActionDialog(b.dataset.hero, b);
   }
   function openHeroActionDialog(action, trigger) {
+    if (!g(() => canManageClass(navSchool, navClass) || canOpenClass(navSchool, navClass), false)) {
+      g(() => toast('View only: You do not have access to manage this class.'));
+      return;
+    }
     let dialog = $('ts-hero-action-dialog');
     if (!dialog) {
       dialog = document.createElement('dialog');
@@ -539,7 +552,14 @@
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.amt) { amount = +b.dataset.amt; b.parentElement.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); return; }
     if (b.dataset.tsClass) return onNav(e);
-    if (b.id === 'ts-rail-add') { openHeroActionDialog('add', b); return; }
+    if (b.id === 'ts-rail-add') {
+      if (!g(() => canManageClass(navSchool, navClass) || canOpenClass(navSchool, navClass), false)) {
+        g(() => toast('View only: You do not have access to manage this class.'));
+        return;
+      }
+      openHeroActionDialog('add', b);
+      return;
+    }
     if (b.id === 'ts-box-open') { g(() => window.openTeacherSurpriseBox()); return; }
     if (b.id === 'ts-award-go') {
       const sel = $('award-student'), amt = $('award-amount'), form = $('award-form');
@@ -564,6 +584,7 @@
     build();
     const tab = g(() => activeMainTab, 'dashboard');
     const inClass = tab === 'dashboard' && [...document.querySelectorAll('[id="view-students"]')].some(v => !v.classList.contains('hidden') && v.getClientRects().length) && g(() => navClass, null);
+    const isClassViewOnly = !!inClass && !g(() => canManageClass(navSchool, navClass) || canOpenClass(navSchool, navClass), false);
     document.body.classList.toggle('ts-rail-on', !!inClass);
     $('ts-current').textContent = g(() => navClass, null) || 'Choose a class';
     $('ts-current-school').textContent = g(() => navSchool, null) || 'Schools & classes';
@@ -572,7 +593,10 @@
     const zoneTab = document.querySelector('.teacher-zone-tab[aria-selected="true"]')?.id?.replace(/^teacher-zone-|-tab$/g, '');
     document.querySelectorAll('#ts-sidebar .ts-item, #ts-sidebar .ts-switch').forEach((b) => {
       let a = false;
-      if (b.dataset.tsClass) a = !!inClass && activeClassTab === b.dataset.tsClass;
+      if (b.dataset.tsClass) {
+        a = !!inClass && activeClassTab === b.dataset.tsClass;
+        b.style.display = (isClassViewOnly && b.dataset.tsClass !== 'students') ? 'none' : '';
+      }
       else if (b.dataset.tsZone === 'vb-lists') a = tab === 'teacher-zone' && zoneTab === 'vb-lists';
       else if (b.dataset.tsZone) a = tab === 'teacher-zone' && zoneTab === b.dataset.tsZone;
       else if (b.dataset.ts === 'admin-users') a = tab === 'admin' && document.querySelector('.admin-sub-tab[data-subtab="users"]')?.classList.contains('admin-sub-tab-active');
@@ -641,6 +665,12 @@
         lastClassData = allData;
         lastClassKey = classKey;
       }
+      const heroActions = document.querySelector('#ts-hero .ts-hero-actions');
+      if (heroActions) heroActions.style.display = isClassViewOnly ? 'none' : '';
+      const railAdd = $('ts-rail-add');
+      if (railAdd) railAdd.style.display = isClassViewOnly ? 'none' : '';
+      const quickAwardSection = $('ts-award-go')?.closest('section');
+      if (quickAwardSection) quickAwardSection.style.display = isClassViewOnly ? 'none' : '';
       const list = rosterStudents.slice().sort((a, b) => (Number(b.coins) || 0) - (Number(a.coins) || 0) || String(a.student_name || '').localeCompare(String(b.student_name || ''))).slice(0, 3);
       const topHtml = list.map((s, i) => `<li class="m${i + 1}"><span class="ts-medal">${i + 1}</span><span><strong>${esc(s.student_name)}</strong><small>🪙 ${Number(s.coins || 0).toLocaleString()} coins</small></span></li>`).join('') || '<li class="ts-empty">No students yet</li>';
       if (topHtml !== lastTop) { $('ts-top3').innerHTML = topHtml; lastTop = topHtml; }
@@ -656,6 +686,12 @@
       sidebarSelect.disabled = !canAward || !rosterStudents.length;
       document.querySelectorAll('#ts-rail .ts-amounts button').forEach(button => { button.disabled = !canAward; });
       $('ts-award-go').disabled = !canAward || !rosterStudents.length;
+    } else {
+      document.querySelectorAll('#ts-sidebar [data-ts-class]').forEach((b) => { b.style.display = ''; });
+      const railAdd = $('ts-rail-add');
+      if (railAdd) railAdd.style.display = '';
+      const quickAwardSection = $('ts-award-go')?.closest('section');
+      if (quickAwardSection) quickAwardSection.style.display = '';
     }
   }
 
