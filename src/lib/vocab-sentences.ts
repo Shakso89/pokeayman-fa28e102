@@ -176,4 +176,3 @@ export async function askSentenceModel(body: GeminiBody): Promise<string> {
   }
   throw new SentenceAiError("The sentences did not pass the ChatGPT check after several tries. Please try again.");
 }
-

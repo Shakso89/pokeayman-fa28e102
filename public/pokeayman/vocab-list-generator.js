@@ -1041,4 +1041,3 @@
   new MutationObserver(bindGenerateBtn).observe(document.documentElement, { childList: true, subtree: true });
 })();
 
-
