@@ -13059,6 +13059,36 @@ function reviewTeacherZoneSnapshot(snapshot) {
   const extras = (Array.isArray(snapshot.subHours) ? snapshot.subHours : []).filter(entry => String(entry.date || '').startsWith(month));
   const schedule = Array.isArray(snapshot.schedule?.entries) ? snapshot.schedule.entries : [];
   const insuranceTotal = insurance.reduce((total, entry) => total + (Number(entry.amount) || 0), 0);
+  const rate = Math.max(0, Number(snapshot.hourlyRate) || 0);
+  const excludedDates = new Set((Array.isArray(snapshot.unpaidDays) ? snapshot.unpaidDays : [])
+    .filter(entry => String(entry.date || '').startsWith(month))
+    .map(entry => String(entry.date)));
+  const daysInMonth = Number.isFinite(year) && Number.isFinite(monthNumber) ? new Date(year, monthNumber, 0).getDate() : 0;
+  const schoolHours = {};
+  schedule.forEach(entry => {
+    const dayIndex = ['Monday','Tuesday','Wednesday','Thursday','Friday'].indexOf(entry.day);
+    if (dayIndex < 0) return;
+    const school = String(entry.school || '').trim() || 'No school specified';
+    let classDays = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = `${month}-${String(day).padStart(2, '0')}`;
+      if (new Date(year, monthNumber - 1, day).getDay() === dayIndex + 1 && !excludedDates.has(date)) classDays++;
+    }
+    const [startHour, startMinute] = String(entry.start || '00:00').split(':').map(Number);
+    const [endHour, endMinute] = String(entry.end || '00:00').split(':').map(Number);
+    const duration = Math.max(0, ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) / 60);
+    schoolHours[school] = (schoolHours[school] || 0) + duration * classDays;
+  });
+  extras.filter(entry => !excludedDates.has(String(entry.date || ''))).forEach(entry => {
+    const school = String(entry.school || '').trim() || 'No school specified';
+    const [startHour, startMinute] = String(entry.start || '00:00').split(':').map(Number);
+    const [endHour, endMinute] = String(entry.end || '00:00').split(':').map(Number);
+    schoolHours[school] = (schoolHours[school] || 0) + Math.max(0, ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) / 60);
+  });
+  const grossTotal = Object.values(schoolHours).reduce((total, hours) => total + hours * rate, 0);
+  const schoolGrossRows = Object.entries(schoolHours).sort(([a], [b]) => a.localeCompare(b)).map(([school, hours]) =>
+    `<li class=\"history-review-row\"><span><strong>${escape(school)}</strong><small>${hours.toFixed(1)} hours · ${financialMoney(rate)} per hour</small></span><strong class=\"history-review-amount\">${financialMoney(hours * rate)}</strong></li>`
+  ).join('') || `<li class=\"history-review-empty\">No scheduled or extra hours for ${escape(monthLabel)}.</li>`;
   const unpaidRows = unpaid.map(entry => {
     const from = entry.start_date || entry.date;
     const to = entry.end_date && entry.end_date !== from ? ` – ${formatDate(entry.end_date)}` : '';
@@ -13073,7 +13103,8 @@ function reviewTeacherZoneSnapshot(snapshot) {
   modal.innerHTML = `<section class="teacher-history-dialog" role="dialog" aria-modal="true" aria-labelledby="history-review-title">
     <header class="teacher-history-header"><div><p class="teacher-history-kicker">SAVED SNAPSHOT</p><h2 id="history-review-title">${escape(snapshot.name || 'Teacher Zone history')}</h2><p>Saved ${escape(savedDate)}</p></div><button type="button" id="history-review-close" class="teacher-history-close" aria-label="Close historical review">×</button></header>
     <div class="teacher-history-month"><span>Financial records shown</span><strong>${escape(monthLabel)}</strong><small>Unpaid entries, insurance, and extra hours are filtered to this month only.</small></div>
-    <div class="teacher-history-summary"><article><span>Hourly rate</span><strong>${financialMoney(snapshot.hourlyRate)} <small>per hour</small></strong></article><article><span>Unpaid entries</span><strong>${unpaid.length}</strong></article><article><span>Insurance deductions</span><strong>${financialMoney(insuranceTotal)}</strong></article></div>
+    <div class="teacher-history-summary"><article><span>Gross amount · ${escape(monthLabel)}</span><strong>${financialMoney(grossTotal)}</strong></article><article><span>Hourly rate</span><strong>${financialMoney(rate)} <small>per hour</small></strong></article><article><span>Unpaid entries</span><strong>${unpaid.length}</strong></article><article><span>Insurance deductions</span><strong>${financialMoney(insuranceTotal)}</strong></article></div>
+    <section class="teacher-history-section"><div class="teacher-history-section-heading"><div><p class="teacher-history-kicker">GROSS BY SCHOOL</p><h3>${escape(monthLabel)}</h3></div></div><article class="teacher-history-card"><ul>${schoolGrossRows}</ul></article></section>
     <section class="teacher-history-section"><div class="teacher-history-section-heading"><div><p class="teacher-history-kicker">MONTHLY ADJUSTMENTS</p><h3>${escape(monthLabel)}</h3></div></div><div class="teacher-history-columns"><article class="teacher-history-card"><h4>Unpaid dates <span>${unpaid.length}</span></h4><ul>${unpaidRows}</ul></article><article class="teacher-history-card"><h4>Insurance deductions <span>${financialMoney(insuranceTotal)}</span></h4><ul>${insuranceRows}</ul></article></div></section>
     <section class="teacher-history-section"><div class="teacher-history-section-heading"><div><p class="teacher-history-kicker">RECURRING PLAN</p><h3>Weekly schedule <span>${schedule.length} classes</span></h3></div></div><article class="teacher-history-card"><ul>${scheduleRows}</ul></article></section>
     <section class="teacher-history-section"><div class="teacher-history-section-heading"><div><p class="teacher-history-kicker">MONTHLY ADDITIONS</p><h3>Extra hours <span>${extras.length} entries</span></h3></div></div><article class="teacher-history-card"><ul>${extraRows}</ul></article></section>

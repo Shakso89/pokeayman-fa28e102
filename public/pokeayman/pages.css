@@ -378,7 +378,7 @@ body.ts-on #app-screen :is(.financial-card-kicker, .financial-eyebrow, .financia
 .teacher-history-month span { color: var(--pk-muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .teacher-history-month strong { color: var(--pk-brand); font: 800 22px/1.2 var(--pk-font-display); }
 .teacher-history-month small { color: var(--pk-ink-2); font-size: 13px; }
-.teacher-history-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 12px 0 22px; }
+.teacher-history-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 12px 0 22px; }
 .teacher-history-summary article { display: grid; gap: 5px; min-width: 0; padding: 13px 15px; border: 1px solid var(--pk-border); border-radius: 14px; background: var(--pk-surface-2); }
 .teacher-history-summary article > span { color: var(--pk-muted); font-size: 12px; font-weight: 700; }
 .teacher-history-summary article > strong { color: var(--pk-ink); font: 800 20px/1.2 var(--pk-font-display); overflow-wrap: anywhere; }

@@ -804,7 +804,11 @@ html body.ts-bright :is(.th-close,.pk-cv-close,.es-close) { background: var(--ts
 html body.ts-bright .th-card { background: linear-gradient(120deg, #ffe680, #ffcb05 45%, #9ec5ff) !important; color: #1d2650 !important; }
 html body.ts-bright .th-card * { color: #1d2650 !important; }
 html body.ts-bright .th-chip-gold { background: #1d2650 !important; } html body.ts-bright .th-chip-gold, html body.ts-bright .th-chip-gold * { color: #ffe680 !important; }
-html body.ts-bright .trainer-hub-backdrop, html body.ts-bright :is(.es-overlay,.tsb-overlay,.pk-cv-overlay) { background: color-mix(in srgb, var(--ts-ink) 35%, transparent) !important; }
+html body.ts-bright :is(.trainer-hub-backdrop,.es-overlay,.tsb-overlay,.pk-cv-overlay,.teacher-history-overlay,.fixed.inset-0) {
+  background: color-mix(in srgb, var(--ts-ink) 42%, transparent) !important;
+  -webkit-backdrop-filter: blur(9px) !important;
+  backdrop-filter: blur(9px) !important;
+}
 html body.ts-bright :is(.trainer-hub,.es-card,.bg-slate-900,.pk-cv-dialog) :is(input:not([type=checkbox]):not([type=radio]):not([type=color]),select,textarea) { background: var(--ts-surface) !important; color: var(--ts-ink) !important; border: 1px solid var(--ts-border) !important; }
 html body.ts-bright .es-card { background: var(--ts-surface) !important; }
 html body.ts-bright #app-screen :is(.text-amber-200,.text-amber-300,.text-amber-100,.text-indigo-200,.text-slate-300,.text-gray-300,.text-green-300) { color: var(--ts-ink) !important; }
