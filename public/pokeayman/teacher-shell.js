@@ -239,20 +239,42 @@
     if (!h) {
       h = document.createElement('section'); h.id = 'ts-hero'; h.className = 'ts-hero';
       h.innerHTML = `<div class="ts-hero-text"><h2 id="ts-hero-title"></h2><p id="ts-hero-school"></p>
-        <div class="ts-chips"><span class="ts-chip"><b id="ts-hero-count">0</b><small>Students</small></span><span class="ts-chip"><b id="ts-hero-coins">0</b><small>Total coins</small></span><span class="ts-chip" id="ts-hero-teacher-chip" hidden><b id="ts-hero-teacher"></b><small>Teacher</small></span></div></div>
-        <div class="ts-hero-actions"><button type="button" class="ts-btn ghost" data-hero="gift">Gift whole class</button><button type="button" class="ts-btn" data-hero="add">＋ Add student</button></div>`;
+        <div class="ts-chips"><span class="ts-chip"><b id="ts-hero-count">0</b><small>Students</small></span><span class="ts-chip"><b id="ts-hero-coins">0</b><small>Total coins</small></span><span class="ts-chip" id="ts-hero-teacher-chip" hidden><b id="ts-hero-teacher"></b><small>Teachers</small></span></div></div>
+        <div class="ts-hero-actions"><button type="button" class="ts-btn ghost" data-hero="assign-teachers" id="ts-hero-assign-btn" hidden>👥 Assign Teachers</button><button type="button" class="ts-btn ghost" data-hero="gift">Gift whole class</button><button type="button" class="ts-btn" data-hero="add">＋ Add student</button></div>`;
       sub.prepend(h);
       h.querySelectorAll('[data-hero]').forEach(button => button.addEventListener('click', onHero));
     }
     const set = (id, v) => { const el = $(id); if (el.textContent !== v) el.textContent = v; };
     set('ts-hero-title', g(() => navClass, '') || ''); set('ts-hero-school', g(() => navSchool, '') || '');
     set('ts-hero-count', String(list.length));
-    { const names = g(() => window.getClassTeacherNames(navSchool, navClass), []) || []; const chip = $('ts-hero-teacher-chip'); if (chip) { chip.hidden = !names.length; const html = names.map(n => { const src = g(() => window.classTeacherAvatarFor(n), ''); return (src ? `<img class="class-teacher-avatar" src="${esc(src)}" alt="">` : '🎓 ') + 'TR. ' + esc(n); }).join(', '); const el = $('ts-hero-teacher'); if (el.innerHTML !== html) el.innerHTML = html; } }
+    {
+      const names = g(() => window.getClassTeacherNames(navSchool, navClass), []) || [];
+      const chip = $('ts-hero-teacher-chip');
+      const canManageAssignments = g(() => window.canManageSchool?.(navSchool) || window.isAymanTeacher?.(), false);
+      const assignBtn = $('ts-hero-assign-btn');
+      if (assignBtn) assignBtn.hidden = !canManageAssignments;
+      if (chip) {
+        chip.hidden = !names.length;
+        chip.classList.toggle('ts-chip-clickable', canManageAssignments);
+        chip.title = canManageAssignments ? 'Click to assign teachers to this class' : 'Class teachers';
+        chip.onclick = canManageAssignments ? () => g(() => window.openAssignClassTeachersModal?.(navSchool, navClass)) : null;
+        const html = names.map(n => {
+          const src = g(() => window.classTeacherAvatarFor(n), '');
+          return (src ? `<img class="class-teacher-avatar" src="${esc(src)}" alt="">` : '🎓 ') + 'TR. ' + esc(n);
+        }).join(', ');
+        const el = $('ts-hero-teacher');
+        if (el.innerHTML !== html) el.innerHTML = html + (canManageAssignments ? ' <span class="ts-chip-edit-icon" style="font-size:10px;opacity:.7">✎</span>' : '');
+      }
+    }
     set('ts-hero-coins', list.reduce((a, s) => a + (Number(s.coins) || 0), 0).toLocaleString());
   }
   function onHero(e) {
     const b = e.target.closest('[data-hero],[data-ts-add-student]'); if (!b) return;
     if (b.dataset.tsAddStudent !== undefined) { e.preventDefault(); return openHeroActionDialog('add', b); }
+    if (b.dataset.hero === 'assign-teachers') {
+      e.preventDefault();
+      return g(() => window.openAssignClassTeachersModal?.(navSchool, navClass));
+    }
     e.preventDefault();
     openHeroActionDialog(b.dataset.hero, b);
   }
@@ -387,15 +409,23 @@
     $('ts-name').textContent = $('logged-in-name-nav')?.textContent || g(() => currentTeacher, '') || 'Teacher';
     $('ts-name').title = $('ts-name').textContent;
     const accountBadge = $('ts-account-badge');
-    const isAdmin = g(() => canAccessAdmin(), false);
+    const role = g(() => window.getEffectiveTeacherRole?.(), 'teacher');
+    const roleTitle = g(() => window.getEffectiveTeacherRoleTitle?.(), 'Teacher');
+    const isAdmin = role === 'admin';
+    const isSchoolManager = role === 'school_manager';
     const streakCard = document.querySelector('#ts-rail .ts-streak');
     if (streakCard) streakCard.hidden = isAdmin;
     const isPro = g(() => findMyTeacherRecord()?.teacher_pro === true, false);
-    accountBadge.textContent = isAdmin ? 'ADMIN' : 'PRO';
-    accountBadge.hidden = !isAdmin && !isPro;
+    accountBadge.textContent = isAdmin ? 'ADMIN' : (isSchoolManager ? 'MANAGER' : (isPro ? 'PRO' : 'TEACHER'));
+    accountBadge.hidden = !isAdmin && !isSchoolManager && !isPro;
     accountBadge.classList.toggle('is-admin', isAdmin);
+    accountBadge.classList.toggle('is-school-manager', isSchoolManager);
     const credits = $('credit-balance-nav')?.textContent?.trim();
-    $('ts-role').textContent = g(() => canAccessAdmin(), false) ? 'Unlimited credits' : (credits ? `${credits} credits available` : 'Credits unavailable');
+    $('ts-role').textContent = isAdmin
+      ? 'Admin · Unlimited credits'
+      : (isSchoolManager
+          ? `School Manager · ${credits ? `${credits} credits` : '0 credits'}`
+          : (credits ? `Teacher · ${credits} credits` : 'Teacher'));
     const unread = g(() => window.teacherUnreadNotificationCount?.(), 0) || 0;
     $('ts-notification-count').textContent = unread > 99 ? '99+' : String(unread);
     $('ts-notification-count').hidden = unread === 0;

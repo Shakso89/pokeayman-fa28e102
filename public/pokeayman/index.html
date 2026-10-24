@@ -4268,6 +4268,17 @@ document.addEventListener('click', function (e) {
 .th-avatar-ring{position:relative;flex:none;padding:4px;border-radius:999px;background:conic-gradient(#fff,#fde68a,#ffd84d,#fff);box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .th-account-badge{position:absolute;right:-.55rem;bottom:.15rem;z-index:2;display:inline-flex;align-items:center;justify-content:center;min-width:3.25rem;height:1.25rem;padding:0 .42rem;border:3px solid #fbbf24;border-radius:999px;background:linear-gradient(135deg,#ffe37a,#f0a900);color:#352300;font:1000 .55rem/1 'Figtree',sans-serif;letter-spacing:.06em;box-shadow:0 3px 9px rgba(0,0,0,.3)}
 .th-account-badge.is-admin{border-color:#fbbf24;background:linear-gradient(135deg,#dbeafe,#60a5fa);color:#10244a}
+.th-account-badge.is-school-manager{border-color:#34d399!important;background:linear-gradient(135deg,#10b981,#059669)!important;color:#ffffff!important}
+.ts-account-badge.is-school-manager{border-color:#34d399!important;background:linear-gradient(135deg,#10b981,#059669)!important;color:#ffffff!important}
+html body.ts-bright .trainer-hub .th-account-badge.is-school-manager{color:#ffffff!important}
+.th-role-title{font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#181e5f;margin:0 0 .2rem}
+.class-teacher-pill.is-assignable{cursor:pointer;transition:transform .15s ease,filter .15s ease}
+.class-teacher-pill.is-assignable:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.class-teacher-assign-btn{font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:999px;background:rgba(99,102,241,.18);border:1px solid rgba(129,140,248,.35);color:#4338ca;cursor:pointer;margin-left:4px;transition:.15s ease}
+.class-teacher-assign-btn:hover{background:rgba(99,102,241,.3);color:#312e81}
+.class-teacher-badge.is-manager{font-size:.7rem}
+.ts-chip-clickable{cursor:pointer;transition:transform .15s ease,filter .15s ease}
+.ts-chip-clickable:hover{transform:translateY(-1px);filter:brightness(1.15)}
 .th-account-badge[hidden]{display:none}
 html body.ts-bright .trainer-hub .th-account-badge:not(.is-admin){color:#352300!important}
 html body.ts-bright .trainer-hub .th-account-badge.is-admin{color:#10244a!important}
@@ -7151,13 +7162,19 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
          // Render schools with edit button for admin
          function renderSchoolsList() {
            const schools = getSchools();
-           document.getElementById('schools-list').innerHTML = schools.map(s => `<div class="bg-white rounded-xl p-4 shadow-sm border card-hover cursor-pointer group relative" onclick="navigateTo('classes','${s.school_name}')"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-lg">🏫</div><div><p class="font-semibold">${s.school_name}</p><p class="text-xs text-gray-400">${getClasses(s.school_name).length} classes</p></div></div>${currentTeacher === 'Ayman' ? `<button class="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-6 h-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600 font-bold" onclick="event.stopPropagation(); openEditSchoolModal('${s.__backendId}','${s.school_name}')">✎</button>` : ''}</div>`).join('') || '<p class="text-gray-400 text-sm col-span-3 text-center py-8">No schools yet.</p>';
+           document.getElementById('schools-list').innerHTML = schools.map(s => {
+             const canManage = canManageSchool(s.school_name);
+             return `<div class="bg-white rounded-xl p-4 shadow-sm border card-hover cursor-pointer group relative" onclick="navigateTo('classes','${s.school_name}')"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-lg">🏫</div><div><p class="font-semibold">${s.school_name}</p><p class="text-xs text-gray-400">${getClasses(s.school_name).length} classes</p></div></div>${canManage ? `<button class="absolute top-2 right-2 bg-blue-500 text-white rounded-full w-6 h-6 text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600 font-bold" title="Manage ${s.school_name}" onclick="event.stopPropagation(); openEditSchoolModal('${s.__backendId}','${s.school_name}')">✎</button>` : ''}</div>`;
+           }).join('') || '<p class="text-gray-400 text-sm col-span-3 text-center py-8">No schools yet.</p>';
          }
        </script>
       </div>
       <div id="view-classes" class="hidden">
        <div id="add-class-container" class="glass-container rounded-xl p-5 mb-4">
-        <h3 data-template-id="add-class-title" class="canva-text font-semibold mb-3" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 19px;">Add Class</h3>
+        <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <h3 data-template-id="add-class-title" class="canva-text font-semibold" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 19px;">Add Class</h3>
+          <button type="button" id="btn-manage-class-teachers" class="btn-secondary text-xs px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 hidden" onclick="openManageClassTeachersModal(navSchool)">👥 Manage Class Teachers</button>
+        </div>
         <form id="add-class-form" class="flex flex-nowrap items-center gap-2 overflow-x-auto"><input id="new-class-name" type="text" placeholder="Class name" class="flex-1 min-w-[10rem] border rounded-lg px-3 py-2 text-sm" required=""> <input id="new-class-pin" type="password" placeholder="Class PIN (6 digits)" maxlength="6" class="flex-1 min-w-[10rem] border rounded-lg px-3 py-2 text-sm tracking-widest" required=""> <select id="new-class-level" class="class-level-select border rounded-lg px-3 py-2 text-sm" aria-label="Class reading level" title="Reading level for cards and games"><option value="P4" selected>Beginner</option><option value="P5">Good</option><option value="P6">Confident</option></select> <button type="submit" class="btn-primary shrink-0">Add</button>
         </form>
        </div>
@@ -9253,6 +9270,15 @@ function isProTeacher(teacher) {
 function isCurrentTeacherPro() { return isAymanTeacher() || isProTeacher(findMyTeacherRecord()); }
 function isClassManagedByPro(schoolName, className) {
   const cls = allData.find(row => row.type === 'class' && row.school_name === schoolName && row.class_name === className);
+  const teacherNames = getClassTeacherNames(schoolName, className);
+  if (teacherNames.some(name => {
+    const clean = String(name || '').replace(/^TR\.\s*/i, '').trim();
+    if (clean === 'Ayman') return true;
+    const t = getTeachers().find(rec => rec.teacher_name === clean);
+    return isProTeacher(t);
+  })) {
+    return true;
+  }
   if (!cls?.main_manager_id && !cls?.main_manager_name) return false;
   const manager = allData.find(row => row.type === 'teacher' && (String(row.__backendId || '') === String(cls.main_manager_id || '') || normalizeStudentIdentity(row.teacher_name) === normalizeStudentIdentity(cls.main_manager_name)));
   return isProTeacher(manager);
@@ -10743,6 +10769,7 @@ function renderTrainerTab() {
  <div class="th-avatar-ring"><div id="th-avatar" class="th-avatar"></div><span id="th-account-badge" class="th-account-badge" hidden></span></div>
  <div class="th-id">
   <h2 id="account-settings-title" class="th-name"></h2>
+  <p id="th-role-title" class="th-role-title font-bold text-xs uppercase tracking-wider text-amber-300 mt-0.5"></p>
   <p id="tp-email" class="th-email"></p>
   <div class="th-chips"><span class="th-chip th-chip-gold"><b id="th-credits"></b> credits available</span><span class="th-chip"><b id="th-owned"></b> avatars</span></div>
  </div>
@@ -10783,11 +10810,26 @@ function renderTrainerTab() {
   modal.remove = () => showMainTab('dashboard');
   modal.querySelector('#account-settings-title').textContent = currentTeacher;
   const teacherBadge = modal.querySelector('#th-account-badge');
-  const teacherIsAdmin = canAccessAdmin();
+  const role = getEffectiveTeacherRole(currentTeacher);
+  const teacherIsAdmin = role === 'admin';
+  const teacherIsManager = role === 'school_manager';
   const teacherIsPro = teacherRecord?.teacher_pro === true;
-  teacherBadge.textContent = teacherIsAdmin ? 'ADMIN' : 'PRO';
-  teacherBadge.hidden = !teacherIsAdmin && !teacherIsPro;
+  teacherBadge.textContent = teacherIsAdmin ? 'ADMIN' : (teacherIsManager ? 'MANAGER' : (teacherIsPro ? 'PRO' : 'TEACHER'));
+  teacherBadge.hidden = false;
   teacherBadge.classList.toggle('is-admin', teacherIsAdmin);
+  teacherBadge.classList.toggle('is-school-manager', teacherIsManager);
+  teacherBadge.classList.toggle('is-pro', !teacherIsAdmin && !teacherIsManager && teacherIsPro);
+  const roleTitleEl = modal.querySelector('#th-role-title');
+  if (roleTitleEl) {
+    if (teacherIsAdmin) {
+      roleTitleEl.textContent = 'Administrator';
+    } else if (teacherIsManager) {
+      const schools = getAssignedSchools(currentTeacher).map(s => s.assigned_school);
+      roleTitleEl.textContent = schools.length ? `School Manager · ${schools.join(', ')}` : 'School Manager';
+    } else {
+      roleTitleEl.textContent = `Teacher${teacherIsPro ? ' · Pro' : ''}`;
+    }
+  }
   const closeTeacherEditor = id => {
     const editor = modal.querySelector('#' + id);
     editor.classList.add('hidden');
@@ -12556,16 +12598,17 @@ function renderTeacherDashboard() {
     renderSchoolsList();
   } else if (navSchool && !navClass) {
     const classes = getClasses(navSchool);
-    // Check if current teacher is school-assigned or admin
-    const isSchoolAssigned = currentTeacher === 'Ayman' || getAssignedSchools(currentTeacher).some(a => a.assigned_school === navSchool);
-    // Also check for class-level assignments to this school
+    const isSchoolAssigned = canManageSchool(navSchool);
     const hasClassAssignmentsInSchool = getAssignedClasses(currentTeacher).some(a => a.assigned_school === navSchool);
     const isAuthorized = isSchoolAssigned;
     
-    // Show Add Class form only if teacher is admin (Ayman) or authorized to manage classes in this school
     const addClassContainer = document.getElementById('add-class-container');
     if (addClassContainer) {
       addClassContainer.style.display = isAuthorized ? 'block' : 'none';
+    }
+    const manageBtn = document.getElementById('btn-manage-class-teachers');
+    if (manageBtn) {
+      manageBtn.classList.toggle('hidden', !isAuthorized);
     }
     
     document.getElementById('classes-list').innerHTML = classes.map(c => {
@@ -13878,7 +13921,7 @@ function renderAdminPanel() {
   const teachers = getTeachers().filter(teacher => !teacherQuery || String(teacher.teacher_name || '').trim().toLocaleLowerCase().includes(teacherQuery));
   renderAdminNotificationRecipients();
   const teachersList = document.getElementById('teachers-list');
-  teachersList.innerHTML = teachers.length ? teachers.map(t => `<div class="teachers-inventory-card" tabindex="0" role="button" aria-label="Open teacher ${t.teacher_name}" onclick="if(!event.target.closest('button')) openEditTeacherModal('${t.__backendId}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openEditTeacherModal('${t.__backendId}');}"><span class="teacher-inventory-avatar" aria-hidden="true">${(() => { const avatarSrc = teacherAvatarSrc(t.teacher_avatar); return avatarSrc ? `<img src="${avatarSrc}" class="w-full h-full object-contain" alt="${String(t.teacher_name || 'Teacher').replace(/"/g, '&quot;')}'s Pokémon avatar" loading="lazy">` : (String(t.teacher_name || '?').trim().charAt(0).toUpperCase() || '?'); })()}</span><p class="teacher-inventory-name" title="${t.teacher_name}">${t.teacher_name}</p><p class="teacher-inventory-detail">Credits: ${t.teacher_credits === -1 ? '∞' : (t.teacher_credits || 0)} 💳</p><p class="teacher-inventory-detail">${t.teacher_name === 'Ayman' ? 'Admin' : (t.teacher_pro === true ? 'Pro teacher' : 'Teacher')}</p><div class="teachers-inventory-actions">${t.teacher_name === 'Ayman' ? '<span class="text-xs bg-yellow-300 text-slate-900 px-2 py-1 rounded font-black" title="Administrator">Admin</span>' : `<button type="button" class="text-blue-200 bg-blue-900/70 hover:bg-blue-700" aria-label="Edit ${t.teacher_name}" title="Edit teacher" onclick="event.stopPropagation();openEditTeacherModal('${t.__backendId}')">✎</button><button type="button" class="text-red-200 bg-red-900/70 hover:bg-red-700" aria-label="Delete ${t.teacher_name}" title="Delete teacher" onclick="event.stopPropagation();deleteTeacher('${t.__backendId}','${t.teacher_name}')">×</button>`}</div></div>`).join('') : `<p class="text-gray-400 text-sm text-center py-8">${teacherQuery ? 'No teachers match your search.' : 'No teachers yet.'}</p>`;
+  teachersList.innerHTML = teachers.length ? teachers.map(t => `<div class="teachers-inventory-card" tabindex="0" role="button" aria-label="Open teacher ${t.teacher_name}" onclick="if(!event.target.closest('button')) openEditTeacherModal('${t.__backendId}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openEditTeacherModal('${t.__backendId}');}"><span class="teacher-inventory-avatar" aria-hidden="true">${(() => { const avatarSrc = teacherAvatarSrc(t.teacher_avatar); return avatarSrc ? `<img src="${avatarSrc}" class="w-full h-full object-contain" alt="${String(t.teacher_name || 'Teacher').replace(/"/g, '&quot;')}'s Pokémon avatar" loading="lazy">` : (String(t.teacher_name || '?').trim().charAt(0).toUpperCase() || '?'); })()}</span><p class="teacher-inventory-name" title="${t.teacher_name}">${t.teacher_name}</p><p class="teacher-inventory-detail">Credits: ${t.teacher_credits === -1 ? '∞' : (t.teacher_credits || 0)} 💳</p><p class="teacher-inventory-detail">${getEffectiveTeacherRoleTitle(t)}${t.teacher_pro === true ? ' · Pro' : ''}</p><div class="teachers-inventory-actions">${t.teacher_name === 'Ayman' ? '<span class="text-xs bg-yellow-300 text-slate-900 px-2 py-1 rounded font-black" title="Administrator">Admin</span>' : `<button type="button" class="text-blue-200 bg-blue-900/70 hover:bg-blue-700" aria-label="Edit ${t.teacher_name}" title="Edit teacher" onclick="event.stopPropagation();openEditTeacherModal('${t.__backendId}')">✎</button><button type="button" class="text-red-200 bg-red-900/70 hover:bg-red-700" aria-label="Delete ${t.teacher_name}" title="Delete teacher" onclick="event.stopPropagation();deleteTeacher('${t.__backendId}','${t.teacher_name}')">×</button>`}</div></div>`).join('') : `<p class="text-gray-400 text-sm text-center py-8">${teacherQuery ? 'No teachers match your search.' : 'No teachers yet.'}</p>`;
   renderAdminClassManagers();
   renderAdminAllStudents(); renderAdminShop(); renderCreditLog();
   if (!document.getElementById('admin-subtab-analytics')?.classList.contains('hidden')) window.renderAdminAnalytics?.();
@@ -13926,31 +13969,37 @@ function escapeAdminText(value) { return String(value ?? '').replace(/[&<>"']/g,
 function renderAdminClassManagers() {
   const host = document.getElementById('admin-class-managers'); if (!host) return;
   const classes = getAllTeacherClasses().slice().sort((a,b) => `${a.school_name} ${a.class_name}`.localeCompare(`${b.school_name} ${b.class_name}`));
-  const teachers = getTeachers().filter(teacher => teacher.teacher_name && normalizeTeacherRole(teacher.teacher_role || teacher.role || teacher.user_role) !== 'admin').slice().sort((a,b) => String(a.teacher_name).localeCompare(String(b.teacher_name)));
-  host.innerHTML = `<div class="mb-4"><p class="text-xs font-black tracking-widest text-amber-300">CLASS ACCESS</p><h3 id="admin-class-managers-title" class="heading-font text-lg font-bold text-white">Main class managers</h3><p class="mt-1 text-sm text-slate-300">Choose the teacher responsible for each class. Their Pro status controls Poké Battle and Listen and Catch for students in that class.</p></div>${classes.length ? `<div class="grid gap-3 sm:grid-cols-2">${classes.map(cls => `<label class="flex min-w-0 flex-col gap-2 rounded-xl border border-indigo-200/20 bg-slate-900/50 p-3"><span class="min-w-0"><strong class="block truncate text-white">${escapeAdminText(cls.class_name)}</strong><small class="block truncate text-slate-300">${escapeAdminText(cls.school_name)}</small></span><select class="admin-main-manager-select account-control w-full" data-class-id="${escapeAdminText(cls.__backendId)}" aria-label="Main manager for ${escapeAdminText(cls.class_name)}"><option value="">No main manager selected</option>${teachers.map(teacher => `<option value="${escapeAdminText(teacher.__backendId)}" ${String(cls.main_manager_id || '') === String(teacher.__backendId || '') ? 'selected' : ''}>${escapeAdminText(teacher.teacher_name)}${teacher.teacher_pro === true ? ' · Pro' : ''}</option>`).join('')}</select></label>`).join('')}</div>` : '<p class="rounded-xl bg-slate-900/60 p-4 text-sm text-slate-300">Create a class first to assign its main manager.</p>'}`;
-  host.querySelectorAll('.admin-main-manager-select').forEach(select => select.addEventListener('change', async () => {
-    const classId = select.dataset.classId; const classRec = allData.find(row => row.type === 'class' && String(row.__backendId) === String(classId));
-    if (!classRec || select.dataset.busy === 'true') return;
-    const teacher = teachers.find(row => String(row.__backendId) === String(select.value));
-    select.dataset.busy = 'true'; select.disabled = true;
-    const assignment = teacher && allData.find(row => row.type === 'teacher_class_assignment' && (String(row.assigned_teacher_id || '') === String(teacher.__backendId) || (!row.assigned_teacher_id && normalizeStudentIdentity(row.assigned_teacher) === normalizeStudentIdentity(teacher.teacher_name))) && row.assigned_school === classRec.school_name && row.assigned_class === classRec.class_name);
-    let newAssignment = null;
-    if (teacher && !assignment) {
-      const created = await window.dataSdk.create({ type: 'teacher_class_assignment', assigned_teacher: teacher.teacher_name, assigned_teacher_id: teacher.__backendId, assigned_school: classRec.school_name, assigned_class: classRec.class_name, created_at: new Date().toISOString() });
-      if (!created?.isOk) { toast('Could not assign this teacher to the class.'); select.disabled = false; select.dataset.busy = 'false'; renderAdminClassManagers(); return; }
-      newAssignment = created.data;
-    }
-    const latest = allData.find(row => row.type === 'class' && String(row.__backendId) === String(classId)) || classRec;
-    const saved = await window.dataSdk.update({ ...latest, main_manager_id: teacher?.__backendId || '', main_manager_name: teacher?.teacher_name || '' });
-    if (!saved?.isOk) {
-      if (newAssignment) await window.dataSdk.delete(newAssignment);
-      toast('Could not save the main class manager.');
-    } else toast(teacher ? `${teacher.teacher_name} is now main manager of ${classRec.class_name}.` : `Main manager cleared for ${classRec.class_name}.`);
-    if (saved?.isOk && teacher && (String(latest.main_manager_id || '') !== String(teacher.__backendId || '')) && window.sendTeacherNotifications) {
-      await window.sendTeacherNotifications([teacher], 'Class assigned to you', `You are now the main manager for ${classRec.class_name} at ${classRec.school_name}. Open your dashboard to view the class.`, 'class');
-    }
-    renderAdminClassManagers();
-  }));
+  host.innerHTML = `<div class="mb-4">
+    <p class="text-xs font-black tracking-widest text-amber-300 uppercase">CLASS ACCESS</p>
+    <h3 id="admin-class-managers-title" class="heading-font text-lg font-bold text-white">Manage class teachers</h3>
+    <p class="mt-1 text-sm text-slate-300">Assign multiple teachers to each class. Teachers assigned to a class share equal management of student rosters, vocabulary lists, quizzes, and games.</p>
+  </div>
+  ${classes.length ? `<div class="grid gap-3 sm:grid-cols-2">
+    ${classes.map(cls => {
+      const assigned = getClassTeacherNames(cls.school_name, cls.class_name);
+      return `
+        <div class="flex min-w-0 flex-col justify-between gap-3 rounded-xl border border-indigo-200/20 bg-slate-900/60 p-4">
+          <div>
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0 flex-1">
+                <strong class="block truncate text-white text-base">${escapeAdminText(cls.class_name)}</strong>
+                <small class="block truncate text-slate-400">🏫 ${escapeAdminText(cls.school_name)}</small>
+              </div>
+              <button type="button" class="btn-primary text-xs px-3 py-1.5 rounded-lg font-bold shrink-0" onclick="openAssignClassTeachersModal('${escapeAdminText(cls.school_name)}','${escapeAdminText(cls.class_name)}')">
+                Assign Teachers
+              </button>
+            </div>
+            <div class="mt-3">
+              <span class="text-[11px] font-bold text-indigo-200 block mb-1 uppercase tracking-wider">Assigned Teachers (${assigned.length}):</span>
+              <div class="flex flex-wrap gap-1.5">
+                ${assigned.length ? assigned.map(n => `<span class="inline-flex items-center gap-1 text-xs bg-indigo-950/80 border border-indigo-500/30 text-indigo-100 px-2 py-0.5 rounded-full font-medium">🎓 TR. ${escapeAdminText(n)}</span>`).join('') : '<span class="text-xs text-amber-300/80 italic">No teachers assigned</span>'}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('')}
+  </div>` : '<p class="rounded-xl bg-slate-900/60 p-4 text-sm text-slate-300">Create a class first to assign its teachers.</p>'}`;
 }
 
 function studentActivityTimestamp(record) {
@@ -15564,11 +15613,16 @@ document.getElementById('create-teacher-form')?.addEventListener('submit', async
 function openEditClassModal(classId, schoolName) {
   const classRec = allData.find(c => c.__backendId === classId); if (!classRec) return;
   const adminAvatar = teacherAvatarSrc(getAdminTeacherRecord()?.teacher_avatar);
-  const modal = document.createElement('div'); modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+  const modal = document.createElement('div'); modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
   const level = /^P[4-6]$/.test(classRec.class_level || '') ? classRec.class_level : 'P4';
-  modal.innerHTML = `<div class="bg-white rounded-xl p-6 shadow-lg w-96"><h2 class="heading-font text-lg font-bold mb-4">Edit Class</h2><form class="space-y-3"><input type="text" id="ec-name" value="${classRec.class_name}" class="w-full border rounded-lg px-3 py-2 text-sm" required><input type="password" id="ec-pin" value="${classRec.class_pin||''}" maxlength="6" class="w-full border rounded-lg px-3 py-2 text-sm tracking-widest" required><label class="block text-sm font-semibold text-slate-700" for="ec-level">Reading level for cards and games<select id="ec-level" class="class-level-select mt-1 w-full border rounded-lg px-3 py-2 text-sm">${[['P4','Beginner'],['P5','Good'],['P6','Confident']].map(([value, label]) => `<option value="${value}" ${value === level ? 'selected' : ''}>${label}</option>`).join('')}</select></label><p class="text-xs text-gray-500 italic">Changing PIN will update all students in this class</p>${currentTeacher === 'Ayman' ? `<label class="ec-teacher-toggle flex items-center gap-3 text-sm font-semibold"><input type="checkbox" id="ec-show-admin" ${classRec.show_admin_teacher === true ? 'checked' : ''}>${adminAvatar ? `<img src="${adminAvatar}" alt="" class="ec-teacher-avatar">` : '<span class="ec-teacher-avatar">🎓</span>'}<span>Show TR. Ayman as teacher on this class</span></label>` : ''}<div class="flex gap-2 pt-2"><button type="submit" class="flex-1 btn-primary">Save</button><button type="button" class="flex-1 btn-secondary" id="ec-delete">Delete</button><button type="button" class="flex-1 btn-outline" id="ec-cancel">Cancel</button></div></form></div>`;
+  const canAssign = canManageSchool(schoolName);
+  const currentAssigned = getClassTeacherNames(schoolName, classRec.class_name);
+  const schoolTeachers = getTeachersForSchool(schoolName);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  modal.innerHTML = `<div class="bg-white rounded-xl p-6 shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto"><h2 class="heading-font text-lg font-bold mb-4">Edit Class</h2><form class="space-y-3"><div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="ec-name">Class name</label><input type="text" id="ec-name" value="${esc(classRec.class_name)}" class="w-full border rounded-lg px-3 py-2 text-sm" required></div><div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="ec-pin">Class PIN</label><input type="password" id="ec-pin" value="${esc(classRec.class_pin||'')}" maxlength="6" class="w-full border rounded-lg px-3 py-2 text-sm tracking-widest" required></div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider" for="ec-level">Reading level for cards and games<select id="ec-level" class="class-level-select mt-1 w-full border rounded-lg px-3 py-2 text-sm">${[['P4','Beginner'],['P5','Good'],['P6','Confident']].map(([value, label]) => `<option value="${value}" ${value === level ? 'selected' : ''}>${label}</option>`).join('')}</select></label><p class="text-xs text-gray-500 italic">Changing PIN will update all students in this class</p><div class="ec-teachers-section border-t border-slate-200 pt-3 mt-3"><div class="flex items-center justify-between mb-2"><label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Assigned Teachers</label>${canAssign ? '<span class="text-[11px] text-indigo-600 font-semibold">Select teachers</span>' : '<span class="text-[11px] text-slate-400">Read only</span>'}</div>${canAssign ? `<div class="space-y-1.5 max-h-44 overflow-y-auto border rounded-lg p-2.5 bg-slate-50">${(isAymanTeacher() || currentAssigned.includes('Ayman')) ? `<label class="flex items-center gap-2 p-1.5 hover:bg-white rounded transition cursor-pointer text-sm font-medium"><input type="checkbox" class="ec-teacher-checkbox h-4 w-4 rounded text-indigo-600" value="Ayman" ${currentAssigned.includes('Ayman') ? 'checked' : ''}>${adminAvatar ? `<img src="${adminAvatar}" alt="" class="w-5 h-5 rounded-full object-contain">` : '🎓'}<span>Ayman <small class="text-amber-600 font-bold">(Admin)</small></span></label>` : ''}${schoolTeachers.map(t => { const isChecked = currentAssigned.includes(t.teacher_name); const avatar = teacherAvatarSrc(t.teacher_avatar); return `<label class="flex items-center gap-2 p-1.5 hover:bg-white rounded transition cursor-pointer text-sm font-medium"><input type="checkbox" class="ec-teacher-checkbox h-4 w-4 rounded text-indigo-600" value="${esc(t.teacher_name)}" ${isChecked ? 'checked' : ''}>${avatar ? `<img src="${avatar}" alt="" class="w-5 h-5 rounded-full object-contain">` : '🎓'}<span>${esc(t.teacher_name)}${t.teacher_pro ? ' ⭐' : ''}</span></label>`; }).join('')}</div><p class="text-[11px] text-slate-500 mt-1">Multiple teachers can manage this class together with equal permissions.</p>` : `<div class="flex flex-wrap gap-1.5 p-2 bg-slate-50 border rounded-lg">${currentAssigned.length ? currentAssigned.map(t => `<span class="text-xs bg-white border border-slate-200 px-2.5 py-1 rounded-full font-medium text-slate-700">🎓 TR. ${esc(t)}</span>`).join('') : '<span class="text-xs text-slate-400 italic">No teachers assigned</span>'}</div><p class="text-[11px] text-slate-400 mt-1 italic">Only Admins and School Managers can change teacher assignments.</p>`}</div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 btn-primary">Save</button><button type="button" class="flex-1 btn-secondary" id="ec-delete">Delete</button><button type="button" class="flex-1 btn-outline" id="ec-cancel">Cancel</button></div></form></div>`;
   document.body.appendChild(modal);
-  modal.querySelector('form').addEventListener('submit', async e => {
+  modal.querySelector('#es-manage-class-teachers')?.addEventListener('click', () => { modal.remove(); openManageClassTeachersModal(schoolName); });
+modal.querySelector('form').addEventListener('submit', async e => {
     e.preventDefault();
     const newName = modal.querySelector('#ec-name').value.trim();
     const newPin = modal.querySelector('#ec-pin').value.trim();
@@ -15576,15 +15630,21 @@ function openEditClassModal(classId, schoolName) {
     if (!newName) { toast('Class name cannot be empty'); return; }
     if (newPin.length !== 6 || !/^\d+$/.test(newPin)) { toast('PIN must be 6 digits'); return; }
     const oldClassName = classRec.class_name, oldPin = classRec.class_pin;
-    const box = modal.querySelector('#ec-show-admin');
     const studentsInClass = getStudents(schoolName, oldClassName);
-    const pokemonInClass = getPokemons().filter(p => p.owner && studentsInClass.some(s => s.student_name === p.owner));
+    const selectedTeachers = canAssign
+      ? [...modal.querySelectorAll('.ec-teacher-checkbox:checked')].map(cb => cb.value)
+      : currentAssigned;
+    const hasAyman = selectedTeachers.includes('Ayman');
     modal.remove();
-    const res = await window.dataSdk.update({ ...classRec, class_name: newName, class_pin: newPin, class_level: newLevel, ...(box ? { show_admin_teacher: box.checked } : {}) });
+    const res = await window.dataSdk.update({ ...classRec, class_name: newName, class_pin: newPin, class_level: newLevel, assigned_teachers: selectedTeachers, show_admin_teacher: hasAyman });
     if (res && res.isOk === false) { toast('Could not save class. Please try again.'); return; }
     if (newPin !== oldPin && studentsInClass.length) await window.dataSdk.updateMany(studentsInClass.map(st => ({ ...st, student_pin: newPin })));
     if (newName !== oldClassName) await window.cascadeClassRename(schoolName, oldClassName, schoolName, newName, classRec.__backendId);
+    if (canAssign) {
+      await saveClassTeacherAssignments(schoolName, newName, selectedTeachers);
+    }
     try { renderTeacherDashboard(); } catch (e) {}
+    try { window.teacherShellSync?.(); } catch (e) {}
     toast(`Class "${newName}" saved!`);
   });
   modal.querySelector('#ec-delete').addEventListener('click', async () => {
@@ -15650,7 +15710,7 @@ function openEditTeacherModal(teacherId) {
   const email = teacher.teacher_email || '';
   modal.innerHTML = `<div class="es-card et-card" role="dialog" aria-modal="true" aria-label="Edit teacher"><form>
     <div class="et-hero">${avatar ? `<img src="${avatar}" alt="" class="et-avatar">` : `<span class="et-avatar et-initial">${String(teacher.teacher_name||'?').charAt(0).toUpperCase()}</span>`}
-      <div class="et-hero-info"><p class="et-kicker">${isAdminRow ? 'Administrator' : 'Teacher'}</p><h2>${teacher.teacher_name}</h2><p class="et-email">✉️ ${email || (teacher.cloud_user_id ? 'Email appears after their next sign-in' : 'No sign-in account linked')}</p></div>
+      <div class="et-hero-info"><p class="et-kicker">${isAdminRow ? 'Administrator' : (isSchoolManager(teacher.teacher_name) ? 'School Manager' : 'Teacher')}</p><h2>${teacher.teacher_name}</h2><p class="et-email">✉️ ${email || (teacher.cloud_user_id ? 'Email appears after their next sign-in' : 'No sign-in account linked')}</p></div>
       <button type="button" class="es-close" id="et-x" aria-label="Close">×</button></div>
     <div class="et-stats"><div><strong>${teacher.teacher_credits === -1 ? '∞' : (teacher.teacher_credits||0)}</strong><small>credits</small></div><div><strong>🔥 ${Number(teacher.streak_count||0)}/7</strong><small>login streak</small></div><div><strong>🎁 <span id="et-box-count">${Number(teacher.surprise_boxes||0)}</span></strong><small>boxes to open</small></div></div>
     <label class="es-label" for="et-name">Teacher name</label><input type="text" id="et-name" value="${teacher.teacher_name}" class="es-input" ${isAdminRow ? 'disabled' : ''} required>
@@ -15816,31 +15876,434 @@ function assignmentMatchesTeacher(r, teacherName) {
   if (id) return recs.some(t => t.__backendId === id);
   return r.assigned_teacher === teacherName;
 }
+function canManageSchool(schoolName, teacherName = currentTeacher) {
+  if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return false;
+  if (isAymanTeacher() || (typeof teacherName === 'string' && teacherName === ADMIN_TEACHER.name)) return true;
+  const norm = v => String(v || '').trim().toLocaleLowerCase();
+  const school = norm(schoolName);
+  return getAssignedSchools(teacherName).some(item => norm(item.assigned_school) === school);
+}
+window.canManageSchool = canManageSchool;
+
+function isSchoolManager(teacherName = currentTeacher) {
+  if (!teacherName) return false;
+  if (isAymanTeacher() || (typeof teacherName === 'string' && teacherName === ADMIN_TEACHER.name)) return false;
+  const rec = typeof teacherName === 'object' ? teacherName : getTeachers().find(t => t.teacher_name === teacherName);
+  if (rec && normalizeTeacherRole(rec.teacher_role || rec.role || rec.user_role) === 'admin') return false;
+  const name = typeof teacherName === 'string' ? teacherName : (rec?.teacher_name || '');
+  return getAssignedSchools(name).length > 0;
+}
+window.isSchoolManager = isSchoolManager;
+
+function getEffectiveTeacherRole(teacherNameOrRecord = currentTeacher) {
+  if (isAymanTeacher() || teacherNameOrRecord === ADMIN_TEACHER.name) return 'admin';
+  const rec = typeof teacherNameOrRecord === 'object' ? teacherNameOrRecord : getTeachers().find(t => t.teacher_name === teacherNameOrRecord);
+  if (rec && normalizeTeacherRole(rec.teacher_role || rec.role || rec.user_role) === 'admin') return 'admin';
+  const name = typeof teacherNameOrRecord === 'string' ? teacherNameOrRecord : (rec?.teacher_name || '');
+  if (getAssignedSchools(name).length > 0) return 'school_manager';
+  return 'teacher';
+}
+window.getEffectiveTeacherRole = getEffectiveTeacherRole;
+
+function getEffectiveTeacherRoleTitle(teacherNameOrRecord = currentTeacher) {
+  const role = getEffectiveTeacherRole(teacherNameOrRecord);
+  if (role === 'admin') return 'Admin';
+  if (role === 'school_manager') return 'School Manager';
+  return 'Teacher';
+}
+window.getEffectiveTeacherRoleTitle = getEffectiveTeacherRoleTitle;
+
+function getTeachersForSchool(schoolName) {
+  const norm = v => String(v || '').trim().toLocaleLowerCase();
+  const targetSchool = norm(schoolName);
+  const teachers = getTeachers().filter(t => t.teacher_name && normalizeTeacherRole(t.teacher_role || t.role || t.user_role) !== 'admin');
+  const affiliated = teachers.filter(t => {
+    if (norm(t.school_name) === targetSchool || norm(t.school) === targetSchool) return true;
+    return allData.some(r =>
+      (r.type === 'teacher_school_assignment' || r.type === 'teacher_class_assignment') &&
+      norm(r.assigned_school) === targetSchool &&
+      assignmentMatchesTeacher(r, t.teacher_name)
+    );
+  });
+  if (isAymanTeacher() || affiliated.length === 0) {
+    return teachers;
+  }
+  return affiliated;
+}
+window.getTeachersForSchool = getTeachersForSchool;
+
+async function saveClassTeacherAssignments(schoolName, className, teacherNamesOrIds) {
+  if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) {
+    toast('Please sign in as a teacher.');
+    return { ok: false, error: 'unauthenticated' };
+  }
+  if (!canManageSchool(schoolName)) {
+    toast('Permission denied: only Admins and School Managers of this school can assign teachers.');
+    return { ok: false, error: 'permission_denied' };
+  }
+  const classRec = allData.find(c => c.type === 'class' && c.school_name === schoolName && c.class_name === className);
+  if (!classRec) {
+    toast(`Class "${className}" not found.`);
+    return { ok: false, error: 'not_found' };
+  }
+
+  const availableTeachers = getTeachersForSchool(schoolName);
+  const availableSet = new Set(availableTeachers.map(t => t.teacher_name));
+  
+  if (!isAymanTeacher()) {
+    for (const item of teacherNamesOrIds) {
+      const name = typeof item === 'object' ? item.teacher_name : (getTeachers().find(t => t.__backendId === item)?.teacher_name || item);
+      if (name !== 'Ayman' && !availableSet.has(name)) {
+        toast(`Permission denied: Teacher "${name}" is not registered at ${schoolName}.`);
+        return { ok: false, error: 'unauthorized_teacher' };
+      }
+    }
+  }
+
+  const selectedTeacherNames = [...new Set(teacherNamesOrIds.map(item => {
+    if (typeof item === 'object') return item.teacher_name;
+    const byId = getTeachers().find(t => t.__backendId === item);
+    return byId ? byId.teacher_name : item;
+  }).filter(Boolean))];
+
+  const currentAssignments = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === className);
+  const currentAssignedNames = new Set(currentAssignments.map(assignmentTeacherName));
+
+  const toRemove = currentAssignments.filter(a => !selectedTeacherNames.includes(assignmentTeacherName(a)));
+  const toAddNames = selectedTeacherNames.filter(n => !currentAssignedNames.has(n));
+
+  for (const a of toRemove) {
+    await window.dataSdk.delete(a);
+    allData = allData.filter(r => r.__backendId !== a.__backendId);
+  }
+
+  const newlyAssignedRecords = [];
+  for (const name of toAddNames) {
+    if (name === 'Ayman') continue;
+    const teacherRec = getTeachers().find(t => t.teacher_name === name);
+    const teacherId = teacherRec?.__backendId || '';
+    const payload = {
+      type: 'teacher_class_assignment',
+      school_name: '',
+      class_name: '',
+      student_name: '',
+      coins: 0,
+      pokemon_id: 0,
+      pokemon_name: '',
+      pokemon_rarity: '',
+      pokemon_price: 0,
+      pokemon_power: 0,
+      quiz_question: '',
+      quiz_answer: '',
+      quiz_reward: 0,
+      quiz_solved_by: '',
+      quiz_type: '',
+      quiz_options: '',
+      quiz_image: '',
+      owner: '',
+      created_at: new Date().toISOString(),
+      teacher_name: '',
+      teacher_pin: '',
+      teacher_role: '',
+      avatar_pokemon_id: 0,
+      teacher_credits: 0,
+      log_action: '',
+      log_amount: 0,
+      log_target: '',
+      shop_pokemon_id: 0,
+      shop_pokemon_name: '',
+      shop_pokemon_rarity: '',
+      shop_pokemon_price: 0,
+      shop_pokemon_power: 0,
+      shop_pokemon_hp: 0,
+      quiz_folder: '',
+      folder_name: '',
+      archived: false,
+      quiz_attempts: '',
+      quiz_created_by: '',
+      quiz_class: '',
+      quiz_submitted_answers: '',
+      assigned_teacher: name,
+      assigned_teacher_id: teacherId,
+      assigned_school: schoolName,
+      assigned_class: className
+    };
+    const res = await window.dataSdk.create(payload);
+    if (res?.isOk && res.data) {
+      allData.push(res.data);
+      if (teacherRec) newlyAssignedRecords.push(teacherRec);
+    }
+  }
+
+  const hasAyman = selectedTeacherNames.includes('Ayman');
+  const updatedClass = {
+    ...classRec,
+    assigned_teachers: selectedTeacherNames,
+    show_admin_teacher: hasAyman
+  };
+  await window.dataSdk.update(updatedClass);
+  allData = allData.map(r => r.__backendId === classRec.__backendId ? updatedClass : r);
+
+  if (newlyAssignedRecords.length && window.sendTeacherNotifications) {
+    await window.sendTeacherNotifications(
+      newlyAssignedRecords,
+      'Class assigned to you',
+      `You were assigned to co-manage ${className} at ${schoolName}. Open your dashboard to view the class.`,
+      'class',
+      { target: 'class', school: schoolName, class: className }
+    );
+  }
+
+  try { renderTeacherDashboard(); } catch (_) {}
+  try { window.teacherShellSync?.(); } catch (_) {}
+  return { ok: true, assigned: selectedTeacherNames };
+}
+window.saveClassTeacherAssignments = saveClassTeacherAssignments;
+
+function openAssignClassTeachersModal(schoolName, className) {
+  if (!canManageSchool(schoolName)) {
+    toast('Only Admins and School Managers can change teacher assignments.');
+    return;
+  }
+  const classRec = allData.find(c => c.type === 'class' && c.school_name === schoolName && c.class_name === className);
+  if (!classRec) {
+    toast(`Class "${className}" not found.`);
+    return;
+  }
+
+  const assignedNames = new Set(getClassTeacherNames(schoolName, className));
+  const availableTeachers = getTeachersForSchool(schoolName);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const showAdminOption = isAymanTeacher() || assignedNames.has('Ayman');
+
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4 backdrop-blur-sm';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+      <div class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-5 flex items-start justify-between">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-widest text-indigo-200">Class Teacher Assignment</span>
+          <h2 class="heading-font text-lg font-bold">${esc(className)}</h2>
+          <p class="text-xs text-indigo-100/90">${esc(schoolName)}</p>
+        </div>
+        <button type="button" class="text-white/80 hover:text-white text-xl leading-none font-bold p-1" id="at-close" aria-label="Close">×</button>
+      </div>
+      <div class="p-5 overflow-y-auto flex-1 space-y-4">
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Select teachers registered at <strong>${esc(schoolName)}</strong> to manage this class. Multiple teachers share equal teaching permissions for rosters, vocabulary, quizzes, games, and progress.
+        </p>
+        <div class="border rounded-xl p-3 bg-slate-50/80 space-y-2 max-h-64 overflow-y-auto" id="at-teachers-list">
+          ${showAdminOption ? `
+            <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-white transition cursor-pointer border border-transparent hover:border-indigo-100">
+              <input type="checkbox" class="at-checkbox h-4 w-4 rounded text-indigo-600 cursor-pointer" value="Ayman" ${assignedNames.has('Ayman') ? 'checked' : ''}>
+              <span class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-sm font-bold shadow-sm">👑</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-sm font-bold text-slate-900">Ayman</span>
+                  <span class="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.5 rounded">Admin</span>
+                </div>
+                <small class="text-[11px] text-slate-500 block">System Administrator</small>
+              </div>
+            </label>
+          ` : ''}
+          ${availableTeachers.length ? availableTeachers.map(t => {
+            const isChecked = assignedNames.has(t.teacher_name);
+            const avatar = teacherAvatarSrc(t.teacher_avatar);
+            const isManager = isSchoolManager(t.teacher_name);
+            return `
+              <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-white transition cursor-pointer border border-transparent hover:border-indigo-100">
+                <input type="checkbox" class="at-checkbox h-4 w-4 rounded text-indigo-600 cursor-pointer" value="${esc(t.teacher_name)}" data-id="${esc(t.__backendId)}" ${isChecked ? 'checked' : ''}>
+                ${avatar ? `<img src="${avatar}" class="w-8 h-8 rounded-full object-contain border border-slate-200 bg-white" alt="">` : '<span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold shadow-sm">🎓</span>'}
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-sm font-bold text-slate-900">${esc(t.teacher_name)}</span>
+                    ${isManager ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Manager</span>' : ''}
+                    ${t.teacher_pro ? '<span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">⭐ Pro</span>' : ''}
+                  </div>
+                  <small class="text-[11px] text-slate-500 block truncate">${esc(t.teacher_email || 'Teacher account')}</small>
+                </div>
+              </label>
+            `;
+          }).join('') : '<p class="text-xs text-slate-400 py-3 text-center">No other teachers registered at this school yet.</p>'}
+        </div>
+        <p id="at-status" class="text-xs text-slate-500" aria-live="polite">Assigned teachers will appear in the class header and class card.</p>
+      </div>
+      <div class="p-4 bg-slate-50 border-t flex gap-2">
+        <button type="button" class="flex-1 btn-primary py-2.5 text-sm font-bold rounded-xl" id="at-save">Save Teachers</button>
+        <button type="button" class="btn-outline px-4 py-2.5 text-sm font-bold rounded-xl" id="at-cancel">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector('#at-close').addEventListener('click', close);
+  modal.querySelector('#at-cancel').addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  modal.querySelector('#at-save').addEventListener('click', async () => {
+    const saveBtn = modal.querySelector('#at-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    const selected = [...modal.querySelectorAll('.at-checkbox:checked')].map(cb => cb.value);
+    const res = await saveClassTeacherAssignments(schoolName, className, selected);
+    if (res?.ok) {
+      toast(`Updated teachers for ${className}!`);
+      close();
+    } else {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Teachers';
+    }
+  });
+}
+window.openAssignClassTeachersModal = openAssignClassTeachersModal;
+
+function openManageClassTeachersModal(schoolName) {
+  if (!canManageSchool(schoolName)) {
+    toast('Only Admins and School Managers can access class teacher management.');
+    return;
+  }
+  const classes = getClasses(schoolName).slice().sort((a,b) => String(a.class_name).localeCompare(String(b.class_name)));
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4 backdrop-blur-sm';
+  modal.innerHTML = `
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden text-slate-800 animate-in fade-in zoom-in-95 duration-150">
+      <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-5 flex items-start justify-between">
+        <div>
+          <span class="text-[10px] font-black uppercase tracking-widest text-blue-200">School Management</span>
+          <h2 class="heading-font text-lg sm:text-xl font-bold">Manage Class Teachers</h2>
+          <p class="text-xs text-blue-100/90 mt-0.5">🏫 ${esc(schoolName)} · ${classes.length} class${classes.length !== 1 ? 'es' : ''}</p>
+        </div>
+        <button type="button" class="text-white/80 hover:text-white text-2xl leading-none font-bold p-1" id="mct-close" aria-label="Close">×</button>
+      </div>
+      <div class="p-5 overflow-y-auto flex-1 space-y-4">
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Assign, add, or remove teachers for each class in <strong>${esc(schoolName)}</strong>. Multiple teachers can manage the same class with equal access to student rosters, vocabulary lists, quizzes, classroom games, and progress.
+        </p>
+        ${classes.length ? `
+          <div class="space-y-4">
+            ${classes.map(cls => {
+              const assigned = getClassTeacherNames(schoolName, cls.class_name);
+              const students = getStudents(schoolName, cls.class_name);
+              return `
+                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 hover:bg-slate-50 transition shadow-sm" data-class-name="${esc(cls.class_name)}">
+                  <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                    <div>
+                      <h3 class="font-bold text-slate-900 text-base">${esc(cls.class_name)}</h3>
+                      <span class="text-xs text-slate-500 font-medium">👥 ${students.length} student${students.length !== 1 ? 's' : ''} · Level ${esc(cls.class_level || 'P4')}</span>
+                    </div>
+                    <button type="button" class="btn-primary text-xs px-3 py-1.5 rounded-lg font-bold mct-quick-assign-btn" data-class="${esc(cls.class_name)}">
+                      Assign Teachers (${assigned.length})
+                    </button>
+                  </div>
+                  <div class="mb-2">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Currently Assigned Teachers:</span>
+                    <div class="flex flex-wrap gap-1.5">
+                      ${assigned.length ? assigned.map(name => {
+                        const avatar = classTeacherAvatarFor(name);
+                        return `<span class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-800 text-xs px-2.5 py-1 rounded-full font-semibold shadow-2xs">
+                          ${avatar ? `<img src="${avatar}" class="w-4 h-4 rounded-full object-contain" alt="">` : '🎓'}
+                          TR. ${esc(name)}
+                        </span>`;
+                      }).join('') : '<span class="text-xs text-amber-700 italic">No teachers assigned yet.</span>'}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : '<p class="text-center text-slate-400 py-8 text-sm">No classes created in this school yet.</p>'}
+      </div>
+      <div class="p-4 bg-slate-50 border-t flex justify-end">
+        <button type="button" class="btn-primary px-6 py-2.5 text-sm font-bold rounded-xl" id="mct-done">Done</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector('#mct-close').addEventListener('click', close);
+  modal.querySelector('#mct-done').addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  modal.querySelectorAll('.mct-quick-assign-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const clsName = btn.dataset.class;
+      close();
+      openAssignClassTeachersModal(schoolName, clsName);
+    });
+  });
+}
+window.openManageClassTeachersModal = openManageClassTeachersModal;
+
 function getClassTeacherNames(schoolName, className) {
   const names = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === className).map(assignmentTeacherName).filter(Boolean);
   const cls = getClasses(schoolName).find(c => c.class_name === className);
   const rest = names.filter(n => n !== 'Ayman');
   if (cls && cls.show_admin_teacher === true) rest.unshift('Ayman');
+  if (cls && Array.isArray(cls.assigned_teachers)) {
+    cls.assigned_teachers.forEach(t => { if (t && !rest.includes(t)) rest.push(t); });
+  }
+  if (cls && cls.main_manager_name && !rest.includes(cls.main_manager_name)) {
+    rest.push(cls.main_manager_name);
+  }
   return [...new Set(rest)];
 }
 window.getClassTeacherNames = getClassTeacherNames;
+
 function classTeacherAvatarFor(name) {
   const clean = String(name || '').replace(/^TR\.\s*/i, '').trim();
   const rec = clean === 'Ayman' ? getAdminTeacherRecord() : getTeachers().find(t => t.teacher_name === clean && t.teacher_role !== 'admin');
   return teacherAvatarSrc(rec?.teacher_avatar);
 }
 window.classTeacherAvatarFor = classTeacherAvatarFor;
+
 function getAdminTeacherRecord() { const t = getTeachers(); return t.find(r => r.teacher_role === 'admin') || t.find(r => r.teacher_name === 'Ayman') || null; }
+
 function classTeacherPill(schoolName, className) {
   const names = getClassTeacherNames(schoolName, className);
-  if (!names.length) return '';
+  const canAssign = canManageSchool(schoolName);
   const esc = v => String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const visibleNames = names.slice(0, 2);
   const hiddenCount = Math.max(0, names.length - visibleNames.length);
-  return `<span class="class-teacher-pill" title="Class teachers">${visibleNames.map(n => { const src = classTeacherAvatarFor(n); const cleanName = n.replace(/^TR\.\s*/i, ''); const teacher = cleanName === 'Ayman' ? getAdminTeacherRecord() : getTeachers().find(record => record.teacher_name === cleanName); const isAdmin = cleanName === 'Ayman' || teacher?.teacher_role === 'admin'; const badges = `${isAdmin ? '<span class="class-teacher-badge is-admin" role="img" aria-label="Admin" title="Admin">👑</span>' : ''}${teacher?.teacher_pro === true ? '<span class="class-teacher-badge is-pro" role="img" aria-label="Pro" title="Pro">⭐</span>' : ''}`; return `<span class="class-teacher-item" title="TR. ${esc(n)}">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}<span class="class-teacher-label">TR. ${esc(cleanName)}${badges}</span></span>`; }).join('')}${hiddenCount ? `<span class="class-teacher-more" aria-label="${hiddenCount} more teacher${hiddenCount === 1 ? '' : 's'}">+${hiddenCount} more</span>` : ''}</span>`;
+  const teachersHtml = visibleNames.map(n => {
+    const src = classTeacherAvatarFor(n);
+    const cleanName = n.replace(/^TR\.\s*/i, '');
+    const teacher = cleanName === 'Ayman' ? getAdminTeacherRecord() : getTeachers().find(record => record.teacher_name === cleanName);
+    const isAdmin = cleanName === 'Ayman' || teacher?.teacher_role === 'admin';
+    const isManager = isSchoolManager(cleanName);
+    const badges = `${isAdmin ? '<span class="class-teacher-badge is-admin" role="img" aria-label="Admin" title="Admin">👑</span>' : (isManager ? '<span class="class-teacher-badge is-manager" role="img" aria-label="Manager" title="School Manager">🛡️</span>' : '')}${teacher?.teacher_pro === true ? '<span class="class-teacher-badge is-pro" role="img" aria-label="Pro" title="Pro">⭐</span>' : ''}`;
+    return `<span class="class-teacher-item" title="TR. ${esc(n)}">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}<span class="class-teacher-label">TR. ${esc(cleanName)}${badges}</span></span>`;
+  }).join('') + (hiddenCount ? `<span class="class-teacher-more" aria-label="${hiddenCount} more teacher${hiddenCount === 1 ? '' : 's'}">+${hiddenCount} more</span>` : '');
+
+  const assignBtnHtml = canAssign ? `<button type="button" class="class-teacher-assign-btn" title="Assign teachers" onclick="event.stopPropagation(); openAssignClassTeachersModal('${esc(schoolName)}','${esc(className)}')">👥 Assign</button>` : '';
+
+  return `<span class="class-teacher-pill ${canAssign ? 'is-assignable' : ''}" title="${canAssign ? 'Click to assign teachers' : 'Class teachers'}" ${canAssign ? `onclick="event.stopPropagation(); openAssignClassTeachersModal('${esc(schoolName)}','${esc(className)}');"` : ''}>${teachersHtml || '<span class="class-teacher-empty">No teachers assigned</span>'}${assignBtnHtml}</span>`;
 }
+
 function getAssignedClasses(teacherName) {
-  return allData.filter(r => r.type === 'teacher_class_assignment' && assignmentMatchesTeacher(r, teacherName));
+  const norm = v => String(v || '').trim().toLocaleLowerCase();
+  const targetTeacher = norm(teacherName);
+  const assignments = allData.filter(r => r.type === 'teacher_class_assignment' && assignmentMatchesTeacher(r, teacherName));
+  const assignedKeys = new Set(assignments.map(r => `${norm(r.assigned_school)}||${norm(r.assigned_class)}`));
+  const classRecs = allData.filter(r => r.type === 'class');
+  classRecs.forEach(c => {
+    const key = `${norm(c.school_name)}||${norm(c.class_name)}`;
+    if (assignedKeys.has(key)) return;
+    if (Array.isArray(c.assigned_teachers) && c.assigned_teachers.some(t => norm(t) === targetTeacher)) {
+      assignments.push({
+        type: 'teacher_class_assignment',
+        assigned_teacher: teacherName,
+        assigned_school: c.school_name,
+        assigned_class: c.class_name,
+        __virtual: true
+      });
+      assignedKeys.add(key);
+    }
+  });
+  return assignments;
 }
 window.getAssignedClasses = getAssignedClasses;
 async function deleteTeacher(teacherId, name) { if (name === 'Ayman') { toast('Cannot delete admin!'); return; } const teacher = allData.find(t => t.__backendId === teacherId); if (teacher) { await window.dataSdk.delete(teacher); toast(`${name} deleted!`); } }
@@ -15867,7 +16330,8 @@ async function openEditSchoolModal(schoolId, schoolName) {
   const modal = document.createElement('div'); modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
   const currentAssignments = allData.filter(record => record.type === 'teacher_school_assignment' && record.assigned_school === schoolName);
   const assignedTeacherIds = new Set(currentAssignments.map(record => String(record.assigned_teacher_id || '').trim()).filter(Boolean));
-  modal.innerHTML = `<div class="bg-white rounded-xl shadow-lg w-96 max-h-[90vh] overflow-y-auto"><div class="sticky top-0 bg-blue-500 text-white p-6 rounded-t-xl"><h2 class="heading-font text-lg font-bold">Edit School</h2></div><form class="p-6 space-y-4"><div><label class="text-xs font-semibold text-gray-600 block mb-2" for="es-name">School Name</label><input type="text" id="es-name" value="${schoolName}" class="w-full border rounded-lg px-3 py-2 text-sm" required></div><fieldset><legend class="text-xs font-semibold text-gray-600 block mb-3">Assign Teachers</legend><div class="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50" role="group" aria-label="Assign teachers">${allTeachers.length > 0 ? allTeachers.map(t => { const teacherId = String(t.__backendId || '').trim(); const checked = assignedTeacherIds.has(teacherId); return `<label class="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded transition text-sm text-indigo-950"><input type="checkbox" class="es-teacher-checkbox h-4 w-4 shrink-0" value="${teacherId}" data-teacher-id="${teacherId}" data-teacher-name="${t.teacher_name}" ${checked ? 'checked' : ''}><span class="select-none">${t.teacher_name}</span></label>`; }).join('') : '<p class="text-xs text-gray-500">No teachers available</p>'}</div><p id="es-assignment-status" class="text-xs text-gray-500 mt-2" aria-live="polite">${allTeachers.length ? 'Select one or more teachers, or leave all unchecked to remove assignments.' : 'No teachers available to assign.'}</p></fieldset><p id="es-error" class="hidden text-xs text-red-600 font-semibold" role="alert" aria-live="polite"></p><div class="flex gap-2"><button type="submit" class="flex-1 btn-primary">Save</button><button type="button" class="flex-1 btn-secondary" id="es-delete">Delete School</button><button type="button" class="flex-1 btn-outline" id="es-cancel">Cancel</button></div></form></div>`;
+  modal.innerHTML = `<div class="bg-white rounded-xl shadow-lg w-96 max-h-[90vh] overflow-y-auto"><div class="sticky top-0 bg-blue-500 text-white p-6 rounded-t-xl"><h2 class="heading-font text-lg font-bold">Edit School</h2></div><form class="p-6 space-y-4"><div><label class="text-xs font-semibold text-gray-600 block mb-2" for="es-name">School Name</label><input type="text" id="es-name" value="${schoolName}" class="w-full border rounded-lg px-3 py-2 text-sm" required></div><button type="button" class="w-full btn-secondary text-sm font-bold py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 mb-3" id="es-manage-class-teachers">👥 Manage Class Teachers</button>
+<fieldset><legend class="text-xs font-semibold text-gray-600 block mb-3">Assign School Managers</legend><div class="space-y-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-gray-50" role="group" aria-label="Assign teachers">${allTeachers.length > 0 ? allTeachers.map(t => { const teacherId = String(t.__backendId || '').trim(); const checked = assignedTeacherIds.has(teacherId); return `<label class="flex items-center gap-2 cursor-pointer hover:bg-white p-2 rounded transition text-sm text-indigo-950"><input type="checkbox" class="es-teacher-checkbox h-4 w-4 shrink-0" value="${teacherId}" data-teacher-id="${teacherId}" data-teacher-name="${t.teacher_name}" ${checked ? 'checked' : ''}><span class="select-none">${t.teacher_name}</span></label>`; }).join('') : '<p class="text-xs text-gray-500">No teachers available</p>'}</div><p id="es-assignment-status" class="text-xs text-gray-500 mt-2" aria-live="polite">${allTeachers.length ? 'Select one or more teachers, or leave all unchecked to remove assignments.' : 'No teachers available to assign.'}</p></fieldset><p id="es-error" class="hidden text-xs text-red-600 font-semibold" role="alert" aria-live="polite"></p><div class="flex gap-2"><button type="submit" class="flex-1 btn-primary">Save</button>${currentTeacher === 'Ayman' ? '<button type="button" class="flex-1 btn-secondary" id="es-delete">Delete School</button>' : ''}<button type="button" class="flex-1 btn-outline" id="es-cancel">Cancel</button></div></form></div>`;
   document.body.appendChild(modal);
   
   modal.querySelector('form').addEventListener('submit', async e => { 
