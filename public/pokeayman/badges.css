@@ -118,7 +118,7 @@ html body #app-screen#app-screen#app-screen#app-screen #view-students #students-
 html body #app-screen#app-screen#app-screen#app-screen #view-students #students-list > .global-rank-card .student-roster-coins { color: var(--rank-edge) !important; }
 @keyframes pk-foil { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 @media (prefers-reduced-motion: reduce) { html body #students-list > .global-rank-card::after { animation: none !important; } }
-#view-student-profile #profile-student-classes { white-space: normal; overflow-wrap: anywhere; }
+#view-student-profile #profile-student-classes { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .pk-pin-global-1 { --pin-a: #fff1a8; --pin-b: #d4a017; --pin-ink: #2a1a00; }
 .pk-pin-global-2 { --pin-a: #c4b5fd; --pin-b: #6d28d9; --pin-ink: #fff; }
 .pk-pin-global-3 { --pin-a: #67e8f9; --pin-b: #2563eb; --pin-ink: #fff; }

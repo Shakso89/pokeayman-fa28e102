@@ -8152,6 +8152,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
           <span class="profile-back-to-class-label">Back to Class</span>
          </button>
+         <div class="profile-classes-dock" id="profile-classes-dock" aria-label="Enrolled Classes">
+          <span class="profile-classes-label">
+           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+           <span>Classes</span>
+          </span>
+          <div class="profile-classes-pills" id="profile-student-classes" role="tablist" aria-label="Switch student class"></div>
+         </div>
         </div>
         <section class="cp-overview stat-card-glass" aria-label="Student overview">
          <div class="cp-identity">
@@ -8164,8 +8171,11 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </div>
           <div class="cp-name">
            <h2 id="profile-student-name"></h2>
-           <p class="cp-label" id="profile-student-classes" style="white-space: normal; overflow-wrap: anywhere;"></p>
-           <p class="cp-label" id="profile-student-school" style="white-space: normal; overflow-wrap: anywhere;"></p>
+           <div class="cp-active-class-pill" id="profile-active-class-pill" title="Currently viewed class">
+            <span class="cp-active-class-icon" aria-hidden="true">🏫</span>
+            <span id="profile-current-class-name">Pokémon Trainer</span>
+           </div>
+           <p class="cp-label hidden" id="profile-student-school" style="white-space: normal; overflow-wrap: anywhere;"></p>
            <div id="profile-top3-badge" class="hidden flex flex-wrap items-center gap-1">
             <div id="profile-rank-badge"><span id="profile-medal-emoji"></span> <span id="profile-rank-text"></span></div>
             <span id="profile-quiz-solver-badge" class="hidden">🏆 Good Job</span>
@@ -17995,21 +18005,73 @@ function handleProfileBackToClass() {
     navigateTo('schools');
   }
 }
+function switchStudentProfileClass(schoolName, className) {
+  if (!schoolName || !className) return;
+  schoolName = String(schoolName).trim();
+  className = String(className).trim();
+  if (navSchool === schoolName && navClass === className) return;
+  navSchool = schoolName;
+  navClass = className;
+  if (typeof selectedStudentClassKey !== 'undefined') {
+    selectedStudentClassKey = `${schoolName}||${className}`;
+  }
+  
+  // Re-evaluate authorization for newly switched class
+  const isSchoolAssigned = currentTeacher === 'Ayman' || (typeof getAssignedSchools === 'function' && getAssignedSchools(currentTeacher).some(a => a.assigned_school === navSchool));
+  const isClassAssigned = currentTeacher === 'Ayman' || (typeof getAssignedClasses === 'function' && getAssignedClasses(currentTeacher).some(a => a.assigned_class === navClass && a.assigned_school === navSchool));
+  const isAuthorized = isSchoolAssigned || isClassAssigned;
+  const isViewOnly = !isAuthorized && navClass && navSchool;
+
+  navigateTo('student-profile', navSchool, navClass, profileStudent?.student_name || '');
+  renderStudentProfile(isViewOnly);
+  if (typeof toast === 'function') {
+    toast(`Switched view to ${className} (${schoolName})`);
+  }
+}
+window.switchStudentProfileClass = switchStudentProfileClass;
+
 window.handleProfileBackToClass = handleProfileBackToClass;function renderStudentProfile(isViewOnly = false) {
   if (!profileStudent) return;
-  const targetClassName = navClass || profileStudent?.class_name || '';
-  const backLabelText = targetClassName ? 'Back to ' + targetClassName : 'Back to Class';
-  document.querySelectorAll('.profile-back-to-class-label').forEach(el => { el.textContent = backLabelText; });
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const jsStr = v => String(v ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+
+  // Find all classes the student belongs to
+  const enrolledClasses = [];
+  const seenClassKeys = new Set();
+  const registerClass = (school, cls) => {
+    school = String(school || '').trim();
+    cls = String(cls || '').trim();
+    if (!school || !cls) return;
+    const key = `${school.toLowerCase()}||${cls.toLowerCase()}`;
+    if (seenClassKeys.has(key)) return;
+    seenClassKeys.add(key);
+    enrolledClasses.push({ school_name: school, class_name: cls });
+  };
+
+  const studentNameKey = normalizeStudentIdentity(profileStudent.student_name);
+  const matchingRecs = getAllStudents().filter(st => normalizeStudentIdentity(st.student_name) === studentNameKey);
+  const candidateRecs = matchingRecs.length ? matchingRecs : [profileStudent];
   
-  // Populate class and school info in the profile header
-  const profileStudentClass = document.getElementById('profile-student-classes');
-  const profileStudentSchool = document.getElementById('profile-student-school');
-  if (profileStudentClass) {
-    profileStudentClass.textContent = targetClassName || 'Pokémon Trainer';
-  }
-  if (profileStudentSchool && profileStudentSchool.style) {
-    profileStudentSchool.textContent = profileStudent?.school_name || '';
-  }
+  candidateRecs.forEach(rec => {
+    normalizeStudentMembershipValues(rec.class_memberships, []).forEach(val => {
+      String(val).split('||').forEach(part => {
+        const text = String(part || '').trim();
+        const sep = text.indexOf(' / ');
+        if (sep > -1) registerClass(text.slice(0, sep), text.slice(sep + 3));
+      });
+    });
+    if (rec.school_name && rec.class_name) registerClass(rec.school_name, rec.class_name);
+  });
+  if (navSchool && navClass) registerClass(navSchool, navClass);
+  if (profileStudent.school_name && profileStudent.class_name) registerClass(profileStudent.school_name, profileStudent.class_name);
+
+  // Determine current active class context
+  const activeSchool = navSchool || profileStudent?.school_name || (enrolledClasses[0]?.school_name || '');
+  const activeClass = navClass || profileStudent?.class_name || (enrolledClasses[0]?.class_name || '');
+  
+  // Update back button
+  const backLabelText = activeClass ? 'Back to ' + activeClass : 'Back to Class';
+  document.querySelectorAll('.profile-back-to-class-label').forEach(el => { el.textContent = backLabelText; });
   
   // Show tabs and controls for authorized teachers; hide only for completely unassigned teachers
   if (isViewOnly) {
@@ -18036,13 +18098,46 @@ window.handleProfileBackToClass = handleProfileBackToClass;function renderStuden
   
   // Student name and avatar
   document.getElementById('profile-student-name').textContent = `${profileStudent.student_name}`;
-  try {
-    const rec = getAllStudents().find(st => normalizeStudentIdentity(st.student_name) === normalizeStudentIdentity(profileStudent.student_name)) || profileStudent;
-    const seen = new Set(); const list = [];
-    String(rec.class_memberships || '').split('||').concat(rec.school_name && rec.class_name ? [`${rec.school_name} / ${rec.class_name}`] : []).forEach(t => { t = String(t).trim(); if (t && !seen.has(t)) { seen.add(t); list.push(t.replace(' / ', ' · ')); } });
-    const el = document.getElementById('profile-student-classes');
-    if (el) { el.textContent = list.length ? list.join('  |  ') : 'No classes yet'; el.title = list.join(', '); }
-  } catch (e) {}
+
+  // Update current active class display inside profile identity
+  const currentClassNameEl = document.getElementById('profile-current-class-name');
+  if (currentClassNameEl) {
+    const levelLabel = (typeof getClassReadingLevelLabel === 'function' && activeSchool && activeClass) ? getClassReadingLevelLabel(activeSchool, activeClass) : '';
+    const otherCount = enrolledClasses.length > 1 ? ` · <span class="cp-other-classes-badge">${enrolledClasses.length} Classes</span>` : '';
+    currentClassNameEl.innerHTML = (activeSchool && activeClass)
+      ? `${esc(activeSchool)} · <strong>${esc(activeClass)}</strong>${levelLabel ? ` <span class="cp-level-chip">${esc(levelLabel)}</span>` : ''}${otherCount}`
+      : 'Pokémon Trainer';
+  }
+  const profileStudentSchool = document.getElementById('profile-student-school');
+  if (profileStudentSchool && profileStudentSchool.style) {
+    profileStudentSchool.textContent = activeSchool || '';
+  }
+
+  // Render enrolled classes pills inside classes dock
+  const profileStudentClassesEl = document.getElementById('profile-student-classes');
+  if (profileStudentClassesEl) {
+    if (!enrolledClasses.length) {
+      profileStudentClassesEl.innerHTML = '<span class="profile-class-pill is-empty">No classes yet</span>';
+    } else {
+      profileStudentClassesEl.innerHTML = enrolledClasses.map(item => {
+        const isActive = item.school_name.toLowerCase() === activeSchool.toLowerCase() && item.class_name.toLowerCase() === activeClass.toLowerCase();
+        const levelLabel = (typeof getClassReadingLevelLabel === 'function') ? getClassReadingLevelLabel(item.school_name, item.class_name) : '';
+        const schoolEsc = esc(item.school_name);
+        const classEsc = esc(item.class_name);
+        const jsSchool = jsStr(item.school_name);
+        const jsClass = jsStr(item.class_name);
+        return `<button type="button" class="profile-class-pill ${isActive ? 'is-active' : ''}" ` +
+          `role="tab" aria-selected="${isActive}" ` +
+          `title="${isActive ? 'Current class: ' + classEsc : 'Switch to ' + classEsc + ' (' + schoolEsc + ')'}" ` +
+          `${isActive ? '' : `onclick="switchStudentProfileClass('${jsSchool}', '${jsClass}')"`}>` +
+          `<span class="pill-icon" aria-hidden="true">🏫</span>` +
+          `<span class="pill-name">${schoolEsc} · <strong>${classEsc}</strong></span>` +
+          `${levelLabel ? `<span class="pill-level">${esc(levelLabel)}</span>` : ''}` +
+          `${isActive ? '<span class="pill-active-badge">Active</span>' : ''}` +
+          `</button>`;
+      }).join('');
+    }
+  }
   
   // Check if student is in top 3 globally
   const allStudents = getAllStudents().sort((a, b) => {
