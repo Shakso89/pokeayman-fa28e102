@@ -7359,6 +7359,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   }
   function closeGame() {
     if (session?.timer) clearTimeout(session.timer);
+    if (typeof lcSpeechTimer !== 'undefined' && lcSpeechTimer) { clearTimeout(lcSpeechTimer); lcSpeechTimer = null; }
     window.speechSynthesis?.cancel();
     session?.root?.remove();
     session = null;
@@ -7370,10 +7371,44 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (stage) stage.remove();
     catchdexViewer = null;
   };
+  let lcSpeechTimer = null;
+  function setListenSpeakingState(speaking, durationMs = 2200) {
+    const listenBtn = session?.root?.querySelector('.lc-listen');
+    if (!listenBtn) return;
+    if (lcSpeechTimer) { clearTimeout(lcSpeechTimer); lcSpeechTimer = null; }
+    if (speaking) {
+      listenBtn.classList.add('is-speaking');
+      lcSpeechTimer = setTimeout(() => {
+        listenBtn.classList.remove('is-speaking');
+        lcSpeechTimer = null;
+      }, durationMs);
+    } else {
+      listenBtn.classList.remove('is-speaking');
+    }
+  }
+
   function speak(word) {
     window.speechSynthesis?.cancel();
-    if (typeof window.readNaturalVocabulary === 'function') window.readNaturalVocabulary(word, null, { level: window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4' });
-    else { const level = window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4'; const rates = { Beginner: .92, Good: 1, Confident: 1.08, P1: .82, P2: .85, P3: .9, P4: .92, P5: 1, P6: 1.08 }; const utterance = new SpeechSynthesisUtterance(word); utterance.rate = rates[level] || .92; window.speechSynthesis?.speak(utterance); }
+    const wordText = String(word || '');
+    const wordCount = wordText.trim().split(/\s+/).filter(Boolean).length;
+    const estDuration = Math.min(6500, Math.max(1600, wordCount * 450 + 600));
+    setListenSpeakingState(true, estDuration);
+
+    const onDone = () => { setListenSpeakingState(false); };
+    if (typeof window.readNaturalVocabulary === 'function') {
+      window.readNaturalVocabulary(word, null, {
+        level: window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4',
+        onEnd: onDone
+      });
+    } else {
+      const level = window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4';
+      const rates = { Beginner: .92, Good: 1, Confident: 1.08, P1: .82, P2: .85, P3: .9, P4: .92, P5: 1, P6: 1.08 };
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.rate = rates[level] || .92;
+      utterance.onend = onDone;
+      utterance.onerror = onDone;
+      window.speechSynthesis?.speak(utterance);
+    }
   }
   function gameWords(listName) {
     // A previous teacher session can leave the global list source set to
@@ -7521,7 +7556,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
     const dailyBefore = ballsEarnedToday(saved);
     const dailyAtLimit = dailyEarnedBefore >= DAILY_BALL_LIMIT;
-    root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span class="lc-pro-tag">👑 PRO FEATURE • LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><span aria-hidden="true">🔊</span><span class="lc-listen-label">Hear the sentence</span></button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div><section class="lc-reward-panel" aria-label="Catch Balls earned during this game"><div class="lc-reward-icon"><img src="/pokeayman/assets/catch-ball.png" alt="" onerror="this.onerror=null;this.src='/pokeayman/assets/balls/1.png';"></div><div class="lc-reward-copy"><span>ROUND REWARDS</span><strong><b class="lc-balls">0</b> Catch Balls this game</strong><div class="lc-reward-track"><i class="lc-reward-fill"></i></div><small class="lc-reward-status">0 of ${words.length} rounds rewarded</small><small class="lc-daily-cap${dailyAtLimit ? ' is-limit' : ''}">${dailyAtLimit ? `Daily limit reached (${dailyBefore}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyBefore} / ${DAILY_BALL_LIMIT} Catch Balls`}</small></div></section></section></main>`;
+    root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span class="lc-pro-tag">👑 PRO FEATURE • LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><div class="audio-wave-visualizer lc-audio-wave" aria-hidden="true"><span class="audio-wave-bar bar-1"></span><span class="audio-wave-bar bar-2"></span><span class="audio-wave-bar bar-3"></span><span class="audio-wave-bar bar-4"></span><span class="audio-wave-bar bar-5"></span><span class="audio-wave-bar bar-6"></span><span class="audio-wave-bar bar-7"></span><span class="audio-wave-bar bar-8"></span></div><span class="lc-listen-label">Hear the sentence</span></button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div><section class="lc-reward-panel" aria-label="Catch Balls earned during this game"><div class="lc-reward-icon"><img src="/pokeayman/assets/catch-ball.png" alt="" onerror="this.onerror=null;this.src='/pokeayman/assets/balls/1.png';"></div><div class="lc-reward-copy"><span>ROUND REWARDS</span><strong><b class="lc-balls">0</b> Catch Balls this game</strong><div class="lc-reward-track"><i class="lc-reward-fill"></i></div><small class="lc-reward-status">0 of ${words.length} rounds rewarded</small><small class="lc-daily-cap${dailyAtLimit ? ' is-limit' : ''}">${dailyAtLimit ? `Daily limit reached (${dailyBefore}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyBefore} / ${DAILY_BALL_LIMIT} Catch Balls`}</small></div></section></section></main>`;
     const gameMain = root.querySelector('.lc-main');
     const rewardPanel = gameMain?.querySelector('.lc-reward-panel');
     if (gameMain && rewardPanel) gameMain.insertBefore(rewardPanel, gameMain.firstChild);
@@ -13521,12 +13556,29 @@ window.stopNaturalVocabulary = () => {
   }
   if (window._currentReadingButton) {
     try {
-      window._currentReadingButton.textContent = window._currentReadingOriginalText || '🔊 Read';
+      if (window._currentReadingOriginalHtml) window._currentReadingButton.innerHTML = window._currentReadingOriginalHtml;
+       else window._currentReadingButton.textContent = window._currentReadingOriginalText || 'Read';
+       window._currentReadingButton.classList.remove('is-speaking');
       window._currentReadingButton.disabled = false;
       window._currentReadingButton.removeAttribute('aria-busy');
     } catch {}
     window._currentReadingButton = null;
   }
+};
+
+window.getAudioWaveHtml = function(size = 'sm', active = false) {
+  const sizeClass = size === 'xs' ? 'audio-wave-xs' : (size === 'lg' ? 'audio-wave-lg' : 'audio-wave-sm');
+  const activeClass = active ? ' is-speaking' : '';
+  return '<span class="audio-wave-visualizer ' + sizeClass + activeClass + '" aria-hidden="true">' +
+    '<span class="audio-wave-bar bar-1"></span>' +
+    '<span class="audio-wave-bar bar-2"></span>' +
+    '<span class="audio-wave-bar bar-3"></span>' +
+    '<span class="audio-wave-bar bar-4"></span>' +
+    '<span class="audio-wave-bar bar-5"></span>' +
+    '<span class="audio-wave-bar bar-6"></span>' +
+    '<span class="audio-wave-bar bar-7"></span>' +
+    '<span class="audio-wave-bar bar-8"></span>' +
+  '</span>';
 };
 
 window.readNaturalVocabulary = async (text, button, options = {}) => {
@@ -13549,13 +13601,21 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
 
   window._vocabularyReading = true;
   window._currentReadingButton = button || null;
+  const originalHtml = button?.innerHTML;
   const original = button?.textContent;
+  window._currentReadingOriginalHtml = originalHtml;
   window._currentReadingOriginalText = original;
 
   if (button) {
-    button.textContent = '🔊 …';
+    const waveEl = button.querySelector('.audio-wave-visualizer');
+    if (waveEl) {
+      waveEl.classList.add('is-speaking');
+    } else {
+      button.innerHTML = window.getAudioWaveHtml('sm', true) + '<span class="audio-wave-btn-text">Reading...</span>';
+    }
     button.disabled = true;
     button.setAttribute('aria-busy', 'true');
+    button.classList.add('is-speaking');
   }
 
   const rawLevel = options?.level
@@ -13579,11 +13639,25 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
       utterance.rate = rates[rawLevel] || rates[level] || 0.92;
       utterance.onend = () => {
         window._vocabularyReading = false;
-        if (button) { button.textContent = original; button.disabled = false; button.removeAttribute('aria-busy'); }
+        if (button) {
+          if (originalHtml) button.innerHTML = originalHtml;
+          else button.textContent = original;
+          button.disabled = false;
+          button.removeAttribute('aria-busy');
+          button.classList.remove('is-speaking');
+        }
+        if (typeof options?.onEnd === 'function') { try { options.onEnd(); } catch {} }
       };
       utterance.onerror = () => {
         window._vocabularyReading = false;
-        if (button) { button.textContent = original; button.disabled = false; button.removeAttribute('aria-busy'); }
+        if (button) {
+          if (originalHtml) button.innerHTML = originalHtml;
+          else button.textContent = original;
+          button.disabled = false;
+          button.removeAttribute('aria-busy');
+          button.classList.remove('is-speaking');
+        }
+        if (typeof options?.onEnd === 'function') { try { options.onEnd(); } catch {} }
       };
       window.speechSynthesis.speak(utterance);
       return;
@@ -13593,11 +13667,14 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
   } finally {
     window._vocabularyReading = false;
     if (button) {
-      button.textContent = original;
+      if (originalHtml) button.innerHTML = originalHtml;
+      else button.textContent = original;
       button.disabled = false;
       button.removeAttribute('aria-busy');
+      button.classList.remove('is-speaking');
     }
     window._currentReadingButton = null;
+    if (typeof options?.onEnd === 'function') { try { options.onEnd(); } catch {} }
   }
 };
 
@@ -14542,7 +14619,7 @@ function openStudentVocabularyFlashcards(listName, trigger = null) {
   let flipped = false;
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="flashcard-popup-shell student-flashcard-shell teacher-flashcard-shell w-full max-w-[19rem] sm:max-w-[19rem] mx-auto px-0" style="--flashcard-scale:1;--student-flashcard-scale:1;"><div class="flashcard-popup-frame student-flashcard-frame teacher-flashcard-frame bg-white rounded-xl shadow-lg p-2 sm:p-3 text-center"><div class="flashcard-popup-header flex items-center gap-1 sm:gap-2 mb-1 w-full overflow-hidden"><p class="text-xs text-gray-400 font-semibold shrink-0 mr-auto"><span id="student-vocab-progress">1 / ${words.length}</span></p><div class="flashcard-controls-row flex items-center gap-1 shrink-0" role="group" aria-label="Word size"><span class="text-xs font-semibold text-gray-500 whitespace-nowrap">Word size</span><button id="student-vocab-font-decrease" type="button" class="btn-outline px-2 py-1 text-sm shrink-0" aria-label="Decrease word size">A−</button><button id="student-vocab-font-increase" type="button" class="btn-primary px-2 py-1 text-sm shrink-0" aria-label="Increase word size">A+</button></div><div class="flex items-center gap-1 shrink-0" role="group" aria-label="Flashcard popup size"><button id="student-vocab-size-decrease" type="button" class="btn-outline px-2 py-1 text-sm shrink-0" aria-label="Make flashcard popup smaller">−</button><span id="student-vocab-size-label" class="text-xs font-semibold text-gray-600 min-w-10 text-center" aria-live="polite">100%</span><button id="student-vocab-size-increase" type="button" class="btn-primary px-2 py-1 text-sm shrink-0" aria-label="Make flashcard popup larger">+</button></div></div><button type="button" id="student-vocab-card" class="w-full h-[clamp(11rem,35*min(var(--vh,1vh),1vh),18rem)] mb-2 cursor-pointer rounded-xl border-2 border-blue-200 focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-300" style="perspective:1000px" aria-label="Flip vocabulary card"><div id="student-vocab-card-inner" style="position:relative;width:100%;height:100%;transition:transform .6s ease-out;transform-style:preserve-3d"><div id="student-vocab-card-front" class="w-full h-full flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl" style="backface-visibility:hidden;-webkit-backface-visibility:hidden"></div><div id="student-vocab-card-back" class="w-full h-full flex items-center justify-center p-2 rounded-xl absolute inset-0" style="transform:rotateY(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;background-color:#f3f4f6"></div></div></button><p id="student-vocab-sentence" class="hidden mt-2 text-sm text-slate-600 text-center leading-relaxed" aria-live="polite"></p><div class="flex items-center justify-center gap-2"><button id="student-vocab-read" type="button" class="hidden btn-outline text-xs rounded-lg" aria-label="Read word aloud" style="min-height:1.75rem">🔊 Read word</button><button id="student-vocab-read-sentence" type="button" class="hidden btn-outline text-xs rounded-lg" aria-label="Read sentence aloud">🔊 Read sentence</button></div><div class="flex gap-2 mb-4"><button id="student-vocab-prev" type="button" class="flex-1 btn-outline">← Prev</button><button id="student-vocab-next" type="button" class="flex-1 btn-primary">Next →</button></div><button id="student-vocab-back" type="button" class="w-full btn-outline">Close</button></div></div>`;
+  modal.innerHTML = `<div class="flashcard-popup-shell student-flashcard-shell teacher-flashcard-shell w-full max-w-[19rem] sm:max-w-[19rem] mx-auto px-0" style="--flashcard-scale:1;--student-flashcard-scale:1;"><div class="flashcard-popup-frame student-flashcard-frame teacher-flashcard-frame bg-white rounded-xl shadow-lg p-2 sm:p-3 text-center"><div class="flashcard-popup-header flex items-center gap-1 sm:gap-2 mb-1 w-full overflow-hidden"><p class="text-xs text-gray-400 font-semibold shrink-0 mr-auto"><span id="student-vocab-progress">1 / ${words.length}</span></p><div class="flashcard-controls-row flex items-center gap-1 shrink-0" role="group" aria-label="Word size"><span class="text-xs font-semibold text-gray-500 whitespace-nowrap">Word size</span><button id="student-vocab-font-decrease" type="button" class="btn-outline px-2 py-1 text-sm shrink-0" aria-label="Decrease word size">A−</button><button id="student-vocab-font-increase" type="button" class="btn-primary px-2 py-1 text-sm shrink-0" aria-label="Increase word size">A+</button></div><div class="flex items-center gap-1 shrink-0" role="group" aria-label="Flashcard popup size"><button id="student-vocab-size-decrease" type="button" class="btn-outline px-2 py-1 text-sm shrink-0" aria-label="Make flashcard popup smaller">−</button><span id="student-vocab-size-label" class="text-xs font-semibold text-gray-600 min-w-10 text-center" aria-live="polite">100%</span><button id="student-vocab-size-increase" type="button" class="btn-primary px-2 py-1 text-sm shrink-0" aria-label="Make flashcard popup larger">+</button></div></div><button type="button" id="student-vocab-card" class="w-full h-[clamp(11rem,35*min(var(--vh,1vh),1vh),18rem)] mb-2 cursor-pointer rounded-xl border-2 border-blue-200 focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-300" style="perspective:1000px" aria-label="Flip vocabulary card"><div id="student-vocab-card-inner" style="position:relative;width:100%;height:100%;transition:transform .6s ease-out;transform-style:preserve-3d"><div id="student-vocab-card-front" class="w-full h-full flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl" style="backface-visibility:hidden;-webkit-backface-visibility:hidden"></div><div id="student-vocab-card-back" class="w-full h-full flex items-center justify-center p-2 rounded-xl absolute inset-0" style="transform:rotateY(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;background-color:#f3f4f6"></div></div></button><p id="student-vocab-sentence" class="hidden mt-2 text-sm text-slate-600 text-center leading-relaxed" aria-live="polite"></p><div class="flex items-center justify-center gap-2"><button id="student-vocab-read" type="button" class="hidden btn-outline text-xs rounded-lg" aria-label="Read word aloud" style="min-height:1.75rem"><span class="audio-wave-visualizer audio-wave-xs" aria-hidden="true"><span class="audio-wave-bar bar-1"></span><span class="audio-wave-bar bar-2"></span><span class="audio-wave-bar bar-3"></span><span class="audio-wave-bar bar-4"></span><span class="audio-wave-bar bar-5"></span><span class="audio-wave-bar bar-6"></span><span class="audio-wave-bar bar-7"></span><span class="audio-wave-bar bar-8"></span></span> Read word</button><button id="student-vocab-read-sentence" type="button" class="hidden btn-outline text-xs rounded-lg" aria-label="Read sentence aloud"><span class="audio-wave-visualizer audio-wave-xs" aria-hidden="true"><span class="audio-wave-bar bar-1"></span><span class="audio-wave-bar bar-2"></span><span class="audio-wave-bar bar-3"></span><span class="audio-wave-bar bar-4"></span><span class="audio-wave-bar bar-5"></span><span class="audio-wave-bar bar-6"></span><span class="audio-wave-bar bar-7"></span><span class="audio-wave-bar bar-8"></span></span> Read sentence</button></div><div class="flex gap-2 mb-4"><button id="student-vocab-prev" type="button" class="flex-1 btn-outline">← Prev</button><button id="student-vocab-next" type="button" class="flex-1 btn-primary">Next →</button></div><button id="student-vocab-back" type="button" class="w-full btn-outline">Close</button></div></div>`;
   document.body.appendChild(modal);
   const previousBodyOverflow = document.body.style.overflow;
   document.body.style.overflow = 'hidden';
@@ -23280,7 +23357,7 @@ function openVocabFlashcards(listName) {
           <div id="flashcard-back" class="w-full h-full flex items-center justify-center p-2 rounded-xl absolute inset-0" style="transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden; background-color: #f3f4f6;"></div>
         </div>
       </div>
-      <p id="flashcard-sentence" class="hidden mt-2 text-sm text-slate-600 text-center leading-relaxed" aria-live="polite"></p><div class="flex items-center justify-center gap-2"><button id="flashcard-read" type="button" class="hidden btn-outline text-xs rounded-lg" aria-label="Read word aloud" style="min-height:1.75rem">🔊 Read word</button><button id="flashcard-read-sentence" type="button" class="hidden btn-outline text-xs rounded-lg" aria-label="Read sentence aloud">🔊 Read sentence</button></div>
+      <p id="flashcard-sentence" class="hidden mt-2 text-sm text-slate-600 text-center leading-relaxed" aria-live="polite"></p><div class="flex items-center justify-center gap-2"><button id="flashcard-read" type="button" class="hidden btn-outline text-xs rounded-lg" aria-label="Read word aloud" style="min-height:1.75rem"><span class="audio-wave-visualizer audio-wave-xs" aria-hidden="true"><span class="audio-wave-bar bar-1"></span><span class="audio-wave-bar bar-2"></span><span class="audio-wave-bar bar-3"></span><span class="audio-wave-bar bar-4"></span><span class="audio-wave-bar bar-5"></span><span class="audio-wave-bar bar-6"></span><span class="audio-wave-bar bar-7"></span><span class="audio-wave-bar bar-8"></span></span> Read word</button><button id="flashcard-read-sentence" type="button" class="hidden btn-outline text-xs rounded-lg" aria-label="Read sentence aloud"><span class="audio-wave-visualizer audio-wave-xs" aria-hidden="true"><span class="audio-wave-bar bar-1"></span><span class="audio-wave-bar bar-2"></span><span class="audio-wave-bar bar-3"></span><span class="audio-wave-bar bar-4"></span><span class="audio-wave-bar bar-5"></span><span class="audio-wave-bar bar-6"></span><span class="audio-wave-bar bar-7"></span><span class="audio-wave-bar bar-8"></span></span> Read sentence</button></div>
       
       <div class="flex gap-2 mb-4">
         <button id="flashcard-prev" class="flex-1 btn-outline">← Prev</button>

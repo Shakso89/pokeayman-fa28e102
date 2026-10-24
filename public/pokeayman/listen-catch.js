@@ -624,6 +624,7 @@
   }
   function closeGame() {
     if (session?.timer) clearTimeout(session.timer);
+    if (typeof lcSpeechTimer !== 'undefined' && lcSpeechTimer) { clearTimeout(lcSpeechTimer); lcSpeechTimer = null; }
     window.speechSynthesis?.cancel();
     session?.root?.remove();
     session = null;
@@ -635,10 +636,44 @@
     if (stage) stage.remove();
     catchdexViewer = null;
   };
+  let lcSpeechTimer = null;
+  function setListenSpeakingState(speaking, durationMs = 2200) {
+    const listenBtn = session?.root?.querySelector('.lc-listen');
+    if (!listenBtn) return;
+    if (lcSpeechTimer) { clearTimeout(lcSpeechTimer); lcSpeechTimer = null; }
+    if (speaking) {
+      listenBtn.classList.add('is-speaking');
+      lcSpeechTimer = setTimeout(() => {
+        listenBtn.classList.remove('is-speaking');
+        lcSpeechTimer = null;
+      }, durationMs);
+    } else {
+      listenBtn.classList.remove('is-speaking');
+    }
+  }
+
   function speak(word) {
     window.speechSynthesis?.cancel();
-    if (typeof window.readNaturalVocabulary === 'function') window.readNaturalVocabulary(word, null, { level: window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4' });
-    else { const level = window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4'; const rates = { Beginner: .92, Good: 1, Confident: 1.08, P1: .82, P2: .85, P3: .9, P4: .92, P5: 1, P6: 1.08 }; const utterance = new SpeechSynthesisUtterance(word); utterance.rate = rates[level] || .92; window.speechSynthesis?.speak(utterance); }
+    const wordText = String(word || '');
+    const wordCount = wordText.trim().split(/\s+/).filter(Boolean).length;
+    const estDuration = Math.min(6500, Math.max(1600, wordCount * 450 + 600));
+    setListenSpeakingState(true, estDuration);
+
+    const onDone = () => { setListenSpeakingState(false); };
+    if (typeof window.readNaturalVocabulary === 'function') {
+      window.readNaturalVocabulary(word, null, {
+        level: window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4',
+        onEnd: onDone
+      });
+    } else {
+      const level = window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4';
+      const rates = { Beginner: .92, Good: 1, Confident: 1.08, P1: .82, P2: .85, P3: .9, P4: .92, P5: 1, P6: 1.08 };
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.rate = rates[level] || .92;
+      utterance.onend = onDone;
+      utterance.onerror = onDone;
+      window.speechSynthesis?.speak(utterance);
+    }
   }
   function gameWords(listName) {
     // A previous teacher session can leave the global list source set to
@@ -786,7 +821,7 @@
     const dailyAllowance = Math.max(0, DAILY_BALL_LIMIT - dailyEarnedBefore);
     const dailyBefore = ballsEarnedToday(saved);
     const dailyAtLimit = dailyEarnedBefore >= DAILY_BALL_LIMIT;
-    root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span class="lc-pro-tag">👑 PRO FEATURE • LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><span aria-hidden="true">🔊</span><span class="lc-listen-label">Hear the sentence</span></button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div><section class="lc-reward-panel" aria-label="Catch Balls earned during this game"><div class="lc-reward-icon"><img src="/pokeayman/assets/catch-ball.png" alt="" onerror="this.onerror=null;this.src='/pokeayman/assets/balls/1.png';"></div><div class="lc-reward-copy"><span>ROUND REWARDS</span><strong><b class="lc-balls">0</b> Catch Balls this game</strong><div class="lc-reward-track"><i class="lc-reward-fill"></i></div><small class="lc-reward-status">0 of ${words.length} rounds rewarded</small><small class="lc-daily-cap${dailyAtLimit ? ' is-limit' : ''}">${dailyAtLimit ? `Daily limit reached (${dailyBefore}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyBefore} / ${DAILY_BALL_LIMIT} Catch Balls`}</small></div></section></section></main>`;
+    root.innerHTML = `<main class="lc-play"><header class="lc-head"><div><span class="lc-pro-tag">👑 PRO FEATURE • LISTENING QUEST</span><h1>Listen and Catch</h1></div><div class="lc-hud"><b class="lc-round">1 / ${words.length}</b><button type="button" data-lc="close" aria-label="Close game">×</button></div></header><section class="lc-main"><button type="button" class="lc-listen" data-lc="listen"><div class="audio-wave-visualizer lc-audio-wave" aria-hidden="true"><span class="audio-wave-bar bar-1"></span><span class="audio-wave-bar bar-2"></span><span class="audio-wave-bar bar-3"></span><span class="audio-wave-bar bar-4"></span><span class="audio-wave-bar bar-5"></span><span class="audio-wave-bar bar-6"></span><span class="audio-wave-bar bar-7"></span><span class="audio-wave-bar bar-8"></span></div><span class="lc-listen-label">Hear the sentence</span></button><p class="lc-prompt" aria-live="polite"></p><div class="lc-options"></div><section class="lc-reward-panel" aria-label="Catch Balls earned during this game"><div class="lc-reward-icon"><img src="/pokeayman/assets/catch-ball.png" alt="" onerror="this.onerror=null;this.src='/pokeayman/assets/balls/1.png';"></div><div class="lc-reward-copy"><span>ROUND REWARDS</span><strong><b class="lc-balls">0</b> Catch Balls this game</strong><div class="lc-reward-track"><i class="lc-reward-fill"></i></div><small class="lc-reward-status">0 of ${words.length} rounds rewarded</small><small class="lc-daily-cap${dailyAtLimit ? ' is-limit' : ''}">${dailyAtLimit ? `Daily limit reached (${dailyBefore}/${DAILY_BALL_LIMIT}). Come back tomorrow for more Catch Balls.` : `Today: ${dailyBefore} / ${DAILY_BALL_LIMIT} Catch Balls`}</small></div></section></section></main>`;
     const gameMain = root.querySelector('.lc-main');
     const rewardPanel = gameMain?.querySelector('.lc-reward-panel');
     if (gameMain && rewardPanel) gameMain.insertBefore(rewardPanel, gameMain.firstChild);
