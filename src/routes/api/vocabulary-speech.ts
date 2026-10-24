@@ -14,10 +14,10 @@ function extractPCMFromWav(wavBytes: Uint8Array): Uint8Array {
     let offset = 12;
     while (offset + 8 <= wavBytes.length) {
       const chunkId = String.fromCharCode(
-        wavBytes[offset],
-        wavBytes[offset + 1],
-        wavBytes[offset + 2],
-        wavBytes[offset + 3]
+        wavBytes[offset] ?? 0,
+        wavBytes[offset + 1] ?? 0,
+        wavBytes[offset + 2] ?? 0,
+        wavBytes[offset + 3] ?? 0
       );
       const chunkSize = view.getUint32(offset + 4, true);
       const chunkDataStart = offset + 8;
