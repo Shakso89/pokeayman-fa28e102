@@ -370,6 +370,13 @@ html body #view-classes .gym-card .class-teacher-action-chip {
   transition: all 0.16s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   margin-top: 2px;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+}
+html body #view-classes .gym-card .class-teacher-action-chip:focus-visible {
+  outline: 2px solid #ffcb05;
+  outline-offset: 2px;
 }
 html body #view-classes .gym-card .class-teacher-action-chip:hover {
   background: #ffcb05;

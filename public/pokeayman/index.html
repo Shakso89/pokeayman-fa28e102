@@ -13321,6 +13321,43 @@ function updateRoleUI() {
   }
 }
 
+function canOpenClass(schoolName, className, teacherName = currentTeacher) {
+  if (!teacherName) return false;
+  if (teacherName === 'Ayman' || (typeof canAccessAdmin === 'function' && canAccessAdmin()) || (typeof isAymanTeacher === 'function' && isAymanTeacher())) return true;
+  if (typeof getEffectiveTeacherRole === 'function' && getEffectiveTeacherRole(teacherName) === 'admin') return true;
+  if (typeof canManageSchool === 'function' && canManageSchool(schoolName, teacherName)) return true;
+  
+  const norm = v => String(v || '').replace(/^TR\.\s*/i, '').trim().toLowerCase();
+  const target = norm(teacherName);
+  
+  if (typeof getClassTeacherNames === 'function') {
+    const names = getClassTeacherNames(schoolName, className);
+    if (names.some(n => norm(n) === target)) return true;
+  }
+  if (typeof getAssignedClasses === 'function') {
+    const assigned = getAssignedClasses(teacherName);
+    if (assigned.some(a => norm(a.assigned_school) === norm(schoolName) && norm(a.assigned_class) === norm(className))) return true;
+  }
+  if (typeof getClasses === 'function') {
+    const cls = getClasses(schoolName).find(c => norm(c.class_name) === norm(className));
+    if (cls && (norm(cls.created_by) === target || norm(cls.teacher_name) === target || norm(cls.assigned_teacher) === target)) return true;
+  }
+  return false;
+}
+window.canOpenClass = canOpenClass;
+
+function handleClassCardClick(schoolName, className) {
+  if (canOpenClass(schoolName, className)) {
+    navigateTo('students', schoolName, className);
+  } else {
+    if (typeof toast === 'function') toast('Only assigned teachers and admins can open this class.');
+    if (typeof openClassPreviewModal === 'function') {
+      openClassPreviewModal(schoolName, className);
+    }
+  }
+}
+window.handleClassCardClick = handleClassCardClick;
+
 function navigateTo(level, school, cls, studentName) {
   navSchool = school || null; navClass = cls || null;
   document.getElementById('view-schools').classList.add('hidden');
@@ -13643,12 +13680,11 @@ function renderTeacherDashboard() {
     
     document.getElementById('classes-list').innerHTML = classes.map(c => {
       const isClassAssigned = currentTeacher === 'Ayman' || getAssignedClasses(currentTeacher).some(a => a.assigned_class === c.class_name && a.assigned_school === navSchool);
-      // School-assigned teachers can manage ALL classes in their school (not just assigned ones)
       const canManage = currentTeacher === 'Ayman' || isSchoolAssigned || isClassAssigned;
-      const onClickHandler = canManage ? `navigateTo('students','${navSchool}','${c.class_name}')` : `openClassPreviewModal('${navSchool}','${c.class_name}')`;
+      const escJs = v => String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
       const roster = getStudents(navSchool, c.class_name);
       const totalCoins = roster.reduce((a, s) => a + (Number(s.coins) || 0), 0);
-      return `<div class="gym-card group relative" role="button" tabindex="0" onclick="${onClickHandler}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">${canManage ? `<button class="gym-edit" title="Edit class" aria-label="Edit ${c.class_name}" onclick="event.stopPropagation(); openEditClassModal('${c.__backendId}','${navSchool}')">✎</button>` : ''}<div class="gym-head"><p class="gym-name">${c.class_name}</p></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}</div>`;
+      return `<div class="gym-card group relative" role="button" tabindex="0" onclick="handleClassCardClick('${escJs(navSchool)}','${escJs(c.class_name)}')" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">${canManage ? `<button class="gym-edit" title="Edit class" aria-label="Edit ${c.class_name}" onclick="event.stopPropagation(); openEditClassModal('${c.__backendId}','${escJs(navSchool)}')">✎</button>` : ''}<div class="gym-head"><p class="gym-name">${c.class_name}</p></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}</div>`;
     }).join('') || '<p class="text-gray-400 text-sm col-span-3 text-center py-8">No classes yet.</p>';
   } else if (isViewOnly) {
     // View-only mode for unassigned classes: show only student collection cards with name, coins, Pokémon count, and total value
@@ -17412,10 +17448,11 @@ function classTeacherPill(schoolName, className) {
   const names = getClassTeacherNames(schoolName, className);
   const canAssign = canManageSchool(schoolName);
   const esc = v => String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const escJs = v => String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
   if (!names.length) {
     if (canAssign) {
-      return `<div class="class-teacher-pill is-empty is-assignable" title="Click to assign teachers" onclick="event.stopPropagation(); openAssignClassTeachersModal('${esc(schoolName)}','${esc(className)}')"><span class="class-teacher-action-chip">🎓 ＋ Assign Teachers</span></div>`;
+      return `<div class="class-teacher-pill is-empty"><button type="button" class="class-teacher-action-chip" title="Assign class teachers" onclick="event.stopPropagation(); openAssignClassTeachersModal('${escJs(schoolName)}','${escJs(className)}');">🎓 ＋ Assign Teachers</button></div>`;
     }
     return `<div class="class-teacher-pill is-empty"><span class="class-teacher-empty-label">No teachers assigned</span></div>`;
   }
@@ -17435,12 +17472,16 @@ function classTeacherPill(schoolName, className) {
 
   let actionChip = '';
   if (hiddenCount > 0) {
-    actionChip = `<span class="class-teacher-action-chip" title="${canAssign ? 'Manage teachers' : `${hiddenCount} more teachers`}">${canAssign ? `+${hiddenCount} more · 👥 Manage` : `+${hiddenCount} more`}</span>`;
+    if (canAssign) {
+      actionChip = `<button type="button" class="class-teacher-action-chip" title="Manage class teachers" onclick="event.stopPropagation(); openAssignClassTeachersModal('${escJs(schoolName)}','${escJs(className)}');">+${hiddenCount} more · 👥 Manage</button>`;
+    } else {
+      actionChip = `<span class="class-teacher-more" title="${hiddenCount} more teachers">+${hiddenCount} more</span>`;
+    }
   } else if (canAssign) {
-    actionChip = `<span class="class-teacher-action-chip" title="Manage class teachers">👥 Manage Teachers</span>`;
+    actionChip = `<button type="button" class="class-teacher-action-chip" title="Manage class teachers" onclick="event.stopPropagation(); openAssignClassTeachersModal('${escJs(schoolName)}','${escJs(className)}');">👥 Manage Teachers</button>`;
   }
 
-  return `<div class="class-teacher-pill ${canAssign ? 'is-assignable' : ''} ${visibleNames.length === 1 ? 'has-single' : 'has-multiple'}" title="${canAssign ? 'Click to assign or manage teachers' : 'Class teachers'}" ${canAssign ? `onclick="event.stopPropagation(); openAssignClassTeachersModal('${esc(schoolName)}','${esc(className)}');"` : ''}>${teachersHtml}${actionChip}</div>`;
+  return `<div class="class-teacher-pill ${visibleNames.length === 1 ? 'has-single' : 'has-multiple'}">${teachersHtml}${actionChip}</div>`;
 }
 
 function getAssignedClasses(teacherName) {
