@@ -4269,6 +4269,450 @@ document.addEventListener('click', function (e) {
 .th-account-badge{position:absolute;right:-.55rem;bottom:.15rem;z-index:2;display:inline-flex;align-items:center;justify-content:center;min-width:3.25rem;height:1.25rem;padding:0 .42rem;border:3px solid #fbbf24;border-radius:999px;background:linear-gradient(135deg,#ffe37a,#f0a900);color:#352300;font:1000 .55rem/1 'Figtree',sans-serif;letter-spacing:.06em;box-shadow:0 3px 9px rgba(0,0,0,.3)}
 .th-account-badge.is-admin{border-color:#fbbf24;background:linear-gradient(135deg,#dbeafe,#60a5fa);color:#10244a}
 .th-account-badge.is-school-manager{border-color:#34d399!important;background:linear-gradient(135deg,#10b981,#059669)!important;color:#ffffff!important}
+/* =========================================================================
+   POKÉAYMAN TEACHER SHELL - CLASS TEACHER ASSIGNMENT MODALS & UI
+   ========================================================================= */
+.ts-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 8, 19, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+  animation: ts-modal-fade-in 0.16s ease-out both;
+}
+@keyframes ts-modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes ts-modal-card-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ts-modal-card {
+  width: min(500px, calc(100vw - 32px));
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.12));
+  border-radius: 20px;
+  background: var(--ts-deep, #131c2e);
+  color: var(--ts-ink, #f5f7ff);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px color-mix(in srgb, var(--ts-yellow, #ffcb05) 18%, transparent);
+  animation: ts-modal-card-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ts-modal-card.is-wide {
+  width: min(640px, calc(100vw - 32px));
+}
+
+.ts-modal-header {
+  padding: 20px 24px 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--ts-border, rgba(255, 255, 255, 0.08));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ts-surface, #1e2846) 92%, #2d3b66), var(--ts-deep, #131c2e));
+}
+
+.ts-modal-kicker {
+  margin: 0 0 4px;
+  font: 800 11px/1 'Outfit', sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ts-muted, #94a3b8);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ts-modal-title {
+  margin: 0;
+  font: 800 24px/1.2 'Outfit', sans-serif;
+  color: var(--ts-yellow, #ffcb05);
+  letter-spacing: -0.01em;
+}
+
+.ts-modal-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ts-muted, #94a3b8);
+}
+
+.ts-modal-close-btn {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.12));
+  border-radius: 10px;
+  background: var(--ts-surface, #1e2846);
+  color: var(--ts-ink, #f5f7ff);
+  font-size: 22px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.ts-modal-close-btn:hover {
+  background: color-mix(in srgb, var(--ts-surface, #1e2846) 80%, white);
+  color: #fff;
+  border-color: color-mix(in srgb, var(--ts-yellow, #ffcb05) 50%, transparent);
+}
+
+.ts-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--ts-deep, #131c2e);
+}
+
+.ts-modal-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ts-muted, #94a3b8);
+}
+.ts-modal-desc strong {
+  color: var(--ts-ink, #f5f7ff);
+}
+
+.ts-modal-list {
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.08));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ts-surface, #1e2846) 65%, var(--ts-bg, #0f172a));
+  padding: 8px;
+  max-height: 290px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ts-ink, #fff) 18%, transparent) transparent;
+}
+.ts-modal-list::-webkit-scrollbar {
+  width: 6px;
+}
+.ts-modal-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ts-modal-list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ts-ink, #fff) 18%, transparent);
+  border-radius: 999px;
+}
+
+.ts-teacher-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--ts-surface, #1e2846) 50%, transparent);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.16s ease;
+}
+.ts-teacher-row:hover {
+  background: var(--ts-surface, #1e2846);
+  border-color: var(--ts-border, rgba(255, 255, 255, 0.12));
+}
+.ts-teacher-row.is-checked {
+  background: color-mix(in srgb, var(--ts-yellow, #ffcb05) 12%, var(--ts-surface, #1e2846));
+  border-color: color-mix(in srgb, var(--ts-yellow, #ffcb05) 45%, transparent);
+}
+
+.ts-teacher-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ts-yellow, #ffcb05);
+  cursor: pointer;
+  flex: none;
+  margin: 0;
+}
+
+.ts-teacher-avatar-slot {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--ts-ink, #fff) 10%, transparent);
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.12));
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+}
+
+.ts-teacher-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.ts-teacher-meta-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ts-teacher-meta-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ts-ink, #f5f7ff);
+}
+
+.ts-teacher-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+.ts-teacher-badge.is-admin {
+  background: linear-gradient(135deg, #dbeafe, #93c5fd);
+  color: #10244a;
+  border: 1px solid #bfdbfe;
+}
+.ts-teacher-badge.is-manager {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  border: 1px solid #34d399;
+}
+.ts-teacher-badge.is-pro {
+  background: linear-gradient(135deg, #ffe37a, #f59e0b);
+  color: #352300;
+  border: 1px solid #fbbf24;
+}
+
+.ts-teacher-meta-sub {
+  font-size: 12px;
+  color: var(--ts-muted, #94a3b8);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.ts-modal-hint {
+  font-size: 12px;
+  color: var(--ts-muted, #94a3b8);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ts-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--ts-border, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, var(--ts-deep, #131c2e) 85%, black);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ts-modal-btn-cancel {
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.15));
+  border-radius: 10px;
+  background: var(--ts-surface, #1e2846);
+  color: var(--ts-ink, #f5f7ff);
+  font: 700 14px/1 'Outfit', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.ts-modal-btn-cancel:hover {
+  background: color-mix(in srgb, var(--ts-surface, #1e2846) 75%, white);
+  color: #fff;
+  border-color: color-mix(in srgb, var(--ts-border, rgba(255, 255, 255, 0.25)) 150%, transparent);
+}
+
+.ts-modal-btn-save {
+  min-height: 42px;
+  padding: 0 24px;
+  border: 1px solid var(--ts-yellow, #ffcb05);
+  border-radius: 10px;
+  background: var(--ts-yellow, #ffcb05);
+  color: var(--ts-action-ink, #101828);
+  font: 800 14px/1 'Outfit', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--ts-yellow, #ffcb05) 30%, transparent);
+}
+.ts-modal-btn-save:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.ts-modal-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Manage Class Teachers Cards */
+.ts-class-assign-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--ts-surface, #1e2846);
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.08));
+}
+.ts-class-assign-left {
+  min-width: 0;
+  flex: 1;
+}
+.ts-class-assign-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ts-class-assign-name {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--ts-ink, #f5f7ff);
+}
+.ts-class-assign-level {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ts-blue, #60a5fa) 20%, transparent);
+  color: var(--ts-blue, #93c5fd);
+  border: 1px solid color-mix(in srgb, var(--ts-blue, #60a5fa) 40%, transparent);
+}
+.ts-class-assign-teachers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.ts-class-assign-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ts-deep, #131c2e) 80%, black);
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.1));
+  color: var(--ts-ink, #f5f7ff);
+}
+.ts-class-assign-chip img {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  object-fit: contain;
+}
+.ts-class-assign-btn {
+  font: 700 12px/1 'Outfit', sans-serif;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.15));
+  background: var(--ts-deep, #131c2e);
+  color: var(--ts-ink, #f5f7ff);
+  cursor: pointer;
+  flex: none;
+  transition: all 0.15s ease;
+}
+.ts-class-assign-btn:hover {
+  background: var(--ts-yellow, #ffcb05);
+  color: var(--ts-action-ink, #101828);
+  border-color: var(--ts-yellow, #ffcb05);
+}
+
+/* Bright mode overrides */
+html body.ts-bright .ts-modal-card {
+  background: var(--color-surface, #ffffff);
+  border-color: var(--color-border, #e2e8f0);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+  color: var(--color-text-primary, #0f172a);
+}
+html body.ts-bright .ts-modal-header {
+  background: var(--color-surface, #f8fafc);
+  border-color: var(--color-border, #e2e8f0);
+}
+html body.ts-bright .ts-modal-title {
+  color: #0f172a;
+}
+html body.ts-bright .ts-modal-kicker,
+html body.ts-bright .ts-modal-subtitle,
+html body.ts-bright .ts-modal-desc,
+html body.ts-bright .ts-modal-hint,
+html body.ts-bright .ts-teacher-meta-sub {
+  color: var(--color-text-secondary, #64748b);
+}
+html body.ts-bright .ts-modal-close-btn {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+html body.ts-bright .ts-modal-body {
+  background: var(--color-surface, #ffffff);
+}
+html body.ts-bright .ts-modal-list {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+html body.ts-bright .ts-teacher-row {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+html body.ts-bright .ts-teacher-row:hover {
+  background: #f1f5f9;
+}
+html body.ts-bright .ts-teacher-row.is-checked {
+  background: #fef9c3;
+  border-color: #facc15;
+}
+html body.ts-bright .ts-teacher-meta-name {
+  color: #0f172a;
+}
+html body.ts-bright .ts-modal-footer {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+html body.ts-bright .ts-modal-btn-cancel {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+html body.ts-bright .ts-class-assign-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+html body.ts-bright .ts-class-assign-name {
+  color: #0f172a;
+}
+html body.ts-bright .ts-class-assign-btn {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
 .ts-account-badge.is-school-manager{border-color:#34d399!important;background:linear-gradient(135deg,#10b981,#059669)!important;color:#ffffff!important}
 html body.ts-bright .trainer-hub .th-account-badge.is-school-manager{color:#ffffff!important}
 .th-role-title{font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#181e5f;margin:0 0 .2rem}
@@ -16077,32 +16521,32 @@ function openAssignClassTeachersModal(schoolName, className) {
   const showAdminOption = isAymanTeacher() || assignedNames.has('Ayman');
 
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4 backdrop-blur-sm';
+  modal.className = 'ts-modal-backdrop';
   modal.innerHTML = `
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden text-slate-800 animate-in fade-in zoom-in-95 duration-150">
-      <div class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-5 flex items-start justify-between">
+    <div class="ts-modal-card" role="dialog" aria-modal="true" aria-labelledby="at-modal-title">
+      <div class="ts-modal-header">
         <div>
-          <span class="text-[10px] font-black uppercase tracking-widest text-indigo-200">Class Teacher Assignment</span>
-          <h2 class="heading-font text-lg font-bold">${esc(className)}</h2>
-          <p class="text-xs text-indigo-100/90">${esc(schoolName)}</p>
+          <p class="ts-modal-kicker"><span>🛡️</span> CLASS TEACHER ASSIGNMENT</p>
+          <h2 class="ts-modal-title" id="at-modal-title">${esc(className)}</h2>
+          <p class="ts-modal-subtitle">🏫 ${esc(schoolName)} · Co-Teacher Permissions</p>
         </div>
-        <button type="button" class="text-white/80 hover:text-white text-xl leading-none font-bold p-1" id="at-close" aria-label="Close">×</button>
+        <button type="button" class="ts-modal-close-btn" id="at-close" aria-label="Close">×</button>
       </div>
-      <div class="p-5 overflow-y-auto flex-1 space-y-4">
-        <p class="text-xs text-slate-600 leading-relaxed">
+      <div class="ts-modal-body">
+        <p class="ts-modal-desc">
           Select teachers registered at <strong>${esc(schoolName)}</strong> to manage this class. Multiple teachers share equal teaching permissions for rosters, vocabulary, quizzes, games, and progress.
         </p>
-        <div class="border rounded-xl p-3 bg-slate-50/80 space-y-2 max-h-64 overflow-y-auto" id="at-teachers-list">
+        <div class="ts-modal-list" id="at-teachers-list">
           ${showAdminOption ? `
-            <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-white transition cursor-pointer border border-transparent hover:border-indigo-100">
-              <input type="checkbox" class="at-checkbox h-4 w-4 rounded text-indigo-600 cursor-pointer" value="Ayman" ${assignedNames.has('Ayman') ? 'checked' : ''}>
-              <span class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-sm font-bold shadow-sm">👑</span>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-1.5">
-                  <span class="text-sm font-bold text-slate-900">Ayman</span>
-                  <span class="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-1.5 py-0.5 rounded">Admin</span>
+            <label class="ts-teacher-row ${assignedNames.has('Ayman') ? 'is-checked' : ''}">
+              <input type="checkbox" class="ts-teacher-checkbox at-checkbox" value="Ayman" ${assignedNames.has('Ayman') ? 'checked' : ''}>
+              <span class="ts-teacher-avatar-slot">👑</span>
+              <div class="ts-teacher-meta">
+                <div class="ts-teacher-meta-top">
+                  <span class="ts-teacher-meta-name">Ayman</span>
+                  <span class="ts-teacher-badge is-admin">Admin</span>
                 </div>
-                <small class="text-[11px] text-slate-500 block">System Administrator</small>
+                <small class="ts-teacher-meta-sub">System Administrator</small>
               </div>
             </label>
           ` : ''}
@@ -16111,26 +16555,28 @@ function openAssignClassTeachersModal(schoolName, className) {
             const avatar = teacherAvatarSrc(t.teacher_avatar);
             const isManager = isSchoolManager(t.teacher_name);
             return `
-              <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-white transition cursor-pointer border border-transparent hover:border-indigo-100">
-                <input type="checkbox" class="at-checkbox h-4 w-4 rounded text-indigo-600 cursor-pointer" value="${esc(t.teacher_name)}" data-id="${esc(t.__backendId)}" ${isChecked ? 'checked' : ''}>
-                ${avatar ? `<img src="${avatar}" class="w-8 h-8 rounded-full object-contain border border-slate-200 bg-white" alt="">` : '<span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold shadow-sm">🎓</span>'}
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-sm font-bold text-slate-900">${esc(t.teacher_name)}</span>
-                    ${isManager ? '<span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Manager</span>' : ''}
-                    ${t.teacher_pro ? '<span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">⭐ Pro</span>' : ''}
+              <label class="ts-teacher-row ${isChecked ? 'is-checked' : ''}">
+                <input type="checkbox" class="ts-teacher-checkbox at-checkbox" value="${esc(t.teacher_name)}" data-id="${esc(t.__backendId)}" ${isChecked ? 'checked' : ''}>
+                ${avatar ? `<img src="${avatar}" class="ts-teacher-avatar-slot" alt="">` : '<span class="ts-teacher-avatar-slot">🎓</span>'}
+                <div class="ts-teacher-meta">
+                  <div class="ts-teacher-meta-top">
+                    <span class="ts-teacher-meta-name">${esc(t.teacher_name)}</span>
+                    ${isManager ? '<span class="ts-teacher-badge is-manager">School Manager</span>' : ''}
+                    ${t.teacher_pro ? '<span class="ts-teacher-badge is-pro">⭐ Pro</span>' : ''}
                   </div>
-                  <small class="text-[11px] text-slate-500 block truncate">${esc(t.teacher_email || 'Teacher account')}</small>
+                  <small class="ts-teacher-meta-sub">${esc(t.teacher_email || 'Teacher account')}</small>
                 </div>
               </label>
             `;
-          }).join('') : '<p class="text-xs text-slate-400 py-3 text-center">No other teachers registered at this school yet.</p>'}
+          }).join('') : '<p class="ts-modal-desc" style="text-align:center;padding:16px 0;opacity:0.7">No other teachers registered at this school yet.</p>'}
         </div>
-        <p id="at-status" class="text-xs text-slate-500" aria-live="polite">Assigned teachers will appear in the class header and class card.</p>
+        <p class="ts-modal-hint" id="at-status">
+          <span>💡</span> Assigned teachers will appear in the class header and class card.
+        </p>
       </div>
-      <div class="p-4 bg-slate-50 border-t flex gap-2">
-        <button type="button" class="flex-1 btn-primary py-2.5 text-sm font-bold rounded-xl" id="at-save">Save Teachers</button>
-        <button type="button" class="btn-outline px-4 py-2.5 text-sm font-bold rounded-xl" id="at-cancel">Cancel</button>
+      <div class="ts-modal-footer">
+        <button type="button" class="ts-modal-btn-cancel" id="at-cancel">Cancel</button>
+        <button type="button" class="ts-modal-btn-save" id="at-save">Save Teachers</button>
       </div>
     </div>
   `;
@@ -16140,6 +16586,13 @@ function openAssignClassTeachersModal(schoolName, className) {
   modal.querySelector('#at-close').addEventListener('click', close);
   modal.querySelector('#at-cancel').addEventListener('click', close);
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  modal.querySelectorAll('.at-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const row = cb.closest('.ts-teacher-row');
+      if (row) row.classList.toggle('is-checked', cb.checked);
+    });
+  });
 
   modal.querySelector('#at-save').addEventListener('click', async () => {
     const saveBtn = modal.querySelector('#at-save');
@@ -16167,57 +16620,47 @@ function openManageClassTeachersModal(schoolName) {
   const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[10000] p-4 backdrop-blur-sm';
+  modal.className = 'ts-modal-backdrop';
   modal.innerHTML = `
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden text-slate-800 animate-in fade-in zoom-in-95 duration-150">
-      <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-5 flex items-start justify-between">
+    <div class="ts-modal-card is-wide" role="dialog" aria-modal="true" aria-labelledby="mct-modal-title">
+      <div class="ts-modal-header">
         <div>
-          <span class="text-[10px] font-black uppercase tracking-widest text-blue-200">School Management</span>
-          <h2 class="heading-font text-lg sm:text-xl font-bold">Manage Class Teachers</h2>
-          <p class="text-xs text-blue-100/90 mt-0.5">🏫 ${esc(schoolName)} · ${classes.length} class${classes.length !== 1 ? 'es' : ''}</p>
+          <p class="ts-modal-kicker"><span>🏫</span> SCHOOL MANAGEMENT</p>
+          <h2 class="ts-modal-title" id="mct-modal-title">Manage Class Teachers</h2>
+          <p class="ts-modal-subtitle">${esc(schoolName)} · ${classes.length} class${classes.length !== 1 ? 'es' : ''}</p>
         </div>
-        <button type="button" class="text-white/80 hover:text-white text-2xl leading-none font-bold p-1" id="mct-close" aria-label="Close">×</button>
+        <button type="button" class="ts-modal-close-btn" id="mct-close" aria-label="Close">×</button>
       </div>
-      <div class="p-5 overflow-y-auto flex-1 space-y-4">
-        <p class="text-xs text-slate-600 leading-relaxed">
-          Assign, add, or remove teachers for each class in <strong>${esc(schoolName)}</strong>. Multiple teachers can manage the same class with equal access to student rosters, vocabulary lists, quizzes, classroom games, and progress.
+      <div class="ts-modal-body">
+        <p class="ts-modal-desc">
+          Review and assign teachers for each class in <strong>${esc(schoolName)}</strong>. Multiple teachers share equal management permissions.
         </p>
-        ${classes.length ? `
-          <div class="space-y-4">
-            ${classes.map(cls => {
-              const assigned = getClassTeacherNames(schoolName, cls.class_name);
-              const students = getStudents(schoolName, cls.class_name);
-              return `
-                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/70 hover:bg-slate-50 transition shadow-sm" data-class-name="${esc(cls.class_name)}">
-                  <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
-                    <div>
-                      <h3 class="font-bold text-slate-900 text-base">${esc(cls.class_name)}</h3>
-                      <span class="text-xs text-slate-500 font-medium">👥 ${students.length} student${students.length !== 1 ? 's' : ''} · Level ${esc(cls.class_level || 'P4')}</span>
-                    </div>
-                    <button type="button" class="btn-primary text-xs px-3 py-1.5 rounded-lg font-bold mct-quick-assign-btn" data-class="${esc(cls.class_name)}">
-                      Assign Teachers (${assigned.length})
-                    </button>
+        <div class="ts-modal-list" style="max-height: 420px; gap: 8px;">
+          ${classes.length ? classes.map(c => {
+            const teachers = getClassTeacherNames(schoolName, c.class_name);
+            const level = /^P[4-6]$/.test(c.class_level || '') ? c.class_level : 'P4';
+            return `
+              <div class="ts-class-assign-card">
+                <div class="ts-class-assign-left">
+                  <div class="ts-class-assign-heading">
+                    <span class="ts-class-assign-name">${esc(c.class_name)}</span>
+                    <span class="ts-class-assign-level">${esc(level)}</span>
                   </div>
-                  <div class="mb-2">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Currently Assigned Teachers:</span>
-                    <div class="flex flex-wrap gap-1.5">
-                      ${assigned.length ? assigned.map(name => {
-                        const avatar = classTeacherAvatarFor(name);
-                        return `<span class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-800 text-xs px-2.5 py-1 rounded-full font-semibold shadow-2xs">
-                          ${avatar ? `<img src="${avatar}" class="w-4 h-4 rounded-full object-contain" alt="">` : '🎓'}
-                          TR. ${esc(name)}
-                        </span>`;
-                      }).join('') : '<span class="text-xs text-amber-700 italic">No teachers assigned yet.</span>'}
-                    </div>
+                  <div class="ts-class-assign-teachers">
+                    ${teachers.length ? teachers.map(name => {
+                      const avatar = classTeacherAvatarFor(name);
+                      return `<span class="ts-class-assign-chip">${avatar ? `<img src="${avatar}" alt="">` : ''}TR. ${esc(name)}</span>`;
+                    }).join('') : '<span style="font-size:12px;color:var(--ts-muted);font-style:italic">No teachers assigned</span>'}
                   </div>
                 </div>
-              `;
-            }).join('')}
-          </div>
-        ` : '<p class="text-center text-slate-400 py-8 text-sm">No classes created in this school yet.</p>'}
+                <button type="button" class="ts-class-assign-btn" data-assign-class="${esc(c.class_name)}">✎ Assign Teachers</button>
+              </div>
+            `;
+          }).join('') : '<p class="ts-modal-desc" style="text-align:center;padding:16px 0;opacity:0.7">No classes found in this school.</p>'}
+        </div>
       </div>
-      <div class="p-4 bg-slate-50 border-t flex justify-end">
-        <button type="button" class="btn-primary px-6 py-2.5 text-sm font-bold rounded-xl" id="mct-done">Done</button>
+      <div class="ts-modal-footer">
+        <button type="button" class="ts-modal-btn-cancel" id="mct-close-btn">Close</button>
       </div>
     </div>
   `;
@@ -16225,12 +16668,12 @@ function openManageClassTeachersModal(schoolName) {
 
   const close = () => modal.remove();
   modal.querySelector('#mct-close').addEventListener('click', close);
-  modal.querySelector('#mct-done').addEventListener('click', close);
+  modal.querySelector('#mct-close-btn').addEventListener('click', close);
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
 
-  modal.querySelectorAll('.mct-quick-assign-btn').forEach(btn => {
+  modal.querySelectorAll('[data-assign-class]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const clsName = btn.dataset.class;
+      const clsName = btn.getAttribute('data-assign-class');
       close();
       openAssignClassTeachersModal(schoolName, clsName);
     });
