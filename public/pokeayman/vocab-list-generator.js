@@ -300,8 +300,17 @@
 
     async function postJson(path, payload) {
       const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: controller.signal });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'The request failed. Please try again.');
+      const responseText = await res.text();
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (error) {
+        console.error(`[vocab] ${path} returned non-JSON HTTP ${res.status}:`, responseText.slice(0, 300));
+        throw new Error(res.ok
+          ? 'The server returned an unexpected response. Please try again.'
+          : `The server returned an error page (HTTP ${res.status}). Please check the deployed API route and server logs.`);
+      }
+      if (!res.ok) throw new Error(data.message || `The request failed (HTTP ${res.status}). Please try again.`);
       return data;
     }
 
@@ -1031,4 +1040,5 @@
 
   new MutationObserver(bindGenerateBtn).observe(document.documentElement, { childList: true, subtree: true });
 })();
+
 

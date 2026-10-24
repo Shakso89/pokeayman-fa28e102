@@ -90,14 +90,14 @@ type Review = { ok: boolean; feedback: string };
 
 /** ChatGPT checks Gemini's answer for meaning, context, grammar and natural wording. */
 async function reviewWithChatGpt(task: string, answer: string): Promise<Review> {
-  // ChatGPT review runs through Lovable's AI Gateway (billed to workspace credits).
-  const key = process.env["LOVABLE_API_KEY"];
-  if (!key) throw new SentenceAiError("ChatGPT checking is not set up yet.");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  // Use the OpenAI API directly so review uses the configured OpenAI API account.
+  const key = process.env["OPENAI_API_KEY"];
+  if (!key) throw new SentenceAiError("OpenAI sentence review is not configured. Add OPENAI_API_KEY as a server-side secret.");
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "openai/gpt-6-astra",
+      model: process.env["OPENAI_VOCAB_REVIEW_MODEL"] || "gpt-6-astra",
       reasoning_effort: "low",
       response_format: {
         type: "json_schema",
@@ -122,17 +122,24 @@ async function reviewWithChatGpt(task: string, answer: string): Promise<Review> 
       ],
     }),
   });
+  const responseText = await res.text();
+  let data: any;
+  try {
+    data = responseText ? JSON.parse(responseText) : {};
+  } catch {
+    console.warn(`[vocab] OpenAI review returned non-JSON HTTP ${res.status}:`, responseText.slice(0, 300));
+    throw new SentenceAiError(`OpenAI sentence review returned an unexpected response (HTTP ${res.status}). Please try again.`);
+  }
   if (!res.ok) {
-    console.warn(`[vocab] ChatGPT review -> HTTP ${res.status}`, (await res.text().catch(() => "")).slice(0, 300));
+    console.warn(`[vocab] OpenAI review -> HTTP ${res.status}`, JSON.stringify(data).slice(0, 300));
     throw new SentenceAiError(
-      res.status === 402
-        ? "AI credits have run out. Add credits in Settings → Plans & credits."
+      res.status === 401 || res.status === 403
+        ? "OpenAI rejected the API key. Check the server-side OPENAI_API_KEY secret."
         : res.status === 429
-          ? "ChatGPT checking is busy right now. Please try again in a minute."
-          : "ChatGPT could not check the sentences. Please try again."
+          ? "OpenAI review is busy or the API account has reached its limit. Check OpenAI API billing and try again."
+          : `OpenAI could not check the sentences (HTTP ${res.status}). Please try again.`
     );
   }
-  const data: any = await res.json();
   try {
     const parsed = JSON.parse(String(data?.choices?.[0]?.message?.content || "{}"));
     return { ok: parsed.ok === true, feedback: String(parsed.feedback || "") };
@@ -140,7 +147,6 @@ async function reviewWithChatGpt(task: string, answer: string): Promise<Review> 
     return { ok: false, feedback: "The review could not be read." };
   }
 }
-
 const MAX_REVISIONS = 2;
 
 /**
@@ -170,3 +176,4 @@ export async function askSentenceModel(body: GeminiBody): Promise<string> {
   }
   throw new SentenceAiError("The sentences did not pass the ChatGPT check after several tries. Please try again.");
 }
+
