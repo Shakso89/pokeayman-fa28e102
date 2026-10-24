@@ -4,7 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { streamSpeech } from "@/lib/vocabulary-speech";
-import homeHabitat from "@/assets/home-habitat.jpg";
+import homeHabitat from "@/assets/home-habitat.webp";
 
 type Result = { error?: string; name?: string; signedIn?: boolean };
 
