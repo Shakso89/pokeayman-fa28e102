@@ -68,6 +68,8 @@
     let draft = null;
     let saveDraft = null;
     let draftPersisted = false;
+    let minimized = false;
+    let notifiedReady = false;
 
     // Read list name from current input field if teacher already typed one (e.g. "tester")
     const inputListName = document.getElementById('new-vocab-list-name')?.value?.trim() || '';
@@ -273,6 +275,42 @@
     const progressWrap = modal.querySelector('#vocab-gen-progress-wrap');
     const statusTextEl = modal.querySelector('#vocab-gen-status-text');
     const progressFillEl = modal.querySelector('#vocab-gen-progress-fill');
+    const floatingButton = document.createElement('button');
+    floatingButton.type = 'button';
+    floatingButton.className = 'vocab-gen-floating-status';
+    floatingButton.hidden = true;
+    floatingButton.setAttribute('aria-live', 'polite');
+    floatingButton.innerHTML = '<span class="vocab-gen-floating-ball" aria-hidden="true"><span></span></span><span class="vocab-gen-floating-copy"><small>AI VOCABULARY</small><strong>Generating…</strong></span>';
+    document.body.appendChild(floatingButton);
+
+    function restoreModal() {
+      if (closed) return;
+      minimized = false;
+      modal.style.removeProperty('display');
+      modal.removeAttribute('aria-hidden');
+      modal.inert = false;
+      floatingButton.hidden = true;
+      closeBtn.focus();
+    }
+
+    function updateFloatingStatus() {
+      if (closed || !minimized) { floatingButton.hidden = true; return; }
+      let state = 'working';
+      let label = 'Generating…';
+      if (!isGenerating && draft && !reviewPanel.hidden) { state = 'ready'; label = 'Ready to review'; }
+      else if (!isGenerating && errorBanner.style.display !== 'none' && errorBanner.textContent.trim()) { state = 'error'; label = 'Needs attention'; }
+      else if (isGenerating && statusTextEl.textContent.trim()) { label = statusTextEl.textContent.replace(/^Step \d+\/\d+:\s*/, '').replace(/\.\.\.$/, '…'); }
+      floatingButton.dataset.state = state;
+      floatingButton.querySelector('strong').textContent = label;
+      floatingButton.setAttribute('aria-label', label + '. Click to reopen vocabulary generator.');
+      floatingButton.hidden = false;
+      if (state === 'ready' && !notifiedReady && document.visibilityState === 'hidden' && 'Notification' in window && Notification.permission === 'granted') {
+        notifiedReady = true;
+        try { const notification = new Notification('Vocabulary list is ready', { body: 'Your AI generated list is ready to review.' }); notification.onclick = () => { window.focus(); restoreModal(); notification.close(); }; }
+        catch (error) { console.info('Desktop notification is unavailable in this browser context.'); }
+      }
+    }
+    floatingButton.addEventListener('click', restoreModal);
     const submitBtn = modal.querySelector('#vocab-gen-submit-button');
     const countAllBtn = modal.querySelector('#vocab-gen-count-all');
     const customCountInput = modal.querySelector('#vocab-gen-custom-count-input');
@@ -285,10 +323,20 @@
 
     function closeModal() {
       if (isSaving) return;
+      if (isGenerating) {
+        minimized = true;
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        modal.inert = true;
+        updateFloatingStatus();
+        floatingButton.focus();
+        return;
+      }
       closed = true;
       controller.abort();
       isGenerating = false;
       modal.remove();
+      floatingButton.remove();
     }
 
     closeBtn.addEventListener('click', closeModal);
@@ -351,6 +399,7 @@
       saveBtn.disabled = pending > 0 || busy || isSaving;
       saveBtn.textContent = `Save list · ${draft.length} credit${draft.length === 1 ? '' : 's'}`;
       modal.querySelector('#vocab-gen-review-summary').textContent = pending ? `${pending} item${pending === 1 ? ' needs' : 's need'} review` : 'Ready to save';
+      updateFloatingStatus();
     }
 
     function showReview() {
@@ -361,6 +410,7 @@
       reviewPanel.hidden = false;
       closeBtn.disabled = false;
       renderReview();
+      updateFloatingStatus();
     }
 
     async function matchItem(item, options = {}) {
@@ -511,6 +561,7 @@
         badgeEl.style.color = '#6ee7b7';
         submitBtn.disabled = cost === 0;
       }
+      updateFloatingStatus();
     }
 
     if (classSelect) {
@@ -653,6 +704,7 @@
       textInput.disabled = generating;
       submitBtn.disabled = generating;
       closeBtn.disabled = isSaving;
+      closeBtn.setAttribute('aria-label', generating ? 'Minimize generator' : 'Close');
       modeWordsBtn.disabled = generating;
       modePhotoBtn.disabled = generating;
       if (classSelect) classSelect.disabled = generating;
@@ -668,6 +720,7 @@
         if (popupForm) popupForm.style.display = 'flex';
         submitBtn.innerHTML = `<svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate List</span>`;
       }
+      updateFloatingStatus();
     }
 
     // Submit handler
@@ -733,6 +786,9 @@
       }
 
       errorBanner.style.display = 'none';
+      if ('Notification' in window && Notification.permission === 'default' && typeof Notification.requestPermission === 'function') {
+        try { Notification.requestPermission().catch(() => {}); } catch (error) { /* Embedded browsers may deny notification prompts. */ }
+      }
 
       let itemsWithImages = [];
 
@@ -991,6 +1047,7 @@
         controller.abort();
         isGenerating = false;
         modal.remove();
+        floatingButton.remove();
 
         if (typeof window.renderVocabLists === 'function') window.renderVocabLists();
         if (typeof window.renderGamesList === 'function') window.renderGamesList();

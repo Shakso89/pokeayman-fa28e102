@@ -501,3 +501,57 @@ html body #student-dashboard#student-dashboard#student-dashboard #student-classe
   #vocab-gen-popup-modal .vocab-gen-review-actions button { flex: 1 1 120px; }
   #vocab-gen-popup-modal .vocab-gen-review-footer > span { flex-basis: 100%; }
 }
+
+
+/* Floating Poké Ball status for minimized AI vocabulary generation. */
+.vocab-gen-floating-status {
+  position: fixed;
+  z-index: 10050;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 64px;
+  padding: 9px 18px 9px 10px;
+  border: 1px solid rgba(255, 207, 0, .72);
+  border-radius: 999px;
+  color: #f8fafc;
+  background: rgba(12, 20, 36, .96);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .4), 0 0 24px rgba(255, 207, 0, .16);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  backdrop-filter: blur(14px);
+}
+.vocab-gen-floating-status[hidden] { display: none !important; }
+.vocab-gen-floating-ball {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border: 2px solid rgba(255, 255, 255, .78);
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #f0444d 0 46%, #171923 46% 55%, #f8fafc 55% 100%);
+  box-shadow: 0 0 0 4px rgba(255, 207, 0, .1), 0 0 20px rgba(255, 207, 0, .42);
+  animation: vocab-gen-ball-float 1.8s ease-in-out infinite;
+}
+.vocab-gen-floating-ball::before { content: ''; position: absolute; inset: -5px; border: 2px solid rgba(255, 207, 0, .68); border-radius: 50%; animation: vocab-gen-ball-spin 2.2s linear infinite; }
+.vocab-gen-floating-ball > span { z-index: 1; width: 13px; height: 13px; border: 3px solid #202738; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
+.vocab-gen-floating-copy { display: grid; gap: 2px; min-width: 0; }
+.vocab-gen-floating-copy small { color: #ffd43b; font-size: 9px; font-weight: 800; letter-spacing: .13em; }
+.vocab-gen-floating-copy strong { max-width: min(56vw, 260px); overflow: hidden; color: #f8fafc; font-size: 13px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+.vocab-gen-floating-status[data-state="ready"] { border-color: rgba(110, 231, 183, .8); }
+.vocab-gen-floating-status[data-state="ready"] .vocab-gen-floating-ball { box-shadow: 0 0 0 4px rgba(110, 231, 183, .12), 0 0 20px rgba(110, 231, 183, .45); animation-duration: 2.8s; }
+.vocab-gen-floating-status[data-state="error"] { border-color: rgba(248, 113, 113, .85); }
+.vocab-gen-floating-status[data-state="error"] .vocab-gen-floating-ball { box-shadow: 0 0 0 4px rgba(248, 113, 113, .12), 0 0 20px rgba(248, 113, 113, .4); }
+@keyframes vocab-gen-ball-float { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-4px) rotate(5deg); } }
+@keyframes vocab-gen-ball-spin { to { transform: rotate(360deg); } }
+@media (max-width: 520px) {
+  .vocab-gen-floating-status { right: max(14px, env(safe-area-inset-right)); bottom: calc(max(14px, env(safe-area-inset-bottom)) + 70px); min-height: 54px; gap: 9px; padding: 6px 13px 6px 7px; }
+  .vocab-gen-floating-ball { flex-basis: 38px; width: 38px; height: 38px; }
+  .vocab-gen-floating-copy strong { max-width: 54vw; font-size: 12px; }
+}
