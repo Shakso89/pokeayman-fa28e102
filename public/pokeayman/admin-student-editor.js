@@ -63,12 +63,13 @@
     };
     modal.innerHTML = `<div class="es-card" role="dialog" aria-modal="true" aria-label="Edit student"><div class="es-head"><h2>Edit Student</h2><button type="button" class="es-close" id="ase-x" aria-label="Close">✕</button></div><form>
       <label class="es-label" for="ase-name">Student name</label><input id="ase-name" class="es-input" value="${esc(student.student_name)}" required>
-      <label class="es-label" for="ase-coins">Coins</label><input id="ase-coins" type="number" min="0" class="es-input" value="${Number(student.coins || 0)}">
+      <label class="es-label" for="ase-coins">Coins</label><input id="ase-coins" type="number" min="0" step="5" class="es-input" value="${Number(student.coins || 0)}">
       <div class="es-label">Classes</div><div class="es-classes">${classes.map(c => `<label class="es-class-row"><input type="checkbox" class="ase-cls" data-s="${esc(c.school_name)}" data-c="${esc(c.class_name)}" ${current.has(classKey(c.school_name, c.class_name)) ? 'checked' : ''}><span class="es-class-text"><strong>${esc(c.class_name)}</strong><small>${esc(c.school_name)}</small></span></label>`).join('')}</div>
       <div class="es-label">Pokémon collection</div><div id="ase-pokes" class="es-classes"></div>
       <p id="ase-err" class="es-error" hidden></p>
       <div class="es-actions"><button type="submit" class="btn-primary es-save">Save Changes</button><button type="button" class="es-cancel" id="ase-cancel">Cancel</button></div></form></div>`;
     document.body.appendChild(modal);
+    window.enableFiveStepCoinInput?.(modal.querySelector("#ase-coins"));
     renderPokes();
     const close = () => modal.remove();
     modal.querySelector('#ase-x').onclick = close; modal.querySelector('#ase-cancel').onclick = close;

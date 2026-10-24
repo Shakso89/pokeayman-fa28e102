@@ -7922,9 +7922,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </div>
           <div class="class-student-control-group flex shrink-0 items-end gap-2">
            <h3 data-template-id="award-coins-title" class="canva-text font-semibold text-sm mb-2" style="color: rgb(255, 255, 255); font-weight: 600; font-style: normal; font-size: 19px;">   Gift Coins      </h3>
-           <div class="class-gift-controls"><form id="award-form" class="flex gap-2"><select id="award-student" aria-label="Student to award" class="w-44 border rounded-lg px-2.5 py-1.5 text-xs"></select> <input id="award-amount" aria-label="Coins to award" type="number" min="1" max="1000" value="10" class="border rounded-lg px-2 py-1.5 text-xs w-16"> <button type="submit" class="btn-primary text-xs px-2.5 py-1.5">Award</button>
+           <div class="class-gift-controls"><form id="award-form" class="flex gap-2" novalidate><select id="award-student" aria-label="Student to award" class="w-44 border rounded-lg px-2.5 py-1.5 text-xs"></select> <input id="award-amount" aria-label="Coins to award" type="number" min="0" max="1000" step="5" value="10" class="border rounded-lg px-2 py-1.5 text-xs w-16"> <button type="submit" class="btn-primary text-xs px-2.5 py-1.5">Award</button>
            </form>
-           <form id="gift-all-form" class="flex shrink-0 items-end gap-2"><input id="gift-all-amount" type="number" min="1" max="1000" value="10" aria-label="Coins per student" class="border rounded-lg px-2 py-1.5 text-xs w-16"> <button type="submit" class="btn-success text-xs px-2.5 py-1.5 whitespace-nowrap">Gift All</button>
+           <form id="gift-all-form" class="flex shrink-0 items-end gap-2" novalidate><input id="gift-all-amount" type="number" min="0" max="1000" step="5" value="10" aria-label="Coins per student" class="border rounded-lg px-2 py-1.5 text-xs w-16"> <button type="submit" class="btn-success text-xs px-2.5 py-1.5 whitespace-nowrap">Gift All</button>
            </form></div>
           </div>
          </div>
@@ -8005,7 +8005,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-white/10">
             <div class="flex items-center gap-2">
              <label for="quiz-r" class="text-xs font-semibold text-slate-300">Reward:</label>
-             <input id="quiz-r" type="number" min="5" max="50" value="15" placeholder="Coins" class="quiz-input px-3 py-1.5 text-sm w-20 text-center font-bold">
+             <input id="quiz-r" type="number" min="5" max="50" step="5" value="15" placeholder="Coins" class="quiz-input px-3 py-1.5 text-sm w-20 text-center font-bold">
              <span class="text-xs text-amber-400 font-medium">🪙 coins (from budget)</span>
             </div>
             <button type="submit" class="btn-primary px-6 py-2.5 rounded-xl font-bold text-sm shadow-md transition hover:scale-[1.02]">Post Quiz</button>
@@ -8178,10 +8178,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <div class="cp-stat"><p id="profile-total-power">0</p><p>Power</p></div>
           <div class="cp-stat"><p id="profile-total-value">0</p><p>Value</p></div>
          </div>
-         <form id="profile-adjust-form" class="flex" aria-label="Adjust student coins">
-          <input id="profile-adjust-amount" type="number" placeholder="Amount" aria-label="Coin adjustment amount" required>
-          <button type="submit" class="btn-primary">Adjust</button>
-         </form>
+         <form id="profile-adjust-form" class="flex" aria-label="Adjust student coins" novalidate>
+           <input id="profile-adjust-amount" type="number" placeholder="Amount" aria-label="Coin adjustment amount" step="5" required>
+           <button type="submit" class="btn-primary">Adjust</button>
+          </form>
         </section>
         <div class="cp-content">
          <div class="cp-tabs" aria-label="Student profile sections">
@@ -23282,6 +23282,44 @@ function openEditStudentModal(studentName) {
   modal.querySelector('#es-cancel').addEventListener('click', () => modal.remove());
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
+
+function enableFiveStepCoinInput(input, options = {}) {
+  if (!input || input.__fiveStepEnabled) return;
+  input.__fiveStepEnabled = true;
+  input.step = '5';
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const isUp = e.key === 'ArrowUp';
+      const delta = isUp ? 5 : -5;
+      const raw = input.value.trim();
+      let current;
+      if (raw === '' || isNaN(Number(raw))) {
+        current = isUp ? 0 : (input.min !== '' && Number(input.min) >= 0 ? 5 : 0);
+      } else {
+        current = Number(raw);
+      }
+      let next = current + delta;
+      if (input.min !== '' && !isNaN(Number(input.min))) {
+        const minVal = Number(input.min);
+        if (next < minVal) next = minVal;
+      }
+      if (input.max !== '' && !isNaN(Number(input.max))) {
+        const maxVal = Number(input.max);
+        if (next > maxVal) next = maxVal;
+      }
+      input.value = next;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+}
+window.enableFiveStepCoinInput = enableFiveStepCoinInput;
+
+['profile-adjust-amount', 'award-amount', 'gift-all-amount', 'quiz-r'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) enableFiveStepCoinInput(el);
+});
 
 // Profile controls
 document.getElementById('profile-adjust-form').addEventListener('submit', async e => {

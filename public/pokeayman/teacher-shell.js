@@ -455,9 +455,17 @@
       dialog.addEventListener('submit', (event) => {
         event.preventDefault();
         const form = event.target;
-        if (!form.reportValidity()) return;
-        const targetId = form.dataset.action === 'add' ? 'add-student-form' : 'gift-all-form';
         const source = form.elements.namedItem('value');
+        if (form.dataset.action === 'gift') {
+          const val = Number(source?.value);
+          if (isNaN(val) || val < 1 || val > 1000) {
+            form.reportValidity();
+            return;
+          }
+        } else if (!form.reportValidity()) {
+          return;
+        }
+        const targetId = form.dataset.action === 'add' ? 'add-student-form' : 'gift-all-form';
         const target = $(form.dataset.action === 'add' ? 'new-student-name' : 'gift-all-amount');
         if (!target || !source) return;
         target.value = source.value.trim();
@@ -471,13 +479,28 @@
       <header><div><p class="ts-action-kicker">${add ? 'CLASS ROSTER' : 'CLASS REWARD'}</p><h2>${add ? 'Add a student' : 'Gift the whole class'}</h2></div><button class="ts-action-close" type="button" aria-label="Close">×</button></header>
       <p class="ts-action-copy">${add ? 'Add a student to the currently selected class.' : 'Give the same number of coins to every student in this class.'}</p>
       <label for="ts-action-value">${add ? 'Student name' : 'Coins per student'}</label>
-      <input id="ts-action-value" name="value" type="${add ? 'text' : 'number'}" ${add ? 'maxlength="80" autocomplete="off" placeholder="Student name" required' : 'min="1" max="1000" step="1" value="10" required'}>
+      <input id="ts-action-value" name="value" type="${add ? 'text' : 'number'}" ${add ? 'maxlength="80" autocomplete="off" placeholder="Student name" required' : 'min="0" max="1000" step="5" value="10" required'}>
       <footer><button type="button" class="ts-action-cancel">Cancel</button><button type="submit" class="ts-action-confirm">${add ? 'Add student' : 'Gift coins'}</button></footer>
     </form>`;
     dialog.querySelector('.ts-action-close').addEventListener('click', () => dialog.close());
     dialog.querySelector('.ts-action-cancel').addEventListener('click', () => dialog.close());
     if (!dialog.open) dialog.showModal();
-    dialog.querySelector('[name="value"]').focus();
+    const valInput = dialog.querySelector('[name="value"]');
+    if (!add && valInput) {
+      valInput.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          const delta = e.key === 'ArrowUp' ? 5 : -5;
+          const raw = valInput.value.trim();
+          let current = (raw === '' || isNaN(Number(raw))) ? (delta > 0 ? 5 : 0) : Number(raw);
+          let next = Math.max(0, Math.min(1000, current + delta));
+          valInput.value = next;
+          valInput.dispatchEvent(new Event('input', { bubbles: true }));
+          valInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      });
+    }
+    valInput?.focus();
   }
   const submit = (f) => f && (f.requestSubmit ? f.requestSubmit() : f.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true })));
   function cardButtons() {
