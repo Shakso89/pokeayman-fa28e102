@@ -820,3 +820,25 @@ html body.ts-bright #app-screen :is(#battle-left,#battle-right) :is(p) { color: 
 .ts-rail-add { flex: none; background: var(--ts-yellow) !important; color: var(--ts-action-ink, #111) !important; }
 body.ts-on .ts-card select#ts-award-student { background: var(--ts-surface) !important; color: var(--ts-ink) !important; }
 body.ts-on .ts-card select#ts-award-student option { background: var(--ts-surface); color: var(--ts-ink); }
+
+/* Short branded cover while a teacher session opens and initial classroom data hydrates. */
+.ts-startup-overlay {
+  position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse at 50% 42%, rgba(18, 37, 76, .82), rgba(5, 10, 23, .97) 68%),
+    linear-gradient(rgba(4, 9, 22, .84), rgba(4, 9, 22, .93)),
+    url('/__l5e/assets-v1/11d538ad-dd06-42ea-8131-ce7d76bbbc3d/app-bg.jpg') center / cover;
+  color: #f8fafc; opacity: 1; transition: opacity .26s ease;
+}
+.ts-startup-overlay.is-leaving { opacity: 0; pointer-events: none; }
+.ts-startup-card { width: min(100%, 380px); display: grid; justify-items: center; gap: 12px; padding: 34px 28px 30px; text-align: center; border: 1px solid rgba(255, 203, 5, .22); border-radius: 26px; background: linear-gradient(155deg, rgba(19, 30, 55, .9), rgba(9, 15, 30, .92)); box-shadow: 0 28px 80px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.08); backdrop-filter: blur(12px); }
+.ts-startup-ball { position: relative; display: grid; place-items: center; width: 66px; height: 66px; margin-bottom: 3px; border: 4px solid rgba(255,255,255,.9); border-radius: 50%; background: linear-gradient(to bottom, #ee4149 0 45%, #121725 45% 55%, #f8fafc 55% 100%); box-shadow: 0 0 0 5px rgba(255,203,5,.1), 0 0 32px rgba(255,203,5,.2); animation: ts-startup-bob 1.6s ease-in-out infinite; }
+.ts-startup-ball::after { content: ''; position: absolute; left: 50%; top: 50%; width: 19px; height: 19px; transform: translate(-50%,-50%); border: 4px solid #121725; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.86); }
+.ts-startup-kicker { margin: 3px 0 0; color: #ffcb05; font: 800 10px/1.2 system-ui,sans-serif; letter-spacing: .2em; }
+.ts-startup-card h1 { margin: 0; color: #f8fafc; font: 800 clamp(21px, 5vw, 27px)/1.15 'Outfit','Fredoka',system-ui,sans-serif; }
+.ts-startup-copy { margin: 0; color: #aebbd3; font: 500 14px/1.5 system-ui,sans-serif; }
+.ts-startup-progress { width: min(100%, 240px); height: 4px; margin-top: 9px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.1); }
+.ts-startup-progress i { display: block; width: 38%; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#ffcb05,#ffeb83); box-shadow: 0 0 14px rgba(255,203,5,.65); animation: ts-startup-progress 1.25s ease-in-out infinite; }
+@keyframes ts-startup-bob { 0%,100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-5px) rotate(5deg); } }
+@keyframes ts-startup-progress { from { transform: translateX(-110%); } to { transform: translateX(270%); } }
+@media (prefers-reduced-motion: reduce) { .ts-startup-ball,.ts-startup-progress i { animation: none; } }

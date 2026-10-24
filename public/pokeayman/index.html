@@ -12273,6 +12273,8 @@ document.getElementById('student-logout-btn')?.addEventListener('click', () => {
 
 
 function enterApp() {
+  const launchingTeacher = currentRole === 'teacher';
+  if (launchingTeacher) window.pokeaymanShowTeacherStartup?.();
   if (currentRole === 'teacher') {
     const trophy = document.getElementById('global-leaderboard-trigger');
     const trophyHome = document.querySelector('#app-screen header .absolute.right-0');
@@ -12280,7 +12282,7 @@ function enterApp() {
     if (trophy && trophyHome) trophyHome.appendChild(trophy);
     if (trophySlot) { trophySlot.style.display = 'none'; }
   }
-  if (currentRole === 'teacher' && !loadTeacherWorkspace()) { toast('Access denied. Please sign in again.'); currentRole = ''; currentTeacher = ''; currentTeacherRecordId = ''; return false; }
+  if (currentRole === 'teacher' && !loadTeacherWorkspace()) { toast('Access denied. Please sign in again.'); currentRole = ''; currentTeacher = ''; currentTeacherRecordId = ''; window.pokeaymanHideTeacherStartup?.(); return false; }
   const homeScreen = document.getElementById('home-screen');
   const appScreen = document.getElementById('app-screen');
   const studentDashboard = document.getElementById('student-dashboard');
@@ -12335,6 +12337,12 @@ function enterApp() {
   // Shop hydration is a student feature; avoid hundreds of catalog requests and
   // their follow-up render while a teacher is opening the classroom dashboard.
   if (currentRole === 'student') loadShop();
+  if (launchingTeacher) {
+    const initialDataReady = window.__pokeaymanInitialDataReadyPromise || Promise.resolve();
+    const dataReadyOrTimeout = Promise.race([Promise.resolve(initialDataReady).catch(() => {}), new Promise(resolve => window.setTimeout(resolve, 12000))]);
+    const minimumScreenTime = new Promise(resolve => window.setTimeout(resolve, 420));
+    Promise.all([dataReadyOrTimeout, minimumScreenTime]).then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))).then(() => window.pokeaymanHideTeacherStartup?.());
+  }
   return true;
 }
 
@@ -25276,16 +25284,22 @@ function updateHomeArch() {
   initPokemonArch();
 }
 
-(async () => {
+window.__pokeaymanInitialDataReady = false;
+window.__pokeaymanInitialDataReadyPromise = (async () => {
   // Initialization reads the selected Canva Sheet; no local sample rows are created.
-  const res = await window.dataSdk.init(handler);
-  populateHomeStudents();
-  loadPricingPlans();
-  loadHomeArchConfig();
-  // onDataChanged supplies the complete sheet dataset and renders every school,
-  // class, and student row through the matching app sections.
-  if (!res.isOk) {
-    toast('Unable to load PokéAyman - Canva Code Data. Please try again.');
+  try {
+    const res = await window.dataSdk.init(handler);
+    populateHomeStudents();
+    loadPricingPlans();
+    loadHomeArchConfig();
+    // onDataChanged supplies the complete sheet dataset and renders every school,
+    // class, and student row through the matching app sections.
+    if (!res.isOk) {
+      toast('Unable to load PokéAyman - Canva Code Data. Please try again.');
+    }
+    return res;
+  } finally {
+    window.__pokeaymanInitialDataReady = true;
   }
 })();
 lucide.createIcons();

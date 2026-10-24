@@ -1,5 +1,27 @@
 /* Teacher 3-column shell: left sidebar + right utility rail. Drives the existing tabs/forms only. */
 (function () {
+  let startupOverlay = null;
+  function showTeacherStartup() {
+    if (startupOverlay?.isConnected) return;
+    startupOverlay = document.createElement('div');
+    startupOverlay.className = 'ts-startup-overlay';
+    startupOverlay.setAttribute('role', 'status');
+    startupOverlay.setAttribute('aria-live', 'polite');
+    startupOverlay.innerHTML = '<section class="ts-startup-card"><span class="ts-startup-ball" aria-hidden="true"><i></i></span><p class="ts-startup-kicker">TEACHER PORTAL</p><h1>Getting your classroom ready</h1><p class="ts-startup-copy">Loading classes, students, and your dashboard…</p><span class="ts-startup-progress" aria-hidden="true"><i></i></span></section>';
+    document.body.appendChild(startupOverlay);
+  }
+  function hideTeacherStartup() {
+    if (!startupOverlay?.isConnected) return;
+    const overlay = startupOverlay;
+    startupOverlay = null;
+    overlay.classList.add('is-leaving');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.inert = true;
+    window.setTimeout(() => overlay.remove(), 280);
+  }
+  window.pokeaymanShowTeacherStartup = showTeacherStartup;
+  window.pokeaymanHideTeacherStartup = hideTeacherStartup;
+
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const g = (fn, fb) => { try { return fn(); } catch (e) { return fb; } };
