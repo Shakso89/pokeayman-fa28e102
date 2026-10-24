@@ -8172,7 +8172,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <div class="cp-name">
            <h2 id="profile-student-name"></h2>
            <div class="cp-active-class-pill" id="profile-active-class-pill" title="Currently viewed class">
-            <span class="cp-active-class-icon" aria-hidden="true">🏫</span>
             <span id="profile-current-class-name">Pokémon Trainer</span>
            </div>
            <p class="cp-label hidden" id="profile-student-school" style="white-space: normal; overflow-wrap: anywhere;"></p>
@@ -13430,24 +13429,35 @@ function updateRoleUI() {
 
 function canOpenClass(schoolName, className, teacherName = currentTeacher) {
   if (!teacherName) return false;
+  // 1. Admins have access to all classes
   if (teacherName === 'Ayman' || (typeof canAccessAdmin === 'function' && canAccessAdmin()) || (typeof isAymanTeacher === 'function' && isAymanTeacher())) return true;
   if (typeof getEffectiveTeacherRole === 'function' && getEffectiveTeacherRole(teacherName) === 'admin') return true;
+  
+  // 2. School Managers have access to all classes in their assigned school
   if (typeof canManageSchool === 'function' && canManageSchool(schoolName, teacherName)) return true;
   
   const norm = v => String(v || '').replace(/^TR\.\s*/i, '').trim().toLowerCase();
   const target = norm(teacherName);
   
+  // 3. Explicitly assigned via class record assigned_teachers
   if (typeof getClassTeacherNames === 'function') {
     const names = getClassTeacherNames(schoolName, className);
     if (names.some(n => norm(n) === target)) return true;
   }
+  // 4. Explicitly assigned via teacher_class_assignment records
   if (typeof getAssignedClasses === 'function') {
     const assigned = getAssignedClasses(teacherName);
     if (assigned.some(a => norm(a.assigned_school) === norm(schoolName) && norm(a.assigned_class) === norm(className))) return true;
   }
+  // 5. Legacy fallback only when no assigned_teachers array is configured on the class
   if (typeof getClasses === 'function') {
     const cls = getClasses(schoolName).find(c => norm(c.class_name) === norm(className));
-    if (cls && (norm(cls.created_by) === target || norm(cls.teacher_name) === target || norm(cls.assigned_teacher) === target)) return true;
+    if (cls) {
+      if (Array.isArray(cls.assigned_teachers) && cls.assigned_teachers.length > 0) {
+        return false;
+      }
+      if (norm(cls.assigned_teacher) === target || norm(cls.teacher_name) === target) return true;
+    }
   }
   return false;
 }
@@ -13457,15 +13467,22 @@ function handleClassCardClick(schoolName, className) {
   if (canOpenClass(schoolName, className)) {
     navigateTo('students', schoolName, className);
   } else {
-    if (typeof toast === 'function') toast('Only assigned teachers and admins can open this class.');
-    if (typeof openClassPreviewModal === 'function') {
-      openClassPreviewModal(schoolName, className);
-    }
+    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${className}.`);
   }
 }
 window.handleClassCardClick = handleClassCardClick;
 
 function navigateTo(level, school, cls, studentName) {
+  // Enforce explicit class assignment permissions for teachers
+  if (currentRole === 'teacher' && (level === 'students' || level === 'student-profile')) {
+    if (school && cls && !canOpenClass(school, cls)) {
+      if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${cls}.`);
+      navSchool = school;
+      navClass = null;
+      navigateTo('classes', school);
+      return;
+    }
+  }
   navSchool = school || null; navClass = cls || null;
   document.getElementById('view-schools').classList.add('hidden');
   document.getElementById('view-classes').classList.add('hidden');
@@ -13771,10 +13788,10 @@ function renderTeacherDashboard() {
   if (!navSchool && !navClass) {
     renderSchoolsList();
   } else if (navSchool && !navClass) {
-    const classes = getClasses(navSchool);
+    const allClasses = getClasses(navSchool);
     const isSchoolAssigned = canManageSchool(navSchool);
-    const hasClassAssignmentsInSchool = getAssignedClasses(currentTeacher).some(a => a.assigned_school === navSchool);
-    const isAuthorized = isSchoolAssigned;
+    const isTeacherAdmin = currentTeacher === 'Ayman' || (typeof canAccessAdmin === 'function' && canAccessAdmin()) || (typeof isAymanTeacher === 'function' && isAymanTeacher()) || (typeof getEffectiveTeacherRole === 'function' && getEffectiveTeacherRole(currentTeacher) === 'admin');
+    const isAuthorized = isSchoolAssigned || isTeacherAdmin;
     
     const addClassContainer = document.getElementById('add-class-container');
     if (addClassContainer) {
@@ -13785,15 +13802,27 @@ function renderTeacherDashboard() {
       manageBtn.classList.toggle('hidden', !isAuthorized);
     }
     
+    // Teachers only see their explicitly assigned classes; Admins and School Managers see all
+    const classes = allClasses.filter(c => {
+      if (isTeacherAdmin || isSchoolAssigned) return true;
+      return canOpenClass(navSchool, c.class_name);
+    });
+    
     document.getElementById('classes-list').innerHTML = classes.map(c => {
-      const isClassAssigned = currentTeacher === 'Ayman' || getAssignedClasses(currentTeacher).some(a => a.assigned_class === c.class_name && a.assigned_school === navSchool);
-      const canManage = currentTeacher === 'Ayman' || isSchoolAssigned || isClassAssigned;
+      const isClassAssigned = isTeacherAdmin || isSchoolAssigned || canOpenClass(navSchool, c.class_name);
+      const canManage = isTeacherAdmin || isSchoolAssigned || isClassAssigned;
       const escJs = v => String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
       const roster = getStudents(navSchool, c.class_name);
       const totalCoins = roster.reduce((a, s) => a + (Number(s.coins) || 0), 0);
       return `<div class="gym-card group relative" role="button" tabindex="0" onclick="handleClassCardClick('${escJs(navSchool)}','${escJs(c.class_name)}')" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">${canManage ? `<button class="gym-edit" title="Edit class" aria-label="Edit ${c.class_name}" onclick="event.stopPropagation(); openEditClassModal('${c.__backendId}','${escJs(navSchool)}')">✎</button>` : ''}<div class="gym-head"><p class="gym-name">${c.class_name}</p></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}</div>`;
-    }).join('') || '<p class="text-gray-400 text-sm col-span-3 text-center py-8">No classes yet.</p>';
-  } else if (isViewOnly) {
+    }).join('') || `<p class="text-gray-400 text-sm col-span-3 text-center py-8">${allClasses.length ? `You are not assigned to any classes in ${navSchool}.` : 'No classes yet.'}</p>`;
+  } else if (!canOpenClass(navSchool, navClass)) {
+    // Unauthorized class access blocked at the view level
+    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${navClass}.`);
+    navClass = null;
+    navigateTo('classes', navSchool);
+    return;
+  } else if (false && isViewOnly) {
     // View-only mode for unassigned classes: show only student collection cards with name, coins, Pokémon count, and total value
     const students = getStudents(navSchool, navClass);
     const metrics = getClassRosterMetrics(students);
@@ -18009,21 +18038,19 @@ function switchStudentProfileClass(schoolName, className) {
   if (!schoolName || !className) return;
   schoolName = String(schoolName).trim();
   className = String(className).trim();
+  if (currentRole === 'teacher' && !canOpenClass(schoolName, className)) {
+    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${className}.`);
+    return;
+  }
   if (navSchool === schoolName && navClass === className) return;
   navSchool = schoolName;
   navClass = className;
   if (typeof selectedStudentClassKey !== 'undefined') {
     selectedStudentClassKey = `${schoolName}||${className}`;
   }
-  
-  // Re-evaluate authorization for newly switched class
-  const isSchoolAssigned = currentTeacher === 'Ayman' || (typeof getAssignedSchools === 'function' && getAssignedSchools(currentTeacher).some(a => a.assigned_school === navSchool));
-  const isClassAssigned = currentTeacher === 'Ayman' || (typeof getAssignedClasses === 'function' && getAssignedClasses(currentTeacher).some(a => a.assigned_class === navClass && a.assigned_school === navSchool));
-  const isAuthorized = isSchoolAssigned || isClassAssigned;
-  const isViewOnly = !isAuthorized && navClass && navSchool;
 
   navigateTo('student-profile', navSchool, navClass, profileStudent?.student_name || '');
-  renderStudentProfile(isViewOnly);
+  renderStudentProfile(false);
   if (typeof toast === 'function') {
     toast(`Switched view to ${className} (${schoolName})`);
   }
@@ -18099,13 +18126,19 @@ window.handleProfileBackToClass = handleProfileBackToClass;function renderStuden
   // Student name and avatar
   document.getElementById('profile-student-name').textContent = `${profileStudent.student_name}`;
 
-  // Update current active class display inside profile identity
+  // Filter enrolled classes: teachers can only see and switch to their assigned classes (admins see all)
+  const isTeacherAdmin = currentRole !== 'teacher' || currentTeacher === 'Ayman' || (typeof canAccessAdmin === 'function' && canAccessAdmin()) || (typeof isAymanTeacher === 'function' && isAymanTeacher()) || (typeof getEffectiveTeacherRole === 'function' && getEffectiveTeacherRole(currentTeacher) === 'admin');
+  const accessibleClasses = enrolledClasses.filter(item => {
+    if (isTeacherAdmin) return true;
+    return canOpenClass(item.school_name, item.class_name);
+  });
+
+  // Update current active class display inside profile identity (clean without school emoji or level label)
   const currentClassNameEl = document.getElementById('profile-current-class-name');
   if (currentClassNameEl) {
-    const levelLabel = (typeof getClassReadingLevelLabel === 'function' && activeSchool && activeClass) ? getClassReadingLevelLabel(activeSchool, activeClass) : '';
-    const otherCount = enrolledClasses.length > 1 ? ` · <span class="cp-other-classes-badge">${enrolledClasses.length} Classes</span>` : '';
+    const otherCount = accessibleClasses.length > 1 ? ` · <span class="cp-other-classes-badge">${accessibleClasses.length} Classes</span>` : '';
     currentClassNameEl.innerHTML = (activeSchool && activeClass)
-      ? `${esc(activeSchool)} · <strong>${esc(activeClass)}</strong>${levelLabel ? ` <span class="cp-level-chip">${esc(levelLabel)}</span>` : ''}${otherCount}`
+      ? `${esc(activeSchool)} · <strong>${esc(activeClass)}</strong>${otherCount}`
       : 'Pokémon Trainer';
   }
   const profileStudentSchool = document.getElementById('profile-student-school');
@@ -18113,15 +18146,14 @@ window.handleProfileBackToClass = handleProfileBackToClass;function renderStuden
     profileStudentSchool.textContent = activeSchool || '';
   }
 
-  // Render enrolled classes pills inside classes dock
+  // Render enrolled classes pills inside classes dock (clean without school emoji or reading level)
   const profileStudentClassesEl = document.getElementById('profile-student-classes');
   if (profileStudentClassesEl) {
-    if (!enrolledClasses.length) {
-      profileStudentClassesEl.innerHTML = '<span class="profile-class-pill is-empty">No classes yet</span>';
+    if (!accessibleClasses.length) {
+      profileStudentClassesEl.innerHTML = '<span class="profile-class-pill is-empty">No accessible classes</span>';
     } else {
-      profileStudentClassesEl.innerHTML = enrolledClasses.map(item => {
+      profileStudentClassesEl.innerHTML = accessibleClasses.map(item => {
         const isActive = item.school_name.toLowerCase() === activeSchool.toLowerCase() && item.class_name.toLowerCase() === activeClass.toLowerCase();
-        const levelLabel = (typeof getClassReadingLevelLabel === 'function') ? getClassReadingLevelLabel(item.school_name, item.class_name) : '';
         const schoolEsc = esc(item.school_name);
         const classEsc = esc(item.class_name);
         const jsSchool = jsStr(item.school_name);
@@ -18130,9 +18162,7 @@ window.handleProfileBackToClass = handleProfileBackToClass;function renderStuden
           `role="tab" aria-selected="${isActive}" ` +
           `title="${isActive ? 'Current class: ' + classEsc : 'Switch to ' + classEsc + ' (' + schoolEsc + ')'}" ` +
           `${isActive ? '' : `onclick="switchStudentProfileClass('${jsSchool}', '${jsClass}')"`}>` +
-          `<span class="pill-icon" aria-hidden="true">🏫</span>` +
           `<span class="pill-name">${schoolEsc} · <strong>${classEsc}</strong></span>` +
-          `${levelLabel ? `<span class="pill-level">${esc(levelLabel)}</span>` : ''}` +
           `${isActive ? '<span class="pill-active-badge">Active</span>' : ''}` +
           `</button>`;
       }).join('');

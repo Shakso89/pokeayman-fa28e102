@@ -187,79 +187,73 @@ html body #app-screen #view-student-profile .profile-classes-pills {
 html body #app-screen #view-student-profile .profile-class-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
+  gap: 8px;
+  padding: 6px 14px;
   border-radius: 9999px;
-  font: 600 12.5px Outfit, sans-serif;
-  color: var(--profile-muted);
-  background: color-mix(in srgb, var(--profile-surface) 65%, transparent);
-  border: 1px solid var(--profile-border);
+  font: 700 13px Outfit, sans-serif;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
   user-select: none;
   text-decoration: none;
 }
-html body #app-screen #view-student-profile .profile-class-pill:hover:not(.is-active) {
-  color: var(--profile-ink);
-  border-color: var(--ts-yellow, #f59e0b);
-  background: color-mix(in srgb, var(--ts-yellow, #f59e0b) 12%, var(--profile-surface));
-  transform: translateY(-1px);
-}
+/* Dark Mode: default theme */
 html body:not(.ts-bright) #app-screen #view-student-profile .profile-class-pill {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  color: var(--color-text-secondary) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #cbd5e1 !important;
 }
 html body:not(.ts-bright) #app-screen #view-student-profile .profile-class-pill:hover:not(.is-active) {
-  color: #93c5fd !important;
-  border-color: rgba(96, 165, 250, 0.6) !important;
-  background: rgba(59, 130, 246, 0.15) !important;
-}
-html body #app-screen #view-student-profile .profile-class-pill.is-active {
-  color: #111827 !important;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
-  border-color: #d97706 !important;
-  font-weight: 700;
-  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.35);
-  cursor: default;
+  color: #fef08a !important;
+  border-color: rgba(255, 203, 5, 0.55) !important;
+  background: rgba(255, 203, 5, 0.12) !important;
+  transform: translateY(-1px);
 }
 html body:not(.ts-bright) #app-screen #view-student-profile .profile-class-pill.is-active {
-  color: #ffffff !important;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-  border-color: #60a5fa !important;
-  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.4);
+  color: #111827 !important;
+  background: linear-gradient(135deg, #ffd84d 0%, #ffcb05 50%, #f59e0b 100%) !important;
+  border: 1px solid #f59e0b !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.45) !important;
+  cursor: default;
 }
-html body #app-screen #view-student-profile .profile-class-pill .pill-icon {
-  font-size: 13px;
-  line-height: 1;
+html body:not(.ts-bright) #app-screen #view-student-profile .profile-class-pill.is-active .pill-name strong {
+  color: #111827 !important;
 }
+
+/* Bright Mode: light theme */
+html body.ts-bright #app-screen #view-student-profile .profile-class-pill {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.16) !important;
+  color: #475569 !important;
+}
+html body.ts-bright #app-screen #view-student-profile .profile-class-pill:hover:not(.is-active) {
+  color: #0f172a !important;
+  border-color: #f59e0b !important;
+  background: rgba(245, 158, 11, 0.1) !important;
+  transform: translateY(-1px);
+}
+html body.ts-bright #app-screen #view-student-profile .profile-class-pill.is-active {
+  color: #0f172a !important;
+  background: linear-gradient(135deg, #ffc700 0%, #f59e0b 100%) !important;
+  border: 1px solid #d97706 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 2px 10px rgba(217, 119, 6, 0.35) !important;
+  cursor: default;
+}
+html body.ts-bright #app-screen #view-student-profile .profile-class-pill.is-active .pill-name strong {
+  color: #0f172a !important;
+}
+
 html body #app-screen #view-student-profile .profile-class-pill .pill-active-badge {
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 1px 6px;
+  padding: 1px 7px;
   border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.22);
   color: inherit;
-}
-html body:not(.ts-bright) #app-screen #view-student-profile .profile-class-pill.is-active .pill-active-badge {
-  background: rgba(255, 255, 255, 0.25);
-}
-html body #app-screen #view-student-profile .profile-class-pill .pill-level {
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 1px 6px;
-  border-radius: 9999px;
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  border: 1px solid rgba(96, 165, 250, 0.3);
-}
-html body #app-screen #view-student-profile .profile-class-pill.is-active .pill-level {
-  background: rgba(0, 0, 0, 0.15);
-  color: inherit;
-  border-color: transparent;
 }
 html body #app-screen #view-student-profile .profile-class-pill.is-empty {
   cursor: default;
