@@ -47,6 +47,60 @@
   }
   window.setPokeaymanThemeMode = setThemeMode;
 
+  const STREAK_DISMISSED_KEY = 'pokeayman-streak-dismissed-session';
+  const SESSION_ID_KEY = 'pokeayman-login-session-id';
+
+  function getCurrentSessionId() {
+    try {
+      let sid = sessionStorage.getItem(SESSION_ID_KEY);
+      const teacherName = g(() => currentTeacher, '') || 'teacher';
+      if (sid && !sid.startsWith(teacherName + '-')) {
+        sid = null;
+      }
+      if (!sid && g(() => currentRole) === 'teacher') {
+        sid = teacherName + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        sessionStorage.setItem(SESSION_ID_KEY, sid);
+      }
+      return sid || '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function isStreakDismissed() {
+    try {
+      const sid = getCurrentSessionId();
+      if (!sid) {
+        return sessionStorage.getItem(STREAK_DISMISSED_KEY) === '1';
+      }
+      return sessionStorage.getItem(STREAK_DISMISSED_KEY) === sid;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function setStreakDismissed(dismissed) {
+    try {
+      if (dismissed) {
+        const sid = getCurrentSessionId() || 'active';
+        sessionStorage.setItem(STREAK_DISMISSED_KEY, sid);
+      } else {
+        sessionStorage.removeItem(STREAK_DISMISSED_KEY);
+      }
+    } catch (_) {}
+  }
+
+  function clearStreakSession() {
+    try {
+      sessionStorage.removeItem(SESSION_ID_KEY);
+      sessionStorage.removeItem(STREAK_DISMISSED_KEY);
+    } catch (_) {}
+  }
+
+  window.pokeaymanSetStreakDismissed = setStreakDismissed;
+  window.pokeaymanClearStreakSession = clearStreakSession;
+  window.pokeaymanIsStreakDismissed = isStreakDismissed;
+
   const CLASS_ITEMS = [
     ['students', '👩‍🎓', 'Class Roster'], ['quiz', '📝', 'Quizzes'], ['vocab', '📚', 'Vocabulary'],
     ['games', '🎁', 'Games'], ['battle', '⚔️', 'Battle Arena'],
@@ -84,7 +138,7 @@
         <div class="ts-amounts">${[10, 50, 100].map((n) => `<button type="button" data-amt="${n}"${n === 10 ? ' class="on"' : ''}>+${n}</button>`).join('')}</div>
         <button type="button" class="ts-award-go" id="ts-award-go">Award coins</button></section>
       <section class="ts-card"><h3>🏆 Top 3 Students</h3><ol id="ts-top3" class="ts-top3"></ol></section>
-      <section class="ts-card ts-gift ts-streak"><button type="button" class="ts-streak-close" data-ts-streak-close aria-label="Close login streak card" title="Close">×</button><h3>🔥 Login Streak</h3><p id="ts-streak-text">Log in 7 days in a row to unlock a Streak Box</p>
+      <section class="ts-card ts-gift ts-streak"${isStreakDismissed() ? ' hidden' : ''}><button type="button" class="ts-streak-close" data-ts-streak-close aria-label="Close login streak card" title="Close">×</button><h3>🔥 Login Streak</h3><p id="ts-streak-text">Log in 7 days in a row to unlock a Streak Box</p>
         <div class="ts-streak-dots" id="ts-streak-dots"></div>
         <button type="button" class="ts-award-go" id="ts-box-open">🎁 Open Streak Box</button></section>`;
     document.body.append(side, rail);
@@ -191,7 +245,7 @@
     } else if (act === 'schools') { g(() => showMainTab('dashboard')); }
     else if (act === 'admin') { g(() => showMainTab('admin')); }
     else if (act === 'leaders') { $('global-leaderboard-trigger')?.click(); }
-    else if (act === 'logout') { ($('header-logout') || $('logout-btn'))?.click(); }
+    else if (act === 'logout') { clearStreakSession(); ($('header-logout') || $('logout-btn'))?.click(); }
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(sync, 50);
   }
@@ -510,7 +564,7 @@
     const isAdmin = role === 'admin';
     const isSchoolManager = role === 'school_manager';
     const streakCard = document.querySelector('#ts-rail .ts-streak');
-    if (streakCard) streakCard.hidden = isAdmin;
+    if (streakCard) streakCard.hidden = isAdmin || isStreakDismissed();
     const isPro = g(() => findMyTeacherRecord()?.teacher_pro === true, false);
     accountBadge.textContent = isAdmin ? 'ADMIN' : (isSchoolManager ? 'MANAGER' : (isPro ? 'PRO' : 'TEACHER'));
     accountBadge.hidden = !isAdmin && !isSchoolManager && !isPro;

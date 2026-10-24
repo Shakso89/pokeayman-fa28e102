@@ -67,7 +67,14 @@ function Index() {
     supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user ?? null); setReady(true); });
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" || event === "USER_UPDATED") setUser(session?.user ?? null);
-      if (event === "SIGNED_OUT") { setUser(null); setFrameKey((k) => k + 1); }
+      if (event === "SIGNED_OUT") {
+        try {
+          sessionStorage.removeItem("pokeayman-login-session-id");
+          sessionStorage.removeItem("pokeayman-streak-dismissed-session");
+        } catch (_) {}
+        setUser(null);
+        setFrameKey((k) => k + 1);
+      }
     });
     return () => data.subscription.unsubscribe();
   }, []);
@@ -115,7 +122,13 @@ function Index() {
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
         return error ? { error: error.message } : {};
       },
-      signOut: async () => { await supabase.auth.signOut(); },
+      signOut: async () => {
+        try {
+          sessionStorage.removeItem("pokeayman-login-session-id");
+          sessionStorage.removeItem("pokeayman-streak-dismissed-session");
+        } catch (_) {}
+        await supabase.auth.signOut();
+      },
       email: user?.email ?? null,
       getAccount: async () => {
         const { data } = await supabase.auth.getUser();
