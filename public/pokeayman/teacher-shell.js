@@ -131,19 +131,19 @@
     chooser.id = 'ts-chooser';
     chooser.setAttribute('aria-labelledby', 'ts-chooser-title');
     chooser.innerHTML = `<header class="ts-chooser-header"><div><h2 id="ts-chooser-title">Schools &amp; classes</h2><p id="ts-chooser-count"></p></div><button type="button" data-ts-close aria-label="Close class chooser">×</button></header>
-      <div class="ts-chooser-filters"><label class="sr-only" for="ts-class-search">Search schools or classes</label><input id="ts-class-search" type="search" placeholder="Search schools or classes…" autocomplete="off"><label class="sr-only" for="ts-school-filter">School</label><select id="ts-school-filter"><option value="">All schools</option></select></div>
-      <div id="ts-class-results" class="ts-class-results"></div><footer><button type="button" class="ts-pop-all" data-ts="schools">Manage schools &amp; classes →</button></footer>`;
+      <div class="ts-chooser-search-bar"><span class="ts-search-icon">🔍</span><input id="ts-class-search" type="search" placeholder="Search schools or classes…" autocomplete="off"></div>
+      <div id="ts-class-results" class="ts-class-results"></div><footer><button type="button" class="ts-pop-all" data-ts="schools">⚙️ Manage all schools &amp; classes →</button></footer>`;
     document.body.appendChild(chooser);
     chooser.addEventListener('click', (e) => {
       const b = e.target.closest('button');
       if (b?.hasAttribute('data-ts-close') || e.target === chooser) return closePop();
-      if (b?.dataset.tsGo) { const [sc, cl] = JSON.parse(b.dataset.tsGo); closePop(); switchClass(sc, cl); sync(); }
-      else if (b?.dataset.tsSchool) { closePop(); showMainTab('dashboard'); navigateTo('classes', b.dataset.tsSchool); sync(); }
-      else if (b?.dataset.ts === 'schools') { closePop(); showMainTab('dashboard'); navigateTo('schools'); sync(); }
+      if (b?.dataset.tsSelectSchool) { activeChooserSchool = b.dataset.tsSelectSchool; renderClassChoices(); return; }
+      if (b?.dataset.tsGo) { const [sc, cl] = JSON.parse(b.dataset.tsGo); closePop(); switchClass(sc, cl); sync(); return; }
+      if (b?.dataset.tsSchool) { closePop(); showMainTab('dashboard'); navigateTo('classes', b.dataset.tsSchool); sync(); return; }
+      if (b?.dataset.ts === 'schools') { closePop(); showMainTab('dashboard'); navigateTo('schools'); sync(); return; }
     });
     chooser.addEventListener('close', () => document.querySelector('.ts-switch')?.setAttribute('aria-expanded', 'false'));
     $('ts-class-search').addEventListener('input', renderClassChoices);
-    $('ts-school-filter').addEventListener('change', renderClassChoices);
 
     side.addEventListener('click', onNav);
     rail.addEventListener('click', onRail);
@@ -203,26 +203,122 @@
     const ac = g(() => getAssignedClasses(me), []), as = g(() => getAssignedSchools(me), []).map((a) => a.assigned_school || a.school_name);
     return all.filter((c) => as.includes(c.school_name) || ac.some((a) => (a.assigned_school || a.school_name) === c.school_name && (a.assigned_class || a.class_name) === c.class_name) || [c.created_by, c.teacher_name, c.assigned_teacher].includes(me));
   }
+  let activeChooserSchool = '';
+
   function togglePop() {
     const pop = $('ts-chooser'), btn = document.querySelector('.ts-switch');
     if (pop.open) return closePop();
     $('ts-class-search').value = '';
-    $('ts-school-filter').innerHTML = '<option value="">All schools</option>' + [...new Set(myClasses().map((c) => c.school_name))].sort().map((sc) => `<option value="${esc(sc)}">${esc(sc)}</option>`).join('');
+    const classes = myClasses();
+    const allSchools = [...new Set(classes.map((c) => c.school_name))].sort();
+    const curSchool = g(() => navSchool, '');
+    activeChooserSchool = (allSchools.includes(curSchool) ? curSchool : allSchools[0]) || '';
     renderClassChoices();
-    pop.showModal(); btn.setAttribute('aria-expanded', 'true'); $('ts-class-search').focus();
+    pop.showModal();
+    btn?.setAttribute('aria-expanded', 'true');
+    $('ts-class-search').focus();
   }
+
   function renderClassChoices() {
-    const groups = {};
-    const query = $('ts-class-search').value.trim().toLocaleLowerCase(), school = $('ts-school-filter').value;
+    const query = $('ts-class-search').value.trim().toLocaleLowerCase();
     const seen = new Set();
-    const classes = myClasses().filter((c) => { const key = JSON.stringify([c.school_name, c.class_name]); if (seen.has(key)) return false; seen.add(key); return true; });
-    $('ts-chooser-count').textContent = `${new Set(classes.map((c) => c.school_name)).size} schools · ${classes.length} classes`;
-    classes.filter((c) => (!school || c.school_name === school) && `${c.school_name} ${c.class_name}`.toLocaleLowerCase().includes(query)).forEach((c) => { (groups[c.school_name] = groups[c.school_name] || []).push(c); });
+    const classes = myClasses().filter((c) => {
+      const key = JSON.stringify([c.school_name, c.class_name]);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    const allSchools = [...new Set(classes.map((c) => c.school_name))].sort();
+    if (!activeChooserSchool || !allSchools.includes(activeChooserSchool)) {
+      activeChooserSchool = allSchools[0] || '';
+    }
+
+    $('ts-chooser-count').textContent = `${allSchools.length} school${allSchools.length !== 1 ? 's' : ''} · ${classes.length} class${classes.length !== 1 ? 'es' : ''}`;
+
     const cur = `${g(() => navSchool, '')}|${g(() => navClass, '')}`;
-    $('ts-class-results').innerHTML = Object.keys(groups).sort().map((sc) => `<section class="ts-school-group"><div class="ts-school-heading"><h3>${esc(sc)}</h3><button type="button" data-ts-school="${esc(sc)}" aria-label="Open ${esc(sc)} school">Open school →</button></div>` + groups[sc].sort((a, b) => a.class_name.localeCompare(b.class_name)).map((c) => {
-      const n = g(() => getStudents(sc, c.class_name).length, 0);
-      return `<button type="button" class="ts-pop-item${cur === sc + '|' + c.class_name ? ' on' : ''}" aria-pressed="${cur === sc + '|' + c.class_name}" data-ts-go='${esc(JSON.stringify([sc, c.class_name]))}'><span>${esc(c.class_name)}</span><small>${n} students ${cur === sc + '|' + c.class_name ? '✓' : '→'}</small></button>`;
-    }).join('') + '</section>').join('') || '<p class="ts-empty">No matching classes</p>';
+    const curSchool = g(() => navSchool, '');
+
+    if (query) {
+      const matched = classes.filter(c => `${c.school_name} ${c.class_name}`.toLocaleLowerCase().includes(query));
+      $('ts-class-results').innerHTML = `<div class="ts-search-results-view">
+        <div class="ts-search-summary">Search results for "${esc(query)}" (${matched.length})</div>
+        <div class="ts-classes-scroll-list">
+          ${matched.length ? matched.map(c => {
+            const n = g(() => getStudents(c.school_name, c.class_name).length, 0);
+            const isCur = cur === `${c.school_name}|${c.class_name}`;
+            const level = c.class_level || 'P4';
+            return `<button type="button" class="ts-class-card ${isCur ? 'on' : ''}" data-ts-go='${esc(JSON.stringify([c.school_name, c.class_name]))}'>
+              <div class="ts-class-card-left">
+                <div class="ts-class-card-title-row">
+                  <span class="ts-class-card-school">🏫 ${esc(c.school_name)}</span>
+                  <span class="ts-class-card-level">${esc(level)}</span>
+                </div>
+                <strong class="ts-class-card-name">${esc(c.class_name)}</strong>
+                <span class="ts-class-card-students">👥 ${n} student${n !== 1 ? 's' : ''}</span>
+              </div>
+              <div class="ts-class-card-right">
+                ${isCur ? '<span class="ts-class-card-badge">Active</span>' : '<span class="ts-class-card-arrow">→</span>'}
+              </div>
+            </button>`;
+          }).join('') : '<p class="ts-empty" style="padding:24px;text-align:center;color:var(--ts-muted)">No matching schools or classes found</p>'}
+        </div>
+      </div>`;
+      return;
+    }
+
+    const schoolClasses = classes.filter(c => c.school_name === activeChooserSchool).sort((a, b) => a.class_name.localeCompare(b.class_name));
+
+    const schoolsNavHtml = allSchools.map(sc => {
+      const count = classes.filter(c => c.school_name === sc).length;
+      const isSelected = sc === activeChooserSchool;
+      const isCurNavSchool = sc === curSchool;
+      return `<button type="button" class="ts-school-item ${isSelected ? 'is-selected' : ''} ${isCurNavSchool ? 'is-current-school' : ''}" data-ts-select-school="${esc(sc)}">
+        <div class="ts-school-item-text">
+          <div class="ts-school-item-name">🏫 ${esc(sc)}</div>
+          ${isCurNavSchool ? '<small class="ts-school-item-sub">Active School</small>' : ''}
+        </div>
+        <span class="ts-school-item-count">${count}</span>
+      </button>`;
+    }).join('');
+
+    const classesListHtml = schoolClasses.length ? schoolClasses.map(c => {
+      const n = g(() => getStudents(activeChooserSchool, c.class_name).length, 0);
+      const isCur = cur === `${activeChooserSchool}|${c.class_name}`;
+      const level = c.class_level || 'P4';
+      return `<button type="button" class="ts-class-card ${isCur ? 'on' : ''}" data-ts-go='${esc(JSON.stringify([activeChooserSchool, c.class_name]))}'>
+        <div class="ts-class-card-left">
+          <div class="ts-class-card-title-row">
+            <strong class="ts-class-card-name">${esc(c.class_name)}</strong>
+            <span class="ts-class-card-level">${esc(level)}</span>
+          </div>
+          <span class="ts-class-card-students">👥 ${n} student${n !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="ts-class-card-right">
+          ${isCur ? '<span class="ts-class-card-badge">Active</span>' : '<span class="ts-class-card-arrow">→</span>'}
+        </div>
+      </button>`;
+    }).join('') : '<p class="ts-empty" style="padding:24px;text-align:center;color:var(--ts-muted)">No classes in this school yet</p>';
+
+    $('ts-class-results').innerHTML = `<div class="ts-hierarchy-container">
+      <aside class="ts-hierarchy-schools">
+        <div class="ts-pane-head">
+          <span>Schools (${allSchools.length})</span>
+        </div>
+        <div class="ts-schools-scroll-list">
+          ${schoolsNavHtml}
+        </div>
+      </aside>
+      <main class="ts-hierarchy-classes">
+        <div class="ts-pane-head ts-classes-head">
+          <span>Classes in <strong>${esc(activeChooserSchool)}</strong> (${schoolClasses.length})</span>
+          <button type="button" class="ts-btn-open-school" data-ts-school="${esc(activeChooserSchool)}">Open school ↗</button>
+        </div>
+        <div class="ts-classes-scroll-list">
+          ${classesListHtml}
+        </div>
+      </main>
+    </div>`;
   }
   function closePop() { $('ts-chooser')?.close(); document.querySelector('.ts-switch')?.setAttribute('aria-expanded', 'false'); }
   function switchClass(sc, cl) {
