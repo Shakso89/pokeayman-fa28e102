@@ -1,5 +1,5 @@
 // AI Vocabulary List Generator for PokéAyman
-// Gemini + ChatGPT approve sentences first; pixel-level matching follows.
+// AI models approve sentences first; pixel-level matching follows.
 // The teacher reviews the draft before any records or credits change.
 
 (function () {
@@ -425,7 +425,7 @@
         renderReview();
       }
       if (action === 'rewrite') {
-        // Sentences remain Gemini-written and ChatGPT-approved. Invalidate the
+        // Sentences remain AI-written and approved. Invalidate the
         // previous image before requesting a new sentence, even on failure.
         Object.assign(item, { busy: true, imageUrl: '', mediaStatus: 'needs_review', approvedSentence: '', withoutImage: false, candidates: [], note: '' });
         renderReview();
@@ -810,7 +810,7 @@
       draft = itemsWithImages.map((item, index) => ({ ...item, id: `item-${index + 1}`, mediaStatus: 'needs_review', approvedSentence: '', withoutImage: false, searchType: 'photo', candidates: [] }));
       for (let i = 0; i < draft.length; i++) {
         if (closed) return;
-        setGenerating(true, `Step 2/3: Checking pictures for "${draft[i].word}" (${i + 1}/${draft.length})...`, 50 + Math.round((i / draft.length) * 35));
+        setGenerating(true, `Step 2/3: Finding illustrations & pictures for "${draft[i].word}" (${i + 1}/${draft.length})...`, 50 + Math.round((i / draft.length) * 35));
         await matchItem(draft[i]);
       }
       if (closed) return;
@@ -818,8 +818,8 @@
 
       const listId = `vocab-ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const teacherCtx = typeof window.getCurrentTeacherContext === 'function' ? window.getCurrentTeacherContext() : {};
-      const teacherName = teacherCtx.teacherName || window.currentTeacher || 'Teacher';
-      const teacherId = teacherCtx.teacherId || window.currentTeacherRecordId || '';
+      const teacherName = teacherCtx.teacherName || window.currentTeacher || (typeof currentTeacher !== 'undefined' ? currentTeacher : '') || 'Teacher';
+      const teacherId = teacherCtx.teacherId || window.currentTeacherRecordId || (typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : '') || (typeof verifiedTeacherIdentity === 'function' ? verifiedTeacherIdentity() : '') || '';
 
       // The whole list is written atomically with stable IDs for safe retries.
       let creditsDeducted = false;
@@ -850,6 +850,9 @@
         owner: teacherName,
         teacher_name: teacherName,
         teacher_id: teacherId,
+        created_by: teacherName,
+        ai_creator_teacher: teacherName,
+        ai_creator_id: teacherId,
         is_ai_generated: true,
         ai_generated: true,
         generation_source: 'ai',
@@ -926,7 +929,10 @@
             is_ai_generated: true,
             created_at: new Date().toISOString(),
             teacher_name: teacherName,
-            owner: teacherName
+            owner: teacherName,
+            created_by: teacherName,
+            ai_creator_teacher: teacherName,
+            ai_creator_id: teacherId
           };
 
           wordPayloads.push(wordPayload);
