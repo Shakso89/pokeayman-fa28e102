@@ -413,6 +413,306 @@ html body.ts-bright .vocab-gen-generating-subhint {
 }
 
 /* ============================================================
+   Tender Dolphin UI (File Upload by akshat-patel28)
+   Adapted for Dark & Bright theme harmonization
+   ============================================================ */
+
+.tender-dolphin-dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  border-radius: 14px;
+  border: 2px dashed rgba(129, 140, 248, 0.35);
+  background: rgba(15, 23, 42, 0.45);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.tender-dolphin-dropzone:hover,
+.tender-dolphin-dropzone.is-dragover {
+  border-color: #818cf8;
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.tender-dolphin-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.tender-dolphin-input-div {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  border: 2px solid #6366f1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.45), inset 0 0 10px rgba(99, 102, 241, 0.3);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, rgba(15, 23, 42, 0.7) 80%);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tender-dolphin-dropzone:hover .tender-dolphin-input-div,
+.tender-dolphin-input-div:hover {
+  transform: scale(1.08);
+  border-color: #a5b4fc;
+  box-shadow: 0 0 35px rgba(129, 140, 248, 0.75), inset 0 0 16px rgba(129, 140, 248, 0.45);
+}
+
+.tender-dolphin-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.tender-dolphin-icon {
+  width: 32px;
+  height: 32px;
+  color: #a5b4fc;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+}
+
+.tender-dolphin-dropzone:hover .tender-dolphin-icon,
+.tender-dolphin-input-div:hover .tender-dolphin-icon {
+  transform: translateY(-4px);
+  color: #ffffff;
+}
+
+.tender-dolphin-text-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.tender-dolphin-main-text {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #f8fafc;
+  letter-spacing: -0.01em;
+}
+
+.tender-dolphin-sub-text {
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+/* Bright Mode support for Tender Dolphin */
+html body.ts-bright .tender-dolphin-dropzone,
+body.ts-on.ts-bright .tender-dolphin-dropzone {
+  background: #f8fafc;
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.05);
+}
+
+html body.ts-bright .tender-dolphin-dropzone:hover,
+html body.ts-bright .tender-dolphin-dropzone.is-dragover {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.05);
+}
+
+html body.ts-bright .tender-dolphin-input-div,
+body.ts-on.ts-bright .tender-dolphin-input-div {
+  border-color: #6366f1;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, #ffffff 80%);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.25), inset 0 0 8px rgba(99, 102, 241, 0.15);
+}
+
+html body.ts-bright .tender-dolphin-dropzone:hover .tender-dolphin-input-div,
+html body.ts-bright .tender-dolphin-input-div:hover {
+  transform: scale(1.08);
+  border-color: #4f46e5;
+  box-shadow: 0 0 30px rgba(99, 102, 241, 0.45), inset 0 0 12px rgba(99, 102, 241, 0.25);
+}
+
+html body.ts-bright .tender-dolphin-icon,
+body.ts-on.ts-bright .tender-dolphin-icon {
+  color: #4f46e5;
+}
+
+html body.ts-bright .tender-dolphin-main-text {
+  color: #0f172a;
+}
+
+html body.ts-bright .tender-dolphin-sub-text {
+  color: #64748b;
+}
+
+/* ============================================================
+   Word Extraction Count Controls (All vs Manual Number Input)
+   ============================================================ */
+
+.vocab-gen-extract-count-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vocab-gen-count-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pk-ink, #f8fafc);
+}
+
+.vocab-gen-count-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vocab-gen-count-toggle-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.vocab-gen-count-toggle-btn:hover {
+  border-color: rgba(129, 140, 248, 0.6);
+  color: #ffffff;
+}
+
+.vocab-gen-count-toggle-btn.is-selected {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  border-color: #818cf8;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.4);
+}
+
+.vocab-gen-custom-count-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.vocab-gen-custom-label {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.vocab-gen-number-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.vocab-gen-number-input {
+  width: 100%;
+  padding: 8px 50px 8px 12px;
+  border-radius: 8px;
+  background: var(--pk-surface, #0b1220);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.vocab-gen-number-input:focus,
+.vocab-gen-number-input.is-active {
+  border-color: #818cf8;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+}
+
+.vocab-gen-number-unit {
+  position: absolute;
+  right: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.vocab-gen-count-caption {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Bright Mode support for Word Extraction Controls */
+html body.ts-bright .vocab-gen-count-title,
+body.ts-on.ts-bright .vocab-gen-count-title {
+  color: #0f172a;
+}
+
+html body.ts-bright .vocab-gen-count-toggle-btn,
+body.ts-on.ts-bright .vocab-gen-count-toggle-btn {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+html body.ts-bright .vocab-gen-count-toggle-btn:hover,
+body.ts-on.ts-bright .vocab-gen-count-toggle-btn:hover {
+  border-color: #6366f1;
+  color: #1e1b4b;
+}
+
+html body.ts-bright .vocab-gen-count-toggle-btn.is-selected,
+body.ts-on.ts-bright .vocab-gen-count-toggle-btn.is-selected {
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  border-color: #4f46e5;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.3);
+}
+
+html body.ts-bright .vocab-gen-custom-label,
+body.ts-on.ts-bright .vocab-gen-custom-label {
+  color: #64748b;
+}
+
+html body.ts-bright .vocab-gen-number-input,
+body.ts-on.ts-bright .vocab-gen-number-input {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+html body.ts-bright .vocab-gen-number-input:focus,
+html body.ts-bright .vocab-gen-number-input.is-active {
+  border-color: #6366f1;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.25);
+}
+
+html body.ts-bright .vocab-gen-number-unit,
+body.ts-on.ts-bright .vocab-gen-number-unit {
+  color: #64748b;
+}
+
+html body.ts-bright .vocab-gen-count-caption,
+body.ts-on.ts-bright .vocab-gen-count-caption {
+  color: #64748b;
+}
+
+/* ============================================================
    Unassigned School Classes & View-Only Mode Styles
    ============================================================ */
 

@@ -111,7 +111,7 @@
     const { school, className } = getTargetClassInfo();
     activeMode = 'words';
     uploadedPhotoBase64 = '';
-    selectedPhotoCount = 5;
+    selectedPhotoCount = 'all';
     isGenerating = false;
 
     // Available classes (mandatory selection)
@@ -131,7 +131,7 @@
       <div class="teacher-vb-create-dialog" style="max-width:38rem; width:100%;">
         <div class="teacher-vb-create-heading">
           <h4 style="display:flex; align-items:center; gap:8px;">
-            <span>⚡</span> Generate Vocabulary List
+            Generate Vocabulary List
           </h4>
           <button id="vocab-gen-popup-close" type="button" aria-label="Close" style="cursor:pointer;">&times;</button>
         </div>
@@ -157,10 +157,10 @@
             <span style="display:block; font-size:12px; font-weight:700; color:var(--pk-ink, #f8fafc); margin-bottom:6px;">How do you want to generate?</span>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
               <button type="button" id="vocab-gen-mode-words" class="vocab-gen-tab-btn active" style="padding:10px 12px; border-radius:8px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
-                <span>📝</span> Write Words
+                Write Words
               </button>
               <button type="button" id="vocab-gen-mode-photo" class="vocab-gen-tab-btn" style="padding:10px 12px; border-radius:8px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;">
-                <span>📷</span> Upload Photo
+                Upload Photo
               </button>
             </div>
           </div>
@@ -177,29 +177,46 @@
             </div>
           </div>
 
-          <!-- Mode 2: Photo Upload -->
-          <div id="vocab-gen-section-photo" style="display:none; flex-direction:column; gap:10px;">
-            <div id="vocab-gen-photo-dropzone" style="border:2px dashed rgba(148,163,184,.4); border-radius:10px; padding:16px; text-align:center; cursor:pointer; background:rgba(255,255,255,0.02); transition:all 0.2s ease;">
-              <input type="file" id="vocab-gen-photo-file" accept="image/*" style="display:none;">
-              <div id="vocab-gen-photo-prompt">
-                <div style="font-size:28px; margin-bottom:4px;">📸</div>
-                <div style="font-weight:700; font-size:13px;">Click or drop a photo here</div>
-                <div style="font-size:11px; opacity:0.7; margin-top:2px;">Textbook page, real scene, flashcard, etc.</div>
+          <!-- Mode 2: Photo Upload (Tender Dolphin by akshat-patel28) -->
+          <div id="vocab-gen-section-photo" style="display:none; flex-direction:column; gap:12px;">
+            <div id="vocab-gen-photo-dropzone" class="tender-dolphin-dropzone">
+              <input type="file" id="vocab-gen-photo-file" accept="image/*" class="tender-dolphin-input">
+              <div id="vocab-gen-photo-prompt" class="tender-dolphin-container">
+                <div class="tender-dolphin-input-div">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" stroke-linejoin="round" stroke-linecap="round" viewBox="0 0 24 24" stroke-width="2" fill="none" stroke="currentColor" class="tender-dolphin-icon">
+                    <polyline points="16 16 12 12 8 16"></polyline>
+                    <line y2="21" x2="12" y1="12" x1="12"></line>
+                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+                    <polyline points="16 16 12 12 8 16"></polyline>
+                  </svg>
+                </div>
+                <div class="tender-dolphin-text-wrap">
+                  <span class="tender-dolphin-main-text">Click or drop a photo here</span>
+                  <span class="tender-dolphin-sub-text">Textbook page, real scene, flashcard, etc.</span>
+                </div>
               </div>
-              <div id="vocab-gen-photo-preview-wrap" style="display:none; position:relative;">
-                <img id="vocab-gen-photo-preview-img" src="" alt="Photo preview" style="max-height:140px; margin:0 auto; border-radius:6px; object-fit:contain;">
-                <button type="button" id="vocab-gen-photo-remove" style="position:absolute; top:4px; right:4px; background:rgba(220,38,38,0.9); color:#fff; border:none; border-radius:4px; padding:2px 8px; font-size:11px; cursor:pointer; font-weight:700;">✕ Remove</button>
+              <div id="vocab-gen-photo-preview-wrap" style="display:none; position:relative; width:100%; text-align:center;">
+                <img id="vocab-gen-photo-preview-img" src="" alt="Photo preview" style="max-height:160px; margin:0 auto; border-radius:8px; object-fit:contain; border:1px solid rgba(255,255,255,0.15);">
+                <button type="button" id="vocab-gen-photo-remove" style="position:absolute; top:6px; right:6px; background:rgba(220,38,38,0.92); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; font-weight:700; box-shadow:0 2px 6px rgba(0,0,0,0.3); transition:background 0.2s;">✕ Remove</button>
               </div>
             </div>
 
-            <div>
-              <span style="display:block; font-size:12px; font-weight:700; color:var(--pk-ink, #f8fafc); margin-bottom:4px;">Extract how many words?</span>
-              <div style="display:flex; gap:8px;">
-                <button type="button" class="vocab-gen-count-btn" data-count="3" style="flex:1; padding:6px 0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">3 words</button>
-                <button type="button" class="vocab-gen-count-btn is-selected" data-count="5" style="flex:1.4; padding:6px 0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">5 words (best)</button>
-                <button type="button" class="vocab-gen-count-btn" data-count="8" style="flex:1; padding:6px 0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">8 words</button>
-                <button type="button" class="vocab-gen-count-btn" data-count="10" style="flex:1; padding:6px 0; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer;">10 words</button>
+            <!-- Word Extraction Count Controls (All vs Manual Number Input) -->
+            <div class="vocab-gen-extract-count-card">
+              <span class="vocab-gen-count-title">Extract how many words?</span>
+              <div class="vocab-gen-count-controls">
+                <button type="button" id="vocab-gen-count-all" class="vocab-gen-count-toggle-btn is-selected">
+                  All words
+                </button>
+                <div class="vocab-gen-custom-count-box">
+                  <span class="vocab-gen-custom-label">or enter number:</span>
+                  <div class="vocab-gen-number-input-wrap">
+                    <input type="number" id="vocab-gen-custom-count-input" min="1" max="30" placeholder="e.g. 5" class="vocab-gen-number-input">
+                    <span class="vocab-gen-number-unit">words</span>
+                  </div>
+                </div>
               </div>
+              <p id="vocab-gen-count-caption" class="vocab-gen-count-caption">Extracts all vocabulary words found in the photo (1 credit per word).</p>
             </div>
           </div>
 
@@ -242,7 +259,7 @@
 
           <div class="vocab-gen-status-badge">
             <span class="ai-sparkle-pulse">✦</span>
-            <span id="vocab-gen-status-text">Writing sentences with Gemini AI...</span>
+            <span id="vocab-gen-status-text">Step 1/3: Writing contextual sentences...</span>
           </div>
 
           <div class="vocab-gen-progress-track">
@@ -250,7 +267,7 @@
           </div>
 
           <div class="vocab-gen-generating-subhint">
-            Gemini is crafting contextual sentences, definitions & visual prompts for your classroom...
+            Crafting contextual sentences, definitions & visual prompts for your classroom...
           </div>
         </div>
       </div>
@@ -281,7 +298,9 @@
     const statusTextEl = modal.querySelector('#vocab-gen-status-text');
     const progressFillEl = modal.querySelector('#vocab-gen-progress-fill');
     const submitBtn = modal.querySelector('#vocab-gen-submit-button');
-    const countBtns = modal.querySelectorAll('.vocab-gen-count-btn');
+    const countAllBtn = modal.querySelector('#vocab-gen-count-all');
+    const customCountInput = modal.querySelector('#vocab-gen-custom-count-input');
+    const countCaption = modal.querySelector('#vocab-gen-count-caption');
     const classSelect = modal.querySelector('#vocab-gen-class-select');
 
     function closeModal() {
@@ -302,7 +321,8 @@
       if (activeMode === 'words') {
         return getEnteredWords().length;
       } else {
-        return uploadedPhotoBase64 ? selectedPhotoCount : 0;
+        if (!uploadedPhotoBase64) return 0;
+        return selectedPhotoCount;
       }
     }
 
@@ -312,14 +332,19 @@
       const hasClass = classSelect ? Boolean(classSelect.value) : Boolean(className);
 
       balanceLabel.textContent = formatBalance(balance);
-      costLabel.textContent = String(cost);
+      if (cost === 'all') {
+        costLabel.textContent = '1 per word';
+      } else {
+        costLabel.textContent = String(cost);
+      }
 
       if (activeMode === 'words') {
         const count = getEnteredWords().length;
         wordsCountLabel.textContent = `${count} word${count === 1 ? '' : 's'} detected`;
       }
 
-      if (balance !== Infinity && balance < cost) {
+      const numericCost = typeof cost === 'number' ? cost : 1;
+      if (balance !== Infinity && balance < numericCost) {
         badgeEl.textContent = 'Insufficient credits';
         badgeEl.style.background = 'rgba(239,68,68,0.2)';
         badgeEl.style.color = '#fca5a5';
@@ -330,7 +355,7 @@
         badgeEl.style.color = '#fde047';
         submitBtn.disabled = true;
       } else {
-        badgeEl.textContent = cost > 0 ? `${cost} credit${cost === 1 ? '' : 's'}` : 'Ready';
+        badgeEl.textContent = (typeof cost === 'number' && cost > 0) ? `${cost} credit${cost === 1 ? '' : 's'}` : (cost === 'all' ? '1 credit/word' : 'Ready');
         badgeEl.style.background = 'rgba(16,185,129,0.2)';
         badgeEl.style.color = '#6ee7b7';
         submitBtn.disabled = cost === 0;
@@ -367,15 +392,45 @@
       updateModalUI();
     });
 
-    countBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
+    if (countAllBtn) {
+      countAllBtn.addEventListener('click', () => {
         if (isGenerating) return;
-        countBtns.forEach(b => b.classList.remove('is-selected'));
-        btn.classList.add('is-selected');
-        selectedPhotoCount = Number(btn.dataset.count) || 5;
+        selectedPhotoCount = 'all';
+        countAllBtn.classList.add('is-selected');
+        if (customCountInput) {
+          customCountInput.value = '';
+          customCountInput.classList.remove('is-active');
+        }
+        if (countCaption) {
+          countCaption.textContent = 'Extracts all vocabulary words found in the photo (1 credit per word).';
+        }
         updateModalUI();
       });
-    });
+    }
+
+    if (customCountInput) {
+      customCountInput.addEventListener('input', () => {
+        if (isGenerating) return;
+        const raw = customCountInput.value.trim();
+        const val = parseInt(raw, 10);
+        if (raw !== '' && !isNaN(val) && val > 0) {
+          selectedPhotoCount = Math.max(1, Math.min(30, val));
+          if (countAllBtn) countAllBtn.classList.remove('is-selected');
+          customCountInput.classList.add('is-active');
+          if (countCaption) {
+            countCaption.textContent = `Extracts ${selectedPhotoCount} word${selectedPhotoCount === 1 ? '' : 's'} from the photo (${selectedPhotoCount} credit${selectedPhotoCount === 1 ? '' : 's'}).`;
+          }
+        } else {
+          selectedPhotoCount = 'all';
+          if (countAllBtn) countAllBtn.classList.add('is-selected');
+          customCountInput.classList.remove('is-active');
+          if (countCaption) {
+            countCaption.textContent = 'Extracts all vocabulary words found in the photo (1 credit per word).';
+          }
+        }
+        updateModalUI();
+      });
+    }
 
     textInput.addEventListener('input', () => {
       errorBanner.style.display = 'none';
@@ -389,16 +444,16 @@
 
     photoDropzone.addEventListener('dragover', (e) => {
       e.preventDefault();
-      photoDropzone.style.borderColor = '#fde047';
+      photoDropzone.classList.add('is-dragover');
     });
 
     photoDropzone.addEventListener('dragleave', () => {
-      photoDropzone.style.borderColor = '';
+      photoDropzone.classList.remove('is-dragover');
     });
 
     photoDropzone.addEventListener('drop', (e) => {
       e.preventDefault();
-      photoDropzone.style.borderColor = '';
+      photoDropzone.classList.remove('is-dragover');
       if (isGenerating) return;
       const file = e.dataTransfer?.files?.[0];
       if (file && file.type.startsWith('image/')) {
@@ -456,7 +511,7 @@
         progressWrap.style.display = 'flex';
         statusTextEl.textContent = text;
         progressFillEl.style.width = `${pct}%`;
-        submitBtn.innerHTML = `<span>⏳</span> Generating...`;
+        submitBtn.innerHTML = `Generating...`;
       } else {
         progressWrap.style.display = 'none';
         if (popupForm) popupForm.style.display = 'flex';
@@ -518,10 +573,10 @@
         }
       }
 
-      const expectedCount = activeMode === 'words' ? words.length : selectedPhotoCount;
+      const expectedCount = activeMode === 'words' ? words.length : (selectedPhotoCount === 'all' ? 1 : selectedPhotoCount);
       const balance = getTeacherBalance();
       if (balance !== Infinity && balance < expectedCount) {
-        errorBanner.textContent = `Insufficient credits! You need ${expectedCount} credits, but you have ${balance}.`;
+        errorBanner.textContent = `Insufficient credits! You need at least ${expectedCount} credit${expectedCount === 1 ? '' : 's'}, but you have ${balance}.`;
         errorBanner.style.display = 'block';
         return;
       }
@@ -531,8 +586,8 @@
       let itemsWithImages = [];
 
       if (activeMode === 'words') {
-        // STEP 1: Gemini writes a sentence for every word first (ChatGPT checks it).
-        setGenerating(true, '1/3 Writing sentences with Gemini...', 30);
+        // STEP 1: Write a sentence for every word first
+        setGenerating(true, 'Step 1/3: Writing contextual sentences...', 30);
         const generatedMap = new Map();
         try {
           const payload = { mode: 'words', items: words.map(w => ({ word: w, picture: '' })) };
@@ -579,7 +634,7 @@
         if (!missingWords.length) {
           for (let i = 0; i < itemsWithImages.length; i++) {
             const it = itemsWithImages[i];
-            setGenerating(true, `2/3 Finding a picture for "${it.word}" (${i + 1}/${itemsWithImages.length})...`, 55 + Math.round((i / itemsWithImages.length) * 20));
+            setGenerating(true, `Step 2/3: Finding illustrations for "${it.word}" (${i + 1}/${itemsWithImages.length})...`, 55 + Math.round((i / itemsWithImages.length) * 20));
             const photoData = await fetchPhotoForWord(it.word, it.sentence);
             it.imageUrl = photoData.url || '';
           }
@@ -587,21 +642,21 @@
 
         if (missingWords.length) {
           setGenerating(false);
-          errorBanner.textContent = `Gemini did not return a usable sentence for ${missingWords.map(w => `"${w}"`).join(', ')}. Please try again.`;
+          errorBanner.textContent = `Could not generate a usable sentence for ${missingWords.map(w => `"${w}"`).join(', ')}. Please try again.`;
           errorBanner.style.display = 'block';
           updateModalUI();
           return;
         }
       } else {
         // Photo upload mode
-        setGenerating(true, '1/3 Analyzing your photo with Gemini AI...', 35);
+        setGenerating(true, 'Step 1/3: Scanning photo & extracting words...', 35);
         let photoItems = [];
 
         try {
           const payload = {
             mode: 'photo',
             image: uploadedPhotoBase64,
-            count: selectedPhotoCount
+            count: selectedPhotoCount === 'all' ? 'all' : Number(selectedPhotoCount)
           };
 
           let res = await fetch('/api/generate-vocab-list', {
@@ -634,8 +689,8 @@
           return;
         }
 
-        // Attach images; every sentence must be Gemini's and use its own word.
-        setGenerating(true, '2/3 Matching photos for each word...', 65);
+        // Attach images; every sentence must use its own word.
+        setGenerating(true, 'Step 2/3: Finding illustrations for each word...', 65);
         for (let i = 0; i < photoItems.length; i++) {
           const it = photoItems[i];
           const sentence = String(it.sentence || '').trim();
@@ -643,7 +698,7 @@
 
           if (!sentence || !sentenceUsesWord(sentence, it.word)) {
             setGenerating(false);
-            errorBanner.textContent = `Gemini did not return a usable sentence for "${it.word}". Please try again.`;
+            errorBanner.textContent = `Could not generate a usable sentence for "${it.word}". Please try again.`;
             errorBanner.style.display = 'block';
             updateModalUI();
             return;
@@ -666,7 +721,7 @@
       }
 
       // STEP 3: Save to database (marking as AI-generated while keeping the creator teacher name)
-      setGenerating(true, '3/3 Saving vocabulary list to classroom...', 90);
+      setGenerating(true, 'Step 3/3: Saving vocabulary list to classroom...', 90);
 
       const listId = `vocab-ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const firstValidImage = itemsWithImages.find(it => it.imageUrl)?.imageUrl || uploadedPhotoBase64 || '';
@@ -791,7 +846,7 @@
         if (typeof window.renderTeacherOwnedVocabLists === 'function') window.renderTeacherOwnedVocabLists();
 
         if (typeof window.toast === 'function') {
-          window.toast(`🎉 Generated "${listName}" with ${finalWordCount} words! (-${finalWordCount} credits)`);
+          window.toast(`Generated "${listName}" with ${finalWordCount} words! (-${finalWordCount} credits)`);
         }
       } catch (saveErr) {
         console.error('Saving vocabulary list error:', saveErr);

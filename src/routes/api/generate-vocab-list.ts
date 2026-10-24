@@ -179,8 +179,19 @@ ${list}`;
             return Response.json({ message: "Please upload a photo first." }, { status: 400, headers: CORS });
           }
 
-          const targetCount = Math.min(Math.max(Number(input.count) || 5, 2), 15);
-          const prompt = `You are an English language teacher for young ESL elementary students.
+          const isAll = input.count === 'all' || input.count === 'All' || input.count === 0 || input.all === true;
+          const targetCount = isAll ? 0 : Math.min(Math.max(Number(input.count) || 5, 1), 30);
+          const prompt = isAll
+            ? `You are an English language teacher for young ESL elementary students.
+Analyze this photo and identify all clear, prominent vocabulary objects, animals, food, or actions in the picture (up to 15 key words).
+For each item:
+1. Provide the main vocabulary word.
+2. Write one simple, vivid, natural sentence (6 to 9 words) describing that object or action in the photo.
+3. The sentence must contain the vocabulary word exactly as you wrote it.
+4. Every sentence MUST be unique! NEVER repeat the same sentence structure or pattern.
+5. NEVER write lazy or shallow sentences like "Look at the...", "This is a...", "Here is...", "I see a...".
+6. Return ONLY a valid JSON array of objects with keys "word" and "sentence".`
+            : `You are an English language teacher for young ESL elementary students.
 Analyze this photo and identify exactly ${targetCount} clear, visible objects, animals, food, or actions in the picture.
 For each item:
 1. Provide the main vocabulary word.
