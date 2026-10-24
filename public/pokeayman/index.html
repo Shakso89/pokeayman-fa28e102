@@ -13464,25 +13464,12 @@ function canOpenClass(schoolName, className, teacherName = currentTeacher) {
 window.canOpenClass = canOpenClass;
 
 function handleClassCardClick(schoolName, className) {
-  if (canOpenClass(schoolName, className)) {
-    navigateTo('students', schoolName, className);
-  } else {
-    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${className}.`);
-  }
+  navigateTo('students', schoolName, className);
 }
 window.handleClassCardClick = handleClassCardClick;
 
 function navigateTo(level, school, cls, studentName) {
-  // Enforce explicit class assignment permissions for teachers
-  if (currentRole === 'teacher' && (level === 'students' || level === 'student-profile')) {
-    if (school && cls && !canOpenClass(school, cls)) {
-      if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${cls}.`);
-      navSchool = school;
-      navClass = null;
-      navigateTo('classes', school);
-      return;
-    }
-  }
+  // When teachers access unassigned classes, view-only mode is enforced in renderTeacherDashboard
   navSchool = school || null; navClass = cls || null;
   document.getElementById('view-schools').classList.add('hidden');
   document.getElementById('view-classes').classList.add('hidden');
@@ -13786,8 +13773,13 @@ function renderTeacherDashboard() {
   const isViewOnly = !isSchoolAssigned && !isClassAssigned && navClass && navSchool;
   
   if (!navSchool && !navClass) {
+    const banner = document.getElementById('class-view-only-banner');
+    if (banner) banner.remove();
     renderSchoolsList();
   } else if (navSchool && !navClass) {
+    const banner = document.getElementById('class-view-only-banner');
+    if (banner) banner.remove();
+
     const allClasses = getClasses(navSchool);
     const isSchoolAssigned = canManageSchool(navSchool);
     const isTeacherAdmin = currentTeacher === 'Ayman' || (typeof canAccessAdmin === 'function' && canAccessAdmin()) || (typeof isAymanTeacher === 'function' && isAymanTeacher()) || (typeof getEffectiveTeacherRole === 'function' && getEffectiveTeacherRole(currentTeacher) === 'admin');
@@ -13802,42 +13794,125 @@ function renderTeacherDashboard() {
       manageBtn.classList.toggle('hidden', !isAuthorized);
     }
     
-    // Teachers only see their explicitly assigned classes; Admins and School Managers see all
-    const classes = allClasses.filter(c => {
-      if (isTeacherAdmin || isSchoolAssigned) return true;
-      return canOpenClass(navSchool, c.class_name);
-    });
-    
-    document.getElementById('classes-list').innerHTML = classes.map(c => {
+    // Separate assigned classes (full manage) and unassigned classes in that school (view-only)
+    const isManager = isTeacherAdmin || isSchoolAssigned;
+    const classes = allClasses.filter(c => canOpenClass(navSchool, c.class_name));
+    const assignedClasses = isManager ? allClasses : classes;
+    const unassignedClasses = isManager ? [] : allClasses.filter(c => !canOpenClass(navSchool, c.class_name));
+
+    const escJs = v => String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const escHtml = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+    const renderAssignedCard = c => {
       const isClassAssigned = isTeacherAdmin || isSchoolAssigned || canOpenClass(navSchool, c.class_name);
       const canManage = isTeacherAdmin || isSchoolAssigned || isClassAssigned;
-      const escJs = v => String(v ?? '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
       const roster = getStudents(navSchool, c.class_name);
       const totalCoins = roster.reduce((a, s) => a + (Number(s.coins) || 0), 0);
-      return `<div class="gym-card group relative" role="button" tabindex="0" onclick="handleClassCardClick('${escJs(navSchool)}','${escJs(c.class_name)}')" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">${canManage ? `<button class="gym-edit" title="Edit class" aria-label="Edit ${c.class_name}" onclick="event.stopPropagation(); openEditClassModal('${c.__backendId}','${escJs(navSchool)}')">✎</button>` : ''}<div class="gym-head"><p class="gym-name">${c.class_name}</p></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}</div>`;
-    }).join('') || `<p class="text-gray-400 text-sm col-span-3 text-center py-8">${allClasses.length ? `You are not assigned to any classes in ${navSchool}.` : 'No classes yet.'}</p>`;
-  } else if (!canOpenClass(navSchool, navClass)) {
-    // Unauthorized class access blocked at the view level
-    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${navClass}.`);
-    navClass = null;
-    navigateTo('classes', navSchool);
-    return;
-  } else if (false && isViewOnly) {
-    // View-only mode for unassigned classes: show only student collection cards with name, coins, Pokémon count, and total value
+      return `<div class="gym-card group relative" role="button" tabindex="0" onclick="handleClassCardClick('${escJs(navSchool)}','${escJs(c.class_name)}')" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">${canManage ? `<button class="gym-edit" title="Edit class" aria-label="Edit ${c.class_name}" onclick="event.stopPropagation(); openEditClassModal('${c.__backendId}','${escJs(navSchool)}')">✎</button>` : ''}<div class="gym-head"><p class="gym-name">${escHtml(c.class_name)}</p></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}</div>`;
+    };
+
+    const renderUnassignedCard = c => {
+      const roster = getStudents(navSchool, c.class_name);
+      const totalCoins = roster.reduce((a, s) => a + (Number(s.coins) || 0), 0);
+      return `<div class="gym-card gym-card-view-only group relative" role="button" tabindex="0" onclick="handleClassCardClick('${escJs(navSchool)}','${escJs(c.class_name)}')" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}" title="View ${escJs(c.class_name)} (View Only)"><span class="gym-view-only-badge" title="View Only">👁 View Only</span><div class="gym-head"><p class="gym-name">${escHtml(c.class_name)}</p></div>${classTeacherPill(navSchool, c.class_name)}<div class="gym-chips"><span>👥 ${roster.length} students</span><span>🪙 ${totalCoins.toLocaleString()}</span></div>${renderClassTop3Leaderboard(c.class_name)}</div>`;
+    };
+
+    if (!unassignedClasses.length) {
+      document.getElementById('classes-list').innerHTML = assignedClasses.map(renderAssignedCard).join('') || `<p class="text-gray-400 text-sm col-span-3 text-center py-8">${allClasses.length ? `You are not assigned to any classes in ${escHtml(navSchool)}.` : 'No classes yet.'}</p>`;
+    } else {
+      let html = '';
+      if (assignedClasses.length > 0) {
+        html += `
+          <div style="grid-column: 1 / -1;" class="col-span-full mb-1 flex items-center justify-between">
+            <h4 class="text-sm font-bold text-slate-100 uppercase tracking-wider flex items-center gap-2">
+              <span class="text-amber-400">⭐</span> My Classes <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-amber-500/30 font-semibold">${assignedClasses.length}</span>
+            </h4>
+          </div>
+        `;
+        html += assignedClasses.map(renderAssignedCard).join('');
+      } else {
+        html += `
+          <div style="grid-column: 1 / -1;" class="col-span-full p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-center text-slate-400 text-sm">
+            You are not assigned as a managing teacher to any classes in ${escHtml(navSchool)}. You can view the classroom rosters below.
+          </div>
+        `;
+      }
+
+      html += `
+        <div style="grid-column: 1 / -1;" class="col-span-full mt-6 pt-6 border-t border-slate-700/60 mb-1">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h4 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                <span class="text-indigo-400">🏫</span> Other Classes in ${escHtml(navSchool)}
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-700/60 font-bold uppercase tracking-wider">View Only</span>
+              </h4>
+              <p class="text-xs text-slate-400 mt-0.5">Explore students and managing teachers in other classroom rosters.</p>
+            </div>
+            <span class="text-xs font-semibold text-slate-400 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-800">
+              ${unassignedClasses.length} ${unassignedClasses.length === 1 ? 'class' : 'classes'}
+            </span>
+          </div>
+        </div>
+      `;
+      html += unassignedClasses.map(renderUnassignedCard).join('');
+      document.getElementById('classes-list').innerHTML = html;
+    }
+  } else if (isViewOnly) {
+    const existingBanner = document.getElementById('class-view-only-banner');
+    if (existingBanner) existingBanner.remove();
+
     const students = getStudents(navSchool, navClass);
     const metrics = getClassRosterMetrics(students);
     const top3ByCoins = students.slice().sort((a, b) => metrics.valueFor(b) - metrics.valueFor(a) || a.student_name.localeCompare(b.student_name)).slice(0, 3).map(s => s.student_name);
-    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name), true, metrics.pokemonByOwner, metrics.valueFor)).join('') || '<p class="student-roster-empty">No students yet.</p>';
-    // Hide all tabs and management controls for view-only mode
+
+    const banner = document.createElement('div');
+    banner.id = 'class-view-only-banner';
+    banner.className = 'mb-4 p-4 rounded-xl bg-slate-900/90 border border-indigo-500/40 shadow-lg flex items-center justify-between flex-wrap gap-3';
+    banner.innerHTML = `
+      <div class="flex items-center gap-3">
+        <span class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 flex items-center gap-1.5">
+          <span>👁</span> View Only
+        </span>
+        <span class="text-sm text-slate-200">
+          Viewing <strong>${navClass}</strong> (${students.length} ${students.length === 1 ? 'student' : 'students'}) in <em>${navSchool}</em>.
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs text-slate-400 font-semibold">Managing Teachers:</span>
+        ${classTeacherPill(navSchool, navClass)}
+      </div>
+    `;
+
+    const studentsContainer = document.getElementById('view-students');
+    const firstChild = studentsContainer?.firstElementChild;
+    if (firstChild) {
+      studentsContainer.insertBefore(banner, firstChild);
+    }
+
+    document.getElementById('students-list').innerHTML = students.map(s => renderClassRosterCard(s, top3ByCoins.indexOf(s.student_name), true, metrics.pokemonByOwner, metrics.valueFor)).join('') || '<p class="student-roster-empty">No students in this class yet.</p>';
+    
+    const actionConsole = document.querySelector('.class-action-console');
+    if (actionConsole) actionConsole.style.display = 'none';
+
     const classTabs = document.querySelectorAll('.class-view-tab');
-    classTabs.forEach(tab => tab.style.display = 'none');
-    const addStudentContainer = document.getElementById('add-student-container');
-    if (addStudentContainer) addStudentContainer.style.display = 'none';
-    const awardForm = document.getElementById('award-form');
-    if (awardForm) awardForm.style.display = 'none';
+    classTabs.forEach(tab => {
+      if (tab.dataset.classtab === 'students') {
+        tab.style.display = '';
+        tab.classList.remove('class-tab-inactive');
+        tab.classList.add('class-tab-students-active');
+      } else {
+        tab.style.display = 'none';
+      }
+    });
+
     applyGlobalAchievementBadges(document.getElementById('students-list'));
     return;
   } else {
+    const banner = document.getElementById('class-view-only-banner');
+    if (banner) banner.remove();
+
+    const actionConsole = document.querySelector('.class-action-console');
+    if (actionConsole) actionConsole.style.display = '';
     const students = getStudents(navSchool, navClass);
     const metrics = getClassRosterMetrics(students);
     const top3ByCoins = students.slice().sort((a, b) => metrics.valueFor(b) - metrics.valueFor(a) || a.student_name.localeCompare(b.student_name)).slice(0, 3).map(s => s.student_name);
@@ -16377,6 +16452,10 @@ document.getElementById('add-class-form').addEventListener('submit', async e => 
 
 document.getElementById('add-student-form').addEventListener('submit', async e => {
   e.preventDefault(); 
+  if (currentRole === 'teacher' && !canOpenClass(navSchool, navClass)) {
+    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${navClass}.`);
+    return;
+  }
   const name = document.getElementById('new-student-name').value.trim();
   if (!name || allData.length >= 999) { if (allData.length >= 999) toast('Storage limit reached!'); return; }
   
@@ -16586,7 +16665,12 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
 });
 
 document.getElementById('award-form').addEventListener('submit', async e => {
-  e.preventDefault(); const name = document.getElementById('award-student').value; const rawAmount = String(document.getElementById('award-amount').value).trim(); const amount = Number(rawAmount);
+  e.preventDefault();
+  if (currentRole === 'teacher' && !canOpenClass(navSchool, navClass)) {
+    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${navClass}.`);
+    return;
+  }
+  const name = document.getElementById('award-student').value; const rawAmount = String(document.getElementById('award-amount').value).trim(); const amount = Number(rawAmount);
   if (!/^\d+$/.test(rawAmount) || amount < 1 || amount > 1000) { toast('Value must be an integer between 1 and 1,000 coins.'); return; }
   const student = getStudents(navSchool, navClass).find(s => s.student_name === name) || getAllStudents().find(s => s.student_name === name);
   if (!student) { toast('Could not find that student.'); return; }
@@ -16814,6 +16898,10 @@ document.getElementById('create-teacher-form')?.addEventListener('submit', async
 
 function openEditClassModal(classId, schoolName) {
   const classRec = allData.find(c => c.__backendId === classId); if (!classRec) return;
+  if (!canOpenClass(schoolName, classRec.class_name)) {
+    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${classRec.class_name}.`);
+    return;
+  }
   const adminAvatar = teacherAvatarSrc(getAdminTeacherRecord()?.teacher_avatar);
   const level = typeof toReadingLevelCode === 'function' ? toReadingLevelCode(classRec.class_level || classRec.reading_level) : (/^P[4-6]$/.test(classRec.class_level || '') ? classRec.class_level : 'P4');
   const canAssign = canManageSchool(schoolName);
@@ -18038,10 +18126,6 @@ function switchStudentProfileClass(schoolName, className) {
   if (!schoolName || !className) return;
   schoolName = String(schoolName).trim();
   className = String(className).trim();
-  if (currentRole === 'teacher' && !canOpenClass(schoolName, className)) {
-    if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${className}.`);
-    return;
-  }
   if (navSchool === schoolName && navClass === className) return;
   navSchool = schoolName;
   navClass = className;
@@ -18049,10 +18133,11 @@ function switchStudentProfileClass(schoolName, className) {
     selectedStudentClassKey = `${schoolName}||${className}`;
   }
 
+  const isView = currentRole === 'teacher' && !canOpenClass(schoolName, className);
   navigateTo('student-profile', navSchool, navClass, profileStudent?.student_name || '');
-  renderStudentProfile(false);
+  renderStudentProfile(isView);
   if (typeof toast === 'function') {
-    toast(`Switched view to ${className} (${schoolName})`);
+    toast(`Switched view to ${className} (${schoolName})${isView ? ' (View Only)' : ''}`);
   }
 }
 window.switchStudentProfileClass = switchStudentProfileClass;
