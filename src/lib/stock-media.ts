@@ -31,6 +31,30 @@ export function isMediaType(value: unknown): value is MediaType {
   return value === "photo" || value === "vector" || value === "illustration";
 }
 
+function pixabayCdnVariant(url: string, size: 640 | 1280): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" || parsed.hostname !== "cdn.pixabay.com" || parsed.port) return null;
+    const match = parsed.pathname.match(/^(.*)_\d+(\.[a-z0-9]+)$/i);
+    if (!match) return null;
+    parsed.pathname = `${match[1]}_${size}${match[2]}`;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function normalizePixabayPhoto(photo: StockPhoto): StockPhoto {
+  const preview = photo.src.tiny || photo.src.small || photo.src.medium;
+  const large = pixabayCdnVariant(preview, 1280);
+  const medium = pixabayCdnVariant(preview, 640);
+  if (!large || !medium) return photo;
+  return {
+    ...photo,
+    src: { ...photo.src, original: large, large: medium, medium, small: medium, tiny: preview },
+  };
+}
+
 /** Shared stock search. A vector/illustration request must never fall back to photos. */
 export async function searchStockMedia(
   query: string,
@@ -90,7 +114,7 @@ export async function searchStockMedia(
             small: hit.previewURL || hit.webformatURL || "",
             tiny: hit.previewURL || hit.webformatURL || "",
           },
-        }));
+        })).map(normalizePixabayPhoto);
       if (photos.length || imageType === "vector" || imageType === "illustration") {
         const total = Number(data.totalHits) || photos.length;
         return remember({
@@ -145,7 +169,7 @@ export async function readStockImage(
       url.port ||
       url.username ||
       url.password ||
-      !["cdn.pixabay.com", "images.pexels.com"].includes(url.hostname)
+      !["cdn.pixabay.com", "pixabay.com", "images.pexels.com"].includes(url.hostname)
     )
       return null;
     const res = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(8000) });
@@ -181,3 +205,4 @@ export async function readStockImage(
     return null;
   }
 }
+
