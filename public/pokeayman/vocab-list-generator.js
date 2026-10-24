@@ -725,7 +725,9 @@
 
       const listId = `vocab-ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const firstValidImage = itemsWithImages.find(it => it.imageUrl)?.imageUrl || uploadedPhotoBase64 || '';
-      const teacherName = window.currentTeacher || 'Teacher';
+      const teacherCtx = typeof window.getCurrentTeacherContext === 'function' ? window.getCurrentTeacherContext() : {};
+      const teacherName = teacherCtx.teacherName || window.currentTeacher || 'Teacher';
+      const teacherId = teacherCtx.teacherId || window.currentTeacherRecordId || '';
 
       const listRecord = {
         type: 'vocab_list',
@@ -737,7 +739,7 @@
         class_name: targetClass,
         owner: teacherName,
         teacher_name: teacherName,
-        teacher_id: window.currentTeacherRecordId || '',
+        teacher_id: teacherId,
         is_ai_generated: true,
         ai_generated: true,
         generation_source: 'ai',

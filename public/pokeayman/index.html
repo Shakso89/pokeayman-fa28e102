@@ -10101,6 +10101,35 @@ function canSeeTeacherFinance() {
 let navSchool = null;
 let navClass = null;
 window.getNavClassContext = () => ({ school: String(navSchool || '').trim(), className: String(navClass || '').trim() });
+
+// Expose teacher context for extensions & external modules (like AI Vocab List Generator)
+window.getCurrentTeacherContext = function() {
+  const teacherId = typeof verifiedTeacherIdentity === 'function' ? verifiedTeacherIdentity() : (currentTeacherRecordId || '');
+  const isAdmin = typeof canAccessAdmin === 'function' ? canAccessAdmin() : false;
+  return {
+    teacherName: String(currentTeacher || '').trim(),
+    teacherId: String(teacherId || '').trim(),
+    role: String(currentRole || '').trim(),
+    isAdmin: Boolean(isAdmin)
+  };
+};
+try {
+  if (!Object.getOwnPropertyDescriptor(window, 'currentTeacher')?.get) {
+    Object.defineProperty(window, 'currentTeacher', {
+      get: () => typeof currentTeacher !== 'undefined' ? currentTeacher : '',
+      set: v => { if (typeof currentTeacher !== 'undefined') currentTeacher = v; },
+      configurable: true
+    });
+  }
+  if (!Object.getOwnPropertyDescriptor(window, 'currentTeacherRecordId')?.get) {
+    Object.defineProperty(window, 'currentTeacherRecordId', {
+      get: () => typeof verifiedTeacherIdentity === 'function' ? (verifiedTeacherIdentity() || currentTeacherRecordId || '') : (typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : ''),
+      set: v => { if (typeof currentTeacherRecordId !== 'undefined') currentTeacherRecordId = v; },
+      configurable: true
+    });
+  }
+} catch (_) {}
+
 let profileStudent = null;
 let profileTarget = { canonicalId: '', school: '', className: '', loading: false };
 
@@ -13097,7 +13126,19 @@ function renderTeacherOwnedVocabLists() {
     const teacherKey = normalizeStudentIdentity(currentTeacher);
     const allLists = getVocabLists('', '');
     const myId = String(verifiedTeacherIdentity() || '').trim();
-    const isOwnedByCurrentTeacher = list => Boolean((myId && String(list.teacher_id || '').trim() === myId) || (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey));
+    const isOwnedByCurrentTeacher = list => {
+      const isAiGen = typeof isAiGeneratedVocabList === 'function' && isAiGeneratedVocabList(list);
+      const listSchool = String(list.vocab_list_school || list.school_name || '');
+      const listClass = String(list.vocab_list_class || list.class_name || '');
+      const isClassManager = typeof canManageClass === 'function' && Boolean(canManageClass(listSchool, listClass));
+      return Boolean(
+        (myId && String(list.teacher_id || '').trim() === myId) ||
+        (!list.teacher_id && normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey) ||
+        (normalizeStudentIdentity(list.teacher_name || list.owner) === teacherKey) ||
+        (isAiGen && (isClassManager || !list.teacher_id || list.teacher_name === 'Teacher')) ||
+        isClassManager
+      );
+    };
     const baseLists = allLists.filter(list => adminCanManageAnyList || isOwnedByCurrentTeacher(list))
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
     if (ownerScope !== currentTeacherZoneOwnerScope() || requestVersion !== teacherZoneRequestVersion || teacherWorkspaceKey !== teacherStorageKey(ownerScope)) return;
@@ -22669,8 +22710,32 @@ function openVocabListEditor(listId, listName) {
   const selectedList = allData.find(record => ['vocab_list', 'vocabulary_list'].includes(record.type) && (normalizeVocabId(record.__backendId) === normalizeVocabId(listId) || normalizeVocabId(record.vocab_list_id || record.list_id || record.vocabulary_list_id) === normalizeVocabId(listId)));
   if (!selectedList) { toast('This vocabulary list is no longer available. Refresh and try again.'); return; }
   const myTeacherId = String(verifiedTeacherIdentity() || '').trim();
-  const ownedByCurrentTeacher = Boolean((myTeacherId && String(selectedList.teacher_id || '').trim() === myTeacherId) || (!selectedList.teacher_id && normalizeStudentIdentity(selectedList.teacher_name || selectedList.owner) === normalizeStudentIdentity(currentTeacher)));
-  if (currentRole !== 'teacher' || !myTeacherId || (!canAccessAdmin() && !ownedByCurrentTeacher)) { toast('Only the list owner or an admin can edit this vocabulary list.'); return; }
+  const listSchool = String(selectedList.vocab_list_school || selectedList.school_name || '');
+  const listClass = String(selectedList.vocab_list_class || selectedList.class_name || '');
+  const isClassManager = typeof canManageClass === 'function' && Boolean(canManageClass(listSchool, listClass));
+  const isAiGen = typeof isAiGeneratedVocabList === 'function' && isAiGeneratedVocabList(selectedList);
+
+  const ownedByCurrentTeacher = Boolean(
+    (myTeacherId && String(selectedList.teacher_id || '').trim() === myTeacherId) ||
+    (normalizeStudentIdentity(selectedList.teacher_name || selectedList.owner) === normalizeStudentIdentity(currentTeacher)) ||
+    isClassManager ||
+    (isAiGen && (isClassManager || !selectedList.teacher_id || selectedList.teacher_name === 'Teacher' || selectedList.owner === 'Teacher' || String(listClass).trim() === String(navClass || '').trim()))
+  );
+
+  if (currentRole !== 'teacher' || !myTeacherId || (!canAccessAdmin() && !ownedByCurrentTeacher)) {
+    toast('Only the list owner or an admin can edit this vocabulary list.');
+    return;
+  }
+
+  // If this list was AI generated with generic "Teacher" placeholder or missing teacher_id, claim ownership for current teacher
+  if (isAiGen && currentTeacher && (!selectedList.teacher_id || selectedList.teacher_name === 'Teacher' || selectedList.owner === 'Teacher' || !selectedList.owner)) {
+    selectedList.teacher_name = currentTeacher;
+    selectedList.owner = currentTeacher;
+    selectedList.teacher_id = myTeacherId;
+    try {
+      window.dataSdk?.update?.({ ...selectedList, teacher_name: currentTeacher, owner: currentTeacher, teacher_id: myTeacherId });
+    } catch (e) {}
+  }
   const storageId = selectedList.__backendId;
   const canonicalListId = normalizeVocabId(selectedList.vocab_list_id || selectedList.list_id || selectedList.vocabulary_list_id || storageId);
   listId = canonicalListId;
@@ -23208,7 +23273,16 @@ async function removeVocabListFromClass(listId, listName, button) {
     toast('This list is no longer assigned to the selected class. Refresh and try again.');
     return;
   }
-  if (normalizeStudentIdentity(list.teacher_name || list.owner) !== normalizeStudentIdentity(currentTeacher)) {
+  const isAiGen = typeof isAiGeneratedVocabList === 'function' && isAiGeneratedVocabList(list);
+  const isClassManager = typeof canManageClass === 'function' && Boolean(canManageClass(list.vocab_list_school || list.school_name, list.vocab_list_class || list.class_name));
+  const canRemove = Boolean(
+    canAccessAdmin() ||
+    (normalizeStudentIdentity(list.teacher_name || list.owner) === normalizeStudentIdentity(currentTeacher)) ||
+    (myTeacherId && String(list.teacher_id || '').trim() === myTeacherId) ||
+    (isAiGen && (isClassManager || list.teacher_name === 'Teacher' || !list.teacher_id)) ||
+    isClassManager
+  );
+  if (!canRemove) {
     toast('Only the list owner can remove it from this class.');
     return;
   }
@@ -23277,11 +23351,15 @@ async function deleteVocabList(listId, listName, options = {}) {
     ));
   if (!list) return fail('Could not verify this vocabulary list. Please refresh and try again.');
   const myTeacherId = String(verifiedTeacherIdentity() || '').trim();
+  const isAiGen = typeof isAiGeneratedVocabList === 'function' && isAiGeneratedVocabList(list);
+  const isClassManager = typeof canManageClass === 'function' && Boolean(canManageClass(list.vocab_list_school || list.school_name, list.vocab_list_class || list.class_name));
   const ownedByCurrentTeacher = Boolean(
-    !list.teacher_id
-    || (myTeacherId && String(list.teacher_id || '').trim() === myTeacherId)
-    || (normalizeStudentIdentity(list.teacher_name || list.owner) === normalizeStudentIdentity(currentTeacher))
-    || canAccessAdmin()
+    !list.teacher_id ||
+    (myTeacherId && String(list.teacher_id || '').trim() === myTeacherId) ||
+    (normalizeStudentIdentity(list.teacher_name || list.owner) === normalizeStudentIdentity(currentTeacher)) ||
+    (isAiGen && (isClassManager || !list.teacher_id || list.teacher_name === 'Teacher')) ||
+    isClassManager ||
+    canAccessAdmin()
   );
   if (!canAccessAdmin() && !ownedByCurrentTeacher) return fail('Only the list owner or an admin can permanently delete it.');
   const canonicalListId = normalizeVocabId(list.vocab_list_id || list.list_id || list.__backendId);
