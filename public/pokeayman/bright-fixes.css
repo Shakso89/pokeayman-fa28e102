@@ -708,17 +708,7 @@ html body.ts-bright .teacher-vb-create-field select {
   color: #0f172a !important;
 }
 
-html body.ts-bright #generate-vocab-list-btn {
-  background: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
-}
-html body.ts-bright #generate-vocab-list-btn:hover {
-  background: #f1f5f9 !important;
-  border-color: #d97706 !important;
-  color: #b45309 !important;
-}
+/* #generate-vocab-list-btn styled via components.css / theme-bridge.css */
 
 html body.ts-bright .vocab-gen-count-btn {
   background: #f1f5f9 !important;

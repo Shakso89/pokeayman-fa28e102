@@ -217,23 +217,42 @@
           <!-- Error Alert Banner -->
           <div id="vocab-gen-error-banner" style="display:none; padding:10px 12px; border-radius:8px; background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-size:12px; font-weight:600;"></div>
 
-          <!-- Loading Progress Bar -->
-          <div id="vocab-gen-progress-wrap" style="display:none; flex-direction:column; gap:6px; padding:10px 12px; border-radius:8px; background:rgba(79,70,229,0.2); border:1px solid rgba(99,102,241,0.4);">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <div style="width:16px; height:16px; border:2px solid #818cf8; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
-              <span id="vocab-gen-status-text" style="font-size:12px; font-weight:700; color:#c7d2fe;">Finding pictures and generating vivid sentences...</span>
-            </div>
-            <div style="width:100%; height:4px; background:rgba(255,255,255,0.15); border-radius:2px; overflow:hidden;">
-              <div id="vocab-gen-progress-fill" style="width:25%; height:100%; background:#818cf8; transition:width 0.3s ease;"></div>
-            </div>
-          </div>
-
           <!-- Submit Button -->
           <button id="vocab-gen-submit-button" type="button" class="btn-ai-generate btn-ai-generate-full" style="margin-top:4px; cursor:pointer;" title="Generate vocabulary list with AI">
             <svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg>
             <span class="ai-btn-text">Generate List</span>
           </button>
         </form>
+
+        <!-- Loading Progress with Dexter-st Bright-Lizard-8 AI Orb -->
+        <div id="vocab-gen-progress-wrap" class="vocab-gen-generating-screen" style="display:none;">
+          <div class="loader-wrapper bl8-loader-wrapper">
+            <span class="loader-letter bl8-loader-letter">G</span>
+            <span class="loader-letter bl8-loader-letter">e</span>
+            <span class="loader-letter bl8-loader-letter">n</span>
+            <span class="loader-letter bl8-loader-letter">e</span>
+            <span class="loader-letter bl8-loader-letter">r</span>
+            <span class="loader-letter bl8-loader-letter">a</span>
+            <span class="loader-letter bl8-loader-letter">t</span>
+            <span class="loader-letter bl8-loader-letter">i</span>
+            <span class="loader-letter bl8-loader-letter">n</span>
+            <span class="loader-letter bl8-loader-letter">g</span>
+            <div class="loader bl8-loader"></div>
+          </div>
+
+          <div class="vocab-gen-status-badge">
+            <span class="ai-sparkle-pulse">✦</span>
+            <span id="vocab-gen-status-text">Writing sentences with Gemini AI...</span>
+          </div>
+
+          <div class="vocab-gen-progress-track">
+            <div id="vocab-gen-progress-fill" class="vocab-gen-progress-bar"></div>
+          </div>
+
+          <div class="vocab-gen-generating-subhint">
+            Gemini is crafting contextual sentences, definitions & visual prompts for your classroom...
+          </div>
+        </div>
       </div>
     `;
 
@@ -420,6 +439,8 @@
       updateModalUI();
     });
 
+    const popupForm = modal.querySelector('#vocab-gen-popup-form');
+
     function setGenerating(generating, text = '', pct = 0) {
       isGenerating = generating;
       nameInput.disabled = generating;
@@ -431,12 +452,14 @@
       if (classSelect) classSelect.disabled = generating;
 
       if (generating) {
+        if (popupForm) popupForm.style.display = 'none';
         progressWrap.style.display = 'flex';
         statusTextEl.textContent = text;
         progressFillEl.style.width = `${pct}%`;
         submitBtn.innerHTML = `<span>⏳</span> Generating...`;
       } else {
         progressWrap.style.display = 'none';
+        if (popupForm) popupForm.style.display = 'flex';
         submitBtn.innerHTML = `<svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate List</span>`;
       }
     }
