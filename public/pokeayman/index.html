@@ -4718,8 +4718,6 @@ html body.ts-bright .trainer-hub .th-account-badge.is-school-manager{color:#ffff
 .th-role-title{font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#181e5f;margin:0 0 .2rem}
 .class-teacher-pill.is-assignable{cursor:pointer;transition:transform .15s ease,filter .15s ease}
 .class-teacher-pill.is-assignable:hover{transform:translateY(-1px);filter:brightness(1.08)}
-.class-teacher-assign-btn{font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:999px;background:rgba(99,102,241,.18);border:1px solid rgba(129,140,248,.35);color:#4338ca;cursor:pointer;margin-left:4px;transition:.15s ease}
-.class-teacher-assign-btn:hover{background:rgba(99,102,241,.3);color:#312e81}
 .class-teacher-badge.is-manager{font-size:.7rem}
 .ts-chip-clickable{cursor:pointer;transition:transform .15s ease,filter .15s ease}
 .ts-chip-clickable:hover{transform:translateY(-1px);filter:brightness(1.15)}
@@ -16709,21 +16707,35 @@ function classTeacherPill(schoolName, className) {
   const names = getClassTeacherNames(schoolName, className);
   const canAssign = canManageSchool(schoolName);
   const esc = v => String(v).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+  if (!names.length) {
+    if (canAssign) {
+      return `<div class="class-teacher-pill is-empty is-assignable" title="Click to assign teachers" onclick="event.stopPropagation(); openAssignClassTeachersModal('${esc(schoolName)}','${esc(className)}')"><span class="class-teacher-action-chip">🎓 ＋ Assign Teachers</span></div>`;
+    }
+    return `<div class="class-teacher-pill is-empty"><span class="class-teacher-empty-label">No teachers assigned</span></div>`;
+  }
+
   const visibleNames = names.slice(0, 2);
   const hiddenCount = Math.max(0, names.length - visibleNames.length);
+
   const teachersHtml = visibleNames.map(n => {
     const src = classTeacherAvatarFor(n);
-    const cleanName = n.replace(/^TR\.\s*/i, '');
+    const cleanName = n.replace(/^TR.\s*/i, '');
     const teacher = cleanName === 'Ayman' ? getAdminTeacherRecord() : getTeachers().find(record => record.teacher_name === cleanName);
     const isAdmin = cleanName === 'Ayman' || teacher?.teacher_role === 'admin';
     const isManager = isSchoolManager(cleanName);
     const badges = `${isAdmin ? '<span class="class-teacher-badge is-admin" role="img" aria-label="Admin" title="Admin">👑</span>' : (isManager ? '<span class="class-teacher-badge is-manager" role="img" aria-label="Manager" title="School Manager">🛡️</span>' : '')}${teacher?.teacher_pro === true ? '<span class="class-teacher-badge is-pro" role="img" aria-label="Pro" title="Pro">⭐</span>' : ''}`;
-    return `<span class="class-teacher-item" title="TR. ${esc(n)}">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}<span class="class-teacher-label">TR. ${esc(cleanName)}${badges}</span></span>`;
-  }).join('') + (hiddenCount ? `<span class="class-teacher-more" aria-label="${hiddenCount} more teacher${hiddenCount === 1 ? '' : 's'}">+${hiddenCount} more</span>` : '');
+    return `<span class="class-teacher-item" title="TR. ${esc(cleanName)}">${src ? `<img class="class-teacher-avatar" src="${src}" alt="" loading="lazy">` : '<span class="class-teacher-avatar">🎓</span>'}<span class="class-teacher-label"><span class="class-teacher-name-text">TR. ${esc(cleanName)}</span>${badges}</span></span>`;
+  }).join('');
 
-  const assignBtnHtml = canAssign ? `<button type="button" class="class-teacher-assign-btn" title="Assign teachers" onclick="event.stopPropagation(); openAssignClassTeachersModal('${esc(schoolName)}','${esc(className)}')">👥 Assign</button>` : '';
+  let actionChip = '';
+  if (hiddenCount > 0) {
+    actionChip = `<span class="class-teacher-action-chip" title="${canAssign ? 'Manage teachers' : `${hiddenCount} more teachers`}">${canAssign ? `+${hiddenCount} more · 👥 Manage` : `+${hiddenCount} more`}</span>`;
+  } else if (canAssign) {
+    actionChip = `<span class="class-teacher-action-chip" title="Manage class teachers">👥 Manage Teachers</span>`;
+  }
 
-  return `<span class="class-teacher-pill ${canAssign ? 'is-assignable' : ''}" title="${canAssign ? 'Click to assign teachers' : 'Class teachers'}" ${canAssign ? `onclick="event.stopPropagation(); openAssignClassTeachersModal('${esc(schoolName)}','${esc(className)}');"` : ''}>${teachersHtml || '<span class="class-teacher-empty">No teachers assigned</span>'}${assignBtnHtml}</span>`;
+  return `<div class="class-teacher-pill ${canAssign ? 'is-assignable' : ''} ${visibleNames.length === 1 ? 'has-single' : 'has-multiple'}" title="${canAssign ? 'Click to assign or manage teachers' : 'Class teachers'}" ${canAssign ? `onclick="event.stopPropagation(); openAssignClassTeachersModal('${esc(schoolName)}','${esc(className)}');"` : ''}>${teachersHtml}${actionChip}</div>`;
 }
 
 function getAssignedClasses(teacherName) {
