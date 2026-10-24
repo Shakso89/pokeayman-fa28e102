@@ -474,11 +474,16 @@ body.ts-on .ts-card, body.ts-on .ts-switch, body.ts-on .ts-me { background: var(
 .ts-class-card-level {
   font-size: 10px;
   font-weight: 800;
-  padding: 1.5px 6px;
+  padding: 1.5px 7px;
   border-radius: 6px;
   background: color-mix(in srgb, var(--ts-blue) 18%, transparent);
   color: var(--ts-blue);
   border: 1px solid color-mix(in srgb, var(--ts-blue) 35%, transparent);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.25;
 }
 .ts-class-card-school {
   font-size: 11px;

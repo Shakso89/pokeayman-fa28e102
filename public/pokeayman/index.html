@@ -4597,11 +4597,16 @@ document.addEventListener('click', function (e) {
 .ts-class-assign-level {
   font-size: 10px;
   font-weight: 800;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 6px;
   background: color-mix(in srgb, var(--ts-blue, #60a5fa) 20%, transparent);
   color: var(--ts-blue, #93c5fd);
   border: 1px solid color-mix(in srgb, var(--ts-blue, #60a5fa) 40%, transparent);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.25;
 }
 .ts-class-assign-teachers {
   display: flex;
@@ -7358,7 +7363,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   function speak(word) {
     window.speechSynthesis?.cancel();
     if (typeof window.readNaturalVocabulary === 'function') window.readNaturalVocabulary(word, null, { level: window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4' });
-    else { const level = window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4'; const rates = { P4: .92, P5: 1, P6: 1.08 }; const utterance = new SpeechSynthesisUtterance(word); utterance.rate = rates[level] || .92; window.speechSynthesis?.speak(utterance); }
+    else { const level = window.getClassReadingLevel?.(student()?.school_name, student()?.class_name) || 'P4'; const rates = { Beginner: .92, Good: 1, Confident: 1.08, P1: .82, P2: .85, P3: .9, P4: .92, P5: 1, P6: 1.08 }; const utterance = new SpeechSynthesisUtterance(word); utterance.rate = rates[level] || .92; window.speechSynthesis?.speak(utterance); }
   }
   function gameWords(listName) {
     // A previous teacher session can leave the global list source set to
@@ -10208,9 +10213,44 @@ function showStudentAwardCelebration(student, amount = 10) {
 
 function getSchools() { return allData.filter(r => r.type === 'school'); }
 function getClasses(schoolName) { return allData.filter(r => r.type === 'class' && r.school_name === schoolName); }
+function formatReadingLevel(rawLevel) {
+  const val = String(rawLevel || '').trim().toLowerCase();
+  if (val === 'confident' || val === 'p6' || val === 'advanced') return 'Confident';
+  if (val === 'good' || val === 'p5' || val === 'intermediate') return 'Good';
+  if (val === 'beginner' || val === 'p4' || val === 'p3' || val === 'p2' || val === 'p1' || val === 'starter') return 'Beginner';
+  if (val && /^[a-z]+$/i.test(val)) return val.charAt(0).toUpperCase() + val.slice(1);
+  return 'Beginner';
+}
+window.formatReadingLevel = formatReadingLevel;
+
+function toReadingLevelCode(level) {
+  const norm = formatReadingLevel(level);
+  if (norm === 'Confident') return 'P6';
+  if (norm === 'Good') return 'P5';
+  return 'P4';
+}
+window.toReadingLevelCode = toReadingLevelCode;
+
 window.getClassReadingLevel = function(schoolName, className) {
-  const record = allData.find(row => row.type === 'class' && row.school_name === schoolName && row.class_name === className);
-  return /^P[4-6]$/.test(record?.class_level || '') ? record.class_level : 'P4';
+  const record = (typeof allData !== 'undefined' && Array.isArray(allData))
+    ? allData.find(row => row.type === 'class' && row.school_name === schoolName && row.class_name === className)
+    : null;
+  return toReadingLevelCode(record?.class_level || record?.reading_level);
+};
+
+window.getClassReadingLevelLabel = function(schoolName, className, classRecord = null) {
+  const record = classRecord || ((typeof allData !== 'undefined' && Array.isArray(allData))
+    ? allData.find(row => row.type === 'class' && row.school_name === schoolName && row.class_name === className)
+    : null);
+  return formatReadingLevel(record?.class_level || record?.reading_level);
+};
+
+window.getStudentReadingLevelLabel = function(student) {
+  if (!student) return 'Beginner';
+  if (student.reading_level) return formatReadingLevel(student.reading_level);
+  const school = student.school_name || (typeof currentStudentSchool !== 'undefined' ? currentStudentSchool : '');
+  const cls = student.class_name || (typeof currentStudentClass !== 'undefined' ? currentStudentClass : '');
+  return window.getClassReadingLevelLabel(school, cls);
 };
 function getStudents(schoolName, className) {
   if (canonicalStudentIndexData !== allData) rebuildCanonicalStudentIndex();
@@ -13363,9 +13403,9 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
     button.setAttribute('aria-busy', 'true');
   }
 
-  const level = /^P[1-6]$/.test(options?.level || '')
-    ? options.level
-    : (window.getClassReadingLevel?.(currentRole === 'student' ? currentStudentSchool : navSchool, currentRole === 'student' ? currentStudentClass : navClass) || 'P4');
+  const rawLevel = options?.level
+    || (window.getClassReadingLevel?.(currentRole === 'student' ? currentStudentSchool : navSchool, currentRole === 'student' ? currentStudentClass : navClass) || 'P4');
+  const level = typeof toReadingLevelCode === 'function' ? toReadingLevelCode(rawLevel) : (/^P[1-6]$/.test(rawLevel) ? rawLevel : 'P4');
 
   try {
     if (typeof window.parent?.pokeaymanSpeak === 'function') {
@@ -13380,8 +13420,8 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(clean);
-      const rates = { P1: 0.82, P2: 0.85, P3: 0.9, P4: 0.88, P5: 1.0, P6: 1.08 };
-      utterance.rate = rates[level] || 0.92;
+      const rates = { Beginner: 0.92, Good: 1.0, Confident: 1.08, P1: 0.82, P2: 0.85, P3: 0.9, P4: 0.88, P5: 1.0, P6: 1.08 };
+      utterance.rate = rates[rawLevel] || rates[level] || 0.92;
       utterance.onend = () => {
         window._vocabularyReading = false;
         if (button) { button.textContent = original; button.disabled = false; button.removeAttribute('aria-busy'); }
@@ -13807,7 +13847,7 @@ function renderStudentDashboard() {
       myClassesList.innerHTML = '<p class="my-classes-empty">No classes yet</p>';
     } else {
       myClassesList.innerHTML = enrolledClasses.map(item =>
-        `<span class="my-class-chip">${item.class_name}<span class="my-class-school">· ${item.school_name}</span></span>`
+        `<span class="my-class-chip">${item.class_name}<span class="my-class-school">· ${item.school_name}</span>${(typeof getClassReadingLevelLabel === 'function' && getClassReadingLevelLabel(item.school_name, item.class_name)) ? `<span class="my-class-level-pill">${getClassReadingLevelLabel(item.school_name, item.class_name)}</span>` : ''}</span>`
       ).join('');
     }
   }
@@ -16603,7 +16643,7 @@ document.getElementById('create-teacher-form')?.addEventListener('submit', async
 function openEditClassModal(classId, schoolName) {
   const classRec = allData.find(c => c.__backendId === classId); if (!classRec) return;
   const adminAvatar = teacherAvatarSrc(getAdminTeacherRecord()?.teacher_avatar);
-  const level = /^P[4-6]$/.test(classRec.class_level || '') ? classRec.class_level : 'P4';
+  const level = typeof toReadingLevelCode === 'function' ? toReadingLevelCode(classRec.class_level || classRec.reading_level) : (/^P[4-6]$/.test(classRec.class_level || '') ? classRec.class_level : 'P4');
   const canAssign = canManageSchool(schoolName);
   const currentAssigned = getClassTeacherNames(schoolName, classRec.class_name);
   const schoolTeachers = getTeachersForSchool(schoolName);
@@ -17301,13 +17341,13 @@ function openManageClassTeachersModal(schoolName) {
         <div class="ts-modal-list" style="max-height: 420px; gap: 8px;">
           ${classes.length ? classes.map(c => {
             const teachers = getClassTeacherNames(schoolName, c.class_name);
-            const level = /^P[4-6]$/.test(c.class_level || '') ? c.class_level : 'P4';
+            const level = typeof formatReadingLevel === 'function' ? formatReadingLevel(c.class_level || c.reading_level) : (/^P[4-6]$/.test(c.class_level || '') ? c.class_level : 'P4');
             return `
               <div class="ts-class-assign-card">
                 <div class="ts-class-assign-left">
                   <div class="ts-class-assign-heading">
                     <span class="ts-class-assign-name">${esc(c.class_name)}</span>
-                    <span class="ts-class-assign-level">${esc(level)}</span>
+                    <span class="ts-class-assign-level" data-level="${esc(level)}">${esc(level)}</span>
                   </div>
                   <div class="ts-class-assign-teachers">
                     ${teachers.length ? teachers.map(name => {

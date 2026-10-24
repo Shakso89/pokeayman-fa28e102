@@ -250,6 +250,16 @@
     setTimeout(sync, 50);
   }
 
+  function formatReadingLevel(rawLevel) {
+    if (typeof window.formatReadingLevel === 'function') return window.formatReadingLevel(rawLevel);
+    const val = String(rawLevel || '').trim().toLowerCase();
+    if (val === 'confident' || val === 'p6' || val === 'advanced') return 'Confident';
+    if (val === 'good' || val === 'p5' || val === 'intermediate') return 'Good';
+    if (val === 'beginner' || val === 'p4' || val === 'p3' || val === 'p2' || val === 'p1' || val === 'starter') return 'Beginner';
+    if (val && /^[a-z]+$/i.test(val)) return val.charAt(0).toUpperCase() + val.slice(1);
+    return 'Beginner';
+  }
+
   function myClasses() {
     const all = g(() => allData.filter((r) => r.type === 'class'), []);
     if (g(() => canAccessAdmin(), false)) return all;
@@ -301,12 +311,12 @@
           ${matched.length ? matched.map(c => {
             const n = g(() => getStudents(c.school_name, c.class_name).length, 0);
             const isCur = cur === `${c.school_name}|${c.class_name}`;
-            const level = c.class_level || 'P4';
+            const level = formatReadingLevel(c.class_level || c.reading_level);
             return `<button type="button" class="ts-class-card ${isCur ? 'on' : ''}" data-ts-go='${esc(JSON.stringify([c.school_name, c.class_name]))}'>
               <div class="ts-class-card-left">
                 <div class="ts-class-card-title-row">
                   <span class="ts-class-card-school">🏫 ${esc(c.school_name)}</span>
-                  <span class="ts-class-card-level">${esc(level)}</span>
+                  <span class="ts-class-card-level" data-level="${esc(level)}">${esc(level)}</span>
                 </div>
                 <strong class="ts-class-card-name">${esc(c.class_name)}</strong>
                 <span class="ts-class-card-students">👥 ${n} student${n !== 1 ? 's' : ''}</span>
@@ -339,12 +349,12 @@
     const classesListHtml = schoolClasses.length ? schoolClasses.map(c => {
       const n = g(() => getStudents(activeChooserSchool, c.class_name).length, 0);
       const isCur = cur === `${activeChooserSchool}|${c.class_name}`;
-      const level = c.class_level || 'P4';
+      const level = formatReadingLevel(c.class_level || c.reading_level);
       return `<button type="button" class="ts-class-card ${isCur ? 'on' : ''}" data-ts-go='${esc(JSON.stringify([activeChooserSchool, c.class_name]))}'>
         <div class="ts-class-card-left">
           <div class="ts-class-card-title-row">
             <strong class="ts-class-card-name">${esc(c.class_name)}</strong>
-            <span class="ts-class-card-level">${esc(level)}</span>
+            <span class="ts-class-card-level" data-level="${esc(level)}">${esc(level)}</span>
           </div>
           <span class="ts-class-card-students">👥 ${n} student${n !== 1 ? 's' : ''}</span>
         </div>

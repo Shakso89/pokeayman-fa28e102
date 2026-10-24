@@ -453,6 +453,17 @@ html body #student-dashboard#student-dashboard .my-class-chip {
   box-shadow: var(--kid-control-shadow);
 }
 html body #student-dashboard#student-dashboard .my-class-chip .my-class-school { font-size: .62rem; font-weight: 600; opacity: .65; }
+html body #student-dashboard#student-dashboard .my-class-chip .my-class-level-pill {
+  font-size: .6rem;
+  font-weight: 800;
+  padding: .1rem .45rem;
+  border-radius: 999px;
+  background: var(--kid-sky-100, #e0f2fe);
+  color: var(--kid-sky-800, #0369a1);
+  margin-left: .25rem;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
 html body #student-dashboard#student-dashboard .my-classes-empty {
   margin: 0; font-size: .72rem; font-weight: 600; color: var(--kid-ink); opacity: .6;
 }

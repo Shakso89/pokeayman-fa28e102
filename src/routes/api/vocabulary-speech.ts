@@ -68,7 +68,19 @@ export const Route = createFileRoute("/api/vocabulary-speech")({
             .replace(/\s+/g, " ")
             .trim();
           if (!text) throw new Error("Empty text");
-          level = typeof input.level === "string" && /^P[1-6]$/.test(input.level) ? input.level : "P4";
+          const rawInputLevel = typeof input.level === "string" ? input.level.trim() : "";
+          const normLevel = rawInputLevel.toLowerCase();
+          if (normLevel === "confident" || normLevel === "p6" || normLevel === "advanced") {
+            level = "P6";
+          } else if (normLevel === "good" || normLevel === "p5" || normLevel === "intermediate") {
+            level = "P5";
+          } else if (normLevel === "beginner" || /^p[1-4]$/.test(normLevel) || normLevel === "starter") {
+            level = "P4";
+          } else if (/^P[1-6]$/.test(rawInputLevel)) {
+            level = rawInputLevel;
+          } else {
+            level = "P4";
+          }
         } catch {
           return Response.json({ message: "Choose a saved vocabulary word or sentence to read." }, { status: 400 });
         }
