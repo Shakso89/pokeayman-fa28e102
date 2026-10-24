@@ -78,6 +78,7 @@ function Index() {
         try {
           sessionStorage.removeItem("pokeayman-login-session-id");
           sessionStorage.removeItem("pokeayman-streak-dismissed-session");
+          sessionStorage.removeItem("pokeayman-streak-dismissed");
         } catch (_) {}
         setUser(null);
         setFrameKey((k) => k + 1);

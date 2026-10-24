@@ -22,6 +22,7 @@
     pointer-events: none;
   }
   html body.ts-on #ts-rail > .ts-streak:not([hidden]) { pointer-events: auto; }
+  html body.ts-on #ts-rail:has(> .ts-streak[hidden]) { display: none !important; }
   /* The floating rail is reduced to the streak card on compact screens. The
      class header already has Add student, so don't leave its rail shortcut
      stranded as a large yellow button at the viewport edge. */

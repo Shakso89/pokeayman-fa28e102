@@ -47,33 +47,15 @@
   }
   window.setPokeaymanThemeMode = setThemeMode;
 
-  const STREAK_DISMISSED_KEY = 'pokeayman-streak-dismissed-session';
-  const SESSION_ID_KEY = 'pokeayman-login-session-id';
-
-  function getCurrentSessionId() {
-    try {
-      let sid = sessionStorage.getItem(SESSION_ID_KEY);
-      const teacherName = g(() => currentTeacher, '') || 'teacher';
-      if (sid && !sid.startsWith(teacherName + '-')) {
-        sid = null;
-      }
-      if (!sid && g(() => currentRole) === 'teacher') {
-        sid = teacherName + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-        sessionStorage.setItem(SESSION_ID_KEY, sid);
-      }
-      return sid || '';
-    } catch (_) {
-      return '';
-    }
-  }
+  const STREAK_DISMISSED_KEY = 'pokeayman-streak-dismissed';
 
   function isStreakDismissed() {
     try {
-      const sid = getCurrentSessionId();
-      if (!sid) {
-        return sessionStorage.getItem(STREAK_DISMISSED_KEY) === '1';
+      const teacher = g(() => currentTeacher, '') || '';
+      if (teacher && sessionStorage.getItem(`${STREAK_DISMISSED_KEY}:${encodeURIComponent(teacher)}`) === '1') {
+        return true;
       }
-      return sessionStorage.getItem(STREAK_DISMISSED_KEY) === sid;
+      return sessionStorage.getItem(STREAK_DISMISSED_KEY) === '1' || sessionStorage.getItem('pokeayman-streak-dismissed-session') === '1';
     } catch (_) {
       return false;
     }
@@ -81,19 +63,33 @@
 
   function setStreakDismissed(dismissed) {
     try {
+      const teacher = g(() => currentTeacher, '') || '';
       if (dismissed) {
-        const sid = getCurrentSessionId() || 'active';
-        sessionStorage.setItem(STREAK_DISMISSED_KEY, sid);
+        sessionStorage.setItem(STREAK_DISMISSED_KEY, '1');
+        sessionStorage.setItem('pokeayman-streak-dismissed-session', '1');
+        if (teacher) {
+          sessionStorage.setItem(`${STREAK_DISMISSED_KEY}:${encodeURIComponent(teacher)}`, '1');
+        }
       } else {
         sessionStorage.removeItem(STREAK_DISMISSED_KEY);
+        sessionStorage.removeItem('pokeayman-streak-dismissed-session');
+        if (teacher) {
+          sessionStorage.removeItem(`${STREAK_DISMISSED_KEY}:${encodeURIComponent(teacher)}`);
+        }
       }
     } catch (_) {}
   }
 
   function clearStreakSession() {
     try {
-      sessionStorage.removeItem(SESSION_ID_KEY);
       sessionStorage.removeItem(STREAK_DISMISSED_KEY);
+      sessionStorage.removeItem('pokeayman-streak-dismissed-session');
+      sessionStorage.removeItem('pokeayman-login-session-id');
+      Object.keys(sessionStorage).forEach((k) => {
+        if (k.startsWith(STREAK_DISMISSED_KEY) || k.includes('streak-dismissed') || k.includes('session-id')) {
+          sessionStorage.removeItem(k);
+        }
+      });
     } catch (_) {}
   }
 
@@ -142,9 +138,18 @@
         <div class="ts-streak-dots" id="ts-streak-dots"></div>
         <button type="button" class="ts-award-go" id="ts-box-open">🎁 Open Streak Box</button></section>`;
     document.body.append(side, rail);
-    rail.querySelector('[data-ts-streak-close]')?.addEventListener('click', () => {
-      const streakCard = rail.querySelector('.ts-streak');
-      if (streakCard) streakCard.hidden = true;
+    rail.addEventListener('click', (e) => {
+      const closeBtn = e.target.closest('[data-ts-streak-close]');
+      if (closeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        setStreakDismissed(true);
+        const streakCard = rail.querySelector('.ts-streak');
+        if (streakCard) {
+          streakCard.hidden = true;
+          streakCard.setAttribute('hidden', '');
+        }
+      }
     });
     const sidebarToggle = document.createElement('button');
     sidebarToggle.id = 'ts-sidebar-toggle'; sidebarToggle.type = 'button'; sidebarToggle.setAttribute('aria-controls', 'ts-sidebar');
