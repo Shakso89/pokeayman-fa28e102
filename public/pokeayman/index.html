@@ -17521,17 +17521,73 @@ function openManageClassTeachersModal(schoolName) {
 window.openManageClassTeachersModal = openManageClassTeachersModal;
 
 function getClassTeacherNames(schoolName, className) {
-  const names = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === className).map(assignmentTeacherName).filter(Boolean);
+  const teachers = getTeachers();
+  const validTeachers = new Map();
+  const validIds = new Map();
+  teachers.forEach(t => {
+    const n = String(t.teacher_name || '').trim();
+    if (n) {
+      validTeachers.set(n.toLowerCase(), n);
+      if (t.__backendId) validIds.set(String(t.__backendId).trim(), n);
+    }
+  });
+
+  const classAssignments = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === className);
+  const aliasMap = new Map();
+  classAssignments.forEach(a => {
+    const aId = String(a.assigned_teacher_id || '').trim();
+    const aName = String(a.assigned_teacher || '').trim();
+    if (aId && validIds.has(aId)) {
+      const current = validIds.get(aId);
+      if (aName && aName.toLowerCase() !== current.toLowerCase()) {
+        aliasMap.set(aName.toLowerCase(), current);
+      }
+    }
+  });
+
+  const resolve = (raw) => {
+    const clean = String(raw || '').replace(/^TR\.\s*/i, '').trim();
+    if (!clean) return '';
+    if (clean.toLowerCase() === 'ayman') return 'Ayman';
+    if (validIds.has(clean)) return validIds.get(clean);
+    if (validTeachers.has(clean.toLowerCase())) return validTeachers.get(clean.toLowerCase());
+    if (aliasMap.has(clean.toLowerCase())) return aliasMap.get(clean.toLowerCase());
+    return '';
+  };
+
+  const resolved = [];
+  const add = (name) => {
+    const canonical = resolve(name);
+    if (canonical && !resolved.includes(canonical)) {
+      resolved.push(canonical);
+    }
+  };
+
+  classAssignments.forEach(r => {
+    const aId = String(r.assigned_teacher_id || '').trim();
+    if (aId && validIds.has(aId)) {
+      add(validIds.get(aId));
+    } else if (r.assigned_teacher) {
+      add(r.assigned_teacher);
+    }
+  });
+
   const cls = getClasses(schoolName).find(c => c.class_name === className);
-  const rest = names.filter(n => n !== 'Ayman');
-  if (cls && cls.show_admin_teacher === true) rest.unshift('Ayman');
-  if (cls && Array.isArray(cls.assigned_teachers)) {
-    cls.assigned_teachers.forEach(t => { if (t && !rest.includes(t)) rest.push(t); });
+  if (cls) {
+    if (cls.show_admin_teacher === true) add('Ayman');
+    if (Array.isArray(cls.assigned_teachers)) {
+      cls.assigned_teachers.forEach(t => add(t));
+    }
+    if (cls.main_manager_name) {
+      add(cls.main_manager_name);
+    }
   }
-  if (cls && cls.main_manager_name && !rest.includes(cls.main_manager_name)) {
-    rest.push(cls.main_manager_name);
+
+  if (resolved.includes('Ayman')) {
+    const withoutAyman = resolved.filter(n => n !== 'Ayman');
+    return ['Ayman', ...withoutAyman];
   }
-  return [...new Set(rest)];
+  return resolved;
 }
 window.getClassTeacherNames = getClassTeacherNames;
 
@@ -24472,6 +24528,89 @@ function announceIncomingTeacherNotifications() {
   incoming.forEach(item => announcedTeacherNotificationIds.add(String(item.__backendId)));
   if (incoming.length) toast(`🔔 ${incoming[incoming.length - 1].notification_title || 'New teacher notification'}`);
 }
+function sanitizeClassTeacherAssignments() {
+  const teachers = getTeachers();
+  const validTeachers = new Map();
+  const validIds = new Map();
+  teachers.forEach(t => {
+    const n = String(t.teacher_name || '').trim();
+    if (n) {
+      validTeachers.set(n.toLowerCase(), n);
+      if (t.__backendId) validIds.set(String(t.__backendId).trim(), n);
+    }
+  });
+
+  const assignments = allData.filter(r => r.type === 'teacher_class_assignment');
+  const aliasMap = new Map();
+  assignments.forEach(a => {
+    const aId = String(a.assigned_teacher_id || '').trim();
+    const aName = String(a.assigned_teacher || '').trim();
+    if (aId && validIds.has(aId)) {
+      const current = validIds.get(aId);
+      if (aName && aName.toLowerCase() !== current.toLowerCase()) {
+        aliasMap.set(aName.toLowerCase(), current);
+      }
+    }
+  });
+
+  const resolve = (raw) => {
+    const clean = String(raw || '').replace(/^TR\.\s*/i, '').trim();
+    if (!clean) return '';
+    if (clean.toLowerCase() === 'ayman') return 'Ayman';
+    if (validIds.has(clean)) return validIds.get(clean);
+    if (validTeachers.has(clean.toLowerCase())) return validTeachers.get(clean.toLowerCase());
+    if (aliasMap.has(clean.toLowerCase())) return aliasMap.get(clean.toLowerCase());
+    return '';
+  };
+
+  for (const a of assignments) {
+    const aId = String(a.assigned_teacher_id || '').trim();
+    if (aId && validIds.has(aId)) {
+      const canonical = validIds.get(aId);
+      if (a.assigned_teacher !== canonical) {
+        a.assigned_teacher = canonical;
+        if (window.dataSdk && window.dataSdk.update) {
+          window.dataSdk.update({ ...a, assigned_teacher: canonical }, { notify: false }).catch(() => {});
+        }
+      }
+    }
+  }
+
+  const classes = allData.filter(r => r.type === 'class');
+  for (const c of classes) {
+    if (Array.isArray(c.assigned_teachers)) {
+      const cleaned = [];
+      for (const raw of c.assigned_teachers) {
+        const canonical = resolve(raw);
+        if (canonical && !cleaned.includes(canonical)) {
+          cleaned.push(canonical);
+        }
+      }
+      const isDifferent = cleaned.length !== c.assigned_teachers.length || cleaned.some((t, i) => t !== c.assigned_teachers[i]);
+      if (isDifferent) {
+        c.assigned_teachers = cleaned;
+        if (window.dataSdk && window.dataSdk.update) {
+          window.dataSdk.update({ ...c, assigned_teachers: cleaned }, { notify: false }).catch(() => {});
+        }
+      }
+    }
+    if (c.main_manager_name) {
+      const canonicalManager = resolve(c.main_manager_name);
+      if (!canonicalManager) {
+        c.main_manager_name = '';
+        if (window.dataSdk && window.dataSdk.update) {
+          window.dataSdk.update({ ...c, main_manager_name: '' }, { notify: false }).catch(() => {});
+        }
+      } else if (canonicalManager !== c.main_manager_name) {
+        c.main_manager_name = canonicalManager;
+        if (window.dataSdk && window.dataSdk.update) {
+          window.dataSdk.update({ ...c, main_manager_name: canonicalManager }, { notify: false }).catch(() => {});
+        }
+      }
+    }
+  }
+}
+
 const handler = {
   onDataChanged(data) {
     const generation = ++dataRefreshGeneration;
@@ -24488,6 +24627,7 @@ const handler = {
     } else if (currentRole === 'teacher' && !verifiedTeacherIdentity()) return;
     // Keep every authoritative row delivered by the selected sheet; never seed or paginate.
     allData = normalizedData;
+    sanitizeClassTeacherAssignments();
     announceIncomingTeacherNotifications();
     rebuildCanonicalStudentIndex();
     const configRow = getPublishedConfigRows().sort((a,b) => Number(b.config_version || 0) - Number(a.config_version || 0))[0];
