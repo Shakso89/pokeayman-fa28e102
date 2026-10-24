@@ -240,6 +240,8 @@
             <span id="vocab-gen-status-text">Step 1/3: Writing contextual sentences...</span>
           </div>
 
+          <button id="vocab-gen-minimize" class="vocab-gen-minimize" type="button" title="Keep generating while you browse">Minimize · keep generating</button>
+
           <div class="vocab-gen-progress-track">
             <div id="vocab-gen-progress-fill" class="vocab-gen-progress-bar"></div>
           </div>
@@ -255,6 +257,7 @@
 
     // References
     const closeBtn = modal.querySelector('#vocab-gen-popup-close');
+    const minimizeBtn = modal.querySelector('#vocab-gen-minimize');
     const nameInput = modal.querySelector('#vocab-gen-name-input');
     const modeWordsBtn = modal.querySelector('#vocab-gen-mode-words');
     const modePhotoBtn = modal.querySelector('#vocab-gen-mode-photo');
@@ -340,6 +343,7 @@
     }
 
     closeBtn.addEventListener('click', closeModal);
+    minimizeBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
       if (e.target === modal) closeModal();
     });
