@@ -4644,6 +4644,273 @@ document.addEventListener('click', function (e) {
   border-color: var(--ts-yellow, #ffcb05);
 }
 
+
+/* =========================================================================
+   POKÉAYMAN TEACHER SHELL - EDIT CLASS MODAL & COMPACT TEACHER SELECTOR
+   ========================================================================= */
+.ts-edit-class-card {
+  width: min(480px, calc(100vw - 32px));
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.12));
+  border-radius: 20px;
+  background: var(--ts-deep, #131c2e);
+  color: var(--ts-ink, #f5f7ff);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px color-mix(in srgb, var(--ts-yellow, #ffcb05) 18%, transparent);
+  animation: ts-modal-card-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ts-edit-class-body {
+  padding: 18px 22px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--ts-deep, #131c2e);
+}
+
+.ts-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ts-form-label {
+  display: block;
+  font: 800 11px/1.2 'Outfit', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ts-muted, #94a3b8);
+}
+
+.ts-form-input, .ts-form-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.12));
+  border-radius: 10px;
+  background: var(--ts-surface, #1e2846);
+  color: var(--ts-ink, #f5f7ff);
+  font: 600 14px/1 'Outfit', sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ts-form-input:focus, .ts-form-select:focus {
+  border-color: var(--ts-yellow, #ffcb05);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ts-yellow, #ffcb05) 25%, transparent);
+}
+
+.ts-form-note {
+  font-size: 11.5px;
+  color: var(--ts-muted, #94a3b8);
+  font-style: italic;
+  margin: 2px 0 0;
+}
+
+/* Compact Teachers Box */
+.ts-compact-teachers-section {
+  border-top: 1px solid var(--ts-border, rgba(255, 255, 255, 0.08));
+  padding-top: 10px;
+  margin-top: 2px;
+}
+
+.ts-compact-teachers-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.ts-compact-teachers-box {
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ts-surface, #1e2846) 65%, var(--ts-bg, #0f172a));
+  padding: 5px;
+  max-height: 115px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ts-ink, #fff) 18%, transparent) transparent;
+}
+.ts-compact-teachers-box::-webkit-scrollbar {
+  width: 5px;
+}
+.ts-compact-teachers-box::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ts-ink, #fff) 18%, transparent);
+  border-radius: 999px;
+}
+
+.ts-compact-teacher-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--ts-surface, #1e2846) 45%, transparent);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.14s ease;
+  min-height: 30px;
+  box-sizing: border-box;
+}
+.ts-compact-teacher-row:hover {
+  background: var(--ts-surface, #1e2846);
+  border-color: var(--ts-border, rgba(255, 255, 255, 0.12));
+}
+.ts-compact-teacher-row.is-checked {
+  background: color-mix(in srgb, var(--ts-yellow, #ffcb05) 12%, var(--ts-surface, #1e2846));
+  border-color: color-mix(in srgb, var(--ts-yellow, #ffcb05) 45%, transparent);
+}
+
+.ts-compact-teacher-cb {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ts-yellow, #ffcb05);
+  cursor: pointer;
+  flex: none;
+  margin: 0;
+}
+
+.ts-compact-teacher-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--ts-ink, #fff) 8%, transparent);
+  border: 1px solid var(--ts-border, rgba(255, 255, 255, 0.12));
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+}
+
+.ts-compact-teacher-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ts-ink, #f5f7ff) !important;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ts-compact-teacher-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 1.5px 6px;
+  border-radius: 999px;
+  flex: none;
+  line-height: 1.2;
+}
+.ts-compact-teacher-badge.is-admin {
+  background: linear-gradient(135deg, #dbeafe, #93c5fd);
+  color: #10244a !important;
+  border: 1px solid #bfdbfe;
+}
+.ts-compact-teacher-badge.is-manager {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff !important;
+  border: 1px solid #34d399;
+}
+.ts-compact-teacher-badge.is-pro {
+  background: linear-gradient(135deg, #ffe37a, #f59e0b);
+  color: #352300 !important;
+  border: 1px solid #fbbf24;
+}
+
+.ts-edit-footer {
+  padding: 14px 22px;
+  border-top: 1px solid var(--ts-border, rgba(255, 255, 255, 0.08));
+  background: color-mix(in srgb, var(--ts-deep, #131c2e) 85%, black);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.ts-btn-danger {
+  min-height: 38px;
+  padding: 0 16px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  font: 700 13px/1 'Outfit', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.ts-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #fee2e2;
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+/* Bright Mode Overrides for Edit Class */
+html body.ts-bright .ts-edit-class-card {
+  background: var(--color-surface, #ffffff);
+  border-color: var(--color-border, #e2e8f0);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
+  color: var(--color-text-primary, #0f172a);
+}
+html body.ts-bright .ts-edit-class-body {
+  background: var(--color-surface, #ffffff);
+}
+html body.ts-bright .ts-form-label {
+  color: #475569;
+}
+html body.ts-bright .ts-form-input, 
+html body.ts-bright .ts-form-select {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+html body.ts-bright .ts-form-note {
+  color: #64748b;
+}
+html body.ts-bright .ts-compact-teachers-section {
+  border-top-color: #e2e8f0;
+}
+html body.ts-bright .ts-compact-teachers-box {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+html body.ts-bright .ts-compact-teacher-row {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+html body.ts-bright .ts-compact-teacher-row:hover {
+  background: #f1f5f9;
+}
+html body.ts-bright .ts-compact-teacher-row.is-checked {
+  background: #fef9c3;
+  border-color: #facc15;
+}
+html body.ts-bright .ts-compact-teacher-name {
+  color: #0f172a !important;
+}
+html body.ts-bright .ts-edit-footer {
+  background: #f8fafc;
+  border-top-color: #e2e8f0;
+}
+html body.ts-bright .ts-btn-danger {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+html body.ts-bright .ts-btn-danger:hover {
+  background: #fecaca;
+}
+
 /* Bright mode overrides */
 html body.ts-bright .ts-modal-card {
   background: var(--color-surface, #ffffff);
@@ -16055,29 +16322,128 @@ document.getElementById('create-teacher-form')?.addEventListener('submit', async
 function openEditClassModal(classId, schoolName) {
   const classRec = allData.find(c => c.__backendId === classId); if (!classRec) return;
   const adminAvatar = teacherAvatarSrc(getAdminTeacherRecord()?.teacher_avatar);
-  const modal = document.createElement('div'); modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
   const level = /^P[4-6]$/.test(classRec.class_level || '') ? classRec.class_level : 'P4';
   const canAssign = canManageSchool(schoolName);
   const currentAssigned = getClassTeacherNames(schoolName, classRec.class_name);
   const schoolTeachers = getTeachersForSchool(schoolName);
   const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  modal.innerHTML = `<div class="bg-white rounded-xl p-6 shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto"><h2 class="heading-font text-lg font-bold mb-4">Edit Class</h2><form class="space-y-3"><div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="ec-name">Class name</label><input type="text" id="ec-name" value="${esc(classRec.class_name)}" class="w-full border rounded-lg px-3 py-2 text-sm" required></div><div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1" for="ec-pin">Class PIN</label><input type="password" id="ec-pin" value="${esc(classRec.class_pin||'')}" maxlength="6" class="w-full border rounded-lg px-3 py-2 text-sm tracking-widest" required></div><label class="block text-xs font-bold text-slate-700 uppercase tracking-wider" for="ec-level">Reading level for cards and games<select id="ec-level" class="class-level-select mt-1 w-full border rounded-lg px-3 py-2 text-sm">${[['P4','Beginner'],['P5','Good'],['P6','Confident']].map(([value, label]) => `<option value="${value}" ${value === level ? 'selected' : ''}>${label}</option>`).join('')}</select></label><p class="text-xs text-gray-500 italic">Changing PIN will update all students in this class</p><div class="ec-teachers-section border-t border-slate-200 pt-3 mt-3"><div class="flex items-center justify-between mb-2"><label class="text-xs font-bold text-slate-700 uppercase tracking-wider">Assigned Teachers</label>${canAssign ? '<span class="text-[11px] text-indigo-600 font-semibold">Select teachers</span>' : '<span class="text-[11px] text-slate-400">Read only</span>'}</div>${canAssign ? `<div class="space-y-1.5 max-h-44 overflow-y-auto border rounded-lg p-2.5 bg-slate-50">${(isAymanTeacher() || currentAssigned.includes('Ayman')) ? `<label class="flex items-center gap-2 p-1.5 hover:bg-white rounded transition cursor-pointer text-sm font-medium"><input type="checkbox" class="ec-teacher-checkbox h-4 w-4 rounded text-indigo-600" value="Ayman" ${currentAssigned.includes('Ayman') ? 'checked' : ''}>${adminAvatar ? `<img src="${adminAvatar}" alt="" class="w-5 h-5 rounded-full object-contain">` : '🎓'}<span>Ayman <small class="text-amber-600 font-bold">(Admin)</small></span></label>` : ''}${schoolTeachers.map(t => { const isChecked = currentAssigned.includes(t.teacher_name); const avatar = teacherAvatarSrc(t.teacher_avatar); return `<label class="flex items-center gap-2 p-1.5 hover:bg-white rounded transition cursor-pointer text-sm font-medium"><input type="checkbox" class="ec-teacher-checkbox h-4 w-4 rounded text-indigo-600" value="${esc(t.teacher_name)}" ${isChecked ? 'checked' : ''}>${avatar ? `<img src="${avatar}" alt="" class="w-5 h-5 rounded-full object-contain">` : '🎓'}<span>${esc(t.teacher_name)}${t.teacher_pro ? ' ⭐' : ''}</span></label>`; }).join('')}</div><p class="text-[11px] text-slate-500 mt-1">Multiple teachers can manage this class together with equal permissions.</p>` : `<div class="flex flex-wrap gap-1.5 p-2 bg-slate-50 border rounded-lg">${currentAssigned.length ? currentAssigned.map(t => `<span class="text-xs bg-white border border-slate-200 px-2.5 py-1 rounded-full font-medium text-slate-700">🎓 TR. ${esc(t)}</span>`).join('') : '<span class="text-xs text-slate-400 italic">No teachers assigned</span>'}</div><p class="text-[11px] text-slate-400 mt-1 italic">Only Admins and School Managers can change teacher assignments.</p>`}</div><div class="flex gap-2 pt-2"><button type="submit" class="flex-1 btn-primary">Save</button><button type="button" class="flex-1 btn-secondary" id="ec-delete">Delete</button><button type="button" class="flex-1 btn-outline" id="ec-cancel">Cancel</button></div></form></div>`;
+  const showAdminOption = isAymanTeacher() || currentAssigned.includes('Ayman');
+
+  const modal = document.createElement('div');
+  modal.className = 'ts-modal-backdrop';
+  modal.innerHTML = `
+    <div class="ts-edit-class-card" role="dialog" aria-modal="true" aria-labelledby="ec-title">
+      <div class="ts-modal-header">
+        <div>
+          <p class="ts-modal-kicker"><span>⚙️</span> CLASS SETTINGS</p>
+          <h2 class="ts-modal-title" id="ec-title">Edit Class</h2>
+          <p class="ts-modal-subtitle">🏫 ${esc(schoolName)} · ${esc(classRec.class_name)}</p>
+        </div>
+        <button type="button" class="ts-modal-close-btn" id="ec-close-btn" aria-label="Close">×</button>
+      </div>
+      <form class="ts-edit-class-body" id="ec-form">
+        <div class="ts-form-group">
+          <label class="ts-form-label" for="ec-name">Class name</label>
+          <input type="text" id="ec-name" value="${esc(classRec.class_name)}" class="ts-form-input" required>
+        </div>
+        <div class="ts-form-group">
+          <label class="ts-form-label" for="ec-pin">Class PIN</label>
+          <input type="password" id="ec-pin" value="${esc(classRec.class_pin || '')}" maxlength="6" class="ts-form-input" style="letter-spacing:0.25em" required>
+          <p class="ts-form-note">Changing PIN will update all students in this class</p>
+        </div>
+        <div class="ts-form-group">
+          <label class="ts-form-label" for="ec-level">Reading level for cards and games</label>
+          <select id="ec-level" class="ts-form-select">
+            ${[['P4','Beginner'],['P5','Good'],['P6','Confident']].map(([val, label]) => `<option value="${val}" ${val === level ? 'selected' : ''}>${label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="ts-compact-teachers-section">
+          <div class="ts-compact-teachers-head">
+            <span class="ts-form-label">Assigned Teachers</span>
+            ${canAssign ? '<span style="font-size:11px;color:var(--ts-yellow,#ffcb05);font-weight:700">Select co-teachers</span>' : '<span style="font-size:11px;color:var(--ts-muted,#94a3b8)">Read only</span>'}
+          </div>
+          ${canAssign ? `
+            <div class="ts-compact-teachers-box" id="ec-teachers-box">
+              ${showAdminOption ? `
+                <label class="ts-compact-teacher-row ${currentAssigned.includes('Ayman') ? 'is-checked' : ''}">
+                  <input type="checkbox" class="ts-compact-teacher-cb ec-teacher-checkbox" value="Ayman" ${currentAssigned.includes('Ayman') ? 'checked' : ''}>
+                  <span class="ts-compact-teacher-avatar">👑</span>
+                  <span class="ts-compact-teacher-name">Ayman</span>
+                  <span class="ts-compact-teacher-badge is-admin">Admin</span>
+                </label>
+              ` : ''}
+              ${schoolTeachers.map(t => {
+                const isChecked = currentAssigned.includes(t.teacher_name);
+                const avatar = teacherAvatarSrc(t.teacher_avatar);
+                const isManager = isSchoolManager(t.teacher_name);
+                return `
+                  <label class="ts-compact-teacher-row ${isChecked ? 'is-checked' : ''}">
+                    <input type="checkbox" class="ts-compact-teacher-cb ec-teacher-checkbox" value="${esc(t.teacher_name)}" ${isChecked ? 'checked' : ''}>
+                    ${avatar ? `<img src="${avatar}" class="ts-compact-teacher-avatar" alt="">` : '<span class="ts-compact-teacher-avatar">🎓</span>'}
+                    <span class="ts-compact-teacher-name">${esc(t.teacher_name)}</span>
+                    ${isManager ? '<span class="ts-compact-teacher-badge is-manager">Manager</span>' : ''}
+                    ${t.teacher_pro ? '<span class="ts-compact-teacher-badge is-pro">⭐ Pro</span>' : ''}
+                  </label>
+                `;
+              }).join('')}
+            </div>
+            <p class="ts-form-note" style="margin-top:4px">Multiple teachers can manage this class together with equal permissions.</p>
+          ` : `
+            <div class="ts-compact-teachers-box" style="max-height:80px">
+              ${currentAssigned.length ? currentAssigned.map(t => {
+                const avatar = classTeacherAvatarFor(t);
+                return `
+                  <div class="ts-compact-teacher-row" style="cursor:default">
+                    ${avatar ? `<img src="${avatar}" class="ts-compact-teacher-avatar" alt="">` : '<span class="ts-compact-teacher-avatar">🎓</span>'}
+                    <span class="ts-compact-teacher-name">TR. ${esc(t)}</span>
+                  </div>
+                `;
+              }).join('') : '<span class="ts-form-note" style="padding:6px;text-align:center">No teachers assigned</span>'}
+            </div>
+            <p class="ts-form-note" style="margin-top:4px">Only Admins and School Managers can change teacher assignments.</p>
+          `}
+        </div>
+        <div class="ts-edit-footer" style="padding:10px 0 0;background:transparent;border-top:1px solid var(--ts-border,rgba(255,255,255,0.08))">
+          <button type="button" class="ts-btn-danger" id="ec-delete" style="margin-right:auto">Delete</button>
+          <button type="button" class="ts-modal-btn-cancel" id="ec-cancel">Cancel</button>
+          <button type="submit" class="ts-modal-btn-save" id="ec-submit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  `;
   document.body.appendChild(modal);
-  modal.querySelector('#es-manage-class-teachers')?.addEventListener('click', () => { modal.remove(); openManageClassTeachersModal(schoolName); });
-modal.querySelector('form').addEventListener('submit', async e => {
+
+  const close = () => modal.remove();
+  modal.querySelector('#ec-close-btn').addEventListener('click', close);
+  modal.querySelector('#ec-cancel').addEventListener('click', close);
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  modal.querySelectorAll('.ec-teacher-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const row = cb.closest('.ts-compact-teacher-row');
+      if (row) row.classList.toggle('is-checked', cb.checked);
+    });
+  });
+
+  modal.querySelector('#ec-form').addEventListener('submit', async e => {
     e.preventDefault();
+    const saveBtn = modal.querySelector('#ec-submit');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
     const newName = modal.querySelector('#ec-name').value.trim();
     const newPin = modal.querySelector('#ec-pin').value.trim();
     const newLevel = modal.querySelector('#ec-level').value;
-    if (!newName) { toast('Class name cannot be empty'); return; }
-    if (newPin.length !== 6 || !/^\d+$/.test(newPin)) { toast('PIN must be 6 digits'); return; }
+    if (!newName) { toast('Class name cannot be empty'); saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; return; }
+    if (newPin.length !== 6 || !/^\d+$/.test(newPin)) { toast('PIN must be 6 digits'); saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; return; }
     const oldClassName = classRec.class_name, oldPin = classRec.class_pin;
     const studentsInClass = getStudents(schoolName, oldClassName);
     const selectedTeachers = canAssign
       ? [...modal.querySelectorAll('.ec-teacher-checkbox:checked')].map(cb => cb.value)
       : currentAssigned;
     const hasAyman = selectedTeachers.includes('Ayman');
-    modal.remove();
+    close();
+
     const res = await window.dataSdk.update({ ...classRec, class_name: newName, class_pin: newPin, class_level: newLevel, assigned_teachers: selectedTeachers, show_admin_teacher: hasAyman });
     if (res && res.isOk === false) { toast('Could not save class. Please try again.'); return; }
     if (newPin !== oldPin && studentsInClass.length) await window.dataSdk.updateMany(studentsInClass.map(st => ({ ...st, student_pin: newPin })));
@@ -16085,57 +16451,75 @@ modal.querySelector('form').addEventListener('submit', async e => {
     if (canAssign) {
       await saveClassTeacherAssignments(schoolName, newName, selectedTeachers);
     }
-    try { renderTeacherDashboard(); } catch (e) {}
-    try { window.teacherShellSync?.(); } catch (e) {}
+    try { renderTeacherDashboard(); } catch (err) {}
+    try { window.teacherShellSync?.(); } catch (err) {}
     toast(`Class "${newName}" saved!`);
   });
+
   modal.querySelector('#ec-delete').addEventListener('click', async () => {
     const deleteModal = document.createElement('div');
-    deleteModal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4';
-    deleteModal.innerHTML = `<div class="bg-white rounded-xl p-6 shadow-lg w-96">
-      <h2 class="heading-font text-lg font-bold text-gray-800 mb-4">Confirm Delete Class</h2>
-      <p class="text-sm text-gray-600 mb-6">Delete class "<strong>${classRec.class_name}</strong>" and all its students, Pokémon, and quizzes? This cannot be undone.</p>
-      <div class="flex gap-2">
-        <button id="confirm-delete-class" class="flex-1 btn-secondary">Delete Class</button>
-        <button id="cancel-delete-class" class="flex-1 btn-outline">Cancel</button>
+    deleteModal.className = 'ts-modal-backdrop';
+    deleteModal.innerHTML = `
+      <div class="ts-modal-card" style="width:min(420px,calc(100vw - 32px))" role="dialog" aria-modal="true">
+        <div class="ts-modal-header" style="border-bottom-color:rgba(239,68,68,0.2)">
+          <div>
+            <p class="ts-modal-kicker" style="color:#f87171"><span>⚠️</span> DANGER ZONE</p>
+            <h2 class="ts-modal-title" style="color:#fca5a5;font-size:20px">Confirm Delete Class</h2>
+          </div>
+          <button type="button" class="ts-modal-close-btn" id="cancel-delete-x">×</button>
+        </div>
+        <div class="ts-modal-body">
+          <p class="ts-modal-desc">
+            Delete class <strong>"${esc(classRec.class_name)}"</strong> and all its students, Pokémon collections, and quizzes?
+          </p>
+          <p style="font-size:12px;color:#fca5a5;margin:0;font-weight:600">
+            ⚠️ This action cannot be undone.
+          </p>
+        </div>
+        <div class="ts-modal-footer">
+          <button type="button" class="ts-modal-btn-cancel" id="cancel-delete-class">Cancel</button>
+          <button type="button" class="ts-btn-danger" id="confirm-delete-class" style="padding:0 20px">Delete Class</button>
+        </div>
       </div>
-    </div>`;
+    `;
     document.body.appendChild(deleteModal);
+
+    const closeDelete = () => deleteModal.remove();
+    deleteModal.querySelector('#cancel-delete-x').addEventListener('click', closeDelete);
+    deleteModal.querySelector('#cancel-delete-class').addEventListener('click', closeDelete);
+    deleteModal.addEventListener('click', e => { if (e.target === deleteModal) closeDelete(); });
     
     deleteModal.querySelector('#confirm-delete-class').addEventListener('click', async () => {
+      const delBtn = deleteModal.querySelector('#confirm-delete-class');
+      delBtn.disabled = true;
+      delBtn.textContent = 'Deleting…';
+
       const oldClassName = classRec.class_name;
-      // Delete all students in this class
       const studentsInClass = getStudents(schoolName, oldClassName);
       for (const student of studentsInClass) {
-        // Delete all their Pokémon too
         const pokes = getPokemons().filter(p => p.owner === student.student_name);
         for (const p of pokes) {
           await window.dataSdk.delete(p);
         }
         await window.dataSdk.delete(student);
       }
-      // Delete all quizzes in this class
-      const quizzesInClass = allData.filter(r => r.type === 'quiz' && r.quiz_class === oldClassName);
-      for (const q of quizzesInClass) {
+      const quizzes = allData.filter(r => r.type === 'quiz' && r.class_name === oldClassName && r.school_name === schoolName);
+      for (const q of quizzes) {
         await window.dataSdk.delete(q);
       }
-      // Delete the class itself
+      const assignments = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === oldClassName);
+      for (const a of assignments) {
+        await window.dataSdk.delete(a);
+      }
       await window.dataSdk.delete(classRec);
-      deleteModal.remove();
-      modal.remove();
-      toast(`Class "${oldClassName}" and all its data deleted!`);
+      closeDelete();
+      close();
+      try { renderTeacherDashboard(); } catch (err) {}
+      try { window.teacherShellSync?.(); } catch (err) {}
+      toast(`Class "${oldClassName}" deleted!`);
     });
-    
-    deleteModal.querySelector('#cancel-delete-class').addEventListener('click', () => {
-      deleteModal.remove();
-    });
-    
-    deleteModal.addEventListener('click', e => { if (e.target === deleteModal) deleteModal.remove(); });
   });
-  modal.querySelector('#ec-cancel').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
-
 function openEditTeacherModal(teacherId) {
   const teacher = allData.find(t => t.__backendId === teacherId); if (!teacher) return;
   const allClasses = getAllTeacherClasses();
