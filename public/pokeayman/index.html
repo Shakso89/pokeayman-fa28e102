@@ -12988,11 +12988,11 @@ renderTeacherZoneHistory();
 document.getElementById('teacher-zone-history-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-history-panel', 'teacher-zone-history-tab'); renderTeacherZoneHistory(); });
 const teacherVbCardLayoutStyles = document.createElement('style');
 teacherVbCardLayoutStyles.textContent = `
-  .teacher-vb-create-actions{display:flex;gap:.65rem;margin:1rem 0}.teacher-vb-create-actions .teacher-vb-open-create{flex:1 1 0;margin:0}.teacher-vb-open-create{display:block;width:100%;margin:1rem 0}.teacher-vb-open-create[hidden]{display:none}
+  .teacher-vb-create-actions{display:flex;gap:.65rem;margin:1rem 0 1.25rem 0;padding:2px 2px 8px 2px;overflow:visible;position:relative;z-index:4}.teacher-vb-create-actions .teacher-vb-open-create{flex:1 1 0;margin:0}.teacher-vb-open-create{display:block;width:100%;margin:1rem 0}.teacher-vb-open-create[hidden]{display:none}
   .teacher-vb-search{display:grid;grid-template-columns:auto minmax(9rem,12rem) minmax(12rem,1fr);align-items:center;gap:.65rem;margin:1rem 0;padding:.9rem;border:1px solid rgba(148,163,184,.22);border-radius:1rem;background:rgba(15,23,42,.55);color:#f8fafc}
   .teacher-vb-search label{font-weight:800}.teacher-vb-search input,.teacher-vb-search select{width:100%;min-width:0;min-height:2.8rem;padding:.65rem .8rem;border:1px solid rgba(148,163,184,.35);border-radius:.7rem;background:#111c30;color:#f8fafc}
   .teacher-vb-create-modal{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(2,6,23,.78);backdrop-filter:blur(5px)}
-  .teacher-vb-create-modal.hidden{display:none}.teacher-vb-create-dialog{width:min(100%,42rem);padding:1.25rem;border:1px solid rgba(148,163,184,.35);border-radius:1.1rem;background:#111c30;color:#f8fafc;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+  .teacher-vb-create-modal.hidden{display:none}.teacher-vb-create-dialog{width:min(100%,42rem);padding:1.25rem;border:1px solid rgba(148,163,184,.35);border-radius:1.1rem;background:#111c30;color:#f8fafc;box-shadow:0 24px 80px rgba(0,0,0,.5);overflow:visible}
   .teacher-vb-create-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}.teacher-vb-create-heading h4{font-size:1.2rem;font-weight:900}.teacher-vb-create-heading button{width:2.4rem;height:2.4rem;border:1px solid rgba(148,163,184,.4);border-radius:.7rem;background:#0b1220;color:#fff;font-size:1.5rem}
   @media(max-width:640px){.teacher-vb-search{grid-template-columns:1fr}.teacher-vb-create-form{grid-template-columns:1fr!important}}
   #teacher-vb-lists-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr)); align-items:stretch; gap:1rem; }

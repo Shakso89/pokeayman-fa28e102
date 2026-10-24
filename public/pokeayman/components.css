@@ -166,6 +166,9 @@ html body:is(#pk-ds, body) .btn-ai-generate {
   user-select: none !important;
   white-space: nowrap !important;
   text-decoration: none !important;
+  z-index: 2 !important;
+  isolation: isolate !important;
+  margin-block: 2px !important;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
               filter 0.2s ease,
@@ -185,6 +188,7 @@ html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teach
 }
 
 html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button):hover:not(:disabled) {
+  z-index: 10 !important;
   transform: translateY(-2px) scale(1.02) !important;
   background: linear-gradient(135deg, #4338ca 0%, #4f46e5 45%, #6d28d9 100%) !important;
   border-color: rgba(224, 231, 255, 0.6) !important;
@@ -206,6 +210,7 @@ html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-
 }
 
 html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button):hover:not(:disabled) {
+  z-index: 10 !important;
   transform: translateY(-2px) scale(1.02) !important;
   background: linear-gradient(135deg, #4338ca 0%, #4f46e5 55%, #6d28d9 100%) !important;
   border-color: rgba(99, 102, 241, 0.6) !important;
@@ -302,6 +307,29 @@ html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-
   width: 100% !important;
   min-height: 46px !important;
 }
+/* Anti-clipping safeguards for AI Generate button hover glow across all views */
+html body :is(#class-subtab-vocab, #class-subtab-vocab > .glass-container, #class-subtab-vocab > .glass-container > div, #view-students #class-subtab-vocab, #view-students #class-subtab-vocab > .glass-container, .teacher-vb-create-actions) {
+  overflow: visible !important;
+}
+html body .teacher-vb-create-actions {
+  position: relative !important;
+  z-index: 5 !important;
+  padding: 2px 2px 8px 2px !important;
+  margin: 1rem 0 1.25rem 0 !important;
+  overflow: visible !important;
+}
+html body .teacher-vb-create-actions :is(.btn-ai-generate, #teacher-vb-open-ai) {
+  position: relative !important;
+  z-index: 6 !important;
+}
+html body .teacher-vb-create-actions :is(.btn-ai-generate, #teacher-vb-open-ai):hover:not(:disabled) {
+  z-index: 12 !important;
+}
+html body .teacher-vb-search {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
 
 /* ============================================================
    Generating UI (dexter-st/bright-lizard-8 AI Orb Loader)
