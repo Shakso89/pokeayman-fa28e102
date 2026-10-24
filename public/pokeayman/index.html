@@ -13,6 +13,16 @@
   <link rel="stylesheet" href="/pokeayman/teacher-streak.css">
   <link rel="stylesheet" href="/pokeayman/home-showcase.css">
   <link rel="preload" as="image" href="/pokeayman/assets/home-habitat.webp" type="image/webp" fetchpriority="high">
+  <script>
+    (function () {
+      try {
+        var hImg = new Image();
+        hImg.decoding = 'async';
+        hImg.src = '/pokeayman/assets/home-habitat.webp';
+        window._homeHabitatWarmup = hImg;
+      } catch (_) {}
+    })();
+  </script>
   <link rel="stylesheet" href="/pokeayman/home-hand.css">
   <script src="/pokeayman/home-artwork.js"></script>
   <script src="/pokeayman/home-hand.js"></script>

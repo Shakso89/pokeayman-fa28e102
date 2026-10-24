@@ -4,7 +4,6 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { streamSpeech } from "@/lib/vocabulary-speech";
-import homeHabitat from "@/assets/home-habitat.webp";
 
 type Result = { error?: string; name?: string; signedIn?: boolean };
 
@@ -39,6 +38,14 @@ export const Route = createFileRoute("/")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [
+      {
+        rel: "preload",
+        as: "image",
+        href: "/pokeayman/assets/home-habitat.webp",
+        type: "image/webp",
+      },
+    ],
   }),
   component: Index,
 });
@@ -60,7 +67,7 @@ let activeSpeechController: AbortController | null = null;
 
 function Index() {
   const [user, setUser] = useState<User | null>(null);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(true);
   const [frameKey, setFrameKey] = useState(0);
 
   useEffect(() => {
@@ -159,7 +166,5 @@ function Index() {
   }
 
   if (!ready) return null;
-  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html?v=20261023-classic-boxes-v1" allowFullScreen onLoad={(event) => {
-    event.currentTarget.contentDocument?.documentElement.style.setProperty("--home-habitat-image", `url("${new URL(homeHabitat, window.location.href).href}")`);
-  }} />;
+  return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html?v=20261023-classic-boxes-v1" allowFullScreen />;
 }

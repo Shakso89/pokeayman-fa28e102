@@ -31,7 +31,7 @@
 .pokemon-hand-card::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 35%, var(--hand-shine) 49%, transparent 62%); transform: translateX(-120%); transition: transform .7s; }
 .pokemon-hand-card:hover::after { transform: translateX(120%); }
 .pokemon-hand-number { text-align: right; font-size: .65rem; font-weight: 800; line-height: 1.5; }
-.pokemon-hand-art { flex: 1; min-height: 0; display: grid; place-items: center; border-radius: 4px; background: #a8d5f2 var(--home-habitat-image, url("/pokeayman/assets/home-habitat.webp")) center / cover no-repeat; }
+.pokemon-hand-art { flex: 1; min-height: 0; display: grid; place-items: center; border-radius: 4px; background-color: #a8d5f2; background-image: var(--home-habitat-image, url("/pokeayman/assets/home-habitat.webp")); background-position: center; background-size: cover; background-repeat: no-repeat; }
 .pokemon-hand-art img { width: 96%; height: 100%; max-height: calc(var(--hand-card-width) * .95); object-fit: contain; filter: drop-shadow(var(--hand-art-shadow)); pointer-events: none; }
 .pokemon-hand-name { font-size: .95rem; font-weight: 900; padding-top: .4rem; white-space: nowrap; }
 .pokemon-hand-card small { font-size: .45rem; font-weight: 800; padding: .15rem 0; }
@@ -42,7 +42,7 @@
 .pokemon-hand-caption span { font-size: .8rem; }
 .home-showcase .home-side-card { background: var(--hand-paper) !important; border: 3px solid var(--hand-frame); color: var(--hand-ink); padding: .6rem; border-radius: 8px; box-shadow: var(--hand-shadow); }
 .home-showcase .home-side-card:hover, .home-showcase .home-side-card:focus-visible { border-color: var(--home-yellow); box-shadow: 0 26px 52px rgba(0, 0, 0, .55), 0 0 26px rgba(255, 203, 5, .24); }
-.home-showcase .home-side-card img { background: #a8d5f2 var(--home-habitat-image, url("/pokeayman/assets/home-habitat.webp")) center / cover no-repeat; border-radius: 4px; width: 100%; filter: none; object-fit: contain; padding: .3rem; transform: none !important; }
+.home-showcase .home-side-card img { background-color: #a8d5f2; background-image: var(--home-habitat-image, url("/pokeayman/assets/home-habitat.webp")); background-position: center; background-size: cover; background-repeat: no-repeat; border-radius: 4px; width: 100%; filter: none; object-fit: contain; padding: .3rem; transform: none !important; }
 .home-showcase .hsc-name { margin-top: .5rem; }
 @media (max-width: 900px) {
   .home-showcase #pokemon-arch.pokemon-hand { grid-template-columns: 1fr; width: min(100%, 38rem); }
