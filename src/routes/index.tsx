@@ -73,7 +73,13 @@ function Index() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user ?? null); setReady(true); });
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "USER_UPDATED") setUser(session?.user ?? null);
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        setUser(session?.user ?? null);
+        if (window.pokeaymanAuth && session?.user) {
+          window.pokeaymanAuth.userId = session.user.id;
+          window.pokeaymanAuth.email = session.user.email ?? null;
+        }
+      }
       if (event === "SIGNED_OUT") {
         try {
           sessionStorage.removeItem("pokeayman-login-session-id");
@@ -146,10 +152,27 @@ function Index() {
         return { email: u.email ?? "", displayName: p?.display_name ?? "", school: p?.school ?? "" };
       },
       updateProfile: async (name, school) => {
-        const { data } = await supabase.auth.getUser();
-        if (!data.user) return { error: "Not signed in" };
-        const { error } = await supabase.from("profiles").upsert({ id: data.user.id, display_name: name.slice(0, 80), school: school.slice(0, 120) || null });
-        return error ? { error: error.message } : {};
+        const { data, error: userError } = await supabase.auth.getUser();
+        if (userError || !data.user) return { error: "Not signed in" };
+        const trimmedName = name.trim().slice(0, 80);
+        const trimmedSchool = school.trim().slice(0, 120) || null;
+        const { error } = await supabase.from("profiles").upsert({
+          id: data.user.id,
+          display_name: trimmedName,
+          school: trimmedSchool,
+        });
+        if (error) return { error: error.message };
+        try {
+          await supabase.auth.updateUser({
+            data: {
+              display_name: trimmedName,
+              school: trimmedSchool,
+              full_name: trimmedName,
+            },
+          });
+        } catch (_) {}
+        const finalName = await profileName();
+        return { name: finalName, school: trimmedSchool };
       },
       updatePassword: async (password, currentPassword) => {
         if (!currentPassword || currentPassword.length > 1024) return { error: "Enter your current password." };

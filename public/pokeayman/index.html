@@ -11993,10 +11993,96 @@ function renderTrainerTab() {
     closeTeacherEditor('change-pin-form'); toast('Password changed!');
   });
   (async () => { const auth = window.parent.pokeaymanAuth; const acc = auth?.getAccount ? await auth.getAccount() : null; if (!acc) { modal.querySelector('#teacher-profile-form')?.classList.add('hidden'); modal.querySelector('#change-pin-form')?.classList.add('hidden'); modal.querySelectorAll('[data-th-panel="profile"],[data-th-panel="security"]').forEach(p => p.insertAdjacentHTML('beforeend', '<p class="th-hint" style="text-align:center;padding:1.5rem">Sign in with your teacher email to edit this.</p>')); return; } modal.querySelector('#tp-email').textContent = acc.email; modal.querySelector('#tp-name').value = acc.displayName || ''; modal.querySelector('#tp-school').value = acc.school || ''; })();
-  modal.querySelector('#teacher-profile-form').addEventListener('submit', async e => { e.preventDefault(); const name = modal.querySelector('#tp-name').value.trim(); const school = modal.querySelector('#tp-school').value.trim(); if (!name) return; const r = await window.parent.pokeaymanAuth?.updateProfile(name, school); if (!r || r.error) { toast('Could not save profile.'); return; } const latest = getTeachers().find(t => t.__backendId === currentTeacherRecordId); if (latest && currentTeacher !== 'Ayman') { const oldName = latest.teacher_name; await window.dataSdk.update({ ...latest, teacher_name: name }); await relinkTeacherAssignments(latest, oldName, name); currentTeacher = name; renderAll?.(); } toast('Profile saved!'); });
+  modal.querySelector('#teacher-profile-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = modal.querySelector('#tp-name').value.trim();
+    const school = modal.querySelector('#tp-school').value.trim();
+    if (!name) return;
+    const submitBtn = modal.querySelector('#teacher-profile-form button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
+      const r = await window.parent.pokeaymanAuth?.updateProfile(name, school);
+      if (r && r.error) { toast('Could not save profile: ' + r.error); return; }
+      const authoritativeName = (r && r.name) || name;
+      let latest = findMyTeacherRecord() || (currentTeacherRecordId && getTeachers().find(t => t.__backendId === currentTeacherRecordId));
+      const auth = window.parent?.pokeaymanAuth;
+      const cloudId = auth?.userId || '';
+      const authEmail = auth?.email || '';
+      if (!latest || !latest.__backendId) {
+        try {
+          const created = await window.dataSdk.create({
+            type: 'teacher',
+            teacher_name: authoritativeName,
+            teacher_pin: '',
+            teacher_role: isAymanTeacher() ? 'admin' : 'teacher',
+            teacher_credits: isAymanTeacher() ? -1 : 100,
+            avatar_pokemon_id: 0,
+            cloud_user_id: cloudId,
+            teacher_email: authEmail,
+            archived: false,
+            created_at: new Date().toISOString()
+          });
+          if (created?.data?.__backendId) currentTeacherRecordId = created.data.__backendId;
+          await window.dataSdk.refresh?.();
+        } catch (err) { console.warn('Teacher creation during profile update failed', err); }
+        latest = findMyTeacherRecord() || (currentTeacherRecordId && getTeachers().find(t => t.__backendId === currentTeacherRecordId));
+      }
+      const oldName = latest?.teacher_name || currentTeacher;
+      if (latest && latest.__backendId) {
+        currentTeacherRecordId = latest.__backendId;
+        if (!isAymanTeacher()) {
+          const patch = { teacher_name: authoritativeName };
+          if (cloudId && !latest.cloud_user_id) patch.cloud_user_id = cloudId;
+          if (authEmail && !latest.teacher_email) patch.teacher_email = authEmail;
+          await window.dataSdk.update({ ...latest, ...patch, __backendId: latest.__backendId });
+          allData = allData.map(row => row.__backendId === latest.__backendId ? { ...row, ...patch } : row);
+        }
+      }
+      if (oldName && oldName !== authoritativeName && !isAymanTeacher()) {
+        await relinkTeacherAssignments(latest, oldName, authoritativeName);
+      }
+      syncTeacherNameAcrossApp(authoritativeName);
+      const settingsTitle = modal.querySelector('#account-settings-title');
+      if (settingsTitle) settingsTitle.textContent = authoritativeName;
+      const tpNameInput = modal.querySelector('#tp-name');
+      if (tpNameInput) tpNameInput.value = authoritativeName;
+      const tpSchoolInput = modal.querySelector('#tp-school');
+      if (tpSchoolInput && school) tpSchoolInput.value = school;
+      closeTeacherEditor('teacher-profile-form');
+      toast('Profile saved!');
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
 }
 document.getElementById('logged-in-name-container').addEventListener('click', () => showMainTab('trainer'));
 document.getElementById('teacher-header-showcase').addEventListener('click', () => showMainTab('trainer'));
+function syncTeacherNameAcrossApp(newName) {
+  if (!newName) return;
+  currentTeacher = newName;
+  const navName = document.getElementById('logged-in-name-nav');
+  if (navName) navName.textContent = newName;
+  const infoName = document.getElementById('teacher-info-name');
+  if (infoName) infoName.textContent = '👨‍🏫 ' + newName;
+  try {
+    if (sessionStorage.getItem('pokeayman-streak-dismissed') === '1') {
+      sessionStorage.setItem('pokeayman-streak-dismissed:' + encodeURIComponent(newName), '1');
+    }
+  } catch (_) {}
+  if (typeof updateHeaderShowcase === 'function') updateHeaderShowcase();
+  const tsName = document.getElementById('ts-name');
+  if (tsName) {
+    tsName.textContent = newName;
+    tsName.title = newName;
+  }
+  if (typeof window.pokeaymanRefreshTeacherShell === 'function') {
+    try { window.pokeaymanRefreshTeacherShell(); } catch (_) {}
+  }
+  if (typeof renderAll === 'function') renderAll();
+  if (typeof renderFolders === 'function') renderFolders();
+}
+window.syncTeacherNameAcrossApp = syncTeacherNameAcrossApp;
+
 function updateHeaderShowcase() {
   const box = document.getElementById('teacher-header-showcase');
   if (!box) return;
@@ -17036,6 +17122,9 @@ function openEditTeacherModal(teacherId) {
       const newlyAssignedSchools = [...selectedSchoolIds].filter(name => !currentSchoolAssignments.some(assignment => assignment.assigned_school === name));
       // If teacher name changed, update all existing assignments with new teacher name
       await relinkTeacherAssignments(teacher, teacher.teacher_name, newName);
+      if (String(teacher.__backendId || '').trim() === String(currentTeacherRecordId || '').trim()) {
+        syncTeacherNameAcrossApp(newName);
+      }
       if (newlyAssignedClasses.length) {
         const classList = newlyAssignedClasses.map(item => `${item.className} (${item.schoolName})`).join(', ');
         await window.sendTeacherNotifications?.([getTeachers().find(item => item.__backendId === teacher.__backendId) || { ...teacher, teacher_name:newName }], 'New class access', `You have been assigned to: ${classList}. Sign in to view your classes.`, 'class', { target: 'class' });
@@ -17526,8 +17615,44 @@ function getAssignedSchools(teacherName) {
 window.getAssignedSchools = getAssignedSchools;
 async function relinkTeacherAssignments(teacherRec, oldName, newName) {
   if (!teacherRec) return;
-  const rows = allData.filter(r => (r.type === 'teacher_class_assignment' || r.type === 'teacher_school_assignment') && (r.assigned_teacher_id === teacherRec.__backendId || (!r.assigned_teacher_id && r.assigned_teacher === oldName)));
-  for (const r of rows) await window.dataSdk.update({ ...r, assigned_teacher: newName, assigned_teacher_id: teacherRec.__backendId });
+  const teacherId = teacherRec.__backendId || '';
+  const rows = allData.filter(r => (r.type === 'teacher_class_assignment' || r.type === 'teacher_school_assignment') && ((teacherId && r.assigned_teacher_id === teacherId) || (!r.assigned_teacher_id && r.assigned_teacher === oldName)));
+  for (const r of rows) {
+    await window.dataSdk.update({ ...r, assigned_teacher: newName, assigned_teacher_id: teacherId });
+    allData = allData.map(item => item.__backendId === r.__backendId ? { ...item, assigned_teacher: newName, assigned_teacher_id: teacherId } : item);
+  }
+  const classRows = allData.filter(r => r.type === 'class' && (
+    (Array.isArray(r.assigned_teachers) && r.assigned_teachers.includes(oldName)) ||
+    r.main_manager_name === oldName ||
+    r.teacher_name === oldName
+  ));
+  for (const c of classRows) {
+    const updatedAssigned = Array.isArray(c.assigned_teachers)
+      ? c.assigned_teachers.map(t => t === oldName ? newName : t)
+      : c.assigned_teachers;
+    const patch = { ...c, assigned_teachers: updatedAssigned };
+    if (c.main_manager_name === oldName) patch.main_manager_name = newName;
+    if (c.teacher_name === oldName) patch.teacher_name = newName;
+    await window.dataSdk.update(patch);
+    allData = allData.map(item => item.__backendId === c.__backendId ? { ...item, ...patch } : item);
+  }
+  const vocabLists = allData.filter(r => (r.type === 'vocab_list' || r.type === 'vocabulary_list') && (
+    (teacherId && r.teacher_id === teacherId) ||
+    r.teacher_name === oldName ||
+    r.owner === oldName ||
+    r.quiz_created_by === oldName
+  ));
+  for (const vl of vocabLists) {
+    const patch = {};
+    if (vl.teacher_name === oldName) patch.teacher_name = newName;
+    if (vl.owner === oldName) patch.owner = newName;
+    if (vl.quiz_created_by === oldName) patch.quiz_created_by = newName;
+    if (teacherId && !vl.teacher_id) patch.teacher_id = teacherId;
+    if (Object.keys(patch).length) {
+      await window.dataSdk.update({ ...vl, ...patch });
+      allData = allData.map(item => item.__backendId === vl.__backendId ? { ...item, ...patch } : item);
+    }
+  }
 }
 
 async function openEditSchoolModal(schoolId, schoolName) {

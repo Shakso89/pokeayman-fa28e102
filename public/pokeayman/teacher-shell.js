@@ -571,8 +571,9 @@
       if (el) el.hidden = hide;
     });
 
-    $('ts-name').textContent = $('logged-in-name-nav')?.textContent || g(() => currentTeacher, '') || 'Teacher';
-    $('ts-name').title = $('ts-name').textContent;
+    const activeName = g(() => currentTeacher, '') || $('logged-in-name-nav')?.textContent || 'Teacher';
+    $('ts-name').textContent = activeName;
+    $('ts-name').title = activeName;
     const accountBadge = $('ts-account-badge');
     const role = g(() => window.getEffectiveTeacherRole?.(), 'teacher');
     const roleTitle = g(() => window.getEffectiveTeacherRoleTitle?.(), 'Teacher');
@@ -708,6 +709,7 @@
     try { syncAvatar(); } catch (error) { console.error('Teacher avatar refresh failed:', error); }
     try { syncBottom(); } catch (error) { console.error('Teacher navigation refresh failed:', error); }
   }
+  window.pokeaymanRefreshTeacherShell = refreshShell;
   function start() {
     const studentToggle = $('student-theme-toggle');
     studentToggle?.addEventListener('click', () => setThemeMode(!bright));
