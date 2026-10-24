@@ -1,9 +1,6 @@
 // AI Vocabulary List Generator for PokéAyman
-// Step 1: Picks high quality picture for each word (animal, food, color, etc.)
-// Step 2: Generates simple, vivid, non-shallow sentence directly related to that picture
-// Step 3: Ensures 100% sentence uniqueness (no duplicate sentence frames in the same list)
-// Step 4: Saves list with creator teacher name + marks list with AI Generated badge
-// Step 5: Charges 1 credit/word strictly upon success.
+// Gemini + ChatGPT approve sentences first; pixel-level matching follows.
+// The teacher reviews the draft before any records or credits change.
 
 (function () {
   let isGenerating = false;
@@ -52,47 +49,8 @@
     return bal === Infinity ? 'Unlimited' : `${bal} credit${bal === 1 ? '' : 's'}`;
   }
 
-  // Choose a top quality photo of that word first, returning URL and photo description/tags
-  const PHOTO_STOP = new Set('a an the is are was were be been am i you he she it we they my your his her its our their this that these those of in on at to for with and or but from by up down over under into out very so too can will has have had do does did not no yes some any one two three red blue green big small little'.split(' '));
-  function sentenceKeywords(word, sentence) {
-    const target = String(word || '').toLowerCase();
-    return String(sentence || '').toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/)
-      .filter(t => t.length > 2 && !PHOTO_STOP.has(t) && !t.startsWith(target.slice(0, 4))).slice(0, 2);
-  }
-
-  // Picture search uses the word plus key words from its sentence; falls back to the word alone.
-  async function fetchPhotoForWord(word, sentence) {
-    if (!word) return { url: '', tags: '' };
-    const extra = sentenceKeywords(word, sentence);
-    if (extra.length) {
-      const hit = await searchPhoto(`${word.trim()} ${extra.join(' ')}`);
-      if (hit.url) return hit;
-    }
-    return searchPhoto(word.trim());
-  }
-
-  async function searchPhoto(query) {
-    if (!query || typeof window.pexelsFetch !== 'function') return { url: '', tags: '' };
-    const word = query;
-    try {
-      const res = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=6`, {
-        headers: { 'Authorization': '' }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const photo = data.photos?.[0];
-        if (photo?.src?.large || photo?.src?.medium) {
-          return {
-            url: photo.src.large || photo.src.medium,
-            tags: String(photo.alt || photo.photographer || '').slice(0, 150)
-          };
-        }
-      }
-    } catch (err) {
-      console.warn(`Could not fetch photo for "${word}":`, err);
-    }
-    return { url: '', tags: '' };
-  }
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+  const isStoredImage = value => /^data:image\/(jpeg|png|webp);base64,[a-z0-9+/]+=*$/i.test(String(value || ''));
 
   function getTargetClassInfo() {
     const ctx = typeof window.getNavClassContext === 'function' ? window.getNavClassContext() : {};
@@ -103,7 +61,13 @@
 
   function openGenerateModal() {
     const existingModal = document.getElementById('vocab-gen-popup-modal');
-    if (existingModal) existingModal.remove();
+    if (existingModal) { existingModal.querySelector('button')?.focus(); return; }
+    const controller = new AbortController();
+    let closed = false;
+    let isSaving = false;
+    let draft = null;
+    let saveDraft = null;
+    let draftPersisted = false;
 
     // Read list name from current input field if teacher already typed one (e.g. "tester")
     const inputListName = document.getElementById('new-vocab-list-name')?.value?.trim() || '';
@@ -118,7 +82,7 @@
     const allClasses = typeof window.getAllTeacherClasses === 'function' ? window.getAllTeacherClasses() : [];
     const resolvedClasses = allClasses.length ? allClasses : (window.allData || []).filter(r => r.type === 'class' && r.class_name);
     const classOptionsHtml = resolvedClasses.map(c => 
-      `<option value="${c.school_name || ''}||${c.class_name}" ${c.school_name === school && c.class_name === className ? 'selected' : ''}>${c.class_name}${c.school_name ? ` (${c.school_name})` : ''}</option>`
+      `<option value="${escapeHtml(c.school_name || '')}||${escapeHtml(c.class_name)}" ${c.school_name === school && c.class_name === className ? 'selected' : ''}>${escapeHtml(c.class_name)}${c.school_name ? ` (${escapeHtml(c.school_name)})` : ''}</option>`
     ).join('');
 
     const modal = document.createElement('div');
@@ -140,7 +104,7 @@
           <!-- List Name -->
           <label class="teacher-vb-create-field">
             <span>List name</span>
-            <input id="vocab-gen-name-input" type="text" maxlength="80" placeholder="e.g. Unit 5 Verbs or Animals" value="${inputListName.replace(/"/g, '&quot;')}" required>
+            <input id="vocab-gen-name-input" type="text" maxlength="80" placeholder="e.g. Unit 5 Verbs or Animals" value="${escapeHtml(inputListName)}" required>
           </label>
 
           <!-- Class selector (mandatory) -->
@@ -241,6 +205,18 @@
           </button>
         </form>
 
+        <section id="vocab-gen-review" class="vocab-gen-review" hidden aria-label="Review vocabulary pictures">
+          <h5 tabindex="-1">Review your vocabulary list</h5>
+          <p>Check that each picture explains the whole sentence. Nothing is saved or charged until you save this list.</p>
+          <div id="vocab-gen-review-items"></div>
+          <p id="vocab-gen-review-error" role="alert" hidden></p>
+          <div class="vocab-gen-review-footer">
+            <span id="vocab-gen-review-summary" aria-live="polite"></span>
+            <button type="button" id="vocab-gen-save" class="btn-primary">Save list</button>
+            <button type="button" id="vocab-gen-cancel">Cancel</button>
+          </div>
+        </section>
+
         <!-- Loading Progress with Dexter-st Bright-Lizard-8 AI Orb -->
         <div id="vocab-gen-progress-wrap" class="vocab-gen-generating-screen" style="display:none;">
           <div class="loader-wrapper bl8-loader-wrapper">
@@ -302,15 +278,171 @@
     const customCountInput = modal.querySelector('#vocab-gen-custom-count-input');
     const countCaption = modal.querySelector('#vocab-gen-count-caption');
     const classSelect = modal.querySelector('#vocab-gen-class-select');
+    const reviewPanel = modal.querySelector('#vocab-gen-review');
+    const reviewItems = modal.querySelector('#vocab-gen-review-items');
+    const reviewError = modal.querySelector('#vocab-gen-review-error');
+    const saveBtn = modal.querySelector('#vocab-gen-save');
 
     function closeModal() {
-      if (isGenerating) return;
+      if (isSaving) return;
+      closed = true;
+      controller.abort();
+      isGenerating = false;
       modal.remove();
     }
 
     closeBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
-      if (e.target === modal && !isGenerating) closeModal();
+      if (e.target === modal) closeModal();
+    });
+    modal.querySelector('#vocab-gen-cancel').addEventListener('click', closeModal);
+    modal.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    async function postJson(path, payload) {
+      const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: controller.signal });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'The request failed. Please try again.');
+      return data;
+    }
+
+    function itemResolved(item) {
+      return item.approvedSentence === item.sentence && (item.withoutImage || (isStoredImage(item.imageUrl) && ['matched', 'manual'].includes(item.mediaStatus)));
+    }
+
+    function renderReview() {
+      if (closed || !draft) return;
+      const pending = draft.filter(item => !itemResolved(item)).length;
+      const busy = draft.some(item => item.busy);
+      reviewItems.innerHTML = draft.map(item => `
+        <article class="vocab-gen-review-item" data-item-id="${item.id}" aria-busy="${Boolean(item.busy)}">
+          <div class="vocab-gen-review-picture">${item.imageUrl ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.sentence)}">` : '<span>No picture selected</span>'}</div>
+          <div class="vocab-gen-review-content">
+            <strong>${escapeHtml(item.word)}</strong>
+            <p class="vocab-gen-review-sentence">${escapeHtml(item.sentence)}</p>
+            <span class="vocab-gen-review-status">${item.busy ? 'Checking…' : item.withoutImage ? 'Will save without a picture' : item.mediaStatus === 'matched' ? `Checked · ${escapeHtml(item.mediaType)}` : item.mediaStatus === 'manual' ? 'Picture selected by you' : 'Needs review'}</span>
+            <div class="vocab-gen-review-actions">
+              <button type="button" data-action="retry" ${item.busy ? 'disabled' : ''}>Retry matching</button>
+              <button type="button" data-action="choose" ${item.busy ? 'disabled' : ''}>Choose picture</button>
+              <button type="button" data-action="rewrite" ${item.busy ? 'disabled' : ''}>New sentence</button>
+            </div>
+            ${!item.imageUrl ? `<label class="vocab-gen-without"><input type="checkbox" data-action="without" ${item.withoutImage ? 'checked' : ''} ${item.busy ? 'disabled' : ''}> Save this word without a picture</label>` : ''}
+            ${item.note ? `<p class="vocab-gen-review-note" role="status">${escapeHtml(item.note)}</p>` : ''}
+            ${item.pickerOpen ? `<div class="vocab-gen-picker">
+              <label>Describe the scene<input data-field="query" maxlength="100" value="${escapeHtml(item.query || item.sentence)}"></label>
+              <label>Picture type<select data-field="type"><option value="photo" ${item.searchType === 'photo' ? 'selected' : ''}>Photo</option><option value="vector" ${item.searchType === 'vector' ? 'selected' : ''}>Vector</option><option value="illustration" ${item.searchType === 'illustration' ? 'selected' : ''}>Illustration</option></select></label>
+              <button type="button" data-action="search" ${item.busy ? 'disabled' : ''}>Search</button>
+              <p>Choose only a picture that explains this sentence. Search results are not automatically approved.</p>
+              <div class="vocab-gen-candidates">${(item.candidates || []).map((candidate, index) => `<div><button type="button" data-action="select" data-index="${index}" aria-label="Select picture ${index + 1} for ${escapeHtml(item.word)}" ${item.busy ? 'disabled' : ''}><img src="${escapeHtml(candidate.imageUrl)}" alt="Candidate ${index + 1}"></button><span>${escapeHtml(candidate.source || 'Stock image')}</span>${/^https:\/\/(www\.)?(pixabay\.com|pexels\.com)\//.test(candidate.sourceUrl || '') ? `<a href="${escapeHtml(candidate.sourceUrl)}" target="_blank" rel="noopener noreferrer">Source</a>` : ''}</div>`).join('')}</div>
+              ${item.candidates?.length ? `<button type="button" data-action="more" ${item.busy ? 'disabled' : ''}>More results</button>` : ''}
+            </div>` : ''}
+          </div>
+        </article>`).join('');
+      if (draftPersisted) reviewItems.querySelectorAll('button, input, select').forEach(control => { control.disabled = true; });
+      reviewItems.querySelectorAll('[aria-busy="true"] input, [aria-busy="true"] select').forEach(control => { control.disabled = true; });
+      saveBtn.disabled = pending > 0 || busy || isSaving;
+      saveBtn.textContent = `Save list · ${draft.length} credit${draft.length === 1 ? '' : 's'}`;
+      modal.querySelector('#vocab-gen-review-summary').textContent = pending ? `${pending} item${pending === 1 ? ' needs' : 's need'} review` : 'Ready to save';
+    }
+
+    function showReview() {
+      if (closed) return;
+      isGenerating = false;
+      progressWrap.style.display = 'none';
+      popupForm.style.display = 'none';
+      reviewPanel.hidden = false;
+      closeBtn.disabled = false;
+      renderReview();
+    }
+
+    async function matchItem(item, options = {}) {
+      const sentence = item.sentence;
+      item.busy = true;
+      item.note = '';
+      if (options.action !== 'search') {
+        item.imageUrl = '';
+        item.withoutImage = false;
+        item.approvedSentence = '';
+        item.mediaStatus = 'needs_review';
+        item.candidates = [];
+      }
+      renderReview();
+      try {
+        const data = await postJson('/api/generate-vocab-list', { mode: 'media', id: item.id, word: item.word, sentence, ...options });
+        if (closed || item.sentence !== sentence || data.id !== item.id || data.sentence !== sentence) return;
+        item.query = data.query || item.query;
+        item.candidates = (Array.isArray(data.candidates) ? data.candidates : []).filter(candidate => isStoredImage(candidate.imageUrl));
+        if (options.action !== 'search' && data.status === 'matched' && isStoredImage(data.imageUrl)) {
+          item.imageUrl = data.imageUrl;
+          item.mediaStatus = 'matched';
+          item.mediaType = data.type;
+          item.approvedSentence = sentence;
+        }
+        item.note = data.reason || 'No verified picture found.';
+      } catch (err) {
+        if (!closed) item.note = err.message || 'Picture checking failed. Retry or choose a picture.';
+      } finally {
+        item.busy = false;
+        renderReview();
+      }
+    }
+
+    reviewItems.addEventListener('input', e => {
+      const item = draft?.find(entry => entry.id === e.target.closest('[data-item-id]')?.dataset.itemId);
+      if (!item) return;
+      if (e.target.dataset.field === 'query') { item.query = e.target.value; item.searchPage = 1; }
+      if (e.target.dataset.field === 'type') { item.searchType = e.target.value; item.searchPage = 1; }
+    });
+    reviewItems.addEventListener('error', e => {
+      if (!e.target.matches?.('.vocab-gen-review-picture img') || isSaving || draftPersisted) return;
+      const item = draft?.find(entry => entry.id === e.target.closest('[data-item-id]')?.dataset.itemId);
+      if (!item) return;
+      Object.assign(item, { imageUrl: '', mediaStatus: 'needs_review', approvedSentence: '', withoutImage: false, note: 'The picture could not be displayed. Please retry or choose another picture.' });
+      renderReview();
+    }, true);
+    reviewItems.addEventListener('change', e => {
+      if (e.target.dataset.action !== 'without' || isSaving || draftPersisted) return;
+      const item = draft?.find(entry => entry.id === e.target.closest('[data-item-id]')?.dataset.itemId);
+      if (!item || item.busy) return;
+      item.withoutImage = e.target.checked;
+      item.approvedSentence = item.sentence;
+      renderReview();
+    });
+    reviewItems.addEventListener('click', async e => {
+      const button = e.target.closest('button[data-action]');
+      const item = draft?.find(entry => entry.id === button?.closest('[data-item-id]')?.dataset.itemId);
+      if (!button || !item || item.busy || isSaving || draftPersisted) return;
+      const action = button.dataset.action;
+      if (action === 'choose') { item.pickerOpen = !item.pickerOpen; renderReview(); }
+      if (action === 'retry') await matchItem(item);
+      if (action === 'search' || action === 'more') {
+        item.searchPage = action === 'more' ? (item.searchPage || 1) + 1 : 1;
+        await matchItem(item, { action: 'search', query: item.query || item.sentence, imageType: item.searchType || 'photo', page: item.searchPage });
+      }
+      if (action === 'select') {
+        const candidate = item.candidates[Number(button.dataset.index)];
+        if (!candidate || !isStoredImage(candidate.imageUrl)) return;
+        Object.assign(item, { imageUrl: candidate.imageUrl, mediaStatus: 'manual', mediaType: candidate.type, approvedSentence: item.sentence, withoutImage: false, pickerOpen: false, note: 'You selected this picture for the sentence.' });
+        renderReview();
+      }
+      if (action === 'rewrite') {
+        // Sentences remain Gemini-written and ChatGPT-approved. Invalidate the
+        // previous image before requesting a new sentence, even on failure.
+        Object.assign(item, { busy: true, imageUrl: '', mediaStatus: 'needs_review', approvedSentence: '', withoutImage: false, candidates: [], note: '' });
+        renderReview();
+        try {
+          const data = await postJson('/api/vocabulary-sentence', { word: item.word, avoid: item.sentence });
+          if (closed) return;
+          if (!data.sentence || !sentenceUsesWord(data.sentence, item.word)) throw new Error('Could not write a usable sentence.');
+          item.sentence = data.sentence.trim();
+          item.pickerOpen = false;
+          item.query = '';
+          await matchItem(item);
+        } catch (err) { item.note = err.message; }
+        finally { item.busy = false; renderReview(); }
+      }
+    });
+    saveBtn.addEventListener('click', () => {
+      if (!closed && !isSaving && draft?.length && !draft.some(item => item.busy || !itemResolved(item))) saveDraft?.();
     });
 
     function getEnteredWords() {
@@ -501,7 +633,7 @@
       nameInput.disabled = generating;
       textInput.disabled = generating;
       submitBtn.disabled = generating;
-      closeBtn.disabled = generating;
+      closeBtn.disabled = isSaving;
       modeWordsBtn.disabled = generating;
       modePhotoBtn.disabled = generating;
       if (classSelect) classSelect.disabled = generating;
@@ -521,7 +653,7 @@
 
     // Submit handler
     submitBtn.addEventListener('click', async () => {
-      if (isGenerating) return;
+      if (isGenerating || draft || closed) return;
 
       const listName = nameInput.value.trim().replace(/\s+/g, ' ');
       if (!listName) {
@@ -559,8 +691,8 @@
       let words = [];
       if (activeMode === 'words') {
         words = getEnteredWords();
-        if (!words.length) {
-          errorBanner.textContent = 'Please enter at least one word (with spaces between).';
+        if (!words.length || words.length > 30) {
+          errorBanner.textContent = 'Please enter between 1 and 30 words (with spaces between).';
           errorBanner.style.display = 'block';
           textInput.focus();
           return;
@@ -591,29 +723,13 @@
         const generatedMap = new Map();
         try {
           const payload = { mode: 'words', items: words.map(w => ({ word: w, picture: '' })) };
-          let res;
-          try {
-            res = await fetch('/api/generate-vocab-list', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-          } catch (fetchErr) {
-            console.warn('generate-vocab-list failed, trying vocabulary-sentence:', fetchErr);
-          }
-          if (!res || (!res.ok && res.status >= 500 && res.status !== 502)) {
-            res = await fetch('/api/vocabulary-sentence', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-          }
-          if (res && res.ok) {
-            const data = await res.json();
-            (Array.isArray(data.items) ? data.items : []).forEach(it => {
-              if (it.word && it.sentence) generatedMap.set(it.word.toLowerCase(), it.sentence);
-            });
-          } else {
-            const errData = await res?.json().catch(() => ({}));
-            throw new Error(errData?.message || 'The sentences could not be written. Please try again.');
-          }
+          const data = await postJson('/api/generate-vocab-list', payload);
+          if (closed) return;
+          (Array.isArray(data.items) ? data.items : []).forEach(it => {
+            if (it.word && it.sentence) generatedMap.set(it.word.toLowerCase(), it.sentence);
+          });
         } catch (apiErr) {
+          if (closed) return;
           setGenerating(false);
           errorBanner.textContent = apiErr.message || 'The sentences could not be written. Please try again.';
           errorBanner.style.display = 'block';
@@ -628,16 +744,6 @@
           if (sentence && !sentenceUsesWord(sentence, w)) sentence = '';
           if (!sentence) missingWords.push(w);
           itemsWithImages.push({ word: w, imageUrl: '', sentence });
-        }
-
-        // STEP 2: find a picture that matches each finished sentence.
-        if (!missingWords.length) {
-          for (let i = 0; i < itemsWithImages.length; i++) {
-            const it = itemsWithImages[i];
-            setGenerating(true, `Step 2/3: Finding illustrations for "${it.word}" (${i + 1}/${itemsWithImages.length})...`, 55 + Math.round((i / itemsWithImages.length) * 20));
-            const photoData = await fetchPhotoForWord(it.word, it.sentence);
-            it.imageUrl = photoData.url || '';
-          }
         }
 
         if (missingWords.length) {
@@ -659,28 +765,11 @@
             count: selectedPhotoCount === 'all' ? 'all' : Number(selectedPhotoCount)
           };
 
-          let res = await fetch('/api/generate-vocab-list', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          }).catch(() => null);
-
-          if (!res || !res.ok) {
-            res = await fetch('/api/vocabulary-sentence', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-          }
-
-          if (!res || !res.ok) {
-            const errData = await res?.json().catch(() => ({}));
-            throw new Error(errData?.message || 'Could not analyze photo.');
-          }
-
-          const data = await res.json();
+          const data = await postJson('/api/generate-vocab-list', payload);
+          if (closed) return;
           photoItems = Array.isArray(data.items) ? data.items : [];
         } catch (err) {
+          if (closed) return;
           console.error('Photo mode AI error:', err);
           setGenerating(false);
           errorBanner.textContent = err.message || 'Photo analysis failed. No credits were deducted.';
@@ -689,12 +778,10 @@
           return;
         }
 
-        // Attach images; every sentence must use its own word.
-        setGenerating(true, 'Step 2/3: Finding illustrations for each word...', 65);
+        // Both entry modes share the same final-sentence media matching below.
         for (let i = 0; i < photoItems.length; i++) {
           const it = photoItems[i];
           const sentence = String(it.sentence || '').trim();
-          const photoData = await fetchPhotoForWord(it.word, sentence);
 
           if (!sentence || !sentenceUsesWord(sentence, it.word)) {
             setGenerating(false);
@@ -707,7 +794,7 @@
           itemsWithImages.push({
             word: it.word,
             sentence,
-            imageUrl: photoData.url || uploadedPhotoBase64
+            imageUrl: ''
           });
         }
       }
@@ -720,14 +807,37 @@
         return;
       }
 
-      // STEP 3: Save to database (marking as AI-generated while keeping the creator teacher name)
-      setGenerating(true, 'Step 3/3: Saving vocabulary list to classroom...', 90);
+      draft = itemsWithImages.map((item, index) => ({ ...item, id: `item-${index + 1}`, mediaStatus: 'needs_review', approvedSentence: '', withoutImage: false, searchType: 'photo', candidates: [] }));
+      for (let i = 0; i < draft.length; i++) {
+        if (closed) return;
+        setGenerating(true, `Step 2/3: Checking pictures for "${draft[i].word}" (${i + 1}/${draft.length})...`, 50 + Math.round((i / draft.length) * 35));
+        await matchItem(draft[i]);
+      }
+      if (closed) return;
+      itemsWithImages = draft;
 
       const listId = `vocab-ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const firstValidImage = itemsWithImages.find(it => it.imageUrl)?.imageUrl || uploadedPhotoBase64 || '';
       const teacherName = window.currentTeacher || 'Teacher';
 
+      // The whole list is written atomically with stable IDs for safe retries.
+      let creditsDeducted = false;
+      let saveComplete = false;
+      const listBackendId = crypto.randomUUID();
+      const wordBackendIds = itemsWithImages.map(() => crypto.randomUUID());
+
+      saveDraft = async () => {
+      if (isSaving || saveComplete || closed || itemsWithImages.some(item => item.busy || !itemResolved(item))) return;
+      if (getTeacherBalance() < itemsWithImages.length) {
+        reviewError.textContent = `Insufficient credits. You need ${itemsWithImages.length} credits to save this list.`;
+        reviewError.hidden = false;
+        return;
+      }
+      isSaving = true;
+      reviewPanel.hidden = true;
+      setGenerating(true, 'Step 3/3: Saving vocabulary list to classroom...', 90);
+      const firstValidImage = itemsWithImages.find(item => item.imageUrl && itemResolved(item))?.imageUrl || '';
       const listRecord = {
+        __backendId: listBackendId,
         type: 'vocab_list',
         vocab_list_id: listId,
         vocab_list_name: listName,
@@ -741,6 +851,7 @@
         is_ai_generated: true,
         ai_generated: true,
         generation_source: 'ai',
+        vocab_media_policy: 'sentence-reviewed-v1',
         created_at: new Date().toISOString(),
         vocab_word: '',
         vocab_image: '',
@@ -783,18 +894,16 @@
       };
 
       try {
-        if (!window.dataSdk || typeof window.dataSdk.create !== 'function') {
+        if (!window.dataSdk || typeof window.dataSdk.createMany !== 'function') {
           throw new Error('Database SDK is not available.');
         }
 
-        const listResult = await window.dataSdk.create(listRecord);
-        if (!listResult?.isOk) {
-          throw new Error('Could not save the vocabulary list.');
-        }
-
-        for (const item of itemsWithImages) {
-          const wordId = `vocab-word-${listId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const wordPayloads = [];
+        for (let index = 0; index < itemsWithImages.length; index++) {
+          const item = itemsWithImages[index];
+          const wordId = `vocab-word-${listId}-${index + 1}`;
           const wordPayload = {
+            __backendId: wordBackendIds[index],
             type: 'vocab_word',
             vocab_list_id: listId,
             list_id: listId,
@@ -809,26 +918,38 @@
             vocab_word: item.word,
             vocab_image: item.imageUrl,
             vocab_sentence: item.sentence,
+            vocab_media_policy: 'sentence-reviewed-v1',
+            vocab_media_status: item.withoutImage ? 'omitted' : item.mediaStatus,
+            vocab_media_type: item.withoutImage ? '' : item.mediaType,
             is_ai_generated: true,
             created_at: new Date().toISOString(),
             teacher_name: teacherName,
             owner: teacherName
           };
 
-          await window.dataSdk.create(wordPayload, { notify: false });
+          wordPayloads.push(wordPayload);
         }
-
-        if (typeof window.dataSdk.init === 'function' && window.handler) {
-          await window.dataSdk.init(window.handler);
+        if (!draftPersisted) {
+          const result = await window.dataSdk.createMany([listRecord, ...wordPayloads], { notify: false });
+          if (!result?.isOk) throw new Error('Could not save the complete vocabulary list. No credits were deducted. Please retry.');
+          draftPersisted = true;
         }
 
         // STEP 4: Deduct credits strictly AFTER successful creation
         const finalWordCount = itemsWithImages.length;
-        if (typeof window.deductTeacherCredits === 'function') {
-          await window.deductTeacherCredits(finalWordCount);
+        if (!creditsDeducted) {
+          if (typeof window.deductTeacherCredits !== 'function') throw new Error('Credit service is unavailable. No credits were deducted.');
+          const paid = await window.deductTeacherCredits(finalWordCount);
+          if (paid !== true) throw new Error('Could not update your credits. Retry saving this list.');
+          creditsDeducted = true;
         }
+        saveComplete = true;
         if (typeof window.logCredit === 'function') {
-          await window.logCredit('generate_vocab_list', -finalWordCount, `Generated ${finalWordCount} words for "${listName}"`);
+          try { await window.logCredit('generate_vocab_list', -finalWordCount, `Generated ${finalWordCount} words for "${listName}"`); }
+          catch (err) { console.warn('Could not record credit log:', err); }
+        }
+        if (typeof window.dataSdk.init === 'function' && window.handler) {
+          try { await window.dataSdk.init(window.handler); } catch (err) { console.warn('Could not refresh lists:', err); }
         }
         if (typeof window.updateTeacherCreditBalance === 'function') {
           window.updateTeacherCreditBalance();
@@ -838,6 +959,9 @@
         const mainInput = document.getElementById('new-vocab-list-name');
         if (mainInput) mainInput.value = '';
 
+        isSaving = false;
+        closed = true;
+        controller.abort();
         isGenerating = false;
         modal.remove();
 
@@ -850,11 +974,15 @@
         }
       } catch (saveErr) {
         console.error('Saving vocabulary list error:', saveErr);
-        setGenerating(false);
-        errorBanner.textContent = saveErr.message || 'Failed to save list to database. No credits were deducted.';
-        errorBanner.style.display = 'block';
-        updateModalUI();
+        // Keep the reviewed draft and successful writes for a safe retry.
+        isSaving = false;
+        reviewError.textContent = saveErr.message || 'Failed to save list. Please retry.';
+        reviewError.hidden = false;
+        showReview();
       }
+      };
+      showReview();
+      reviewPanel.querySelector('h5').focus();
     });
 
     updateModalUI();

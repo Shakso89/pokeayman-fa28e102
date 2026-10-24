@@ -4022,7 +4022,8 @@
   "ok": "https://cdn.pixabay.com/photo/2019/10/30/15/45/thumbs-up-4589867_640.jpg",
   "tv": "https://cdn.pixabay.com/photo/2021/11/28/20/28/wild-6831139_640.jpg"
 };
-  window.resolvePermanentVocabCover = function(url, listName) {
+  window.resolvePermanentVocabCover = function(url, listName, record) {
+    if (record && record.vocab_media_policy === 'sentence-reviewed-v1') return url || '';
     const normName = String(listName || '').trim();
     const ciKey = window.PERMANENT_VOCAB_COVERS ? Object.keys(window.PERMANENT_VOCAB_COVERS).find(k => k.toLowerCase() === normName.toLowerCase()) : null;
     if (ciKey && (!url || String(url).includes('pixabay.com/get/'))) {
@@ -4035,7 +4036,8 @@
     }
     return url || (ciKey ? window.PERMANENT_VOCAB_COVERS[ciKey] : '') || '';
   };
-  window.resolvePermanentVocabImage = function(url, wordText) {
+  window.resolvePermanentVocabImage = function(url, wordText, record) {
+    if (record && record.vocab_media_policy === 'sentence-reviewed-v1') return url || '';
     const normWord = String(wordText || '').trim().toLowerCase();
     if (window.PERMANENT_VOCAB_WORDS && window.PERMANENT_VOCAB_WORDS[normWord]) {
       if (!url || String(url).includes('pixabay.com/get/')) {
@@ -4052,6 +4054,7 @@
   window._healedQueryCache = {};
   window.healBrokenVocabImgElement = async function(imgEl, label, isCover) {
     if (!imgEl || imgEl.dataset.healed === '2') return;
+    if (String(imgEl.getAttribute('src') || '').startsWith('data:image/')) { imgEl.hidden = true; return; }
     const cleanLabel = String(label || '').replace(/^Cover for\s*/i, '').trim();
     if (!imgEl.dataset.healed) {
       imgEl.dataset.healed = '1';
@@ -4084,6 +4087,7 @@
   };
   window.sanitizeRecordImages = function(r) {
     if (!r || typeof r !== 'object') return r;
+    if (r.vocab_media_policy === 'sentence-reviewed-v1') return r;
     const type = String(r.type || '').toLowerCase();
     if (type === 'vocab_list' || type === 'vocabulary_list') {
       const name = String(r.vocab_list_name || r.list_name || r.name || '').trim();
@@ -4171,6 +4175,7 @@
             if (!token) return;
             rows.forEach(r => {
               const data = r.data || {};
+              if (data.vocab_media_policy === 'sentence-reviewed-v1') return;
               let dirty = false;
               if (data.type === 'vocab_list' || data.type === 'vocabulary_list') {
                 const fixed = window.resolvePermanentVocabCover(data.vocab_cover_image_url, data.vocab_list_name);
@@ -4220,6 +4225,18 @@
       const row = {...value, __backendId: value.__backendId || crypto.randomUUID()};
       try { await api('POST', '', {id: row.__backendId, data: row}); } catch (e) { console.error(e); return {isOk:false, error:e}; }
       records.push(row); if (options.notify !== false) { lastSig = cache(); notify(); } else cacheAfterPaint(); return {isOk:true, data:row};
+    },
+    // One PostgREST insert/upsert is atomic: a failed word cannot leave half a
+    // generated list. Stable IDs also make retries after a lost response safe.
+    async createMany(values, options = {}) {
+      if (!Array.isArray(values) || !values.length) return {isOk:false};
+      const rows = values.map(value => ({...value, __backendId:value.__backendId || crypto.randomUUID()}));
+      try { await api('POST', '', rows.map(row => ({id:row.__backendId, data:row}))); }
+      catch (e) { console.error(e); return {isOk:false, error:e}; }
+      const ids = new Set(rows.map(row => row.__backendId));
+      records = records.filter(row => !ids.has(row.__backendId)).concat(rows);
+      if (options.notify !== false) { lastSig=cache(); notify(); } else cacheAfterPaint();
+      return {isOk:true, data:rows};
     },
     async update(value, options = {}) {
       const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
@@ -18869,7 +18886,7 @@ function normalizeVocabListRecord(record) {
   const className = String(record.vocab_list_class ?? record.class_name ?? record.class ?? '').trim();
   const id = String(record.vocab_list_id ?? record.list_id ?? record.vocabulary_list_id ?? record.parent_list_id ?? record.__backendId ?? '').trim();
   if (!id || !name) return null;
-  const coverUrl = (typeof window.resolvePermanentVocabCover === 'function') ? window.resolvePermanentVocabCover(record.vocab_cover_image_url, name) : String(record.vocab_cover_image_url || '').trim();
+  const coverUrl = (typeof window.resolvePermanentVocabCover === 'function') ? window.resolvePermanentVocabCover(record.vocab_cover_image_url, name, record) : String(record.vocab_cover_image_url || '').trim();
   const embeddedWords = raw(record.words ?? record.items ?? record.vocab_words ?? record.word_items).map((item, index) => typeof item === 'object' ? { ...item, vocab_list_id: id, vocab_list_name: name, vocab_list_school: school, vocab_list_class: className, __wordIdentity: String(item.word_id ?? item.item_id ?? item.vocab_word_id ?? item.__backendId ?? `${id}|${item.vocab_word || item.word || index}`).trim() } : { vocab_word: String(item).trim(), vocab_list_id: id, vocab_list_name: name, vocab_list_school: school, vocab_list_class: className, __wordIdentity: `${id}|${String(item).trim().toLocaleLowerCase()}` });
   return { ...record, type: 'vocab_list', vocab_list_id: id, __backendId: String(record.__backendId || id), vocab_list_name: name, vocab_list_school: school, vocab_list_class: className, vocab_cover_image_url: coverUrl, words: embeddedWords, teacher_name: String(record.teacher_name ?? record.owner ?? '').trim(), created_at: String(record.created_at ?? record.timestamp ?? '').trim() };
 }
@@ -18882,7 +18899,7 @@ function normalizeVocabWordRecord(word, listId, source) {
   const value = String(word.vocab_word ?? word.word ?? word.term ?? word.text ?? '').trim();
   const identity = normalizeVocabId(word.word_id ?? word.item_id ?? word.vocab_word_id ?? word.__backendId ?? `${listId}|${value.toLocaleLowerCase()}`);
   if (!value && !identity) return null;
-  const wordImg = (typeof window.resolvePermanentVocabImage === 'function') ? window.resolvePermanentVocabImage(word.vocab_image ?? word.image ?? word.image_url, value) : String(word.vocab_image ?? word.image ?? word.image_url ?? '').trim();
+  const wordImg = (typeof window.resolvePermanentVocabImage === 'function') ? window.resolvePermanentVocabImage(word.vocab_image ?? word.image ?? word.image_url, value, word) : String(word.vocab_image ?? word.image ?? word.image_url ?? '').trim();
   return { ...word, vocab_list_id: normalizeVocabId(word.vocab_list_id ?? word.list_id ?? word.vocabulary_list_id ?? listId), vocab_word: value || String(word.word ?? word.term ?? word.text ?? '').trim(), vocab_image: wordImg, __wordIdentity: identity, __sourceBackendId: source?.__backendId || word.__backendId };
 }
 function extractVocabWords(value, listId, source, output = []) {

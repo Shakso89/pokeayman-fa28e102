@@ -423,3 +423,81 @@ html body #app-screen#app-screen#app-screen #view-students #students-list > .tra
 html body #student-dashboard#student-dashboard#student-dashboard #student-classes-grid .student-classmate-card:not(.global-rank-card) .student-classmate-coins {
   color: var(--color-warning) !important;
 }
+
+/* AI vocabulary review: scoped to the legacy iframe dialog, in both themes. */
+#vocab-gen-popup-modal .teacher-vb-create-dialog {
+  box-sizing: border-box;
+  min-width: 0;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+#vocab-gen-popup-modal .vocab-gen-review[hidden],
+#vocab-gen-popup-modal .vocab-gen-review [hidden] { display: none !important; }
+#vocab-gen-popup-modal .vocab-gen-review {
+  display: grid;
+  gap: var(--pk-space-4);
+  color: var(--pk-ink);
+  font: var(--pk-text-sm)/var(--pk-leading-body) var(--pk-font-body);
+}
+#vocab-gen-popup-modal .vocab-gen-review h5 { margin: 0; font-size: var(--pk-text-h3); color: var(--pk-ink); }
+#vocab-gen-popup-modal .vocab-gen-review p { margin: 0; color: var(--pk-muted); }
+#vocab-gen-popup-modal #vocab-gen-review-items { display: grid; gap: var(--pk-space-4); }
+#vocab-gen-popup-modal .vocab-gen-review-item {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: var(--pk-space-4);
+  padding: var(--pk-space-4);
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-2);
+}
+#vocab-gen-popup-modal .vocab-gen-review-picture {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  min-height: 112px;
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface);
+  color: var(--pk-muted);
+  overflow: hidden;
+  text-align: center;
+  padding: var(--pk-space-2);
+}
+#vocab-gen-popup-modal .vocab-gen-review-picture img { display: block; width: 100%; max-height: 176px; object-fit: contain; }
+#vocab-gen-popup-modal .vocab-gen-review-content { display: grid; gap: var(--pk-space-2); min-width: 0; overflow-wrap: anywhere; }
+#vocab-gen-popup-modal .vocab-gen-review .vocab-gen-review-sentence { color: var(--pk-ink); font-size: var(--pk-text-body); }
+#vocab-gen-popup-modal .vocab-gen-review-status { color: var(--pk-ink-2); font-size: var(--pk-text-xs); }
+#vocab-gen-popup-modal .vocab-gen-review-actions,
+#vocab-gen-popup-modal .vocab-gen-review-footer { display: flex; gap: var(--pk-space-2); flex-wrap: wrap; align-items: center; }
+#vocab-gen-popup-modal .vocab-gen-review button {
+  min-height: 40px;
+  padding: var(--pk-space-2) var(--pk-space-3);
+  border: 1px solid var(--pk-border-strong);
+  border-radius: var(--pk-radius-md);
+  background: var(--pk-surface);
+  color: var(--pk-ink);
+  cursor: pointer;
+  font: inherit;
+}
+#vocab-gen-popup-modal .vocab-gen-review button:hover { background: var(--pk-surface-hover); }
+#vocab-gen-popup-modal .vocab-gen-review button:disabled { opacity: .5; cursor: not-allowed; }
+#vocab-gen-popup-modal #vocab-gen-save { margin-left: auto; background: var(--pk-brand); color: var(--pk-on-brand); font-weight: 700; }
+#vocab-gen-popup-modal .vocab-gen-without { display: flex; align-items: center; gap: var(--pk-space-2); color: var(--pk-ink); }
+#vocab-gen-popup-modal .vocab-gen-without input { width: 18px; height: 18px; flex: none; accent-color: var(--pk-brand); }
+#vocab-gen-popup-modal .vocab-gen-picker { display: grid; gap: var(--pk-space-2); padding-top: var(--pk-space-3); border-top: 1px solid var(--pk-border-strong); }
+#vocab-gen-popup-modal .vocab-gen-picker label { display: grid; gap: var(--pk-space-1); color: var(--pk-ink-2); }
+#vocab-gen-popup-modal .vocab-gen-picker :is(input, select) { box-sizing: border-box; min-width: 0; width: 100%; min-height: 40px; padding: var(--pk-space-2); border: 1px solid var(--pk-border-strong); border-radius: var(--pk-radius-sm); background: var(--pk-surface); color: var(--pk-ink); font: inherit; }
+#vocab-gen-popup-modal .vocab-gen-candidates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--pk-space-2); }
+#vocab-gen-popup-modal .vocab-gen-candidates > div { display: grid; gap: var(--pk-space-1); min-width: 0; }
+#vocab-gen-popup-modal .vocab-gen-candidates button { padding: var(--pk-space-1); }
+#vocab-gen-popup-modal .vocab-gen-candidates img { display: block; width: 100%; height: 96px; object-fit: contain; }
+#vocab-gen-popup-modal .vocab-gen-candidates :is(span, a) { font-size: var(--pk-text-xs); color: var(--pk-ink-2); overflow-wrap: anywhere; }
+#vocab-gen-popup-modal #vocab-gen-review-error { color: var(--pk-danger); }
+@media (max-width: 520px) {
+  #vocab-gen-popup-modal .teacher-vb-create-dialog { padding: var(--pk-space-3); max-height: calc(100dvh - 16px); }
+  #vocab-gen-popup-modal .vocab-gen-review-item { grid-template-columns: minmax(0, 1fr); padding: var(--pk-space-3); }
+  #vocab-gen-popup-modal .vocab-gen-review-picture { width: 100%; }
+  #vocab-gen-popup-modal .vocab-gen-review-actions button { flex: 1 1 120px; }
+  #vocab-gen-popup-modal .vocab-gen-review-footer > span { flex-basis: 100%; }
+}

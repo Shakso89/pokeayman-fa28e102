@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SentenceAiError, askSentenceModel, normalizeWord, sentenceHasWord } from "@/lib/vocab-sentences";
+import { matchVocabularyMedia } from "@/lib/vocab-media";
+import { isMediaType } from "@/lib/stock-media";
 
 const requests = new Map<string, { count: number; reset: number }>();
 
@@ -34,6 +36,23 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
           input = await request.json();
         } catch {
           return Response.json({ message: "Invalid request payload." }, { status: 400, headers: CORS });
+        }
+
+        if (input?.mode === "media") {
+          const id = typeof input.id === "string" ? input.id.trim() : "";
+          const word = typeof input.word === "string" ? input.word.trim() : "";
+          const sentence = typeof input.sentence === "string" ? input.sentence.trim() : "";
+          if (!id || id.length > 100 || !word || word.length > 60 || !sentence || sentence.length > 500 || !sentenceHasWord(sentence, word)) {
+            return Response.json({ message: "Provide an item ID, word and final sentence containing that word." }, { status: 400, headers: CORS });
+          }
+          const result = await matchVocabularyMedia({
+            id, word, sentence,
+            ...(input.action === "search" ? { action: "search" as const } : {}),
+            ...(typeof input.query === "string" ? { query: input.query.slice(0, 100) } : {}),
+            ...(isMediaType(input.imageType) ? { imageType: input.imageType } : {}),
+            page: Math.min(Math.max(Math.floor(Number(input.page) || 1), 1), 50),
+          });
+          return Response.json(result, { headers: { ...CORS, "Cache-Control": "no-store" } });
         }
 
         const mode = input?.mode === "photo" ? "photo" : "words";

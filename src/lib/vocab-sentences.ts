@@ -56,7 +56,9 @@ type GeminiBody = {
 
 export class SentenceAiError extends Error {}
 
-async function callGemini(body: GeminiBody): Promise<string> {
+// Visual matching does not write or revise sentences. Keep it separate from the
+// Gemini + ChatGPT sentence approval pipeline below.
+export async function callGemini(body: GeminiBody): Promise<string> {
   const key = process.env["GEMINI_API_KEY"];
   if (!key) throw new SentenceAiError("Gemini is not set up yet. Please add the Gemini key.");
   let lastStatus = 0;
@@ -66,6 +68,7 @@ async function callGemini(body: GeminiBody): Promise<string> {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": key },
         body: JSON.stringify({ ...body, generationConfig: { ...body.generationConfig, responseMimeType: "application/json" } }),
+        signal: AbortSignal.timeout(30000),
       });
       if (!res.ok) {
         lastStatus = res.status;
