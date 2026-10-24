@@ -553,3 +553,192 @@ html body.ts-bright #class-view-only-banner strong {
 html body.ts-bright #class-view-only-banner .text-slate-200 {
   color: #334155 !important;
 }
+
+/* ============================================================
+   Student Collection Modal Header & Dialog (Theme Harmonized)
+   Supports both Dark Mode and Bright Mode (.ts-bright)
+   ============================================================ */
+
+.student-collection-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483646 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(2, 8, 18, 0.8) !important;
+  backdrop-filter: blur(8px) saturate(1.1) !important;
+  isolation: isolate;
+  overflow: auto;
+}
+
+.student-collection-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 46rem);
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.25rem !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.75), 0 0 35px rgba(79, 70, 229, 0.15) !important;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.student-collection-header {
+  padding: 18px 24px !important;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 1.25rem 1.25rem 0 0 !important;
+}
+
+.student-collection-kicker {
+  font-family: Outfit, 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.student-collection-title {
+  margin: 0;
+  font-family: Outfit, 'DM Sans', -apple-system, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #f8fafc !important;
+  letter-spacing: -0.01em;
+}
+
+.student-collection-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.student-collection-coin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24 !important;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.student-collection-count-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 9999px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #a5b4fc !important;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.student-collection-close-btn {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  padding: 0;
+}
+
+.student-collection-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  transform: scale(1.05);
+}
+
+.student-collection-body {
+  padding: 24px !important;
+  overflow-y: auto;
+  background: #0b1220 !important;
+}
+
+/* Bright Mode (ts-bright) overrides */
+html body.ts-bright .student-collection-dialog {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.18), 0 0 24px rgba(99, 102, 241, 0.08) !important;
+}
+
+html body.ts-bright .student-collection-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+html body.ts-bright .student-collection-kicker {
+  color: #64748b !important;
+}
+
+html body.ts-bright .student-collection-title {
+  color: #0f172a !important;
+}
+
+html body.ts-bright .student-collection-coin-chip {
+  background: #fef3c7 !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+
+html body.ts-bright .student-collection-count-chip {
+  background: #eef2ff !important;
+  border-color: #c7d2fe !important;
+  color: #4338ca !important;
+}
+
+html body.ts-bright .student-collection-close-btn {
+  border: 1px solid #cbd5e1 !important;
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+}
+
+html body.ts-bright .student-collection-close-btn:hover {
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: scale(1.05);
+}
+
+html body.ts-bright .student-collection-body {
+  background: #f8fafc !important;
+}
+
+@media (max-width: 640px) {
+  .student-collection-overlay { padding: 0.5rem; }
+  .student-collection-dialog { max-height: 94%; width: 100%; }
+  .student-collection-header { padding: 14px 16px !important; }
+  .student-collection-body { padding: 16px !important; }
+}

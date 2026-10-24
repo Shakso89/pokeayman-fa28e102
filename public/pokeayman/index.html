@@ -7767,10 +7767,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     body:has(#app-screen:not(.hidden)) #global-leaderboard-trigger { display: block; }
     .global-leaderboard-overlay { position: fixed; inset: 0; z-index: 22000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(2,8,18,.78); backdrop-filter: blur(8px); }
     .student-collection-overlay { position: fixed !important; inset: 0 !important; z-index: 2147483646 !important; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(2,8,18,.84); backdrop-filter: blur(8px); isolation: isolate; overflow: auto; }
-    .student-collection-dialog { position: relative; z-index: 1; width: min(100%, 42rem); max-height: 92%; overflow-y: auto; border: 1px solid rgba(255,255,255,.35); border-radius: 1.25rem; background: linear-gradient(145deg,#1d256e,#0b222d); color: #f5f7ff; box-shadow: 0 28px 90px rgba(0,0,0,.65); }
-    .student-collection-dialog .student-collection-header { background: linear-gradient(135deg,#3b82f6,#7c3aed); }
-    .student-collection-dialog .student-collection-body { background: linear-gradient(145deg,#1d256e,#0b222d); }
-    @media (max-width:640px) { .student-collection-overlay { padding: .5rem; } .student-collection-dialog { max-height: 94%; } }
+    .student-collection-dialog { position: relative; z-index: 1; width: min(100%, 46rem); max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; border-radius: 1.25rem; background: #0f172a; color: #f8fafc; border: 1px solid rgba(255,255,255,.14); box-shadow: 0 25px 60px -12px rgba(0,0,0,.75); }
+    .student-collection-dialog .student-collection-header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 18px 24px; border-radius: 1.25rem 1.25rem 0 0; }
+    .student-collection-dialog .student-collection-body { background: #0b1220; padding: 24px; overflow-y: auto; }
+    body.ts-bright .student-collection-dialog { background: #ffffff !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; box-shadow: 0 25px 60px -12px rgba(15,23,42,.18) !important; }
+    body.ts-bright .student-collection-dialog .student-collection-header { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border-bottom: 1px solid #e2e8f0 !important; }
+    body.ts-bright .student-collection-dialog .student-collection-body { background: #f8fafc !important; }
+    @media (max-width:640px) { .student-collection-overlay { padding: .5rem; } .student-collection-dialog { max-height: 94%; width: 100%; } .student-collection-dialog .student-collection-header { padding: 14px 16px; } .student-collection-dialog .student-collection-body { padding: 16px; } }
     .student-dashboard-trophy-slot { display: none; width: 100%; max-width: 64rem; justify-content: flex-start; align-items: center; margin: 0 auto .75rem; padding: 0 .25rem; }
     .student-dashboard-trophy-slot #student-dashboard-tr-logo { display: block; }
     .student-dashboard-trophy-slot #global-leaderboard-trigger { display: block; width: 6.5rem; height: 6.5rem; }
@@ -18615,24 +18618,6 @@ function openLeaderboardStudentCollection(studentName) {
   const stableIds = new Set(memberships.map(record => String(record.__backendId || '').trim()).filter(Boolean));
   const returnFocus = document.activeElement;
   document.getElementById('student-collection-overlay')?.remove();
-  const modal = document.createElement('div');
-  modal.id = 'student-collection-overlay';
-  modal.className = 'student-collection-overlay';
-  modal.innerHTML = `<div class="student-collection-dialog" role="dialog" aria-modal="true" aria-labelledby="collection-title" tabindex="-1">
-      <div class="student-collection-header flex items-start justify-between gap-3 p-5">
-        <div class="min-w-0">
-          <h2 id="collection-title" class="heading-font text-2xl font-bold text-white break-words">${student.student_name}'s Collection</h2>
-          <p class="text-sm text-blue-100 mt-1">💰 ${student.coins || 0} coins</p>
-        </div>
-        <button id="collection-close" type="button" class="shrink-0 text-white hover:text-gray-200 text-3xl font-bold leading-none" aria-label="Close collection">×</button>
-      </div>
-      <div class="student-collection-body p-6">
-        <div id="collection-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 min-w-0"></div>
-        <p id="collection-empty" class="text-center text-gray-400 py-8 text-sm hidden">No Pokémon in collection.</p>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  
   const ownedNames = new Set(memberships.map(record => record.student_name));
   const seenItems = new Set();
   const pokemons = getPokemons().filter(p => ownedNames.has(p.owner)).filter(p => {
@@ -18641,6 +18626,40 @@ function openLeaderboardStudentCollection(studentName) {
     seenItems.add(itemKey);
     return true;
   });
+
+  const escape = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const modal = document.createElement('div');
+  modal.id = 'student-collection-overlay';
+  modal.className = 'student-collection-overlay';
+  modal.innerHTML = `<div class="student-collection-dialog" role="dialog" aria-modal="true" aria-labelledby="collection-title" tabindex="-1">
+      <div class="student-collection-header">
+        <div class="min-w-0">
+          <div class="student-collection-kicker">
+            <span class="collection-kicker-icon">🎴</span>
+            <span>Trainer Portfolio</span>
+          </div>
+          <h2 id="collection-title" class="student-collection-title">${escape(student.student_name)}'s Collection</h2>
+          <div class="student-collection-stats">
+            <span class="student-collection-coin-chip">
+              <span>🪙</span>
+              <span>${Number(student.coins || 0).toLocaleString()} coins</span>
+            </span>
+            <span class="student-collection-count-chip">
+              <span>📦</span>
+              <span>${pokemons.length} ${pokemons.length === 1 ? 'card' : 'cards'}</span>
+            </span>
+          </div>
+        </div>
+        <button id="collection-close" type="button" class="student-collection-close-btn" aria-label="Close collection">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="student-collection-body">
+        <div id="collection-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 min-w-0"></div>
+        <p id="collection-empty" class="text-center text-gray-400 py-8 text-sm hidden">No Pokémon in collection.</p>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
   const grid = modal.querySelector('#collection-grid');
   const empty = modal.querySelector('#collection-empty');
   
