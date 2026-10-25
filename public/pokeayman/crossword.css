@@ -347,3 +347,84 @@ html body > .ga-stage .crossword-cell {
   background-color: #f8fafc !important;
   border: 1px solid #cbd5e1 !important;
 }
+
+/* Compact, centered letter-only dock: use Hangman's calm spacing and tactile key sizing. */
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  z-index: 2 !important;
+  flex: 0 0 auto !important;
+  align-self: center !important;
+  width: min(100%, 680px) !important;
+  max-width: 680px !important;
+  max-height: none !important;
+  overflow: visible !important;
+  margin: .15rem auto max(.35rem, env(safe-area-inset-bottom)) !important;
+  padding: .45rem clamp(.4rem, 1.4vw, .8rem) !important;
+  border: 2px solid var(--cw-kb-edge) !important;
+  border-radius: 1rem !important;
+  background: color-mix(in srgb, var(--cw-kb-panel) 96%, transparent) !important;
+  box-shadow: 0 4px 0 var(--cw-kb-bottom), 0 10px 26px #0004 !important;
+  touch-action: manipulation !important;
+}
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="small"],
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="medium"],
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="large"] {
+  width: min(100%, 680px) !important;
+  max-width: 680px !important;
+}
+html body > .ga-stage .crossword-content .crossword-keyboard-head {
+  min-height: 2rem !important;
+  margin: 0 0 .4rem !important;
+}
+html body > .ga-stage .crossword-content .crossword-keyboard-keys {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: clamp(.25rem, .7vh, .42rem) !important;
+  width: 100% !important;
+}
+html body > .ga-stage .crossword-content .crossword-keyboard-row {
+  display: flex !important;
+  justify-content: center !important;
+  gap: clamp(.22rem, .55vw, .42rem) !important;
+  width: 100% !important;
+  padding: 0 !important;
+}
+html body > .ga-stage .crossword-content .crossword-keyboard-row:nth-child(2) { width: 90% !important; align-self: center !important; }
+html body > .ga-stage .crossword-content .crossword-keyboard-row:nth-child(3) { width: 72% !important; align-self: center !important; }
+html body > .ga-stage .crossword-content .crossword-keyboard-row button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  min-height: clamp(2.35rem, 5vh, 3rem) !important;
+  padding: .15rem !important;
+  border: 2px solid var(--cw-kb-edge) !important;
+  border-radius: .7rem !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cw-kb-face) 92%, white), var(--cw-kb-face)) !important;
+  color: var(--cw-kb-text) !important;
+  box-shadow: 0 3px 0 var(--cw-kb-bottom) !important;
+  font-size: clamp(1rem, 2.3vh, 1.3rem) !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  touch-action: manipulation !important;
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease !important;
+}
+html body > .ga-stage .crossword-content .crossword-keyboard-row button:hover { filter: brightness(1.08) !important; transform: translateY(-1px) !important; }
+html body > .ga-stage .crossword-content .crossword-keyboard-row button:active { transform: translateY(2px) !important; box-shadow: 0 1px 0 var(--cw-kb-bottom) !important; }
+html body > .ga-stage .crossword-content.is-keyboard-open .crossword-layout { flex: 1 1 0 !important; min-height: 5rem !important; }
+@media (max-width: 760px) {
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard { width: 100% !important; padding: .4rem .35rem !important; }
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="small"],
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="medium"],
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="large"] { width: 100% !important; }
+  html body > .ga-stage .crossword-content .crossword-keyboard-row { gap: clamp(.14rem, 1vw, .28rem) !important; }
+  html body > .ga-stage .crossword-content .crossword-keyboard-row:nth-child(2) { width: 92% !important; }
+  html body > .ga-stage .crossword-content .crossword-keyboard-row:nth-child(3) { width: 76% !important; }
+  html body > .ga-stage .crossword-content .crossword-keyboard-row button { min-height: clamp(2.2rem, 5.2vh, 2.75rem) !important; border-radius: .55rem !important; }
+}
+@media (max-width: 420px) {
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard { padding: .32rem .25rem !important; }
+  html body > .ga-stage .crossword-content .crossword-keyboard-keys { gap: .2rem !important; }
+  html body > .ga-stage .crossword-content .crossword-keyboard-row { gap: .12rem !important; }
+  html body > .ga-stage .crossword-content .crossword-keyboard-row button { min-height: 2rem !important; font-size: .9rem !important; }
+}
