@@ -428,3 +428,22 @@ html body > .ga-stage .crossword-content.is-keyboard-open .crossword-layout { fl
   html body > .ga-stage .crossword-content .crossword-keyboard-row { gap: .12rem !important; }
   html body > .ga-stage .crossword-content .crossword-keyboard-row button { min-height: 2rem !important; font-size: .9rem !important; }
 }
+
+/* The keyboard is fixed in-flow, so its former drag grip is now a useful title. */
+html body > .ga-stage .crossword-content .crossword-keyboard-head { grid-template-columns: 1fr auto 1fr !important; }
+html body > .ga-stage .crossword-content .crossword-keyboard-title { justify-self: start; color: var(--cw-kb-text); font-size: .82rem; font-weight: 900; letter-spacing: .05em; }
+/* Size presets update both the keyboard footprint and touch target scale. */
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="small"] { width: min(100%, 520px) !important; max-width: 520px !important; }
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="medium"] { width: min(100%, 610px) !important; max-width: 610px !important; }
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="large"] { width: min(100%, 680px) !important; max-width: 680px !important; }
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="small"] .crossword-keyboard-row button { min-height: 2rem !important; font-size: .92rem !important; border-radius: .55rem !important; }
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="medium"] .crossword-keyboard-row button { min-height: 2.4rem !important; font-size: 1.08rem !important; border-radius: .65rem !important; }
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="large"] .crossword-keyboard-row button { min-height: 2.85rem !important; font-size: 1.25rem !important; border-radius: .75rem !important; }
+@media (max-width: 760px) {
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="small"] { width: 100% !important; }
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="medium"] { width: 100% !important; }
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="large"] { width: 100% !important; }
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="small"] .crossword-keyboard-row button { min-height: 1.9rem !important; font-size: .84rem !important; }
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="medium"] .crossword-keyboard-row button { min-height: 2.2rem !important; font-size: .96rem !important; }
+  html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="large"] .crossword-keyboard-row button { min-height: 2.5rem !important; font-size: 1.08rem !important; }
+}
