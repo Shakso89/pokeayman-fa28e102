@@ -13053,45 +13053,60 @@ function reviewTeacherZoneSnapshot(snapshot) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return escape(date || 'Date not saved');
     return new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   };
-  const unpaid = (Array.isArray(snapshot.unpaidDays) ? snapshot.unpaidDays : []).filter(entry => String(entry.start_date || entry.date || '').startsWith(month));
+  const unpaidRecords = Array.isArray(snapshot.unpaidDays) ? snapshot.unpaidDays : [];
+  const unpaid = unpaidRecords.filter(entry => unpaidDateSet(entry).some(date => date.startsWith(month)));
   const insurance = (Array.isArray(snapshot.insuranceDeductions) ? snapshot.insuranceDeductions : []).filter(entry => String(entry.month || '').slice(0, 7) === month);
   const extras = (Array.isArray(snapshot.subHours) ? snapshot.subHours : []).filter(entry => String(entry.date || '').startsWith(month));
   const schedule = Array.isArray(snapshot.schedule?.entries) ? snapshot.schedule.entries : [];
-  const insuranceTotal = insurance.reduce((total, entry) => total + (Number(entry.amount) || 0), 0);
   const rate = Math.max(0, Number(snapshot.hourlyRate) || 0);
-  const excludedDates = new Set((Array.isArray(snapshot.unpaidDays) ? snapshot.unpaidDays : [])
-    .filter(entry => String(entry.date || '').startsWith(month))
-    .map(entry => String(entry.date)));
   const daysInMonth = Number.isFinite(year) && Number.isFinite(monthNumber) ? new Date(year, monthNumber, 0).getDate() : 0;
-  const schoolHours = {};
+  const schoolName = entry => String(entry.school || entry.school_name || entry.schedule_school || '').trim() || 'No school specified';
+  const grossHoursBySchool = Object.create(null);
+  [...new Set([
+    ...schedule.map(schoolName),
+    ...extras.map(schoolName),
+    ...insurance.map(schoolName),
+    ...unpaid.map(schoolName)
+  ])].forEach(school => { grossHoursBySchool[school] = 0; });
   schedule.forEach(entry => {
-    const dayIndex = ['Monday','Tuesday','Wednesday','Thursday','Friday'].indexOf(entry.day);
+    const dayIndex = scheduleDays.indexOf(entry.day);
     if (dayIndex < 0) return;
-    const school = String(entry.school || '').trim() || 'No school specified';
+    const school = schoolName(entry);
     let classDays = 0;
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = `${month}-${String(day).padStart(2, '0')}`;
-      if (new Date(year, monthNumber - 1, day).getDay() === dayIndex + 1 && !excludedDates.has(date)) classDays++;
+      if (new Date(year, monthNumber - 1, day).getDay() === dayIndex + 1) classDays++;
     }
-    const [startHour, startMinute] = String(entry.start || '00:00').split(':').map(Number);
-    const [endHour, endMinute] = String(entry.end || '00:00').split(':').map(Number);
-    const duration = Math.max(0, ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) / 60);
-    schoolHours[school] = (schoolHours[school] || 0) + duration * classDays;
+    grossHoursBySchool[school] = (grossHoursBySchool[school] || 0) + scheduleHours(entry) * classDays;
   });
-  extras.filter(entry => !excludedDates.has(String(entry.date || ''))).forEach(entry => {
-    const school = String(entry.school || '').trim() || 'No school specified';
-    const [startHour, startMinute] = String(entry.start || '00:00').split(':').map(Number);
-    const [endHour, endMinute] = String(entry.end || '00:00').split(':').map(Number);
-    schoolHours[school] = (schoolHours[school] || 0) + Math.max(0, ((endHour * 60 + endMinute) - (startHour * 60 + startMinute)) / 60);
+  extras.forEach(entry => {
+    const school = schoolName(entry);
+    grossHoursBySchool[school] = (grossHoursBySchool[school] || 0) + subHourDuration(entry);
   });
-  const grossTotal = Object.values(schoolHours).reduce((total, hours) => total + hours * rate, 0);
-  const schoolGrossRows = Object.entries(schoolHours).sort(([a], [b]) => a.localeCompare(b)).map(([school, hours]) =>
-    `<li class=\"history-review-row\"><span><strong>${escape(school)}</strong><small>${hours.toFixed(1)} hours · ${financialMoney(rate)} per hour</small></span><strong class=\"history-review-amount\">${financialMoney(hours * rate)}</strong></li>`
-  ).join('') || `<li class=\"history-review-empty\">No scheduled or extra hours for ${escape(monthLabel)}.</li>`;
-  const unpaidRows = unpaid.map(entry => {
-    const from = entry.start_date || entry.date;
-    const to = entry.end_date && entry.end_date !== from ? ` – ${formatDate(entry.end_date)}` : '';
-    return `<li class="history-review-row"><span class="history-review-date">${formatDate(from)}${to}</span><span><strong>${escape(entry.type || 'Unpaid')}</strong><small>${escape(entry.details || 'No note')}</small></span></li>`;
+  const dailyUnpaidRows = financialUnpaidDailyBreakdown(unpaid, month, schedule, extras, rate);
+  const unpaidBySchool = Object.create(null);
+  dailyUnpaidRows.forEach(day => Object.entries(day.schoolDeductions).forEach(([school, amount]) => { unpaidBySchool[school] = (unpaidBySchool[school] || 0) + amount; }));
+  const unpaidTotal = dailyUnpaidRows.reduce((sum, day) => sum + day.deduction, 0);
+  const insuranceBySchool = Object.create(null);
+  insurance.forEach(entry => {
+    const school = schoolName(entry);
+    insuranceBySchool[school] = (insuranceBySchool[school] || 0) + Math.max(0, Number(entry.amount) || 0);
+  });
+  const insuranceTotal = Object.values(insuranceBySchool).reduce((sum, amount) => sum + amount, 0);
+  const grossTotal = Object.values(grossHoursBySchool).reduce((sum, hours) => sum + hours * rate, 0);
+  const netTotal = grossTotal - unpaidTotal - insuranceTotal;
+  const formatUnpaidDate = value => formatFinancialUnpaidDate(value);
+  const schoolNetRows = Object.entries(grossHoursBySchool).sort(([a], [b]) => a.localeCompare(b)).map(([school, hours]) => {
+    const gross = hours * rate;
+    const unpaidDeduction = unpaidBySchool[school] || 0;
+    const schoolInsurance = insuranceBySchool[school] || 0;
+    const net = gross - unpaidDeduction - schoolInsurance;
+    return `<li class="history-review-row"><span><strong>${escape(school)}</strong><small>${hours.toFixed(1)} hours · Gross ${financialMoney(gross)} - Unpaid ${financialMoney(unpaidDeduction)} - Insurance ${financialMoney(schoolInsurance)}</small></span><strong class="history-review-amount">${financialMoney(net)}</strong></li>`;
+  }).join('') || `<li class="history-review-empty">No scheduled or extra hours for ${escape(monthLabel)}.</li>`;
+  const unpaidRows = dailyUnpaidRows.map(day => {
+    const records = unpaid.filter(entry => unpaidDateSet(entry).includes(day.date));
+    const types = [...new Set(records.map(entry => String(entry.type || 'Unpaid')))];
+    const details = [...new Set(records.map(entry => String(entry.details || 'No note')))];
+    return `<li class="history-review-row"><span class="history-review-date">${formatUnpaidDate(day.date)}<small>${day.hours.toFixed(1)} hours</small></span><span><strong>${escape(types.join(' / ') || 'Unpaid')}</strong><small>${escape(details.join(' · ') || 'No note')}</small></span><strong class="history-review-amount">Deducts ${financialMoney(day.deduction)}</strong></li>`;
   }).join('') || `<li class="history-review-empty">No unpaid records for ${escape(monthLabel)}.</li>`;
   const insuranceRows = insurance.map(entry => `<li class="history-review-row"><span><strong>${escape(entry.school || 'School not named')}</strong><small>${escape(entry.note || 'Insurance deduction')}</small></span><strong class="history-review-amount">${financialMoney(entry.amount)}</strong></li>`).join('') || `<li class="history-review-empty">No insurance deductions for ${escape(monthLabel)}.</li>`;
   const scheduleRows = schedule.map(entry => `<li class="history-review-row"><span><strong>${escape(entry.day || 'Day not set')} · ${escape(entry.title || 'Untitled class')}</strong><small>${escape(entry.school || 'School not specified')}</small></span><span class="history-review-time">${escape(entry.start || '—')}–${escape(entry.end || '—')}</span></li>`).join('') || `<li class="history-review-empty">No weekly classes saved.</li>`;
@@ -13102,9 +13117,9 @@ function reviewTeacherZoneSnapshot(snapshot) {
   modal.innerHTML = `<section class="teacher-history-dialog" role="dialog" aria-modal="true" aria-labelledby="history-review-title">
     <header class="teacher-history-header"><div><p class="teacher-history-kicker">SAVED SNAPSHOT</p><h2 id="history-review-title">${escape(snapshot.name || 'Teacher Zone history')}</h2><p>Saved ${escape(savedDate)}</p></div><button type="button" id="history-review-close" class="teacher-history-close" aria-label="Close historical review">×</button></header>
     <div class="teacher-history-month"><span>Financial records shown</span><strong>${escape(monthLabel)}</strong><small>Unpaid entries, insurance, and extra hours are filtered to this month only.</small></div>
-    <div class="teacher-history-summary"><article><span>Gross amount · ${escape(monthLabel)}</span><strong>${financialMoney(grossTotal)}</strong></article><article><span>Hourly rate</span><strong>${financialMoney(rate)} <small>per hour</small></strong></article><article><span>Unpaid entries</span><strong>${unpaid.length}</strong></article><article><span>Insurance deductions</span><strong>${financialMoney(insuranceTotal)}</strong></article></div>
-    <section class="teacher-history-section"><div class="teacher-history-section-heading"><div><p class="teacher-history-kicker">GROSS BY SCHOOL</p><h3>${escape(monthLabel)}</h3></div></div><article class="teacher-history-card"><ul>${schoolGrossRows}</ul></article></section>
-    <section class="teacher-history-section"><div class="teacher-history-section-heading"><div><p class="teacher-history-kicker">MONTHLY ADJUSTMENTS</p><h3>${escape(monthLabel)}</h3></div></div><div class="teacher-history-columns"><article class="teacher-history-card"><h4>Unpaid dates <span>${unpaid.length}</span></h4><ul>${unpaidRows}</ul></article><article class="teacher-history-card"><h4>Insurance deductions <span>${financialMoney(insuranceTotal)}</span></h4><ul>${insuranceRows}</ul></article></div></section>
+    <div class="teacher-history-summary"><article><span>Estimated take-home · ${escape(monthLabel)}</span><strong>${financialMoney(netTotal)}</strong></article><article><span>Hourly rate</span><strong>${financialMoney(rate)} <small>per hour</small></strong></article><article><span>Unpaid deductions</span><strong>${financialMoney(unpaidTotal)}</strong></article><article><span>Insurance deductions</span><strong>${financialMoney(insuranceTotal)}</strong></article></div>
+    <section class="teacher-history-section"><div class="teacher-history-section-heading"><div><p class="teacher-history-kicker">NET BY SCHOOL</p><h3>${escape(monthLabel)}</h3></div></div><article class="teacher-history-card"><ul>${schoolNetRows}</ul></article></section>
+    <section class="teacher-history-section"><div class="teacher-history-section-heading"><div><p class="teacher-history-kicker">MONTHLY ADJUSTMENTS</p><h3>${escape(monthLabel)}</h3></div></div><div class="teacher-history-columns"><article class="teacher-history-card"><h4>Unpaid dates <span>${dailyUnpaidRows.length} days</span></h4><p class="history-review-deduction-total">Total deduction: ${financialMoney(unpaidTotal)}</p><ul>${unpaidRows}</ul></article><article class="teacher-history-card"><h4>Insurance deductions <span>${financialMoney(insuranceTotal)}</span></h4><ul>${insuranceRows}</ul></article></div></section>
     <section class="teacher-history-section"><div class="teacher-history-section-heading"><div><p class="teacher-history-kicker">RECURRING PLAN</p><h3>Weekly schedule <span>${schedule.length} classes</span></h3></div></div><article class="teacher-history-card"><ul>${scheduleRows}</ul></article></section>
     <section class="teacher-history-section"><div class="teacher-history-section-heading"><div><p class="teacher-history-kicker">MONTHLY ADDITIONS</p><h3>Extra hours <span>${extras.length} entries</span></h3></div></div><article class="teacher-history-card"><ul>${extraRows}</ul></article></section>
     <footer class="teacher-history-footer"><span>Read-only history · Restoring is available from the snapshot list.</span><button type="button" class="btn-primary" id="history-review-done">Done</button></footer>
@@ -24737,6 +24752,44 @@ function unpaidDateSet(entry) {
   while (cursor <= last && dates.length < 370) { dates.push(formatLocalDate(cursor)); cursor.setDate(cursor.getDate() + 1); }
   return dates;
 }
+function financialUnpaidDailyBreakdown(records, month, scheduleEntries, extraEntries, rate) {
+  const rows = [];
+  const monthRecords = (Array.isArray(records) ? records : []).filter(record => unpaidDateSet(record).some(date => date.startsWith(month)));
+  const dates = [...new Set(monthRecords.flatMap(unpaidDateSet).filter(date => date.startsWith(month)))].sort();
+  const schoolName = entry => String(entry.school || entry.school_name || entry.schedule_school || '').trim() || 'No school specified';
+  const schools = [...new Set([
+    ...(Array.isArray(scheduleEntries) ? scheduleEntries : []).map(schoolName),
+    ...(Array.isArray(extraEntries) ? extraEntries : []).map(schoolName),
+    ...monthRecords.map(schoolName)
+  ])];
+  const datesBySchool = new Map(schools.map(school => {
+    const schoolKey = normalizeScheduleSchool(school);
+    const affected = new Set();
+    monthRecords.forEach(record => {
+      const recordSchool = String(record.school || record.school_name || record.schedule_school || '').trim();
+      if (recordSchool && normalizeScheduleSchool(recordSchool) !== schoolKey) return;
+      unpaidDateSet(record).filter(date => date.startsWith(month)).forEach(date => affected.add(date));
+    });
+    return [school, affected];
+  }));
+  dates.forEach(date => {
+    const weekday = new Date(`${date}T00:00:00`).getDay();
+    const scheduledDay = weekday >= 1 && weekday <= 5 ? scheduleDays[weekday - 1] : '';
+    const schoolDeductions = {};
+    let hours = 0;
+    schools.forEach(school => {
+      if (!datesBySchool.get(school)?.has(date)) return;
+      const schoolKey = normalizeScheduleSchool(school);
+      const recurringHours = scheduledDay ? (scheduleEntries || []).filter(entry => entry.day === scheduledDay && normalizeScheduleSchool(schoolName(entry)) === schoolKey).reduce((sum, entry) => sum + scheduleHours(entry), 0) : 0;
+      const extraHours = (extraEntries || []).filter(entry => String(entry.date || '').slice(0, 10) === date && normalizeScheduleSchool(schoolName(entry)) === schoolKey).reduce((sum, entry) => sum + subHourDuration(entry), 0);
+      const schoolHours = recurringHours + extraHours;
+      hours += schoolHours;
+      schoolDeductions[school] = schoolHours * rate;
+    });
+    rows.push({ date, hours, deduction: hours * rate, schoolDeductions });
+  });
+  return rows;
+}
 function normalizeScheduleSchool(value) {
   return String(value || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
 }
@@ -24872,6 +24925,9 @@ function renderFinancialExtras() {
     ...records.map(entry => String(entry.school || '').trim() || 'No school specified')
   ])].sort((a, b) => a.localeCompare(b));
   const escapeText = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const dailyUnpaidRows = financialUnpaidDailyBreakdown(unpaidEntries, month, teacherSchedule.entries || [], monthlyExtras, rate);
+  const dailyUnpaidByDate = new Map(dailyUnpaidRows.map(day => [day.date, day]));
+  const dailyUnpaidTotal = dailyUnpaidRows.reduce((sum, day) => sum + day.deduction, 0);
   const schoolRows = schools.map(school => {
     const datesForSchool = [...unpaidDatesForSchool(school, month)].map(date => ({ date }));
     const scheduled = financialHoursForMonth(month, [], school);
@@ -24896,6 +24952,9 @@ function renderFinancialExtras() {
     insurance: sum.insurance + row.insurance,
     net: sum.net + row.net
   }), { regularHours: 0, extraHours: 0, payableRegularHours: 0, payableHours: 0, gross: 0, unpaidHours: 0, unpaidDeduction: 0, insurance: 0, net: 0 });
+  totals.unpaidDeduction = dailyUnpaidTotal;
+  totals.unpaidHours = dailyUnpaidRows.reduce((sum, day) => sum + day.hours, 0);
+  totals.net = totals.gross - totals.unpaidDeduction - totals.insurance;
   const set = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
   const [year, monthNumber] = month.split('-').map(Number);
   set('financial-summary-period', new Date(year, monthNumber - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }));
@@ -24912,7 +24971,7 @@ function renderFinancialExtras() {
   set('financial-salary', financialMoney(totals.gross));
   set('financial-insurance-total', financialMoney(totals.insurance));
   set('financial-net-salary', financialMoney(totals.net));
-  set('financial-unpaid-count', unpaidEntries.length ? `${unpaidEntries.length} ${unpaidEntries.length === 1 ? 'record' : 'records'}` : 'No records');
+  set('financial-unpaid-count', unpaidEntries.length ? dailyUnpaidRows.length + ' days · Total deduction ' + financialMoney(dailyUnpaidTotal) : 'No records');
   set('financial-insurance-count', records.length ? `${records.length} ${records.length === 1 ? 'entry' : 'entries'} · ${financialMoney(totals.insurance)}` : 'No records');
   set('financial-extra-hours-hint', `${monthlyExtras.length} ${monthlyExtras.length === 1 ? 'entry' : 'entries'} · ${totals.extraHours.toFixed(1)} hours`);
   const breakdown = document.getElementById('financial-school-breakdown');
@@ -24922,7 +24981,15 @@ function renderFinancialExtras() {
   const extraList = document.getElementById('financial-extra-hours-list');
   if (extraList) extraList.innerHTML = monthlyExtras.length ? `<div class="financial-breakdown-scroll"><table class="financial-breakdown-table" aria-label="One-time hours for the selected month"><thead><tr><th scope="col">Date</th><th scope="col">School</th><th scope="col">Class or activity</th><th scope="col">Hours</th><th scope="col">Pay</th></tr></thead><tbody>${monthlyExtras.slice().sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`)).map(entry => { const hours = subHourDuration(entry); const excluded = excludedDates.includes(String(entry.date || '')); return `<tr><td>${escapeText(entry.date)}</td><td>${escapeText(entry.school || 'No school specified')}</td><td>${escapeText(entry.title || 'One-time hours')}</td><td>${hours.toFixed(1)}</td><td>${excluded ? 'Excluded' : financialMoney(hours * rate)}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="financial-table-empty">No one-time hours for this month.</p>';
   const unpaidList = document.getElementById('financial-unpaid-list');
-  if (unpaidList) unpaidList.innerHTML = unpaidEntries.length ? unpaidEntries.map(entry => { const dates = unpaidDateSet(entry).filter(date => date.startsWith(month)); const label = dates.length > 1 ? `${formatFinancialUnpaidDate(dates[0])} to ${formatFinancialUnpaidDate(dates[dates.length - 1])} · ${dates.length} days` : formatFinancialUnpaidDate(dates[0]); return `<article class="financial-unpaid-card"><div><strong>${escapeText(entry.type || 'Unpaid date')}</strong><span>${escapeText(label)}</span><p>${escapeText(entry.details || '')}</p></div><div class="financial-record-actions"><button type="button" class="btn-outline text-xs" data-edit-unpaid="${escapeText(entry.id)}">Edit</button><button type="button" class="btn-secondary text-xs" data-remove-unpaid="${escapeText(entry.id)}">Delete</button></div></article>`; }).join('') : '';
+  if (unpaidList) unpaidList.innerHTML = unpaidEntries.length ? unpaidEntries.map(entry => {
+    const dates = unpaidDateSet(entry).filter(date => date.startsWith(month));
+    const dayRows = dates.map(date => {
+      const day = dailyUnpaidByDate.get(date);
+      const hoursText = day ? ' · ' + day.hours.toFixed(1) + ' hours' : '';
+      return '<li><span>' + escapeText(formatFinancialUnpaidDate(date)) + hoursText + '</span><strong>Deduction ' + financialMoney(day?.deduction || 0) + '</strong></li>';
+    }).join('');
+    return '<article class="financial-unpaid-card"><div><strong>' + escapeText(entry.type || 'Unpaid date') + '</strong><p>' + escapeText(entry.details || '') + '</p><ul class="financial-unpaid-day-breakdown">' + dayRows + '</ul></div><div class="financial-record-actions"><button type="button" class="btn-outline text-xs" data-edit-unpaid="' + escapeText(entry.id) + '">Edit</button><button type="button" class="btn-secondary text-xs" data-remove-unpaid="' + escapeText(entry.id) + '">Delete</button></div></article>';
+  }).join('') : '';
   document.getElementById('financial-unpaid-empty')?.classList.toggle('hidden', unpaidEntries.length > 0);
   const insuranceList = document.getElementById('financial-insurance-list');
   if (insuranceList) insuranceList.innerHTML = records.length ? records.map(entry => `<article class="financial-insurance-card"><div><strong>${escapeText(entry.school)}</strong><span>${escapeText(entry.month)}</span><p class="financial-insurance-amount">${financialMoney(entry.amount)}</p><p>${escapeText(entry.note || 'No note')}</p></div><div class="financial-record-actions"><button type="button" class="btn-outline text-xs" data-ins-edit="${escapeText(entry.id)}">Edit</button><button type="button" class="btn-secondary text-xs" data-ins-delete="${escapeText(entry.id)}">Delete</button></div></article>`).join('') : '';

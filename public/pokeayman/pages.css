@@ -449,3 +449,8 @@ body.ts-on #app-screen :is(.financial-card-kicker, .financial-eyebrow, .financia
   .financial-record-actions { width: 100%; }
   .financial-record-actions button { flex: 1; }
 }
+.financial-unpaid-day-breakdown { display: grid; gap: .35rem; margin: .55rem 0 0; padding: 0; list-style: none; }
+.financial-unpaid-day-breakdown li { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; padding: .35rem .5rem; border: 1px solid var(--pk-border); border-radius: var(--pk-radius-sm); color: var(--pk-muted); font-size: var(--pk-text-xs); font-variant-numeric: tabular-nums; }
+.financial-unpaid-day-breakdown li strong { flex: none; color: var(--pk-ink); }
+.history-review-deduction-total { margin: .35rem 0 .65rem; color: var(--pk-muted); font-size: var(--pk-text-xs); font-weight: 700; }
+@media (max-width: 600px) { .financial-unpaid-day-breakdown li { align-items: flex-start; flex-direction: column; gap: .1rem; } }
