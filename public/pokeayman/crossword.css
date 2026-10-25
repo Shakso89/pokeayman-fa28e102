@@ -176,3 +176,9 @@ html body.ts-bright .crossword-keyboard-size-controls span { color:#312e81; }
 }
 
 .crossword-content.is-keyboard-open .crossword-keyboard-launch-row { display:none!important; }
+
+/* Keep crossword slots square during focus zoom and keep camera motion inside the board. */
+.crossword-cell { box-sizing:border-box!important; width:var(--crossword-cell-size,32px)!important; height:var(--crossword-cell-size,32px)!important; min-width:0!important; min-height:0!important; aspect-ratio:1/1; overflow:hidden; }
+.crossword-cell input { box-sizing:border-box; min-height:0; }
+.crossword-grid { will-change:transform; }
+.crossword-content.is-keyboard-open .crossword-keyboard-launch-row { display:none!important; }

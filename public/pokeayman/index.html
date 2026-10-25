@@ -5319,16 +5319,25 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         return;
       }
       const cellSize = parseFloat(grid.style.getPropertyValue('--crossword-cell-size')) || 24;
-      const unit = cellSize + 2;
-      const mid = Math.floor(selectedWord.answer.length / 2);
-      const row = selectedWord.row + (selectedWord.direction === 'down' ? mid : 0), col = selectedWord.col + (selectedWord.direction === 'across' ? mid : 0);
-      const maxScale = (selectedWord.direction === 'across' ? boardViewport.clientWidth : boardViewport.clientHeight) * .76 / (selectedWord.answer.length * cellSize);
-      const scale = Math.max(1, Math.min(3, maxScale));
+      const gap = 2, unit = cellSize + gap;
+      const length = selectedWord.answer.length;
+      const wordWidth = (selectedWord.direction === 'across' ? length : 1) * cellSize + (selectedWord.direction === 'across' ? length - 1 : 0) * gap;
+      const wordHeight = (selectedWord.direction === 'down' ? length : 1) * cellSize + (selectedWord.direction === 'down' ? length - 1 : 0) * gap;
+      const safeWidth = Math.max(1, boardViewport.clientWidth - 32);
+      const safeHeight = Math.max(1, boardViewport.clientHeight - 32);
+      const scale = Math.max(1, Math.min(2.2, safeWidth / wordWidth, safeHeight / wordHeight));
+      const wordLeft = selectedWord.col * unit;
+      const wordTop = selectedWord.row * unit;
+      const focusCenterY = modal.querySelector('.crossword-content').classList.contains('is-keyboard-open') ? boardViewport.clientHeight * .42 : boardViewport.clientHeight / 2;
+      const desiredX = boardViewport.clientWidth / 2 - (wordLeft + wordWidth / 2) * scale;
+      const desiredY = focusCenterY - (wordTop + wordHeight / 2) * scale;
+      const minX = boardViewport.clientWidth - 16 - (wordLeft + wordWidth) * scale;
+      const maxX = 16 - wordLeft * scale;
+      const minY = boardViewport.clientHeight - 16 - (wordTop + wordHeight) * scale;
+      const maxY = 16 - wordTop * scale;
       grid.style.setProperty('--crossword-scale', String(scale));
-      grid.style.setProperty('--crossword-x', `${boardViewport.clientWidth / 2 - (col * unit + cellSize / 2) * scale}px`);
-      const focusCenterY = modal.querySelector('.crossword-content').classList.contains('is-keyboard-open') ? boardViewport.clientHeight * .43 : boardViewport.clientHeight / 2;
-      grid.style.setProperty('--crossword-y', `${focusCenterY - (row * unit + cellSize / 2) * scale}px`);
-    };
+      grid.style.setProperty('--crossword-x', `${Math.min(maxX, Math.max(minX, desiredX))}px`);
+      grid.style.setProperty('--crossword-y', `${Math.min(maxY, Math.max(minY, desiredY))}px`);    };
     const selectWord = word => {
       if (!word || completedWords.has(word.id)) return;
       selectedWord = word;
@@ -5443,7 +5452,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       });
     });
     setZoom(false);
-    resetZoomButton.addEventListener('click', () => setZoom(false));
+    resetZoomButton.addEventListener('click', () => { selectedWord = null; activeInput = null; modal.querySelectorAll('.crossword-cell.is-active').forEach(cell => cell.classList.remove('is-active')); modal.querySelectorAll('.crossword-clue.is-active').forEach(button => button.classList.remove('is-active')); setKeyboardOpen(false); setZoom(false); });
     requestAnimationFrame(sizeBoardToViewport);
     const keyboard = modal.querySelector('#crossword-virtual-keyboard');
     const keyboardToggle = modal.querySelector('#crossword-keyboard-toggle');
