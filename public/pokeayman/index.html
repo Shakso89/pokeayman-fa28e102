@@ -5155,7 +5155,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/vocab-editor.css">
 <link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261023-classic-boxes-v1">
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
-<link rel="stylesheet" href="/pokeayman/crossword.css?v=20261025-crosswords-v4">
+<link rel="stylesheet" href="/pokeayman/crossword.css?v=20261025-crosswords-v5">
 <link rel="stylesheet" href="/pokeayman/vocab-battle.css">
 <link rel="stylesheet" href="/pokeayman/study-theme.css">
 <link rel="stylesheet" href="/pokeayman/components.css">
@@ -5176,6 +5176,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       return { answer, word: String(record.vocab_word || answer), clue: clueText, image: String(record.vocab_image || '') };
     }).filter(Boolean).slice(0, 12);
   };
+  window.getCrosswordWordCount = listName => crosswordWords(listName).length;
   const coordKey = (row, col) => `${row},${col}`;
   function buildCrossword(entries) {
     const words = entries.slice().sort((a, b) => b.answer.length - a.answer.length);
@@ -5248,18 +5249,26 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (currentRole === 'student') { chooseGamePlayers(listName, window.chooseCrossword); return; }
     chooseGamePlayers(listName, window.chooseCrossword);
   };
-  window.openGameCrossword = function (listName, timerSeconds = 0) {
-    const entries = crosswordWords(listName);
-    const puzzle = buildCrossword(entries);
-    if (!puzzle) { toast('These vocabulary words do not share enough letters for a crossword. Choose a different list.'); return; }
+  window.openGameCrossword = function (listName, timerSeconds = 0, requestedWordCount = null) {
+    const allEntries = crosswordWords(listName);
+    const maxWordCount = allEntries.length;
+    const wordCount = requestedWordCount !== null && requestedWordCount !== undefined && Number.isInteger(Number(requestedWordCount)) ? Number(requestedWordCount) : maxWordCount;
+    if (wordCount < 2 || wordCount > maxWordCount) { toast('Choose a crossword word count from 2 to the number of available words.'); return; }
+    let puzzle = null;
+    for (let attempt = 0; !puzzle && attempt < 80; attempt++) {
+      const entries = allEntries.slice().sort(() => Math.random() - 0.5).slice(0, wordCount).map(word => ({ ...word }));
+      const candidate = buildCrossword(entries);
+      if (candidate && candidate.across.length + candidate.down.length === wordCount) puzzle = candidate;
+    }
+    if (!puzzle) { toast('Could not fit that exact number of words into a crossword. Try a smaller word count.'); return; }
     if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) { toast('Select at least one student to play Crosswords.'); return; }
-    setGameReplay(() => { resetGameTurnState(); window.openGameCrossword(listName, timerSeconds); });
+    setGameReplay(() => { resetGameTurnState(); window.openGameCrossword(listName, timerSeconds, wordCount); });
     activeGameScores = activeGamePlayers.map(() => 0);
     const modal = document.createElement('div');
     modal.className = 'game-popup-modal crossword-game-root fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3';
     modal.dataset.noWinnerOnTimeout = 'true';
     const clueRow = (word, index, group) => `<button type="button" class="crossword-clue" data-word-id="${word.id}" data-group="${group}"><span class="crossword-clue-number">${word.number}</span><span class="crossword-clue-copy">${word.clue ? escCrossword(word.clue) : word.image ? `<img src="${escCrossword(word.image)}" alt="Picture clue for ${escCrossword(word.word)}" loading="lazy">` : `Word with ${word.answer.length} letters`}</span></button>`;
-    modal.innerHTML = `<section class="crossword-game-shell"><header class="crossword-header"><div><p>VOCABULARY CROSSWORD</p><h2>Crosswords</h2></div><div class="crossword-header-actions"><button type="button" id="crossword-board-reset" aria-label="Fit whole board" title="Fit whole board" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" id="crossword-close" aria-label="Close game">×</button></div></header><div class="crossword-content"><div class="game-player-hud-slot"></div><p class="crossword-instructions">Choose a clue, zoom in, then enter its answer. A correct word earns one point.</p><div class="crossword-layout"><div class="crossword-board-scroll"><div class="crossword-grid" id="crossword-grid" role="group" aria-label="Crossword puzzle"></div></div><aside class="crossword-clues"><section><h3>Across</h3>${puzzle.across.map((word, index) => clueRow(word, index, 'across')).join('')}</section><section><h3>Down</h3>${puzzle.down.map((word, index) => clueRow(word, index, 'down')).join('')}</section></aside></div><div class="crossword-keyboard-launch-row"><button type="button" id="crossword-keyboard-toggle" class="crossword-keyboard-fab" aria-label="Open touch keyboard" aria-expanded="false" title="Open touch keyboard"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="9" width="40" height="29" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M11 17h4m4 0h4m4 0h4m4 0h4M11 24h4m4 0h4m4 0h4m4 0h4M14 31h20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button></div><div class="crossword-actions"><p id="crossword-feedback" aria-live="polite">${puzzle.across.length + puzzle.down.length} words to solve · 0 points</p></div><div id="crossword-virtual-keyboard" class="crossword-virtual-keyboard" data-size="medium" hidden><div class="crossword-keyboard-head"><span class="crossword-keyboard-grip" aria-hidden="true">···</span><div class="crossword-keyboard-size-controls" role="group" aria-label="Touch keyboard size"><button type="button" data-keyboard-size-step="-1" aria-label="Make keyboard smaller">−</button><span id="crossword-keyboard-size-label" aria-live="polite">Medium</span><button type="button" data-keyboard-size-step="1" aria-label="Make keyboard larger">+</button></div><button type="button" id="crossword-keyboard-close" class="crossword-keyboard-close" aria-label="Minimize keyboard" title="Minimize keyboard">▼</button></div><div class="crossword-keyboard-keys"><div class="crossword-keyboard-row">${'QWERTYUIOP'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}</div><div class="crossword-keyboard-row">${'ASDFGHJKL'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}</div><div class="crossword-keyboard-row">${'ZXCVBNM'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}<button type="button" data-key="BACKSPACE" aria-label="Backspace">⌫</button></div><div class="crossword-keyboard-row crossword-keyboard-utility-row"><button type="button" data-key="SPACE" aria-label="Move to next letter">Space</button><button type="button" data-key="ENTER" aria-label="Submit answer">Enter</button></div></div></div></div></section>`;
+    modal.innerHTML = `<section class="crossword-game-shell"><header class="crossword-header"><div><p>VOCABULARY CROSSWORD</p><h2>Crosswords</h2></div><div class="crossword-header-actions"><button type="button" id="crossword-board-reset" aria-label="Fit whole board" title="Fit whole board" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" id="crossword-close" aria-label="Close game">×</button></div></header><div class="crossword-content"><div class="game-player-hud-slot"></div><p class="crossword-instructions">Choose a clue, zoom in, then enter its answer. A correct word earns one point.</p><div class="crossword-layout"><div class="crossword-board-scroll"><div class="crossword-grid" id="crossword-grid" role="group" aria-label="Crossword puzzle"></div></div><aside class="crossword-clues"><header class="crossword-clues-toolbar"><strong>Clues</strong><button type="button" id="crossword-clues-toggle" aria-expanded="true" aria-label="Hide clues" title="Hide clues">◀</button></header><section><h3>Across</h3>${puzzle.across.map((word, index) => clueRow(word, index, 'across')).join('')}</section><section><h3>Down</h3>${puzzle.down.map((word, index) => clueRow(word, index, 'down')).join('')}</section></aside></div><div class="crossword-keyboard-launch-row"><button type="button" id="crossword-keyboard-toggle" class="crossword-keyboard-fab" aria-label="Open touch keyboard" aria-expanded="false" title="Open touch keyboard"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="9" width="40" height="29" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M11 17h4m4 0h4m4 0h4m4 0h4M11 24h4m4 0h4m4 0h4m4 0h4M14 31h20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button></div><div class="crossword-actions"><p id="crossword-feedback" aria-live="polite">${puzzle.across.length + puzzle.down.length} words to solve · 0 points</p></div><div id="crossword-virtual-keyboard" class="crossword-virtual-keyboard" data-size="medium" hidden><div class="crossword-keyboard-head"><span class="crossword-keyboard-grip" aria-hidden="true">···</span><div class="crossword-keyboard-size-controls" role="group" aria-label="Touch keyboard size"><button type="button" data-keyboard-size-step="-1" aria-label="Make keyboard smaller">−</button><span id="crossword-keyboard-size-label" aria-live="polite">Medium</span><button type="button" data-keyboard-size-step="1" aria-label="Make keyboard larger">+</button></div><button type="button" id="crossword-keyboard-close" class="crossword-keyboard-close" aria-label="Minimize keyboard" title="Minimize keyboard">▼</button></div><div class="crossword-keyboard-keys"><div class="crossword-keyboard-row">${'QWERTYUIOP'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}</div><div class="crossword-keyboard-row">${'ASDFGHJKL'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}</div><div class="crossword-keyboard-row">${'ZXCVBNM'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}<button type="button" data-key="BACKSPACE" aria-label="Backspace">⌫</button></div><div class="crossword-keyboard-row crossword-keyboard-utility-row"><button type="button" data-key="SPACE" aria-label="Move to next letter">Space</button><button type="button" data-key="ENTER" aria-label="Submit answer">Enter</button></div></div></div></div></section>`;
     document.body.appendChild(modal);
     if (typeof attachGameFullscreen === 'function') attachGameFullscreen(modal);
     renderGamePlayerHud(modal, 1, 0);
@@ -5346,6 +5355,18 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       setZoom(true);
       setKeyboardOpen(true);
     };
+    const cluesToggle = modal.querySelector('#crossword-clues-toggle');
+    cluesToggle.addEventListener('click', () => {
+      const hidden = modal.querySelector('.crossword-layout').classList.toggle('is-clues-hidden');
+      const cluesPanel = modal.querySelector('.crossword-clues');
+      cluesPanel.inert = hidden;
+      cluesPanel.setAttribute('aria-hidden', String(hidden));
+      cluesToggle.setAttribute('aria-expanded', String(!hidden));
+      cluesToggle.setAttribute('aria-label', hidden ? 'Show clues' : 'Hide clues');
+      cluesToggle.title = hidden ? 'Show clues' : 'Hide clues';
+      cluesToggle.textContent = hidden ? '▶' : '◀';
+      requestAnimationFrame(sizeBoardToViewport);
+    });
     modal.querySelectorAll('.crossword-clue').forEach(button => button.addEventListener('click', () => {
       const group = button.dataset.group === 'down' ? puzzle.down : puzzle.across;
       const word = group.find(item => item.id === Number(button.dataset.wordId));
@@ -6695,6 +6716,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       area.querySelectorAll(':scope > .game-inline-view').forEach(view => view.remove());
       const hub = area.querySelector(':scope > .glass-container');
       if (hub) hub.hidden = true;
+      const crosswordWordMax = resolvedFnName === 'chooseCrossword' ? Math.max(2, Number(window.getCrosswordWordCount?.(listName) || 2)) : 0;
       const selectedThemeId = window.gaGetTheme();
       const selectedTheme = GAME_THEMES.find(t => t.id === selectedThemeId) || GAME_THEMES[0];
       const panel = document.createElement('section');
@@ -6708,10 +6730,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </div>
           <div class="ga-theme-grid" role="radiogroup" aria-label="Choose visual style">${renderThemeCardsMarkup(selectedTheme.id)}</div>
         </section>
+        ${resolvedFnName === 'chooseCrossword' ? `<section class="ga-crossword-count" aria-label="Crossword word count"><label for="ga-crossword-word-count">Words in puzzle</label><div class="ga-crossword-count-controls"><input id="ga-crossword-word-count" type="number" min="2" max="${crosswordWordMax}" value="${crosswordWordMax}" inputmode="numeric"><button type="button" id="ga-crossword-play-all">Play All (${crosswordWordMax} words)</button></div></section>` : ''}
         <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
           <button type="button" class="btn-primary ga-student-start-btn" style="padding: 0.75rem 1.75rem; font-size: 1rem; font-weight: 800;">Start ${esc(game.name)} →</button>
         </div>`;
       panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
+      panel.querySelector('#ga-crossword-play-all')?.addEventListener('click', () => { const input = panel.querySelector('#ga-crossword-word-count'); input.value = String(crosswordWordMax); input.setCustomValidity(''); });
       panel.addEventListener('click', event => {
         const card = event.target.closest('[data-ga-theme-choice]');
         if (card) {
@@ -6719,10 +6743,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         }
       });
       panel.querySelector('.ga-student-start-btn').addEventListener('click', () => {
+        const crosswordCountInput = panel.querySelector('#ga-crossword-word-count');
+        const crosswordCount = crosswordCountInput ? Number(crosswordCountInput.value) : null;
+        if (crosswordCountInput && (!Number.isInteger(crosswordCount) || crosswordCount < 2 || crosswordCount > crosswordWordMax)) { crosswordCountInput.setCustomValidity(`Enter a whole number from 2 to ${crosswordWordMax}.`); crosswordCountInput.reportValidity(); return; }
         panel.remove();
         if (resolvedFnName === 'startVocabBattle') window.startVocabBattle(listName);
         else if (resolvedFnName === 'startListenCatch') window.startListenCatch(listName);
-        else window.openGameCrossword(listName, 0);
+        else window.openGameCrossword(listName, 0, crosswordCount);
       });
       area.appendChild(panel);
       return;
@@ -21134,12 +21161,14 @@ function chooseGamePlayers(listName, nextStep) {
   const isSurpriseBoxes = nextStep === chooseBaamboozlePowerUps;
   const isFindMe = nextStep === chooseFindMeScore;
   const availableMatchWords = isMatchWords ? getGameWords(listName, true).filter(w => w.vocab_image && w.vocab_image.trim()) : [];
+  const availableCrosswordWordCount = isCrossword ? Math.max(2, Number(window.getCrosswordWordCount?.(listName) || 2)) : 0;
   const matchWordCounts = isMatchWords ? (() => { const maxWords = availableMatchWords.length; const desired = [Math.round(maxWords * 0.5), Math.round(maxWords * 0.8), maxWords]; const counts = [...new Set(desired.map((count, index) => index === 2 ? maxWords : Math.max(2, Math.min(maxWords, count))))].sort((a, b) => a - b); for (let count = 2; counts.length < 3 && count <= maxWords; count += 1) if (!counts.includes(count)) counts.push(count); return counts.sort((a, b) => a - b); })() : [];
   modal.innerHTML = `<div class="w-full text-center">
     <h2 class="heading-font text-2xl font-bold text-gray-100 mb-2">👥 Choose Players</h2>
     <p class="text-sm text-gray-500 mb-4">Choose players and configure every game setting before starting.</p>
     <div class="flex flex-wrap justify-center gap-3 text-left max-h-56 overflow-y-auto mb-4" id="game-player-list">${students.map((s, index) => { const accents = ['rose', 'violet', 'sky', 'amber', 'emerald', 'cyan']; const accent = accents[index % accents.length]; return `<label class="game-player-card-option group relative flex min-h-[116px] w-[104px] sm:w-[116px] flex-col items-center justify-center gap-1.5 rounded-full border-2 border-${accent}-200 bg-gradient-to-br from-white to-${accent}-50 p-2.5 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-${accent}-400 hover:shadow-lg focus-within:ring-4 focus-within:ring-${accent}-200"><input type="checkbox" value="${s.student_name}" class="game-player-check peer sr-only"><span class="game-player-checkmark absolute left-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-${accent}-600 text-white text-base font-black shadow-md ring-2 ring-white peer-checked:flex" aria-hidden="true">✓</span><span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-${accent}-100 shadow-inner transition-transform group-hover:scale-105">${gameStudentAvatarMarkup(s, 'h-10 w-10 object-contain')}</span><span class="max-w-full truncate px-1 font-extrabold tracking-wide text-${accent}-900 text-xs sm:text-sm" title="${s.student_name}">${s.student_name}</span></label>`; }).join('')}</div>
 
+    ${isCrossword ? `<section class="ga-crossword-count mb-4" aria-label="Crossword word count"><label for="crossword-word-count">Words in puzzle</label><div class="ga-crossword-count-controls"><input id="crossword-word-count" type="number" min="2" max="${availableCrosswordWordCount}" value="${availableCrosswordWordCount}" inputmode="numeric"><button type="button" id="crossword-play-all">Play All (${availableCrosswordWordCount} words)</button></div></section>` : ''}
     ${isMatchWords ? `<div class="mb-4 text-left"><h3 class="text-sm font-black text-amber-100 mb-2">Choose word count</h3><div class="grid grid-cols-3 gap-2" role="group" aria-label="Number of words">${matchWordCounts.map((count, index) => `<button type="button" class="match-word-count-option rounded-lg border-2 px-3 py-2 text-sm font-bold transition ${index === matchWordCounts.length - 1 ? 'is-selected border-lime-300 bg-indigo-700 text-amber-100 ring-2 ring-lime-300' : 'border-indigo-300 bg-slate-900 text-indigo-100 hover:border-indigo-200 hover:bg-slate-800'}" data-count="${count}" aria-pressed="${index === matchWordCounts.length - 1}">${count} words</button>`).join('')}</div></div>` : ''}
     ${isMemory ? `<div class="mb-4 text-left"><h3 class="text-sm font-black text-amber-100 mb-2">Choose difficulty</h3><div class="grid grid-cols-1 sm:grid-cols-3 gap-2" role="group" aria-label="Memory difficulty level"><button type="button" class="memory-level-option rounded-lg border-2 px-3 py-3 text-sm font-bold transition is-selected border-lime-300 bg-indigo-700 text-amber-100 ring-2 ring-lime-300" data-level="easy" aria-pressed="true">Easy · 10 cards</button><button type="button" class="memory-level-option rounded-lg border-2 border-indigo-300 bg-slate-900 px-3 py-3 text-sm font-bold text-indigo-100 transition hover:border-indigo-200 hover:bg-slate-800" data-level="medium" aria-pressed="false">Medium · 18 cards</button><button type="button" class="memory-level-option rounded-lg border-2 border-indigo-300 bg-slate-900 px-3 py-3 text-sm font-bold text-indigo-100 transition hover:border-indigo-200 hover:bg-slate-800" data-level="hard" aria-pressed="false">Hard · 30 cards</button></div></div>` : ''}
     ${isScramble || isFindMe || isMatchWords || isMemory || isSurpriseBoxes || isHangman || isCrossword ? `<div class="game-settings-grid mb-4 text-left"><div class="game-setting-control"><label for="shared-winning-score" class="block text-sm font-black text-amber-100 mb-2">Points to win</label><input id="shared-winning-score" type="number" min="1" max="1000" step="1" value="5" class="w-full border-2 border-indigo-300 rounded-lg px-3 py-2 text-sm" aria-describedby="shared-winning-score-help"><p id="shared-winning-score-help" class="text-xs text-indigo-100 mt-1">First to 5 points.</p></div><fieldset class="game-setting-control"><legend class="block text-sm font-black text-amber-100 mb-2">Winner reward coins</legend><div id="game-reward-coins" class="grid grid-cols-4 gap-2" role="radiogroup" aria-describedby="game-reward-help"><button type="button" class="game-reward-option is-selected" data-reward="0" role="radio" aria-checked="true">No coin</button><button type="button" class="game-reward-option" data-reward="5" role="radio" aria-checked="false">5 coins</button><button type="button" class="game-reward-option" data-reward="10" role="radio" aria-checked="false">10 coins</button><button type="button" class="game-reward-option" data-reward="20" role="radio" aria-checked="false">20 coins</button></div><p id="game-reward-help" class="text-xs text-indigo-100 mt-1">Choose 0, 5, 10, or 20 coins; it cannot exceed your available credits.</p></fieldset><div class="game-setting-control game-timer-setting-slot"><span class="block text-sm font-black text-amber-100 mb-2">Timer</span><div class="grid grid-cols-4 gap-2" role="group" aria-label="Timer duration"><button type="button" class="game-timer-option is-selected" data-seconds="0" aria-pressed="true">No timer</button><button type="button" class="game-timer-option" data-seconds="60" aria-pressed="false">1 min</button><button type="button" class="game-timer-option" data-seconds="180" aria-pressed="false">3 min</button><button type="button" class="game-timer-option" data-seconds="300" aria-pressed="false">5 min</button></div></div></div>` : ''}
@@ -21187,6 +21216,10 @@ function chooseGamePlayers(listName, nextStep) {
     });
   }));
   let selectedMatchWordCount = isMatchWords ? (matchWordCounts[matchWordCounts.length - 1] || 2) : null;
+  let selectedCrosswordWordCount = isCrossword ? availableCrosswordWordCount : null;
+  const crosswordWordInput = modal.querySelector('#crossword-word-count');
+  modal.querySelector('#crossword-play-all')?.addEventListener('click', () => { selectedCrosswordWordCount = availableCrosswordWordCount; crosswordWordInput.value = String(selectedCrosswordWordCount); crosswordWordInput.setCustomValidity(''); });
+  crosswordWordInput?.addEventListener('input', () => { selectedCrosswordWordCount = Number(crosswordWordInput.value); crosswordWordInput.setCustomValidity(''); });
   let selectedMemoryDifficulty = isMemory ? 'easy' : null;
   modal.querySelectorAll('.memory-level-option').forEach(option => option.addEventListener('click', () => {
     selectedMemoryDifficulty = option.dataset.level;
@@ -21245,6 +21278,7 @@ function chooseGamePlayers(listName, nextStep) {
     if (!Number.isInteger(reward) || reward < 0) { modal.querySelector('#game-player-error').textContent = 'Reward must be a non-negative whole number of coins.'; modal.querySelector('#game-player-error').classList.remove('hidden'); return; }
     if (reward > getTeacherCredits()) { modal.querySelector('#game-player-error').textContent = 'Reward cannot exceed your available credits.'; modal.querySelector('#game-player-error').classList.remove('hidden'); return; }
     if (!selected.length) { modal.querySelector('#game-player-error').textContent = 'Select at least one student.'; modal.querySelector('#game-player-error').classList.remove('hidden'); return; }
+    if (isCrossword && (!Number.isInteger(selectedCrosswordWordCount) || selectedCrosswordWordCount < 2 || selectedCrosswordWordCount > availableCrosswordWordCount)) { crosswordWordInput.setCustomValidity(`Choose a whole number from 2 to ${availableCrosswordWordCount}.`); crosswordWordInput.reportValidity(); return; }
     const sharedScore = (isScramble || isFindMe) ? Number(modal.querySelector('#shared-winning-score')?.value || 0) : 0;
     if ((isScramble || isFindMe) && (!Number.isInteger(sharedScore) || sharedScore < 1 || sharedScore > 1000)) { modal.querySelector('#game-player-error').textContent = 'Points to win must be a whole number from 1 to 1,000.'; modal.querySelector('#game-player-error').classList.remove('hidden'); return; }
     pendingGameReward = reward;
@@ -21278,7 +21312,7 @@ function chooseGamePlayers(listName, nextStep) {
       const selectedTimerSeconds = Number.isFinite(timerSeconds) && timerSeconds > 0 ? timerSeconds : 0;
       showFirstPlayerReveal(() => openBaamboozle(listName, enabled, selectedBaamCardCount, selectedTimerSeconds), listName);
     } else if (isCrossword) {
-      showFirstPlayerReveal(() => window.openGameCrossword(listName, timerSeconds), listName);
+      showFirstPlayerReveal(() => window.openGameCrossword(listName, timerSeconds, selectedCrosswordWordCount), listName);
     } else showFirstPlayerReveal(nextStep, listName);
   });
   modal.querySelector('#game-players-cancel').addEventListener('click', () => { window.gaExitSetupToArcade?.(); });

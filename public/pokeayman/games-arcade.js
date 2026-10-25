@@ -1179,6 +1179,7 @@
       area.querySelectorAll(':scope > .game-inline-view').forEach(view => view.remove());
       const hub = area.querySelector(':scope > .glass-container');
       if (hub) hub.hidden = true;
+      const crosswordWordMax = resolvedFnName === 'chooseCrossword' ? Math.max(2, Number(window.getCrosswordWordCount?.(listName) || 2)) : 0;
       const selectedThemeId = window.gaGetTheme();
       const selectedTheme = GAME_THEMES.find(t => t.id === selectedThemeId) || GAME_THEMES[0];
       const panel = document.createElement('section');
@@ -1192,10 +1193,12 @@
           </div>
           <div class="ga-theme-grid" role="radiogroup" aria-label="Choose visual style">${renderThemeCardsMarkup(selectedTheme.id)}</div>
         </section>
+        ${resolvedFnName === 'chooseCrossword' ? `<section class="ga-crossword-count" aria-label="Crossword word count"><label for="ga-crossword-word-count">Words in puzzle</label><div class="ga-crossword-count-controls"><input id="ga-crossword-word-count" type="number" min="2" max="${crosswordWordMax}" value="${crosswordWordMax}" inputmode="numeric"><button type="button" id="ga-crossword-play-all">Play All (${crosswordWordMax} words)</button></div></section>` : ''}
         <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
           <button type="button" class="btn-primary ga-student-start-btn" style="padding: 0.75rem 1.75rem; font-size: 1rem; font-weight: 800;">Start ${esc(game.name)} →</button>
         </div>`;
       panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
+      panel.querySelector('#ga-crossword-play-all')?.addEventListener('click', () => { const input = panel.querySelector('#ga-crossword-word-count'); input.value = String(crosswordWordMax); input.setCustomValidity(''); });
       panel.addEventListener('click', event => {
         const card = event.target.closest('[data-ga-theme-choice]');
         if (card) {
@@ -1203,10 +1206,13 @@
         }
       });
       panel.querySelector('.ga-student-start-btn').addEventListener('click', () => {
+        const crosswordCountInput = panel.querySelector('#ga-crossword-word-count');
+        const crosswordCount = crosswordCountInput ? Number(crosswordCountInput.value) : null;
+        if (crosswordCountInput && (!Number.isInteger(crosswordCount) || crosswordCount < 2 || crosswordCount > crosswordWordMax)) { crosswordCountInput.setCustomValidity(`Enter a whole number from 2 to ${crosswordWordMax}.`); crosswordCountInput.reportValidity(); return; }
         panel.remove();
         if (resolvedFnName === 'startVocabBattle') window.startVocabBattle(listName);
         else if (resolvedFnName === 'startListenCatch') window.startListenCatch(listName);
-        else window.openGameCrossword(listName, 0);
+        else window.openGameCrossword(listName, 0, crosswordCount);
       });
       area.appendChild(panel);
       return;
