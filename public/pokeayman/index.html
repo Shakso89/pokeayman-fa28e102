@@ -5153,7 +5153,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/leaderboard-views.css">
 <link rel="stylesheet" href="/pokeayman/profile-workspace.css">
 <link rel="stylesheet" href="/pokeayman/vocab-editor.css">
-<link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261023-classic-boxes-v1">
+<link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261025-score-target-badge-v1">
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/crossword.css?v=20261025-crosswords-v10">
 <link rel="stylesheet" href="/pokeayman/vocab-battle.css">
@@ -5268,10 +5268,11 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     modal.className = 'game-popup-modal crossword-game-root fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3';
     modal.dataset.noWinnerOnTimeout = 'true';
     const clueRow = (word, index, group) => `<button type="button" class="crossword-clue" data-word-id="${word.id}" data-group="${group}"><span class="crossword-clue-number">${word.number}</span><span class="crossword-clue-copy">${word.clue ? escCrossword(word.clue) : word.image ? `<img src="${escCrossword(word.image)}" alt="Picture clue for ${escCrossword(word.word)}" loading="lazy">` : `Word with ${word.answer.length} letters`}</span></button>`;
-    modal.innerHTML = `<section class="crossword-game-shell"><header class="crossword-header"><div><p>VOCABULARY CROSSWORD</p><h2>Crosswords</h2></div><div class="crossword-header-actions"><button type="button" id="crossword-board-reset" aria-label="Fit whole board" title="Fit whole board" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" id="crossword-close" aria-label="Close game">×</button></div></header><div class="crossword-content"><div class="game-player-hud-slot"></div><p class="crossword-instructions">Choose a clue, zoom in, then enter its answer. A correct word earns one point.</p><div class="crossword-layout"><button type="button" id="crossword-clues-toggle" class="crossword-clues-toggle" aria-controls="crossword-clues-panel" aria-expanded="true" aria-label="Hide clues" title="Hide clues">▶</button><div class="crossword-board-scroll"><div class="crossword-grid" id="crossword-grid" role="group" aria-label="Crossword puzzle"></div></div><aside id="crossword-clues-panel" class="crossword-clues"><header class="crossword-clues-toolbar"><strong>Clues</strong></header><section><h3>Across</h3>${puzzle.across.map((word, index) => clueRow(word, index, 'across')).join('')}</section><section><h3>Down</h3>${puzzle.down.map((word, index) => clueRow(word, index, 'down')).join('')}</section></aside></div><div class="crossword-keyboard-launch-row"><button type="button" id="crossword-keyboard-toggle" class="crossword-keyboard-fab" aria-label="Open touch keyboard" aria-expanded="false" title="Open touch keyboard"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="9" width="40" height="29" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M11 17h4m4 0h4m4 0h4m4 0h4M11 24h4m4 0h4m4 0h4m4 0h4M14 31h20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button></div><div class="crossword-actions"><p id="crossword-feedback" aria-live="polite">${puzzle.across.length + puzzle.down.length} words to solve · 0 points</p></div><div id="crossword-virtual-keyboard" class="crossword-virtual-keyboard" data-size="medium" hidden><div class="crossword-keyboard-head"><strong class="crossword-keyboard-title">Keyboard</strong><div class="crossword-keyboard-size-controls" role="group" aria-label="Touch keyboard size"><button type="button" data-keyboard-size-step="-1" aria-label="Make keyboard smaller">−</button><span id="crossword-keyboard-size-label" aria-live="polite">Medium</span><button type="button" data-keyboard-size-step="1" aria-label="Make keyboard larger">+</button></div><button type="button" id="crossword-keyboard-close" class="crossword-keyboard-close" aria-label="Minimize keyboard" title="Minimize keyboard">▼</button></div><div class="crossword-keyboard-keys"><div class="crossword-keyboard-row">${'QWERTYUIOP'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}</div><div class="crossword-keyboard-row">${'ASDFGHJKL'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}</div><div class="crossword-keyboard-row">${'ZXCVBNM'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}</div></div></div></div></section>`;
+    modal.innerHTML = `<section class="crossword-game-shell"><header class="crossword-header"><div><p>VOCABULARY CROSSWORD</p><h2>Crosswords</h2></div><div class="crossword-header-actions"><button type="button" id="crossword-board-reset" aria-label="Fit whole board" title="Fit whole board" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" id="crossword-close" aria-label="Close game">×</button></div></header><div class="crossword-content"><div class="game-player-hud-slot"></div><div class="crossword-layout"><button type="button" id="crossword-clues-toggle" class="crossword-clues-toggle" aria-controls="crossword-clues-panel" aria-expanded="true" aria-label="Hide clues" title="Hide clues">▶</button><div class="crossword-board-scroll"><div class="crossword-grid" id="crossword-grid" role="group" aria-label="Crossword puzzle"></div></div><aside id="crossword-clues-panel" class="crossword-clues"><header class="crossword-clues-toolbar"><strong>Clues</strong></header><section><h3>Across</h3>${puzzle.across.map((word, index) => clueRow(word, index, 'across')).join('')}</section><section><h3>Down</h3>${puzzle.down.map((word, index) => clueRow(word, index, 'down')).join('')}</section></aside></div><div class="crossword-keyboard-launch-row"><button type="button" id="crossword-keyboard-toggle" class="crossword-keyboard-fab" aria-label="Open touch keyboard" aria-expanded="false" title="Open touch keyboard"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="9" width="40" height="29" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M11 17h4m4 0h4m4 0h4m4 0h4M11 24h4m4 0h4m4 0h4m4 0h4M14 31h20" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button></div><p id="crossword-feedback" class="sr-only" aria-live="polite" aria-atomic="true"></p><div id="crossword-virtual-keyboard" class="crossword-virtual-keyboard" data-size="medium" hidden><div class="crossword-keyboard-head"><strong class="crossword-keyboard-title">Keyboard</strong><div class="crossword-keyboard-size-controls" role="group" aria-label="Touch keyboard size"><button type="button" data-keyboard-size-step="-1" aria-label="Make keyboard smaller">−</button><span id="crossword-keyboard-size-label" aria-live="polite">Medium</span><button type="button" data-keyboard-size-step="1" aria-label="Make keyboard larger">+</button></div><button type="button" id="crossword-keyboard-close" class="crossword-keyboard-close" aria-label="Minimize keyboard" title="Minimize keyboard">▼</button></div><div class="crossword-keyboard-keys"><div class="crossword-keyboard-row">${'QWERTYUIOP'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}</div><div class="crossword-keyboard-row">${'ASDFGHJKL'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}</div><div class="crossword-keyboard-row">${'ZXCVBNM'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}</div></div></div></div></section>`;
     document.body.appendChild(modal);
     if (typeof attachGameFullscreen === 'function') attachGameFullscreen(modal);
-    renderGamePlayerHud(modal, 1, 0);
+    const crosswordTargetScore = puzzle.across.length + puzzle.down.length;
+    renderGamePlayerHud(modal, crosswordTargetScore, 0, crosswordTargetScore);
     startPlayerTurnTimer(modal, timerSeconds);
     const feedback = modal.querySelector('#crossword-feedback');
     const grid = modal.querySelector('#crossword-grid');
@@ -20872,7 +20873,7 @@ function resetGameTurnState() {
 function advanceGameTurn() {
   if (activeGamePlayers.length > 1) activeGamePlayerIndex = (activeGamePlayerIndex + 1) % activeGamePlayers.length;
 }
-function renderGamePlayerHud(modal, total, progress = 0) {
+function renderGamePlayerHud(modal, total, progress = 0, targetScore = null) {
   if (!activeGamePlayers.length || !modal) return;
   const hud = document.createElement('div');
   hud.className = 'game-player-hud';
@@ -20888,6 +20889,19 @@ function renderGamePlayerHud(modal, total, progress = 0) {
       <p class="game-player-score" aria-label="Player score">${activeGameScores[index] || 0}</p>
     </div>`;
   }).join('');
+  const scoreTarget = Number(targetScore);
+  if (Number.isFinite(scoreTarget) && scoreTarget > 0) {
+    hud.classList.add('has-target-score');
+    const targetBadge = document.createElement('div');
+    targetBadge.className = 'game-player-target-score';
+    targetBadge.setAttribute('aria-label', 'Target score ' + scoreTarget);
+    const targetLabel = document.createElement('span');
+    targetLabel.textContent = 'Target';
+    const targetValue = document.createElement('strong');
+    targetValue.textContent = String(scoreTarget);
+    targetBadge.append(targetLabel, targetValue);
+    hud.appendChild(targetBadge);
+  }
   const anchor = modal.querySelector('.game-player-hud-slot') || modal.querySelector('.p-6, .p-8');
   if (anchor) anchor.appendChild(hud);
 }
@@ -21317,7 +21331,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   let findMeAnimationId = null;
   const modal = document.createElement('div'); modal.className = 'game-popup-modal game-find-me-root fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
   modal.innerHTML = `<div class="find-me-game-shell bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[calc(100*min(var(--vh,1vh),1vh)-1rem)] overflow-hidden flex flex-col"><header class="find-me-game-header sticky top-0 px-3 py-2 flex items-center gap-2 rounded-t-2xl shrink-0"><div class="find-me-game-heading flex items-center gap-2 flex-1 min-w-0"><h2 class="heading-font text-2xl font-bold flex-1 min-w-0">🕵️ Find Me</h2></div><div class="find-me-game-tools flex items-center gap-1.5 ml-auto"><div class="match-game-density find-me-density" role="group" aria-label="Tile size"><button type="button" id="find-me-size-decrease" class="text-base font-black" aria-label="Make Find Me words smaller" title="Smaller words">−</button><button type="button" id="find-me-size-increase" class="text-base font-black" aria-label="Make Find Me words bigger" title="Bigger words">+</button></div><button class="game-fullscreen-btn text-xl font-bold" aria-label="Enter fullscreen">⛶</button><button id="find-me-close" class="text-2xl font-bold ml-2" aria-label="Close game">×</button></div></header><div class="find-me-game-content p-3 sm:p-4 overflow-y-auto"><div class="game-player-hud-slot flex justify-center w-full mb-3"></div><div class="text-center"><div class="find-me-controls find-me-inline-controls" role="group" aria-label="Find Me difficulty"><button type="button" class="find-me-difficulty-btn difficulty-easy" data-difficulty="easy" aria-pressed="false">Easy</button><button type="button" class="find-me-difficulty-btn difficulty-medium" data-difficulty="medium" aria-pressed="false">Medium</button><button type="button" class="find-me-difficulty-btn difficulty-hard" data-difficulty="hard" aria-pressed="false">Hard</button><p id="find-me-progress" class="text-sm font-semibold text-gray-600 mb-0 self-center">0/${findMeTargetScore}</p></div><div class="find-me-board-layout"><div class="flex items-center justify-center"><img id="find-me-picture" class="find-me-square object-contain rounded-xl border-2 border-orange-200 bg-orange-50" alt="Picture clue"></div><div id="find-me-box" class="find-me-square relative overflow-hidden rounded-2xl border-2 border-dashed border-orange-300 bg-orange-50"></div></div><p id="find-me-feedback" class="min-h-8 mt-4 text-lg font-bold" aria-live="polite"></p></div></div></div>`;
-  document.body.appendChild(modal); attachGameFullscreen(modal); modal.dataset.noWinnerOnTimeout = 'true'; renderGamePlayerHud(modal, winningScore, 0); startPlayerTurnTimer(modal, timerSeconds);
+  document.body.appendChild(modal); attachGameFullscreen(modal); modal.dataset.noWinnerOnTimeout = 'true'; renderGamePlayerHud(modal, winningScore, 0, findMeTargetScore); startPlayerTurnTimer(modal, timerSeconds);
   const box = modal.querySelector('#find-me-box'), feedback = modal.querySelector('#find-me-feedback');
   let findMeWordCount = Math.min(5, words.length, 15);
   const wordCountEl = modal.querySelector('#find-me-word-count');
@@ -22458,7 +22472,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
   modal.innerHTML = `<div class="cipher-lab-shell relative rounded-2xl shadow-2xl max-w-3xl w-full">
     <div class="cipher-lab-header p-4 flex items-center justify-between rounded-t-2xl">
-      <div class="flex-1 text-center"><p class="cipher-lab-progress">Pokémon Cipher Lab · First to ${wordCount} points</p><h2 class="heading-font text-2xl font-bold text-white">Unscramble Lab</h2></div>
+      <div class="flex-1 text-center"><p class="cipher-lab-progress">Pokémon Cipher Lab</p><h2 class="heading-font text-2xl font-bold text-white">Unscramble Lab</h2></div>
       <div class="flex items-center gap-2">
         <div class="scramble-sound-controls flex items-center gap-1 rounded-xl border border-white/20 bg-white/10 p-1" role="group" aria-label="Unscramble sounds">
           <button type="button" id="scramble-sound-mute" class="text-white hover:bg-white/20 rounded-lg w-8 h-8 font-bold" aria-label="Mute Unscramble sounds" title="Mute sounds">🔊</button>
@@ -22477,7 +22491,6 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
       <div class="game-player-hud-slot col-span-full flex justify-center w-full"></div>
     </div>
     <div class="cipher-lab-panel m-4 p-5 sm:p-8 text-center">
-      <p class="text-xs font-bold uppercase tracking-[.22em] text-indigo-200 mb-3">Required score to win: ${wordCount}</p>
       <p id="scramble-answer" class="cipher-lab-answer text-5xl sm:text-7xl font-black mb-6 tracking-wider flex items-center justify-center" aria-label="Unscramble word">_____</p>
       <div id="scramble-tiles" class="flex flex-wrap gap-3 mb-7 justify-center" aria-label="Available letters"></div>
       <div id="scramble-feedback" class="sr-only" aria-live="polite" aria-atomic="true"></div>
@@ -22490,7 +22503,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   </div>`;
   document.body.appendChild(modal);
   attachGameFullscreen(modal);
-  renderGamePlayerHud(modal, Math.min(wordCount, words.length), 0);
+  renderGamePlayerHud(modal, Math.min(wordCount, words.length), 0, Math.min(wordCount, words.length));
   startPlayerTurnTimer(modal, timerSeconds);
   const scrambleSoundState = { muted: false, volume: 0.32, lastPlayed: 0 };
   const scrambleMute = modal.querySelector('#scramble-sound-mute');
