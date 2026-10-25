@@ -7,7 +7,7 @@ const legacyDir = path.join(root, "public", "pokeayman");
 const htmlPath = path.join(legacyDir, "index.html");
 let html = await readFile(htmlPath, "utf8");
 
-const modules = ["games-arcade", "listen-catch"];
+const modules = ["games-arcade", "listen-catch", "crossword"];
 for (const name of modules) {
   const marker = `data-pokeayman-inline="${name}"`;
   const startTag = `<script ${marker}>`;
@@ -26,7 +26,7 @@ for (const name of modules) {
 
   const externalTag = `<script src="/pokeayman/${name}.js"></script>`;
   if (!html.includes(externalTag)) throw new Error(`Could not find ${externalTag} in index.html`);
-  html = html.replace(externalTag, `${startTag}\n${source}\n${endTag}`);
+  html = html.replace(externalTag, () => `${startTag}\n${source}\n${endTag}`);
 }
 
 await writeFile(htmlPath, html);
