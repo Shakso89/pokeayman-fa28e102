@@ -290,3 +290,11 @@ html body.ts-bright .crossword-keyboard-size-controls span { color:#312e81; }
 .crossword-layout.is-clues-hidden .crossword-clues > section { visibility:hidden; opacity:0; pointer-events:none; }
 .crossword-layout.is-clues-hidden .crossword-clues-toolbar { justify-content:flex-end; margin:0; }
 .crossword-layout.is-clues-hidden .crossword-clues-toolbar strong { display:none; }
+/* Keep the clues handle outside the sidebar so it survives collapse. */
+.crossword-clues-toggle { position:absolute; z-index:8; top:.5rem; right:.5rem; display:grid; place-items:center; width:2.7rem; height:2.7rem; border:1px solid var(--ga-stage-yellow,#ffcb05); border-radius:.8rem; background:var(--ga-stage-chip,#263449); color:var(--ga-stage-ink,#fff); box-shadow:0 4px 0 color-mix(in srgb,var(--ga-stage-chip,#263449) 65%,#000); font-size:1.15rem; font-weight:950; cursor:pointer; transition:transform .18s ease,background .18s ease; }
+.crossword-clues-toggle:hover { transform:translateX(-2px); }
+.crossword-layout.is-clues-hidden .crossword-clues-toggle { position:absolute; top:.5rem; right:.5rem; }
+.crossword-clues-toolbar { display:none!important; }
+
+.crossword-clues-toolbar { display:block!important; padding-right:3.2rem; }
+.crossword-layout.is-clues-hidden .crossword-clues-toolbar { visibility:hidden; }
