@@ -165,16 +165,11 @@
       const scale = Math.max(1, Math.min(2.2, safeWidth / wordWidth, safeHeight / wordHeight));
       const wordLeft = selectedWord.col * unit;
       const wordTop = selectedWord.row * unit;
-      const focusCenterY = modal.querySelector('.crossword-content').classList.contains('is-keyboard-open') ? boardViewport.clientHeight * .42 : boardViewport.clientHeight / 2;
       const desiredX = boardViewport.clientWidth / 2 - (wordLeft + wordWidth / 2) * scale;
-      const desiredY = focusCenterY - (wordTop + wordHeight / 2) * scale;
-      const minX = boardViewport.clientWidth - 16 - (wordLeft + wordWidth) * scale;
-      const maxX = 16 - wordLeft * scale;
-      const minY = boardViewport.clientHeight - 16 - (wordTop + wordHeight) * scale;
-      const maxY = 16 - wordTop * scale;
+      const desiredY = boardViewport.clientHeight / 2 - (wordTop + wordHeight / 2) * scale;
       grid.style.setProperty('--crossword-scale', String(scale));
-      grid.style.setProperty('--crossword-x', `${Math.min(maxX, Math.max(minX, desiredX))}px`);
-      grid.style.setProperty('--crossword-y', `${Math.min(maxY, Math.max(minY, desiredY))}px`);    };
+      grid.style.setProperty('--crossword-x', `${desiredX}px`);
+      grid.style.setProperty('--crossword-y', `${desiredY}px`);    };
     const selectWord = word => {
       if (!word || completedWords.has(word.id)) return;
       selectedWord = word;
