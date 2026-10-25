@@ -198,3 +198,62 @@ html body.ts-bright .crossword-keyboard-size-controls span { color:#312e81; }
   .crossword-virtual-keyboard { margin-left:3rem; margin-right:4.5rem; max-height:44vh; }
   .crossword-keyboard-launch-row { margin-left:3rem; margin-right:4.5rem; }
 }
+
+/* The touch keyboard is a true in-flow dock, with all keys visible and theme-aware surfaces. */
+.crossword-virtual-keyboard {
+  --cw-kb-panel: color-mix(in srgb, var(--ga-stage-surface, #17233a) 94%, #090d1b);
+  --cw-kb-face: color-mix(in srgb, var(--ga-stage-chip, #25334e) 80%, #fff);
+  --cw-kb-text: var(--ga-stage-ink, #f7f8ff);
+  --cw-kb-edge: color-mix(in srgb, var(--ga-stage-blue, #7c8cff) 75%, white);
+  --cw-kb-bottom: color-mix(in srgb, var(--ga-stage-blue, #5865d8) 75%, #11152d);
+  --cw-kb-accent: var(--ga-stage-yellow, #ffcb05);
+  position:relative!important; inset:auto!important; left:auto!important; right:auto!important; top:auto!important; bottom:auto!important;
+  transform:none!important; z-index:auto; flex:0 0 auto; align-self:stretch; width:auto!important;
+  max-height:none!important; overflow:visible!important; box-sizing:border-box; margin:0 clamp(.35rem,2vw,1rem);
+  padding:.45rem clamp(.35rem,1.4vw,1rem) max(.45rem,env(safe-area-inset-bottom));
+  border:2px solid var(--cw-kb-edge); border-radius:1.1rem 1.1rem 0 0;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--cw-kb-panel) 92%,transparent),var(--cw-kb-panel));
+  color:var(--cw-kb-text); box-shadow:0 -5px 0 var(--cw-kb-bottom),0 -14px 32px #0004; backdrop-filter:blur(14px); touch-action:manipulation;
+}
+.crossword-keyboard-head { min-height:2rem!important; margin:0 0 .32rem!important; }
+.crossword-keyboard-grip { color:var(--cw-kb-edge)!important; }
+.crossword-keyboard-size-controls { background:color-mix(in srgb,var(--cw-kb-panel) 76%,#080b16)!important; border-color:var(--cw-kb-edge)!important; }
+.crossword-keyboard-size-controls button,.crossword-keyboard-close { color:var(--cw-kb-text)!important; border-color:var(--cw-kb-edge)!important; background:color-mix(in srgb,var(--cw-kb-face) 60%,var(--cw-kb-panel))!important; }
+.crossword-keyboard-keys { gap:clamp(.18rem,.45vh,.32rem)!important; }
+.crossword-keyboard-row { gap:clamp(.15rem,.42vw,.34rem)!important; }
+.crossword-keyboard-row:nth-child(2) { padding-inline:5%!important; }
+.crossword-keyboard-row:nth-child(3) { padding-inline:9%!important; }
+.crossword-keyboard-row button {
+  box-sizing:border-box; flex:1 1 0; min-width:0; min-height:clamp(1.7rem,4.2vh,2.75rem)!important; padding:.04rem!important;
+  border:2px solid color-mix(in srgb,var(--cw-kb-edge) 75%,white)!important; border-radius:clamp(.42rem,1vw,.8rem)!important;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--cw-kb-face) 90%,white),var(--cw-kb-face))!important;
+  color:var(--cw-kb-text)!important; box-shadow:0 3px 0 var(--cw-kb-bottom)!important; font-weight:950; touch-action:manipulation;
+}
+.crossword-keyboard-row button[data-key="BACKSPACE"],.crossword-keyboard-row button[data-key="ENTER"],.crossword-keyboard-row button[data-key="SPACE"] {
+  flex:1.5 1 0; background:linear-gradient(180deg,color-mix(in srgb,var(--cw-kb-accent) 72%,white),var(--cw-kb-accent))!important;
+  border-color:color-mix(in srgb,var(--cw-kb-accent) 75%,white)!important; color:var(--ga-stage-action-ink,#171717)!important; box-shadow:0 3px 0 color-mix(in srgb,var(--cw-kb-accent) 55%,#482800)!important;
+}
+.crossword-keyboard-utility-row { padding-inline:18%!important; }
+.crossword-keyboard-utility-row button[data-key="SPACE"] { flex:2.4 1 0; }
+.crossword-keyboard-utility-row button[data-key="ENTER"] { flex:1.2 1 0; }
+.crossword-virtual-keyboard[data-size="small"] .crossword-keyboard-row button { min-height:clamp(1.55rem,3.4vh,2.2rem)!important; font-size:clamp(.78rem,1.55vh,.98rem)!important; }
+.crossword-virtual-keyboard[data-size="medium"] .crossword-keyboard-row button { min-height:clamp(1.7rem,4.2vh,2.75rem)!important; font-size:clamp(.85rem,1.8vh,1.15rem)!important; }
+.crossword-virtual-keyboard[data-size="large"] .crossword-keyboard-row button { min-height:clamp(1.8rem,4.7vh,3rem)!important; font-size:clamp(.9rem,1.95vh,1.25rem)!important; }
+.ga-stage[data-ga-theme="toybox"] .crossword-virtual-keyboard {
+  --cw-kb-panel:#263b71; --cw-kb-face:#f3d9ff; --cw-kb-text:#20234b; --cw-kb-edge:#9b8bff; --cw-kb-bottom:#5344c2; --cw-kb-accent:#ffd24a;
+  border-radius:1.45rem 1.45rem 0 0; box-shadow:0 -5px 0 #4435ae,0 -14px 32px #130b3c99;
+}
+.ga-stage[data-ga-theme="toybox"] .crossword-keyboard-row button { border-radius:1rem!important; }
+.ga-stage[data-ga-theme="halloween"] .crossword-virtual-keyboard {
+  --cw-kb-panel:#21152f; --cw-kb-face:#3a294a; --cw-kb-text:#fff4e7; --cw-kb-edge:#a866ff; --cw-kb-bottom:#100b19; --cw-kb-accent:#ff922b;
+  border-color:#b76cff; box-shadow:0 -5px 0 #6c2aa1,0 -14px 32px #09050ebb;
+}
+.ga-stage[data-ga-theme="halloween"] .crossword-keyboard-row button:not([data-key="BACKSPACE"]):not([data-key="ENTER"]):not([data-key="SPACE"]) { background:linear-gradient(180deg,#493454,#30213c)!important; border-color:#a866ff!important; color:#fff4e7!important; box-shadow:0 3px 0 #170d21!important; }
+.ga-stage[data-ga-theme="halloween"] .crossword-keyboard-row button[data-key="BACKSPACE"],.ga-stage[data-ga-theme="halloween"] .crossword-keyboard-row button[data-key="ENTER"],.ga-stage[data-ga-theme="halloween"] .crossword-keyboard-row button[data-key="SPACE"] { background:linear-gradient(180deg,#ffb04f,#ed701b)!important; border-color:#ffc477!important; color:#341800!important; box-shadow:0 3px 0 #8f390c!important; }
+@media(max-width:760px) {
+  .crossword-virtual-keyboard { margin-inline:clamp(.3rem,1.5vw,.8rem); padding:.35rem .35rem max(.4rem,env(safe-area-inset-bottom)); }
+  .crossword-keyboard-keys { gap:.16rem!important; }
+  .crossword-keyboard-row { gap:.14rem!important; }
+  .crossword-keyboard-row:nth-child(2),.crossword-keyboard-row:nth-child(3),.crossword-keyboard-utility-row { padding-inline:2%!important; }
+  .crossword-keyboard-row button { min-height:clamp(1.75rem,5vh,2.45rem)!important; font-size:clamp(.8rem,2vh,1rem)!important; border-radius:.48rem!important; }
+}
