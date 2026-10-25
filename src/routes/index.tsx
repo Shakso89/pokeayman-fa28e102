@@ -189,6 +189,30 @@ function Index() {
     };
   }
 
-  if (!ready) return <main className="grid min-h-screen place-items-center bg-slate-950 text-slate-100" role="status">Preparing your sign-in session...</main>;
+  if (!ready) return (
+    <div className="session-restore-overlay" role="status" aria-live="polite">
+      <style>{`
+        .session-restore-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 42%,rgba(18,37,76,.82),rgba(5,10,23,.97) 68%),linear-gradient(rgba(4,9,22,.84),rgba(4,9,22,.93));color:#f8fafc}
+        .session-restore-card{width:min(100%,380px);display:grid;justify-items:center;gap:12px;padding:34px 28px 30px;text-align:center;border:1px solid rgba(255,203,5,.22);border-radius:26px;background:linear-gradient(155deg,rgba(19,30,55,.9),rgba(9,15,30,.92));box-shadow:0 28px 80px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(12px)}
+        .session-restore-ball{position:relative;display:grid;place-items:center;width:66px;height:66px;margin-bottom:3px;border:4px solid rgba(255,255,255,.9);border-radius:50%;background:linear-gradient(to bottom,#ee4149 0 45%,#121725 45% 55%,#f8fafc 55% 100%);box-shadow:0 0 0 5px rgba(255,203,5,.1),0 0 32px rgba(255,203,5,.2);animation:session-restore-bob 1.6s ease-in-out infinite}
+        .session-restore-ball:after{content:'';position:absolute;left:50%;top:50%;width:19px;height:19px;transform:translate(-50%,-50%);border:4px solid #121725;border-radius:50%;background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.86)}
+        .session-restore-kicker{margin:3px 0 0;color:#ffcb05;font:800 10px/1.2 system-ui,sans-serif;letter-spacing:.2em}
+        .session-restore-card h1{margin:0;color:#f8fafc;font:800 clamp(21px,5vw,27px)/1.15 system-ui,sans-serif}
+        .session-restore-copy{margin:0;color:#aebbd3;font:500 14px/1.5 system-ui,sans-serif}
+        .session-restore-progress{width:min(100%,240px);height:4px;margin-top:9px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.1)}
+        .session-restore-progress i{display:block;width:38%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ffcb05,#ffeb83);box-shadow:0 0 14px rgba(255,203,5,.65);animation:session-restore-progress 1.25s ease-in-out infinite}
+        @keyframes session-restore-bob{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-5px) rotate(5deg)}}
+        @keyframes session-restore-progress{from{transform:translateX(-110%)}to{transform:translateX(270%)}}
+        @media(prefers-reduced-motion:reduce){.session-restore-ball,.session-restore-progress i{animation:none}}
+      `}</style>
+      <section className="session-restore-card">
+        <span className="session-restore-ball" aria-hidden="true" />
+        <p className="session-restore-kicker">TEACHER PORTAL</p>
+        <h1>Getting your classroom ready</h1>
+        <p className="session-restore-copy">Restoring your sign-in and preparing your dashboard.</p>
+        <span className="session-restore-progress" aria-hidden="true"><i /></span>
+      </section>
+    </div>
+  );
   return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html?v=20261023-classic-boxes-v1" allowFullScreen />;
 }
