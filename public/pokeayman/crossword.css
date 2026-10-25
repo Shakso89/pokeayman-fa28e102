@@ -298,3 +298,52 @@ html body.ts-bright .crossword-keyboard-size-controls span { color:#312e81; }
 
 .crossword-clues-toolbar { display:block!important; padding-right:3.2rem; }
 .crossword-layout.is-clues-hidden .crossword-clues-toolbar { visibility:hidden; }
+
+/* Crossword input visibility: out-rank the legacy global form-field inset shadow/height rules. */
+html body > .ga-stage .crossword-cell,
+html body > .ga-stage .crossword-cell input[data-cell-key] {
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+html body > .ga-stage .crossword-cell::before,
+html body > .ga-stage .crossword-cell::after,
+html body > .ga-stage .crossword-cell input[data-cell-key]::before,
+html body > .ga-stage .crossword-cell input[data-cell-key]::after {
+  content: none !important;
+  display: none !important;
+}
+html body > .ga-stage .crossword-cell input[data-cell-key] {
+  display: block !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: #172554 !important;
+  -webkit-text-fill-color: #172554 !important;
+  caret-color: #172554 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-indent: 0 !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  font-family: inherit !important;
+  font-size: clamp(12px, calc(var(--crossword-cell-size, 24px) * .58), 1.25rem) !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+}
+html body > .ga-stage .crossword-cell {
+  overflow: hidden !important;
+  border-radius: clamp(3px, .35vw, 7px) !important;
+  background-color: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
