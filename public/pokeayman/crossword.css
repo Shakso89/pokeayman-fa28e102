@@ -111,3 +111,20 @@ body > .ga-stage .ga-stage-shell > .crossword-content:not(.ga-stage-header):not(
 .crossword-virtual-keyboard { bottom:6rem; }
 @media(max-width:760px) { .crossword-virtual-keyboard { bottom:6rem; } .crossword-keyboard-fab { width:3.8rem;height:3.8rem; } }
 .crossword-header-actions > button[hidden] { display:none!important; }
+/* In-flow keyboard controls stay below the board and never cover Check. */
+.crossword-keyboard-toolbar { display:flex; flex:0 0 auto; align-items:center; justify-content:center; gap:.8rem; min-height:3.6rem; padding:.35rem 0; }
+.crossword-keyboard-toolbar .crossword-keyboard-fab { position:static!important; inset:auto!important; transform:none; width:3.25rem;height:3.25rem; padding:.3rem; }
+.crossword-keyboard-size-controls { display:flex; align-items:center; gap:.5rem; padding:.25rem; border:1px solid #475569; border-radius:.9rem; background:#172033; }
+.crossword-keyboard-size-controls button { display:grid;place-items:center; width:2.55rem;height:2.55rem; border:2px solid #a5b4fc; border-radius:.7rem; background:linear-gradient(#fff,#c7d2fe); color:#312e81; box-shadow:0 3px 0 #4f46e5; font-size:1.55rem;line-height:1;font-weight:1000; }
+.crossword-keyboard-size-controls button:active:not(:disabled) { transform:translateY(2px);box-shadow:0 1px 0 #4f46e5; }
+.crossword-keyboard-size-controls button:disabled { opacity:.42; }
+.crossword-keyboard-size-controls span { min-width:4.5rem; color:#e0e7ff; text-align:center; text-transform:capitalize; font-size:.8rem;font-weight:900; }
+.crossword-virtual-keyboard[data-size="small"] { width:min(29rem,calc(100vw - 1rem)); }
+.crossword-virtual-keyboard[data-size="medium"] { width:min(43rem,calc(100vw - 1rem)); }
+.crossword-virtual-keyboard[data-size="large"] { width:min(56rem,calc(100vw - 1rem)); }
+.crossword-virtual-keyboard[data-size="small"] .crossword-keyboard-keys button { min-height:2.25rem;font-size:1rem; }
+.crossword-virtual-keyboard[data-size="medium"] .crossword-keyboard-keys button { min-height:3rem;font-size:1.2rem; }
+.crossword-virtual-keyboard[data-size="large"] .crossword-keyboard-keys button { min-height:4rem;font-size:1.55rem; }
+html body.ts-bright .crossword-keyboard-size-controls { background:#eef2ff;border-color:#c7d2fe; }
+html body.ts-bright .crossword-keyboard-size-controls span { color:#312e81; }
+@media(max-width:760px) { .crossword-keyboard-toolbar { min-height:3.1rem; } .crossword-keyboard-toolbar .crossword-keyboard-fab { width:2.85rem;height:2.85rem; } .crossword-virtual-keyboard { bottom:6.2rem; } }

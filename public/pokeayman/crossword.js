@@ -96,7 +96,7 @@
     modal.className = 'game-popup-modal crossword-game-root fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3';
     modal.dataset.noWinnerOnTimeout = 'true';
     const clueRow = (word, index, group) => `<button type="button" class="crossword-clue" data-word-id="${word.id}" data-group="${group}"><span class="crossword-clue-number">${word.number}</span><span class="crossword-clue-copy">${word.clue ? escCrossword(word.clue) : word.image ? `<img src="${escCrossword(word.image)}" alt="Picture clue for ${escCrossword(word.word)}" loading="lazy">` : `Word with ${word.answer.length} letters`}</span></button>`;
-    modal.innerHTML = `<section class="crossword-game-shell"><header class="crossword-header"><div><p>VOCABULARY CROSSWORD</p><h2>Crosswords</h2></div><div class="crossword-header-actions"><button type="button" id="crossword-board-reset" aria-label="Fit whole board" title="Fit whole board" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" id="crossword-close" aria-label="Close game">×</button></div></header><div class="crossword-content"><div class="game-player-hud-slot"></div><p class="crossword-instructions">Choose a clue, zoom in, then enter its answer. A correct word earns one point.</p><div class="crossword-layout"><div class="crossword-board-scroll"><div class="crossword-grid" id="crossword-grid" role="group" aria-label="Crossword puzzle"></div></div><aside class="crossword-clues"><section><h3>Across</h3>${puzzle.across.map((word, index) => clueRow(word, index, 'across')).join('')}</section><section><h3>Down</h3>${puzzle.down.map((word, index) => clueRow(word, index, 'down')).join('')}</section></aside></div><div class="crossword-actions"><p id="crossword-feedback" aria-live="polite">${puzzle.across.length + puzzle.down.length} words to solve · 0 points</p><button type="button" id="crossword-check" class="btn-primary">Check word</button></div><button type="button" id="crossword-keyboard-toggle" class="crossword-keyboard-fab" aria-label="Open touch keyboard" title="Open touch keyboard" aria-expanded="false"><svg viewBox="0 0 48 36" aria-hidden="true"><rect x="2" y="2" width="44" height="32" rx="6" fill="currentColor" opacity=".2"/><rect x="2" y="2" width="44" height="30" rx="6" fill="#fff" stroke="currentColor" stroke-width="3"/><g fill="#6366f1"><rect x="7" y="8" width="5" height="4" rx="1"/><rect x="15" y="8" width="5" height="4" rx="1"/><rect x="23" y="8" width="5" height="4" rx="1"/><rect x="31" y="8" width="5" height="4" rx="1"/><rect x="39" y="8" width="4" height="4" rx="1"/><rect x="7" y="15" width="5" height="4" rx="1"/><rect x="15" y="15" width="5" height="4" rx="1"/><rect x="23" y="15" width="5" height="4" rx="1"/><rect x="31" y="15" width="5" height="4" rx="1"/><rect x="39" y="15" width="4" height="4" rx="1"/><rect x="11" y="22" width="26" height="4" rx="2" fill="#f59e0b"/></g></svg></button><div id="crossword-virtual-keyboard" class="crossword-virtual-keyboard" hidden><button type="button" class="crossword-keyboard-drag" aria-label="Drag keyboard"><svg viewBox="0 0 36 12" aria-hidden="true"><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="30" cy="6" r="2"/></g></svg></button><div class="crossword-keyboard-keys">${'QWERTYUIOPASDFGHJKLZXCVBNM'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}<button type="button" data-key="BACKSPACE" aria-label="Backspace">⌫</button><button type="button" data-key="ENTER">Enter</button></div></div></div></section>`;
+    modal.innerHTML = `<section class="crossword-game-shell"><header class="crossword-header"><div><p>VOCABULARY CROSSWORD</p><h2>Crosswords</h2></div><div class="crossword-header-actions"><button type="button" id="crossword-board-reset" aria-label="Fit whole board" title="Fit whole board" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" id="crossword-close" aria-label="Close game">×</button></div></header><div class="crossword-content"><div class="game-player-hud-slot"></div><p class="crossword-instructions">Choose a clue, zoom in, then enter its answer. A correct word earns one point.</p><div class="crossword-layout"><div class="crossword-board-scroll"><div class="crossword-grid" id="crossword-grid" role="group" aria-label="Crossword puzzle"></div></div><aside class="crossword-clues"><section><h3>Across</h3>${puzzle.across.map((word, index) => clueRow(word, index, 'across')).join('')}</section><section><h3>Down</h3>${puzzle.down.map((word, index) => clueRow(word, index, 'down')).join('')}</section></aside></div><div class="crossword-keyboard-toolbar"><button type="button" id="crossword-keyboard-toggle" class="crossword-keyboard-fab" aria-label="Open touch keyboard" title="Open touch keyboard" aria-expanded="false"><svg viewBox="0 0 48 36" aria-hidden="true"><rect x="2" y="2" width="44" height="32" rx="6" fill="currentColor" opacity=".2"/><rect x="2" y="2" width="44" height="30" rx="6" fill="#fff" stroke="currentColor" stroke-width="3"/><g fill="#6366f1"><rect x="7" y="8" width="5" height="4" rx="1"/><rect x="15" y="8" width="5" height="4" rx="1"/><rect x="23" y="8" width="5" height="4" rx="1"/><rect x="31" y="8" width="5" height="4" rx="1"/><rect x="39" y="8" width="4" height="4" rx="1"/><rect x="7" y="15" width="5" height="4" rx="1"/><rect x="15" y="15" width="5" height="4" rx="1"/><rect x="23" y="15" width="5" height="4" rx="1"/><rect x="31" y="15" width="5" height="4" rx="1"/><rect x="39" y="15" width="4" height="4" rx="1"/><rect x="11" y="22" width="26" height="4" rx="2" fill="#f59e0b"/></g></svg></button><div class="crossword-keyboard-size-controls" role="group" aria-label="Touch keyboard size"><button type="button" data-keyboard-size-step="-1" aria-label="Make keyboard smaller">−</button><span id="crossword-keyboard-size-label" aria-live="polite">Medium</span><button type="button" data-keyboard-size-step="1" aria-label="Make keyboard larger">+</button></div></div><div class="crossword-actions"><p id="crossword-feedback" aria-live="polite">${puzzle.across.length + puzzle.down.length} words to solve · 0 points</p><button type="button" id="crossword-check" class="btn-primary">Check word</button></div><div id="crossword-virtual-keyboard" class="crossword-virtual-keyboard" hidden><button type="button" class="crossword-keyboard-drag" aria-label="Drag keyboard"><svg viewBox="0 0 36 12" aria-hidden="true"><g fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="30" cy="6" r="2"/></g></svg></button><div class="crossword-keyboard-keys">${'QWERTYUIOPASDFGHJKLZXCVBNM'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}<button type="button" data-key="BACKSPACE" aria-label="Backspace">⌫</button><button type="button" data-key="ENTER">Enter</button></div></div></div></section>`;
     document.body.appendChild(modal);
     if (typeof attachGameFullscreen === 'function') attachGameFullscreen(modal);
     renderGamePlayerHud(modal, 1, 0);
@@ -115,7 +115,7 @@
       const number = startNumbers.get(key);
       grid.insertAdjacentHTML('beforeend', `<label class="crossword-cell" data-cell="${key}">${number ? `<small>${number}</small>` : ''}<input type="text" maxlength="1" autocomplete="off" autocapitalize="characters" data-cell-key="${key}" aria-label="Row ${row}, column ${col}" data-words="${cell.wordIds.join(',')}"></label>`);
     }
-    let selectedWord = puzzle.across[0] || puzzle.down[0];
+    let selectedWord = null;
     const completedWords = new Set();
     const allWords = [...puzzle.across, ...puzzle.down];
     let activeInput = null;
@@ -135,6 +135,14 @@
     };
     const boardResizeObserver = new ResizeObserver(sizeBoardToViewport);
     boardResizeObserver.observe(boardViewport);
+    boardViewport.addEventListener('pointerdown', event => {
+      if (event.target.closest('.crossword-cell')) return;
+      selectedWord = null;
+      activeInput = null;
+      modal.querySelectorAll('.crossword-cell.is-active').forEach(cell => cell.classList.remove('is-active'));
+      modal.querySelectorAll('.crossword-clue.is-active').forEach(button => button.classList.remove('is-active'));
+      setZoom(false);
+    });
     const setZoom = (enabled, animate = true) => {
       boardViewport.classList.toggle('is-zoomed', enabled);
       resetZoomButton.hidden = !enabled;
@@ -236,7 +244,7 @@
       input.addEventListener('focus', () => {
         activeInput = input;
         const cell = puzzle.cells.get(input.dataset.cellKey);
-        const word = [selectedWord, ...allWords.filter(item => cell.wordIds.includes(item.id))].find(item => cell.wordIds.includes(item.id) && !completedWords.has(item.id));
+        const word = [...(selectedWord ? [selectedWord] : []), ...allWords.filter(item => cell.wordIds.includes(item.id))].find(item => cell.wordIds.includes(item.id) && !completedWords.has(item.id));
         if (word) selectWord(word);
       });
       input.addEventListener('input', () => {
@@ -267,7 +275,7 @@
         modal.querySelector(`input[data-cell-key="${coordKey(row + delta[0], col + delta[1])}"]`)?.focus();
       });
     });
-    selectWord(selectedWord);
+    setZoom(false);
     modal.querySelector('#crossword-check').addEventListener('click', solveActiveWord);
     resetZoomButton.addEventListener('click', () => setZoom(false));
     requestAnimationFrame(sizeBoardToViewport);
@@ -280,6 +288,23 @@
       keyboardToggle.setAttribute('aria-label', open ? 'Close touch keyboard' : 'Open touch keyboard');
       keyboardToggle.title = open ? 'Close touch keyboard' : 'Open touch keyboard';
     });
+    const keyboardSizes = ['small', 'medium', 'large'];
+    let keyboardSizeIndex = 1;
+    const keyboardSizeLabel = modal.querySelector('#crossword-keyboard-size-label');
+    const syncKeyboardSize = () => {
+      const size = keyboardSizes[keyboardSizeIndex];
+      keyboard.dataset.size = size;
+      keyboardSizeLabel.textContent = size[0].toUpperCase() + size.slice(1);
+      modal.querySelectorAll('[data-keyboard-size-step]').forEach(button => {
+        const step = Number(button.dataset.keyboardSizeStep);
+        button.disabled = (step < 0 && keyboardSizeIndex === 0) || (step > 0 && keyboardSizeIndex === keyboardSizes.length - 1);
+      });
+    };
+    modal.querySelectorAll('[data-keyboard-size-step]').forEach(button => button.addEventListener('click', () => {
+      keyboardSizeIndex = Math.max(0, Math.min(keyboardSizes.length - 1, keyboardSizeIndex + Number(button.dataset.keyboardSizeStep)));
+      syncKeyboardSize();
+    }));
+    syncKeyboardSize();
     keyboard.querySelectorAll('[data-key]').forEach(button => {
       button.addEventListener('pointerdown', event => event.preventDefault());
       button.addEventListener('click', () => {
