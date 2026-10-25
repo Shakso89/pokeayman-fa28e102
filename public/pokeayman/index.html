@@ -5259,7 +5259,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     modal.className = 'game-popup-modal crossword-game-root fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3';
     modal.dataset.noWinnerOnTimeout = 'true';
     const clueRow = (word, index, group) => `<button type="button" class="crossword-clue" data-word-id="${word.id}" data-group="${group}"><span class="crossword-clue-number">${word.number}</span><span class="crossword-clue-copy">${word.clue ? escCrossword(word.clue) : word.image ? `<img src="${escCrossword(word.image)}" alt="Picture clue for ${escCrossword(word.word)}" loading="lazy">` : `Word with ${word.answer.length} letters`}</span></button>`;
-    modal.innerHTML = `<section class="crossword-game-shell"><header class="crossword-header"><div><p>VOCABULARY CROSSWORD</p><h2>Crosswords</h2></div><button type="button" id="crossword-close" aria-label="Close game">×</button></header><div class="crossword-content"><div class="game-player-hud-slot"></div><p class="crossword-instructions">Use the clues to fill the intersecting words. Select a clue to highlight its cells.</p><div class="crossword-layout"><div class="crossword-board-scroll"><div id="crossword-grid" class="crossword-grid" role="group" aria-label="Crossword puzzle"></div></div><aside class="crossword-clues"><section><h3>Across</h3>${puzzle.across.map((word, index) => clueRow(word, index, 'across')).join('')}</section><section><h3>Down</h3>${puzzle.down.map((word, index) => clueRow(word, index, 'down')).join('')}</section></aside></div><div class="crossword-actions"><p id="crossword-feedback" aria-live="polite">${puzzle.across.length + puzzle.down.length} clues · ${puzzle.cells.size} letters</p><button type="button" id="crossword-check" class="btn-primary">Check crossword</button></div></div></section>`;
+    modal.innerHTML = `<section class="crossword-game-shell"><header class="crossword-header"><div><p>VOCABULARY CROSSWORD</p><h2>Crosswords</h2></div><div class="crossword-header-actions"><button type="button" id="crossword-keyboard-toggle" aria-expanded="false">Touch keyboard</button><button type="button" id="crossword-close" aria-label="Close game">×</button></div></header><div class="crossword-content"><div class="game-player-hud-slot"></div><p class="crossword-instructions">Choose a clue, zoom in, then enter its answer. A correct word earns one point.</p><div class="crossword-layout"><div class="crossword-board-scroll"><div class="crossword-grid" id="crossword-grid" role="group" aria-label="Crossword puzzle"></div><button type="button" id="crossword-board-reset" class="crossword-board-reset" hidden>Show full board</button></div><aside class="crossword-clues"><section><h3>Across</h3>${puzzle.across.map((word, index) => clueRow(word, index, 'across')).join('')}</section><section><h3>Down</h3>${puzzle.down.map((word, index) => clueRow(word, index, 'down')).join('')}</section></aside></div><div class="crossword-actions"><p id="crossword-feedback" aria-live="polite">${puzzle.across.length + puzzle.down.length} words to solve · 0 points</p><button type="button" id="crossword-check" class="btn-primary">Check word</button></div><div id="crossword-virtual-keyboard" class="crossword-virtual-keyboard" hidden><button type="button" class="crossword-keyboard-drag">Move keyboard</button><div class="crossword-keyboard-keys">${'QWERTYUIOPASDFGHJKLZXCVBNM'.split('').map(letter => `<button type="button" data-key="${letter}">${letter}</button>`).join('')}<button type="button" data-key="BACKSPACE" aria-label="Backspace">⌫</button><button type="button" data-key="ENTER">Enter</button></div></div></div></section>`;
     document.body.appendChild(modal);
     if (typeof attachGameFullscreen === 'function') attachGameFullscreen(modal);
     renderGamePlayerHud(modal, 1, 0);
@@ -5278,7 +5278,22 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       grid.insertAdjacentHTML('beforeend', `<label class="crossword-cell" data-cell="${key}">${number ? `<small>${number}</small>` : ''}<input type="text" maxlength="1" autocomplete="off" autocapitalize="characters" data-cell-key="${key}" aria-label="Row ${row}, column ${col}" data-words="${cell.wordIds.join(',')}"></label>`);
     }
     let selectedWord = puzzle.across[0] || puzzle.down[0];
+    const completedWords = new Set();
+    const allWords = [...puzzle.across, ...puzzle.down];
+    let activeInput = null;
+    let checkLocked = false;
+    const boardViewport = modal.querySelector('.crossword-board-scroll');
+    const resetZoomButton = modal.querySelector('#crossword-board-reset');
+    const setZoom = enabled => {
+      boardViewport.classList.toggle('is-zoomed', enabled);
+      resetZoomButton.hidden = !enabled;
+      if (!enabled || !selectedWord) { boardViewport.scrollTo({ top: 0, left: 0, behavior: 'smooth' }); return; }
+      const mid = Math.floor(selectedWord.answer.length / 2);
+      const row = selectedWord.row + (selectedWord.direction === 'down' ? mid : 0), col = selectedWord.col + (selectedWord.direction === 'across' ? mid : 0);
+      modal.querySelector(`.crossword-cell[data-cell="${coordKey(row, col)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    };
     const selectWord = word => {
+      if (!word || completedWords.has(word.id)) return;
       selectedWord = word;
       modal.querySelectorAll('.crossword-cell.is-active').forEach(cell => cell.classList.remove('is-active'));
       modal.querySelectorAll('.crossword-clue.is-active').forEach(button => button.classList.remove('is-active'));
@@ -5287,19 +5302,78 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         const row = word.row + (word.direction === 'down' ? i : 0), col = word.col + (word.direction === 'across' ? i : 0);
         modal.querySelector(`.crossword-cell[data-cell="${coordKey(row, col)}"]`)?.classList.add('is-active');
       }
+      setZoom(true);
     };
     modal.querySelectorAll('.crossword-clue').forEach(button => button.addEventListener('click', () => {
       const group = button.dataset.group === 'down' ? puzzle.down : puzzle.across;
       const word = group.find(item => item.id === Number(button.dataset.wordId));
-      if (!word) return;
+      if (!word || completedWords.has(word.id)) return;
       selectWord(word);
-      const firstCell = modal.querySelector(`.crossword-cell[data-cell="${coordKey(word.row, word.col)}"] input`);
-      firstCell?.focus();
+      const wordInputs = Array.from({ length: word.answer.length }, (_, i) => modal.querySelector(`input[data-cell-key="${coordKey(word.row + (word.direction === 'down' ? i : 0), word.col + (word.direction === 'across' ? i : 0))}"]`)).filter(Boolean);
+      activeInput = wordInputs.find(input => !input.readOnly) || wordInputs[0];
+      activeInput?.focus({ preventScroll: true });
     }));
+    const solveActiveWord = () => {
+      if (!selectedWord || completedWords.has(selectedWord.id) || checkLocked) return;
+      const word = selectedWord;
+      const keys = Array.from({ length: word.answer.length }, (_, i) => coordKey(word.row + (word.direction === 'down' ? i : 0), word.col + (word.direction === 'across' ? i : 0)));
+      if (keys.some(key => !inputState.get(key))) { feedback.textContent = 'Finish entering this word first.'; feedback.classList.add('is-error'); return; }
+      const correct = keys.every((key, i) => inputState.get(key) === word.answer[i]);
+      checkLocked = true;
+      const clue = modal.querySelector(`.crossword-clue[data-word-id="${word.id}"][data-group="${word.direction}"]`);
+      const wordCells = keys.map(key => modal.querySelector(`.crossword-cell[data-cell="${key}"]`)).filter(Boolean);
+      feedback.classList.remove('is-error');
+      if (correct) {
+        completedWords.add(word.id);
+        wordCells.forEach(cell => { cell.classList.add('is-correct'); const input = cell.querySelector('input'); if (input) input.readOnly = true; });
+        clue?.classList.add('is-solved');
+        activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+        updateGamePlayerHud(modal, allWords.length, activeGamePlayerIndex);
+        feedback.textContent = `Correct! ${completedWords.size} of ${allWords.length} words solved · ${activeGameScores[activeGamePlayerIndex]} point${activeGameScores[activeGamePlayerIndex] === 1 ? '' : 's'}.`;
+        window.pokeSfx?.play?.('correct');
+        if (completedWords.size === allWords.length) {
+          window.pokeSfx?.play?.('victory');
+          showGameCelebration(modal, 'Crossword solved!', '', activeGamePlayers[activeGamePlayerIndex]);
+          return;
+        }
+        const nextWord = allWords.find(item => !completedWords.has(item.id));
+        selectWord(nextWord);
+        const nextInputs = Array.from({ length: nextWord.answer.length }, (_, i) => modal.querySelector(`input[data-cell-key="${coordKey(nextWord.row + (nextWord.direction === 'down' ? i : 0), nextWord.col + (nextWord.direction === 'across' ? i : 0))}"]`)).filter(Boolean);
+        activeInput = nextInputs.find(input => !input.readOnly) || nextInputs[0];
+        activeInput?.focus({ preventScroll: true });
+      } else {
+        wordCells.forEach(cell => { if (!cell.classList.contains('is-correct')) cell.classList.add('is-wrong', 'is-shaking'); });
+        clue?.classList.add('is-wrong');
+        feedback.textContent = 'Not quite. Your turn ends; the next player can try this word.';
+        feedback.classList.add('is-error');
+        window.pokeSfx?.play?.('wrong');
+        advanceGameTurn();
+        updateGamePlayerHud(modal, allWords.length, activeGamePlayerIndex);
+        window.setTimeout(() => {
+          wordCells.forEach(cell => {
+            cell.classList.remove('is-wrong', 'is-shaking');
+            const key = cell.dataset.cell;
+            if (!cell.classList.contains('is-correct') && !puzzle.cells.get(key).wordIds.some(id => completedWords.has(id))) {
+              const input = cell.querySelector('input'); input.value = ''; inputState.set(key, '');
+            }
+          });
+          clue?.classList.remove('is-wrong');
+          feedback.classList.remove('is-error');
+          feedback.textContent = `Next turn: ${activeGamePlayers[activeGamePlayerIndex]?.student_name || 'Player'}.`;
+          const firstKey = keys.find(key => !modal.querySelector(`.crossword-cell[data-cell="${key}"]`)?.classList.contains('is-correct'));
+          activeInput = modal.querySelector(`input[data-cell-key="${firstKey || keys[0]}"]`);
+          activeInput?.focus({ preventScroll: true });
+          checkLocked = false;
+        }, 520);
+        return;
+      }
+      checkLocked = false;
+    };
     grid.querySelectorAll('input').forEach(input => {
       input.addEventListener('focus', () => {
+        activeInput = input;
         const cell = puzzle.cells.get(input.dataset.cellKey);
-        const word = [selectedWord, ...[...puzzle.across, ...puzzle.down].filter(item => cell.wordIds.includes(item.id))].find(item => cell.wordIds.includes(item.id));
+        const word = [selectedWord, ...allWords.filter(item => cell.wordIds.includes(item.id))].find(item => cell.wordIds.includes(item.id) && !completedWords.has(item.id));
         if (word) selectWord(word);
       });
       input.addEventListener('input', () => {
@@ -5310,11 +5384,18 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         if (!value || !selectedWord) return;
         const index = Array.from({ length: selectedWord.answer.length }, (_, i) => coordKey(selectedWord.row + (selectedWord.direction === 'down' ? i : 0), selectedWord.col + (selectedWord.direction === 'across' ? i : 0))).indexOf(input.dataset.cellKey);
         if (index >= 0 && index < selectedWord.answer.length - 1) {
-          const nextKey = coordKey(selectedWord.row + (selectedWord.direction === 'down' ? index + 1 : 0), selectedWord.col + (selectedWord.direction === 'across' ? index + 1 : 0));
-          modal.querySelector(`input[data-cell-key="${nextKey}"]`)?.focus();
+          let nextIndex = index + 1;
+          while (nextIndex < selectedWord.answer.length && modal.querySelector(`input[data-cell-key="${coordKey(selectedWord.row + (selectedWord.direction === 'down' ? nextIndex : 0), selectedWord.col + (selectedWord.direction === 'across' ? nextIndex : 0))}"]`)?.readOnly) nextIndex++;
+          if (nextIndex < selectedWord.answer.length) {
+            const nextKey = coordKey(selectedWord.row + (selectedWord.direction === 'down' ? nextIndex : 0), selectedWord.col + (selectedWord.direction === 'across' ? nextIndex : 0));
+            modal.querySelector(`input[data-cell-key="${nextKey}"]`)?.focus();
+          }
         }
+        const selectedKeys = Array.from({ length: selectedWord.answer.length }, (_, i) => coordKey(selectedWord.row + (selectedWord.direction === 'down' ? i : 0), selectedWord.col + (selectedWord.direction === 'across' ? i : 0)));
+        if (selectedKeys.every(key => inputState.get(key))) solveActiveWord();
       });
       input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') { event.preventDefault(); solveActiveWord(); return; }
         if (event.key === 'Backspace' && input.value) { input.value = ''; inputState.set(input.dataset.cellKey, ''); return; }
         if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
         event.preventDefault();
@@ -5324,36 +5405,52 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       });
     });
     selectWord(selectedWord);
-    const allWords = [...puzzle.across, ...puzzle.down];
-    modal.querySelector('#crossword-check').addEventListener('click', () => {
-      const wrong = new Set();
-      let complete = true;
-      allWords.forEach(word => {
-        let correct = true;
-        for (let i = 0; i < word.answer.length; i++) {
-          const key = coordKey(word.row + (word.direction === 'down' ? i : 0), word.col + (word.direction === 'across' ? i : 0));
-          if (inputState.get(key) !== word.answer[i]) { complete = false; correct = false; wrong.add(key); }
-        }
-        modal.querySelector(`.crossword-clue[data-word-id="${word.id}"][data-group="${word.direction}"]`)?.classList.toggle('is-wrong', !correct);
-      });
-      modal.querySelectorAll('.crossword-cell').forEach(cell => {
-        cell.classList.toggle('is-wrong', wrong.has(cell.dataset.cell));
-        cell.classList.toggle('is-correct', !wrong.has(cell.dataset.cell) && Boolean(inputState.get(cell.dataset.cell)));
-      });
-      if (complete) {
-        const winnerIndex = activeGamePlayerIndex;
-        activeGameScores[winnerIndex] = 1;
-        updateGamePlayerHud(modal, 1, winnerIndex);
-        window.pokeSfx?.play?.('victory');
-        showGameCelebration(modal, 'Crossword solved!', '', activeGamePlayers[winnerIndex]);
-        return;
-      }
-      feedback.textContent = 'Some letters need another look. The next player is up.';
-      feedback.classList.add('is-error');
-      window.pokeSfx?.play?.('wrong');
-      advanceGameTurn();
-      updateGamePlayerHud(modal, 1, activeGamePlayerIndex);
+    modal.querySelector('#crossword-check').addEventListener('click', solveActiveWord);
+    resetZoomButton.addEventListener('click', () => setZoom(false));
+    const keyboard = modal.querySelector('#crossword-virtual-keyboard');
+    const keyboardToggle = modal.querySelector('#crossword-keyboard-toggle');
+    keyboardToggle.addEventListener('click', () => {
+      const open = keyboard.hidden;
+      keyboard.hidden = !open;
+      keyboardToggle.setAttribute('aria-expanded', String(open));
+      keyboardToggle.textContent = open ? 'Hide keyboard' : 'Touch keyboard';
     });
+    keyboard.querySelectorAll('[data-key]').forEach(button => {
+      button.addEventListener('pointerdown', event => event.preventDefault());
+      button.addEventListener('click', () => {
+        if (button.dataset.key === 'ENTER') { solveActiveWord(); return; }
+        if (!activeInput) activeInput = modal.querySelector('.crossword-cell.is-active input');
+        if (!activeInput) return;
+        activeInput.focus({ preventScroll: true });
+        if (button.dataset.key === 'BACKSPACE') {
+          activeInput.value = ''; inputState.set(activeInput.dataset.cellKey, '');
+          activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+          return;
+        }
+        activeInput.value = button.dataset.key;
+        activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
+    const dragHandle = keyboard.querySelector('.crossword-keyboard-drag');
+    dragHandle.addEventListener('pointerdown', event => {
+      if (event.button !== 0 && event.pointerType === 'mouse') return;
+      event.preventDefault();
+      const rect = keyboard.getBoundingClientRect();
+      keyboard.style.transform = 'none';
+      keyboard.style.left = `${rect.left}px`;
+      keyboard._drag = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: rect.left, top: rect.top };
+      dragHandle.setPointerCapture(event.pointerId);
+    });
+    dragHandle.addEventListener('pointermove', event => {
+      const drag = keyboard._drag;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      keyboard.style.left = `${Math.max(8, Math.min(window.innerWidth - keyboard.offsetWidth - 8, drag.left + event.clientX - drag.x))}px`;
+      keyboard.style.top = `${Math.max(8, Math.min(window.innerHeight - keyboard.offsetHeight - 8, drag.top + event.clientY - drag.y))}px`;
+      keyboard.style.bottom = 'auto';
+    });
+    const stopKeyboardDrag = event => { if (keyboard._drag?.pointerId === event.pointerId) keyboard._drag = null; };
+    dragHandle.addEventListener('pointerup', stopKeyboardDrag);
+    dragHandle.addEventListener('pointercancel', stopKeyboardDrag);
     modal.querySelector('#crossword-close').addEventListener('click', () => { modal._stopPlayerTurnTimer?.(); modal.remove(); returnToGamesTab(); });
   };
 })();
@@ -20984,7 +21081,7 @@ function chooseGamePlayers(listName, nextStep) {
     <h2 class="heading-font text-2xl font-bold text-gray-100 mb-2">👥 Choose Players</h2>
     <p class="text-sm text-gray-500 mb-4">Choose players and configure every game setting before starting.</p>
     <div class="flex flex-wrap justify-center gap-3 text-left max-h-56 overflow-y-auto mb-4" id="game-player-list">${students.map((s, index) => { const accents = ['rose', 'violet', 'sky', 'amber', 'emerald', 'cyan']; const accent = accents[index % accents.length]; return `<label class="game-player-card-option group relative flex min-h-[116px] w-[104px] sm:w-[116px] flex-col items-center justify-center gap-1.5 rounded-full border-2 border-${accent}-200 bg-gradient-to-br from-white to-${accent}-50 p-2.5 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-${accent}-400 hover:shadow-lg focus-within:ring-4 focus-within:ring-${accent}-200"><input type="checkbox" value="${s.student_name}" class="game-player-check peer sr-only"><span class="game-player-checkmark absolute left-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-${accent}-600 text-white text-base font-black shadow-md ring-2 ring-white peer-checked:flex" aria-hidden="true">✓</span><span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-${accent}-100 shadow-inner transition-transform group-hover:scale-105">${gameStudentAvatarMarkup(s, 'h-10 w-10 object-contain')}</span><span class="max-w-full truncate px-1 font-extrabold tracking-wide text-${accent}-900 text-xs sm:text-sm" title="${s.student_name}">${s.student_name}</span></label>`; }).join('')}</div>
-    ${isCrossword ? `<section class="ga-theme-picker ga-round-setting mb-4" aria-label="Visual style"><div class="ga-theme-picker-head"><h3>Visual style</h3><span class="ga-theme-active-label">Choose a board theme</span></div><div class="ga-theme-grid" role="radiogroup" aria-label="Choose crossword theme">${window.renderThemeCardsMarkup?.(window.gaGetTheme?.()) || ''}</div></section>` : ''}
+
     ${isMatchWords ? `<div class="mb-4 text-left"><h3 class="text-sm font-black text-amber-100 mb-2">Choose word count</h3><div class="grid grid-cols-3 gap-2" role="group" aria-label="Number of words">${matchWordCounts.map((count, index) => `<button type="button" class="match-word-count-option rounded-lg border-2 px-3 py-2 text-sm font-bold transition ${index === matchWordCounts.length - 1 ? 'is-selected border-lime-300 bg-indigo-700 text-amber-100 ring-2 ring-lime-300' : 'border-indigo-300 bg-slate-900 text-indigo-100 hover:border-indigo-200 hover:bg-slate-800'}" data-count="${count}" aria-pressed="${index === matchWordCounts.length - 1}">${count} words</button>`).join('')}</div></div>` : ''}
     ${isMemory ? `<div class="mb-4 text-left"><h3 class="text-sm font-black text-amber-100 mb-2">Choose difficulty</h3><div class="grid grid-cols-1 sm:grid-cols-3 gap-2" role="group" aria-label="Memory difficulty level"><button type="button" class="memory-level-option rounded-lg border-2 px-3 py-3 text-sm font-bold transition is-selected border-lime-300 bg-indigo-700 text-amber-100 ring-2 ring-lime-300" data-level="easy" aria-pressed="true">Easy · 10 cards</button><button type="button" class="memory-level-option rounded-lg border-2 border-indigo-300 bg-slate-900 px-3 py-3 text-sm font-bold text-indigo-100 transition hover:border-indigo-200 hover:bg-slate-800" data-level="medium" aria-pressed="false">Medium · 18 cards</button><button type="button" class="memory-level-option rounded-lg border-2 border-indigo-300 bg-slate-900 px-3 py-3 text-sm font-bold text-indigo-100 transition hover:border-indigo-200 hover:bg-slate-800" data-level="hard" aria-pressed="false">Hard · 30 cards</button></div></div>` : ''}
     ${isScramble || isFindMe || isMatchWords || isMemory || isSurpriseBoxes || isHangman || isCrossword ? `<div class="game-settings-grid mb-4 text-left"><div class="game-setting-control"><label for="shared-winning-score" class="block text-sm font-black text-amber-100 mb-2">Points to win</label><input id="shared-winning-score" type="number" min="1" max="1000" step="1" value="5" class="w-full border-2 border-indigo-300 rounded-lg px-3 py-2 text-sm" aria-describedby="shared-winning-score-help"><p id="shared-winning-score-help" class="text-xs text-indigo-100 mt-1">First to 5 points.</p></div><fieldset class="game-setting-control"><legend class="block text-sm font-black text-amber-100 mb-2">Winner reward coins</legend><div id="game-reward-coins" class="grid grid-cols-4 gap-2" role="radiogroup" aria-describedby="game-reward-help"><button type="button" class="game-reward-option is-selected" data-reward="0" role="radio" aria-checked="true">No coin</button><button type="button" class="game-reward-option" data-reward="5" role="radio" aria-checked="false">5 coins</button><button type="button" class="game-reward-option" data-reward="10" role="radio" aria-checked="false">10 coins</button><button type="button" class="game-reward-option" data-reward="20" role="radio" aria-checked="false">20 coins</button></div><p id="game-reward-help" class="text-xs text-indigo-100 mt-1">Choose 0, 5, 10, or 20 coins; it cannot exceed your available credits.</p></fieldset><div class="game-setting-control game-timer-setting-slot"><span class="block text-sm font-black text-amber-100 mb-2">Timer</span><div class="grid grid-cols-4 gap-2" role="group" aria-label="Timer duration"><button type="button" class="game-timer-option is-selected" data-seconds="0" aria-pressed="true">No timer</button><button type="button" class="game-timer-option" data-seconds="60" aria-pressed="false">1 min</button><button type="button" class="game-timer-option" data-seconds="180" aria-pressed="false">3 min</button><button type="button" class="game-timer-option" data-seconds="300" aria-pressed="false">5 min</button></div></div></div>` : ''}
