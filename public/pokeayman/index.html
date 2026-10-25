@@ -12955,7 +12955,7 @@ async function loadTaiwanGovernmentHolidays(month) {
     }
     const dismissed = dismissedTaiwanHolidays();
     const existingDates = new Set(financialUnpaidDays.map(entry => entry.date || entry.start_date));
-    const additions = taiwanGovernmentHolidayCalendar[year].filter(date => date.startsWith(month) && !dismissed[date] && !existingDates.has(date)).map(date => ({ id: `tw-government-${date}`, date, start_date: date, end_date: date, type: 'Holiday', details: ({
+    const additions = taiwanGovernmentHolidayCalendar[year].filter(date => { const weekday = new Date(date + 'T12:00:00').getDay(); return date.startsWith(month) && weekday !== 0 && weekday !== 6 && !dismissed[date] && !existingDates.has(date); }).map(date => ({ id: `tw-government-${date}`, date, start_date: date, end_date: date, type: 'Holiday', details: ({
       '2026-01-01': "Government holiday (Taiwan) — New Year's Day",
       '2026-02-16': 'Government holiday (Taiwan) — Lunar New Year holiday',
       '2026-02-17': 'Government holiday (Taiwan) — Lunar New Year holiday',
@@ -13065,8 +13065,7 @@ function reviewTeacherZoneSnapshot(snapshot) {
   [...new Set([
     ...schedule.map(schoolName),
     ...extras.map(schoolName),
-    ...insurance.map(schoolName),
-    ...unpaid.map(schoolName)
+    ...insurance.map(schoolName)
   ])].forEach(school => { grossHoursBySchool[school] = 0; });
   schedule.forEach(entry => {
     const dayIndex = scheduleDays.indexOf(entry.day);
@@ -13095,7 +13094,7 @@ function reviewTeacherZoneSnapshot(snapshot) {
   const grossTotal = Object.values(grossHoursBySchool).reduce((sum, hours) => sum + hours * rate, 0);
   const netTotal = grossTotal - unpaidTotal - insuranceTotal;
   const formatUnpaidDate = value => formatFinancialUnpaidDate(value);
-  const schoolNetRows = Object.entries(grossHoursBySchool).sort(([a], [b]) => a.localeCompare(b)).map(([school, hours]) => {
+  const schoolNetRows = Object.entries(grossHoursBySchool).filter(([school, hours]) => hours > 0 || (unpaidBySchool[school] || 0) > 0 || (insuranceBySchool[school] || 0) > 0).sort(([a], [b]) => a.localeCompare(b)).map(([school, hours]) => {
     const gross = hours * rate;
     const unpaidDeduction = unpaidBySchool[school] || 0;
     const schoolInsurance = insuranceBySchool[school] || 0;
@@ -24760,7 +24759,7 @@ function financialUnpaidDailyBreakdown(records, month, scheduleEntries, extraEnt
   const schools = [...new Set([
     ...(Array.isArray(scheduleEntries) ? scheduleEntries : []).map(schoolName),
     ...(Array.isArray(extraEntries) ? extraEntries : []).map(schoolName),
-    ...monthRecords.map(schoolName)
+    ...monthRecords.map(record => String(record.school || record.school_name || record.schedule_school || '').trim()).filter(Boolean)
   ])];
   const datesBySchool = new Map(schools.map(school => {
     const schoolKey = normalizeScheduleSchool(school);
