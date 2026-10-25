@@ -67,11 +67,11 @@ let activeSpeechController: AbortController | null = null;
 
 function Index() {
   const [user, setUser] = useState<User | null>(null);
-  const [ready, setReady] = useState(true);
+  const [ready, setReady] = useState(false);
   const [frameKey, setFrameKey] = useState(0);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user ?? null); setReady(true); });
+    supabase.auth.getSession().then(({ data }) => { setUser(data.session?.user ?? null); }).catch(() => {}).finally(() => setReady(true));
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         setUser(session?.user ?? null);
@@ -189,6 +189,6 @@ function Index() {
     };
   }
 
-  if (!ready) return null;
+  if (!ready) return <main className="grid min-h-screen place-items-center bg-slate-950 text-slate-100" role="status">Preparing your sign-in session...</main>;
   return <iframe key={frameKey} className="imported-app" title="PokéAyman" src="/pokeayman/index.html?v=20261023-classic-boxes-v1" allowFullScreen />;
 }

@@ -8365,53 +8365,52 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       </div>
       <div class="glass-container rounded-2xl p-5 mb-6">
        <div class="financial-summary-heading">
-        <div><p class="financial-eyebrow">OVERVIEW</p><h3 class="font-semibold text-lg text-white">Your estimate</h3></div>
+        <div><p class="financial-eyebrow">MONTHLY SUMMARY</p><h3 class="font-semibold text-lg text-white">Estimated pay</h3></div>
         <span class="financial-summary-period" id="financial-summary-period"></span>
        </div>
        <div id="financial-empty" class="hidden rounded-lg border border-amber-200/20 bg-indigo-950/60 p-4 text-sm text-gray-300 mb-4">
         No scheduled hours this month yet.
        </div>
        <div id="financial-extra-summary" class="financial-overview-grid">
-        <article class="financial-overview-card net"><span class="financial-card-kicker">ESTIMATED TAKE-HOME</span><strong id="financial-net-salary">0.00</strong><span class="financial-card-note">After insurance</span></article>
-        <article class="financial-overview-card"><span class="financial-card-kicker">TOTAL HOURS</span><strong id="financial-total-hours">0.0 hrs</strong><span class="financial-card-note">Recurring + one-time</span></article>
-        <article class="financial-overview-card"><span class="financial-card-kicker">UNPAID TIME</span><strong id="financial-unpaid-hours">0.0 hrs</strong><span class="financial-card-note">Excluded from pay</span></article>
-        <article class="financial-overview-card"><span class="financial-card-kicker">INSURANCE</span><strong id="financial-insurance-total">0.00</strong><span class="financial-card-note">This month</span></article>
+        <article class="financial-overview-card"><span class="financial-card-kicker">GROSS EARNINGS</span><strong id="financial-overview-gross">0.00</strong><span id="financial-overview-hours" class="financial-card-note">0.0 scheduled hours</span></article>
+        <article class="financial-overview-card deduction"><span class="financial-card-kicker">UNPAID DEDUCTIONS</span><strong id="financial-overview-unpaid">0.00</strong><span id="financial-unpaid-hours" class="financial-card-note">0.0 hours excluded</span></article>
+        <article class="financial-overview-card deduction"><span class="financial-card-kicker">INSURANCE DEDUCTIONS</span><strong id="financial-overview-insurance">0.00</strong><span id="financial-insurance-note" class="financial-card-note">This month</span></article>
+        <article class="financial-overview-card net"><span class="financial-card-kicker">ESTIMATED TAKE-HOME</span><strong id="financial-overview-net">0.00</strong><span class="financial-card-note">After listed deductions</span></article>
        </div>
-       <span id="financial-salary" class="sr-only">0.00</span><span id="financial-recurring-hours" class="sr-only">0.0 hrs</span><span id="financial-one-time-hours" class="sr-only">0.0 hrs</span>
+       <p class="financial-estimate-note">Take-home estimate = gross earnings minus unpaid dates and insurance.</p>
+       <span id="financial-salary" class="sr-only">0.00</span><span id="financial-recurring-hours" class="sr-only">0.0 hrs</span><span id="financial-one-time-hours" class="sr-only">0.0 hrs</span><span id="financial-total-hours" class="sr-only">0.0 hrs</span><span id="financial-insurance-total" class="sr-only">0.00</span><span id="financial-net-salary" class="sr-only">0.00</span>
+       <section class="financial-school-section" aria-labelledby="financial-school-title">
+        <div class="financial-section-heading"><div><p class="financial-eyebrow">SCHOOL BREAKDOWN</p><h4 id="financial-school-title">Pay by school</h4></div><span>Selected month</span></div>
+        <div id="financial-school-breakdown" class="financial-breakdown-scroll"></div>
+       </section>
        <details class="financial-disclosure">
-        <summary><span>Hours by school</span><span class="financial-disclosure-hint">Weekday details</span></summary>
+        <summary><span>Recurring schedule by weekday</span><span class="financial-disclosure-hint">Before unpaid dates</span></summary>
         <div id="financial-weekday-breakdown" class="financial-disclosure-content"></div>
        </details>
        <details class="financial-disclosure">
-        <summary><span>Payment by school</span><span class="financial-disclosure-hint">Salary details</span></summary>
-        <div id="financial-school-breakdown" class="financial-disclosure-content"></div>
+        <summary><span>One-time hours</span><span id="financial-extra-hours-hint" class="financial-disclosure-hint">Selected month</span></summary>
+        <div id="financial-extra-hours-list" class="financial-disclosure-content"></div>
        </details>
       </div>
       <section id="financial-adjustments-panel" class="financial-adjustments-panel glass-container rounded-xl p-4 mb-6" aria-labelledby="financial-adjustments-title">
        <div class="financial-adjustments-heading">
         <div>
-         <p class="financial-eyebrow">OPTIONAL CHANGES</p><h3 id="financial-adjustments-title" class="font-semibold text-lg text-white">Adjustments</h3>
+         <p class="financial-eyebrow">MONTHLY RECORDS</p><h3 id="financial-adjustments-title" class="font-semibold text-lg text-white">Unpaid dates and insurance</h3>
         </div>
        </div>
        <div class="financial-adjustments-grid">
-        <section id="financial-unpaid-panel" class="financial-adjustment-column" aria-labelledby="financial-unpaid-title">
-         <div class="financial-adjustment-header">
-          <div>
-           <h4 id="financial-unpaid-title" class="font-semibold text-base text-white">Unpaid days</h4>
-          </div><button id="financial-unpaid-add-btn" type="button" class="btn-primary text-xs">＋ Add date</button>
+        <details id="financial-unpaid-panel" class="financial-adjustment-column" aria-labelledby="financial-unpaid-title">
+         <summary class="financial-adjustment-summary"><span id="financial-unpaid-title">Unpaid dates</span><span id="financial-unpaid-count">No records</span></summary>
+         <div class="financial-adjustment-content"><div class="financial-adjustment-header"><p>Only entries in the selected month are shown.</p><button id="financial-unpaid-add-btn" type="button" class="btn-primary text-xs">Add unpaid dates</button></div>
+          <div id="financial-unpaid-list"></div><p id="financial-unpaid-empty" class="text-center text-gray-400 py-3 text-xs">No unpaid dates for this month.</p>
          </div>
-         <div id="financial-unpaid-list" class="financial-breakdown-scroll"></div>
-         <p id="financial-unpaid-empty" class="text-center text-gray-400 py-3 text-xs">No unpaid dates</p>
-        </section>
-        <section id="financial-insurance-panel" class="financial-adjustment-column" aria-labelledby="financial-insurance-title">
-         <div class="financial-adjustment-header">
-          <div>
-           <h4 id="financial-insurance-title" class="font-semibold text-base text-white">Insurance deductions</h4>
-          </div><button id="financial-insurance-add-btn" type="button" class="btn-primary text-xs">＋ Add deduction</button>
+        </details>
+        <details id="financial-insurance-panel" class="financial-adjustment-column" aria-labelledby="financial-insurance-title">
+         <summary class="financial-adjustment-summary"><span id="financial-insurance-title">Insurance deductions</span><span id="financial-insurance-count">No records</span></summary>
+         <div class="financial-adjustment-content"><div class="financial-adjustment-header"><p>Only deductions in the selected month are shown.</p><button id="financial-insurance-add-btn" type="button" class="btn-primary text-xs">Add deduction</button></div>
+          <div id="financial-insurance-list"></div><p id="financial-insurance-empty" class="text-center text-gray-400 py-3 text-xs">No insurance deductions for this month.</p>
          </div>
-         <div id="financial-insurance-list" class="financial-breakdown-scroll"></div>
-         <p id="financial-insurance-empty" class="text-center text-gray-400 py-3 text-xs">No deductions</p>
-        </section>
+        </details>
        </div>
       </section>
        <section id="teacher-zone-history-panel" class="teacher-zone-content-panel glass-container rounded-xl p-4 mb-6" role="region" aria-labelledby="teacher-zone-history-title">
@@ -11449,7 +11448,7 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
   };
   setMode('signin');
   modal.querySelectorAll('.ta-tab').forEach(b => b.addEventListener('click', () => setMode(b.dataset.tab)));
-  if (!auth) { msg('Sign-in is unavailable here.', false); }
+  if (!auth) { msg('This preview has no sign-in connection. Open the app from its main page.', false); }
 
   $('#teacher-account-form').addEventListener('submit', async e => {
     e.preventDefault(); if (!auth) return;
@@ -24854,33 +24853,73 @@ function renderMonthlySchoolCalculation(month, unpaidDates, rate) {
 }
 
 function renderFinancialExtras() {
-  const month = financialMonth(), rate = Math.max(0, Number(document.getElementById('financial-hourly-rate')?.value) || 0);
-  const entries = normalizedUnpaidEntries().filter(entry => unpaidDateSet(entry).some(date => date.startsWith(month)));
-  const affectedDates = new Set(entries.flatMap(unpaidDateSet).filter(date => date.startsWith(month)));
-  const hours = Object.keys(Object.fromEntries((teacherSchedule.entries || []).map(entry => [String(entry.school || '').trim() || 'No school specified', true]))).reduce((total, school) => {
-    const schoolHours = financialHoursForMonth(month, [...unpaidDatesForSchool(school, month)].map(date => ({ date })), school);
-    return { recurring: total.recurring + schoolHours.recurring, oneTime: total.oneTime + schoolHours.oneTime, excludedHours: total.excludedHours + schoolHours.excludedHours, bySchool: { ...total.bySchool, ...schoolHours.bySchool } };
-  }, { recurring: 0, oneTime: 0, excludedHours: 0, bySchool: {} });
-  renderMonthlySchoolCalculation(month, [...affectedDates], rate);
-  const deductions = financialInsuranceDeductions.filter(item => item.month === month);
-  const gross = (hours.recurring + hours.oneTime) * rate;
-  const insurance = deductions.reduce((sum, item) => sum + Math.max(0, Number(item.amount) || 0), 0);
-  const net = Math.max(0, gross - insurance);
-  const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
-  const [summaryYear, summaryMonth] = month.split('-').map(Number);
-  set('financial-summary-period', new Date(summaryYear, summaryMonth - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }));
-  set('financial-recurring-hours', `${hours.recurring.toFixed(1)} hrs`); set('financial-one-time-hours', `${hours.oneTime.toFixed(1)} hrs`); set('financial-total-hours', `${(hours.recurring + hours.oneTime).toFixed(1)} hrs`); set('financial-salary', financialMoney(gross)); set('financial-unpaid-hours', `${hours.excludedHours.toFixed(1)} hrs`); set('financial-insurance-total', financialMoney(insurance)); set('financial-net-salary', financialMoney(net));
-  const unpaidList = document.getElementById('financial-unpaid-list');
-  if (unpaidList) unpaidList.innerHTML = entries.length ? entries.map(entry => { const dates = unpaidDateSet(entry); const label = dates.length > 1 ? `${dates[0]} → ${dates[dates.length - 1]} (${dates.length} days)` : dates[0]; return `<article class="financial-unpaid-card rounded-lg border border-amber-200/25 bg-indigo-950/60 p-3"><div class="flex flex-wrap items-center justify-between gap-2"><div><strong class="text-amber-100">${entry.type}</strong><span class="ml-2 text-xs text-indigo-100">${label}</span><p class="text-xs text-slate-300 mt-1">${entry.details}</p></div><div class="flex gap-2"><button type="button" class="btn-primary text-xs" data-edit-unpaid="${entry.id}">Edit</button><button type="button" class="btn-secondary text-xs" data-remove-unpaid="${entry.id}">Delete</button></div></div></article>`; }).join('') : '';
-  document.getElementById('financial-unpaid-empty')?.classList.toggle('hidden', !entries.length);
-  const totals = {};
-  Object.entries(hours.bySchool || {}).forEach(([school, value]) => { totals[school] = { gross: value * rate, deduction: 0 }; });
-  deductions.forEach(item => { totals[item.school] ||= { gross: 0, deduction: 0 }; totals[item.school].deduction += Number(item.amount) || 0; });
+  const month = financialMonth();
+  const rate = Math.max(0, Number(document.getElementById('financial-hourly-rate')?.value) || 0);
+  const unpaidEntries = normalizedUnpaidEntries().filter(entry => unpaidDateSet(entry).some(date => date.startsWith(month)));
+  const excludedDates = [...new Set(unpaidEntries.flatMap(unpaidDateSet).filter(date => date.startsWith(month)))];
+  const records = financialInsuranceDeductions.filter(entry => String(entry.month || '').slice(0, 7) === month);
+  const monthlyExtras = (subHours || []).filter(entry => String(entry.date || '').startsWith(month));
+  const schools = [...new Set([
+    ...(teacherSchedule.entries || []).map(entry => String(entry.school || '').trim() || 'No school specified'),
+    ...monthlyExtras.map(entry => String(entry.school || '').trim() || 'No school specified'),
+    ...records.map(entry => String(entry.school || '').trim() || 'No school specified')
+  ])].sort((a, b) => a.localeCompare(b));
+  const escapeText = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const schoolRows = schools.map(school => {
+    const datesForSchool = [...unpaidDatesForSchool(school, month)].map(date => ({ date }));
+    const scheduled = financialHoursForMonth(month, [], school);
+    const payable = financialHoursForMonth(month, datesForSchool, school);
+    const regularHours = scheduled.recurring;
+    const extraHours = scheduled.oneTime;
+    const gross = (regularHours + extraHours) * rate;
+    const unpaidHours = Math.max(0, regularHours + extraHours - payable.recurring - payable.oneTime);
+    const unpaidDeduction = unpaidHours * rate;
+    const insurance = records.filter(entry => (String(entry.school || '').trim() || 'No school specified') === school).reduce((sum, entry) => sum + Math.max(0, Number(entry.amount) || 0), 0);
+    const net = gross - unpaidDeduction - insurance;
+    return { school, regularHours, extraHours, payableRegularHours: payable.recurring, payableHours: payable.recurring + payable.oneTime, gross, unpaidHours, unpaidDeduction, insurance, net };
+  });
+  const totals = schoolRows.reduce((sum, row) => ({
+    regularHours: sum.regularHours + row.regularHours,
+    extraHours: sum.extraHours + row.extraHours,
+    payableRegularHours: sum.payableRegularHours + row.payableRegularHours,
+    payableHours: sum.payableHours + row.payableHours,
+    gross: sum.gross + row.gross,
+    unpaidHours: sum.unpaidHours + row.unpaidHours,
+    unpaidDeduction: sum.unpaidDeduction + row.unpaidDeduction,
+    insurance: sum.insurance + row.insurance,
+    net: sum.net + row.net
+  }), { regularHours: 0, extraHours: 0, payableRegularHours: 0, payableHours: 0, gross: 0, unpaidHours: 0, unpaidDeduction: 0, insurance: 0, net: 0 });
+  const set = (id, value) => { const element = document.getElementById(id); if (element) element.textContent = value; };
+  const [year, monthNumber] = month.split('-').map(Number);
+  set('financial-summary-period', new Date(year, monthNumber - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }));
+  set('financial-overview-gross', financialMoney(totals.gross));
+  set('financial-overview-hours', `${(totals.regularHours + totals.extraHours).toFixed(1)} scheduled hours`);
+  set('financial-overview-unpaid', financialMoney(totals.unpaidDeduction));
+  set('financial-unpaid-hours', `${totals.unpaidHours.toFixed(1)} hours excluded`);
+  set('financial-overview-insurance', financialMoney(totals.insurance));
+  set('financial-insurance-note', `${records.length} ${records.length === 1 ? 'entry' : 'entries'} this month`);
+  set('financial-overview-net', financialMoney(totals.net));
+  set('financial-total-hours', `${totals.payableHours.toFixed(1)} hrs`);
+  set('financial-recurring-hours', `${totals.payableRegularHours.toFixed(1)} hrs`);
+  set('financial-one-time-hours', `${totals.extraHours.toFixed(1)} hrs`);
+  set('financial-salary', financialMoney(totals.gross));
+  set('financial-insurance-total', financialMoney(totals.insurance));
+  set('financial-net-salary', financialMoney(totals.net));
+  set('financial-unpaid-count', unpaidEntries.length ? `${unpaidEntries.length} ${unpaidEntries.length === 1 ? 'record' : 'records'}` : 'No records');
+  set('financial-insurance-count', records.length ? `${records.length} ${records.length === 1 ? 'entry' : 'entries'} · ${financialMoney(totals.insurance)}` : 'No records');
+  set('financial-extra-hours-hint', `${monthlyExtras.length} ${monthlyExtras.length === 1 ? 'entry' : 'entries'} · ${totals.extraHours.toFixed(1)} hours`);
   const breakdown = document.getElementById('financial-school-breakdown');
-  if (breakdown) { const schoolRows = Object.entries(totals).sort(([a], [b]) => a.localeCompare(b)); const rows = schoolRows.map(([school, value]) => { const regularHours = financialHoursForMonth(month, [...unpaidDatesForSchool(school, month)].map(date => ({ date })), school).recurring; const substituteHours = (subHours || []).filter(entry => String(entry.date || '').startsWith(month) && (String(entry.school || '').trim() || 'No school specified') === school).reduce((sum, entry) => sum + subHourDuration(entry), 0); const totalHours = regularHours + substituteHours; const insurance = value.deduction; const payment = Math.max(0, totalHours * rate - insurance); return `<tr><td>${school}</td><td>${regularHours.toFixed(1)}</td><td>${substituteHours.toFixed(1)}</td><td>${totalHours.toFixed(1)}</td><td>${financialMoney(insurance)}</td><td>${financialMoney(payment)}</td></tr>`; }).join(''); const totalRegularHours = schoolRows.reduce((sum, [school]) => sum + financialHoursForMonth(month, [...unpaidDatesForSchool(school, month)].map(date => ({ date })), school).recurring, 0); const totalSubstituteHours = schoolRows.reduce((sum, [school]) => sum + (subHours || []).filter(entry => String(entry.date || '').startsWith(month) && (String(entry.school || '').trim() || 'No school specified') === school).reduce((hours, entry) => hours + subHourDuration(entry), 0), 0); const totalHours = totalRegularHours + totalSubstituteHours; const totalInsurance = schoolRows.reduce((sum, [, value]) => sum + value.deduction, 0); const totalPayment = Math.max(0, totalHours * rate - totalInsurance); breakdown.innerHTML = schoolRows.length ? `<div class="financial-breakdown-scroll"><table class="financial-breakdown-table salary-details-table" aria-label="Salary details by school"><thead><tr><th scope="col">School</th><th scope="col">Regular hours</th><th scope="col">Substitute hours</th><th scope="col">Total hours</th><th scope="col">Insurance</th><th scope="col">Total payment</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="financial-total-row"><td>TOTAL MONTHLY SALARY</td><td>${totalRegularHours.toFixed(1)}</td><td>${totalSubstituteHours.toFixed(1)}</td><td>${totalHours.toFixed(1)}</td><td>${financialMoney(totalInsurance)}</td><td>${financialMoney(totalPayment)}</td></tr></tfoot></table></div>` : '<span class="text-gray-400">No hours for this month.</span>'; }
+  if (breakdown) breakdown.innerHTML = schoolRows.length ? `<table class="financial-breakdown-table salary-details-table" aria-label="Monthly pay breakdown by school"><thead><tr><th scope="col">School</th><th scope="col">Regular hours</th><th scope="col">Extra hours</th><th scope="col">Gross</th><th scope="col">Unpaid</th><th scope="col">Insurance</th><th scope="col">Est. take-home</th></tr></thead><tbody>${schoolRows.map(row => `<tr><td class="font-bold">${escapeText(row.school)}</td><td>${row.regularHours.toFixed(1)}</td><td>${row.extraHours.toFixed(1)}</td><td>${financialMoney(row.gross)}</td><td>${financialMoney(row.unpaidDeduction)}</td><td>${financialMoney(row.insurance)}</td><td class="font-black">${financialMoney(row.net)}</td></tr>`).join('')}</tbody><tfoot><tr class="financial-total-row"><td>All schools</td><td>${totals.regularHours.toFixed(1)}</td><td>${totals.extraHours.toFixed(1)}</td><td>${financialMoney(totals.gross)}</td><td>${financialMoney(totals.unpaidDeduction)}</td><td>${financialMoney(totals.insurance)}</td><td>${financialMoney(totals.net)}</td></tr></tfoot></table>` : '<p class="financial-table-empty">No scheduled or extra hours for this month.</p>';
+  const weekdayDetails = document.getElementById('financial-weekday-breakdown');
+  if (weekdayDetails) renderMonthlySchoolCalculation(month, excludedDates, rate);
+  const extraList = document.getElementById('financial-extra-hours-list');
+  if (extraList) extraList.innerHTML = monthlyExtras.length ? `<div class="financial-breakdown-scroll"><table class="financial-breakdown-table" aria-label="One-time hours for the selected month"><thead><tr><th scope="col">Date</th><th scope="col">School</th><th scope="col">Class or activity</th><th scope="col">Hours</th><th scope="col">Pay</th></tr></thead><tbody>${monthlyExtras.slice().sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`)).map(entry => { const hours = subHourDuration(entry); const excluded = excludedDates.includes(String(entry.date || '')); return `<tr><td>${escapeText(entry.date)}</td><td>${escapeText(entry.school || 'No school specified')}</td><td>${escapeText(entry.title || 'One-time hours')}</td><td>${hours.toFixed(1)}</td><td>${excluded ? 'Excluded' : financialMoney(hours * rate)}</td></tr>`; }).join('')}</tbody></table></div>` : '<p class="financial-table-empty">No one-time hours for this month.</p>';
+  const unpaidList = document.getElementById('financial-unpaid-list');
+  if (unpaidList) unpaidList.innerHTML = unpaidEntries.length ? unpaidEntries.map(entry => { const dates = unpaidDateSet(entry).filter(date => date.startsWith(month)); const label = dates.length > 1 ? `${dates[0]} to ${dates[dates.length - 1]} · ${dates.length} days` : dates[0]; return `<article class="financial-unpaid-card"><div><strong>${escapeText(entry.type || 'Unpaid date')}</strong><span>${escapeText(label)}</span><p>${escapeText(entry.details || '')}</p></div><div class="financial-record-actions"><button type="button" class="btn-outline text-xs" data-edit-unpaid="${escapeText(entry.id)}">Edit</button><button type="button" class="btn-secondary text-xs" data-remove-unpaid="${escapeText(entry.id)}">Delete</button></div></article>`; }).join('') : '';
+  document.getElementById('financial-unpaid-empty')?.classList.toggle('hidden', unpaidEntries.length > 0);
   const insuranceList = document.getElementById('financial-insurance-list');
-  if (insuranceList) insuranceList.innerHTML = deductions.length ? deductions.map(item => `<article class="financial-insurance-card rounded-lg border border-indigo-200/20 bg-indigo-950/60 p-3 mb-2"><div class="flex flex-wrap items-center justify-between gap-3"><div><strong class="text-indigo-100">${item.school}</strong><span class="ml-2 text-xs text-slate-300">${item.month}</span><p class="text-lg font-black text-amber-200">${financialMoney(item.amount)}</p><p class="text-xs text-slate-300">${item.note || 'No note'}</p></div><div class="flex gap-2"><button type="button" class="btn-primary text-xs" data-ins-edit="${item.id}">Edit</button><button type="button" class="btn-secondary text-xs" data-ins-delete="${item.id}">Delete</button></div></div></article>`).join('') : '';
-  document.getElementById('financial-insurance-empty')?.classList.toggle('hidden', !deductions.length);
+  if (insuranceList) insuranceList.innerHTML = records.length ? records.map(entry => `<article class="financial-insurance-card"><div><strong>${escapeText(entry.school)}</strong><span>${escapeText(entry.month)}</span><p class="financial-insurance-amount">${financialMoney(entry.amount)}</p><p>${escapeText(entry.note || 'No note')}</p></div><div class="financial-record-actions"><button type="button" class="btn-outline text-xs" data-ins-edit="${escapeText(entry.id)}">Edit</button><button type="button" class="btn-secondary text-xs" data-ins-delete="${escapeText(entry.id)}">Delete</button></div></article>`).join('') : '';
+  document.getElementById('financial-insurance-empty')?.classList.toggle('hidden', records.length > 0);
 }
 function financialPrompt(type, editEntry = null) {
   if (type !== 'unpaid') { openInsuranceEditor(editEntry); return; }
