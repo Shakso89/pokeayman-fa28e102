@@ -5355,3 +5355,173 @@ html body.ts-bright .baam-stage-portal .baam-choice-badge {
   border-color: #94a3b8 !important;
   color: #334155 !important;
 }
+
+/* Jungle refresh: rainforest canopy, carved trail markers, and a readable clearing.
+   Keep selectors at the arcade reset specificity so the theme ink remains visible. */
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) {
+  --ga-stage-bg: #071c17;
+  --ga-stage-surface: #12372b;
+  --ga-stage-ink: #f3ffe8;
+  --ga-stage-muted: #b9d8c1;
+  --ga-stage-line: #4f8a62;
+  --ga-stage-accent: #f3ca58;
+  --ga-stage-yellow: #f3ca58;
+  --ga-stage-chip: #1c4b38;
+  background: transparent !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .ga-stage-header {
+  background: linear-gradient(125deg, rgba(12, 48, 36, .98), rgba(21, 73, 48, .97) 58%, rgba(37, 86, 49, .96)) !important;
+  border: 1px solid rgba(180, 219, 118, .48) !important;
+  border-bottom: 4px solid #74a94f !important;
+  border-radius: 20px 20px 12px 12px !important;
+  box-shadow: inset 0 1px 0 rgba(239, 255, 198, .2), 0 8px 26px rgba(0, 0, 0, .36) !important;
+  color: #f3ffe8 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .ga-stage-header :is(h1,h2,p,.cipher-lab-progress) {
+  color: #f3ffe8 !important;
+  text-shadow: 0 2px 5px rgba(0, 20, 12, .68) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .ga-stage-header button:not(.ga-stage-exit):not(.ga-theme-card) {
+  background: linear-gradient(180deg, #ffe58a, #e9b83f) !important;
+  border: 2px solid #654820 !important;
+  border-radius: 12px !important;
+  color: #203b2b !important;
+  -webkit-text-fill-color: #203b2b !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 4px 0 #694a22, 0 8px 16px rgba(0,0,0,.22) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .ga-stage-header button:not(.ga-stage-exit):not(.ga-theme-card):hover {
+  background: linear-gradient(180deg, #d1ee82, #83bd59) !important;
+  transform: translateY(-1px);
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .game-player-card {
+  background: linear-gradient(145deg, rgba(21, 70, 48, .98), rgba(12, 43, 36, .98)) !important;
+  border: 2px solid #5a9860 !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 1px 0 rgba(222,255,190,.16), 0 5px 0 #09271f, 0 12px 24px rgba(0,0,0,.32) !important;
+  color: #f3ffe8 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .game-player-card :is(.game-player-name,.game-player-turn) { color: #eaffd5 !important; }
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .game-player-card .game-player-score { color: #ffe27a !important; }
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .game-player-card .game-player-avatar-wrap {
+  background: #173d2e !important; border: 2px solid #d0df75 !important; box-shadow: 0 0 0 3px rgba(141,196,92,.18) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .game-player-card.is-active {
+  border-color: #f2cf5b !important;
+  background: linear-gradient(145deg, #356f43, #174b39) !important;
+  box-shadow: 0 0 0 3px rgba(226,197,83,.36), 0 5px 0 #09271f, 0 0 24px rgba(184,224,103,.23) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .game-player-card.is-active .game-player-turn { color: #ffe27a !important; }
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(#hangman-drawing-panel,#hangman-content,#find-me-box,.match-game-board,.memory-game-grid) {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(139,196,97,.16), transparent 58%),
+    linear-gradient(145deg, rgba(18,57,43,.97), rgba(8,35,31,.98)) !important;
+  border: 3px solid #518b58 !important;
+  border-radius: 22px !important;
+  box-shadow: inset 0 0 0 2px rgba(231,207,113,.28), inset 0 12px 28px rgba(0,0,0,.28), 0 6px 0 #08261d, 0 18px 38px rgba(0,0,0,.34) !important;
+  color: #f3ffe8 !important;
+}
+/* Surprise Boxes own their grid geometry; theme their contents without altering its frame. */
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) #baam-board {
+  background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.match-game-progress,.cipher-lab-panel > p:first-child) {
+  background: linear-gradient(135deg, #255c3c, #123b31) !important;
+  border: 2px solid #83ad5d !important;
+  border-radius: 14px !important;
+  color: #f3ffe8 !important;
+  box-shadow: inset 0 1px 0 rgba(240,255,210,.17), 0 4px 0 #09271f !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.match-game-progress-copy,#match-status) { color: #e8f8ce !important; }
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(#scramble-tiles .scramble-tile,.hangman-letter.is-available,.find-me-word) {
+  background: linear-gradient(180deg, #e6c875, #c79e4d) !important;
+  color: #203b2b !important;
+  border: 2px solid #654820 !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), 0 4px 0 #694a22, 0 7px 14px rgba(0,0,0,.25) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(#scramble-tiles .scramble-tile:hover:not(:disabled),.hangman-letter.is-available:hover) {
+  background: linear-gradient(180deg, #d4ed8b, #8fc363) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot,
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) #hangman-clue,
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) #find-me-picture {
+  background: #f7f2d8 !important; color: #233d2e !important; border: 3px solid #6e9c5a !important;
+  box-shadow: inset 0 1px 0 #fff, 0 4px 0 #375f3c !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) #hangman-word { color: #f1d872 !important; }
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.match-tile,.memory-card-back) {
+  background: linear-gradient(150deg, #f7f3df, #d9e6c3) !important; color: #203b2b !important;
+  border: 2px solid #668f56 !important; border-radius: 16px !important;
+  box-shadow: inset 0 1px 0 #fff, 0 5px 0 #365a3a, 0 10px 18px rgba(0,0,0,.25) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-tile.match-word-card {
+  background: linear-gradient(150deg, #e4c675, #bf9548) !important; color: #233b2c !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-tile.is-selected {
+  background: linear-gradient(150deg, #d8ef91, #83bd5c) !important; border-color: #f1d76c !important;
+  box-shadow: 0 0 0 3px rgba(239,214,111,.45), 0 5px 0 #365a3a !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .memory-card {
+  border-radius: 16px !important; box-shadow: 0 6px 0 #24442e, 0 11px 20px rgba(0,0,0,.32) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .memory-card-front {
+  border: 3px solid #d8bd65 !important; border-radius: 16px !important; overflow: hidden !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .memory-card .memory-word-content {
+  background: linear-gradient(145deg, #286343, #123d32) !important; color: #f3ffe8 !important; border: 2px solid #9abf65 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .baam-giftbox :is(.baam-box-body,.baam-box-lid) {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 17px, rgba(17,48,31,.2) 17px 19px),
+    linear-gradient(140deg, #8c6538, #5b4428 62%, #3a3923) !important;
+  border: 2px solid #3a2d1d !important; box-shadow: inset 0 0 0 2px rgba(226,194,104,.62), 0 6px 12px rgba(0,0,0,.35) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .baam-giftbox .baam-box-seal {
+  background: linear-gradient(180deg, #70ad55 0 43%, #183c31 43% 57%, #f4f1dc 57%) !important;
+  border: 3px solid #173529 !important; box-shadow: 0 0 0 2px #e2c260, 0 4px 10px rgba(0,0,0,.35) !important;
+}
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-reveal-panel.baam-question-card {
+  background: linear-gradient(145deg, #174937, #0b2b27) !important; border: 4px solid #82a954 !important; color: #f3ffe8 !important;
+}
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-question-header :is(h3,.baam-question-player) { color: #f3ffe8 !important; }
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-choice-btn {
+  background: linear-gradient(145deg, #174937, #10372d) !important; border-color: #86aa5e !important; color: #f3ffe8 !important;
+}
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-choice-btn:hover:not(:disabled) {
+  background: linear-gradient(145deg, #2b7047, #19503b) !important; border-color: #efcf64 !important;
+}
+html body[data-ga-active-theme="jungle"] .baam-stage-portal .baam-choice-badge {
+  background: rgba(219,196,103,.2) !important; border-color: #dbc467 !important; color: #ffe47f !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]).lc-stage {
+  background: radial-gradient(ellipse at 50% 0%, #1d5938, #0a2b24 60%, #071c17) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.lc-reward-panel,.lc-listen,.lc-option) {
+  background: linear-gradient(145deg, #255d3c, #123d32) !important; border: 2px solid #8bb761 !important;
+  color: #f3ffe8 !important; box-shadow: inset 0 1px 0 rgba(240,255,210,.18), 0 5px 0 #09271f, 0 10px 20px rgba(0,0,0,.27) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .lc-listen {
+  border-radius: 22px !important; border-color: #e1c456 !important; background: radial-gradient(circle at 35% 25%, #83bd5c, #286843 62%, #123d32) !important;
+  box-shadow: 0 0 0 5px rgba(139,183,97,.2), 0 7px 0 #09271f, 0 0 32px rgba(143,195,99,.25) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.lc-prompt,.vb-message) {
+  background: rgba(9,39,31,.94) !important; border: 2px solid #80aa5a !important; color: #f3ffe8 !important;
+  text-shadow: none !important; box-shadow: 0 4px 0 #071c17 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.lc-option:hover:not(:disabled),.vb-btn:not(.vb-btn-ghost)) {
+  background: linear-gradient(180deg, #d8ed8a, #91c563) !important; border-color: #f0d570 !important; color: #1e3a2b !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .vb-hud {
+  background: linear-gradient(145deg, rgba(21,70,48,.96), rgba(11,39,34,.97)) !important;
+  border: 2px solid #75a85b !important; border-radius: 18px !important; color: #f3ffe8 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.vb-me-name,.vb-foe-name,.vb-partner-name,.vb-message,.vb-timer-text) {
+  color: #f3ffe8 !important; text-shadow: 0 1px 3px rgba(0,20,12,.65) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.vb-versus,.vb-hud b,.lc-reward-copy span) { color: #ffe27a !important; }
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.lc-option.is-correct,.vb-result.is-correct) {
+  background: #1d754d !important; border-color: #8be0a5 !important; color: #f2fff5 !important;
+}
+html body[data-ga-active-theme="jungle"] :is(.lc-stage,.vb-stage) .ga-stage-header :is(h1,h2,p) {
+  color: #f3ffe8 !important; text-shadow: 0 2px 4px rgba(0,20,12,.68) !important;
+}
