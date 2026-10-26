@@ -2753,12 +2753,12 @@
     .cipher-lab-header h2 { letter-spacing:.04em; text-shadow:0 2px 10px rgba(2,6,23,.6); }
     .cipher-lab-progress { color:#bae6fd; font-size:.72rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
     .cipher-lab-panel { position:relative; background:rgba(21,27,88,.74); border:1px solid rgba(125,211,252,.28); border-radius:1.25rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 18px 40px rgba(2,6,23,.3); backdrop-filter:blur(12px); }
-    .cipher-lab-answer { min-height:6rem; color:#f5f7ff !important; letter-spacing:0 !important; text-shadow:0 0 20px rgba(255,203,5,.35); gap:.22em; flex-wrap:wrap; }
-    .scramble-answer-slot { position:relative; display:inline-flex; align-items:center; justify-content:center; min-width:1.18em; min-height:1.34em; padding:0.05em 0.16em 0.1em; margin:0 0.12em; background:rgba(14,22,64,.75); border:2.5px solid rgba(147,197,253,.55); border-radius:12px; box-shadow:inset 0 2px 6px rgba(0,0,0,.4), 0 3px 8px rgba(2,6,23,.3); line-height:1; transition:all .2s ease; }
-    .scramble-answer-slot.is-filled { border-color:#fde047; background:linear-gradient(145deg, rgba(37,99,235,.55), rgba(30,64,175,.75)); color:#fde047; text-shadow:0 0 18px rgba(255,203,5,.6); box-shadow:0 4px 14px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.25); animation:scramble-slot-pop .22s ease; }
-    @keyframes scramble-slot-pop { from { transform:scale(.55); } to { transform:scale(1); } }
-    .cipher-lab-answer.scramble-result-correct .scramble-answer-slot.is-filled { color:#86efac; text-shadow:0 0 20px rgba(74,222,128,.9); animation:scramble-letter-correct .52s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--slot-index, 0) * 55ms); }
-    .cipher-lab-answer.scramble-result-wrong .scramble-answer-slot.is-filled { color:#fca5a5; text-shadow:0 0 16px rgba(248,113,113,.7); animation:scramble-letter-wrong .42s ease both; animation-delay:calc(var(--slot-index, 0) * 28ms); }
+    .cipher-lab-answer { min-height:4.8rem; color:#f5f7ff !important; letter-spacing:normal !important; text-shadow:none !important; gap:clamp(0.35rem, 1vw, 0.65rem); flex-wrap:wrap; }
+    .scramble-answer-slot { position:relative; display:inline-flex; align-items:center; justify-content:center; width:clamp(2.85rem, 6.2vw, 3.85rem); height:clamp(3.3rem, 7.2vw, 4.4rem); min-width:clamp(2.85rem, 6.2vw, 3.85rem); min-height:clamp(3.3rem, 7.2vw, 4.4rem); padding:0; margin:0 clamp(0.12rem, 0.3vw, 0.25rem); background:rgba(14,22,64,.75); border:2.5px dashed rgba(147,197,253,.55); border-radius:12px; box-shadow:inset 0 2px 6px rgba(0,0,0,.4), 0 3px 8px rgba(2,6,23,.3); line-height:1; font-size:clamp(1.5rem, 3.4vw, 2.15rem); font-weight:900; text-align:center; text-transform:uppercase; transition:all .2s ease; }
+    .scramble-answer-slot.is-filled { border-style:solid; border-color:#fde047; background:linear-gradient(145deg, rgba(37,99,235,.85), rgba(30,64,175,.95)); color:#fde047; text-shadow:0 0 14px rgba(255,203,5,.6); box-shadow:0 4px 14px rgba(37,99,235,.45), inset 0 1px 0 rgba(255,255,255,.25); animation:scramble-slot-pop .24s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes scramble-slot-pop { 0% { transform:scale(.78); } 70% { transform:scale(1.06); } 100% { transform:scale(1); } }
+    .cipher-lab-answer.scramble-result-correct .scramble-answer-slot.is-filled { color:#14532d; background:linear-gradient(180deg, #dcfce7 0%, #86efac 100%); border-color:#16a34a; box-shadow:0 4px 0 #15803d, 0 0 20px rgba(74,222,128,.9); text-shadow:none; animation:scramble-letter-correct .52s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--slot-index, 0) * 55ms); }
+    .cipher-lab-answer.scramble-result-wrong .scramble-answer-slot.is-filled { color:#7f1d1d; background:linear-gradient(180deg, #fee2e2 0%, #fca5a5 100%); border-color:#dc2626; box-shadow:0 4px 0 #991b1b, 0 0 16px rgba(248,113,113,.7); text-shadow:none; animation:scramble-letter-wrong .42s ease both; animation-delay:calc(var(--slot-index, 0) * 28ms); }
     @keyframes scramble-letter-correct { 0%{transform:translateY(0) scale(1)} 45%{transform:translateY(-.22em) scale(1.22);color:#bbf7d0} 100%{transform:translateY(0) scale(1)} }
     @keyframes scramble-letter-wrong { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-.12em)} 40%,80%{transform:translateX(.12em)} }
     #scramble-tiles.scramble-tiles-wrong .scramble-tile:not(:disabled) { animation:scramble-tiles-nudge .38s ease; border-color:rgba(248,113,113,.8)!important; }
@@ -22773,7 +22773,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     scrambleTileAnimation = reduced ? null : next.tile.animate([
       { transform: 'translate3d(0,0,0) scale(1)', opacity: 1 },
-      { transform: `translate3d(${x}px,${y}px,0) scale(.72)`, opacity: .15 }
+      { transform: `translate3d(${x}px,${y}px,0) scale(.92)`, opacity: .2 }
     ], { duration: 260, easing: 'cubic-bezier(.2,.8,.25,1)', fill: 'both' });
     const finish = () => {
       usedIndices.add(next.idx);

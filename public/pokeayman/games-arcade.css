@@ -1512,7 +1512,8 @@ html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .cipher-lab-
   padding: 0.35rem 0 0.75rem !important;
   gap: 0.75rem !important;
 }
-html body > .ga-stage .cipher-lab-panel > p:first-child {
+html body > .ga-stage .cipher-lab-panel > p:has(#scramble-win-score),
+html body > .ga-stage .cipher-lab-panel > .scramble-win-badge {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1530,7 +1531,8 @@ html body > .ga-stage .cipher-lab-panel > p:first-child {
   border: 2.5px solid #475569 !important;
   box-shadow: 0 4px 0 #020617, 0 8px 18px rgba(0, 0, 0, 0.28) !important;
 }
-html body > .ga-stage .cipher-lab-panel > p:first-child #scramble-win-score {
+html body > .ga-stage .cipher-lab-panel > p:has(#scramble-win-score) #scramble-win-score,
+html body > .ga-stage .cipher-lab-panel > .scramble-win-badge #scramble-win-score {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1541,6 +1543,57 @@ html body > .ga-stage .cipher-lab-panel > p:first-child #scramble-win-score {
   color: #1c1917 !important;
   font-weight: 900 !important;
   box-shadow: inset 0 1px 0 #fef9c3 !important;
+}
+
+/* Unscramble Answer Display & Designated Letter Slots */
+html body > .ga-stage #scramble-answer,
+html body > .ga-stage .cipher-lab-answer {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+  gap: clamp(0.35rem, 1vw, 0.65rem) !important;
+  min-height: clamp(3.8rem, 8vw, 5.2rem) !important;
+  margin: 0.25rem auto 1.5rem !important;
+  padding: 0.6rem clamp(0.75rem, 2vw, 1.5rem) !important;
+  font-size: clamp(1.6rem, 3.8vw, 2.4rem) !important;
+  font-weight: 900 !important;
+  letter-spacing: normal !important;
+  border-radius: 20px !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: 100% !important;
+}
+html body > .ga-stage #scramble-answer .scramble-answer-slot,
+html body .scramble-answer-slot {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: clamp(2.85rem, 6.2vw, 3.85rem) !important;
+  height: clamp(3.3rem, 7.2vw, 4.4rem) !important;
+  min-width: clamp(2.85rem, 6.2vw, 3.85rem) !important;
+  min-height: clamp(3.3rem, 7.2vw, 4.4rem) !important;
+  padding: 0 !important;
+  margin: 0 clamp(0.12rem, 0.3vw, 0.25rem) !important;
+  border-radius: 12px !important;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: clamp(1.5rem, 3.4vw, 2.15rem) !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  text-transform: uppercase !important;
+  box-sizing: border-box !important;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+html body > .ga-stage #scramble-answer .scramble-answer-slot.is-filled::after,
+html body .scramble-answer-slot.is-filled::after {
+  display: none !important;
+}
+@keyframes scramble-slot-pop {
+  0% { transform: scale(0.78); }
+  70% { transform: scale(1.06); }
+  100% { transform: scale(1); }
 }
 html body > .ga-stage #scramble-practice-hint:not(.hidden) {
   display: flex !important;
@@ -1776,34 +1829,40 @@ html body > .ga-stage[data-ga-theme="classroom"] #scramble-tiles .scramble-tile:
   background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%) !important;
   transform: translateY(-3px) !important;
 }
-html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer .scramble-answer-slot {
-  position: relative !important;
-  background: #ffffff !important;
+html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer {
+  background: linear-gradient(180deg, #2a563d 0%, #1d3f2c 100%) !important;
+  color: #fffbeb !important;
+  border: 4px solid #b5804c !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.45), 0 5px 0 #4a2c12, 0 10px 24px rgba(45, 28, 12, 0.35) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer .scramble-answer-slot:not(.is-filled) {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: transparent !important;
+  border: 2.5px dashed rgba(255, 251, 235, 0.55) !important;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.35) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer .scramble-answer-slot:not(.is-filled)::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 20% !important;
+  right: 20% !important;
+  bottom: 12% !important;
+  height: 3px !important;
+  border-radius: 999px !important;
+  background: rgba(255, 251, 235, 0.45) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer .scramble-answer-slot.is-filled {
+  background: linear-gradient(180deg, #ffffff 0%, #fef9c3 100%) !important;
   color: #1c1917 !important;
   border: 3px solid #292524 !important;
   border-radius: 12px !important;
-  min-width: 1.32em !important;
-  min-height: 1.42em !important;
-  padding: 0.05em 0.18em 0.16em !important;
-  box-shadow: 0 5px 0 rgba(28, 25, 23, 0.48) !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 4px 0 #292524, 0 8px 16px rgba(0, 0, 0, 0.25) !important;
   text-shadow: none !important;
+  animation: scramble-slot-pop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
-html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer .scramble-answer-slot::after {
-  content: '';
-  position: absolute;
-  left: 18%;
-  right: 18%;
-  bottom: 10%;
-  height: 4px;
-  border-radius: 999px;
-  background: #94a3b8;
-}
-html body > .ga-stage[data-ga-theme="classroom"] #scramble-answer .scramble-answer-slot.is-filled {
-  background: #fef9c3 !important;
-  color: #1c1917 !important;
-  border-color: #292524 !important;
-}
-html body > .ga-stage[data-ga-theme="classroom"] .cipher-lab-panel > p:first-child {
+html body > .ga-stage[data-ga-theme="classroom"] .cipher-lab-panel > p:has(#scramble-win-score),
+html body > .ga-stage[data-ga-theme="classroom"] .cipher-lab-panel > .scramble-win-badge {
   background: linear-gradient(180deg, #2a563d 0%, #1d3f2c 100%) !important;
   color: #fffbeb !important;
   border-color: #b5804c !important;
@@ -2298,33 +2357,39 @@ html body > .ga-stage[data-ga-theme="jungle"] #scramble-tiles .scramble-tile:hov
   background: linear-gradient(180deg, #bef264 0%, #65a30d 100%) !important;
   transform: translateY(-3px) !important;
 }
-html body > .ga-stage[data-ga-theme="jungle"] #scramble-answer .scramble-answer-slot {
-  position: relative !important;
-  background: #fdf3dc !important;
-  color: #3b1d04 !important;
-  border: 3px solid #5c340e !important;
-  border-radius: 12px !important;
-  min-width: 1.32em !important;
-  min-height: 1.42em !important;
-  padding: 0.05em 0.18em 0.16em !important;
-  box-shadow: 0 5px 0 #271202 !important;
-  text-shadow: none !important;
+html body > .ga-stage[data-ga-theme="jungle"] #scramble-answer {
+  background: linear-gradient(180deg, #3d2208 0%, #261403 100%) !important;
+  border: 4px solid #a16207 !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5), 0 5px 0 #1c0e02, 0 10px 24px rgba(0, 0, 0, 0.35) !important;
 }
-html body > .ga-stage[data-ga-theme="jungle"] #scramble-answer .scramble-answer-slot::after {
-  content: '';
-  position: absolute;
-  left: 18%;
-  right: 18%;
-  bottom: 10%;
-  height: 4px;
-  border-radius: 999px;
-  background: #b4844c;
+html body > .ga-stage[data-ga-theme="jungle"] #scramble-answer .scramble-answer-slot:not(.is-filled) {
+  background: rgba(253, 243, 220, 0.12) !important;
+  color: transparent !important;
+  border: 2.5px dashed rgba(254, 240, 138, 0.5) !important;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.35) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] #scramble-answer .scramble-answer-slot:not(.is-filled)::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 20% !important;
+  right: 20% !important;
+  bottom: 12% !important;
+  height: 3px !important;
+  border-radius: 999px !important;
+  background: rgba(254, 240, 138, 0.45) !important;
 }
 html body > .ga-stage[data-ga-theme="jungle"] #scramble-answer .scramble-answer-slot.is-filled {
-  background: #fef08a !important;
+  background: linear-gradient(180deg, #fef9c3 0%, #fef08a 100%) !important;
   color: #2b1503 !important;
+  border: 3px solid #5c340e !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 4px 0 #271202, 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+  text-shadow: none !important;
+  animation: scramble-slot-pop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
-html body > .ga-stage[data-ga-theme="jungle"] .cipher-lab-panel > p:first-child {
+html body > .ga-stage[data-ga-theme="jungle"] .cipher-lab-panel > p:has(#scramble-win-score),
+html body > .ga-stage[data-ga-theme="jungle"] .cipher-lab-panel > .scramble-win-badge {
   background: linear-gradient(180deg, #5c340e 0%, #3b1f06 100%) !important;
   color: #fef3c7 !important;
   border-color: #d97706 !important;
@@ -2802,7 +2867,8 @@ html body > .ga-stage[data-ga-theme="toybox"] #baam-board {
   padding: clamp(0.95rem, 2vw, 1.55rem) !important;
   color: #1e1b4b !important;
 }
-html body > .ga-stage[data-ga-theme="toybox"] .cipher-lab-panel > p:first-child {
+html body > .ga-stage[data-ga-theme="toybox"] .cipher-lab-panel > p:has(#scramble-win-score),
+html body > .ga-stage[data-ga-theme="toybox"] .cipher-lab-panel > .scramble-win-badge {
   background: linear-gradient(180deg, #ffffff 0%, #eef2ff 100%) !important;
   color: #312e81 !important;
   border-color: #6366f1 !important;
@@ -2842,33 +2908,36 @@ html body > .ga-stage[data-ga-theme="toybox"] #scramble-tiles .scramble-tile:nth
   border-color: #a16207 !important;
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.65), 0 5px 0 #854d0e, 0 8px 16px rgba(234, 179, 8, 0.3) !important;
 }
-html body > .ga-stage[data-ga-theme="toybox"] #scramble-answer .scramble-answer-slot {
-  position: relative !important;
-  background: #e0e7ff !important;
+html body > .ga-stage[data-ga-theme="toybox"] #scramble-answer {
+  background: linear-gradient(180deg, #312e81 0%, #1e1b4b 100%) !important;
+  border: 4px solid #6366f1 !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4), 0 5px 0 #1e1b4b, 0 10px 24px rgba(30, 27, 75, 0.35) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #scramble-answer .scramble-answer-slot:not(.is-filled) {
+  background: rgba(224, 231, 255, 0.14) !important;
+  color: transparent !important;
+  border: 2.5px dashed rgba(165, 180, 252, 0.55) !important;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.35) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #scramble-answer .scramble-answer-slot:not(.is-filled)::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 20% !important;
+  right: 20% !important;
+  bottom: 12% !important;
+  height: 3px !important;
+  border-radius: 999px !important;
+  background: rgba(165, 180, 252, 0.45) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] #scramble-answer .scramble-answer-slot.is-filled {
+  background: linear-gradient(180deg, #ffffff 0%, #fef08a 100%) !important;
   color: #1e1b4b !important;
   border: 3px solid #6366f1 !important;
   border-radius: 14px !important;
-  min-width: 1.32em !important;
-  min-height: 1.42em !important;
-  padding: 0.05em 0.18em 0.16em !important;
-  box-shadow: inset 0 3px 6px rgba(67, 56, 202, 0.16), 0 4px 0 #a5b4fc !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 4px 0 #4338ca, 0 8px 16px rgba(30, 27, 75, 0.3) !important;
   text-shadow: none !important;
-}
-html body > .ga-stage[data-ga-theme="toybox"] #scramble-answer .scramble-answer-slot::after {
-  content: '';
-  position: absolute;
-  left: 18%;
-  right: 18%;
-  bottom: 10%;
-  height: 4px;
-  border-radius: 999px;
-  background: #818cf8;
-}
-html body > .ga-stage[data-ga-theme="toybox"] #scramble-answer .scramble-answer-slot.is-filled {
-  background: #fef08a !important;
-  color: #1e1b4b !important;
-  border-color: #eab308 !important;
-  box-shadow: 0 4px 0 #ca8a04 !important;
+  animation: scramble-slot-pop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 /* Toybox Hangman */
 html body > .ga-stage[data-ga-theme="toybox"] #hangman-word {
@@ -4264,7 +4333,8 @@ html body[data-ga-active-theme="halloween"] .cdx-stat-label {
 }
 
 /* Unscramble (Cipher Lab): Open-stage Haunted Manor layout */
-html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .cipher-lab-panel > p:first-child {
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .cipher-lab-panel > p:has(#scramble-win-score),
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .cipher-lab-panel > .scramble-win-badge {
   background: linear-gradient(180deg, #3c1d70 0%, #241046 100%) !important;
   border: 2.5px solid #f97316 !important;
   border-radius: 999px !important;
@@ -4302,36 +4372,36 @@ html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) 
   transform: translateY(-2px) !important;
   box-shadow: 0 6px 0 var(--hlw-ink), 0 12px 20px rgba(0, 0, 0, 0.4) !important;
 }
-html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot {
-  position: relative !important;
-  background: linear-gradient(180deg, #fffdf7 0%, #fde8c4 100%) !important;
-  color: #26143a !important;
-  border: 3px solid var(--hlw-ink) !important;
-  border-bottom-width: 4px !important;
-  border-radius: 14px !important;
-  min-width: 1.32em !important;
-  min-height: 1.42em !important;
-  padding: 0.05em 0.18em 0.16em !important;
-  box-shadow: 0 5px 0 var(--hlw-ink), 0 10px 18px rgba(0, 0, 0, 0.4) !important;
-  text-shadow: none !important;
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #scramble-answer {
+  background: linear-gradient(180deg, #2a1040 0%, #180829 100%) !important;
+  border: 4px solid #ea580c !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.55), 0 5px 0 #0f0419, 0 10px 24px rgba(0, 0, 0, 0.45) !important;
 }
-html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot::after {
-  content: '';
-  position: absolute;
-  left: 18%;
-  right: 18%;
-  bottom: 10%;
-  height: 4px;
-  border-radius: 999px;
-  background: #d97706;
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot:not(.is-filled) {
+  background: rgba(253, 186, 116, 0.1) !important;
+  color: transparent !important;
+  border: 2.5px dashed rgba(249, 115, 22, 0.55) !important;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot:not(.is-filled)::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 20% !important;
+  right: 20% !important;
+  bottom: 12% !important;
+  height: 3px !important;
+  border-radius: 999px !important;
+  background: rgba(249, 115, 22, 0.45) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot.is-filled {
-  background: linear-gradient(180deg, #fdba74 0%, #f97316 100%) !important;
-  color: #2a1207 !important;
-  border-color: var(--hlw-ink) !important;
-}
-html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot.is-filled::after {
-  display: none;
+  background: linear-gradient(180deg, #fff7ed 0%, #fed7aa 100%) !important;
+  color: #431407 !important;
+  border: 3px solid #ea580c !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 4px 0 #7c2d12, 0 8px 16px rgba(0, 0, 0, 0.35) !important;
+  text-shadow: none !important;
+  animation: scramble-slot-pop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .cipher-lab-reset,
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .cipher-lab-next {
@@ -5272,41 +5342,35 @@ html body[data-ga-active-theme="classic"] .lc-daily-cap:not(.is-limit) {
 /* ==========================================================================
    Classic Theme - Unscramble (Empty boxes instead of empty lines)
    ========================================================================== */
-html body > .ga-stage[data-ga-theme="classic"] #scramble-answer .scramble-answer-slot,
-html body > .ga-stage:not([data-ga-theme]) #scramble-answer .scramble-answer-slot,
-html body[data-ga-active-theme="classic"] #scramble-answer .scramble-answer-slot,
-.cipher-lab-shell #scramble-answer .scramble-answer-slot {
-  position: relative !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-width: 1.18em !important;
-  min-height: 1.34em !important;
-  padding: 0.05em 0.16em 0.1em !important;
-  margin: 0 0.12em !important;
-  background: rgba(14, 22, 64, 0.75) !important;
-  border: 2.5px solid rgba(147, 197, 253, 0.55) !important;
-  border-bottom: 2.5px solid rgba(147, 197, 253, 0.55) !important;
-  border-radius: 12px !important;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), 0 3px 8px rgba(2, 6, 23, 0.3) !important;
-  line-height: 1 !important;
-  text-shadow: none !important;
+html body > .ga-stage[data-ga-theme="classic"] #scramble-answer,
+html body > .ga-stage:not([data-ga-theme]) #scramble-answer,
+html body[data-ga-active-theme="classic"] #scramble-answer,
+.cipher-lab-shell #scramble-answer {
+  background: rgba(15, 23, 42, 0.55) !important;
+  border: 2px solid rgba(147, 197, 253, 0.35) !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.25) !important;
 }
-html body > .ga-stage[data-ga-theme="classic"] #scramble-answer .scramble-answer-slot::after,
-html body > .ga-stage:not([data-ga-theme]) #scramble-answer .scramble-answer-slot::after,
-html body[data-ga-active-theme="classic"] #scramble-answer .scramble-answer-slot::after,
-.cipher-lab-shell #scramble-answer .scramble-answer-slot::after {
-  display: none !important;
+html body > .ga-stage[data-ga-theme="classic"] #scramble-answer .scramble-answer-slot:not(.is-filled),
+html body > .ga-stage:not([data-ga-theme]) #scramble-answer .scramble-answer-slot:not(.is-filled),
+html body[data-ga-active-theme="classic"] #scramble-answer .scramble-answer-slot:not(.is-filled),
+.cipher-lab-shell #scramble-answer .scramble-answer-slot:not(.is-filled) {
+  background: rgba(14, 22, 64, 0.6) !important;
+  color: transparent !important;
+  border: 2.5px dashed rgba(147, 197, 253, 0.45) !important;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4) !important;
 }
 html body > .ga-stage[data-ga-theme="classic"] #scramble-answer .scramble-answer-slot.is-filled,
 html body > .ga-stage:not([data-ga-theme]) #scramble-answer .scramble-answer-slot.is-filled,
 html body[data-ga-active-theme="classic"] #scramble-answer .scramble-answer-slot.is-filled,
 .cipher-lab-shell #scramble-answer .scramble-answer-slot.is-filled {
-  border-color: #fde047 !important;
-  background: linear-gradient(145deg, rgba(37, 99, 235, 0.55), rgba(30, 64, 175, 0.75)) !important;
+  border: 2.5px solid #fde047 !important;
+  border-radius: 12px !important;
+  background: linear-gradient(145deg, rgba(37, 99, 235, 0.85), rgba(30, 64, 175, 0.95)) !important;
   color: #fde047 !important;
-  text-shadow: 0 0 18px rgba(255, 203, 5, 0.6) !important;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  text-shadow: 0 0 14px rgba(255, 203, 5, 0.6) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 14px rgba(37, 99, 235, 0.45) !important;
+  animation: scramble-slot-pop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
 /* ==========================================================================
@@ -5424,7 +5488,7 @@ html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is
 html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) #baam-board {
   background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important;
 }
-html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.match-game-progress,.cipher-lab-panel > p:first-child) {
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.match-game-progress,.cipher-lab-panel > p:has(#scramble-win-score)) {
   background: linear-gradient(135deg, #255c3c, #123b31) !important;
   border: 2px solid #83ad5d !important;
   border-radius: 14px !important;
@@ -5442,7 +5506,7 @@ html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is
 html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(#scramble-tiles .scramble-tile:hover:not(:disabled),.hangman-letter.is-available:hover) {
   background: linear-gradient(180deg, #d4ed8b, #8fc363) !important;
 }
-html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot,
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot:not(.is-filled),
 html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) #hangman-clue,
 html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) #find-me-picture {
   background: #f7f2d8 !important; color: #233d2e !important; border: 3px solid #6e9c5a !important;
@@ -5586,7 +5650,7 @@ html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) #baam-board {
   background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important;
 }
-html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is(.match-game-progress,.cipher-lab-panel > p:first-child) {
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is(.match-game-progress,.cipher-lab-panel > p:has(#scramble-win-score)) {
   background: linear-gradient(120deg,#443584,#725bd1) !important; border: 2px solid #b8fff0 !important; border-radius: 16px !important;
   color: #fffdf4 !important; box-shadow: inset 0 2px 0 rgba(255,255,255,.24), 0 4px 0 #251d61 !important;
 }
@@ -5612,7 +5676,7 @@ html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) #sc
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is(#scramble-tiles .scramble-tile:hover:not(:disabled),.hangman-letter.is-available:hover,.find-me-word:hover) {
   filter: brightness(1.04) saturate(1.08) !important; transform: translateY(-3px) rotate(-1deg) !important;
 }
-html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot,
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot:not(.is-filled),
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is(#hangman-clue,#find-me-picture) {
   background: #fffdf0 !important; color: #29245f !important; border: 3px solid #43cfc8 !important;
   box-shadow: inset 0 2px 0 #fff, 0 5px 0 #338e9a !important;
