@@ -69,6 +69,14 @@
     .teacher-zone-switch input:checked + span { background: #4152d9; }
     .teacher-zone-switch input:checked + span::after { transform: translateX(1.25rem); }
     .teacher-zone-switch input:focus-visible + span { outline: 3px solid #4152d9; outline-offset: 3px; }
+    
+    /* Dark theme root radial backdrop */
+    body:not(.ts-bright),
+    body.ts-on:not(.ts-bright),
+    body:not(.ts-bright) #app-screen {
+      background: radial-gradient(circle at center, #111a2e 0%, #080d18 70%, #04070d 100%) !important;
+      background-attachment: fixed !important;
+    }
     #home-screen { background: linear-gradient(135deg, #020617 0%, #071b3a 48%, #1f2774 100%); }
     #home-screen::before { content: ''; position: fixed; inset: 0; pointer-events: none; background-image: radial-gradient(circle at 12% 18%, rgba(255,255,255,.8) 0 1px, transparent 1.5px), radial-gradient(circle at 78% 24%, rgba(125,211,252,.7) 0 1px, transparent 1.5px), radial-gradient(circle at 42% 72%, rgba(255,255,255,.65) 0 1px, transparent 1.5px), radial-gradient(circle at 88% 82%, rgba(167,243,208,.65) 0 1px, transparent 1.5px), linear-gradient(115deg, transparent 22%, rgba(255,203,5,.16) 42%, rgba(129,140,248,.2) 50%, transparent 68%); background-size: 180px 160px, 240px 220px, 210px 190px, 270px 240px, 100% 100%; background-position: 0 0, 40px 20px, 90px 30px, 10px 80px, center; z-index: -1; }
     #home-screen::after { content: ''; position: fixed; inset: 8% 10% 18%; pointer-events: none; border: 1px solid rgba(125,211,252,.12); clip-path: polygon(8% 20%, 38% 8%, 72% 25%, 92% 12%, 82% 70%, 52% 88%, 18% 72%); opacity: .8; z-index: -1; }
@@ -2118,7 +2126,7 @@
     #tab-admin.teacher-zone-standalone #admin-subtab-teacher-zone > .flex.gap-2.mb-4 button { display: inline-flex; }
 
     /* Shared responsive game setup language: compact dark panels, outlined choices, and clear selected states. */
-    .game-setup-panel { position: relative; isolation: isolate; width: min(100%, 32rem); max-height: calc(100 * min(var(--vh, 1vh), 1vh) - 1.5rem); overflow-y: auto; padding: 1.25rem; border: 1px solid rgba(135,171,255,.34); border-radius: 1.15rem; background: linear-gradient(145deg,#071b2b,#1e2673 58%,#10153b); color: #f5f7ff; box-shadow: 0 24px 70px rgba(2,6,23,.62), inset 0 1px 0 rgba(255,255,255,.12); }
+    .game-setup-panel { position: relative; isolation: isolate; width: min(100%, 32rem); max-height: calc(100 * min(var(--vh, 1vh), 1vh) - 1.5rem); overflow-y: auto; padding: 1.25rem; border: 1px solid rgba(135,171,255,.34); border-radius: 1.15rem; background: radial-gradient(circle at center, #111a2e 0%, #080d18 70%, #04070d 100%) !important; background-attachment: fixed !important; color: #f5f7ff; box-shadow: 0 24px 70px rgba(2,6,23,.62), inset 0 1px 0 rgba(255,255,255,.12); }
     .game-setup-panel h2 { color: #fef3c7 !important; text-align: center; }
     .game-setup-panel p { color: #b9c3e6 !important; }
     .game-setup-panel [class*="-word-count-option"], .game-setup-panel [class*="-timer-option"], .game-setup-panel .baam-card-count { min-height: 2.35rem; border: 1px solid rgba(135,171,255,.42) !important; border-radius: .65rem; background: #071f35 !important; color: #d7f4ef !important; font-weight: 800; transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease; }

@@ -142,6 +142,31 @@ body.ts-on { background: var(--ts-bg) !important; }
 body.ts-on #app-screen { background: var(--ts-bg) !important; }
 body.ts-on #app-screen > header, body.ts-on #app-screen > nav.sticky { background: var(--ts-bg) !important; border: 0 !important; box-shadow: none !important; }
 body.ts-on #ts-sidebar { background: var(--ts-bg); border-right-color: var(--ts-border); }
+/* Dark Theme root/container and viewports */
+html:not(.ts-bright),
+body:not(.ts-bright),
+body.ts-on:not(.ts-bright),
+body:not(.ts-bright) #app-screen,
+body.ts-on:not(.ts-bright) #app-screen,
+body:not(.ts-bright) .ts-viewport {
+  background: radial-gradient(circle at center, #111a2e 0%, #080d18 70%, #04070d 100%) !important;
+  background-attachment: fixed !important;
+}
+
+body.ts-on:not(.ts-bright) #app-screen > header,
+body.ts-on:not(.ts-bright) #app-screen > nav.sticky {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+body.ts-on:not(.ts-bright) #ts-sidebar {
+  background: rgba(17, 26, 46, 0.78) !important;
+  border-right: 1px solid var(--ts-border) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
 body.ts-on .ts-card, body.ts-on .ts-switch, body.ts-on .ts-me { background: var(--ts-surface); border-color: var(--ts-border); border-radius: 16px; backdrop-filter: none; }
 .ts-switch-wrap { position: relative; }
 .ts-switch { width: 100%; }
@@ -829,9 +854,8 @@ body.ts-on .ts-card select#ts-award-student option { background: var(--ts-surfac
 .ts-startup-overlay {
   position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center;
   padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
-  background: radial-gradient(ellipse at 50% 42%, rgba(18, 37, 76, .82), rgba(5, 10, 23, .97) 68%),
-    linear-gradient(rgba(4, 9, 22, .84), rgba(4, 9, 22, .93)),
-    url('/__l5e/assets-v1/11d538ad-dd06-42ea-8131-ce7d76bbbc3d/app-bg.jpg') center / cover;
+  background: radial-gradient(circle at center, #111a2e 0%, #080d18 70%, #04070d 100%) !important;
+  background-attachment: fixed !important;
   color: #f8fafc; opacity: 1; transition: opacity .26s ease;
 }
 .ts-startup-overlay.is-leaving { opacity: 0; pointer-events: none; }
