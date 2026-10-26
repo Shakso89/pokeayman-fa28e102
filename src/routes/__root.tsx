@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 function NotFoundComponent() {
   useEffect(() => {
     // Unknown addresses (old links, sign-in returns) go straight home without a 404 flash.
+    if (window.self !== window.top) return; // never nest the site inside its own frame
     window.location.replace("/" + window.location.hash);
   }, []);
 
