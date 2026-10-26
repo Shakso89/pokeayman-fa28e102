@@ -5865,7 +5865,8 @@ html body[data-ga-active-theme="toybox"] :is(.lc-stage,.vb-stage) .ga-stage-head
 }
 
 /* Quick-mouse-100 Panel */
-.ga-lobby .ga-qpanel {
+.ga-lobby .ga-qpanel,
+.ga-qpanel {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5884,20 +5885,23 @@ html body[data-ga-active-theme="toybox"] :is(.lc-stage,.vb-stage) .ga-stage-head
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.ga-lobby .ga-qpanel:hover {
+.ga-lobby .ga-qpanel:hover,
+.ga-qpanel:hover {
   border-top-color: rgba(255, 203, 5, 0.45);
   border-left-color: rgba(255, 203, 5, 0.3);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32), 0 0 12px rgba(255, 203, 5, 0.12);
 }
 
-.ga-lobby .ga-qleft {
+.ga-lobby .ga-qleft,
+.ga-qleft {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   min-width: 0;
 }
 
-.ga-lobby .ga-qicon {
+.ga-lobby .ga-qicon,
+.ga-qicon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -5913,7 +5917,8 @@ html body[data-ga-active-theme="toybox"] :is(.lc-stage,.vb-stage) .ga-stage-head
   flex-shrink: 0;
 }
 
-.ga-lobby .ga-qlabel {
+.ga-lobby .ga-qlabel,
+.ga-qlabel {
   font-family: 'Outfit', sans-serif;
   font-size: 0.88rem;
   font-weight: 800;
@@ -5923,7 +5928,8 @@ html body[data-ga-active-theme="toybox"] :is(.lc-stage,.vb-stage) .ga-stage-head
 }
 
 /* Quick-mouse-100 Counter Group */
-.ga-lobby .ga-qcounter {
+.ga-lobby .ga-qcounter,
+.ga-qcounter {
   display: inline-flex;
   align-items: center;
   background: rgba(0, 0, 0, 0.32);
@@ -5935,7 +5941,8 @@ html body[data-ga-active-theme="toybox"] :is(.lc-stage,.vb-stage) .ga-stage-head
 }
 
 /* Quick-mouse-100 Tactile Action Buttons */
-.ga-lobby .ga-qbtn {
+.ga-lobby .ga-qbtn,
+.ga-qbtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -5957,20 +5964,24 @@ html body[data-ga-active-theme="toybox"] :is(.lc-stage,.vb-stage) .ga-stage-head
   transition: background 0.15s ease, transform 0.08s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.ga-lobby .ga-qbtn:hover:not(:disabled) {
+.ga-lobby .ga-qbtn:hover:not(:disabled),
+.ga-qbtn:hover:not(:disabled) {
   background: linear-gradient(180deg, rgba(255, 203, 5, 0.35), rgba(255, 203, 5, 0.1));
   border-color: rgba(255, 203, 5, 0.6);
   color: #ffcb05;
   box-shadow: 0 0 8px rgba(255, 203, 5, 0.35);
 }
 
-.ga-lobby .ga-qbtn:active:not(:disabled) {
+.ga-lobby .ga-qbtn:active:not(:disabled),
+.ga-qbtn:active:not(:disabled) {
   transform: translateY(1px) scale(0.95);
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(255, 255, 255, 0.08));
 }
 
 .ga-lobby .ga-qbtn:disabled,
-.ga-lobby .ga-qbtn.is-disabled {
+.ga-lobby .ga-qbtn.is-disabled,
+.ga-qbtn:disabled,
+.ga-qbtn.is-disabled {
   opacity: 0.25 !important;
   cursor: not-allowed !important;
   pointer-events: none !important;
@@ -5982,7 +5993,8 @@ html body[data-ga-active-theme="toybox"] :is(.lc-stage,.vb-stage) .ga-stage-head
 }
 
 /* Quick-mouse-100 Value Badge */
-.ga-lobby .ga-qvalue {
+.ga-lobby .ga-qvalue,
+.ga-qvalue {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6004,7 +6016,8 @@ html body[data-ga-active-theme="toybox"] :is(.lc-stage,.vb-stage) .ga-stage-head
   transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
-.ga-lobby .ga-qvalue.has-value {
+.ga-lobby .ga-qvalue.has-value,
+.ga-qvalue.has-value {
   color: #ffcb05;
   border-color: rgba(255, 203, 5, 0.35);
   background: rgba(255, 203, 5, 0.08);

@@ -1166,7 +1166,29 @@
           <button type="button" class="btn-primary ga-student-start-btn" style="padding: 0.75rem 1.75rem; font-size: 1rem; font-weight: 800;">Start ${esc(game.name)} →</button>
         </div>`;
       panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
-      panel.querySelector('#ga-crossword-play-all')?.addEventListener('click', () => { const input = panel.querySelector('#ga-crossword-word-count'); input.value = String(crosswordWordMax); input.setCustomValidity(''); });
+      if (resolvedFnName === 'chooseCrossword') {
+        const cwInput = panel.querySelector('#ga-crossword-word-count');
+        const cwSection = panel.querySelector('.ga-crossword-count');
+        if (cwInput && cwSection) {
+          const cwPanel = createQuickMousePanel({
+            iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+            title: 'Words in puzzle',
+            value: crosswordWordMax,
+            min: 2,
+            max: crosswordWordMax,
+            step: 1,
+            format: v => `${v} words`,
+            onChange: v => {
+              cwInput.value = String(v);
+              cwInput.dispatchEvent(new Event('input', { bubbles: true }));
+              cwInput.setCustomValidity?.('');
+            }
+          });
+          cwInput.style.display = 'none';
+          cwPanel.element.appendChild(cwInput);
+          cwSection.replaceWith(cwPanel.element);
+        }
+      }
       panel.addEventListener('click', event => {
         const card = event.target.closest('[data-ga-theme-choice]');
         if (card) {
@@ -1567,9 +1589,39 @@
     paramsSection.className = 'ga-params-section';
     paramsSection.setAttribute('aria-label', 'Game parameters');
 
-    // Collect game-specific controls if any
+    // Words in puzzle (Top for Crossword)
+    const existingCrosswordSection = root.querySelector('.ga-crossword-count') || modal.querySelector('.ga-crossword-count');
+    const existingCrosswordInput = existingCrosswordSection?.querySelector('#crossword-word-count, #ga-crossword-word-count') || modal.querySelector('#crossword-word-count, #ga-crossword-word-count');
+    if (existingCrosswordInput) {
+      const cwMin = Math.max(2, Number(existingCrosswordInput.min || 2));
+      const cwMax = Math.max(cwMin, Number(existingCrosswordInput.max || 10));
+      const cwInitial = Math.max(cwMin, Math.min(cwMax, Number(existingCrosswordInput.value || cwMax)));
+      const crosswordPanel = createQuickMousePanel({
+        iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+        title: 'Words in puzzle',
+        value: cwInitial,
+        min: cwMin,
+        max: cwMax,
+        step: 1,
+        format: v => `${v} words`,
+        onChange: v => {
+          existingCrosswordInput.value = String(v);
+          existingCrosswordInput.dispatchEvent(new Event('input', { bubbles: true }));
+          existingCrosswordInput.dispatchEvent(new Event('change', { bubbles: true }));
+          existingCrosswordInput.setCustomValidity?.('');
+          modal.dataset.gaCrosswordCount = String(v);
+        }
+      });
+      existingCrosswordInput.style.display = 'none';
+      crosswordPanel.element.appendChild(existingCrosswordInput);
+      if (existingCrosswordSection) existingCrosswordSection.remove();
+      modal.dataset.gaCrosswordCount = String(crosswordPanel.getValue());
+      paramsSection.appendChild(crosswordPanel.element);
+    }
+
+    // Collect other game-specific controls if any
     const gameSpecificControls = [...root.children].filter(el =>
-      el.matches('.ga-crossword-count') ||
+      !el.matches('.ga-crossword-count') &&
       el.querySelector('.memory-level-option, .match-word-count-option, .shared-baam-count')
     );
     gameSpecificControls.forEach(ctrl => {
