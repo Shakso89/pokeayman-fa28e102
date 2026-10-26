@@ -63,7 +63,7 @@ function AuthPage() {
 
   async function google() {
     setMsg(null);
-    const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
+    const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
     if (res?.error) setMsg({ ok: false, text: String(res.error.message ?? res.error) });
   }
 
