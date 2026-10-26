@@ -6895,63 +6895,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   }).observe(document.body, { childList: true, subtree: true });
   if (document.body) observeStages(); else document.addEventListener('DOMContentLoaded', observeStages, { once: true });
 
-  function createStepper({ value, min, max, step = 1, format = v => String(v), onChange }) {
-    let current = value;
-    const el = document.createElement('div');
-    el.className = 'ga-stepper';
-    el.innerHTML = `<button type="button" class="ga-stepper-btn ga-stepper-dec" aria-label="Decrease">
-      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-    </button>
-    <div class="ga-stepper-val-wrap">
-      <span class="ga-stepper-val"></span>
-    </div>
-    <button type="button" class="ga-stepper-btn ga-stepper-inc" aria-label="Increase">
-      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-    </button>`;
-    const decBtn = el.querySelector('.ga-stepper-dec');
-    const incBtn = el.querySelector('.ga-stepper-inc');
-    const valSpan = el.querySelector('.ga-stepper-val');
-
-    function update() {
-      valSpan.textContent = format(current);
-      const atMin = current <= min;
-      const atMax = current >= max;
-      decBtn.disabled = atMin;
-      decBtn.setAttribute('aria-disabled', String(atMin));
-      decBtn.classList.toggle('is-disabled', atMin);
-      incBtn.disabled = atMax;
-      incBtn.setAttribute('aria-disabled', String(atMax));
-      incBtn.classList.toggle('is-disabled', atMax);
-      el.dataset.value = String(current);
-      onChange?.(current);
-    }
-
-    decBtn.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (current > min) {
-        current = Math.max(min, current - step);
-        update();
-      }
-    });
-
-    incBtn.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (current < max) {
-        current = Math.min(max, current + step);
-        update();
-      }
-    });
-
-    update();
-    return {
-      element: el,
-      getValue: () => current,
-      setValue: v => { current = Math.min(max, Math.max(min, v)); update(); }
-    };
-  }
-
   window.gaEnhanceLobby = function (modal, fnName, refresh) {
     if (modal.classList.contains('ga-lobby')) return;
     const resolvedFnName = fnName || (window.pendingChosenGame ? window.pendingChosenGame.fn : '');
@@ -7064,121 +7007,22 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     list.before(players);
     players.append(bar, list);
     checks.forEach(c => c.addEventListener('change', update));
-
-    const existingScoreInput = modal.querySelector('#shared-winning-score');
-    const isScrambleOrFindMe = resolvedFnName === 'chooseScrambleWordCount' || resolvedFnName === 'chooseFindMeScore' || (window.pendingChosenGame && (window.pendingChosenGame.fn === 'chooseScrambleWordCount' || window.pendingChosenGame.fn === 'chooseFindMeScore'));
-    const hasPointsToWin = !!existingScoreInput || isScrambleOrFindMe;
-
-    modal.querySelectorAll('.shared-baam-count').forEach(button => button.classList.remove('game-timer-option'));
-
-    const setupLayout = document.createElement('div');
-    setupLayout.className = 'ga-setup-layout';
-
-    const setupLeft = document.createElement('div');
-    setupLeft.className = 'ga-setup-left';
-
-    const setupRight = document.createElement('div');
-    setupRight.className = 'ga-setup-right';
-
-    // 1. Players & teams section in left column
-    setupLeft.appendChild(players);
-
-    // 2. Parameters section stacked directly under Players
-    const paramsSection = document.createElement('section');
-    paramsSection.className = 'ga-params-section';
-    paramsSection.setAttribute('aria-label', 'Game parameters');
-
-    // Collect game-specific controls if any
-    const gameSpecificControls = [...root.children].filter(el =>
-      el.matches('.ga-crossword-count') ||
-      el.querySelector('.memory-level-option, .match-word-count-option, .shared-baam-count')
-    );
-    gameSpecificControls.forEach(ctrl => {
-      ctrl.classList.add('ga-round-setting', 'ga-game-specific-rule');
-      paramsSection.appendChild(ctrl);
-    });
-
-    // Points to win (Top)
-    if (hasPointsToWin) {
-      const initialScore = Number(existingScoreInput?.value || 5) || 5;
-      const pointsRow = document.createElement('div');
-      pointsRow.className = 'ga-param-row ga-param-points';
-      pointsRow.innerHTML = '<label class="ga-param-title">Points to win</label>';
-      const pointsStepper = createStepper({
-        value: Math.max(1, Math.min(20, initialScore)),
-        min: 1,
-        max: 20,
-        step: 1,
-        format: v => `${v} pts`,
-        onChange: v => {
-          if (existingScoreInput) {
-            existingScoreInput.value = String(v);
-            existingScoreInput.dispatchEvent(new Event('input', { bubbles: true }));
-          }
-          modal.dataset.gaWinningScore = String(v);
-        }
+    const settings = modal.querySelector('.game-settings-grid');
+    const options = document.createElement('details');
+    options.className = 'ga-round-options';
+    options.innerHTML = '<summary><span>Timer & rewards</span><span class="ga-options-summary"></span></summary><div class="ga-options-body"></div>';
+    if (settings) {
+      settings.classList.add('ga-core-settings');
+      settings.querySelectorAll('.game-setting-control').forEach(control => {
+        if (!control.querySelector('#shared-winning-score')) options.querySelector('.ga-options-body').appendChild(control);
       });
-      pointsRow.appendChild(pointsStepper.element);
-      if (existingScoreInput) {
-        existingScoreInput.style.display = 'none';
-        pointsRow.appendChild(existingScoreInput);
-      }
-      modal.dataset.gaWinningScore = String(pointsStepper.getValue());
-      paramsSection.appendChild(pointsRow);
+      if (!settings.children.length) settings.remove();
     }
-
-    // Winner reward coins (Middle)
-    const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : 20;
-    const rewardMax = (availableCredits === Infinity || !Number.isFinite(availableCredits)) ? 100 : Math.max(0, Math.floor(availableCredits / 5) * 5);
-    const rewardRow = document.createElement('div');
-    rewardRow.className = 'ga-param-row ga-param-reward';
-    rewardRow.innerHTML = '<label class="ga-param-title">Winner reward coins</label>';
-    const rewardStepper = createStepper({
-      value: 0,
-      min: 0,
-      max: rewardMax,
-      step: 5,
-      format: v => v === 0 ? 'No coins' : `${v} coins`,
-      onChange: v => {
-        modal.dataset.gaRewardCoins = String(v);
-        modal.querySelectorAll('.game-reward-option').forEach(btn => {
-          const active = Number(btn.dataset.reward || 0) === v;
-          btn.classList.toggle('is-selected', active);
-          btn.setAttribute('aria-checked', String(active));
-        });
-      }
+    // Card count and timer are separate segmented controls, never competing selections.
+    modal.querySelectorAll('.shared-baam-count').forEach(button => button.classList.remove('game-timer-option'));
+    [...root.children].forEach(el => {
+      if (el.querySelector('.memory-level-option, .match-word-count-option, .shared-baam-count') || el === settings) el.classList.add('ga-round-setting');
     });
-    rewardRow.appendChild(rewardStepper.element);
-    modal.dataset.gaRewardCoins = '0';
-    paramsSection.appendChild(rewardRow);
-
-    // Timer (Bottom)
-    const timerRow = document.createElement('div');
-    timerRow.className = 'ga-param-row ga-param-timer';
-    timerRow.innerHTML = '<label class="ga-param-title">Timer</label>';
-    const timerStepper = createStepper({
-      value: 0,
-      min: 0,
-      max: 10,
-      step: 1,
-      format: v => v === 0 ? 'No timer' : `${v} min`,
-      onChange: v => {
-        const seconds = v * 60;
-        modal.dataset.gaTimerSeconds = String(seconds);
-        modal.querySelectorAll('.game-timer-option').forEach(btn => {
-          const active = Number(btn.dataset.seconds || 0) === seconds;
-          btn.classList.toggle('is-selected', active);
-          btn.setAttribute('aria-pressed', String(active));
-        });
-      }
-    });
-    timerRow.appendChild(timerStepper.element);
-    modal.dataset.gaTimerSeconds = '0';
-    paramsSection.appendChild(timerRow);
-
-    setupLeft.appendChild(paramsSection);
-
-    // Right column: Visual style picker
     if (window.gaIsTeacherThemeEnabled()) {
       const selectedThemeId = window.gaGetTheme();
       const selectedTheme = GAME_THEMES.find(t => t.id === selectedThemeId) || GAME_THEMES[0];
@@ -7195,20 +7039,16 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         if (!card) return;
         window.gaSetTheme(card.dataset.gaThemeChoice);
       });
-      setupRight.appendChild(themeSection);
+      footer.before(themeSection);
     }
-
-    setupLayout.append(setupLeft, setupRight);
-
-    const oldSettings = modal.querySelector('.game-settings-grid');
-    if (oldSettings) oldSettings.remove();
-
-    if (p && p.parentElement === root) {
-      p.after(setupLayout);
-    } else {
-      root.prepend(setupLayout);
-    }
-
+    if (options.querySelector('.ga-options-body').children.length) footer.before(options);
+    const updateOptions = () => {
+      const seconds = Number(modal.querySelector('.game-timer-option.is-selected')?.dataset.seconds || 0);
+      const reward = Number(modal.querySelector('.game-reward-option.is-selected')?.dataset.reward || 0);
+      options.querySelector('.ga-options-summary').textContent = `${seconds ? `${seconds / 60} min` : 'No timer'} · ${reward ? `${reward} coins` : 'No reward'}`;
+    };
+    modal.addEventListener('click', () => queueMicrotask(updateOptions));
+    updateOptions();
     footer.classList.add('ga-lobby-footer');
     if (cancel) {
       cancel.textContent = '← Games';
@@ -21405,15 +21245,15 @@ function chooseGamePlayers(listName, nextStep) {
   }));
   modal.querySelector('#game-players-next').addEventListener('click', async () => {
     const selected = [...modal.querySelectorAll('.game-player-check:checked')];
-    const reward = modal.dataset.gaRewardCoins !== undefined ? Number(modal.dataset.gaRewardCoins) : selectedGameReward;
+    const reward = selectedGameReward;
     if (!Number.isInteger(reward) || reward < 0) { modal.querySelector('#game-player-error').textContent = 'Reward must be a non-negative whole number of coins.'; modal.querySelector('#game-player-error').classList.remove('hidden'); return; }
     if (reward > getTeacherCredits()) { modal.querySelector('#game-player-error').textContent = 'Reward cannot exceed your available credits.'; modal.querySelector('#game-player-error').classList.remove('hidden'); return; }
     if (!selected.length) { modal.querySelector('#game-player-error').textContent = 'Select at least one student.'; modal.querySelector('#game-player-error').classList.remove('hidden'); return; }
     if (isCrossword && (!Number.isInteger(selectedCrosswordWordCount) || selectedCrosswordWordCount < 2 || selectedCrosswordWordCount > availableCrosswordWordCount)) { crosswordWordInput.setCustomValidity(`Choose a whole number from 2 to ${availableCrosswordWordCount}.`); crosswordWordInput.reportValidity(); return; }
-    const sharedScore = (isScramble || isFindMe) ? Number(modal.dataset.gaWinningScore || modal.querySelector('#shared-winning-score')?.value || 0) : 0;
+    const sharedScore = (isScramble || isFindMe) ? Number(modal.querySelector('#shared-winning-score')?.value || 0) : 0;
     if ((isScramble || isFindMe) && (!Number.isInteger(sharedScore) || sharedScore < 1 || sharedScore > 1000)) { modal.querySelector('#game-player-error').textContent = 'Points to win must be a whole number from 1 to 1,000.'; modal.querySelector('#game-player-error').classList.remove('hidden'); return; }
     pendingGameReward = reward;
-    pendingGameTimerSeconds = modal.dataset.gaTimerSeconds !== undefined ? Number(modal.dataset.gaTimerSeconds) : Number(modal.querySelector('.game-timer-option.is-selected')?.dataset.seconds || 0);
+    pendingGameTimerSeconds = Number(modal.querySelector('.game-timer-option.is-selected')?.dataset.seconds || 0);
     if (selected.length > 4) { modal.querySelector('#game-player-error').textContent = 'Select no more than four students.'; modal.querySelector('#game-player-error').classList.remove('hidden'); return; }
     pendingGamePlayers = selected.length;
     if (pendingGameReward > 0 && !(await deductTeacherCredits(pendingGameReward))) return;
