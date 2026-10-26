@@ -11819,7 +11819,7 @@ window.pokeaymanEnterTeacher = async function (name) {
   pkTeacherEntering = true;
   try {
     // Wait for saved teachers to load (max 8s) so we match the account instead of creating a duplicate.
-    if (window.pokeaymanDataReady) await Promise.race([window.pokeaymanDataReady, new Promise(r => setTimeout(r, 8000))]);
+    if (window.pokeaymanDataReady) await Promise.race([window.pokeaymanDataReady, new Promise(r => setTimeout(r, 3000))]);
     await pkEnterTeacherNow(name);
   } finally { pkTeacherEntering = false; }
 };
@@ -12839,7 +12839,7 @@ function enterApp() {
   if (currentRole === 'student') loadShop();
   if (launchingTeacher) {
     const initialDataReady = window.__pokeaymanInitialDataReadyPromise || Promise.resolve();
-    const dataReadyOrTimeout = Promise.race([Promise.resolve(initialDataReady).catch(() => {}), new Promise(resolve => window.setTimeout(resolve, 12000))]);
+    const dataReadyOrTimeout = Promise.race([Promise.resolve(initialDataReady).catch(() => {}), new Promise(resolve => window.setTimeout(resolve, 4000))]);
     const minimumScreenTime = new Promise(resolve => window.setTimeout(resolve, 420));
     Promise.all([dataReadyOrTimeout, minimumScreenTime]).then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))).then(() => window.pokeaymanHideTeacherStartup?.());
   }

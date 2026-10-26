@@ -50,14 +50,16 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-async function profileName(): Promise<string> {
-  const { data } = await supabase.auth.getUser();
-  const u = data.user;
+async function profileName(known?: User | null): Promise<string> {
+  const u = known ?? (await supabase.auth.getSession()).data.session?.user ?? null;
   if (!u) return "Teacher";
   // Cloud admins enter as the built-in "Ayman" Admin identity, inheriting all its permissions.
-  const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", u.id);
+  // Role and profile are read in parallel to keep sign-in fast.
+  const [{ data: roles }, { data: p }] = await Promise.all([
+    supabase.from("user_roles").select("role").eq("user_id", u.id),
+    supabase.from("profiles").select("display_name").eq("id", u.id).maybeSingle(),
+  ]);
   if (roles?.some((r) => r.role === "admin")) return "Ayman";
-  const { data: p } = await supabase.from("profiles").select("display_name").eq("id", u.id).maybeSingle();
   const name = p?.display_name || (u.user_metadata?.["display_name"] as string) || (u.user_metadata?.["full_name"] as string) || u.email?.split("@")[0] || "Teacher";
   // Non-admins may not take the reserved Admin name.
   return /^(teacher\s+)?ayman$/i.test(name.trim()) ? `${name.trim()} (Teacher)` : name;
@@ -87,7 +89,13 @@ function Index() {
           sessionStorage.removeItem("pokeayman-streak-dismissed");
         } catch (_) {}
         setUser(null);
-        setFrameKey((k) => k + 1);
+        if (window.pokeaymanAuth) { window.pokeaymanAuth.userId = null; window.pokeaymanAuth.email = null; }
+        // Return the existing app to its home screen instead of reloading it (much faster).
+        try {
+          const frame = document.querySelector<HTMLIFrameElement>("iframe.imported-app");
+          const w = frame?.contentWindow as (Window & { logoutTeacherSession?: () => void }) | null;
+          if (w?.logoutTeacherSession) w.logoutTeacherSession(); else setFrameKey((k) => k + 1);
+        } catch (_) { setFrameKey((k) => k + 1); }
       }
     });
     return () => data.subscription.unsubscribe();
@@ -116,7 +124,7 @@ function Index() {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) return { error: error.message.includes("confirm") ? "Please confirm your email first (check your inbox)." : "Wrong email or password." };
         if (window.pokeaymanAuth) { window.pokeaymanAuth.userId = data.user?.id ?? null; window.pokeaymanAuth.email = data.user?.email ?? null; }
-        return { name: await profileName() };
+        return { name: await profileName(data.user) };
       },
       signUp: async (email, password, name, school) => {
         const { data, error } = await supabase.auth.signUp({
