@@ -1368,25 +1368,31 @@
   }).observe(document.body, { childList: true, subtree: true });
   if (document.body) observeStages(); else document.addEventListener('DOMContentLoaded', observeStages, { once: true });
 
-  function createStepper({ value, min, max, step = 1, format = v => String(v), onChange }) {
+  function createQuickMousePanel({ iconSvg, title, value, min, max, step = 1, format = v => String(v), onChange }) {
     let current = value;
-    const el = document.createElement('div');
-    el.className = 'ga-stepper';
-    el.innerHTML = `<button type="button" class="ga-stepper-btn ga-stepper-dec" aria-label="Decrease">
-      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-    </button>
-    <div class="ga-stepper-val-wrap">
-      <span class="ga-stepper-val"></span>
+    const panel = document.createElement('div');
+    panel.className = 'ga-qpanel';
+    panel.innerHTML = `<div class="ga-qleft">
+      <span class="ga-qicon" aria-hidden="true">${iconSvg}</span>
+      <span class="ga-qlabel">${esc(title)}</span>
     </div>
-    <button type="button" class="ga-stepper-btn ga-stepper-inc" aria-label="Increase">
-      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-    </button>`;
-    const decBtn = el.querySelector('.ga-stepper-dec');
-    const incBtn = el.querySelector('.ga-stepper-inc');
-    const valSpan = el.querySelector('.ga-stepper-val');
+    <div class="ga-qcounter" role="group" aria-label="${esc(title)} counter">
+      <button type="button" class="ga-qbtn ga-qbtn-dec" aria-label="Decrease ${esc(title)}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <span class="ga-qvalue"></span>
+      <button type="button" class="ga-qbtn ga-qbtn-inc" aria-label="Increase ${esc(title)}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>`;
+
+    const decBtn = panel.querySelector('.ga-qbtn-dec');
+    const incBtn = panel.querySelector('.ga-qbtn-inc');
+    const valSpan = panel.querySelector('.ga-qvalue');
 
     function update() {
       valSpan.textContent = format(current);
+      valSpan.classList.toggle('has-value', current > min);
       const atMin = current <= min;
       const atMax = current >= max;
       decBtn.disabled = atMin;
@@ -1395,7 +1401,7 @@
       incBtn.disabled = atMax;
       incBtn.setAttribute('aria-disabled', String(atMax));
       incBtn.classList.toggle('is-disabled', atMax);
-      el.dataset.value = String(current);
+      panel.dataset.value = String(current);
       onChange?.(current);
     }
 
@@ -1419,7 +1425,7 @@
 
     update();
     return {
-      element: el,
+      element: panel,
       getValue: () => current,
       setValue: v => { current = Math.min(max, Math.max(min, v)); update(); }
     };
@@ -1574,10 +1580,9 @@
     // Points to win (Top)
     if (hasPointsToWin) {
       const initialScore = Number(existingScoreInput?.value || 5) || 5;
-      const pointsRow = document.createElement('div');
-      pointsRow.className = 'ga-param-row ga-param-points';
-      pointsRow.innerHTML = '<label class="ga-param-title">Points to win</label>';
-      const pointsStepper = createStepper({
+      const pointsPanel = createQuickMousePanel({
+        iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+        title: 'Points to win',
         value: Math.max(1, Math.min(20, initialScore)),
         min: 1,
         max: 20,
@@ -1591,22 +1596,20 @@
           modal.dataset.gaWinningScore = String(v);
         }
       });
-      pointsRow.appendChild(pointsStepper.element);
       if (existingScoreInput) {
         existingScoreInput.style.display = 'none';
-        pointsRow.appendChild(existingScoreInput);
+        pointsPanel.element.appendChild(existingScoreInput);
       }
-      modal.dataset.gaWinningScore = String(pointsStepper.getValue());
-      paramsSection.appendChild(pointsRow);
+      modal.dataset.gaWinningScore = String(pointsPanel.getValue());
+      paramsSection.appendChild(pointsPanel.element);
     }
 
     // Winner reward coins (Middle)
     const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : 20;
     const rewardMax = (availableCredits === Infinity || !Number.isFinite(availableCredits)) ? 100 : Math.max(0, Math.floor(availableCredits / 5) * 5);
-    const rewardRow = document.createElement('div');
-    rewardRow.className = 'ga-param-row ga-param-reward';
-    rewardRow.innerHTML = '<label class="ga-param-title">Winner reward coins</label>';
-    const rewardStepper = createStepper({
+    const rewardPanel = createQuickMousePanel({
+      iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h6a1.5 1.5 0 0 1 0 3H9a1.5 1.5 0 0 0 0 3h6"/></svg>',
+      title: 'Winner reward coins',
       value: 0,
       min: 0,
       max: rewardMax,
@@ -1621,15 +1624,13 @@
         });
       }
     });
-    rewardRow.appendChild(rewardStepper.element);
     modal.dataset.gaRewardCoins = '0';
-    paramsSection.appendChild(rewardRow);
+    paramsSection.appendChild(rewardPanel.element);
 
     // Timer (Bottom)
-    const timerRow = document.createElement('div');
-    timerRow.className = 'ga-param-row ga-param-timer';
-    timerRow.innerHTML = '<label class="ga-param-title">Timer</label>';
-    const timerStepper = createStepper({
+    const timerPanel = createQuickMousePanel({
+      iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+      title: 'Timer',
       value: 0,
       min: 0,
       max: 10,
@@ -1645,9 +1646,8 @@
         });
       }
     });
-    timerRow.appendChild(timerStepper.element);
     modal.dataset.gaTimerSeconds = '0';
-    paramsSection.appendChild(timerRow);
+    paramsSection.appendChild(timerPanel.element);
 
     setupLeft.appendChild(paramsSection);
 
