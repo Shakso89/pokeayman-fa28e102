@@ -1147,7 +1147,9 @@
       area.querySelectorAll(':scope > .game-inline-view').forEach(view => view.remove());
       const hub = area.querySelector(':scope > .glass-container');
       if (hub) hub.hidden = true;
-      const crosswordWordMax = resolvedFnName === 'chooseCrossword' ? Math.max(2, Number(window.getCrosswordWordCount?.(listName) || 2)) : 0;
+      const rawCrosswordCount = resolvedFnName === 'chooseCrossword' ? Math.max(0, Number(window.getCrosswordWordCount?.(listName) || 0)) : 0;
+      const CROSSWORD_SAFE_MAX = 12;
+      const crosswordWordMax = Math.min(CROSSWORD_SAFE_MAX, Math.max(2, rawCrosswordCount || 2));
       const selectedThemeId = window.gaGetTheme();
       const selectedTheme = GAME_THEMES.find(t => t.id === selectedThemeId) || GAME_THEMES[0];
       const panel = document.createElement('section');
@@ -1161,7 +1163,7 @@
           </div>
           <div class="ga-theme-grid" role="radiogroup" aria-label="Choose visual style">${renderThemeCardsMarkup(selectedTheme.id)}</div>
         </section>
-        ${resolvedFnName === 'chooseCrossword' ? `<section class="ga-crossword-count" aria-label="Crossword word count"><label for="ga-crossword-word-count">Words in puzzle</label><div class="ga-crossword-count-controls"><input id="ga-crossword-word-count" type="number" min="2" max="${crosswordWordMax}" value="${crosswordWordMax}" inputmode="numeric"><button type="button" id="ga-crossword-play-all">Play All (${crosswordWordMax} words)</button></div></section>` : ''}
+        ${resolvedFnName === 'chooseCrossword' ? `<section class="ga-crossword-count" aria-label="Crossword word count"><label for="ga-crossword-word-count">Words in puzzle</label><div class="ga-crossword-count-controls"><input id="ga-crossword-word-count" type="number" min="2" max="${crosswordWordMax}" value="${crosswordWordMax}" inputmode="numeric"><button type="button" id="ga-crossword-play-all">Play ${rawCrosswordCount > CROSSWORD_SAFE_MAX ? `Max (${crosswordWordMax}` : `All (${crosswordWordMax}`} words)</button></div>${rawCrosswordCount > CROSSWORD_SAFE_MAX ? `<p class="ga-crossword-hint text-xs text-amber-300 font-semibold mt-1">Crosswords support up to ${CROSSWORD_SAFE_MAX} words for best board layout.</p>` : ''}</section>` : ''}
         <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
           <button type="button" class="btn-primary ga-student-start-btn" style="padding: 0.75rem 1.75rem; font-size: 1rem; font-weight: 800;">Start ${esc(game.name)} →</button>
         </div>`;
@@ -1186,6 +1188,12 @@
           });
           cwInput.style.display = 'none';
           cwPanel.element.appendChild(cwInput);
+          if (rawCrosswordCount > CROSSWORD_SAFE_MAX) {
+            const hint = document.createElement('p');
+            hint.className = 'ga-crossword-hint text-xs text-amber-300 font-semibold mt-1 px-1 text-center';
+            hint.textContent = `Crosswords support up to ${CROSSWORD_SAFE_MAX} words for best board layout.`;
+            cwPanel.element.appendChild(hint);
+          }
           cwSection.replaceWith(cwPanel.element);
         }
       }
@@ -1202,7 +1210,14 @@
         panel.remove();
         if (resolvedFnName === 'startVocabBattle') window.startVocabBattle(listName);
         else if (resolvedFnName === 'startListenCatch') window.startListenCatch(listName);
-        else window.openGameCrossword(listName, 0, crosswordCount);
+        else {
+          try {
+            window.openGameCrossword(listName, 0, crosswordCount);
+          } catch (err) {
+            console.error('Student crossword launch failed:', err);
+            if (typeof window.handleCrosswordFailure === 'function') window.handleCrosswordFailure();
+          }
+        }
       });
       area.appendChild(panel);
       return;
@@ -1593,8 +1608,10 @@
     const existingCrosswordSection = root.querySelector('.ga-crossword-count') || modal.querySelector('.ga-crossword-count');
     const existingCrosswordInput = existingCrosswordSection?.querySelector('#crossword-word-count, #ga-crossword-word-count') || modal.querySelector('#crossword-word-count, #ga-crossword-word-count');
     if (existingCrosswordInput) {
+      const CROSSWORD_SAFE_MAX = 12;
+      const rawMax = Math.max(2, Number(existingCrosswordInput.max || 10));
       const cwMin = Math.max(2, Number(existingCrosswordInput.min || 2));
-      const cwMax = Math.max(cwMin, Number(existingCrosswordInput.max || 10));
+      const cwMax = Math.min(CROSSWORD_SAFE_MAX, rawMax);
       const cwInitial = Math.max(cwMin, Math.min(cwMax, Number(existingCrosswordInput.value || cwMax)));
       const crosswordPanel = createQuickMousePanel({
         iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
@@ -1614,6 +1631,12 @@
       });
       existingCrosswordInput.style.display = 'none';
       crosswordPanel.element.appendChild(existingCrosswordInput);
+      if (rawMax > CROSSWORD_SAFE_MAX) {
+        const hint = document.createElement('p');
+        hint.className = 'ga-crossword-hint text-xs text-amber-300 font-semibold mt-1 px-1 text-center';
+        hint.textContent = `Crosswords support up to ${CROSSWORD_SAFE_MAX} words for best board layout.`;
+        crosswordPanel.element.appendChild(hint);
+      }
       if (existingCrosswordSection) existingCrosswordSection.remove();
       modal.dataset.gaCrosswordCount = String(crosswordPanel.getValue());
       paramsSection.appendChild(crosswordPanel.element);

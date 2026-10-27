@@ -13,6 +13,9 @@
       return { answer, word: String(record.vocab_word || answer), clue: clueText, image: String(record.vocab_image || '') };
     }).filter(Boolean);
   };
+  const CROSSWORD_SAFE_MAX = 12;
+  window.CROSSWORD_SAFE_MAX = CROSSWORD_SAFE_MAX;
+  window.getCrosswordWords = crosswordWords;
   window.getCrosswordWordCount = listName => crosswordWords(listName).length;
   const coordKey = (row, col) => `${row},${col}`;
   function buildCrossword(entries) {
@@ -79,28 +82,151 @@
     const down = placed.filter(word => word.direction === 'down').sort((a, b) => a.number - b.number);
     return { cells: shifted, across, down, rows: maxRow - minRow + 3, cols: maxCol - minCol + 3 };
   }
+
+  const CROSSWORD_FALLBACK_MSG = 'Unable to generate crossword with this word list. Please try fewer words or choose another game.';
+
+  function showCrosswordFallbackAlert(message) {
+    const text = message || CROSSWORD_FALLBACK_MSG;
+    document.querySelectorAll('#ga-crossword-fallback-alert').forEach(el => el.remove());
+    const alertEl = document.createElement('div');
+    alertEl.id = 'ga-crossword-fallback-alert';
+    alertEl.setAttribute('role', 'alert');
+    alertEl.className = 'fixed top-6 left-1/2 -translate-x-1/2 z-[9999] max-w-lg w-[92vw] flex items-center gap-3 p-4 rounded-xl bg-slate-900/95 text-amber-200 border-2 border-amber-400 shadow-2xl backdrop-blur-md transition-all';
+    alertEl.innerHTML = `<span class="text-2xl shrink-0" aria-hidden="true">⚠️</span><div class="flex-1 text-sm font-bold text-amber-100">${escCrossword(text)}</div><button type="button" aria-label="Dismiss alert" class="w-7 h-7 rounded-lg bg-amber-400/20 hover:bg-amber-400/40 text-amber-200 hover:text-white font-black text-base flex items-center justify-center transition shrink-0">✕</button>`;
+    alertEl.querySelector('button')?.addEventListener('click', () => alertEl.remove());
+    document.body.appendChild(alertEl);
+    setTimeout(() => { if (alertEl.parentNode) alertEl.remove(); }, 6500);
+  }
+
+  function handleCrosswordFailure(message) {
+    const errorMsg = message || CROSSWORD_FALLBACK_MSG;
+    console.warn('[Crossword Error Handler]', errorMsg);
+
+    // 1. Refund teacher credits if active reward was reserved
+    try {
+      if (typeof refundTeacherCredits === 'function' && typeof activeGameReward !== 'undefined' && activeGameReward > 0) {
+        const teacher = typeof currentTeacher !== 'undefined' ? currentTeacher : '';
+        refundTeacherCredits(activeGameReward, teacher);
+      }
+    } catch (_) {}
+    if (typeof activeGameReward !== 'undefined') activeGameReward = 0;
+    if (typeof activeGameRewardClaimed !== 'undefined') activeGameRewardClaimed = false;
+    if (typeof pendingGameReward !== 'undefined') pendingGameReward = 0;
+
+    // 2. Clean up any open game modals, countdowns, or partial views
+    document.querySelectorAll('.crossword-game-root, .ga-countdown-modal, .game-popup-modal').forEach(el => el.remove());
+
+    // 3. Return cleanly to the Games Selection / Setup screen
+    if (typeof window.gaExitSetupToArcade === 'function') {
+      window.gaExitSetupToArcade();
+    }
+    if (typeof returnToGamesTab === 'function') {
+      returnToGamesTab();
+    }
+    const teacherArea = document.getElementById('class-subtab-games');
+    const studentArea = document.getElementById('student-tab-games');
+    const teacherHub = teacherArea?.querySelector(':scope > .glass-container');
+    const studentHub = studentArea?.querySelector(':scope > .glass-container');
+    if (teacherHub) teacherHub.hidden = false;
+    if (studentHub) studentHub.hidden = false;
+
+    // 4. Show friendly alerts & toasts
+    if (typeof toast === 'function') toast(errorMsg);
+    if (typeof showToast === 'function') showToast(errorMsg, 'error');
+    showCrosswordFallbackAlert(errorMsg);
+  }
+  window.handleCrosswordFailure = handleCrosswordFailure;
+
+  function generateCrosswordPuzzle(allEntries, targetCount) {
+    if (!allEntries || allEntries.length < 2) return null;
+    const count = Math.min(allEntries.length, Math.max(2, targetCount));
+    
+    let bestPuzzle = null;
+    let bestWordCount = 0;
+
+    // Phase 1: Try exact requested word count (up to 80 attempts)
+    for (let attempt = 0; attempt < 80; attempt++) {
+      const sample = allEntries.slice().sort(() => Math.random() - 0.5).slice(0, count).map(w => ({ ...w }));
+      const candidate = buildCrossword(sample);
+      if (candidate) {
+        const placedCount = candidate.across.length + candidate.down.length;
+        if (placedCount === count) {
+          return candidate;
+        }
+        if (placedCount > bestWordCount) {
+          bestWordCount = placedCount;
+          bestPuzzle = candidate;
+        }
+      }
+    }
+
+    // Phase 2: Accept best puzzle if it placed a strong connected set
+    const acceptableMin = Math.max(2, Math.min(count, 4));
+    if (bestPuzzle && bestWordCount >= acceptableMin) {
+      return bestPuzzle;
+    }
+
+    // Phase 3: Try progressively smaller word subsets down to 2 words
+    for (let c = count - 1; c >= 2; c--) {
+      for (let attempt = 0; attempt < 20; attempt++) {
+        const sample = allEntries.slice().sort(() => Math.random() - 0.5).slice(0, c).map(w => ({ ...w }));
+        const candidate = buildCrossword(sample);
+        if (candidate) {
+          const placedCount = candidate.across.length + candidate.down.length;
+          if (placedCount === c && placedCount >= 2) {
+            return candidate;
+          }
+          if (placedCount > bestWordCount) {
+            bestWordCount = placedCount;
+            bestPuzzle = candidate;
+          }
+        }
+      }
+    }
+
+    if (bestPuzzle && bestWordCount >= 2) {
+      return bestPuzzle;
+    }
+
+    return null;
+  }
+
   window.chooseCrossword = function (listName) {
     const words = crosswordWords(listName);
-    if (words.length < 2 || !buildCrossword(words)) { toast('Choose a vocabulary list with at least two words that can cross.'); return; }
+    if (words.length < 2 || !buildCrossword(words)) {
+      handleCrosswordFailure('Choose a vocabulary list with at least two words that can cross.');
+      return;
+    }
     // Route student launches through shared setup so the signed-in student becomes the solo player.
     if (currentRole === 'student') { chooseGamePlayers(listName, window.chooseCrossword); return; }
     chooseGamePlayers(listName, window.chooseCrossword);
   };
+
   window.openGameCrossword = function (listName, timerSeconds = 0, requestedWordCount = null) {
-    const allEntries = crosswordWords(listName);
-    const maxWordCount = allEntries.length;
-    const wordCount = requestedWordCount !== null && requestedWordCount !== undefined && Number.isInteger(Number(requestedWordCount)) ? Number(requestedWordCount) : maxWordCount;
-    if (wordCount < 2 || wordCount > maxWordCount) { toast('Choose a crossword word count from 2 to the number of available words.'); return; }
-    let puzzle = null;
-    for (let attempt = 0; !puzzle && attempt < 80; attempt++) {
-      const entries = allEntries.slice().sort(() => Math.random() - 0.5).slice(0, wordCount).map(word => ({ ...word }));
-      const candidate = buildCrossword(entries);
-      if (candidate && candidate.across.length + candidate.down.length === wordCount) puzzle = candidate;
-    }
-    if (!puzzle) { toast('Could not fit that exact number of words into a crossword. Try a smaller word count.'); return; }
-    if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) { toast('Select at least one student to play Crosswords.'); return; }
-    setGameReplay(() => { resetGameTurnState(); window.openGameCrossword(listName, timerSeconds, wordCount); });
-    activeGameScores = activeGamePlayers.map(() => 0);
+    try {
+      const allEntries = crosswordWords(listName);
+      if (!allEntries || allEntries.length < 2) {
+        handleCrosswordFailure(CROSSWORD_FALLBACK_MSG);
+        return;
+      }
+      const safeMax = Math.min(CROSSWORD_SAFE_MAX, allEntries.length);
+      const wordCount = requestedWordCount !== null && requestedWordCount !== undefined && Number.isInteger(Number(requestedWordCount))
+        ? Math.max(2, Math.min(safeMax, Number(requestedWordCount)))
+        : safeMax;
+
+      const puzzle = generateCrosswordPuzzle(allEntries, wordCount);
+      if (!puzzle || !puzzle.across || !puzzle.down || (puzzle.across.length + puzzle.down.length < 2)) {
+        handleCrosswordFailure(CROSSWORD_FALLBACK_MSG);
+        return;
+      }
+
+      if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
+        handleCrosswordFailure('Select at least one student to play Crosswords.');
+        return;
+      }
+
+      setGameReplay(() => { resetGameTurnState(); window.openGameCrossword(listName, timerSeconds, wordCount); });
+      activeGameScores = activeGamePlayers.map(() => 0);
     const modal = document.createElement('div');
     modal.className = 'game-popup-modal crossword-game-root fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3';
     modal.dataset.noWinnerOnTimeout = 'true';
@@ -427,5 +553,9 @@
       });
     });
     modal.querySelector('#crossword-close').addEventListener('click', () => { modal._stopPlayerTurnTimer?.(); boardResizeObserver.disconnect(); modal.remove(); returnToGamesTab(); });
+    } catch (err) {
+      console.error('Crossword game failed to launch:', err);
+      handleCrosswordFailure(CROSSWORD_FALLBACK_MSG);
+    }
   };
 })();
