@@ -125,7 +125,7 @@
   ];
   const ZONE_ITEMS = [
     ['schedule', '🗓️', 'Schedule'], ['financial', '💰', 'Financial'],
-    ['vb-lists', '🔖', 'Word Bank'], ['battle-claims', '⚔️', 'Battle Claims'], ['leaders', '🏆', 'Global Top 10'], ['profile', '🎓', 'Teacher Card'],
+    ['vb-lists', '🔖', 'Word Bank'], ['battle-claims', '⚔️', 'Battle Claims'],
   ];
 
   function build() {
