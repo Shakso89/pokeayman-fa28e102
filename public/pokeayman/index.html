@@ -2445,20 +2445,16 @@
     @media (max-width: 640px) { .credit-log-scroll { max-height: calc(3 * 9.5rem + 2 * .6rem + 1.2rem); padding: .6rem; } #credit-log-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; } #credit-log-list > div { min-height: 9.5rem; padding: .7rem !important; } #credit-log-list > div > button { opacity: 1; } }
     @media (max-width: 380px) { #credit-log-list { grid-template-columns: minmax(0, 1fr); } }
 
-    /* Admin All Students: bounded shop-style inventory grid. */
+    /* Admin All Students: paginated shop-style inventory grid. */
     #admin-subtab-all-students .admin-students-scroll {
       width: 100%;
-      max-height: calc(3 * 10.5rem + 2 * .75rem + 1.5rem);
+      max-height: none !important;
       min-height: 0;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: .75rem;
-      border: 1px solid rgba(255,255,255,.28);
-      border-radius: 1.1rem;
-      background: linear-gradient(145deg, rgba(20,26,85,.94), rgba(33,42,123,.76));
-      box-shadow: 0 18px 38px rgba(2,6,23,.28), inset 0 1px 0 rgba(255,255,255,.14);
-      scrollbar-color: rgba(255,203,5,.72) rgba(16,20,73,.62);
-      scrollbar-width: thin;
+      overflow: visible !important;
+      padding: .25rem 0 !important;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
     }
     #admin-subtab-all-students #admin-students-list {
       width: 100%;
@@ -2469,16 +2465,10 @@
       grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
       gap: .75rem;
       align-items: stretch;
-      border: 1px solid rgba(255,255,255,.28);
-      border-radius: 1.1rem;
-      background: linear-gradient(145deg, rgba(20,26,85,.94), rgba(33,42,123,.76));
-      box-shadow: 0 18px 38px rgba(2,6,23,.28), inset 0 1px 0 rgba(255,255,255,.14);
-      scrollbar-color: rgba(255,203,5,.72) rgba(16,20,73,.62);
-      scrollbar-width: thin;
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
     }
-    #admin-subtab-all-students .admin-students-scroll::-webkit-scrollbar { width: .55rem; }
-    #admin-subtab-all-students .admin-students-scroll::-webkit-scrollbar-track { background: rgba(16,20,73,.62); border-radius: 999px; }
-    #admin-subtab-all-students .admin-students-scroll::-webkit-scrollbar-thumb { background: rgba(255,203,5,.72); border-radius: 999px; }
     #admin-subtab-all-students #admin-students-list > div {
       position: relative;
       isolation: isolate;
@@ -2509,13 +2499,205 @@
     #admin-subtab-all-students #admin-students-list > div > div p:first-child { color: #fef3c7 !important; font-size: .85rem; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #admin-subtab-all-students #admin-students-list > div > div p:last-child { color: #b9c3e6 !important; font-size: .65rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #admin-subtab-all-students #admin-students-list > div > span { color: #fde68a !important; font-size: .85rem; font-weight: 950; }
-    #admin-subtab-all-students #admin-students-list > div > button { position: absolute; top: .55rem; right: .55rem; z-index: 3; opacity: 1 !important; width: 2rem; height: 2rem; min-width: 2rem; min-height: 2rem; border: 1px solid rgba(252,165,165,.55); border-radius: .6rem; background: rgba(127,29,29,.72); color: #fee2e2 !important; box-shadow: 0 4px 10px rgba(2,6,23,.24); }
-    #admin-subtab-all-students #admin-students-list > div > button.admin-student-edit { left: .55rem; right: auto; border-color: rgba(253,224,71,.6); background: rgba(30,58,138,.85) !important; color: #fde68a !important; font-size: 1rem; }
-    #admin-subtab-all-students #admin-students-list > div > button.admin-student-edit:hover { background: #2563eb !important; color: #fff !important; }
-    #admin-subtab-all-students #admin-students-list > div > button:hover { background: #dc2626 !important; color: #fff !important; transform: scale(1.05); }
+    #admin-subtab-all-students #admin-students-list > div > button { position: absolute; top: .55rem; right: .55rem; z-index: 3; opacity: 1 !important; width: 2rem; height: 2rem; min-width: 2rem; min-height: 2rem; border-radius: .6rem; transition: transform .15s ease, background .15s ease, border-color .15s ease; }
+    
+    /* Dark mode buttons (default) */
+    html body:not(.ts-bright) #admin-subtab-all-students #admin-students-list > div > button.admin-student-edit {
+      left: .55rem; right: auto;
+      background: rgba(30, 41, 59, 0.9) !important;
+      border: 1px solid rgba(51, 65, 85, 0.6) !important;
+      color: #e2e8f0 !important;
+      font-size: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    html body:not(.ts-bright) #admin-subtab-all-students #admin-students-list > div > button.admin-student-edit:hover {
+      background: #334155 !important;
+      color: #ffffff !important;
+      border-color: #64748b !important;
+      transform: scale(1.05);
+    }
+    html body:not(.ts-bright) #admin-subtab-all-students #admin-students-list > div > button.admin-student-delete {
+      right: .55rem; left: auto;
+      background: rgba(30, 41, 59, 0.9) !important;
+      border: 1px solid rgba(51, 65, 85, 0.6) !important;
+      color: #f87171 !important;
+      font-size: 1.15rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    html body:not(.ts-bright) #admin-subtab-all-students #admin-students-list > div > button.admin-student-delete:hover {
+      background: #dc2626 !important;
+      color: #ffffff !important;
+      border-color: #ef4444 !important;
+      transform: scale(1.05);
+    }
+    html body:not(.ts-bright) #credit-log-list > div > button {
+      background: rgba(30, 41, 59, 0.9) !important;
+      border: 1px solid rgba(51, 65, 85, 0.6) !important;
+      color: #f87171 !important;
+      border-radius: .5rem;
+      padding: .25rem .55rem;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    html body:not(.ts-bright) #credit-log-list > div > button:hover {
+      background: #dc2626 !important;
+      border-color: #ef4444 !important;
+      color: #ffffff !important;
+    }
+
+    /* Light/Bright Mode: Student Cards & Buttons */
+    html body.ts-bright #admin-subtab-all-students #admin-students-list > div {
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 1rem !important;
+      color: #0f172a !important;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+    }
+    html body.ts-bright #admin-subtab-all-students #admin-students-list > div::before { display: none !important; }
+    html body.ts-bright #admin-subtab-all-students #admin-students-list > div:hover {
+      background: #ffffff !important;
+      border-color: #cbd5e1 !important;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.1), 0 2px 6px rgba(15, 23, 42, 0.06) !important;
+      transform: translateY(-3px);
+    }
+    html body.ts-bright #admin-subtab-all-students #admin-students-list > div > div p:first-child {
+      color: #0f172a !important;
+      font-size: .85rem;
+      font-weight: 800;
+    }
+    html body.ts-bright #admin-subtab-all-students #admin-students-list > div > div p:last-child {
+      color: #475569 !important;
+      font-size: .65rem;
+      font-weight: 500;
+    }
+    html body.ts-bright #admin-subtab-all-students #admin-students-list > div > span {
+      color: #b45309 !important;
+      font-size: .85rem;
+      font-weight: 800;
+    }
+    /* Light Mode Edit button */
+    html body.ts-bright #admin-subtab-all-students #admin-students-list > div > button.admin-student-edit {
+      left: .55rem; right: auto;
+      background: #f1f5f9 !important;
+      border: 1px solid #e2e8f0 !important;
+      color: #334155 !important;
+      font-size: 1rem;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    }
+    html body.ts-bright #admin-subtab-all-students #admin-students-list > div > button.admin-student-edit:hover {
+      background: #e2e8f0 !important;
+      border-color: #cbd5e1 !important;
+      color: #0f172a !important;
+      transform: scale(1.05);
+    }
+    /* Light Mode Delete button */
+    html body.ts-bright #admin-subtab-all-students #admin-students-list > div > button.admin-student-delete {
+      right: .55rem; left: auto;
+      background: #fff1f2 !important;
+      border: 1px solid #fecdd3 !important;
+      color: #e11d48 !important;
+      font-size: 1.15rem;
+      box-shadow: 0 1px 3px rgba(225, 29, 72, 0.08);
+    }
+    html body.ts-bright #admin-subtab-all-students #admin-students-list > div > button.admin-student-delete:hover {
+      background: #ffe4e6 !important;
+      border-color: #fda4af !important;
+      color: #be123c !important;
+      transform: scale(1.05);
+    }
+    html body.ts-bright #admin-student-search {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #0f172a !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+
+    /* Light/Bright Mode: Credit Log Tab */
+    html body.ts-bright .credit-log-scroll {
+      background: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+    }
+    html body.ts-bright #credit-log-list > div {
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      color: #0f172a !important;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
+    }
+    html body.ts-bright #credit-log-list > div:hover {
+      border-color: #cbd5e1 !important;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
+    }
+    html body.ts-bright #credit-log-list > div p {
+      color: #0f172a !important;
+    }
+    html body.ts-bright #credit-log-list > div .text-gray-400 {
+      color: #64748b !important;
+    }
+    html body.ts-bright #credit-log-list > div > button {
+      background: #fff1f2 !important;
+      border: 1px solid #fecdd3 !important;
+      color: #e11d48 !important;
+      border-radius: .5rem;
+      padding: .25rem .55rem;
+      font-size: .75rem;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(225, 29, 72, 0.08);
+    }
+    html body.ts-bright #credit-log-list > div > button:hover {
+      background: #ffe4e6 !important;
+      border-color: #fda4af !important;
+      color: #be123c !important;
+    }
+    html body.ts-bright #credit-log-teacher-search {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #0f172a !important;
+    }
+    html body.ts-bright #reset-log-btn {
+      background: #fff1f2 !important;
+      border: 1px solid #fecdd3 !important;
+      color: #e11d48 !important;
+    }
+    html body.ts-bright #reset-log-btn:hover {
+      background: #ffe4e6 !important;
+      border-color: #fda4af !important;
+    }
+
+    /* Light/Bright Mode: Pager controls */
+    html body.ts-bright .shop-pager-btn {
+      color: #1e293b !important;
+      background: #f1f5f9 !important;
+      border: 1px solid #cbd5e1 !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+    html body.ts-bright .shop-pager-btn:hover:not([disabled]) {
+      background: #e2e8f0 !important;
+      color: #0f172a !important;
+      border-color: #94a3b8 !important;
+    }
+    html body.ts-bright .shop-pager-btn.active {
+      background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+      color: #ffffff !important;
+      border-color: #b45309 !important;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35) !important;
+    }
+    html body.ts-bright .shop-pager-btn[disabled] {
+      opacity: .4 !important;
+      background: #f8fafc !important;
+      color: #94a3b8 !important;
+      border-color: #e2e8f0 !important;
+    }
+    html body.ts-bright .shop-pager-gap {
+      color: #64748b !important;
+    }
+    html body.ts-bright .shop-pager-info {
+      color: #475569 !important;
+      font-weight: 600;
+    }
+
     #admin-subtab-all-students #admin-students-list > div > button:focus-visible { outline: 3px solid #fde047; outline-offset: 2px; }
     @media (max-width: 640px) {
-      #admin-subtab-all-students .admin-students-scroll { max-height: calc(3 * 9.5rem + 2 * .6rem + 1.2rem); padding: .6rem; }
       #admin-subtab-all-students #admin-students-list { gap: .6rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       #admin-subtab-all-students #admin-students-list > div { min-height: 9.5rem; padding: .8rem .55rem !important; }
       #admin-subtab-all-students #admin-students-list > div > img { width: 3.5rem; height: 3.5rem; }
@@ -9393,6 +9575,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      <div id="admin-students-scroll" class="admin-students-scroll">
       <div id="admin-students-list" class="space-y-2"></div>
      </div>
+     <div id="admin-students-pager" class="shop-pager admin-students-pager"></div>
     </div>
     <div id="admin-subtab-shop-mgmt" class="admin-subtab-content hidden">
      <div class="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -16781,23 +16964,144 @@ function openStudentActivityPopup(student, row) {
 const studentActivityStyles = document.createElement('style');
 studentActivityStyles.textContent = `.student-activity-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(2,8,18,.78);backdrop-filter:blur(8px)}.student-activity-dialog{width:min(100%,34rem);max-height:92%;overflow:auto;border:1px solid rgba(255,255,255,.35);border-radius:1.2rem;background:linear-gradient(145deg,#1d256e,#0b222d);color:#f5f7ff;box-shadow:0 28px 90px rgba(0,0,0,.65);outline:none}.student-activity-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem;background:linear-gradient(135deg,#1e2a6e,#1b2560)}.student-activity-header h2{color:#fff7cc;font-size:1.2rem;font-weight:900}.student-activity-header p{color:#bae6fd;font-size:.72rem}.student-activity-joined{margin-top:.45rem;color:#d7f4ef;font-size:.7rem}.student-activity-joined strong{display:block;color:#fde68a;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em}.student-activity-joined div{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.25rem}.student-activity-joined span{padding:.2rem .45rem;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(18,26,69,.5)}.student-activity-avatar{width:3rem;height:3rem;object-fit:contain;border-radius:999px;background:rgba(255,255,255,.14)}.student-activity-close{width:2.4rem;height:2.4rem;border-radius:.7rem;background:rgba(255,255,255,.14);color:#fff;font-size:1.5rem}.student-activity-body{display:grid;gap:.75rem;padding:1rem}.student-activity-card{padding:1rem;border-radius:.9rem;border:1px solid rgba(255,255,255,.25);background:rgba(18,26,69,.82)}.student-activity-card.coin{border-color:rgba(251,191,36,.55)}.student-activity-card.pokemon{border-color:rgba(255,203,5,.5)}.student-activity-card h3{font-weight:900;color:#fef3c7;margin-bottom:.55rem}.student-activity-card p,.student-activity-card time{font-size:.8rem;color:#d7f4ef}.student-activity-value{font-size:1.25rem!important;font-weight:900;color:#fde68a!important}.student-activity-feed-title{font-weight:900;color:#fde68a;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}.student-activity-empty{color:#b9c3e6!important;font-style:italic}.student-activity-pokemon-row{display:flex;align-items:center;gap:.8rem}.student-activity-pokemon-row img{width:4rem;height:4rem;object-fit:contain}@media(max-width:480px){.student-activity-overlay{padding:.5rem}.student-activity-dialog{max-height:94%}}`;
 document.head.appendChild(studentActivityStyles);
-function renderAdminAllStudents() {
-  const search = String(document.getElementById('admin-student-search')?.value || '').trim().toLocaleLowerCase();
-  // Admin All Students is sourced from the complete global student roster, not class membership.
-  const students = getAllStudents().filter(s => {
+const ADMIN_STUDENTS_PAGE_SIZE = 20;
+let adminStudentsCurrentPage = 0;
+let adminStudentsSearchTerm = '';
+let adminStudentsDebounceTimer = null;
+
+function getFilteredAdminStudents() {
+  const query = adminStudentsSearchTerm;
+  return getAllStudents().filter(s => {
+    if (!query) return true;
     const name = String(s.student_name || '').toLocaleLowerCase();
     const school = String(s.school_name || '').toLocaleLowerCase();
     const className = String(s.class_name || '').toLocaleLowerCase();
-    return !search || name.includes(search) || school.includes(search) || className.includes(search);
+    const memberships = String(s.class_memberships || '').toLocaleLowerCase();
+    const sid = String(s.student_id || '').toLocaleLowerCase();
+    const bid = String(s.__backendId || '').toLocaleLowerCase();
+    return name.includes(query) ||
+           school.includes(query) ||
+           className.includes(query) ||
+           memberships.includes(query) ||
+           sid.includes(query) ||
+           bid.includes(query);
   });
-  const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
-  document.getElementById('admin-students-list').innerHTML = students.map(s => {
-    const memberships = String(s.class_memberships || '').split('||').filter(Boolean);
-    const status = memberships.length ? memberships.join(' · ') : 'No class assigned';
-    return `<div class="bg-white rounded-lg p-3 shadow-sm border flex items-center gap-3 group" tabindex="0" role="button" data-admin-student-id="${escape(s.__backendId)}" aria-label="View recent activity for ${escape(s.student_name)}" onclick="openStudentActivityPopup(getStudentRecordByStableId(this.dataset.adminStudentId), this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${getStudentAvatarSrc(s)}" class="w-8 h-8 rounded-full object-contain bg-white/20" alt="${escape(getStudentAvatarAlt(s))}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><div class="flex-1 min-w-0"><p class="font-medium text-sm truncate">${escape(s.student_name)}</p><p class="text-xs text-gray-400 truncate">${escape(status)}</p></div><span class="text-amber-500 font-bold text-sm">${s.coins || 0} 🪙</span><button type="button" class="admin-student-edit text-blue-200 bg-blue-900/70 hover:bg-blue-700 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" data-admin-student-id="${escape(s.__backendId)}" aria-label="Edit classes for ${escape(s.student_name)}" title="Edit student">✎</button><button type="button" class="admin-student-delete text-red-500 hover:text-red-600 text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity" data-admin-student-id="${escape(s.__backendId)}" aria-label="Delete student record for ${escape(s.student_name)}" title="Delete student record">×</button></div>`;
-  }).join('') || '<p class="text-gray-400 text-sm text-center py-8">No students found.</p>';
 }
-document.getElementById('admin-student-search')?.addEventListener('input', renderAdminAllStudents);
+
+function adminStudentsGoPage(page) {
+  const filtered = getFilteredAdminStudents();
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / ADMIN_STUDENTS_PAGE_SIZE));
+  adminStudentsCurrentPage = Math.max(0, Math.min(page, totalPages - 1));
+  renderAdminAllStudents();
+  const topAnchor = document.getElementById('admin-student-search') || document.getElementById('admin-subtab-all-students');
+  if (topAnchor) {
+    topAnchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+window.adminStudentsGoPage = adminStudentsGoPage;
+
+function renderAdminStudentsPager(total, totalPages, page) {
+  const listEl = document.getElementById('admin-students-list');
+  if (!listEl) return;
+  let bar = document.getElementById('admin-students-pager');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'admin-students-pager';
+    bar.className = 'shop-pager admin-students-pager';
+    const scrollContainer = document.getElementById('admin-students-scroll');
+    if (scrollContainer) {
+      scrollContainer.insertAdjacentElement('afterend', bar);
+    } else {
+      listEl.insertAdjacentElement('afterend', bar);
+    }
+  }
+
+  if (total === 0) {
+    bar.innerHTML = '';
+    return;
+  }
+
+  const start = page * ADMIN_STUDENTS_PAGE_SIZE + 1;
+  const end = Math.min((page + 1) * ADMIN_STUDENTS_PAGE_SIZE, total);
+  const infoText = `<span class="shop-pager-info">Showing ${start}–${end} of ${total} students (Page ${page + 1} of ${totalPages})</span>`;
+
+  if (totalPages <= 1) {
+    bar.innerHTML = `<span class="shop-pager-info">Showing all ${total} student${total === 1 ? '' : 's'}</span>`;
+    return;
+  }
+
+  const nums = [];
+  for (let i = 0; i < totalPages; i++) {
+    if (i === 0 || i === totalPages - 1 || Math.abs(i - page) <= 1) {
+      nums.push(i);
+    } else if (nums[nums.length - 1] !== '…') {
+      nums.push('…');
+    }
+  }
+
+  const btn = (label, target, dis, act, ariaLabel) => `<button type="button" class="shop-pager-btn${act ? ' active' : ''}" ${dis ? 'disabled' : ''} aria-label="${ariaLabel || label}" onclick="adminStudentsGoPage(${target})">${label}</button>`;
+
+  let html = '';
+  if (totalPages > 3) {
+    html += btn('« First', 0, page === 0, false, 'Go to first page');
+  }
+  html += btn('‹ Prev', page - 1, page === 0, false, 'Go to previous page');
+  html += nums.map(n => n === '…' ? '<span class="shop-pager-gap">…</span>' : btn(n + 1, n, false, n === page, `Go to page ${n + 1}`)).join('');
+  html += btn('Next ›', page + 1, page === totalPages - 1, false, 'Go to next page');
+  if (totalPages > 3) {
+    html += btn('Last »', totalPages - 1, page === totalPages - 1, false, 'Go to last page');
+  }
+  html += infoText;
+
+  bar.innerHTML = html;
+}
+
+function renderAdminAllStudents() {
+  const searchInput = document.getElementById('admin-student-search');
+  if (searchInput && adminStudentsSearchTerm === '' && searchInput.value) {
+    adminStudentsSearchTerm = String(searchInput.value || '').trim().toLocaleLowerCase();
+  }
+
+  const filtered = getFilteredAdminStudents();
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / ADMIN_STUDENTS_PAGE_SIZE));
+  if (adminStudentsCurrentPage >= totalPages) {
+    adminStudentsCurrentPage = Math.max(0, totalPages - 1);
+  }
+
+  const start = adminStudentsCurrentPage * ADMIN_STUDENTS_PAGE_SIZE;
+  const end = Math.min(start + ADMIN_STUDENTS_PAGE_SIZE, total);
+  const pageItems = filtered.slice(start, end);
+
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+  const listEl = document.getElementById('admin-students-list');
+  if (!listEl) return;
+
+  if (pageItems.length === 0) {
+    listEl.innerHTML = `<p class="text-gray-400 text-sm text-center py-8 col-span-full">${adminStudentsSearchTerm ? 'No students match your search.' : 'No students found.'}</p>`;
+  } else {
+    listEl.innerHTML = pageItems.map(s => {
+      const memberships = String(s.class_memberships || '').split('||').filter(Boolean);
+      const status = memberships.length ? memberships.join(' · ') : 'No class assigned';
+      return `<div class="bg-white rounded-lg p-3 shadow-sm border flex items-center gap-3 group" tabindex="0" role="button" data-admin-student-id="${escape(s.__backendId)}" aria-label="View recent activity for ${escape(s.student_name)}" onclick="openStudentActivityPopup(getStudentRecordByStableId(this.dataset.adminStudentId), this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${getStudentAvatarSrc(s)}" class="w-8 h-8 rounded-full object-contain bg-white/20" alt="${escape(getStudentAvatarAlt(s))}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()"><div class="flex-1 min-w-0"><p class="font-medium text-sm truncate">${escape(s.student_name)}</p><p class="text-xs text-gray-400 truncate">${escape(status)}</p></div><span class="text-amber-500 font-bold text-sm">${s.coins || 0} 🪙</span><button type="button" class="admin-student-edit text-xs font-medium" data-admin-student-id="${escape(s.__backendId)}" aria-label="Edit classes for ${escape(s.student_name)}" title="Edit student">✎</button><button type="button" class="admin-student-delete text-xs font-medium" data-admin-student-id="${escape(s.__backendId)}" aria-label="Delete student record for ${escape(s.student_name)}" title="Delete student record">×</button></div>`;
+    }).join('');
+  }
+
+  renderAdminStudentsPager(total, totalPages, adminStudentsCurrentPage);
+}
+
+const adminStudentSearchInput = document.getElementById('admin-student-search');
+if (adminStudentSearchInput) {
+  adminStudentSearchInput.addEventListener('input', (e) => {
+    clearTimeout(adminStudentsDebounceTimer);
+    adminStudentsDebounceTimer = setTimeout(() => {
+      adminStudentsSearchTerm = String(e.target.value || '').trim().toLocaleLowerCase();
+      adminStudentsCurrentPage = 0;
+      renderAdminAllStudents();
+    }, 280);
+  });
+}
 document.getElementById('admin-teacher-search')?.addEventListener('input', renderAdminPanel);
 document.getElementById('credit-log-teacher-search')?.addEventListener('input', renderCreditLog);
 
