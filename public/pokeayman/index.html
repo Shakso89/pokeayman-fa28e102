@@ -12409,6 +12409,116 @@ function logoutTeacherSession() {
 }
 // Canonical student authentication: resolve a live class PIN first, then verify
 // the named student through the current class membership only.
+// Canonical student authentication with 3 fields: Class, Student Name, and 4-digit PIN
+async function authenticateStudentLoginAsync(name, pin, classOption) {
+  const normalizedName = normalizeStudentIdentity(name);
+  const normalizedPin = String(pin ?? '').trim();
+  const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+  
+  let targetClassId = '';
+  let targetSchool = '';
+  let targetClassName = '';
+  let classRec = null;
+
+  if (typeof classOption === 'string' && classOption) {
+    targetClassId = classOption;
+    classRec = allData.find(r => r.type === 'class' && (String(r.__backendId || r.id) === targetClassId || `${r.school_name}|||${r.class_name}` === targetClassId));
+  } else if (classOption && typeof classOption === 'object') {
+    targetClassId = String(classOption.id || classOption.class_id || classOption.__backendId || '');
+    targetSchool = String(classOption.school || classOption.school_name || '').trim();
+    targetClassName = String(classOption.className || classOption.class_name || '').trim();
+    classRec = allData.find(r => r.type === 'class' && (
+      (targetClassId && String(r.__backendId || r.id) === targetClassId) ||
+      (r.school_name === targetSchool && r.class_name === targetClassName)
+    ));
+  }
+
+  if (classRec) {
+    targetClassId = String(classRec.__backendId || classRec.id || targetClassId);
+    targetSchool = classRec.school_name || targetSchool;
+    targetClassName = classRec.class_name || targetClassName;
+  }
+
+  // 1. Try Supabase class_students join students
+  if (sb && targetClassId) {
+    try {
+      const { data, error } = await sb
+        .from('class_students')
+        .select('class_id, student:students(*)')
+        .eq('class_id', targetClassId)
+        .ilike('student.name', name.trim())
+        .eq('student.pin', normalizedPin)
+        .maybeSingle();
+      if (data && data.student) {
+        return {
+          ok: true,
+          student: {
+            student_name: data.student.name,
+            __backendId: data.student.id,
+            id: data.student.id,
+            student_id: data.student.id,
+            student_pin: data.student.pin,
+            pin: data.student.pin,
+            school_name: targetSchool,
+            class_name: targetClassName,
+            avatar_pokemon_id: data.student.avatar_pokemon_id || 0,
+            coins: data.student.coins || 0
+          },
+          classRecord: classRec || { __backendId: targetClassId, id: targetClassId, school_name: targetSchool, class_name: targetClassName },
+          studentId: String(data.student.id),
+          classId: targetClassId
+        };
+      }
+    } catch (e) {
+      console.warn('Supabase auth query error / fallback:', e);
+    }
+  }
+
+  // 2. Query client allData layer
+  if (classRec) {
+    const classId = String(classRec.__backendId || classRec.id || '');
+    const scoped = r => String(r?.school_name || '').trim() === String(classRec.school_name || '').trim()
+      && String(r?.class_name || '').trim() === String(classRec.class_name || '').trim();
+    
+    // Check all student members for this class
+    const memberRows = allData.filter(r => {
+      const type = String(r?.type || '').toLowerCase();
+      const memberClassId = String(r?.class_id ?? r?.classId ?? '').trim();
+      return ['classmember', 'class_member', 'class_membership', 'student_membership', 'class_student'].includes(type)
+        && (memberClassId === classId || scoped(r));
+    });
+    const scopedStudentRows = allData.filter(r => String(r?.type || '').toLowerCase() === 'student' && scoped(r));
+    
+    const candidates = [];
+    [...memberRows, ...scopedStudentRows].forEach(m => {
+      const stId = String(m.student_id || m.studentId || m.__backendId || '').trim();
+      const student = (stId && getStudentRecordByStableId(stId))
+        || (stId && allData.find(r => r.type === 'student' && String(r.__backendId || '').trim() === stId))
+        || m;
+      if (student && normalizeStudentIdentity(student.student_name) === normalizedName) {
+        const studentPin = String(student.student_pin ?? student.pin ?? m.student_pin ?? m.pin ?? '1234').trim();
+        if (studentPin === normalizedPin) {
+          candidates.push({
+            student,
+            classRecord: classRec,
+            studentId: String(student.student_id || student.__backendId || stId).trim(),
+            classId
+          });
+        }
+      }
+    });
+
+    if (candidates.length > 0) {
+      const match = candidates[0];
+      return { ok: true, student: match.student, classRecord: match.classRecord, studentId: match.studentId, classId: match.classId };
+    }
+    return { ok: false, error: 'Name or PIN incorrect for this class.' };
+  }
+
+  // 3. Fallback: If no classOption was provided, legacy fallback
+  return authenticateStudentLogin(name, pin);
+}
+
 function authenticateStudentLogin(name, pin) {
   const normalizedName = normalizeStudentIdentity(name);
   // PINs are credentials, not numbers: preserve every character, including "000000".
@@ -12470,56 +12580,136 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && lo
 document.addEventListener('click', event => { if (loginChoicePopover && !loginChoicePopover.classList.contains('hidden') && !event.target.closest('#login-toggle, #login-choice-popover')) closeLoginChoices(); });
 
 document.getElementById('student-login-toggle').addEventListener('click', () => {
+  const isLight = document.body.classList.contains('ts-bright') || document.documentElement.classList.contains('light');
+  
+  // Collect active classes sorted by school and name
+  const activeClasses = (typeof allData !== 'undefined' ? allData : []).filter(r => r.type === 'class' && !r.archived);
+  activeClasses.sort((a, b) => {
+    const sDiff = String(a.school_name || '').localeCompare(String(b.school_name || ''));
+    if (sDiff !== 0) return sDiff;
+    return String(a.class_name || '').localeCompare(String(b.class_name || ''));
+  });
+
+  const lastClassId = localStorage.getItem('pokeayman-last-student-class') || '';
+  const schoolGroups = new Map();
+  activeClasses.forEach(c => {
+    const s = String(c.school_name || 'General').trim();
+    if (!schoolGroups.has(s)) schoolGroups.set(s, []);
+    schoolGroups.get(s).push(c);
+  });
+
+  let classOptionsHtml = '<option value="" disabled' + (!lastClassId ? ' selected' : '') + '>Select your class...</option>';
+  for (const [school, list] of schoolGroups.entries()) {
+    classOptionsHtml += `<optgroup label="${escapeHtml(school)}">`;
+    list.forEach(c => {
+      const cid = String(c.__backendId || c.id || '');
+      const cname = String(c.class_name || '').trim();
+      const val = cid || `${school}|||${cname}`;
+      const isSelected = (lastClassId && (lastClassId === cid || lastClassId === val)) ? ' selected' : '';
+      classOptionsHtml += `<option value="${escapeHtml(val)}" data-school="${escapeHtml(school)}" data-class="${escapeHtml(cname)}" data-id="${escapeHtml(cid)}"${isSelected}>${escapeHtml(school)} · ${escapeHtml(cname)}</option>`;
+    });
+    classOptionsHtml += '</optgroup>';
+  }
+
   const modal = document.createElement('div');
   modal.className = 'pk-login-overlay fixed inset-0 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="teacher-login-modal-card pk-login-card pk-login-student w-full max-w-md" role="dialog" aria-modal="true" aria-labelledby="pk-student-login-title">
-    <div class="pk-login-head">
+  modal.innerHTML = `<div class="student-login-modal-card pk-login-card pk-login-student w-full max-w-md ${isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-800 text-white'} rounded-3xl shadow-2xl p-0 overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="pk-student-login-title">
+    <div class="pk-login-head flex items-center gap-4 p-6 ${isLight ? 'border-b border-slate-100' : 'border-b border-slate-800'}">
       <span class="pk-login-ball" aria-hidden="true"></span>
-      <div><p class="pk-login-kicker">Trainer check-in</p><h2 id="pk-student-login-title" class="pk-login-title">Student Login</h2><p class="pk-login-sub">Type your name and your class PIN to start your adventure.</p></div>
+      <div>
+        <p class="pk-login-kicker text-xs font-bold tracking-widest uppercase ${isLight ? 'text-amber-600' : 'text-amber-400'}">Trainer check-in</p>
+        <h2 id="pk-student-login-title" class="pk-login-title text-2xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}">Student Login</h2>
+        <p class="pk-login-sub text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-0.5">Select your class and enter your 4-digit PIN.</p>
+      </div>
     </div>
-    <form id="student-login-form-modal" class="p-6 space-y-3">
-      <label for="home-student-name-modal" class="sr-only">Student Name</label><input id="home-student-name-modal" type="text" placeholder="Student Name" autocomplete="name" class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition" required>
-      <label for="student-pin-modal" class="sr-only">Class PIN</label><input id="student-pin-modal" type="password" placeholder="Class PIN (6 digits)" inputmode="numeric" autocomplete="off" maxlength="6" class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm tracking-widest focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition" required>
-      <p id="student-error-modal" class="text-red-500 text-xs text-center font-semibold hidden" role="alert" aria-live="polite"></p>
-      <div class="flex gap-2 pt-2">
-        <button type="submit" class="flex-1 btn-success pk-login-primary">Let's go!</button>
-        <button type="button" id="student-cancel-btn-modal" class="flex-1 btn-outline pk-login-ghost">Cancel</button>
+    <form id="student-login-form-modal" class="p-6 space-y-4">
+      <div>
+        <label for="student-class-modal" class="block text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'} mb-1.5">Class</label>
+        <select id="student-class-modal" class="w-full ${isLight ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-slate-800/90 border-slate-700 text-white focus:border-indigo-400 focus:bg-slate-800'} border rounded-xl px-3.5 py-2.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+          ${classOptionsHtml}
+        </select>
+      </div>
+      <div>
+        <label for="home-student-name-modal" class="block text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'} mb-1.5">Student Name</label>
+        <input id="home-student-name-modal" type="text" placeholder="Your Name" autocomplete="name" class="w-full ${isLight ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-slate-800/90 border-slate-700 text-white focus:border-indigo-400 focus:bg-slate-800'} border rounded-xl px-3.5 py-2.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+      </div>
+      <div>
+        <label for="student-pin-modal" class="block text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'} mb-1.5">4-Digit Student PIN</label>
+        <input id="student-pin-modal" type="password" placeholder="Your 4-Digit PIN" inputmode="numeric" maxlength="4" autocomplete="off" class="w-full ${isLight ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-slate-800/90 border-slate-700 text-white focus:border-indigo-400 focus:bg-slate-800'} border rounded-xl px-3.5 py-2.5 text-sm tracking-widest text-center font-mono font-bold transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+      </div>
+      <p id="student-error-modal" class="text-red-400 text-xs text-center font-semibold hidden py-2.5 px-3 rounded-xl bg-red-500/10 border border-red-500/20" role="alert" aria-live="polite"></p>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" class="btn-student-submit flex-1 rounded-full px-5 py-3 font-semibold text-sm ${isLight ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20' : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20'} shadow-md transition-all active:scale-95 disabled:opacity-50">Let's go!</button>
+        <button type="button" id="student-cancel-btn-modal" class="btn-student-cancel flex-1 rounded-full px-5 py-3 font-semibold text-sm ${isLight ? 'border-slate-300 hover:bg-slate-100 text-slate-700' : 'border-slate-700 hover:bg-slate-800 text-slate-300'} border transition-all active:scale-95">Cancel</button>
       </div>
     </form>
   </div>`;
   document.body.appendChild(modal);
-  modal.querySelector('#home-student-name-modal')?.addEventListener('input', () => modal.querySelector('#student-error-modal')?.classList.add('hidden'));
-  modal.querySelector('#student-pin-modal')?.addEventListener('input', () => modal.querySelector('#student-error-modal')?.classList.add('hidden'));
-  
+
+  const classSelect = modal.querySelector('#student-class-modal');
+  const nameInput = modal.querySelector('#home-student-name-modal');
+  const pinInput = modal.querySelector('#student-pin-modal');
+  const errorEl = modal.querySelector('#student-error-modal');
+  const submitButton = modal.querySelector('button[type="submit"]');
+
+  [classSelect, nameInput, pinInput].forEach(el => el?.addEventListener('input', () => errorEl?.classList.add('hidden')));
+  pinInput?.addEventListener('input', () => {
+    pinInput.value = pinInput.value.replace(/\D/g, '').slice(0, 4);
+  });
+
   modal.querySelector('#student-login-form-modal').addEventListener('submit', async e => {
     e.preventDefault();
-    const nameInput = modal.querySelector('#home-student-name-modal');
-    const pinInput = modal.querySelector('#student-pin-modal');
-    const errorEl = modal.querySelector('#student-error-modal');
-    const submitButton = modal.querySelector('button[type="submit"]');
+    const classVal = classSelect.value;
     const name = nameInput.value.trim().replace(/\s+/g, ' ');
-    const normalizedName = normalizeStudentIdentity(name);
     const pin = pinInput.value.trim();
     errorEl.classList.add('hidden');
-    if (!name) { errorEl.textContent = 'Please enter the student name.'; errorEl.classList.remove('hidden'); nameInput.focus(); return; }
-    if (!pin) { errorEl.textContent = 'Please enter the class PIN.'; errorEl.classList.remove('hidden'); pinInput.focus(); return; }
+
+    if (!classVal) { errorEl.textContent = 'Please select your class.'; errorEl.classList.remove('hidden'); classSelect.focus(); return; }
+    if (!name) { errorEl.textContent = 'Please enter your student name.'; errorEl.classList.remove('hidden'); nameInput.focus(); return; }
+    if (!pin || pin.length !== 4) { errorEl.textContent = 'Please enter your 4-digit PIN.'; errorEl.classList.remove('hidden'); pinInput.focus(); return; }
+
     submitButton.disabled = true;
     submitButton.setAttribute('aria-busy', 'true');
-    const auth = authenticateStudentLogin(name, pin);
-    if (!auth.ok) {
-      errorEl.textContent = auth.error;
+
+    const auth = await authenticateStudentLoginAsync(name, pin, classVal);
+    if (!auth || !auth.ok) {
+      errorEl.textContent = (auth && auth.error) ? auth.error : 'Name or PIN incorrect for this class.';
       errorEl.classList.remove('hidden');
       submitButton.disabled = false;
       submitButton.removeAttribute('aria-busy');
       return;
     }
+
     const student = auth.student;
     const classRec = auth.classRecord;
     currentRole = 'student';
     currentStudent = student.student_name;
-    currentStudentClassId = String(classRec.__backendId || '');
+    currentStudentPin = pin;
+    currentStudentSchool = classRec.school_name || student.school_name || '';
+    currentStudentClass = classRec.class_name || student.class_name || '';
+    currentStudentClassId = String(classRec.__backendId || classRec.id || auth.classId || '');
+    window.navSchool = currentStudentSchool;
+    window.navClass = currentStudentClass;
+
     try {
-      await loadStudentProfile({ id: student.__backendId, name: student.student_name, pin, school: student.school_name, className: student.class_name });
+      localStorage.setItem('pokeayman-last-student-class', currentStudentClassId || classVal);
+      sessionStorage.setItem('pokeayman-student-session', JSON.stringify({
+        studentId: auth.studentId,
+        activeClassId: currentStudentClassId,
+        studentName: currentStudent,
+        navSchool: currentStudentSchool,
+        navClass: currentStudentClass
+      }));
+    } catch (_) {}
+
+    try {
+      await loadStudentProfile({
+        id: auth.studentId || student.__backendId || student.id,
+        name: student.student_name,
+        pin,
+        school: currentStudentSchool,
+        className: currentStudentClass
+      });
     } catch (error) {
       currentRole = ''; currentStudentRecordId = ''; currentStudentLoading = false;
       errorEl.textContent = 'We could not load your student profile. Please try again.';
@@ -12527,11 +12717,15 @@ document.getElementById('student-login-toggle').addEventListener('click', () => 
       submitButton.disabled = false; submitButton.removeAttribute('aria-busy');
       return;
     }
-    if (!currentStudentRecordId) { currentRole = ''; submitButton.disabled = false; submitButton.removeAttribute('aria-busy'); return; }
+
+    if (!currentStudentRecordId) {
+      currentStudentRecordId = String(auth.studentId || student.__backendId || student.id || '');
+    }
+
     modal.remove();
     enterApp();
   });
-  
+
   modal.querySelector('#student-cancel-btn-modal').addEventListener('click', () => modal.remove());
 });
 
@@ -19021,211 +19215,359 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
     return;
   }
   const name = document.getElementById('new-student-name').value.trim();
-  if (!name || allData.length >= 999) { if (allData.length >= 999) toast('Storage limit reached!'); return; }
-  
-  // Check if student with this name already exists globally
-  const existingStudent = getAllStudents().find(s => s.student_name === name);
-  
-  if (existingStudent) {
-    // Show duplicate name detection modal with two options
+  if (!name) return;
+  if (allData.length >= 999) { toast('Storage limit reached!'); return; }
+
+  const normalizedName = normalizeStudentIdentity(name);
+
+  // Check if student with this name is already in THIS class
+  const alreadyInThisClass = getStudents(navSchool, navClass).find(s => normalizeStudentIdentity(s.student_name) === normalizedName);
+  if (alreadyInThisClass) {
+    toast(`"${name}" is already in this class!`);
+    return;
+  }
+
+  // Query students where lower(name) = lower(enteredName)
+  const existingStudents = getAllStudents().filter(s => normalizeStudentIdentity(s.student_name) === normalizedName);
+
+  if (existingStudents.length > 0) {
+    // Duplicate found: open refined "Choose Student Linking" modal
+    const existingStudent = existingStudents[0];
+    const isLight = document.body.classList.contains('ts-bright') || document.documentElement.classList.contains('light');
+
+    // Get candidate's avatar
+    const avatarId = Number(existingStudent.avatar_pokemon_id || 0);
+    const avatarHtml = avatarId > 0 
+      ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarId}.png" class="w-12 h-12 object-contain" alt="">`
+      : `<span class="text-xl font-black ${isLight ? 'text-indigo-600' : 'text-slate-300'}">${escapeHtml(name.charAt(0).toUpperCase())}</span>`;
+
+    // Existing PIN
+    const existingPin = String(existingStudent.student_pin || existingStudent.pin || '1234').trim();
+
+    // Attended classes
+    const canonicalKey = canonicalStudentKey(existingStudent);
+    const existingStudentId = String(existingStudent.student_id || existingStudent.__backendId || '');
+    const attendedSet = new Set();
+    allData.filter(r => (r.type === 'student' || r.type === 'student_membership' || r.type === 'class_student' || r.type === 'class_membership') && (
+      (canonicalKey && canonicalStudentKey(r) === canonicalKey) ||
+      (existingStudentId && String(r.student_id || r.__backendId || '') === existingStudentId)
+    )).forEach(r => {
+      if (r.school_name && r.class_name) attendedSet.add(`${r.school_name} · ${r.class_name}`);
+    });
+    if (!attendedSet.size && existingStudent.school_name && existingStudent.class_name) {
+      attendedSet.add(`${existingStudent.school_name} · ${existingStudent.class_name}`);
+    }
+    const attendedText = attendedSet.size ? Array.from(attendedSet).join(', ') : 'None recorded';
+
     const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-    modal.innerHTML = `<div class="bg-white rounded-xl shadow-lg max-w-md w-full">
-      <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4 rounded-t-xl">
-        <h2 class="heading-font text-lg font-bold text-white">Choose Student Linking</h2>
+    modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `<div class="student-linking-card ${isLight ? 'is-bright bg-white border-slate-200 text-slate-900' : 'is-dark bg-slate-900 border-slate-800 text-white'} border rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="student-linking-title">
+      <!-- Standard modal header (dark slate in dark mode, clean white in light mode) -->
+      <div class="p-6 pb-4 ${isLight ? 'border-b border-slate-100 bg-slate-50/50' : 'border-b border-slate-800/80 bg-slate-900'}">
+        <h2 id="student-linking-title" class="text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}">Choose Student Linking</h2>
+        <p class="text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-1">A student named <strong class="${isLight ? 'text-indigo-600' : 'text-amber-400'}">${escapeHtml(name)}</strong> already exists.</p>
       </div>
+      
       <div class="p-6 space-y-4">
-        <p class="text-sm text-gray-700">A student named "<strong>${name}</strong>" already exists.</p>
-        <p class="text-xs text-gray-500">Choose an option:</p>
-        <div class="flex flex-col gap-3">
-          <button id="link-account-btn" class="w-full bg-gradient-to-r from-green-500 to-indigo-600 hover:from-green-600 hover:to-indigo-700 text-white py-3 rounded-lg font-semibold text-sm transition shadow-md">
-            Link Existing Student to This Class<br><span class="text-xs font-normal opacity-90">Reuse the canonical student profile</span>
+        <!-- Candidate Card Preview -->
+        <div class="${isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-800/60 border-slate-700/70 text-slate-100'} border rounded-2xl p-4 flex items-center gap-4">
+          <div class="w-14 h-14 rounded-full ${isLight ? 'bg-white border border-slate-200' : 'bg-slate-800 border border-slate-700'} flex-shrink-0 flex items-center justify-center overflow-hidden shadow-sm">
+            ${avatarHtml}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-base font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}">${escapeHtml(name)}</h3>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-semibold ${isLight ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-indigo-950/70 text-indigo-300 border border-indigo-800'}">PIN: ${escapeHtml(existingPin)}</span>
+            </div>
+            <p class="text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-1 line-clamp-2">
+              Currently in: <span class="font-semibold ${isLight ? 'text-slate-700' : 'text-slate-200'}">${escapeHtml(attendedText)}</span>
+            </p>
+          </div>
+        </div>
+
+        <p class="text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'} font-medium">Choose an option:</p>
+
+        <!-- Option Buttons: pill components (rounded-full px-5 py-3 font-semibold text-sm) -->
+        <div class="space-y-3">
+          <button id="link-account-btn" type="button" class="w-full text-left rounded-full px-5 py-3 font-semibold text-sm transition-all shadow-sm flex items-center justify-between gap-3 ${isLight ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'} active:scale-[0.98]">
+            <div class="flex flex-col">
+              <span class="font-bold">Link Existing Student to This Class</span>
+              <span class="text-xs font-normal opacity-90">Reuse profile, coins &amp; Pokémon</span>
+            </div>
           </button>
-          <button id="use-different-name-btn" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 rounded-lg font-semibold text-sm transition shadow-md">
-            Change Name &amp; Create New Student<br><span class="text-xs font-normal opacity-90">Create an independent profile</span>
+
+          <button id="create-new-student-btn" type="button" class="w-full text-left rounded-full px-5 py-3 font-semibold text-sm transition-all shadow-sm flex items-center justify-between gap-3 ${isLight ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-indigo-600 hover:bg-indigo-500 text-white'} active:scale-[0.98]">
+            <div class="flex flex-col">
+              <span class="font-bold">Create New Student with Same Name</span>
+              <span class="text-xs font-normal opacity-90">Independent profile with separate PIN</span>
+            </div>
+          </button>
+        </div>
+
+        <div class="pt-2">
+          <button id="linking-cancel-btn" type="button" class="w-full rounded-full px-5 py-2.5 font-medium text-xs ${isLight ? 'border-slate-300 text-slate-600 hover:bg-slate-100' : 'border-slate-700 text-slate-400 hover:bg-slate-800'} border transition-all text-center">
+            Cancel
           </button>
         </div>
       </div>
     </div>`;
     document.body.appendChild(modal);
-    
-    // Link Account option: Add existing student to current class
+
+    // Option 1: Link Existing Student
     modal.querySelector('#link-account-btn').addEventListener('click', async () => {
-      // Check if student is already in this class
-      const alreadyInClass = getStudents(navSchool, navClass).find(s => canonicalStudentKey(s) === canonicalStudentKey(existingStudent));
-      if (alreadyInClass) {
-        toast(`${name} is already in this class!`);
-        modal.remove();
-        return;
-      }
-      
-      // Create a new student record that links to the existing profile
-      // This allows the same student to appear in multiple classes while syncing profile data
-      if (allData.length >= 999) { toast('Storage limit reached!'); modal.remove(); return; }
-      const classRec = getClasses(navSchool).find(c => c.class_name === navClass);
-      const classPin = classRec ? (classRec.class_pin || '') : '';
-      
-      await window.dataSdk.create({ 
-        type: 'student_membership', 
-        student_id: existingStudent.student_id || existingStudent.__backendId, 
-        school_name: navSchool, 
-        class_name: navClass, 
-        student_name: '', 
-        student_pin: '', 
-        coins: existingStudent.coins || 0,  // Sync coins from existing profile
-        pokemon_id: 0, 
-        pokemon_name: '', 
-        pokemon_rarity: '', 
-        pokemon_price: 0, 
-        pokemon_power: 0, 
-        quiz_question: '', 
-        quiz_answer: '', 
-        quiz_reward: 0, 
-        quiz_solved_by: '', 
-        quiz_type: '', 
-        quiz_options: '', 
-        quiz_image: '', 
-        owner: '', 
-        created_at: new Date().toISOString(), 
-        teacher_name: '', 
-        teacher_pin: '', 
-        teacher_role: '', 
-        avatar_pokemon_id: existingStudent.avatar_pokemon_id || 0,  // Sync avatar from existing profile
-        teacher_credits: 0, 
-        log_action: '', 
-        log_amount: 0, 
-        log_target: '', 
-        shop_pokemon_id: 0, 
-        shop_pokemon_name: '', 
-        shop_pokemon_rarity: '', 
-        shop_pokemon_price: 0, 
-        shop_pokemon_power: 0, 
-        shop_pokemon_hp: 0, 
-        quiz_folder: '', 
-        folder_name: '', 
-        archived: false, 
-        quiz_attempts: '', 
-        quiz_created_by: '', 
-        quiz_class: '', 
-        quiz_submitted_answers: '' 
+      const classRec = getClasses(navSchool).find(c => c.class_name === navClass) || allData.find(c => c.type === 'class' && c.school_name === navSchool && c.class_name === navClass);
+      const classId = classRec ? (classRec.__backendId || classRec.id || '') : '';
+      const studentId = existingStudent.student_id || existingStudent.__backendId || existingStudent.id;
+
+      await window.dataSdk.create({
+        type: 'student_membership',
+        student_id: studentId,
+        class_id: classId,
+        school_name: navSchool,
+        class_name: navClass,
+        student_name: existingStudent.student_name,
+        student_pin: existingStudent.student_pin || existingStudent.pin || '',
+        coins: existingStudent.coins || 0,
+        avatar_pokemon_id: existingStudent.avatar_pokemon_id || 0,
+        pokemon_id: 0,
+        pokemon_name: '',
+        pokemon_rarity: '',
+        pokemon_price: 0,
+        pokemon_power: 0,
+        quiz_question: '',
+        quiz_answer: '',
+        quiz_reward: 0,
+        quiz_solved_by: '',
+        quiz_type: '',
+        quiz_options: '',
+        quiz_image: '',
+        owner: '',
+        created_at: new Date().toISOString(),
+        teacher_name: '',
+        teacher_pin: '',
+        teacher_role: '',
+        teacher_credits: 0,
+        log_action: '',
+        log_amount: 0,
+        log_target: '',
+        shop_pokemon_id: 0,
+        shop_pokemon_name: '',
+        shop_pokemon_rarity: '',
+        shop_pokemon_price: 0,
+        shop_pokemon_power: 0,
+        shop_pokemon_hp: 0,
+        quiz_folder: '',
+        folder_name: '',
+        archived: false,
+        quiz_attempts: '',
+        quiz_created_by: '',
+        quiz_class: '',
+        quiz_submitted_answers: ''
       });
-      
+
+      const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+      if (sb && classId && studentId) {
+        try {
+          await sb.from('class_students').insert({
+            class_id: classId,
+            student_id: studentId
+          });
+        } catch (err) {
+          console.warn('Supabase class_students insert error/fallback:', err);
+        }
+      }
+
       document.getElementById('new-student-name').value = '';
       modal.remove();
       toast(`${name} linked to ${navClass}! Profile synced across classes.`);
+      if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
     });
-    
-    // Use Different Name option: Show input for new unique name
-    modal.querySelector('#use-different-name-btn').addEventListener('click', () => {
-      const renameModal = document.createElement('div');
-      renameModal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-      renameModal.innerHTML = `<div class="bg-white rounded-xl shadow-lg max-w-md w-full">
-        <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4 rounded-t-xl">
-          <h2 class="heading-font text-lg font-bold text-white">Enter Unique Student Name</h2>
-        </div>
-        <form class="p-6 space-y-4">
-          <div>
-            <label class="text-xs font-semibold text-gray-600 block mb-2">New Student Name</label>
-            <input id="new-unique-name" type="text" placeholder="Enter a different name" class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition" required>
-            <p id="name-error" class="text-red-500 text-xs mt-2 hidden"></p>
-          </div>
-          <div class="flex gap-2 pt-2">
-            <button type="submit" class="flex-1 btn-primary">Create Student</button>
-            <button type="button" id="rename-cancel-btn" class="flex-1 btn-outline">Cancel</button>
-          </div>
-        </form>
-      </div>`;
-      document.body.appendChild(renameModal);
+
+    // Option 2: Create New Student with Same Name and Distinct PIN
+    modal.querySelector('#create-new-student-btn').addEventListener('click', async () => {
+      const classRec = getClasses(navSchool).find(c => c.class_name === navClass) || allData.find(c => c.type === 'class' && c.school_name === navSchool && c.class_name === navClass);
+      const classId = classRec ? (classRec.__backendId || classRec.id || '') : '';
       
-      const newNameInput = renameModal.querySelector('#new-unique-name');
-      const errorEl = renameModal.querySelector('#name-error');
-      
-      renameModal.querySelector('form').addEventListener('submit', async e2 => {
-        e2.preventDefault();
-        const uniqueName = newNameInput.value.trim();
-        
-        if (!uniqueName) {
-          errorEl.textContent = 'Name cannot be empty.';
-          errorEl.classList.remove('hidden');
-          return;
-        }
-        
-        // Check if this new name is also taken
-        if (getAllStudents().find(s => s.student_name === uniqueName)) {
-          errorEl.textContent = `"${uniqueName}" is also taken. Try a different name.`;
-          errorEl.classList.remove('hidden');
-          return;
-        }
-        
-        // Create new student with unique name
-        if (allData.length >= 999) { toast('Storage limit reached!'); renameModal.remove(); modal.remove(); return; }
-        const classRec = getClasses(navSchool).find(c => c.class_name === navClass);
-        const classPin = classRec ? (classRec.class_pin || '') : '';
-        
-        await window.dataSdk.create({ 
-          type: 'student', 
-          school_name: navSchool, 
-          class_name: navClass, 
-          student_name: uniqueName, 
-          student_pin: classPin, 
-          coins: 0, 
-          pokemon_id: 0, 
-          pokemon_name: '', 
-          pokemon_rarity: '', 
-          pokemon_price: 0, 
-          pokemon_power: 0, 
-          quiz_question: '', 
-          quiz_answer: '', 
-          quiz_reward: 0, 
-          quiz_solved_by: '', 
-          quiz_type: '', 
-          quiz_options: '', 
-          quiz_image: '', 
-          owner: '', 
-          created_at: new Date().toISOString(), 
-          teacher_name: '', 
-          teacher_pin: '', 
-          teacher_role: '', 
-          avatar_pokemon_id: 0, 
-          teacher_credits: 0, 
-          log_action: '', 
-          log_amount: 0, 
-          log_target: '', 
-          shop_pokemon_id: 0, 
-          shop_pokemon_name: '', 
-          shop_pokemon_rarity: '', 
-          shop_pokemon_price: 0, 
-          shop_pokemon_power: 0, 
-          shop_pokemon_hp: 0, 
-          quiz_folder: '', 
-          folder_name: '', 
-          archived: false, 
-          quiz_attempts: '', 
-          quiz_created_by: '', 
-          quiz_class: '', 
-          quiz_submitted_answers: '' 
-        });
-        
-        document.getElementById('new-student-name').value = '';
-        modal.remove();
-        renameModal.remove();
-        toast(`${uniqueName} added!`);
+      let distinctPin = String(Math.floor(1000 + Math.random() * 9000));
+      while (distinctPin === existingPin) {
+        distinctPin = String(Math.floor(1000 + Math.random() * 9000));
+      }
+
+      const res = await window.dataSdk.create({
+        type: 'student',
+        school_name: navSchool,
+        class_name: navClass,
+        class_id: classId,
+        student_name: name,
+        student_pin: distinctPin,
+        pin: distinctPin,
+        coins: 0,
+        avatar_pokemon_id: 0,
+        pokemon_id: 0,
+        pokemon_name: '',
+        pokemon_rarity: '',
+        pokemon_price: 0,
+        pokemon_power: 0,
+        quiz_question: '',
+        quiz_answer: '',
+        quiz_reward: 0,
+        quiz_solved_by: '',
+        quiz_type: '',
+        quiz_options: '',
+        quiz_image: '',
+        owner: '',
+        created_at: new Date().toISOString(),
+        teacher_name: '',
+        teacher_pin: '',
+        teacher_role: '',
+        teacher_credits: 0,
+        log_action: '',
+        log_amount: 0,
+        log_target: '',
+        shop_pokemon_id: 0,
+        shop_pokemon_name: '',
+        shop_pokemon_rarity: '',
+        shop_pokemon_price: 0,
+        shop_pokemon_power: 0,
+        shop_pokemon_hp: 0,
+        quiz_folder: '',
+        folder_name: '',
+        archived: false,
+        quiz_attempts: '',
+        quiz_created_by: '',
+        quiz_class: '',
+        quiz_submitted_answers: ''
       });
-      
-      renameModal.querySelector('#rename-cancel-btn').addEventListener('click', () => renameModal.remove());
-      renameModal.addEventListener('click', e2 => { if (e2.target === renameModal) renameModal.remove(); });
+
+      const createdId = res?.data?.__backendId || res?.data?.id || '';
+      if (createdId && classId) {
+        await window.dataSdk.create({
+          type: 'class_student',
+          student_id: createdId,
+          class_id: classId,
+          school_name: navSchool,
+          class_name: navClass,
+          created_at: new Date().toISOString()
+        });
+      }
+
+      const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+      if (sb) {
+        try {
+          const { data: sbSt } = await sb.from('students').insert({
+            name,
+            pin: distinctPin,
+            coins: 0,
+            avatar_pokemon_id: 0
+          }).select().maybeSingle();
+          if (sbSt && classId) {
+            await sb.from('class_students').insert({
+              class_id: classId,
+              student_id: sbSt.id
+            });
+          }
+        } catch (e) {
+          console.warn('Supabase student insert fallback:', e);
+        }
+      }
+
+      document.getElementById('new-student-name').value = '';
+      modal.remove();
+      toast(`New student ${name} created for ${navClass} with PIN ${distinctPin}!`);
+      if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
     });
-    
+
+    modal.querySelector('#linking-cancel-btn').addEventListener('click', () => modal.remove());
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
     return;
   }
-  
-  // No duplicate: proceed with normal student creation
-  const classRec = getClasses(navSchool).find(c => c.class_name === navClass);
-  const classPin = classRec ? (classRec.class_pin || '') : '';
-  await window.dataSdk.create({ type: 'student', school_name: navSchool, class_name: navClass, student_name: name, student_pin: classPin, coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '' });
-  document.getElementById('new-student-name').value = ''; 
-  toast(`${name} added!`);
+
+  // No match exists: immediately create new record in students with default 4-digit PIN '1234'
+  const classRec = getClasses(navSchool).find(c => c.class_name === navClass) || allData.find(c => c.type === 'class' && c.school_name === navSchool && c.class_name === navClass);
+  const classId = classRec ? (classRec.__backendId || classRec.id || '') : '';
+  const defaultPin = '1234';
+
+  const res = await window.dataSdk.create({
+    type: 'student',
+    school_name: navSchool,
+    class_name: navClass,
+    class_id: classId,
+    student_name: name,
+    student_pin: defaultPin,
+    pin: defaultPin,
+    coins: 0,
+    avatar_pokemon_id: 0,
+    pokemon_id: 0,
+    pokemon_name: '',
+    pokemon_rarity: '',
+    pokemon_price: 0,
+    pokemon_power: 0,
+    quiz_question: '',
+    quiz_answer: '',
+    quiz_reward: 0,
+    quiz_solved_by: '',
+    quiz_type: '',
+    quiz_options: '',
+    quiz_image: '',
+    owner: '',
+    created_at: new Date().toISOString(),
+    teacher_name: '',
+    teacher_pin: '',
+    teacher_role: '',
+    teacher_credits: 0,
+    log_action: '',
+    log_amount: 0,
+    log_target: '',
+    shop_pokemon_id: 0,
+    shop_pokemon_name: '',
+    shop_pokemon_rarity: '',
+    shop_pokemon_price: 0,
+    shop_pokemon_power: 0,
+    shop_pokemon_hp: 0,
+    quiz_folder: '',
+    folder_name: '',
+    archived: false,
+    quiz_attempts: '',
+    quiz_created_by: '',
+    quiz_class: '',
+    quiz_submitted_answers: ''
+  });
+
+  const createdId = res?.data?.__backendId || res?.data?.id || '';
+  if (createdId && classId) {
+    await window.dataSdk.create({
+      type: 'class_student',
+      student_id: createdId,
+      class_id: classId,
+      school_name: navSchool,
+      class_name: navClass,
+      created_at: new Date().toISOString()
+    });
+  }
+
+  const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+  if (sb) {
+    try {
+      const { data: sbSt } = await sb.from('students').insert({
+        name,
+        pin: defaultPin,
+        coins: 0,
+        avatar_pokemon_id: 0
+      }).select().maybeSingle();
+      if (sbSt && classId) {
+        await sb.from('class_students').insert({
+          class_id: classId,
+          student_id: sbSt.id
+        });
+      }
+    } catch (e) {
+      console.warn('Supabase student insert fallback:', e);
+    }
+  }
+
+  document.getElementById('new-student-name').value = '';
+  toast(`${name} added with default PIN ${defaultPin}!`);
+  if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
 });
 
 document.getElementById('award-form').addEventListener('submit', async e => {

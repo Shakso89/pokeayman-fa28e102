@@ -99,3 +99,95 @@ html body #student-pin-modal:placeholder-shown { letter-spacing: normal !importa
 .pk-login-overlay .pk-login-card { max-height: none !important; overflow: visible !important; margin: auto 0; }
 .pk-login-card button { touch-action: manipulation; }
 .pk-login-card button:active { transform: scale(.97); }
+
+
+/* Student 3-Field Login Styling & Light/Dark Theming */
+html body .pk-login-overlay .pk-login-card select {
+  background: rgba(255, 255, 255, .06) !important;
+  color: var(--pkl-ink) !important;
+  border: 2px solid var(--pkl-line) !important;
+  border-radius: 14px !important;
+  min-height: 48px;
+  padding: 10px 16px !important;
+  font-size: 14px !important;
+  transition: border-color .2s, box-shadow .2s, background .2s;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a9b4d8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+}
+html body .pk-login-overlay .pk-login-card select:focus {
+  outline: none !important;
+  border-color: var(--pkl-gold) !important;
+  background-color: rgba(255, 255, 255, .1) !important;
+  box-shadow: 0 0 0 4px rgba(255, 203, 5, .18) !important;
+}
+html body .pk-login-overlay .pk-login-card select option,
+html body .pk-login-overlay .pk-login-card select optgroup {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* Light mode for Student Login modal */
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25) !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card::before {
+  display: none !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card .pk-login-head {
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card .pk-login-title {
+  color: #0f172a !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card .pk-login-kicker {
+  color: #d97706 !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card .pk-login-sub {
+  color: #64748b !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card :is(input:not([type="checkbox"]):not([type="radio"]), select) {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card :is(input:not([type="checkbox"]):not([type="radio"]), select):focus {
+  background: #ffffff !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card :is(input, select)::placeholder {
+  color: #94a3b8 !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card select option,
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card select optgroup {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card label {
+  color: #475569 !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card .btn-student-submit {
+  background: #059669 !important;
+  color: #ffffff !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card .btn-student-submit:hover {
+  background: #10b981 !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card .btn-student-cancel {
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+  background: transparent !important;
+}
+html body:is(#pk-ds, body).ts-bright .student-login-modal-card .btn-student-cancel:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}

@@ -9,6 +9,7 @@ type Result = { error?: string; name?: string; signedIn?: boolean };
 
 declare global {
   interface Window {
+    supabaseClient?: any;
     pokeaymanSpeak?: (text: string, level?: string) => Promise<void>;
     pokeaymanStop?: () => void;
     pokeaymanAuth?: {
@@ -116,7 +117,9 @@ function Index() {
       activeSpeechController = new AbortController();
       return streamSpeech("/api/vocabulary-speech", text, level, activeSpeechController.signal);
     };
+    window.supabaseClient = supabase;
     window.pokeaymanAuth = {
+      supabase,
       userId: user?.id ?? null,
       getToken: async () => (await supabase.auth.getSession()).data.session?.access_token ?? null,
       getProfile: async () => ({ name: await profileName() }),
