@@ -180,12 +180,28 @@
       grid.style.setProperty('--crossword-scale', String(scale));
       grid.style.setProperty('--crossword-x', `${desiredX}px`);
       grid.style.setProperty('--crossword-y', `${desiredY}px`);    };
-    const selectWord = word => {
+    let currentDirection = 'across';
+    const selectWord = (word, shouldScroll = true) => {
       if (!word || completedWords.has(word.id)) return;
       selectedWord = word;
+      currentDirection = word.direction;
       modal.querySelectorAll('.crossword-cell.is-active').forEach(cell => cell.classList.remove('is-active'));
       modal.querySelectorAll('.crossword-clue.is-active').forEach(button => button.classList.remove('is-active'));
-      modal.querySelector(`.crossword-clue[data-word-id="${word.id}"][data-group="${word.direction}"]`)?.classList.add('is-active');
+      const activeClue = modal.querySelector(`.crossword-clue[data-word-id="${word.id}"][data-group="${word.direction}"]`);
+      if (activeClue) {
+        activeClue.classList.add('is-active');
+        if (shouldScroll) {
+          const scrollClue = () => {
+            try {
+              activeClue.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+            } catch (_) {
+              activeClue.scrollIntoView(false);
+            }
+          };
+          scrollClue();
+          requestAnimationFrame(scrollClue);
+        }
+      }
       for (let i = 0; i < word.answer.length; i++) {
         const row = word.row + (word.direction === 'down' ? i : 0), col = word.col + (word.direction === 'across' ? i : 0);
         modal.querySelector(`.crossword-cell[data-cell="${coordKey(row, col)}"]`)?.classList.add('is-active');
@@ -269,14 +285,56 @@
       }
       checkLocked = false;
     };
-    grid.querySelectorAll('input').forEach(input => {
-      input.addEventListener('focus', () => {
-        activeInput = input;
-        if (!input.readOnly && input.value) input.select();
-        const cell = puzzle.cells.get(input.dataset.cellKey);
-        const word = [...(selectedWord ? [selectedWord] : []), ...allWords.filter(item => cell.wordIds.includes(item.id))].find(item => cell.wordIds.includes(item.id) && !completedWords.has(item.id));
-        if (word) selectWord(word);
+    const handleCellSelection = (input, forceToggle = false, directionalPreference = null) => {
+      activeInput = input;
+      if (!input.readOnly && input.value) input.select();
+      const cell = puzzle.cells.get(input.dataset.cellKey);
+      if (!cell || !cell.wordIds || !cell.wordIds.length) return;
+
+      const availableWords = allWords.filter(item => cell.wordIds.includes(item.id) && !completedWords.has(item.id));
+      if (!availableWords.length) return;
+
+      let wordToSelect = null;
+      const isIntersection = availableWords.length > 1;
+
+      if (forceToggle && isIntersection && selectedWord && cell.wordIds.includes(selectedWord.id)) {
+        // Re-clicking on active intersection tile toggles to other direction
+        wordToSelect = availableWords.find(item => item.id !== selectedWord.id) || availableWords[0];
+      } else if (directionalPreference && isIntersection) {
+        wordToSelect = availableWords.find(item => item.direction === directionalPreference) || selectedWord || availableWords[0];
+      } else if (selectedWord && cell.wordIds.includes(selectedWord.id)) {
+        // Keep current selected word if cell is part of it
+        wordToSelect = selectedWord;
+      } else {
+        // Direction awareness: keep current direction mode if available
+        const prefDir = directionalPreference || selectedWord?.direction || currentDirection || 'across';
+        wordToSelect = availableWords.find(item => item.direction === prefDir) || availableWords[0];
+      }
+
+      if (wordToSelect) {
+        currentDirection = wordToSelect.direction;
+        selectWord(wordToSelect, true);
+      }
+    };
+
+    grid.querySelectorAll('.crossword-cell').forEach(cellEl => {
+      const input = cellEl.querySelector('input');
+      if (!input) return;
+
+      cellEl.addEventListener('pointerdown', event => {
+        if (event.button !== 0) return;
+        const isSameInput = activeInput === input;
+        if (isSameInput) {
+          handleCellSelection(input, true);
+        } else {
+          handleCellSelection(input, false);
+        }
       });
+
+      input.addEventListener('focus', () => {
+        handleCellSelection(input, false);
+      });
+
       input.addEventListener('input', () => {
         const value = input.value.replace(/[^a-z0-9]/ig, '').slice(-1).toUpperCase();
         input.value = value;
@@ -295,14 +353,25 @@
         const selectedKeys = Array.from({ length: selectedWord.answer.length }, (_, i) => coordKey(selectedWord.row + (selectedWord.direction === 'down' ? i : 0), selectedWord.col + (selectedWord.direction === 'across' ? i : 0)));
         if (selectedKeys.every(key => inputState.get(key))) solveActiveWord();
       });
+
       input.addEventListener('keydown', event => {
+        if (event.key === ' ' || event.code === 'Space') {
+          event.preventDefault();
+          handleCellSelection(input, true);
+          return;
+        }
         if (event.key === 'Enter') { event.preventDefault(); solveActiveWord(); return; }
         if (event.key === 'Backspace' && input.value) { input.value = ''; inputState.set(input.dataset.cellKey, ''); return; }
         if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
         event.preventDefault();
         const [row, col] = input.dataset.cellKey.split(',').map(Number);
+        const arrowDir = (event.key === 'ArrowUp' || event.key === 'ArrowDown') ? 'down' : 'across';
         const delta = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[event.key];
-        modal.querySelector(`input[data-cell-key="${coordKey(row + delta[0], col + delta[1])}"]`)?.focus();
+        const nextTargetInput = modal.querySelector(`input[data-cell-key="${coordKey(row + delta[0], col + delta[1])}"]`);
+        if (nextTargetInput) {
+          handleCellSelection(nextTargetInput, false, arrowDir);
+          nextTargetInput.focus();
+        }
       });
     });
     setZoom(false);
