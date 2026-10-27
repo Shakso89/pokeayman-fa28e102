@@ -914,8 +914,38 @@
 
       const listId = `vocab-ai-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const teacherCtx = typeof window.getCurrentTeacherContext === 'function' ? window.getCurrentTeacherContext() : {};
-      const teacherName = teacherCtx.teacherName || window.currentTeacher || (typeof currentTeacher !== 'undefined' ? currentTeacher : '') || 'Teacher';
-      const teacherId = teacherCtx.teacherId || window.currentTeacherRecordId || (typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : '') || (typeof verifiedTeacherIdentity === 'function' ? verifiedTeacherIdentity() : '') || '';
+
+      // Resolve authoritative teacher name and ID
+      let resolvedTeacherName = String(teacherCtx.teacherName || window.currentTeacher || (typeof currentTeacher !== 'undefined' ? currentTeacher : '') || '').trim();
+      let resolvedTeacherId = String(teacherCtx.teacherId || window.currentTeacherRecordId || (typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : '') || (typeof verifiedTeacherIdentity === 'function' ? verifiedTeacherIdentity() : '') || '').trim();
+
+      const allTeachersList = typeof getTeachers === 'function' ? getTeachers() : (typeof allData !== 'undefined' ? allData.filter(r => r.type === 'teacher') : []);
+      const matchedTeacher = allTeachersList.find(t => 
+        (resolvedTeacherId && String(t.__backendId || t.teacher_id) === resolvedTeacherId) ||
+        (resolvedTeacherName && typeof normalizeStudentIdentity === 'function' && normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(resolvedTeacherName))
+      );
+
+      if (matchedTeacher?.teacher_name) {
+        resolvedTeacherName = matchedTeacher.teacher_name;
+        if (!resolvedTeacherId) resolvedTeacherId = String(matchedTeacher.__backendId || '');
+      }
+
+      if (!resolvedTeacherName || resolvedTeacherName.toLowerCase() === 'teacher') {
+        if (typeof isAymanTeacher === 'function' && isAymanTeacher()) {
+          resolvedTeacherName = 'Ayman';
+        }
+      }
+
+      let authorDisplayName = resolvedTeacherName;
+      if (authorDisplayName && !/^Teacher\b/i.test(authorDisplayName)) {
+        authorDisplayName = `Teacher ${authorDisplayName}`;
+      } else if (!authorDisplayName) {
+        authorDisplayName = 'Teacher';
+      }
+
+      const currentUserId = resolvedTeacherId || (typeof verifiedTeacherIdentity === 'function' ? verifiedTeacherIdentity() : '') || (typeof isAymanTeacher === 'function' && isAymanTeacher() ? 'ayman' : '') || authorDisplayName;
+      const teacherName = authorDisplayName;
+      const teacherId = resolvedTeacherId;
 
       // The whole list is written atomically with stable IDs for safe retries.
       let creditsDeducted = false;
@@ -943,14 +973,16 @@
         vocab_list_class: targetClass,
         school_name: targetSchool,
         class_name: targetClass,
-        owner: teacherName,
-        teacher_name: teacherName,
+        owner: authorDisplayName,
+        teacher_name: authorDisplayName,
+        author_name: authorDisplayName,
         teacher_id: teacherId,
-        created_by: teacherName,
-        ai_creator_teacher: teacherName,
+        created_by: currentUserId,
+        ai_creator_teacher: authorDisplayName,
         ai_creator_id: teacherId,
         is_ai_generated: true,
         ai_generated: true,
+        source: 'ai',
         generation_source: 'ai',
         vocab_media_policy: 'sentence-reviewed-v1',
         created_at: new Date().toISOString(),
@@ -1023,11 +1055,15 @@
             vocab_media_status: item.withoutImage ? 'omitted' : item.mediaStatus,
             vocab_media_type: item.withoutImage ? '' : item.mediaType,
             is_ai_generated: true,
+            ai_generated: true,
+            source: 'ai',
+            generation_source: 'ai',
             created_at: new Date().toISOString(),
-            teacher_name: teacherName,
-            owner: teacherName,
-            created_by: teacherName,
-            ai_creator_teacher: teacherName,
+            teacher_name: authorDisplayName,
+            author_name: authorDisplayName,
+            owner: authorDisplayName,
+            created_by: currentUserId,
+            ai_creator_teacher: authorDisplayName,
             ai_creator_id: teacherId
           };
 

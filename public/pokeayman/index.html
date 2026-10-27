@@ -14059,13 +14059,14 @@ function isAiGeneratedVocabList(list) {
     list.is_ai_generated ||
     list.ai_generated ||
     list.generation_source === 'ai' ||
+    list.source === 'ai' ||
     String(list.vocab_list_id || '').startsWith('vocab-ai-') ||
     String(list.list_id || '').startsWith('vocab-ai-') ||
     String(list.__backendId || '').startsWith('vocab-ai-')
   );
 }
 function getAiGeneratedBadgeHtml() {
-  return '<span class="ai-generated-badge" style="display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:9999px; font-size:10px; font-weight:800; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; box-shadow:0 2px 6px rgba(99,102,241,0.35); flex-shrink:0; vertical-align:middle;">⚡ AI Generated</span>';
+  return '<span class="ai-generated-badge" style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:9999px; font-size:10px; font-weight:800; background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; box-shadow:0 2px 6px rgba(99,102,241,0.35); flex-shrink:0; vertical-align:middle; margin:0;"><svg class="ai-badge-sparkle-icon" viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true" style="flex-shrink:0;"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span>AI Generated</span></span>';
 }
 
 function renderTeacherOwnedVocabLists() {
@@ -14210,10 +14211,58 @@ function renderTeacherOwnedVocabLists() {
     }
     const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const sectionHead = text => `<div class="teacher-zone-list-section-title"><span>${escape(text)}</span></div>`;
+    const getTeacherAuthorDisplayName = list => {
+      if (!list) return 'Teacher';
+      const explicitAuthor = String(list.author_name || '').trim();
+      if (explicitAuthor && explicitAuthor.toLowerCase() !== 'teacher') {
+        return /^Teacher\b/i.test(explicitAuthor) ? explicitAuthor : `Teacher ${explicitAuthor}`;
+      }
+
+      const teachers = typeof getTeachers === 'function' ? getTeachers() : [];
+      const teacherId = String(list.teacher_id || list.created_by_id || list.ai_creator_id || list.created_by || '').trim();
+      let rec = teachers.find(t => teacherId && String(t.__backendId || t.teacher_id) === teacherId);
+      if (!rec) {
+        const candidates = [list.teacher_name, list.owner, list.ai_creator_teacher, list.created_by].filter(n => n && String(n).trim().toLowerCase() !== 'teacher');
+        for (const cand of candidates) {
+          rec = teachers.find(t => typeof normalizeStudentIdentity === 'function' && normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(cand));
+          if (rec) break;
+        }
+      }
+
+      let name = '';
+      if (rec?.teacher_name && rec.teacher_name.toLowerCase() !== 'teacher') {
+        name = rec.teacher_name;
+      } else {
+        const raw = [list.teacher_name, list.owner, list.ai_creator_teacher].find(n => n && String(n).trim().toLowerCase() !== 'teacher');
+        if (raw) {
+          name = String(raw).trim();
+        } else if (!schoolMode) {
+          if (typeof currentTeacher !== 'undefined' && currentTeacher && currentTeacher.toLowerCase() !== 'teacher') {
+            name = currentTeacher;
+          } else if (typeof isAymanTeacher === 'function' && isAymanTeacher()) {
+            name = 'Ayman';
+          }
+        }
+      }
+
+      if (!name || name.toLowerCase() === 'teacher') {
+        if (typeof isAymanTeacher === 'function' && isAymanTeacher()) {
+          name = 'Ayman';
+        } else if (typeof currentTeacher !== 'undefined' && currentTeacher && currentTeacher.toLowerCase() !== 'teacher') {
+          name = currentTeacher;
+        } else {
+          name = schoolMode ? 'Another teacher' : 'Teacher';
+        }
+      }
+
+      if (name === 'Another teacher') return name;
+      return /^Teacher\b/i.test(name) ? name : `Teacher ${name}`;
+    };
+
     const teacherByline = list => {
-      const rec = getTeachers().find(t => (list.teacher_id && String(t.__backendId) === String(list.teacher_id)) || normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(list.teacher_name || list.owner));
-      const rawName = rec?.teacher_name || list.teacher_name || list.owner || (schoolMode ? 'Another teacher' : (currentTeacher || 'You'));
-      const name = escape(rawName);
+      const rec = getTeachers().find(t => (list.teacher_id && String(t.__backendId) === String(list.teacher_id)) || normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(list.author_name || list.teacher_name || list.owner));
+      const displayName = getTeacherAuthorDisplayName(list);
+      const name = escape(displayName);
       const src = rec ? teacherAvatarSrc(rec.teacher_avatar) : '';
       const avatar = src ? `<img src="${src}" alt="${name}'s avatar" loading="lazy" class="teacher-zone-list-avatar">` : `<span class="teacher-zone-list-avatar-fallback" aria-hidden="true">🎓</span>`;
       return `<span class="teacher-zone-list-author">${avatar}<span>By ${name}</span></span>`;
