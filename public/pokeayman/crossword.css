@@ -517,3 +517,172 @@ html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="
   html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="medium"] .crossword-keyboard-row button { min-height: 2.2rem !important; font-size: .96rem !important; }
   html body > .ga-stage .crossword-content .crossword-virtual-keyboard[data-size="large"] .crossword-keyboard-row button { min-height: 2.5rem !important; font-size: 1.08rem !important; }
 }
+
+
+/* ============================================================
+   Crossword Virtual Keyboard: Smooth Slide-Down & Floating FAB
+   ============================================================ */
+
+/* Keyboard Dock: Fixed at bottom with smooth slide-down transition */
+html body .crossword-virtual-keyboard,
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: max(0.5rem, env(safe-area-inset-bottom)) !important;
+  transform: translateX(-50%) translateY(0) !important;
+  z-index: 2147482500 !important;
+  width: min(100%, 680px) !important;
+  max-width: 680px !important;
+  margin: 0 !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease !important;
+  will-change: transform, opacity !important;
+}
+
+/* Dismissed State: Smooth slide down off the bottom edge */
+html body .crossword-virtual-keyboard.is-dismissed,
+html body > .ga-stage .crossword-content .crossword-virtual-keyboard.is-dismissed {
+  transform: translateX(-50%) translateY(calc(100% + 3rem)) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Floating FAB Button: Smooth scale & reveal when keyboard is dismissed */
+html body .crossword-keyboard-fab,
+html body > .ga-stage .crossword-keyboard-fab {
+  position: fixed !important;
+  right: max(1.25rem, env(safe-area-inset-right)) !important;
+  bottom: max(1.25rem, env(safe-area-inset-bottom)) !important;
+  z-index: 2147482501 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 4.1rem !important;
+  height: 4.1rem !important;
+  padding: .45rem !important;
+  border: 3px solid #c4b5fd !important;
+  border-radius: 1.25rem !important;
+  background: linear-gradient(180deg, #a5b4fc, #6366f1 70%, #4f46e5) !important;
+  color: #fff !important;
+  box-shadow: 0 6px 0 #3730a3, 0 10px 24px rgba(0, 0, 0, 0.45) !important;
+  transform: scale(1) translateY(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, box-shadow .12s ease !important;
+}
+
+html body .crossword-keyboard-fab.is-hidden,
+html body > .ga-stage .crossword-keyboard-fab.is-hidden,
+html body .crossword-keyboard-fab[hidden],
+html body > .ga-stage .crossword-keyboard-fab[hidden] {
+  transform: scale(0.55) translateY(2rem) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.crossword-keyboard-launch-row {
+  position: static !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+/* ============================================================
+   Answer Validation States: Crosswords (All Themes)
+   ============================================================ */
+
+/* Gentle horizontal shake animation */
+@keyframes crossword-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-5px); }
+  30% { transform: translateX(5px); }
+  45% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+  90% { transform: translateX(2px); }
+}
+
+html body .crossword-cell.is-shaking,
+html body > .ga-stage .crossword-cell.is-shaking {
+  animation: crossword-shake 0.48s ease-in-out !important;
+}
+
+/* Base Correct: Success Green across all themes */
+html body .crossword-cell.is-correct,
+html body > .ga-stage .crossword-cell.is-correct {
+  background: linear-gradient(180deg, #dcfce7 0%, #86efac 100%) !important;
+  background-color: #86efac !important;
+  border: 2px solid #22c55e !important;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.45) !important;
+  pointer-events: none !important;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+html body .crossword-cell.is-correct input,
+html body > .ga-stage .crossword-cell.is-correct input {
+  color: #052e16 !important;
+  -webkit-text-fill-color: #052e16 !important;
+}
+
+/* Base Wrong: Vivid Error Red across all themes */
+html body .crossword-cell.is-wrong,
+html body > .ga-stage .crossword-cell.is-wrong {
+  background: linear-gradient(180deg, #fee2e2 0%, #fca5a5 100%) !important;
+  background-color: #fca5a5 !important;
+  border: 2px solid #ef4444 !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5) !important;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+html body .crossword-cell.is-wrong input,
+html body > .ga-stage .crossword-cell.is-wrong input {
+  color: #450a0a !important;
+  -webkit-text-fill-color: #450a0a !important;
+}
+
+/* Theme: Classroom */
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-cell.is-correct {
+  background: linear-gradient(180deg, #dcfce7 0%, #86efac 100%) !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 0 12px rgba(22, 163, 74, 0.5) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-cell.is-wrong {
+  background: linear-gradient(180deg, #fee2e2 0%, #f87171 100%) !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.55) !important;
+}
+
+/* Theme: Jungle */
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-cell.is-correct {
+  background: linear-gradient(180deg, #d1fae5 0%, #34d399 100%) !important;
+  border-color: #059669 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.55) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-cell.is-wrong {
+  background: linear-gradient(180deg, #ffe4e6 0%, #fb7185 100%) !important;
+  border-color: #e11d48 !important;
+  box-shadow: 0 0 12px rgba(225, 29, 72, 0.55) !important;
+}
+
+/* Theme: Toybox */
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-cell.is-correct {
+  background: linear-gradient(180deg, #ecfdf5 0%, #6ee7b7 100%) !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.6) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-cell.is-wrong {
+  background: linear-gradient(180deg, #fee2e2 0%, #fb7185 100%) !important;
+  border-color: #e11d48 !important;
+  box-shadow: 0 0 12px rgba(225, 29, 72, 0.6) !important;
+}
+
+/* Theme: Halloween */
+html body > .ga-stage[data-ga-theme="halloween"] .crossword-cell.is-correct {
+  background: linear-gradient(180deg, #dcfce7 0%, #4ade80 100%) !important;
+  border-color: #22c55e !important;
+  box-shadow: 0 0 14px rgba(74, 222, 128, 0.7) !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .crossword-cell.is-wrong {
+  background: linear-gradient(180deg, #fee2e2 0%, #ef4444 100%) !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.7) !important;
+}

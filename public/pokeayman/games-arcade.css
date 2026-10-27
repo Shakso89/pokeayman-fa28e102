@@ -6441,3 +6441,65 @@ html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) 
   font-weight: 900 !important;
 }
 
+
+
+/* ============================================================
+   Unscramble Answer Validation: Halloween Theme Fix & All Themes
+   ============================================================ */
+
+/* Correct submission: bright success green glow on filled slots */
+html body > .ga-stage[data-ga-theme="halloween"] #scramble-answer.scramble-result-correct .scramble-answer-slot.is-filled,
+html body > .ga-stage[data-ga-theme] #scramble-answer.scramble-result-correct .scramble-answer-slot.is-filled,
+html body #scramble-answer.scramble-result-correct .scramble-answer-slot.is-filled {
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%) !important;
+  color: #ffffff !important;
+  border: 3px solid #fef08a !important;
+  border-color: #fef08a !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 5px 0 #052e16, 0 0 24px rgba(74, 222, 128, 0.85) !important;
+  text-shadow: 0 1px 2px rgba(5, 46, 22, 0.7) !important;
+}
+
+/* Correct submission: bright success green glow on letter tiles */
+html body > .ga-stage[data-ga-theme="halloween"] #scramble-tiles .scramble-tile:is(.bg-green-500, .is-correct),
+html body > .ga-stage[data-ga-theme] #scramble-tiles .scramble-tile:is(.bg-green-500, .is-correct),
+html body #scramble-tiles .scramble-tile:is(.bg-green-500, .is-correct) {
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%) !important;
+  color: #ffffff !important;
+  border-color: #22c55e !important;
+  box-shadow: 0 4px 0 #052e16, 0 0 20px rgba(74, 222, 128, 0.8) !important;
+}
+
+/* Incorrect submission: vivid error red flash on filled slots */
+html body > .ga-stage[data-ga-theme="halloween"] #scramble-answer.scramble-result-wrong .scramble-answer-slot.is-filled,
+html body > .ga-stage[data-ga-theme] #scramble-answer.scramble-result-wrong .scramble-answer-slot.is-filled,
+html body #scramble-answer.scramble-result-wrong .scramble-answer-slot.is-filled {
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 100%) !important;
+  color: #ffffff !important;
+  border: 3px solid #7f1d1d !important;
+  border-color: #7f1d1d !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.35), 0 5px 0 #450a0a, 0 0 24px rgba(239, 68, 68, 0.85) !important;
+  text-shadow: 0 1px 2px rgba(69, 10, 10, 0.7) !important;
+}
+
+/* Incorrect submission: vivid error red flash on letter cards */
+html body > .ga-stage[data-ga-theme="halloween"] #scramble-tiles.scramble-tiles-wrong .scramble-tile,
+html body > .ga-stage[data-ga-theme] #scramble-tiles.scramble-tiles-wrong .scramble-tile,
+html body #scramble-tiles.scramble-tiles-wrong .scramble-tile,
+html body > .ga-stage[data-ga-theme="halloween"] #scramble-tiles .scramble-tile.is-wrong,
+html body > .ga-stage[data-ga-theme] #scramble-tiles .scramble-tile.is-wrong,
+html body #scramble-tiles .scramble-tile.is-wrong {
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 100%) !important;
+  color: #ffffff !important;
+  border-color: #7f1d1d !important;
+  box-shadow: 0 4px 0 #450a0a, 0 0 16px rgba(239, 68, 68, 0.65) !important;
+}
+
+/* Horizontal error shake on wrong unscramble submission */
+html body > .ga-stage #scramble-answer.scramble-result-wrong,
+html body #scramble-answer.scramble-result-wrong,
+html body > .ga-stage[data-ga-theme="halloween"] #scramble-answer.scramble-result-wrong,
+html body > .ga-stage #scramble-tiles.scramble-tiles-wrong,
+html body #scramble-tiles.scramble-tiles-wrong,
+html body > .ga-stage[data-ga-theme="halloween"] #scramble-tiles.scramble-tiles-wrong {
+  animation: gaFeedbackWrongShake 0.45s ease-in-out !important;
+}
