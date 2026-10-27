@@ -8921,7 +8921,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         <div class="glass-container rounded-xl p-6 mb-6">
          <div class="mb-6 flex gap-3 items-end">
           <div class="flex-1"><label class="text-xs text-slate-300 font-semibold block mb-1.5 uppercase tracking-wider">Create New Vocab List</label> <input id="new-vocab-list-name" type="text" placeholder="List name (e.g., 'Unit 5 Verbs')" class="quiz-input w-full px-3.5 py-2.5 text-sm" required="">
-          </div><button id="create-vocab-list-btn" class="btn-primary">Create</button> <button id="generate-vocab-list-btn" type="button" class="btn-ai-generate" title="Generate vocabulary list with AI"><svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate with AI</span></button>
+          </div><button id="create-vocab-list-btn" class="btn-primary rounded-full">Create</button> <button id="generate-vocab-list-btn" type="button" class="btn-ai-generate" title="Generate vocabulary list with AI"><svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate with AI</span></button>
          </div>
         </div>
         <div id="vocab-lists-container" class="space-y-4"></div>
@@ -9212,9 +9212,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      </section>
      <section id="teacher-zone-vb-lists-panel" class="hidden teacher-zone-content-panel" role="tabpanel" aria-labelledby="teacher-zone-vb-lists-tab">
       <div class="teacher-zone-content-card">
-       <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">📚</span><div><p class="teacher-zone-page-kicker">WORD BANK</p><h3 id="teacher-vb-lists-title">My Lists</h3><p id="teacher-vb-lists-description">Review, edit, or delete the word banks you created.</p></div></header>
-       <div class="teacher-vb-list-modes" role="group" aria-label="Vocabulary list view"><button id="teacher-vb-mode-mine" type="button" class="btn-primary" aria-pressed="true">My Lists</button><button id="teacher-vb-mode-school" type="button" class="btn-secondary" aria-pressed="false">School Lists</button></div>
-       <div class="teacher-vb-create-actions"><button id="teacher-vb-open-create" type="button" class="btn-primary teacher-vb-open-create">+ Create list</button><button id="teacher-vb-open-ai" type="button" class="btn-ai-generate teacher-vb-open-create teacher-vb-open-ai" title="Generate vocabulary list with AI"><svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate with AI</span></button></div>
+       <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">📚</span><div><p class="teacher-zone-page-kicker">WORD BANK</p><h3 id="teacher-vb-lists-title">All Lists</h3><p id="teacher-vb-lists-description">Review, edit, or delete your vocabulary word banks.</p></div></header>
+       <div class="teacher-vb-list-modes" role="group" aria-label="Vocabulary list view"><button id="teacher-vb-mode-mine" type="button" class="btn-primary rounded-full is-active" aria-pressed="true">All Lists</button><button id="teacher-vb-mode-school" type="button" class="btn-secondary rounded-full" aria-pressed="false">School Lists</button></div>
+       <div class="teacher-vb-create-actions"><button id="teacher-vb-open-create" type="button" class="btn-primary teacher-vb-open-create rounded-full">+ Create list</button><button id="teacher-vb-open-ai" type="button" class="btn-ai-generate teacher-vb-open-create teacher-vb-open-ai" title="Generate vocabulary list with AI"><svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate with AI</span></button></div>
        <div id="teacher-vb-create-modal" class="teacher-vb-create-modal hidden" role="dialog" aria-modal="true" aria-labelledby="teacher-vb-create-title"><div class="teacher-vb-create-dialog"><div class="teacher-vb-create-heading"><h4 id="teacher-vb-create-title">Create vocabulary list</h4><button id="teacher-vb-create-close" type="button" aria-label="Close">×</button></div><form id="teacher-vb-create-form" class="teacher-vb-create-form"><label class="teacher-vb-create-field"><span>List name</span><input id="teacher-vb-create-name" type="text" maxlength="80" placeholder="e.g. Unit 5 Verbs" required></label><label class="teacher-vb-create-field"><span>Class</span><select id="teacher-vb-create-class" required><option value="">Choose a class</option></select></label><button id="teacher-vb-create-submit" type="submit" class="btn-primary">Create list</button></form></div></div>
        <div class="teacher-vb-search"><label for="teacher-vb-search-field">Search lists</label><select id="teacher-vb-search-field" aria-label="Search filter"><option value="all">All fields</option><option value="list">List name</option><option value="teacher">Teacher name</option><option value="word">Word</option><option value="class">Class or school</option></select><input id="teacher-vb-search-query" type="search" placeholder="Search by list, teacher, word, class…" autocomplete="off"></div>
        <p id="teacher-vb-lists-status" class="teacher-zone-status" aria-live="polite">Loading your lists…</p>
@@ -14019,16 +14019,27 @@ function renderTeacherOwnedVocabLists() {
   const ownerScope = currentTeacherZoneOwnerScope();
   const requestVersion = teacherZoneRequestVersion;
   const schoolMode = window.vbListsMode === 'school';
-  document.getElementById('teacher-vb-mode-mine')?.setAttribute('aria-pressed', String(!schoolMode));
-  document.getElementById('teacher-vb-mode-school')?.setAttribute('aria-pressed', String(schoolMode));
-  document.getElementById('teacher-vb-mode-mine')?.classList.toggle('is-active', !schoolMode);
-  document.getElementById('teacher-vb-mode-school')?.classList.toggle('is-active', schoolMode);
-  if (document.getElementById('teacher-vb-mode-mine')) document.getElementById('teacher-vb-mode-mine').textContent = canAccessAdmin() ? 'All Lists' : 'My Lists';
+  const mineBtn = document.getElementById('teacher-vb-mode-mine');
+  const schoolBtn = document.getElementById('teacher-vb-mode-school');
+
+  if (mineBtn) {
+    mineBtn.setAttribute('aria-pressed', String(!schoolMode));
+    mineBtn.classList.toggle('is-active', !schoolMode);
+    mineBtn.classList.toggle('btn-primary', !schoolMode);
+    mineBtn.classList.toggle('btn-secondary', schoolMode);
+    mineBtn.textContent = 'All Lists';
+  }
+  if (schoolBtn) {
+    schoolBtn.setAttribute('aria-pressed', String(schoolMode));
+    schoolBtn.classList.toggle('is-active', schoolMode);
+    schoolBtn.classList.toggle('btn-primary', schoolMode);
+    schoolBtn.classList.toggle('btn-secondary', !schoolMode);
+    schoolBtn.textContent = 'School Lists';
+  }
   const title = document.getElementById('teacher-vb-lists-title');
   const description = document.getElementById('teacher-vb-lists-description');
-  const adminCanManageAnyList = canAccessAdmin();
-  if (title) title.textContent = schoolMode ? 'School Lists' : adminCanManageAnyList ? 'All Lists' : 'My Lists';
-  if (description) description.textContent = schoolMode ? 'Browse and share word banks other teachers have made available.' : adminCanManageAnyList ? 'Review, edit, or delete any teacher’s word bank.' : 'Review, edit, or delete the word banks you created.';
+  if (title) title.textContent = schoolMode ? 'School Lists' : 'All Lists';
+  if (description) description.textContent = schoolMode ? 'Browse and share word banks other teachers have made available.' : 'Review, edit, or delete your own and AI-generated word banks.';
   const classSelect = document.getElementById('teacher-vb-create-class');
   const createButton = document.getElementById('teacher-vb-open-create');
   if (createButton) createButton.hidden = schoolMode;
@@ -14047,26 +14058,82 @@ function renderTeacherOwnedVocabLists() {
     const teacherKey = normalizeStudentIdentity(currentTeacher);
     const allLists = getVocabLists('', '');
     const myId = String(verifiedTeacherIdentity() || (typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : '') || '').trim();
+
+    // Determine if a list was created by or AI-generated for the current logged-in teacher
     const isOwnedByCurrentTeacher = list => {
-      const isAiGen = typeof isAiGeneratedVocabList === 'function' && isAiGeneratedVocabList(list);
-      const listSchool = String(list.vocab_list_school || list.school_name || '');
-      const listClass = String(list.vocab_list_class || list.class_name || '');
-      const isClassManager = typeof canManageClass === 'function' && Boolean(canManageClass(listSchool, listClass));
-      const listOwnerKey = normalizeStudentIdentity(list.teacher_name || list.owner || list.created_by || list.ai_creator_teacher);
-      const listTeacherId = String(list.teacher_id || list.ai_creator_id || '').trim();
-      return Boolean(
-        (myId && listTeacherId && listTeacherId === myId) ||
-        (!listTeacherId && listOwnerKey === teacherKey) ||
-        (listOwnerKey && listOwnerKey === teacherKey) ||
-        (isAiGen && (isClassManager || !listTeacherId || listOwnerKey === 'teacher' || listOwnerKey === teacherKey)) ||
-        isClassManager
-      );
+      if (!list) return false;
+      const listTeacherId = String(list.teacher_id || list.ai_creator_id || list.created_by_id || list.user_id || '').trim();
+      const listCreatedBy = String(list.created_by || '').trim();
+
+      // 1. Direct ID match against current logged-in teacher ID
+      if (myId) {
+        if (listTeacherId && listTeacherId === myId) return true;
+        if (listCreatedBy && listCreatedBy === myId) return true;
+      }
+
+      // 2. Name match across creator / owner / teacher fields
+      const listOwnerKeys = [
+        normalizeStudentIdentity(list.teacher_name),
+        normalizeStudentIdentity(list.owner),
+        normalizeStudentIdentity(list.created_by),
+        normalizeStudentIdentity(list.ai_creator_teacher),
+        normalizeStudentIdentity(list.quiz_created_by)
+      ].filter(Boolean);
+
+      if (teacherKey && listOwnerKeys.includes(teacherKey)) return true;
+
+      // 3. Fallback for built-in admin Ayman
+      if (typeof isAymanTeacher === 'function' && isAymanTeacher() && (listOwnerKeys.includes('ayman') || listTeacherId === 'ayman')) {
+        return true;
+      }
+
+      return false;
     };
-    const baseLists = allLists.filter(list => adminCanManageAnyList || isOwnedByCurrentTeacher(list))
+
+    // Determine if list belongs to the same school or organization
+    const norm = v => String(v || '').trim().toLocaleLowerCase();
+    const mySchools = new Set();
+    if (typeof isAymanTeacher === 'function' && isAymanTeacher()) {
+      (typeof getSchools === 'function' ? getSchools() : []).forEach(s => {
+        const name = norm(s.school_name || s.school);
+        if (name) mySchools.add(name);
+      });
+    } else {
+      if (typeof getAssignedSchools === 'function') {
+        getAssignedSchools(currentTeacher).forEach(s => { const name = norm(s.assigned_school); if (name) mySchools.add(name); });
+      }
+      if (typeof getAssignedClasses === 'function') {
+        getAssignedClasses(currentTeacher).forEach(c => { const name = norm(c.assigned_school); if (name) mySchools.add(name); });
+      }
+      if (typeof getAllTeacherClasses === 'function') {
+        getAllTeacherClasses().forEach(c => {
+          if (c.school_name && (typeof canManageClass !== 'function' || canManageClass(c.school_name, c.class_name))) {
+            const name = norm(c.school_name);
+            if (name) mySchools.add(name);
+          }
+        });
+      }
+      if (typeof navSchool !== 'undefined' && navSchool) mySchools.add(norm(navSchool));
+    }
+
+    const isSameSchoolOrOrg = list => {
+      if (!list) return false;
+      if (typeof isAymanTeacher === 'function' && isAymanTeacher()) return true;
+      const listSchool = norm(list.vocab_list_school || list.school_name || list.school);
+      if (!listSchool || mySchools.size === 0) return true;
+      return mySchools.has(listSchool);
+    };
+
+    // All Lists: Displays the current logged-in teacher's own created and AI-generated vocabulary lists
+    const baseLists = allLists.filter(list => isOwnedByCurrentTeacher(list))
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
+
     if (ownerScope !== currentTeacherZoneOwnerScope() || requestVersion !== teacherZoneRequestVersion || teacherWorkspaceKey !== teacherStorageKey(ownerScope)) return;
-    const baseOtherLists = allLists.filter(list => !isOwnedByCurrentTeacher(list))
+
+    // School Lists: Fetches shared vocabulary lists created by other teachers/members within the same school or organization (created_by != current_user_id)
+    const baseOtherLists = allLists.filter(list => !isOwnedByCurrentTeacher(list) && isSameSchoolOrOrg(list))
       .sort((a,b) => String(a.vocab_list_name).localeCompare(String(b.vocab_list_name)));
+
     const query = String(document.getElementById('teacher-vb-search-query')?.value || '').trim().toLocaleLowerCase();
     const field = document.getElementById('teacher-vb-search-field')?.value || 'all';
     const searchValue = list => {
@@ -14082,10 +14149,10 @@ function renderTeacherOwnedVocabLists() {
       if (!otherLists.length) { status.textContent = query ? 'No school lists match your search.' : 'No other teachers have created vocabulary lists yet.'; return; }
       status.textContent = `${otherLists.length} list${otherLists.length === 1 ? '' : 's'} by other teachers · share any of them to your classes`;
     } else {
-      if (!lists.length) { status.textContent = query ? 'No lists match your search.' : adminCanManageAnyList ? 'No vocabulary lists are available yet.' : 'You have not created any vocabulary lists yet.'; return; }
-      status.textContent = adminCanManageAnyList ? `${lists.length} vocabulary list${lists.length === 1 ? '' : 's'} available to manage` : `${lists.length} of your list${lists.length === 1 ? '' : 's'}`;
+      if (!lists.length) { status.textContent = query ? 'No lists match your search.' : 'You have not created any vocabulary lists yet.'; return; }
+      status.textContent = `${lists.length} of your list${lists.length === 1 ? '' : 's'}`;
     }
-    const escape = value => String(value ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
+    const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const sectionHead = text => `<div class="teacher-zone-list-section-title"><span>${escape(text)}</span></div>`;
     const teacherByline = list => {
       const rec = getTeachers().find(t => (list.teacher_id && String(t.__backendId) === String(list.teacher_id)) || normalizeStudentIdentity(t.teacher_name) === normalizeStudentIdentity(list.teacher_name || list.owner));
@@ -14101,9 +14168,9 @@ function renderTeacherOwnedVocabLists() {
       const school = escape(list.vocab_list_school || '');
       const className = escape(list.vocab_list_class || 'Class unavailable');
       const context = school ? `${className} · ${school}` : className;
-      const coverAction = `role="button" tabindex="0" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault();event.stopPropagation();navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"`;
+      const coverAction = `role="button" tabindex="0" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault();event.stopPropagation();navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"`;
       const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${escape(list.vocab_cover_image_url)}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
-      return `<article class="vocab-list-card teacher-zone-wordbank-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="teacher-zone-wordbank-heading">${teacherByline(list)}<span class="student-vocab-list-name vocab-list-name">${safeName}</span></div><p class="vocab-list-count teacher-zone-wordbank-context">${context}</p>${cover}<p class="vocab-list-count teacher-zone-wordbank-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode btn-primary" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div><div class="vocab-card-actions"><button type="button" class="vocab-cover-button btn-secondary" onclick="openVocabSharePopupFor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Share to my classes</button></div></article>`;
+      return `<article class="vocab-list-card teacher-zone-wordbank-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="teacher-zone-wordbank-heading">${teacherByline(list)}<span class="student-vocab-list-name vocab-list-name">${safeName}</span></div><p class="vocab-list-count teacher-zone-wordbank-context">${context}</p>${cover}<p class="vocab-list-count teacher-zone-wordbank-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode btn-primary rounded-full" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div><div class="vocab-card-actions"><button type="button" class="vocab-cover-button btn-secondary rounded-full" onclick="openVocabSharePopupFor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Share to my classes</button></div></article>`;
     };
     if (schoolMode) { grid.innerHTML = sectionHead('School lists · by other teachers') + otherLists.map(schoolCard).join(''); return; }
     grid.innerHTML = lists.map(list => {
@@ -14113,11 +14180,11 @@ function renderTeacherOwnedVocabLists() {
       const school = escape(list.vocab_list_school || '');
       const className = escape(list.vocab_list_class || 'Class unavailable');
       const context = school ? `${className} · ${school}` : className;
-      const coverAction = `role="button" tabindex="0" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault();event.stopPropagation();navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"`;
+      const coverAction = `role="button" tabindex="0" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault();event.stopPropagation();navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"`;
       const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${escape(list.vocab_cover_image_url)}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
-      const canManageList = currentRole === 'teacher' && (adminCanManageAnyList || isOwnedByCurrentTeacher(list));
-      const ownerActions = isOwnedByCurrentTeacher(list) ? `<button type="button" class="vocab-cover-button btn-secondary" onclick="openVocabCoverPicker('${safeId}','${safeName.replace(/'/g, "\\'")}')">Cover</button>` : '';
-      return `<article class="vocab-list-card teacher-zone-wordbank-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="teacher-zone-wordbank-heading"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name">${safeName}</span>${isAiGeneratedVocabList(list) ? getAiGeneratedBadgeHtml() : ""}</div><p class="vocab-list-count teacher-zone-wordbank-context">${context}</p>${cover}<p class="vocab-list-count teacher-zone-wordbank-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode btn-primary" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div>${canManageList ? `<div class="vocab-card-actions teacher-zone-wordbank-actions"><button type="button" class="vocab-card-edit btn-outline" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Edit</button>${ownerActions}<button type="button" class="vocab-card-delete btn-danger" onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeName.replace(/'/g, "\\'")}',this)">Delete</button></div>` : ''}</article>`;
+      const canManageList = currentRole === 'teacher' && (typeof canAccessAdmin === 'function' && canAccessAdmin() || isOwnedByCurrentTeacher(list));
+      const ownerActions = isOwnedByCurrentTeacher(list) ? `<button type="button" class="vocab-cover-button btn-secondary rounded-full" onclick="openVocabCoverPicker('${safeId}','${safeName.replace(/'/g, "\\'")}')">Cover</button>` : '';
+      return `<article class="vocab-list-card teacher-zone-wordbank-card" data-list-id="${escape(list.vocab_list_id || list.__backendId)}"><div class="teacher-zone-wordbank-heading"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name">${safeName}</span>${isAiGeneratedVocabList(list) ? getAiGeneratedBadgeHtml() : ""}</div><p class="vocab-list-count teacher-zone-wordbank-context">${context}</p>${cover}<p class="vocab-list-count teacher-zone-wordbank-count">${words.length} word${words.length === 1 ? '' : 's'}</p><div class="vocab-card-actions"><button type="button" class="vocab-card-mode btn-primary rounded-full" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeName.replace(/'/g, "\\'")}')">🎴 Flashcards</button></div>${canManageList ? `<div class="vocab-card-actions teacher-zone-wordbank-actions"><button type="button" class="vocab-card-edit btn-outline rounded-full" onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeName.replace(/'/g, "\\'")}')">Edit</button>${ownerActions}<button type="button" class="vocab-card-delete btn-danger rounded-full" onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeName.replace(/'/g, "\\'")}',this)">Delete</button></div>` : ''}</article>`;
     }).join('');
   } catch (error) { status.textContent = 'Could not load your vocabulary lists. Please refresh and try again.'; }
 }

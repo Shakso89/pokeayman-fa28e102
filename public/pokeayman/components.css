@@ -330,6 +330,129 @@ html body .teacher-vb-search {
   z-index: 1 !important;
 }
 
+/* ============================================================
+   Vocabulary Tabs & Primary Buttons: Standardized Rounded Pill UI
+   ============================================================ */
+
+/* Uniform fully rounded pill styling across header buttons and mode tabs */
+html body:is(#pk-ds, body) :is(
+  #create-vocab-list-btn,
+  #teacher-vb-open-create,
+  .teacher-vb-open-create:not(.btn-ai-generate),
+  .teacher-vb-list-modes button,
+  #teacher-vb-mode-mine,
+  #teacher-vb-mode-school
+) {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 42px !important;
+  padding: 8px 20px !important;
+  border-radius: 9999px !important;
+  font-family: Outfit, 'DM Sans', -apple-system, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.015em !important;
+  cursor: pointer !important;
+  outline: none !important;
+  user-select: none !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
+  margin-block: 2px !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.2s ease,
+              background 0.25s ease,
+              border-color 0.2s ease,
+              color 0.2s ease !important;
+}
+
+/* Primary yellow pill style for Create and + Create list */
+html body:is(#pk-ds, body) :is(
+  #create-vocab-list-btn,
+  #teacher-vb-open-create,
+  .teacher-vb-open-create:not(.btn-ai-generate)
+) {
+  background: var(--pk-brand, #facc15) !important;
+  color: var(--pk-on-brand, #0f172a) !important;
+  border: 1px solid var(--pk-brand, #facc15) !important;
+  box-shadow: 0 2px 8px -1px rgba(250, 204, 21, 0.35) !important;
+}
+
+html body:is(#pk-ds, body) :is(
+  #create-vocab-list-btn,
+  #teacher-vb-open-create,
+  .teacher-vb-open-create:not(.btn-ai-generate)
+):hover:not(:disabled) {
+  background: var(--pk-brand-hover, #eab308) !important;
+  border-color: var(--pk-brand-hover, #eab308) !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) scale(1.02) !important;
+  box-shadow: 0 4px 14px 0 rgba(250, 204, 21, 0.45) !important;
+}
+
+html body:is(#pk-ds, body) :is(
+  #create-vocab-list-btn,
+  #teacher-vb-open-create,
+  .teacher-vb-open-create:not(.btn-ai-generate)
+):active:not(:disabled) {
+  transform: translateY(1px) scale(0.98) !important;
+}
+
+/* Tab Modes Container */
+html body .teacher-vb-list-modes {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 0 1rem 0 !important;
+}
+
+/* Active Tab: Dynamic Yellow Theme (bg-yellow-400 text-slate-900 font-semibold) */
+html body:is(#pk-ds, body) .teacher-vb-list-modes button:is(.is-active, .btn-primary, [aria-pressed="true"]) {
+  background: #facc15 !important;
+  color: #0f172a !important;
+  border: 1px solid #facc15 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(250, 204, 21, 0.3) !important;
+  transform: none !important;
+}
+
+html body:is(#pk-ds, body) .teacher-vb-list-modes button:is(.is-active, .btn-primary, [aria-pressed="true"]):hover:not(:disabled) {
+  background: #eab308 !important;
+  border-color: #eab308 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(250, 204, 21, 0.4) !important;
+}
+
+/* Inactive Tab: Subtle Dark Gray Style */
+html body:is(#pk-ds, body) .teacher-vb-list-modes button:not(.is-active):not([aria-pressed="true"]),
+html body:is(#pk-ds, body) .teacher-vb-list-modes button.btn-secondary:not(.is-active):not([aria-pressed="true"]) {
+  background: rgba(30, 41, 59, 0.8) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(148, 163, 184, 0.28) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+html body:is(#pk-ds, body) .teacher-vb-list-modes button:not(.is-active):not([aria-pressed="true"]):hover:not(:disabled) {
+  background: rgba(51, 65, 85, 0.95) !important;
+  color: #ffffff !important;
+  border-color: rgba(148, 163, 184, 0.5) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+html body:is(#pk-ds, body) .teacher-vb-list-modes button:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98) !important;
+}
+
+
 
 /* ============================================================
    Generating UI (dexter-st/bright-lizard-8 AI Orb Loader)
