@@ -597,7 +597,7 @@ body:has(#contact-pricing-modal:not(.hidden)) #home-screen {
 .pk-plan-btn {
   width: 100%;
   padding: 0.65rem 0.75rem;
-  border-radius: 0.75rem;
+  border-radius: 9999px !important;
   font-size: 0.88rem;
   font-weight: 800;
   border: none;

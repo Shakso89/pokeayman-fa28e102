@@ -1102,3 +1102,64 @@ html body.ts-bright .shop-pager-info {
   color: #475569 !important;
 }
 
+/* Pricing Plan Admin Editor & Welcome Bonus Card Bright Mode */
+html body.ts-bright .welcome-bonus-config-card,
+html body.ts-bright .pricing-plan-editor-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+html body.ts-bright .welcome-bonus-config-card h4,
+html body.ts-bright .pricing-plan-editor-card h4 {
+  color: #0f172a !important;
+}
+
+html body.ts-bright .welcome-bonus-config-card p,
+html body.ts-bright .pricing-plan-editor-card p,
+html body.ts-bright .welcome-bonus-config-card label,
+html body.ts-bright .pricing-plan-editor-card label {
+  color: #475569 !important;
+}
+
+html body.ts-bright .welcome-bonus-config-card input,
+html body.ts-bright .pricing-plan-editor-card input {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html body.ts-bright .welcome-bonus-config-card input:focus,
+html body.ts-bright .pricing-plan-editor-card input:focus {
+  border-color: #f59e0b !important;
+  background: #ffffff !important;
+}
+
+html body.ts-bright .welcome-bonus-config-card #welcome-bonus-preview {
+  color: #334155 !important;
+}
+
+html body.ts-bright .welcome-bonus-config-card .bg-slate-950\/60,
+html body.ts-bright .pricing-plan-editor-card .bg-slate-950\/50 {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+html body.ts-bright .pricing-plan-editor-card .border-slate-800 {
+  border-color: #e2e8f0 !important;
+}
+
+html body.ts-bright #add-pricing-plan-btn {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+html body.ts-bright #add-pricing-plan-btn:hover {
+  background: #ffffff !important;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+}
+
+

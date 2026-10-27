@@ -9600,10 +9600,27 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
      </div>
     </div>
     <div id="admin-subtab-pricing-plans" class="admin-subtab-content hidden">
-     <div class="glass-container rounded-xl p-6 mb-6">
-      <h3 class="font-semibold text-lg text-white mb-4">💳 Manage Pricing Plans</h3>
-      <p class="text-xs text-gray-300 mb-4">Edit pricing plans that appear in the Contact &amp; Pricing modal on the home page.</p>
-      <div id="pricing-plans-list" class="space-y-4"></div>
+     <div class="glass-container rounded-2xl p-6 mb-6">
+      <div class="flex items-center gap-3 mb-2">
+       <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+         <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+         <line x1="1" y1="10" x2="23" y2="10"/>
+        </svg>
+       </div>
+       <div>
+        <h3 class="font-bold text-xl text-white">Manage Pricing Plans &amp; Welcome Bonus</h3>
+        <p class="text-xs text-slate-400">Configure welcome credits, pricing tiers, bullet points, and marketing subtitles that appear in the Contact &amp; Pricing modal.</p>
+       </div>
+      </div>
+      <div id="welcome-bonus-control-card" class="mt-6 mb-6"></div>
+      <div id="pricing-plans-list" class="space-y-6"></div>
+      <div class="mt-6">
+       <button type="button" id="add-pricing-plan-btn" onclick="addNewPricingPlan()" class="w-full rounded-2xl py-3 border-2 border-dashed border-slate-700 hover:border-amber-400/60 text-slate-300 hover:text-amber-300 text-sm font-bold flex items-center justify-center gap-2 transition cursor-pointer bg-slate-900/40 hover:bg-slate-900/80">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add New Pricing Plan
+       </button>
+      </div>
      </div>
     </div>
     <div id="admin-subtab-home-arch" class="admin-subtab-content hidden">
@@ -12485,7 +12502,7 @@ async function pkEnterTeacherNow(name) {
     // Register Cloud teacher accounts so they appear in the Admin dashboard's teacher inventory.
     if (!rec && cloudId) {
       try {
-        const created = await window.dataSdk.create({ type: 'teacher', teacher_name: clean, teacher_pin: '', teacher_role: 'teacher', teacher_credits: 100, avatar_pokemon_id: 0, cloud_user_id: cloudId, teacher_email: (window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.email) || '', archived: false, created_at: new Date().toISOString() });
+        const created = await window.dataSdk.create({ type: 'teacher', teacher_name: clean, teacher_pin: '', teacher_role: 'teacher', teacher_credits: (typeof getWelcomeBonusCredits === 'function' ? getWelcomeBonusCredits() : 500), avatar_pokemon_id: 0, cloud_user_id: cloudId, teacher_email: (window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.email) || '', archived: false, created_at: new Date().toISOString() });
         createdTeacherRecord = Boolean(created?.isOk);
         rec = getTeachers().find(t => t.cloud_user_id === cloudId) || null;
       } catch (e) { console.warn('Teacher registration failed', e); }
@@ -13182,7 +13199,7 @@ function renderTrainerTab() {
     if (!rec || !rec.__backendId) {
       const auth = window.parent?.pokeaymanAuth;
       try {
-        await window.dataSdk.create({ type: 'teacher', teacher_name: isAymanTeacher() ? 'Ayman Soliman' : currentTeacher, teacher_pin: '', teacher_role: isAymanTeacher() ? 'admin' : 'teacher', teacher_credits: isAymanTeacher() ? -1 : 100, avatar_pokemon_id: 0, cloud_user_id: auth?.userId || '', teacher_email: auth?.email || '', archived: false, created_at: new Date().toISOString() });
+        await window.dataSdk.create({ type: 'teacher', teacher_name: isAymanTeacher() ? 'Ayman Soliman' : currentTeacher, teacher_pin: '', teacher_role: isAymanTeacher() ? 'admin' : 'teacher', teacher_credits: isAymanTeacher() ? -1 : (typeof getWelcomeBonusCredits === 'function' ? getWelcomeBonusCredits() : 500), avatar_pokemon_id: 0, cloud_user_id: auth?.userId || '', teacher_email: auth?.email || '', archived: false, created_at: new Date().toISOString() });
         await window.dataSdk.refresh?.();
       } catch (e) { console.warn(e); }
       rec = myTeacherRec();
@@ -13256,7 +13273,7 @@ function renderTrainerTab() {
             teacher_name: authoritativeName,
             teacher_pin: '',
             teacher_role: isAymanTeacher() ? 'admin' : 'teacher',
-            teacher_credits: isAymanTeacher() ? -1 : 100,
+            teacher_credits: isAymanTeacher() ? -1 : (typeof getWelcomeBonusCredits === 'function' ? getWelcomeBonusCredits() : 500),
             avatar_pokemon_id: 0,
             cloud_user_id: cloudId,
             teacher_email: authEmail,
@@ -17209,117 +17226,316 @@ function renderCreditLog() {
   }).join('');
 }
 
-function renderPricingPlans() {
-  const plansData = window.pricingPlans || [];
-  const container = document.getElementById('pricing-plans-list');
-  if (!plansData.length) { container.innerHTML = '<p class="text-gray-300 text-sm text-center py-4">No plans configured.</p>'; return; }
-  container.innerHTML = plansData.map((plan, idx) => `<div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
-    <div class="grid grid-cols-4 gap-3 mb-3">
-      <div>
-        <label class="text-xs font-semibold text-gray-400 block mb-1">Plan Name</label>
-        <input type="text" class="w-full border rounded-lg px-2 py-1 text-sm bg-gray-700 text-white border-gray-600" id="plan-name-${idx}" value="${plan.name || ''}" placeholder="e.g., Starter">
+function renderWelcomeBonusControlCard() {
+  const container = document.getElementById('welcome-bonus-control-card');
+  if (!container) return;
+  const cfg = publishedConfig || readPublishedConfig();
+  const credits = Number(cfg.welcome_bonus_credits ?? 500);
+  const message = cfg.welcome_bonus_message || 'Every teacher receives {credits} free credits to get started!';
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+
+  container.innerHTML = `
+    <div class="welcome-bonus-config-card bg-slate-900/90 border border-slate-700/80 rounded-2xl p-5 shadow-lg">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 12 20 22 4 22 4 12"/>
+            <rect x="2" y="7" width="20" height="5"/>
+            <line x1="12" y1="22" x2="12" y2="7"/>
+            <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+            <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+          </svg>
+        </div>
+        <div>
+          <h4 class="text-base font-bold text-white">Welcome Bonus Configuration</h4>
+          <p class="text-xs text-slate-400">Configure the starting credits given to new teachers and customize the announcement banner in the pricing modal.</p>
+        </div>
       </div>
-      <div>
-        <label class="text-xs font-semibold text-gray-400 block mb-1">Price (NTD)</label>
-        <input type="number" class="w-full border rounded-lg px-2 py-1 text-sm bg-gray-700 text-white border-gray-600" id="plan-price-${idx}" value="${plan.price || 0}" placeholder="e.g., 99" min="0">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1.5" for="welcome-bonus-credits-input">Welcome Bonus Amount (Credits)</label>
+          <input type="number" min="0" step="50" id="welcome-bonus-credits-input" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-400" value="${credits}">
+        </div>
+        <div>
+          <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1.5" for="welcome-bonus-message-input">Banner Message Template <span class="text-slate-500 font-normal lowercase">(use {credits} placeholder)</span></label>
+          <input type="text" id="welcome-bonus-message-input" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-400" value="${escape(message)}">
+        </div>
       </div>
-      <div>
-        <label class="text-xs font-semibold text-gray-400 block mb-1">Credits</label>
-        <input type="number" class="w-full border rounded-lg px-2 py-1 text-sm bg-gray-700 text-white border-gray-600" id="plan-credits-${idx}" value="${plan.credits || 0}" placeholder="e.g., 500" min="0">
+      <div class="mb-4 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center gap-3">
+        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider flex-shrink-0">Live Preview:</span>
+        <div id="welcome-bonus-preview" class="text-xs text-slate-200"></div>
       </div>
-      <div>
-        <label class="text-xs font-semibold text-gray-400 block mb-1">Badge</label>
-        <select class="w-full border rounded-lg px-2 py-1 text-sm bg-gray-700 text-white border-gray-600" id="plan-badge-${idx}">
-          <option value="None" ${(plan.badge || '') === 'None' ? 'selected' : ''}>None</option>
-          <option value="Best Value" ${(plan.badge || '') === 'Best Value' ? 'selected' : ''}>Best Value</option>
-          <option value="Enterprise" ${(plan.badge || '') === 'Enterprise' ? 'selected' : ''}>Enterprise</option>
-        </select>
+      <div class="flex justify-end">
+        <button type="button" id="save-welcome-bonus-btn" onclick="saveWelcomeBonusSettings()" class="rounded-full px-6 py-2 text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md transition cursor-pointer border-0">
+          Save Welcome Settings
+        </button>
       </div>
     </div>
-    <div class="flex gap-2">
-      <button class="flex-1 btn-primary text-xs" onclick="savePricingPlan(${idx})">Save Plan</button>
-      <button class="flex-1 btn-secondary text-xs" onclick="deletePricingPlan(${idx})">Delete Plan</button>
-    </div>
-  </div>`).join('');
+  `;
+
+  const syncPreview = () => {
+    const cVal = document.getElementById('welcome-bonus-credits-input')?.value || '500';
+    const tVal = document.getElementById('welcome-bonus-message-input')?.value || 'Every teacher receives {credits} free credits to get started!';
+    const previewEl = document.getElementById('welcome-bonus-preview');
+    if (previewEl) {
+      previewEl.innerHTML = escape(tVal).replace('{credits}', `<strong class="text-emerald-400 font-bold">${Number(cVal).toLocaleString()} free credits</strong>`);
+    }
+  };
+
+  document.getElementById('welcome-bonus-credits-input')?.addEventListener('input', syncPreview);
+  document.getElementById('welcome-bonus-message-input')?.addEventListener('input', syncPreview);
+  syncPreview();
 }
+
+async function saveWelcomeBonusSettings() {
+  const credits = Math.max(0, parseInt(document.getElementById('welcome-bonus-credits-input')?.value, 10) || 500);
+  const message = document.getElementById('welcome-bonus-message-input')?.value.trim() || 'Every teacher receives {credits} free credits to get started!';
+
+  const next = {
+    ...(publishedConfig || readPublishedConfig()),
+    welcome_bonus_credits: credits,
+    welcome_bonus_message: message
+  };
+
+  const result = await publishAdminConfig(next);
+  if (!result?.isOk) { toast('Could not save welcome bonus settings.'); return; }
+  renderPricingPlans();
+  renderPricingPlansModal();
+  toast('Welcome bonus settings saved & published!');
+}
+window.saveWelcomeBonusSettings = saveWelcomeBonusSettings;
+
+function addPlanFeatureRow(planIdx) {
+  const container = document.getElementById(`plan-features-container-${planIdx}`);
+  if (!container) return;
+  const row = document.createElement('div');
+  row.className = 'flex items-center gap-2 feature-line-row';
+  row.innerHTML = `
+    <span class="text-emerald-400 flex-shrink-0">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </span>
+    <input type="text" class="plan-feature-input-${planIdx} flex-1 bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400" placeholder="e.g. Instant credit delivery">
+    <button type="button" class="text-slate-400 hover:text-rose-400 p-1 text-sm transition cursor-pointer border-0 bg-transparent" onclick="this.closest('.feature-line-row').remove()" title="Remove line">✕</button>
+  `;
+  container.appendChild(row);
+  row.querySelector('input')?.focus();
+}
+window.addPlanFeatureRow = addPlanFeatureRow;
+
+function renderPricingPlans() {
+  renderWelcomeBonusControlCard();
+  const cfg = publishedConfig || readPublishedConfig();
+  const plansData = (cfg.pricingPlans && cfg.pricingPlans.length) ? cfg.pricingPlans : (DEFAULT_PUBLISHED_CONFIG.pricingPlans || []);
+  const container = document.getElementById('pricing-plans-list');
+  if (!container) return;
+
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+
+  if (!plansData.length) {
+    container.innerHTML = '<p class="text-gray-300 text-sm text-center py-4">No plans configured.</p>';
+    return;
+  }
+
+  container.innerHTML = plansData.map((plan, idx) => {
+    const features = Array.isArray(plan.features) && plan.features.length ? plan.features : (
+      idx === 0 ? ['750 AI Credits', 'Instant credit delivery', 'No expiration date', 'Great for trying AI lists'] :
+      idx === 1 ? ['2,000 AI Credits', 'Instant credit delivery', 'No expiration date', '25% extra credit value'] :
+      ['15,000 AI Credits', 'Instant delivery & priority support', 'Shared across all school teachers', 'Maximum bulk savings (60% off)']
+    );
+
+    const featureRowsHtml = features.map(feat => `
+      <div class="flex items-center gap-2 feature-line-row">
+        <span class="text-emerald-400 flex-shrink-0">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        <input type="text" class="plan-feature-input-${idx} flex-1 bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400" value="${escape(feat)}" placeholder="Feature description">
+        <button type="button" class="text-slate-400 hover:text-rose-400 p-1 text-sm transition cursor-pointer border-0 bg-transparent" onclick="this.closest('.feature-line-row').remove()" title="Remove line">✕</button>
+      </div>
+    `).join('');
+
+    return `
+      <div class="pricing-plan-editor-card bg-slate-900/90 border border-slate-700/80 rounded-2xl p-5 shadow-lg space-y-4" data-plan-idx="${idx}">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-300 font-bold text-xs flex items-center justify-center">#${idx + 1}</span>
+            <h4 class="text-base font-bold text-white">${escape(plan.name || 'Tier')}</h4>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">${escape(plan.tier_tag || plan.badge || 'TIER')}</span>
+          </div>
+          <div class="text-xs font-semibold text-amber-400">
+            NT$ ${Number(plan.price || 0).toLocaleString()} · ${Number(plan.credits || 0).toLocaleString()} Credits
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div>
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">Plan Name</label>
+            <input type="text" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400" id="plan-name-${idx}" value="${escape(plan.name || '')}" placeholder="e.g. Starter">
+          </div>
+          <div>
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">Subtitle</label>
+            <input type="text" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400" id="plan-sub-${idx}" value="${escape(plan.subtitle || '')}" placeholder="e.g. Great for individual teachers">
+          </div>
+          <div>
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">Price (NTD)</label>
+            <input type="number" min="0" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400" id="plan-price-${idx}" value="${Number(plan.price) || 0}" placeholder="99">
+          </div>
+          <div>
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">Credits</label>
+            <input type="number" min="0" step="50" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400" id="plan-credits-${idx}" value="${Number(plan.credits) || 0}" placeholder="750">
+          </div>
+          <div>
+            <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">Badge / Tier Tag</label>
+            <input type="text" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400" id="plan-tag-${idx}" value="${escape(plan.tier_tag || plan.badge || '')}" placeholder="e.g. BEST VALUE">
+          </div>
+        </div>
+
+        <div class="bg-slate-950/50 border border-slate-800/80 rounded-xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between mb-1 flex-wrap gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Plan Features / Checklist
+            </span>
+            <span class="text-xs text-slate-500">Edit or delete bullet points shown to teachers</span>
+          </div>
+          <div id="plan-features-container-${idx}" class="space-y-2">
+            ${featureRowsHtml}
+          </div>
+          <button type="button" onclick="addPlanFeatureRow(${idx})" class="text-xs font-bold text-amber-400 hover:text-amber-300 inline-flex items-center gap-1.5 mt-2 py-1 px-2.5 rounded-lg bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/20 transition cursor-pointer">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add feature line
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+          <button type="button" class="rounded-full px-5 py-2 text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition cursor-pointer" onclick="deletePricingPlan(${idx})">
+            Delete Plan
+          </button>
+          <button type="button" class="rounded-full px-6 py-2 text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md transition cursor-pointer border-0" onclick="savePricingPlan(${idx})">
+            Save Plan
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+window.renderPricingPlans = renderPricingPlans;
 
 async function savePricingPlan(idx) {
   const name = document.getElementById(`plan-name-${idx}`)?.value.trim();
-  const price = parseInt(document.getElementById(`plan-price-${idx}`)?.value) || 0;
-  const credits = parseInt(document.getElementById(`plan-credits-${idx}`)?.value) || 0;
-  const badge = document.getElementById(`plan-badge-${idx}`)?.value || 'None';
-  if (!name) { toast('Enter plan name'); return; }
+  const subtitle = document.getElementById(`plan-sub-${idx}`)?.value.trim() || '';
+  const price = parseInt(document.getElementById(`plan-price-${idx}`)?.value, 10) || 0;
+  const credits = parseInt(document.getElementById(`plan-credits-${idx}`)?.value, 10) || 0;
+  const tier_tag = document.getElementById(`plan-tag-${idx}`)?.value.trim() || '';
+  const badge = tier_tag || 'None';
+
+  const featureInputs = document.querySelectorAll(`.plan-feature-input-${idx}`);
+  const features = Array.from(featureInputs).map(inp => inp.value.trim()).filter(Boolean);
+
+  if (!name) { toast('Please enter a plan name'); return; }
+
   const next = { ...(publishedConfig || readPublishedConfig()), pricingPlans: [...(publishedConfig?.pricingPlans || window.pricingPlans || [])] };
-  next.pricingPlans[idx] = { name, price, credits, badge };
+  next.pricingPlans[idx] = {
+    ...next.pricingPlans[idx],
+    name,
+    subtitle,
+    price,
+    credits,
+    badge,
+    tier_tag,
+    features: features.length ? features : ['Instant credit delivery', 'No expiration date']
+  };
+
   const result = await publishAdminConfig(next);
   if (!result?.isOk) { toast('Could not publish this plan. Your last published plan remains active.'); return; }
   renderPricingPlans();
+  renderPricingPlansModal();
+  toast(`${name} plan updated & published!`);
 }
+window.savePricingPlan = savePricingPlan;
 
 async function deletePricingPlan(idx) {
   const currentPlans = [...(publishedConfig?.pricingPlans || window.pricingPlans || [])];
   const planName = currentPlans[idx]?.name || 'Plan';
+  if (!confirm(`Are you sure you want to delete the "${planName}" plan?`)) return;
   currentPlans.splice(idx, 1);
   const result = await publishAdminConfig({ ...(publishedConfig || readPublishedConfig()), pricingPlans: currentPlans });
   if (!result?.isOk) { toast('Could not publish this change. Your last published plans remain active.'); return; }
   renderPricingPlans();
+  renderPricingPlansModal();
   toast(`${planName} deleted!`);
 }
+window.deletePricingPlan = deletePricingPlan;
+
+async function addNewPricingPlan() {
+  const currentPlans = [...(publishedConfig?.pricingPlans || window.pricingPlans || [])];
+  currentPlans.push({
+    name: 'New Tier',
+    subtitle: 'Custom credit package',
+    price: 499,
+    credits: 5000,
+    badge: 'Custom',
+    tier_tag: 'SPECIAL OFFER',
+    features: [
+      '5,000 AI Credits',
+      'Instant credit delivery',
+      'No expiration date'
+    ]
+  });
+  const result = await publishAdminConfig({ ...(publishedConfig || readPublishedConfig()), pricingPlans: currentPlans });
+  if (!result?.isOk) { toast('Could not add new plan.'); return; }
+  renderPricingPlans();
+  renderPricingPlansModal();
+  toast('New pricing plan created!');
+}
+window.addNewPricingPlan = addNewPricingPlan;
 
 function renderPricingPlansModal() {
-  const plansData = (window.pricingPlans && window.pricingPlans.length) ? window.pricingPlans : (DEFAULT_PUBLISHED_CONFIG.pricingPlans || []);
+  const cfg = publishedConfig || readPublishedConfig();
+  const plansData = (cfg.pricingPlans && cfg.pricingPlans.length) ? cfg.pricingPlans : (DEFAULT_PUBLISHED_CONFIG.pricingPlans || []);
   const container = document.getElementById('pricing-tab-content');
   if (!container) return;
 
+  const bonusCredits = Number(cfg.welcome_bonus_credits ?? 500);
+  const bonusTemplate = cfg.welcome_bonus_message || 'Every teacher receives {credits} free credits to get started!';
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+  const bonusFormatted = escape(bonusTemplate).replace('{credits}', `<span class="pk-bonus-highlight">${bonusCredits.toLocaleString()} free credits</span>`);
+
+  const getCleanIcon = (plan, idx) => {
+    const name = String(plan.name || '').toLowerCase();
+    if (name.includes('starter') || idx === 0) {
+      return `<svg class="w-6 h-6 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
+    }
+    if (name.includes('pro') || idx === 1) {
+      return `<svg class="w-6 h-6 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`;
+    }
+    if (name.includes('school') || name.includes('enterprise') || idx === 2) {
+      return `<svg class="w-6 h-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="9" y1="22" x2="9" y2="2"/><line x1="15" y1="22" x2="15" y2="2"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="17" x2="20" y2="17"/></svg>`;
+    }
+    return `<svg class="w-6 h-6 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+  };
+
+  const getCleanFeatures = (plan, idx) => {
+    if (Array.isArray(plan.features) && plan.features.length) {
+      return plan.features.map(f => String(f).replace(/[⚡💎✓•]/g, '').trim()).filter(Boolean);
+    }
+    if (idx === 0) return ['750 AI Credits', 'Instant credit delivery', 'No expiration date', 'Great for trying AI lists'];
+    if (idx === 1) return ['2,000 AI Credits', 'Instant credit delivery', 'No expiration date', '25% extra credit value'];
+    return ['15,000 AI Credits', 'Instant delivery & priority support', 'Shared across all school teachers', 'Maximum bulk savings (60% off)'];
+  };
+
   const planCards = plansData.map((plan, idx) => {
-    const isStarter = plan.name === 'Starter' || idx === 0;
-    const isPro = plan.name === 'Professional' || plan.badge === 'Best Value' || idx === 1;
-    const isSchool = plan.name === 'School' || plan.badge === 'Enterprise' || idx === 2;
+    const isStarter = idx === 0 || plan.name?.toLowerCase().includes('starter');
+    const isPro = idx === 1 || plan.badge === 'Best Value' || plan.name?.toLowerCase().includes('pro');
 
-    let tierClass = 'pk-tier-starter';
-    let badgeHtml = '<span class="pk-tier-badge">📘 Trainer Tier</span>';
-    let icon = '⚡';
-    let tierSubtitle = 'Great for individual teachers';
-    let bullet1 = `${Number(plan.credits || 0).toLocaleString()} AI Credits`;
-    let bullet2 = 'Instant credit delivery';
-    let bullet3 = 'No expiration date';
-    let bullet4 = 'Great for trying AI lists';
-    let btnText = 'Purchase Starter';
-    let btnClass = 'pk-plan-btn-starter';
+    let tierClass = isStarter ? 'pk-tier-starter' : isPro ? 'pk-tier-pro' : 'pk-tier-school';
+    let btnClass = isStarter ? 'pk-plan-btn-starter' : isPro ? 'pk-plan-btn-pro' : 'pk-plan-btn-school';
 
-    if (isPro) {
-      tierClass = 'pk-tier-pro';
-      badgeHtml = '<span class="pk-tier-badge">⭐ Most Popular</span>';
-      icon = '🔥';
-      tierSubtitle = 'Best value for active classrooms';
-      bullet1 = `${Number(plan.credits || 0).toLocaleString()} AI Credits`;
-      bullet2 = 'Instant credit delivery';
-      bullet3 = 'No expiration date';
-      bullet4 = '⚡ 25% extra credit value';
-      btnText = 'Purchase Professional';
-      btnClass = 'pk-plan-btn-pro';
-    } else if (isSchool) {
-      tierClass = 'pk-tier-school';
-      badgeHtml = '<span class="pk-tier-badge">👑 Enterprise</span>';
-      icon = '🏫';
-      tierSubtitle = 'For entire school or department';
-      bullet1 = `${Number(plan.credits || 0).toLocaleString()} AI Credits`;
-      bullet2 = 'Instant delivery & priority support';
-      bullet3 = 'Shared across all school teachers';
-      bullet4 = '💎 Maximum bulk savings (60% off)';
-      btnText = 'Purchase School Plan';
-      btnClass = 'pk-plan-btn-school';
-    }
+    const tagText = String(plan.tier_tag || (isStarter ? 'TRAINER TIER' : isPro ? 'BEST VALUE' : 'ENTERPRISE')).replace(/[⭐👑📘⚡💎]/g, '').trim();
+    const badgeHtml = tagText && tagText !== 'None' ? `<span class="pk-tier-badge">${escape(tagText)}</span>` : '';
 
-    if (plan.badge && plan.badge !== 'None') {
-      if (plan.badge === 'Best Value') {
-        badgeHtml = '<span class="pk-tier-badge">⭐ Best Value</span>';
-      } else if (plan.badge === 'Enterprise') {
-        badgeHtml = '<span class="pk-tier-badge">👑 Enterprise</span>';
-      } else {
-        badgeHtml = `<span class="pk-tier-badge">${plan.badge}</span>`;
-      }
-    }
+    const iconSvg = getCleanIcon(plan, idx);
+    const subtitle = plan.subtitle || (isStarter ? 'Great for individual teachers' : isPro ? 'Best value for active classrooms' : 'For entire school or department');
+    const features = getCleanFeatures(plan, idx);
 
     return `
       <div class="pk-pricing-card ${tierClass}">
@@ -17328,14 +17544,14 @@ function renderPricingPlansModal() {
             ${badgeHtml}
           </div>
           <div class="pk-card-hero">
-            <div class="pk-tier-icon-wrap"><span class="pk-tier-icon">${icon}</span></div>
-            <h4 class="pk-tier-title">${plan.name}</h4>
-            <p class="pk-tier-sub">${tierSubtitle}</p>
+            <div class="pk-tier-icon-wrap">${iconSvg}</div>
+            <h4 class="pk-tier-title">${escape(plan.name)}</h4>
+            <p class="pk-tier-sub">${escape(subtitle)}</p>
           </div>
           <div class="pk-card-price-section">
             <div class="pk-tier-price-row">
               <span class="pk-tier-currency">NT$</span>
-              <span class="pk-tier-price">${plan.price}</span>
+              <span class="pk-tier-price">${Number(plan.price || 0).toLocaleString()}</span>
             </div>
             <div class="pk-tier-credits-chip">
               <span class="pk-credits-num">${Number(plan.credits || 0).toLocaleString()}</span> Credits
@@ -17343,14 +17559,21 @@ function renderPricingPlansModal() {
           </div>
         </div>
         <div>
-          <button type="button" class="pk-plan-btn ${btnClass}" onclick="window.open('https://line.me/ti/p/~ayman.soliman', '_blank', 'noopener noreferrer')">
-            💳 ${btnText}
+          <button type="button" class="pk-plan-btn ${btnClass} rounded-full inline-flex items-center justify-center gap-2" onclick="window.open('https://line.me/ti/p/~ayman.soliman', '_blank', 'noopener noreferrer')">
+            <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Purchase ${escape(plan.name)}
           </button>
           <div class="pk-card-features">
-            <p class="pk-feature-item"><span class="pk-check">✓</span> <span>${bullet1}</span></p>
-            <p class="pk-feature-item"><span class="pk-check">✓</span> <span>${bullet2}</span></p>
-            <p class="pk-feature-item"><span class="pk-check">✓</span> <span>${bullet3}</span></p>
-            <p class="pk-feature-item"><span class="pk-check">✓</span> <span>${bullet4}</span></p>
+            ${features.map(f => `
+              <p class="pk-feature-item">
+                <span class="pk-check flex-shrink-0 text-emerald-400">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </span>
+                <span>${escape(f)}</span>
+              </p>
+            `).join('')}
           </div>
         </div>
       </div>
@@ -17359,12 +17582,26 @@ function renderPricingPlansModal() {
 
   container.innerHTML = `
     <div class="pk-pricing-header-wrap">
-      <h3 class="pk-pricing-title">💳 Credit Purchase Plans (NTD)</h3>
+      <h3 class="pk-pricing-title inline-flex items-center justify-center gap-2">
+        <svg class="w-5 h-5 text-amber-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+          <line x1="1" y1="10" x2="23" y2="10"/>
+        </svg>
+        Credit Purchase Plans (NTD)
+      </h3>
       <p class="pk-pricing-subtitle">Choose the perfect plan for your classroom needs</p>
       <div class="pk-welcome-bonus-box">
-        <span class="pk-bonus-icon">🎁</span>
+        <span class="pk-bonus-icon text-emerald-400 flex-shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 12 20 22 4 22 4 12"/>
+            <rect x="2" y="7" width="20" height="5"/>
+            <line x1="12" y1="22" x2="12" y2="7"/>
+            <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+            <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+          </svg>
+        </span>
         <div class="pk-bonus-text">
-          <strong>Welcome Bonus:</strong> Every teacher receives <span class="pk-bonus-highlight">500 free credits</span> to get started!
+          <strong>Welcome Bonus:</strong> ${bonusFormatted}
         </div>
       </div>
     </div>
@@ -17373,6 +17610,7 @@ function renderPricingPlansModal() {
     </div>
   `;
 }
+window.renderPricingPlansModal = renderPricingPlansModal;
 
 let homeArchDraft = null;
 let homeArchSaving = false;
@@ -27431,10 +27669,51 @@ const handler = {
 
 // Published Admin Controls are shared through the Canva Sheet, not local-only browser state.
 const DEFAULT_PUBLISHED_CONFIG = {
+  welcome_bonus_credits: 500,
+  welcome_bonus_message: 'Every teacher receives {credits} free credits to get started!',
   pricingPlans: [
-    { name: 'Starter', price: 99, credits: 700, badge: 'None' },
-    { name: 'Professional', price: 199, credits: 2000, badge: 'Best Value' },
-    { name: 'School', price: 1199, credits: 15000, badge: 'Enterprise' }
+    {
+      name: 'Starter',
+      subtitle: 'Great for individual teachers',
+      price: 99,
+      credits: 750,
+      badge: 'None',
+      tier_tag: 'TRAINER TIER',
+      features: [
+        '750 AI Credits',
+        'Instant credit delivery',
+        'No expiration date',
+        'Great for trying AI lists'
+      ]
+    },
+    {
+      name: 'Professional',
+      subtitle: 'Best value for active classrooms',
+      price: 199,
+      credits: 2000,
+      badge: 'Best Value',
+      tier_tag: 'BEST VALUE',
+      features: [
+        '2,000 AI Credits',
+        'Instant credit delivery',
+        'No expiration date',
+        '25% extra credit value'
+      ]
+    },
+    {
+      name: 'School',
+      subtitle: 'For entire school or department',
+      price: 1199,
+      credits: 15000,
+      badge: 'Enterprise',
+      tier_tag: 'ENTERPRISE',
+      features: [
+        '15,000 AI Credits',
+        'Instant delivery & priority support',
+        'Shared across all school teachers',
+        'Maximum bulk savings (60% off)'
+      ]
+    }
   ],
   homeArchPokemon: [144, 145, 146, 150, 249, 250],
   catalogPrices: {}
@@ -27446,9 +27725,24 @@ function readPublishedConfig() {
   const rows = getPublishedConfigRows().sort((a,b) => Number(b.config_version || 0) - Number(a.config_version || 0));
   const latest = rows[0];
   if (!latest) return JSON.parse(JSON.stringify(DEFAULT_PUBLISHED_CONFIG));
-  try { return { ...JSON.parse(latest.config_value || '{}'), pricingPlans: JSON.parse(latest.config_value || '{}').pricingPlans || DEFAULT_PUBLISHED_CONFIG.pricingPlans, homeArchPokemon: JSON.parse(latest.config_value || '{}').homeArchPokemon || DEFAULT_PUBLISHED_CONFIG.homeArchPokemon, catalogPrices: JSON.parse(latest.config_value || '{}').catalogPrices || {} }; }
+  try {
+    const parsed = JSON.parse(latest.config_value || '{}');
+    return {
+      ...parsed,
+      welcome_bonus_credits: Number(parsed.welcome_bonus_credits ?? DEFAULT_PUBLISHED_CONFIG.welcome_bonus_credits),
+      welcome_bonus_message: parsed.welcome_bonus_message || DEFAULT_PUBLISHED_CONFIG.welcome_bonus_message,
+      pricingPlans: (Array.isArray(parsed.pricingPlans) && parsed.pricingPlans.length) ? parsed.pricingPlans : DEFAULT_PUBLISHED_CONFIG.pricingPlans,
+      homeArchPokemon: parsed.homeArchPokemon || DEFAULT_PUBLISHED_CONFIG.homeArchPokemon,
+      catalogPrices: parsed.catalogPrices || {}
+    };
+  }
   catch (error) { return JSON.parse(JSON.stringify(DEFAULT_PUBLISHED_CONFIG)); }
 }
+function getWelcomeBonusCredits() {
+  const cfg = publishedConfig || readPublishedConfig();
+  return Number(cfg?.welcome_bonus_credits) || 500;
+}
+window.getWelcomeBonusCredits = getWelcomeBonusCredits;
 function applyPublishedConfig(config, meta = {}) {
   publishedConfig = config || readPublishedConfig();
   publishedConfigMeta = { version: Number(meta.version || 0), publishedAt: meta.publishedAt || '', publishedBy: meta.publishedBy || '' };
