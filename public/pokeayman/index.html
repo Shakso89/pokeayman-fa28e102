@@ -9489,7 +9489,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
        </section>
         <section id="teacher-zone-history-panel" class="teacher-zone-content-panel glass-container rounded-xl p-4 mb-6" role="region" aria-labelledby="teacher-zone-history-title">
          <div class="teacher-zone-content-card">
-          <header class="teacher-zone-page-heading"><div><p class="teacher-zone-page-kicker text-xs uppercase tracking-wider text-slate-400 font-medium mb-0.5">FINANCIAL &amp; SCHEDULE HISTORY</p><h3 id="teacher-zone-history-title" class="font-bold text-lg text-white">Saved history</h3><p class="text-xs text-slate-400">Restore a previous schedule and its financial settings.</p></div><button id="teacher-zone-save-snapshot-btn" type="button" class="btn-save-records">Save Records</button></header>
+          <header class="teacher-zone-page-heading"><div><p class="teacher-zone-page-kicker text-xs uppercase tracking-wider text-slate-400 font-medium mb-0.5">FINANCIAL &amp; SCHEDULE HISTORY</p><h3 id="teacher-zone-history-title" class="font-bold text-lg text-white">Saved history</h3><p class="text-xs text-slate-400">Restore a previous schedule and its financial settings.</p></div><button id="teacher-zone-save-snapshot-btn" type="button" class="btn-save-records rounded-full px-4 py-1.5 text-xs font-semibold bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold shadow-sm transition border-0 cursor-pointer">Save Records</button></header>
           <div id="teacher-zone-history-list" class="teacher-zone-history-list"></div>
           <p id="teacher-zone-history-empty" class="pk-empty"><span>No snapshots saved yet.</span><small>Save a snapshot to keep a restore point for your schedule and finance settings.</small></p>
          </div>
@@ -14213,7 +14213,20 @@ function currentTeacherZoneSnapshot(name = '') {
   };
 }
 function persistTeacherZoneSnapshots() { saveTeacherWorkspace(); localStorage.setItem(teacherWorkspaceKey ? `${teacherWorkspaceKey}:history` : 'teacherZoneSnapshots', JSON.stringify(teacherZoneSnapshots)); renderTeacherZoneHistory(); }
-function historyDialog(title, message, confirmText, onConfirm) { const modal=document.createElement('div'); modal.className='fixed inset-0 bg-black/60 flex items-center justify-center z-[12000] p-4'; modal.innerHTML=`<div class="bg-slate-900 text-white rounded-2xl p-5 w-full max-w-sm" role="dialog" aria-modal="true" aria-labelledby="history-dialog-title"><h2 id="history-dialog-title" class="heading-font text-xl font-bold mb-2">${title}</h2><p class="text-sm text-slate-300 mb-5">${message}</p><div class="flex gap-2"><button type="button" id="history-dialog-confirm" class="btn-primary flex-1">${confirmText}</button><button type="button" id="history-dialog-cancel" class="btn-outline flex-1">Cancel</button></div></div>`; document.body.appendChild(modal); modal.querySelector('#history-dialog-cancel').onclick=()=>modal.remove(); modal.querySelector('#history-dialog-confirm').onclick=()=>{modal.remove();onConfirm();}; modal.querySelector('#history-dialog-confirm').focus(); }
+function historyDialog(title, message, confirmText, onConfirm) {
+  const isBright = document.body.classList.contains('ts-bright') || document.body.classList.contains('light');
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[12000] p-4';
+  const isDelete = confirmText === 'Delete' || confirmText.toLowerCase().includes('delete');
+  const confirmBtnClass = isDelete
+    ? 'bg-rose-600 hover:bg-rose-700 text-white font-bold'
+    : (isBright ? 'bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold' : 'btn-primary');
+  modal.innerHTML = `<div class="${isBright ? 'bg-white text-slate-900 border border-slate-200 shadow-xl' : 'bg-slate-900 text-white'} rounded-2xl p-5 w-full max-w-sm" role="dialog" aria-modal="true" aria-labelledby="history-dialog-title"><h2 id="history-dialog-title" class="heading-font text-xl font-bold mb-2 ${isBright ? 'text-slate-900' : 'text-white'}">${title}</h2><p class="text-sm ${isBright ? 'text-slate-600' : 'text-slate-300'} mb-5">${message}</p><div class="flex gap-2"><button type="button" id="history-dialog-confirm" class="btn-primary flex-1 ${confirmBtnClass}">${confirmText}</button><button type="button" id="history-dialog-cancel" class="btn-outline flex-1 ${isBright ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300' : ''}">Cancel</button></div></div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#history-dialog-cancel').onclick = () => modal.remove();
+  modal.querySelector('#history-dialog-confirm').onclick = () => { modal.remove(); onConfirm(); };
+  modal.querySelector('#history-dialog-confirm').focus();
+}
 function reviewTeacherZoneSnapshot(snapshot) {
   if (!snapshot) return;
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -14326,10 +14339,10 @@ function renderTeacherZoneHistory() {
         <span class="text-xs text-slate-400 block history-item-meta">${new Date(s.savedAt).toLocaleString()} · schedule, sub-hours &amp; financial records</span>
       </div>
       <div class="teacher-zone-history-actions flex items-center gap-2 flex-wrap">
-        <button type="button" class="btn-history-review rounded-full px-4 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition" data-history-review="${s.id}">Review</button>
-        <button type="button" class="btn-history-rename rounded-full px-4 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition" data-history-rename="${s.id}">Rename</button>
-        <button type="button" class="btn-history-restore rounded-full px-4 py-1.5 text-xs font-semibold bg-yellow-400 hover:bg-yellow-300 text-slate-950 shadow-sm transition border-0 cursor-pointer" data-history-restore="${s.id}">Restore</button>
-        <button type="button" class="btn-history-delete rounded-full px-4 py-1.5 text-xs font-semibold hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 border border-transparent hover:border-rose-500/30 transition cursor-pointer" data-history-delete="${s.id}">Delete</button>
+        <button type="button" class="btn-history-review rounded-full px-4 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/70 transition cursor-pointer" data-history-review="${s.id}">Review</button>
+        <button type="button" class="btn-history-rename rounded-full px-4 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/70 transition cursor-pointer" data-history-rename="${s.id}">Rename</button>
+        <button type="button" class="btn-history-restore rounded-full px-4 py-1.5 text-xs font-semibold bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold shadow-sm transition border-0 cursor-pointer" data-history-restore="${s.id}">Restore</button>
+        <button type="button" class="btn-history-delete rounded-full px-4 py-1.5 text-xs font-semibold bg-rose-950/30 hover:bg-rose-900/50 text-rose-300 border border-rose-800/40 transition cursor-pointer" data-history-delete="${s.id}">Delete</button>
       </div>
     </article>
   `).join('');
@@ -14339,7 +14352,8 @@ function renderTeacherZoneHistory() {
     if (!s) return;
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[12000] p-4';
-    modal.innerHTML = `<form class="bg-slate-900 text-white rounded-2xl p-5 w-full max-w-sm" role="dialog" aria-modal="true"><label class="block text-sm font-bold">Snapshot name<input id="history-name-input" class="w-full mt-2 rounded-lg p-2 text-slate-900" value="${escape(s.name)}" required></label><div class="flex gap-2 mt-4"><button class="btn-primary flex-1" type="submit">Save</button><button class="btn-outline flex-1" type="button">Cancel</button></div></form>`;
+    const isBright = document.body.classList.contains('ts-bright') || document.body.classList.contains('light');
+    modal.innerHTML = `<form class="${isBright ? 'bg-white text-slate-900 border border-slate-200 shadow-xl' : 'bg-slate-900 text-white border border-slate-800'} rounded-2xl p-5 w-full max-w-sm" role="dialog" aria-modal="true"><label class="block text-sm font-bold ${isBright ? 'text-slate-900' : 'text-white'}">Snapshot name<input id="history-name-input" class="w-full mt-2 rounded-lg p-2.5 text-sm ${isBright ? 'bg-slate-50 border border-slate-300 text-slate-900' : 'bg-slate-800 border border-slate-700 text-white'}" value="${escape(s.name)}" required></label><div class="flex gap-2 mt-4"><button class="btn-primary flex-1 ${isBright ? 'bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold' : ''}" type="submit">Save</button><button class="btn-outline flex-1 ${isBright ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300' : ''}" type="button">Cancel</button></div></form>`;
     document.body.appendChild(modal);
     modal.querySelector('input').focus();
     modal.querySelector('form').onsubmit = e => {
@@ -26987,23 +27001,6 @@ details[open] > summary .financial-adj-chevron {
 }
 
 /* 5. Financial & Schedule History */
-#teacher-zone-save-snapshot-btn,
-.btn-save-records {
-  border-radius: 9999px !important;
-  padding: 0.5rem 1.25rem !important;
-  font-size: 0.8125rem !important;
-  font-weight: 600 !important;
-  background: #facc15 !important;
-  color: #020617 !important;
-  border: none !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
-  cursor: pointer !important;
-  transition: all 0.15s ease !important;
-}
-#teacher-zone-save-snapshot-btn:hover,
-.btn-save-records:hover {
-  background: #fde047 !important;
-}
 .teacher-zone-history-list {
   display: grid !important;
   gap: 0.75rem !important;
@@ -27014,28 +27011,8 @@ details[open] > summary .financial-adj-chevron {
   justify-content: space-between !important;
   gap: 1rem !important;
   padding: 1rem 1.25rem !important;
-  border: 1px solid rgba(51, 65, 85, 0.8) !important;
   border-radius: 0.75rem !important;
-  background: rgba(15, 23, 42, 0.6) !important;
-  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.15) !important;
-  transition: border-color 0.2s ease, background-color 0.2s ease !important;
-}
-.teacher-zone-history-item:hover {
-  border-color: rgba(100, 116, 139, 0.6) !important;
-}
-.teacher-zone-history-copy strong,
-.teacher-zone-history-copy .history-item-title {
-  color: #ffffff !important;
-  font-size: 0.9375rem !important;
-  font-weight: 700 !important;
-  margin-bottom: 0.25rem !important;
-  display: block !important;
-}
-.teacher-zone-history-copy span,
-.teacher-zone-history-copy .history-item-meta {
-  color: #94a3b8 !important;
-  font-size: 0.75rem !important;
-  display: block !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease !important;
 }
 .teacher-zone-history-actions {
   display: flex !important;
@@ -27043,53 +27020,174 @@ details[open] > summary .financial-adj-chevron {
   gap: 0.5rem !important;
   flex-wrap: wrap !important;
 }
+#teacher-zone-history-panel button,
+#teacher-zone-save-snapshot-btn,
+.btn-save-records,
 .btn-history-review,
-.btn-history-rename {
-  border-radius: 9999px !important;
-  padding: 0.375rem 1rem !important;
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  background: #1e293b !important;
-  color: #e2e8f0 !important;
-  border: 1px solid rgba(51, 65, 85, 0.6) !important;
-  cursor: pointer !important;
-  transition: all 0.15s ease !important;
-}
-.btn-history-review:hover,
-.btn-history-rename:hover {
-  background: #334155 !important;
-  color: #ffffff !important;
-}
-.btn-history-restore {
-  border-radius: 9999px !important;
-  padding: 0.375rem 1rem !important;
-  font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  background: #facc15 !important;
-  color: #020617 !important;
-  border: none !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  cursor: pointer !important;
-  transition: all 0.15s ease !important;
-}
-.btn-history-restore:hover {
-  background: #fde047 !important;
-}
+.btn-history-rename,
+.btn-history-restore,
 .btn-history-delete {
   border-radius: 9999px !important;
   padding: 0.375rem 1rem !important;
   font-size: 0.75rem !important;
-  font-weight: 600 !important;
-  background: transparent !important;
-  color: #94a3b8 !important;
-  border: 1px solid transparent !important;
+  line-height: 1rem !important;
   cursor: pointer !important;
   transition: all 0.15s ease !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
-.btn-history-delete:hover {
-  background: rgba(244, 63, 94, 0.1) !important;
-  color: #fb7185 !important;
-  border-color: rgba(244, 63, 94, 0.3) !important;
+
+/* Dark Mode (Default / not bright) */
+html body:not(.ts-bright):not(.light) #teacher-zone-history-panel,
+html body:not(.ts-bright):not(.light) #teacher-zone-history-panel .teacher-zone-content-card {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(51, 65, 85, 0.8) !important;
+}
+html body:not(.ts-bright):not(.light) .teacher-zone-history-item {
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.15) !important;
+}
+html body:not(.ts-bright):not(.light) .teacher-zone-history-item:hover {
+  border-color: rgba(100, 116, 139, 0.6) !important;
+}
+html body:not(.ts-bright):not(.light) #teacher-zone-history-panel .teacher-zone-page-heading h3,
+html body:not(.ts-bright):not(.light) #teacher-zone-history-title,
+html body:not(.ts-bright):not(.light) .teacher-zone-history-copy strong,
+html body:not(.ts-bright):not(.light) .teacher-zone-history-copy .history-item-title {
+  color: #ffffff !important;
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.25rem !important;
+  display: block !important;
+}
+html body:not(.ts-bright):not(.light) #teacher-zone-history-panel .teacher-zone-page-heading p,
+html body:not(.ts-bright):not(.light) #teacher-zone-history-panel .teacher-zone-page-kicker,
+html body:not(.ts-bright):not(.light) .teacher-zone-history-copy span,
+html body:not(.ts-bright):not(.light) .teacher-zone-history-copy .history-item-meta {
+  color: #94a3b8 !important;
+  font-size: 0.75rem !important;
+  display: block !important;
+}
+
+/* Dark Mode Action Buttons */
+html body:not(.ts-bright):not(.light) #teacher-zone-save-snapshot-btn,
+html body:not(.ts-bright):not(.light) .btn-save-records,
+html body:not(.ts-bright):not(.light) .btn-history-restore {
+  background: #facc15 !important;
+  color: #020617 !important;
+  font-weight: 700 !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+}
+html body:not(.ts-bright):not(.light) #teacher-zone-save-snapshot-btn:hover,
+html body:not(.ts-bright):not(.light) .btn-save-records:hover,
+html body:not(.ts-bright):not(.light) .btn-history-restore:hover {
+  background: #fde047 !important;
+  color: #020617 !important;
+}
+html body:not(.ts-bright):not(.light) .btn-history-review,
+html body:not(.ts-bright):not(.light) .btn-history-rename {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(51, 65, 85, 0.7) !important;
+  font-weight: 600 !important;
+}
+html body:not(.ts-bright):not(.light) .btn-history-review:hover,
+html body:not(.ts-bright):not(.light) .btn-history-rename:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
+  border-color: rgba(71, 85, 105, 0.8) !important;
+}
+html body:not(.ts-bright):not(.light) .btn-history-delete {
+  background: rgba(136, 19, 55, 0.3) !important;
+  color: #fda4af !important;
+  border: 1px solid rgba(159, 18, 57, 0.4) !important;
+  font-weight: 600 !important;
+}
+html body:not(.ts-bright):not(.light) .btn-history-delete:hover {
+  background: rgba(159, 18, 57, 0.5) !important;
+  color: #fecdd3 !important;
+  border-color: rgba(225, 29, 72, 0.5) !important;
+}
+
+/* Light / Bright Mode */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-panel,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-panel .teacher-zone-content-card,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-item {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-item:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-panel .teacher-zone-page-heading h3,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-title,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-copy strong,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-copy .history-item-title {
+  color: #0f172a !important;
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.25rem !important;
+  display: block !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-panel .teacher-zone-page-heading p,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-panel .teacher-zone-page-kicker,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-copy span,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-copy .history-item-meta,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-empty {
+  color: #64748b !important;
+  font-size: 0.75rem !important;
+  display: block !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-empty small {
+  color: #94a3b8 !important;
+}
+
+/* Light / Bright Mode Action Buttons */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-save-snapshot-btn,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-save-records,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-restore {
+  background: #fbbf24 !important;
+  color: #0f172a !important;
+  border: 1px solid #f59e0b !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-save-snapshot-btn:hover,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-save-records:hover,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-restore:hover {
+  background: #f59e0b !important;
+  color: #0f172a !important;
+  border-color: #d97706 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-review,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-rename {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-review:hover,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-rename:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-delete {
+  background: #fff1f2 !important;
+  color: #e11d48 !important;
+  border: 1px solid #fecdd3 !important;
+  font-weight: 600 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-delete:hover {
+  background: #ffe4e6 !important;
+  color: #be123c !important;
+  border-color: #fda4af !important;
 }
 
 @media(max-width: 800px) {

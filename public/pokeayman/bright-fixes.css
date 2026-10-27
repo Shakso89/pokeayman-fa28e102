@@ -337,17 +337,73 @@ html body.ts-bright #ts-sidebar .ts-section-toggle:is(:hover, .current, [aria-ex
 }
 
 /* Teacher Zone history panel in bright mode */
-html body.ts-bright .teacher-zone-content-card,
-html body.ts-bright .teacher-zone-history-item {
-  background: var(--color-surface, #ffffff) !important;
-  border-color: var(--color-border, #e2e8f0) !important;
-  color: var(--color-text-primary, #0f172a) !important;
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-panel,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-panel .teacher-zone-content-card,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-item {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
-html body.ts-bright .teacher-zone-history-copy strong {
-  color: var(--color-text-primary, #0f172a) !important;
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-item:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07) !important;
 }
-html body.ts-bright .teacher-zone-history-copy span {
-  color: var(--color-text-secondary, #64748b) !important;
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-panel .teacher-zone-page-heading h3,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-title,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-copy strong,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-copy .history-item-title {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-panel .teacher-zone-page-heading p,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-panel .teacher-zone-page-kicker,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-copy span,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .teacher-zone-history-copy .history-item-meta,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-empty {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-history-empty small {
+  color: #94a3b8 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-save-snapshot-btn,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-save-records,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-restore {
+  background: #fbbf24 !important;
+  color: #0f172a !important;
+  border: 1px solid #f59e0b !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-zone-save-snapshot-btn:hover,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-save-records:hover,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-restore:hover {
+  background: #f59e0b !important;
+  color: #0f172a !important;
+  border-color: #d97706 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-review,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-rename {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-review:hover,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-rename:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-delete {
+  background: #fff1f2 !important;
+  color: #e11d48 !important;
+  border: 1px solid #fecdd3 !important;
+  font-weight: 600 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .btn-history-delete:hover {
+  background: #ffe4e6 !important;
+  color: #be123c !important;
+  border-color: #fda4af !important;
 }
 
 /* Quiz tab in bright mode */
