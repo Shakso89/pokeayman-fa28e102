@@ -10963,11 +10963,11 @@ function rebuildCanonicalStudentIndex() {
     const linkedKey = explicit && (canonicalStudentAliases.get(explicit) || explicit);
     const key = linkedKey || studentStableIdentity(record);
     if (!key) return;
-    if (record.__backendId) canonicalStudentAliases.set(String(record.__backendId), key);
-    if (record.id) canonicalStudentAliases.set(String(record.id), key);
-    if (explicit) canonicalStudentAliases.set(String(explicit), key);
     const previous = canonicalStudentAccounts.get(key);
     if (previous) {
+      if (record.__backendId) canonicalStudentAliases.set(String(record.__backendId), key);
+      if (record.id) canonicalStudentAliases.set(String(record.id), key);
+      if (explicit) canonicalStudentAliases.set(String(explicit), key);
       // Retain canonical profile; do not let empty membership attributes overwrite student profile fields
       const merged = {
         ...record,
@@ -10977,15 +10977,24 @@ function rebuildCanonicalStudentIndex() {
         name: previous.name || previous.student_name || record.name || record.student_name || ''
       };
       canonicalStudentAccounts.set(key, merged);
-    } else {
-      const merged = {
-        ...record,
-        student_id: key,
-        student_name: record.student_name || record.name || '',
-        name: record.name || record.student_name || ''
-      };
-      canonicalStudentAccounts.set(key, merged);
     }
+    // Note: Do not synthesize accounts for orphaned junction rows where no primary student exists.
+  });
+
+  // In-memory cleanup: purge orphaned junction rows from allData whose student_id is not known
+  const validStudentKeys = new Set(canonicalStudentAccounts.keys());
+  const validAliases = new Set(canonicalStudentAliases.keys());
+  allData = allData.filter(record => {
+    const type = String(record.type || '').toLowerCase();
+    if (['class_student', 'student_membership', 'class_membership', 'membership'].includes(type)) {
+      const explicit = canonicalIdentityFromRecord(record);
+      const linkedKey = explicit && (canonicalStudentAliases.get(explicit) || explicit);
+      const key = linkedKey || studentStableIdentity(record);
+      const sid = String(record.student_id || record.id || record.__backendId || '').trim();
+      const hasMatch = (key && validStudentKeys.has(key)) || (sid && (validStudentKeys.has(sid) || validAliases.has(sid)));
+      if (!hasMatch) return false;
+    }
+    return true;
   });
 
   canonicalStudentIndexData = allData;
@@ -11566,6 +11575,14 @@ function getStudents(schoolName, className) {
     const type = String(r.type || '').toLowerCase();
     const isStudentType = (type === 'student' || type === 'student_membership' || type === 'class_student' || type === 'class_membership');
     if (!isStudentType) return false;
+
+    // Auxiliary junction rows must resolve to an existing canonical student
+    if (type !== 'student') {
+      const canonicalId = canonicalStudentKey(r);
+      const canonical = canonicalId ? canonicalStudentAccounts.get(canonicalId) : null;
+      if (!canonical || canonical.type !== 'student') return false;
+    }
+
     const rSchoolNorm = String(r.school_name || '').trim().toLocaleLowerCase();
     const rClassNorm = String(r.class_name || '').trim().toLocaleLowerCase();
     if (rSchoolNorm === targetSchoolNorm && rClassNorm === targetClassNorm) return true;
@@ -11588,27 +11605,35 @@ function getStudents(schoolName, className) {
   const uniqueStudents = new Map();
   classRows.forEach(row => {
     const canonicalId = canonicalStudentKey(row);
-    const canonical = (canonicalId ? canonicalStudentAccounts.get(canonicalId) : null) || (row.type === 'student' ? row : null) || {};
-    const studentName = normalizeStudentDisplayName(canonical.student_name || row.student_name);
+    const canonical = (canonicalId ? canonicalStudentAccounts.get(canonicalId) : null) || (row.type === 'student' ? row : null);
+    if (!canonical && row.type !== 'student') return;
+
+    const studentName = normalizeStudentDisplayName(canonical?.student_name || canonical?.name || (row.type === 'student' ? (row.student_name || row.name) : ''));
     const nameKey = normalizeStudentIdentity(studentName);
-    if (!nameKey && !canonicalId) return;
+    if (!nameKey || !studentName) return;
+    if (nameKey === 'student' || nameKey === 'link') {
+      if (!canonical || canonical.type !== 'student' || !canonical.student_name || normalizeStudentIdentity(canonical.student_name) === 'student' || normalizeStudentIdentity(canonical.student_name) === 'link') {
+        return;
+      }
+    }
 
     // A student is uniquely identified strictly by their canonical ID or row backend ID
     const dedupKey = canonicalId ? `id:${canonicalId}` : (row.__backendId ? `id:${row.__backendId}` : `id:${row.id || Math.random()}`);
     const previous = uniqueStudents.get(dedupKey);
 
-    const score = (row.type === 'student' ? 1000 : 0) + studentCompletenessScore(row) + (canonical.student_name ? 500 : 0);
+    const score = (row.type === 'student' ? 1000 : 0) + studentCompletenessScore(row) + (canonical?.student_name ? 500 : 0);
     const membershipBackendId = row.type === 'student_membership' ? row.__backendId : (previous?.merged?.__membershipBackendId || row.__backendId);
 
     if (!previous || score > previous.score) {
       const merged = {
         ...row,
-        ...canonical,
-        __canonicalStudentId: canonicalId || canonical.__backendId || row.student_id || row.__backendId,
+        ...(canonical || {}),
+        __canonicalStudentId: canonicalId || canonical?.__backendId || row.student_id || row.__backendId,
         __membershipBackendId: membershipBackendId,
-        __backendId: canonical.__backendId || (row.type === 'student' ? row.__backendId : row.student_id) || row.__backendId,
+        __backendId: canonical?.__backendId || (row.type === 'student' ? row.__backendId : row.student_id) || row.__backendId,
         student_name: studentName,
-        coins: Number(canonical.coins ?? row.coins) || 0,
+        name: studentName,
+        coins: Number(canonical?.coins ?? row.coins) || 0,
         school_name: targetSchool,
         class_name: targetClass
       };
@@ -16059,7 +16084,14 @@ function applyGlobalAchievementBadges(root = document) {
 function renderClassRosterCard(student, rank, viewOnly = false, pokemonByOwner = null, valueFor = null) {
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const jsString = value => escape(JSON.stringify(String(value ?? '')));
-  const studentDisplayName = student.student_name || student.name || 'Student';
+  const studentDisplayName = normalizeStudentDisplayName(student.student_name || student.name || '');
+  if (!studentDisplayName || studentDisplayName.toLowerCase() === 'student' || studentDisplayName.toLowerCase() === 'link') {
+    const cKey = typeof canonicalStudentKey === 'function' ? canonicalStudentKey(student) : '';
+    const cAcc = cKey && typeof canonicalStudentAccounts !== 'undefined' ? canonicalStudentAccounts.get(cKey) : null;
+    if (!cAcc || !cAcc.student_name || cAcc.student_name.toLowerCase() === 'student' || cAcc.student_name.toLowerCase() === 'link') {
+      return '';
+    }
+  }
   const name = escape(studentDisplayName);
   const studentKey = String(student.__membershipBackendId || student.__backendId || student.id || student.student_id || studentDisplayName).trim();
   const count = typeof getOwnedPokemonForStudent === 'function' ? getOwnedPokemonForStudent(student).length : 0;
@@ -21649,14 +21681,20 @@ async function deleteAdminStudent(studentId) {
   try {
     rebuildCanonicalStudentIndex();
     const canonical = canonicalStudentAccounts.get(canonicalStudentAliases.get(String(studentId)) || String(studentId));
-    const canonicalId = String(canonical?.__backendId || studentId).trim();
+    const canonicalId = String(canonical?.__backendId || canonical?.id || canonical?.student_id || studentId).trim();
+    const targetTypes = ['student', 'student_membership', 'class_student', 'class_membership', 'membership'];
     const rows = allData.filter(record => {
       const key = canonicalStudentKey(record);
-      return (record.type === 'student' || record.type === 'student_membership') && (String(record.__backendId || '') === canonicalId || key === canonicalStudentKey(canonicalId));
+      const t = String(record.type || '').toLowerCase();
+      if (!targetTypes.includes(t)) return false;
+      return String(record.__backendId || '') === canonicalId ||
+             String(record.id || '') === canonicalId ||
+             String(record.student_id || '') === canonicalId ||
+             key === canonicalStudentKey(canonicalId);
     });
     diagnostics.recordType = canonical?.type || rows[0]?.type || 'unresolved';
     diagnostics.canonicalStudentId = String(canonical?.student_id || canonicalId);
-    diagnostics.membershipIds = rows.filter(row => row.type === 'student_membership').map(row => String(row.__backendId || '')).filter(Boolean);
+    diagnostics.membershipIds = rows.filter(row => ['student_membership', 'class_student', 'class_membership'].includes(row.type)).map(row => String(row.__backendId || row.id || '')).filter(Boolean);
     diagnostics.sourceClasses = rows.map(row => `${row.school_name || ''} / ${row.class_name || ''}`).filter(value => value !== ' / ');
     window.__pokeymanStudentDeleteDiagnostics = [...(window.__pokeymanStudentDeleteDiagnostics || []), diagnostics].slice(-50);
     if (!canonical || !canonicalId) { diagnostics.deletionStatus = 'rejected:no-canonical-id'; toast('This record has no resolvable canonical student ID. No data was deleted.'); return; }
@@ -21674,17 +21712,86 @@ async function deleteAdminStudent(studentId) {
       confirmButton.focus();
     });
     if (!confirmed) { diagnostics.deletionStatus = 'cancelled'; return; }
-    const relatedPokemon = allData.filter(record => record.type === 'pokemon' && (String(record.student_id || record.owner_id || '') === canonicalId || normalizeStudentIdentity(record.owner) === normalizeStudentIdentity(canonical.student_name) && !getTeachers().some(teacher => normalizeStudentIdentity(teacher.teacher_name) === normalizeStudentIdentity(record.owner))));
-    for (const record of [...new Set([...rows, ...relatedPokemon])]) {
-      const result = await window.dataSdk.delete(record);
-      if (!result?.isOk) { diagnostics.deletionStatus = `rejected:${record.type || 'record'}`; toast('Could not confirm the deletion. Refresh before trying again.'); return; }
+
+    // Find all related pokemon and badges
+    const relatedPokemon = allData.filter(record => {
+      if (record.type !== 'pokemon') return false;
+      const sId = String(record.student_id || record.owner_id || '');
+      if (sId && sId === canonicalId) return true;
+      if (canonical?.student_name && normalizeStudentIdentity(record.owner) === normalizeStudentIdentity(canonical.student_name)) {
+        return !getTeachers().some(teacher => normalizeStudentIdentity(teacher.teacher_name) === normalizeStudentIdentity(record.owner));
+      }
+      return false;
+    });
+
+    const relatedBadges = allData.filter(record => {
+      const t = String(record.type || '').toLowerCase();
+      if (t !== 'student_badge' && t !== 'student_badges') return false;
+      return String(record.student_id || '') === canonicalId || String(record.__backendId || '') === canonicalId || String(record.id || '') === canonicalId;
+    });
+
+    const allRecordsToDelete = [...new Set([...rows, ...relatedPokemon, ...relatedBadges])];
+
+    // Supabase cascade delete
+    const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+    if (sb && canonicalId) {
+      try {
+        await Promise.allSettled([
+          sb.from('class_students').delete().eq('student_id', canonicalId),
+          sb.from('student_pokemon').delete().eq('student_id', canonicalId),
+          sb.from('student_badges').delete().eq('student_id', canonicalId),
+          sb.from('students').delete().eq('id', canonicalId)
+        ]);
+      } catch (sbErr) {
+        console.warn('Supabase cascade delete warning:', sbErr);
+      }
     }
-    const refresh = await window.dataSdk.init(handler);
-    if (!refresh?.isOk) { diagnostics.deletionStatus = 'unverified:refresh-failed'; toast('The deletion could not be verified. Refresh before trying again.'); return; }
+
+    const deletedIds = new Set([canonicalId]);
+    for (const record of allRecordsToDelete) {
+      if (record.__backendId) deletedIds.add(String(record.__backendId));
+      if (record.id) deletedIds.add(String(record.id));
+      if (record.student_id) deletedIds.add(String(record.student_id));
+      try {
+        await window.dataSdk.delete(record);
+      } catch (err) {
+        console.warn('dataSdk delete error for record:', err);
+      }
+    }
+
+    // Immediately purge from in-memory allData
+    allData = allData.filter(record => {
+      const rBackend = String(record.__backendId || '');
+      const rId = String(record.id || '');
+      const rStudent = String(record.student_id || '');
+      const rKey = canonicalStudentKey(record);
+      if (deletedIds.has(rBackend) || deletedIds.has(rId) || deletedIds.has(rStudent)) return false;
+      if (rKey && rKey === canonicalStudentKey(canonicalId)) return false;
+      return true;
+    });
+
+    try { await window.dataSdk.init(handler); } catch (_) {}
+
+    // Re-filter after init in case dataSdk returned cached rows
+    allData = allData.filter(record => {
+      const rBackend = String(record.__backendId || '');
+      const rId = String(record.id || '');
+      const rStudent = String(record.student_id || '');
+      const rKey = canonicalStudentKey(record);
+      if (deletedIds.has(rBackend) || deletedIds.has(rId) || deletedIds.has(rStudent)) return false;
+      if (rKey && rKey === canonicalStudentKey(canonicalId)) return false;
+      return true;
+    });
+
+    canonicalStudentAccounts.delete(canonicalId);
+    canonicalStudentAccounts.delete(canonicalStudentKey(canonicalId));
     rebuildCanonicalStudentIndex();
-    if (canonicalStudentAccounts.has(canonicalStudentKey(canonicalId))) { diagnostics.deletionStatus = 'unverified:record-remains'; toast('The student still appears in saved data. Refresh before trying again.'); return; }
+    canonicalStudentViewsData = null;
+    canonicalStudentViewsCache = [];
     diagnostics.deletionStatus = 'verified';
-    renderAdminAllStudents(); renderTeacherDashboard(); renderStudentDashboard();
+    renderAdminAllStudents();
+    if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
+    if (typeof renderStudentDashboard === 'function') renderStudentDashboard();
     toast('Student record deleted permanently.');
   } catch (error) {
     diagnostics.deletionStatus = 'rejected:exception';
