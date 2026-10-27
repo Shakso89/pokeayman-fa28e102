@@ -104,7 +104,7 @@ html body:is(#pk-ds, body) .btn-ai-generate {
 }
 
 /* Default / Dark Mode: Deep Electric Indigo to Cosmic Violet */
-html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button) {
+html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button, .sg-btn) {
   background: linear-gradient(135deg, #4f46e5 0%, #6366f1 45%, #7c3aed 100%) !important;
   color: #ffffff !important;
   border: 1px solid rgba(199, 210, 254, 0.35) !important;
@@ -114,7 +114,7 @@ html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teach
     inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
 }
 
-html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button):hover:not(:disabled) {
+html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button, .sg-btn):hover:not(:disabled) {
   z-index: 10 !important;
   transform: translateY(-2px) scale(1.02) !important;
   background: linear-gradient(135deg, #4338ca 0%, #4f46e5 45%, #6d28d9 100%) !important;
@@ -126,7 +126,7 @@ html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teach
 }
 
 /* Bright Mode (ts-bright): Crisp Radiant Indigo-Violet */
-html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button) {
+html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button, .sg-btn) {
   background: linear-gradient(135deg, #4f46e5 0%, #6366f1 55%, #7c3aed 100%) !important;
   color: #ffffff !important;
   border: 1px solid rgba(79, 70, 229, 0.35) !important;
@@ -136,7 +136,7 @@ html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-
     inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
 }
 
-html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button):hover:not(:disabled) {
+html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button, .sg-btn):hover:not(:disabled) {
   z-index: 10 !important;
   transform: translateY(-2px) scale(1.02) !important;
   background: linear-gradient(135deg, #4338ca 0%, #4f46e5 55%, #6d28d9 100%) !important;
@@ -148,8 +148,8 @@ html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-
 }
 
 /* Active Press State */
-html body:is(#pk-ds, body) :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button):active:not(:disabled) {
-  transform: translateY(1px) scale(0.97) !important;
+html body:is(#pk-ds, body) :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button, .sg-btn):active:not(:disabled) {
+  transform: translateY(1px) scale(0.95) !important;
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.3),
     inset 0 2px 4px rgba(0, 0, 0, 0.2) !important;
@@ -162,7 +162,7 @@ html body:is(#pk-ds, body) .btn-ai-generate:focus-visible {
 }
 
 /* Disabled State: Clean, translucent indigo without muddy discoloration */
-html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button):is(:disabled, [disabled], [aria-disabled="true"]) {
+html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button, .sg-btn):is(:disabled, [disabled], [aria-disabled="true"]) {
   opacity: 0.65 !important;
   cursor: not-allowed !important;
   transform: none !important;
@@ -173,7 +173,7 @@ html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teach
   box-shadow: none !important;
 }
 
-html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button):is(:disabled, [disabled], [aria-disabled="true"]) {
+html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button, .sg-btn):is(:disabled, [disabled], [aria-disabled="true"]) {
   opacity: 0.65 !important;
   cursor: not-allowed !important;
   transform: none !important;

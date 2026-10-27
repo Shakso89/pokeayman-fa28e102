@@ -11435,7 +11435,7 @@ async function deductTeacherCredits(amount, options = {}) {
   if (!result?.isOk) { toast('Could not update teacher credits.'); return false; }
   const saved = result.data || next;
   allData = allData.map(r => r.__backendId === rec.__backendId ? saved : r);
-  if (options.notify === false) updateTeacherCreditBalance();
+  updateTeacherCreditBalance();
   return true;
 }
 
@@ -11444,6 +11444,13 @@ async function refundTeacherCredits(amount, teacherName) {
   const rec = (teacherName === currentTeacher && currentTeacherRec()) || getTeachers().find(t => t.teacher_name === teacherName);
   if (rec && rec.teacher_credits !== -1) await window.dataSdk.update({ ...rec, teacher_credits: (rec.teacher_credits || 0) + amount });
 }
+window.getTeacherCredits = getTeacherCredits;
+window.deductTeacherCredits = deductTeacherCredits;
+window.refundTeacherCredits = refundTeacherCredits;
+window.updateTeacherCreditBalance = updateTeacherCreditBalance;
+window.isAymanTeacher = isAymanTeacher;
+window.findMyTeacherRecord = findMyTeacherRecord;
+window.currentTeacherRec = currentTeacherRec;
 
 // ---- Teacher login streak & surprise credit boxes ----
 const STREAK_DAYS = 7;
@@ -13296,6 +13303,7 @@ function updateTeacherCreditBalance() {
   const credits = rec ? (rec.teacher_credits === -1 ? '∞' : (rec.teacher_credits || 0)) : 0;
   creditEl.textContent = String(credits);
   creditEl.classList.remove('hidden', 'account-credit-admin');
+  try { window.dispatchEvent(new CustomEvent('teacher-credits-updated')); } catch (_) {}
 }
 
 // Main destination is the sole source of truth for dashboard, Teacher Zone, and Admin visibility.
