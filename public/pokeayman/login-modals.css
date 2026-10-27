@@ -1,5 +1,7 @@
 /* Sign-in popups (student + teacher) — scoped to .pk-login-* so legacy modal styles stay untouched. */
 .pk-login-overlay {
+  z-index: 99999 !important;
+  pointer-events: auto !important;
   --pkl-navy: #0b1533;
   --pkl-navy-2: #14214a;
   --pkl-ink: #eef2ff;

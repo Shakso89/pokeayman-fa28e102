@@ -12409,6 +12409,13 @@ function logoutTeacherSession() {
 }
 // Canonical student authentication: resolve a live class PIN first, then verify
 // the named student through the current class membership only.
+
+// Global escapeHtml helper to prevent modal rendering crashes
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+window.escapeHtml = escapeHtml;
+
 // Canonical student authentication with 3 fields: Class, Student Name, and 4-digit PIN
 async function authenticateStudentLoginAsync(name, pin, classOption) {
   const normalizedName = normalizeStudentIdentity(name);
@@ -12579,155 +12586,184 @@ document.getElementById('student-login-choice')?.addEventListener('click', event
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && loginChoicePopover && !loginChoicePopover.classList.contains('hidden')) closeLoginChoices(); });
 document.addEventListener('click', event => { if (loginChoicePopover && !loginChoicePopover.classList.contains('hidden') && !event.target.closest('#login-toggle, #login-choice-popover')) closeLoginChoices(); });
 
-document.getElementById('student-login-toggle').addEventListener('click', () => {
-  const isLight = document.body.classList.contains('ts-bright') || document.documentElement.classList.contains('light');
-  
-  // Collect active classes sorted by school and name
-  const activeClasses = (typeof allData !== 'undefined' ? allData : []).filter(r => r.type === 'class' && !r.archived);
-  activeClasses.sort((a, b) => {
-    const sDiff = String(a.school_name || '').localeCompare(String(b.school_name || ''));
-    if (sDiff !== 0) return sDiff;
-    return String(a.class_name || '').localeCompare(String(b.class_name || ''));
-  });
+// Global function to open the 3-field Student Login modal
+function openStudentLoginModal() {
+  try {
+    document.querySelectorAll('.pk-login-overlay').forEach(m => m.remove());
+    const isLight = document.body.classList.contains('ts-bright') || document.documentElement.classList.contains('light');
+    
+    // Collect active classes sorted by school and name
+    let activeClasses = (typeof allData !== 'undefined' ? allData : []).filter(r => r.type === 'class' && !r.archived);
+    if (!activeClasses.length) {
+      try {
+        const cached = JSON.parse(localStorage.getItem('pokeayman-local-preview-v1') || '[]');
+        activeClasses = cached.filter(r => r.type === 'class' && !r.archived);
+      } catch (_) {}
+    }
 
-  const lastClassId = localStorage.getItem('pokeayman-last-student-class') || '';
-  const schoolGroups = new Map();
-  activeClasses.forEach(c => {
-    const s = String(c.school_name || 'General').trim();
-    if (!schoolGroups.has(s)) schoolGroups.set(s, []);
-    schoolGroups.get(s).push(c);
-  });
-
-  let classOptionsHtml = '<option value="" disabled' + (!lastClassId ? ' selected' : '') + '>Select your class...</option>';
-  for (const [school, list] of schoolGroups.entries()) {
-    classOptionsHtml += `<optgroup label="${escapeHtml(school)}">`;
-    list.forEach(c => {
-      const cid = String(c.__backendId || c.id || '');
-      const cname = String(c.class_name || '').trim();
-      const val = cid || `${school}|||${cname}`;
-      const isSelected = (lastClassId && (lastClassId === cid || lastClassId === val)) ? ' selected' : '';
-      classOptionsHtml += `<option value="${escapeHtml(val)}" data-school="${escapeHtml(school)}" data-class="${escapeHtml(cname)}" data-id="${escapeHtml(cid)}"${isSelected}>${escapeHtml(school)} · ${escapeHtml(cname)}</option>`;
+    activeClasses.sort((a, b) => {
+      const sDiff = String(a.school_name || '').localeCompare(String(b.school_name || ''));
+      if (sDiff !== 0) return sDiff;
+      return String(a.class_name || '').localeCompare(String(b.class_name || ''));
     });
-    classOptionsHtml += '</optgroup>';
+
+    const lastClassId = localStorage.getItem('pokeayman-last-student-class') || '';
+    const schoolGroups = new Map();
+    activeClasses.forEach(c => {
+      const s = String(c.school_name || 'General').trim();
+      if (!schoolGroups.has(s)) schoolGroups.set(s, []);
+      schoolGroups.get(s).push(c);
+    });
+
+    let classOptionsHtml = '<option value="" disabled' + (!lastClassId ? ' selected' : '') + '>Select your class...</option>';
+    if (schoolGroups.size > 0) {
+      for (const [school, list] of schoolGroups.entries()) {
+        classOptionsHtml += `<optgroup label="${escapeHtml(school)}">`;
+        list.forEach(c => {
+          const cid = String(c.__backendId || c.id || '');
+          const cname = String(c.class_name || '').trim();
+          const val = cid || `${school}|||${cname}`;
+          const isSelected = (lastClassId && (lastClassId === cid || lastClassId === val)) ? ' selected' : '';
+          classOptionsHtml += `<option value="${escapeHtml(val)}" data-school="${escapeHtml(school)}" data-class="${escapeHtml(cname)}" data-id="${escapeHtml(cid)}"${isSelected}>${escapeHtml(school)} · ${escapeHtml(cname)}</option>`;
+        });
+        classOptionsHtml += '</optgroup>';
+      }
+    } else {
+      classOptionsHtml += '<option value="default">General Class</option>';
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'pk-login-overlay fixed inset-0 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `<div class="student-login-modal-card pk-login-card pk-login-student w-full max-w-md ${isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-800 text-white'} rounded-3xl shadow-2xl p-0 overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="pk-student-login-title">
+      <div class="pk-login-head flex items-center gap-4 p-6 ${isLight ? 'border-b border-slate-100' : 'border-b border-slate-800'}">
+        <span class="pk-login-ball" aria-hidden="true"></span>
+        <div>
+          <p class="pk-login-kicker text-xs font-bold tracking-widest uppercase ${isLight ? 'text-amber-600' : 'text-amber-400'}">Trainer check-in</p>
+          <h2 id="pk-student-login-title" class="pk-login-title text-2xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}">Student Login</h2>
+          <p class="pk-login-sub text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-0.5">Select your class and enter your 4-digit PIN.</p>
+        </div>
+      </div>
+      <form id="student-login-form-modal" class="p-6 space-y-4">
+        <div>
+          <label for="student-class-modal" class="block text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'} mb-1.5">Class</label>
+          <select id="student-class-modal" class="w-full ${isLight ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-slate-800/90 border-slate-700 text-white focus:border-indigo-400 focus:bg-slate-800'} border rounded-xl px-3.5 py-2.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+            ${classOptionsHtml}
+          </select>
+        </div>
+        <div>
+          <label for="home-student-name-modal" class="block text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'} mb-1.5">Student Name</label>
+          <input id="home-student-name-modal" type="text" placeholder="Your Name" autocomplete="name" class="w-full ${isLight ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-slate-800/90 border-slate-700 text-white focus:border-indigo-400 focus:bg-slate-800'} border rounded-xl px-3.5 py-2.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+        </div>
+        <div>
+          <label for="student-pin-modal" class="block text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'} mb-1.5">4-Digit Student PIN</label>
+          <input id="student-pin-modal" type="password" placeholder="Your 4-Digit PIN" inputmode="numeric" maxlength="4" autocomplete="off" class="w-full ${isLight ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-slate-800/90 border-slate-700 text-white focus:border-indigo-400 focus:bg-slate-800'} border rounded-xl px-3.5 py-2.5 text-sm tracking-widest text-center font-mono font-bold transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20" required>
+        </div>
+        <p id="student-error-modal" class="text-red-400 text-xs text-center font-semibold hidden py-2.5 px-3 rounded-xl bg-red-500/10 border border-red-500/20" role="alert" aria-live="polite"></p>
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="btn-student-submit flex-1 rounded-full px-5 py-3 font-semibold text-sm ${isLight ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20' : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20'} shadow-md transition-all active:scale-95 disabled:opacity-50">Let's go!</button>
+          <button type="button" id="student-cancel-btn-modal" class="btn-student-cancel flex-1 rounded-full px-5 py-3 font-semibold text-sm ${isLight ? 'border-slate-300 hover:bg-slate-100 text-slate-700' : 'border-slate-700 hover:bg-slate-800 text-slate-300'} border transition-all active:scale-95">Cancel</button>
+        </div>
+      </form>
+    </div>`;
+    document.body.appendChild(modal);
+
+    const classSelect = modal.querySelector('#student-class-modal');
+    const nameInput = modal.querySelector('#home-student-name-modal');
+    const pinInput = modal.querySelector('#student-pin-modal');
+    const errorEl = modal.querySelector('#student-error-modal');
+    const submitButton = modal.querySelector('button[type="submit"]');
+
+    [classSelect, nameInput, pinInput].forEach(el => el?.addEventListener('input', () => errorEl?.classList.add('hidden')));
+    pinInput?.addEventListener('input', () => {
+      pinInput.value = pinInput.value.replace(/\D/g, '').slice(0, 4);
+    });
+
+    modal.querySelector('#student-login-form-modal').addEventListener('submit', async e => {
+      e.preventDefault();
+      const classVal = classSelect.value;
+      const name = nameInput.value.trim().replace(/\s+/g, ' ');
+      const pin = pinInput.value.trim();
+      errorEl.classList.add('hidden');
+
+      if (!classVal) { errorEl.textContent = 'Please select your class.'; errorEl.classList.remove('hidden'); classSelect.focus(); return; }
+      if (!name) { errorEl.textContent = 'Please enter your student name.'; errorEl.classList.remove('hidden'); nameInput.focus(); return; }
+      if (!pin || pin.length !== 4) { errorEl.textContent = 'Please enter your 4-digit PIN.'; errorEl.classList.remove('hidden'); pinInput.focus(); return; }
+
+      submitButton.disabled = true;
+      submitButton.setAttribute('aria-busy', 'true');
+
+      const auth = await authenticateStudentLoginAsync(name, pin, classVal);
+      if (!auth || !auth.ok) {
+        errorEl.textContent = (auth && auth.error) ? auth.error : 'Name or PIN incorrect for this class.';
+        errorEl.classList.remove('hidden');
+        submitButton.disabled = false;
+        submitButton.removeAttribute('aria-busy');
+        return;
+      }
+
+      const student = auth.student;
+      const classRec = auth.classRecord;
+      currentRole = 'student';
+      currentStudent = student.student_name;
+      currentStudentPin = pin;
+      currentStudentSchool = classRec.school_name || student.school_name || '';
+      currentStudentClass = classRec.class_name || student.class_name || '';
+      currentStudentClassId = String(classRec.__backendId || classRec.id || auth.classId || '');
+      window.navSchool = currentStudentSchool;
+      window.navClass = currentStudentClass;
+
+      try {
+        localStorage.setItem('pokeayman-last-student-class', currentStudentClassId || classVal);
+        sessionStorage.setItem('pokeayman-student-session', JSON.stringify({
+          studentId: auth.studentId,
+          activeClassId: currentStudentClassId,
+          studentName: currentStudent,
+          navSchool: currentStudentSchool,
+          navClass: currentStudentClass
+        }));
+      } catch (_) {}
+
+      try {
+        await loadStudentProfile({
+          id: auth.studentId || student.__backendId || student.id,
+          name: student.student_name,
+          pin,
+          school: currentStudentSchool,
+          className: currentStudentClass
+        });
+      } catch (error) {
+        currentRole = ''; currentStudentRecordId = ''; currentStudentLoading = false;
+        errorEl.textContent = 'We could not load your student profile. Please try again.';
+        errorEl.classList.remove('hidden');
+        submitButton.disabled = false; submitButton.removeAttribute('aria-busy');
+        return;
+      }
+
+      if (!currentStudentRecordId) {
+        currentStudentRecordId = String(auth.studentId || student.__backendId || student.id || '');
+      }
+
+      modal.remove();
+      enterApp();
+    });
+
+    modal.querySelector('#student-cancel-btn-modal').addEventListener('click', () => modal.remove());
+  } catch (err) {
+    console.error('Failed to open Student Login modal:', err);
   }
+}
+window.openStudentLoginModal = openStudentLoginModal;
 
-  const modal = document.createElement('div');
-  modal.className = 'pk-login-overlay fixed inset-0 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="student-login-modal-card pk-login-card pk-login-student w-full max-w-md ${isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-800 text-white'} rounded-3xl shadow-2xl p-0 overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="pk-student-login-title">
-    <div class="pk-login-head flex items-center gap-4 p-6 ${isLight ? 'border-b border-slate-100' : 'border-b border-slate-800'}">
-      <span class="pk-login-ball" aria-hidden="true"></span>
-      <div>
-        <p class="pk-login-kicker text-xs font-bold tracking-widest uppercase ${isLight ? 'text-amber-600' : 'text-amber-400'}">Trainer check-in</p>
-        <h2 id="pk-student-login-title" class="pk-login-title text-2xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}">Student Login</h2>
-        <p class="pk-login-sub text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-0.5">Select your class and enter your 4-digit PIN.</p>
-      </div>
-    </div>
-    <form id="student-login-form-modal" class="p-6 space-y-4">
-      <div>
-        <label for="student-class-modal" class="block text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'} mb-1.5">Class</label>
-        <select id="student-class-modal" class="w-full ${isLight ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-slate-800/90 border-slate-700 text-white focus:border-indigo-400 focus:bg-slate-800'} border rounded-xl px-3.5 py-2.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20" required>
-          ${classOptionsHtml}
-        </select>
-      </div>
-      <div>
-        <label for="home-student-name-modal" class="block text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'} mb-1.5">Student Name</label>
-        <input id="home-student-name-modal" type="text" placeholder="Your Name" autocomplete="name" class="w-full ${isLight ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-slate-800/90 border-slate-700 text-white focus:border-indigo-400 focus:bg-slate-800'} border rounded-xl px-3.5 py-2.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20" required>
-      </div>
-      <div>
-        <label for="student-pin-modal" class="block text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-600' : 'text-slate-400'} mb-1.5">4-Digit Student PIN</label>
-        <input id="student-pin-modal" type="password" placeholder="Your 4-Digit PIN" inputmode="numeric" maxlength="4" autocomplete="off" class="w-full ${isLight ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-indigo-500 focus:bg-white' : 'bg-slate-800/90 border-slate-700 text-white focus:border-indigo-400 focus:bg-slate-800'} border rounded-xl px-3.5 py-2.5 text-sm tracking-widest text-center font-mono font-bold transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20" required>
-      </div>
-      <p id="student-error-modal" class="text-red-400 text-xs text-center font-semibold hidden py-2.5 px-3 rounded-xl bg-red-500/10 border border-red-500/20" role="alert" aria-live="polite"></p>
-      <div class="flex gap-3 pt-2">
-        <button type="submit" class="btn-student-submit flex-1 rounded-full px-5 py-3 font-semibold text-sm ${isLight ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20' : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/20'} shadow-md transition-all active:scale-95 disabled:opacity-50">Let's go!</button>
-        <button type="button" id="student-cancel-btn-modal" class="btn-student-cancel flex-1 rounded-full px-5 py-3 font-semibold text-sm ${isLight ? 'border-slate-300 hover:bg-slate-100 text-slate-700' : 'border-slate-700 hover:bg-slate-800 text-slate-300'} border transition-all active:scale-95">Cancel</button>
-      </div>
-    </form>
-  </div>`;
-  document.body.appendChild(modal);
-
-  const classSelect = modal.querySelector('#student-class-modal');
-  const nameInput = modal.querySelector('#home-student-name-modal');
-  const pinInput = modal.querySelector('#student-pin-modal');
-  const errorEl = modal.querySelector('#student-error-modal');
-  const submitButton = modal.querySelector('button[type="submit"]');
-
-  [classSelect, nameInput, pinInput].forEach(el => el?.addEventListener('input', () => errorEl?.classList.add('hidden')));
-  pinInput?.addEventListener('input', () => {
-    pinInput.value = pinInput.value.replace(/\D/g, '').slice(0, 4);
-  });
-
-  modal.querySelector('#student-login-form-modal').addEventListener('submit', async e => {
-    e.preventDefault();
-    const classVal = classSelect.value;
-    const name = nameInput.value.trim().replace(/\s+/g, ' ');
-    const pin = pinInput.value.trim();
-    errorEl.classList.add('hidden');
-
-    if (!classVal) { errorEl.textContent = 'Please select your class.'; errorEl.classList.remove('hidden'); classSelect.focus(); return; }
-    if (!name) { errorEl.textContent = 'Please enter your student name.'; errorEl.classList.remove('hidden'); nameInput.focus(); return; }
-    if (!pin || pin.length !== 4) { errorEl.textContent = 'Please enter your 4-digit PIN.'; errorEl.classList.remove('hidden'); pinInput.focus(); return; }
-
-    submitButton.disabled = true;
-    submitButton.setAttribute('aria-busy', 'true');
-
-    const auth = await authenticateStudentLoginAsync(name, pin, classVal);
-    if (!auth || !auth.ok) {
-      errorEl.textContent = (auth && auth.error) ? auth.error : 'Name or PIN incorrect for this class.';
-      errorEl.classList.remove('hidden');
-      submitButton.disabled = false;
-      submitButton.removeAttribute('aria-busy');
-      return;
-    }
-
-    const student = auth.student;
-    const classRec = auth.classRecord;
-    currentRole = 'student';
-    currentStudent = student.student_name;
-    currentStudentPin = pin;
-    currentStudentSchool = classRec.school_name || student.school_name || '';
-    currentStudentClass = classRec.class_name || student.class_name || '';
-    currentStudentClassId = String(classRec.__backendId || classRec.id || auth.classId || '');
-    window.navSchool = currentStudentSchool;
-    window.navClass = currentStudentClass;
-
-    try {
-      localStorage.setItem('pokeayman-last-student-class', currentStudentClassId || classVal);
-      sessionStorage.setItem('pokeayman-student-session', JSON.stringify({
-        studentId: auth.studentId,
-        activeClassId: currentStudentClassId,
-        studentName: currentStudent,
-        navSchool: currentStudentSchool,
-        navClass: currentStudentClass
-      }));
-    } catch (_) {}
-
-    try {
-      await loadStudentProfile({
-        id: auth.studentId || student.__backendId || student.id,
-        name: student.student_name,
-        pin,
-        school: currentStudentSchool,
-        className: currentStudentClass
-      });
-    } catch (error) {
-      currentRole = ''; currentStudentRecordId = ''; currentStudentLoading = false;
-      errorEl.textContent = 'We could not load your student profile. Please try again.';
-      errorEl.classList.remove('hidden');
-      submitButton.disabled = false; submitButton.removeAttribute('aria-busy');
-      return;
-    }
-
-    if (!currentStudentRecordId) {
-      currentStudentRecordId = String(auth.studentId || student.__backendId || student.id || '');
-    }
-
-    modal.remove();
-    enterApp();
-  });
-
-  modal.querySelector('#student-cancel-btn-modal').addEventListener('click', () => modal.remove());
+// Direct click binding for Student Adventure button
+document.getElementById('home-student-entry')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  openStudentLoginModal();
 });
+document.getElementById('student-login-toggle')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  openStudentLoginModal();
+});
+
 
 // Enter the teacher dashboard for a signed-in Cloud teacher account.
 let pkTeacherEntering = false;
