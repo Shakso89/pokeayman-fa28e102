@@ -91,9 +91,12 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
               .filter((it: any) => it.word.length > 0 && it.word.length <= 60)
               .slice(0, 30);
           } else if (typeof input.words === "string") {
-            rawItems = input.words
-              .split(/[\s,]+/)
-              .map((w: string) => ({ word: w.trim().replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, ""), picture: "" }))
+            const clean = input.words.replace(/\.+$/, "").trim();
+            const wordsList = (clean.includes(",") || clean.includes("\n"))
+              ? clean.split(/[\n,]+/).map((w) => w.trim()).filter((w) => w.length > 0)
+              : clean.split(/\s+/).map((w) => w.trim()).filter((w) => w.length > 0);
+            rawItems = wordsList
+              .map((w: string) => ({ word: w.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "").trim(), picture: "" }))
               .filter((it: any) => it.word.length > 0 && it.word.length <= 60)
               .slice(0, 30);
           }

@@ -54,7 +54,16 @@ export const Route = createFileRoute("/api/vocabulary-sentence")({
               picture: String(it.picture || it.context || "").trim().slice(0, 150),
             }));
           } else {
-            const rawWords = Array.isArray(input.words) ? input.words : String(input.words || "").split(/[\s,]+/);
+            let rawWords: string[] = [];
+            if (Array.isArray(input.words)) {
+              rawWords = input.words.map((w: any) => (typeof w === "object" ? String(w.word || "") : String(w || "")).trim());
+            } else {
+              const clean = String(input.words || "").replace(/\.+$/, "").trim();
+              const wordsList = (clean.includes(",") || clean.includes("\n"))
+                ? clean.split(/[\n,]+/).map((w) => w.trim()).filter((w) => w.length > 0)
+                : clean.split(/\s+/).map((w) => w.trim()).filter((w) => w.length > 0);
+              rawWords = wordsList.map((w) => w.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "").trim());
+            }
             rawItems = rawWords.map((w: any) => ({
               word: (typeof w === "object" ? String(w.word || "") : String(w || "")).trim(),
               picture: "",

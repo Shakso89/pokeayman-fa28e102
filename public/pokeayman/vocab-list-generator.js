@@ -8,13 +8,30 @@
   let uploadedPhotoBase64 = '';
   let selectedPhotoCount = 5;
 
-  function parseWordsFromText(text) {
-    return String(text || '')
-      .trim()
-      .split(/[\s,]+/)
+  function parseWordInput(input) {
+    // Clean trailing periods and trim
+    const clean = String(input || '').replace(/\.+$/, '').trim();
+    if (!clean) return [];
+
+    // If commas or newlines are present, split ONLY by those delimiters
+    if (clean.includes(',') || clean.includes('\n')) {
+      return clean
+        .split(/[\n,]+/)
+        .map(w => w.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim())
+        .filter(w => w.length > 0 && w.length <= 60);
+    }
+
+    // Fallback: If no commas or newlines exist, split by spaces
+    return clean
+      .split(/\s+/)
       .map(w => w.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, '').trim())
       .filter(w => w.length > 0 && w.length <= 60);
   }
+
+  function parseWordsFromText(text) {
+    return parseWordInput(text);
+  }
+  window.parseWordInput = parseWordInput;
 
   // Mirrors the server rule: a sentence is only usable when it actually uses the
   // teacher's word (or the plural of it), never a different word.
@@ -134,8 +151,8 @@
           <!-- Mode 1: Words with spaces between -->
           <div id="vocab-gen-section-words" style="display:flex; flex-direction:column; gap:6px;">
             <label class="teacher-vb-create-field">
-              <span>Enter words with spaces between (or commas)</span>
-              <textarea id="vocab-gen-text-input" rows="3" placeholder="e.g. pencil cat apple blue book dog lion" style="width:100%; border-radius:8px; padding:10px 12px; background:var(--pk-surface, #0b1220); color:#fff; border:1px solid rgba(148,163,184,.35); font-size:14px; resize:none;"></textarea>
+              <span>Enter words separated by commas (use commas for multi-word phrases like 'ice cream')</span>
+              <textarea id="vocab-gen-text-input" rows="3" placeholder="e.g. pencil, cat, ice cream, blue book, dog" style="width:100%; border-radius:8px; padding:10px 12px; background:var(--pk-surface, #0b1220); color:#fff; border:1px solid rgba(148,163,184,.35); font-size:14px; resize:none;"></textarea>
             </label>
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; color:rgba(255,255,255,0.7);">
               <span id="vocab-gen-words-count-label">0 words detected</span>
