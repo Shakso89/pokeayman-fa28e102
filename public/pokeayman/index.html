@@ -10905,8 +10905,8 @@ function setCurrentStudentRecord(record) {
 function getStudentRecordByStableId(stableId) {
   const rawId = String(stableId || '').trim();
   if (!rawId) return null;
-  const legacyIdFields = ['student_id', 'studentId', 'user_id', 'userId', 'account_id', 'accountId', 'canonicalStudentId', 'linkedStudentId', 'profile_id', 'profileId'];
-  const matchesStableId = record => legacyIdFields.some(field => String(record?.[field] || '').trim() === rawId) || String(record?.__backendId || '').trim() === rawId;
+  const legacyIdFields = ['student_id', 'studentId', 'id', 'user_id', 'userId', 'account_id', 'accountId', 'canonicalStudentId', 'linkedStudentId', 'profile_id', 'profileId'];
+  const matchesStableId = record => legacyIdFields.some(field => String(record?.[field] || '').trim() === rawId) || String(record?.__backendId || record?.id || '').trim() === rawId;
   const direct = allData.find(record => record.type === 'student' && matchesStableId(record)) || null;
   const membership = allData.find(record => (record.type === 'student_membership' || record.type === 'student') && matchesStableId(record)) || null;
   const explicitCanonicalId = direct ? canonicalIdentityFromRecord(direct) : membership ? legacyIdFields.map(field => String(membership[field] || '').trim()).find(Boolean) : '';
@@ -10923,8 +10923,17 @@ const canonicalStudentLocks = new Map();
 let canonicalStudentIndexData = null;
 let canonicalStudentViewsData = null;
 let canonicalStudentViewsCache = [];
+function generateUuid() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    try { return crypto.randomUUID(); } catch (_) {}
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
 function canonicalIdentityFromRecord(record) {
-  return String(record?.student_id || record?.user_id || record?.profile_id || record?.account_id || '').trim();
+  return String(record?.student_id || record?.studentId || record?.id || record?.__backendId || record?.user_id || record?.profile_id || record?.account_id || '').trim();
 }
 function rebuildCanonicalStudentIndex() {
   canonicalStudentAccounts.clear(); canonicalStudentAliases.clear();
@@ -10935,14 +10944,16 @@ function rebuildCanonicalStudentIndex() {
     const key = explicit || studentStableIdentity(record);
     if (!key) return;
     const previous = canonicalStudentAccounts.get(key);
-    const previousBackendId = String(previous?.__backendId || '').trim();
-    const recordBackendId = String(record.__backendId || '').trim();
+    const previousBackendId = String(previous?.__backendId || previous?.id || '').trim();
+    const recordBackendId = String(record.__backendId || record.id || '').trim();
     const authoritativeRow = previous && previousBackendId && recordBackendId === previousBackendId;
     const merged = authoritativeRow ? { ...record } : (previous ? { ...previous, ...record } : { ...record });
     merged.__backendId = previousBackendId || recordBackendId;
     merged.student_id = key;
+    merged.student_name = merged.student_name || merged.name || record.student_name || record.name || '';
+    merged.name = merged.name || merged.student_name || record.name || record.student_name || '';
     if (authoritativeRow || !previous || studentCompletenessScore(record) > studentCompletenessScore(previous) || (studentCompletenessScore(record) === studentCompletenessScore(previous) && !previousBackendId)) canonicalStudentAccounts.set(key, merged);
-    [record.__backendId, explicit, record.user_id, record.profile_id, record.account_id, record.student_id].filter(Boolean).forEach(alias => canonicalStudentAliases.set(String(alias), key));
+    [record.__backendId, record.id, explicit, record.user_id, record.profile_id, record.account_id, record.student_id].filter(Boolean).forEach(alias => canonicalStudentAliases.set(String(alias), key));
   });
 
   // Pass 2: Index 'student_membership' and auxiliary class link records
@@ -10953,17 +10964,26 @@ function rebuildCanonicalStudentIndex() {
     const key = linkedKey || studentStableIdentity(record);
     if (!key) return;
     if (record.__backendId) canonicalStudentAliases.set(String(record.__backendId), key);
+    if (record.id) canonicalStudentAliases.set(String(record.id), key);
     if (explicit) canonicalStudentAliases.set(String(explicit), key);
     const previous = canonicalStudentAccounts.get(key);
     if (previous) {
       // Retain canonical profile; do not let empty membership attributes overwrite student profile fields
       const merged = {
+        ...record,
         ...previous,
-        student_id: previous.student_id || key
+        student_id: previous.student_id || key,
+        student_name: previous.student_name || previous.name || record.student_name || record.name || '',
+        name: previous.name || previous.student_name || record.name || record.student_name || ''
       };
       canonicalStudentAccounts.set(key, merged);
     } else {
-      const merged = { ...record, student_id: key };
+      const merged = {
+        ...record,
+        student_id: key,
+        student_name: record.student_name || record.name || '',
+        name: record.name || record.student_name || ''
+      };
       canonicalStudentAccounts.set(key, merged);
     }
   });
@@ -11602,15 +11622,13 @@ function getStudents(schoolName, className) {
 }
 function normalizeStudentDisplayName(value) { return String(value ?? '').trim().replace(/\s+/g, ' '); }
 function studentStableIdentity(record) {
-  const explicit = String(record?.student_id || record?.user_id || record?.profile_id || record?.account_id || '').trim();
+  const explicit = String(record?.student_id || record?.studentId || record?.id || record?.__backendId || record?.user_id || record?.profile_id || record?.account_id || '').trim();
   if (explicit) return explicit;
-  // Legacy linked enrollments commonly carry the same canonical identity in
-  // class_memberships. Prefer that durable linkage before the class PIN fallback.
-  const name = normalizeStudentIdentity(record?.student_name);
+  const name = normalizeStudentIdentity(record?.student_name || record?.name);
   const memberships = normalizeStudentMembershipValues(record?.class_memberships, []).map(value => String(value).trim().toLocaleLowerCase()).filter(Boolean).sort();
   if (name && memberships.length) return `legacy-linked:${name}|classes:${memberships.join('||')}`;
-  const pin = String(record?.student_pin || '').trim();
-  return pin && name ? `legacy:${name}|pin:${pin}` : String(record?.__backendId || '').trim();
+  const pin = String(record?.student_pin || record?.pin || '').trim();
+  return pin && name ? `legacy:${name}|pin:${pin}` : String(record?.__backendId || record?.id || '').trim();
 }
 function studentCompletenessScore(record) {
   return Object.values(record || {}).reduce((score, value) => score + (value !== '' && value !== null && value !== undefined ? 1 : 0), 0);
@@ -16041,28 +16059,30 @@ function applyGlobalAchievementBadges(root = document) {
 function renderClassRosterCard(student, rank, viewOnly = false, pokemonByOwner = null, valueFor = null) {
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const jsString = value => escape(JSON.stringify(String(value ?? '')));
-  const name = escape(student.student_name);
-  const count = pokemonByOwner ? (pokemonByOwner.get(student.student_name) || []).length : getPokemons().filter(p => p.owner === student.student_name).length;
+  const studentDisplayName = student.student_name || student.name || 'Student';
+  const name = escape(studentDisplayName);
+  const studentKey = String(student.__membershipBackendId || student.__backendId || student.id || student.student_id || studentDisplayName).trim();
+  const count = typeof getOwnedPokemonForStudent === 'function' ? getOwnedPokemonForStudent(student).length : 0;
   const artwork = Number(student.avatar_pokemon_id);
-  const onOpen = viewOnly ? `openLeaderboardStudentCollection(${jsString(student.student_name)})` : `openStudentProfileById(${jsString(student.__backendId)})`;
-  return `<div class="trainer-student-card ${rank >= 0 ? `class-rank-${rank + 1}` : ''}" data-student-id="${escape(student.__backendId)}" data-student-name="${name}" role="button" tabindex="0" aria-label="View ${name}'s profile" onclick="${onOpen}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">
+  const onOpen = viewOnly ? `openLeaderboardStudentCollection(${jsString(studentKey)})` : `openStudentProfileById(${jsString(studentKey)})`;
+  return `<div class="trainer-student-card ${rank >= 0 ? `class-rank-${rank + 1}` : ''}" data-student-id="${escape(student.__backendId || student.id || studentKey)}" data-student-name="${name}" role="button" tabindex="0" aria-label="View ${name}'s profile" onclick="${onOpen}" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();this.click()}">
     ${rank >= 0 ? `<span class="student-rank" aria-label="Class rank ${rank + 1}">#${rank + 1}</span>` : ''}
-    <div class="student-avatar-stage">${Number.isInteger(artwork) && artwork > 0 ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${artwork}.png" alt="${name}'s Pokémon avatar" loading="lazy" decoding="async">` : `<span class="student-avatar-initial" aria-label="${name}'s initials">${escape(Array.from(student.student_name || '?')[0].toUpperCase())}</span>`}</div>
+    <div class="student-avatar-stage">${Number.isInteger(artwork) && artwork > 0 ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${artwork}.png" alt="${name}'s Pokémon avatar" loading="lazy" decoding="async">` : `<span class="student-avatar-initial" aria-label="${name}'s initials">${escape(Array.from(studentDisplayName || '?')[0].toUpperCase())}</span>`}</div>
     <h3 class="student-roster-name">${name}</h3>
     <p class="student-roster-coins">${Number(student.coins) || 0}<span>coins</span></p>
     <p class="student-roster-count">${count} Pokémon${viewOnly ? ` · ${Math.floor(valueFor ? valueFor(student) : getStudentTotalValue(student))} value` : ''}</p>
-    ${viewOnly ? '' : `<button type="button" class="btn-outline student-roster-edit" title="Edit ${name}" aria-label="Edit ${name}" onclick="event.stopPropagation();openEditStudentModal(${jsString(student.student_name)})">✎</button>`}
+    ${viewOnly ? '' : `<button type="button" class="btn-outline student-roster-edit" title="Edit ${name}" aria-label="Edit ${name}" onclick="event.stopPropagation();openEditStudentModal(${jsString(studentKey)})">✎</button>`}
   </div>`;
 }
 
 function getTop3Students() {
   const students = getAllStudents().sort((a, b) => (b.coins || 0) - (a.coins || 0));
-  return students.slice(0, 3).map(s => s.student_name);
+  return students.slice(0, 3).map(s => s.student_name || s.name);
 }
 
 function getStudentTotalValue(student) {
-  let value = student.coins || 0;
-  const myPokes = getPokemons().filter(p => p.owner === student.student_name);
+  let value = Number(student?.coins || 0);
+  const myPokes = typeof getOwnedPokemonForStudent === 'function' ? getOwnedPokemonForStudent(student) : [];
   myPokes.forEach(p => {
     const maxHP = getMaxHP(p);
     const currentHP = getHealedHP(p);
@@ -16074,30 +16094,15 @@ function getStudentTotalValue(student) {
 }
 
 function getClassRosterMetrics(students) {
-  const pokemonByOwner = new Map();
-  getPokemons().forEach(pokemon => {
-    const owner = String(pokemon.owner || '');
-    if (!owner) return;
-    const owned = pokemonByOwner.get(owner) || [];
-    owned.push(pokemon);
-    pokemonByOwner.set(owner, owned);
-  });
   const values = new Map();
   const valueFor = student => {
-    const key = String(student.__canonicalStudentId || student.__backendId || student.student_name || '');
+    const key = String(student.__canonicalStudentId || student.__backendId || student.id || student.student_id || student.student_name || '');
     if (!values.has(key)) {
-      const pokemons = pokemonByOwner.get(student.student_name) || [];
-      let value = student.coins || 0;
-      pokemons.forEach(pokemon => {
-        const maxHP = getMaxHP(pokemon);
-        const currentHP = getHealedHP(pokemon);
-        value += (pokemon.pokemon_price || 0) * Math.max(0, Math.min(1, currentHP / maxHP));
-      });
-      values.set(key, value);
+      values.set(key, getStudentTotalValue(student));
     }
     return values.get(key);
   };
-  return { pokemonByOwner, valueFor };
+  return { valueFor };
 }
 
 function getTop3StudentsByValue() {
@@ -19462,13 +19467,12 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
       const classRec = getClasses(navSchool).find(c => c.class_name === navClass) || allData.find(c => c.type === 'class' && c.school_name === navSchool && c.class_name === navClass);
       const classId = classRec ? (classRec.__backendId || classRec.id || '') : '';
       
-      const newStudentId = (typeof crypto !== 'undefined' && crypto.randomUUID)
-        ? crypto.randomUUID()
-        : ('student-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9));
+      const newStudentId = generateUuid();
+      const trimmedName = name.trim();
 
       const existingPins = new Set(
         allData
-          .filter(r => r.type === 'student' && normalizeStudentIdentity(r.student_name) === normalizeStudentIdentity(name))
+          .filter(r => r.type === 'student' && normalizeStudentIdentity(r.student_name || r.name) === normalizeStudentIdentity(trimmedName))
           .map(r => String(r.student_pin || r.pin || '').trim().slice(0, 4))
           .filter(Boolean)
       );
@@ -19481,18 +19485,48 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
         attempts++;
       }
 
+      let canonicalNewId = newStudentId;
+      const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+      if (sb) {
+        try {
+          const { data: sbSt, error: sbErr } = await sb.from('students').insert({
+            id: newStudentId,
+            name: trimmedName,
+            pin: distinctPin,
+            coins: 0,
+            power: 0,
+            avatar_pokemon_id: 0
+          }).select().maybeSingle();
+          if (sbSt?.id) {
+            canonicalNewId = String(sbSt.id);
+          } else if (sbErr) {
+            console.warn('Supabase student insert error:', sbErr);
+          }
+          if (canonicalNewId && classId) {
+            await sb.from('class_students').insert({
+              class_id: classId,
+              student_id: canonicalNewId
+            });
+          }
+        } catch (e) {
+          console.warn('Supabase student insert fallback:', e);
+        }
+      }
+
       const newStudentPayload = {
         type: 'student',
-        id: newStudentId,
-        student_id: newStudentId,
-        __backendId: newStudentId,
+        id: canonicalNewId,
+        student_id: canonicalNewId,
+        __backendId: canonicalNewId,
         school_name: navSchool,
         class_name: navClass,
         class_id: classId,
-        student_name: name,
+        student_name: trimmedName,
+        name: trimmedName,
         student_pin: distinctPin,
         pin: distinctPin,
         coins: 0,
+        power: 0,
         badges: [],
         avatar_pokemon_id: 0,
         pokemon_id: 0,
@@ -19532,10 +19566,17 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
       };
 
       const res = await window.dataSdk.create(newStudentPayload);
-      const createdId = res?.data?.__backendId || res?.data?.id || res?.data?.student_id || newStudentId;
+      const createdId = res?.data?.__backendId || res?.data?.id || res?.data?.student_id || canonicalNewId;
 
       if (typeof allData !== 'undefined') {
-        const localRecord = { ...newStudentPayload, __backendId: createdId, id: createdId, student_id: createdId };
+        const localRecord = {
+          ...newStudentPayload,
+          __backendId: createdId,
+          id: createdId,
+          student_id: createdId,
+          student_name: trimmedName,
+          name: trimmedName
+        };
         allData.push(localRecord);
       }
 
@@ -19546,6 +19587,8 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
           class_id: classId,
           school_name: navSchool,
           class_name: navClass,
+          student_name: trimmedName,
+          name: trimmedName,
           created_at: new Date().toISOString()
         };
         await window.dataSdk.create(classStudentPayload);
@@ -19554,31 +19597,10 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
         }
       }
 
-      const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
-      if (sb) {
-        try {
-          const { data: sbSt } = await sb.from('students').insert({
-            id: createdId,
-            name,
-            pin: distinctPin,
-            coins: 0,
-            avatar_pokemon_id: 0
-          }).select().maybeSingle();
-          if (sbSt && classId) {
-            await sb.from('class_students').insert({
-              class_id: classId,
-              student_id: sbSt.id
-            });
-          }
-        } catch (e) {
-          console.warn('Supabase student insert fallback:', e);
-        }
-      }
-
       rebuildCanonicalStudentIndex();
       document.getElementById('new-student-name').value = '';
       modal.remove();
-      toast(`New student ${name} created for ${navClass} with PIN ${distinctPin}!`);
+      toast(`New student ${trimmedName} created for ${navClass} with PIN ${distinctPin}!`);
       if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
     });
 
@@ -19591,16 +19613,48 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
   const classRec = getClasses(navSchool).find(c => c.class_name === navClass) || allData.find(c => c.type === 'class' && c.school_name === navSchool && c.class_name === navClass);
   const classId = classRec ? (classRec.__backendId || classRec.id || '') : '';
   const defaultPin = '1234';
+  const newStudentId = generateUuid();
+  const trimmedName = name.trim();
 
-  const res = await window.dataSdk.create({
+  let canonicalNewId = newStudentId;
+  const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+  if (sb) {
+    try {
+      const { data: sbSt } = await sb.from('students').insert({
+        id: newStudentId,
+        name: trimmedName,
+        pin: defaultPin,
+        coins: 0,
+        power: 0,
+        avatar_pokemon_id: 0
+      }).select().maybeSingle();
+      if (sbSt?.id) canonicalNewId = String(sbSt.id);
+      if (canonicalNewId && classId) {
+        await sb.from('class_students').insert({
+          class_id: classId,
+          student_id: canonicalNewId
+        });
+      }
+    } catch (e) {
+      console.warn('Supabase student insert fallback:', e);
+    }
+  }
+
+  const regStudentPayload = {
     type: 'student',
+    id: canonicalNewId,
+    student_id: canonicalNewId,
+    __backendId: canonicalNewId,
     school_name: navSchool,
     class_name: navClass,
     class_id: classId,
-    student_name: name,
+    student_name: trimmedName,
+    name: trimmedName,
     student_pin: defaultPin,
     pin: defaultPin,
     coins: 0,
+    power: 0,
+    badges: [],
     avatar_pokemon_id: 0,
     pokemon_id: 0,
     pokemon_name: '',
@@ -19636,39 +19690,33 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
     quiz_created_by: '',
     quiz_class: '',
     quiz_submitted_answers: ''
-  });
+  };
 
-  const createdId = res?.data?.__backendId || res?.data?.id || '';
+  const res = await window.dataSdk.create(regStudentPayload);
+  const createdId = res?.data?.__backendId || res?.data?.id || res?.data?.student_id || canonicalNewId;
+
+  if (typeof allData !== 'undefined') {
+    allData.push({ ...regStudentPayload, __backendId: createdId, id: createdId, student_id: createdId });
+  }
+
   if (createdId && classId) {
-    await window.dataSdk.create({
+    const classStudentPayload = {
       type: 'class_student',
       student_id: createdId,
       class_id: classId,
       school_name: navSchool,
       class_name: navClass,
+      student_name: trimmedName,
+      name: trimmedName,
       created_at: new Date().toISOString()
-    });
-  }
-
-  const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
-  if (sb) {
-    try {
-      const { data: sbSt } = await sb.from('students').insert({
-        name,
-        pin: defaultPin,
-        coins: 0,
-        avatar_pokemon_id: 0
-      }).select().maybeSingle();
-      if (sbSt && classId) {
-        await sb.from('class_students').insert({
-          class_id: classId,
-          student_id: sbSt.id
-        });
-      }
-    } catch (e) {
-      console.warn('Supabase student insert fallback:', e);
+    };
+    await window.dataSdk.create(classStudentPayload);
+    if (typeof allData !== 'undefined') {
+      allData.push({ ...classStudentPayload, __backendId: 'cs-' + createdId });
     }
   }
+
+  rebuildCanonicalStudentIndex();
 
   document.getElementById('new-student-name').value = '';
   toast(`${name} added with default PIN ${defaultPin}!`);
@@ -21107,24 +21155,31 @@ document.getElementById('create-folder-btn')?.addEventListener('click', async ()
 
 // Folders & Archive
 function openStudentProfileById(studentId) {
-  const membership = getStudents(navSchool, navClass).find(record => String(record.__membershipBackendId || record.__backendId || '').trim() === String(studentId || '').trim());
+  const membership = getStudents(navSchool, navClass).find(record => String(record.__membershipBackendId || record.__backendId || record.id || '').trim() === String(studentId || '').trim())
+    || getAllStudents().find(record => String(record.__membershipBackendId || record.__backendId || record.id || '').trim() === String(studentId || '').trim());
   const canonicalId = String(membership?.__canonicalStudentId || membership?.student_id || studentId || '').trim();
-  const selectedRecord = canonicalId ? getStudentRecordByStableId(canonicalId) : null;
+  const selectedRecord = (canonicalId ? getStudentRecordByStableId(canonicalId) : null) || membership;
   if (!selectedRecord) {
     toast('The class membership is valid, but its permanent student profile is unavailable. Refresh the class data and try again.');
     return;
   }
-  openStudentProfile(selectedRecord.student_name, canonicalId, selectedRecord, membership);
+  const resolvedName = selectedRecord.student_name || selectedRecord.name || membership?.student_name || membership?.name || '';
+  openStudentProfile(resolvedName, canonicalId, selectedRecord, membership);
 }
 function openStudentProfile(studentName, canonicalId = '', canonicalAccount = null, membership = null) {
-  const selectedRecord = canonicalAccount || (canonicalId ? getStudentRecordByStableId(canonicalId) : null);
-  profileStudent = selectedRecord;
+  const selectedRecord = canonicalAccount || (canonicalId ? getStudentRecordByStableId(canonicalId) : null) || membership;
+  profileStudent = selectedRecord ? { ...selectedRecord } : null;
+  if (profileStudent) {
+    const validName = profileStudent.student_name || profileStudent.name || membership?.student_name || membership?.name || studentName || 'Student';
+    profileStudent.student_name = validName;
+    profileStudent.name = validName;
+  }
   if (!profileStudent) {
     toast('Student record not found. Please refresh the class data.');
     return;
   }
-  currentStudentRecordId = profileStudent.__backendId;
-  profileTarget = { canonicalId: String(profileStudent.__backendId || ''), school: String(navSchool || ''), className: String(navClass || ''), loading: false };
+  currentStudentRecordId = profileStudent.__backendId || profileStudent.id || canonicalId;
+  profileTarget = { canonicalId: String(currentStudentRecordId || ''), school: String(navSchool || ''), className: String(navClass || ''), loading: false };
   window.__pokeymanNavigationDiagnostics = window.__pokeymanNavigationDiagnostics || [];
   window.__pokeymanNavigationDiagnostics.push({ destination: 'student-profile', canonicalStudentId: Boolean(profileTarget.canonicalId), loading: false, redirectReason: 'explicit-profile-open' });
   // Check if teacher is authorized: Admin OR school-assigned OR class-assigned to this class
@@ -21197,9 +21252,18 @@ window.handleProfileBackToClass = handleProfileBackToClass;function renderStuden
     enrolledClasses.push({ school_name: school, class_name: cls });
   };
 
-  const studentNameKey = normalizeStudentIdentity(profileStudent.student_name);
-  const matchingRecs = getAllStudents().filter(st => normalizeStudentIdentity(st.student_name) === studentNameKey);
-  const candidateRecs = matchingRecs.length ? matchingRecs : [profileStudent];
+  const targetId = String(profileStudent.__backendId || profileStudent.id || profileStudent.student_id || '').trim();
+  const canonicalKey = canonicalStudentKey(profileStudent);
+  
+  // Only match records belonging to THIS specific student account (never cross-link by display name)
+  const candidateRecs = allData.filter(st => {
+    if (st.type !== 'student' && st.type !== 'student_membership' && st.type !== 'class_student') return false;
+    const sid = String(st.student_id || st.studentId || st.__backendId || st.id || '').trim();
+    if (targetId && (sid === targetId || String(st.__backendId || st.id || '').trim() === targetId)) return true;
+    if (canonicalKey && canonicalStudentKey(st) === canonicalKey) return true;
+    return false;
+  });
+  if (!candidateRecs.length) candidateRecs.push(profileStudent);
   
   candidateRecs.forEach(rec => {
     normalizeStudentMembershipValues(rec.class_memberships, []).forEach(val => {
@@ -21245,8 +21309,9 @@ window.handleProfileBackToClass = handleProfileBackToClass;function renderStuden
     if (adjustmentForm) adjustmentForm.style.display = 'flex';
   }
   
-  // Student name and avatar
-  document.getElementById('profile-student-name').textContent = `${profileStudent.student_name}`;
+  // Student name and avatar with robust fallback
+  const displayName = profileStudent?.name || profileStudent?.student_name || 'Student';
+  document.getElementById('profile-student-name').textContent = displayName;
 
   // Filter enrolled classes: teachers can only see and switch to their assigned classes (admins see all)
   const isTeacherAdmin = currentRole !== 'teacher' || currentTeacher === 'Ayman' || (typeof canAccessAdmin === 'function' && canAccessAdmin()) || (typeof isAymanTeacher === 'function' && isAymanTeacher()) || (typeof getEffectiveTeacherRole === 'function' && getEffectiveTeacherRole(currentTeacher) === 'admin');
@@ -28666,11 +28731,20 @@ document.head.appendChild(salarySchoolPopupStyles);
 function normalizeSheetRecord(record) {
   const normalized = { ...record };
   if (!normalized.type) {
-    if (normalized.school_name && !normalized.class_name && !normalized.student_name) normalized.type = 'school';
-    else if (normalized.class_name && normalized.class_pin && !normalized.student_name) normalized.type = 'class';
-    else if (normalized.student_name) normalized.type = 'student';
+    if (normalized.school_name && !normalized.class_name && !normalized.student_name && !normalized.name) normalized.type = 'school';
+    else if (normalized.class_name && normalized.class_pin && !normalized.student_name && !normalized.name) normalized.type = 'class';
+    else if (normalized.student_name || normalized.name) normalized.type = 'student';
   }
   if (normalized.type) normalized.type = String(normalized.type).trim().toLowerCase().replace(/[ -]+/g, '_');
+  if (['student', 'student_membership', 'class_student', 'class_membership'].includes(normalized.type)) {
+    if (!normalized.student_name && normalized.name) normalized.student_name = normalized.name;
+    if (!normalized.name && normalized.student_name) normalized.name = normalized.student_name;
+    if (!normalized.student_pin && normalized.pin) normalized.student_pin = normalized.pin;
+    if (!normalized.pin && normalized.student_pin) normalized.pin = normalized.student_pin;
+    if (!normalized.__backendId && normalized.id) normalized.__backendId = normalized.id;
+    if (!normalized.id && normalized.__backendId) normalized.id = normalized.__backendId;
+    if (!normalized.student_id && (normalized.id || normalized.__backendId)) normalized.student_id = normalized.id || normalized.__backendId;
+  }
   if (normalized.type === 'teacher') {
     const isAdm = typeof isTeacherAdminRecord === 'function' ? isTeacherAdminRecord(normalized) : (normalized.teacher_name === 'Ayman' || normalized.role === 'admin' || normalized.teacher_role === 'admin' || normalized.is_admin === true);
     if (!normalized.role) normalized.role = isAdm ? 'admin' : (typeof normalizeTeacherRole === 'function' ? normalizeTeacherRole(normalized.teacher_role || normalized.user_role) : (normalized.teacher_role || 'teacher')) || 'teacher';
