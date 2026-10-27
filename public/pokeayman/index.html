@@ -10767,6 +10767,42 @@ function currentTeacherZoneOwnerScope() {
 function normalizeTeacherRole(value) {
   return String(value || '').trim().toLocaleLowerCase().replace(/[\s-]+/g, '_');
 }
+function isTeacherAdminRecord(teacher) {
+  if (!teacher) return false;
+  if (typeof teacher === 'string') {
+    const clean = String(teacher).trim();
+    return clean === 'Ayman' || (typeof ADMIN_TEACHER !== 'undefined' && clean === ADMIN_TEACHER.name) || (typeof normalizeStudentIdentity === 'function' && normalizeStudentIdentity(clean) === 'ayman');
+  }
+  const cleanName = String(teacher.teacher_name || '').trim();
+  if (cleanName === 'Ayman' || (typeof ADMIN_TEACHER !== 'undefined' && cleanName === ADMIN_TEACHER.name) || (typeof normalizeStudentIdentity === 'function' && normalizeStudentIdentity(cleanName) === 'ayman')) {
+    return true;
+  }
+  if (teacher.is_admin === true || teacher.isAdmin === true) {
+    return true;
+  }
+  const role = normalizeTeacherRole(teacher.role || teacher.teacher_role || teacher.user_role);
+  return role === 'admin' || role === 'administrator';
+}
+window.isTeacherAdminRecord = isTeacherAdminRecord;
+
+function getRoleTierLabel(teacher) {
+  if (!teacher) return 'Teacher · Free';
+  const roleText = isTeacherAdminRecord(teacher) ? 'Admin' : 'Teacher';
+  const isPro = Boolean(
+    teacher.is_pro === true ||
+    teacher.teacher_pro === true ||
+    teacher.plan === 'pro' ||
+    String(teacher.plan || '').toLowerCase() === 'pro' ||
+    teacher.subscription_status === 'pro' ||
+    teacher.subscription_tier === 'pro'
+  );
+  const tierText = isPro ? 'Pro' : 'Free';
+  if (roleText === 'Admin') {
+    return tierText === 'Pro' ? 'Admin · Pro' : 'Admin';
+  }
+  return roleText + ' · ' + tierText;
+}
+window.getRoleTierLabel = getRoleTierLabel;
 function verifiedTeacherIdentity() {
   if (currentRole !== 'teacher') return '';
   const normalizedName = normalizeStudentIdentity(currentTeacher);
@@ -16427,7 +16463,11 @@ function renderAdminPanel() {
   const teachers = getTeachers().filter(teacher => !teacherQuery || String(teacher.teacher_name || '').trim().toLocaleLowerCase().includes(teacherQuery));
   renderAdminNotificationRecipients();
   const teachersList = document.getElementById('teachers-list');
-  teachersList.innerHTML = teachers.length ? teachers.map(t => `<div class="teachers-inventory-card" tabindex="0" role="button" aria-label="Open teacher ${t.teacher_name}" onclick="if(!event.target.closest('button')) openEditTeacherModal('${t.__backendId}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openEditTeacherModal('${t.__backendId}');}"><span class="teacher-inventory-avatar" aria-hidden="true">${(() => { const avatarSrc = teacherAvatarSrc(t.teacher_avatar); return avatarSrc ? `<img src="${avatarSrc}" class="w-full h-full object-contain" alt="${String(t.teacher_name || 'Teacher').replace(/"/g, '&quot;')}'s Pokémon avatar" loading="lazy">` : (String(t.teacher_name || '?').trim().charAt(0).toUpperCase() || '?'); })()}</span><p class="teacher-inventory-name" title="${t.teacher_name}">${t.teacher_name}</p><p class="teacher-inventory-detail">Credits: ${t.teacher_credits === -1 ? '∞' : (t.teacher_credits || 0)} 💳</p><p class="teacher-inventory-detail">${getEffectiveTeacherRoleTitle(t)}${t.teacher_pro === true ? ' · Pro' : ''}</p><div class="teachers-inventory-actions">${t.teacher_name === 'Ayman' ? '<span class="text-xs bg-yellow-300 text-slate-900 px-2 py-1 rounded font-black" title="Administrator">Admin</span>' : `<button type="button" class="text-blue-200 bg-blue-900/70 hover:bg-blue-700" aria-label="Edit ${t.teacher_name}" title="Edit teacher" onclick="event.stopPropagation();openEditTeacherModal('${t.__backendId}')">✎</button><button type="button" class="text-red-200 bg-red-900/70 hover:bg-red-700" aria-label="Delete ${t.teacher_name}" title="Delete teacher" onclick="event.stopPropagation();deleteTeacher('${t.__backendId}','${t.teacher_name}')">×</button>`}</div></div>`).join('') : `<p class="text-gray-400 text-sm text-center py-8">${teacherQuery ? 'No teachers match your search.' : 'No teachers yet.'}</p>`;
+  teachersList.innerHTML = teachers.length ? teachers.map(t => {
+    const isAdmin = isTeacherAdminRecord(t);
+    const subtitle = getRoleTierLabel(t);
+    return `<div class="teachers-inventory-card" tabindex="0" role="button" aria-label="Open teacher ${t.teacher_name}" onclick="if(!event.target.closest('button')) openEditTeacherModal('${t.__backendId}')" onkeydown="if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button')){event.preventDefault();openEditTeacherModal('${t.__backendId}');}"><span class="teacher-inventory-avatar" aria-hidden="true">${(() => { const avatarSrc = teacherAvatarSrc(t.teacher_avatar); return avatarSrc ? `<img src="${avatarSrc}" class="w-full h-full object-contain" alt="${String(t.teacher_name || 'Teacher').replace(/"/g, '&quot;')}'s Pokémon avatar" loading="lazy">` : (String(t.teacher_name || '?').trim().charAt(0).toUpperCase() || '?'); })()}</span><p class="teacher-inventory-name" title="${t.teacher_name}">${t.teacher_name}</p><p class="teacher-inventory-detail">Credits: ${t.teacher_credits === -1 ? '∞' : (t.teacher_credits || 0)} 💳</p><p class="teacher-inventory-detail">${subtitle}</p><div class="teachers-inventory-actions">${isAdmin ? '<span class="text-xs bg-yellow-300 text-slate-900 px-2 py-1 rounded font-black" title="Administrator">Admin</span>' : `<button type="button" class="text-blue-200 bg-blue-900/70 hover:bg-blue-700" aria-label="Edit ${t.teacher_name}" title="Edit teacher" onclick="event.stopPropagation();openEditTeacherModal('${t.__backendId}')">✎</button><button type="button" class="text-red-200 bg-red-900/70 hover:bg-red-700" aria-label="Delete ${t.teacher_name}" title="Delete teacher" onclick="event.stopPropagation();deleteTeacher('${t.__backendId}','${t.teacher_name}')">×</button>`}</div></div>`;
+  }).join('') : `<p class="text-gray-400 text-sm text-center py-8">${teacherQuery ? 'No teachers match your search.' : 'No teachers yet.'}</p>`;
   renderAdminClassManagers();
   renderAdminAllStudents(); renderAdminShop(); renderCreditLog();
   if (!document.getElementById('admin-subtab-analytics')?.classList.contains('hidden')) window.renderAdminAnalytics?.();
@@ -18351,7 +18391,7 @@ function openEditTeacherModal(teacherId) {
   const modal = document.createElement('div');
   modal.className = 'es-overlay et-overlay';
   const avatar = teacherAvatarSrc(teacher.teacher_avatar);
-  const isAdminRow = teacher.teacher_name === 'Ayman';
+  const isAdminRow = isTeacherAdminRecord(teacher);
   const email = teacher.teacher_email || '';
   modal.innerHTML = `<div class="es-card et-card" role="dialog" aria-modal="true" aria-label="Edit teacher"><form>
     <div class="et-hero">${avatar ? `<img src="${avatar}" alt="" class="et-avatar">` : `<span class="et-avatar et-initial">${String(teacher.teacher_name||'?').charAt(0).toUpperCase()}</span>`}
@@ -18392,11 +18432,23 @@ function openEditTeacherModal(teacherId) {
     const previousCredits = Number((allData.find(item => item.__backendId === teacher.__backendId) || teacher).teacher_credits || 0);
     const newCredits = parseInt(modal.querySelector('#et-credits').value);
     const teacherZoneAccess = modal.querySelector('#et-zone-access').checked ? 'allow' : 'hide';
-    const teacherPro = isAdminRow ? true : modal.querySelector('#et-pro-access').checked;
+    const teacherPro = isAdminRow ? Boolean(teacher.teacher_pro || teacher.is_pro || teacher.plan === 'pro') : modal.querySelector('#et-pro-access').checked;
     const previousTeacherPro = allData.find(t => t.__backendId === teacher.__backendId)?.teacher_pro;
-    const saved = await window.dataSdk.update({ ...(allData.find(t => t.__backendId === teacher.__backendId) || teacher), teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess, teacher_pro: teacherPro });
+    const teacherPatch = {
+      ...(allData.find(t => t.__backendId === teacher.__backendId) || teacher),
+      teacher_name: newName,
+      teacher_credits: newCredits,
+      teacher_zone_access: teacherZoneAccess,
+      teacher_pro: teacherPro,
+      is_pro: teacherPro,
+      plan: teacherPro ? 'pro' : 'free',
+      subscription_status: teacherPro ? 'active' : 'free',
+      role: isAdminRow ? 'admin' : (teacher.role || teacher.teacher_role || 'teacher'),
+      is_admin: isAdminRow
+    };
+    const saved = await window.dataSdk.update(teacherPatch);
     if (!saved?.isOk) { toast('Could not save teacher settings. Please try again.'); return; }
-    allData = allData.map(row => row.__backendId === teacher.__backendId ? { ...row, teacher_name: newName, teacher_credits: newCredits, teacher_zone_access: teacherZoneAccess, teacher_pro: teacherPro } : row);
+    allData = allData.map(row => row.__backendId === teacher.__backendId ? { ...row, ...teacherPatch } : row);
     // Adding credits is worth an inbox item; lowering a balance is not, so admins
     // can correct a mistake without sending an alert.
     if (!isAdminRow && Number.isFinite(newCredits) && newCredits > previousCredits) {
@@ -18526,7 +18578,8 @@ function assignmentMatchesTeacher(r, teacherName) {
 }
 function canManageSchool(schoolName, teacherName = currentTeacher) {
   if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return false;
-  if (isAymanTeacher() || (typeof teacherName === 'string' && teacherName === ADMIN_TEACHER.name)) return true;
+  const isTargetAdmin = isTeacherAdminRecord(teacherName) || (teacherName === currentTeacher && isAymanTeacher());
+  if (isTargetAdmin) return true;
   const norm = v => String(v || '').trim().toLocaleLowerCase();
   const school = norm(schoolName);
   return getAssignedSchools(teacherName).some(item => norm(item.assigned_school) === school);
@@ -18535,20 +18588,25 @@ window.canManageSchool = canManageSchool;
 
 function isSchoolManager(teacherName = currentTeacher) {
   if (!teacherName) return false;
-  if (isAymanTeacher() || (typeof teacherName === 'string' && teacherName === ADMIN_TEACHER.name)) return false;
-  const rec = typeof teacherName === 'object' ? teacherName : getTeachers().find(t => t.teacher_name === teacherName);
-  if (rec && normalizeTeacherRole(rec.teacher_role || rec.role || rec.user_role) === 'admin') return false;
+  const rec = typeof teacherName === 'object' && teacherName !== null ? teacherName : getTeachers().find(t => t.teacher_name === teacherName);
   const name = typeof teacherName === 'string' ? teacherName : (rec?.teacher_name || '');
+  if (isTeacherAdminRecord(name || rec)) return false;
+  if (name && currentTeacher && normalizeStudentIdentity(name) === normalizeStudentIdentity(currentTeacher) && isAymanTeacher()) return false;
   return getAssignedSchools(name).length > 0;
 }
 window.isSchoolManager = isSchoolManager;
 
 function getEffectiveTeacherRole(teacherNameOrRecord = currentTeacher) {
-  if (isAymanTeacher() || teacherNameOrRecord === ADMIN_TEACHER.name) return 'admin';
-  const rec = typeof teacherNameOrRecord === 'object' ? teacherNameOrRecord : getTeachers().find(t => t.teacher_name === teacherNameOrRecord);
-  if (rec && normalizeTeacherRole(rec.teacher_role || rec.role || rec.user_role) === 'admin') return 'admin';
+  if (isTeacherAdminRecord(teacherNameOrRecord)) return 'admin';
+  const rec = typeof teacherNameOrRecord === 'object' && teacherNameOrRecord !== null
+    ? teacherNameOrRecord
+    : getTeachers().find(t => t.teacher_name === teacherNameOrRecord);
+  if (rec && isTeacherAdminRecord(rec)) return 'admin';
   const name = typeof teacherNameOrRecord === 'string' ? teacherNameOrRecord : (rec?.teacher_name || '');
-  if (getAssignedSchools(name).length > 0) return 'school_manager';
+  if (name && currentTeacher && normalizeStudentIdentity(name) === normalizeStudentIdentity(currentTeacher) && isAymanTeacher()) {
+    return 'admin';
+  }
+  if (name && getAssignedSchools(name).length > 0) return 'school_manager';
   return 'teacher';
 }
 window.getEffectiveTeacherRole = getEffectiveTeacherRole;
@@ -26230,6 +26288,17 @@ function normalizeSheetRecord(record) {
     else if (normalized.student_name) normalized.type = 'student';
   }
   if (normalized.type) normalized.type = String(normalized.type).trim().toLowerCase().replace(/[ -]+/g, '_');
+  if (normalized.type === 'teacher') {
+    const isAdm = typeof isTeacherAdminRecord === 'function' ? isTeacherAdminRecord(normalized) : (normalized.teacher_name === 'Ayman' || normalized.role === 'admin' || normalized.teacher_role === 'admin' || normalized.is_admin === true);
+    if (!normalized.role) normalized.role = isAdm ? 'admin' : (typeof normalizeTeacherRole === 'function' ? normalizeTeacherRole(normalized.teacher_role || normalized.user_role) : (normalized.teacher_role || 'teacher')) || 'teacher';
+    if (!normalized.teacher_role) normalized.teacher_role = normalized.role;
+    if (normalized.is_admin === undefined) normalized.is_admin = isAdm;
+    const pro = Boolean(normalized.teacher_pro === true || normalized.is_pro === true || normalized.plan === 'pro');
+    if (normalized.is_pro === undefined) normalized.is_pro = pro;
+    if (normalized.teacher_pro === undefined) normalized.teacher_pro = pro;
+    if (!normalized.plan) normalized.plan = pro ? 'pro' : 'free';
+    if (!normalized.subscription_status) normalized.subscription_status = pro ? 'active' : 'free';
+  }
   return normalized;
 }
 
