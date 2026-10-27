@@ -3,7 +3,7 @@
    celebrations, game tiles) are intentionally not targeted. */
 
 /* ---------- Buttons ---------- */
-html body:is(#pk-ds, body) :is(.btn-primary, .btn-secondary, .btn-outline, .btn-success, .btn-danger, .ts-btn) {
+html body:is(#pk-ds, body) :is(.btn-primary:not(#create-vocab-list-btn):not(#teacher-vb-open-create):not(.teacher-vb-open-create):not(.rounded-full), .btn-secondary:not(.teacher-vb-list-modes button):not(.rounded-full), .btn-outline:not(.rounded-full), .btn-success, .btn-danger, .ts-btn) {
   display: inline-flex !important; align-items: center; justify-content: center; gap: var(--pk-space-2);
   min-height: 40px; padding: 0 var(--pk-space-4) !important;
   border-radius: var(--pk-radius-md) !important;
@@ -1317,4 +1317,86 @@ html body.ts-bright .audio-wave-visualizer .audio-wave-bar {
   .audio-wave-bar {
     animation: none !important;
   }
+}
+
+
+/* ============================================================
+   Action Buttons Strict Match: Create / + Create list and Generate with AI
+   ============================================================ */
+
+html body:is(#pk-ds, body, html) :is(
+  #create-vocab-list-btn,
+  #generate-vocab-list-btn,
+  #teacher-vb-open-create,
+  #teacher-vb-open-ai,
+  .teacher-vb-open-create,
+  .btn-ai-generate
+) {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  gap: 8px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  padding: 8px 20px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  border-radius: 9999px !important;
+  font-family: Outfit, 'DM Sans', -apple-system, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.015em !important;
+  cursor: pointer !important;
+  outline: none !important;
+  user-select: none !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  margin-block: 2px !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.2s ease,
+              background 0.25s ease,
+              border-color 0.2s ease,
+              color 0.2s ease !important;
+}
+
+/* Yellow color scheme for Create and + Create list */
+html body:is(#pk-ds, body, html) :is(
+  #create-vocab-list-btn,
+  #teacher-vb-open-create,
+  .teacher-vb-open-create:not(.btn-ai-generate):not(#teacher-vb-open-ai):not(#generate-vocab-list-btn)
+) {
+  background: var(--pk-brand, #facc15) !important;
+  color: #0f172a !important;
+  border: 1px solid var(--pk-brand, #facc15) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 2px 8px -1px rgba(250, 204, 21, 0.35) !important;
+}
+
+html body:is(#pk-ds, body, html) :is(
+  #create-vocab-list-btn,
+  #teacher-vb-open-create,
+  .teacher-vb-open-create:not(.btn-ai-generate):not(#teacher-vb-open-ai):not(#generate-vocab-list-btn)
+):hover:not(:disabled) {
+  background: var(--pk-brand-hover, #eab308) !important;
+  border-color: var(--pk-brand-hover, #eab308) !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) scale(1.02) !important;
+  box-shadow: 0 4px 14px 0 rgba(250, 204, 21, 0.45) !important;
+}
+
+html body:is(#pk-ds, body, html) :is(
+  #create-vocab-list-btn,
+  #teacher-vb-open-create,
+  .teacher-vb-open-create:not(.btn-ai-generate):not(#teacher-vb-open-ai):not(#generate-vocab-list-btn)
+):active:not(:disabled) {
+  transform: translateY(1px) scale(0.98) !important;
 }
