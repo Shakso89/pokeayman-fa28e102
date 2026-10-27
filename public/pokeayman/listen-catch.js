@@ -399,7 +399,7 @@
     const originalData = JSON.stringify(state);
     const createdAt = new Date().toISOString();
     const pokemonRecord = {
-      type: 'pokemon', student_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '',
+      type: 'pokemon', student_id: recordId, owner_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '',
       student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(candidate.id), pokemon_name: candidate.name,
       pokemon_rarity: candidate.rarity || 'common', pokemon_price: Number(candidate.price) || 0, pokemon_power: Number(candidate.power) || 0,
       current_hp: Number(candidate.hp) || (Number(candidate.power) || 0) + 30, last_battle_time: '', created_at: createdAt,
@@ -466,7 +466,7 @@
     const item = randomPokemon('mystery-box'); if (!item) return toast('The Pokémon collection is loading. Try again in a moment.');
     const alreadyOwned = studentAlreadyOwnsPokemon(item, record);
     const now = new Date().toISOString();
-    const pokemonRecord = { type: 'pokemon', student_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '', student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(item.id), pokemon_name: item.name, pokemon_rarity: item.rarity || 'common', pokemon_price: Number(item.price) || 0, pokemon_power: Number(item.power) || 0, current_hp: Number(item.hp) || (Number(item.power) || 0) + 30, last_battle_time: '', created_at: now, catchdex_box_reward: true };
+    const pokemonRecord = { type: 'pokemon', student_id: recordId, owner_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '', student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(item.id), pokemon_name: item.name, pokemon_rarity: item.rarity || 'common', pokemon_price: Number(item.price) || 0, pokemon_power: Number(item.power) || 0, current_hp: Number(item.hp) || (Number(item.power) || 0) + 30, last_battle_time: '', created_at: now, catchdex_box_reward: true };
     const coins = alreadyOwned ? duplicateCoins(item) : 0;
     openingBoxIds.add(recordId);
     let createdPokemon = null;

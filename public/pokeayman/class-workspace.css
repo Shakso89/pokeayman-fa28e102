@@ -203,21 +203,153 @@ body.ts-on.ts-bright .gym-card .class-teacher-pill{color:var(--ts-ink)}
 body.ts-on.ts-bright .gym-card .class-teacher-avatar{background:var(--ts-deep)}
 
 /* Avatar picker */
-.pk-avatar-modal{backdrop-filter:blur(6px)}
-.pk-avatar-box{border-radius:20px;background:linear-gradient(160deg,#1c2766,#0c1238);border:1px solid rgba(255,203,5,.45);box-shadow:0 24px 60px rgba(0,0,0,.5);color:#f5f7ff}
-.pk-avatar-head{background:linear-gradient(160deg,#1c2766f2,#121a4cf2);border-bottom:1px solid rgba(255,255,255,.1);z-index:1}
-.pk-avatar-head h2{color:#ffcb05}
-.pk-avatar-head button{color:#e6ecff!important}
-.pk-avatar-box :is(.avatar-option,.profile-avatar-option){background:rgba(255,255,255,.06)!important;border:1.5px solid rgba(255,255,255,.12)!important;border-radius:14px!important;color:#f5f7ff;box-shadow:none!important;text-transform:capitalize}
-.pk-avatar-box :is(.avatar-option,.profile-avatar-option):hover{border-color:#ffcb05!important;background:rgba(255,203,5,.1)!important;transform:translateY(-1px)}
-.pk-avatar-box :is(.avatar-option,.profile-avatar-option) img{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle,#2b3a8f,#141c44);padding:4px}
-.pk-avatar-box :is(.avatar-option,.profile-avatar-option) .text-gray-400{color:#ffcb05!important}
-.pk-avatar-box :is(.avatar-option,.profile-avatar-option) .text-blue-600{color:#0c1238!important;background:#ffcb05;border-radius:999px;padding:2px 9px;font-size:.8rem}
-body.ts-bright .pk-avatar-box{background:#fff;color:#1d2650}
-body.ts-bright .pk-avatar-head{background:#f3f7ff}
-body.ts-bright .pk-avatar-head h2{color:#2a4bd6}
-body.ts-bright .pk-avatar-head button{color:#1d2650!important}
-body.ts-bright .pk-avatar-box :is(.avatar-option,.profile-avatar-option){background:#f6f8ff!important;border-color:#d6def5!important;color:#1d2650}
+.pk-avatar-modal {
+  backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.65);
+}
+.pk-avatar-box {
+  border-radius: 1rem;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+}
+.pk-avatar-head {
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
+  z-index: 1;
+}
+.pk-avatar-head h2 {
+  font-family: inherit;
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.pk-avatar-head button,
+.pk-avatar-close {
+  color: #94a3b8 !important;
+  font-size: 1.5rem;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.pk-avatar-head button:hover,
+.pk-avatar-close:hover {
+  color: #ffffff !important;
+}
+.pk-avatar-box :is(.avatar-option, .profile-avatar-option) {
+  background: rgba(30, 41, 59, 0.6) !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  border-radius: 0.75rem !important;
+  color: #f1f5f9;
+  box-shadow: none !important;
+  transition: all 0.15s ease;
+  text-transform: capitalize;
+}
+.pk-avatar-box :is(.avatar-option, .profile-avatar-option):hover {
+  border-color: #475569 !important;
+  background: rgba(51, 65, 85, 0.6) !important;
+  transform: translateY(-1px);
+}
+.pk-avatar-box :is(.avatar-option, .profile-avatar-option) img {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 4px;
+}
+.pk-avatar-box :is(.avatar-option, .profile-avatar-option) .avatar-pwr-badge,
+.pk-avatar-box :is(.avatar-option, .profile-avatar-option) .text-gray-400 {
+  color: #f59e0b !important;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.pk-avatar-box :is(.avatar-option, .profile-avatar-option) .avatar-selected-indicator,
+.pk-avatar-box :is(.avatar-option, .profile-avatar-option) .text-blue-600 {
+  background: #facc15 !important;
+  color: #020617 !important;
+  border-radius: 9999px;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+
+/* Light / Bright Theme */
+body.ts-bright .pk-avatar-modal {
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(4px);
+}
+body.ts-bright .pk-avatar-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  color: #0f172a;
+}
+body.ts-bright .pk-avatar-head {
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+body.ts-bright .pk-avatar-head h2 {
+  color: #0f172a;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+body.ts-bright .pk-avatar-head button,
+body.ts-bright .pk-avatar-close {
+  color: #94a3b8 !important;
+}
+body.ts-bright .pk-avatar-head button:hover,
+body.ts-bright .pk-avatar-close:hover {
+  color: #334155 !important;
+}
+body.ts-bright .pk-avatar-box :is(.avatar-option, .profile-avatar-option) {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.75rem !important;
+  color: #1e293b !important;
+}
+body.ts-bright .pk-avatar-box :is(.avatar-option, .profile-avatar-option):hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  transform: translateY(-1px);
+}
+body.ts-bright .pk-avatar-box :is(.avatar-option, .profile-avatar-option) img {
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+}
+body.ts-bright .pk-avatar-box :is(.avatar-option, .profile-avatar-option) .avatar-pwr-badge,
+body.ts-bright .pk-avatar-box :is(.avatar-option, .profile-avatar-option) .text-gray-400 {
+  color: #b45309 !important;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 9999px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+body.ts-bright .pk-avatar-box :is(.avatar-option, .profile-avatar-option) .avatar-selected-indicator,
+body.ts-bright .pk-avatar-box :is(.avatar-option, .profile-avatar-option) .text-blue-600 {
+  background: #facc15 !important;
+  color: #020617 !important;
+  border-radius: 9999px;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+
 /* Multiple teachers: equal, unclipped */
 html body .gym-card .class-teacher-pill{display:flex!important;flex-direction:row!important;flex-wrap:wrap;justify-content:center;gap:14px!important;overflow:visible!important;max-width:100%;text-overflow:clip!important}
 html body .gym-card .class-teacher-item{flex:0 1 96px;min-width:78px;text-align:center;white-space:normal;overflow-wrap:anywhere;line-height:1.2;color:#ffcb05;font-weight:800}

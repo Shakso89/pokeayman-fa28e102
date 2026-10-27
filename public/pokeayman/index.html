@@ -4353,9 +4353,41 @@
           try { await api('DELETE', '?id=eq.' + encodeURIComponent(tr.id)); } catch (_) {}
         });
       }
+      const studentIdByName = new Map();
+      const aymanStudentId = 'add9ac02-211e-42e5-ae2f-2961abc75c2e';
+      rows.forEach(r => {
+        const d = r.data;
+        if (d && (d.type === 'student' || d.type === 'student_membership') && d.student_name) {
+          const k = String(d.student_name).trim().toLowerCase();
+          if (!studentIdByName.has(k) || d.type === 'student') {
+            studentIdByName.set(k, { id: r.id, school: d.school_name || '', class: d.class_name || '', name: d.student_name });
+          }
+        }
+      });
+
       const next = rows.map(r => {
         const item = {...r.data, __backendId: r.id};
         if (typeof window.sanitizeRecordImages === 'function') window.sanitizeRecordImages(item);
+        if (item.type === 'pokemon') {
+          const sid = String(item.student_id || '').trim();
+          const ownerNorm = String(item.owner || '').trim().toLowerCase();
+          if (!sid || sid === 'b9c51dec-eace-4f49-86d7-3159396e1b44') {
+            if (ownerNorm === 'ayman' || r.id === '03496bfb-e984-4dde-9411-2b56a4a3748f' || r.id === 'f078e928-9d53-47c9-96a4-e77f10cd6d32') {
+              item.student_id = aymanStudentId;
+              item.owner_id = aymanStudentId;
+              if (!item.school_name) item.school_name = 'Stanford';
+              if (!item.class_name) item.class_name = 'Halloween';
+              if (!item.student_name) item.student_name = 'Ayman';
+            } else if (studentIdByName.has(ownerNorm)) {
+              const m = studentIdByName.get(ownerNorm);
+              item.student_id = m.id;
+              item.owner_id = m.id;
+              if (!item.school_name) item.school_name = m.school;
+              if (!item.class_name) item.class_name = m.class;
+              if (!item.student_name) item.student_name = m.name;
+            }
+          }
+        }
         return item;
       }).filter(r => !isTester2Record(r));
       try {
@@ -4367,6 +4399,20 @@
               const data = r.data || {};
               if (data.vocab_media_policy === 'sentence-reviewed-v1') return;
               let dirty = false;
+              if (data.type === 'pokemon') {
+                const sid = String(data.student_id || '').trim();
+                const ownerNorm = String(data.owner || '').trim().toLowerCase();
+                if (r.id === '03496bfb-e984-4dde-9411-2b56a4a3748f' || r.id === 'f078e928-9d53-47c9-96a4-e77f10cd6d32' || ((!sid || sid === 'b9c51dec-eace-4f49-86d7-3159396e1b44') && ownerNorm === 'ayman')) {
+                  if (data.student_id !== aymanStudentId) {
+                    data.student_id = aymanStudentId;
+                    data.owner_id = aymanStudentId;
+                    data.school_name = 'Stanford';
+                    data.class_name = 'Halloween';
+                    data.student_name = 'Ayman';
+                    dirty = true;
+                  }
+                }
+              }
               if (data.type === 'vocab_list' || data.type === 'vocabulary_list') {
                 const fixed = window.resolvePermanentVocabCover(data.vocab_cover_image_url, data.vocab_list_name);
                 if (fixed && fixed !== data.vocab_cover_image_url) { data.vocab_cover_image_url = fixed; dirty = true; }
@@ -8172,7 +8218,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const originalData = JSON.stringify(state);
     const createdAt = new Date().toISOString();
     const pokemonRecord = {
-      type: 'pokemon', student_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '',
+      type: 'pokemon', student_id: recordId, owner_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '',
       student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(candidate.id), pokemon_name: candidate.name,
       pokemon_rarity: candidate.rarity || 'common', pokemon_price: Number(candidate.price) || 0, pokemon_power: Number(candidate.power) || 0,
       current_hp: Number(candidate.hp) || (Number(candidate.power) || 0) + 30, last_battle_time: '', created_at: createdAt,
@@ -8239,7 +8285,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const item = randomPokemon('mystery-box'); if (!item) return toast('The Pokémon collection is loading. Try again in a moment.');
     const alreadyOwned = studentAlreadyOwnsPokemon(item, record);
     const now = new Date().toISOString();
-    const pokemonRecord = { type: 'pokemon', student_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '', student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(item.id), pokemon_name: item.name, pokemon_rarity: item.rarity || 'common', pokemon_price: Number(item.price) || 0, pokemon_power: Number(item.power) || 0, current_hp: Number(item.hp) || (Number(item.power) || 0) + 30, last_battle_time: '', created_at: now, catchdex_box_reward: true };
+    const pokemonRecord = { type: 'pokemon', student_id: recordId, owner_id: recordId, school_name: record.school_name || '', class_name: record.class_name || '', student_name: '', coins: 0, owner: record.student_name || '', pokemon_id: Number(item.id), pokemon_name: item.name, pokemon_rarity: item.rarity || 'common', pokemon_price: Number(item.price) || 0, pokemon_power: Number(item.power) || 0, current_hp: Number(item.hp) || (Number(item.power) || 0) + 30, last_battle_time: '', created_at: now, catchdex_box_reward: true };
     const coins = alreadyOwned ? duplicateCoins(item) : 0;
     openingBoxIds.add(recordId);
     let createdPokemon = null;
@@ -11636,12 +11682,24 @@ function getAllStudents() {
 function getPokemons() {
   // Collapse duplicate source rows before any card, shop, collection, battle, or leaderboard render.
   const canonical = new Map();
+  const allStudents = typeof getAllStudents === 'function' ? getAllStudents() : [];
+  const studentNames = new Set(allStudents.map(s => normalizeStudentIdentity(s.student_name)));
   const teacherNames = new Set(getTeachers().map(teacher => normalizeStudentIdentity(teacher.teacher_name)));
-  allData.filter(r => r.type === 'pokemon' && (r.student_id || r.owner_id || !teacherNames.has(normalizeStudentIdentity(r.owner)))).forEach(record => {
+  allData.filter(r => {
+    if (r.type !== 'pokemon') return false;
+    const sid = String(r.student_id || '').trim();
+    if (sid) return true;
+    const owner = normalizeStudentIdentity(r.owner);
+    if (!owner) return false;
+    // Do NOT discard student pokemon even if a teacher shares the same display name (e.g. Ayman)
+    if (studentNames.has(owner)) return true;
+    return !teacherNames.has(owner);
+  }).forEach(record => {
     const owner = normalizeStudentIdentity(record.owner);
+    const sid = String(record.student_id || '').trim();
     const id = Number(record.pokemon_id);
     const name = String(record.pokemon_name || '').trim().toLocaleLowerCase();
-    const key = `${owner}|${Number.isFinite(id) && id > 0 ? `id:${id}` : `name:${name}`}`;
+    const key = `${sid || owner}|${Number.isFinite(id) && id > 0 ? `id:${id}` : `name:${name}`}`;
     const previous = canonical.get(key);
     if (!previous) { canonical.set(key, record); return; }
     // Keep the richest/latest valid row without duplicating the Pokémon in views.
@@ -17701,24 +17759,119 @@ function gameStudentAvatarMarkup(student, className = 'game-player-avatar') {
   return `<img class="${className}" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${id}.png" alt="${student.student_name}'s avatar Pokémon" loading="lazy">`;
 }
 function getOwnedPokemonForStudent(studentOrName, excludedPokemonId = null) {
-  const student = studentOrName && typeof studentOrName === 'object'
-    ? studentOrName
-    : getAllStudents().find(record => normalizeStudentIdentity(record.student_name) === normalizeStudentIdentity(studentOrName));
-  const studentName = typeof studentOrName === 'string' ? studentOrName : studentOrName?.student_name;
+  const allSt = typeof getAllStudents === 'function' ? getAllStudents() : [];
+  let student = null;
+  let studentName = '';
+  if (studentOrName && typeof studentOrName === 'object') {
+    student = studentOrName;
+    studentName = student.student_name;
+  } else if (typeof studentOrName === 'string') {
+    const raw = String(studentOrName).trim();
+    student = allSt.find(s => String(s.__backendId || s.student_id || s.id).trim() === raw);
+    if (!student) {
+      student = allSt.find(record => normalizeStudentIdentity(record.student_name) === normalizeStudentIdentity(raw));
+      studentName = raw;
+    } else {
+      studentName = student.student_name;
+    }
+  }
   const ownerKey = normalizeStudentIdentity(student?.student_name || studentName);
   const canonicalId = student ? canonicalStudentKey(student) : '';
-  const studentIds = new Set([canonicalId, student?.student_id, student?.__backendId].filter(Boolean).map(value => String(value).trim()));
+  const studentIds = new Set([canonicalId, student?.student_id, student?.__backendId, student?.id].filter(Boolean).map(value => String(value).trim()));
   if (canonicalId) {
     allData.filter(record => (record.type === 'student' || record.type === 'student_membership') && canonicalStudentKey(record) === canonicalId)
-      .forEach(record => [record.__backendId, record.student_id].filter(Boolean).forEach(value => studentIds.add(String(value).trim())));
+      .forEach(record => [record.__backendId, record.student_id, record.id].filter(Boolean).forEach(value => studentIds.add(String(value).trim())));
   }
   const excludedId = excludedPokemonId === null || excludedPokemonId === undefined ? null : Number(excludedPokemonId);
   return getPokemons().filter(pokemon => {
-    const pokemonStudentId = String(pokemon.student_id || pokemon.owner_id || '').trim();
-    const belongsToStudent = pokemonStudentId ? studentIds.has(pokemonStudentId) : normalizeStudentIdentity(pokemon.owner) === ownerKey;
+    const pokemonStudentId = String(pokemon.student_id || '').trim();
+    let belongsToStudent = false;
+    if (pokemonStudentId) {
+      belongsToStudent = studentIds.has(pokemonStudentId);
+    } else if (ownerKey && studentIds.size) {
+      const ownerMatches = normalizeStudentIdentity(pokemon.owner) === ownerKey;
+      if (ownerMatches) {
+        const pSchool = normalizeStudentIdentity(pokemon.school_name);
+        const pClass = normalizeStudentIdentity(pokemon.class_name);
+        const sSchool = normalizeStudentIdentity(student?.school_name);
+        const sClass = normalizeStudentIdentity(student?.class_name);
+        if (pSchool && sSchool && pSchool !== sSchool) belongsToStudent = false;
+        else if (pClass && sClass && pClass !== sClass) belongsToStudent = false;
+        else belongsToStudent = true;
+      }
+    }
     return belongsToStudent && (excludedId === null || Number(pokemon.pokemon_id) !== excludedId);
   });
 }
+
+// Global fetchStudentCollection querying strictly by student_id
+window.fetchStudentCollection = async function(studentId) {
+  const sid = String(studentId || '').trim();
+  if (!sid) return [];
+  const localMatches = (typeof allData !== 'undefined' ? allData : [])
+    .filter(r => r.type === 'pokemon' && String(r.student_id || '').trim() === sid);
+  if (localMatches.length) return localMatches;
+  try {
+    const res = await fetch(`https://lbmdlligjjrkmjmdtwsq.supabase.co/rest/v1/app_records?data->>type=eq.pokemon&data->>student_id=eq.${encodeURIComponent(sid)}&select=id,data`, {
+      headers: {
+        apikey: 'sb_publishable_s_aLtLB6z1AL3tI1bRyMMA_YEkOrrHI',
+        Authorization: 'Bearer sb_publishable_s_aLtLB6z1AL3tI1bRyMMA_YEkOrrHI'
+      }
+    });
+    if (res.ok) {
+      const rows = await res.json();
+      return rows.map(r => ({ ...r.data, __backendId: r.id }));
+    }
+  } catch (err) {
+    console.warn('fetchStudentCollection query failed', err);
+  }
+  return localMatches;
+};
+
+// Global awardPokemon mutation using strict unique student_id UUID
+window.awardPokemon = async function(studentOrId, pokemonData) {
+  const allSt = typeof getAllStudents === 'function' ? getAllStudents() : [];
+  let targetStudent = null;
+  if (typeof studentOrId === 'object' && studentOrId !== null) {
+    targetStudent = studentOrId;
+  } else if (typeof studentOrId === 'string') {
+    targetStudent = allSt.find(s => String(s.__backendId || s.student_id || s.id).trim() === studentOrId.trim());
+  }
+  const studentId = String(targetStudent?.__backendId || targetStudent?.student_id || targetStudent?.id || (typeof studentOrId === 'string' ? studentOrId : '')).trim();
+  if (!studentId) throw new Error('Cannot award Pokémon: Missing unique student_id UUID.');
+
+  const pId = Number(pokemonData.id || pokemonData.pokemon_id);
+  const pName = String(pokemonData.name || pokemonData.pokemon_name || '').trim();
+  const pRarity = String(pokemonData.rarity || pokemonData.pokemon_rarity || 'common').trim();
+  const pPrice = Number(pokemonData.price || pokemonData.pokemon_price || 0);
+  const pPower = Number(pokemonData.power || pokemonData.pokemon_power || 0);
+  const maxHP = Number(pokemonData.hp || pokemonData.current_hp) || (pPower + 30);
+  const now = new Date().toISOString();
+
+  const recordPayload = {
+    type: 'pokemon',
+    student_id: studentId,
+    owner_id: studentId,
+    school_name: targetStudent?.school_name || '',
+    class_name: targetStudent?.class_name || '',
+    student_name: targetStudent?.student_name || '',
+    owner: targetStudent?.student_name || '',
+    pokemon_id: pId,
+    pokemon_name: pName,
+    pokemon_rarity: pRarity,
+    pokemon_price: pPrice,
+    pokemon_power: pPower,
+    current_hp: maxHP,
+    last_battle_time: '',
+    created_at: now
+  };
+
+  const result = await window.dataSdk.create(recordPayload);
+  if (!result?.isOk) throw new Error('Failed to create pokemon award in database.');
+  return result.data || result;
+};
+window.quickAward = window.awardPokemon;
+window.catchdexClaim = window.awardPokemon;
 async function syncStudentAvatarAfterPokemonLoss(studentName, lostPokemonId) {
   const student = getAllStudents().find(record => normalizeStudentIdentity(record.student_name) === normalizeStudentIdentity(studentName));
   if (!student) return;
@@ -18353,18 +18506,44 @@ async function buyPokemonFromProfile(id, name, rarity, price, power) {
   if (takenByOther) { toast(`${name} already belongs to ${takenByOther.owner || 'another student'}. Each Pokémon can have only one owner.`); return; }
   if (allData.length >= 999) { toast('Storage limit reached!'); return; }
   const latestProfile = getStudentRecordByStableId(profileStudent.__backendId) || profileStudent;
+  const targetStudentId = String(latestProfile.__backendId || latestProfile.id || latestProfile.student_id || profileStudent.__backendId || '').trim();
+  if (!targetStudentId) { toast('Could not identify student record.'); return; }
+
   const nextProfile = { ...latestProfile, coins: (Number(latestProfile.coins) || 0) - price };
   const debitResult = await window.dataSdk.update(nextProfile, { notify:false });
   if (!debitResult?.isOk) { toast('Could not complete the award.'); return; }
   refreshCanonicalStudentViews(debitResult.data || nextProfile, { mutationType:'purchase', coins:true, responseStatus:'verified' });
   const maxHP = power + 30;
-  const awardResult = await window.dataSdk.create({ type: 'pokemon', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: id, pokemon_name: name, pokemon_rarity: rarity, pokemon_price: price, pokemon_power: power, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: profileStudent.student_name, created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', current_hp: maxHP, last_battle_time: '' }, { notify:false });
-  if (!awardResult?.isOk) { const refund = await window.dataSdk.update({ ...latestProfile, coins:Number(latestProfile.coins) || 0 }, { notify:false }); if (refund?.isOk) refreshCanonicalStudentViews(refund.data || latestProfile, { mutationType:'purchase-refund', coins:true, responseStatus:'verified' }); toast('Could not save the awarded Pokémon. Coins were returned.'); return; }
+  const awardPayload = {
+    type: 'pokemon',
+    student_id: targetStudentId,
+    owner_id: targetStudentId,
+    school_name: latestProfile.school_name || profileStudent.school_name || '',
+    class_name: latestProfile.class_name || profileStudent.class_name || '',
+    student_name: latestProfile.student_name || profileStudent.student_name || '',
+    coins: 0,
+    pokemon_id: id,
+    pokemon_name: name,
+    pokemon_rarity: rarity,
+    pokemon_price: price,
+    pokemon_power: power,
+    current_hp: maxHP,
+    owner: latestProfile.student_name || profileStudent.student_name || '',
+    created_at: new Date().toISOString(),
+    last_battle_time: ''
+  };
+  const awardResult = await window.dataSdk.create(awardPayload, { notify:false });
+  if (!awardResult?.isOk) {
+    const refund = await window.dataSdk.update({ ...latestProfile, coins:Number(latestProfile.coins) || 0 }, { notify:false });
+    if (refund?.isOk) refreshCanonicalStudentViews(refund.data || latestProfile, { mutationType:'purchase-refund', coins:true, responseStatus:'verified' });
+    toast('Could not save the awarded Pokémon. Coins were returned.');
+    return;
+  }
   if (awardResult.data) allData.push(awardResult.data);
   showCatchCelebration(name, id);
   toast(`Caught ${name}!`);
   void playCatchSound().catch(() => {});
-  setTimeout(() => { if (profileStudent && profileStudent.__backendId === latestProfile.__backendId) renderStudentProfile(); }, 0);
+  setTimeout(() => { if (profileStudent && (profileStudent.__backendId === latestProfile.__backendId || profileStudent.__backendId === targetStudentId)) renderStudentProfile(); }, 0);
 }
 
 // Forms
@@ -20704,15 +20883,44 @@ function openEditPokemonPriceModal(pokemonId, pokemonName, currentPrice) {
     
     // Update ownership in the database if changed
     if (currentOwner !== newOwner) {
+      const targetStudent = getAllStudents().find(s => s.student_name === newOwner);
+      const studentId = targetStudent ? String(targetStudent.__backendId || targetStudent.student_id || targetStudent.id || '').trim() : '';
       if (ownedPokemon) {
         // Update existing owned record
-        await window.dataSdk.update({ ...ownedPokemon, owner: newOwner });
+        await window.dataSdk.update({
+          ...ownedPokemon,
+          owner: newOwner,
+          student_id: studentId,
+          owner_id: studentId,
+          school_name: targetStudent?.school_name || ownedPokemon.school_name || '',
+          class_name: targetStudent?.class_name || ownedPokemon.class_name || '',
+          student_name: targetStudent?.student_name || ''
+        });
       } else if (newOwner) {
         // Create new owned record if transitioning from available → owned
         const maxHP = (pokemon.power || 50) + 30;
         if (allData.length < 999) {
           await window.dataSdk.create({ 
-            type: 'pokemon', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: pokemonId, pokemon_name: pokemonName, pokemon_rarity: pokemon.rarity, pokemon_price: newPrice, pokemon_power: pokemon.power, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: newOwner, created_at: new Date().toISOString(), teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '', current_hp: maxHP, last_battle_time: '', claimed_via_battle: false 
+            type: 'pokemon',
+            student_id: studentId,
+            owner_id: studentId,
+            school_name: targetStudent?.school_name || '',
+            class_name: targetStudent?.class_name || '',
+            student_name: targetStudent?.student_name || '',
+            coins: 0,
+            pokemon_id: pokemonId,
+            pokemon_name: pokemonName,
+            pokemon_rarity: pokemon.rarity,
+            pokemon_price: newPrice,
+            pokemon_power: pokemon.power,
+            quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '',
+            owner: newOwner,
+            created_at: new Date().toISOString(),
+            teacher_name: '', teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0,
+            log_action: '', log_amount: 0, log_target: '', shop_pokemon_id: 0, shop_pokemon_name: '',
+            shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0,
+            quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '',
+            quiz_class: '', quiz_submitted_answers: '', current_hp: maxHP, last_battle_time: '', claimed_via_battle: false 
           });
         }
       }
@@ -26395,26 +26603,25 @@ function openProfileAvatarSelector() {
   if (!myPokes.length) { toast('No Pokémon in collection'); return; }
   
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.classList.add('pk-avatar-modal');
+  modal.className = 'fixed inset-0 flex items-center justify-center z-50 p-4 pk-avatar-modal';
   modal.innerHTML = `<div class="pk-avatar-box max-w-md w-full max-h-[80vh] overflow-y-auto">
-    <div class="pk-avatar-head sticky top-0 p-5 flex items-center justify-between">
-      <h2 class="heading-font text-xl font-bold">Choose your avatar</h2>
-      <button id="profile-avatar-close" class="text-white hover:text-gray-200 text-2xl font-bold">×</button>
+    <div class="pk-avatar-head sticky top-0 px-6 py-4 flex items-center justify-between">
+      <h2>Choose your avatar</h2>
+      <button id="profile-avatar-close" class="pk-avatar-close" aria-label="Close">×</button>
     </div>
-    <div class="p-6 space-y-2" id="profile-avatar-grid"></div>
+    <div class="p-6 space-y-2.5" id="profile-avatar-grid"></div>
   </div>`;
   document.body.appendChild(modal);
   
   const grid = modal.querySelector('#profile-avatar-grid');
   grid.innerHTML = myPokes.map(p => `
-    <button type="button" class="profile-avatar-option w-full bg-white rounded-lg p-3 shadow-sm border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition text-center flex items-center gap-3" data-pokemon-id="${p.pokemon_id}" data-name="${p.pokemon_name}">
+    <button type="button" class="profile-avatar-option w-full p-3 transition text-left flex items-center gap-3.5" data-pokemon-id="${p.pokemon_id}" data-name="${p.pokemon_name}">
       <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png" class="w-12 h-12 object-contain" alt="${p.pokemon_name}" onerror="this.src='https://via.placeholder.com/48'">
-      <div class="text-left flex-1">
-        <p class="font-bold text-sm">${p.pokemon_name}</p>
-        <p class="text-xs text-gray-400">PWR ${p.pokemon_power}</p>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-sm truncate">${p.pokemon_name}</p>
+        <span class="avatar-pwr-badge text-xs font-semibold">PWR ${p.pokemon_power || 0}</span>
       </div>
-      ${p.pokemon_id == profileStudent.avatar_pokemon_id ? '<span class="text-blue-600 font-bold text-lg">✓</span>' : ''}
+      ${p.pokemon_id == profileStudent.avatar_pokemon_id ? '<span class="avatar-selected-indicator" aria-label="Selected">✓</span>' : ''}
     </button>
   `).join('');
   
@@ -26440,26 +26647,25 @@ function openAvatarSelector() {
   if (!myPokes.length) { toast('No Pokémon in collection'); return; }
   
   const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.classList.add('pk-avatar-modal');
+  modal.className = 'fixed inset-0 flex items-center justify-center z-50 p-4 pk-avatar-modal';
   modal.innerHTML = `<div class="pk-avatar-box max-w-md w-full max-h-[80vh] overflow-y-auto">
-    <div class="pk-avatar-head sticky top-0 p-5 flex items-center justify-between">
-      <h2 class="heading-font text-xl font-bold">Choose your avatar</h2>
-      <button id="avatar-close" class="text-white hover:text-gray-200 text-2xl font-bold">×</button>
+    <div class="pk-avatar-head sticky top-0 px-6 py-4 flex items-center justify-between">
+      <h2>Choose your avatar</h2>
+      <button id="avatar-close" class="pk-avatar-close" aria-label="Close">×</button>
     </div>
-    <div class="p-6 space-y-2" id="avatar-grid"></div>
+    <div class="p-6 space-y-2.5" id="avatar-grid"></div>
   </div>`;
   document.body.appendChild(modal);
   
   const grid = modal.querySelector('#avatar-grid');
   grid.innerHTML = myPokes.map(p => `
-    <button type="button" class="avatar-option w-full bg-white rounded-lg p-3 shadow-sm border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition text-center flex items-center gap-3" data-pokemon-id="${p.pokemon_id}" data-name="${p.pokemon_name}">
+    <button type="button" class="avatar-option w-full p-3 transition text-left flex items-center gap-3.5" data-pokemon-id="${p.pokemon_id}" data-name="${p.pokemon_name}">
       <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png" class="w-12 h-12 object-contain" alt="${p.pokemon_name}" onerror="this.src='https://via.placeholder.com/48'">
-      <div class="text-left flex-1">
-        <p class="font-bold text-sm">${p.pokemon_name}</p>
-        <p class="text-xs text-gray-400">PWR ${p.pokemon_power}</p>
+      <div class="flex-1 min-w-0">
+        <p class="font-bold text-sm truncate">${p.pokemon_name}</p>
+        <span class="avatar-pwr-badge text-xs font-semibold">PWR ${p.pokemon_power || 0}</span>
       </div>
-      ${p.pokemon_id == student.avatar_pokemon_id ? '<span class="text-blue-600 font-bold text-lg">✓</span>' : ''}
+      ${p.pokemon_id == student.avatar_pokemon_id ? '<span class="avatar-selected-indicator" aria-label="Selected">✓</span>' : ''}
     </button>
   `).join('');
   

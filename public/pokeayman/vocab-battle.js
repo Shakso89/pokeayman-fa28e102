@@ -729,7 +729,7 @@
     const price = Number(claim.pokemon_price) || 0;
     if (!(await deductTeacherCredits(price))) return false; // keeps the Pokémon in the shop, claim stays pending
     const grant = await window.dataSdk.create({
-      type: 'pokemon', student_id: claim.student_id, school_name: claim.school_name || '', class_name: claim.class_name || '',
+      type: 'pokemon', student_id: claim.student_id, owner_id: claim.student_id, school_name: claim.school_name || '', class_name: claim.class_name || '',
       student_name: '', coins: 0, owner: claim.student_name,
       pokemon_id: Number(claim.pokemon_id), pokemon_name: claim.pokemon_name, pokemon_rarity: claim.pokemon_rarity || '',
       pokemon_price: price, pokemon_power: Number(claim.pokemon_power) || 0,
