@@ -578,7 +578,9 @@
     startTurn();
   }
 
-  /* ---- Teacher: claim approvals ---- */
+  /* ---- Teacher: claim approvals & history ---- */
+  let battleClaimsActiveTab = 'pending';
+
   function myPendingClaims() {
     const claims = allData.filter((r) => r.type === 'battle_claim' && r.status === 'pending');
     if (typeof canAccessAdmin === 'function' && canAccessAdmin()) return claims;
@@ -587,24 +589,130 @@
       || (typeof canManageClass === 'function' && canManageClass(c.school_name || '', c.class_name || '')));
   }
 
+  function myApprovedClaims() {
+    const claims = allData.filter((r) => r.type === 'battle_claim' && r.status === 'approved');
+    const filtered = (typeof canAccessAdmin === 'function' && canAccessAdmin())
+      ? claims
+      : claims.filter((c) => {
+          const me = normalizeStudentIdentity(currentTeacher || '');
+          return normalizeStudentIdentity(c.teacher_name || '') === me
+            || normalizeStudentIdentity(c.resolved_by || '') === me
+            || (typeof canManageClass === 'function' && canManageClass(c.school_name || '', c.class_name || ''));
+        });
+    return filtered.slice().sort((a, b) => new Date(b.resolved_at || b.created_at || 0) - new Date(a.resolved_at || a.created_at || 0));
+  }
+
+  function formatApprovalTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    return d.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+
+  function renderStudentAvatar(c) {
+    const student = (allData || []).find((r) => r.type === 'student' && (String(r.__backendId) === String(c.student_id) || r.student_name === c.student_name));
+    const avatarId = student?.avatar_pokemon_id;
+    if (avatarId && Number(avatarId) > 0) {
+      return `<img src="${sprite(avatarId)}" alt="" class="vb-student-avatar-img w-9 h-9 rounded-full bg-slate-800 object-contain p-0.5 border border-slate-700/80 flex-shrink-0" loading="lazy">`;
+    }
+    const initial = (c.student_name ? c.student_name[0] : 'S').toUpperCase();
+    return `<div class="vb-student-avatar-fallback w-9 h-9 rounded-full bg-slate-800 border border-slate-700/80 flex items-center justify-center text-xs font-bold text-slate-200 flex-shrink-0 select-none">${initial}</div>`;
+  }
+
   window.renderBattleClaims = function () {
     const panel = document.getElementById('battle-claims-list');
     if (!panel) return;
-    const claims = myPendingClaims();
-    panel.innerHTML = `<div class="vb-claims">${claims.length ? claims.map((c) => `
-      <article class="vb-claim">
-        <img class="vb-claim-art" src="${sprite(c.pokemon_id)}" alt="${esc(c.pokemon_name)}" loading="lazy">
-        <div class="vb-claim-info">
-          <p class="vb-claim-name">${esc(c.student_name)} ${c.claim_source === 'listen_catch_mystery' ? `unlocked ${esc(c.pokemon_name)} from a Catchdex Mystery Box!` : `defeated ${esc(c.pokemon_name)}!`}</p>
-          <p class="vb-claim-meta">${esc(c.class_name || '')}${c.school_name ? ` · ${esc(c.school_name)}` : ''} · ${esc(c.pokemon_rarity || 'common')} · costs ${Number(c.pokemon_price) || 0} credits</p>
-        </div>
-        <div class="vb-claim-actions">
-          <button type="button" class="vb-approve" data-vb-approve="${esc(c.claim_id)}">Approve</button>
-          <button type="button" class="vb-decline" data-vb-decline="${esc(c.claim_id)}">Decline</button>
-        </div>
-      </article>`).join('') : '<p class="vb-claims-empty">No battle claims waiting. When a student wins a Poké Battle, their catch request appears here.</p>'}</div>`;
-    panel.querySelectorAll('[data-vb-approve]').forEach((b) => b.addEventListener('click', () => approveClaim(b.dataset.vbApprove)));
-    panel.querySelectorAll('[data-vb-decline]').forEach((b) => b.addEventListener('click', () => declineClaim(b.dataset.vbDecline)));
+    const pending = myPendingClaims();
+    const approved = myApprovedClaims();
+
+    // Sync tab buttons and badge in the header
+    const pendingTab = document.getElementById('battle-claims-tab-pending');
+    const historyTab = document.getElementById('battle-claims-tab-history');
+    const badge = document.getElementById('battle-claims-pending-count');
+    if (badge) badge.textContent = pending.length;
+
+    if (pendingTab && historyTab) {
+      const isPending = battleClaimsActiveTab === 'pending';
+      pendingTab.classList.toggle('is-active', isPending);
+      pendingTab.setAttribute('aria-selected', String(isPending));
+      historyTab.classList.toggle('is-active', !isPending);
+      historyTab.setAttribute('aria-selected', String(!isPending));
+
+      if (!pendingTab.dataset.bound) {
+        pendingTab.dataset.bound = 'true';
+        pendingTab.addEventListener('click', () => {
+          battleClaimsActiveTab = 'pending';
+          renderBattleClaims();
+        });
+      }
+      if (!historyTab.dataset.bound) {
+        historyTab.dataset.bound = 'true';
+        historyTab.addEventListener('click', () => {
+          battleClaimsActiveTab = 'history';
+          renderBattleClaims();
+        });
+      }
+    }
+
+    if (battleClaimsActiveTab === 'history') {
+      panel.innerHTML = `<div class="vb-claims">${approved.length ? approved.map((c) => `
+        <article class="vb-claim vb-claim-history">
+          <div class="vb-claim-student flex items-center gap-3">
+            ${renderStudentAvatar(c)}
+            <div>
+              <strong class="vb-claim-student-name font-bold text-sm text-white block">${esc(c.student_name)}</strong>
+              <span class="vb-claim-meta text-xs text-slate-400 block">${esc(c.class_name || '')}${c.school_name ? ' · ' + esc(c.school_name) : ''}</span>
+            </div>
+          </div>
+          <div class="vb-claim-reward flex items-center gap-3">
+            <img class="vb-claim-art w-10 h-10 object-contain rounded-lg bg-slate-800/80 p-1 border border-slate-700/60 flex-shrink-0" src="${sprite(c.pokemon_id)}" alt="${esc(c.pokemon_name)}" loading="lazy">
+            <div>
+              <strong class="vb-claim-pokemon-name font-bold text-sm text-slate-200 block">${esc(c.pokemon_name)}</strong>
+              <span class="vb-claim-meta text-xs text-slate-400 block capitalize">${esc(c.pokemon_rarity || 'common')} · ${Number(c.pokemon_price) || 0} credits</span>
+            </div>
+          </div>
+          <div class="vb-claim-history-status flex items-center justify-between md:justify-end gap-3 flex-wrap">
+            <span class="vb-claim-time text-xs text-slate-400 font-medium">${formatApprovalTime(c.resolved_at || c.created_at)}</span>
+            <span class="vb-claim-status-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Approved
+            </span>
+          </div>
+        </article>`).join('') : `
+        <div class="vb-claims-empty">
+          <svg class="vb-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p>No approved claims yet. Approved Pokémon rewards will be logged here.</p>
+        </div>`}</div>`;
+    } else {
+      panel.innerHTML = `<div class="vb-claims">${pending.length ? pending.map((c) => `
+        <article class="vb-claim">
+          <img class="vb-claim-art" src="${sprite(c.pokemon_id)}" alt="${esc(c.pokemon_name)}" loading="lazy">
+          <div class="vb-claim-info">
+            <p class="vb-claim-name">
+              <span class="font-bold text-white">${esc(c.student_name)}</span>
+              ${c.claim_source === 'listen_catch_mystery' ? `unlocked <strong class="text-amber-300">${esc(c.pokemon_name)}</strong> from a Catchdex Mystery Box!` : `defeated <strong class="text-amber-300">${esc(c.pokemon_name)}</strong>!`}
+            </p>
+            <p class="vb-claim-meta">${esc(c.class_name || '')}${c.school_name ? ' · ' + esc(c.school_name) : ''} · <span class="capitalize">${esc(c.pokemon_rarity || 'common')}</span> · costs ${Number(c.pokemon_price) || 0} credits${c.created_at ? ' · ' + formatApprovalTime(c.created_at) : ''}</p>
+          </div>
+          <div class="vb-claim-actions">
+            <button type="button" class="vb-approve rounded-full px-4 py-1.5 text-xs font-semibold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer border-0 shadow-sm" data-vb-approve="${esc(c.claim_id)}">Approve</button>
+            <button type="button" class="vb-decline rounded-full px-4 py-1.5 text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition cursor-pointer" data-vb-decline="${esc(c.claim_id)}">Decline</button>
+          </div>
+        </article>`).join('') : `
+        <div class="vb-claims-empty">
+          <svg class="vb-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><polyline points="12 6 12 12 16 14" stroke-width="2"/></svg>
+          <p>No battle claims waiting. When a student wins a Poké Battle, their catch request appears here.</p>
+        </div>`}</div>`;
+      panel.querySelectorAll('[data-vb-approve]').forEach((b) => b.addEventListener('click', () => approveClaim(b.dataset.vbApprove)));
+      panel.querySelectorAll('[data-vb-decline]').forEach((b) => b.addEventListener('click', () => declineClaim(b.dataset.vbDecline)));
+    }
     updateClaimsBadge();
   };
 
@@ -658,7 +766,7 @@
       if (count) navBtn.insertAdjacentHTML('beforeend', `<span class="vb-claims-badge" aria-label="${count} pending claims">${count}</span>`);
     }
     const tab = document.getElementById('teacher-zone-battle-claims-tab');
-    if (tab) tab.textContent = count ? `Battle Claims (${count})` : 'Battle Claims';
+    if (tab) tab.textContent = count ? `Pocket Battle Claims (${count})` : 'Pocket Battle Claims';
   }
   window.vbUpdateClaimsBadge = updateClaimsBadge;
   setInterval(updateClaimsBadge, 20000);
