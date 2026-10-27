@@ -1475,6 +1475,9 @@ html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-sh
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) > .game-popup-modal,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-shell > :not(.ga-stage-header):not(.game-celebration-overlay):not(.ga-theme-backdrop),
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .match-game-shell,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .crossword-game-shell,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .crossword-content,
+html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .crossword-layout,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .find-me-game-shell,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .game-match-root,
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .game-find-me-root,
@@ -1783,6 +1786,7 @@ html body > .ga-stage[data-ga-theme="classroom"] .game-player-card.is-active .ga
   color: #fde047 !important;
 }
 /* Classroom Chalkboard Centerpiece Panels (3D Mitered Oak Frame + Slate Dust Texture) */
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-board-scroll,
 html body > .ga-stage[data-ga-theme="classroom"] #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="classroom"] #hangman-content,
 html body > .ga-stage[data-ga-theme="classroom"] #find-me-box,
@@ -2312,6 +2316,7 @@ html body > .ga-stage[data-ga-theme="jungle"] .game-player-card.is-active .game-
   color: #4ade80 !important;
 }
 /* Jungle Temple Centerpiece Panels (Carved Gold & Timber Sanctuary Frame) */
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-board-scroll,
 html body > .ga-stage[data-ga-theme="jungle"] #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="jungle"] #hangman-content,
 html body > .ga-stage[data-ga-theme="jungle"] #find-me-box,
@@ -2845,6 +2850,7 @@ html body > .ga-stage[data-ga-theme="toybox"] .game-player-card.is-active .game-
   color: #e11d48 !important;
 }
 /* Toybox Studio Playmat Centerpiece Panels */
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-board-scroll,
 html body > .ga-stage[data-ga-theme="toybox"] #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="toybox"] #hangman-content,
 html body > .ga-stage[data-ga-theme="toybox"] #find-me-box,
@@ -3939,6 +3945,7 @@ html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) 
 }
 
 /* Centerpiece panels: Haunted Manor 3D Carved Pumpkin-Amber & Obsidian Frame */
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-board-scroll,
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #hangman-content,
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #find-me-box,
@@ -6081,3 +6088,356 @@ body > .ga-stage[data-ga-theme="classic"]:not(.ts-bright) .ga-stage-header {
   background: radial-gradient(circle at center, #111a2e 0%, #080d18 70%, #04070d 100%) !important;
   background-attachment: fixed !important;
 }
+
+
+/* ==========================================================================
+   Crossword Game: Theme Palette Synchronization (Board Frames & Clues Panels)
+   ========================================================================== */
+
+/* --- 1. CLASSROOM THEME --- */
+/* Authentic Oak-framed Chalkboard Board Container */
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-board-scroll,
+.ga-stage[data-ga-theme="classroom"] .crossword-board-scroll {
+  border-top: 11px solid #c28d58 !important;
+  border-left: 11px solid #b07a45 !important;
+  border-right: 11px solid #9c6836 !important;
+  border-bottom: 16px solid #7d4e24 !important;
+  border-radius: 20px !important;
+  box-shadow: inset 0 0 0 3px #593515, inset 0 10px 32px rgba(0, 0, 0, 0.45), 0 6px 0 #4a2c12, 0 20px 44px rgba(45, 28, 12, 0.38) !important;
+  padding: clamp(0.75rem, 1.5vw, 1.25rem) !important;
+}
+
+/* Warm Cream / Corkboard Clues Panels */
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clues section,
+.ga-stage[data-ga-theme="classroom"] .crossword-clues section {
+  background: linear-gradient(180deg, rgba(255, 254, 247, 0.96) 0%, rgba(246, 235, 220, 0.96) 100%) !important;
+  border: 3.5px solid #b5804c !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.75), 0 5px 0 #7d4e24, 0 12px 28px rgba(45, 28, 12, 0.28) !important;
+  color: #1c1917 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clues h3,
+.ga-stage[data-ga-theme="classroom"] .crossword-clues h3 {
+  color: #78350f !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.12em !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clue,
+.ga-stage[data-ga-theme="classroom"] .crossword-clue {
+  color: #292524 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clue-number,
+.ga-stage[data-ga-theme="classroom"] .crossword-clue-number {
+  color: #b45309 !important;
+  font-weight: 950 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clue:hover:not(.is-active),
+.ga-stage[data-ga-theme="classroom"] .crossword-clue:hover:not(.is-active) {
+  background: rgba(181, 128, 76, 0.15) !important;
+  border-color: rgba(181, 128, 76, 0.35) !important;
+  color: #1c1917 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clue.is-active,
+.ga-stage[data-ga-theme="classroom"] .crossword-clue.is-active {
+  background: linear-gradient(135deg, #fef08a 0%, #fde047 100%) !important;
+  border: 2px solid #b45309 !important;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.55), 0 4px 12px rgba(120, 53, 15, 0.25) !important;
+  color: #1c1917 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clue.is-active .crossword-clue-number,
+.ga-stage[data-ga-theme="classroom"] .crossword-clue.is-active .crossword-clue-number {
+  color: #78350f !important;
+  text-shadow: none !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clue.is-active .crossword-clue-copy,
+.ga-stage[data-ga-theme="classroom"] .crossword-clue.is-active .crossword-clue-copy {
+  color: #1c1917 !important;
+  font-weight: 800 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clue.is-solved,
+.ga-stage[data-ga-theme="classroom"] .crossword-clue.is-solved {
+  color: #15803d !important;
+  text-decoration: line-through !important;
+  opacity: 0.75 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clue.is-solved .crossword-clue-number,
+.ga-stage[data-ga-theme="classroom"] .crossword-clue.is-solved .crossword-clue-number {
+  color: #16a34a !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-clues-toggle,
+.ga-stage[data-ga-theme="classroom"] .crossword-clues-toggle {
+  background: linear-gradient(180deg, #fffdf9 0%, #ede3d5 100%) !important;
+  border: 2.5px solid #44372c !important;
+  color: #292524 !important;
+  box-shadow: 0 4px 0 #44372c !important;
+}
+
+/* Classroom Letter Tiles (Paper/Card style on chalkboard) */
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-cell,
+.ga-stage[data-ga-theme="classroom"] .crossword-cell {
+  background: linear-gradient(180deg, #ffffff 0%, #fef9c3 100%) !important;
+  border: 2px solid #292524 !important;
+  border-radius: clamp(4px, 0.4vw, 8px) !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 3px 0 #292524, 0 6px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-cell input,
+.ga-stage[data-ga-theme="classroom"] .crossword-cell input {
+  color: #1c1917 !important;
+  font-weight: 900 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-cell small,
+.ga-stage[data-ga-theme="classroom"] .crossword-cell small {
+  color: #78350f !important;
+  font-weight: 900 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-cell.is-active,
+.ga-stage[data-ga-theme="classroom"] .crossword-cell.is-active {
+  background: linear-gradient(180deg, #fef08a 0%, #facc15 100%) !important;
+  outline: 3px solid #facc15 !important;
+  outline-offset: 1px !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"] .crossword-cell.is-correct,
+.ga-stage[data-ga-theme="classroom"] .crossword-cell.is-correct {
+  background: linear-gradient(180deg, #dcfce7 0%, #86efac 100%) !important;
+  border-color: #14532d !important;
+}
+
+
+/* --- 2. JUNGLE THEME --- */
+/* Temple Sanctuary Frame Board */
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-board-scroll,
+.ga-stage[data-ga-theme="jungle"] .crossword-board-scroll {
+  border-top: 10px solid #eab308 !important;
+  border-left: 10px solid #ca8a04 !important;
+  border-right: 10px solid #b45309 !important;
+  border-bottom: 14px solid #78350f !important;
+  border-radius: 22px !important;
+  box-shadow: inset 0 0 0 3px #422006, inset 0 12px 34px rgba(0, 0, 0, 0.55), 0 6px 0 #271202, 0 22px 48px rgba(0, 0, 0, 0.55) !important;
+  padding: clamp(0.75rem, 1.5vw, 1.25rem) !important;
+}
+
+/* Deep Jungle Moss Cards */
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-clues section,
+.ga-stage[data-ga-theme="jungle"] .crossword-clues section {
+  background: linear-gradient(180deg, rgba(20, 54, 34, 0.94) 0%, rgba(9, 31, 19, 0.96) 100%) !important;
+  border: 3px solid #ca8a04 !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 0 2px #422006, 0 5px 0 #271202, 0 12px 28px rgba(0, 0, 0, 0.45) !important;
+  color: #fef3c7 !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-clues h3,
+.ga-stage[data-ga-theme="jungle"] .crossword-clues h3 {
+  color: #fde047 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-clue,
+.ga-stage[data-ga-theme="jungle"] .crossword-clue {
+  color: #e2f4e8 !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-clue-number,
+.ga-stage[data-ga-theme="jungle"] .crossword-clue-number {
+  color: #facc15 !important;
+  font-weight: 950 !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-clue:hover:not(.is-active),
+.ga-stage[data-ga-theme="jungle"] .crossword-clue:hover:not(.is-active) {
+  background: rgba(34, 197, 94, 0.16) !important;
+  border-color: rgba(234, 179, 8, 0.4) !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-clue.is-active,
+.ga-stage[data-ga-theme="jungle"] .crossword-clue.is-active {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.35), rgba(34, 197, 94, 0.22)) !important;
+  border: 2px solid #fde047 !important;
+  box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.45), 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+  color: #ffffff !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-cell,
+.ga-stage[data-ga-theme="jungle"] .crossword-cell {
+  background: linear-gradient(180deg, #fdf8ee 0%, #f0dec1 100%) !important;
+  border: 2px solid #422006 !important;
+  border-radius: clamp(4px, 0.4vw, 8px) !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 3px 0 #271202, 0 6px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-cell input,
+.ga-stage[data-ga-theme="jungle"] .crossword-cell input {
+  color: #271202 !important;
+  font-weight: 900 !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"] .crossword-cell small,
+.ga-stage[data-ga-theme="jungle"] .crossword-cell small {
+  color: #78350f !important;
+  font-weight: 900 !important;
+}
+
+
+/* --- 3. TOYBOX THEME --- */
+/* Playmat Frame Board */
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-board-scroll,
+.ga-stage[data-ga-theme="toybox"] .crossword-board-scroll {
+  border-top: 9px solid #818cf8 !important;
+  border-left: 9px solid #6366f1 !important;
+  border-right: 9px solid #6366f1 !important;
+  border-bottom: 14px solid #4338ca !important;
+  border-radius: 26px !important;
+  box-shadow: inset 0 0 0 3px #c7d2fe, 0 8px 0 #1e1b4b, 0 24px 52px rgba(10, 8, 36, 0.55) !important;
+  padding: clamp(0.75rem, 1.5vw, 1.25rem) !important;
+}
+
+/* Clean Toybox Studio Cards */
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-clues section,
+.ga-stage[data-ga-theme="toybox"] .crossword-clues section {
+  background: linear-gradient(180deg, #ffffff 0%, #f5f7ff 100%) !important;
+  border: 3.5px solid #6366f1 !important;
+  border-radius: 20px !important;
+  box-shadow: 0 5px 0 #3730a3, 0 12px 28px rgba(30, 27, 75, 0.25) !important;
+  color: #1e1b4b !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-clues h3,
+.ga-stage[data-ga-theme="toybox"] .crossword-clues h3 {
+  color: #4338ca !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-clue,
+.ga-stage[data-ga-theme="toybox"] .crossword-clue {
+  color: #312e81 !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-clue-number,
+.ga-stage[data-ga-theme="toybox"] .crossword-clue-number {
+  color: #ec4899 !important;
+  font-weight: 950 !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-clue:hover:not(.is-active),
+.ga-stage[data-ga-theme="toybox"] .crossword-clue:hover:not(.is-active) {
+  background: #e0e7ff !important;
+  border-color: #818cf8 !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-clue.is-active,
+.ga-stage[data-ga-theme="toybox"] .crossword-clue.is-active {
+  background: linear-gradient(135deg, #fbcfe8, #f472b6) !important;
+  border: 2px solid #be185d !important;
+  box-shadow: 0 0 0 1px rgba(236, 72, 153, 0.4), 0 4px 14px rgba(190, 24, 93, 0.25) !important;
+  color: #4c0519 !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-clue.is-active .crossword-clue-number,
+.ga-stage[data-ga-theme="toybox"] .crossword-clue.is-active .crossword-clue-number {
+  color: #831843 !important;
+  text-shadow: none !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-cell,
+.ga-stage[data-ga-theme="toybox"] .crossword-cell {
+  background: #ffffff !important;
+  border: 2.5px solid #6366f1 !important;
+  border-radius: clamp(4px, 0.4vw, 8px) !important;
+  box-shadow: 0 3px 0 #4338ca, 0 6px 12px rgba(67, 56, 202, 0.2) !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"] .crossword-cell input,
+.ga-stage[data-ga-theme="toybox"] .crossword-cell input {
+  color: #1e1b4b !important;
+  font-weight: 900 !important;
+}
+
+
+/* --- 4. HALLOWEEN THEME --- */
+/* Haunted Manor Obsidian & Pumpkin Carved Frame */
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-board-scroll,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-board-scroll {
+  border-top: 11px solid #fb923c !important;
+  border-left: 11px solid #f97316 !important;
+  border-right: 11px solid #ea580c !important;
+  border-bottom: 15px solid #9a3412 !important;
+  border-radius: 24px !important;
+  box-shadow: inset 0 2px 0 rgba(254, 243, 199, 0.35), inset 0 0 0 3px #140726, 0 6px 0 #0d051a, 0 22px 48px rgba(0, 0, 0, 0.65) !important;
+  padding: clamp(0.75rem, 1.8vw, 1.25rem) !important;
+  box-sizing: border-box !important;
+}
+
+/* Haunted Spellbook Cards */
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clues section,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clues section {
+  background: linear-gradient(180deg, rgba(38, 16, 71, 0.94) 0%, rgba(20, 7, 40, 0.96) 100%) !important;
+  border: 3.5px solid #f97316 !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 0 2px #140726, 0 5px 0 #0d051a, 0 12px 30px rgba(0, 0, 0, 0.6) !important;
+  color: #fef3c7 !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clues h3,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clues h3 {
+  color: #fb923c !important;
+  text-shadow: 0 0 8px rgba(249, 115, 22, 0.6) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clue,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clue {
+  color: #fed7aa !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clue-number,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clue-number {
+  color: #fbbf24 !important;
+  font-weight: 950 !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clue:hover:not(.is-active),
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clue:hover:not(.is-active) {
+  background: rgba(249, 115, 22, 0.18) !important;
+  border-color: rgba(251, 146, 60, 0.4) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clue.is-active,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-clue.is-active {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.35), rgba(168, 85, 247, 0.25)) !important;
+  border: 2px solid #fb923c !important;
+  box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.5), 0 4px 16px rgba(249, 115, 22, 0.35) !important;
+  color: #ffffff !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell {
+  background: linear-gradient(180deg, #3b1d60 0%, #200f35 100%) !important;
+  border: 2px solid #ea580c !important;
+  border-radius: clamp(4px, 0.4vw, 8px) !important;
+  box-shadow: inset 0 1px 0 rgba(251, 146, 60, 0.3), 0 3px 0 #0d051a, 0 6px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell input,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell input {
+  color: #fed7aa !important;
+  font-weight: 900 !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell small,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell small {
+  color: #fb923c !important;
+  font-weight: 900 !important;
+}
+
