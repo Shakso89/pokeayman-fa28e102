@@ -731,3 +731,200 @@ html body.ts-bright .vocab-gen-tab-btn.active {
   color: #3730a3 !important;
   border-color: #6366f1 !important;
 }
+
+/* ---- Set List Cover Modal (Light Mode / ts-bright) ---- */
+html body.ts-bright .vocab-cover-popover,
+html body.light .vocab-cover-popover,
+.vocab-cover-popover.is-light {
+  background: rgba(15, 23, 42, 0.35) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+
+html body.ts-bright .vocab-cover-dialog,
+html body.light .vocab-cover-dialog,
+.vocab-cover-popover.is-light .vocab-cover-dialog {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.18), 0 10px 25px -5px rgba(15, 23, 42, 0.1) !important;
+}
+
+html body.ts-bright .vocab-cover-dialog #vocab-cover-title,
+html body.light .vocab-cover-dialog #vocab-cover-title,
+.vocab-cover-popover.is-light .vocab-cover-dialog #vocab-cover-title {
+  color: #0f172a !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-cover-subtitle,
+html body.light .vocab-cover-dialog .vocab-cover-subtitle,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-subtitle,
+html body.ts-bright .vocab-cover-dialog #vocab-cover-status,
+html body.light .vocab-cover-dialog #vocab-cover-status,
+.vocab-cover-popover.is-light .vocab-cover-dialog #vocab-cover-status {
+  color: #64748b !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-editor-close,
+html body.light .vocab-cover-dialog .vocab-editor-close,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-editor-close {
+  background: transparent !important;
+  color: #64748b !important;
+  border: 1px solid transparent !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-editor-close:hover,
+html body.light .vocab-cover-dialog .vocab-editor-close:hover,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-editor-close:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+html body.ts-bright .vocab-cover-dialog input#vocab-cover-search,
+html body.light .vocab-cover-dialog input#vocab-cover-search,
+.vocab-cover-popover.is-light .vocab-cover-dialog input#vocab-cover-search,
+html body.ts-bright .vocab-cover-dialog .vocab-cover-search-input,
+html body.light .vocab-cover-dialog .vocab-cover-search-input,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-search-input {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05) !important;
+}
+
+html body.ts-bright .vocab-cover-dialog input#vocab-cover-search::placeholder,
+html body.light .vocab-cover-dialog input#vocab-cover-search::placeholder,
+.vocab-cover-popover.is-light .vocab-cover-dialog input#vocab-cover-search::placeholder,
+html body.ts-bright .vocab-cover-dialog .vocab-cover-search-input::placeholder,
+html body.light .vocab-cover-dialog .vocab-cover-search-input::placeholder,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-search-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+html body.ts-bright .vocab-cover-dialog input#vocab-cover-search:focus,
+html body.light .vocab-cover-dialog input#vocab-cover-search:focus,
+.vocab-cover-popover.is-light .vocab-cover-dialog input#vocab-cover-search:focus,
+html body.ts-bright .vocab-cover-dialog .vocab-cover-search-input:focus,
+html body.light .vocab-cover-dialog .vocab-cover-search-input:focus,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-search-input:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-cover-btn-secondary,
+html body.light .vocab-cover-dialog .vocab-cover-btn-secondary,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-btn-secondary,
+html body.ts-bright .vocab-cover-dialog button#vocab-cover-remove,
+html body.light .vocab-cover-dialog button#vocab-cover-remove,
+.vocab-cover-popover.is-light .vocab-cover-dialog button#vocab-cover-remove,
+html body.ts-bright .vocab-cover-dialog button#vocab-cover-cancel,
+html body.light .vocab-cover-dialog button#vocab-cover-cancel,
+.vocab-cover-popover.is-light .vocab-cover-dialog button#vocab-cover-cancel {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-cover-btn-secondary:hover,
+html body.light .vocab-cover-dialog .vocab-cover-btn-secondary:hover,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-btn-secondary:hover,
+html body.ts-bright .vocab-cover-dialog button#vocab-cover-remove:hover,
+html body.light .vocab-cover-dialog button#vocab-cover-remove:hover,
+.vocab-cover-popover.is-light .vocab-cover-dialog button#vocab-cover-remove:hover,
+html body.ts-bright .vocab-cover-dialog button#vocab-cover-cancel:hover,
+html body.light .vocab-cover-dialog button#vocab-cover-cancel:hover,
+.vocab-cover-popover.is-light .vocab-cover-dialog button#vocab-cover-cancel:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-cover-btn-primary,
+html body.light .vocab-cover-dialog .vocab-cover-btn-primary,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-btn-primary,
+html body.ts-bright .vocab-cover-dialog button#vocab-cover-search-btn,
+html body.light .vocab-cover-dialog button#vocab-cover-search-btn,
+.vocab-cover-popover.is-light .vocab-cover-dialog button#vocab-cover-search-btn,
+html body.ts-bright .vocab-cover-dialog button#vocab-cover-apply,
+html body.light .vocab-cover-dialog button#vocab-cover-apply,
+.vocab-cover-popover.is-light .vocab-cover-dialog button#vocab-cover-apply {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(79, 70, 229, 0.35) !important;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.22) !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-cover-btn-primary:hover:not(:disabled),
+html body.light .vocab-cover-dialog .vocab-cover-btn-primary:hover:not(:disabled),
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-btn-primary:hover:not(:disabled),
+html body.ts-bright .vocab-cover-dialog button#vocab-cover-search-btn:hover:not(:disabled),
+html body.light .vocab-cover-dialog button#vocab-cover-search-btn:hover:not(:disabled),
+.vocab-cover-popover.is-light .vocab-cover-dialog button#vocab-cover-search-btn:hover:not(:disabled),
+html body.ts-bright .vocab-cover-dialog button#vocab-cover-apply:hover:not(:disabled),
+html body.light .vocab-cover-dialog button#vocab-cover-apply:hover:not(:disabled),
+.vocab-cover-popover.is-light .vocab-cover-dialog button#vocab-cover-apply:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.32) !important;
+}
+
+html body.ts-bright .vocab-cover-dialog #vocab-cover-load-more,
+html body.light .vocab-cover-dialog #vocab-cover-load-more,
+.vocab-cover-popover.is-light .vocab-cover-dialog #vocab-cover-load-more,
+html body.ts-bright .vocab-cover-dialog .vocab-cover-load-more,
+html body.light .vocab-cover-dialog .vocab-cover-load-more,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-load-more {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+html body.ts-bright .vocab-cover-dialog #vocab-cover-load-more:hover:not(:disabled),
+html body.light .vocab-cover-dialog #vocab-cover-load-more:hover:not(:disabled),
+.vocab-cover-popover.is-light .vocab-cover-dialog #vocab-cover-load-more:hover:not(:disabled),
+html body.ts-bright .vocab-cover-dialog .vocab-cover-load-more:hover:not(:disabled),
+html body.light .vocab-cover-dialog .vocab-cover-load-more:hover:not(:disabled),
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-load-more:hover:not(:disabled) {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-cover-preview-box,
+html body.light .vocab-cover-dialog .vocab-cover-preview-box,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-preview-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-cover-preview-label,
+html body.light .vocab-cover-dialog .vocab-cover-preview-label,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-preview-label {
+  color: #475569 !important;
+}
+
+html body.ts-bright .vocab-cover-dialog #vocab-cover-preview,
+html body.light .vocab-cover-dialog #vocab-cover-preview,
+.vocab-cover-popover.is-light .vocab-cover-dialog #vocab-cover-preview {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-cover-result,
+html body.light .vocab-cover-dialog .vocab-cover-result,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-result {
+  background: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-cover-result:hover,
+html body.light .vocab-cover-dialog .vocab-cover-result:hover,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-result:hover {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
+}
+
+html body.ts-bright .vocab-cover-dialog .vocab-cover-result.is-selected,
+html body.light .vocab-cover-dialog .vocab-cover-result.is-selected,
+.vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-result.is-selected {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35) !important;
+}
