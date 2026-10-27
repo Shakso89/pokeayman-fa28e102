@@ -4,12 +4,14 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { streamSpeech } from "@/lib/vocabulary-speech";
+import { fetchClassStudents } from "@/lib/class-students";
 
 type Result = { error?: string; name?: string; signedIn?: boolean };
 
 declare global {
   interface Window {
     supabaseClient?: any;
+    fetchClassStudents?: typeof fetchClassStudents;
     pokeaymanSpeak?: (text: string, level?: string) => Promise<void>;
     pokeaymanStop?: () => void;
     pokeaymanAuth?: {
@@ -118,6 +120,7 @@ function Index() {
       return streamSpeech("/api/vocabulary-speech", text, level, activeSpeechController.signal);
     };
     window.supabaseClient = supabase;
+    window.fetchClassStudents = fetchClassStudents;
     window.pokeaymanAuth = {
       supabase,
       userId: user?.id ?? null,
