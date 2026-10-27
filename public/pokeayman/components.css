@@ -1400,3 +1400,91 @@ html body:is(#pk-ds, body, html) :is(
 ):active:not(:disabled) {
   transform: translateY(1px) scale(0.98) !important;
 }
+
+/* ==========================================================================
+   Vocabulary Card Header Layout & Title Wrapping & Responsive Grid
+   ========================================================================== */
+#teacher-vb-lists-grid,
+#vocab-lists-container {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  align-items: stretch !important;
+}
+
+@media (max-width: 640px) {
+  #teacher-vb-lists-grid,
+  #vocab-lists-container {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)) !important;
+  }
+}
+
+:is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.teacher-zone-wordbank-header, .teacher-zone-wordbank-heading) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  gap: 8px !important;
+  margin: 0 0 8px 0 !important;
+}
+
+:is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.teacher-zone-wordbank-card, .vocab-list-card) :is(.student-vocab-list-name, .vocab-list-name) {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  line-height: 1.35 !important;
+}
+
+:is(#teacher-vb-lists-grid, #vocab-lists-container, body) .teacher-zone-wordbank-meta {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+:is(#teacher-vb-lists-grid, #vocab-lists-container, body) .teacher-zone-wordbank-meta .teacher-zone-list-author {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: #94a3b8 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+:is(#teacher-vb-lists-grid, #vocab-lists-container, body) .teacher-zone-wordbank-meta .teacher-zone-list-avatar,
+:is(#teacher-vb-lists-grid, #vocab-lists-container, body) .teacher-zone-wordbank-meta .teacher-zone-list-avatar-fallback {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  font-size: 0.85rem !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+:is(#teacher-vb-lists-grid, #vocab-lists-container, body) .teacher-zone-wordbank-meta :is(.vocab-list-context-tag, .teacher-zone-wordbank-context) {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 2px 8px !important;
+  border-radius: 6px !important;
+  background: rgba(51, 65, 85, 0.6) !important;
+  color: #cbd5e1 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border: 1px solid rgba(148, 163, 184, 0.2) !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+}
+
+:is(#teacher-vb-lists-grid, #vocab-lists-container, body) .teacher-zone-wordbank-meta .ai-generated-badge {
+  margin: 0 !important;
+  white-space: nowrap !important;
+}

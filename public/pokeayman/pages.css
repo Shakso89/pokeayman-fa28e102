@@ -89,8 +89,13 @@ body.ts-on .teacher-zone-history-actions { display: flex; flex-wrap: wrap; gap: 
 body.ts-on #teacher-zone-history-empty { margin-top: var(--pk-space-4); }
 
 body.ts-on #teacher-vb-lists-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   align-items: stretch; gap: var(--pk-space-4);
+}
+@media (max-width: 640px) {
+  body.ts-on #teacher-vb-lists-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  }
 }
 .teacher-vb-list-modes { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1rem; }
 .teacher-vb-list-modes button { min-height: 2.65rem; padding: .65rem 1rem; border: 1px solid var(--pk-border-strong); border-radius: var(--pk-radius-md); background: var(--pk-surface-elevated); color: var(--pk-ink); font-weight: 800; }
@@ -118,12 +123,18 @@ body.ts-on #teacher-vb-lists-grid .teacher-zone-wordbank-card::before { content:
 body.ts-on #teacher-vb-lists-grid .teacher-zone-wordbank-card:hover {
   transform: translateY(-2px) !important; border-color: var(--pk-border-strong) !important; box-shadow: var(--pk-shadow-2) !important;
 }
-body.ts-on #teacher-vb-lists-grid .teacher-zone-wordbank-heading {
-  display: flex; align-items: center; gap: var(--pk-space-3); min-width: 0; margin: 0;
+body.ts-on #teacher-vb-lists-grid :is(.teacher-zone-wordbank-header, .teacher-zone-wordbank-heading) {
+  display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 8px !important; width: 100% !important; margin: 0 0 6px 0 !important;
 }
-body.ts-on #teacher-vb-lists-grid .vocab-list-card .student-vocab-list-name {
-  min-width: 0; margin: 0 !important; padding: 0 !important; color: var(--pk-ink) !important;
-  font: 700 var(--pk-text-body)/var(--pk-leading-tight) var(--pk-font-display) !important; text-align: left !important; overflow-wrap: anywhere;
+body.ts-on #teacher-vb-lists-grid .vocab-list-card :is(.student-vocab-list-name, .vocab-list-name) {
+  display: block !important; width: 100% !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; color: var(--pk-ink) !important;
+  font: 800 var(--pk-text-base)/var(--pk-leading-tight) var(--pk-font-display) !important; text-align: left !important; white-space: normal !important; word-break: normal !important; overflow-wrap: break-word !important;
+}
+body.ts-on #teacher-vb-lists-grid .teacher-zone-wordbank-meta {
+  display: flex !important; flex-wrap: wrap !important; gap: 8px !important; align-items: center !important; width: 100% !important;
+}
+body.ts-on #teacher-vb-lists-grid .vocab-list-context-tag {
+  display: inline-flex !important; align-items: center !important; padding: 2px 8px !important; border-radius: 6px !important; background: var(--pk-surface-elevated, rgba(51, 65, 85, 0.6)) !important; color: var(--pk-muted, #cbd5e1) !important; font-size: 11px !important; font-weight: 600 !important; border: 1px solid var(--pk-border, rgba(148, 163, 184, 0.2)) !important; white-space: nowrap !important; margin: 0 !important;
 }
 body.ts-on #teacher-vb-lists-grid .teacher-zone-list-author { display: flex; align-items: center; gap: var(--pk-space-2); color: var(--pk-muted); font-size: var(--pk-text-xs); }
 body.ts-on #teacher-vb-lists-grid .teacher-zone-list-avatar,
