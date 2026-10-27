@@ -9189,77 +9189,130 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
        </div>
       </div>
      </div>
-     <section id="teacher-zone-financial-panel" class="hidden financial-dashboard" role="tabpanel" aria-labelledby="teacher-zone-financial-tab">
-      <div class="financial-hero glass-container rounded-2xl p-5 mb-6">
-       <div class="financial-hero-copy">
-        <p class="financial-eyebrow">TEACHER ZONE · FINANCE</p>
-        <h3 class="font-semibold text-xl text-white">Monthly pay</h3>
-       </div>
-       <div class="financial-period-card">
-        <label for="financial-month" class="financial-field-label">Month</label> <input id="financial-month" type="month" class="financial-period-input" aria-label="Selected financial month">
-       </div>
-       <div class="financial-period-card">
-        <label for="financial-hourly-rate" class="financial-field-label">Hourly rate</label> <input id="financial-hourly-rate" type="number" min="0" step="0.01" inputmode="decimal" class="financial-period-input" placeholder="Amount per hour" aria-label="Hourly rate">
-       </div>
-      </div>
-      <div class="glass-container rounded-2xl p-5 mb-6">
-       <div class="financial-summary-heading">
-        <div><p class="financial-eyebrow">MONTHLY SUMMARY</p><h3 class="font-semibold text-lg text-white">Estimated pay</h3></div>
-        <span class="financial-summary-period" id="financial-summary-period"></span>
-       </div>
-       <div id="financial-empty" class="hidden rounded-lg border border-amber-200/20 bg-indigo-950/60 p-4 text-sm text-gray-300 mb-4">
-        No scheduled hours this month yet.
-       </div>
-       <div id="financial-extra-summary" class="financial-overview-grid">
-        <article class="financial-overview-card"><span class="financial-card-kicker">GROSS EARNINGS</span><strong id="financial-overview-gross">NT$0</strong><span id="financial-overview-hours" class="financial-card-note">0.0 scheduled hours</span></article>
-        <article class="financial-overview-card deduction"><span class="financial-card-kicker">UNPAID DEDUCTIONS</span><strong id="financial-overview-unpaid">NT$0</strong><span id="financial-unpaid-hours" class="financial-card-note">0.0 hours excluded</span></article>
-        <article class="financial-overview-card deduction"><span class="financial-card-kicker">INSURANCE DEDUCTIONS</span><strong id="financial-overview-insurance">NT$0</strong><span id="financial-insurance-note" class="financial-card-note">This month</span></article>
-        <article class="financial-overview-card net"><span class="financial-card-kicker">ESTIMATED TAKE-HOME</span><strong id="financial-overview-net">NT$0</strong><span class="financial-card-note">After listed deductions</span></article>
-       </div>
-       <p class="financial-estimate-note">Take-home estimate = gross earnings minus unpaid dates and insurance.</p>
-       <span id="financial-salary" class="sr-only">NT$0</span><span id="financial-recurring-hours" class="sr-only">0.0 hrs</span><span id="financial-one-time-hours" class="sr-only">0.0 hrs</span><span id="financial-total-hours" class="sr-only">0.0 hrs</span><span id="financial-insurance-total" class="sr-only">NT$0</span><span id="financial-net-salary" class="sr-only">NT$0</span>
-       <section class="financial-school-section" aria-labelledby="financial-school-title">
-        <div class="financial-section-heading"><div><p class="financial-eyebrow">SCHOOL BREAKDOWN</p><h4 id="financial-school-title">Pay by school</h4></div><span>Selected month</span></div>
-        <div id="financial-school-breakdown" class="financial-breakdown-scroll"></div>
-       </section>
-       <details class="financial-disclosure">
-        <summary><span>Recurring schedule by weekday</span><span class="financial-disclosure-hint">Before unpaid dates</span></summary>
-        <div id="financial-weekday-breakdown" class="financial-disclosure-content"></div>
-       </details>
-       <details class="financial-disclosure">
-        <summary><span>One-time hours</span><span id="financial-extra-hours-hint" class="financial-disclosure-hint">Selected month</span></summary>
-        <div id="financial-extra-hours-list" class="financial-disclosure-content"></div>
-       </details>
-      </div>
-      <section id="financial-adjustments-panel" class="financial-adjustments-panel glass-container rounded-xl p-4 mb-6" aria-labelledby="financial-adjustments-title">
-       <div class="financial-adjustments-heading">
-        <div>
-         <p class="financial-eyebrow">MONTHLY RECORDS</p><h3 id="financial-adjustments-title" class="font-semibold text-lg text-white">Unpaid dates and insurance</h3>
+      <section id="teacher-zone-financial-panel" class="hidden financial-dashboard" role="tabpanel" aria-labelledby="teacher-zone-financial-tab">
+       <div class="financial-hero glass-container rounded-2xl p-5 mb-6">
+        <div class="financial-hero-copy">
+         <p class="financial-eyebrow text-xs uppercase tracking-wider text-slate-400 font-medium mb-1">TEACHER ZONE · FINANCE</p>
+         <h3 class="text-2xl font-bold text-white tracking-tight">Monthly pay</h3>
+        </div>
+        <div class="financial-period-card">
+         <label for="financial-month" class="financial-field-label text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1 block">Month</label>
+         <input id="financial-month" type="month" class="financial-period-input" aria-label="Selected financial month">
+        </div>
+        <div class="financial-period-card">
+         <label for="financial-hourly-rate" class="financial-field-label text-xs uppercase tracking-wider text-slate-400 font-semibold mb-1 block">Hourly rate</label>
+         <div class="financial-rate-input-wrap relative flex items-center">
+          <span class="financial-rate-prefix absolute left-3.5 text-slate-400 font-semibold text-sm pointer-events-none select-none">NT$</span>
+          <input id="financial-hourly-rate" type="number" min="0" step="1" inputmode="numeric" class="financial-period-input financial-rate-input" placeholder="800" aria-label="Hourly rate">
+         </div>
         </div>
        </div>
-       <div class="financial-adjustments-grid">
-        <details id="financial-unpaid-panel" class="financial-adjustment-column" aria-labelledby="financial-unpaid-title">
-         <summary class="financial-adjustment-summary"><span id="financial-unpaid-title">Unpaid dates</span><span id="financial-unpaid-count">No records</span></summary>
-         <div class="financial-adjustment-content"><div class="financial-adjustment-header"><p>Only entries in the selected month are shown.</p><button id="financial-unpaid-add-btn" type="button" class="btn-primary text-xs">Add unpaid dates</button></div>
-          <div id="financial-unpaid-list"></div><p id="financial-unpaid-empty" class="text-center text-gray-400 py-3 text-xs">No unpaid dates for this month.</p>
+       <div class="glass-container rounded-2xl p-5 mb-6">
+        <div class="financial-summary-heading">
+         <div>
+          <p class="financial-eyebrow text-xs uppercase tracking-wider text-slate-400 font-medium mb-0.5">MONTHLY SUMMARY</p>
+          <h3 class="font-bold text-lg text-white">Estimated pay</h3>
          </div>
+         <span class="financial-summary-period font-semibold text-slate-400 text-sm" id="financial-summary-period"></span>
+        </div>
+        <div id="financial-empty" class="hidden rounded-lg border border-amber-200/20 bg-indigo-950/60 p-4 text-sm text-gray-300 mb-4">
+         No scheduled hours this month yet.
+        </div>
+        <div id="financial-extra-summary" class="financial-overview-grid">
+         <article class="financial-overview-card gross"><span class="financial-card-kicker">GROSS EARNINGS</span><strong id="financial-overview-gross">NT$0</strong><span id="financial-overview-hours" class="financial-card-note">0.0 scheduled hours</span></article>
+         <article class="financial-overview-card deduction"><span class="financial-card-kicker">UNPAID DEDUCTIONS</span><strong id="financial-overview-unpaid">-NT$0</strong><span id="financial-unpaid-hours" class="financial-card-note">0.0 hours excluded</span></article>
+         <article class="financial-overview-card deduction"><span class="financial-card-kicker">INSURANCE DEDUCTIONS</span><strong id="financial-overview-insurance">-NT$0</strong><span id="financial-insurance-note" class="financial-card-note">This month</span></article>
+         <article class="financial-overview-card net hero-card"><span class="financial-card-kicker">ESTIMATED TAKE-HOME</span><strong id="financial-overview-net">NT$0</strong><span class="financial-card-note">After listed deductions</span></article>
+        </div>
+        <div class="financial-estimate-bar">
+         <svg class="financial-info-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" stroke-width="2"/>
+          <line x1="12" y1="16" x2="12" y2="12" stroke-width="2"/>
+          <line x1="12" y1="8" x2="12.01" y2="8" stroke-width="2"/>
+         </svg>
+         <span>Take-home estimate = gross earnings minus unpaid dates and insurance deductions.</span>
+        </div>
+        <span id="financial-salary" class="sr-only">NT$0</span><span id="financial-recurring-hours" class="sr-only">0.0 hrs</span><span id="financial-one-time-hours" class="sr-only">0.0 hrs</span><span id="financial-total-hours" class="sr-only">0.0 hrs</span><span id="financial-insurance-total" class="sr-only">NT$0</span><span id="financial-net-salary" class="sr-only">NT$0</span>
+        <section class="financial-school-section" aria-labelledby="financial-school-title">
+         <div class="financial-section-heading"><div><p class="financial-eyebrow text-xs uppercase tracking-wider text-slate-400 font-medium mb-0.5">SCHOOL BREAKDOWN</p><h4 id="financial-school-title" class="text-base font-bold text-white">Pay by school</h4></div><span class="text-xs text-slate-400">Selected month</span></div>
+         <div id="financial-school-breakdown" class="financial-breakdown-scroll"></div>
+        </section>
+        <details class="financial-disclosure">
+         <summary class="financial-disclosure-summary">
+          <div class="financial-disclosure-title-wrap">
+           <svg class="financial-disclosure-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+           <span>Recurring schedule by weekday</span>
+          </div>
+          <span class="financial-disclosure-badge">Before unpaid dates</span>
+         </summary>
+         <div id="financial-weekday-breakdown" class="financial-disclosure-content"></div>
         </details>
-        <details id="financial-insurance-panel" class="financial-adjustment-column" aria-labelledby="financial-insurance-title">
-         <summary class="financial-adjustment-summary"><span id="financial-insurance-title">Insurance deductions</span><span id="financial-insurance-count">No records</span></summary>
-         <div class="financial-adjustment-content"><div class="financial-adjustment-header"><p>Only deductions in the selected month are shown.</p><button id="financial-insurance-add-btn" type="button" class="btn-primary text-xs">Add deduction</button></div>
-          <div id="financial-insurance-list"></div><p id="financial-insurance-empty" class="text-center text-gray-400 py-3 text-xs">No insurance deductions for this month.</p>
-         </div>
+        <details class="financial-disclosure">
+         <summary class="financial-disclosure-summary">
+          <div class="financial-disclosure-title-wrap">
+           <svg class="financial-disclosure-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+           <span>One-time hours</span>
+          </div>
+          <span id="financial-extra-hours-hint" class="financial-disclosure-badge">Selected month</span>
+         </summary>
+         <div id="financial-extra-hours-list" class="financial-disclosure-content"></div>
         </details>
        </div>
+       <section id="financial-adjustments-panel" class="financial-adjustments-panel glass-container rounded-xl p-4 mb-6" aria-labelledby="financial-adjustments-title">
+        <div class="financial-adjustments-heading">
+         <div>
+          <p class="financial-eyebrow text-xs uppercase tracking-wider text-slate-400 font-medium mb-0.5">MONTHLY RECORDS</p>
+          <h3 id="financial-adjustments-title" class="font-bold text-lg text-white">Unpaid dates and insurance</h3>
+         </div>
+        </div>
+        <div class="financial-adjustments-grid">
+         <details id="financial-unpaid-panel" class="financial-adjustment-column" aria-labelledby="financial-unpaid-title">
+          <summary class="financial-adjustment-summary">
+           <div class="financial-adj-title-wrap">
+            <svg class="financial-adj-icon text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+             <rect x="3" y="4" width="18" height="18" rx="2" stroke-width="2"/>
+             <line x1="16" y1="2" x2="16" y2="6" stroke-width="2"/>
+             <line x1="8" y1="2" x2="8" y2="6" stroke-width="2"/>
+             <line x1="3" y1="10" x2="21" y2="10" stroke-width="2"/>
+            </svg>
+            <span id="financial-unpaid-title">Unpaid dates</span>
+           </div>
+           <div class="financial-adj-meta-wrap">
+            <span id="financial-unpaid-count" class="financial-adj-pill">No records</span>
+            <svg class="financial-adj-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+           </div>
+          </summary>
+          <div class="financial-adjustment-content"><div class="financial-adjustment-header"><p>Only entries in the selected month are shown.</p><button id="financial-unpaid-add-btn" type="button" class="btn-primary text-xs">Add unpaid dates</button></div>
+           <div id="financial-unpaid-list"></div><p id="financial-unpaid-empty" class="text-center text-gray-400 py-3 text-xs">No unpaid dates for this month.</p>
+          </div>
+         </details>
+         <details id="financial-insurance-panel" class="financial-adjustment-column" aria-labelledby="financial-insurance-title">
+          <summary class="financial-adjustment-summary">
+           <div class="financial-adj-title-wrap">
+            <svg class="financial-adj-icon text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span id="financial-insurance-title">Insurance deductions</span>
+           </div>
+           <div class="financial-adj-meta-wrap">
+            <span id="financial-insurance-count" class="financial-adj-pill">No records</span>
+            <svg class="financial-adj-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+           </div>
+          </summary>
+          <div class="financial-adjustment-content"><div class="financial-adjustment-header"><p>Only deductions in the selected month are shown.</p><button id="financial-insurance-add-btn" type="button" class="btn-primary text-xs">Add deduction</button></div>
+           <div id="financial-insurance-list"></div><p id="financial-insurance-empty" class="text-center text-gray-400 py-3 text-xs">No insurance deductions for this month.</p>
+          </div>
+         </details>
+        </div>
+       </section>
+        <section id="teacher-zone-history-panel" class="teacher-zone-content-panel glass-container rounded-xl p-4 mb-6" role="region" aria-labelledby="teacher-zone-history-title">
+         <div class="teacher-zone-content-card">
+          <header class="teacher-zone-page-heading"><div><p class="teacher-zone-page-kicker text-xs uppercase tracking-wider text-slate-400 font-medium mb-0.5">FINANCIAL &amp; SCHEDULE HISTORY</p><h3 id="teacher-zone-history-title" class="font-bold text-lg text-white">Saved history</h3><p class="text-xs text-slate-400">Restore a previous schedule and its financial settings.</p></div><button id="teacher-zone-save-snapshot-btn" type="button" class="btn-save-records">Save Records</button></header>
+          <div id="teacher-zone-history-list" class="teacher-zone-history-list"></div>
+          <p id="teacher-zone-history-empty" class="pk-empty"><span>No snapshots saved yet.</span><small>Save a snapshot to keep a restore point for your schedule and finance settings.</small></p>
+         </div>
+        </section>
       </section>
-       <section id="teacher-zone-history-panel" class="teacher-zone-content-panel glass-container rounded-xl p-4 mb-6" role="region" aria-labelledby="teacher-zone-history-title">
-        <div class="teacher-zone-content-card">
-         <header class="teacher-zone-page-heading"><div><p class="teacher-zone-page-kicker">FINANCIAL &amp; SCHEDULE HISTORY</p><h3 id="teacher-zone-history-title">Saved history</h3><p>Restore a previous schedule and its financial settings.</p></div><button id="teacher-zone-save-snapshot-btn" type="button" class="btn-primary">Save Records</button></header>
-         <div id="teacher-zone-history-list" class="teacher-zone-history-list"></div>
-         <p id="teacher-zone-history-empty" class="pk-empty"><span>No snapshots saved yet.</span><small>Save a snapshot to keep a restore point for your schedule and finance settings.</small></p>
-        </div>
-       </section>
-     </section>
      <section id="teacher-zone-battle-claims-panel" class="hidden teacher-zone-content-panel" role="tabpanel" aria-labelledby="teacher-zone-battle-claims-tab">
       <div class="teacher-zone-content-card">
        <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">⚔️</span><div><p class="teacher-zone-page-kicker">BATTLE ARENA</p><h3>Battle claims</h3><p>Review student wins and approve Pokémon rewards.</p></div></header>
@@ -14030,7 +14083,54 @@ function teacherZoneSnapshotName(snapshot) {
     ? new Date(year, month - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
     : 'Saved records';
 }
-function renderTeacherZoneHistory() { const list=document.getElementById('teacher-zone-history-list'), empty=document.getElementById('teacher-zone-history-empty'); if(!list||!empty)return; empty.classList.toggle('hidden',teacherZoneSnapshots.length>0); list.innerHTML=teacherZoneSnapshots.slice().reverse().map(s=>`<article class="teacher-zone-history-item"><div class="teacher-zone-history-copy"><strong>${teacherZoneSnapshotName(s)}</strong><span>${new Date(s.savedAt).toLocaleString()} · schedule, sub-hours &amp; financial records</span></div><div class="teacher-zone-history-actions"><button type="button" class="btn-outline" data-history-review="${s.id}">Review</button><button type="button" class="btn-outline" data-history-rename="${s.id}">Rename</button><button type="button" class="btn-primary" data-history-restore="${s.id}">Restore</button><button type="button" class="btn-secondary" data-history-delete="${s.id}">Delete</button></div></article>`).join(''); list.querySelectorAll('[data-history-review]').forEach(b=>b.onclick=()=>reviewTeacherZoneSnapshot(teacherZoneSnapshots.find(s=>s.id===b.dataset.historyReview))); list.querySelectorAll('[data-history-rename]').forEach(b=>b.onclick=()=>{const s=teacherZoneSnapshots.find(x=>x.id===b.dataset.historyRename); if(!s)return; const modal=document.createElement('div'); modal.className='fixed inset-0 bg-black/60 flex items-center justify-center z-[12000] p-4'; modal.innerHTML=`<form class="bg-slate-900 text-white rounded-2xl p-5 w-full max-w-sm" role="dialog" aria-modal="true"><label class="block text-sm font-bold">Snapshot name<input id="history-name-input" class="w-full mt-2 rounded-lg p-2 text-slate-900" value="${s.name}" required></label><div class="flex gap-2 mt-4"><button class="btn-primary flex-1" type="submit">Save</button><button class="btn-outline flex-1" type="button">Cancel</button></div></form>`;document.body.appendChild(modal);modal.querySelector('input').focus();modal.querySelector('form').onsubmit=e=>{e.preventDefault();s.name=modal.querySelector('input').value.trim()||s.name;persistTeacherZoneSnapshots();modal.remove();};modal.querySelector('button[type=button]').onclick=()=>modal.remove();}); list.querySelectorAll('[data-history-delete]').forEach(b=>b.onclick=()=>historyDialog('Delete snapshot','This historical snapshot will be permanently removed.','Delete',()=>{teacherZoneSnapshots=teacherZoneSnapshots.filter(s=>s.id!==b.dataset.historyDelete);persistTeacherZoneSnapshots();})); list.querySelectorAll('[data-history-restore]').forEach(b=>b.onclick=()=>{const snapshot=teacherZoneSnapshots.find(s=>s.id===b.dataset.historyRestore);if(!snapshot)return;historyDialog(`Restore “${snapshot.name}”?`,`This will replace the current Teacher Zone schedule, time rows, one-time hours, and financial settings with this saved snapshot. Your current records will first be saved as a backup snapshot.`, 'Restore snapshot',()=>restoreTeacherZoneSnapshot(snapshot));}); }
+function renderTeacherZoneHistory() {
+  const list = document.getElementById('teacher-zone-history-list'), empty = document.getElementById('teacher-zone-history-empty');
+  if (!list || !empty) return;
+  empty.classList.toggle('hidden', teacherZoneSnapshots.length > 0);
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  list.innerHTML = teacherZoneSnapshots.slice().reverse().map(s => `
+    <article class="teacher-zone-history-item bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 flex flex-wrap md:flex-nowrap items-center justify-between gap-3 hover:border-slate-700 transition">
+      <div class="teacher-zone-history-copy">
+        <strong class="text-sm font-bold text-white block mb-0.5 history-item-title">${escape(teacherZoneSnapshotName(s))}</strong>
+        <span class="text-xs text-slate-400 block history-item-meta">${new Date(s.savedAt).toLocaleString()} · schedule, sub-hours &amp; financial records</span>
+      </div>
+      <div class="teacher-zone-history-actions flex items-center gap-2 flex-wrap">
+        <button type="button" class="btn-history-review rounded-full px-4 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition" data-history-review="${s.id}">Review</button>
+        <button type="button" class="btn-history-rename rounded-full px-4 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition" data-history-rename="${s.id}">Rename</button>
+        <button type="button" class="btn-history-restore rounded-full px-4 py-1.5 text-xs font-semibold bg-yellow-400 hover:bg-yellow-300 text-slate-950 shadow-sm transition border-0 cursor-pointer" data-history-restore="${s.id}">Restore</button>
+        <button type="button" class="btn-history-delete rounded-full px-4 py-1.5 text-xs font-semibold hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 border border-transparent hover:border-rose-500/30 transition cursor-pointer" data-history-delete="${s.id}">Delete</button>
+      </div>
+    </article>
+  `).join('');
+  list.querySelectorAll('[data-history-review]').forEach(b => b.onclick = () => reviewTeacherZoneSnapshot(teacherZoneSnapshots.find(s => s.id === b.dataset.historyReview)));
+  list.querySelectorAll('[data-history-rename]').forEach(b => b.onclick = () => {
+    const s = teacherZoneSnapshots.find(x => x.id === b.dataset.historyRename);
+    if (!s) return;
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[12000] p-4';
+    modal.innerHTML = `<form class="bg-slate-900 text-white rounded-2xl p-5 w-full max-w-sm" role="dialog" aria-modal="true"><label class="block text-sm font-bold">Snapshot name<input id="history-name-input" class="w-full mt-2 rounded-lg p-2 text-slate-900" value="${escape(s.name)}" required></label><div class="flex gap-2 mt-4"><button class="btn-primary flex-1" type="submit">Save</button><button class="btn-outline flex-1" type="button">Cancel</button></div></form>`;
+    document.body.appendChild(modal);
+    modal.querySelector('input').focus();
+    modal.querySelector('form').onsubmit = e => {
+      e.preventDefault();
+      s.name = modal.querySelector('input').value.trim() || s.name;
+      persistTeacherZoneSnapshots();
+      modal.remove();
+      renderTeacherZoneHistory();
+    };
+    modal.querySelector('button[type=button]').onclick = () => modal.remove();
+  });
+  list.querySelectorAll('[data-history-delete]').forEach(b => b.onclick = () => historyDialog('Delete snapshot', 'This historical snapshot will be permanently removed.', 'Delete', () => {
+    teacherZoneSnapshots = teacherZoneSnapshots.filter(s => s.id !== b.dataset.historyDelete);
+    persistTeacherZoneSnapshots();
+    renderTeacherZoneHistory();
+  }));
+  list.querySelectorAll('[data-history-restore]').forEach(b => b.onclick = () => {
+    const snapshot = teacherZoneSnapshots.find(s => s.id === b.dataset.historyRestore);
+    if (!snapshot) return;
+    historyDialog(`Restore “${snapshot.name}”?`, `This will replace the current Teacher Zone schedule, time rows, one-time hours, and financial settings with this saved snapshot. Your current records will first be saved as a backup snapshot.`, 'Restore snapshot', () => restoreTeacherZoneSnapshot(snapshot));
+  });
+}
 function restoreTeacherZoneSnapshot(snapshot){
   if(!snapshot)return;
   const restoringBackup=Boolean(snapshot.isBackup||/^backup\s+before restoring/i.test(String(snapshot.name||'')));
@@ -25979,7 +26079,470 @@ const schoolBreakdownStyles = document.createElement('style');
  schoolBreakdownStyles.textContent = `.school-summary-table{display:grid;gap:.5rem;width:100%;font-size:.82rem}.school-summary-row{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(3,minmax(5.5rem,1fr));align-items:center;gap:.65rem;padding:.7rem .8rem;border:1px solid rgba(255,255,255,.22);border-radius:.75rem;background:linear-gradient(145deg,rgba(18,26,69,.9),rgba(30,40,100,.62));color:#f5f7ff;box-shadow:0 6px 14px rgba(2,6,23,.16);width:100%;box-sizing:border-box}.school-summary-row.school-summary-interactive{grid-template-columns:minmax(10rem,1.7fr) repeat(3,minmax(6rem,1fr));text-align:initial}.school-summary-row.school-summary-interactive > .school-summary-name{grid-column:1;min-width:0;text-align:left}.school-summary-row.school-summary-interactive > .school-summary-value{min-width:0;grid-column:auto;text-align:right}.school-summary-row.school-summary-total{grid-template-columns:minmax(10rem,1.7fr) repeat(3,minmax(6rem,1fr));text-align:initial}.school-summary-row.school-summary-total > strong:first-child{text-align:left}.school-summary-row.school-summary-total > span{text-align:right}.school-summary-row.school-summary-total > span strong{display:block;text-align:right}.school-summary-interactive{width:100%;font:inherit;text-align:inherit;cursor:pointer;transition:transform .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}.school-summary-interactive:hover{transform:translateY(-2px);background:linear-gradient(145deg,rgba(30,40,100,.98),rgba(53,67,181,.82));border-color:rgba(253,224,71,.62);box-shadow:0 10px 20px rgba(2,6,23,.24)}.school-summary-interactive:focus-visible{outline:3px solid #fde047;outline-offset:3px}.school-summary-row>span:not(.school-summary-label),.school-summary-row>strong:not(.school-summary-name){text-align:right}.school-summary-header{padding:.45rem .8rem;border:0;border-radius:.5rem;background:rgba(16,20,73,.58);color:#bae6fd;font-size:.68rem;font-weight:900;letter-spacing:.05em;text-transform:uppercase;box-shadow:none}.school-summary-name{min-width:0;overflow-wrap:anywhere;color:#fff7cc}.school-summary-value{display:flex;flex-direction:column;gap:.15rem;min-width:0;text-align:right}.school-summary-value>strong{color:#f8fafc;font-variant-numeric:tabular-nums;white-space:nowrap}.school-summary-label{display:none;color:#bae6fd;font-size:.65rem;font-weight:800;text-transform:uppercase}.school-summary-total{border-color:rgba(253,224,71,.55);background:linear-gradient(135deg,rgba(120,72,10,.68),rgba(30,40,100,.82));color:#fff7cc;box-shadow:0 0 0 1px rgba(253,224,71,.16),0 8px 18px rgba(2,6,23,.2)}.monthly-school-trigger-wrap{display:block}.monthly-school-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.75rem .85rem;border:1px solid rgba(255,203,5,.3);border-radius:.8rem;background:linear-gradient(145deg,rgba(18,26,69,.94),rgba(30,40,100,.72));color:#f8fafc;text-align:left;font-weight:900;box-shadow:0 7px 16px rgba(2,6,23,.18);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.monthly-school-trigger:hover{transform:translateY(-1px);border-color:rgba(253,224,71,.7)}.monthly-school-trigger:focus-visible,.school-breakdown-close:focus-visible{outline:3px solid #fde047;outline-offset:3px}.monthly-school-trigger-meta{color:#bae6fd;font-size:.68rem;font-weight:700;white-space:nowrap}.school-breakdown-modal{position:fixed;inset:0;z-index:2147483000!important;display:flex;align-items:center;justify-content:center;padding:1rem;isolation:isolate;width:100vw;height:calc(100 * min(var(--vh, 1vh), 1vh));overflow:auto;overscroll-behavior:contain}.school-breakdown-modal .school-breakdown-backdrop{z-index:0}.school-breakdown-modal .school-breakdown-panel{z-index:1}.school-breakdown-modal[hidden]{display:none}.school-breakdown-backdrop{position:absolute;inset:0;background:rgba(2,8,18,.72);backdrop-filter:blur(4px)}.school-breakdown-panel{position:relative;width:min(920px,96vw);max-height:90%;overflow:auto;border:1px solid rgba(255,255,255,.35);border-radius:1.25rem;background:linear-gradient(145deg,#1d256e,#0b222d);color:#f5f7ff;box-shadow:0 24px 70px rgba(2,6,23,.65);padding:1rem}.school-breakdown-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:.25rem .2rem .9rem;border-bottom:1px solid rgba(255,255,255,.2)}.school-breakdown-header h3{margin:.2rem 0;color:#fff7cc;font-size:1.2rem;font-weight:900}.school-breakdown-month{margin:0;color:#b9c3e6;font-size:.75rem}.school-breakdown-close{width:2.6rem;height:2.6rem;border:1px solid rgba(255,255,255,.3);border-radius:.75rem;background:rgba(255,255,255,.1);color:#fff;font-size:1.7rem;font-weight:900;line-height:1}.school-breakdown-table-wrap{overflow-x:auto;padding-top:.85rem}.school-breakdown-table-wrap .monthly-school-table{min-width:700px}@media(max-width:640px){.school-summary-row{grid-template-columns:1fr;gap:.45rem;padding:.75rem}.school-summary-header{display:none}.school-summary-name{font-size:.9rem}.school-summary-value{display:grid;grid-template-columns:1fr auto;align-items:center;text-align:left;padding:.35rem .45rem;border-radius:.45rem;background:rgba(16,20,73,.4)}.school-summary-value>strong{text-align:right}.school-summary-label{display:block}.school-summary-total{grid-template-columns:1fr;gap:.5rem}.monthly-school-trigger{align-items:flex-start;flex-direction:column}.school-breakdown-modal{padding:.5rem}.school-breakdown-panel{max-height:94%;padding:.75rem}}`;
  document.head.appendChild(schoolBreakdownStyles);
 const financialDashboardPolish = document.createElement('style');
-financialDashboardPolish.textContent = `.financial-dashboard{--finance-line:rgba(148,163,184,.2);--finance-surface:rgba(22,31,50,.84);--finance-muted:#aab5c7;display:grid;gap:1rem}.financial-dashboard>.financial-hero,.financial-dashboard>.glass-container,.financial-dashboard>.financial-adjustments-panel{margin:0!important}.financial-dashboard .financial-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(10rem,13rem) minmax(10rem,13rem);align-items:center;gap:.8rem;padding:1rem 1.1rem!important;border:1px solid var(--finance-line);border-radius:1.15rem;background:linear-gradient(120deg,rgba(24,34,54,.98),rgba(27,39,62,.9));box-shadow:0 12px 32px rgba(2,6,23,.18)}.financial-dashboard .financial-eyebrow{margin:0 0 .28rem;font-size:.59rem;letter-spacing:.16em}.financial-dashboard .financial-hero h3{margin:0;font-size:1.35rem;line-height:1.15}.financial-dashboard .financial-period-card{min-width:0;padding:.55rem .7rem;border-color:var(--finance-line);border-radius:.8rem;background:rgba(10,17,30,.45)}.financial-dashboard .financial-field-label{color:var(--finance-muted);font-size:.62rem;letter-spacing:.06em}.financial-dashboard .financial-period-input{min-height:2.45rem!important;margin-top:.25rem!important;border:1px solid rgba(148,163,184,.25)!important;border-radius:.6rem!important;background:#111b2b!important;color:#f8fafc!important;font-size:.85rem}.financial-dashboard>.glass-container{padding:1rem!important;border:1px solid var(--finance-line);border-radius:1.15rem;background:linear-gradient(145deg,rgba(20,29,46,.97),rgba(18,27,43,.96));box-shadow:0 12px 30px rgba(2,6,23,.16)}.financial-summary-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.8rem}.financial-summary-heading h3{margin:0;font-size:1.02rem}.financial-summary-period{color:var(--finance-muted);font-size:.75rem;font-weight:700}.financial-overview-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem}.financial-overview-card{display:flex;min-height:6.2rem;flex-direction:column;justify-content:center;gap:.08rem;padding:.8rem .9rem;border:1px solid var(--finance-line);border-radius:.9rem;background:rgba(28,39,59,.78);box-shadow:none}.financial-overview-card::before{content:none}.financial-card-kicker{color:var(--finance-muted);font-size:.58rem;letter-spacing:.08em}.financial-overview-card strong{margin:.28rem 0;color:#f1f5f9;font-size:1.4rem;line-height:1.05;font-variant-numeric:tabular-nums}.financial-card-note{color:#8897ad;font-size:.65rem}.financial-overview-card.net{border-color:rgba(52,211,153,.32);background:linear-gradient(135deg,rgba(16,68,62,.54),rgba(28,39,59,.82))}.financial-overview-card.net strong{color:#86efac;font-size:1.55rem}.financial-dashboard #financial-empty{margin:.7rem 0 0;border:1px solid rgba(251,191,36,.24);border-radius:.7rem;background:rgba(120,53,15,.13);color:#fcd34d}.financial-disclosure{margin-top:.6rem;border:1px solid var(--finance-line);border-radius:.8rem;background:rgba(13,21,35,.45);overflow:hidden}.financial-disclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:.8rem;min-height:2.8rem;padding:.65rem .8rem;color:#e7edf5;font-size:.78rem;font-weight:800;cursor:pointer;list-style:none}.financial-disclosure>summary::-webkit-details-marker{display:none}.financial-disclosure>summary::after{content:'＋';color:#9aa9bc;font-size:1rem}.financial-disclosure[open]>summary::after{content:'−'}.financial-disclosure-hint{margin-left:auto;color:#8998ad;font-size:.67rem;font-weight:600}.financial-disclosure-content{padding:.65rem .75rem;border-top:1px solid var(--finance-line)}.financial-disclosure .monthly-school-calculation{gap:.5rem}.financial-disclosure .monthly-school-section{border-color:var(--finance-line);border-radius:.65rem;background:rgba(28,39,59,.56);box-shadow:none}.financial-disclosure .monthly-school-heading{padding:.55rem .65rem;background:rgba(40,52,73,.5);color:#dce5f1}.financial-disclosure .monthly-school-trigger{min-height:2.5rem;border-color:var(--finance-line);border-radius:.65rem;background:rgba(28,39,59,.68);box-shadow:none;font-size:.75rem}.financial-disclosure .monthly-school-trigger:hover{transform:none;border-color:rgba(96,165,250,.5)}.financial-disclosure .financial-breakdown-scroll{border-color:var(--finance-line);border-radius:.65rem}.financial-disclosure .financial-breakdown-table{font-size:.67rem}.financial-disclosure .financial-breakdown-table th{background:rgba(40,52,73,.75);color:#bbc8d9}.financial-disclosure .financial-breakdown-table .financial-total-row td{border-color:var(--finance-line);background:rgba(52,211,153,.08);color:#c6f6df}.financial-dashboard>.financial-adjustments-panel{padding:1rem!important;border:1px solid var(--finance-line);border-radius:1.15rem;background:transparent;box-shadow:none}.financial-adjustments-heading{margin-bottom:.7rem;padding:0 0 .65rem;border-bottom:1px solid var(--finance-line)}.financial-adjustments-heading h3{margin:0;font-size:1.02rem}.financial-adjustments-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}.financial-adjustment-column{min-width:0;padding:.8rem;border:1px solid var(--finance-line);border-radius:.9rem;background:var(--finance-surface)}.financial-adjustment-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:0 0 .7rem;border-bottom:1px solid var(--finance-line)}.financial-adjustment-header h4{margin:0;font-size:.88rem}.financial-adjustment-header .btn-primary{flex:none;min-height:2.25rem!important;padding:.45rem .7rem!important;border-radius:.65rem;font-size:.7rem!important;white-space:nowrap}.financial-unpaid-card,.financial-insurance-card{border-color:var(--finance-line)!important;border-radius:.7rem!important;background:rgba(28,39,59,.7)!important;box-shadow:none!important}.financial-unpaid-card strong,.financial-insurance-card strong{color:#e6edf6!important}.financial-unpaid-card p,.financial-insurance-card p{color:var(--finance-muted)!important}.financial-dashboard .financial-adjustment-column>p{margin:.35rem 0 0;color:#8190a4;font-size:.68rem}.financial-dashboard :is(button,input,summary):focus-visible{outline:3px solid rgba(96,165,250,.8);outline-offset:2px}@media(max-width:800px){.financial-dashboard .financial-hero{grid-template-columns:repeat(2,minmax(0,1fr))}.financial-dashboard .financial-hero-copy{grid-column:1/-1}.financial-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.financial-dashboard{gap:.7rem}.financial-dashboard .financial-hero{grid-template-columns:1fr 1fr;padding:.8rem!important;gap:.55rem}.financial-dashboard .financial-hero-copy{grid-column:1/-1}.financial-dashboard .financial-hero h3{font-size:1.18rem}.financial-dashboard>.glass-container,.financial-dashboard>.financial-adjustments-panel{padding:.75rem!important}.financial-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem}.financial-overview-card{min-height:5.2rem;padding:.65rem}.financial-overview-card strong{font-size:1.18rem}.financial-overview-card.net strong{font-size:1.3rem}.financial-summary-period{font-size:.65rem}.financial-adjustments-grid{grid-template-columns:1fr}.financial-adjustment-column{padding:.65rem}.financial-adjustment-header{align-items:flex-start}.financial-disclosure-content{padding:.45rem}.financial-disclosure-hint{font-size:.6rem}}`;
+financialDashboardPolish.textContent = `
+#teacher-zone-financial-panel {
+  display: grid;
+  gap: 1.25rem;
+}
+#teacher-zone-financial-panel > .financial-hero,
+#teacher-zone-financial-panel > .glass-container,
+#teacher-zone-financial-panel > .financial-adjustments-panel,
+#teacher-zone-financial-panel > #teacher-zone-history-panel {
+  margin: 0 !important;
+}
+
+/* 1. Header & Controls */
+#teacher-zone-financial-panel .financial-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(11rem, 14rem) minmax(11rem, 14rem);
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  border-radius: 1rem !important;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85)) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25) !important;
+}
+#teacher-zone-financial-panel .financial-eyebrow {
+  color: #94a3b8 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+  margin: 0 0 0.25rem 0 !important;
+}
+#teacher-zone-financial-panel .financial-hero h3 {
+  color: #ffffff !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+#teacher-zone-financial-panel .financial-period-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+#teacher-zone-financial-panel .financial-field-label {
+  color: #94a3b8 !important;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.35rem !important;
+  display: block;
+}
+#teacher-zone-financial-panel .financial-period-input {
+  min-height: 2.75rem !important;
+  height: 2.75rem !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  border-radius: 0.75rem !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  color: #ffffff !important;
+  font-size: 0.875rem !important;
+  padding: 0 1rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+#teacher-zone-financial-panel .financial-period-input:focus {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25) !important;
+}
+#teacher-zone-financial-panel .financial-rate-input-wrap {
+  position: relative;
+  width: 100%;
+}
+#teacher-zone-financial-panel .financial-rate-prefix {
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8 !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  pointer-events: none;
+  user-select: none;
+  z-index: 2;
+}
+#teacher-zone-financial-panel .financial-rate-input {
+  padding-left: 2.85rem !important;
+}
+
+/* 2. Monthly Summary Metric Cards */
+#teacher-zone-financial-panel .financial-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+#teacher-zone-financial-panel .financial-overview-card {
+  display: flex !important;
+  min-height: 6.8rem !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  padding: 1rem 1.15rem !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  border-radius: 0.875rem !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.2) !important;
+}
+#teacher-zone-financial-panel .financial-card-kicker {
+  color: #94a3b8 !important;
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+#teacher-zone-financial-panel .financial-overview-card strong {
+  margin: 0.35rem 0 0.15rem !important;
+  font-size: 1.5rem !important;
+  line-height: 1.1 !important;
+  font-weight: 700 !important;
+  font-variant-numeric: tabular-nums !important;
+}
+#teacher-zone-financial-panel .financial-overview-card.gross strong {
+  color: #ffffff !important;
+}
+#teacher-zone-financial-panel .financial-overview-card.deduction strong {
+  color: #fda4af !important; /* Soft rose tint */
+}
+#teacher-zone-financial-panel .financial-overview-card.hero-card,
+#teacher-zone-financial-panel .financial-overview-card.net {
+  border: 1px solid rgba(16, 185, 129, 0.5) !important;
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.25), rgba(15, 23, 42, 0.9)) !important;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), 0 4px 16px rgba(2, 6, 23, 0.3) !important;
+}
+#teacher-zone-financial-panel .financial-overview-card.hero-card strong,
+#teacher-zone-financial-panel .financial-overview-card.net strong {
+  color: #34d399 !important; /* Bold emerald */
+  font-size: 1.65rem !important;
+  font-weight: 800 !important;
+}
+#teacher-zone-financial-panel .financial-card-note {
+  color: #64748b !important;
+  font-size: 0.72rem !important;
+}
+
+/* Info footnote bar */
+.financial-estimate-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.6rem !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1.25rem !important;
+  padding: 0.65rem 0.95rem !important;
+  border-radius: 0.75rem !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  border: 1px solid rgba(51, 65, 85, 0.6) !important;
+  color: #94a3b8 !important;
+  font-size: 0.75rem !important;
+  line-height: 1.4 !important;
+}
+.financial-estimate-bar .financial-info-icon {
+  width: 1rem !important;
+  height: 1rem !important;
+  flex-shrink: 0 !important;
+  color: #60a5fa !important;
+}
+
+/* 3. School Breakdown Table */
+#teacher-zone-financial-panel .financial-breakdown-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 0.8125rem !important;
+}
+#teacher-zone-financial-panel .financial-breakdown-table th {
+  padding: 0.75rem 1rem !important;
+  background: rgba(30, 41, 59, 0.8) !important;
+  color: #94a3b8 !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.8) !important;
+}
+#teacher-zone-financial-panel .financial-breakdown-table th:first-child,
+#teacher-zone-financial-panel .financial-breakdown-table td:first-child {
+  text-align: left !important;
+}
+#teacher-zone-financial-panel .financial-breakdown-table th:not(:first-child),
+#teacher-zone-financial-panel .financial-breakdown-table td:not(:first-child) {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums !important;
+}
+#teacher-zone-financial-panel .financial-breakdown-table td {
+  padding: 0.75rem 1rem !important;
+  border-top: 1px solid rgba(51, 65, 85, 0.4) !important;
+  color: #e2e8f0 !important;
+}
+#teacher-zone-financial-panel .financial-breakdown-table tbody tr:hover {
+  background: rgba(30, 41, 59, 0.35) !important;
+}
+#teacher-zone-financial-panel .financial-breakdown-table .financial-total-row td {
+  border-top: 2px solid #334155 !important;
+  background: rgba(30, 41, 59, 0.6) !important;
+  font-weight: 700 !important;
+  padding: 0.85rem 1rem !important;
+}
+
+/* Accordion Disclosures */
+.financial-disclosure {
+  margin-top: 0.75rem !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  border-radius: 0.75rem !important;
+  background: rgba(15, 23, 42, 0.5) !important;
+  overflow: hidden !important;
+}
+.financial-disclosure summary,
+.financial-disclosure-summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  min-height: 3rem !important;
+  padding: 0.75rem 1rem !important;
+  color: #e2e8f0 !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  list-style: none !important;
+  user-select: none !important;
+}
+.financial-disclosure summary::-webkit-details-marker {
+  display: none !important;
+}
+.financial-disclosure summary::after {
+  display: none !important;
+  content: none !important;
+}
+.financial-disclosure-title-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+}
+.financial-disclosure-chevron {
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  color: #94a3b8 !important;
+  transition: transform 0.2s ease !important;
+  flex-shrink: 0 !important;
+}
+details[open] > summary .financial-disclosure-chevron {
+  transform: rotate(180deg) !important;
+}
+.financial-disclosure-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 9999px !important;
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  border: 1px solid rgba(51, 65, 85, 0.6) !important;
+}
+
+/* 4. Monthly Records Cards */
+.financial-adjustments-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.85rem !important;
+}
+.financial-adjustment-column {
+  min-width: 0 !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  border-radius: 0.875rem !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+  overflow: hidden !important;
+}
+.financial-adjustment-summary {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  min-height: 3.25rem !important;
+  padding: 0.75rem 1rem !important;
+  color: #f1f5f9 !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  list-style: none !important;
+  user-select: none !important;
+}
+.financial-adjustment-summary::-webkit-details-marker {
+  display: none !important;
+}
+.financial-adjustment-summary::after {
+  display: none !important;
+  content: none !important;
+}
+.financial-adj-title-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+}
+.financial-adj-icon {
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+  flex-shrink: 0 !important;
+}
+.financial-adj-meta-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+.financial-adj-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 9999px !important;
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  border: 1px solid rgba(51, 65, 85, 0.6) !important;
+}
+.financial-adj-chevron {
+  width: 1.1rem !important;
+  height: 1.1rem !important;
+  color: #94a3b8 !important;
+  transition: transform 0.2s ease !important;
+  flex-shrink: 0 !important;
+}
+details[open] > summary .financial-adj-chevron {
+  transform: rotate(180deg) !important;
+}
+
+/* 5. Financial & Schedule History */
+#teacher-zone-save-snapshot-btn,
+.btn-save-records {
+  border-radius: 9999px !important;
+  padding: 0.5rem 1.25rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  background: #facc15 !important;
+  color: #020617 !important;
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+#teacher-zone-save-snapshot-btn:hover,
+.btn-save-records:hover {
+  background: #fde047 !important;
+}
+.teacher-zone-history-list {
+  display: grid !important;
+  gap: 0.75rem !important;
+}
+.teacher-zone-history-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  padding: 1rem 1.25rem !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+  border-radius: 0.75rem !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+  box-shadow: 0 4px 12px rgba(2, 6, 23, 0.15) !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease !important;
+}
+.teacher-zone-history-item:hover {
+  border-color: rgba(100, 116, 139, 0.6) !important;
+}
+.teacher-zone-history-copy strong,
+.teacher-zone-history-copy .history-item-title {
+  color: #ffffff !important;
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 0.25rem !important;
+  display: block !important;
+}
+.teacher-zone-history-copy span,
+.teacher-zone-history-copy .history-item-meta {
+  color: #94a3b8 !important;
+  font-size: 0.75rem !important;
+  display: block !important;
+}
+.teacher-zone-history-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  flex-wrap: wrap !important;
+}
+.btn-history-review,
+.btn-history-rename {
+  border-radius: 9999px !important;
+  padding: 0.375rem 1rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(51, 65, 85, 0.6) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.btn-history-review:hover,
+.btn-history-rename:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
+}
+.btn-history-restore {
+  border-radius: 9999px !important;
+  padding: 0.375rem 1rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  background: #facc15 !important;
+  color: #020617 !important;
+  border: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.btn-history-restore:hover {
+  background: #fde047 !important;
+}
+.btn-history-delete {
+  border-radius: 9999px !important;
+  padding: 0.375rem 1rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+  color: #94a3b8 !important;
+  border: 1px solid transparent !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+.btn-history-delete:hover {
+  background: rgba(244, 63, 94, 0.1) !important;
+  color: #fb7185 !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+@media(max-width: 800px) {
+  #teacher-zone-financial-panel .financial-hero {
+    grid-template-columns: 1fr 1fr;
+  }
+  #teacher-zone-financial-panel .financial-hero-copy {
+    grid-column: 1 / -1;
+  }
+  #teacher-zone-financial-panel .financial-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media(max-width: 640px) {
+  #teacher-zone-financial-panel .financial-hero {
+    grid-template-columns: 1fr;
+  }
+  .financial-adjustments-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .teacher-zone-history-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+}
+`;
 document.head.appendChild(financialDashboardPolish);
  function openSchoolHoursBreakdown(school, trigger) {
    const month = financialMonth();
@@ -26113,9 +26676,9 @@ function renderFinancialExtras() {
   set('financial-summary-period', new Date(year, monthNumber - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }));
   set('financial-overview-gross', formatCurrency(totals.gross));
   set('financial-overview-hours', `${(totals.regularHours + totals.extraHours).toFixed(1)} scheduled hours`);
-  set('financial-overview-unpaid', formatCurrency(totals.unpaidDeduction));
+  set('financial-overview-unpaid', totals.unpaidDeduction > 0 ? `-${formatCurrency(totals.unpaidDeduction)}` : '-NT$0');
   set('financial-unpaid-hours', `${totals.unpaidHours.toFixed(1)} hours excluded`);
-  set('financial-overview-insurance', formatCurrency(totals.insurance));
+  set('financial-overview-insurance', totals.insurance > 0 ? `-${formatCurrency(totals.insurance)}` : '-NT$0');
   set('financial-insurance-note', `${records.length} ${records.length === 1 ? 'entry' : 'entries'} this month`);
   set('financial-overview-net', formatCurrency(totals.net));
   set('financial-total-hours', `${totals.payableHours.toFixed(1)} hrs`);
@@ -26124,11 +26687,11 @@ function renderFinancialExtras() {
   set('financial-salary', formatCurrency(totals.gross));
   set('financial-insurance-total', formatCurrency(totals.insurance));
   set('financial-net-salary', formatCurrency(totals.net));
-  set('financial-unpaid-count', unpaidEntries.length ? dailyUnpaidRows.length + ' days · Total deduction ' + formatCurrency(dailyUnpaidTotal) : 'No records');
-  set('financial-insurance-count', records.length ? `${records.length} ${records.length === 1 ? 'entry' : 'entries'} · ${formatCurrency(totals.insurance)}` : 'No records');
+  set('financial-unpaid-count', unpaidEntries.length ? `${dailyUnpaidRows.length} ${dailyUnpaidRows.length === 1 ? 'day' : 'days'} · Total deduction -${formatCurrency(dailyUnpaidTotal)}` : 'No records');
+  set('financial-insurance-count', records.length ? `${records.length} ${records.length === 1 ? 'entry' : 'entries'} · -${formatCurrency(totals.insurance)}` : 'No records');
   set('financial-extra-hours-hint', `${monthlyExtras.length} ${monthlyExtras.length === 1 ? 'entry' : 'entries'} · ${totals.extraHours.toFixed(1)} hours`);
   const breakdown = document.getElementById('financial-school-breakdown');
-  if (breakdown) breakdown.innerHTML = schoolRows.length ? `<table class="financial-breakdown-table salary-details-table" aria-label="Monthly pay breakdown by school"><thead><tr><th scope="col">School</th><th scope="col">Regular hours</th><th scope="col">Extra hours</th><th scope="col">Gross</th><th scope="col">Unpaid</th><th scope="col">Insurance</th><th scope="col">Est. take-home</th></tr></thead><tbody>${schoolRows.map(row => `<tr><td class="font-bold">${escapeText(row.school)}</td><td>${row.regularHours.toFixed(1)}</td><td>${row.extraHours.toFixed(1)}</td><td>${formatCurrency(row.gross, false)}</td><td>${formatCurrency(row.unpaidDeduction, false)}</td><td>${formatCurrency(row.insurance, false)}</td><td class="font-black">${formatCurrency(row.net, false)}</td></tr>`).join('')}</tbody><tfoot><tr class="financial-total-row"><td>All schools</td><td>${totals.regularHours.toFixed(1)}</td><td>${totals.extraHours.toFixed(1)}</td><td>${formatCurrency(totals.gross, false)}</td><td>${formatCurrency(totals.unpaidDeduction, false)}</td><td>${formatCurrency(totals.insurance, false)}</td><td>${formatCurrency(totals.net, false)}</td></tr></tfoot></table>` : '<p class="financial-table-empty">No scheduled or extra hours for this month.</p>';
+  if (breakdown) breakdown.innerHTML = schoolRows.length ? `<table class="financial-breakdown-table salary-details-table" aria-label="Monthly pay breakdown by school"><thead><tr><th scope="col" class="text-left">School</th><th scope="col" class="text-right">Regular hours</th><th scope="col" class="text-right">Extra hours</th><th scope="col" class="text-right">Gross (NT$)</th><th scope="col" class="text-right">Unpaid (NT$)</th><th scope="col" class="text-right">Insurance (NT$)</th><th scope="col" class="text-right">Est. take-home (NT$)</th></tr></thead><tbody>${schoolRows.map(row => `<tr><td class="text-left font-semibold text-slate-200">${escapeText(row.school)}</td><td class="text-right tabular-nums text-slate-300">${row.regularHours.toFixed(1)}</td><td class="text-right tabular-nums text-slate-300">${row.extraHours.toFixed(1)}</td><td class="text-right tabular-nums text-slate-200">${formatCurrency(row.gross, false)}</td><td class="text-right tabular-nums ${row.unpaidDeduction > 0 ? 'text-rose-300' : 'text-slate-400'}">${row.unpaidDeduction > 0 ? '-' + formatCurrency(row.unpaidDeduction, false) : '0'}</td><td class="text-right tabular-nums ${row.insurance > 0 ? 'text-rose-300' : 'text-slate-400'}">${row.insurance > 0 ? '-' + formatCurrency(row.insurance, false) : '0'}</td><td class="text-right tabular-nums font-bold text-emerald-400">${formatCurrency(row.net, false)}</td></tr>`).join('')}</tbody><tfoot><tr class="financial-total-row"><td class="text-left font-bold text-white">All schools</td><td class="text-right tabular-nums font-bold text-slate-200">${totals.regularHours.toFixed(1)}</td><td class="text-right tabular-nums font-bold text-slate-200">${totals.extraHours.toFixed(1)}</td><td class="text-right tabular-nums font-bold text-white">${formatCurrency(totals.gross)}</td><td class="text-right tabular-nums font-bold ${totals.unpaidDeduction > 0 ? 'text-rose-300' : 'text-slate-300'}">${totals.unpaidDeduction > 0 ? '-' + formatCurrency(totals.unpaidDeduction) : 'NT$0'}</td><td class="text-right tabular-nums font-bold ${totals.insurance > 0 ? 'text-rose-300' : 'text-slate-300'}">${totals.insurance > 0 ? '-' + formatCurrency(totals.insurance) : 'NT$0'}</td><td class="text-right tabular-nums font-black text-emerald-400">${formatCurrency(totals.net)}</td></tr></tfoot></table>` : '<p class="financial-table-empty">No scheduled or extra hours for this month.</p>';
   const weekdayDetails = document.getElementById('financial-weekday-breakdown');
   if (weekdayDetails) renderMonthlySchoolCalculation(month, excludedDates, rate);
   const extraList = document.getElementById('financial-extra-hours-list');

@@ -47,18 +47,13 @@ html body .schedule-weekly-graph :is(.schedule-weekly-graph-name,.schedule-weekl
 html body .schedule-weekly-graph-empty { color:var(--ts-muted)!important; }
 
 /* Financial ledger: consistent readable surfaces, including nested legacy wrappers. */
-html body #teacher-zone-financial-panel { color:var(--ts-ink)!important; }
-html body #teacher-zone-financial-panel :is(.financial-hero,.financial-period-card,.financial-overview-card,.financial-source-bar,.financial-adjustment-column,.financial-breakdown-scroll),
-html body #financial-school-breakdown > div,
-html body #financial-extra-summary > div { background:var(--ts-deep)!important; color:var(--ts-ink)!important; border-color:var(--ts-border)!important; box-shadow:none!important; }
+html body #teacher-zone-financial-panel { color:var(--ts-ink); }
+html body #teacher-zone-financial-panel :is(.financial-source-bar),
+html body #financial-school-breakdown > div { background:var(--ts-deep)!important; color:var(--ts-ink)!important; border-color:var(--ts-border)!important; box-shadow:none!important; }
 html body #teacher-zone-financial-panel :is(.financial-unpaid-card,.financial-insurance-card) { background:var(--ts-surface)!important; border-color:var(--ts-border)!important; }
-html body #teacher-zone-financial-panel :is(h2,h3,h4,p,span,strong,small,label,td,th),
-html body #teacher-zone-financial-panel .financial-breakdown-table { color:var(--ts-ink)!important; text-shadow:none!important; }
 html body #teacher-zone-financial-panel :is(.financial-card-note,.financial-card-kicker,.financial-adjustment-header p,.financial-unpaid-card p,.financial-insurance-card p) { color:var(--ts-muted)!important; }
-html body #teacher-zone-financial-panel .financial-breakdown-table :is(th,.financial-total-row td) { background:var(--ts-deep)!important; color:var(--ts-ink)!important; border-color:var(--ts-border)!important; }
-html body #teacher-zone-financial-panel .financial-breakdown-table td { border-color:var(--ts-border)!important; font-variant-numeric:tabular-nums; }
-html body #teacher-zone-financial-panel .financial-breakdown-table tbody tr:nth-child(even) { background:var(--ts-surface); }
-html body #teacher-zone-financial-panel :is(.financial-adjustment-column,.financial-breakdown-scroll) { border-radius:8px!important; }
+html body #teacher-zone-financial-panel .financial-breakdown-table td { border-color:var(--ts-border); font-variant-numeric:tabular-nums; }
+html body #teacher-zone-financial-panel :is(.financial-adjustment-column,.financial-breakdown-scroll) { border-radius:8px; }
 html body.ts-bright #teacher-zone-schedule-panel :is(.schedule-weekly-graph-name,.schedule-weekly-graph-hours) { color:var(--ts-ink)!important; }
 html body #teacher-schedule-grid thead tr { background:var(--ts-deep)!important; }
 html body #teacher-schedule-grid th { color:var(--ts-ink)!important; border-color:var(--ts-border)!important; }
