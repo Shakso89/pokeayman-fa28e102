@@ -13146,6 +13146,13 @@ function renderTrainerTab() {
  </form>
  <button type="button" class="th-ghost th-edit-toggle" data-th-editor="teacher-streak-panel" aria-expanded="false" aria-controls="teacher-streak-panel">Login streak</button>
  <div id="teacher-streak-panel" class="th-form hidden" aria-live="polite"></div>
+ <button type="button" id="btn-transfer-credits" class="th-transfer-pill" style="display:none">
+  <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+   <path d="M22 2L11 13"></path>
+   <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+  </svg>
+  <span>Transfer credits</span>
+ </button>
 </section>
 <section class="th-panel hidden" data-th-panel="security">
  <button type="button" class="th-ghost th-edit-toggle" data-th-editor="change-pin-form" aria-expanded="false" aria-controls="change-pin-form">Change password</button>
@@ -13172,6 +13179,18 @@ function renderTrainerTab() {
   teacherBadge.classList.toggle('is-school-manager', teacherIsManager);
   teacherBadge.classList.toggle('is-pro', !teacherIsAdmin && !teacherIsManager && teacherIsPro);
   const roleTitleEl = modal.querySelector('#th-role-title');
+  const transferBtn = modal.querySelector('#btn-transfer-credits');
+  if (transferBtn) {
+    if (canTransferCredits()) {
+      transferBtn.style.display = 'inline-flex';
+      transferBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openTransferCreditsModal();
+      });
+    } else {
+      transferBtn.style.display = 'none';
+    }
+  }
   if (roleTitleEl) {
     if (teacherIsAdmin) {
       roleTitleEl.textContent = 'Administrator';
@@ -13371,6 +13390,400 @@ function renderTrainerTab() {
     }
   });
 }
+
+function canTransferCredits() {
+  if (currentRole !== 'teacher') return false;
+  const role = getEffectiveTeacherRole(currentTeacher);
+  const rec = currentTeacherRec() || findMyTeacherRecord();
+  const rawRole = String(rec?.teacher_role || rec?.role || '').toLowerCase();
+  return role === 'admin' ||
+         role === 'school_manager' ||
+         role === 'manager' ||
+         rawRole === 'admin' ||
+         rawRole === 'manager' ||
+         rawRole === 'school_manager' ||
+         isAymanTeacher() ||
+         (typeof canAccessAdmin === 'function' && canAccessAdmin()) ||
+         (typeof isSchoolManager === 'function' && isSchoolManager(currentTeacher));
+}
+window.canTransferCredits = canTransferCredits;
+
+function openTransferCreditsModal() {
+  if (!canTransferCredits()) {
+    toast('Permission denied: Only managers and administrators can transfer credits.');
+    return;
+  }
+  document.getElementById('transfer-credits-modal')?.remove();
+
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const senderRec = findMyTeacherRecord() || currentTeacherRec();
+  const role = getEffectiveTeacherRole(currentTeacher);
+  const isAdmin = role === 'admin' || isTeacherAdminRecord(senderRec) || isAymanTeacher() || senderRec?.teacher_credits === -1 || (typeof canAccessAdmin === 'function' && canAccessAdmin());
+  const senderCredits = isAdmin ? Infinity : Math.max(0, Number(senderRec?.teacher_credits || 0));
+  const balanceText = isAdmin ? 'Unlimited' : senderCredits.toLocaleString();
+
+  let managedSchools = [];
+  if (isAdmin) {
+    managedSchools = getSchools().map(s => s.school_name).filter(Boolean);
+    if (!managedSchools.length) {
+      managedSchools = [...new Set(getClasses().map(c => c.school_name).concat(getTeachers().map(t => t.school_name || t.school)).filter(Boolean))];
+    }
+  } else {
+    managedSchools = [...new Set(getAssignedSchools(currentTeacher).map(s => s.assigned_school).filter(Boolean))];
+    if (!managedSchools.length && (senderRec?.school_name || senderRec?.school)) {
+      managedSchools = [senderRec.school_name || senderRec.school];
+    }
+  }
+  managedSchools = managedSchools.filter(Boolean);
+  let selectedSchool = managedSchools.length > 0 ? managedSchools[0] : '';
+
+  const getCandidateTeachers = (school) => {
+    let list = school ? getTeachersForSchool(school) : getTeachers();
+    return list.filter(t =>
+      t && t.teacher_name &&
+      normalizeStudentIdentity(t.teacher_name) !== normalizeStudentIdentity(currentTeacher) &&
+      !t.archived
+    ).sort((a, b) => (a.teacher_name || '').localeCompare(b.teacher_name || ''));
+  };
+
+  const defaultAvatarUrl = 'https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/25.png';
+  const getTeacherAvatar = t => teacherAvatarSrc(t.teacher_avatar || t.avatar_pokemon_id) || defaultAvatarUrl;
+
+  const modal = document.createElement('div');
+  modal.id = 'transfer-credits-modal';
+  modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 tc-modal-overlay';
+  modal.innerHTML = `
+    <div class="tc-modal-box w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl transition-all" role="dialog" aria-modal="true" aria-labelledby="tc-modal-title">
+      <!-- Header -->
+      <div class="tc-modal-head p-6 pb-4 border-b">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h3 id="tc-modal-title" class="tc-modal-title text-lg font-bold">Transfer Credits</h3>
+            <p class="tc-modal-subtitle text-xs mt-1">Send credits from your balance to a teacher in your school.</p>
+          </div>
+          <button type="button" id="tc-close-btn" class="tc-modal-close text-xl font-bold p-1 leading-none" aria-label="Close dialog">×</button>
+        </div>
+        <div class="mt-3 flex items-center gap-2">
+          <span class="tc-balance-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold">
+            <span>Your Balance:</span>
+            <strong id="tc-current-balance">${balanceText} credits</strong>
+          </span>
+        </div>
+      </div>
+
+      <!-- Body Form -->
+      <form id="tc-transfer-form" class="p-6 space-y-4">
+        <!-- Target School Field -->
+        <div id="tc-school-section" class="${managedSchools.length > 1 ? '' : (managedSchools.length === 1 ? '' : 'hidden')}">
+          <label class="tc-label text-xs font-semibold uppercase tracking-wider block mb-1.5">
+            Target School
+          </label>
+          ${managedSchools.length > 1 ? `
+            <select id="tc-school-select" class="tc-input w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition cursor-pointer">
+              ${managedSchools.map(s => `<option value="${esc(s)}" ${s === selectedSchool ? 'selected' : ''}>${esc(s)}</option>`).join('')}
+            </select>
+          ` : `
+            <div class="tc-school-static px-3.5 py-2.5 rounded-xl text-sm font-medium">
+              ${esc(selectedSchool || 'Default School')}
+            </div>
+          `}
+        </div>
+
+        <!-- Select Teacher Field -->
+        <div>
+          <label class="tc-label text-xs font-semibold uppercase tracking-wider block mb-1.5">
+            Select Teacher
+          </label>
+          <div id="tc-teacher-container" class="relative">
+            <button type="button" id="tc-teacher-trigger" class="tc-input w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm outline-none transition cursor-pointer">
+              <div class="flex items-center gap-2.5 min-w-0" id="tc-teacher-trigger-content">
+                <span class="tc-hint">Choose a teacher...</span>
+              </div>
+              <svg class="w-4 h-4 shrink-0 tc-hint ml-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div id="tc-teacher-dropdown" class="tc-teacher-dropdown hidden absolute top-full left-0 right-0 mt-1 max-h-52 overflow-y-auto rounded-xl p-1.5 z-30 shadow-lg"></div>
+            <input type="hidden" id="tc-selected-teacher-id" value="">
+            <input type="hidden" id="tc-selected-teacher-name" value="">
+          </div>
+          <p id="tc-teacher-error" class="text-xs text-rose-500 mt-1 hidden"></p>
+        </div>
+
+        <!-- Credit Amount Field -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="tc-label text-xs font-semibold uppercase tracking-wider">
+              Credit Amount
+            </label>
+            <span id="tc-max-hint" class="tc-hint text-xs font-medium">
+              ${isAdmin ? 'Unlimited' : `Max: ${senderCredits.toLocaleString()}`}
+            </span>
+          </div>
+          <div class="relative">
+            <input type="number" id="tc-amount-input" min="1" ${isAdmin ? '' : `max="${senderCredits}"`} step="1" placeholder="Enter amount..." class="tc-input w-full rounded-xl px-3.5 py-2.5 text-sm font-semibold outline-none transition pr-16" required>
+            <span class="tc-currency-label absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold pointer-events-none">
+              CREDITS
+            </span>
+          </div>
+          
+          <!-- Quick-fill chips -->
+          <div class="flex items-center gap-2 mt-2.5">
+            <span class="tc-hint text-[11px] font-medium mr-1">Quick Add:</span>
+            <button type="button" class="tc-chip" data-quick-amount="100">+100</button>
+            <button type="button" class="tc-chip" data-quick-amount="500">+500</button>
+            <button type="button" class="tc-chip" data-quick-amount="1000">+1,000</button>
+          </div>
+          <p id="tc-amount-error" class="text-xs text-rose-500 mt-1.5 hidden"></p>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="flex items-center justify-end gap-2.5 pt-4 border-t tc-modal-footer">
+          <button type="button" id="tc-cancel-btn" class="tc-btn-cancel rounded-full px-5 py-2 text-xs font-semibold transition cursor-pointer">
+            Cancel
+          </button>
+          <button type="submit" id="tc-confirm-btn" class="tc-btn-confirm rounded-full px-6 py-2 text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed shadow-sm cursor-pointer" disabled>
+            Confirm Transfer
+          </button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const form = modal.querySelector('#tc-transfer-form');
+  const schoolSelect = modal.querySelector('#tc-school-select');
+  const teacherTrigger = modal.querySelector('#tc-teacher-trigger');
+  const teacherTriggerContent = modal.querySelector('#tc-teacher-trigger-content');
+  const teacherDropdown = modal.querySelector('#tc-teacher-dropdown');
+  const teacherIdInput = modal.querySelector('#tc-selected-teacher-id');
+  const teacherNameInput = modal.querySelector('#tc-selected-teacher-name');
+  const amountInput = modal.querySelector('#tc-amount-input');
+  const amountError = modal.querySelector('#tc-amount-error');
+  const confirmBtn = modal.querySelector('#tc-confirm-btn');
+  const cancelBtn = modal.querySelector('#tc-cancel-btn');
+  const closeBtn = modal.querySelector('#tc-close-btn');
+
+  const closeModal = () => modal.remove();
+  cancelBtn.addEventListener('click', closeModal);
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+  const validateForm = () => {
+    const teacherId = teacherIdInput.value;
+    const amountVal = amountInput.value.trim();
+    const amount = parseInt(amountVal, 10);
+    let isValid = true;
+    let errorMsg = '';
+
+    if (!teacherId) {
+      isValid = false;
+    }
+    if (!amountVal || isNaN(amount) || amount <= 0) {
+      isValid = false;
+    } else if (!isAdmin && amount > senderCredits) {
+      isValid = false;
+      errorMsg = `Amount exceeds your balance of ${senderCredits.toLocaleString()} credits.`;
+    }
+
+    if (errorMsg) {
+      amountError.textContent = errorMsg;
+      amountError.classList.remove('hidden');
+    } else {
+      amountError.classList.add('hidden');
+    }
+
+    confirmBtn.disabled = !isValid;
+  };
+
+  const populateTeachers = (school) => {
+    const candidateTeachers = getCandidateTeachers(school);
+    teacherDropdown.innerHTML = '';
+    teacherIdInput.value = '';
+    teacherNameInput.value = '';
+    teacherTriggerContent.innerHTML = '<span class="tc-hint">Choose a teacher...</span>';
+    validateForm();
+
+    if (!candidateTeachers.length) {
+      teacherDropdown.innerHTML = '<div class="p-3 text-center text-xs tc-hint">No active teachers found in this school.</div>';
+      return;
+    }
+
+    candidateTeachers.forEach(t => {
+      const avatarSrc = getTeacherAvatar(t);
+      const opt = document.createElement('button');
+      opt.type = 'button';
+      opt.className = 'tc-teacher-option w-full flex items-center gap-3 px-3 py-2 text-left transition rounded-xl cursor-pointer';
+      opt.innerHTML = `
+        <img src="${esc(avatarSrc)}" class="w-8 h-8 rounded-full object-contain shrink-0 bg-slate-800/40 p-0.5" alt="" onerror="this.src='${defaultAvatarUrl}'">
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-bold truncate">Teacher ${esc(t.teacher_name)}</p>
+          <p class="text-[11px] tc-hint truncate">${esc(t.school_name || school || 'Staff')}</p>
+        </div>
+      `;
+      opt.addEventListener('click', () => {
+        teacherIdInput.value = t.__backendId;
+        teacherNameInput.value = t.teacher_name;
+        teacherTriggerContent.innerHTML = `
+          <img src="${esc(avatarSrc)}" class="w-6 h-6 rounded-full object-contain shrink-0" alt="" onerror="this.src='${defaultAvatarUrl}'">
+          <span class="font-semibold text-sm truncate">Teacher ${esc(t.teacher_name)}</span>
+        `;
+        teacherDropdown.classList.add('hidden');
+        validateForm();
+      });
+      teacherDropdown.appendChild(opt);
+    });
+  };
+
+  populateTeachers(selectedSchool);
+
+  if (schoolSelect) {
+    schoolSelect.addEventListener('change', () => {
+      selectedSchool = schoolSelect.value;
+      populateTeachers(selectedSchool);
+    });
+  }
+
+  teacherTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    teacherDropdown.classList.toggle('hidden');
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#tc-teacher-container')) {
+      teacherDropdown.classList.add('hidden');
+    }
+  });
+
+  // Quick-fill chips
+  modal.querySelectorAll('.tc-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const add = parseInt(chip.dataset.quickAmount, 10) || 0;
+      const currentVal = parseInt(amountInput.value, 10) || 0;
+      let nextVal = currentVal + add;
+      if (!isAdmin && nextVal > senderCredits) {
+        nextVal = senderCredits;
+      }
+      amountInput.value = nextVal;
+      validateForm();
+    });
+  });
+
+  amountInput.addEventListener('input', validateForm);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const recipientId = teacherIdInput.value;
+    const recipientName = teacherNameInput.value;
+    const amount = parseInt(amountInput.value, 10);
+    if (!recipientId || isNaN(amount) || amount <= 0) return;
+    if (!isAdmin && amount > senderCredits) {
+      toast(`Insufficient credits. You have ${senderCredits.toLocaleString()} credits.`);
+      return;
+    }
+
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Transferring...';
+
+    try {
+      await executeCreditTransfer(senderRec.__backendId, recipientId, amount, recipientName);
+      toast(`Successfully transferred ${amount.toLocaleString()} credits to Teacher ${recipientName}.`);
+      closeModal();
+    } catch (err) {
+      console.error('Transfer failed:', err);
+      toast(err.message || 'Could not complete credit transfer.');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirm Transfer';
+    }
+  });
+}
+window.openTransferCreditsModal = openTransferCreditsModal;
+
+async function executeCreditTransfer(senderId, recipientId, amount, recipientName) {
+  const senderRec = getTeachers().find(t => t.__backendId === senderId);
+  const recipientRec = getTeachers().find(t => t.__backendId === recipientId);
+  const isAdmin = isTeacherAdminRecord(senderRec) || isAymanTeacher() || senderRec?.teacher_credits === -1 || (typeof canAccessAdmin === 'function' && canAccessAdmin());
+  const senderCredits = isAdmin ? Infinity : Math.max(0, Number(senderRec?.teacher_credits || 0));
+
+  if (!isAdmin && senderCredits < amount) {
+    throw new Error(`Insufficient credits. You have ${senderCredits.toLocaleString()} credits.`);
+  }
+
+  let rpcSuccess = false;
+  try {
+    const res = await window.dataSdk.rpc('transfer_teacher_credits', {
+      _sender_id: senderId,
+      _recipient_id: recipientId,
+      _amount: amount
+    });
+    if (res && res.ok) {
+      rpcSuccess = true;
+    }
+  } catch (err) {
+    console.warn('RPC transfer_teacher_credits fallback to direct dataSdk:', err);
+  }
+
+  if (!rpcSuccess) {
+    // Client fallback:
+    // 1. Deduct from sender if not admin
+    if (!isAdmin && senderRec) {
+      const nextSender = {
+        ...senderRec,
+        teacher_credits: Math.max(0, (senderRec.teacher_credits || 0) - amount),
+        teacher_spent_total: Number(senderRec.teacher_spent_total || 0) + amount
+      };
+      const res1 = await window.dataSdk.update(nextSender);
+      if (!res1?.isOk) throw new Error('Could not update your credit balance.');
+      allData = allData.map(r => r.__backendId === senderId ? (res1.data || nextSender) : r);
+    }
+
+    // 2. Add to recipient
+    if (recipientRec && recipientRec.teacher_credits !== -1) {
+      const nextRecipient = {
+        ...recipientRec,
+        teacher_credits: (Number(recipientRec.teacher_credits) || 0) + amount
+      };
+      const res2 = await window.dataSdk.update(nextRecipient);
+      if (!res2?.isOk) throw new Error('Could not update recipient teacher credits.');
+      allData = allData.map(r => r.__backendId === recipientId ? (res2.data || nextRecipient) : r);
+    }
+
+    // 3. Insert credit log
+    const logPayload = {
+      type: 'credit_log',
+      log_type: 'manager_transfer',
+      sender_id: senderId,
+      recipient_id: recipientId,
+      sender_name: senderRec?.teacher_name || currentTeacher,
+      recipient_name: recipientName,
+      amount: amount,
+      log_action: 'Transfer',
+      log_amount: amount,
+      log_target: recipientName,
+      teacher_name: senderRec?.teacher_name || currentTeacher,
+      created_at: new Date().toISOString()
+    };
+    try {
+      const logRes = await window.dataSdk.create(logPayload);
+      if (logRes?.isOk && logRes.data) allData.push(logRes.data);
+    } catch (e) {
+      console.warn('Could not record credit_log:', e);
+    }
+  }
+
+  // Update in-memory records immediately
+  if (!isAdmin && senderRec) {
+    senderRec.teacher_credits = Math.max(0, (senderRec.teacher_credits || 0) - amount);
+  }
+  if (recipientRec && recipientRec.teacher_credits !== -1) {
+    recipientRec.teacher_credits = (Number(recipientRec.teacher_credits) || 0) + amount;
+  }
+
+  // Update UI immediately
+  updateTeacherCreditBalance();
+  const thCredits = document.querySelector('#th-credits');
+  if (thCredits) {
+    thCredits.textContent = isAdmin ? 'Unlimited' : (senderRec?.teacher_credits === -1 ? '∞' : (senderRec?.teacher_credits || 0));
+  }
+}
+window.executeCreditTransfer = executeCreditTransfer;
 document.getElementById('logged-in-name-container').addEventListener('click', () => showMainTab('trainer'));
 document.getElementById('teacher-header-showcase').addEventListener('click', () => showMainTab('trainer'));
 function syncTeacherNameAcrossApp(newName) {
