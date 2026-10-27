@@ -10847,12 +10847,13 @@ function resolveStudentProfile(identity = {}) {
   const pin = String(identity.pin || identity.student_pin || '').trim();
   const scoped = record => (!school || record.school_name === school) && (!className || record.class_name === className);
   const byId = String(identity.id || identity.backendId || identity.__backendId || '').trim();
-  const direct = byId && students.find(record => String(record.__backendId || '').trim() === byId && scoped(record));
+  const direct = byId && students.find(record => String(record.__backendId || record.id || record.student_id || '').trim() === byId);
   const canonicalKey = byId ? canonicalStudentAliases.get(byId) || (direct && canonicalStudentKey(direct)) : '';
   const canonical = canonicalKey ? canonicalStudentAccounts.get(canonicalKey) : null;
   return (canonical && (!school || canonical.school_name === school) && (!className || canonical.class_name === className) ? canonical : null)
     || direct
-    || (pin && students.find(record => scoped(record) && String(record.student_pin || '').trim() === pin))
+    || (pin && name && students.find(record => scoped(record) && normalizeStudentIdentity(record.student_name) === name && (String(record.student_pin || record.pin || '').trim() === pin || String(record.student_pin || '').slice(0, 4) === pin)))
+    || (pin && students.find(record => scoped(record) && (String(record.student_pin || record.pin || '').trim() === pin || String(record.student_pin || '').slice(0, 4) === pin)))
     || (name && students.find(record => scoped(record) && normalizeStudentIdentity(record.student_name) === name))
     || null;
 }
@@ -10967,25 +10968,6 @@ function rebuildCanonicalStudentIndex() {
     }
   });
 
-  // Older class rows can lack student_id and carry different class PINs. When
-  // their durable membership metadata or name identifies the same joined account,
-  // collapse them into one canonical balance before any card is rendered.
-  const linkedByName = new Map();
-  allData.filter(record => record.type === 'student').forEach(record => {
-    const name = normalizeStudentIdentity(record.student_name);
-    if (!name) return;
-    const existingKey = linkedByName.get(name);
-    const candidate = canonicalIdentityFromRecord(record) || record.__backendId || studentStableIdentity(record);
-    const key = canonicalStudentAliases.get(String(candidate || '').trim()) || String(candidate || '').trim();
-    if (existingKey && existingKey !== key) {
-      const primary = canonicalStudentAccounts.get(existingKey) || {};
-      const secondary = canonicalStudentAccounts.get(key) || {};
-      const merged = { ...secondary, ...primary, ...record, __backendId: primary.__backendId || secondary.__backendId || record.__backendId };
-      canonicalStudentAccounts.set(existingKey, merged);
-      canonicalStudentAccounts.delete(key);
-      canonicalStudentAliases.forEach((value, alias) => { if (value === key) canonicalStudentAliases.set(alias, existingKey); });
-    } else if (!existingKey) linkedByName.set(name, key);
-  });
   canonicalStudentIndexData = allData;
   return canonicalStudentAccounts;
 }
@@ -10996,14 +10978,6 @@ function canonicalStudentKey(recordOrId) {
   const strCandidate = String(candidate || '').trim();
   const aliasKey = canonicalStudentAliases.get(strCandidate);
   if (aliasKey) return aliasKey;
-  if (raw) {
-    const rawName = normalizeStudentIdentity(raw.student_name);
-    if (rawName) {
-      for (const [key, acc] of canonicalStudentAccounts.entries()) {
-        if (normalizeStudentIdentity(acc.student_name) === rawName) return key;
-      }
-    }
-  }
   return strCandidate || studentStableIdentity(raw || {});
 }
 function canonicalStudentRows(key) { return allData.filter(record => record.type === 'student' && canonicalStudentKey(record) === key); }
@@ -11599,8 +11573,8 @@ function getStudents(schoolName, className) {
     const nameKey = normalizeStudentIdentity(studentName);
     if (!nameKey && !canonicalId) return;
 
-    // A student is uniquely identified by their normalized name or canonical ID
-    const dedupKey = nameKey ? `name:${nameKey}` : `id:${canonicalId}`;
+    // A student is uniquely identified strictly by their canonical ID or row backend ID
+    const dedupKey = canonicalId ? `id:${canonicalId}` : (row.__backendId ? `id:${row.__backendId}` : `id:${row.id || Math.random()}`);
     const previous = uniqueStudents.get(dedupKey);
 
     const score = (row.type === 'student' ? 1000 : 0) + studentCompletenessScore(row) + (canonical.student_name ? 500 : 0);
@@ -11654,7 +11628,7 @@ function getAllStudents() {
     const canonical = canonicalStudentAccounts.get(canonicalId) || record;
     const studentName = normalizeStudentDisplayName(canonical.student_name || record.student_name);
     const nameKey = normalizeStudentIdentity(studentName);
-    const dedupKey = nameKey ? `name:${nameKey}` : `id:${canonicalId}`;
+    const dedupKey = canonicalId ? `id:${canonicalId}` : (record.__backendId ? `id:${record.__backendId}` : `id:${record.id || Math.random()}`);
     const previous = byIdentity.get(dedupKey) || {};
     const memberships = new Set([
       ...normalizeStudentMembershipValues(previous.class_memberships, []),
@@ -12418,8 +12392,20 @@ window.escapeHtml = escapeHtml;
 
 // Canonical student authentication with 3 fields: Class, Student Name, and 4-digit PIN
 async function authenticateStudentLoginAsync(name, pin, classOption) {
-  const normalizedName = normalizeStudentIdentity(name);
-  const normalizedPin = String(pin ?? '').trim();
+  const trimmedName = String(name ?? '').trim();
+  const normalizedName = normalizeStudentIdentity(trimmedName);
+  const trimmedPin = String(pin ?? '').trim();
+  const isLegacyPinMatch = (candPin, targetPin) => {
+    const cp = String(candPin ?? '').trim();
+    const tp = String(targetPin ?? '').trim();
+    if (!tp) return false;
+    if (cp === tp) return true;
+    if (cp.length === 6 && cp.slice(0, 4) === tp) return true;
+    if (cp === '000000' && tp === '0000') return true;
+    if (!cp && tp === '1234') return true;
+    return false;
+  };
+
   const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
   
   let targetClassId = '';
@@ -12430,6 +12416,11 @@ async function authenticateStudentLoginAsync(name, pin, classOption) {
   if (typeof classOption === 'string' && classOption) {
     targetClassId = classOption;
     classRec = allData.find(r => r.type === 'class' && (String(r.__backendId || r.id) === targetClassId || `${r.school_name}|||${r.class_name}` === targetClassId));
+    if (!classRec && targetClassId.includes('|||')) {
+      const parts = targetClassId.split('|||');
+      targetSchool = parts[0] || '';
+      targetClassName = parts[1] || '';
+    }
   } else if (classOption && typeof classOption === 'object') {
     targetClassId = String(classOption.id || classOption.class_id || classOption.__backendId || '');
     targetSchool = String(classOption.school || classOption.school_name || '').trim();
@@ -12446,46 +12437,82 @@ async function authenticateStudentLoginAsync(name, pin, classOption) {
     targetClassName = classRec.class_name || targetClassName;
   }
 
-  // 1. Try Supabase class_students join students
-  if (sb && targetClassId) {
+  // 1. Direct 2-step lookup in Supabase
+  if (sb) {
     try {
-      const { data, error } = await sb
-        .from('class_students')
-        .select('class_id, student:students(*)')
-        .eq('class_id', targetClassId)
-        .ilike('student.name', name.trim())
-        .eq('student.pin', normalizedPin)
-        .maybeSingle();
-      if (data && data.student) {
-        return {
-          ok: true,
-          student: {
-            student_name: data.student.name,
-            __backendId: data.student.id,
-            id: data.student.id,
-            student_id: data.student.id,
-            student_pin: data.student.pin,
-            pin: data.student.pin,
-            school_name: targetSchool,
-            class_name: targetClassName,
-            avatar_pokemon_id: data.student.avatar_pokemon_id || 0,
-            coins: data.student.coins || 0
-          },
-          classRecord: classRec || { __backendId: targetClassId, id: targetClassId, school_name: targetSchool, class_name: targetClassName },
-          studentId: String(data.student.id),
-          classId: targetClassId
-        };
+      // Step 1: Match student by name (ilike)
+      const { data: studentsFound, error: stErr } = await sb
+        .from('students')
+        .select('*')
+        .ilike('name', trimmedName);
+      
+      if (!stErr && Array.isArray(studentsFound) && studentsFound.length > 0) {
+        // Find matching student by 4-digit PIN (supporting legacy 6-digit truncation)
+        const matchedStudent = studentsFound.find(s => isLegacyPinMatch(s.pin, trimmedPin));
+        if (matchedStudent) {
+          const studentId = String(matchedStudent.id);
+          // If legacy 6-digit PIN in database, normalize to 4 digits in background
+          if (matchedStudent.pin && matchedStudent.pin.length > 4) {
+            sb.from('students').update({ pin: trimmedPin }).eq('id', studentId).then(() => {}).catch(() => {});
+          }
+
+          // Step 2: Verify enrollment in targetClassId via class_students
+          let isEnrolled = false;
+          if (targetClassId) {
+            const { data: enrollment } = await sb
+              .from('class_students')
+              .select('*')
+              .eq('student_id', studentId)
+              .eq('class_id', targetClassId)
+              .maybeSingle();
+            if (enrollment) isEnrolled = true;
+          }
+
+          // Also check client data layer for enrollment if not found in class_students table yet
+          if (!isEnrolled && (classRec || (targetSchool && targetClassName))) {
+            const cid = String(classRec?.__backendId || classRec?.id || targetClassId);
+            const inAllData = allData.some(r => {
+              const type = String(r?.type || '').toLowerCase();
+              const recCid = String(r?.class_id || r?.classId || '');
+              const recSid = String(r?.student_id || r?.studentId || r?.__backendId || '');
+              return (recSid === studentId || normalizeStudentIdentity(r.student_name) === normalizedName)
+                && (recCid === cid || (r.school_name === targetSchool && r.class_name === targetClassName));
+            });
+            if (inAllData) isEnrolled = true;
+          }
+
+          if (isEnrolled || !targetClassId) {
+            return {
+              ok: true,
+              student: {
+                student_name: matchedStudent.name,
+                __backendId: studentId,
+                id: studentId,
+                student_id: studentId,
+                student_pin: trimmedPin,
+                pin: trimmedPin,
+                school_name: targetSchool,
+                class_name: targetClassName,
+                avatar_pokemon_id: matchedStudent.avatar_pokemon_id || 0,
+                coins: matchedStudent.coins || 0
+              },
+              classRecord: classRec || { __backendId: targetClassId, id: targetClassId, school_name: targetSchool, class_name: targetClassName },
+              studentId,
+              classId: targetClassId
+            };
+          }
+        }
       }
     } catch (e) {
-      console.warn('Supabase auth query error / fallback:', e);
+      console.warn('Supabase 2-step student lookup failed:', e);
     }
   }
 
   // 2. Query client allData layer
-  if (classRec) {
-    const classId = String(classRec.__backendId || classRec.id || '');
-    const scoped = r => String(r?.school_name || '').trim() === String(classRec.school_name || '').trim()
-      && String(r?.class_name || '').trim() === String(classRec.class_name || '').trim();
+  if (classRec || (targetSchool && targetClassName)) {
+    const classId = String(classRec?.__backendId || classRec?.id || targetClassId);
+    const scoped = r => String(r?.school_name || '').trim() === String(targetSchool).trim()
+      && String(r?.class_name || '').trim() === String(targetClassName).trim();
     
     // Check all student members for this class
     const memberRows = allData.filter(r => {
@@ -12504,10 +12531,20 @@ async function authenticateStudentLoginAsync(name, pin, classOption) {
         || m;
       if (student && normalizeStudentIdentity(student.student_name) === normalizedName) {
         const studentPin = String(student.student_pin ?? student.pin ?? m.student_pin ?? m.pin ?? '1234').trim();
-        if (studentPin === normalizedPin) {
+        if (isLegacyPinMatch(studentPin, trimmedPin)) {
+          // Normalize legacy 6-digit PIN in memory and background
+          if (studentPin.length > 4) {
+            student.student_pin = trimmedPin;
+            student.pin = trimmedPin;
+            m.student_pin = trimmedPin;
+            m.pin = trimmedPin;
+            if (student.__backendId && window.dataSdk?.update) {
+              window.dataSdk.update({ ...student, student_pin: trimmedPin, pin: trimmedPin });
+            }
+          }
           candidates.push({
             student,
-            classRecord: classRec,
+            classRecord: classRec || { __backendId: classId, id: classId, school_name: targetSchool, class_name: targetClassName },
             studentId: String(student.student_id || student.__backendId || stId).trim(),
             classId
           });
@@ -18427,11 +18464,11 @@ function getOwnedPokemonForStudent(studentOrName, excludedPokemonId = null) {
   }
   const excludedId = excludedPokemonId === null || excludedPokemonId === undefined ? null : Number(excludedPokemonId);
   return getPokemons().filter(pokemon => {
-    const pokemonStudentId = String(pokemon.student_id || '').trim();
+    const pokemonStudentId = String(pokemon.student_id || pokemon.owner_id || pokemon.canonical_student_id || '').trim();
     let belongsToStudent = false;
     if (pokemonStudentId) {
       belongsToStudent = studentIds.has(pokemonStudentId);
-    } else if (ownerKey && studentIds.size) {
+    } else if (studentIds.size === 0 && ownerKey) {
       const ownerMatches = normalizeStudentIdentity(pokemon.owner) === ownerKey;
       if (ownerMatches) {
         const pSchool = normalizeStudentIdentity(pokemon.school_name);
@@ -19277,8 +19314,9 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
       ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarId}.png" class="w-12 h-12 object-contain" alt="">`
       : `<span class="text-xl font-black ${isLight ? 'text-indigo-600' : 'text-slate-300'}">${escapeHtml(name.charAt(0).toUpperCase())}</span>`;
 
-    // Existing PIN
+    // Existing PIN (formatted to 4 digits)
     const existingPin = String(existingStudent.student_pin || existingStudent.pin || '1234').trim();
+    const displayPin = (existingPin.length > 4 ? existingPin.slice(0, 4) : existingPin) || '1234';
 
     // Attended classes
     const canonicalKey = canonicalStudentKey(existingStudent);
@@ -19313,7 +19351,7 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
               <h3 class="text-base font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}">${escapeHtml(name)}</h3>
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-semibold ${isLight ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-indigo-950/70 text-indigo-300 border border-indigo-800'}">PIN: ${escapeHtml(existingPin)}</span>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-semibold ${isLight ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-indigo-950/70 text-indigo-300 border border-indigo-800'}">PIN: ${escapeHtml(displayPin)}</span>
             </div>
             <p class="text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-1 line-clamp-2">
               Currently in: <span class="font-semibold ${isLight ? 'text-slate-700' : 'text-slate-200'}">${escapeHtml(attendedText)}</span>
@@ -19419,18 +19457,35 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
       if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
     });
 
-    // Option 2: Create New Student with Same Name and Distinct PIN
+    // Option 2: Create New Student with Same Name and Distinct PIN (Complete Isolation)
     modal.querySelector('#create-new-student-btn').addEventListener('click', async () => {
       const classRec = getClasses(navSchool).find(c => c.class_name === navClass) || allData.find(c => c.type === 'class' && c.school_name === navSchool && c.class_name === navClass);
       const classId = classRec ? (classRec.__backendId || classRec.id || '') : '';
       
+      const newStudentId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : ('student-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9));
+
+      const existingPins = new Set(
+        allData
+          .filter(r => r.type === 'student' && normalizeStudentIdentity(r.student_name) === normalizeStudentIdentity(name))
+          .map(r => String(r.student_pin || r.pin || '').trim().slice(0, 4))
+          .filter(Boolean)
+      );
+      if (existingPin) existingPins.add(existingPin.slice(0, 4));
+
       let distinctPin = String(Math.floor(1000 + Math.random() * 9000));
-      while (distinctPin === existingPin) {
+      let attempts = 0;
+      while (existingPins.has(distinctPin) && attempts < 100) {
         distinctPin = String(Math.floor(1000 + Math.random() * 9000));
+        attempts++;
       }
 
-      const res = await window.dataSdk.create({
+      const newStudentPayload = {
         type: 'student',
+        id: newStudentId,
+        student_id: newStudentId,
+        __backendId: newStudentId,
         school_name: navSchool,
         class_name: navClass,
         class_id: classId,
@@ -19438,6 +19493,7 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
         student_pin: distinctPin,
         pin: distinctPin,
         coins: 0,
+        badges: [],
         avatar_pokemon_id: 0,
         pokemon_id: 0,
         pokemon_name: '',
@@ -19473,24 +19529,36 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
         quiz_created_by: '',
         quiz_class: '',
         quiz_submitted_answers: ''
-      });
+      };
 
-      const createdId = res?.data?.__backendId || res?.data?.id || '';
+      const res = await window.dataSdk.create(newStudentPayload);
+      const createdId = res?.data?.__backendId || res?.data?.id || res?.data?.student_id || newStudentId;
+
+      if (typeof allData !== 'undefined') {
+        const localRecord = { ...newStudentPayload, __backendId: createdId, id: createdId, student_id: createdId };
+        allData.push(localRecord);
+      }
+
       if (createdId && classId) {
-        await window.dataSdk.create({
+        const classStudentPayload = {
           type: 'class_student',
           student_id: createdId,
           class_id: classId,
           school_name: navSchool,
           class_name: navClass,
           created_at: new Date().toISOString()
-        });
+        };
+        await window.dataSdk.create(classStudentPayload);
+        if (typeof allData !== 'undefined') {
+          allData.push({ ...classStudentPayload, __backendId: 'cs-' + createdId });
+        }
       }
 
       const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
       if (sb) {
         try {
           const { data: sbSt } = await sb.from('students').insert({
+            id: createdId,
             name,
             pin: distinctPin,
             coins: 0,
@@ -19507,6 +19575,7 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
         }
       }
 
+      rebuildCanonicalStudentIndex();
       document.getElementById('new-student-name').value = '';
       modal.remove();
       toast(`New student ${name} created for ${navClass} with PIN ${distinctPin}!`);

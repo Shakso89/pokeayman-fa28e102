@@ -15,10 +15,18 @@
   }
 
   // Increment a win counter on every membership record of the student (one batch).
-  window.pkRecordWin = async function (name, field) {
+  window.pkRecordWin = async function (nameOrId, field) {
     try {
-      const key = norm(name); if (!key || !window.dataSdk) return;
-      const rows = students().filter(s => norm(s.student_name) === key && s.__backendId);
+      const targetId = (typeof currentStudentRecordId !== 'undefined' && currentStudentRecordId) ? String(currentStudentRecordId) : '';
+      const key = norm(nameOrId); if (!key && !targetId && !nameOrId) return;
+      if (!window.dataSdk) return;
+      const rows = students().filter(s => {
+        if (!s.__backendId) return false;
+        if (targetId && String(s.__backendId || s.id || s.student_id) === targetId) return true;
+        if (typeof nameOrId === 'string' && String(s.__backendId || s.id || s.student_id) === nameOrId) return true;
+        if (!targetId && norm(s.student_name) === key) return true;
+        return false;
+      });
       if (!rows.length) return;
       const next = Math.max(...rows.map(r => Number(r[field]) || 0)) + 1;
       const values = rows.map(r => ({ ...r, [field]: next }));
