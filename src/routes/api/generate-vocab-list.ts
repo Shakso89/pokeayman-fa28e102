@@ -93,8 +93,8 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
           } else if (typeof input.words === "string") {
             const clean = input.words.replace(/\.+$/, "").trim();
             const wordsList = (clean.includes(",") || clean.includes("\n"))
-              ? clean.split(/[\n,]+/).map((w) => w.trim()).filter((w) => w.length > 0)
-              : clean.split(/\s+/).map((w) => w.trim()).filter((w) => w.length > 0);
+              ? clean.split(/[\n,]+/).map((w: string) => w.trim()).filter((w: string) => w.length > 0)
+              : clean.split(/\s+/).map((w: string) => w.trim()).filter((w: string) => w.length > 0);
             rawItems = wordsList
               .map((w: string) => ({ word: w.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, "").trim(), picture: "" }))
               .filter((it: any) => it.word.length > 0 && it.word.length <= 60)

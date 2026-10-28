@@ -15,6 +15,7 @@ declare global {
     pokeaymanSpeak?: (text: string, level?: string) => Promise<void>;
     pokeaymanStop?: () => void;
     pokeaymanAuth?: {
+      supabase?: unknown;
       userId: string | null;
       getToken: () => Promise<string | null>;
       getProfile: () => Promise<{ name: string }>;

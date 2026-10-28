@@ -1,4 +1,8 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase as typedSupabase } from "@/integrations/supabase/client";
+
+// Roster tables are not in the generated schema types; query them untyped.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const supabase = typedSupabase as any;
 
 export interface StudentRosterItem {
   id: string;
