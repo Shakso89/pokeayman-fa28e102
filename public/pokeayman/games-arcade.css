@@ -5814,10 +5814,14 @@ html body[data-ga-active-theme="toybox"] :is(.lc-stage,.vb-stage) .ga-stage-head
 .game-player-target-score strong { color:var(--ga-stage-yellow,#ffcb05)!important; font-size:1.25rem!important; font-weight:1000!important; }
 .game-player-hud.has-target-score:has(> .game-player-target-score):not(:has(> .game-player-card:nth-child(2))) { grid-template-columns:minmax(0,1fr) 3.7rem!important; max-width:420px!important; }
 .game-player-hud.has-target-score:has(> .game-player-target-score):not(:has(> .game-player-card:nth-child(2))) > .game-player-target-score { grid-column:2!important; }
-.game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) { grid-template-columns:repeat(2,minmax(0,1fr))!important; max-width:660px!important; }
-.game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) > .game-player-target-score { grid-column:1/-1!important; grid-row:1!important; width:3.15rem!important; }
-.game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) > .game-player-card { grid-row:auto!important; }
-.game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) > .game-player-card:nth-child(3) { grid-column:1!important; }
+/* 3+ players: one compact row, target badge last. */
+body > .ga-stage .game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)), .game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) { grid-auto-flow:column!important; grid-template-columns:none!important; grid-auto-columns:minmax(0,1fr)!important; grid-template-rows:auto!important; width:min(100%,1100px)!important; max-width:1100px!important; }
+.game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) > .game-player-card { grid-column:auto!important; grid-row:1!important; min-height:54px!important; padding:.35rem .65rem!important; }
+.game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) > .game-player-target-score { grid-column:auto!important; grid-row:1!important; width:3.15rem!important; }
+body > .ga-stage .game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) { grid-auto-columns:minmax(0,1fr)!important; }
+body > .ga-stage .game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) > .game-player-target-score { flex:none!important; }
+@media(max-width:700px){ body > .ga-stage .game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) { grid-auto-flow:row!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; } .game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) > .game-player-card, .game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) > .game-player-target-score { grid-row:auto!important; } .game-player-hud.has-target-score:has(> .game-player-card:nth-child(3)) > .game-player-target-score { grid-column:1/-1!important; } }
+#find-me-progress { display:none!important; }
 @media(max-width:540px) {
   .game-player-hud.has-target-score:has(> .game-player-card:nth-child(2)) { grid-template-columns:minmax(0,1fr) 3rem minmax(0,1fr)!important; gap:.2rem!important; }
   .game-player-target-score { width:2.9rem!important; }
