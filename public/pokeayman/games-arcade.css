@@ -6521,3 +6521,10 @@ body > .ga-stage #find-me-box { height:100%!important; min-height:0!important; a
 body > .ga-stage #find-me-feedback { margin:.15rem auto 0!important; min-height:1.25rem!important; line-height:1.2!important; font-size:.9rem!important; flex:0 0 auto!important; }
 body > .ga-stage .game-player-card { min-width:0!important; overflow:hidden!important; }
 body > .ga-stage .game-player-name { min-width:0!important; }
+
+/* Find Me: hide the 0/N pill in every theme. Match Words: HUD uses full width so 4 cards are not clipped. */
+html body > .ga-stage[data-ga-theme] p#find-me-progress, html body p#find-me-progress { display:none!important; }
+html body > .ga-stage .match-game-summary { display:block!important; grid-template-columns:none!important; width:100%!important; max-width:none!important; overflow:visible!important; }
+html body > .ga-stage .match-game-summary .game-player-hud-slot { width:100%!important; padding-left:0!important; padding-right:0!important; overflow:visible!important; }
+html body > .ga-stage .match-game-summary .game-player-hud { width:min(100%,1100px)!important; max-width:1100px!important; }
+html body > .ga-stage .match-game-summary .game-player-card { min-width:0!important; }
