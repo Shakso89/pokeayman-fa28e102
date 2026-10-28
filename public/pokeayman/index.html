@@ -26930,10 +26930,20 @@ function getCanonicalStudentMemberships(studentId, fallback = null) {
   const classRows = allData.filter(record => ['class_students','class_student','student_membership','class_membership','membership'].includes(String(record.type || '').toLowerCase()) && [record.student_id, record.studentId, record.canonicalStudentId, record.profile_id, record.user_id, record.account_id].some(idEquals));
   const profileRows = allData.filter(record => record.type === 'student' && (idEquals(record.__backendId) || idEquals(record.student_id) || idEquals(record.user_id) || idEquals(record.profile_id) || idEquals(record.account_id)));
   const sourceRows = [...profileRows, ...(fallback ? [fallback] : []), ...classRows];
-  const values = sourceRows.flatMap(record => ['classMemberships','class_memberships','classes','memberships','membership','className','class','class_name'].flatMap(key => normalizeStudentMembershipValues(record[key], [])));
+  const values = sourceRows.flatMap(record => {
+    const list = ['classMemberships','class_memberships','classes','memberships','membership','className','class','class_name'].flatMap(key => normalizeStudentMembershipValues(record[key], []));
+    if (record.school_name && record.class_name) {
+      list.push(`${record.school_name} / ${record.class_name}`);
+    }
+    return list;
+  });
   const classIdOf = record => String(record.class_id ?? record.classId ?? record.joined_class_id ?? record.joinedClassId ?? '').trim();
   const validClassIds = classRows.map(classIdOf).filter(Boolean);
-  const classMeta = id => allData.find(record => record.type === 'class' && String(record.__backendId ?? '').trim() === String(id).trim());
+  const classMeta = id => allData.find(record => record.type === 'class' && (
+    String(record.__backendId ?? '').trim() === String(id).trim() ||
+    String(record.id ?? '').trim() === String(id).trim() ||
+    String(record.class_id ?? '').trim() === String(id).trim()
+  ));
   const resolved = validClassIds.map(classId => { const meta = classMeta(classId); return meta ? `${meta.school_name} / ${meta.class_name}` : `Class ${classId} (unresolved)`; });
   const merged = [...values, ...resolved];
   const seen = new Set();
@@ -26960,20 +26970,83 @@ function getEditStudentClassList(studentId, record) {
   });
   return list;
 }
-function openEditStudentModal(studentName) {
-  const selectedStudent = resolveStudentProfile({ name: studentName, school: navSchool, className: navClass });
-  const student = selectedStudent || getAllStudents().find(s => s.student_name === studentName);
-  if (!student) return;
-  const canonicalStudentId = student.__backendId;
-  const studentPokes = getPokemons().filter(p => p.owner === student.student_name);
-  const canonicalStudent = getStudentRecordByStableId(canonicalStudentId) || student;
+function openEditStudentModal(studentKeyOrName) {
+  const rawKey = typeof studentKeyOrName === 'object' && studentKeyOrName !== null
+    ? String(studentKeyOrName.__membershipBackendId || studentKeyOrName.__canonicalStudentId || studentKeyOrName.__backendId || studentKeyOrName.id || studentKeyOrName.student_id || studentKeyOrName.student_name || studentKeyOrName.name || '').trim()
+    : String(studentKeyOrName || '').trim();
+
+  if (!rawKey) return;
+
+  // 1. Try finding in active class roster
+  const roster = (typeof getStudents === 'function' && navSchool && navClass) ? getStudents(navSchool, navClass) : [];
+  let student = roster.find(s => 
+    String(s.__membershipBackendId || '').trim() === rawKey ||
+    String(s.__backendId || '').trim() === rawKey ||
+    String(s.student_id || '').trim() === rawKey ||
+    String(s.id || '').trim() === rawKey ||
+    String(s.__canonicalStudentId || '').trim() === rawKey
+  );
+
+  // 2. Try getStudentRecordByStableId
+  if (!student && typeof getStudentRecordByStableId === 'function') {
+    student = getStudentRecordByStableId(rawKey);
+  }
+
+  // 3. Try canonicalStudentAccounts
+  if (!student && typeof canonicalStudentAccounts !== 'undefined') {
+    const aliasKey = typeof canonicalStudentAliases !== 'undefined' ? canonicalStudentAliases.get(rawKey) : null;
+    student = (aliasKey ? canonicalStudentAccounts.get(aliasKey) : null) || canonicalStudentAccounts.get(rawKey);
+  }
+
+  // 4. Try getAllStudents by ID
+  if (!student && typeof getAllStudents === 'function') {
+    student = getAllStudents().find(s => 
+      String(s.__membershipBackendId || '').trim() === rawKey ||
+      String(s.__backendId || '').trim() === rawKey ||
+      String(s.student_id || '').trim() === rawKey ||
+      String(s.id || '').trim() === rawKey ||
+      String(s.__canonicalStudentId || '').trim() === rawKey
+    );
+  }
+
+  // 5. Try resolving by student name
+  if (!student) {
+    student = roster.find(s => normalizeStudentIdentity(s.student_name) === normalizeStudentIdentity(rawKey))
+      || (typeof getAllStudents === 'function' ? getAllStudents().find(s => normalizeStudentIdentity(s.student_name) === normalizeStudentIdentity(rawKey)) : null)
+      || (typeof resolveStudentProfile === 'function' ? (resolveStudentProfile({ id: rawKey, school: navSchool, className: navClass }) || resolveStudentProfile({ name: rawKey, school: navSchool, className: navClass }) || resolveStudentProfile({ name: rawKey })) : null);
+  }
+
+  // 6. Direct search in allData
+  if (!student && typeof allData !== 'undefined' && Array.isArray(allData)) {
+    student = allData.find(r => 
+      (r.type === 'student' || r.type === 'class_student' || r.type === 'student_membership') &&
+      (String(r.__backendId || r.id || r.student_id || '').trim() === rawKey ||
+       normalizeStudentIdentity(r.student_name || r.name) === normalizeStudentIdentity(rawKey))
+    );
+  }
+
+  if (!student) {
+    console.warn('openEditStudentModal: could not resolve student for key:', studentKeyOrName);
+    toast('Could not find student profile to edit.');
+    return;
+  }
+
+  const canonicalStudentId = String(student.__canonicalStudentId || student.student_id || student.__backendId || student.id || '').trim();
+  const canonicalStudent = (canonicalStudentId && typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(canonicalStudentId) : null) || student;
+  const studentDisplayName = student.student_name || student.name || canonicalStudent.student_name || canonicalStudent.name || 'Student';
+
+  const studentPokes = typeof getOwnedPokemonForStudent === 'function'
+    ? getOwnedPokemonForStudent(canonicalStudent)
+    : (typeof getPokemons === 'function' ? getPokemons().filter(p => p.owner === studentDisplayName || (canonicalStudentId && String(p.student_id || '') === canonicalStudentId)) : []);
+
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const cap = v => String(v || '').replace(/(^|[\s-])\S/g, s => s.toUpperCase());
   const norm = v => String(v || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
-  const initials = String(student.student_name || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const initials = String(studentDisplayName || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   let modal = null;
+
   const renderJoinedClasses = () => {
-    const current = getStudentRecordByStableId(canonicalStudentId) || canonicalStudent;
+    const current = (canonicalStudentId && typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(canonicalStudentId) : null) || canonicalStudent;
     const list = getEditStudentClassList(canonicalStudentId, current);
     const target = modal?.querySelector('#enrolled-classes');
     const count = modal?.querySelector('#es-class-count');
@@ -26982,6 +27055,7 @@ function openEditStudentModal(studentName) {
     target.innerHTML = list.length ? list.map(item => `<div class="es-class-row"><span class="es-class-icon" aria-hidden="true">🏫</span><span class="es-class-text"><strong>${esc(item.class)}</strong><small>${esc(item.school || 'No school')}</small></span><button type="button" class="es-remove-btn" data-key="${esc(item.key)}" aria-label="Remove ${esc(item.class)}">✕ Remove</button></div>`).join('') : '<p class="es-empty">Not enrolled in any classes</p>';
     target.querySelectorAll('.es-remove-btn').forEach(b => b.addEventListener('click', removeClassMembership));
   };
+
   const removeClassMembership = async event => {
     event.preventDefault(); event.stopPropagation();
     const btn = event.currentTarget;
@@ -26991,7 +27065,7 @@ function openEditStudentModal(studentName) {
       setTimeout(() => { if (btn.isConnected && btn.dataset.busy !== 'true') { btn.dataset.confirm = ''; btn.textContent = '✕ Remove'; } }, 3000);
       return;
     }
-    const latest = getStudentRecordByStableId(canonicalStudentId) || canonicalStudent;
+    const latest = (canonicalStudentId && typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(canonicalStudentId) : null) || canonicalStudent;
     const list = getEditStudentClassList(canonicalStudentId, latest);
     const removed = list.find(i => i.key === btn.dataset.key);
     if (!removed) { renderJoinedClasses(); return; }
@@ -27003,29 +27077,46 @@ function openEditStudentModal(studentName) {
     ['classMemberships', 'classes', 'memberships'].forEach(k => { if (k in updated) delete updated[k]; });
     const result = await window.dataSdk.update(updated);
     if (!result?.isOk) { btn.dataset.busy = 'false'; btn.disabled = false; btn.dataset.confirm = ''; btn.textContent = '✕ Remove'; toast('Could not remove this class. Please try again.'); return; }
-    allData = allData.map(r => r.__backendId === canonicalStudentId ? { ...updated } : r);
+    allData = allData.map(r => String(r.__backendId || r.id || r.student_id) === String(canonicalStudentId) ? { ...updated } : r);
     const rowTypes = ['class_students','class_student','student_membership','class_membership','membership'];
     const idMatch = r => [r.student_id, r.studentId, r.canonicalStudentId, r.profile_id, r.user_id, r.account_id].some(v => String(v ?? '').trim() === String(canonicalStudentId));
     const classMatch = r => {
-      const meta = allData.find(c => c.type === 'class' && String(c.__backendId) === String(r.class_id ?? r.classId ?? ''));
+      const meta = allData.find(c => c.type === 'class' && (String(c.__backendId) === String(r.class_id ?? r.classId ?? '') || String(c.id) === String(r.class_id ?? r.classId ?? '')));
       const school = meta ? meta.school_name : r.school_name; const cls = meta ? meta.class_name : r.class_name;
       return norm(cls) === norm(removed.class) && (!school || norm(school) === norm(removed.school));
     };
     const rows = allData.filter(r => rowTypes.includes(String(r.type || '').toLowerCase()) && idMatch(r) && classMatch(r));
-    for (const r of rows) { try { const d = await window.dataSdk.delete(r); if (d?.isOk) allData = allData.filter(x => x.__backendId !== r.__backendId); } catch (e) {} }
-    try { rebuildCanonicalStudentIndex(); } catch (e) {}
+    for (const r of rows) { try { const d = await window.dataSdk.delete(r); if (d?.isOk) allData = allData.filter(x => x.__backendId !== r.__backendId && x.id !== r.id); } catch (e) {} }
+
+    // Supabase cascade deletion for this class enrollment
+    const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+    if (sb && canonicalStudentId) {
+      try {
+        const { data: removedClassRec } = await sb.from('classes').select('id').eq('name', removed.class).eq('school_name', removed.school).maybeSingle();
+        if (removedClassRec?.id) {
+          await sb.from('class_students').delete().eq('student_id', canonicalStudentId).eq('class_id', removedClassRec.id);
+        }
+      } catch (err) {
+        console.warn('Supabase remove class error:', err);
+      }
+    }
+
+    try { rebuildCanonicalStudentIndex(); canonicalStudentViewsData = null; canonicalStudentViewsCache = []; } catch (e) {}
     try { await window.dataSdk.create({ type: 'activity_log', activity_type: 'student_removed_from_class', student_id: canonicalStudentId, removed_class: `${removed.school} / ${removed.class}`, timestamp: updated.updated_at, created_at: updated.updated_at }); } catch (e) {}
     renderJoinedClasses();
     try { renderTeacherDashboard(); } catch (e) {}
     try { renderAdminAllStudents(); } catch (e) {}
     toast(`${removed.class} removed.`);
   };
-  const currentAvatar = String(student.avatar_pokemon_id || '');
+
+  const currentAvatar = String(student.avatar_pokemon_id || canonicalStudent.avatar_pokemon_id || '');
   const avatarTiles = `<button type="button" class="es-avatar-btn es-avatar-default${!currentAvatar || currentAvatar === '0' ? ' is-selected' : ''}" data-pokemon-id=""><span class="es-initials">${esc(initials)}</span><span class="es-avatar-name">Initials</span></button>` + studentPokes.map(p => `<button type="button" class="es-avatar-btn${String(p.pokemon_id) === currentAvatar ? ' is-selected' : ''}" data-pokemon-id="${esc(p.pokemon_id)}"><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${esc(p.pokemon_id)}.png" alt="" loading="lazy"><span class="es-avatar-name">${esc(cap(p.pokemon_name))}</span></button>`).join('');
+
   modal = document.createElement('div');
   modal.className = 'es-overlay';
-  modal.innerHTML = `<div class="es-card" role="dialog" aria-modal="true" aria-labelledby="es-title"><div class="es-head"><h2 id="es-title">Edit Student</h2><button type="button" class="es-close" id="es-x" aria-label="Close">✕</button></div><form><label class="es-label" for="es-name">Student Name</label><input type="text" id="es-name" class="es-input" value="${esc(student.student_name)}" required><div class="es-label">Avatar Pokémon</div><div class="es-avatar-grid">${avatarTiles}</div>${studentPokes.length ? '' : '<p class="es-empty">No Pokémon in collection yet</p>'}<input type="hidden" id="es-avatar-pokemon-id" value="${esc(currentAvatar)}"><div class="es-label">Enrolled Classes (<span id="es-class-count">0</span>)</div><div id="enrolled-classes" class="es-classes"></div><p id="es-error" class="hidden es-error" role="alert" aria-live="polite"></p><div class="es-actions"><button type="submit" class="btn-primary es-save" id="es-save">Save Changes</button><button type="button" class="es-cancel" id="es-cancel">Cancel</button></div></form></div>`;
+  modal.innerHTML = `<div class="es-card" role="dialog" aria-modal="true" aria-labelledby="es-title"><div class="es-head"><h2 id="es-title">Edit Student</h2><button type="button" class="es-close" id="es-x" aria-label="Close">✕</button></div><form><label class="es-label" for="es-name">Student Name</label><input type="text" id="es-name" class="es-input" value="${esc(studentDisplayName)}" required><div class="es-label">Avatar Pokémon</div><div class="es-avatar-grid">${avatarTiles}</div>${studentPokes.length ? '' : '<p class="es-empty">No Pokémon in collection yet</p>'}<input type="hidden" id="es-avatar-pokemon-id" value="${esc(currentAvatar)}"><div class="es-label">Enrolled Classes (<span id="es-class-count">0</span>)</div><div id="enrolled-classes" class="es-classes"></div><p id="es-error" class="hidden es-error" role="alert" aria-live="polite"></p><div class="es-actions"><button type="submit" class="btn-primary es-save" id="es-save">Save Changes</button><button type="button" class="es-cancel" id="es-cancel">Cancel</button></div></form></div>`;
   document.body.appendChild(modal);
+
   const studentNameInput = modal.querySelector('#es-name');
   const avatarInput = modal.querySelector('#es-avatar-pokemon-id');
   modal.querySelectorAll('.es-avatar-btn').forEach(btn => btn.addEventListener('click', e => {
@@ -27034,10 +27125,12 @@ function openEditStudentModal(studentName) {
     btn.classList.add('is-selected');
     avatarInput.value = btn.dataset.pokemonId;
   }));
+
   modal.querySelector('#es-x').addEventListener('click', () => modal.remove());
   renderJoinedClasses();
   const saveButton = modal.querySelector('#es-save');
   const errorEl = modal.querySelector('#es-error');
+
   modal.querySelector('form').addEventListener('submit', async e => {
     e.preventDefault();
     if (saveButton?.dataset.busy === 'true') return;
@@ -27050,24 +27143,56 @@ function openEditStudentModal(studentName) {
     }
     if (errorEl) errorEl.classList.add('hidden');
     if (saveButton) { saveButton.dataset.busy = 'true'; saveButton.disabled = true; }
-    const oldName = student.student_name;
+    const oldName = studentDisplayName;
+
     try {
-      const canonicalRecord = getStudentRecordByStableId(canonicalStudentId) || student;
-      const latestRecord = getStudentRecordByStableId(canonicalStudentId);
+      const canonicalRecord = (canonicalStudentId && typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(canonicalStudentId) : null) || student;
+      const latestRecord = (canonicalStudentId && typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(canonicalStudentId) : null) || canonicalRecord;
       if (!latestRecord) throw new Error('Student record not found');
-      const result = await window.dataSdk.update({ ...latestRecord, student_name: newName, avatar_pokemon_id: newAvatarId, __backendId: canonicalStudentId });
+      const updatedPayload = { ...latestRecord, student_name: newName, name: newName, avatar_pokemon_id: newAvatarId, __backendId: canonicalStudentId, id: canonicalStudentId, student_id: canonicalStudentId };
+      const result = await window.dataSdk.update(updatedPayload);
       if (!result?.isOk) throw new Error('Student save failed');
-      allData = allData.map(record => record.__backendId === canonicalStudentId ? { ...record, student_name: newName, avatar_pokemon_id: newAvatarId } : record);
-      const allPokemonWithOldName = allData.filter(r => r.type === 'pokemon' && r.owner === oldName && (!r.school_name || r.school_name === canonicalRecord.school_name) && (!r.class_name || r.class_name === canonicalRecord.class_name));
-      for (const poke of allPokemonWithOldName) {
-        const pokemonResult = await window.dataSdk.update({ ...poke, owner: newName });
-        if (!pokemonResult?.isOk) throw new Error('Pokémon ownership update failed');
+
+      allData = allData.map(record => {
+        if (String(record.__backendId || record.id || record.student_id || '') === canonicalStudentId) {
+          return { ...record, student_name: newName, name: newName, avatar_pokemon_id: newAvatarId };
+        }
+        return record;
+      });
+
+      // Update Supabase
+      const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+      if (sb && canonicalStudentId) {
+        try {
+          await sb.from('students').update({
+            name: newName,
+            avatar_pokemon_id: newAvatarId
+          }).eq('id', canonicalStudentId);
+        } catch (sbErr) {
+          console.warn('Supabase student update error:', sbErr);
+        }
       }
-      profileStudent = { ...getStudentRecordByStableId(canonicalStudentId), student_name: newName, avatar_pokemon_id: newAvatarId };
+
+      if (newName !== oldName) {
+        const allPokemonWithOldName = allData.filter(r => r.type === 'pokemon' && (r.owner === oldName || String(r.student_id || '') === canonicalStudentId));
+        for (const poke of allPokemonWithOldName) {
+          try {
+            await window.dataSdk.update({ ...poke, owner: newName });
+            poke.owner = newName;
+          } catch (_) {}
+        }
+      }
+
+      rebuildCanonicalStudentIndex();
+      canonicalStudentViewsData = null;
+      canonicalStudentViewsCache = [];
+
+      profileStudent = { ...getStudentRecordByStableId(canonicalStudentId), student_name: newName, name: newName, avatar_pokemon_id: newAvatarId };
       if (currentRole === 'student' && currentStudentRecordId === canonicalStudentId) setCurrentStudentRecord(profileStudent);
-      renderStudentProfile();
-      renderStudentDashboard();
-      renderTeacherDashboard();
+      if (typeof renderStudentProfile === 'function') renderStudentProfile();
+      if (typeof renderStudentDashboard === 'function') renderStudentDashboard();
+      if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
+      if (typeof renderAdminAllStudents === 'function') renderAdminAllStudents();
       modal.remove();
       toast('Student updated successfully.');
     } catch (error) {
@@ -27076,10 +27201,11 @@ function openEditStudentModal(studentName) {
       if (saveButton) { saveButton.dataset.busy = 'false'; saveButton.disabled = false; }
     }
   });
+
   modal.querySelector('#es-cancel').addEventListener('click', () => modal.remove());
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
-
+window.openEditStudentModal = openEditStudentModal;
 function enableFiveStepCoinInput(input, options = {}) {
   if (!input || input.__fiveStepEnabled) return;
   input.__fiveStepEnabled = true;
