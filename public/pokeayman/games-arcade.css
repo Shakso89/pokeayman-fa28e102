@@ -6503,3 +6503,17 @@ html body #scramble-tiles.scramble-tiles-wrong,
 html body > .ga-stage[data-ga-theme="halloween"] #scramble-tiles.scramble-tiles-wrong {
   animation: gaFeedbackWrongShake 0.45s ease-in-out !important;
 }
+
+/* Find Me: fit the whole board in the screen without scrolling; score boxes keep names inside. */
+body > .ga-stage :is(.find-me-game-content, .game-popup-modal:has(#find-me-box) > div > .p-3) { display:flex!important; flex-direction:column!important; overflow:hidden!important; padding-top:.25rem!important; padding-bottom:.35rem!important; height:100%!important; box-sizing:border-box!important; }
+body > .ga-stage .find-me-game-content .game-player-hud-slot { padding-top:.25rem!important; }
+body > .ga-stage .find-me-game-content .game-player-hud { margin-bottom:.35rem!important; }
+body > .ga-stage .find-me-game-content > .text-center { display:flex!important; flex-direction:column!important; flex:1 1 auto!important; min-height:0!important; }
+body > .ga-stage .find-me-inline-controls { margin:0 auto .25rem!important; flex:0 0 auto!important; }
+body > .ga-stage .find-me-board-layout { align-items:stretch!important; flex:1 1 auto!important; min-height:0!important; margin:0 auto!important; }
+body > .ga-stage .find-me-board-layout > div:first-child { height:100%!important; min-height:0!important; }
+body > .ga-stage #find-me-picture { height:100%!important; max-height:100%!important; }
+body > .ga-stage #find-me-box { height:100%!important; min-height:0!important; aspect-ratio:auto!important; padding:.6rem!important; }
+body > .ga-stage #find-me-feedback { margin:.15rem auto 0!important; min-height:1.25rem!important; line-height:1.2!important; font-size:.9rem!important; flex:0 0 auto!important; }
+body > .ga-stage .game-player-card { min-width:0!important; overflow:hidden!important; }
+body > .ga-stage .game-player-name { min-width:0!important; }
