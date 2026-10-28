@@ -724,3 +724,17 @@ html body.ts-bright .crossword-game-root .cw-kb-toggle:not([aria-expanded="true"
   html body .crossword-game-root .crossword-layout { grid-template-columns:minmax(0,1fr) clamp(180px,30vw,260px)!important; grid-template-rows:minmax(0,1fr)!important; }
   html body .crossword-game-root .cw-keyboard { --cw-key-h:1.9rem!important; gap:.2rem; padding:.3rem; }
 }
+/* Keyboard dock follows the active game style (Classic, Forest, Halloween, etc.) via --ga-stage-* tokens. */
+html body .crossword-game-root .cw-dock {
+  --kb-surface: var(--ga-stage-surface,#131c2e); --kb-ink: var(--ga-stage-ink,#f5f7ff); --kb-chip: var(--ga-stage-chip,#202b42);
+  --kb-line: var(--ga-stage-line,#344058); --kb-accent: var(--ga-stage-yellow,#ffcb05); --kb-blue: var(--ga-stage-blue,#4fa3ff);
+}
+html body .crossword-game-root .cw-keyboard { background:linear-gradient(160deg,color-mix(in srgb,var(--kb-surface) 92%,var(--kb-blue)),var(--kb-surface))!important; border:2px solid color-mix(in srgb,var(--kb-accent) 55%,var(--kb-line))!important; box-shadow:0 6px 0 color-mix(in srgb,var(--kb-surface) 60%,#000),0 12px 28px #0005; }
+html body .crossword-game-root .cw-keyboard .crossword-keyboard-row button:not(.cw-key-wide) { background:linear-gradient(180deg,color-mix(in srgb,var(--kb-chip) 80%,#fff),var(--kb-chip))!important; color:var(--kb-ink)!important; border:2px solid color-mix(in srgb,var(--kb-line) 60%,var(--kb-ink))!important; box-shadow:0 4px 0 color-mix(in srgb,var(--kb-chip) 55%,#000)!important; border-radius:.7rem!important; font-weight:950; }
+html body .crossword-game-root .cw-keyboard .crossword-keyboard-row button:not(.cw-key-wide):active { transform:translateY(3px); box-shadow:0 1px 0 color-mix(in srgb,var(--kb-chip) 55%,#000)!important; background:var(--kb-accent)!important; color:var(--ga-stage-action-ink,#111827)!important; }
+html body .crossword-game-root .cw-keyboard .cw-key-wide { background:linear-gradient(180deg,color-mix(in srgb,var(--kb-accent) 70%,#fff),var(--kb-accent))!important; border-color:color-mix(in srgb,var(--kb-accent) 60%,#fff)!important; color:var(--ga-stage-action-ink,#111827)!important; box-shadow:0 4px 0 color-mix(in srgb,var(--kb-accent) 55%,#000)!important; }
+html body .crossword-game-root .cw-kb-toggle, html body.ts-bright .crossword-game-root .cw-kb-toggle:not([aria-expanded="true"]) { background:var(--kb-chip)!important; color:var(--kb-ink)!important; border:2px solid color-mix(in srgb,var(--kb-blue) 60%,var(--kb-line))!important; box-shadow:0 3px 0 color-mix(in srgb,var(--kb-chip) 55%,#000); }
+html body .crossword-game-root .cw-kb-toggle[aria-expanded="true"] { background:color-mix(in srgb,var(--kb-blue) 30%,var(--kb-chip))!important; border-color:var(--kb-accent)!important; color:var(--kb-ink)!important; }
+html body .crossword-game-root .crossword-keyboard-size-controls { background:var(--kb-surface)!important; border:1px solid var(--kb-line)!important; }
+html body .crossword-game-root .crossword-keyboard-size-controls span { color:var(--kb-ink)!important; opacity:1; }
+html body .crossword-game-root .crossword-keyboard-size-controls button { background:var(--kb-chip)!important; color:var(--kb-ink)!important; border:2px solid var(--kb-line)!important; box-shadow:0 3px 0 color-mix(in srgb,var(--kb-chip) 55%,#000)!important; }
