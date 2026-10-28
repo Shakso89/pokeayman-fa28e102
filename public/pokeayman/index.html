@@ -24912,10 +24912,31 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   let flipped = [];
   let matched = new Set();
   let mismatchLocked = false;
+  let checkTimer = null;
   let mismatchTimer = null;
   let roundToken = `${Date.now()}-${Math.random()}`;
-  const clearMemoryRoundTimers = () => { if (mismatchTimer) { clearTimeout(mismatchTimer); mismatchTimer = null; } };
+  const clearMemoryRoundTimers = () => {
+    if (checkTimer) { clearTimeout(checkTimer); checkTimer = null; }
+    if (mismatchTimer) { clearTimeout(mismatchTimer); mismatchTimer = null; }
+  };
   const invalidateMemoryRound = () => { clearMemoryRoundTimers(); roundToken = `${Date.now()}-${Math.random()}`; };
+
+  // Single source of truth for flipped card faces. Prevents any card from ever getting stuck face-up.
+  const syncCardFaces = () => {
+    grid.querySelectorAll('.memory-card').forEach(c => {
+      const i = Number(c.dataset.index);
+      const inner = c.querySelector('.memory-card-inner');
+      if (!inner) return;
+      const shouldBeFlipped = matched.has(i) || flipped.includes(i);
+      if (inner.classList.contains('flipped') !== shouldBeFlipped) {
+        inner.classList.toggle('flipped', shouldBeFlipped);
+        c.setAttribute('aria-pressed', String(shouldBeFlipped));
+      }
+      if (!flipped.includes(i)) {
+        c.classList.remove('memory-card-mismatch');
+      }
+    });
+  };
   
   const modal = document.createElement('div');
   modal.dataset.memoryInline = 'true';
@@ -25246,31 +25267,37 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   modal._cleanupMemoryFit = () => { window.removeEventListener('resize', scheduleMemoryFit); window.removeEventListener('orientationchange', scheduleMemoryFit); document.removeEventListener('fullscreenchange', scheduleMemoryFit); window.visualViewport?.removeEventListener('resize', scheduleMemoryFit); memoryResizeObserver?.disconnect(); };
 
   function runMemoryCheck() {
+    checkTimer = null;
     try {
       checkMatch();
     } catch (error) {
       console.error('Memory check failed', error);
-      grid.querySelectorAll('.memory-card-inner.flipped').forEach(inner => {
-        const i = Number(inner.closest('.memory-card')?.dataset.index);
-        if (!matched.has(i)) inner.classList.remove('flipped');
-      });
+      clearMemoryRoundTimers();
       flipped = [];
       mismatchLocked = false;
+      grid._memoryLockAt = 0;
+      syncCardFaces();
     }
   }
 
   function checkMatch() {
     if (flipped.length !== 2) {
+      clearMemoryRoundTimers();
       flipped = [];
       mismatchLocked = false;
+      grid._memoryLockAt = 0;
+      syncCardFaces();
       return;
     }
     const [idx1, idx2] = flipped;
     const firstCard = pairs[idx1];
     const secondCard = pairs[idx2];
-    if (!firstCard || !secondCard) {
+    if (!firstCard || !secondCard || idx1 === idx2) {
+      clearMemoryRoundTimers();
       flipped = [];
       mismatchLocked = false;
+      grid._memoryLockAt = 0;
+      syncCardFaces();
       return;
     }
     
@@ -25279,8 +25306,12 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
 
     if (firstCard.pairId === secondCard.pairId && firstCard.cardId !== secondCard.cardId) {
       // Correct match!
+      clearMemoryRoundTimers();
       matched.add(idx1);
       matched.add(idx2);
+      flipped = [];
+      mismatchLocked = false;
+      grid._memoryLockAt = 0;
 
       // Handle Mystery pair effects vs standard vocabulary pair
       if (firstCard.type === 'mystery') {
@@ -25381,6 +25412,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
                     rc.style.setProperty('opacity', '0', 'important');
                     rc.style.setProperty('pointer-events', 'none', 'important');
                   });
+                  syncCardFaces();
                 }, 450);
               }, 250);
             }
@@ -25411,6 +25443,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
               shuffledNodes.forEach(node => grid.appendChild(node));
               setTimeout(() => {
                 remainingCards.forEach(c => c.classList.remove('ga-ditto-wobble'));
+                syncCardFaces();
               }, 450);
             }
           }, 350);
@@ -25448,9 +25481,6 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
         c.style.pointerEvents = 'none';
       });
 
-      flipped = [];
-      mismatchLocked = false;
-
       // Both cards vanish completely after celebration pulse
       setTimeout(() => {
         if (!document.body.contains(modal)) return;
@@ -25467,6 +25497,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
             child.style.setProperty('pointer-events', 'none', 'important');
           });
         });
+        syncCardFaces();
       }, 420);
 
       if (matched.size === pairs.length) {
@@ -25500,53 +25531,60 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       clearMemoryRoundTimers();
       mismatchTimer = setTimeout(() => {
         try {
-          [card1, card2].forEach(c => {
-            if (!c) return;
-            c.querySelector('.memory-card-inner')?.classList.remove('flipped');
+          grid.querySelectorAll('.memory-card.memory-card-mismatch').forEach(c => {
             c.classList.remove('memory-card-mismatch');
             c.style.animation = 'none';
-            c.setAttribute('aria-pressed', 'false');
           });
-        } finally {
           flipped = [];
+          syncCardFaces();
+        } finally {
           mismatchLocked = false;
           mismatchTimer = null;
+          grid._memoryLockAt = 0;
         }
-      }, 480);
+      }, 500);
     }
   }
   
   grid.querySelectorAll('.memory-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const idx = parseInt(card.dataset.index);
+    card.addEventListener('click', (e) => {
+      e.preventDefault();
+      const idx = parseInt(card.dataset.index, 10);
+      if (isNaN(idx) || !pairs[idx] || matched.has(idx)) return;
 
-      // Watchdog failsafe: if locked for more than 700ms, force release immediately
-      if (mismatchLocked && grid._memoryLockAt && Date.now() - grid._memoryLockAt > 700) {
-        grid.querySelectorAll('.memory-card').forEach(c => {
-          const i = Number(c.dataset.index);
-          if (!matched.has(i)) {
-            c.querySelector('.memory-card-inner')?.classList.remove('flipped');
-            c.classList.remove('memory-card-mismatch');
-          }
-        });
+      // Watchdog failsafe: if locked for more than 1200ms, force release and sync
+      if (mismatchLocked && grid._memoryLockAt && Date.now() - grid._memoryLockAt > 1200) {
+        clearMemoryRoundTimers();
         flipped = [];
         mismatchLocked = false;
+        grid._memoryLockAt = 0;
+        syncCardFaces();
       }
 
-      if (mismatchLocked || flipped.includes(idx) || matched.has(idx) || flipped.length >= 2 || !pairs[idx]) return;
-      
-      // Flip the card
+      // If locked or already 2 cards flipped, ignore click
+      if (mismatchLocked || flipped.length >= 2) return;
+
+      // Cannot click a card that is already selected
+      if (flipped.includes(idx)) return;
+
+      // Extra check: if DOM card is already flipped, resync and ignore
       const inner = card.querySelector('.memory-card-inner');
-      if (inner) inner.classList.add('flipped');
-      card.setAttribute('aria-pressed', 'true');
+      if (inner?.classList.contains('flipped')) {
+        syncCardFaces();
+        return;
+      }
+
+      // Flip the card and sync DOM
+      flipped.push(idx);
+      syncCardFaces();
       unlockGameSound();
       playGameSound('select');
-      flipped.push(idx);
-      
+
       if (flipped.length === 2) {
         mismatchLocked = true;
         grid._memoryLockAt = Date.now();
-        setTimeout(runMemoryCheck, 340);
+        clearMemoryRoundTimers();
+        checkTimer = setTimeout(runMemoryCheck, 300);
       }
     });
   });
