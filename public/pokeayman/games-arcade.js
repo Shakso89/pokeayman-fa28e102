@@ -1405,6 +1405,86 @@
   }).observe(document.body, { childList: true, subtree: true });
   if (document.body) observeStages(); else document.addEventListener('DOMContentLoaded', observeStages, { once: true });
 
+  function createCustomStepper({ iconSvg, title, subtitleGetter, options, initialIndex = 0, onChange }) {
+    let currentIndex = Math.max(0, Math.min(options.length - 1, initialIndex));
+    const panel = document.createElement('div');
+    panel.className = 'ga-stepper-panel bg-[#0f172a]/90 border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between shadow-sm transition-all duration-200 focus-within:border-yellow-500/60 focus-within:shadow-[0_0_12px_rgba(234,179,8,0.15)] hover:border-slate-700';
+
+    panel.innerHTML = `<div class="flex items-center gap-3 min-w-0">
+      <div class="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-amber-400 shrink-0">
+        ${iconSvg}
+      </div>
+      <div class="flex flex-col min-w-0 text-left">
+        <span class="font-bold text-white text-sm tracking-tight truncate">${esc(title)}</span>
+        <span class="ga-stepper-subtitle text-xs text-amber-300 font-medium truncate mt-0.5"></span>
+      </div>
+    </div>
+    <div class="bg-[#0b1120] border border-slate-800 rounded-xl p-1 flex items-center gap-1.5 shrink-0">
+      <button type="button" class="ga-stepper-dec w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer" aria-label="Decrease ${esc(title)}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <span class="ga-stepper-val px-3 py-1.5 bg-slate-800/60 rounded-lg border border-slate-700/40 text-xs font-bold text-slate-200 select-none text-center min-w-[70px]"></span>
+      <button type="button" class="ga-stepper-inc w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer" aria-label="Increase ${esc(title)}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>`;
+
+    const decBtn = panel.querySelector('.ga-stepper-dec');
+    const incBtn = panel.querySelector('.ga-stepper-inc');
+    const valSpan = panel.querySelector('.ga-stepper-val');
+    const subSpan = panel.querySelector('.ga-stepper-subtitle');
+
+    function update() {
+      const curOpt = options[currentIndex] || options[0];
+      valSpan.textContent = curOpt.label || String(curOpt.value ?? curOpt);
+      const subText = subtitleGetter ? subtitleGetter(curOpt, currentIndex) : '';
+      if (subText) {
+        subSpan.textContent = subText;
+        subSpan.classList.remove('hidden');
+      } else {
+        subSpan.textContent = '';
+        subSpan.classList.add('hidden');
+      }
+      const atMin = currentIndex <= 0;
+      const atMax = currentIndex >= options.length - 1;
+      decBtn.disabled = atMin;
+      decBtn.setAttribute('aria-disabled', String(atMin));
+      incBtn.disabled = atMax;
+      incBtn.setAttribute('aria-disabled', String(atMax));
+      onChange?.(curOpt, currentIndex);
+    }
+
+    decBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      if (currentIndex > 0) { currentIndex--; update(); }
+    });
+    incBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      if (currentIndex < options.length - 1) { currentIndex++; update(); }
+    });
+
+    update();
+    return {
+      element: panel,
+      getValue: () => options[currentIndex] || options[0],
+      refreshSubtitle: () => {
+        const curOpt = options[currentIndex] || options[0];
+        const subText = subtitleGetter ? subtitleGetter(curOpt, currentIndex) : '';
+        if (subText) {
+          subSpan.textContent = subText;
+          subSpan.classList.remove('hidden');
+        } else {
+          subSpan.textContent = '';
+          subSpan.classList.add('hidden');
+        }
+      },
+      setValue: val => {
+        const idx = options.findIndex(o => (o.value ?? o.level ?? o.seconds ?? o) === val);
+        if (idx >= 0) { currentIndex = idx; update(); }
+      }
+    };
+  }
+
   function createQuickMousePanel({ iconSvg, title, value, min, max, step = 1, format = v => String(v), onChange }) {
     let current = value;
     const panel = document.createElement('div');
@@ -1647,82 +1727,188 @@
       !el.matches('.ga-crossword-count') &&
       el.querySelector('.memory-level-option, .match-word-count-option, .shared-baam-count')
     );
-    gameSpecificControls.forEach(ctrl => {
-      ctrl.classList.add('ga-round-setting', 'ga-game-specific-rule');
-      paramsSection.appendChild(ctrl);
-    });
 
-    // Points to win (Top)
-    if (hasPointsToWin) {
-      const initialScore = Number(existingScoreInput?.value || 5) || 5;
-      const pointsPanel = createQuickMousePanel({
-        iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
-        title: 'Points to win',
-        value: Math.max(1, Math.min(20, initialScore)),
-        min: 1,
-        max: 20,
-        step: 1,
-        format: v => `${v} pts`,
-        onChange: v => {
-          if (existingScoreInput) {
-            existingScoreInput.value = String(v);
-            existingScoreInput.dispatchEvent(new Event('input', { bubbles: true }));
+    const isMemoryGame = resolvedFnName === 'chooseMemoryDifficulty';
+    if (isMemoryGame) {
+      // Remove any existing raw memory-level-option container
+      const existingMemoryCtrl = gameSpecificControls.find(el => el.querySelector('.memory-level-option'));
+      if (existingMemoryCtrl) {
+        existingMemoryCtrl.remove();
+        const idx = gameSpecificControls.indexOf(existingMemoryCtrl);
+        if (idx >= 0) gameSpecificControls.splice(idx, 1);
+      }
+
+      const activeListName = modal.dataset.gaListName || '';
+      const memoryWords = typeof getGameWords === 'function' ? getGameWords(activeListName).filter(w => w && String(w.vocab_word || '').trim()) : [];
+      const vocabWordCount = memoryWords.length;
+
+      // 1. Grid Size Stepper
+      const gridIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>`;
+
+      const gridStepper = createCustomStepper({
+        iconSvg: gridIcon,
+        title: 'Grid size',
+        subtitleGetter: (opt) => {
+          const needed = Math.max(0, opt.pairs - vocabWordCount);
+          if (needed > 0) {
+            return `${vocabWordCount} words + ${needed} mystery pair${needed === 1 ? '' : 's'}`;
           }
-          modal.dataset.gaWinningScore = String(v);
+          return `${opt.pairs} words`;
+        },
+        options: [
+          { level: 'easy', pairs: 5, label: 'Easy · 10 cards' },
+          { level: 'medium', pairs: 9, label: 'Medium · 18 cards' },
+          { level: 'hard', pairs: 15, label: 'Hard · 30 cards' }
+        ],
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaMemoryDifficulty = opt.level;
+          window.selectedMemoryDifficulty = opt.level;
+          modal.querySelectorAll('.memory-level-option').forEach(btn => {
+            const active = btn.dataset.level === opt.level;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-pressed', String(active));
+          });
         }
       });
-      if (existingScoreInput) {
-        existingScoreInput.style.display = 'none';
-        pointsPanel.element.appendChild(existingScoreInput);
+      modal.dataset.gaMemoryDifficulty = 'easy';
+      window.selectedMemoryDifficulty = 'easy';
+      paramsSection.appendChild(gridStepper.element);
+
+      // 2. Winner reward coins Stepper
+      const coinIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h6a1.5 1.5 0 0 1 0 3H9a1.5 1.5 0 0 0 0 3h6"/></svg>`;
+      const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : 20;
+      const rewardMax = (availableCredits === Infinity || !Number.isFinite(availableCredits)) ? 100 : Math.max(0, Math.floor(availableCredits / 10) * 10);
+      const coinOptions = [{ value: 0, label: 'No coins' }];
+      for (let c = 10; c <= Math.max(20, rewardMax); c += 10) {
+        coinOptions.push({ value: c, label: `${c} coins` });
       }
-      modal.dataset.gaWinningScore = String(pointsPanel.getValue());
-      paramsSection.appendChild(pointsPanel.element);
+
+      const rewardStepper = createCustomStepper({
+        iconSvg: coinIcon,
+        title: 'Winner reward coins',
+        options: coinOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaRewardCoins = String(opt.value);
+          window.pendingGameReward = opt.value;
+          modal.querySelectorAll('.game-reward-option').forEach(btn => {
+            const active = Number(btn.dataset.reward || 0) === opt.value;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-checked', String(active));
+          });
+        }
+      });
+      modal.dataset.gaRewardCoins = '0';
+      window.pendingGameReward = 0;
+      paramsSection.appendChild(rewardStepper.element);
+
+      // 3. Timer Stepper (No timer, 30s, 45s, 60s)
+      const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+      const timerOptions = [
+        { seconds: 0, label: 'No timer' },
+        { seconds: 30, label: '30s' },
+        { seconds: 45, label: '45s' },
+        { seconds: 60, label: '60s' }
+      ];
+
+      const timerStepper = createCustomStepper({
+        iconSvg: timerIcon,
+        title: 'Timer',
+        options: timerOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaTimerSeconds = String(opt.seconds);
+          window.pendingGameTimerSeconds = opt.seconds;
+          modal.querySelectorAll('.game-timer-option').forEach(btn => {
+            const active = Number(btn.dataset.seconds || 0) === opt.seconds;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-pressed', String(active));
+          });
+          gridStepper.refreshSubtitle?.();
+        }
+      });
+      modal.dataset.gaTimerSeconds = '0';
+      window.pendingGameTimerSeconds = 0;
+      paramsSection.appendChild(timerStepper.element);
+    } else {
+      gameSpecificControls.forEach(ctrl => {
+        ctrl.classList.add('ga-round-setting', 'ga-game-specific-rule');
+        paramsSection.appendChild(ctrl);
+      });
+
+      // Points to win (Top)
+      if (hasPointsToWin) {
+        const initialScore = Number(existingScoreInput?.value || 5) || 5;
+        const pointsPanel = createQuickMousePanel({
+          iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+          title: 'Points to win',
+          value: Math.max(1, Math.min(20, initialScore)),
+          min: 1,
+          max: 20,
+          step: 1,
+          format: v => `${v} pts`,
+          onChange: v => {
+            if (existingScoreInput) {
+              existingScoreInput.value = String(v);
+              existingScoreInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            modal.dataset.gaWinningScore = String(v);
+          }
+        });
+        if (existingScoreInput) {
+          existingScoreInput.style.display = 'none';
+          pointsPanel.element.appendChild(existingScoreInput);
+        }
+        modal.dataset.gaWinningScore = String(pointsPanel.getValue());
+        paramsSection.appendChild(pointsPanel.element);
+      }
+
+      // Winner reward coins (Middle)
+      const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : 20;
+      const rewardMax = (availableCredits === Infinity || !Number.isFinite(availableCredits)) ? 100 : Math.max(0, Math.floor(availableCredits / 5) * 5);
+      const rewardPanel = createQuickMousePanel({
+        iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h6a1.5 1.5 0 0 1 0 3H9a1.5 1.5 0 0 0 0 3h6"/></svg>',
+        title: 'Winner reward coins',
+        value: 0,
+        min: 0,
+        max: rewardMax,
+        step: 5,
+        format: v => v === 0 ? 'No coins' : `${v} coins`,
+        onChange: v => {
+          modal.dataset.gaRewardCoins = String(v);
+          modal.querySelectorAll('.game-reward-option').forEach(btn => {
+            const active = Number(btn.dataset.reward || 0) === v;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-checked', String(active));
+          });
+        }
+      });
+      modal.dataset.gaRewardCoins = '0';
+      paramsSection.appendChild(rewardPanel.element);
+
+      // Timer (Bottom)
+      const timerPanel = createQuickMousePanel({
+        iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
+        title: 'Timer',
+        value: 0,
+        min: 0,
+        max: 10,
+        step: 1,
+        format: v => v === 0 ? 'No timer' : `${v} min`,
+        onChange: v => {
+          const seconds = v * 60;
+          modal.dataset.gaTimerSeconds = String(seconds);
+          modal.querySelectorAll('.game-timer-option').forEach(btn => {
+            const active = Number(btn.dataset.seconds || 0) === seconds;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-pressed', String(active));
+          });
+        }
+      });
+      modal.dataset.gaTimerSeconds = '0';
+      paramsSection.appendChild(timerPanel.element);
     }
-
-    // Winner reward coins (Middle)
-    const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : 20;
-    const rewardMax = (availableCredits === Infinity || !Number.isFinite(availableCredits)) ? 100 : Math.max(0, Math.floor(availableCredits / 5) * 5);
-    const rewardPanel = createQuickMousePanel({
-      iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h6a1.5 1.5 0 0 1 0 3H9a1.5 1.5 0 0 0 0 3h6"/></svg>',
-      title: 'Winner reward coins',
-      value: 0,
-      min: 0,
-      max: rewardMax,
-      step: 5,
-      format: v => v === 0 ? 'No coins' : `${v} coins`,
-      onChange: v => {
-        modal.dataset.gaRewardCoins = String(v);
-        modal.querySelectorAll('.game-reward-option').forEach(btn => {
-          const active = Number(btn.dataset.reward || 0) === v;
-          btn.classList.toggle('is-selected', active);
-          btn.setAttribute('aria-checked', String(active));
-        });
-      }
-    });
-    modal.dataset.gaRewardCoins = '0';
-    paramsSection.appendChild(rewardPanel.element);
-
-    // Timer (Bottom)
-    const timerPanel = createQuickMousePanel({
-      iconSvg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>',
-      title: 'Timer',
-      value: 0,
-      min: 0,
-      max: 10,
-      step: 1,
-      format: v => v === 0 ? 'No timer' : `${v} min`,
-      onChange: v => {
-        const seconds = v * 60;
-        modal.dataset.gaTimerSeconds = String(seconds);
-        modal.querySelectorAll('.game-timer-option').forEach(btn => {
-          const active = Number(btn.dataset.seconds || 0) === seconds;
-          btn.classList.toggle('is-selected', active);
-          btn.setAttribute('aria-pressed', String(active));
-        });
-      }
-    });
-    modal.dataset.gaTimerSeconds = '0';
-    paramsSection.appendChild(timerPanel.element);
 
     setupLeft.appendChild(paramsSection);
 
