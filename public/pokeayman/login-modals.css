@@ -17,6 +17,9 @@
 }
 .pk-login-overlay .pk-login-card {
   position: relative;
+  width: 100% !important;
+  max-width: min(100%, 480px) !important;
+  margin: auto !important;
   background: linear-gradient(160deg, var(--pkl-navy-2), var(--pkl-navy) 70%) !important;
   color: var(--pkl-ink) !important;
   border: 2px solid rgba(255, 203, 5, .45) !important;
@@ -24,6 +27,18 @@
   box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .8), 0 0 0 6px rgba(255, 203, 5, .08), inset 0 1px 0 rgba(255, 255, 255, .08) !important;
   overflow: hidden;
   animation: pklPop .45s cubic-bezier(.2, 1.4, .4, 1);
+}
+.pk-login-overlay .pk-login-student,
+.pk-login-overlay .student-login-modal-card {
+  width: 100% !important;
+  max-width: min(100%, 460px) !important;
+  margin: auto !important;
+}
+.pk-login-overlay .pk-login-teacher,
+.pk-login-overlay .teacher-login-modal-card {
+  width: 100% !important;
+  max-width: min(100%, 520px) !important;
+  margin: auto !important;
 }
 .pk-login-overlay .pk-login-card::before {
   content: ""; position: absolute; inset: -40% -20% auto auto; width: 320px; height: 320px; border-radius: 50%;
@@ -98,7 +113,7 @@ html body #student-pin-modal:placeholder-shown { letter-spacing: normal !importa
 
 /* Mobile: scrollable overlay so buttons stay reachable with the keyboard open */
 .pk-login-overlay { overflow-y: auto; -webkit-overflow-scrolling: touch; align-items: safe center !important; }
-.pk-login-overlay .pk-login-card { max-height: none !important; overflow: visible !important; margin: auto 0; }
+.pk-login-overlay .pk-login-card { max-height: none !important; overflow: visible !important; margin: auto !important; }
 .pk-login-card button { touch-action: manipulation; }
 .pk-login-card button:active { transform: scale(.97); }
 
