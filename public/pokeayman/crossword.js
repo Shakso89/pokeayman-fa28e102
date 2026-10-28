@@ -502,7 +502,7 @@
           while (nextIndex < selectedWord.answer.length && modal.querySelector(`input[data-cell-key="${coordKey(selectedWord.row + (selectedWord.direction === 'down' ? nextIndex : 0), selectedWord.col + (selectedWord.direction === 'across' ? nextIndex : 0))}"]`)?.readOnly) nextIndex++;
           if (nextIndex < selectedWord.answer.length) {
             const nextKey = coordKey(selectedWord.row + (selectedWord.direction === 'down' ? nextIndex : 0), selectedWord.col + (selectedWord.direction === 'across' ? nextIndex : 0));
-            modal.querySelector(`input[data-cell-key="${nextKey}"]`)?.focus();
+            modal.querySelector(`input[data-cell-key="${nextKey}"]`)?.focus({ preventScroll: true });
           }
         }
         const selectedKeys = Array.from({ length: selectedWord.answer.length }, (_, i) => coordKey(selectedWord.row + (selectedWord.direction === 'down' ? i : 0), selectedWord.col + (selectedWord.direction === 'across' ? i : 0)));
@@ -525,7 +525,7 @@
         const nextTargetInput = modal.querySelector(`input[data-cell-key="${coordKey(row + delta[0], col + delta[1])}"]`);
         if (nextTargetInput) {
           handleCellSelection(nextTargetInput, false, arrowDir);
-          nextTargetInput.focus();
+          nextTargetInput.focus({ preventScroll: true });
         }
       });
     });
