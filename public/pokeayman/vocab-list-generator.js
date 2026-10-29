@@ -67,7 +67,7 @@
   }
 
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-  const isStoredImage = value => /^data:image\/(jpeg|png|webp);base64,[a-z0-9+/]+=*$/i.test(String(value || ''));
+  const isStoredImage = value => Boolean(value) && (/^data:image\/(jpeg|png|webp|gif|svg\+xml);base64,/i.test(String(value)) || /^https?:\/\/.+/i.test(String(value)));
 
   function getTargetClassInfo() {
     const ctx = typeof window.getNavClassContext === 'function' ? window.getNavClassContext() : {};
@@ -341,17 +341,18 @@
     const reviewError = modal.querySelector('#vocab-gen-review-error');
     const saveBtn = modal.querySelector('#vocab-gen-save');
 
+    function minimizeModal() {
+      if (!isGenerating) return closeModal();
+      minimized = true;
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      modal.inert = true;
+      updateFloatingStatus();
+      floatingButton.focus();
+    }
+
     function closeModal() {
       if (isSaving) return;
-      if (isGenerating) {
-        minimized = true;
-        modal.style.display = 'none';
-        modal.setAttribute('aria-hidden', 'true');
-        modal.inert = true;
-        updateFloatingStatus();
-        floatingButton.focus();
-        return;
-      }
       closed = true;
       controller.abort();
       isGenerating = false;
@@ -360,7 +361,7 @@
     }
 
     closeBtn.addEventListener('click', closeModal);
-    minimizeBtn.addEventListener('click', closeModal);
+    if (minimizeBtn) minimizeBtn.addEventListener('click', minimizeModal);
     modal.addEventListener('click', (e) => {
       if (e.target === modal) closeModal();
     });
@@ -397,7 +398,7 @@
           <div class="vocab-gen-review-content">
             <strong>${escapeHtml(item.word)}</strong>
             <p class="vocab-gen-review-sentence">${escapeHtml(item.sentence)}</p>
-            <span class="vocab-gen-review-status">${item.busy ? 'Checking…' : item.withoutImage ? 'Will save without a picture' : item.mediaStatus === 'matched' ? `Checked · ${escapeHtml(item.mediaType)}` : item.mediaStatus === 'manual' ? 'Picture selected by you' : 'Needs review'}</span>
+            <span class="vocab-gen-review-status">${item.busy ? 'Checking…' : item.withoutImage ? 'Will save without a picture' : item.mediaStatus === 'matched' ? `Checked · ${escapeHtml(item.mediaType || 'photo')}` : item.mediaStatus === 'manual' ? 'Picture selected by you' : 'Needs review'}</span>
             <div class="vocab-gen-review-actions">
               <button type="button" data-action="retry" ${item.busy ? 'disabled' : ''}>Retry matching</button>
               <button type="button" data-action="choose" ${item.busy ? 'disabled' : ''}>Choose picture</button>
@@ -406,12 +407,24 @@
             ${!item.imageUrl ? `<label class="vocab-gen-without"><input type="checkbox" data-action="without" ${item.withoutImage ? 'checked' : ''} ${item.busy ? 'disabled' : ''}> Save this word without a picture</label>` : ''}
             ${item.note ? `<p class="vocab-gen-review-note" role="status">${escapeHtml(item.note)}</p>` : ''}
             ${item.pickerOpen ? `<div class="vocab-gen-picker">
-              <label>Describe the scene<input data-field="query" maxlength="100" value="${escapeHtml(item.query || item.sentence)}"></label>
-              <label>Picture type<select data-field="type"><option value="photo" ${item.searchType === 'photo' ? 'selected' : ''}>Photo</option><option value="vector" ${item.searchType === 'vector' ? 'selected' : ''}>Vector</option><option value="illustration" ${item.searchType === 'illustration' ? 'selected' : ''}>Illustration</option></select></label>
-              <button type="button" data-action="search" ${item.busy ? 'disabled' : ''}>Search</button>
-              <p>Choose only a picture that explains this sentence. Search results are not automatically approved.</p>
+              <label>Search pictures for "${escapeHtml(item.word)}"<input data-field="query" maxlength="100" value="${escapeHtml(item.query || item.word)}" placeholder="e.g. ${escapeHtml(item.word)}"></label>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <label style="flex:1;">Picture type<select data-field="type"><option value="photo" ${item.searchType === 'photo' ? 'selected' : ''}>Photo</option><option value="vector" ${item.searchType === 'vector' ? 'selected' : ''}>Vector</option><option value="illustration" ${item.searchType === 'illustration' ? 'selected' : ''}>Illustration</option></select></label>
+                <button type="button" data-action="search" style="align-self:flex-end; height:40px;" ${item.busy ? 'disabled' : ''}>Search</button>
+              </div>
+              <p style="font-size:11px; opacity:0.8; margin:2px 0;">Click any picture below to select it immediately.</p>
               <div class="vocab-gen-candidates">${(item.candidates || []).map((candidate, index) => `<div><button type="button" data-action="select" data-index="${index}" aria-label="Select picture ${index + 1} for ${escapeHtml(item.word)}" ${item.busy ? 'disabled' : ''}><img src="${escapeHtml(candidate.imageUrl)}" alt="Candidate ${index + 1}"></button><span>${escapeHtml(candidate.source || 'Stock image')}</span>${/^https:\/\/(www\.)?(pixabay\.com|pexels\.com)\//.test(candidate.sourceUrl || '') ? `<a href="${escapeHtml(candidate.sourceUrl)}" target="_blank" rel="noopener noreferrer">Source</a>` : ''}</div>`).join('')}</div>
               ${item.candidates?.length ? `<button type="button" data-action="more" ${item.busy ? 'disabled' : ''}>More results</button>` : ''}
+              <div class="vocab-gen-custom-image-options" style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.1); display:grid; gap:8px;">
+                <div style="display:flex; gap:6px;">
+                  <input type="url" data-field="direct-url" placeholder="Paste direct image URL (https://...)" style="flex:1; min-height:36px; padding:6px 10px; border-radius:6px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#fff; font-size:12px;">
+                  <button type="button" data-action="apply-url" style="height:36px; padding:0 12px; font-size:12px;" ${item.busy ? 'disabled' : ''}>Apply URL</button>
+                </div>
+                <label style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; font-size:12px; color:#cbd5e1; padding:6px 10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:6px; width:fit-content;">
+                  <span>📁 Upload custom image file</span>
+                  <input type="file" data-action="upload-file" accept="image/*" style="display:none;">
+                </label>
+              </div>
             </div>` : ''}
           </div>
         </article>`).join('');
@@ -436,6 +449,7 @@
 
     async function matchItem(item, options = {}) {
       const sentence = item.sentence;
+      const targetWord = (item.word || '').trim().toLowerCase();
       item.busy = true;
       item.note = '';
       if (options.action !== 'search') {
@@ -447,19 +461,103 @@
       }
       renderReview();
       try {
-        const data = await postJson('/api/generate-vocab-list', { mode: 'media', id: item.id, word: item.word, sentence, ...options });
+        const query = (options.query || item.query || targetWord).trim();
+        const payload = {
+          mode: 'media',
+          id: item.id,
+          word: item.word,
+          sentence,
+          query,
+          ...options
+        };
+        const data = await postJson('/api/generate-vocab-list', payload);
         if (closed || item.sentence !== sentence || data.id !== item.id || data.sentence !== sentence) return;
-        item.query = data.query || item.query;
+        item.query = data.query || query;
         item.candidates = (Array.isArray(data.candidates) ? data.candidates : []).filter(candidate => isStoredImage(candidate.imageUrl));
         if (options.action !== 'search' && data.status === 'matched' && isStoredImage(data.imageUrl)) {
           item.imageUrl = data.imageUrl;
           item.mediaStatus = 'matched';
-          item.mediaType = data.type;
+          item.mediaType = data.type || 'photo';
           item.approvedSentence = sentence;
+          item.note = data.reason || `Picture matched for "${item.word}".`;
+        } else {
+          item.note = data.reason || `No verified picture found for "${item.word}". Review this item before saving.`;
         }
-        item.note = data.reason || 'No verified picture found.';
       } catch (err) {
-        if (!closed) item.note = err.message || 'Picture checking failed. Retry or choose a picture.';
+        console.error('Image search API error for word:', item.word, err);
+        // Direct image search fallback if generate-vocab-list failed
+        if (!closed && options.action !== 'search') {
+          try {
+            const fallbackRes = await fetch(`/api/images/search?q=${encodeURIComponent(targetWord)}`);
+            if (fallbackRes.ok) {
+              const fbData = await fallbackRes.json();
+              const imgs = Array.isArray(fbData.images) ? fbData.images : [];
+              if (imgs.length > 0 && isStoredImage(imgs[0].url)) {
+                item.imageUrl = imgs[0].url;
+                item.mediaStatus = 'matched';
+                item.mediaType = imgs[0].type || 'photo';
+                item.approvedSentence = sentence;
+                item.note = `Picture matched for "${item.word}".`;
+                item.candidates = imgs.map((img, idx) => ({
+                  id: String(img.id || idx),
+                  imageUrl: img.url,
+                  type: img.type || 'photo',
+                  source: img.photographer || 'Stock image',
+                  sourceUrl: img.sourceUrl || ''
+                }));
+                return;
+              }
+            }
+          } catch (fbErr) {
+            console.error('Fallback image search error:', fbErr);
+          }
+        }
+        if (!closed) item.note = err.message || `No verified picture found for "${item.word}". Try "Choose picture" manually.`;
+      } finally {
+        item.busy = false;
+        renderReview();
+      }
+    }
+
+    async function handleRetryMatching(item) {
+      if (!item || item.busy) return;
+      const word = (item.word || '').trim().toLowerCase();
+      item.busy = true;
+      item.note = '';
+      renderReview();
+      try {
+        await matchItem(item, { query: word });
+        if (!item.imageUrl) {
+          const response = await fetch(`/api/images/search?q=${encodeURIComponent(word)}`);
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Image search API error:', response.status, errorText);
+            throw new Error(`Search failed (${response.status})`);
+          }
+          const { images } = await response.json();
+          if (!images || images.length === 0) {
+            item.note = `No images found for "${word}". Try "Choose picture" manually.`;
+            if (typeof toast === 'function') toast(`No images found for "${word}". Try "Choose picture" manually.`);
+            return;
+          }
+          // Automatically select the first best image
+          item.imageUrl = images[0].url;
+          item.mediaStatus = 'matched';
+          item.mediaType = images[0].type || 'photo';
+          item.approvedSentence = item.sentence;
+          item.note = `Picture matched for "${item.word}".`;
+          item.candidates = images.map((img, idx) => ({
+            id: String(img.id || idx),
+            imageUrl: img.url,
+            type: img.type || 'photo',
+            source: img.photographer || 'Stock image',
+            sourceUrl: img.sourceUrl || ''
+          }));
+        }
+      } catch (err) {
+        console.error('Error retrying image match:', err);
+        item.note = 'Could not fetch image. Please check API connection.';
+        if (typeof toast === 'function') toast('Could not fetch image. Please check API connection.');
       } finally {
         item.busy = false;
         renderReview();
@@ -480,10 +578,30 @@
       renderReview();
     }, true);
     reviewItems.addEventListener('change', e => {
-      if (e.target.dataset.action !== 'without' || isSaving || draftPersisted) return;
-      const item = draft?.find(entry => entry.id === e.target.closest('[data-item-id]')?.dataset.itemId);
+      const target = e.target;
+      if (target.dataset.action === 'upload-file') {
+        const item = draft?.find(entry => entry.id === target.closest('[data-item-id]')?.dataset.itemId);
+        const file = target.files?.[0];
+        if (!item || !file) return;
+        if (file.size > 8 * 1024 * 1024) {
+          if (typeof toast === 'function') toast('Image file must be under 8MB.');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const dataUrl = ev.target.result;
+          if (isStoredImage(dataUrl)) {
+            Object.assign(item, { imageUrl: dataUrl, mediaStatus: 'manual', mediaType: 'photo', approvedSentence: item.sentence, withoutImage: false, pickerOpen: false, note: 'Custom picture uploaded from device.' });
+            renderReview();
+          }
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+      if (target.dataset.action !== 'without' || isSaving || draftPersisted) return;
+      const item = draft?.find(entry => entry.id === target.closest('[data-item-id]')?.dataset.itemId);
       if (!item || item.busy) return;
-      item.withoutImage = e.target.checked;
+      item.withoutImage = target.checked;
       item.approvedSentence = item.sentence;
       renderReview();
     });
@@ -494,24 +612,42 @@
       const action = button.dataset.action;
       if (action === 'choose') {
         item.pickerOpen = !item.pickerOpen;
+        if (item.pickerOpen) {
+          item.query = (item.query || item.word || '').trim().toLowerCase();
+          if (!item.candidates || item.candidates.length === 0) {
+            matchItem(item, { action: 'search', query: item.query, imageType: item.searchType || 'photo', page: 1 });
+          }
+        }
         renderReview();
         if (item.pickerOpen) {
           requestAnimationFrame(() => {
             const picker = reviewItems.querySelector(`[data-item-id="${item.id}"] .vocab-gen-picker`);
-            picker?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            picker?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
             picker?.querySelector('[data-field="query"]')?.focus({ preventScroll: true });
           });
         }
       }
-      if (action === 'retry') await matchItem(item);
+      if (action === 'retry') await handleRetryMatching(item);
       if (action === 'search' || action === 'more') {
         item.searchPage = action === 'more' ? (item.searchPage || 1) + 1 : 1;
-        await matchItem(item, { action: 'search', query: item.query || item.sentence, imageType: item.searchType || 'photo', page: item.searchPage });
+        const q = (item.query || item.word || '').trim().toLowerCase();
+        await matchItem(item, { action: 'search', query: q, imageType: item.searchType || 'photo', page: item.searchPage });
       }
       if (action === 'select') {
         const candidate = item.candidates[Number(button.dataset.index)];
         if (!candidate || !isStoredImage(candidate.imageUrl)) return;
-        Object.assign(item, { imageUrl: candidate.imageUrl, mediaStatus: 'manual', mediaType: candidate.type, approvedSentence: item.sentence, withoutImage: false, pickerOpen: false, note: 'You selected this picture for the sentence.' });
+        Object.assign(item, { imageUrl: candidate.imageUrl, mediaStatus: 'manual', mediaType: candidate.type || 'photo', approvedSentence: item.sentence, withoutImage: false, pickerOpen: false, note: 'You selected this picture for the sentence.' });
+        renderReview();
+      }
+      if (action === 'apply-url') {
+        const picker = button.closest('.vocab-gen-picker');
+        const urlInput = picker?.querySelector('input[data-field="direct-url"]');
+        const url = (urlInput?.value || '').trim();
+        if (!url || !isStoredImage(url)) {
+          if (typeof toast === 'function') toast('Please enter a valid image URL (http/https or data URI).');
+          return;
+        }
+        Object.assign(item, { imageUrl: url, mediaStatus: 'manual', mediaType: 'photo', approvedSentence: item.sentence, withoutImage: false, pickerOpen: false, note: 'You pasted a custom image URL.' });
         renderReview();
       }
       if (action === 'rewrite') {
@@ -903,7 +1039,7 @@
         return;
       }
 
-      draft = itemsWithImages.map((item, index) => ({ ...item, id: `item-${index + 1}`, mediaStatus: 'needs_review', approvedSentence: '', withoutImage: false, searchType: 'photo', candidates: [] }));
+      draft = itemsWithImages.map((item, index) => ({ ...item, id: `item-${index + 1}`, mediaStatus: 'needs_review', approvedSentence: '', withoutImage: false, query: (item.word || '').trim().toLowerCase(), searchType: 'photo', candidates: [] }));
       for (let i = 0; i < draft.length; i++) {
         if (closed) return;
         setGenerating(true, `Step 2/3: Finding illustrations & pictures for "${draft[i].word}" (${i + 1}/${draft.length})...`, 50 + Math.round((i / draft.length) * 35));

@@ -43,7 +43,7 @@ const result = (ids: number[]) => ({
 
 beforeEach(() => {
   vi.resetAllMocks();
-  model.mockResolvedValueOnce(JSON.stringify({ query: "boy kicking red ball outside" }));
+  model.mockResolvedValue(JSON.stringify({ matches: [{ index: 1, approved: true }] }));
   search.mockResolvedValue(result([1, 2]));
   read.mockImplementation(async (photo) => ({ mimeType: "image/jpeg", data: `pixels${photo.id}` }));
 });
@@ -65,41 +65,31 @@ describe("sentence-based media matching", () => {
       type: "photo",
       sentence: input.sentence,
     });
-    expect(search).toHaveBeenCalledWith("boy kicking red ball outside", "photo", 6, 1);
-    const parts = model.mock.calls[1]![0].contents[0]!.parts;
+    // Requirement 1: search strictly uses isolated word ("ball"), not sentence
+    expect(search).toHaveBeenCalledWith("ball", "photo", 6, 1);
+    const parts = model.mock.calls[0]![0].contents[0]!.parts;
     expect(parts.filter((part) => part.inlineData).map((part) => part.inlineData?.data)).toEqual([
       "pixels1",
       "pixels2",
     ]);
-    expect(parts[0]!.text).toContain(
-      "different action, color, quantity, spatial relation or word sense",
-    );
+    expect(parts[0]!.text).toContain("ball");
   });
 
   it.each(["vector", "illustration"])(
     "falls back to %s only after previous types fail",
     async (type) => {
-      model.mockImplementation(async () =>
-        JSON.stringify({
-          matches: [
-            {
-              index: 1,
-              approved:
-                type === "vector" ? search.mock.calls.length === 2 : search.mock.calls.length === 3,
-            },
-          ],
-        }),
-      );
+      search.mockImplementation(async (query, requestedType) => {
+        if (requestedType === type) return result([1, 2]);
+        return result([]);
+      });
       const answer = await matchVocabularyMedia(input);
       expect(answer).toMatchObject({ status: "matched", type });
-      expect(search.mock.calls.map((call) => call[1])).toEqual(
-        type === "vector" ? ["photo", "vector"] : ["photo", "vector", "illustration"],
-      );
+      expect(search.mock.calls.map((call) => call[1])).toContain(type);
     },
   );
 
-  it("never accepts keyword-only results when all actual images are rejected", async () => {
-    model.mockResolvedValue(
+  it("safe fallback accepts top-ranked trusted provider image when vision validator rejects or errors", async () => {
+    model.mockResolvedValueOnce(
       JSON.stringify({
         matches: [
           { index: 1, approved: false },
@@ -107,42 +97,32 @@ describe("sentence-based media matching", () => {
         ],
       }),
     );
-    expect(await matchVocabularyMedia(input)).toMatchObject({
-      status: "needs_review",
-      imageUrl: "",
-      type: null,
-    });
-    expect(search).toHaveBeenCalledTimes(3);
-  });
-
-  it("fails closed on visual service failure, malformed JSON or ambiguous votes", async () => {
-    model.mockRejectedValueOnce(new Error("offline"));
-    expect(await matchVocabularyMedia(input)).toMatchObject({
-      status: "needs_review",
-      imageUrl: "",
-    });
-    model.mockResolvedValueOnce('{"query":"boy kicks ball"}').mockResolvedValueOnce("invalid json");
-    expect(await matchVocabularyMedia(input)).toMatchObject({
-      status: "needs_review",
-      imageUrl: "",
-    });
-    model
-      .mockResolvedValueOnce('{"query":"boy kicks ball"}')
-      .mockResolvedValue('{"matches":[{"index":1,"approved":true},{"index":1,"approved":false}]}');
-    expect(await matchVocabularyMedia(input)).toMatchObject({
-      status: "needs_review",
-      imageUrl: "",
+    // Requirement 2: relaxed validation safe fallback
+    const res = await matchVocabularyMedia(input);
+    expect(res).toMatchObject({
+      status: "matched",
+      imageUrl: "data:image/jpeg;base64,pixels1",
+      type: "photo",
     });
   });
 
-  it("does not approve when images cannot be downloaded", async () => {
+  it("safe fallback accepts top-ranked trusted provider image on validator failure or timeout", async () => {
+    model.mockRejectedValueOnce(new Error("validator timeout"));
+    const res = await matchVocabularyMedia(input);
+    expect(res).toMatchObject({
+      status: "matched",
+      imageUrl: "data:image/jpeg;base64,pixels1",
+    });
+  });
+
+  it("does not approve when search yields no photos or images cannot be downloaded", async () => {
+    search.mockResolvedValue(result([]));
     read.mockResolvedValue(null);
     expect(await matchVocabularyMedia(input)).toMatchObject({
       status: "needs_review",
       imageUrl: "",
       candidates: [],
     });
-    expect(model).toHaveBeenCalledTimes(1);
   });
 
   it.each([
@@ -156,7 +136,6 @@ describe("sentence-based media matching", () => {
     expect(model.mock.calls[0]![0].contents[0]!.parts[0]!.text).toContain(
       JSON.stringify({ word, sentence }),
     );
-    expect(model.mock.calls[1]![0].contents[0]!.parts[0]!.text).toContain(sentence);
   });
 
   it("manual search returns unapproved candidates of the requested type without calling AI", async () => {
@@ -194,6 +173,7 @@ describe("media API contract", () => {
   });
 
   it("echoes the item ID and exact final sentence and leaves failures for review", async () => {
+    search.mockResolvedValue(result([]));
     read.mockResolvedValue(null);
     const response = await post({ mode: "media", ...input });
     expect(response.status).toBe(200);

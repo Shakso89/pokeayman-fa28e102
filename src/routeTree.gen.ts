@@ -13,8 +13,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ApiGenerateVocabListRouteImport } from './routes/api/generate-vocab-list'
+import { Route as ApiSearchImageRouteImport } from './routes/api/search-image'
 import { Route as ApiVocabularySentenceRouteImport } from './routes/api/vocabulary-sentence'
 import { Route as ApiVocabularySpeechRouteImport } from './routes/api/vocabulary-speech'
+import { Route as ApiImagesSearchRouteImport } from './routes/api/images/search'
 import { Route as ApiPublicPexelsRouteImport } from './routes/api/public/pexels'
 
 const IndexRoute = IndexRouteImport.update({
@@ -37,6 +39,11 @@ const ApiGenerateVocabListRoute = ApiGenerateVocabListRouteImport.update({
   path: '/api/generate-vocab-list',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSearchImageRoute = ApiSearchImageRouteImport.update({
+  id: '/api/search-image',
+  path: '/api/search-image',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiVocabularySentenceRoute = ApiVocabularySentenceRouteImport.update({
   id: '/api/vocabulary-sentence',
   path: '/api/vocabulary-sentence',
@@ -45,6 +52,11 @@ const ApiVocabularySentenceRoute = ApiVocabularySentenceRouteImport.update({
 const ApiVocabularySpeechRoute = ApiVocabularySpeechRouteImport.update({
   id: '/api/vocabulary-speech',
   path: '/api/vocabulary-speech',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiImagesSearchRoute = ApiImagesSearchRouteImport.update({
+  id: '/api/images/search',
+  path: '/api/images/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicPexelsRoute = ApiPublicPexelsRouteImport.update({
@@ -58,8 +70,10 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/api/generate-vocab-list': typeof ApiGenerateVocabListRoute
+  '/api/search-image': typeof ApiSearchImageRoute
   '/api/vocabulary-sentence': typeof ApiVocabularySentenceRoute
   '/api/vocabulary-speech': typeof ApiVocabularySpeechRoute
+  '/api/images/search': typeof ApiImagesSearchRoute
   '/api/public/pexels': typeof ApiPublicPexelsRoute
 }
 export interface FileRoutesByTo {
@@ -67,8 +81,10 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/api/generate-vocab-list': typeof ApiGenerateVocabListRoute
+  '/api/search-image': typeof ApiSearchImageRoute
   '/api/vocabulary-sentence': typeof ApiVocabularySentenceRoute
   '/api/vocabulary-speech': typeof ApiVocabularySpeechRoute
+  '/api/images/search': typeof ApiImagesSearchRoute
   '/api/public/pexels': typeof ApiPublicPexelsRoute
 }
 export interface FileRoutesById {
@@ -77,8 +93,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/api/generate-vocab-list': typeof ApiGenerateVocabListRoute
+  '/api/search-image': typeof ApiSearchImageRoute
   '/api/vocabulary-sentence': typeof ApiVocabularySentenceRoute
   '/api/vocabulary-speech': typeof ApiVocabularySpeechRoute
+  '/api/images/search': typeof ApiImagesSearchRoute
   '/api/public/pexels': typeof ApiPublicPexelsRoute
 }
 export interface FileRouteTypes {
@@ -88,8 +106,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/api/generate-vocab-list'
+    | '/api/search-image'
     | '/api/vocabulary-sentence'
     | '/api/vocabulary-speech'
+    | '/api/images/search'
     | '/api/public/pexels'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -97,8 +117,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/api/generate-vocab-list'
+    | '/api/search-image'
     | '/api/vocabulary-sentence'
     | '/api/vocabulary-speech'
+    | '/api/images/search'
     | '/api/public/pexels'
   id:
     | '__root__'
@@ -106,8 +128,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/api/generate-vocab-list'
+    | '/api/search-image'
     | '/api/vocabulary-sentence'
     | '/api/vocabulary-speech'
+    | '/api/images/search'
     | '/api/public/pexels'
   fileRoutesById: FileRoutesById
 }
@@ -116,8 +140,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiGenerateVocabListRoute: typeof ApiGenerateVocabListRoute
+  ApiSearchImageRoute: typeof ApiSearchImageRoute
   ApiVocabularySentenceRoute: typeof ApiVocabularySentenceRoute
   ApiVocabularySpeechRoute: typeof ApiVocabularySpeechRoute
+  ApiImagesSearchRoute: typeof ApiImagesSearchRoute
   ApiPublicPexelsRoute: typeof ApiPublicPexelsRoute
 }
 
@@ -151,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGenerateVocabListRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/search-image': {
+      id: '/api/search-image'
+      path: '/api/search-image'
+      fullPath: '/api/search-image'
+      preLoaderRoute: typeof ApiSearchImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/vocabulary-sentence': {
       id: '/api/vocabulary-sentence'
       path: '/api/vocabulary-sentence'
@@ -163,6 +196,13 @@ declare module '@tanstack/react-router' {
       path: '/api/vocabulary-speech'
       fullPath: '/api/vocabulary-speech'
       preLoaderRoute: typeof ApiVocabularySpeechRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/images/search': {
+      id: '/api/images/search'
+      path: '/api/images/search'
+      fullPath: '/api/images/search'
+      preLoaderRoute: typeof ApiImagesSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/pexels': {
@@ -180,8 +220,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiGenerateVocabListRoute: ApiGenerateVocabListRoute,
+  ApiSearchImageRoute: ApiSearchImageRoute,
   ApiVocabularySentenceRoute: ApiVocabularySentenceRoute,
   ApiVocabularySpeechRoute: ApiVocabularySpeechRoute,
+  ApiImagesSearchRoute: ApiImagesSearchRoute,
   ApiPublicPexelsRoute: ApiPublicPexelsRoute,
 }
 export const routeTree = rootRouteImport
