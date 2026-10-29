@@ -24992,7 +24992,7 @@ const getWordFontSize = (word) => {
 };
 window.getWordFontSize = getWordFontSize;
 
-// Timer-Aware Mystery Filler Deck Generation
+// Timer-Aware Mystery Filler Deck Generation with Rarity and Economy Rules
 function generateMemoryDeck(vocabWords, difficulty = 'easy', isTimerActive = false) {
   const levels = { easy: 5, medium: 9, hard: 15 };
   const totalPairs = levels[difficulty] || 5;
@@ -25021,50 +25021,74 @@ function generateMemoryDeck(vocabWords, difficulty = 'easy', isTimerActive = fal
   });
 
   if (neededMysteryPairs > 0) {
-    const pool = [
+    const standardPerks = [
       {
         kind: 'bomb',
         icon: '💣',
         title: 'Bomb',
+        subtitle: '-1 Point',
         desc: '-1 Point',
         gradient: 'from-rose-300 to-rose-400'
-      },
-      {
-        kind: 'star',
-        icon: '⭐',
-        title: 'Lucky Star',
-        desc: '+5 Coins',
-        gradient: 'from-amber-200 to-yellow-400'
       },
       {
         kind: 'radar',
         icon: '🔍',
         title: 'Radar',
-        desc: 'Free Match',
+        subtitle: 'Free Pair',
+        desc: 'Free Pair',
         gradient: 'from-sky-200 to-cyan-400'
       },
       {
         kind: 'ditto',
         icon: '🔄',
         title: 'Ditto',
-        desc: 'Shuffle Cards',
+        subtitle: 'Shuffle',
+        desc: 'Shuffle',
         gradient: 'from-purple-200 to-fuchsia-300'
       }
     ];
 
     // STRICT RULE: Only include Time Boost if timer is active (> 0)
     if (isTimerActive) {
-      pool.push({
+      standardPerks.push({
         kind: 'time',
         icon: '⏳',
         title: 'Time Boost',
+        subtitle: '+10s Timer',
         desc: '+10s Timer',
         gradient: 'from-emerald-200 to-teal-300'
       });
     }
 
+    // Teacher Credit Economy & Rarity Rule:
+    // If hosting teacher has 0 credits remaining (and is not an admin with unlimited credits),
+    // Lucky Star should NEVER spawn in the deck during card generation.
+    const teacherCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : Infinity;
+    const canSpawnLuckyStar = teacherCredits === Infinity || teacherCredits >= 5;
+
+    // Low Spawn Rate: Maximum 1 pair per game, with only a 15% probability
+    let luckyStarAssigned = false;
+    const selectedMysteryItems = [];
+
     for (let m = 0; m < neededMysteryPairs; m++) {
-      const mysteryItem = pool[m % pool.length];
+      let chosenItem = null;
+      if (canSpawnLuckyStar && !luckyStarAssigned && Math.random() < 0.15) {
+        chosenItem = {
+          kind: 'star',
+          icon: '⭐',
+          title: 'Lucky Star',
+          subtitle: '+5 Coins',
+          desc: '+5 Coins',
+          gradient: 'from-amber-200 to-yellow-400'
+        };
+        luckyStarAssigned = true;
+      } else {
+        chosenItem = standardPerks[m % standardPerks.length];
+      }
+      selectedMysteryItems.push(chosenItem);
+    }
+
+    selectedMysteryItems.forEach((mysteryItem, m) => {
       const pairId = `memory-mystery-${m}-${mysteryItem.kind}-${Math.random().toString(36).slice(2, 6)}`;
       cards.push({
         pairId,
@@ -25080,7 +25104,7 @@ function generateMemoryDeck(vocabWords, difficulty = 'easy', isTimerActive = fal
         mystery: mysteryItem,
         word: { vocab_word: mysteryItem.title }
       });
-    }
+    });
   }
 
   const shuffledCards = cards.sort(() => Math.random() - 0.5);
@@ -25228,6 +25252,11 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       position: relative;
       border-radius: 14px;
       overflow: visible !important;
+      perspective: 1000px;
+      -webkit-perspective: 1000px;
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      height: 100%;
       transition: transform 0.12s ease-out;
     }
     .memory-card:active:not(.memory-card-matched):not(.memory-card-disappeared) {
@@ -25264,10 +25293,12 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       width: 100%;
       height: 100%;
       border-radius: inherit;
-      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .memory-card-inner.flipped {
-      transform: scale(1.03);
+      transform: rotateY(180deg);
     }
     
     .memory-card-front, .memory-card-back {
@@ -25281,32 +25312,27 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       border-radius: inherit !important;
       overflow: hidden !important;
       box-sizing: border-box !important;
+      backface-visibility: hidden !important;
+      -webkit-backface-visibility: hidden !important;
     }
     .memory-card-front {
       z-index: 2 !important;
-      opacity: 1;
-      transform: scale(1);
-      transition: opacity 0.22s ease-out, transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transform: rotateY(0deg);
+      background: #ffffff;
       pointer-events: auto;
     }
     .memory-card-back {
       z-index: 1 !important;
-      opacity: 0;
-      transform: scale(0.85);
-      transition: opacity 0.2s ease-out, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
-      background: #0f172a;
+      transform: rotateY(180deg);
+      background: #ffffff !important;
       pointer-events: none;
     }
     .memory-card-inner.flipped .memory-card-front {
       z-index: 1 !important;
-      opacity: 0 !important;
-      transform: scale(0.85) !important;
       pointer-events: none !important;
     }
     .memory-card-inner.flipped .memory-card-back {
       z-index: 6 !important;
-      opacity: 1 !important;
-      transform: scale(1) !important;
       pointer-events: auto !important;
       box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.8), 0 8px 24px rgba(56, 189, 248, 0.35);
     }
@@ -25335,29 +25361,30 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     }
     html:has(.ga-stage), body.ga-playing { overflow: hidden !important; box-sizing: border-box; }
     *, *::before, *::after { box-sizing: border-box; }
-    .memory-game-shell { position: relative; inset: auto; width: 100%; max-width: 100%; height: auto; min-height: min(38rem, calc(100 * min(var(--vh, 1vh), 1vh) - 2rem)); max-height: none; overflow: visible; display: flex; flex-direction: column; margin: 0; padding: 0; transform: none; box-sizing: border-box; }
+    .memory-game-shell { position: relative; inset: auto; width: 100%; max-width: 100%; height: auto; min-height: 0; max-height: 92vh; overflow: hidden; display: flex; flex-direction: column; margin: 0; padding: 0; transform: none; box-sizing: border-box; }
     .game-fullscreen-active .memory-game-shell { position: relative; inset: auto; width: 100%; max-width: none; height: 100%; min-height: 0; max-height: none; overflow: hidden; }
-    .game-inline-view .memory-game-shell { position: relative; inset: auto; width: 100%; height: auto; min-height: 0; max-height: none; overflow: visible; display: flex; flex-direction: column; }
+    .game-inline-view .memory-game-shell { position: relative; inset: auto; width: 100%; height: 100%; min-height: 0; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
     .game-inline-view .memory-game-shell .memory-game-header { flex: 0 0 auto; }
-    .game-inline-view .memory-game-shell .memory-game-body { flex: 0 0 auto; min-height: 0; height: auto; overflow: visible; }
-    .game-inline-view .memory-game-shell .memory-game-grid { min-height: 20rem; height: auto; align-content: center; justify-content: center; overflow: visible; }
+    .game-inline-view .memory-game-shell .memory-game-body { flex: 1 1 0%; min-height: 0; height: 100%; overflow: hidden; }
+    .game-inline-view .memory-game-shell .memory-game-grid { flex: 1 1 0%; min-height: 0; height: 100%; align-content: center; justify-content: center; overflow: hidden; }
     .game-inline-view .memory-game-shell .game-player-hud-slot { flex: 0 0 auto; min-height: 0; }
     @media (max-width: 640px) {
-      .game-inline-view .memory-game-shell { height: auto; min-height: 0; max-height: none; overflow: visible; }
-      .game-inline-view .memory-game-shell .memory-game-body { min-height: 0; overflow: visible; }
-      .game-inline-view .memory-game-shell .memory-game-grid { height: auto; min-height: 18rem; overflow: visible; }
+      .game-inline-view .memory-game-shell { height: 100%; min-height: 0; max-height: 85vh; overflow: hidden; }
+      .game-inline-view .memory-game-shell .memory-game-body { min-height: 0; height: 100%; overflow: hidden; }
+      .game-inline-view .memory-game-shell .memory-game-grid { height: 100%; min-height: 0; overflow: hidden; }
     }
-    .memory-game-header, .memory-game-body, .memory-game-hud, .memory-game-status, .memory-game-grid { overflow: hidden; min-height: 0; }
-    .memory-game-body { flex: 1 1 auto; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: clamp(4px, 1vh, 12px); padding: clamp(6px, 1.5vh, 16px); }
-    .memory-game-grid { width: 100%; height: 100%; min-width: 0; min-height: 0; display: grid; align-content: center; justify-content: center; align-items: center; justify-items: center; gap: var(--memory-gap, 8px); grid-template-columns: repeat(var(--memory-cols, 4), minmax(0, 1fr)); grid-template-rows: repeat(var(--memory-rows, 4), minmax(0, 1fr)); overflow: hidden; box-sizing: border-box; }
-    .memory-game-grid .memory-card { width: 100%; height: 100%; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; box-sizing: border-box; overflow: visible; position: relative; margin: 0; }
-    .memory-game-status { min-height: 1.25rem; line-height: 1.1; }
+    .memory-game-header, .memory-game-body, .memory-game-hud, .memory-game-status, .memory-game-grid { min-height: 0; }
+    .memory-game-body { flex: 1 1 0%; min-height: 0; max-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: clamp(4px, 1vh, 10px); padding: clamp(6px, 1vh, 12px); overflow: hidden; }
+    .memory-game-grid { width: 100%; height: 100%; flex: 1 1 0%; min-width: 0; min-height: 0; max-height: 100%; display: grid; align-content: center; justify-content: center; align-items: center; justify-items: center; gap: var(--memory-gap, 8px); grid-template-columns: repeat(var(--memory-cols, 4), minmax(0, 1fr)); grid-template-rows: repeat(var(--memory-rows, 4), minmax(0, 1fr)); overflow: hidden; box-sizing: border-box; }
+    .memory-game-grid .memory-card { width: 100%; height: 100%; min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; aspect-ratio: 1 / 1; box-sizing: border-box; overflow: visible; position: relative; margin: 0; }
+    .memory-game-status { flex: 0 0 auto; min-height: 1.25rem; line-height: 1.1; }
   `;
   document.head.appendChild(style);
   
   const cardBackUrl = document.querySelector('[data-template-id="memory-card-back"]')?.src || '';
-  const activeMemoryThemeId = modal.dataset.gaTheme || (typeof window.gaGetTheme === 'function' ? window.gaGetTheme() : 'classroom');
-  const activeMemoryTheme = (window.gaThemes || []).find(t => t.id === activeMemoryThemeId) || (window.gaThemes || [])[0];
+  const frozenThemeId = modal.dataset.frozenTheme || modal.dataset.gaTheme || (typeof window.gaGetTheme === 'function' ? window.gaGetTheme() : 'classroom');
+  modal.dataset.frozenTheme = frozenThemeId;
+  const activeMemoryTheme = (window.gaThemes || []).find(t => t.id === frozenThemeId) || (window.gaThemes || [])[0];
   const grid = modal.querySelector('#memory-grid');
   let memoryGridColumns = levelConfig.columns;
   const updateMemoryGridDensity = () => { delete grid.dataset.fitKey; requestAnimationFrame(fitMemoryBoard); };
@@ -25373,8 +25400,8 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     if (p.type === 'word') {
       revealedContent = `
         <div class="w-full h-full p-2 flex items-center justify-center overflow-hidden">
-          <div class="w-[90%] min-h-[46px] max-h-[75%] px-3 py-1.5 rounded-2xl bg-gradient-to-b from-amber-200 to-amber-300 border-2 border-slate-900 flex items-center justify-center shadow-inner">
-            <span class="font-extrabold text-slate-900 text-center tracking-tight leading-tight select-none break-words ${getWordFontSize(wordText)}">
+          <div class="w-[90%] h-[90%] rounded-2xl bg-gradient-to-b from-amber-200 to-amber-300 border-2 border-slate-900 flex items-center justify-center px-2 py-1 shadow-inner overflow-hidden select-none">
+            <span class="font-extrabold text-slate-900 text-center tracking-tight leading-tight break-words ${getWordFontSize(wordText)}">
               ${wordText}
             </span>
           </div>
@@ -25383,33 +25410,42 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     } else if (p.type === 'image') {
       revealedContent = `
         <div class="w-full h-full p-2 flex items-center justify-center overflow-hidden">
-          <img src="${imgSrc}" class="w-full h-full object-contain p-1 rounded-lg" alt="${wordText}" onerror="this.src='https://via.placeholder.com/160?text=Image+Not+Found'; this.style.backgroundColor='#e9d5ff';">
+          <div class="w-[90%] h-[90%] rounded-2xl border-2 border-slate-900 flex items-center justify-center p-1 bg-white shadow-inner overflow-hidden select-none">
+            <img src="${imgSrc}" class="w-full h-full object-contain rounded-lg" alt="${wordText}" onerror="this.src='https://via.placeholder.com/160?text=Image+Not+Found'; this.style.backgroundColor='#e9d5ff';">
+          </div>
         </div>
       `;
     } else if (p.type === 'mystery') {
       const m = p.mystery;
+      const subtitleText = m.subtitle || m.desc || '';
       revealedContent = `
         <div class="w-full h-full p-2 flex items-center justify-center overflow-hidden">
-          <div class="w-[90%] min-h-[46px] max-h-[85%] px-2.5 py-1.5 rounded-2xl bg-gradient-to-b ${m.gradient} border-2 border-slate-900 flex flex-col items-center justify-center shadow-inner text-center">
-            <span class="text-2xl sm:text-3xl leading-none select-none filter drop-shadow">${m.icon}</span>
-            <span class="font-extrabold text-slate-900 text-xs sm:text-sm tracking-tight leading-tight select-none mt-1 break-words">
-              ${m.title}
-            </span>
-            <span class="text-[10px] sm:text-xs font-bold text-slate-800 opacity-90 leading-tight mt-0.5 select-none">
-              ${m.desc}
-            </span>
+          <div class="w-[90%] h-[90%] rounded-2xl bg-gradient-to-b ${m.gradient} border-2 border-slate-900 flex flex-col items-center justify-between py-2 px-1 shadow-inner overflow-hidden select-none">
+            <!-- 1. Icon Container -->
+            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-2xl leading-none filter drop-shadow">
+              ${m.icon}
+            </div>
+            <!-- 2. Text Content -->
+            <div class="flex flex-col items-center justify-center text-center px-1 min-w-0 w-full">
+              <span class="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight truncate max-w-full">
+                ${m.title}
+              </span>
+              <span class="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight mt-0.5 truncate max-w-full">
+                ${subtitleText}
+              </span>
+            </div>
           </div>
         </div>
       `;
     }
     
-    const cardBackHtml = activeMemoryTheme?.cardBackSvg ? `<div class="ga-card-back-art" data-theme-id="${activeMemoryTheme.id}" aria-hidden="true">${activeMemoryTheme.cardBackSvg}</div>` : '';
+    const cardBackHtml = activeMemoryTheme?.cardBackSvg ? `<div class="ga-card-back-art w-full h-full flex items-center justify-center p-2" data-theme-id="${frozenThemeId}" aria-hidden="true">${activeMemoryTheme.cardBackSvg}</div>` : '';
     return isMatched ? `<div class="memory-card memory-card-placeholder" aria-hidden="true" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" style="visibility:hidden; pointer-events:none;"></div>` : `<div class="memory-card relative rounded-xl shadow-xl cursor-pointer" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" data-type="${p.type}" data-word="${wordText}" aria-label="${p.type === 'word' ? 'Word card' : p.type === 'image' ? 'Picture card' : 'Mystery card'}" aria-pressed="${flipped.includes(idx)}" tabindex="0" role="button" style="container-type: size;">
       <div class="memory-card-inner w-full h-full">
-        <div class="memory-card-front bg-cover bg-center" style="${cardBackUrl ? `background-image: url('${cardBackUrl}');` : ''}">
+        <div class="memory-card-front bg-white bg-cover bg-center" style="${cardBackUrl ? `background-image: url('${cardBackUrl}');` : ''}">
           ${cardBackHtml}
         </div>
-        <div class="memory-card-back bg-cover bg-center p-1">
+        <div class="memory-card-back bg-white p-1">
           ${revealedContent}
         </div>
       </div>
@@ -25435,28 +25471,34 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     const rawGridInnerW = grid.clientWidth > 0 ? (grid.clientWidth - gridPadX) : (body.clientWidth - bodyPadX - gridPadX - gridBorderX);
     const availableWidth = Math.max(1, rawGridInnerW - 16);
     const inlineMode = !modal.classList.contains('game-fullscreen-active') && !document.fullscreenElement;
-    const measuredBodyHeight = body.clientHeight || (inlineMode ? Math.min(680, Math.max(420, availableWidth * .9)) : 0);
-    const availableHeight = Math.max(1, measuredBodyHeight - bodyPadY - gridPadY - gridBorderY - (hud?.offsetHeight || 0) - (status?.offsetHeight || 0) - 24);
+    const measuredBodyHeight = body.clientHeight || (inlineMode ? Math.min(680, Math.max(380, availableWidth * .75)) : 0);
+    const hudHeight = hud?.offsetHeight || 0;
+    const statusHeight = status?.offsetHeight || 0;
+    const availableHeight = Math.max(1, measuredBodyHeight - bodyPadY - gridPadY - gridBorderY - hudHeight - statusHeight - 16);
     
     let best = { size: 0, cols: 1, rows: count, gap: 4 };
     for (let cols = 2; cols <= Math.min(count, 10); cols++) {
       const rows = Math.ceil(count / cols);
-      const gap = Math.max(6, Math.min(14, Math.floor(Math.min(availableWidth / cols, availableHeight / rows) * .08)));
+      const gap = Math.max(4, Math.min(12, Math.floor(Math.min(availableWidth / cols, availableHeight / rows) * .08)));
       const size = Math.min((availableWidth - gap * (cols - 1)) / cols, (availableHeight - gap * (rows - 1)) / rows);
       if (size > best.size + 0.5) best = { size, cols, rows, gap };
     }
     const maxFitSizeW = Math.floor((availableWidth - best.gap * (best.cols - 1)) / best.cols);
     const maxFitSizeH = Math.floor((availableHeight - best.gap * (best.rows - 1)) / best.rows);
-    const clampedSize = Math.max(40, Math.min(200, Math.floor(best.size), maxFitSizeW, maxFitSizeH));
-    const cardSize = `${clampedSize}px`;
-    if (grid.dataset.fitKey === `${best.cols}|${cardSize}|${best.gap}`) return;
-    grid.dataset.fitKey = `${best.cols}|${cardSize}|${best.gap}`;
+    const clampedSize = Math.max(36, Math.min(180, Math.floor(best.size), maxFitSizeW, maxFitSizeH));
+    const targetGridW = Math.floor(best.cols * clampedSize + best.gap * (best.cols - 1));
+    const targetGridH = Math.floor(best.rows * clampedSize + best.gap * (best.rows - 1));
+
+    if (grid.dataset.fitKey === `${best.cols}|${best.rows}|${clampedSize}|${best.gap}`) return;
+    grid.dataset.fitKey = `${best.cols}|${best.rows}|${clampedSize}|${best.gap}`;
     grid.style.setProperty('--memory-cols', best.cols);
     grid.style.setProperty('--memory-rows', best.rows);
     grid.style.setProperty('--memory-gap', `${best.gap}px`);
-    grid.style.setProperty('--memory-card-size', cardSize);
-    grid.style.gridTemplateColumns = `repeat(${best.cols}, ${cardSize})`;
-    grid.style.gridTemplateRows = `repeat(${best.rows}, ${cardSize})`;
+    grid.style.setProperty('--memory-card-size', `${clampedSize}px`);
+    grid.style.maxWidth = `${targetGridW}px`;
+    grid.style.maxHeight = `${targetGridH}px`;
+    grid.style.gridTemplateColumns = `repeat(${best.cols}, 1fr)`;
+    grid.style.gridTemplateRows = `repeat(${best.rows}, 1fr)`;
   };
   const scheduleMemoryFit = () => requestAnimationFrame(() => requestAnimationFrame(fitMemoryBoard));
   scheduleMemoryFit();
@@ -25537,9 +25579,23 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
             status.innerHTML = '<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point!</span>';
           }
         } else if (kind === 'star') {
-          // ⭐ Lucky Star: Sparkling icon; matching grants an instant bonus (+5 coins).
+          // ⭐ Lucky Star: Sparkling icon; matching grants an instant bonus (+5 coins) and deducts 5 credits from hosting teacher
           playTransactionSound('reward');
           const currentPlayer = activeGamePlayers[activeGamePlayerIndex];
+          const studentId = currentPlayer ? (currentPlayer.__backendId || currentPlayer.id || '') : '';
+          const teacherRec = typeof currentTeacherRec === 'function' ? currentTeacherRec() : null;
+          const teacherId = teacherRec?.__backendId || teacherRec?.id || (typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : '') || String(currentTeacher || 'admin');
+
+          // 1. Deduct 5 credits from hosting teacher balance
+          if (typeof deductTeacherCredits === 'function') {
+            try {
+              deductTeacherCredits(5, { notify: false });
+            } catch (err) {
+              console.warn('Failed to deduct teacher credits for Lucky Star:', err);
+            }
+          }
+
+          // 2. Award student +5 coins
           if (currentPlayer) {
             const stableId = currentPlayer.__backendId || currentPlayer.id;
             const target = (typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(stableId) : null) || currentPlayer;
@@ -25552,6 +25608,27 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
               window.dataSdk.update({ ...target, coins: newCoins });
             }
           }
+
+          // 3. Create audit record / transaction log entry
+          if (window.dataSdk?.create) {
+            try {
+              window.dataSdk.create({
+                type: 'memory_game_lucky_star',
+                transaction_type: 'memory_game_lucky_star',
+                amount: 5,
+                coins_awarded: 5,
+                credits_deducted: 5,
+                student_id: studentId,
+                teacher_id: teacherId,
+                student_name: currentPlayer?.student_name || '',
+                timestamp: new Date().toISOString(),
+                created_at: new Date().toISOString()
+              });
+            } catch (err) {
+              console.warn('Failed to log Lucky Star transaction:', err);
+            }
+          }
+
           if (activeGamePlayers.length) {
             activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
             updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
