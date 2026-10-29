@@ -60,3 +60,35 @@ export const fetchClassStudents = async (classId: string): Promise<StudentRoster
   // Flatten array so components receive standard student objects:
   return (data || []).map((item: any) => item.student).filter(Boolean);
 };
+
+/**
+ * Unenroll a student from a specific class by removing the junction record.
+ * Strictly deletes only the junction record for the active class (class_students),
+ * preserving the student's global wallet, Pokémon collection, and other class enrollments.
+ */
+export const removeStudentFromClass = async (studentId: string, classId: string): Promise<void> => {
+  if (!studentId || !classId) {
+    throw new Error("Both studentId and classId are required to unenroll student.");
+  }
+
+  const { error } = await supabase
+    .from("class_students")
+    .delete()
+    .eq("student_id", studentId)
+    .eq("class_id", classId);
+
+  if (error) {
+    console.error("Failed to unenroll student:", error);
+    throw new Error(error.message || "Could not perform this action.");
+  }
+
+  // Invalidate active React Query / SWR keys for ['class_students', classId]
+  if (typeof window !== "undefined" && (window as any).queryClient) {
+    try {
+      (window as any).queryClient.invalidateQueries({ queryKey: ["class_students", classId] });
+    } catch (qErr) {
+      console.warn("Failed to invalidate query cache for class_students:", qErr);
+    }
+  }
+};
+

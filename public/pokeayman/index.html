@@ -11836,6 +11836,195 @@ async function fetchClassStudents(classId) {
 }
 window.fetchClassStudents = fetchClassStudents;
 
+async function removeStudentFromClass(studentId, classId) {
+  if (!studentId || !classId) {
+    throw new Error('Both studentId and classId are required to unenroll a student.');
+  }
+  const parentRemover = window.parent && window.parent.removeStudentFromClass;
+  if (typeof parentRemover === 'function') {
+    return await parentRemover(studentId, classId);
+  }
+  const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+  if (!sb) {
+    console.warn('No Supabase client found for removeStudentFromClass; continuing with local unenrollment.');
+    return;
+  }
+  const { error } = await sb
+    .from('class_students')
+    .delete()
+    .eq('student_id', studentId)
+    .eq('class_id', classId);
+
+  if (error) {
+    console.error('Failed to unenroll student:', error);
+    throw new Error(error.message || 'Could not perform this action.');
+  }
+
+  if (window.parent && window.parent.queryClient) {
+    try {
+      window.parent.queryClient.invalidateQueries({ queryKey: ['class_students', classId] });
+    } catch (qErr) {
+      console.warn('Failed to invalidate React Query cache:', qErr);
+    }
+  }
+}
+window.removeStudentFromClass = removeStudentFromClass;
+
+async function handleUnenrollStudentFromCurrentClass(studentKeyOrId, studentDisplayName) {
+  if (!studentKeyOrId) return;
+  const currentSchool = navSchool;
+  const currentClass = navClass;
+  if (!currentSchool || !currentClass) {
+    toast('No active class selected.');
+    return;
+  }
+
+  const isTeacherAdmin = currentTeacher === 'Ayman' || (typeof canAccessAdmin === 'function' && canAccessAdmin()) || (typeof isAymanTeacher === 'function' && isAymanTeacher()) || (typeof getEffectiveTeacherRole === 'function' && getEffectiveTeacherRole(currentTeacher) === 'admin');
+  const isSchoolAssigned = typeof canManageSchool === 'function' && canManageSchool(currentSchool);
+  const isClassAssigned = typeof canOpenClass === 'function' && canOpenClass(currentSchool, currentClass);
+  if (!isTeacherAdmin && !isSchoolAssigned && !isClassAssigned) {
+    toast('You do not have permission to modify this class roster.');
+    return;
+  }
+
+  const roster = (typeof getStudents === 'function') ? getStudents(currentSchool, currentClass) : [];
+  const rawKey = String(studentKeyOrId).trim();
+  let student = roster.find(s => 
+    String(s.__membershipBackendId || '').trim() === rawKey ||
+    String(s.__backendId || '').trim() === rawKey ||
+    String(s.student_id || '').trim() === rawKey ||
+    String(s.id || '').trim() === rawKey ||
+    String(s.__canonicalStudentId || '').trim() === rawKey
+  );
+  if (!student && typeof getStudentRecordByStableId === 'function') {
+    student = getStudentRecordByStableId(rawKey);
+  }
+  if (!student && typeof getAllStudents === 'function') {
+    student = getAllStudents().find(s => 
+      String(s.__membershipBackendId || '').trim() === rawKey ||
+      String(s.__backendId || '').trim() === rawKey ||
+      String(s.student_id || '').trim() === rawKey ||
+      String(s.id || '').trim() === rawKey ||
+      normalizeStudentIdentity(s.student_name || s.name) === normalizeStudentIdentity(studentDisplayName || rawKey)
+    );
+  }
+
+  const canonicalStudentId = String(student?.__canonicalStudentId || student?.student_id || student?.__backendId || student?.id || rawKey).trim();
+  const displayName = student?.student_name || student?.name || studentDisplayName || 'Student';
+
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const confirmBox = document.createElement('div');
+  confirmBox.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[12000] p-4';
+  confirmBox.innerHTML = `
+    <div class="bg-slate-900 text-white rounded-xl p-5 max-w-sm w-full border border-slate-700 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="unenroll-student-title">
+      <h2 id="unenroll-student-title" class="font-bold text-lg mb-2 text-rose-400">Remove from Class?</h2>
+      <p class="text-sm text-slate-300 mb-2">Are you sure you want to remove <strong>${esc(displayName)}</strong> from <strong>${esc(currentClass)}</strong>?</p>
+      <p class="text-xs text-amber-200/90 mb-4 bg-amber-950/40 border border-amber-500/30 p-2.5 rounded-lg leading-relaxed">
+        This action strictly unenrolls the student from this class. Their global account, wallet coins, Pokémon collection, and progress in other classes are completely safe.
+      </p>
+      <div class="flex gap-2">
+        <button id="unenroll-student-confirm" type="button" class="btn-secondary flex-1 bg-rose-600 hover:bg-rose-700 text-white font-medium py-2 px-3 rounded-lg text-sm transition">Remove</button>
+        <button id="unenroll-student-cancel" type="button" class="btn-outline flex-1 py-2 px-3 rounded-lg text-sm border border-slate-600 text-slate-300 hover:bg-slate-800 transition">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(confirmBox);
+
+  const confirmed = await new Promise(resolve => {
+    const finish = val => { confirmBox.remove(); resolve(val); };
+    confirmBox.querySelector('#unenroll-student-cancel')?.addEventListener('click', () => finish(false), { once: true });
+    confirmBox.addEventListener('click', e => { if (e.target === confirmBox) finish(false); }, { once: true });
+    confirmBox.querySelector('#unenroll-student-confirm')?.addEventListener('click', () => finish(true), { once: true });
+  });
+
+  if (!confirmed) return;
+
+  const activeClassId = await ensureActiveClassId(currentSchool, currentClass);
+
+  try {
+    // 1. Remove junction record from Supabase class_students
+    if (activeClassId && canonicalStudentId) {
+      await removeStudentFromClass(canonicalStudentId, activeClassId);
+    }
+
+    // 2. Remove junction rows in allData
+    const norm = v => String(v || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+    const rowTypes = ['class_students','class_student','student_membership','class_membership','membership'];
+    const idMatch = r => [r.student_id, r.studentId, r.canonicalStudentId, r.profile_id, r.user_id, r.account_id].some(v => String(v ?? '').trim() === String(canonicalStudentId));
+    const classMatch = r => {
+      const meta = allData.find(c => c.type === 'class' && (String(c.__backendId) === String(r.class_id ?? r.classId ?? '') || String(c.id) === String(r.class_id ?? r.classId ?? '')));
+      const school = meta ? meta.school_name : r.school_name;
+      const cls = meta ? meta.class_name : r.class_name;
+      return norm(cls) === norm(currentClass) && (!school || norm(school) === norm(currentSchool));
+    };
+    const rows = allData.filter(r => rowTypes.includes(String(r.type || '').toLowerCase()) && idMatch(r) && classMatch(r));
+    for (const r of rows) {
+      try {
+        const d = await window.dataSdk.delete(r);
+        if (d?.isOk) allData = allData.filter(x => x.__backendId !== r.__backendId && x.id !== r.id);
+      } catch (e) {}
+    }
+
+    // 3. Update student class_memberships
+    const latest = (canonicalStudentId && typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(canonicalStudentId) : null) || student;
+    if (latest) {
+      const list = typeof getEditStudentClassList === 'function' ? getEditStudentClassList(canonicalStudentId, latest) : [];
+      const remaining = list.filter(i => norm(i.class) !== norm(currentClass) || (i.school && norm(i.school) !== norm(currentSchool)));
+      const primary = remaining[0] || null;
+      const updated = {
+        ...latest,
+        student_id: latest.student_id || canonicalStudentId,
+        class_memberships: remaining.map(i => `${i.school} / ${i.class}`).join('||'),
+        school_name: primary ? primary.school : '',
+        class_name: primary ? primary.class : '',
+        updated_at: new Date().toISOString(),
+        __backendId: canonicalStudentId
+      };
+      ['classMemberships', 'classes', 'memberships'].forEach(k => { if (k in updated) delete updated[k]; });
+      try { await window.dataSdk.update(updated); } catch (e) {}
+      allData = allData.map(r => String(r.__backendId || r.id || r.student_id) === String(canonicalStudentId) ? { ...updated } : r);
+    }
+
+    // 4. Invalidate caches
+    try { rebuildCanonicalStudentIndex(); canonicalStudentViewsData = null; canonicalStudentViewsCache = []; } catch (e) {}
+    try {
+      await window.dataSdk.create({
+        type: 'activity_log',
+        activity_type: 'student_removed_from_class',
+        student_id: canonicalStudentId,
+        removed_class: `${currentSchool} / ${currentClass}`,
+        timestamp: new Date().toISOString(),
+        created_at: new Date().toISOString()
+      });
+    } catch (e) {}
+
+    // Invalidate active React Query / SWR keys for ['class_students', classId]
+    if (window.parent && window.parent.queryClient && activeClassId) {
+      try { window.parent.queryClient.invalidateQueries({ queryKey: ['class_students', activeClassId] }); } catch (qErr) {}
+    }
+
+    // 5. Instantly remove student from local UI state:
+    const escapedKey = esc(rawKey);
+    const escapedCanonical = esc(canonicalStudentId);
+    const cardEl = document.querySelector(`.trainer-student-card[data-student-id="${escapedKey}"]`)
+                || document.querySelector(`.trainer-student-card[data-student-id="${escapedCanonical}"]`)
+                || Array.from(document.querySelectorAll('.trainer-student-card')).find(c => c.dataset.studentName === displayName);
+    if (cardEl) {
+      cardEl.remove();
+    }
+
+    if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
+    if (typeof renderAdminAllStudents === 'function') renderAdminAllStudents();
+
+    toast('Student removed from class.');
+  } catch (err) {
+    console.error('Detailed unenroll error:', err);
+    toast(err.message || 'Could not perform this action.');
+  }
+}
+window.handleUnenrollStudentFromCurrentClass = handleUnenrollStudentFromCurrentClass;
+
+
 async function syncClassRosterFromSupabase(schoolName, className) {
   if (!schoolName || !className) return [];
   const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
@@ -16471,7 +16660,7 @@ function renderClassRosterCard(student, rank, viewOnly = false, pokemonByOwner =
     <h3 class="student-roster-name">${name}</h3>
     <p class="student-roster-coins">${Number(student.coins) || 0}<span>coins</span></p>
     <p class="student-roster-count">${count} Pokémon${viewOnly ? ` · ${Math.floor(valueFor ? valueFor(student) : getStudentTotalValue(student))} value` : ''}</p>
-    ${viewOnly ? '' : `<button type="button" class="btn-outline student-roster-edit" title="Edit ${name}" aria-label="Edit ${name}" onclick="event.stopPropagation();openEditStudentModal(${jsString(studentKey)})">✎</button>`}
+    ${viewOnly ? '' : `<button type="button" class="btn-outline student-roster-remove" title="Remove ${name} from ${escape(navClass)}" aria-label="Remove ${name} from ${escape(navClass)}" onclick="event.stopPropagation();handleUnenrollStudentFromCurrentClass(${jsString(studentKey)}, ${jsString(studentDisplayName)})">✕</button><button type="button" class="btn-outline student-roster-edit" title="Edit ${name}" aria-label="Edit ${name}" onclick="event.stopPropagation();openEditStudentModal(${jsString(studentKey)})">✎</button>`}
   </div>`;
 }
 
@@ -27556,16 +27745,25 @@ function openEditStudentModal(studentKeyOrName) {
     const rows = allData.filter(r => rowTypes.includes(String(r.type || '').toLowerCase()) && idMatch(r) && classMatch(r));
     for (const r of rows) { try { const d = await window.dataSdk.delete(r); if (d?.isOk) allData = allData.filter(x => x.__backendId !== r.__backendId && x.id !== r.id); } catch (e) {} }
 
-    // Supabase cascade deletion for this class enrollment
-    const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
-    if (sb && canonicalStudentId) {
+    // Supabase unenrollment for this class
+    if (canonicalStudentId) {
       try {
-        const { data: removedClassRec } = await sb.from('classes').select('id').eq('name', removed.class).eq('school_name', removed.school).maybeSingle();
-        if (removedClassRec?.id) {
-          await sb.from('class_students').delete().eq('student_id', canonicalStudentId).eq('class_id', removedClassRec.id);
+        let removedClassId = null;
+        const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+        if (sb) {
+          const { data: removedClassRec, error: cLookupErr } = await sb.from('classes').select('id').eq('name', removed.class).eq('school_name', removed.school).maybeSingle();
+          if (cLookupErr) console.error('Detailed class lookup error during unenroll:', cLookupErr);
+          removedClassId = removedClassRec?.id;
+        }
+        if (!removedClassId && typeof ensureActiveClassId === 'function') {
+          removedClassId = await ensureActiveClassId(removed.school, removed.class);
+        }
+        if (removedClassId) {
+          await removeStudentFromClass(canonicalStudentId, removedClassId);
         }
       } catch (err) {
-        console.warn('Supabase remove class error:', err);
+        console.error('Detailed unenroll error:', err);
+        toast(err?.message || 'Could not perform this action.');
       }
     }
 

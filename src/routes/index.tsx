@@ -4,14 +4,17 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { streamSpeech } from "@/lib/vocabulary-speech";
-import { fetchClassStudents } from "@/lib/class-students";
+import { fetchClassStudents, removeStudentFromClass } from "@/lib/class-students";
+import { useRouter } from "@tanstack/react-router";
 
 type Result = { error?: string; name?: string; signedIn?: boolean };
 
 declare global {
   interface Window {
     supabaseClient?: any;
+    queryClient?: any;
     fetchClassStudents?: typeof fetchClassStudents;
+    removeStudentFromClass?: typeof removeStudentFromClass;
     pokeaymanSpeak?: (text: string, level?: string) => Promise<void>;
     pokeaymanStop?: () => void;
     pokeaymanAuth?: {
@@ -72,6 +75,8 @@ async function profileName(known?: User | null): Promise<string> {
 let activeSpeechController: AbortController | null = null;
 
 function Index() {
+  const router = useRouter();
+  const queryClient = (router.options.context as any)?.queryClient;
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
   const [frameKey, setFrameKey] = useState(0);
@@ -121,7 +126,9 @@ function Index() {
       return streamSpeech("/api/vocabulary-speech", text, level, activeSpeechController.signal);
     };
     window.supabaseClient = supabase;
+    window.queryClient = queryClient;
     window.fetchClassStudents = fetchClassStudents;
+    window.removeStudentFromClass = removeStudentFromClass;
     window.pokeaymanAuth = {
       supabase,
       userId: user?.id ?? null,

@@ -96,6 +96,26 @@
       const myId = String(latest.student_id || sid);
       const stale = allData.filter(r => ['student_membership', 'class_student', 'class_membership'].includes(r.type) && [r.student_id, r.studentId].some(v => String(v || '') === myId || String(v || '') === String(sid)) && !pickedKeys.has(classKey(r.school_name, r.class_name)));
       for (const r of [...stale, ...allData.filter(r => removed.has(r.__backendId))]) { try { await window.dataSdk.delete(r); } catch (x) {} }
+
+      // Unenroll removed classes from Supabase class_students
+      const prevClasses = typeof getEditStudentClassList === 'function' ? getEditStudentClassList(sid, latest) : [];
+      const unpicked = prevClasses.filter(c => !pickedKeys.has(classKey(c.school, c.class)));
+      for (const u of unpicked) {
+        try {
+          let cId = null;
+          const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+          if (sb) {
+            const { data: cRec } = await sb.from('classes').select('id').eq('name', u.class).eq('school_name', u.school).maybeSingle();
+            cId = cRec?.id;
+          }
+          if (!cId && typeof ensureActiveClassId === 'function') cId = await ensureActiveClassId(u.school, u.class);
+          if (cId && typeof removeStudentFromClass === 'function') {
+            await removeStudentFromClass(myId, cId);
+          }
+        } catch (unenrollErr) {
+          console.error('Detailed unenroll error in admin editor:', unenrollErr);
+        }
+      }
       try { rebuildCanonicalStudentIndex(); } catch (x) {}
       try { renderAdminAllStudents(); } catch (x) {}
       try { renderTeacherDashboard(); } catch (x) {}

@@ -727,6 +727,8 @@ html body.ts-on #app-screen #view-students .trainer-student-card .student-roster
 html body.ts-on #app-screen #view-students .trainer-student-card .student-roster-coins { font-size: 16px; margin: 0 0 2px; }
 html body.ts-on #app-screen #view-students .trainer-student-card .student-roster-count { font-size: 12px; margin-bottom: 10px; }
 html body.ts-on #app-screen #view-students .student-roster-edit { top: 8px; right: 8px; bottom: auto; width: 28px; height: 28px; min-height: 28px; border: 0 !important; }
+html body.ts-on #app-screen #view-students .student-roster-remove { top: 8px; right: 38px; bottom: auto; width: 28px; height: 28px; min-height: 28px; border: 0 !important; color: #94a3b8 !important; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+html body.ts-on #app-screen #view-students .student-roster-remove:hover { color: #f87171 !important; }
 html body.ts-on #app-screen #view-students #students-list .global-achievement-badge { top: auto; bottom: 52px; right: 8px; transform: scale(.85); }
 .ts-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; min-width: 0; margin-top: auto; }
 .ts-quick button { height: 32px; border-radius: 9px; border: 0; font: 800 14px 'Outfit', sans-serif; cursor: pointer; }

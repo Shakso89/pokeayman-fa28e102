@@ -72,7 +72,8 @@ html body #app-screen#app-screen#app-screen #view-students .global-rank-card .st
   width: 100%; height: 100%; background: transparent !important; border: none !important;
   color: var(--rank-edge) !important; font-size: 56px;
 }
-html body #app-screen#app-screen#app-screen #view-students .global-rank-card .student-roster-edit {
+html body #app-screen#app-screen#app-screen #view-students .global-rank-card .student-roster-edit,
+html body #app-screen#app-screen#app-screen #view-students .global-rank-card .student-roster-remove {
   color: var(--rank-edge) !important; border-color: color-mix(in srgb, var(--rank-edge) 40%, transparent) !important;
   background: var(--rank-night) !important;
 }
