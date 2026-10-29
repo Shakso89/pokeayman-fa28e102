@@ -4475,23 +4475,37 @@
       return {isOk:true, data:rows};
     },
     async update(value, options = {}) {
-      const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
-      const row = {...records[i], ...value};
+      const i = records.findIndex(row => 
+        (row.__backendId && (row.__backendId === value.__backendId || row.__backendId === value.id)) ||
+        (row.id && (row.id === value.__backendId || row.id === value.id))
+      );
+      if (i < 0) return {isOk:false};
+      const row = {...records[i], ...value, __backendId: records[i].__backendId};
       try { await api('PATCH', '?id=eq.' + encodeURIComponent(row.__backendId), {data: row}); } catch (e) { console.error(e); return {isOk:false, error:e}; }
       records[i] = row; if (options.notify !== false) { lastSig = cache(); notify(); } else cacheAfterPaint(); return {isOk:true, data:row};
     },
     async updateMany(values, options = {}) {
       const rows = [];
       for (const value of values) {
-        const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
-        rows.push({ i, row: {...records[i], ...value} });
+        const i = records.findIndex(row => 
+          (row.__backendId && (row.__backendId === value.__backendId || row.__backendId === value.id)) ||
+          (row.id && (row.id === value.__backendId || row.id === value.id))
+        );
+        if (i < 0) return {isOk:false};
+        rows.push({ i, row: {...records[i], ...value, __backendId: records[i].__backendId} });
       }
       try { await api('POST', '', rows.map(({row}) => ({id: row.__backendId, data: row}))); } catch (e) { console.error(e); return {isOk:false, error:e}; }
       rows.forEach(({i, row}) => { records[i] = row; }); if (options.notify !== false) { lastSig = cache(); notify(); } else cacheAfterPaint(); return {isOk:true, data: rows.map(r => r.row)};
     },
     async delete(value, options = {}) {
-      const i = records.findIndex(row => row.__backendId === value.__backendId); if (i < 0) return {isOk:false};
-      try { await api('DELETE', '?id=eq.' + encodeURIComponent(value.__backendId)); } catch (e) { console.error(e); return {isOk:false, error:e}; }
+      const targetId = value.__backendId || value.id;
+      const i = records.findIndex(row => 
+        (row.__backendId && (row.__backendId === targetId || row.__backendId === value.id)) ||
+        (row.id && (row.id === targetId || row.id === value.id))
+      );
+      if (i < 0) return {isOk:false};
+      const deleteId = records[i].__backendId || records[i].id || targetId;
+      try { await api('DELETE', '?id=eq.' + encodeURIComponent(deleteId)); } catch (e) { console.error(e); return {isOk:false, error:e}; }
       records.splice(i, 1); if (options.notify === false) cacheAfterPaint(); else { lastSig = cache(); notify(); } return {isOk:true};
     }
   };
@@ -27717,36 +27731,113 @@ function openEditStudentModal(studentKeyOrName) {
     event.preventDefault(); event.stopPropagation();
     const btn = event.currentTarget;
     if (!btn || btn.dataset.busy === 'true') return;
-    if (btn.dataset.confirm !== 'true') {
-      btn.dataset.confirm = 'true'; btn.textContent = 'Confirm?';
-      setTimeout(() => { if (btn.isConnected && btn.dataset.busy !== 'true') { btn.dataset.confirm = ''; btn.textContent = '✕ Remove'; } }, 3000);
-      return;
-    }
+    
     const latest = (canonicalStudentId && typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(canonicalStudentId) : null) || canonicalStudent;
     const list = getEditStudentClassList(canonicalStudentId, latest);
     const removed = list.find(i => i.key === btn.dataset.key);
     if (!removed) { renderJoinedClasses(); return; }
+    
     btn.dataset.busy = 'true'; btn.disabled = true; btn.textContent = 'Removing…';
-    const remaining = list.filter(i => i.key !== removed.key);
-    const primaryKey = norm(latest.school_name) + '||' + norm(latest.class_name);
-    const primary = remaining.find(i => i.key === primaryKey) || remaining[0] || null;
-    const updated = { ...latest, student_id: latest.student_id || canonicalStudentId, class_memberships: remaining.map(i => `${i.school} / ${i.class}`).join('||'), school_name: primary ? primary.school : (latest.school_name || ''), class_name: primary ? primary.class : '', updated_at: new Date().toISOString(), __backendId: canonicalStudentId };
-    ['classMemberships', 'classes', 'memberships'].forEach(k => { if (k in updated) delete updated[k]; });
-    const result = await window.dataSdk.update(updated);
-    if (!result?.isOk) { btn.dataset.busy = 'false'; btn.disabled = false; btn.dataset.confirm = ''; btn.textContent = '✕ Remove'; toast('Could not remove this class. Please try again.'); return; }
-    allData = allData.map(r => String(r.__backendId || r.id || r.student_id) === String(canonicalStudentId) ? { ...updated } : r);
-    const rowTypes = ['class_students','class_student','student_membership','class_membership','membership'];
-    const idMatch = r => [r.student_id, r.studentId, r.canonicalStudentId, r.profile_id, r.user_id, r.account_id].some(v => String(v ?? '').trim() === String(canonicalStudentId));
-    const classMatch = r => {
-      const meta = allData.find(c => c.type === 'class' && (String(c.__backendId) === String(r.class_id ?? r.classId ?? '') || String(c.id) === String(r.class_id ?? r.classId ?? '')));
-      const school = meta ? meta.school_name : r.school_name; const cls = meta ? meta.class_name : r.class_name;
-      return norm(cls) === norm(removed.class) && (!school || norm(school) === norm(removed.school));
-    };
-    const rows = allData.filter(r => rowTypes.includes(String(r.type || '').toLowerCase()) && idMatch(r) && classMatch(r));
-    for (const r of rows) { try { const d = await window.dataSdk.delete(r); if (d?.isOk) allData = allData.filter(x => x.__backendId !== r.__backendId && x.id !== r.id); } catch (e) {} }
 
-    // Supabase unenrollment for this class
-    if (canonicalStudentId) {
+    try {
+      // 1. Gather all aliases and IDs for this student
+      const studentAliases = new Set([
+        String(canonicalStudentId || '').trim(),
+        String(student.__backendId || '').trim(),
+        String(student.id || '').trim(),
+        String(student.student_id || '').trim(),
+        String(canonicalStudent?.__backendId || '').trim(),
+        String(canonicalStudent?.id || '').trim(),
+        String(canonicalStudent?.student_id || '').trim(),
+        String(latest?.__backendId || '').trim(),
+        String(latest?.id || '').trim(),
+        String(latest?.student_id || '').trim(),
+      ].filter(Boolean));
+      if (typeof canonicalStudentAliases !== 'undefined') {
+        for (const a of Array.from(studentAliases)) {
+          const k = canonicalStudentAliases.get(a);
+          if (k) studentAliases.add(String(k).trim());
+        }
+      }
+
+      const isMyRow = r => {
+        if (!r) return false;
+        const ids = [r.student_id, r.studentId, r.canonicalStudentId, r.profile_id, r.user_id, r.account_id, r.__backendId, r.id];
+        if (ids.some(v => v && studentAliases.has(String(v).trim()))) return true;
+        if (typeof canonicalStudentKey === 'function') {
+          const rKey = canonicalStudentKey(r);
+          if (rKey && studentAliases.has(String(rKey).trim())) return true;
+        }
+        const rName = normalizeStudentIdentity(r.student_name || r.name);
+        if (rName && rName === normalizeStudentIdentity(studentDisplayName)) return true;
+        return false;
+      };
+
+      const myRows = allData.filter(isMyRow);
+
+      // Remaining classes calculation
+      const remaining = list.filter(i => i.key !== removed.key);
+      const primaryKey = norm(latest.school_name) + '||' + norm(latest.class_name);
+      const primary = remaining.find(i => i.key === primaryKey) || remaining[0] || null;
+
+      // 2. Update primary student row(s) (type === 'student')
+      const studentRows = myRows.filter(r => r.type === 'student');
+      const targetStudentRows = studentRows.length ? studentRows : (latest ? [latest] : []);
+      
+      for (const stRec of targetStudentRows) {
+        const existingMems = normalizeStudentMembershipValues(stRec.class_memberships, []);
+        const updatedMems = existingMems.filter(m => {
+          const seg = norm(String(m));
+          return seg !== `${norm(removed.school)} / ${norm(removed.class)}` && seg !== norm(removed.class);
+        });
+        const realBackendId = stRec.__backendId || stRec.id;
+        const isCurrentClass = norm(stRec.class_name) === norm(removed.class);
+        const updated = {
+          ...stRec,
+          class_memberships: updatedMems.join('||'),
+          school_name: isCurrentClass ? (primary ? primary.school : '') : (stRec.school_name || ''),
+          class_name: isCurrentClass ? (primary ? primary.class : '') : (stRec.class_name || ''),
+          updated_at: new Date().toISOString(),
+          __backendId: realBackendId,
+          id: realBackendId
+        };
+        ['classMemberships', 'classes', 'memberships'].forEach(k => { if (k in updated) delete updated[k]; });
+        try {
+          await window.dataSdk.update(updated);
+        } catch (uErr) {
+          console.warn('dataSdk student update error:', uErr);
+        }
+        allData = allData.map(r => (r.__backendId === realBackendId || r.id === realBackendId) ? { ...updated } : r);
+      }
+
+      // 3. Delete any auxiliary junction rows for the removed class
+      const junctionTypes = ['class_students', 'class_student', 'student_membership', 'class_membership', 'membership'];
+      const classMatch = r => {
+        const rCls = norm(r.class_name || r.className || r.class || '');
+        const rSchool = norm(r.school_name || r.schoolName || r.school || '');
+        if (rCls === norm(removed.class) && (!rSchool || !removed.school || rSchool === norm(removed.school))) {
+          return true;
+        }
+        if (typeof r.class_memberships === 'string' && r.class_memberships) {
+          const segs = r.class_memberships.split('||').map(s => norm(s));
+          if (segs.some(s => s === `${norm(removed.school)} / ${norm(removed.class)}` || s === norm(removed.class))) {
+            return true;
+          }
+        }
+        return false;
+      };
+
+      const rowsToDelete = allData.filter(r => junctionTypes.includes(String(r.type || '').toLowerCase()) && isMyRow(r) && classMatch(r));
+      for (const r of rowsToDelete) {
+        try {
+          await window.dataSdk.delete(r);
+          allData = allData.filter(x => x.__backendId !== r.__backendId && x.id !== r.id);
+        } catch (e) {
+          console.warn('dataSdk delete error:', e);
+        }
+      }
+
+      // 4. Supabase unenrollment for this class
       try {
         let removedClassId = null;
         const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
@@ -27758,21 +27849,45 @@ function openEditStudentModal(studentKeyOrName) {
         if (!removedClassId && typeof ensureActiveClassId === 'function') {
           removedClassId = await ensureActiveClassId(removed.school, removed.class);
         }
-        if (removedClassId) {
-          await removeStudentFromClass(canonicalStudentId, removedClassId);
+        if (removedClassId && typeof removeStudentFromClass === 'function') {
+          for (const sId of studentAliases) {
+            try {
+              await removeStudentFromClass(sId, removedClassId);
+            } catch (_) {}
+          }
         }
       } catch (err) {
         console.error('Detailed unenroll error:', err);
-        toast(err?.message || 'Could not perform this action.');
       }
-    }
 
-    try { rebuildCanonicalStudentIndex(); canonicalStudentViewsData = null; canonicalStudentViewsCache = []; } catch (e) {}
-    try { await window.dataSdk.create({ type: 'activity_log', activity_type: 'student_removed_from_class', student_id: canonicalStudentId, removed_class: `${removed.school} / ${removed.class}`, timestamp: updated.updated_at, created_at: updated.updated_at }); } catch (e) {}
-    renderJoinedClasses();
-    try { renderTeacherDashboard(); } catch (e) {}
-    try { renderAdminAllStudents(); } catch (e) {}
-    toast(`${removed.class} removed.`);
+      // 5. Activity log
+      try {
+        await window.dataSdk.create({
+          type: 'activity_log',
+          activity_type: 'student_removed_from_class',
+          student_id: canonicalStudentId,
+          removed_class: `${removed.school} / ${removed.class}`,
+          timestamp: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        });
+      } catch (e) {}
+
+      // 6. Invalidate caches & re-render
+      try {
+        rebuildCanonicalStudentIndex();
+        canonicalStudentViewsData = null;
+        canonicalStudentViewsCache = [];
+      } catch (e) {}
+
+      renderJoinedClasses();
+      try { renderTeacherDashboard(); } catch (e) {}
+      try { renderAdminAllStudents(); } catch (e) {}
+      toast(`${removed.class} removed.`);
+    } catch (err) {
+      console.error('Detailed unenroll error:', err);
+      toast(err?.message || 'Could not remove this class. Please try again.');
+      renderJoinedClasses();
+    }
   };
 
   const currentAvatar = String(student.avatar_pokemon_id || canonicalStudent.avatar_pokemon_id || '');
@@ -27815,12 +27930,13 @@ function openEditStudentModal(studentKeyOrName) {
       const canonicalRecord = (canonicalStudentId && typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(canonicalStudentId) : null) || student;
       const latestRecord = (canonicalStudentId && typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(canonicalStudentId) : null) || canonicalRecord;
       if (!latestRecord) throw new Error('Student record not found');
-      const updatedPayload = { ...latestRecord, student_name: newName, name: newName, avatar_pokemon_id: newAvatarId, __backendId: canonicalStudentId, id: canonicalStudentId, student_id: canonicalStudentId };
+      const realBackendId = latestRecord.__backendId || canonicalRecord.__backendId || student.__backendId || student.id || canonicalStudentId;
+      const updatedPayload = { ...latestRecord, student_name: newName, name: newName, avatar_pokemon_id: newAvatarId, __backendId: realBackendId, id: realBackendId };
       const result = await window.dataSdk.update(updatedPayload);
       if (!result?.isOk) throw new Error('Student save failed');
 
       allData = allData.map(record => {
-        if (String(record.__backendId || record.id || record.student_id || '') === canonicalStudentId) {
+        if (String(record.__backendId || record.id || '') === String(realBackendId) || String(record.student_id || '') === canonicalStudentId) {
           return { ...record, student_name: newName, name: newName, avatar_pokemon_id: newAvatarId };
         }
         return record;
