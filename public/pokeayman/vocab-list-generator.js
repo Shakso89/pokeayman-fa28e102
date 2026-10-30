@@ -447,6 +447,36 @@
       updateFloatingStatus();
     }
 
+    async function directPixabaySearch(query, type = 'all', page = 1) {
+      if (typeof process !== 'undefined' && process.env?.VITEST) return [];
+      try {
+        const cleanQ = (query || '').trim().toLowerCase();
+        if (!cleanQ) return [];
+        const params = new URLSearchParams({
+          key: '58123311-8a89c5e2df18a2650add733fa',
+          q: cleanQ,
+          image_type: type === 'all' ? 'all' : (type || 'all'),
+          safesearch: 'true',
+          per_page: '6',
+          page: String(page || 1)
+        });
+        const res = await fetch('https://pixabay.com/api/?' + params);
+        if (!res.ok) return [];
+        const data = await res.json();
+        const hits = Array.isArray(data.hits) ? data.hits : [];
+        return hits.map(hit => ({
+          id: String(hit.id),
+          imageUrl: hit.webformatURL || hit.largeImageURL || hit.previewURL,
+          type: hit.type || 'photo',
+          source: hit.user || 'Pixabay Artist',
+          sourceUrl: hit.pageURL || ''
+        }));
+      } catch (err) {
+        console.warn('[vocab] Direct client Pixabay search error:', err);
+        return [];
+      }
+    }
+
     async function matchItem(item, options = {}) {
       const sentence = item.sentence;
       const targetWord = (item.word || '').trim().toLowerCase();

@@ -56,6 +56,40 @@ function normalizePixabayPhoto(photo: StockPhoto): StockPhoto {
 }
 
 /** Shared stock search. A vector/illustration request must never fall back to photos. */
+async function searchWikimedia(query: string, perPage = 6): Promise<StockPhoto[]> {
+  try {
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}&gsrlimit=${perPage}&prop=imageinfo&iiprop=url|mime&format=json&origin=*`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return [];
+    const data: any = await res.json();
+    const pages: any[] = Object.values(data?.query?.pages || {});
+    const photos: StockPhoto[] = [];
+    for (const p of pages) {
+      const info = p.imageinfo?.[0];
+      if (info?.url && !info.url.endsWith(".svg") && !info.url.endsWith(".ogg") && !info.url.endsWith(".webm") && !info.url.endsWith(".pdf")) {
+        photos.push({
+          id: String(p.pageid || Math.random()),
+          photographer: "Wikimedia Commons",
+          photographer_url: info.descriptionurl || "",
+          url: info.descriptionurl || info.url,
+          alt: query,
+          type: "photo",
+          src: {
+            original: info.url,
+            large: info.url,
+            medium: info.url,
+            small: info.url,
+            tiny: info.url,
+          },
+        });
+      }
+    }
+    return photos;
+  } catch {
+    return [];
+  }
+}
+
 export async function searchStockMedia(
   query: string,
   imageType: MediaType | "all" = "all",
@@ -174,7 +208,7 @@ export async function readStockImage(
       url.port ||
       url.username ||
       url.password ||
-      !["cdn.pixabay.com", "pixabay.com", "images.pexels.com"].includes(url.hostname)
+      !["cdn.pixabay.com", "pixabay.com", "images.pexels.com", "upload.wikimedia.org"].includes(url.hostname)
     )
       return null;
     const res = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(2000) });
