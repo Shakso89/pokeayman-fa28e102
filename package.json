@@ -8,6 +8,7 @@
     "dev": "vite dev",
     "prebuild": "node scripts/sync-pokeayman-game-modules.mjs",
     "build": "vite build",
+    "postbuild": "node scripts/postbuild.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -102,3 +103,4 @@
     "vitest": "^4.1.10"
   }
 }
+
