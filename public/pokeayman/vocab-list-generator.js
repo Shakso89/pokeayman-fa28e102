@@ -477,6 +477,131 @@
       }
     }
 
+    async function resolveBestPicture(item) {
+      if (typeof process !== 'undefined' && process.env?.VITEST) return false;
+      const word = (item.word || '').trim().toLowerCase();
+      if (!word) return false;
+      const sentence = item.sentence || '';
+
+      // Method 1: If item already has candidate photos, choose the first one
+      if (Array.isArray(item.candidates) && item.candidates.length > 0) {
+        const first = item.candidates.find(c => isStoredImage(c.imageUrl));
+        if (first) {
+          item.imageUrl = first.imageUrl;
+          item.mediaStatus = 'matched';
+          item.mediaType = first.type || 'photo';
+          item.approvedSentence = sentence;
+          item.note = `Picture matched for "${item.word}".`;
+          return true;
+        }
+      }
+
+      // Method 2: Direct browser Pixabay search for word (no sentence context needed)
+      try {
+        const hits = await directPixabaySearch(word, 'all', 1);
+        if (hits.length > 0 && isStoredImage(hits[0].imageUrl)) {
+          item.imageUrl = hits[0].imageUrl;
+          item.mediaStatus = 'matched';
+          item.mediaType = hits[0].type || 'photo';
+          item.approvedSentence = sentence;
+          item.note = `Picture matched for "${item.word}".`;
+          item.candidates = hits;
+          return true;
+        }
+      } catch (_) {}
+
+      // Method 3: Direct browser Pixabay search with clipart
+      try {
+        const hits = await directPixabaySearch(word + ' clipart', 'all', 1);
+        if (hits.length > 0 && isStoredImage(hits[0].imageUrl)) {
+          item.imageUrl = hits[0].imageUrl;
+          item.mediaStatus = 'matched';
+          item.mediaType = hits[0].type || 'photo';
+          item.approvedSentence = sentence;
+          item.note = `Picture matched for "${item.word}".`;
+          item.candidates = hits;
+          return true;
+        }
+      } catch (_) {}
+
+      // Method 4: For multi-word phrase, search main noun
+      if (word.includes(' ')) {
+        const parts = word.split(' ');
+        const mainNoun = parts[parts.length - 1];
+        try {
+          const hits = await directPixabaySearch(mainNoun, 'all', 1);
+          if (hits.length > 0 && isStoredImage(hits[0].imageUrl)) {
+            item.imageUrl = hits[0].imageUrl;
+            item.mediaStatus = 'matched';
+            item.mediaType = hits[0].type || 'photo';
+            item.approvedSentence = sentence;
+            item.note = `Picture matched for "${item.word}".`;
+            item.candidates = hits;
+            return true;
+          }
+        } catch (_) {}
+      }
+
+      // Method 5: Wikimedia Commons public domain image search
+      try {
+        const wikiUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(word)}&gsrlimit=6&prop=imageinfo&iiprop=url|mime&format=json&origin=*`;
+        const res = await fetch(wikiUrl);
+        if (res.ok) {
+          const data = await res.json();
+          const pages = Object.values(data?.query?.pages || {});
+          const wikiCandidates = [];
+          for (const p of pages) {
+            const info = p.imageinfo?.[0];
+            if (info?.url && !/\.(svg|ogg|webm|pdf)$/i.test(info.url)) {
+              wikiCandidates.push({
+                id: String(p.pageid || Math.random()),
+                imageUrl: info.url,
+                type: 'photo',
+                source: 'Wikimedia Commons',
+                sourceUrl: info.descriptionurl || info.url
+              });
+            }
+          }
+          if (wikiCandidates.length > 0 && isStoredImage(wikiCandidates[0].imageUrl)) {
+            item.imageUrl = wikiCandidates[0].imageUrl;
+            item.mediaStatus = 'matched';
+            item.mediaType = 'photo';
+            item.approvedSentence = sentence;
+            item.note = `Picture matched for "${item.word}".`;
+            item.candidates = wikiCandidates;
+            return true;
+          }
+        }
+      } catch (_) {}
+
+      // Method 6: Server fallback search route
+      try {
+        const fallbackRes = await fetch(`/api/images/search?q=${encodeURIComponent(word)}`);
+        if (fallbackRes.ok) {
+          const fbData = await fallbackRes.json();
+          const imgs = Array.isArray(fbData.images) ? fbData.images : [];
+          if (imgs.length > 0 && isStoredImage(imgs[0].url)) {
+            item.imageUrl = imgs[0].url;
+            item.mediaStatus = 'matched';
+            item.mediaType = imgs[0].type || 'photo';
+            item.approvedSentence = sentence;
+            item.note = `Picture matched for "${item.word}".`;
+            item.candidates = imgs.map((img, idx) => ({
+              id: String(img.id || idx),
+              imageUrl: img.url,
+              type: img.type || 'photo',
+              source: img.photographer || 'Stock image',
+              sourceUrl: img.sourceUrl || ''
+            }));
+            return true;
+          }
+        }
+      } catch (_) {}
+
+      item.note = `No verified picture found for "${item.word}". Review this item before saving.`;
+      return false;
+    }
+
     async function matchItem(item, options = {}) {
       const sentence = item.sentence;
       const targetWord = (item.word || '').trim().toLowerCase();
@@ -510,6 +635,8 @@
           item.mediaType = data.type || 'photo';
           item.approvedSentence = sentence;
           item.note = data.reason || `Picture matched for "${item.word}".`;
+        } else if (options.action !== 'search') {
+          await resolveBestPicture(item);
         } else {
           item.note = data.reason || `No verified picture found for "${item.word}". Review this item before saving.`;
         }
