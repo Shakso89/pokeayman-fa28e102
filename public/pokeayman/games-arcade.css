@@ -6584,3 +6584,39 @@ html body > .ga-stage .match-game-summary .game-player-card { min-width:0!import
   animation: gaDittoWobble 0.4s ease-in-out both !important;
 }
 
+
+/* ==========================================================================
+   MEMORY GAME CARD STABILITY & ARTIFACT PREVENTION FIXES
+   ========================================================================== */
+.memory-card:focus,
+.memory-card:focus-visible,
+.memory-card-inner:focus,
+.memory-card-inner:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure completely opaque front face so background room details never leak through */
+html body > .ga-stage[data-ga-theme="classroom"] .memory-card-front {
+  background-color: #224932 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .memory-card-front {
+  background-color: #12382d !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .memory-card-front {
+  background-color: #27215e !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .memory-card-front {
+  background-color: #1e0b3b !important;
+}
+
+/* Strict 3D flip card face separation: hide the non-facing side completely */
+.memory-card:not(.is-flipped):not(.flipped) .memory-card-back {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+.memory-card.is-flipped .memory-card-front,
+.memory-card.flipped .memory-card-front {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

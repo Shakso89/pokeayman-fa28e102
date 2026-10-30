@@ -6036,6 +6036,70 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   ];
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+  
+  function ensureMasterCardBackDefs() {
+    if (typeof document === 'undefined' || document.getElementById('ga-card-back-master-defs')) return;
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.id = 'ga-card-back-master-defs';
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;';
+    svg.innerHTML = `<defs>
+      <!-- Classroom Theme Master Gradients -->
+      <radialGradient id="ga-def-cb-cls-bg" cx="50%" cy="42%" r="65%">
+        <stop offset="0%" stop-color="#356949"/>
+        <stop offset="65%" stop-color="#224932"/>
+        <stop offset="100%" stop-color="#163322"/>
+      </radialGradient>
+      <linearGradient id="ga-def-cb-cls-wood" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#d49a62"/>
+        <stop offset="50%" stop-color="#a86d38"/>
+        <stop offset="100%" stop-color="#7c4b1e"/>
+      </linearGradient>
+      <linearGradient id="ga-def-cb-cls-gold" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#fef08a"/>
+        <stop offset="50%" stop-color="#f59e0b"/>
+        <stop offset="100%" stop-color="#b45309"/>
+      </linearGradient>
+      <radialGradient id="cb-cls-bg" href="#ga-def-cb-cls-bg"/>
+      <linearGradient id="cb-cls-wood" href="#ga-def-cb-cls-wood"/>
+      <linearGradient id="cb-cls-gold" href="#ga-def-cb-cls-gold"/>
+
+      <!-- Jungle Theme Master Gradients -->
+      <linearGradient id="ga-def-cb-jgl-wood" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#957045"/><stop offset=".5" stop-color="#65492e"/><stop offset="1" stop-color="#3d3023"/></linearGradient>
+      <linearGradient id="ga-def-cb-jgl-leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#bfdf7d"/><stop offset=".55" stop-color="#4b9e58"/><stop offset="1" stop-color="#1d6348"/></linearGradient>
+      <linearGradient id="ga-def-cb-jgl-gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0a8"/><stop offset=".52" stop-color="#d7b54d"/><stop offset="1" stop-color="#926127"/></linearGradient>
+      <radialGradient id="ga-def-cb-jgl-light"><stop stop-color="#9bd978" stop-opacity=".36"/><stop offset="1" stop-color="#12372b" stop-opacity="0"/></radialGradient>
+      <linearGradient id="cb-jgl-wood" href="#ga-def-cb-jgl-wood"/>
+      <linearGradient id="cb-jgl-leaf" href="#ga-def-cb-jgl-leaf"/>
+      <linearGradient id="cb-jgl-gold" href="#ga-def-cb-jgl-gold"/>
+      <radialGradient id="cb-jgl-light" href="#ga-def-cb-jgl-light"/>
+
+      <!-- Toybox Theme Master Gradients -->
+      <linearGradient id="ga-def-cb-toy-frame" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#43d7d0"/><stop offset=".48" stop-color="#9182ff"/><stop offset="1" stop-color="#fa83ab"/></linearGradient>
+      <linearGradient id="ga-def-cb-toy-bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#4a3b9a"/><stop offset="1" stop-color="#27215e"/></linearGradient>
+      <linearGradient id="ga-def-cb-toy-ball" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f8ffff"/><stop offset=".48" stop-color="#81e8e8"/><stop offset=".5" stop-color="#f8ffff"/><stop offset="1" stop-color="#bcd2ef"/></linearGradient>
+      <linearGradient id="cb-toy-frame" href="#ga-def-cb-toy-frame"/>
+      <linearGradient id="cb-toy-bg" href="#ga-def-cb-toy-bg"/>
+      <linearGradient id="cb-toy-ball" href="#ga-def-cb-toy-ball"/>
+
+      <!-- Halloween Theme Master Gradients -->
+      <linearGradient id="ga-def-cb-hlw-border" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fdba74"/><stop offset="50%" stop-color="#f97316"/><stop offset="100%" stop-color="#9a3412"/></linearGradient>
+      <radialGradient id="ga-def-cb-hlw-bg" cx="50%" cy="50%" r="65%"><stop offset="0%" stop-color="#3b176b"/><stop offset="60%" stop-color="#1e0b3b"/><stop offset="100%" stop-color="#0d041c"/></radialGradient>
+      <linearGradient id="ga-def-cb-hlw-top" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fdba74"/><stop offset="45%" stop-color="#f97316"/><stop offset="100%" stop-color="#c2410c"/></linearGradient>
+      <linearGradient id="ga-def-cb-hlw-bot" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#581c87"/><stop offset="100%" stop-color="#2e1065"/></linearGradient>
+      <linearGradient id="cb-hlw-border" href="#ga-def-cb-hlw-border"/>
+      <radialGradient id="cb-hlw-bg" href="#ga-def-cb-hlw-bg"/>
+      <linearGradient id="cb-hlw-top" href="#ga-def-cb-hlw-top"/>
+      <linearGradient id="cb-hlw-bot" href="#ga-def-cb-hlw-bot"/>
+    </defs>`;
+    (document.body || document.documentElement).appendChild(svg);
+  }
+  window.ensureMasterCardBackDefs = ensureMasterCardBackDefs;
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureMasterCardBackDefs);
+    else ensureMasterCardBackDefs();
+  }
+
   const THEME_STORAGE_KEY = 'pokeayman-game-theme';
   const GAME_THEMES = [
     {
@@ -6091,14 +6155,14 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             <stop offset="100%" stop-color="#b45309"/>
           </linearGradient>
         </defs>
-        <rect width="200" height="200" rx="22" fill="url(#cb-cls-wood)"/>
-        <rect x="8" y="8" width="184" height="184" rx="16" fill="url(#cb-cls-bg)" stroke="#5c3614" stroke-width="3"/>
+        <rect width="200" height="200" rx="22" fill="url(#ga-def-cb-cls-wood)"/>
+        <rect x="8" y="8" width="184" height="184" rx="16" fill="url(#ga-def-cb-cls-bg)" stroke="#5c3614" stroke-width="3"/>
         <rect x="15" y="15" width="170" height="170" rx="12" fill="none" stroke="#f3d078" stroke-width="1.8" stroke-dasharray="6 4" opacity="0.75"/>
         <!-- Corner brass school brackets -->
-        <path d="M12 30 L12 12 L30 12" fill="none" stroke="url(#cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
-        <path d="M170 12 L188 12 L188 30" fill="none" stroke="url(#cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
-        <path d="M12 170 L12 188 L30 188" fill="none" stroke="url(#cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
-        <path d="M170 188 L188 188 L188 170" fill="none" stroke="url(#cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M12 30 L12 12 L30 12" fill="none" stroke="url(#ga-def-cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M170 12 L188 12 L188 30" fill="none" stroke="url(#ga-def-cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M12 170 L12 188 L30 188" fill="none" stroke="url(#ga-def-cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M170 188 L188 188 L188 170" fill="none" stroke="url(#ga-def-cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
         <!-- Subtle chalkboard ruled lines & chalk stars -->
         <line x1="26" y1="52" x2="174" y2="52" stroke="#ffffff" stroke-width="1" opacity="0.1"/>
         <line x1="26" y1="100" x2="174" y2="100" stroke="#ffffff" stroke-width="1" opacity="0.1"/>
@@ -6121,8 +6185,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <polygon points="20,93.8 14,96 20,98.2" fill="#1e293b"/>
         </g>
         <!-- Golden Academy Laurel Wreath -->
-        <path d="M52 126 C34 102 38 66 64 50" fill="none" stroke="url(#cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
-        <path d="M148 126 C166 102 162 66 136 50" fill="none" stroke="url(#cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M52 126 C34 102 38 66 64 50" fill="none" stroke="url(#ga-def-cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
+        <path d="M148 126 C166 102 162 66 136 50" fill="none" stroke="url(#ga-def-cb-cls-gold)" stroke-width="4" stroke-linecap="round"/>
         <ellipse cx="42" cy="98" rx="8" ry="4" transform="rotate(-50 42 98)" fill="#facc15"/>
         <ellipse cx="44" cy="78" rx="8" ry="4" transform="rotate(-30 44 78)" fill="#facc15"/>
         <ellipse cx="54" cy="60" rx="8" ry="4" transform="rotate(-15 54 60)" fill="#fde047"/>
@@ -6149,7 +6213,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         <path d="M100 51 Q128 56 136 78" fill="none" stroke="#facc15" stroke-width="3" stroke-linecap="round"/>
         <polygon points="136,75 131,88 141,88" fill="#facc15" stroke="#b45309" stroke-width="1"/>
         <!-- Bottom Academy Ribbon Banner -->
-        <rect x="34" y="154" width="132" height="24" rx="8" fill="url(#cb-cls-gold)" stroke="#451a03" stroke-width="2.8"/>
+        <rect x="34" y="154" width="132" height="24" rx="8" fill="url(#ga-def-cb-cls-gold)" stroke="#451a03" stroke-width="2.8"/>
         <text x="100" y="170.5" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="900" font-size="13" letter-spacing="1.2" fill="#1c1917">POKÉ ACADEMY</text>
       </svg>`,
       backdropSvg: `<svg class="ga-theme-backdrop-svg" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -6386,13 +6450,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <linearGradient id="cb-jgl-gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0a8"/><stop offset=".52" stop-color="#d7b54d"/><stop offset="1" stop-color="#926127"/></linearGradient>
           <radialGradient id="cb-jgl-light"><stop stop-color="#9bd978" stop-opacity=".36"/><stop offset="1" stop-color="#12372b" stop-opacity="0"/></radialGradient>
         </defs>
-        <rect width="200" height="280" rx="22" fill="url(#cb-jgl-gold)"/>
-        <rect x="7" y="7" width="186" height="266" rx="18" fill="url(#cb-jgl-wood)" stroke="#30271c" stroke-width="3"/>
+        <rect width="200" height="280" rx="22" fill="url(#ga-def-cb-jgl-gold)"/>
+        <rect x="7" y="7" width="186" height="266" rx="18" fill="url(#ga-def-cb-jgl-wood)" stroke="#30271c" stroke-width="3"/>
         <path d="M18 20H182M18 260H182" stroke="#f2d479" stroke-width="2" opacity=".6"/>
         <path d="M31 16v248M169 16v248" stroke="#30271c" stroke-width="2" opacity=".55"/>
         <rect x="16" y="20" width="168" height="240" rx="14" fill="#12382d" stroke="#bc9851" stroke-width="2"/>
-        <rect x="20" y="24" width="160" height="232" rx="12" fill="url(#cb-jgl-light)"/>
-        <path d="M20 24Q67 34 82 78Q48 74 20 54ZM180 24Q133 34 118 78Q152 74 180 54Z" fill="url(#cb-jgl-leaf)" stroke="#103d2d" stroke-width="2"/>
+        <rect x="20" y="24" width="160" height="232" rx="12" fill="url(#ga-def-cb-jgl-light)"/>
+        <path d="M20 24Q67 34 82 78Q48 74 20 54ZM180 24Q133 34 118 78Q152 74 180 54Z" fill="url(#ga-def-cb-jgl-leaf)" stroke="#103d2d" stroke-width="2"/>
         <path d="M20 256Q56 220 83 209Q72 241 43 260ZM180 256Q144 220 117 209Q128 241 157 260Z" fill="#368450" stroke="#103d2d" stroke-width="2"/>
         <path d="M27 40Q45 62 70 72M173 40Q155 62 130 72M33 245Q56 225 74 217M167 245Q144 225 126 217" fill="none" stroke="#c7e887" stroke-width="2" opacity=".75"/>
         <path d="M36 85Q100 67 164 85V184Q100 204 36 184Z" fill="#174331" stroke="#987846" stroke-width="3"/>
@@ -6400,9 +6464,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         <circle cx="100" cy="132" r="44" fill="#f7f2dd" stroke="#17352b" stroke-width="5"/>
         <path d="M56 132A44 44 0 0 1 144 132Z" fill="#57994c"/>
         <path d="M57 132H143" stroke="#17352b" stroke-width="10"/>
-        <circle cx="100" cy="132" r="13" fill="url(#cb-jgl-gold)" stroke="#17352b" stroke-width="4"/>
+        <circle cx="100" cy="132" r="13" fill="url(#ga-def-cb-jgl-gold)" stroke="#17352b" stroke-width="4"/>
         <circle cx="100" cy="132" r="5" fill="#f5f5d6"/>
-        <rect x="45" y="214" width="110" height="31" rx="9" fill="url(#cb-jgl-gold)" stroke="#382b1d" stroke-width="3"/>
+        <rect x="45" y="214" width="110" height="31" rx="9" fill="url(#ga-def-cb-jgl-gold)" stroke="#382b1d" stroke-width="3"/>
         <text x="100" y="234" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="900" font-size="12" letter-spacing="1.7" fill="#284331">WILD TRAIL</text>
         <path d="M100 15Q85 29 100 43Q115 29 100 15ZM100 237Q86 249 100 263Q114 249 100 237Z" fill="#65a85c"/>
         <circle cx="28" cy="78" r="3" fill="#f3dc84"/><circle cx="172" cy="78" r="3" fill="#f3dc84"/>
@@ -6490,8 +6554,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <linearGradient id="cb-toy-bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#4a3b9a"/><stop offset="1" stop-color="#27215e"/></linearGradient>
           <linearGradient id="cb-toy-ball" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f8ffff"/><stop offset=".48" stop-color="#81e8e8"/><stop offset=".5" stop-color="#f8ffff"/><stop offset="1" stop-color="#bcd2ef"/></linearGradient>
         </defs>
-        <rect width="200" height="280" rx="24" fill="url(#cb-toy-frame)"/>
-        <rect x="8" y="8" width="184" height="264" rx="20" fill="url(#cb-toy-bg)" stroke="#25205a" stroke-width="3"/>
+        <rect width="200" height="280" rx="24" fill="url(#ga-def-cb-toy-frame)"/>
+        <rect x="8" y="8" width="184" height="264" rx="20" fill="url(#ga-def-cb-toy-bg)" stroke="#25205a" stroke-width="3"/>
         <rect x="17" y="18" width="166" height="244" rx="16" fill="none" stroke="#c1f8ef" stroke-width="2" opacity=".78"/>
         <path d="M18 57H182M18 221H182" stroke="#1f194f" stroke-width="2" opacity=".8"/>
         <g opacity=".95">
@@ -6511,13 +6575,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         </g>
         <circle cx="100" cy="143" r="61" fill="none" stroke="#56e5df" stroke-width="4" stroke-dasharray="8 7"/>
         <circle cx="100" cy="143" r="50" fill="none" stroke="#ffc94f" stroke-width="2.5" opacity=".9"/>
-        <circle cx="100" cy="143" r="41" fill="url(#cb-toy-ball)" stroke="#211b55" stroke-width="5"/>
+        <circle cx="100" cy="143" r="41" fill="url(#ga-def-cb-toy-ball)" stroke="#211b55" stroke-width="5"/>
         <path d="M59 143A41 41 0 0 1 141 143Z" fill="#fa698c"/>
         <path d="M60 143H140" stroke="#211b55" stroke-width="9"/>
         <circle cx="100" cy="143" r="13" fill="#ffe66f" stroke="#211b55" stroke-width="4"/>
         <circle cx="100" cy="143" r="5" fill="#f9ffff"/>
         <ellipse cx="84" cy="116" rx="13" ry="6" transform="rotate(-28 84 116)" fill="#fff" opacity=".75"/>
-        <rect x="34" y="230" width="132" height="25" rx="12" fill="url(#cb-toy-frame)" stroke="#211b55" stroke-width="3"/>
+        <rect x="34" y="230" width="132" height="25" rx="12" fill="url(#ga-def-cb-toy-frame)" stroke="#211b55" stroke-width="3"/>
         <text x="100" y="247" text-anchor="middle" font-family="Outfit,sans-serif" font-weight="900" font-size="12" letter-spacing="1.5" fill="#211b55">PLAY AGAIN!</text>
         <circle cx="29" cy="72" r="2" fill="#fff"/><circle cx="171" cy="72" r="2" fill="#fff"/>
         <circle cx="28" cy="203" r="2" fill="#fff"/><circle cx="172" cy="203" r="2" fill="#fff"/>
@@ -6670,9 +6734,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </linearGradient>
         </defs>
         <!-- Outer Pumpkin-Gold Bezel -->
-        <rect width="200" height="200" rx="24" fill="url(#cb-hlw-border)"/>
+        <rect width="200" height="200" rx="24" fill="url(#ga-def-cb-hlw-border)"/>
         <!-- Deep Midnight Velvet Core -->
-        <rect x="8" y="8" width="184" height="184" rx="18" fill="url(#cb-hlw-bg)" stroke="#090312" stroke-width="3.5"/>
+        <rect x="8" y="8" width="184" height="184" rx="18" fill="url(#ga-def-cb-hlw-bg)" stroke="#090312" stroke-width="3.5"/>
         <!-- Inner Ornate Frame & Corner Gems -->
         <rect x="16" y="16" width="168" height="168" rx="13" fill="none" stroke="#fb923c" stroke-width="1.8" stroke-opacity="0.55"/>
         <circle cx="24" cy="24" r="3.5" fill="#fde047"/>
@@ -6697,8 +6761,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         <path d="M98 52 C 99 36, 112 31, 121 37" fill="none" stroke="#090312" stroke-width="9" stroke-linecap="round"/>
         <path d="M98 52 C 99 36, 112 31, 121 37" fill="none" stroke="#22c55e" stroke-width="5" stroke-linecap="round"/>
         <!-- Center Jack-o'-Lantern Poké-Ball -->
-        <circle cx="100" cy="104" r="48" fill="url(#cb-hlw-bot)" stroke="#090312" stroke-width="5"/>
-        <path d="M52 104 A48 48 0 0 1 148 104 Z" fill="url(#cb-hlw-top)" stroke="#090312" stroke-width="5"/>
+        <circle cx="100" cy="104" r="48" fill="url(#ga-def-cb-hlw-bot)" stroke="#090312" stroke-width="5"/>
+        <path d="M52 104 A48 48 0 0 1 148 104 Z" fill="url(#ga-def-cb-hlw-top)" stroke="#090312" stroke-width="5"/>
         <!-- Pumpkin Rib Grooves on Top Half -->
         <path d="M74 60 C 66 76, 66 92, 68 104" fill="none" stroke="#9a3412" stroke-width="2.5" opacity="0.65"/>
         <path d="M126 60 C 134 76, 134 92, 132 104" fill="none" stroke="#9a3412" stroke-width="2.5" opacity="0.65"/>
@@ -6960,6 +7024,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     backdrop.innerHTML = theme.backdropSvg || '';
     backdrop.hidden = !theme.backdropSvg;
     const syncMemoryCardBacks = () => {
+      ensureMasterCardBackDefs();
       const currentTheme = GAME_THEMES.find(t => t.id === target.dataset.gaTheme) || theme;
       target.querySelectorAll('.memory-card-front').forEach(front => {
         if (!currentTheme.cardBackSvg) {
@@ -11712,7 +11777,18 @@ function showStudentAwardCelebration(student, amount = 10) {
   showCoinCelebration(student, amount);
 }
 
-function getSchools() { return allData.filter(r => r.type === 'school'); }
+function getSchools() {
+  const seen = new Set();
+  const unique = [];
+  for (const r of allData) {
+    if (r.type !== 'school') continue;
+    const key = String(r.school_name || '').trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(r);
+  }
+  return unique;
+}
 function getClasses(schoolName) { return allData.filter(r => r.type === 'class' && r.school_name === schoolName); }
 function formatReadingLevel(rawLevel) {
   const val = String(rawLevel || '').trim().toLowerCase();
@@ -25115,6 +25191,7 @@ window.generateMemoryDeck = generateMemoryDeck;
 
 // Memory Game - One card shows word, other shows image
 function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, studentWordCount = null) {
+  window.ensureMasterCardBackDefs?.();
   const memoryLevels = { easy: { pairs: 5, columns: 5, rows: 2 }, medium: { pairs: 9, columns: 6, rows: 3 }, hard: { pairs: 15, columns: 10, rows: 3 } };
   const selectedDifficulty = memoryLevels[difficulty] ? difficulty : 'easy';
   const levelConfig = currentRole === 'student' && [5, 10, 15].includes(studentWordCount) ? { pairs: studentWordCount, columns: studentWordCount === 15 ? 10 : 5, rows: studentWordCount === 5 ? 2 : studentWordCount === 10 ? 4 : 3 } : memoryLevels[selectedDifficulty] || memoryLevels.easy;
@@ -25345,6 +25422,23 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     .memory-card.is-flipped .memory-card-back,
     .memory-card.flipped .memory-card-back {
       box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.8), 0 8px 24px rgba(56, 189, 248, 0.35);
+    }
+    
+    .memory-card:focus,
+    .memory-card:focus-visible,
+    .memory-card-inner:focus,
+    .memory-card-inner:focus-visible {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+    .memory-card:not(.is-flipped):not(.flipped) .memory-card-back {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    .memory-card.is-flipped .memory-card-front,
+    .memory-card.flipped .memory-card-front {
+      visibility: hidden !important;
+      pointer-events: none !important;
     }
     .memory-card-back::after {
       content: '';
