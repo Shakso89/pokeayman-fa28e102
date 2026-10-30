@@ -1791,7 +1791,6 @@ html body > .ga-stage[data-ga-theme="classroom"] #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="classroom"] #hangman-content,
 html body > .ga-stage[data-ga-theme="classroom"] #find-me-box,
 html body > .ga-stage[data-ga-theme="classroom"] .match-game-board,
-html body > .ga-stage[data-ga-theme="classroom"] .memory-game-grid,
 html body > .ga-stage[data-ga-theme="classroom"] #baam-board {
   background:
     radial-gradient(ellipse at 30% 25%, rgba(255, 255, 255, 0.06) 0%, transparent 55%),
@@ -2321,7 +2320,6 @@ html body > .ga-stage[data-ga-theme="jungle"] #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="jungle"] #hangman-content,
 html body > .ga-stage[data-ga-theme="jungle"] #find-me-box,
 html body > .ga-stage[data-ga-theme="jungle"] .match-game-board,
-html body > .ga-stage[data-ga-theme="jungle"] .memory-game-grid,
 html body > .ga-stage[data-ga-theme="jungle"] #baam-board {
   background:
     radial-gradient(ellipse at 50% 20%, rgba(74, 222, 128, 0.12) 0%, transparent 55%),
@@ -2855,7 +2853,6 @@ html body > .ga-stage[data-ga-theme="toybox"] #hangman-drawing-panel,
 html body > .ga-stage[data-ga-theme="toybox"] #hangman-content,
 html body > .ga-stage[data-ga-theme="toybox"] #find-me-box,
 html body > .ga-stage[data-ga-theme="toybox"] .match-game-board,
-html body > .ga-stage[data-ga-theme="toybox"] .memory-game-grid,
 html body > .ga-stage[data-ga-theme="toybox"] #baam-board {
   background:
     radial-gradient(circle at 18px 18px, rgba(99, 102, 241, 0.08) 2px, transparent 2px),
@@ -3950,7 +3947,6 @@ html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) 
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #hangman-content,
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #find-me-box,
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-game-board,
-html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .memory-game-grid,
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) #baam-board {
   background:
     radial-gradient(120% 80% at 50% 0%, rgba(139, 92, 246, 0.28) 0%, transparent 62%),
@@ -5482,7 +5478,7 @@ html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .ga
   box-shadow: 0 0 0 3px rgba(226,197,83,.36), 0 5px 0 #09271f, 0 0 24px rgba(184,224,103,.23) !important;
 }
 html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .game-player-card.is-active .game-player-turn { color: #ffe27a !important; }
-html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(#hangman-drawing-panel,#hangman-content,#find-me-box,.match-game-board,.memory-game-grid) {
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(#hangman-drawing-panel,#hangman-content,#find-me-box,.match-game-board) {
   background:
     radial-gradient(ellipse at 50% 0%, rgba(139,196,97,.16), transparent 58%),
     linear-gradient(145deg, rgba(18,57,43,.97), rgba(8,35,31,.98)) !important;
@@ -5645,7 +5641,7 @@ html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .ga
   box-shadow: 0 0 0 3px rgba(255,224,100,.58), 0 6px 0 #a63877, 0 0 26px rgba(255,223,103,.35) !important;
 }
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .game-player-card.is-active :is(.game-player-score,.game-player-turn) { color: #a52868 !important; }
-html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is(#hangman-drawing-panel,#hangman-content,#find-me-box,.match-game-board,.memory-game-grid) {
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is(#hangman-drawing-panel,#hangman-content,#find-me-box,.match-game-board) {
   background:
     radial-gradient(circle at 14px 14px, rgba(103,91,210,.13) 2px, transparent 2.5px),
     linear-gradient(145deg, #fffef5, #dfedff) !important;
@@ -5656,6 +5652,23 @@ html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is
 }
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) #baam-board {
   background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 0 !important;
+}
+/* Memory Game & Surprise Boxes own their grid geometry across all themes */
+html body > .ga-stage[data-ga-theme] .memory-game-grid,
+html body > .ga-stage:not([data-ga-theme]) .memory-game-grid,
+.memory-game-grid {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+html body > .ga-stage .memory-game-body,
+html body > .ga-stage .ga-stage-shell > .memory-game-body {
+  width: 100% !important;
+  max-width: none !important;
+  padding-left: clamp(0.75rem, 2vw, 2.5rem) !important;
+  padding-right: clamp(0.75rem, 2vw, 2.5rem) !important;
 }
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is(.match-game-progress,.cipher-lab-panel > p:has(#scramble-win-score)) {
   background: linear-gradient(120deg,#443584,#725bd1) !important; border: 2px solid #b8fff0 !important; border-radius: 16px !important;
