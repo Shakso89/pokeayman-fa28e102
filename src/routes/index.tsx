@@ -150,7 +150,14 @@ function Index() {
       },
       signInWithGoogle: async () => {
         const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-        if (r.error) return { error: "Google sign-in failed. Please try again." };
+        if (r.error) {
+          const m = String((r.error as Error)?.message ?? r.error);
+          if (/blocked/i.test(m)) return { error: "Your browser blocked the Google window. Allow pop-ups for this site, then try again." };
+          if (/cancel/i.test(m)) return { error: "The Google window was closed before signing in. Please try again." };
+          if (/preview mode|new tab/i.test(m)) return { error: "Google sign-in doesn't work in this preview. Open the app in a new tab to sign in." };
+          if (/provider|not enabled/i.test(m)) return { error: "Google sign-in isn't switched on yet. Please use email and password for now." };
+          return { error: `Google sign-in failed: ${m}` };
+        }
         if (r.redirected) return {};
         return { name: await profileName() };
       },
