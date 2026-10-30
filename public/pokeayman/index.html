@@ -24727,161 +24727,553 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   if (wordsWithImages.length < 2) { toast('List needs at least 2 words with images'); return; }
   
   // Randomly select the requested number of words for this round.
-  const wordList = wordsWithImages.slice().sort(() => Math.random() - 0.5).slice(0, wordCount || wordsWithImages.length);
-  const imageList = wordList.slice().sort(() => Math.random() - 0.5);
-  const matchTileOrder = [
-    ...wordList.map((_, index) => ({ type: 'word', index })),
-    ...imageList.map((_, index) => ({ type: 'image', index }))
-  ].sort(() => Math.random() - 0.5);
-  
-  let selectedWord = null;
-  let selectedImage = null;
+  const chosenCount = Math.min(wordsWithImages.length, wordCount || wordsWithImages.length);
+  const selectedItems = wordsWithImages.slice().sort(() => Math.random() - 0.5).slice(0, chosenCount);
+  const totalWords = selectedItems.length;
+
+  // Target picture cards: stationary cards shuffled into random order
+  const targetCards = selectedItems.slice().sort(() => Math.random() - 0.5).map((w, index) => ({
+    targetId: index,
+    vocab_word: w.vocab_word,
+    vocab_image: w.vocab_image
+  }));
+
+  // Word bank: draggable word chips shuffled into a different random order
+  const bankWords = selectedItems.slice().sort(() => Math.random() - 0.5).map((w, index) => ({
+    wordId: index,
+    vocab_word: w.vocab_word
+  }));
+
+  // Game state
+  const placements = new Map(); // targetIndex -> bankWordId
+  const matchedTargets = new Set(); // verified correct target indices
+  const wrongTargets = new Set(); // target indices marked wrong
+  let selectedWordId = null; // for tap-to-place fallback
   let correctAnswers = 0;
-  const totalWords = wordList.length;
-  const matchedWords = new Set();
-  const matchedImages = new Set();
-  
+  let isEvaluating = false;
+
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/50 z-50 p-4 game-match-root';
   modal.innerHTML = `<section class="match-game-shell" aria-label="Match Words game">
     <header class="match-game-header sticky top-0">
-      <div class="match-game-heading"><h2>🎯 Match Words</h2><p>Match each word with its picture</p></div>
-      <div class="match-game-tools">${gameSoundControls()}<div class="match-game-density" role="group" aria-label="Tile size"><button type="button" id="match-size-decrease" aria-label="Show fewer tiles per row" title="Fewer tiles">−</button><button type="button" id="match-size-increase" aria-label="Show more tiles per row" title="More tiles">+</button></div><button type="button" id="game-close" aria-label="Close game" title="Close">×</button></div>
+      <div class="match-game-heading">
+        <h2><span>🎯</span> <span>Match Words</span></h2>
+        <p>Drag each word and drop it onto its matching picture</p>
+      </div>
+      <div class="match-game-tools">
+        ${gameSoundControls()}
+        <div class="match-game-density" role="group" aria-label="Tile size">
+          <button type="button" id="match-size-decrease" aria-label="Show fewer cards per row" title="Fewer cards">−</button>
+          <button type="button" id="match-size-increase" aria-label="Show more cards per row" title="More cards">+</button>
+        </div>
+        <button type="button" id="game-close" aria-label="Close game" title="Close">×</button>
+      </div>
     </header>
     <main class="match-game-content">
-      <div class="match-game-summary"><div class="game-player-hud-slot"></div>
-        <div class="match-game-progress" role="status" aria-live="polite"><div class="match-game-progress-copy"><strong id="match-progress-current">0</strong><span>of ${totalWords} pairs</span><span id="match-status">Choose a word and its matching picture.</span></div><div class="match-game-progress-track"><span id="match-progress-fill"></span></div></div>
+      <div class="match-game-summary">
+        <div class="game-player-hud-slot"></div>
+        <div class="match-game-progress" role="status" aria-live="polite">
+          <div class="match-game-progress-copy">
+            <strong id="match-progress-current">0</strong>
+            <span>of ${totalWords} pairs matched</span>
+            <span id="match-status">Drag words to their matching pictures, then submit!</span>
+          </div>
+          <div class="match-game-progress-track">
+            <span id="match-progress-fill"></span>
+          </div>
+        </div>
       </div>
-      <div id="match-board" class="match-game-board" role="group" aria-label="Word and picture tiles"></div>
+      <div class="match-targets-scroll">
+        <div id="match-board" class="match-targets-grid" role="group" aria-label="Picture target cards"></div>
+      </div>
+      <div class="match-bank-tray" role="region" aria-label="Word Bank">
+        <div class="match-bank-header">
+          <div class="match-bank-info">
+            <span class="match-bank-title">🔤 Word Bank</span>
+            <span id="match-bank-counter" class="match-bank-counter">${totalWords} remaining</span>
+          </div>
+          <div class="match-bank-actions">
+            <button type="button" id="match-reset-btn" class="match-action-btn secondary" title="Return unplaced words to bank">↺ Reset</button>
+            <button type="button" id="match-submit-btn" class="match-action-btn primary" title="Submit and check all matches">
+              <span>✔ Submit Answers</span>
+              <span id="match-submit-count" class="match-submit-count">(0/${totalWords})</span>
+            </button>
+          </div>
+        </div>
+        <div id="match-bank-chips" class="match-bank-chips" role="group" aria-label="Draggable word tiles"></div>
+      </div>
     </main>
   </section>`;
+
   document.body.appendChild(modal);
   attachGameSoundControls(modal);
   attachGameFullscreen(modal);
   renderGamePlayerHud(modal, totalWords, 0);
   startPlayerTurnTimer(modal, timerSeconds);
-  
+  window.gaMountStage?.(modal);
+
   const board = modal.querySelector('#match-board');
+  const bankChipsContainer = modal.querySelector('#match-bank-chips');
   const statusEl = modal.querySelector('#match-status');
   const progressCurrentEl = modal.querySelector('#match-progress-current');
   const progressFillEl = modal.querySelector('#match-progress-fill');
-  let matchGridColumns = window.matchMedia('(max-width: 480px)').matches ? 2 : window.matchMedia('(max-width: 850px)').matches ? 3 : 4;
+  const bankCounterEl = modal.querySelector('#match-bank-counter');
+  const submitBtn = modal.querySelector('#match-submit-btn');
+  const submitCountEl = modal.querySelector('#match-submit-count');
+  const resetBtn = modal.querySelector('#match-reset-btn');
 
+  let matchGridColumns = window.matchMedia('(max-width: 640px)').matches ? 2 : window.matchMedia('(max-width: 900px)').matches ? 3 : 4;
   const updateMatchGridDensity = () => {
-    board.style.gridTemplateColumns = `repeat(${matchGridColumns}, minmax(0, 1fr))`;
+    if (board) board.style.gridTemplateColumns = `repeat(${matchGridColumns}, minmax(0, 1fr))`;
   };
   modal.querySelector('#match-size-decrease').addEventListener('click', () => { matchGridColumns = Math.max(2, matchGridColumns - 1); updateMatchGridDensity(); });
   modal.querySelector('#match-size-increase').addEventListener('click', () => { matchGridColumns = Math.min(6, matchGridColumns + 1); updateMatchGridDensity(); });
-  
-  function renderGame() {
-    board.innerHTML = matchTileOrder.map(tile => {
-      if (tile.type === 'word') {
-        const w = wordList[tile.index];
-        const isMatched = matchedWords.has(tile.index);
-        const isSelected = selectedWord === tile.index;
-        return `<button type="button" class="match-tile match-word-card${isMatched ? ' is-matched' : ''}${isSelected ? ' is-selected' : ''}" data-word-id="${tile.index}" aria-label="Word: ${w.vocab_word}" aria-pressed="${isSelected}" ${isMatched ? 'disabled' : ''}><span class="match-tile-kind" aria-hidden="true">Aa</span><span class="match-tile-word">${w.vocab_word}</span>${isMatched ? '<span class="match-tile-check" aria-hidden="true">✓</span>' : ''}</button>`;
-      }
-      const w = imageList[tile.index];
-      const isMatched = matchedImages.has(tile.index);
-      const isSelected = selectedImage === tile.index;
-      return `<button type="button" class="match-tile match-image-card${isMatched ? ' is-matched' : ''}${isSelected ? ' is-selected' : ''}" data-image-id="${tile.index}" aria-label="Picture matching a word" aria-pressed="${isSelected}" ${isMatched ? 'disabled' : ''}><span class="match-tile-kind" aria-hidden="true">▧</span><img src="${w.vocab_image}" alt="Vocabulary picture" onerror="this.src='https://via.placeholder.com/300?text=Image+Not+Found'">${isMatched ? '<span class="match-tile-check" aria-hidden="true">✓</span>' : ''}</button>`;
+
+  // Pointer drag state variables
+  let activePointerId = null;
+  let dragSource = null;
+  let ghostEl = null;
+  let startX = 0, startY = 0;
+  let hasDragged = false;
+  let hoveredSlotEl = null;
+
+  function renderBoard() {
+    const placedWordIds = new Set(placements.values());
+    const remainingCount = bankWords.filter(w => !placedWordIds.has(w.wordId)).length;
+    const placedCount = placements.size;
+
+    // Render target cards
+    board.innerHTML = targetCards.map((target, index) => {
+      const isMatched = matchedTargets.has(index);
+      const isWrong = wrongTargets.has(index);
+      const placedWordId = placements.get(index);
+      const placedWord = placedWordId !== undefined ? bankWords[placedWordId] : null;
+
+      return `<div class="match-target-card${isMatched ? ' is-matched is-correct' : ''}${isWrong ? ' is-wrong' : ''}" data-target-index="${index}">
+        <div class="match-target-img-wrap">
+          <img class="match-target-img" src="${target.vocab_image}" alt="Picture for ${target.vocab_word}" onerror="this.src='https://via.placeholder.com/300?text=Image+Not+Found'">
+          ${isMatched ? '<span class="match-card-badge check" aria-label="Correct match">✓</span>' : ''}
+          ${isWrong ? '<span class="match-card-badge cross" aria-label="Wrong match">✕</span>' : ''}
+        </div>
+        <div class="match-drop-slot${placedWord ? ' has-word' : ' is-empty'}${isMatched ? ' is-matched' : ''}" data-target-index="${index}" role="region" aria-label="Drop target for picture ${index + 1}">
+          ${placedWord ? `
+            <div class="match-placed-chip" data-word-id="${placedWord.wordId}" data-target-index="${index}" role="button" aria-label="Placed word: ${placedWord.vocab_word}">
+              <span class="match-drag-grip" aria-hidden="true">⠿</span>
+              <span class="match-word-text">${placedWord.vocab_word}</span>
+              ${!isMatched && !isEvaluating ? `<button type="button" class="match-unplace-btn" data-unplace-target="${index}" title="Return to bank" aria-label="Remove ${placedWord.vocab_word}">×</button>` : ''}
+            </div>
+          ` : `
+            <div class="match-slot-placeholder">
+              <span class="match-slot-icon">⬇</span>
+              <span class="match-slot-text">Drop word here</span>
+            </div>
+          `}
+        </div>
+      </div>`;
     }).join('');
+
+    // Render bank chips
+    bankChipsContainer.innerHTML = bankWords.map(word => {
+      const isPlaced = placedWordIds.has(word.wordId);
+      const isSelected = selectedWordId === word.wordId;
+
+      return `<div class="match-word-chip${isPlaced ? ' is-placed' : ''}${isSelected ? ' is-selected' : ''}"
+                   data-word-id="${word.wordId}"
+                   role="button"
+                   tabindex="${isPlaced ? '-1' : '0'}"
+                   aria-disabled="${isPlaced}"
+                   aria-pressed="${isSelected}"
+                   aria-label="Draggable word: ${word.vocab_word}">
+        <span class="match-drag-grip" aria-hidden="true">⠿</span>
+        <span class="match-word-text">${word.vocab_word}</span>
+        <button type="button" class="match-word-speak-btn" data-speak-word="${encodeURIComponent(word.vocab_word)}" title="Listen to pronunciation" aria-label="Listen">🔊</button>
+      </div>`;
+    }).join('');
+
+    // Update status and stats
     progressCurrentEl.textContent = String(correctAnswers);
     progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
-    statusEl.textContent = correctAnswers ? 'Find the next matching pair.' : 'Choose a word and its matching picture.';
-    
-    // Either side can be selected first; matching is checked once both are chosen.
-    const clearSelection = () => {
-      selectedWord = null;
-      selectedImage = null;
-      board.querySelectorAll('.is-selected').forEach(b => { b.classList.remove('is-selected'); b.setAttribute('aria-pressed', 'false'); });
-    };
+    bankCounterEl.textContent = `${remainingCount} remaining`;
+    submitCountEl.textContent = `(${placedCount}/${totalWords})`;
 
-    const checkSelectedPair = () => {
-      if (selectedWord === null || selectedImage === null) return;
-      const wordIdx = selectedWord;
-      const imageIdx = selectedImage;
-      const wordBtn = board.querySelector(`[data-word-id="${wordIdx}"]`);
-      const imageBtn = board.querySelector(`[data-image-id="${imageIdx}"]`);
-      const wordItem = wordList[wordIdx];
-      const imageItem = imageList[imageIdx];
+    submitBtn.disabled = isEvaluating || placedCount === 0;
+    resetBtn.disabled = isEvaluating || placedCount === 0;
 
-      if (wordItem.vocab_word === imageItem.vocab_word) {
-        matchedWords.add(wordIdx);
-        matchedImages.add(imageIdx);
-        correctAnswers++;
-        if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
-        // Correct matches let the same player continue their turn.
-        updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
-        wordBtn.classList.remove('is-selected');
-        imageBtn.classList.remove('is-selected');
-        wordBtn.classList.add('is-matched', 'is-correct');
-        imageBtn.classList.add('is-matched', 'is-correct');
-        wordBtn.insertAdjacentHTML('beforeend', '<span class="match-tile-check" aria-hidden="true">✓</span>');
-        imageBtn.insertAdjacentHTML('beforeend', '<span class="match-tile-check" aria-hidden="true">✓</span>');
-        wordBtn.disabled = true;
-        imageBtn.disabled = true;
-        statusEl.textContent = correctAnswers === totalWords ? '🎉 Perfect! All matches found!' : '✅ Correct!';
-        progressCurrentEl.textContent = String(correctAnswers);
-        progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
-        if (correctAnswers === totalWords) {
-          playGameSound('complete');
-          showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
-          clearSelection();
-          setTimeout(() => showGameCelebration(modal, 'Perfect match!'), 520);
-        } else {
-          showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
-          clearSelection();
-          setTimeout(() => renderGame(), 520);
-        }
+    if (!isEvaluating) {
+      if (correctAnswers === totalWords) {
+        statusEl.textContent = '🎉 Perfect! All words correctly matched!';
+      } else if (placedCount === totalWords) {
+        statusEl.textContent = 'All words placed! Click "Submit Answers" to verify.';
+      } else if (placedCount > 0) {
+        statusEl.textContent = `${placedCount} of ${totalWords} words placed. Drag remaining or submit.`;
       } else {
-        // A wrong match ends the turn and passes play to the next player.
-        playGameSound('wrong');
-        const prevPlayerIndex = activeGamePlayerIndex;
-        advanceGameTurn();
-        updateGamePlayerHud(modal, Math.round((correctAnswers / totalWords) * 100), activeGamePlayerIndex);
-        showWrongAnswerCelebration(modal, prevPlayerIndex);
-        statusEl.textContent = '❌ Wrong match!';
-        wordBtn.classList.add('is-wrong');
-        imageBtn.classList.add('is-wrong');
-        setTimeout(() => { clearSelection(); renderGame(); }, 460);
+        statusEl.textContent = 'Drag each word to its picture, then submit!';
       }
-    };
+    }
 
-    board.querySelectorAll('[data-word-id]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const wordIdx = parseInt(btn.dataset.wordId);
-        if (!matchedWords.has(wordIdx)) {
-          board.querySelectorAll('[data-word-id]').forEach(b => { b.classList.remove('is-selected'); b.setAttribute('aria-pressed', 'false'); });
-          selectedWord = wordIdx;
-          unlockGameSound(); playGameSound('select');
-          btn.classList.add('is-selected');
-          btn.setAttribute('aria-pressed', 'true');
-          checkSelectedPair();
+    bindInteractions();
+  }
+
+  function bindInteractions() {
+    // Bank chips drag & click
+    bankChipsContainer.querySelectorAll('.match-word-chip:not(.is-placed)').forEach(chip => {
+      const wordId = Number(chip.dataset.wordId);
+      const wordObj = bankWords[wordId];
+
+      chip.addEventListener('pointerdown', e => {
+        if (e.target.closest('.match-word-speak-btn')) return;
+        initDrag(e, { type: 'bank', wordId, vocab_word: wordObj.vocab_word, el: chip });
+      });
+
+      chip.addEventListener('click', e => {
+        if (e.target.closest('.match-word-speak-btn')) return;
+        if (hasDragged) return;
+        handleTap({ type: 'bank', wordId, vocab_word: wordObj.vocab_word });
+      });
+    });
+
+    // Placed chips drag & click
+    board.querySelectorAll('.match-placed-chip').forEach(placedEl => {
+      const targetIndex = Number(placedEl.dataset.targetIndex);
+      const wordId = Number(placedEl.dataset.wordId);
+      const wordObj = bankWords[wordId];
+
+      if (!matchedTargets.has(targetIndex)) {
+        placedEl.addEventListener('pointerdown', e => {
+          if (e.target.closest('.match-unplace-btn')) return;
+          initDrag(e, { type: 'slot', targetIndex, wordId, vocab_word: wordObj.vocab_word, el: placedEl });
+        });
+
+        placedEl.addEventListener('click', e => {
+          if (e.target.closest('.match-unplace-btn')) return;
+          if (hasDragged) return;
+          handleTap({ type: 'slot', targetIndex, wordId, vocab_word: wordObj.vocab_word });
+        });
+      }
+    });
+
+    // Drop slot tap click (for tap-to-place fallback)
+    board.querySelectorAll('.match-drop-slot').forEach(slot => {
+      const targetIndex = Number(slot.dataset.targetIndex);
+      slot.addEventListener('click', () => {
+        if (matchedTargets.has(targetIndex) || isEvaluating) return;
+        if (selectedWordId !== null) {
+          handleDropOnSlot(targetIndex, { type: 'bank', wordId: selectedWordId, vocab_word: bankWords[selectedWordId].vocab_word });
         }
       });
     });
 
-    board.querySelectorAll('[data-image-id]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const imageIdx = parseInt(btn.dataset.imageId);
-        if (!matchedImages.has(imageIdx)) {
-          board.querySelectorAll('[data-image-id]').forEach(b => { b.classList.remove('is-selected'); b.setAttribute('aria-pressed', 'false'); });
-          selectedImage = imageIdx;
-          unlockGameSound(); playGameSound('select');
-          btn.classList.add('is-selected');
-          btn.setAttribute('aria-pressed', 'true');
-          checkSelectedPair();
+    // Unplace buttons
+    board.querySelectorAll('.match-unplace-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (isEvaluating) return;
+        const targetIndex = Number(btn.dataset.unplaceTarget);
+        if (!matchedTargets.has(targetIndex)) {
+          placements.delete(targetIndex);
+          wrongTargets.delete(targetIndex);
+          unlockGameSound();
+          playGameSound('select');
+          renderBoard();
+        }
+      });
+    });
+
+    // Pronunciation speak buttons
+    modal.querySelectorAll('.match-word-speak-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const word = decodeURIComponent(btn.dataset.speakWord || '');
+        if (word && window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(word);
+          utterance.lang = 'en-US';
+          utterance.rate = 0.9;
+          window.speechSynthesis.speak(utterance);
         }
       });
     });
   }
-  
+
+  function initDrag(e, source) {
+    if (isEvaluating) return;
+    if (activePointerId !== null) return;
+
+    activePointerId = e.pointerId;
+    dragSource = source;
+    startX = e.clientX;
+    startY = e.clientY;
+    hasDragged = false;
+
+    const sourceEl = source.el;
+    try { sourceEl.setPointerCapture?.(e.pointerId); } catch (_) {}
+
+    function onPointerMove(ev) {
+      if (ev.pointerId !== activePointerId) return;
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+
+      if (!hasDragged && Math.hypot(dx, dy) > 5) {
+        hasDragged = true;
+        sourceEl.classList.add('is-being-dragged');
+
+        ghostEl = document.createElement('div');
+        ghostEl.className = 'match-drag-ghost';
+        ghostEl.innerHTML = `<span class="match-drag-grip">⠿</span><span>${source.vocab_word}</span>`;
+        ghostEl.style.left = `${ev.clientX}px`;
+        ghostEl.style.top = `${ev.clientY}px`;
+        document.body.appendChild(ghostEl);
+      }
+
+      if (hasDragged && ghostEl) {
+        ghostEl.style.left = `${ev.clientX}px`;
+        ghostEl.style.top = `${ev.clientY}px`;
+
+        // Detect hover over drop slots
+        const elements = typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(ev.clientX, ev.clientY) : [];
+        const slot = elements.find(el => el.classList && el.classList.contains('match-drop-slot'));
+
+        if (hoveredSlotEl && hoveredSlotEl !== slot) {
+          hoveredSlotEl.classList.remove('is-drag-over');
+          hoveredSlotEl = null;
+        }
+        if (slot && !slot.classList.contains('is-matched')) {
+          hoveredSlotEl = slot;
+          slot.classList.add('is-drag-over');
+        }
+      }
+    }
+
+    function onPointerEnd(ev) {
+      if (ev.pointerId !== activePointerId) return;
+      sourceEl.removeEventListener('pointermove', onPointerMove);
+      sourceEl.removeEventListener('pointerup', onPointerEnd);
+      sourceEl.removeEventListener('pointercancel', onPointerEnd);
+      try { sourceEl.releasePointerCapture?.(ev.pointerId); } catch (_) {}
+
+      if (hoveredSlotEl) {
+        hoveredSlotEl.classList.remove('is-drag-over');
+        hoveredSlotEl = null;
+      }
+
+      if (hasDragged) {
+        sourceEl.classList.remove('is-being-dragged');
+        if (ghostEl) { ghostEl.remove(); ghostEl = null; }
+
+        const elements = typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(ev.clientX, ev.clientY) : [];
+        const slot = elements.find(el => el.classList && el.classList.contains('match-drop-slot'));
+        const bankTray = elements.find(el => el.classList && el.classList.contains('match-bank-tray'));
+
+        if (slot && !slot.classList.contains('is-matched')) {
+          const targetIndex = Number(slot.dataset.targetIndex);
+          handleDropOnSlot(targetIndex, dragSource);
+        } else if (bankTray || !slot) {
+          if (dragSource.type === 'slot') {
+            placements.delete(dragSource.targetIndex);
+            wrongTargets.delete(dragSource.targetIndex);
+            unlockGameSound();
+            playGameSound('select');
+            renderBoard();
+          }
+        }
+      }
+
+      activePointerId = null;
+      dragSource = null;
+    }
+
+    sourceEl.addEventListener('pointermove', onPointerMove);
+    sourceEl.addEventListener('pointerup', onPointerEnd);
+    sourceEl.addEventListener('pointercancel', onPointerEnd);
+  }
+
+  function handleTap(source) {
+    if (source.type === 'bank') {
+      if (selectedWordId === source.wordId) {
+        selectedWordId = null;
+      } else {
+        selectedWordId = source.wordId;
+        unlockGameSound();
+        playGameSound('select');
+      }
+      renderBoard();
+    } else if (source.type === 'slot') {
+      if (matchedTargets.has(source.targetIndex)) return;
+      placements.delete(source.targetIndex);
+      wrongTargets.delete(source.targetIndex);
+      unlockGameSound();
+      playGameSound('select');
+      renderBoard();
+    }
+  }
+
+  function handleDropOnSlot(targetIndex, source) {
+    if (matchedTargets.has(targetIndex)) return;
+    const existingWordId = placements.get(targetIndex);
+
+    if (source.type === 'bank') {
+      placements.set(targetIndex, source.wordId);
+    } else if (source.type === 'slot') {
+      if (source.targetIndex === targetIndex) return;
+      if (existingWordId !== undefined) {
+        placements.set(source.targetIndex, existingWordId);
+        placements.set(targetIndex, source.wordId);
+      } else {
+        placements.delete(source.targetIndex);
+        placements.set(targetIndex, source.wordId);
+      }
+    }
+
+    selectedWordId = null;
+    wrongTargets.delete(targetIndex);
+    unlockGameSound();
+    playGameSound('select');
+
+    // In multiplayer arcade mode with multiple players, evaluate immediately per turn
+    if (activeGamePlayers.length > 1) {
+      evaluateSingleTarget(targetIndex);
+    } else {
+      renderBoard();
+    }
+  }
+
+  function evaluateSingleTarget(targetIndex) {
+    if (!placements.has(targetIndex)) return;
+    const wordId = placements.get(targetIndex);
+    const target = targetCards[targetIndex];
+    const wordObj = bankWords[wordId];
+
+    if (target.vocab_word === wordObj.vocab_word) {
+      matchedTargets.add(targetIndex);
+      wrongTargets.delete(targetIndex);
+      correctAnswers++;
+      if (activeGamePlayers.length) {
+        activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+      }
+      playGameSound('success');
+      showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+      updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
+      progressCurrentEl.textContent = String(correctAnswers);
+      progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
+      renderBoard();
+
+      if (correctAnswers === totalWords) {
+        statusEl.textContent = '🎉 Perfect! All matches found!';
+        playGameSound('complete');
+        setTimeout(() => showGameCelebration(modal, 'Perfect match!'), 520);
+      }
+    } else {
+      wrongTargets.add(targetIndex);
+      playGameSound('wrong');
+      const prevPlayer = activeGamePlayerIndex;
+      advanceGameTurn();
+      updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
+      showWrongAnswerCelebration(modal, prevPlayer);
+      statusEl.textContent = '❌ Wrong match!';
+      renderBoard();
+      setTimeout(() => {
+        placements.delete(targetIndex);
+        wrongTargets.delete(targetIndex);
+        renderBoard();
+      }, 700);
+    }
+  }
+
+  // Wordwall Submit Answers button
+  submitBtn.addEventListener('click', async () => {
+    if (isEvaluating) return;
+    if (placements.size === 0) {
+      toast('Drag some words onto pictures first!');
+      return;
+    }
+
+    isEvaluating = true;
+    statusEl.textContent = 'Checking matches...';
+    renderBoard();
+
+    let newCorrect = 0;
+    const toUnplace = [];
+
+    for (let i = 0; i < totalWords; i++) {
+      if (matchedTargets.has(i)) continue;
+      if (!placements.has(i)) continue;
+
+      const wordId = placements.get(i);
+      const target = targetCards[i];
+      const wordObj = bankWords[wordId];
+
+      if (target.vocab_word === wordObj.vocab_word) {
+        matchedTargets.add(i);
+        wrongTargets.delete(i);
+        correctAnswers++;
+        newCorrect++;
+        if (activeGamePlayers.length) {
+          activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+        }
+      } else {
+        wrongTargets.add(i);
+        toUnplace.push(i);
+      }
+    }
+
+    updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
+    progressCurrentEl.textContent = String(correctAnswers);
+    progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
+    renderBoard();
+
+    if (toUnplace.length > 0) {
+      playGameSound('wrong');
+      statusEl.textContent = `${correctAnswers} of ${totalWords} correct! Wrong words returning to bank...`;
+      if (activeGamePlayers.length > 1) {
+        showWrongAnswerCelebration(modal, activeGamePlayerIndex);
+        advanceGameTurn();
+        updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
+      }
+      await new Promise(r => setTimeout(r, 900));
+      toUnplace.forEach(idx => {
+        placements.delete(idx);
+        wrongTargets.delete(idx);
+      });
+      isEvaluating = false;
+      renderBoard();
+    } else {
+      isEvaluating = false;
+    }
+
+    if (correctAnswers === totalWords) {
+      statusEl.textContent = '🎉 Perfect! All words placed correctly!';
+      playGameSound('complete');
+      showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+      setTimeout(() => showGameCelebration(modal, 'Perfect match!'), 520);
+    } else if (toUnplace.length === 0 && newCorrect > 0) {
+      playGameSound('success');
+      statusEl.textContent = `✅ ${correctAnswers} of ${totalWords} matched! Keep going!`;
+    }
+  });
+
+  // Reset button: unplace all unverified words
+  resetBtn.addEventListener('click', () => {
+    if (isEvaluating) return;
+    for (const [targetIndex] of placements.entries()) {
+      if (!matchedTargets.has(targetIndex)) {
+        placements.delete(targetIndex);
+        wrongTargets.delete(targetIndex);
+      }
+    }
+    selectedWordId = null;
+    unlockGameSound();
+    playGameSound('select');
+    renderBoard();
+  });
+
   updateMatchGridDensity();
-  renderGame();
-  
-  modal.querySelector('#game-close').addEventListener('click', () => { modal._cleanupMemoryFit?.(); modal.remove(); });
-  modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
+  renderBoard();
+
+  modal.querySelector('#game-close').addEventListener('click', () => {
+    modal._cleanupMemoryFit?.();
+    modal.remove();
+  });
+  modal.addEventListener('click', e => { /* Outside clicks do not close game */ });
 }
 
 // Memory Game word-count chooser
