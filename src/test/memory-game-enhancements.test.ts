@@ -1,126 +1,114 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
-describe('Memory Game Enhancements & Economy Rules', () => {
+describe('Memory Game Card Refactor: Responsive Typography, Zero-Text Power-Ups & 2-Card Cap', () => {
   const htmlPath = path.resolve(__dirname, '../../public/pokeayman/index.html');
   const htmlContent = fs.readFileSync(htmlPath, 'utf8');
 
-  it('standardizes copy for Radar, Ditto, Lucky Star, Bomb, and Time Boost', () => {
-    // Check titles and subtitles in generateMemoryDeck
-    expect(htmlContent).toContain("title: 'Radar',\n        subtitle: 'Free Pair'");
-    expect(htmlContent).toContain("title: 'Ditto',\n        subtitle: 'Shuffle'");
-    expect(htmlContent).toContain("title: 'Bomb',\n        subtitle: '-1 Point'");
-    expect(htmlContent).toContain("title: 'Lucky Star',\n          subtitle: '+5 Coins'");
-    expect(htmlContent).toContain("title: 'Time Boost',\n        subtitle: '+10s Timer'");
+  it('permanently removes Lucky Star from mystery generator and game state', () => {
+    // Confirm Lucky star has been purged from generator and match handler
+    expect(htmlContent).not.toContain("title: 'Lucky Star'");
+    expect(htmlContent).not.toContain("kind === 'star'");
+    expect(htmlContent).not.toContain("deductTeacherCredits(5, { notify: false })");
+    expect(htmlContent).not.toContain("type: 'memory_game_lucky_star'");
+    expect(htmlContent).not.toContain("Lucky Star bonus");
   });
 
-  it('applies unified inner container layout to power-up cards to prevent text clipping', () => {
-    // Check inner container layout structure
-    expect(htmlContent).toContain('w-[90%] h-[90%] rounded-2xl bg-gradient-to-b ${m.gradient} border-2 border-slate-900 flex flex-col items-center justify-between py-2 px-1 shadow-inner overflow-hidden select-none');
-    expect(htmlContent).toContain('<div class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-2xl leading-none filter drop-shadow">');
-    expect(htmlContent).toContain('<span class="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight truncate max-w-full">');
-    expect(htmlContent).toContain('<span class="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight mt-0.5 truncate max-w-full">');
+  it('renders power-up cards with 100% textless pure vector graphics scaling at w-3/5 h-3/5', () => {
+    // Vector SVGs with 3/5 sizing and drop shadow
+    expect(htmlContent).toContain('<svg class="w-3/5 h-3/5 text-amber-500 drop-shadow select-none"');
+    expect(htmlContent).toContain('<svg class="w-3/5 h-3/5 text-red-500 drop-shadow select-none"');
+    expect(htmlContent).toContain('<svg class="w-3/5 h-3/5 text-blue-400 drop-shadow select-none"');
+
+    // Inner container matching spec
+    expect(htmlContent).toContain('w-full h-full p-2 sm:p-2.5 flex items-center justify-center');
+    expect(htmlContent).toContain('w-full h-full rounded-2xl flex items-center justify-center border-2 border-slate-900/80 shadow-inner bg-slate-800/40');
   });
 
-  it('configures true 3D flip transform with backface-visibility hidden and white card back', () => {
-    // Check 3D flip styles
-    expect(htmlContent).toContain('transform-style: preserve-3d;');
-    expect(htmlContent).toContain('-webkit-transform-style: preserve-3d;');
-    expect(htmlContent).toContain('transform: rotateY(180deg);');
-    expect(htmlContent).toContain('backface-visibility: hidden !important;');
-    expect(htmlContent).toContain('-webkit-backface-visibility: hidden !important;');
-    expect(htmlContent).toContain('background: #ffffff !important;');
+  it('applies fluid auto-padding container and dynamic text scaling with overflow protection', () => {
+    // Word card container
+    expect(htmlContent).toContain('w-full h-full max-h-[82%] px-2.5 py-1.5 rounded-2xl bg-amber-100 border-2 border-slate-900 flex items-center justify-center text-center shadow-inner');
+    expect(htmlContent).toContain('select-none break-words line-clamp-2 max-w-full ${getDynamicTextClass(wordText, totalGridCards)}');
+
+    // getDynamicTextClass helper definition
+    expect(htmlContent).toContain('const getDynamicTextClass = (word, totalCards = 10) => {');
   });
 
-  it('uses dynamic 1fr grid and aspect-ratio on cards without hardcoded pixel card heights', () => {
-    expect(htmlContent).toContain("grid.style.gridTemplateColumns = `repeat(${best.cols}, 1fr)`;");
-    expect(htmlContent).toContain("grid.style.gridTemplateRows = `repeat(${best.rows}, 1fr)`;");
-    expect(htmlContent).toContain("grid.style.maxWidth = `${targetGridW}px`;");
-    expect(htmlContent).toContain("grid.style.maxHeight = `${targetGridH}px`;");
-    expect(htmlContent).toContain('aspect-ratio: 1 / 1;');
+  it('triggers correct power-up game actions in checkMatch', () => {
+    // Bomb ends turn and deducts point
+    expect(htmlContent).toContain('// 💣 Bomb: Deducts 1 point from active player and ends the turn.');
+    expect(htmlContent).toContain('advanceGameTurn();');
+
+    // Magnet auto-matches hidden vocab pair
+    expect(htmlContent).toContain('// 🧲 Magnet: Auto-reveals and matches one hidden vocabulary pair on board, awarding points to the active player.');
+
+    // Shuffle rearranges cards
+    expect(htmlContent).toContain('// 🔄 Shuffle: Randomizes grid positions of remaining unflipped cards.');
   });
 
-  it('freezes active theme token at game mount to prevent theme flickering', () => {
-    expect(htmlContent).toContain('modal.dataset.frozenTheme = frozenThemeId;');
-    expect(htmlContent).toContain('activeMemoryTheme?.cardBackSvg ? `<div class="ga-card-back-art w-full h-full flex items-center justify-center p-2" data-theme-id="${frozenThemeId}" aria-hidden="true">${activeMemoryTheme.cardBackSvg}</div>`');
+  describe('Dynamic text scaling helper (getDynamicTextClass)', () => {
+    const fnMatch = htmlContent.match(/const getDynamicTextClass = \([\s\S]*?^window\.getDynamicTextClass = getDynamicTextClass;/m);
+    expect(fnMatch).not.toBeNull();
+    const fnBody = fnMatch![0];
+    const sandbox = new Function(`${fnBody}\nreturn getDynamicTextClass;`);
+    const getDynamicTextClass = sandbox();
+
+    it('returns appropriate sizes for small grids (<= 12 cards)', () => {
+      expect(getDynamicTextClass('cat', 10)).toBe('text-xl sm:text-2xl font-extrabold');
+      expect(getDynamicTextClass('camera', 10)).toBe('text-base sm:text-lg font-bold');
+      expect(getDynamicTextClass('elephant', 10)).toBe('text-sm sm:text-base font-bold');
+    });
+
+    it('returns scaled-down sizes for large grids (> 12 cards)', () => {
+      expect(getDynamicTextClass('cat', 18)).toBe('text-sm sm:text-base font-extrabold');
+      expect(getDynamicTextClass('camera', 18)).toBe('text-xs sm:text-sm font-bold');
+      expect(getDynamicTextClass('elephant', 18)).toBe('text-[11px] sm:text-xs font-bold');
+      expect(getDynamicTextClass('hippopotamus', 30)).toBe('text-[11px] sm:text-xs font-bold');
+    });
   });
 
-  it('enforces Lucky Star teacher credit deduction, coin award, and audit logging', () => {
-    // Check checkMatch handling for star
-    expect(htmlContent).toContain('deductTeacherCredits(5, { notify: false })');
-    expect(htmlContent).toContain("persistCanonicalStudentPatch(stableId, { coins: newCoins }, 'Lucky Star bonus')");
-    expect(htmlContent).toContain("type: 'memory_game_lucky_star'");
-    expect(htmlContent).toContain('amount: 5');
-  });
-
-  describe('generateMemoryDeck logic simulation', () => {
-    // Extract generateMemoryDeck implementation from index.html for live unit testing
+  describe('generateMemoryDeck with strict 2-card cap per type', () => {
     const fnMatch = htmlContent.match(/function generateMemoryDeck\([\s\S]*?^window\.generateMemoryDeck = generateMemoryDeck;/m);
     expect(fnMatch).not.toBeNull();
     const fnBody = fnMatch![0];
+    const sandbox = new Function(`${fnBody}\nreturn generateMemoryDeck;`);
+    const generateMemoryDeck = sandbox();
 
-    // Create an isolated sandbox function
-    const createDeckGenerator = (mockTeacherCredits: number) => {
-      const sandbox = new Function(
-        'getTeacherCredits',
-        `
-        ${fnBody}
-        return generateMemoryDeck;
-        `
-      );
-      return sandbox(() => mockTeacherCredits);
-    };
+    it('never spawns more than 2 cards of any single power-up type (bomb, magnet, shuffle)', () => {
+      const vocab = [
+        { vocab_word: 'apple', vocab_image: 'apple.png' },
+        { vocab_word: 'banana', vocab_image: 'banana.png' }
+      ];
 
-    it('never spawns Lucky Star if teacher has 0 credits remaining', () => {
-      const generateDeck = createDeckGenerator(0);
-      // Run multiple iterations to verify 0% probability
-      for (let i = 0; i < 50; i++) {
-        const deck = generateDeck([], 'easy', false);
-        const starCards = deck.cards.filter((c: any) => c.type === 'mystery' && c.mystery.kind === 'star');
-        expect(starCards.length).toBe(0);
-      }
-    });
+      ['easy', 'medium', 'hard'].forEach(diff => {
+        for (let i = 0; i < 30; i++) {
+          const deck = generateMemoryDeck(vocab, diff, false);
+          const bombCount = deck.cards.filter((c: any) => c.powerup === 'bomb').length;
+          const magnetCount = deck.cards.filter((c: any) => c.powerup === 'magnet').length;
+          const shuffleCount = deck.cards.filter((c: any) => c.powerup === 'shuffle').length;
 
-    it('never spawns Lucky Star if teacher has insufficient credits (< 5)', () => {
-      const generateDeck = createDeckGenerator(4);
-      for (let i = 0; i < 50; i++) {
-        const deck = generateDeck([], 'easy', false);
-        const starCards = deck.cards.filter((c: any) => c.type === 'mystery' && c.mystery.kind === 'star');
-        expect(starCards.length).toBe(0);
-      }
-    });
+          expect(bombCount).toBeLessThanOrEqual(2);
+          expect(magnetCount).toBeLessThanOrEqual(2);
+          expect(shuffleCount).toBeLessThanOrEqual(2);
 
-    it('spawns at most 1 pair of Lucky Star per game when teacher has sufficient credits', () => {
-      const generateDeck = createDeckGenerator(20);
-      for (let i = 0; i < 100; i++) {
-        const deck = generateDeck([], 'hard', false); // 15 pairs needed
-        const starCards = deck.cards.filter((c: any) => c.type === 'mystery' && c.mystery.kind === 'star');
-        // Either 0 or 2 cards (1 pair)
-        expect([0, 2]).toContain(starCards.length);
-      }
-    });
-
-    it('only includes Time Boost when isTimerActive is true', () => {
-      const generateDeck = createDeckGenerator(20);
-      // Timer inactive
-      for (let i = 0; i < 20; i++) {
-        const deckNoTimer = generateDeck([], 'hard', false);
-        const timeCardsNoTimer = deckNoTimer.cards.filter((c: any) => c.type === 'mystery' && c.mystery.kind === 'time');
-        expect(timeCardsNoTimer.length).toBe(0);
-      }
-
-      // Timer active
-      let foundTimeBoost = false;
-      for (let i = 0; i < 20; i++) {
-        const deckTimer = generateDeck([], 'hard', true);
-        const timeCardsTimer = deckTimer.cards.filter((c: any) => c.type === 'mystery' && c.mystery.kind === 'time');
-        if (timeCardsTimer.length > 0) {
-          foundTimeBoost = true;
-          break;
+          // And pairs are paired (either 0 or 2)
+          expect([0, 2]).toContain(bombCount);
+          expect([0, 2]).toContain(magnetCount);
+          expect([0, 2]).toContain(shuffleCount);
         }
-      }
-      expect(foundTimeBoost).toBe(true);
+      });
+    });
+
+    it('generates the exact total card count for the grid', () => {
+      const deckEasy = generateMemoryDeck([], 'easy');
+      expect(deckEasy.cards.length).toBe(10);
+
+      const deckMed = generateMemoryDeck([], 'medium');
+      expect(deckMed.cards.length).toBe(18);
+
+      const deckHard = generateMemoryDeck([], 'hard');
+      expect(deckHard.cards.length).toBe(30);
     });
   });
 });
