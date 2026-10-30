@@ -24992,14 +24992,15 @@ const getWordFontSize = (word) => {
 };
 window.getWordFontSize = getWordFontSize;
 
-// Single-Card Instant Trigger Power-Up Deck Generation
+// Timer-Aware Mystery Filler Deck Generation with Rarity and Economy Rules
 function generateMemoryDeck(vocabWords, difficulty = 'easy', isTimerActive = false) {
   const levels = { easy: 5, medium: 9, hard: 15 };
-  const totalPairs = typeof difficulty === 'number' ? difficulty : (levels[difficulty] || 5);
+  const totalPairs = levels[difficulty] || 5;
   const totalGridCards = totalPairs * 2;
 
   const validWords = (Array.isArray(vocabWords) ? vocabWords : []).filter(w => w && String(w.vocab_word || '').trim());
   const chosenWords = validWords.slice().sort(() => Math.random() - 0.5).slice(0, totalPairs);
+  const neededMysteryPairs = Math.max(0, totalPairs - chosenWords.length);
 
   const cards = [];
   chosenWords.forEach((word, pairIndex) => {
@@ -25019,33 +25020,98 @@ function generateMemoryDeck(vocabWords, difficulty = 'easy', isTimerActive = fal
     });
   });
 
-  // Calculate missing individual slots to fill with single-card power-ups
-  const missingCards = Math.max(0, totalGridCards - (chosenWords.length * 2));
-  if (missingCards > 0) {
-    // Strictly three single-card power-ups: bomb, magnet, shuffle
-    const powerUpPool = ['bomb', 'magnet', 'shuffle'];
-    for (let i = 0; i < missingCards; i++) {
-      const effect = powerUpPool[i % powerUpPool.length];
-      const cardId = `memory-powerup-${i}-${effect}-${Math.random().toString(36).slice(2, 6)}`;
-      cards.push({
-        pairId: cardId, // Unique single-card: no matching pair needed
-        cardId,
-        type: 'powerup',
-        isPowerUp: true,
-        effect,
-        powerup: {
-          kind: effect,
-          title: effect === 'bomb' ? 'Bomb' : effect === 'magnet' ? 'Magnet' : 'Shuffle'
-        }
+  if (neededMysteryPairs > 0) {
+    const standardPerks = [
+      {
+        kind: 'bomb',
+        icon: '💣',
+        title: 'Bomb',
+        subtitle: '-1 Point',
+        desc: '-1 Point',
+        gradient: 'from-rose-300 to-rose-400'
+      },
+      {
+        kind: 'radar',
+        icon: '🔍',
+        title: 'Radar',
+        subtitle: 'Free Pair',
+        desc: 'Free Pair',
+        gradient: 'from-sky-200 to-cyan-400'
+      },
+      {
+        kind: 'ditto',
+        icon: '🔄',
+        title: 'Ditto',
+        subtitle: 'Shuffle',
+        desc: 'Shuffle',
+        gradient: 'from-purple-200 to-fuchsia-300'
+      }
+    ];
+
+    // STRICT RULE: Only include Time Boost if timer is active (> 0)
+    if (isTimerActive) {
+      standardPerks.push({
+        kind: 'time',
+        icon: '⏳',
+        title: 'Time Boost',
+        subtitle: '+10s Timer',
+        desc: '+10s Timer',
+        gradient: 'from-emerald-200 to-teal-300'
       });
     }
+
+    // Teacher Credit Economy & Rarity Rule:
+    // If hosting teacher has 0 credits remaining (and is not an admin with unlimited credits),
+    // Lucky Star should NEVER spawn in the deck during card generation.
+    const teacherCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : Infinity;
+    const canSpawnLuckyStar = teacherCredits === Infinity || teacherCredits >= 5;
+
+    // Low Spawn Rate: Maximum 1 pair per game, with only a 15% probability
+    let luckyStarAssigned = false;
+    const selectedMysteryItems = [];
+
+    for (let m = 0; m < neededMysteryPairs; m++) {
+      let chosenItem = null;
+      if (canSpawnLuckyStar && !luckyStarAssigned && Math.random() < 0.15) {
+        chosenItem = {
+          kind: 'star',
+          icon: '⭐',
+          title: 'Lucky Star',
+          subtitle: '+5 Coins',
+          desc: '+5 Coins',
+          gradient: 'from-amber-200 to-yellow-400'
+        };
+        luckyStarAssigned = true;
+      } else {
+        chosenItem = standardPerks[m % standardPerks.length];
+      }
+      selectedMysteryItems.push(chosenItem);
+    }
+
+    selectedMysteryItems.forEach((mysteryItem, m) => {
+      const pairId = `memory-mystery-${m}-${mysteryItem.kind}-${Math.random().toString(36).slice(2, 6)}`;
+      cards.push({
+        pairId,
+        cardId: `${pairId}-a`,
+        type: 'mystery',
+        mystery: mysteryItem,
+        word: { vocab_word: mysteryItem.title }
+      });
+      cards.push({
+        pairId,
+        cardId: `${pairId}-b`,
+        type: 'mystery',
+        mystery: mysteryItem,
+        word: { vocab_word: mysteryItem.title }
+      });
+    });
   }
 
   const shuffledCards = cards.sort(() => Math.random() - 0.5);
   return {
     cards: shuffledCards,
     vocabWords: chosenWords,
-    missingCards,
+    neededMysteryPairs,
     totalPairs,
     totalGridCards
   };
@@ -25176,15 +25242,6 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     }
     .ga-ditto-wobble {
       animation: gaDittoWobble 0.4s ease-in-out both !important;
-    }
-    @keyframes gaPowerupPulse {
-      0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0)); }
-      50% { transform: scale(1.08); filter: drop-shadow(0 0 16px rgba(255, 203, 5, 0.95)); }
-      100% { transform: scale(1.04); filter: drop-shadow(0 0 8px rgba(255, 203, 5, 0.7)); }
-    }
-    .memory-card-powerup-pulse {
-      animation: gaPowerupPulse 0.4s ease-in-out infinite alternate !important;
-      z-index: 10 !important;
     }
     
     .memory-card {
@@ -25358,57 +25415,32 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
           </div>
         </div>
       `;
-    } else if (p.type === 'powerup' || p.isPowerUp) {
-      const kind = p.effect || p.powerup?.kind || 'bomb';
-      let svg = '';
-      let bgGradient = 'from-amber-100 to-amber-200';
-      if (kind === 'bomb') {
-        bgGradient = 'from-rose-100 to-red-200';
-        svg = `<svg class="w-3/5 h-3/5 select-none" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="50" cy="88" rx="26" ry="6" fill="rgba(0,0,0,0.18)"/>
-          <path d="M50 36 C50 20 64 24 66 14" stroke="#d97706" stroke-width="4" stroke-linecap="round" fill="none"/>
-          <circle cx="66" cy="14" r="5" fill="#f59e0b"/>
-          <path d="M66 6 L69 12 L75 14 L69 16 L66 22 L63 16 L57 14 L63 12 Z" fill="#ef4444"/>
-          <circle cx="66" cy="14" r="2.5" fill="#fef08a"/>
-          <rect x="42" y="32" width="16" height="7" rx="3" fill="#334155" stroke="#0f172a" stroke-width="2"/>
-          <circle cx="50" cy="62" r="28" fill="#1e293b" stroke="#0f172a" stroke-width="3"/>
-          <ellipse cx="40" cy="52" rx="9" ry="4.5" transform="rotate(-35 40 52)" fill="rgba(255,255,255,0.35)"/>
-        </svg>`;
-      } else if (kind === 'magnet') {
-        bgGradient = 'from-sky-100 to-cyan-200';
-        svg = `<svg class="w-3/5 h-3/5 select-none" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22 18 C18 10 32 6 36 12" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="2 3"/>
-          <path d="M78 18 C82 10 68 6 64 12" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="2 3"/>
-          <path d="M50 8 L52 13 L57 15 L52 17 L50 22 L48 17 L43 15 L48 13 Z" fill="#fbbf24"/>
-          <path d="M25 8 L26 11 L29 12 L26 13 L25 16 L24 13 L21 12 L24 11 Z" fill="#38bdf8"/>
-          <path d="M75 8 L76 11 L79 12 L76 13 L75 16 L74 13 L71 12 L74 11 Z" fill="#38bdf8"/>
-          <path d="M22 28 V58 C22 74 34 86 50 86 C66 86 78 74 78 58 V28 H62 V56 C62 63 57 68 50 68 C43 68 38 63 38 56 V28 H22 Z" fill="#dc2626" stroke="#991b1b" stroke-width="3"/>
-          <rect x="22" y="20" width="16" height="12" rx="2" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
-          <rect x="62" y="20" width="16" height="12" rx="2" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
-          <path d="M26 34 V56 C26 68 36 78 48 80" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-        </svg>`;
-      } else if (kind === 'shuffle') {
-        bgGradient = 'from-purple-100 to-fuchsia-200';
-        svg = `<svg class="w-3/5 h-3/5 select-none" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="50" cy="50" r="38" stroke="rgba(147, 51, 234, 0.15)" stroke-width="8"/>
-          <path d="M30 32 C35 24 44 20 54 20 C68 20 80 30 82 44" stroke="#7c3aed" stroke-width="7" stroke-linecap="round" fill="none"/>
-          <path d="M74 46 L82 46 L86 38" fill="#7c3aed" stroke="#6d28d9" stroke-width="2" stroke-linejoin="round"/>
-          <path d="M70 68 C65 76 56 80 46 80 C32 80 20 70 18 56" stroke="#a855f7" stroke-width="7" stroke-linecap="round" fill="none"/>
-          <path d="M26 54 L18 54 L14 62" fill="#a855f7" stroke="#9333ea" stroke-width="2" stroke-linejoin="round"/>
-          <circle cx="50" cy="50" r="5" fill="#c084fc"/>
-        </svg>`;
-      }
+    } else if (p.type === 'mystery') {
+      const m = p.mystery;
+      const subtitleText = m.subtitle || m.desc || '';
       revealedContent = `
         <div class="w-full h-full p-2 flex items-center justify-center overflow-hidden">
-          <div class="w-[90%] h-[90%] rounded-2xl bg-gradient-to-b ${bgGradient} border-2 border-slate-900 flex items-center justify-center p-2 shadow-inner overflow-hidden select-none">
-            ${svg}
+          <div class="w-[90%] h-[90%] rounded-2xl bg-gradient-to-b ${m.gradient} border-2 border-slate-900 flex flex-col items-center justify-between py-2 px-1 shadow-inner overflow-hidden select-none">
+            <!-- 1. Icon Container -->
+            <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-2xl leading-none filter drop-shadow">
+              ${m.icon}
+            </div>
+            <!-- 2. Text Content -->
+            <div class="flex flex-col items-center justify-center text-center px-1 min-w-0 w-full">
+              <span class="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight truncate max-w-full">
+                ${m.title}
+              </span>
+              <span class="font-bold text-slate-800 text-[10px] sm:text-xs leading-tight mt-0.5 truncate max-w-full">
+                ${subtitleText}
+              </span>
+            </div>
           </div>
         </div>
       `;
     }
     
     const cardBackHtml = activeMemoryTheme?.cardBackSvg ? `<div class="ga-card-back-art w-full h-full flex items-center justify-center p-2" data-theme-id="${frozenThemeId}" aria-hidden="true">${activeMemoryTheme.cardBackSvg}</div>` : '';
-    return isMatched ? `<div class="memory-card memory-card-placeholder" aria-hidden="true" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" style="visibility:hidden; pointer-events:none;"></div>` : `<div class="memory-card relative rounded-xl shadow-xl cursor-pointer" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" data-type="${p.type}" data-word="${wordText}" data-is-powerup="${p.isPowerUp ? 'true' : 'false'}" data-effect="${p.effect || ''}" aria-label="${p.isPowerUp ? (p.effect + ' power-up card') : p.type === 'word' ? 'Word card' : 'Picture card'}" aria-pressed="${flipped.includes(idx)}" tabindex="0" role="button" style="container-type: size;">
+    return isMatched ? `<div class="memory-card memory-card-placeholder" aria-hidden="true" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" style="visibility:hidden; pointer-events:none;"></div>` : `<div class="memory-card relative rounded-xl shadow-xl cursor-pointer" data-index="${idx}" data-card-id="${p.cardId}" data-pair-id="${p.pairId}" data-type="${p.type}" data-word="${wordText}" aria-label="${p.type === 'word' ? 'Word card' : p.type === 'image' ? 'Picture card' : 'Mystery card'}" aria-pressed="${flipped.includes(idx)}" tabindex="0" role="button" style="container-type: size;">
       <div class="memory-card-inner w-full h-full">
         <div class="memory-card-front bg-white bg-cover bg-center" style="${cardBackUrl ? `background-image: url('${cardBackUrl}');` : ''}">
           ${cardBackHtml}
@@ -25518,7 +25550,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     const card2 = grid.querySelector('.memory-card[data-index="' + idx2 + '"]');
 
     if (firstCard.pairId === secondCard.pairId && firstCard.cardId !== secondCard.cardId) {
-      // Correct vocabulary match!
+      // Correct match!
       clearMemoryRoundTimers();
       matched.add(idx1);
       matched.add(idx2);
@@ -25526,10 +25558,201 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       mismatchLocked = false;
       grid._memoryLockAt = 0;
 
-      playGameSound('success');
-      if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
-      updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
-      showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+      // Handle Mystery pair effects vs standard vocabulary pair
+      if (firstCard.type === 'mystery') {
+        const kind = firstCard.mystery.kind;
+        if (kind === 'bomb') {
+          // 💣 Bomb: Warning badge; matching triggers a tiny board shake and deducts 1 point (or 1 coin).
+          playTransactionSound('deduction');
+          const shell = modal.querySelector('.memory-game-shell') || grid;
+          shell.classList.remove('ga-board-shake');
+          void shell.offsetWidth;
+          shell.classList.add('ga-board-shake');
+          setTimeout(() => shell.classList.remove('ga-board-shake'), 650);
+
+          if (activeGamePlayers.length) {
+            activeGameScores[activeGamePlayerIndex] = Math.max(0, (activeGameScores[activeGamePlayerIndex] || 0) - 1);
+            updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
+          }
+          const status = modal.querySelector('#memory-status');
+          if (status) {
+            status.innerHTML = '<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point!</span>';
+          }
+        } else if (kind === 'star') {
+          // ⭐ Lucky Star: Sparkling icon; matching grants an instant bonus (+5 coins) and deducts 5 credits from hosting teacher
+          playTransactionSound('reward');
+          const currentPlayer = activeGamePlayers[activeGamePlayerIndex];
+          const studentId = currentPlayer ? (currentPlayer.__backendId || currentPlayer.id || '') : '';
+          const teacherRec = typeof currentTeacherRec === 'function' ? currentTeacherRec() : null;
+          const teacherId = teacherRec?.__backendId || teacherRec?.id || (typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : '') || String(currentTeacher || 'admin');
+
+          // 1. Deduct 5 credits from hosting teacher balance
+          if (typeof deductTeacherCredits === 'function') {
+            try {
+              deductTeacherCredits(5, { notify: false });
+            } catch (err) {
+              console.warn('Failed to deduct teacher credits for Lucky Star:', err);
+            }
+          }
+
+          // 2. Award student +5 coins
+          if (currentPlayer) {
+            const stableId = currentPlayer.__backendId || currentPlayer.id;
+            const target = (typeof getStudentRecordByStableId === 'function' ? getStudentRecordByStableId(stableId) : null) || currentPlayer;
+            const newCoins = Math.max(0, (Number(target.coins) || 0) + 5);
+            target.coins = newCoins;
+            currentPlayer.coins = newCoins;
+            if (typeof persistCanonicalStudentPatch === 'function' && stableId) {
+              persistCanonicalStudentPatch(stableId, { coins: newCoins }, 'Lucky Star bonus');
+            } else if (window.dataSdk?.update) {
+              window.dataSdk.update({ ...target, coins: newCoins });
+            }
+          }
+
+          // 3. Create audit record / transaction log entry
+          if (window.dataSdk?.create) {
+            try {
+              window.dataSdk.create({
+                type: 'memory_game_lucky_star',
+                transaction_type: 'memory_game_lucky_star',
+                amount: 5,
+                coins_awarded: 5,
+                credits_deducted: 5,
+                student_id: studentId,
+                teacher_id: teacherId,
+                student_name: currentPlayer?.student_name || '',
+                timestamp: new Date().toISOString(),
+                created_at: new Date().toISOString()
+              });
+            } catch (err) {
+              console.warn('Failed to log Lucky Star transaction:', err);
+            }
+          }
+
+          if (activeGamePlayers.length) {
+            activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+            updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
+            showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+          }
+          const status = modal.querySelector('#memory-status');
+          if (status) {
+            status.innerHTML = '<span class="text-amber-400 font-extrabold text-xl animate-pulse">⭐ Lucky Star! +5 Coins bonus!</span>';
+          }
+        } else if (kind === 'radar') {
+          // 🔍 Master Ball / Radar: Instantly reveals, matches, and clears 1 hidden vocabulary pair from the board.
+          playGameSound('success');
+          if (activeGamePlayers.length) {
+            activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+            updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
+            showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+          }
+          let targetPairId = null;
+          let radarWord = '';
+          for (let i = 0; i < pairs.length; i++) {
+            if (!matched.has(i) && pairs[i].type !== 'mystery') {
+              targetPairId = pairs[i].pairId;
+              radarWord = pairs[i].word?.vocab_word || '';
+              break;
+            }
+          }
+          if (!targetPairId) {
+            for (let i = 0; i < pairs.length; i++) {
+              if (!matched.has(i)) {
+                targetPairId = pairs[i].pairId;
+                radarWord = pairs[i].word?.vocab_word || 'Pair';
+                break;
+              }
+            }
+          }
+          if (targetPairId) {
+            const radarIndices = [];
+            pairs.forEach((p, i) => {
+              if (p.pairId === targetPairId) radarIndices.push(i);
+            });
+            if (radarIndices.length === 2) {
+              const [rIdx1, rIdx2] = radarIndices;
+              matched.add(rIdx1);
+              matched.add(rIdx2);
+              const rc1 = grid.querySelector('.memory-card[data-index="' + rIdx1 + '"]');
+              const rc2 = grid.querySelector('.memory-card[data-index="' + rIdx2 + '"]');
+              setTimeout(() => {
+                [rc1, rc2].forEach(rc => {
+                  if (!rc) return;
+                  rc.querySelector('.memory-card-inner')?.classList.add('flipped');
+                  rc.classList.add('memory-card-matched');
+                  rc.setAttribute('aria-pressed', 'true');
+                  rc.style.pointerEvents = 'none';
+                });
+                setTimeout(() => {
+                  [rc1, rc2].forEach(rc => {
+                    if (!rc) return;
+                    rc.classList.remove('memory-card-matched');
+                    rc.classList.add('memory-card-disappeared');
+                    rc.style.setProperty('visibility', 'hidden', 'important');
+                    rc.style.setProperty('opacity', '0', 'important');
+                    rc.style.setProperty('pointer-events', 'none', 'important');
+                  });
+                  syncCardFaces();
+                }, 450);
+              }, 250);
+            }
+          }
+          const status = modal.querySelector('#memory-status');
+          if (status) {
+            status.innerHTML = `<span class="text-cyan-400 font-extrabold text-xl">🔍 Radar revealed & matched: ${radarWord}!</span>`;
+          }
+        } else if (kind === 'ditto') {
+          // 🔄 Ditto Shuffle: Shuffles remaining unflipped cards on the board.
+          playGameSound('select');
+          if (activeGamePlayers.length) {
+            activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+            updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
+          }
+          const status = modal.querySelector('#memory-status');
+          if (status) {
+            status.innerHTML = '<span class="text-purple-400 font-extrabold text-xl">🔄 Ditto Shuffle! Cards rearranged!</span>';
+          }
+          setTimeout(() => {
+            const remainingCards = [...grid.querySelectorAll('.memory-card')].filter(c => {
+              const i = Number(c.dataset.index);
+              return !matched.has(i) && !c.classList.contains('memory-card-disappeared');
+            });
+            if (remainingCards.length > 1) {
+              remainingCards.forEach(c => c.classList.add('ga-ditto-wobble'));
+              const shuffledNodes = remainingCards.slice().sort(() => Math.random() - 0.5);
+              shuffledNodes.forEach(node => grid.appendChild(node));
+              setTimeout(() => {
+                remainingCards.forEach(c => c.classList.remove('ga-ditto-wobble'));
+                syncCardFaces();
+              }, 450);
+            }
+          }, 350);
+        } else if (kind === 'time') {
+          // ⏳ Time Boost (+10s): STRICT RULE: Only include this card in the mystery pool if isTimerActive === true.
+          playGameSound('success');
+          if (modal._playerTimerRemaining && modal._playerTimerRemaining[activeGamePlayerIndex] !== undefined) {
+            modal._playerTimerRemaining[activeGamePlayerIndex] += 10;
+          }
+          if (Array.isArray(activeGamePlayerRemaining) && activeGamePlayerRemaining[activeGamePlayerIndex] !== undefined) {
+            activeGamePlayerRemaining[activeGamePlayerIndex] += 10;
+          }
+          if (activeGamePlayers.length) {
+            activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+            updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
+            showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+          }
+          const status = modal.querySelector('#memory-status');
+          if (status) {
+            status.innerHTML = '<span class="text-emerald-400 font-extrabold text-xl animate-pulse">⏳ Time Boost! +10s added!</span>';
+          }
+        }
+      } else {
+        // Standard vocab match
+        playGameSound('success');
+        if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
+        updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
+        showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+      }
 
       [card1, card2].forEach(c => {
         if (!c) return;
@@ -25560,13 +25783,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       if (matched.size === pairs.length) {
         playGameSound('complete');
         setTimeout(() => {
-          const st = modal.querySelector('#memory-status');
-          if (st) {
-            st.textContent = '🎉 Perfect! All pairs matched!';
-            st.style.fontSize = '24px';
-            st.style.color = '#7c3aed';
-          }
+          modal.querySelector('#memory-status').textContent = '🎉 Perfect! All pairs matched!';
+          modal.querySelector('#memory-status').style.fontSize = '24px';
           setTimeout(() => showGameCelebration(modal, 'Memory master!'), 650);
+          modal.querySelector('#memory-status').style.color = '#7c3aed';
         }, 500);
       } else {
         setTimeout(() => {
@@ -25606,155 +25826,6 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     }
   }
   
-  const triggerInstantPowerUp = (idx, cardEl, cardData) => {
-    mismatchLocked = true;
-    unlockGameSound();
-
-    // 1. Reveal power-up card face up and start active pulse
-    const inner = cardEl.querySelector('.memory-card-inner');
-    if (inner) inner.classList.add('flipped');
-    cardEl.setAttribute('aria-pressed', 'true');
-    cardEl.classList.add('memory-card-powerup-pulse');
-
-    const effect = cardData.effect || cardData.powerup?.kind || 'bomb';
-    const status = modal.querySelector('#memory-status');
-
-    if (effect === 'bomb') {
-      // 💣 Bomb: Instantly shakes screen, plays explosion sound, deducts 1 point (or 50 score), passes turn immediately
-      playTransactionSound('deduction');
-      const shell = modal.querySelector('.memory-game-shell') || grid;
-      shell.classList.remove('ga-board-shake');
-      void shell.offsetWidth;
-      shell.classList.add('ga-board-shake');
-      setTimeout(() => shell.classList.remove('ga-board-shake'), 650);
-
-      if (activeGamePlayers.length) {
-        activeGameScores[activeGamePlayerIndex] = Math.max(0, (activeGameScores[activeGamePlayerIndex] || 0) - 1);
-        updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
-      }
-      if (status) {
-        status.innerHTML = '<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point!</span>';
-      }
-
-      // If player had previously flipped a card in this turn, flip it back down
-      if (flipped.length > 0) {
-        flipped = [];
-        syncCardFaces();
-      }
-
-      // Pass turn to next player immediately
-      advanceGameTurn();
-      updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
-    } else if (effect === 'magnet') {
-      // 🧲 Magnet: Instantly finds, flips, and clears 1 matching vocabulary pair currently hidden on board, awarding points to active player
-      playGameSound('success');
-      if (activeGamePlayers.length) {
-        activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
-        updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
-        showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
-      }
-
-      let targetPairId = null;
-      let targetWord = '';
-      for (let i = 0; i < pairs.length; i++) {
-        if (!matched.has(i) && !pairs[i].isPowerUp && pairs[i].type !== 'powerup') {
-          targetPairId = pairs[i].pairId;
-          targetWord = pairs[i].word?.vocab_word || '';
-          break;
-        }
-      }
-
-      if (targetPairId) {
-        const targetIndices = [];
-        pairs.forEach((p, i) => {
-          if (p.pairId === targetPairId) targetIndices.push(i);
-        });
-        if (targetIndices.length === 2) {
-          const [r1, r2] = targetIndices;
-          matched.add(r1);
-          matched.add(r2);
-          const rc1 = grid.querySelector('.memory-card[data-index="' + r1 + '"]');
-          const rc2 = grid.querySelector('.memory-card[data-index="' + r2 + '"]');
-          setTimeout(() => {
-            [rc1, rc2].forEach(rc => {
-              if (!rc) return;
-              rc.querySelector('.memory-card-inner')?.classList.add('flipped');
-              rc.classList.add('memory-card-matched');
-              rc.setAttribute('aria-pressed', 'true');
-              rc.style.pointerEvents = 'none';
-            });
-            setTimeout(() => {
-              [rc1, rc2].forEach(rc => {
-                if (!rc) return;
-                rc.classList.remove('memory-card-matched');
-                rc.classList.add('memory-card-disappeared');
-                rc.style.setProperty('visibility', 'hidden', 'important');
-                rc.style.setProperty('opacity', '0', 'important');
-                rc.style.setProperty('pointer-events', 'none', 'important');
-              });
-              syncCardFaces();
-            }, 450);
-          }, 200);
-        }
-      }
-      if (status) {
-        status.innerHTML = `<span class="text-cyan-500 font-extrabold text-xl">🧲 Magnet cleared: ${targetWord || 'Pair'}! +1 Point!</span>`;
-      }
-      // Active player continues their turn
-    } else if (effect === 'shuffle') {
-      // 🔄 Shuffle: Plays whoosh sound, randomly swaps positions of 4 unflipped cards, allows active player to continue turn
-      playGameSound('select');
-      if (status) {
-        status.innerHTML = '<span class="text-purple-500 font-extrabold text-xl">🔄 Shuffle! Cards rearranged!</span>';
-      }
-      setTimeout(() => {
-        const remainingCards = [...grid.querySelectorAll('.memory-card')].filter(c => {
-          const i = Number(c.dataset.index);
-          return !matched.has(i) && i !== idx && !c.classList.contains('memory-card-disappeared') && !flipped.includes(i);
-        });
-        if (remainingCards.length > 1) {
-          const toShuffle = remainingCards.slice().sort(() => Math.random() - 0.5).slice(0, 4);
-          toShuffle.forEach(c => c.classList.add('ga-ditto-wobble'));
-          const parent = grid;
-          const shuffledNodes = toShuffle.slice().sort(() => Math.random() - 0.5);
-          shuffledNodes.forEach(node => parent.appendChild(node));
-          setTimeout(() => {
-            toShuffle.forEach(c => c.classList.remove('ga-ditto-wobble'));
-            syncCardFaces();
-          }, 450);
-        }
-      }, 250);
-      // Active player continues their turn
-    }
-
-    // Brief reveal moment (~800ms): card pulses, then resolves and clears from board
-    setTimeout(() => {
-      if (!document.body.contains(modal)) return;
-      matched.add(idx);
-      cardEl.classList.remove('memory-card-powerup-pulse');
-      cardEl.classList.add('memory-card-disappeared');
-      cardEl.style.setProperty('visibility', 'hidden', 'important');
-      cardEl.style.setProperty('opacity', '0', 'important');
-      cardEl.style.setProperty('pointer-events', 'none', 'important');
-      mismatchLocked = false;
-      syncCardFaces();
-
-      // Check if all cards matched / resolved
-      if (matched.size === pairs.length) {
-        playGameSound('complete');
-        setTimeout(() => {
-          const st = modal.querySelector('#memory-status');
-          if (st) {
-            st.textContent = '🎉 Perfect! All cards cleared!';
-            st.style.fontSize = '24px';
-            st.style.color = '#7c3aed';
-          }
-          setTimeout(() => showGameCelebration(modal, 'Memory master!'), 650);
-        }, 500);
-      }
-    }, 800);
-  };
-
   grid.querySelectorAll('.memory-card').forEach(card => {
     card.addEventListener('click', (e) => {
       e.preventDefault();
@@ -25776,21 +25847,14 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       // Cannot click a card that is already selected
       if (flipped.includes(idx)) return;
 
+      // Extra check: if DOM card is already flipped, resync and ignore
       const inner = card.querySelector('.memory-card-inner');
       if (inner?.classList.contains('flipped')) {
         syncCardFaces();
         return;
       }
 
-      const cardData = pairs[idx];
-
-      // 1. Check for Instant Single Power-Up
-      if (cardData.isPowerUp || cardData.type === 'powerup') {
-        triggerInstantPowerUp(idx, card, cardData);
-        return;
-      }
-
-      // 2. Standard Vocabulary Pair Logic
+      // Flip the card and sync DOM
       flipped.push(idx);
       syncCardFaces();
       unlockGameSound();
