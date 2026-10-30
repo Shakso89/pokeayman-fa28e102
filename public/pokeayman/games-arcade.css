@@ -1466,8 +1466,12 @@ html body > .ga-stage[data-ga-theme] .memory-card-front {
   overflow: hidden !important;
   padding: 0 !important;
 }
-html body > .ga-stage[data-ga-theme] .memory-card:hover:not(.flipped):not(.matched) .memory-card-inner {
-  transform: none !important;
+html body > .ga-stage[data-ga-theme] .memory-card-inner.flipped,
+html body > .ga-stage[data-ga-theme] .memory-card.is-flipped .memory-card-inner {
+  transform: rotateY(180deg) !important;
+}
+html body > .ga-stage[data-ga-theme] .memory-card:not(.is-flipped):not(.memory-card-matched):hover .memory-card-inner {
+  transform: none;
 }
 
 html body > .ga-stage[data-ga-theme]:not([data-ga-theme="classic"]) .ga-stage-wrapper,

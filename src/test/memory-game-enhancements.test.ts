@@ -223,4 +223,40 @@ describe('Memory Game Card Refactor: Responsive Typography, Zero-Text Power-Ups 
       expect(30 % phoneRun.cols).toBe(0);
     });
   });
+
+  describe('Smooth card flipping and prevention of stuck card locks', () => {
+    const cssPath = path.resolve(__dirname, '../../public/pokeayman/games-arcade.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf8');
+
+    it('ensures hover styles never override 3D flipped card rotation with transform none', () => {
+      // In games-arcade.css, .memory-card:hover must NOT apply transform: none !important to .memory-card-inner
+      expect(cssContent).not.toContain('.memory-card:hover:not(.flipped):not(.matched) .memory-card-inner {\n  transform: none !important;');
+      expect(cssContent).toContain('.memory-card-inner.flipped');
+      expect(cssContent).toContain('transform: rotateY(180deg) !important;');
+
+      // In index.html, .memory-card-inner.flipped must have transform: rotateY(180deg) !important;
+      expect(htmlContent).toContain('.memory-card-inner.flipped,');
+      expect(htmlContent).toContain('.memory-card.is-flipped .memory-card-inner');
+      expect(htmlContent).toContain('transform: rotateY(180deg) !important;');
+      expect(htmlContent).not.toContain('.memory-card:hover .memory-card-inner {\n      transform: none !important;');
+    });
+
+    it('attaches cardMismatchWobble to the 2D outer container rather than memory-card-inner to prevent clobbering 3D rotation', () => {
+      // cardMismatchWobble should be on .memory-card.memory-card-mismatch
+      expect(htmlContent).toContain('.memory-card.memory-card-mismatch {');
+      expect(htmlContent).toContain('animation: cardMismatchWobble 0.35s ease forwards;');
+      expect(htmlContent).not.toContain('.memory-card.memory-card-mismatch .memory-card-inner {\n      animation: cardMismatchWobble');
+    });
+
+    it('supports instant mismatch resolution when player clicks a 3rd card during mismatch', () => {
+      expect(htmlContent).toContain('const resetMismatchState = () => {');
+      expect(htmlContent).toContain('if (mismatchLocked || flipped.length >= 2) {');
+      expect(htmlContent).toContain('resetMismatchState();');
+    });
+
+    it('maintains single source of truth and synchronizes is-flipped classes in syncCardFaces', () => {
+      expect(htmlContent).toContain('c.classList.toggle(\'is-flipped\', shouldBeFlipped);');
+      expect(htmlContent).toContain('c.classList.toggle(\'flipped\', shouldBeFlipped);');
+    });
+  });
 });
