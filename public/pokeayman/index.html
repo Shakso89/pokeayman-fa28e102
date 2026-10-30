@@ -4300,8 +4300,10 @@
 <script>
 (function () {
   const key = 'pokeayman-local-preview-v1';
-  const URL_ = 'https://lbmdlligjjrkmjmdtwsq.supabase.co/rest/v1/app_records';
-  const KEY = 'sb_publishable_s_aLtLB6z1AL3tI1bRyMMA_YEkOrrHI';
+  const SUPABASE_BASE_URL = (window.parent && window.parent.pokeaymanSupabaseUrl) || 'https://czszbdkdvvxeqkublkgi.supabase.co';
+  const SUPABASE_ANON_KEY = (window.parent && window.parent.pokeaymanSupabaseKey) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6c3piZGtkdnZ4ZXFrdWJsa2dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4MjkyODEsImV4cCI6MjEwMzQwNTI4MX0.fupuvKLgaRKlR7oW-ps79ce-Uq6iVuHfBoe_MkY86vo';
+  const URL_ = `${SUPABASE_BASE_URL}/rest/v1/app_records`;
+  const KEY = SUPABASE_ANON_KEY;
   const H = {apikey: KEY, 'Content-Type': 'application/json'};
   let listener = null;
   let records = [];
@@ -19100,10 +19102,10 @@ window.fetchStudentCollection = async function(studentId) {
     .filter(r => r.type === 'pokemon' && String(r.student_id || '').trim() === sid);
   if (localMatches.length) return localMatches;
   try {
-    const res = await fetch(`https://lbmdlligjjrkmjmdtwsq.supabase.co/rest/v1/app_records?data->>type=eq.pokemon&data->>student_id=eq.${encodeURIComponent(sid)}&select=id,data`, {
+    const res = await fetch(`${(window.parent && window.parent.pokeaymanSupabaseUrl) || 'https://czszbdkdvvxeqkublkgi.supabase.co'}/rest/v1/app_records?data->>type=eq.pokemon&data->>student_id=eq.${encodeURIComponent(sid)}&select=id,data`, {
       headers: {
-        apikey: 'sb_publishable_s_aLtLB6z1AL3tI1bRyMMA_YEkOrrHI',
-        Authorization: 'Bearer sb_publishable_s_aLtLB6z1AL3tI1bRyMMA_YEkOrrHI'
+        apikey: (window.parent && window.parent.pokeaymanSupabaseKey) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6c3piZGtkdnZ4ZXFrdWJsa2dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4MjkyODEsImV4cCI6MjEwMzQwNTI4MX0.fupuvKLgaRKlR7oW-ps79ce-Uq6iVuHfBoe_MkY86vo',
+        Authorization: 'Bearer ' + ((window.parent && window.parent.pokeaymanSupabaseKey) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN6c3piZGtkdnZ4ZXFrdWJsa2dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4MjkyODEsImV4cCI6MjEwMzQwNTI4MX0.fupuvKLgaRKlR7oW-ps79ce-Uq6iVuHfBoe_MkY86vo')
       }
     });
     if (res.ok) {

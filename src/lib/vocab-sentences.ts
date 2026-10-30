@@ -59,7 +59,7 @@ export class SentenceAiError extends Error {}
 // Visual matching does not write or revise sentences. Keep it separate from the
 // Gemini sentence generation below.
 export async function callGemini(body: GeminiBody): Promise<string> {
-  const key = process.env["GEMINI_API_KEY"];
+  const key = process.env["GEMINI_API_KEY"] || process.env["GOOGLE_API_KEY"] || (globalThis as any).__env__?.["GEMINI_API_KEY"] || (globalThis as any).__env__?.["GOOGLE_API_KEY"];
   if (!key) throw new SentenceAiError("Gemini is not set up yet. Please add the Gemini key.");
   let lastStatus = 0;
   for (const model of GEMINI_MODELS) {

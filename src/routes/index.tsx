@@ -129,13 +129,15 @@ function Index() {
     window.queryClient = queryClient;
     window.fetchClassStudents = fetchClassStudents;
     window.removeStudentFromClass = removeStudentFromClass;
+    (window as any).pokeaymanSupabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://czszbdkdvvxeqkublkgi.supabase.co';
+    (window as any).pokeaymanSupabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
     window.pokeaymanAuth = {
       supabase,
       userId: user?.id ?? null,
       getToken: async () => (await supabase.auth.getSession()).data.session?.access_token ?? null,
       getProfile: async () => ({ name: await profileName() }),
       signIn: async (email, password) => {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (error) return { error: error.message.includes("confirm") ? "Please confirm your email first (check your inbox)." : "Wrong email or password." };
         if (window.pokeaymanAuth) { window.pokeaymanAuth.userId = data.user?.id ?? null; window.pokeaymanAuth.email = data.user?.email ?? null; }
         return { name: await profileName(data.user) };
