@@ -471,7 +471,7 @@
           ...options
         };
         const data = await postJson('/api/generate-vocab-list', payload);
-        if (closed || item.sentence !== sentence || data.id !== item.id || data.sentence !== sentence) return;
+        if (closed || (item.sentence || '').trim() !== (sentence || '').trim() || data.id !== item.id) return;
         item.query = data.query || query;
         item.candidates = (Array.isArray(data.candidates) ? data.candidates : []).filter(candidate => isStoredImage(candidate.imageUrl));
         if (options.action !== 'search' && data.status === 'matched' && isStoredImage(data.imageUrl)) {
@@ -534,7 +534,17 @@
             console.error('Image search API error:', response.status, errorText);
             throw new Error(`Search failed (${response.status})`);
           }
-          const { images } = await response.json();
+          let { images } = await response.json();
+          if (!images || images.length === 0) {
+            // Try fallback query with clipart
+            try {
+              const fbRes = await fetch(`/api/images/search?q=${encodeURIComponent(word + ' clipart')}`);
+              if (fbRes.ok) {
+                const fbJson = await fbRes.json();
+                if (fbJson.images?.length > 0) images = fbJson.images;
+              }
+            } catch (_) {}
+          }
           if (!images || images.length === 0) {
             item.note = `No images found for "${word}". Try "Choose picture" manually.`;
             if (typeof toast === 'function') toast(`No images found for "${word}". Try "Choose picture" manually.`);

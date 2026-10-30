@@ -77,12 +77,16 @@ export async function searchStockMedia(
   };
   if (!query) return empty;
   const remember = (result: SearchResult) => {
+    if (!result.photos.length) return result;
     for (const [key, entry] of cache) if (entry.expires <= Date.now()) cache.delete(key);
     if (cache.size >= 200) cache.delete(cache.keys().next().value!);
     cache.set(cacheKey, { result, expires: Date.now() + 86400000 });
     return result;
   };
-  const pixabayKey = process.env["PIXABAY_API_KEY"] || "58123311-8a89c5e2df18a2650add733fa";
+  const pixabayKey =
+    process.env["PIXABAY_API_KEY"] ||
+    (globalThis as any).__env__?.["PIXABAY_API_KEY"] ||
+    "58123311-8a89c5e2df18a2650add733fa";
   try {
     const params = new URLSearchParams({
       key: pixabayKey,
@@ -99,7 +103,7 @@ export async function searchStockMedia(
       const data: { hits?: PixabayHit[]; totalHits?: number } = await res.json();
       const hits = Array.isArray(data.hits) ? data.hits : [];
       const photos: StockPhoto[] = hits
-        .filter((hit) => imageType === "all" || hit.type === imageType)
+        .filter((hit) => imageType === "all" || hit.type === imageType || (imageType === "vector" && String(hit.type).startsWith("vector")))
         .map((hit) => ({
           id: hit.id,
           photographer: hit.user || "Pixabay Artist",
@@ -129,7 +133,8 @@ export async function searchStockMedia(
     /* Photo requests can use the secondary provider below. */
   }
   if (imageType === "vector" || imageType === "illustration") return empty;
-  const pexelsKey = process.env["PEXELS_API_KEY"];
+  const pexelsKey =
+    process.env["PEXELS_API_KEY"] || (globalThis as any).__env__?.["PEXELS_API_KEY"];
   if (!pexelsKey) return empty;
   try {
     const params = new URLSearchParams({ query, per_page: String(perPage), page: String(page) });
@@ -172,7 +177,7 @@ export async function readStockImage(
       !["cdn.pixabay.com", "pixabay.com", "images.pexels.com"].includes(url.hostname)
     )
       return null;
-    const res = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(8000) });
+    const res = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(2000) });
     const mimeType = (res.headers.get("content-type") || "").split(";")[0]!;
     const maxBytes = 1024 * 1024;
     if (

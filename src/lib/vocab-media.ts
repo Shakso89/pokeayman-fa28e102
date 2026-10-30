@@ -1,7 +1,8 @@
 import { callGemini } from "./vocab-sentences";
 import { isMediaType, readStockImage, searchStockMedia } from "./stock-media";
 import type { MediaType } from "./stock-media";
-import { z } from "zod";
+import * as zodNamespace from "zod";
+const z = (zodNamespace as any).z || (zodNamespace as any).default || zodNamespace;
 
 export type MediaCandidate = {
   id: string;
@@ -81,8 +82,6 @@ export async function matchVocabularyMedia(input: MediaInput): Promise<MediaResu
     } else {
       searchQueries = [
         targetWord,
-        `${targetWord} animal`,
-        `${targetWord} object`,
         `${targetWord} clipart`,
         `${targetWord} illustration`,
       ];
