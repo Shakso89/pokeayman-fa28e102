@@ -57,7 +57,7 @@ describe("Wordwall-style Drag & Drop Match Words Game", () => {
     expect(app.toast).toHaveBeenCalledWith(expect.stringMatching(/fewer than 2 valid words|at least 2 words/));
   });
 
-  it("renders Wordwall layout with picture targets grid and docked word bank tray", () => {
+  it("renders Wordwall layout with picture targets grid and docked word bank tray without Reset or Submit buttons", () => {
     app.openGameMatch("Animals", 3);
     const modal = document.querySelector(".game-match-root");
     expect(modal).not.toBeNull();
@@ -80,84 +80,119 @@ describe("Wordwall-style Drag & Drop Match Words Game", () => {
     const bankTray = modal?.querySelector(".match-bank-tray");
     expect(bankTray).not.toBeNull();
 
-    // Submit Answers and Reset buttons
+    // Reset and Submit Answers buttons must be REMOVED (instant automatic submission)
     const submitBtn = modal?.querySelector("#match-submit-btn");
     const resetBtn = modal?.querySelector("#match-reset-btn");
-    expect(submitBtn).not.toBeNull();
-    expect(resetBtn).not.toBeNull();
-    expect(submitBtn?.textContent).toContain("Submit Answers");
+    expect(submitBtn).toBeNull();
+    expect(resetBtn).toBeNull();
 
     // 3 Word Chips in the bank
     const chips = modal?.querySelectorAll(".match-word-chip");
     expect(chips?.length).toBe(3);
 
+    // Chips must NOT have speaker buttons
+    const speakerBtns = modal?.querySelectorAll(".match-word-speak-btn");
+    expect(speakerBtns?.length).toBe(0);
+
     modal?.remove();
   });
 
-  it("places words into drop slots via tap and unplaces them via reset or unplace button", () => {
-    app.openGameMatch("Animals", 3);
-    const modal = document.querySelector(".game-match-root") as HTMLElement;
-    expect(modal).not.toBeNull();
-
-    // Tap first word chip
-    const chip = modal.querySelector(".match-word-chip:not(.is-placed)") as HTMLElement;
-    expect(chip).not.toBeNull();
-    chip.click();
-
-    // Tap first drop slot
-    const slot = modal.querySelector(".match-drop-slot") as HTMLElement;
-    expect(slot).not.toBeNull();
-    slot.click();
-
-    // Slot should now contain placed chip
-    const placedChip = modal.querySelector(".match-drop-slot .match-placed-chip");
-    expect(placedChip).not.toBeNull();
-
-    // Chip in bank should be marked as placed
-    const placedBankChip = modal.querySelector(".match-word-chip.is-placed");
-    expect(placedBankChip).not.toBeNull();
-
-    // Click unplace button to return word to bank
-    const unplaceBtn = modal.querySelector(".match-unplace-btn") as HTMLElement;
-    expect(unplaceBtn).not.toBeNull();
-    unplaceBtn.click();
-
-    expect(modal.querySelector(".match-drop-slot .match-placed-chip")).toBeNull();
-    expect(modal.querySelector(".match-word-chip.is-placed")).toBeNull();
-
-    modal.remove();
-  });
-
-  it("evaluates answers on submit, locking correct matches and returning wrong matches", async () => {
+  it("evaluates matches instantly on drop: locks correct word with checkmark badge", () => {
     app.openGameMatch("Animals", 2);
     const modal = document.querySelector(".game-match-root") as HTMLElement;
     expect(modal).not.toBeNull();
 
-    // Get the target cards and word bank chips
-    const targetCards = modal.querySelectorAll(".match-target-card");
-    const target1 = targetCards[0] as HTMLElement;
+    // Target 1
+    const target1 = modal.querySelector('.match-target-card[data-target-index="0"]') as HTMLElement;
     const targetImg1 = target1.querySelector(".match-target-img") as HTMLImageElement;
     const targetWord1 = targetImg1.alt.replace("Picture for ", "");
 
-    // Find the chip with matching word
+    // Find the chip with matching word in bank
     const allChips = Array.from(modal.querySelectorAll(".match-word-chip")) as HTMLElement[];
     const matchingChip = allChips.find(c => c.textContent?.includes(targetWord1))!;
     expect(matchingChip).toBeDefined();
 
-    // Place matching chip on target 1
+    // Tap matching chip
     matchingChip.click();
-    const slot1 = target1.querySelector(".match-drop-slot") as HTMLElement;
-    slot1.click();
 
-    // Submit answers
-    const submitBtn = modal.querySelector("#match-submit-btn") as HTMLButtonElement;
-    submitBtn.click();
+    // Target card element after tap render
+    const currentTarget1 = modal.querySelector('.match-target-card[data-target-index="0"]') as HTMLElement;
+    currentTarget1.click();
 
-    // Re-query target card as renderBoard() re-renders the DOM
+    expect(app.playGameSound).toHaveBeenCalledWith("success");
+    expect(app.showCorrectAnswerCelebration).toHaveBeenCalled();
+
+    // Target card should be locked and matched
     const updatedTarget1 = modal.querySelector('.match-target-card[data-target-index="0"]') as HTMLElement;
     expect(updatedTarget1.classList.contains("is-matched")).toBe(true);
     expect(updatedTarget1.querySelector(".match-card-badge.check")).not.toBeNull();
+    expect(updatedTarget1.querySelector(".match-placed-chip")).not.toBeNull();
 
+    modal.remove();
+  });
+
+  it("evaluates wrong match instantly: plays error sound, shakes card, and returns pill to bank without docking", () => {
+    vi.useFakeTimers();
+    app.openGameMatch("Animals", 2);
+    const modal = document.querySelector(".game-match-root") as HTMLElement;
+    expect(modal).not.toBeNull();
+
+    // Target 1
+    const target1 = modal.querySelector('.match-target-card[data-target-index="0"]') as HTMLElement;
+    const targetImg1 = target1.querySelector(".match-target-img") as HTMLImageElement;
+    const targetWord1 = targetImg1.alt.replace("Picture for ", "");
+
+    // Find a non-matching chip
+    const allChips = Array.from(modal.querySelectorAll(".match-word-chip")) as HTMLElement[];
+    const wrongChip = allChips.find(c => !c.textContent?.includes(targetWord1))!;
+    expect(wrongChip).toBeDefined();
+
+    // Tap wrong chip
+    wrongChip.click();
+
+    // Target card element after tap render
+    const currentTarget1 = modal.querySelector('.match-target-card[data-target-index="0"]') as HTMLElement;
+    currentTarget1.click();
+
+    expect(app.playGameSound).toHaveBeenCalledWith("wrong");
+    expect(currentTarget1.classList.contains("is-wrong")).toBe(true);
+
+    // Fast-forward timeout for shake recovery
+    vi.advanceTimersByTime(700);
+
+    // Slot remains empty, card is not matched
+    expect(modal.querySelector('.match-target-card[data-target-index="0"] .match-placed-chip')).toBeNull();
+    expect(modal.querySelector('.match-target-card[data-target-index="0"]')?.classList.contains("is-matched")).toBe(false);
+
+    vi.useRealTimers();
+    modal.remove();
+  });
+
+  it("automatically completes the game and triggers victory celebration when all pairs are matched", () => {
+    vi.useFakeTimers();
+    app.openGameMatch("Animals", 2);
+    const modal = document.querySelector(".game-match-root") as HTMLElement;
+    expect(modal).not.toBeNull();
+
+    // Match both cards
+    for (let i = 0; i < 2; i++) {
+      const card = modal.querySelector(`.match-target-card[data-target-index="${i}"]`) as HTMLElement;
+      const img = card.querySelector(".match-target-img") as HTMLImageElement;
+      const word = img.alt.replace("Picture for ", "");
+
+      const allChips = Array.from(modal.querySelectorAll(".match-word-chip:not(.is-placed)")) as HTMLElement[];
+      const chip = allChips.find(c => c.textContent?.includes(word))!;
+      chip.click();
+
+      const currentCard = modal.querySelector(`.match-target-card[data-target-index="${i}"]`) as HTMLElement;
+      currentCard.click();
+    }
+
+    expect(app.playGameSound).toHaveBeenCalledWith("complete");
+    vi.advanceTimersByTime(600);
+    expect(app.showGameCelebration).toHaveBeenCalledWith(modal, "Perfect match!");
+
+    vi.useRealTimers();
     modal.remove();
   });
 });

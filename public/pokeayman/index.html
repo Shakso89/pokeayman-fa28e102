@@ -24820,6 +24820,7 @@ function chooseMatchWordCount(listName) {
 }
 
 function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
+  const escapeText = typeof escapeHtml === 'function' ? escapeHtml : s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   setGameReplay(() => { resetGameTurnState(); openGameMatch(listName, wordCount, timerSeconds); });
   const words = getGameWords(listName);
   if (words.length < 2) { toast('My lists launch failed: the selected source has fewer than 2 valid words.'); return; }
@@ -24878,7 +24879,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
           <div class="match-game-progress-copy">
             <strong id="match-progress-current">0</strong>
             <span>of ${totalWords} pairs matched</span>
-            <span id="match-status">Drag words to their matching pictures, then submit!</span>
+            <span id="match-status">Drag each word and drop it onto its matching picture!</span>
           </div>
           <div class="match-game-progress-track">
             <span id="match-progress-fill"></span>
@@ -24893,13 +24894,6 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
           <div class="match-bank-info">
             <span class="match-bank-title">🔤 Word Bank</span>
             <span id="match-bank-counter" class="match-bank-counter">${totalWords} remaining</span>
-          </div>
-          <div class="match-bank-actions">
-            <button type="button" id="match-reset-btn" class="match-action-btn secondary" title="Return unplaced words to bank">↺ Reset</button>
-            <button type="button" id="match-submit-btn" class="match-action-btn primary" title="Submit and check all matches">
-              <span>✔ Submit Answers</span>
-              <span id="match-submit-count" class="match-submit-count">(0/${totalWords})</span>
-            </button>
           </div>
         </div>
         <div id="match-bank-chips" class="match-bank-chips" role="group" aria-label="Draggable word tiles"></div>
@@ -24920,9 +24914,6 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   const progressCurrentEl = modal.querySelector('#match-progress-current');
   const progressFillEl = modal.querySelector('#match-progress-fill');
   const bankCounterEl = modal.querySelector('#match-bank-counter');
-  const submitBtn = modal.querySelector('#match-submit-btn');
-  const submitCountEl = modal.querySelector('#match-submit-count');
-  const resetBtn = modal.querySelector('#match-reset-btn');
 
   let matchGridColumns = window.matchMedia('(max-width: 640px)').matches ? 2 : window.matchMedia('(max-width: 900px)').matches ? 3 : 4;
   const updateMatchGridDensity = () => {
@@ -24937,35 +24928,36 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   let ghostEl = null;
   let startX = 0, startY = 0;
   let hasDragged = false;
-  let hoveredSlotEl = null;
+  let hoveredCardEl = null;
 
   function renderBoard() {
     const placedWordIds = new Set(placements.values());
     const remainingCount = bankWords.filter(w => !placedWordIds.has(w.wordId)).length;
-    const placedCount = placements.size;
 
-    // Render target cards
+    // Render target cards: each entire card is an interactive drop target
     board.innerHTML = targetCards.map((target, index) => {
       const isMatched = matchedTargets.has(index);
       const isWrong = wrongTargets.has(index);
       const placedWordId = placements.get(index);
       const placedWord = placedWordId !== undefined ? bankWords[placedWordId] : null;
 
-      return `<div class="match-target-card${isMatched ? ' is-matched is-correct' : ''}${isWrong ? ' is-wrong' : ''}" data-target-index="${index}">
-        <div class="match-target-img-wrap">
-          <img class="match-target-img" src="${target.vocab_image}" alt="Picture for ${target.vocab_word}" onerror="this.src='https://via.placeholder.com/300?text=Image+Not+Found'">
+      return `<div class="match-target-card${isMatched ? ' is-matched is-correct' : ''}${isWrong ? ' is-wrong' : ''}" data-target-index="${index}" role="button" aria-label="Picture card ${index + 1} for ${escapeText(target.vocab_word)}">
+        <div class="match-target-img-wrap pointer-events-none">
+          <img class="match-target-img" src="${target.vocab_image}" alt="Picture for ${escapeText(target.vocab_word)}" onerror="this.src='https://via.placeholder.com/300?text=Image+Not+Found'">
           ${isMatched ? '<span class="match-card-badge check" aria-label="Correct match">✓</span>' : ''}
           ${isWrong ? '<span class="match-card-badge cross" aria-label="Wrong match">✕</span>' : ''}
         </div>
         <div class="match-drop-slot${placedWord ? ' has-word' : ' is-empty'}${isMatched ? ' is-matched' : ''}" data-target-index="${index}" role="region" aria-label="Drop target for picture ${index + 1}">
           ${placedWord ? `
-            <div class="match-placed-chip" data-word-id="${placedWord.wordId}" data-target-index="${index}" role="button" aria-label="Placed word: ${placedWord.vocab_word}">
-              <span class="match-drag-grip" aria-hidden="true">⠿</span>
-              <span class="match-word-text">${placedWord.vocab_word}</span>
-              ${!isMatched && !isEvaluating ? `<button type="button" class="match-unplace-btn" data-unplace-target="${index}" title="Return to bank" aria-label="Remove ${placedWord.vocab_word}">×</button>` : ''}
+            <div class="match-placed-chip is-locked" data-word-id="${placedWord.wordId}" data-target-index="${index}" role="status" aria-label="Matched word: ${escapeText(placedWord.vocab_word)}">
+              <svg class="match-grip-svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+                <circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle>
+                <circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle>
+              </svg>
+              <span class="match-word-text">${escapeText(placedWord.vocab_word)}</span>
             </div>
           ` : `
-            <div class="match-slot-placeholder">
+            <div class="match-slot-placeholder pointer-events-none">
               <span class="match-slot-icon">⬇</span>
               <span class="match-slot-text">Drop word here</span>
             </div>
@@ -24974,7 +24966,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
       </div>`;
     }).join('');
 
-    // Render bank chips
+    // Render bank chips: clean pill with grip dots (no speaker icon)
     bankChipsContainer.innerHTML = bankWords.map(word => {
       const isPlaced = placedWordIds.has(word.wordId);
       const isSelected = selectedWordId === word.wordId;
@@ -24985,10 +24977,12 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
                    tabindex="${isPlaced ? '-1' : '0'}"
                    aria-disabled="${isPlaced}"
                    aria-pressed="${isSelected}"
-                   aria-label="Draggable word: ${word.vocab_word}">
-        <span class="match-drag-grip" aria-hidden="true">⠿</span>
-        <span class="match-word-text">${word.vocab_word}</span>
-        <button type="button" class="match-word-speak-btn" data-speak-word="${encodeURIComponent(word.vocab_word)}" title="Listen to pronunciation" aria-label="Listen">🔊</button>
+                   aria-label="Draggable word: ${escapeText(word.vocab_word)}">
+        <svg class="match-grip-svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+          <circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle>
+          <circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle>
+        </svg>
+        <span class="match-word-text">${escapeText(word.vocab_word)}</span>
       </div>`;
     }).join('');
 
@@ -24996,20 +24990,14 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
     progressCurrentEl.textContent = String(correctAnswers);
     progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
     bankCounterEl.textContent = `${remainingCount} remaining`;
-    submitCountEl.textContent = `(${placedCount}/${totalWords})`;
-
-    submitBtn.disabled = isEvaluating || placedCount === 0;
-    resetBtn.disabled = isEvaluating || placedCount === 0;
 
     if (!isEvaluating) {
       if (correctAnswers === totalWords) {
         statusEl.textContent = '🎉 Perfect! All words correctly matched!';
-      } else if (placedCount === totalWords) {
-        statusEl.textContent = 'All words placed! Click "Submit Answers" to verify.';
-      } else if (placedCount > 0) {
-        statusEl.textContent = `${placedCount} of ${totalWords} words placed. Drag remaining or submit.`;
+      } else if (correctAnswers > 0) {
+        statusEl.textContent = `${correctAnswers} of ${totalWords} pairs matched. Keep going!`;
       } else {
-        statusEl.textContent = 'Drag each word to its picture, then submit!';
+        statusEl.textContent = 'Drag each word and drop it onto its matching picture!';
       }
     }
 
@@ -25017,81 +25005,29 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   }
 
   function bindInteractions() {
-    // Bank chips drag & click
+    // Bank chips drag & tap
     bankChipsContainer.querySelectorAll('.match-word-chip:not(.is-placed)').forEach(chip => {
       const wordId = Number(chip.dataset.wordId);
       const wordObj = bankWords[wordId];
 
       chip.addEventListener('pointerdown', e => {
-        if (e.target.closest('.match-word-speak-btn')) return;
         initDrag(e, { type: 'bank', wordId, vocab_word: wordObj.vocab_word, el: chip });
       });
 
-      chip.addEventListener('click', e => {
-        if (e.target.closest('.match-word-speak-btn')) return;
+      chip.addEventListener('click', () => {
         if (hasDragged) return;
-        handleTap({ type: 'bank', wordId, vocab_word: wordObj.vocab_word });
+        handleTapBank(wordId);
       });
     });
 
-    // Placed chips drag & click
-    board.querySelectorAll('.match-placed-chip').forEach(placedEl => {
-      const targetIndex = Number(placedEl.dataset.targetIndex);
-      const wordId = Number(placedEl.dataset.wordId);
-      const wordObj = bankWords[wordId];
-
-      if (!matchedTargets.has(targetIndex)) {
-        placedEl.addEventListener('pointerdown', e => {
-          if (e.target.closest('.match-unplace-btn')) return;
-          initDrag(e, { type: 'slot', targetIndex, wordId, vocab_word: wordObj.vocab_word, el: placedEl });
-        });
-
-        placedEl.addEventListener('click', e => {
-          if (e.target.closest('.match-unplace-btn')) return;
-          if (hasDragged) return;
-          handleTap({ type: 'slot', targetIndex, wordId, vocab_word: wordObj.vocab_word });
-        });
-      }
-    });
-
-    // Drop slot tap click (for tap-to-place fallback)
-    board.querySelectorAll('.match-drop-slot').forEach(slot => {
-      const targetIndex = Number(slot.dataset.targetIndex);
-      slot.addEventListener('click', () => {
-        if (matchedTargets.has(targetIndex) || isEvaluating) return;
+    // Picture target cards: tap anywhere on card to place selected word
+    board.querySelectorAll('.match-target-card').forEach(card => {
+      const targetIndex = Number(card.dataset.targetIndex);
+      card.addEventListener('click', () => {
+        if (hasDragged || isEvaluating) return;
+        if (matchedTargets.has(targetIndex)) return;
         if (selectedWordId !== null) {
-          handleDropOnSlot(targetIndex, { type: 'bank', wordId: selectedWordId, vocab_word: bankWords[selectedWordId].vocab_word });
-        }
-      });
-    });
-
-    // Unplace buttons
-    board.querySelectorAll('.match-unplace-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        if (isEvaluating) return;
-        const targetIndex = Number(btn.dataset.unplaceTarget);
-        if (!matchedTargets.has(targetIndex)) {
-          placements.delete(targetIndex);
-          wrongTargets.delete(targetIndex);
-          unlockGameSound();
-          playGameSound('select');
-          renderBoard();
-        }
-      });
-    });
-
-    // Pronunciation speak buttons
-    modal.querySelectorAll('.match-word-speak-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const word = decodeURIComponent(btn.dataset.speakWord || '');
-        if (word && window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(word);
-          utterance.lang = 'en-US';
-          utterance.rate = 0.9;
-          window.speechSynthesis.speak(utterance);
+          handleDropOnTarget(targetIndex, { type: 'bank', wordId: selectedWordId, vocab_word: bankWords[selectedWordId].vocab_word });
         }
       });
     });
@@ -25121,7 +25057,13 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
 
         ghostEl = document.createElement('div');
         ghostEl.className = 'match-drag-ghost';
-        ghostEl.innerHTML = `<span class="match-drag-grip">⠿</span><span>${source.vocab_word}</span>`;
+        ghostEl.innerHTML = `
+          <svg class="match-grip-svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+            <circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle>
+            <circle cx="15" cy="12" r="1.5"></circle><circle cx="15" cy="5" r="1.5"></circle><circle cx="15" cy="19" r="1.5"></circle>
+          </svg>
+          <span class="match-word-text">${escapeText(source.vocab_word)}</span>
+        `;
         ghostEl.style.left = `${ev.clientX}px`;
         ghostEl.style.top = `${ev.clientY}px`;
         document.body.appendChild(ghostEl);
@@ -25131,17 +25073,25 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         ghostEl.style.left = `${ev.clientX}px`;
         ghostEl.style.top = `${ev.clientY}px`;
 
-        // Detect hover over drop slots
+        // Detect hover over the entire card container
         const elements = typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(ev.clientX, ev.clientY) : [];
-        const slot = elements.find(el => el.classList && el.classList.contains('match-drop-slot'));
-
-        if (hoveredSlotEl && hoveredSlotEl !== slot) {
-          hoveredSlotEl.classList.remove('is-drag-over');
-          hoveredSlotEl = null;
+        let card = elements.find(el => el.classList && el.classList.contains('match-target-card'));
+        if (!card) {
+          const inner = elements.find(el => el.closest && el.closest('.match-target-card'));
+          if (inner) card = inner.closest('.match-target-card');
         }
-        if (slot && !slot.classList.contains('is-matched')) {
-          hoveredSlotEl = slot;
-          slot.classList.add('is-drag-over');
+
+        if (hoveredCardEl && hoveredCardEl !== card) {
+          hoveredCardEl.classList.remove('is-drag-over');
+          hoveredCardEl = null;
+        }
+
+        if (card) {
+          const tIdx = Number(card.dataset.targetIndex);
+          if (!matchedTargets.has(tIdx)) {
+            hoveredCardEl = card;
+            card.classList.add('is-drag-over');
+          }
         }
       }
     }
@@ -25153,9 +25103,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
       sourceEl.removeEventListener('pointercancel', onPointerEnd);
       try { sourceEl.releasePointerCapture?.(ev.pointerId); } catch (_) {}
 
-      if (hoveredSlotEl) {
-        hoveredSlotEl.classList.remove('is-drag-over');
-        hoveredSlotEl = null;
+      if (hoveredCardEl) {
+        hoveredCardEl.classList.remove('is-drag-over');
+        hoveredCardEl = null;
       }
 
       if (hasDragged) {
@@ -25163,19 +25113,16 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         if (ghostEl) { ghostEl.remove(); ghostEl = null; }
 
         const elements = typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(ev.clientX, ev.clientY) : [];
-        const slot = elements.find(el => el.classList && el.classList.contains('match-drop-slot'));
-        const bankTray = elements.find(el => el.classList && el.classList.contains('match-bank-tray'));
+        let card = elements.find(el => el.classList && el.classList.contains('match-target-card'));
+        if (!card) {
+          const inner = elements.find(el => el.closest && el.closest('.match-target-card'));
+          if (inner) card = inner.closest('.match-target-card');
+        }
 
-        if (slot && !slot.classList.contains('is-matched')) {
-          const targetIndex = Number(slot.dataset.targetIndex);
-          handleDropOnSlot(targetIndex, dragSource);
-        } else if (bankTray || !slot) {
-          if (dragSource.type === 'slot') {
-            placements.delete(dragSource.targetIndex);
-            wrongTargets.delete(dragSource.targetIndex);
-            unlockGameSound();
-            playGameSound('select');
-            renderBoard();
+        if (card) {
+          const targetIndex = Number(card.dataset.targetIndex);
+          if (!matchedTargets.has(targetIndex)) {
+            handleDropOnTarget(targetIndex, dragSource);
           }
         }
       }
@@ -25189,184 +25136,88 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
     sourceEl.addEventListener('pointercancel', onPointerEnd);
   }
 
-  function handleTap(source) {
-    if (source.type === 'bank') {
-      if (selectedWordId === source.wordId) {
-        selectedWordId = null;
-      } else {
-        selectedWordId = source.wordId;
-        unlockGameSound();
-        playGameSound('select');
-      }
-      renderBoard();
-    } else if (source.type === 'slot') {
-      if (matchedTargets.has(source.targetIndex)) return;
-      placements.delete(source.targetIndex);
-      wrongTargets.delete(source.targetIndex);
+  function handleTapBank(wordId) {
+    if (selectedWordId === wordId) {
+      selectedWordId = null;
+    } else {
+      selectedWordId = wordId;
       unlockGameSound();
       playGameSound('select');
-      renderBoard();
     }
+    renderBoard();
   }
 
-  function handleDropOnSlot(targetIndex, source) {
-    if (matchedTargets.has(targetIndex)) return;
-    const existingWordId = placements.get(targetIndex);
-
-    if (source.type === 'bank') {
-      placements.set(targetIndex, source.wordId);
-    } else if (source.type === 'slot') {
-      if (source.targetIndex === targetIndex) return;
-      if (existingWordId !== undefined) {
-        placements.set(source.targetIndex, existingWordId);
-        placements.set(targetIndex, source.wordId);
-      } else {
-        placements.delete(source.targetIndex);
-        placements.set(targetIndex, source.wordId);
-      }
-    }
+  function handleDropOnTarget(targetIndex, source) {
+    if (matchedTargets.has(targetIndex) || isEvaluating) return;
+    const target = targetCards[targetIndex];
+    const wordObj = bankWords[source.wordId];
+    if (!target || !wordObj) return;
 
     selectedWordId = null;
-    wrongTargets.delete(targetIndex);
-    unlockGameSound();
-    playGameSound('select');
 
-    // In multiplayer arcade mode with multiple players, evaluate immediately per turn
-    if (activeGamePlayers.length > 1) {
-      evaluateSingleTarget(targetIndex);
-    } else {
-      renderBoard();
-    }
-  }
+    const isCorrect = String(target.vocab_word || '').trim().toLowerCase() === String(wordObj.vocab_word || '').trim().toLowerCase();
 
-  function evaluateSingleTarget(targetIndex) {
-    if (!placements.has(targetIndex)) return;
-    const wordId = placements.get(targetIndex);
-    const target = targetCards[targetIndex];
-    const wordObj = bankWords[wordId];
-
-    if (target.vocab_word === wordObj.vocab_word) {
+    if (isCorrect) {
+      // 1. Correct Match: Immediately lock into slot & badge
       matchedTargets.add(targetIndex);
+      placements.set(targetIndex, source.wordId);
       wrongTargets.delete(targetIndex);
       correctAnswers++;
+
       if (activeGamePlayers.length) {
         activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
       }
+
+      unlockGameSound();
       playGameSound('success');
       showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
       updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
+
       progressCurrentEl.textContent = String(correctAnswers);
       progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
+      statusEl.textContent = `✅ Correct! "${target.vocab_word}" matched!`;
       renderBoard();
 
+      // Auto-Completion: Trigger victory modal when all pairs matched
       if (correctAnswers === totalWords) {
-        statusEl.textContent = '🎉 Perfect! All matches found!';
+        statusEl.textContent = '🎉 Perfect! All words correctly matched!';
         playGameSound('complete');
         setTimeout(() => showGameCelebration(modal, 'Perfect match!'), 520);
       }
     } else {
-      wrongTargets.add(targetIndex);
+      // 2. Incorrect Match: Gentle bounce, shake, return pill to bank
+      unlockGameSound();
       playGameSound('wrong');
+
       const prevPlayer = activeGamePlayerIndex;
-      advanceGameTurn();
-      updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
-      showWrongAnswerCelebration(modal, prevPlayer);
-      statusEl.textContent = '❌ Wrong match!';
-      renderBoard();
-      setTimeout(() => {
-        placements.delete(targetIndex);
-        wrongTargets.delete(targetIndex);
-        renderBoard();
-      }, 700);
-    }
-  }
-
-  // Wordwall Submit Answers button
-  submitBtn.addEventListener('click', async () => {
-    if (isEvaluating) return;
-    if (placements.size === 0) {
-      toast('Drag some words onto pictures first!');
-      return;
-    }
-
-    isEvaluating = true;
-    statusEl.textContent = 'Checking matches...';
-    renderBoard();
-
-    let newCorrect = 0;
-    const toUnplace = [];
-
-    for (let i = 0; i < totalWords; i++) {
-      if (matchedTargets.has(i)) continue;
-      if (!placements.has(i)) continue;
-
-      const wordId = placements.get(i);
-      const target = targetCards[i];
-      const wordObj = bankWords[wordId];
-
-      if (target.vocab_word === wordObj.vocab_word) {
-        matchedTargets.add(i);
-        wrongTargets.delete(i);
-        correctAnswers++;
-        newCorrect++;
-        if (activeGamePlayers.length) {
-          activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
-        }
-      } else {
-        wrongTargets.add(i);
-        toUnplace.push(i);
-      }
-    }
-
-    updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
-    progressCurrentEl.textContent = String(correctAnswers);
-    progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
-    renderBoard();
-
-    if (toUnplace.length > 0) {
-      playGameSound('wrong');
-      statusEl.textContent = `${correctAnswers} of ${totalWords} correct! Wrong words returning to bank...`;
       if (activeGamePlayers.length > 1) {
-        showWrongAnswerCelebration(modal, activeGamePlayerIndex);
         advanceGameTurn();
         updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
+        showWrongAnswerCelebration(modal, prevPlayer);
       }
-      await new Promise(r => setTimeout(r, 900));
-      toUnplace.forEach(idx => {
-        placements.delete(idx);
-        wrongTargets.delete(idx);
-      });
-      isEvaluating = false;
-      renderBoard();
-    } else {
-      isEvaluating = false;
-    }
 
-    if (correctAnswers === totalWords) {
-      statusEl.textContent = '🎉 Perfect! All words placed correctly!';
-      playGameSound('complete');
-      showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
-      setTimeout(() => showGameCelebration(modal, 'Perfect match!'), 520);
-    } else if (toUnplace.length === 0 && newCorrect > 0) {
-      playGameSound('success');
-      statusEl.textContent = `✅ ${correctAnswers} of ${totalWords} matched! Keep going!`;
-    }
-  });
+      statusEl.textContent = `❌ Try again! That's not "${wordObj.vocab_word}".`;
 
-  // Reset button: unplace all unverified words
-  resetBtn.addEventListener('click', () => {
-    if (isEvaluating) return;
-    for (const [targetIndex] of placements.entries()) {
-      if (!matchedTargets.has(targetIndex)) {
-        placements.delete(targetIndex);
-        wrongTargets.delete(targetIndex);
+      const cardEl = board.querySelector(`.match-target-card[data-target-index="${targetIndex}"]`);
+      if (cardEl) {
+        cardEl.classList.add('is-wrong');
+        const slotEl = cardEl.querySelector('.match-drop-slot');
+        if (slotEl) slotEl.classList.add('is-wrong');
       }
+
+      // Do NOT dock into slot
+      placements.delete(targetIndex);
+
+      setTimeout(() => {
+        if (cardEl) {
+          cardEl.classList.remove('is-wrong');
+          const slotEl = cardEl.querySelector('.match-drop-slot');
+          if (slotEl) slotEl.classList.remove('is-wrong');
+        }
+        renderBoard();
+      }, 650);
     }
-    selectedWordId = null;
-    unlockGameSound();
-    playGameSound('select');
-    renderBoard();
-  });
+  }
 
   updateMatchGridDensity();
   renderBoard();
