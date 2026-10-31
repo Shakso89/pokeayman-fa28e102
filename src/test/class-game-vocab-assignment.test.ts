@@ -90,4 +90,10 @@ describe("Teacher Game Vocabulary Assignment & Multi-Class Student Dashboard Iso
     expect(indexHtml).toContain("vocab_cover_image_id: selectedId");
     expect(indexHtml).toContain("vocab_cover_image_url: selectedUrl");
   });
+
+  it("8. Class hero actions bar removes redundant Assign Teachers button", () => {
+    const teacherShellJs = readFileSync(path.join(root, "public", "pokeayman", "teacher-shell.js"), "utf8");
+    expect(teacherShellJs).not.toContain('data-hero="assign-teachers"');
+    expect(teacherShellJs).not.toContain("ts-hero-assign-btn");
+  });
 });

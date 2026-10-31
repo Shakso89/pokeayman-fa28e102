@@ -431,7 +431,7 @@
       h = document.createElement('section'); h.id = 'ts-hero'; h.className = 'ts-hero';
       h.innerHTML = `<div class="ts-hero-text"><h2 id="ts-hero-title"></h2><p id="ts-hero-school"></p>
         <div class="ts-chips"><span class="ts-chip"><b id="ts-hero-count">0</b><small>Students</small></span><span class="ts-chip"><b id="ts-hero-coins">0</b><small>Total coins</small></span><span class="ts-chip" id="ts-hero-teacher-chip" hidden><b id="ts-hero-teacher"></b><small>Teachers</small></span></div></div>
-        <div class="ts-hero-actions"><button type="button" class="ts-btn ghost" data-hero="assign-teachers" id="ts-hero-assign-btn" hidden>👥 Assign Teachers</button><button type="button" class="ts-btn ghost" data-hero="gift">Gift whole class</button><button type="button" class="ts-btn" data-hero="add">＋ Add student</button></div>`;
+        <div class="ts-hero-actions"><button type="button" class="ts-btn ghost" data-hero="gift">Gift whole class</button><button type="button" class="ts-btn" data-hero="add">＋ Add student</button></div>`;
       sub.prepend(h);
       h.querySelectorAll('[data-hero]').forEach(button => button.addEventListener('click', onHero));
     }
@@ -442,8 +442,6 @@
       const names = g(() => window.getClassTeacherNames(navSchool, navClass), []) || [];
       const chip = $('ts-hero-teacher-chip');
       const canManageAssignments = g(() => window.canManageSchool?.(navSchool) || window.isAymanTeacher?.(), false);
-      const assignBtn = $('ts-hero-assign-btn');
-      if (assignBtn) assignBtn.hidden = !canManageAssignments;
       if (chip) {
         chip.hidden = !names.length;
         chip.classList.toggle('ts-chip-clickable', canManageAssignments);
@@ -467,10 +465,6 @@
       return;
     }
     if (b.dataset.tsAddStudent !== undefined) { e.preventDefault(); return openHeroActionDialog('add', b); }
-    if (b.dataset.hero === 'assign-teachers') {
-      e.preventDefault();
-      return g(() => window.openAssignClassTeachersModal?.(navSchool, navClass));
-    }
     e.preventDefault();
     openHeroActionDialog(b.dataset.hero, b);
   }
