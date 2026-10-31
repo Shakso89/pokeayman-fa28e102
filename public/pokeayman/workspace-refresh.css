@@ -225,6 +225,11 @@ html body:is(body, #pk-refresh):is(body, #pk-refresh):is(body, #pk-refresh) {
   & .vocab-list-card :is(p,span) { color: var(--ui-muted) !important; -webkit-text-fill-color: currentColor !important; text-shadow: none !important; }
   & .vocab-list-card .vocab-list-count { font-size: 12px; text-align: left !important; margin: 0 !important; }
   & .vocab-list-card :is(.vocab-list-cover,.student-vocab-cover) { order: 0; width: 100% !important; max-width: none !important; height: 168px !important; aspect-ratio: auto !important; margin: 0 !important; border: 0 !important; border-radius: 6px !important; background: var(--ui-soft) !important; overflow: hidden; display: grid; place-items: center; }
+  & :is(#student-dashboard, #student-tab-vocabulary, #student-vocabulary-lists) :is(.vocab-list-cover,.student-vocab-cover) {
+    aspect-ratio: 16 / 10 !important;
+    height: auto !important;
+    min-height: 140px !important;
+  }
   & .vocab-list-card :is(.vocab-list-cover,.student-vocab-cover) img { width: 100% !important; height: 100% !important; object-fit: cover; filter: none !important; }
   & .vocab-list-card .vocab-card-actions { display: flex !important; gap: 8px !important; width: 100%; margin: 0 !important; justify-content: stretch !important; }
   & .vocab-list-card .vocab-card-actions button { min-width: 0 !important; flex: 1 1 0 !important; min-height: 40px; padding: 8px !important; font-size: 12px !important; border: 1px solid var(--ui-line) !important; border-radius: 6px !important; background: var(--ui-soft) !important; color: var(--ui-ink) !important; box-shadow: none !important; transform: none !important; }

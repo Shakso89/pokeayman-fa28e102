@@ -307,13 +307,30 @@ html body.ts-bright:has(#student-dashboard:not(.hidden)) #student-dashboard .gla
   box-shadow: 0 8px 24px rgba(24, 44, 72, .10) !important;
 }
 
-/* Vocabulary empty covers become a clear state instead of a blank poster. */
-html body #student-tab-vocabulary .student-vocab-cover {
-  height: clamp(72px, 12vw, 112px) !important; min-height: 72px !important;
+/* Vocabulary covers on student dashboard: full uncropped aspect ratio and responsive frame */
+html body :is(#student-tab-vocabulary, #student-vocabulary-lists) .student-vocab-cover {
+  width: 100% !important;
+  max-width: 100% !important;
+  aspect-ratio: 16 / 10 !important;
+  height: auto !important;
+  min-height: 140px !important;
   border-radius: var(--pk-radius-md) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
-html body #student-tab-vocabulary .student-vocab-cover-fallback {
-  display: grid !important; place-items: center; font-size: 1.5rem !important;
+html body :is(#student-tab-vocabulary, #student-vocabulary-lists) .student-vocab-cover img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+html body :is(#student-tab-vocabulary, #student-vocabulary-lists) .student-vocab-cover-fallback {
+  display: grid !important;
+  place-items: center !important;
+  font-size: 2.25rem !important;
   background: color-mix(in oklab, var(--pk-surface-2) 86%, var(--pk-brand)) !important;
 }
 html body #student-tab-vocabulary .student-vocab-open-button:disabled {
