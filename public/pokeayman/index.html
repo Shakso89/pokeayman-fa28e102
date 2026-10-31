@@ -28028,6 +28028,26 @@ function openVocabCoverPicker(listId, listName) {
 
 window.activeGameVocabCache = window.activeGameVocabCache || new Map();
 
+function toDeterministicUuid(str) {
+  if (!str) return '00000000-0000-0000-0000-000000000000';
+  const s = String(str).trim();
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) {
+    return s.toLowerCase();
+  }
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57, h3 = 0x12345678, h4 = 0x87654321;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+    h3 = Math.imul(h3 ^ ch, 3812015801);
+    h4 = Math.imul(h4 ^ ch, 2718281829);
+  }
+  const toHex = (n) => (n >>> 0).toString(16).padStart(8, '0');
+  const hex = toHex(h1) + toHex(h2) + toHex(h3) + toHex(h4);
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+window.toDeterministicUuid = toDeterministicUuid;
+
 async function syncAllClassesGameVocabLists() {
   const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
   if (!sb) return;
@@ -28050,14 +28070,23 @@ window.syncAllClassesGameVocabLists = syncAllClassesGameVocabLists;
 
 function isVocabListGameActive(list, schoolName, className, classId) {
   if (!list) return false;
-  const ids = window.activeGameVocabCache.get(classId) || window.activeGameVocabCache.get(`${schoolName}||${className}`) || [];
+  const ids = (
+    window.activeGameVocabCache.get(classId) || 
+    window.activeGameVocabCache.get(`${schoolName}||${className}`) || 
+    []
+  ).map(String);
   if (!Array.isArray(ids) || !ids.length) return false;
   const cand = [
     list.__backendId,
     list.id,
     list.vocab_list_id,
     list.list_id,
-    list.vocabulary_list_id
+    list.vocabulary_list_id,
+    list.vocab_list_name,
+    toDeterministicUuid(list.__backendId),
+    toDeterministicUuid(list.id),
+    toDeterministicUuid(list.vocab_list_id),
+    toDeterministicUuid(list.vocab_list_name)
   ].filter(Boolean).map(String);
   return cand.some(id => ids.includes(id));
 }
@@ -28079,37 +28108,49 @@ async function handleToggleGameAccess(classId, listId, listName) {
   );
   const canonicalListId = (listRec && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(listRec.__backendId))
     ? listRec.__backendId
-    : listId;
+    : (listId || listName);
 
-  const currentActiveIds = window.activeGameVocabCache.get(classKey) || (resolvedClassId ? window.activeGameVocabCache.get(resolvedClassId) : null) || [];
-  const isCurrentlyActive = currentActiveIds.includes(canonicalListId) || currentActiveIds.includes(listId);
+  const targetUuid = toDeterministicUuid(canonicalListId || listName);
+
+  const currentActiveIds = (
+    window.activeGameVocabCache.get(classKey) || 
+    (resolvedClassId ? window.activeGameVocabCache.get(resolvedClassId) : null) || 
+    []
+  ).map(String);
+
+  const isCurrentlyActive = currentActiveIds.includes(canonicalListId) || 
+                            currentActiveIds.includes(String(listId)) || 
+                            currentActiveIds.includes(targetUuid);
   
   const updatedIds = isCurrentlyActive
-    ? currentActiveIds.filter(id => id !== canonicalListId && id !== listId)
-    : [...currentActiveIds, canonicalListId];
+    ? currentActiveIds.filter(id => id !== canonicalListId && id !== String(listId) && id !== targetUuid)
+    : [...currentActiveIds, targetUuid];
 
-  // Optimistic update
+  // Optimistic UI update
   window.activeGameVocabCache.set(classKey, updatedIds);
   if (resolvedClassId) window.activeGameVocabCache.set(resolvedClassId, updatedIds);
   renderVocabLists();
 
   if (sb && resolvedClassId) {
-    const { error } = await sb
-      .from('classes')
-      .update({ active_game_vocab_list_ids: updatedIds })
-      .eq('id', resolvedClassId);
+    try {
+      const dbPayload = updatedIds.map(toDeterministicUuid);
+      const { error } = await sb
+        .from('classes')
+        .update({ active_game_vocab_list_ids: dbPayload })
+        .eq('id', resolvedClassId);
 
-    if (error) {
-      console.error('Failed to update active game vocabulary lists:', error);
+      if (error) throw error;
+    } catch (err) {
+      console.error('Failed to update active game vocabulary lists:', err);
       window.activeGameVocabCache.set(classKey, currentActiveIds);
       if (resolvedClassId) window.activeGameVocabCache.set(resolvedClassId, currentActiveIds);
       renderVocabLists();
-      toast('Failed to update game access. Please try again.');
+      toast('Failed to update game access: ' + (err.message || 'Please try again.'));
       return;
     }
   }
 
-  toast(`🎮 Game Access for "${listName}" turned ${!isCurrentlyActive ? 'ON' : 'OFF'} for ${navClass}`);
+  toast(`Game access for "${listName}" turned ${!isCurrentlyActive ? 'ON' : 'OFF'} for ${navClass}`);
 }
 window.handleToggleGameAccess = handleToggleGameAccess;
 
@@ -28128,38 +28169,106 @@ function renderVocabLists() {
   const classRec = (typeof getClasses === 'function' ? getClasses(navSchool).find(c => c.class_name === navClass) : null) || allData.find(c => c.type === 'class' && c.school_name === navSchool && c.class_name === navClass);
   const classId = classRec?.__backendId || classRec?.id || classRec?.class_id || '';
   const classKey = `${navSchool}||${navClass}`;
-  const currentActiveIds = window.activeGameVocabCache.get(classKey) || (classId ? window.activeGameVocabCache.get(classId) : null) || [];
+  const currentActiveIds = (
+    window.activeGameVocabCache.get(classKey) || 
+    (classId ? window.activeGameVocabCache.get(classId) : null) || 
+    []
+  ).map(String);
 
   container.innerHTML = lists.map(list => {
     const words = list.words || [];
     const isShared = String(list.vocab_list_class || '') !== String(navClass || '');
-    const sharedLabel = isShared ? `<p class="vocab-list-count mt-1" style="color:#fbbf24">↗ Shared from ${String(list.vocab_list_class || 'another class').replace(/[&<>"]/g, '')}</p>` : '';
+    const sharedSubtitle = isShared 
+      ? `<span class="flex items-center gap-1 text-amber-300 font-semibold"><svg class="w-3 h-3 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Shared from ${String(list.vocab_list_class || 'another class').replace(/[&<>"]/g, '')}</span>` 
+      : '';
     const removeAction = isShared
       ? `unshareVocabListFromClass('${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}','${String(list.vocab_list_name).replace(/'/g, "\\'")}',this)`
       : `removeVocabListFromClass('${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}','${String(list.vocab_list_name).replace(/'/g, "\\'")}',this)`;
     const removeLabel = isShared ? 'Unshare' : 'Remove';
-    const canonicalListId = String(list.__backendId || list.id || list.vocab_list_id || '');
-    const isGameActive = currentActiveIds.includes(canonicalListId) || currentActiveIds.includes(String(list.vocab_list_id || '')) || currentActiveIds.includes(String(list.__backendId || ''));
+    const canonicalListId = String(list.__backendId || list.id || list.vocab_list_id || list.vocab_list_name || '');
+    const targetUuid = toDeterministicUuid(canonicalListId);
+    const isGameActive = currentActiveIds.includes(canonicalListId) || 
+                         currentActiveIds.includes(String(list.vocab_list_id || '')) || 
+                         currentActiveIds.includes(String(list.__backendId || '')) ||
+                         currentActiveIds.includes(targetUuid);
     const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
+    const coverUrl = window.resolvePermanentVocabCover ? window.resolvePermanentVocabCover(list.vocab_cover_image_url, list.vocab_list_name) : list.vocab_cover_image_url;
 
-    const gameAccessBtn = `<button class="vocab-game-toggle-btn canva-button flex items-center gap-1.5" type="button" 
-      style="${isGameActive ? 'background:rgba(16,185,129,0.25)!important; border-color:rgba(52,211,153,0.6)!important; color:#a7f3d0!important;' : 'background:rgba(30,41,59,0.7)!important; border-color:rgba(71,85,105,0.6)!important; color:#94a3b8!important;'}"
-      onclick="event.stopPropagation();handleToggleGameAccess('${classId}','${canonicalListId}','${safeListName}')"
-      title="Toggle game access for ${list.vocab_list_name} in ${navClass}">
-      <span>🎮</span>
-      <span>Game Access: <strong style="font-weight:900; color:${isGameActive ? '#6ee7b7' : '#cbd5e1'}">${isGameActive ? 'ON' : 'OFF'}</strong></span>
-    </button>`;
-
-    return `<div class="vocab-list-card canva-card p-4 sm:p-5">
-      <div class="flex items-start gap-3 mb-1">
-        <span class="vocab-list-emblem" aria-hidden="true">📚</span>
+    return `<div class="vocab-list-card canva-card p-4 sm:p-5 flex flex-col justify-between" data-list-id="${canonicalListId}">
+      <!-- 1. Card Header: Title, Count, Origin on Left; Ghost Icons on Right -->
+      <div class="flex items-start justify-between gap-3 mb-2">
         <div class="flex-1 min-w-0">
-          <h4 class="vocab-list-name text-sm sm:text-base truncate flex items-center gap-1.5">${list.vocab_list_name} ${isAiGeneratedVocabList(list) ? getAiGeneratedBadgeHtml() : ""}</h4>
-          <p class="vocab-list-count mt-1">${words.length} word${words.length !== 1 ? 's' : ''}</p>${sharedLabel}
+          <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex items-center gap-1.5">
+            ${list.vocab_list_name} ${isAiGeneratedVocabList(list) ? getAiGeneratedBadgeHtml() : ""}
+          </h4>
+          <div class="flex items-center flex-wrap gap-2 mt-0.5 text-xs text-slate-400">
+            <span>${words.length} word${words.length !== 1 ? 's' : ''}</span>
+            ${sharedSubtitle}
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 shrink-0">
+          <button 
+            type="button" 
+            class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition active:scale-95" 
+            onclick="openVocabListEditor('${list.__backendId}','${safeListName}')" 
+            title="Edit ${list.vocab_list_name}">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+          </button>
+          <button 
+            type="button" 
+            class="p-1.5 rounded-lg text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/15 transition active:scale-95" 
+            onclick="${removeAction}" 
+            title="${removeLabel} ${list.vocab_list_name}">
+            ${isShared
+              ? `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`
+              : `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`
+            }
+          </button>
         </div>
       </div>
-      ${list.vocab_cover_image_url ? `<div class="vocab-list-cover" role="button" tabindex="0" aria-label="Open ${String(list.vocab_list_name).replace(/"/g, '&quot;')} flashcards" onclick="openVocabFlashcards('${safeListName}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${window.resolvePermanentVocabCover ? window.resolvePermanentVocabCover(list.vocab_cover_image_url, list.vocab_list_name) : list.vocab_cover_image_url}" alt="Cover for ${list.vocab_list_name}" loading="lazy" onerror="window.healBrokenVocabImgElement&&window.healBrokenVocabImgElement(this,this.alt,true)"></div>` : `<div class="vocab-list-cover" role="button" tabindex="0" aria-label="Open ${String(list.vocab_list_name).replace(/"/g, '&quot;')} flashcards" onclick="openVocabFlashcards('${safeListName}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"></div>`}
-      ${words.length > 0 ? `<div class="vocab-card-actions mb-1"><button class="vocab-card-mode canva-button" type="button" onclick="openVocabFlashcards('${safeListName}')">🎴 Flashcard Mode</button>${gameAccessBtn}</div><div class="vocab-card-actions"><button class="vocab-card-edit canva-button" type="button" onclick="openVocabListEditor('${list.__backendId}','${safeListName}')">Edit</button><button class="vocab-cover-button vocab-card-cover canva-button" type="button" onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${safeListName}')">▣ Cover</button><button class="vocab-card-delete canva-button" type="button" onclick="${removeAction}">${removeLabel}</button></div>` : `<div class="vocab-empty-state vocab-list-count italic">No words yet</div><div class="vocab-card-actions mb-1">${gameAccessBtn}</div><div class="vocab-card-actions vocab-empty-actions"><button class="vocab-card-edit canva-button" type="button" onclick="openVocabListEditor('${list.__backendId}','${safeListName}')">Edit</button><button class="vocab-cover-button vocab-card-cover canva-button" type="button" onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${safeListName}')">▣ Cover</button><button class="vocab-card-delete canva-button" type="button" onclick="${removeAction}">${removeLabel}</button></div>`}
+
+      <!-- 2. Image Preview with Hover Change Cover Overlay -->
+      <div class="relative group/cover rounded-xl overflow-hidden aspect-[16/10] bg-slate-900/60 border border-slate-700/50 flex items-center justify-center my-2 cursor-pointer" onclick="openVocabFlashcards('${safeListName}')">
+        ${coverUrl
+          ? `<img src="${coverUrl}" alt="Cover for ${list.vocab_list_name}" class="w-full h-full object-cover transition duration-300 group-hover/cover:scale-105" loading="lazy" onerror="window.healBrokenVocabImgElement&&window.healBrokenVocabImgElement(this,this.alt,true)">`
+          : `<div class="text-slate-500 text-xs font-semibold flex items-center gap-1.5"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> No cover image</div>`
+        }
+        <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px] opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center p-2">
+          <button 
+            type="button" 
+            onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${safeListName}')" 
+            class="py-1 px-3 rounded-lg bg-slate-800/95 border border-slate-600/80 text-white shadow-md text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-700 transition">
+            <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+            Change Cover
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. Bottom Controls: Single Clean Row (Flashcards & Game Access) -->
+      <div class="vocab-card-bottom-bar flex items-center gap-2 mt-auto pt-2">
+        <button
+          type="button"
+          onclick="openVocabFlashcards('${safeListName}')"
+          class="vocab-flashcard-pill flex-1 py-2 px-3 rounded-xl bg-amber-400/15 border border-amber-400/40 text-amber-300 hover:bg-amber-400/25 active:scale-95 transition flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm"
+        >
+          <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span>Flashcards</span>
+        </button>
+
+        <button
+          type="button"
+          onclick="event.stopPropagation();handleToggleGameAccess('${classId}','${canonicalListId}','${safeListName}')"
+          class="vocab-game-pill flex-1 py-2 px-3 rounded-xl border transition active:scale-95 flex items-center justify-center gap-1.5 text-xs font-bold ${
+            isGameActive
+              ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.15)]'
+              : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-300 hover:bg-slate-800'
+          }"
+        >
+          <svg class="w-3.5 h-3.5 ${isGameActive ? 'text-emerald-400' : 'text-slate-400'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
+          <span>Game: ${isGameActive ? 'ON' : 'OFF'}</span>
+        </button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -28233,7 +28342,7 @@ function openVocabListEditor(listId, listName) {
   modal.innerHTML = `<div class="vocab-editor-modal" role="dialog" aria-modal="true" aria-labelledby="ve-title">
     <div class="vocab-editor-header flex justify-between gap-4">
       <div class="flex-1 min-w-0"><h2 id="ve-title">Edit Vocabulary List</h2><div class="ve-name-row"><label for="edit-vocab-list-name">List name<input id="edit-vocab-list-name" type="text" class="vocab-editor-title-input w-full" maxlength="120"></label><button id="edit-vocab-list-name-btn" type="button" class="vocab-editor-primary">Save name</button></div><p id="ve-name-status" class="ve-status" aria-live="polite"></p></div>
-      <div class="flex items-center gap-2 shrink-0"><button id="open-share-vocab-btn" type="button" class="vocab-editor-secondary" aria-haspopup="dialog" aria-expanded="false">Share</button><button id="open-merge-vocab-btn" type="button" class="vocab-editor-secondary">Merge</button><button id="editor-close" class="vocab-editor-close" type="button" aria-label="Close vocabulary editor">×</button></div>
+      <div class="flex items-center gap-2 shrink-0"><button id="open-share-vocab-btn" type="button" class="vocab-editor-secondary" aria-haspopup="dialog" aria-expanded="false">Share</button><button id="open-cover-vocab-btn" type="button" class="vocab-editor-secondary flex items-center gap-1.5"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Cover</button><button id="open-merge-vocab-btn" type="button" class="vocab-editor-secondary">Merge</button><button id="editor-close" class="vocab-editor-close" type="button" aria-label="Close vocabulary editor">×</button></div>
     </div>
     <div class="vocab-editor-content space-y-5">
       <div class="vocab-editor-form"><h3 class="mb-3">Add word</h3>
@@ -28250,6 +28359,9 @@ function openVocabListEditor(listId, listName) {
   nameInput.value = listName;
   const status = modal.querySelector('#ve-name-status');
   const setStatus = (message, error = false) => { status.textContent = message; status.dataset.error = String(error); };
+  modal.querySelector('#open-cover-vocab-btn')?.addEventListener('click', () => {
+    openVocabCoverPicker(storageId, listName);
+  });
   modal.querySelector('#edit-vocab-list-name-btn').addEventListener('click', async () => {
     const saveButton = modal.querySelector('#edit-vocab-list-name-btn');
     if (saveButton.disabled) return;

@@ -22,13 +22,16 @@ describe("Teacher Game Vocabulary Assignment & Multi-Class Student Dashboard Iso
     expect(types).toContain("active_game_vocab_list_ids: string[] | null");
   });
 
-  it("2. Teacher Class Management contains Game Access toggle control and isolates updates per class", () => {
+  it("2. Teacher Class Management contains Game Access toggle control and isolates updates per class with pure vector icons", () => {
     const indexHtml = readFileSync(path.join(root, "public", "pokeayman", "index.html"), "utf8");
     expect(indexHtml).toContain("handleToggleGameAccess");
-    expect(indexHtml).toContain("Game Access:");
-    expect(indexHtml).toContain("active_game_vocab_list_ids: updatedIds");
+    expect(indexHtml).toContain("Game: ${isGameActive ? 'ON' : 'OFF'}");
+    expect(indexHtml).toContain("toDeterministicUuid");
+    expect(indexHtml).toContain("active_game_vocab_list_ids: dbPayload");
     expect(indexHtml).toContain(".eq('id', resolvedClassId)");
-    expect(indexHtml).toContain("vocab-game-toggle-btn");
+    expect(indexHtml).toContain("vocab-game-pill");
+    expect(indexHtml).toContain("vocab-flashcard-pill");
+    expect(indexHtml).toContain("open-cover-vocab-btn");
   });
 
   it("3. Student UI Games Tab renders multi-class grouped view and strictly filters by active assignments", () => {
