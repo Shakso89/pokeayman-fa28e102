@@ -28008,19 +28008,252 @@ html body.ts-bright .vocab-cover-dialog .vocab-cover-result.is-selected,html bod
 `;
 document.head.appendChild(vocabCoverStyles);
 function openVocabCoverPicker(listId, listName) {
-  const list = getVocabLists().find(item => item.__backendId === listId); if (!list) return;
+  const normId = normalizeVocabId(listId);
+  const normName = String(listName || '').trim().toLowerCase();
+
+  let row = (typeof allData !== 'undefined' && Array.isArray(allData) ? allData : []).find(r => {
+    if (!['vocab_list', 'vocabulary_list'].includes(String(r.type || '').toLowerCase())) return false;
+    const rId = normalizeVocabId(r.vocab_list_id ?? r.list_id ?? r.vocabulary_list_id ?? r.parent_list_id);
+    const rBackend = normalizeVocabId(r.__backendId || r.id);
+    if (normId && (rId === normId || rBackend === normId || r.__backendId === listId || r.id === listId)) return true;
+    if (normName && String(r.vocab_list_name || '').trim().toLowerCase() === normName) return true;
+    return false;
+  });
+
+  let list = row;
+  if (!list && typeof getVocabLists === 'function') {
+    list = getVocabLists('', '').find(item => {
+      const iId = normalizeVocabId(item.vocab_list_id ?? item.list_id ?? item.__backendId);
+      if (normId && (iId === normId || item.__backendId === listId)) return true;
+      if (normName && String(item.vocab_list_name || '').trim().toLowerCase() === normName) return true;
+      return false;
+    });
+  }
+
+  if (!row && !list && typeof allData !== 'undefined' && Array.isArray(allData)) {
+    row = allData.find(r => {
+      const rName = String(r.vocab_list_name || r.name || '').trim().toLowerCase();
+      return normName && rName === normName;
+    });
+    list = row;
+  }
+
+  if (!row && !list) {
+    if (typeof toast === 'function') toast('Could not find this vocabulary list. Refresh and try again.');
+    return;
+  }
+
   const isLight = document.body.classList.contains('ts-bright') ||
                   document.body.classList.contains('light') ||
                   document.documentElement.classList.contains('light') ||
                   document.documentElement.getAttribute('data-theme') === 'light';
   const modal = document.createElement('div');
   modal.className = 'vocab-cover-popover' + (isLight ? ' is-light' : ' is-dark');
-  modal.innerHTML = `<section class="vocab-cover-dialog" role="dialog" aria-modal="true" aria-labelledby="vocab-cover-title"><div class="flex items-start justify-between gap-3 mb-3"><div><h2 id="vocab-cover-title" class="heading-font text-lg font-bold">Set list cover</h2><p class="vocab-cover-subtitle text-xs mt-1">Choose a licensed stock photo for “${String(listName).replace(/</g,'&lt;')}”.</p></div><button type="button" class="vocab-editor-close" data-cover-close aria-label="Close cover picker">×</button></div><label for="vocab-cover-search" class="sr-only">Search stock photos</label><div class="flex gap-2"><input id="vocab-cover-search" class="vocab-editor-input vocab-cover-search-input flex-1" type="search" placeholder="Search photos by keyword"><button id="vocab-cover-search-btn" type="button" class="vocab-editor-primary vocab-cover-btn-primary">Search</button></div><p id="vocab-cover-status" class="min-h-5 mt-2 text-xs" aria-live="polite"></p><div id="vocab-cover-results" class="vocab-cover-results"></div><button type="button" id="vocab-cover-load-more" class="vocab-photo-load-more vocab-cover-load-more w-full mt-3" disabled>Load more photos</button><div class="vocab-cover-preview-box mt-3 rounded-lg p-2.5"><p class="vocab-cover-preview-label text-xs font-bold mb-2">Selected preview</p><div id="vocab-cover-preview" class="w-full max-w-[16rem] aspect-square h-auto mx-auto rounded-lg overflow-hidden flex items-center justify-center text-xs">No cover selected</div></div><div class="flex gap-2 mt-4"><button id="vocab-cover-remove" type="button" class="vocab-editor-secondary vocab-cover-btn-secondary flex-1">Remove cover</button><button id="vocab-cover-cancel" type="button" class="vocab-editor-secondary vocab-cover-btn-secondary flex-1">Cancel</button><button id="vocab-cover-apply" type="button" class="vocab-editor-primary vocab-cover-btn-primary flex-1">Apply</button></div></section>`;
-  document.body.appendChild(modal); let selectedId=String(list.vocab_cover_image_id||''); let selectedUrl=String(list.vocab_cover_image_url||''); const results=modal.querySelector('#vocab-cover-results'), preview=modal.querySelector('#vocab-cover-preview'), status=modal.querySelector('#vocab-cover-status');
-  const showPreview=()=>{ preview.innerHTML=selectedUrl?`<img src="${selectedUrl}" alt="Selected cover preview" class="w-full h-full object-cover">`:'No cover selected'; };
-  showPreview(); const close=()=>modal.remove(); modal.querySelectorAll('[data-cover-close],#vocab-cover-cancel').forEach(btn=>btn.addEventListener('click',close)); modal.addEventListener('click',e=>{if(e.target===modal)close()});
-  let coverQuery=''; let coverPage=1; let coverPhotos=[]; let coverHasMore=false; let coverLoading=false; let coverRequest=0; const loadMore=modal.querySelector('#vocab-cover-load-more'); const renderCoverPhotos=()=>{results.innerHTML=coverPhotos.map((photo,index)=>`<button type="button" class="vocab-cover-result ${String(selectedId)===String(photo.id||'')?'is-selected':''}" data-photo-index="${index}" aria-label="Select stock photo by ${photo.photographer}"><img src="${photo.src.medium}" alt="Stock photo by ${photo.photographer}" loading="lazy"></button>`).join('');results.querySelectorAll('.vocab-cover-result').forEach(card=>card.addEventListener('click',()=>{const photo=coverPhotos[Number(card.dataset.photoIndex)];selectedId=String(photo.id||photo.src.large||'');selectedUrl=String(photo.src.large||photo.src.original||photo.src.medium||'');results.querySelectorAll('.vocab-cover-result').forEach(item=>item.classList.remove('is-selected'));card.classList.add('is-selected');showPreview()}));loadMore.disabled=coverLoading||!coverHasMore||coverPhotos.length>=100;loadMore.textContent=coverLoading?'Loading photos…':'Load more photos';}; const fetchCoverPhotos=async(reset=false)=>{if(coverLoading)return;const query=modal.querySelector('#vocab-cover-search').value.trim().replace(/\s+/g,' ');if(!query){status.textContent='Enter a keyword to search.';return;}if(reset){coverQuery=query.toLocaleLowerCase();coverPage=1;coverPhotos=[];coverHasMore=true;coverRequest+=1;results.replaceChildren();}if(query.toLocaleLowerCase()!==coverQuery||!coverHasMore||coverPhotos.length>=100)return;const request=coverRequest;coverLoading=true;renderCoverPhotos();status.textContent=coverPhotos.length?`${coverPhotos.length} photos loaded · Loading…`:'Loading licensed stock photos…';try{const response=await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}&per_page=12&page=${coverPage}`,{headers:{'Authorization': ''}});if(!response.ok)throw new Error('search');const data=await response.json();if(request!==coverRequest||coverQuery!==query.toLocaleLowerCase())return;const seen=new Set(coverPhotos.map(photo=>String(photo.id||photo.src?.large||photo.src?.original||'')));const additions=(Array.isArray(data.photos)?data.photos:[]).filter(photo=>{const key=String(photo.id||photo.src?.large||photo.src?.original||'');if(!key||seen.has(key))return false;seen.add(key);return true;}).slice(0,100-coverPhotos.length);coverPhotos.push(...additions);coverPage+=1;coverHasMore=Boolean(data.next_page)&&coverPhotos.length<100;status.textContent=coverPhotos.length?`${coverPhotos.length} photos found.`:'No photos found. Try another keyword.';renderCoverPhotos();}catch(error){if(request===coverRequest){coverHasMore=true;status.textContent=`${coverPhotos.length?coverPhotos.length+' photos loaded · ':''}Photo search failed. Try again.`;}}finally{if(request===coverRequest){coverLoading=false;renderCoverPhotos();}}};modal.querySelector('#vocab-cover-search-btn').addEventListener('click',()=>fetchCoverPhotos(true));loadMore.addEventListener('click',()=>fetchCoverPhotos(false));
-  modal.querySelector('#vocab-cover-remove').addEventListener('click',()=>{selectedId='';selectedUrl='';showPreview()}); modal.querySelector('#vocab-cover-apply').addEventListener('click',async()=>{const current=getVocabLists().find(item=>item.__backendId===listId);if(!current){status.textContent='This list is no longer available.';return;}const row=allData.find(r=>['vocab_list','vocabulary_list'].includes(String(r.type||'').toLowerCase())&&normalizeVocabId(r.vocab_list_id??r.list_id??r.vocabulary_list_id??r.parent_list_id)===normalizeVocabId(current.vocab_list_id||listId));if(!row){status.textContent='Could not find this list. Refresh and try again.';return;}const result=await window.dataSdk.update({...row,vocab_cover_image_id:selectedId,vocab_cover_image_url:selectedUrl});if(!result?.isOk){status.textContent='Could not save the cover. Try again.';return;}close();toast(selectedUrl?'List cover saved.':'List cover removed.');}); modal.querySelector('#vocab-cover-search').focus();
+  const displayName = listName || (row && row.vocab_list_name) || (list && list.vocab_list_name) || 'this list';
+  modal.innerHTML = `<section class="vocab-cover-dialog" role="dialog" aria-modal="true" aria-labelledby="vocab-cover-title"><div class="flex items-start justify-between gap-3 mb-3"><div><h2 id="vocab-cover-title" class="heading-font text-lg font-bold">Set list cover</h2><p class="vocab-cover-subtitle text-xs mt-1">Choose a licensed stock photo for “${String(displayName).replace(/</g,'&lt;')}”.</p></div><button type="button" class="vocab-editor-close" data-cover-close aria-label="Close cover picker">×</button></div><label for="vocab-cover-search" class="sr-only">Search stock photos</label><div class="flex gap-2"><input id="vocab-cover-search" class="vocab-editor-input vocab-cover-search-input flex-1" type="search" placeholder="Search photos by keyword"><button id="vocab-cover-search-btn" type="button" class="vocab-editor-primary vocab-cover-btn-primary">Search</button></div><p id="vocab-cover-status" class="min-h-5 mt-2 text-xs" aria-live="polite"></p><div id="vocab-cover-results" class="vocab-cover-results"></div><button type="button" id="vocab-cover-load-more" class="vocab-photo-load-more vocab-cover-load-more w-full mt-3" disabled>Load more photos</button><div class="vocab-cover-preview-box mt-3 rounded-lg p-2.5"><p class="vocab-cover-preview-label text-xs font-bold mb-2">Selected preview</p><div id="vocab-cover-preview" class="w-full max-w-[16rem] aspect-square h-auto mx-auto rounded-lg overflow-hidden flex items-center justify-center text-xs">No cover selected</div></div><div class="flex gap-2 mt-4"><button id="vocab-cover-remove" type="button" class="vocab-editor-secondary vocab-cover-btn-secondary flex-1">Remove cover</button><button id="vocab-cover-cancel" type="button" class="vocab-editor-secondary vocab-cover-btn-secondary flex-1">Cancel</button><button id="vocab-cover-apply" type="button" class="vocab-editor-primary vocab-cover-btn-primary flex-1">Apply</button></div></section>`;
+  document.body.appendChild(modal);
+
+  let selectedId = String((row && row.vocab_cover_image_id) || (list && list.vocab_cover_image_id) || '');
+  let selectedUrl = String((row && row.vocab_cover_image_url) || (list && list.vocab_cover_image_url) || '');
+  if (!selectedUrl && typeof resolvePermanentVocabCover === 'function') {
+    selectedUrl = resolvePermanentVocabCover('', displayName, row || list) || '';
+  }
+
+  const results = modal.querySelector('#vocab-cover-results');
+  const preview = modal.querySelector('#vocab-cover-preview');
+  const status = modal.querySelector('#vocab-cover-status');
+
+  const showPreview = () => {
+    preview.innerHTML = selectedUrl
+      ? `<img src="${selectedUrl}" alt="Selected cover preview" class="w-full h-full object-cover">`
+      : 'No cover selected';
+  };
+  showPreview();
+
+  const close = () => modal.remove();
+  modal.querySelectorAll('[data-cover-close],#vocab-cover-cancel').forEach(btn => btn.addEventListener('click', close));
+  modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  let coverQuery = '';
+  let coverPage = 1;
+  let coverPhotos = [];
+  let coverHasMore = false;
+  let coverLoading = false;
+  let coverRequest = 0;
+  const loadMore = modal.querySelector('#vocab-cover-load-more');
+
+  const renderCoverPhotos = () => {
+    results.innerHTML = coverPhotos.map((photo, index) => `<button type="button" class="vocab-cover-result ${String(selectedId) === String(photo.id || '') ? 'is-selected' : ''}" data-photo-index="${index}" aria-label="Select stock photo by ${photo.photographer}"><img src="${photo.src.medium}" alt="Stock photo by ${photo.photographer}" loading="lazy"></button>`).join('');
+    results.querySelectorAll('.vocab-cover-result').forEach(card => card.addEventListener('click', () => {
+      const photo = coverPhotos[Number(card.dataset.photoIndex)];
+      selectedId = String(photo.id || photo.src.large || '');
+      selectedUrl = String(photo.src.large || photo.src.original || photo.src.medium || '');
+      results.querySelectorAll('.vocab-cover-result').forEach(item => item.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+      showPreview();
+    }));
+    loadMore.disabled = coverLoading || !coverHasMore || coverPhotos.length >= 100;
+    loadMore.textContent = coverLoading ? 'Loading photos…' : 'Load more photos';
+  };
+
+  const fetchCoverPhotos = async (reset = false) => {
+    if (coverLoading) return;
+    const query = modal.querySelector('#vocab-cover-search').value.trim().replace(/\s+/g, ' ');
+    if (!query) { status.textContent = 'Enter a keyword to search.'; return; }
+    if (reset) {
+      coverQuery = query.toLocaleLowerCase();
+      coverPage = 1;
+      coverPhotos = [];
+      coverHasMore = true;
+      coverRequest += 1;
+      results.replaceChildren();
+    }
+    if (query.toLocaleLowerCase() !== coverQuery || !coverHasMore || coverPhotos.length >= 100) return;
+    const request = coverRequest;
+    coverLoading = true;
+    renderCoverPhotos();
+    status.textContent = coverPhotos.length ? `${coverPhotos.length} photos loaded · Loading…` : 'Loading licensed stock photos…';
+    try {
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}&per_page=12&page=${coverPage}`, { headers: { 'Authorization': '' } });
+      if (!response.ok) throw new Error('search');
+      const data = await response.json();
+      if (request !== coverRequest || coverQuery !== query.toLocaleLowerCase()) return;
+      const seen = new Set(coverPhotos.map(photo => String(photo.id || photo.src?.large || photo.src?.original || '')));
+      const additions = (Array.isArray(data.photos) ? data.photos : []).filter(photo => {
+        const key = String(photo.id || photo.src?.large || photo.src?.original || '');
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 100 - coverPhotos.length);
+      coverPhotos.push(...additions);
+      coverPage += 1;
+      coverHasMore = Boolean(data.next_page) && coverPhotos.length < 100;
+      status.textContent = coverPhotos.length ? `${coverPhotos.length} photos found.` : 'No photos found. Try another keyword.';
+      renderCoverPhotos();
+    } catch (error) {
+      if (request === coverRequest) {
+        coverHasMore = true;
+        status.textContent = `${coverPhotos.length ? coverPhotos.length + ' photos loaded · ' : ''}Photo search failed. Try again.`;
+      }
+    } finally {
+      if (request === coverRequest) {
+        coverLoading = false;
+        renderCoverPhotos();
+      }
+    }
+  };
+
+  const searchInput = modal.querySelector('#vocab-cover-search');
+  modal.querySelector('#vocab-cover-search-btn').addEventListener('click', () => fetchCoverPhotos(true));
+  searchInput?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      fetchCoverPhotos(true);
+    }
+  });
+  loadMore.addEventListener('click', () => fetchCoverPhotos(false));
+
+  modal.querySelector('#vocab-cover-remove').addEventListener('click', () => {
+    selectedId = '';
+    selectedUrl = '';
+    showPreview();
+  });
+
+  modal.querySelector('#vocab-cover-apply').addEventListener('click', async () => {
+    const applyBtn = modal.querySelector('#vocab-cover-apply');
+    if (applyBtn && applyBtn.disabled) return;
+    if (applyBtn) {
+      applyBtn.disabled = true;
+      applyBtn.textContent = 'Saving…';
+    }
+    if (status) status.textContent = 'Saving cover photo…';
+
+    if (!row) {
+      row = (typeof allData !== 'undefined' && Array.isArray(allData) ? allData : []).find(r => {
+        if (!['vocab_list', 'vocabulary_list'].includes(String(r.type || '').toLowerCase())) return false;
+        const rId = normalizeVocabId(r.vocab_list_id ?? r.list_id ?? r.vocabulary_list_id ?? r.parent_list_id);
+        const rBackend = normalizeVocabId(r.__backendId || r.id);
+        if (normId && (rId === normId || rBackend === normId || r.__backendId === listId || r.id === listId)) return true;
+        if (normName && String(r.vocab_list_name || '').trim().toLowerCase() === normName) return true;
+        return false;
+      });
+    }
+
+    if (!row) {
+      if (status) status.textContent = 'Could not find this list in database. Refresh and try again.';
+      if (applyBtn) {
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Apply';
+      }
+      return;
+    }
+
+    const payload = {
+      ...row,
+      vocab_cover_image_id: selectedId,
+      vocab_cover_image_url: selectedUrl,
+      __backendId: row.__backendId || row.id,
+    };
+
+    try {
+      const result = await window.dataSdk.update(payload);
+      if (!result?.isOk) {
+        if (status) status.textContent = 'Could not save the cover. Try again.';
+        if (applyBtn) {
+          applyBtn.disabled = false;
+          applyBtn.textContent = 'Apply';
+        }
+        return;
+      }
+
+      // Update in-memory objects
+      row.vocab_cover_image_id = selectedId;
+      row.vocab_cover_image_url = selectedUrl;
+      if (list) {
+        list.vocab_cover_image_id = selectedId;
+        list.vocab_cover_image_url = selectedUrl;
+      }
+      if (typeof allData !== 'undefined' && Array.isArray(allData)) {
+        const canonical = normalizeVocabId(row.vocab_list_id || row.list_id || row.vocabulary_list_id || row.__backendId);
+        allData.forEach(r => {
+          if (['vocab_list', 'vocabulary_list'].includes(String(r.type || '').toLowerCase())) {
+            const cid = normalizeVocabId(r.vocab_list_id || r.list_id || r.vocabulary_list_id || r.__backendId);
+            if (cid === canonical || r.__backendId === row.__backendId) {
+              r.vocab_cover_image_id = selectedId;
+              r.vocab_cover_image_url = selectedUrl;
+            }
+          }
+        });
+      }
+
+      try {
+        if (typeof renderVocabLists === 'function') renderVocabLists();
+        if (typeof renderTeacherOwnedVocabLists === 'function') renderTeacherOwnedVocabLists();
+        if (typeof renderStudentVocabulary === 'function') renderStudentVocabulary();
+      } catch (_) {}
+
+      close();
+      if (typeof toast === 'function') {
+        toast(selectedUrl ? 'List cover saved.' : 'List cover removed.');
+      }
+    } catch (err) {
+      console.error('Failed to update list cover:', err);
+      if (status) status.textContent = 'Could not save the cover. Try again.';
+      if (applyBtn) {
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Apply';
+      }
+    }
+  });
+
+  const initialKeyword = String(displayName).replace(/^VB\s*\d+\s*[-:]*\s*/i, '').trim();
+  if (initialKeyword && searchInput) {
+    searchInput.value = initialKeyword;
+    if (initialKeyword.length > 2 && !/^VB\s*\d+$/i.test(initialKeyword)) {
+      fetchCoverPhotos(true);
+    }
+  }
+  searchInput?.focus();
 }
 
 window.activeGameVocabCache = window.activeGameVocabCache || new Map();
@@ -28357,7 +28590,8 @@ function openVocabListEditor(listId, listName) {
   const status = modal.querySelector('#ve-name-status');
   const setStatus = (message, error = false) => { status.textContent = message; status.dataset.error = String(error); };
   modal.querySelector('#open-cover-vocab-btn')?.addEventListener('click', () => {
-    openVocabCoverPicker(storageId, listName);
+    const currentName = nameInput ? nameInput.value.trim() : listName;
+    openVocabCoverPicker(canonicalListId || storageId, currentName || listName);
   });
   modal.querySelector('#edit-vocab-list-name-btn').addEventListener('click', async () => {
     const saveButton = modal.querySelector('#edit-vocab-list-name-btn');

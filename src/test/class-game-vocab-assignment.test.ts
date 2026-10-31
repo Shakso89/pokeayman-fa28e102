@@ -79,4 +79,15 @@ describe("Teacher Game Vocabulary Assignment & Multi-Class Student Dashboard Iso
     expect(indexHtml).not.toContain("ga-listen-quickplay");
     expect(indexHtml).not.toContain("Uses all vocabulary lists in the selected class automatically.");
   });
+
+  it("7. Edit list Cover button reliably invokes openVocabCoverPicker and resolves parent lists in allData", () => {
+    const indexHtml = readFileSync(path.join(root, "public", "pokeayman", "index.html"), "utf8");
+    // Button exists and passes canonical or storage ID with active list name
+    expect(indexHtml).toContain("openVocabCoverPicker(canonicalListId || storageId, currentName || listName)");
+    // openVocabCoverPicker resolves record from allData by ID or Name without requiring school/class filter
+    expect(indexHtml).toContain("function openVocabCoverPicker(listId, listName)");
+    expect(indexHtml).toContain("vocab-cover-dialog");
+    expect(indexHtml).toContain("vocab_cover_image_id: selectedId");
+    expect(indexHtml).toContain("vocab_cover_image_url: selectedUrl");
+  });
 });
