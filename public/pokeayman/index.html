@@ -7493,6 +7493,97 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   }).observe(document.body, { childList: true, subtree: true });
   if (document.body) observeStages(); else document.addEventListener('DOMContentLoaded', observeStages, { once: true });
 
+  function createWordCountStepper({ totalWords, initialCount, onChange }) {
+    const total = Math.max(2, Number(totalWords) || 2);
+    const steps = [5, 8, 10, 12, 15, 18, 20, 25, 30].filter(n => n < total);
+    const options = [...steps, total];
+    let currentIndex = options.length - 1;
+    if (initialCount && options.includes(Number(initialCount))) {
+      currentIndex = options.indexOf(Number(initialCount));
+    }
+
+    const panel = document.createElement('div');
+    panel.className = 'ga-word-count-panel w-full bg-[#111928]/80 border border-slate-800/80 rounded-xl px-4 py-3.5 flex items-center justify-between shadow-sm transition-all hover:border-yellow-500/50';
+    panel.innerHTML = `<div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-yellow-400">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+          <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+          <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+        </svg>
+      </div>
+      <span class="font-bold text-white text-sm">Word count</span>
+    </div>
+    <div class="bg-[#0b1120] border border-slate-800 rounded-xl p-1 flex items-center gap-1.5">
+      <button
+        type="button"
+        class="ga-word-count-dec w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 cursor-pointer"
+        aria-label="Decrease word count"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div class="ga-word-count-val min-w-[80px] px-3 py-1.5 bg-slate-800/70 rounded-lg border border-slate-700/40 text-xs font-bold text-slate-100 text-center select-none">
+      </div>
+      <button
+        type="button"
+        class="ga-word-count-inc w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 cursor-pointer"
+        aria-label="Increase word count"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>`;
+
+    const decBtn = panel.querySelector('.ga-word-count-dec');
+    const incBtn = panel.querySelector('.ga-word-count-inc');
+    const valBadge = panel.querySelector('.ga-word-count-val');
+
+    function update() {
+      const count = options[currentIndex];
+      valBadge.textContent = count === total ? `All (${count})` : `${count} words`;
+      valBadge.dataset.value = String(count);
+      const atMin = currentIndex <= 0;
+      const atMax = currentIndex >= options.length - 1;
+      decBtn.disabled = atMin;
+      decBtn.setAttribute('aria-disabled', String(atMin));
+      incBtn.disabled = atMax;
+      incBtn.setAttribute('aria-disabled', String(atMax));
+      onChange?.(count);
+    }
+
+    decBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (currentIndex > 0) {
+        currentIndex--;
+        update();
+      }
+    });
+
+    incBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (currentIndex < options.length - 1) {
+        currentIndex++;
+        update();
+      }
+    });
+
+    update();
+
+    return {
+      element: panel,
+      getValue: () => options[currentIndex],
+      setValue: (val) => {
+        const idx = options.indexOf(Number(val));
+        if (idx >= 0) {
+          currentIndex = idx;
+          update();
+        }
+      }
+    };
+  }
+  window.createWordCountStepper = createWordCountStepper;
+
   function createCustomStepper({ iconSvg, title, subtitleGetter, options, initialIndex = 0, onChange }) {
     let currentIndex = Math.max(0, Math.min(options.length - 1, initialIndex));
     const panel = document.createElement('div');
@@ -7817,6 +7908,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     );
 
     const isMemoryGame = resolvedFnName === 'chooseMemoryDifficulty';
+    const isMatchGame = resolvedFnName === 'chooseMatchWordCount';
     if (isMemoryGame) {
       // Remove any existing raw memory-level-option container
       const existingMemoryCtrl = gameSpecificControls.find(el => el.querySelector('.memory-level-option'));
@@ -7914,6 +8006,94 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             btn.setAttribute('aria-pressed', String(active));
           });
           gridStepper.refreshSubtitle?.();
+        }
+      });
+      modal.dataset.gaTimerSeconds = '0';
+      window.pendingGameTimerSeconds = 0;
+      paramsSection.appendChild(timerStepper.element);
+    } else if (isMatchGame) {
+      // Remove any existing raw match-word-count-option container
+      const existingMatchCtrl = gameSpecificControls.find(el => el.querySelector('.match-word-count-option, .ga-match-word-count-panel, .ga-word-count-panel'));
+      if (existingMatchCtrl) {
+        existingMatchCtrl.remove();
+        const idx = gameSpecificControls.indexOf(existingMatchCtrl);
+        if (idx >= 0) gameSpecificControls.splice(idx, 1);
+      }
+      modal.querySelectorAll('.match-word-count-option').forEach(el => {
+        const parent = el.closest('.mb-4, fieldset, .ga-round-setting');
+        if (parent) parent.remove();
+      });
+
+      const activeListName = modal.dataset.gaListName || '';
+      const matchWords = typeof getGameWords === 'function' ? getGameWords(activeListName, true).filter(w => w && w.vocab_image && String(w.vocab_image).trim()) : [];
+      const totalWords = matchWords.length || Number(modal.dataset.gaTotalMatchWords || 0) || 0;
+
+      // 1. Word count Stepper
+      const wordCountStepper = createWordCountStepper({
+        totalWords,
+        initialCount: modal.dataset.gaMatchWordCount ? Number(modal.dataset.gaMatchWordCount) : totalWords,
+        onChange: (count) => {
+          modal.dataset.gaMatchWordCount = String(count);
+          window.selectedMatchWordCount = count;
+        }
+      });
+      const initialWordCount = wordCountStepper.getValue();
+      modal.dataset.gaMatchWordCount = String(initialWordCount);
+      window.selectedMatchWordCount = initialWordCount;
+      paramsSection.appendChild(wordCountStepper.element);
+
+      // 2. Winner reward coins Stepper
+      const coinIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h6a1.5 1.5 0 0 1 0 3H9a1.5 1.5 0 0 0 0 3h6"/></svg>`;
+      const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : 20;
+      const rewardMax = (availableCredits === Infinity || !Number.isFinite(availableCredits)) ? 100 : Math.max(0, Math.floor(availableCredits / 5) * 5);
+      const coinOptions = [{ value: 0, label: 'No coins' }];
+      for (let c = 5; c <= Math.max(20, rewardMax); c += 5) {
+        coinOptions.push({ value: c, label: `${c} coins` });
+      }
+
+      const rewardStepper = createCustomStepper({
+        iconSvg: coinIcon,
+        title: 'Winner reward coins',
+        options: coinOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaRewardCoins = String(opt.value);
+          window.pendingGameReward = opt.value;
+          modal.querySelectorAll('.game-reward-option').forEach(btn => {
+            const active = Number(btn.dataset.reward || 0) === opt.value;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-checked', String(active));
+          });
+        }
+      });
+      modal.dataset.gaRewardCoins = '0';
+      window.pendingGameReward = 0;
+      paramsSection.appendChild(rewardStepper.element);
+
+      // 3. Timer Stepper
+      const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+      const timerOptions = [
+        { seconds: 0, label: 'No timer' },
+        { seconds: 30, label: '30s' },
+        { seconds: 45, label: '45s' },
+        { seconds: 60, label: '60s' },
+        { seconds: 90, label: '90s' },
+        { seconds: 120, label: '2 min' }
+      ];
+
+      const timerStepper = createCustomStepper({
+        iconSvg: timerIcon,
+        title: 'Timer',
+        options: timerOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaTimerSeconds = String(opt.seconds);
+          window.pendingGameTimerSeconds = opt.seconds;
+          modal.querySelectorAll('.game-timer-option').forEach(btn => {
+            const active = Number(btn.dataset.seconds || 0) === opt.seconds;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-pressed', String(active));
+          });
         }
       });
       modal.dataset.gaTimerSeconds = '0';
@@ -24457,6 +24637,7 @@ function chooseGamePlayers(listName, nextStep) {
   const isSurpriseBoxes = nextStep === chooseBaamboozlePowerUps;
   const isFindMe = nextStep === chooseFindMeScore;
   const availableMatchWords = isMatchWords ? getGameWords(listName, true).filter(w => w.vocab_image && w.vocab_image.trim()) : [];
+  if (isMatchWords) modal.dataset.gaTotalMatchWords = String(availableMatchWords.length);
   const rawCrosswordWordCount = isCrossword ? Math.max(0, Number(window.getCrosswordWordCount?.(listName) || 0)) : 0;
   const CROSSWORD_SAFE_MAX = 12;
   const availableCrosswordWordCount = isCrossword ? Math.max(2, Math.min(CROSSWORD_SAFE_MAX, rawCrosswordWordCount || 2)) : 0;
@@ -24467,7 +24648,35 @@ function chooseGamePlayers(listName, nextStep) {
     <div class="flex flex-wrap justify-center gap-3 text-left max-h-56 overflow-y-auto mb-4" id="game-player-list">${students.map((s, index) => { const accents = ['rose', 'violet', 'sky', 'amber', 'emerald', 'cyan']; const accent = accents[index % accents.length]; return `<label class="game-player-card-option group relative flex min-h-[116px] w-[104px] sm:w-[116px] flex-col items-center justify-center gap-1.5 rounded-full border-2 border-${accent}-200 bg-gradient-to-br from-white to-${accent}-50 p-2.5 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:border-${accent}-400 hover:shadow-lg focus-within:ring-4 focus-within:ring-${accent}-200"><input type="checkbox" value="${s.student_name}" class="game-player-check peer sr-only"><span class="game-player-checkmark absolute left-2 top-2 hidden h-7 w-7 items-center justify-center rounded-full bg-${accent}-600 text-white text-base font-black shadow-md ring-2 ring-white peer-checked:flex" aria-hidden="true">✓</span><span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-${accent}-100 shadow-inner transition-transform group-hover:scale-105">${gameStudentAvatarMarkup(s, 'h-10 w-10 object-contain')}</span><span class="max-w-full truncate px-1 font-extrabold tracking-wide text-${accent}-900 text-xs sm:text-sm" title="${s.student_name}">${s.student_name}</span></label>`; }).join('')}</div>
 
     ${isCrossword ? `<section class="ga-crossword-count mb-4" aria-label="Crossword word count"><label for="crossword-word-count">Words in puzzle</label><div class="ga-crossword-count-controls"><input id="crossword-word-count" type="number" min="2" max="${availableCrosswordWordCount}" value="${availableCrosswordWordCount}" inputmode="numeric"><button type="button" id="crossword-play-all">Play ${rawCrosswordWordCount > CROSSWORD_SAFE_MAX ? `Max (${availableCrosswordWordCount}` : `All (${availableCrosswordWordCount}`} words)</button></div>${rawCrosswordWordCount > CROSSWORD_SAFE_MAX ? `<p class="ga-crossword-warning text-xs text-amber-300 font-semibold mt-1">Crosswords support up to ${CROSSWORD_SAFE_MAX} words for best board layout (from ${rawCrosswordWordCount} available).</p>` : ''}</section>` : ''}
-    ${isMatchWords ? `<div class="mb-4 text-left"><h3 class="text-sm font-black text-amber-100 mb-2">Choose word count</h3><div class="grid grid-cols-3 gap-2" role="group" aria-label="Number of words">${matchWordCounts.map((count, index) => `<button type="button" class="match-word-count-option rounded-lg border-2 px-3 py-2 text-sm font-bold transition ${index === matchWordCounts.length - 1 ? 'is-selected border-lime-300 bg-indigo-700 text-amber-100 ring-2 ring-lime-300' : 'border-indigo-300 bg-slate-900 text-indigo-100 hover:border-indigo-200 hover:bg-slate-800'}" data-count="${count}" aria-pressed="${index === matchWordCounts.length - 1}">${count} words</button>`).join('')}</div></div>` : ''}
+    ${isMatchWords ? (() => {
+      const total = Math.max(2, availableMatchWords.length || 2);
+      const steps = [5, 8, 10, 12, 15, 18, 20, 25, 30].filter(n => n < total);
+      const options = [...steps, total];
+      const maxOpt = options[options.length - 1];
+      return `<div class="ga-match-word-count-panel w-full bg-[#111928]/80 border border-slate-800/80 rounded-xl px-4 py-3.5 flex items-center justify-between shadow-sm transition-all hover:border-yellow-500/50 mb-4" data-total="${total}" data-options="${options.join(',')}">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-yellow-400">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+              <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+              <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+            </svg>
+          </div>
+          <span class="font-bold text-white text-sm">Word count</span>
+        </div>
+        <div class="bg-[#0b1120] border border-slate-800 rounded-xl p-1 flex items-center gap-1.5">
+          <button type="button" class="ga-word-count-dec w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95" aria-label="Decrease word count">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <div class="ga-word-count-val min-w-[80px] px-3 py-1.5 bg-slate-800/70 rounded-lg border border-slate-700/40 text-xs font-bold text-slate-100 text-center select-none" data-value="${maxOpt}">
+            All (${maxOpt})
+          </div>
+          <button type="button" class="ga-word-count-inc w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95" disabled aria-disabled="true" aria-label="Increase word count">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+      </div>`;
+    })() : ''}
     ${isMemory ? `<div class="mb-4 text-left"><h3 class="text-sm font-black text-amber-100 mb-2">Choose difficulty</h3><div class="grid grid-cols-1 sm:grid-cols-3 gap-2" role="group" aria-label="Memory difficulty level"><button type="button" class="memory-level-option rounded-lg border-2 px-3 py-3 text-sm font-bold transition is-selected border-lime-300 bg-indigo-700 text-amber-100 ring-2 ring-lime-300" data-level="easy" aria-pressed="true">Easy · 10 cards</button><button type="button" class="memory-level-option rounded-lg border-2 border-indigo-300 bg-slate-900 px-3 py-3 text-sm font-bold text-indigo-100 transition hover:border-indigo-200 hover:bg-slate-800" data-level="medium" aria-pressed="false">Medium · 18 cards</button><button type="button" class="memory-level-option rounded-lg border-2 border-indigo-300 bg-slate-900 px-3 py-3 text-sm font-bold text-indigo-100 transition hover:border-indigo-200 hover:bg-slate-800" data-level="hard" aria-pressed="false">Hard · 30 cards</button></div></div>` : ''}
     ${isScramble || isFindMe || isMatchWords || isMemory || isSurpriseBoxes || isHangman || isCrossword ? `<div class="game-settings-grid mb-4 text-left"><div class="game-setting-control"><label for="shared-winning-score" class="block text-sm font-black text-amber-100 mb-2">Points to win</label><input id="shared-winning-score" type="number" min="1" max="1000" step="1" value="5" class="w-full border-2 border-indigo-300 rounded-lg px-3 py-2 text-sm" aria-describedby="shared-winning-score-help"><p id="shared-winning-score-help" class="text-xs text-indigo-100 mt-1">First to 5 points.</p></div><fieldset class="game-setting-control"><legend class="block text-sm font-black text-amber-100 mb-2">Winner reward coins</legend><div id="game-reward-coins" class="grid grid-cols-4 gap-2" role="radiogroup" aria-describedby="game-reward-help"><button type="button" class="game-reward-option is-selected" data-reward="0" role="radio" aria-checked="true">No coin</button><button type="button" class="game-reward-option" data-reward="5" role="radio" aria-checked="false">5 coins</button><button type="button" class="game-reward-option" data-reward="10" role="radio" aria-checked="false">10 coins</button><button type="button" class="game-reward-option" data-reward="20" role="radio" aria-checked="false">20 coins</button></div><p id="game-reward-help" class="text-xs text-indigo-100 mt-1">Choose 0, 5, 10, or 20 coins; it cannot exceed your available credits.</p></fieldset><div class="game-setting-control game-timer-setting-slot"><span class="block text-sm font-black text-amber-100 mb-2">Timer</span><div class="grid grid-cols-4 gap-2" role="group" aria-label="Timer duration"><button type="button" class="game-timer-option is-selected" data-seconds="0" aria-pressed="true">No timer</button><button type="button" class="game-timer-option" data-seconds="60" aria-pressed="false">1 min</button><button type="button" class="game-timer-option" data-seconds="180" aria-pressed="false">3 min</button><button type="button" class="game-timer-option" data-seconds="300" aria-pressed="false">5 min</button></div></div></div>` : ''}
     ${isSurpriseBoxes ? `<div class="mb-4 text-left"><h3 class="text-sm font-black text-amber-100 mb-2">Number of cards</h3><div class="grid grid-cols-3 gap-2" role="group" aria-label="Number of cards"><button type="button" class="shared-baam-count game-timer-option is-selected" data-count="8">8 cards</button><button type="button" class="shared-baam-count game-timer-option" data-count="18">18 cards</button><button type="button" class="shared-baam-count game-timer-option" data-count="24">24 cards</button></div><label class="flex items-center gap-2 text-sm font-semibold text-indigo-50 mt-3"><input id="shared-baam-powerups" type="checkbox" checked class="accent-teal-400"> Enable all power-ups</label></div>` : ''}
@@ -24554,6 +24763,47 @@ function chooseGamePlayers(listName, nextStep) {
   }
   let selectedBaamCardCount = 8;
   modal.querySelectorAll('.shared-baam-count').forEach(option => option.addEventListener('click', () => { selectedBaamCardCount = Number(option.dataset.count); modal.querySelectorAll('.shared-baam-count').forEach(button => button.classList.toggle('is-selected', button === option)); }));
+  const wcPanel = modal.querySelector('.ga-match-word-count-panel');
+  if (wcPanel) {
+    const rawOpts = (wcPanel.dataset.options || '').split(',').map(Number).filter(Boolean);
+    const totalWords = Number(wcPanel.dataset.total || rawOpts[rawOpts.length - 1] || 2);
+    let curIdx = rawOpts.length - 1;
+    selectedMatchWordCount = rawOpts[curIdx] || totalWords;
+    modal.dataset.gaMatchWordCount = String(selectedMatchWordCount);
+
+    const dec = wcPanel.querySelector('.ga-word-count-dec');
+    const inc = wcPanel.querySelector('.ga-word-count-inc');
+    const val = wcPanel.querySelector('.ga-word-count-val');
+
+    const refreshWc = () => {
+      const c = rawOpts[curIdx];
+      selectedMatchWordCount = c;
+      modal.dataset.gaMatchWordCount = String(c);
+      if (val) {
+        val.textContent = c === totalWords ? `All (${c})` : `${c} words`;
+        val.dataset.value = String(c);
+      }
+      if (dec) {
+        const atMin = curIdx <= 0;
+        dec.disabled = atMin;
+        dec.setAttribute('aria-disabled', String(atMin));
+      }
+      if (inc) {
+        const atMax = curIdx >= rawOpts.length - 1;
+        inc.disabled = atMax;
+        inc.setAttribute('aria-disabled', String(atMax));
+      }
+    };
+    dec?.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (curIdx > 0) { curIdx--; refreshWc(); }
+    });
+    inc?.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      if (curIdx < rawOpts.length - 1) { curIdx++; refreshWc(); }
+    });
+    refreshWc();
+  }
   modal.querySelectorAll('.match-word-count-option').forEach(option => option.addEventListener('click', () => {
     selectedMatchWordCount = Number(option.dataset.count);
     modal.querySelectorAll('.match-word-count-option').forEach(button => {
@@ -24771,36 +25021,71 @@ function chooseMatchWordCount(listName) {
   if (currentRole === 'student') { window.gaStudentSetup(listName, 'chooseMatchWordCount'); return; }
   const available = getGameWords(listName, true).filter(w => w.vocab_image && w.vocab_image.trim());
   if (available.length < 2) { toast('List needs at least 2 words with images'); return; }
+    const totalAvailable = available.length;
+  const wordCountSteps = [5, 8, 10, 12, 15, 18, 20, 25, 30].filter(n => n < totalAvailable);
+  const wordCountOptions = [...wordCountSteps, totalAvailable];
+  let curIndex = wordCountOptions.length - 1;
+  let selectedMatchWordCount = wordCountOptions[curIndex];
+
   const modal = document.createElement('div');
   modal.className = 'game-inline-view game-setup-panel mx-auto my-4';
   modal.innerHTML = `<div class="game-setup-panel text-center">
     <h2 class="heading-font text-2xl font-bold text-amber-100 mb-2">🎯 Match Words</h2>
-    
-    <label for="match-word-count" class="sr-only">Number of words</label>
-    <div id="match-word-count" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4" role="group" aria-label="Number of words">
-      ${(() => { const maxWords = available.length; const desired = [Math.round(maxWords * 0.5), Math.round(maxWords * 0.8), maxWords]; const counts = [...new Set(desired.map((count, index) => index === 2 ? maxWords : Math.max(2, Math.min(maxWords, count))))].sort((a, b) => a - b); for (let count = 2; counts.length < 3 && count <= maxWords; count += 1) { if (!counts.includes(count)) counts.push(count); } counts.sort((a, b) => a - b); return counts.map(n => `<button type="button" class="match-word-count-option rounded-lg border-2 px-3 py-2 text-sm font-bold transition ${n === Math.min(16, available.length) ? 'is-selected border-lime-300 bg-indigo-700 text-amber-100 ring-2 ring-lime-300' : 'border-indigo-300 bg-slate-900 text-indigo-100 hover:border-indigo-200 hover:bg-slate-800'}" data-count="${n}" aria-pressed="${n === Math.min(16, available.length)}">${n} words</button>`).join(''); })()}
+    <div class="ga-match-word-count-panel w-full bg-[#111928]/80 border border-slate-800/80 rounded-xl px-4 py-3.5 flex items-center justify-between shadow-sm transition-all hover:border-yellow-500/50 mb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-yellow-400">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+            <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+            <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+          </svg>
+        </div>
+        <span class="font-bold text-white text-sm">Word count</span>
+      </div>
+      <div class="bg-[#0b1120] border border-slate-800 rounded-xl p-1 flex items-center gap-1.5">
+        <button type="button" class="ga-word-count-dec w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95" aria-label="Decrease word count">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="ga-word-count-val min-w-[80px] px-3 py-1.5 bg-slate-800/70 rounded-lg border border-slate-700/40 text-xs font-bold text-slate-100 text-center select-none">
+          All (${totalAvailable})
+        </div>
+        <button type="button" class="ga-word-count-inc w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95" disabled aria-disabled="true" aria-label="Increase word count">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
     </div>
     
     <div class="flex gap-2"><button type="button" id="match-count-start" class="flex-1 btn-primary">Start Game</button><button type="button" id="match-count-cancel" class="flex-1 btn-outline">Cancel</button></div>
   </div>`;
   document.body.appendChild(modal);
-  let selectedMatchWordCount = Math.min(16, available.length);
-  modal.querySelectorAll('.match-word-count-option').forEach(option => option.addEventListener('click', () => {
-    selectedMatchWordCount = Number(option.dataset.count);
-    modal.querySelectorAll('.match-word-count-option').forEach(button => {
-      const active = button === option;
-      button.classList.toggle('is-selected', active);
-      button.classList.toggle('border-indigo-300', active);
-      button.classList.toggle('bg-indigo-800', active);
-      button.classList.toggle('text-amber-100', active);
-      button.classList.toggle('ring-2', active);
-      button.classList.toggle('ring-amber-300', active);
-      button.classList.toggle('border-indigo-200/40', !active);
-      button.classList.toggle('bg-slate-800', !active);
-      button.classList.toggle('text-indigo-100', !active);
-      button.setAttribute('aria-pressed', String(active));
-    });
-  }));
+
+  const decBtn = modal.querySelector('.ga-word-count-dec');
+  const incBtn = modal.querySelector('.ga-word-count-inc');
+  const valSpan = modal.querySelector('.ga-word-count-val');
+
+  const updateWordCountUI = () => {
+    const c = wordCountOptions[curIndex];
+    selectedMatchWordCount = c;
+    modal.dataset.gaMatchWordCount = String(c);
+    if (valSpan) valSpan.textContent = c === totalAvailable ? `All (${c})` : `${c} words`;
+    if (decBtn) {
+      decBtn.disabled = curIndex <= 0;
+      decBtn.setAttribute('aria-disabled', String(curIndex <= 0));
+    }
+    if (incBtn) {
+      incBtn.disabled = curIndex >= wordCountOptions.length - 1;
+      incBtn.setAttribute('aria-disabled', String(curIndex >= wordCountOptions.length - 1));
+    }
+  };
+  decBtn?.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (curIndex > 0) { curIndex--; updateWordCountUI(); }
+  });
+  incBtn?.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (curIndex < wordCountOptions.length - 1) { curIndex++; updateWordCountUI(); }
+  });
+  updateWordCountUI();
   modal.querySelector('#match-count-start').addEventListener('click', async () => {
     const count = selectedMatchWordCount;
     const rewardInput = modal.querySelector('#match-reward-coins');

@@ -1470,6 +1470,97 @@
   }).observe(document.body, { childList: true, subtree: true });
   if (document.body) observeStages(); else document.addEventListener('DOMContentLoaded', observeStages, { once: true });
 
+  function createWordCountStepper({ totalWords, initialCount, onChange }) {
+    const total = Math.max(2, Number(totalWords) || 2);
+    const steps = [5, 8, 10, 12, 15, 18, 20, 25, 30].filter(n => n < total);
+    const options = [...steps, total];
+    let currentIndex = options.length - 1;
+    if (initialCount && options.includes(Number(initialCount))) {
+      currentIndex = options.indexOf(Number(initialCount));
+    }
+
+    const panel = document.createElement('div');
+    panel.className = 'ga-word-count-panel w-full bg-[#111928]/80 border border-slate-800/80 rounded-xl px-4 py-3.5 flex items-center justify-between shadow-sm transition-all hover:border-yellow-500/50';
+    panel.innerHTML = `<div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-yellow-400">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
+          <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
+          <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
+        </svg>
+      </div>
+      <span class="font-bold text-white text-sm">Word count</span>
+    </div>
+    <div class="bg-[#0b1120] border border-slate-800 rounded-xl p-1 flex items-center gap-1.5">
+      <button
+        type="button"
+        class="ga-word-count-dec w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 cursor-pointer"
+        aria-label="Decrease word count"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div class="ga-word-count-val min-w-[80px] px-3 py-1.5 bg-slate-800/70 rounded-lg border border-slate-700/40 text-xs font-bold text-slate-100 text-center select-none">
+      </div>
+      <button
+        type="button"
+        class="ga-word-count-inc w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 cursor-pointer"
+        aria-label="Increase word count"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>`;
+
+    const decBtn = panel.querySelector('.ga-word-count-dec');
+    const incBtn = panel.querySelector('.ga-word-count-inc');
+    const valBadge = panel.querySelector('.ga-word-count-val');
+
+    function update() {
+      const count = options[currentIndex];
+      valBadge.textContent = count === total ? `All (${count})` : `${count} words`;
+      valBadge.dataset.value = String(count);
+      const atMin = currentIndex <= 0;
+      const atMax = currentIndex >= options.length - 1;
+      decBtn.disabled = atMin;
+      decBtn.setAttribute('aria-disabled', String(atMin));
+      incBtn.disabled = atMax;
+      incBtn.setAttribute('aria-disabled', String(atMax));
+      onChange?.(count);
+    }
+
+    decBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (currentIndex > 0) {
+        currentIndex--;
+        update();
+      }
+    });
+
+    incBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (currentIndex < options.length - 1) {
+        currentIndex++;
+        update();
+      }
+    });
+
+    update();
+
+    return {
+      element: panel,
+      getValue: () => options[currentIndex],
+      setValue: (val) => {
+        const idx = options.indexOf(Number(val));
+        if (idx >= 0) {
+          currentIndex = idx;
+          update();
+        }
+      }
+    };
+  }
+  window.createWordCountStepper = createWordCountStepper;
+
   function createCustomStepper({ iconSvg, title, subtitleGetter, options, initialIndex = 0, onChange }) {
     let currentIndex = Math.max(0, Math.min(options.length - 1, initialIndex));
     const panel = document.createElement('div');
@@ -1794,6 +1885,7 @@
     );
 
     const isMemoryGame = resolvedFnName === 'chooseMemoryDifficulty';
+    const isMatchGame = resolvedFnName === 'chooseMatchWordCount';
     if (isMemoryGame) {
       // Remove any existing raw memory-level-option container
       const existingMemoryCtrl = gameSpecificControls.find(el => el.querySelector('.memory-level-option'));
@@ -1891,6 +1983,94 @@
             btn.setAttribute('aria-pressed', String(active));
           });
           gridStepper.refreshSubtitle?.();
+        }
+      });
+      modal.dataset.gaTimerSeconds = '0';
+      window.pendingGameTimerSeconds = 0;
+      paramsSection.appendChild(timerStepper.element);
+    } else if (isMatchGame) {
+      // Remove any existing raw match-word-count-option container
+      const existingMatchCtrl = gameSpecificControls.find(el => el.querySelector('.match-word-count-option, .ga-match-word-count-panel, .ga-word-count-panel'));
+      if (existingMatchCtrl) {
+        existingMatchCtrl.remove();
+        const idx = gameSpecificControls.indexOf(existingMatchCtrl);
+        if (idx >= 0) gameSpecificControls.splice(idx, 1);
+      }
+      modal.querySelectorAll('.match-word-count-option').forEach(el => {
+        const parent = el.closest('.mb-4, fieldset, .ga-round-setting');
+        if (parent) parent.remove();
+      });
+
+      const activeListName = modal.dataset.gaListName || '';
+      const matchWords = typeof getGameWords === 'function' ? getGameWords(activeListName, true).filter(w => w && w.vocab_image && String(w.vocab_image).trim()) : [];
+      const totalWords = matchWords.length || Number(modal.dataset.gaTotalMatchWords || 0) || 0;
+
+      // 1. Word count Stepper
+      const wordCountStepper = createWordCountStepper({
+        totalWords,
+        initialCount: modal.dataset.gaMatchWordCount ? Number(modal.dataset.gaMatchWordCount) : totalWords,
+        onChange: (count) => {
+          modal.dataset.gaMatchWordCount = String(count);
+          window.selectedMatchWordCount = count;
+        }
+      });
+      const initialWordCount = wordCountStepper.getValue();
+      modal.dataset.gaMatchWordCount = String(initialWordCount);
+      window.selectedMatchWordCount = initialWordCount;
+      paramsSection.appendChild(wordCountStepper.element);
+
+      // 2. Winner reward coins Stepper
+      const coinIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h6a1.5 1.5 0 0 1 0 3H9a1.5 1.5 0 0 0 0 3h6"/></svg>`;
+      const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : 20;
+      const rewardMax = (availableCredits === Infinity || !Number.isFinite(availableCredits)) ? 100 : Math.max(0, Math.floor(availableCredits / 5) * 5);
+      const coinOptions = [{ value: 0, label: 'No coins' }];
+      for (let c = 5; c <= Math.max(20, rewardMax); c += 5) {
+        coinOptions.push({ value: c, label: `${c} coins` });
+      }
+
+      const rewardStepper = createCustomStepper({
+        iconSvg: coinIcon,
+        title: 'Winner reward coins',
+        options: coinOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaRewardCoins = String(opt.value);
+          window.pendingGameReward = opt.value;
+          modal.querySelectorAll('.game-reward-option').forEach(btn => {
+            const active = Number(btn.dataset.reward || 0) === opt.value;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-checked', String(active));
+          });
+        }
+      });
+      modal.dataset.gaRewardCoins = '0';
+      window.pendingGameReward = 0;
+      paramsSection.appendChild(rewardStepper.element);
+
+      // 3. Timer Stepper
+      const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+      const timerOptions = [
+        { seconds: 0, label: 'No timer' },
+        { seconds: 30, label: '30s' },
+        { seconds: 45, label: '45s' },
+        { seconds: 60, label: '60s' },
+        { seconds: 90, label: '90s' },
+        { seconds: 120, label: '2 min' }
+      ];
+
+      const timerStepper = createCustomStepper({
+        iconSvg: timerIcon,
+        title: 'Timer',
+        options: timerOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaTimerSeconds = String(opt.seconds);
+          window.pendingGameTimerSeconds = opt.seconds;
+          modal.querySelectorAll('.game-timer-option').forEach(btn => {
+            const active = Number(btn.dataset.seconds || 0) === opt.seconds;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-pressed', String(active));
+          });
         }
       });
       modal.dataset.gaTimerSeconds = '0';

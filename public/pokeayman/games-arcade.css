@@ -6617,6 +6617,29 @@ html body > .ga-stage .match-game-summary .game-player-hud-slot { width:100%!imp
 html body > .ga-stage .match-game-summary .game-player-hud { width:min(100%,1100px)!important; max-width:1100px!important; }
 html body > .ga-stage .match-game-summary .game-player-card { min-width:0!important; }
 
+/* Match Game: Word Count Capsule Stepper */
+.ga-word-count-panel,
+.ga-match-word-count-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(17, 25, 40, 0.8);
+  border: 1px solid rgba(30, 41, 59, 0.8);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+.ga-word-count-panel:hover,
+.ga-word-count-panel:focus-within,
+.ga-match-word-count-panel:hover,
+.ga-match-word-count-panel:focus-within {
+  border-color: rgba(234, 179, 8, 0.5);
+  box-shadow: 0 0 12px rgba(234, 179, 8, 0.15);
+}
+
 /* Memory Game: Custom Stepper UI & Animations */
 .ga-stepper-panel {
   display: flex;

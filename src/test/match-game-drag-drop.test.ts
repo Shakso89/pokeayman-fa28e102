@@ -195,4 +195,99 @@ describe("Wordwall-style Drag & Drop Match Words Game", () => {
     vi.useRealTimers();
     modal.remove();
   });
+
+  describe("Match Words Settings UI: Capsule Stepper Row Refactor", () => {
+    // Extract createWordCountStepper from index.html / games-arcade.js
+    const stepperStart = "function createWordCountStepper({ totalWords, initialCount, onChange }) {";
+    const stepperEnd = "window.createWordCountStepper = createWordCountStepper;";
+    const sStart = html.indexOf(stepperStart);
+    const sEnd = html.indexOf(stepperEnd);
+    expect(sStart).toBeGreaterThan(-1);
+    expect(sEnd).toBeGreaterThan(sStart);
+
+    const stepperCode = html.slice(sStart, sEnd + stepperEnd.length);
+    const sandbox = new Function("window", "document", `${stepperCode}`);
+    sandbox(window, document);
+    const createWordCountStepper = (window as any).createWordCountStepper;
+
+    it("calculates dynamic increments up to maximum words in list and defaults to All", () => {
+      let selectedVal = 0;
+      const stepper = createWordCountStepper({
+        totalWords: 17,
+        onChange: (v: number) => { selectedVal = v; }
+      });
+      const panel = stepper.element;
+      expect(panel).not.toBeNull();
+
+      // UI Layout Specs
+      expect(panel.className).toContain("ga-word-count-panel");
+      expect(panel.className).toContain("bg-[#111928]/80");
+      expect(panel.className).toContain("border-slate-800/80");
+
+      // Icon & Title
+      const icon = panel.querySelector("svg");
+      expect(icon).not.toBeNull();
+      const label = panel.querySelector(".font-bold.text-white.text-sm");
+      expect(label?.textContent).toBe("Word count");
+
+      // Right side capsule housing
+      const housing = panel.querySelector(".bg-\\[\\#0b1120\\]");
+      expect(housing).not.toBeNull();
+
+      // Initial value display: All (17)
+      const valBadge = panel.querySelector(".ga-word-count-val");
+      expect(valBadge?.textContent?.trim()).toBe("All (17)");
+      expect(stepper.getValue()).toBe(17);
+
+      // Decrement & Increment buttons
+      const decBtn = panel.querySelector(".ga-word-count-dec") as HTMLButtonElement;
+      const incBtn = panel.querySelector(".ga-word-count-inc") as HTMLButtonElement;
+      expect(decBtn).not.toBeNull();
+      expect(incBtn).not.toBeNull();
+
+      // Since we start at the max (17), increment is disabled
+      expect(incBtn.disabled).toBe(true);
+      expect(decBtn.disabled).toBe(false);
+
+      // Step down: 17 -> 15 words
+      decBtn.click();
+      expect(valBadge?.textContent?.trim()).toBe("15 words");
+      expect(stepper.getValue()).toBe(15);
+      expect(selectedVal).toBe(15);
+      expect(incBtn.disabled).toBe(false);
+
+      // Step down through options: 15 -> 12 -> 10 -> 8 -> 5
+      decBtn.click(); // 12
+      expect(valBadge?.textContent?.trim()).toBe("12 words");
+      decBtn.click(); // 10
+      expect(valBadge?.textContent?.trim()).toBe("10 words");
+      decBtn.click(); // 8
+      expect(valBadge?.textContent?.trim()).toBe("8 words");
+      decBtn.click(); // 5 (min)
+      expect(valBadge?.textContent?.trim()).toBe("5 words");
+      expect(stepper.getValue()).toBe(5);
+
+      // At min, decrement must be disabled
+      expect(decBtn.disabled).toBe(true);
+
+      // Step back up to max
+      incBtn.click(); // 8
+      incBtn.click(); // 10
+      incBtn.click(); // 12
+      incBtn.click(); // 15
+      incBtn.click(); // 17 (All)
+      expect(valBadge?.textContent?.trim()).toBe("All (17)");
+      expect(incBtn.disabled).toBe(true);
+    });
+
+    it("verifies static 3-button row is replaced with capsule stepper in index.html", () => {
+      // Static rectangular buttons must NOT be present in match setup
+      expect(html).not.toContain('class="grid grid-cols-3 gap-2" role="group" aria-label="Number of words"');
+      // Capsule stepper row must be present
+      expect(html).toContain('ga-match-word-count-panel');
+      expect(html).toContain('ga-word-count-dec');
+      expect(html).toContain('ga-word-count-inc');
+      expect(html).toContain('ga-word-count-val');
+    });
+  });
 });
