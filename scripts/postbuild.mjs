@@ -4,6 +4,7 @@ import { resolve } from "path";
 const wranglerPath = resolve(process.cwd(), ".output/server/wrangler.json");
 try {
   const content = JSON.parse(readFileSync(wranglerPath, "utf8"));
+  content.name = "pokeayman";
   content.compatibility_date = "2024-11-01";
   
   // Read local key or fallback safely
