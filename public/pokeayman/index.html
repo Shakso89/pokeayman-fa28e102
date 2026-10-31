@@ -13512,7 +13512,7 @@ async function pkEnterTeacherNow(name) {
     // Register Cloud teacher accounts so they appear in the Admin dashboard's teacher inventory.
     if (!rec && cloudId) {
       try {
-        const created = await window.dataSdk.create({ type: 'teacher', teacher_name: clean, teacher_pin: '', teacher_role: 'teacher', teacher_credits: (typeof getWelcomeBonusCredits === 'function' ? getWelcomeBonusCredits() : 500), avatar_pokemon_id: 0, cloud_user_id: cloudId, teacher_email: (window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.email) || '', archived: false, created_at: new Date().toISOString() });
+        const created = await window.dataSdk.create({ type: 'teacher', teacher_name: clean, teacher_pin: '', teacher_role: 'teacher', teacher_credits: (typeof getWelcomeBonusCredits === 'function' ? getWelcomeBonusCredits() : 100), avatar_pokemon_id: 0, cloud_user_id: cloudId, teacher_email: (window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.email) || '', archived: false, created_at: new Date().toISOString() });
         createdTeacherRecord = Boolean(created?.isOk);
         rec = getTeachers().find(t => t.cloud_user_id === cloudId) || null;
       } catch (e) { console.warn('Teacher registration failed', e); }
@@ -14228,7 +14228,7 @@ function renderTrainerTab() {
     if (!rec || !rec.__backendId) {
       const auth = window.parent?.pokeaymanAuth;
       try {
-        await window.dataSdk.create({ type: 'teacher', teacher_name: isAymanTeacher() ? 'Ayman Soliman' : currentTeacher, teacher_pin: '', teacher_role: isAymanTeacher() ? 'admin' : 'teacher', teacher_credits: isAymanTeacher() ? -1 : (typeof getWelcomeBonusCredits === 'function' ? getWelcomeBonusCredits() : 500), avatar_pokemon_id: 0, cloud_user_id: auth?.userId || '', teacher_email: auth?.email || '', archived: false, created_at: new Date().toISOString() });
+        await window.dataSdk.create({ type: 'teacher', teacher_name: isAymanTeacher() ? 'Ayman Soliman' : currentTeacher, teacher_pin: '', teacher_role: isAymanTeacher() ? 'admin' : 'teacher', teacher_credits: isAymanTeacher() ? -1 : (typeof getWelcomeBonusCredits === 'function' ? getWelcomeBonusCredits() : 100), avatar_pokemon_id: 0, cloud_user_id: auth?.userId || '', teacher_email: auth?.email || '', archived: false, created_at: new Date().toISOString() });
         await window.dataSdk.refresh?.();
       } catch (e) { console.warn(e); }
       rec = myTeacherRec();
@@ -14302,7 +14302,7 @@ function renderTrainerTab() {
             teacher_name: authoritativeName,
             teacher_pin: '',
             teacher_role: isAymanTeacher() ? 'admin' : 'teacher',
-            teacher_credits: isAymanTeacher() ? -1 : (typeof getWelcomeBonusCredits === 'function' ? getWelcomeBonusCredits() : 500),
+            teacher_credits: isAymanTeacher() ? -1 : (typeof getWelcomeBonusCredits === 'function' ? getWelcomeBonusCredits() : 100),
             avatar_pokemon_id: 0,
             cloud_user_id: cloudId,
             teacher_email: authEmail,
@@ -18668,7 +18668,7 @@ function renderWelcomeBonusControlCard() {
   const container = document.getElementById('welcome-bonus-control-card');
   if (!container) return;
   const cfg = publishedConfig || readPublishedConfig();
-  const credits = Number(cfg.welcome_bonus_credits ?? 500);
+  const credits = Number(cfg.welcome_bonus_credits ?? 100);
   const message = cfg.welcome_bonus_message || 'Every teacher receives {credits} free credits to get started!';
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
 
@@ -18712,7 +18712,7 @@ function renderWelcomeBonusControlCard() {
   `;
 
   const syncPreview = () => {
-    const cVal = document.getElementById('welcome-bonus-credits-input')?.value || '500';
+    const cVal = document.getElementById('welcome-bonus-credits-input')?.value || '100';
     const tVal = document.getElementById('welcome-bonus-message-input')?.value || 'Every teacher receives {credits} free credits to get started!';
     const previewEl = document.getElementById('welcome-bonus-preview');
     if (previewEl) {
@@ -18726,7 +18726,7 @@ function renderWelcomeBonusControlCard() {
 }
 
 async function saveWelcomeBonusSettings() {
-  const credits = Math.max(0, parseInt(document.getElementById('welcome-bonus-credits-input')?.value, 10) || 500);
+  const credits = Math.max(0, parseInt(document.getElementById('welcome-bonus-credits-input')?.value, 10) || 100);
   const message = document.getElementById('welcome-bonus-message-input')?.value.trim() || 'Every teacher receives {credits} free credits to get started!';
 
   const next = {
@@ -18933,7 +18933,7 @@ function renderPricingPlansModal() {
   const container = document.getElementById('pricing-tab-content');
   if (!container) return;
 
-  const bonusCredits = Number(cfg.welcome_bonus_credits ?? 500);
+  const bonusCredits = Number(cfg.welcome_bonus_credits ?? 100);
   const bonusTemplate = cfg.welcome_bonus_message || 'Every teacher receives {credits} free credits to get started!';
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
   const bonusFormatted = escape(bonusTemplate).replace('{credits}', `<span class="pk-bonus-highlight">${bonusCredits.toLocaleString()} free credits</span>`);
@@ -30583,7 +30583,7 @@ const handler = {
 
 // Published Admin Controls are shared through the Canva Sheet, not local-only browser state.
 const DEFAULT_PUBLISHED_CONFIG = {
-  welcome_bonus_credits: 500,
+  welcome_bonus_credits: 100,
   welcome_bonus_message: 'Every teacher receives {credits} free credits to get started!',
   pricingPlans: [
     {
@@ -30654,7 +30654,7 @@ function readPublishedConfig() {
 }
 function getWelcomeBonusCredits() {
   const cfg = publishedConfig || readPublishedConfig();
-  return Number(cfg?.welcome_bonus_credits) || 500;
+  return Number(cfg?.welcome_bonus_credits) || 100;
 }
 window.getWelcomeBonusCredits = getWelcomeBonusCredits;
 function applyPublishedConfig(config, meta = {}) {
