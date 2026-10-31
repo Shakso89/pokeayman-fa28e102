@@ -1,7 +1,7 @@
 project_id = "czszbdkdvvxeqkublkgi"
 
 [auth]
-additional_redirect_urls = ["https://pokeayman.pokeayman.workers.dev/**", "https://pokeayman.pokeayman.workers.dev", "https://shakso89-pokeayman-fa28e102.pokeayman.workers.dev/**", "http://localhost:3000/**"]
+additional_redirect_urls = ["https://pokeayman.pokeayman.workers.dev/**", "https://pokeayman.pokeayman.workers.dev", "https://pokeayman.pokeayman.workers.dev/classes", "https://shakso89-pokeayman-fa28e102.pokeayman.workers.dev/**", "http://localhost:3000/**", "http://localhost:3000/classes"]
 site_url = "https://pokeayman.pokeayman.workers.dev"
 
 [auth.email]

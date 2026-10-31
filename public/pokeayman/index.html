@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
+  <script>(function(){try{if(window.location.search.includes('enter=classes')||sessionStorage.getItem('pokeayman-enter-teacher')==='1'){document.documentElement.classList.add('pokeayman-auto-classes');document.write('<style>html.pokeayman-auto-classes #home-screen{display:none!important}</style>');}}catch(_){}})();</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <style>button,a,[role=button],[onclick],label,summary,select{touch-action:manipulation;cursor:pointer;-webkit-tap-highlight-color:transparent}</style>
@@ -13783,10 +13784,23 @@ function showTeacherAccessContactNotice() {
   modal.classList.remove('hidden');
 }
 window.addEventListener('load', () => {
-  let want = false; try { want = sessionStorage.getItem('pokeayman-enter-teacher') === '1'; } catch (_) {}
-  const auth = window.parent && window.parent.pokeaymanAuth;
+  let want = false;
+  try {
+    want = sessionStorage.getItem('pokeayman-enter-teacher') === '1' ||
+           window.location.search.includes('enter=classes');
+  } catch (_) {}
+  const auth = (window.parent && window.parent.pokeaymanAuth) || window.pokeaymanAuth;
   if (!want || !auth || !auth.userId) return;
-  setTimeout(async () => { const p = await auth.getProfile(); window.pokeaymanEnterTeacher(p.name); }, 1200);
+  (async () => {
+    try {
+      const p = await auth.getProfile();
+      if (p && p.name) {
+        await window.pokeaymanEnterTeacher(p.name);
+      }
+    } catch (e) {
+      console.warn('Auto enter teacher failed:', e);
+    }
+  })();
 });
 
 document.getElementById('teacher-login-toggle').addEventListener('click', async () => {

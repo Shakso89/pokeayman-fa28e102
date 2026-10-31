@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ClassesRouteImport } from './routes/classes'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ApiGenerateVocabListRouteImport } from './routes/api/generate-vocab-list'
 import { Route as ApiSearchImageRouteImport } from './routes/api/search-image'
@@ -27,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClassesRoute = ClassesRouteImport.update({
+  id: '/classes',
+  path: '/classes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -68,6 +74,7 @@ const ApiPublicPexelsRoute = ApiPublicPexelsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/classes': typeof ClassesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/api/generate-vocab-list': typeof ApiGenerateVocabListRoute
   '/api/search-image': typeof ApiSearchImageRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/classes': typeof ClassesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/api/generate-vocab-list': typeof ApiGenerateVocabListRoute
   '/api/search-image': typeof ApiSearchImageRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/classes': typeof ClassesRoute
   '/reset-password': typeof ResetPasswordRoute
   '/api/generate-vocab-list': typeof ApiGenerateVocabListRoute
   '/api/search-image': typeof ApiSearchImageRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/classes'
     | '/reset-password'
     | '/api/generate-vocab-list'
     | '/api/search-image'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/classes'
     | '/reset-password'
     | '/api/generate-vocab-list'
     | '/api/search-image'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/classes'
     | '/reset-password'
     | '/api/generate-vocab-list'
     | '/api/search-image'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  ClassesRoute: typeof ClassesRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiGenerateVocabListRoute: typeof ApiGenerateVocabListRoute
   ApiSearchImageRoute: typeof ApiSearchImageRoute
@@ -161,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/classes': {
+      id: '/classes'
+      path: '/classes'
+      fullPath: '/classes'
+      preLoaderRoute: typeof ClassesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -218,6 +238,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  ClassesRoute: ClassesRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiGenerateVocabListRoute: ApiGenerateVocabListRoute,
   ApiSearchImageRoute: ApiSearchImageRoute,

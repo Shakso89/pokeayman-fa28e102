@@ -12,7 +12,7 @@ export const lovable = {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider as Provider,
         options: {
-          redirectTo: opts?.redirect_uri || (typeof window !== "undefined" ? window.location.origin : undefined),
+          redirectTo: opts?.redirect_uri || (typeof window !== "undefined" ? `${window.location.origin}/classes` : undefined),
           queryParams: opts?.extraParams,
         },
       });

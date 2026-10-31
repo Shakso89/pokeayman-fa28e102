@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
+import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,10 +34,14 @@ function AuthPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => { if (data.session) navigate({ to: "/", replace: true }); });
-    const { data } = supabase.auth.onAuthStateChange((_e, session) => { if (session) navigate({ to: "/", replace: true }); });
+    supabase.auth.getSession().then(({ data }) => { if (data.session) navigate({ to: "/classes", replace: true }); });
+    const { data } = supabase.auth.onAuthStateChange((_e, session) => { if (session) navigate({ to: "/classes", replace: true }); });
     return () => data.subscription.unsubscribe();
   }, [navigate]);
+
+  if (user) {
+    return <Navigate to="/classes" replace />;
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -47,7 +53,7 @@ function AuthPage() {
       } else if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email, password,
-          options: { emailRedirectTo: window.location.origin, data: { display_name: name, school } },
+          options: { emailRedirectTo: `${window.location.origin}/classes`, data: { display_name: name, school } },
         });
         if (error) throw error;
         if (!data.session) setMsg({ ok: true, text: "Check your email to confirm your account, then sign in." });
@@ -63,8 +69,21 @@ function AuthPage() {
 
   async function google() {
     setMsg(null);
-    const res = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (res?.error) setMsg({ ok: false, text: String(res.error.message ?? res.error) });
+    const redirectToUrl = `${window.location.origin}/classes`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: redirectToUrl,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
+    });
+    if (error) {
+      console.error("Google Sign-In Error:", error.message);
+      setMsg({ ok: false, text: String(error.message ?? error) });
+    }
   }
 
   return (
