@@ -134,10 +134,28 @@ export function setupPokeaymanBridge({
     },
     signOut: async () => {
       try {
+        sessionStorage.removeItem("pokeayman-enter-teacher");
         sessionStorage.removeItem("pokeayman-login-session-id");
         sessionStorage.removeItem("pokeayman-streak-dismissed-session");
+        sessionStorage.removeItem("pokeayman-streak-dismissed");
+        const transientKey = /(^|:)(auth|session|current|selected|last[-_]?used|return|route|restore|restoration|teacher)(:|$)/i;
+        Object.keys(localStorage).filter((k) => transientKey.test(k)).forEach((k) => localStorage.removeItem(k));
       } catch (_) {}
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error("Sign out error:", err);
+      } finally {
+        if (typeof window !== "undefined") {
+          if (window.top && window.top !== window) {
+            try {
+              window.top.location.replace("/");
+              return;
+            } catch (_) {}
+          }
+          window.location.replace("/");
+        }
+      }
     },
     email: user?.email ?? null,
     getAccount: async () => {

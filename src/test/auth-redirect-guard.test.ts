@@ -21,12 +21,28 @@ describe("OAuth Redirect & Loading Guard Architecture", () => {
     expect(indexRoute).toContain("Loading classes...");
   });
 
-  it("Classes route guards unauthenticated users and mounts workspace directly", () => {
+  it("Classes route guards unauthenticated users to landing route / and mounts workspace directly", () => {
     const classesRoute = readFileSync(path.join(root, "src", "routes", "classes.tsx"), "utf8");
     expect(classesRoute).toContain("createFileRoute(\"/classes\")");
-    expect(classesRoute).toContain('<Navigate to="/auth" replace />');
+    expect(classesRoute).toContain('<Navigate to="/" replace />');
     expect(classesRoute).toContain("enter=classes");
     expect(classesRoute).toContain("setupPokeaymanBridge");
+  });
+
+  it("Post-logout and SIGNED_OUT auth events route directly to the public showcase landing page /", () => {
+    const authContext = readFileSync(path.join(root, "src", "context", "AuthContext.tsx"), "utf8");
+    expect(authContext).toContain("signOut");
+    expect(authContext).toContain('event === "SIGNED_OUT"');
+    expect(authContext).toContain('replace("/")');
+
+    const bridge = readFileSync(path.join(root, "src", "lib", "pokeayman-bridge.ts"), "utf8");
+    expect(bridge).toContain("signOut: async () =>");
+    expect(bridge).toContain('location.replace("/")');
+
+    const indexHtml = readFileSync(path.join(root, "public", "pokeayman", "index.html"), "utf8");
+    expect(indexHtml).toContain("logoutTeacherSession");
+    expect(indexHtml).toContain("document.documentElement.classList.remove('pokeayman-auto-classes')");
+    expect(indexHtml).toContain("location.replace('/')");
   });
 
   it("Google OAuth login handlers explicitly provide /classes in redirectTo", () => {

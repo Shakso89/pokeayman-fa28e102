@@ -38,7 +38,7 @@ function ClassesPage() {
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/" replace />;
   }
 
   setupPokeaymanBridge({ user, queryClient });

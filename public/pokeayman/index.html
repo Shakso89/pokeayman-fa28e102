@@ -4559,9 +4559,9 @@
 <script>
 // In-app teacher "Log out" also signs the teacher out of their Cloud account.
 document.addEventListener('click', function (e) {
-  const b = e.target && e.target.closest && e.target.closest('#logout-btn');
-  const auth = window.parent && window.parent.pokeaymanAuth;
-  if (b && auth && auth.userId) auth.signOut();
+  const b = e.target && e.target.closest && (e.target.closest('#logout-btn') || e.target.closest('#header-logout'));
+  const auth = (window.parent && window.parent.pokeaymanAuth) || (window.top && window.top.pokeaymanAuth) || window.pokeaymanAuth;
+  if (b && auth && auth.signOut) auth.signOut();
 }, true);
 </script>
 <style>
@@ -13249,6 +13249,7 @@ function logoutTeacherSession() {
   teacherSessionGeneration += 1;
   teacherAsyncGeneration += 1;
   const logoutGeneration = teacherAsyncGeneration;
+  document.documentElement.classList.remove('pokeayman-auto-classes');
   const homeScreen = document.getElementById('home-screen');
   const appScreen = document.getElementById('app-screen');
   const studentDashboard = document.getElementById('student-dashboard');
@@ -13281,6 +13282,7 @@ function logoutTeacherSession() {
   try { Object.keys(localStorage).filter(key => transientKey.test(key)).forEach(key => localStorage.removeItem(key)); } catch (error) {}
   try {
     window.pokeaymanClearStreakSession?.();
+    sessionStorage.removeItem('pokeayman-enter-teacher');
     sessionStorage.removeItem('pokeayman-login-session-id');
     sessionStorage.removeItem('pokeayman-streak-dismissed-session');
     sessionStorage.removeItem('pokeayman-streak-dismissed');
@@ -13288,6 +13290,11 @@ function logoutTeacherSession() {
   window.history.replaceState(null, '', window.location.pathname + window.location.hash);
   window.scrollTo(0, 0);
   logoutTeacherSession.running = false;
+  if (window.top && window.top !== window) {
+    try {
+      window.top.location.replace('/');
+    } catch (_) {}
+  }
 }
 // Canonical student authentication: resolve a live class PIN first, then verify
 // the named student through the current class membership only.
@@ -15083,6 +15090,7 @@ document.getElementById('student-logout-btn')?.addEventListener('click', () => {
   }
   
   // 7. Show home screen
+  document.documentElement.classList.remove('pokeayman-auto-classes');
   const homeScreen = document.getElementById('home-screen');
   if (homeScreen) {
     homeScreen.style.visibility = 'visible';
@@ -15093,6 +15101,11 @@ document.getElementById('student-logout-btn')?.addEventListener('click', () => {
   
   // 8. Reset scroll
   window.scrollTo(0, 0);
+  if (window.top && window.top !== window && window.top.location.pathname !== '/') {
+    try {
+      window.top.location.replace('/');
+    } catch (_) {}
+  }
 });
 
 
