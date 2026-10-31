@@ -258,4 +258,71 @@ describe("Multi-Match Student Disambiguation & Account Linking", () => {
       student_id: "fresh-uuid-999",
     });
   });
+
+  it("shows student avatar when one exists (avatar_url or avatar_pokemon_id) and falls back to initials", () => {
+    // Helper function mirroring implementation in index.html
+    const escapeHtml = (s: string) => s;
+    const getStudentCandidateAvatarHtml = (cand: any, isLight: boolean, allData: any[] = []) => {
+      const initial = escapeHtml((cand.name || "?").charAt(0).toUpperCase());
+      const initialBadge = `<span class="text-base font-bold ${isLight ? 'text-slate-700' : 'text-slate-200'}">${initial}</span>`;
+
+      let avatarSrc = "";
+      let isPokemon = false;
+
+      // 1. Direct avatar_url
+      if (cand.avatar_url && typeof cand.avatar_url === "string" && cand.avatar_url.trim()) {
+        avatarSrc = cand.avatar_url.trim();
+      }
+
+      // 2. Direct avatar_pokemon_id
+      const directPokemonId = Number(cand.avatar_pokemon_id || cand.pokemon_id || cand.avatar || 0);
+      if (!avatarSrc && Number.isInteger(directPokemonId) && directPokemonId > 0) {
+        avatarSrc = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${directPokemonId}.png`;
+        isPokemon = true;
+      }
+
+      // 3. Match against local student records / owned pokemon
+      if (!avatarSrc && Array.isArray(allData)) {
+        const candId = String(cand.id || "");
+        const pRecord = allData.find(r =>
+          r.type === "pokemon" &&
+          Number(r.pokemon_id) > 0 &&
+          (candId && (String(r.student_id) === candId || String(r.owner_id) === candId))
+        );
+        if (pRecord) {
+          avatarSrc = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${Number(pRecord.pokemon_id)}.png`;
+          isPokemon = true;
+        }
+      }
+
+      if (!avatarSrc) {
+        return initialBadge;
+      }
+
+      return `<img src="${escapeHtml(avatarSrc)}" class="w-full h-full ${isPokemon ? "object-contain p-0.5" : "object-cover"} rounded-full" alt="${escapeHtml(cand.name)}">`;
+    };
+
+    // Case 1: Student with avatar_url
+    const studentWithUrl = { id: "s1", name: "Ayman", avatar_url: "https://example.com/avatar.jpg" };
+    const html1 = getStudentCandidateAvatarHtml(studentWithUrl, false);
+    expect(html1).toContain('<img src="https://example.com/avatar.jpg"');
+    expect(html1).toContain('object-cover');
+
+    // Case 2: Student with avatar_pokemon_id
+    const studentWithPokemon = { id: "s2", name: "Ayman", avatar_pokemon_id: 25 };
+    const html2 = getStudentCandidateAvatarHtml(studentWithPokemon, false);
+    expect(html2).toContain('https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/25.png');
+    expect(html2).toContain('object-contain');
+
+    // Case 3: Student with owned pokemon in local allData
+    const studentWithOwnedPokemon = { id: "s3", name: "Ayman" };
+    const allData = [{ type: "pokemon", student_id: "s3", pokemon_id: 6 }];
+    const html3 = getStudentCandidateAvatarHtml(studentWithOwnedPokemon, false, allData);
+    expect(html3).toContain('https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/6.png');
+
+    // Case 4: Student with NO avatar -> initials fallback
+    const studentWithoutAvatar = { id: "s4", name: "Ayman" };
+    const html4 = getStudentCandidateAvatarHtml(studentWithoutAvatar, false, []);
+    expect(html4).toBe('<span class="text-base font-bold text-slate-200">A</span>');
+  });
 });

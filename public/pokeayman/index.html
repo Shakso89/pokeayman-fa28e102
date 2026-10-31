@@ -20416,20 +20416,95 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
   const isLight = document.body.classList.contains('ts-bright') || document.documentElement.classList.contains('light');
 
   // Render individual candidate card HTML
+  // Helper to resolve student avatar with initials fallback
+  const getStudentCandidateAvatarHtml = (cand, isLight) => {
+    const initial = escapeHtml((cand.name || "?").charAt(0).toUpperCase());
+    const initialBadge = `<span class="text-base font-bold ${isLight ? 'text-slate-700' : 'text-slate-200'}">${initial}</span>`;
+
+    let avatarSrc = "";
+    let isPokemon = false;
+
+    // 1. Direct avatar_url on candidate
+    if (cand.avatar_url && typeof cand.avatar_url === "string" && cand.avatar_url.trim()) {
+      avatarSrc = cand.avatar_url.trim();
+    }
+
+    // 2. Direct avatar_pokemon_id on candidate
+    const directPokemonId = Number(cand.avatar_pokemon_id || cand.pokemon_id || cand.avatar || 0);
+    if (!avatarSrc && Number.isInteger(directPokemonId) && directPokemonId > 0) {
+      avatarSrc = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${directPokemonId}.png`;
+      isPokemon = true;
+    }
+
+    // 3. Match against local student records (allData / getAllStudents)
+    if (!avatarSrc) {
+      const allSt = typeof getAllStudents === "function" ? getAllStudents() : [];
+      const candId = String(cand.id || cand.student_id || "").trim();
+      const candPin = String(cand.pin || cand.student_pin || "").trim().slice(0, 4);
+      const candNormName = normalizeStudentIdentity(cand.name || "");
+
+      const localStudent = allSt.find(s => {
+        const sid = String(s.student_id || s.__backendId || s.id || "").trim();
+        if (candId && sid === candId) return true;
+        const spin = String(s.student_pin || s.pin || "").trim().slice(0, 4);
+        const sname = normalizeStudentIdentity(s.student_name || s.name || "");
+        return sname === candNormName && (!candPin || !spin || spin === candPin);
+      });
+
+      if (localStudent) {
+        if (localStudent.avatar_url && typeof localStudent.avatar_url === "string" && localStudent.avatar_url.trim()) {
+          avatarSrc = localStudent.avatar_url.trim();
+        } else {
+          const locPokemonId = Number(localStudent.avatar_pokemon_id || 0);
+          if (Number.isInteger(locPokemonId) && locPokemonId > 0) {
+            avatarSrc = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${locPokemonId}.png`;
+            isPokemon = true;
+          }
+        }
+      }
+
+      // 4. Check owned Pokémon for this student
+      if (!avatarSrc) {
+        try {
+          const owned = typeof getOwnedPokemonForStudent === "function" ? getOwnedPokemonForStudent(localStudent || cand) : [];
+          const firstPokemonId = Number(owned[0]?.pokemon_id || 0);
+          if (Number.isInteger(firstPokemonId) && firstPokemonId > 0) {
+            avatarSrc = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${firstPokemonId}.png`;
+            isPokemon = true;
+          }
+        } catch (_) {}
+      }
+
+      // 5. Check in allData for any pokemon assigned to this student
+      if (!avatarSrc && Array.isArray(allData)) {
+        const pRecord = allData.find(r =>
+          r.type === "pokemon" &&
+          Number(r.pokemon_id) > 0 &&
+          ((candId && (String(r.student_id) === candId || String(r.owner_id) === candId)) ||
+           (candNormName && (normalizeStudentIdentity(r.owner) === candNormName || normalizeStudentIdentity(r.student_name) === candNormName)))
+        );
+        if (pRecord) {
+          avatarSrc = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${Number(pRecord.pokemon_id)}.png`;
+          isPokemon = true;
+        }
+      }
+    }
+
+    if (!avatarSrc) {
+      return initialBadge;
+    }
+
+    return `<img src="${escapeHtml(avatarSrc)}" class="w-full h-full ${isPokemon ? "object-contain p-0.5" : "object-cover"} rounded-full" alt="${escapeHtml(cand.name)}" onerror="this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='flex';"><span class="text-base font-bold ${isLight ? "text-slate-700" : "text-slate-200"} hidden">${initial}</span>`;
+  };
+
   const renderCandidateCardHtml = (cand) => {
     const isSelected = String(selectedStudentId) === String(cand.id);
     const isAlreadyEnrolled = checkCandidateEnrolled(cand);
     const classNames = getCandidateClassNames(cand);
-    const existingPin = String(cand.pin || cand.student_pin || '1234').trim();
-    const displayPin = (existingPin.length > 4 ? existingPin.slice(0, 4) : existingPin) || '1234';
+    const existingPin = String(cand.pin || cand.student_pin || "1234").trim();
+    const displayPin = (existingPin.length > 4 ? existingPin.slice(0, 4) : existingPin) || "1234";
 
-    const avatarId = Number(cand.avatar_pokemon_id || 0);
-    const avatarHtml = cand.avatar_url
-      ? `<img src="${cand.avatar_url}" class="w-10 h-10 rounded-full object-cover" alt="">`
-      : avatarId > 0
-        ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarId}.png" class="w-8 h-8 object-contain" alt="">`
-        : `<span class="text-base font-bold ${isLight ? 'text-slate-700' : 'text-slate-200'}">${escapeHtml(cand.name.charAt(0).toUpperCase())}</span>`;
-
+    const avatarHtml = getStudentCandidateAvatarHtml(cand, isLight);
     return `
       <div
         data-student-id="${escapeHtml(String(cand.id))}"
