@@ -2021,7 +2021,9 @@ html body > .ga-stage[data-ga-theme="classroom"] #find-me-picture {
   border: 9px solid #b5804c !important;
   box-shadow: inset 0 0 0 2px #593515, 0 12px 28px rgba(45, 28, 12, 0.32) !important;
 }
-html body > .ga-stage[data-ga-theme="classroom"] .find-me-word {
+html body > .ga-stage[data-ga-theme="classroom"] .find-me-word:not(.find-me-word--correct):not(.find-me-word--wrong):not(.find-me-word--hint):not(.is-correct):not(.is-wrong):not([data-status="correct"]):not([data-status="wrong"]),
+html body > .ga-stage[data-ga-theme="chalkboard"] .find-me-word:not(.find-me-word--correct):not(.find-me-word--wrong):not(.find-me-word--hint):not(.is-correct):not(.is-wrong):not([data-status="correct"]):not([data-status="wrong"]),
+html body > .ga-stage[data-ga-theme="board"] .find-me-word:not(.find-me-word--correct):not(.find-me-word--wrong):not(.find-me-word--hint):not(.is-correct):not(.is-wrong):not([data-status="correct"]):not([data-status="wrong"]) {
   background: linear-gradient(180deg, #fffdf9 0%, #e7dccb 100%) !important;
   color: #1c1917 !important;
   border: 2.5px solid #292524 !important;
@@ -2543,7 +2545,7 @@ html body > .ga-stage[data-ga-theme="jungle"] #find-me-picture {
   border: 9px solid #d97706 !important;
   box-shadow: inset 0 0 0 2px #422006, 0 12px 28px rgba(0, 0, 0, 0.45) !important;
 }
-html body > .ga-stage[data-ga-theme="jungle"] .find-me-word {
+html body > .ga-stage[data-ga-theme="jungle"] .find-me-word:not(.find-me-word--correct):not(.find-me-word--wrong):not(.find-me-word--hint):not(.is-correct):not(.is-wrong):not([data-status="correct"]):not([data-status="wrong"]) {
   background: linear-gradient(180deg, #f3c677 0%, #c68634 100%) !important;
   color: #271202 !important;
   border: 2.5px solid #271202 !important;
@@ -3094,7 +3096,7 @@ html body > .ga-stage[data-ga-theme="toybox"] #find-me-picture {
   border: 8px solid #6366f1 !important;
   box-shadow: inset 0 0 0 2px #c7d2fe, 0 8px 0 #3730a3 !important;
 }
-html body > .ga-stage[data-ga-theme="toybox"] .find-me-word {
+html body > .ga-stage[data-ga-theme="toybox"] .find-me-word:not(.find-me-word--correct):not(.find-me-word--wrong):not(.find-me-word--hint):not(.is-correct):not(.is-wrong):not([data-status="correct"]):not([data-status="wrong"]) {
   background: linear-gradient(180deg, #ffffff 0%, #e0e7ff 100%) !important;
   color: #1e1b4b !important;
   border: 2.5px solid #6366f1 !important;
@@ -4143,7 +4145,7 @@ html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) 
   border-radius: 20px !important;
   box-shadow: inset 0 0 0 2px #0d051a, 0 6px 0 #0d051a, 0 14px 28px rgba(0, 0, 0, 0.5) !important;
 }
-html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .find-me-word {
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .find-me-word:not(.find-me-word--correct):not(.find-me-word--wrong):not(.find-me-word--hint):not(.is-correct):not(.is-wrong):not([data-status="correct"]):not([data-status="wrong"]) {
   background: linear-gradient(180deg, #fffdf8 0%, #fde8c4 100%) !important;
   color: #241046 !important;
   border: 2.5px solid var(--hlw-ink) !important;
@@ -4151,7 +4153,7 @@ html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) 
   font-weight: 800 !important;
   box-shadow: inset 0 2px 0 #ffffff, 0 4px 0 var(--hlw-ink), 0 8px 16px rgba(0, 0, 0, 0.35) !important;
 }
-html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .find-me-word:hover:not(:disabled) {
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .find-me-word:hover:not(:disabled):not(.find-me-word--correct):not(.find-me-word--wrong):not(.is-correct):not(.is-wrong):not([data-status="correct"]):not([data-status="wrong"]) {
   background: linear-gradient(180deg, #fde68a 0%, #fb923c 100%) !important;
   color: #1f0c04 !important;
   transform: translateY(-2px) !important;
@@ -5574,7 +5576,7 @@ html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is
   box-shadow: inset 0 1px 0 rgba(240,255,210,.17), 0 4px 0 #09271f !important;
 }
 html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(.match-game-progress-copy,#match-status) { color: #e8f8ce !important; }
-html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(#scramble-tiles .scramble-tile,.hangman-letter.is-available,.find-me-word) {
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) :is(#scramble-tiles .scramble-tile,.hangman-letter.is-available,.find-me-word:not(.find-me-word--correct):not(.find-me-word--wrong):not(.find-me-word--hint):not(.is-correct):not(.is-wrong):not([data-status="correct"]):not([data-status="wrong"])) {
   background: linear-gradient(180deg, #e6c875, #c79e4d) !important;
   color: #203b2b !important;
   border: 2px solid #654820 !important;
@@ -5752,7 +5754,7 @@ html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is(.match-game-progress-copy,#match-status,#find-me-progress) { color: #fff5b8 !important; }
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) #scramble-tiles .scramble-tile,
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .hangman-letter.is-available,
-html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .find-me-word {
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .find-me-word:not(.find-me-word--correct):not(.find-me-word--wrong):not(.find-me-word--hint):not(.is-correct):not(.is-wrong):not([data-status="correct"]):not([data-status="wrong"]) {
   background: linear-gradient(180deg,#fffef5,#cfefff) !important; color: #29245f !important;
   border: 2px solid #6252c3 !important; border-radius: 13px !important;
   box-shadow: inset 0 2px 0 #fff, 0 4px 0 #5141a8, 0 8px 14px rgba(50,38,115,.2) !important;
@@ -5768,7 +5770,7 @@ html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .ha
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) #scramble-tiles .scramble-tile:nth-child(4n+3):not(:disabled) {
   background: linear-gradient(180deg,#baffef,#42d8d0) !important; border-color:#248e97 !important; color:#173a61 !important;
 }
-html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is(#scramble-tiles .scramble-tile:hover:not(:disabled),.hangman-letter.is-available:hover,.find-me-word:hover) {
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) :is(#scramble-tiles .scramble-tile:hover:not(:disabled),.hangman-letter.is-available:hover,.find-me-word:hover:not(.find-me-word--correct):not(.find-me-word--wrong):not(.is-correct):not(.is-wrong):not([data-status="correct"]):not([data-status="wrong"])) {
   filter: brightness(1.04) saturate(1.08) !important; transform: translateY(-3px) rotate(-1deg) !important;
 }
 html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) #scramble-answer .scramble-answer-slot:not(.is-filled),
@@ -6713,4 +6715,120 @@ html body > .ga-stage[data-ga-theme="halloween"] .memory-card-front {
 .memory-card.flipped .memory-card-front {
   visibility: hidden !important;
   pointer-events: none !important;
+}
+
+
+/* ==========================================================================
+   UNIVERSAL ULTRA-SPECIFICITY FIND ME FEEDBACK STATES & ANIMATIONS
+   Ensures consistent energetic green bounce/pop on correct, red shake/wiggle
+   on wrong, and amber pulse on hint across ALL visual styles
+   (Classroom/Chalkboard, Toybox, Jungle, Halloween, Classic).
+   ========================================================================== */
+
+@keyframes bounce-short {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.22) rotate(-2deg); }
+  65% { transform: scale(1.08) rotate(1deg); }
+  100% { transform: scale(1.12); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-8px) rotate(-2deg); }
+  30% { transform: translateX(8px) rotate(2deg); }
+  45% { transform: translateX(-6px) rotate(-1deg); }
+  60% { transform: translateX(5px) rotate(1deg); }
+  75% { transform: translateX(-3px); }
+}
+
+@keyframes findMeCorrectBurst {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.25) rotate(-2deg); }
+  65% { transform: scale(1.08) rotate(1deg); }
+  100% { transform: scale(1.12); }
+}
+
+@keyframes findMeWrongShake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-8px) rotate(-2deg); }
+  30% { transform: translateX(8px) rotate(2deg); }
+  45% { transform: translateX(-6px) rotate(-1deg); }
+  60% { transform: translateX(5px) rotate(1deg); }
+  75% { transform: translateX(-3px); }
+}
+
+@keyframes gaFeedbackCorrectPop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.22) rotate(-2deg); }
+  65% { transform: scale(1.08) rotate(1deg); }
+  100% { transform: scale(1.12); }
+}
+
+@keyframes gaFeedbackWrongShake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-8px) rotate(-2deg); }
+  30% { transform: translateX(8px) rotate(2deg); }
+  45% { transform: translateX(-6px) rotate(-1deg); }
+  60% { transform: translateX(5px) rotate(1deg); }
+  75% { transform: translateX(-3px); }
+}
+
+.animate-bounce-short {
+  animation: bounce-short 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.4) both !important;
+}
+
+.animate-shake {
+  animation: shake 0.45s ease both !important;
+}
+
+/* Universal ultra-specificity overrides guaranteeing vibrant visible feedback */
+html body :is(.ga-stage, [data-ga-theme], .game-popup-modal, div) .find-me-word:is(.find-me-word--correct, .is-correct, [data-status="correct"]),
+html body .find-me-word:is(.find-me-word--correct, .is-correct, [data-status="correct"]) {
+  background: linear-gradient(180deg, #34d399 0%, #059669 100%) !important;
+  color: #ffffff !important;
+  border: 3px solid #bbf7d0 !important;
+  border-radius: 12px !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    0 0 0 4px #34d399,
+    0 5px 0 #064e3b,
+    0 0 26px rgba(52, 211, 153, 0.85) !important;
+  text-shadow: 0 1px 2px rgba(6, 78, 59, 0.85) !important;
+  animation: findMeCorrectBurst 0.65s cubic-bezier(0.2, 0.9, 0.3, 1.4) both !important;
+  pointer-events: none !important;
+  z-index: 15 !important;
+}
+
+html body :is(.ga-stage, [data-ga-theme], .game-popup-modal, div) .find-me-word:is(.find-me-word--wrong, .is-wrong, [data-status="wrong"]),
+html body .find-me-word:is(.find-me-word--wrong, .is-wrong, [data-status="wrong"]) {
+  background: linear-gradient(180deg, #f87171 0%, #dc2626 100%) !important;
+  color: #ffffff !important;
+  border: 3px solid #fee2e2 !important;
+  border-radius: 12px !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    0 0 0 4px #f43f5e,
+    0 4px 0 #450a0a,
+    0 0 22px rgba(239, 68, 68, 0.85) !important;
+  text-shadow: 0 1px 2px rgba(69, 10, 10, 0.85) !important;
+  text-decoration: line-through !important;
+  animation: findMeWrongShake 0.45s ease both !important;
+  pointer-events: none !important;
+  z-index: 14 !important;
+}
+
+html body :is(.ga-stage, [data-ga-theme], .game-popup-modal, div) .find-me-word:is(.find-me-word--hint, [data-status="hint"]),
+html body .find-me-word:is(.find-me-word--hint, [data-status="hint"]) {
+  background: linear-gradient(180deg, #fef08a 0%, #f59e0b 100%) !important;
+  color: #1c1917 !important;
+  border: 3px solid #ffffff !important;
+  border-radius: 12px !important;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.6),
+    0 0 0 4px #fbbf24,
+    0 5px 0 #78350f,
+    0 0 26px rgba(250, 204, 21, 0.85) !important;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+  animation: findMeHintPulse 0.5s ease infinite alternate !important;
+  z-index: 12 !important;
 }

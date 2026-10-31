@@ -2249,19 +2249,61 @@
     .find-me-difficulty-btn.difficulty-medium.is-selected { background: linear-gradient(135deg,#fbbf24,#d97706); }
     .find-me-difficulty-btn.difficulty-hard.is-selected { background: linear-gradient(135deg,#fb7185,#dc2626); color: #fff7ed; }
     @media (max-width: 520px) { .find-me-controls { gap: .5rem; } .find-me-control-group { flex: 1 1 12rem; justify-content: center; } }
-    /* Find Me tile feedback: golden burst on correct, red shake on wrong. */
+    /* Find Me tile feedback: emerald pop on correct, red shake on wrong across all themes */
     .find-me-word { position: absolute; will-change: transform; }
-    .find-me-word--correct { z-index: 6; border-color: #f59e0b !important; background: linear-gradient(135deg,#fef3c7,#fde68a) !important; color: #92400e !important; box-shadow: 0 0 0 4px rgba(251,191,36,.35), 0 0 26px rgba(251,191,36,.65), 0 10px 22px rgba(2,6,23,.25) !important; animation: findMeCorrectBurst .65s cubic-bezier(.2,.9,.3,1.4) both; pointer-events: none; }
-    .find-me-word--correct::after { content: ''; position: absolute; inset: -14px; border-radius: 1.25rem; border: 3px solid rgba(251,191,36,.85); animation: findMeRingOut .6s ease-out both; pointer-events: none; }
+    .find-me-word--correct,
+    .find-me-word.is-correct,
+    .find-me-word[data-status="correct"] {
+      z-index: 10;
+      border-color: #bbf7d0 !important;
+      background: linear-gradient(180deg, #34d399 0%, #059669 100%) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 0 4px #34d399, 0 0 26px rgba(52,211,153,.85), 0 8px 20px rgba(2,6,23,.3) !important;
+      text-shadow: 0 1px 2px rgba(6, 78, 59, 0.85) !important;
+      animation: findMeCorrectBurst .65s cubic-bezier(.2,.9,.3,1.4) both !important;
+      pointer-events: none !important;
+    }
+    .find-me-word--correct::after {
+      content: '';
+      position: absolute;
+      inset: -14px;
+      border-radius: 1.25rem;
+      border: 3px solid rgba(52,211,153,.85);
+      animation: findMeRingOut .6s ease-out both;
+      pointer-events: none;
+    }
     .find-me-score-pop { position: absolute; top: -1.4rem; left: 50%; transform: translateX(-50%); color: #fbbf24; font-size: 1.15rem; font-weight: 900; text-shadow: 0 2px 6px rgba(2,6,23,.5); animation: findMeScorePop .85s ease-out both; pointer-events: none; }
-    .find-me-word--wrong { z-index: 5; border-color: #ef4444 !important; background: linear-gradient(135deg,#fee2e2,#fecaca) !important; color: #991b1b !important; box-shadow: 0 0 0 3px rgba(239,68,68,.3), 0 6px 16px rgba(2,6,23,.25) !important; animation: findMeWrongShake .55s ease both; pointer-events: none; }
-    .find-me-word--hint { border-color: #22c55e !important; box-shadow: 0 0 0 3px rgba(34,197,94,.35), 0 0 18px rgba(34,197,94,.45) !important; animation: findMeHintPulse .5s ease .25s both; }
-    @keyframes findMeCorrectBurst { 0% { transform: scale(1); } 35% { transform: scale(1.28) rotate(-3deg); } 60% { transform: scale(1.12) rotate(2deg); } 100% { transform: scale(1.15); } }
+    .find-me-word--wrong,
+    .find-me-word.is-wrong,
+    .find-me-word[data-status="wrong"] {
+      z-index: 9;
+      border-color: #fee2e2 !important;
+      background: linear-gradient(180deg, #f87171 0%, #dc2626 100%) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 0 4px #f43f5e, 0 0 22px rgba(239,68,68,.85), 0 6px 16px rgba(2,6,23,.3) !important;
+      text-shadow: 0 1px 2px rgba(69, 10, 10, 0.85) !important;
+      text-decoration: line-through !important;
+      animation: findMeWrongShake .45s ease both !important;
+      pointer-events: none !important;
+    }
+    .find-me-word--hint,
+    .find-me-word[data-status="hint"] {
+      border-color: #ffffff !important;
+      background: linear-gradient(180deg, #fef08a 0%, #f59e0b 100%) !important;
+      color: #1c1917 !important;
+      box-shadow: 0 0 0 4px #fbbf24, 0 0 24px rgba(250,204,21,.85) !important;
+      animation: findMeHintPulse .5s ease infinite alternate !important;
+    }
+    @keyframes bounce-short { 0% { transform: scale(1); } 35% { transform: scale(1.22) rotate(-2deg); } 65% { transform: scale(1.08) rotate(1deg); } 100% { transform: scale(1.12); } }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-8px) rotate(-2deg); } 30% { transform: translateX(8px) rotate(2deg); } 45% { transform: translateX(-6px) rotate(-1deg); } 60% { transform: translateX(5px) rotate(1deg); } 75% { transform: translateX(-3px); } }
+    @keyframes findMeCorrectBurst { 0% { transform: scale(1); } 35% { transform: scale(1.25) rotate(-2deg); } 60% { transform: scale(1.1) rotate(1deg); } 100% { transform: scale(1.12); } }
     @keyframes findMeRingOut { from { opacity: .95; transform: scale(.6); } to { opacity: 0; transform: scale(1.5); } }
     @keyframes findMeScorePop { 0% { opacity: 0; transform: translate(-50%, 6px) scale(.5); } 30% { opacity: 1; transform: translate(-50%, -4px) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -26px) scale(1); } }
-    @keyframes findMeWrongShake { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-9px) rotate(-2deg); } 30% { transform: translateX(8px) rotate(2deg); } 45% { transform: translateX(-6px); } 60% { transform: translateX(5px); } 75% { transform: translateX(-3px); } }
+    @keyframes findMeWrongShake { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-8px) rotate(-2deg); } 30% { transform: translateX(8px) rotate(2deg); } 45% { transform: translateX(-6px) rotate(-1deg); } 60% { transform: translateX(5px) rotate(1deg); } 75% { transform: translateX(-3px); } }
     @keyframes findMeHintPulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
-    @media (prefers-reduced-motion: reduce) { .find-me-word--correct, .find-me-word--correct::after, .find-me-word--wrong, .find-me-word--hint, .find-me-score-pop { animation: none; } }
+    .animate-bounce-short { animation: bounce-short .45s cubic-bezier(.2,.9,.3,1.4) both !important; }
+    .animate-shake { animation: shake .45s ease both !important; }
+    @media (prefers-reduced-motion: reduce) { .find-me-word--correct, .find-me-word--correct::after, .find-me-word--wrong, .find-me-word--hint, .find-me-score-pop, .animate-bounce-short, .animate-shake { animation: none !important; } }
 
     /* Scoped Surprise Boxes palette with high-contrast setup states. */
     .surprise-boxes-setup { color: #f5f7ff !important; }
@@ -25246,7 +25288,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
     const boxRect = box.getBoundingClientRect();
     const elapsed = Math.min(0.05, Math.max(0.001, (timestamp - (moveFindMeWords.lastTimestamp || timestamp)) / 1000));
     moveFindMeWords.lastTimestamp = timestamp;
-    box.querySelectorAll('.find-me-word').forEach(btn => {
+    box.querySelectorAll('.find-me-word:not(.find-me-word--correct):not(.find-me-word--wrong):not([data-status="correct"]):not([data-status="wrong"])').forEach(btn => {
       const maxLeft = Math.max(4, boxRect.width - btn.offsetWidth - 8);
       const maxTop = Math.max(4, boxRect.height - btn.offsetHeight - 8);
       let x = Number(btn.dataset.x);
@@ -25281,7 +25323,63 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   };
   let findMeTarget = null;
   const updateFindMeProgress = () => { modal.querySelector('#find-me-progress').textContent = `${getFindMePlayerScore()}/${findMeTargetScore}`; };
-  function renderRound() { locked = false; const setting = findMeDifficulties[findMeDifficulty]; const roundWords = words.slice().sort(() => Math.random() - 0.5); const target = (findMeTarget = currentRole === 'student' ? words[getFindMePlayerScore()] : roundWords[0]); const choices = getFindMeRoundItems(target, setting.itemCount); modal.querySelector('#find-me-picture').src = target.vocab_image; modal.querySelector('#find-me-picture').alt = `Picture clue for ${target.vocab_word}`; updateFindMeProgress(); feedback.textContent = ''; box.innerHTML = choices.map(w=>`<button type="button" class="find-me-word absolute px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold text-orange-700 shadow-md transition hover:bg-orange-100" data-word="${w.vocab_word}">${w.vocab_word}</button>`).join(''); updateFindMeWordSize(); cancelAnimationFrame(findMeAnimationId); findMeAnimationId = requestAnimationFrame(moveFindMeWords); box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{ if(locked) return; locked=true; const correct=btn.dataset.word===target.vocab_word; if(correct){ activeGameScores[activeGamePlayerIndex]=(activeGameScores[activeGamePlayerIndex]||0)+1; updateFindMeProgress(); feedback.textContent='✅ Correct!'; feedback.className='min-h-8 mt-4 text-lg font-bold text-green-600'; btn.classList.add('find-me-word--correct'); const pop=document.createElement('span'); pop.className='find-me-score-pop'; pop.textContent='+1'; btn.appendChild(pop); showCorrectAnswerCelebration(modal, activeGamePlayerIndex);} else {feedback.textContent=`❌ Not quite — the answer is ${target.vocab_word}`; feedback.className='min-h-8 mt-4 text-lg font-bold text-red-600'; btn.classList.add('find-me-word--wrong'); box.querySelectorAll('button').forEach(b=>{ if(b.dataset.word===target.vocab_word) b.classList.add('find-me-word--hint'); }); const prevPlayerIndex = activeGamePlayerIndex; advanceGameTurn(); showWrongAnswerCelebration(modal, prevPlayerIndex);} updateGamePlayerHud(modal, 1, activeGamePlayerIndex); if(getFindMePlayerScore() >= findMeTargetScore){ locked = true; setTimeout(()=>showGameCelebration(modal,'Find Me champion!',target.vocab_word,null,target.vocab_image),500); } else setTimeout(()=>{round++; renderRound();},900);})); }
+  function renderRound() { locked = false; const setting = findMeDifficulties[findMeDifficulty]; const roundWords = words.slice().sort(() => Math.random() - 0.5); const target = (findMeTarget = currentRole === 'student' ? words[getFindMePlayerScore()] : roundWords[0]); const choices = getFindMeRoundItems(target, setting.itemCount); modal.querySelector('#find-me-picture').src = target.vocab_image; modal.querySelector('#find-me-picture').alt = `Picture clue for ${target.vocab_word}`; updateFindMeProgress(); feedback.textContent = ''; box.innerHTML = choices.map(w=>`<button type="button" class="find-me-word absolute px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold text-orange-700 shadow-md transition hover:bg-orange-100" data-word="${w.vocab_word}">${w.vocab_word}</button>`).join(''); updateFindMeWordSize(); cancelAnimationFrame(findMeAnimationId); findMeAnimationId = requestAnimationFrame(moveFindMeWords); box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
+      if(locked) return;
+      locked = true;
+      const correct = btn.dataset.word === target.vocab_word;
+      if(correct) {
+        activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+        updateFindMeProgress();
+        feedback.textContent = '✅ Correct!';
+        feedback.className = 'min-h-8 mt-4 text-lg font-bold text-green-600';
+        btn.dataset.status = 'correct';
+        btn.classList.add(
+          'find-me-word--correct',
+          'is-correct',
+          'animate-bounce-short',
+          'ring-4',
+          'ring-emerald-400',
+          'bg-emerald-500/20',
+          'scale-110',
+          'shadow-[0_0_20px_rgba(52,211,153,0.6)]',
+          'duration-300'
+        );
+        const pop = document.createElement('span');
+        pop.className = 'find-me-score-pop';
+        pop.textContent = '+1';
+        btn.appendChild(pop);
+        showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+      } else {
+        feedback.textContent = `❌ Not quite — the answer is ${target.vocab_word}`;
+        feedback.className = 'min-h-8 mt-4 text-lg font-bold text-red-600';
+        btn.dataset.status = 'wrong';
+        btn.classList.add(
+          'find-me-word--wrong',
+          'is-wrong',
+          'animate-shake',
+          'ring-4',
+          'ring-rose-500',
+          'bg-rose-500/20',
+          'duration-300'
+        );
+        box.querySelectorAll('button').forEach(b => {
+          if (b.dataset.word === target.vocab_word) {
+            b.dataset.status = 'hint';
+            b.classList.add('find-me-word--hint', 'ring-4', 'ring-amber-400');
+          }
+        });
+        const prevPlayerIndex = activeGamePlayerIndex;
+        advanceGameTurn();
+        showWrongAnswerCelebration(modal, prevPlayerIndex);
+      }
+      updateGamePlayerHud(modal, 1, activeGamePlayerIndex);
+      if(getFindMePlayerScore() >= findMeTargetScore){
+        locked = true;
+        setTimeout(() => showGameCelebration(modal, 'Find Me champion!', target.vocab_word, null, target.vocab_image), 500);
+      } else {
+        setTimeout(() => { round++; renderRound(); }, 900);
+      }
+    })); }
   wordCountDecrease?.addEventListener('click', () => { findMeWordCount = Math.max(2, findMeWordCount - 1); updateFindMeWordCountControls(); renderRound(); });
   wordCountIncrease?.addEventListener('click', () => { findMeWordCount = Math.min(Math.min(15, words.length), findMeWordCount + 1); updateFindMeWordCountControls(); renderRound(); });
   updateFindMeWordCountControls();
