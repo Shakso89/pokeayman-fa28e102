@@ -1,1 +1,24 @@
 project_id = "czszbdkdvvxeqkublkgi"
+
+[auth]
+additional_redirect_urls = ["https://pokeayman.pokeayman.workers.dev/**", "https://pokeayman.pokeayman.workers.dev", "https://shakso89-pokeayman-fa28e102.pokeayman.workers.dev/**", "http://localhost:3000/**"]
+site_url = "https://pokeayman.pokeayman.workers.dev"
+
+[auth.email]
+max_frequency = "1m0s"
+otp_length = 8
+
+[auth.external.google]
+client_id = "264955410811-hdfrt5djn538e61vjn6aog8v1pf5hmdu.apps.googleusercontent.com"
+enabled = true
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[db.pooler]
+default_pool_size = 15
+max_client_conn = 200
+
+[storage.vector]
+enabled = false
