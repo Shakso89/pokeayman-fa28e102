@@ -73,4 +73,10 @@ describe("Teacher Game Vocabulary Assignment & Multi-Class Student Dashboard Iso
     const emptyStudent = await fetchStudentEnrolledClasses("");
     expect(emptyStudent).toBeNull();
   });
+
+  it("6. Game setup vocabulary picker removes irrelevant Listen and Catch banner across game flows", () => {
+    const indexHtml = readFileSync(path.join(root, "public", "pokeayman", "index.html"), "utf8");
+    expect(indexHtml).not.toContain("ga-listen-quickplay");
+    expect(indexHtml).not.toContain("Uses all vocabulary lists in the selected class automatically.");
+  });
 });

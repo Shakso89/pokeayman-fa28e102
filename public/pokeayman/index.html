@@ -23902,7 +23902,6 @@ function renderGamesList() {
     if (enrolledClasses.length > 1) {
       studentGamesHtml += classFilterHtml;
     }
-    studentGamesHtml += `<button type="button" class="ga-listen-quickplay${listenCatchLocked ? ' is-pro-locked' : ''} mb-4" aria-disabled="${listenCatchLocked}" aria-label="Listen and Catch${listenCatchLocked ? ', Pro access required for this class' : ''}"><span><b>Listen and Catch <span class="ga-pro-badge">PRO</span></b><small>${listenCatchLocked ? 'Locked for this class. Ask your main class manager about Pro access.' : 'Uses all vocabulary lists in the selected class automatically.'}</small></span><span aria-hidden="true">${listenCatchLocked ? 'Locked' : '▶'}</span></button>`;
 
     const visibleEnrolledClasses = (selectedStudentGamesScope === 'class' && selectedStudentGamesClassKey)
       ? enrolledClasses.filter(c => `${c.school_name}||${c.class_name}` === selectedStudentGamesClassKey)
@@ -24011,7 +24010,6 @@ function renderGamesList() {
     html += '</div>';
   }
   listArea.insertAdjacentHTML('beforeend', html);
-  listArea.querySelector('.ga-listen-quickplay')?.addEventListener('click', () => window.startListenCatch?.());
   
   // Attach class filter listeners for student games
   if (isStudentGames && enrolledClasses.length > 1) {
