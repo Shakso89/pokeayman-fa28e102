@@ -92,3 +92,63 @@ export const removeStudentFromClass = async (studentId: string, classId: string)
   }
 };
 
+/**
+ * Strict UUID-based coin adjustment for students.
+ * Atomically increments the student's coins using increment_student_coins RPC
+ * (with fallback to direct query by UUID) and logs into coin_transactions.
+ */
+export const adjustStudentCoins = async (
+  studentId: string,
+  amount: number,
+  adminId: string,
+  reason: string = "Admin adjustment"
+): Promise<number> => {
+  if (!studentId) {
+    throw new Error("Student ID (UUID) is required for coin adjustment.");
+  }
+
+  let newBalance: number | null = null;
+
+  // 1. Atomically update the student's actual wallet balance via RPC
+  const { data: updatedBalance, error: updateError } = await supabase.rpc("increment_student_coins", {
+    target_student_id: studentId,
+    coin_delta: amount,
+  });
+
+  if (!updateError && updatedBalance !== null && updatedBalance !== undefined) {
+    newBalance = Number(updatedBalance);
+  } else {
+    // Fallback direct update if RPC is not present:
+    const { data: student, error: fetchErr } = await supabase
+      .from("students")
+      .select("coins")
+      .eq("id", studentId)
+      .single();
+
+    if (fetchErr || !student) throw new Error("Student not found");
+
+    const calculated = Math.max(0, (student.coins || 0) + amount);
+    const { error: patchError } = await supabase
+      .from("students")
+      .update({ coins: calculated })
+      .eq("id", studentId);
+
+    if (patchError) throw patchError;
+    newBalance = calculated;
+  }
+
+  // 2. Insert into transaction log using exact UUIDs
+  try {
+    await supabase.from("coin_transactions").insert({
+      student_id: studentId,
+      amount: amount,
+      created_by: adminId,
+      description: reason || "Admin adjustment",
+      created_at: new Date().toISOString(),
+    });
+  } catch (logErr) {
+    console.warn("Failed to insert into coin_transactions:", logErr);
+  }
+
+  return newBalance ?? 0;
+};

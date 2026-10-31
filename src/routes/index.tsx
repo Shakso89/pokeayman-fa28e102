@@ -4,7 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { streamSpeech } from "@/lib/vocabulary-speech";
-import { fetchClassStudents, removeStudentFromClass } from "@/lib/class-students";
+import { fetchClassStudents, removeStudentFromClass, adjustStudentCoins } from "@/lib/class-students";
 import { useRouter } from "@tanstack/react-router";
 
 type Result = { error?: string; name?: string; signedIn?: boolean };
@@ -15,6 +15,7 @@ declare global {
     queryClient?: any;
     fetchClassStudents?: typeof fetchClassStudents;
     removeStudentFromClass?: typeof removeStudentFromClass;
+    adjustStudentCoins?: typeof adjustStudentCoins;
     pokeaymanSpeak?: (text: string, level?: string) => Promise<void>;
     pokeaymanStop?: () => void;
     pokeaymanAuth?: {
@@ -129,6 +130,7 @@ function Index() {
     window.queryClient = queryClient;
     window.fetchClassStudents = fetchClassStudents;
     window.removeStudentFromClass = removeStudentFromClass;
+    window.adjustStudentCoins = adjustStudentCoins;
     (window as any).pokeaymanSupabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://czszbdkdvvxeqkublkgi.supabase.co';
     (window as any).pokeaymanSupabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
     window.pokeaymanAuth = {

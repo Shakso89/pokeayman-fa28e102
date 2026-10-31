@@ -18519,7 +18519,22 @@ function studentActivityTimestamp(record) {
   return Number.isFinite(time) ? time : 0;
 }
 function canonicalStudentId(student) {
-  return String(student?.student_id || student?.pie_id || student?.PIE_ID || student?.user_id || student?.profile_id || student?.account_id || '').trim();
+  return String(student?.student_id || student?.id || student?.__backendId || student?.pie_id || student?.PIE_ID || student?.user_id || student?.profile_id || student?.account_id || '').trim();
+}
+function formatActivityDateTime(timestamp) {
+  if (!timestamp) return '';
+  const d = new Date(timestamp);
+  if (isNaN(d.getTime())) return '';
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const month = months[d.getMonth()];
+  const day = d.getDate();
+  const year = d.getFullYear();
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  return `${month} ${day}, ${year}, ${hours}:${minutes} ${ampm}`;
 }
 function parseActivityMetadata(record) {
   const values = [record?.details, record?.metadata, record?.activity_details, record?.data];
@@ -18532,32 +18547,96 @@ function studentActivityMatches(record, student) {
   if (!record || !student) return false;
   const id = canonicalStudentId(student);
   const metadata = parseActivityMetadata(record);
-  const ids = [record.student_id, record.studentId, record.pie_id, record.PIE_ID, record.student_record_id, record.profile_id, record.user_id, record.account_id, record.target_student_id, metadata.student_id, metadata.studentId, metadata.pie_id, metadata.profile_id].filter(value => value !== undefined && value !== null && value !== '').map(value => String(value).trim());
-  const idSet = new Set([id, String(student.__backendId || '').trim()].filter(Boolean));
+  const ids = [record.student_id, record.studentId, record.pie_id, record.PIE_ID, record.student_record_id, record.profile_id, record.user_id, record.account_id, record.target_student_id, metadata.student_id, metadata.studentId, metadata.pie_id, metadata.profile_id]
+    .filter(value => value !== undefined && value !== null && value !== '')
+    .map(value => String(value).trim());
+  const idSet = new Set([id, String(student.__backendId || '').trim(), String(student.id || '').trim()].filter(Boolean));
   if (ids.some(v => idSet.has(v))) return true;
-  const name = String(student.student_name || '').trim().toLocaleLowerCase();
+
+  // Strict UUID rejection: If the record contains a student_id that does not belong to this student, reject
+  if (ids.length > 0) return false;
+
+  // Name fallback strictly for legacy records with NO ID and ONLY when name is globally unique to this single student
+  const name = String(student.student_name || student.name || '').trim().toLocaleLowerCase();
   if (!name) return false;
   const t = String(record.type || '').toLowerCase();
-  if (t === 'credit_log') return String(record.log_target || '').trim().toLocaleLowerCase() === name;
-  if (t === 'pokemon') return !record.student_id && String(record.owner || '').trim().toLocaleLowerCase() === name;
+  const studentsWithName = allData.filter(r => (r.type === 'student' || r.type === 'student_membership') && String(r.student_name || r.name || '').trim().toLowerCase() === name);
+  if (studentsWithName.length <= 1) {
+    if (['credit_log', 'coin_transactions', 'coin_transaction'].includes(t)) {
+      return String(record.log_target || '').trim().toLocaleLowerCase() === name;
+    }
+    if (['pokemon', 'user_pokemons', 'pokemon_captures', 'pokemon_collected'].includes(t)) {
+      return String(record.owner || '').trim().toLocaleLowerCase() === name;
+    }
+  }
   return false;
 }
 function getStudentWeekFeed(student) {
   const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  return allData.filter(r => ['credit_log','pokemon','activity_log'].includes(String(r.type || '')) && studentActivityMatches(r, student) && studentActivityTimestamp(r) >= cutoff)
-    .sort((a, b) => studentActivityTimestamp(b) - studentActivityTimestamp(a));
+  return allData.filter(r => {
+    const t = String(r.type || '').toLowerCase();
+    const isActivity = ['credit_log', 'coin_transactions', 'coin_transaction', 'pokemon', 'user_pokemons', 'pokemon_captures', 'pokemon_collected', 'activity_log'].includes(t);
+    return isActivity && studentActivityMatches(r, student) && studentActivityTimestamp(r) >= cutoff;
+  }).sort((a, b) => studentActivityTimestamp(b) - studentActivityTimestamp(a));
 }
 function getStudentMemberships(student) {
+  if (!student) return [];
   const id = canonicalStudentId(student);
-  const candidates = allData.filter(record => {
-    const metadata = parseActivityMetadata(record);
-    const ids = [record.student_id, record.studentId, record.pie_id, record.PIE_ID, metadata.student_id, metadata.studentId, metadata.pie_id].filter(Boolean).map(value => String(value).trim());
-    return ids.includes(id) && ['student_membership','class_student','class_membership','membership'].includes(String(record.type || '').toLowerCase());
-  });
-  const fromProfile = normalizeStudentMembershipValues(student?.class_memberships, []);
   const result = new Map();
-  candidates.forEach(record => { const classId = String(record.class_id || record.classId || parseActivityMetadata(record).class_id || '').trim(); const classRecord = allData.find(item => item.type === 'class' && (String(item.__backendId || '') === classId || (item.school_name === record.school_name && item.class_name === record.class_name))); if (classRecord) result.set(String(classRecord.__backendId), { school_name: classRecord.school_name, class_name: classRecord.class_name }); });
-  fromProfile.forEach(value => { const parts = String(value).split(' / '); if (parts.length > 1) result.set(`${parts[0]}||${parts.slice(1).join(' / ')}`, { school_name: parts[0], class_name: parts.slice(1).join(' / ') }); });
+  const addEntry = (school, className, classId = '') => {
+    const s = String(school || '').trim();
+    const c = String(className || '').trim();
+    if (!s && !c) return;
+    const key = (s ? `${s.toLowerCase()} / ${c.toLowerCase()}` : c.toLowerCase());
+    if (!result.has(key)) {
+      result.set(key, { id: classId || key, school_name: s, class_name: c, name: c, school: s });
+    }
+  };
+
+  // 1. From student.classes
+  if (Array.isArray(student.classes)) {
+    student.classes.forEach(cls => {
+      addEntry(cls.school || cls.school_name, cls.name || cls.class_name, cls.id);
+    });
+  }
+
+  // 2. From student.class_students
+  if (Array.isArray(student.class_students)) {
+    student.class_students.forEach(cs => {
+      if (cs.classes) {
+        addEntry(cs.classes.school || cs.classes.school_name, cs.classes.name || cs.classes.class_name, cs.classes.id);
+      }
+    });
+  }
+
+  // 3. From student.class_memberships
+  const fromProfile = normalizeStudentMembershipValues(student.class_memberships, []);
+  fromProfile.forEach(value => {
+    const parts = String(value).split(' / ');
+    if (parts.length > 1) {
+      addEntry(parts[0], parts.slice(1).join(' / '));
+    } else if (String(value).trim()) {
+      addEntry('', String(value).trim());
+    }
+  });
+
+  // 4. From class_students / memberships in allData
+  allData.forEach(record => {
+    const t = String(record.type || '').toLowerCase();
+    if (!['student_membership','class_student','class_membership','membership'].includes(t)) return;
+    const metadata = parseActivityMetadata(record);
+    const ids = [record.student_id, record.studentId, record.pie_id, record.PIE_ID, metadata.student_id, metadata.studentId, metadata.pie_id].filter(Boolean).map(v => String(v).trim());
+    if (id && ids.includes(id)) {
+      const classId = String(record.class_id || record.classId || metadata.class_id || '').trim();
+      const classRecord = allData.find(item => item.type === 'class' && (String(item.__backendId || '') === classId || (item.school_name === record.school_name && item.class_name === record.class_name)));
+      if (classRecord) {
+        addEntry(classRecord.school_name, classRecord.class_name, classRecord.__backendId);
+      } else if (record.school_name || record.class_name) {
+        addEntry(record.school_name, record.class_name, classId);
+      }
+    }
+  });
+
   return [...result.values()];
 }
 function getStudentRecentActivity(student) {
@@ -18572,32 +18651,157 @@ function formatStudentActivityDate(record) {
   return Number.isFinite(time) ? new Date(time).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Date unavailable';
 }
 function openStudentActivityPopup(student, row) {
+  if (!student) return;
   document.getElementById('student-activity-popup')?.remove();
-  const activity = getStudentRecentActivity(student);
-  const coin = activity.coin, pokemon = activity.pokemon;
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-  const coinAmount = coin ? Number(coin.amount ?? coin.coins_awarded ?? coin.log_amount ?? coin.coins ?? 0) : 0;
-  const teacher = coin?.teacher_name || coin?.awarded_by || coin?.teacher || coin?.created_by || 'Teacher unavailable';
-  const pokemonName = pokemon?.pokemon_name || pokemon?.pokemon?.name || 'Pokémon';
-  const pokemonId = Number(pokemon?.pokemon_id || pokemon?.pokemon?.id || 0);
-  const pokemonType = String(pokemon?.activity_type || pokemon?.transaction_type || pokemon?.action || pokemon?.type || '').toLowerCase();
-  const pokemonMode = /buy|purchas|shop/.test(pokemonType) ? 'Bought' : 'Awarded';
-  const pokemonImage = pokemon?.pokemon_image || pokemon?.image || pokemon?.pokemon?.image || (pokemonId ? `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${pokemonId}.png` : '');
-  const feed = getStudentWeekFeed(student);
-  const feedHtml = feed.length ? `<h3 class="student-activity-feed-title">Last 7 days</h3>` + feed.map(r => {
-    const when = `<time>${escape(formatStudentActivityDate(r))}</time>`;
-    if (r.type === 'credit_log') { const amt = Number(r.log_amount || 0); const neg = amt < 0; return `<article class="student-activity-card coin"><p class="student-activity-value">${neg ? '' : '+'}${escape(amt)} coins</p><p>${escape(r.log_action || 'Award')} by ${escape(r.teacher_name || 'Teacher')}</p>${when}</article>`; }
-    if (r.type === 'pokemon') { const pid = Number(r.pokemon_id || 0); return `<article class="student-activity-card pokemon"><div class="student-activity-pokemon-row">${pid ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${pid}.png" alt="">` : ''}<div><p class="student-activity-value">${escape(r.pokemon_name || 'Pokémon')}</p><p>${r.purchase_id ? 'Bought' : 'Got'} · ${escape(r.pokemon_rarity || '')}</p>${when}</div></div></article>`; }
-    return `<article class="student-activity-card"><p>${escape(String(r.activity_type || 'Activity').replace(/_/g, ' '))}${r.removed_class ? ` · ${escape(r.removed_class)}` : ''}</p>${when}</article>`;
+  const weekFeed = getStudentWeekFeed(student);
+
+  const feedHtml = weekFeed.length ? weekFeed.map(r => {
+    const time = studentActivityTimestamp(r);
+    const whenFormatted = formatActivityDateTime(time);
+    const whenHtml = time ? `<time class="student-activity-time" datetime="${new Date(time).toISOString()}">${escape(whenFormatted)}</time>` : '';
+    const t = String(r.type || '').toLowerCase();
+
+    if (['credit_log', 'coin_transactions', 'coin_transaction'].includes(t)) {
+      const amt = Number(r.log_amount ?? r.amount ?? 0);
+      const isNegative = amt < 0;
+      const displayAmount = (amt > 0 ? `+${amt}` : `${amt}`) + ' coins';
+      const adminName = r.admin_name || r.teacher_name || r.created_by || '';
+      let subtitle = r.description || r.log_action || 'Admin adjustment';
+      if (adminName && !subtitle.toLowerCase().includes(adminName.toLowerCase())) {
+        subtitle = `${subtitle} by ${adminName}`;
+      }
+      return `
+        <article class="student-activity-card coin ${isNegative ? 'coin-negative' : ''}">
+          <div class="student-activity-card-row">
+            <div class="student-activity-icon-box">
+              <div class="student-activity-coin-circle ${isNegative ? 'negative' : ''}">🪙</div>
+            </div>
+            <div class="student-activity-info">
+              <h3 class="student-activity-title ${isNegative ? 'coin-negative' : 'coin-positive'}">${escape(displayAmount)}</h3>
+              <p class="student-activity-subtitle">${escape(subtitle)}</p>
+              ${whenHtml}
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    if (['pokemon', 'user_pokemons', 'pokemon_captures', 'pokemon_collected'].includes(t)) {
+      const pid = Number(r.pokemon_id || r.pokemonId || 0);
+      const name = r.pokemon_name || r.name || 'Pokémon';
+      const rarity = r.pokemon_rarity || r.rarity || 'common';
+      const ballType = r.ball_type || r.ballType;
+      const subtitle = ballType ? `Rarity: ${rarity} · ${ballType} used` : `${r.purchase_id ? 'Bought' : 'Got'} · ${rarity}`;
+      const spriteUrl = pid
+        ? `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${pid}.png`
+        : getAvatarFallbackSrc();
+
+      return `
+        <article class="student-activity-card pokemon">
+          <div class="student-activity-card-row">
+            <div class="student-activity-icon-box">
+              <img src="${escape(spriteUrl)}" alt="${escape(name)}" loading="lazy" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pid}.png';">
+            </div>
+            <div class="student-activity-info">
+              <h3 class="student-activity-title">${escape(name)}</h3>
+              <p class="student-activity-subtitle">${escape(subtitle)}</p>
+              ${whenHtml}
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    const title = escape(String(r.activity_type || r.action || 'Activity').replace(/_/g, ' '));
+    const subtitle = r.removed_class ? `Removed from ${escape(r.removed_class)}` : (r.details || '');
+    return `
+      <article class="student-activity-card">
+        <div class="student-activity-card-row">
+          <div class="student-activity-icon-box">
+            <span style="font-size:1.5rem">📋</span>
+          </div>
+          <div class="student-activity-info">
+            <h3 class="student-activity-title">${title}</h3>
+            ${subtitle ? `<p class="student-activity-subtitle">${escape(subtitle)}</p>` : ''}
+            ${whenHtml}
+          </div>
+        </div>
+      </article>
+    `;
   }).join('') : '<p class="student-activity-empty">No activity in the last 7 days</p>';
-  const popup = document.createElement('div'); popup.id = 'student-activity-popup'; popup.className = 'student-activity-overlay';
-  popup.innerHTML = `<section class="student-activity-dialog" role="dialog" aria-modal="true" aria-labelledby="student-activity-title" tabindex="-1"><header class="student-activity-header"><div class="flex items-center gap-3 min-w-0"><img src="${escape(getStudentAvatarSrc(student))}" class="student-activity-avatar" alt="${escape(getStudentAvatarAlt(student))}"><div class="min-w-0"><h2 id="student-activity-title">${escape(student.student_name)}</h2><div class="student-activity-joined"><strong>Joined classes</strong>${getStudentMemberships(student).length ? `<div>${getStudentMemberships(student).map(item => `<span>${escape(item.school_name)} / ${escape(item.class_name)}</span>`).join('')}</div>` : '<em>Resolving memberships…</em>'}</div></div></div><button type="button" class="student-activity-close" aria-label="Close student activity details">×</button></header><div class="student-activity-body">${feedHtml}</div></section>`;
-  document.body.appendChild(popup); document.body.style.overflow = 'hidden'; popup.querySelector('.student-activity-dialog').focus();
+
+  const uniqueClasses = getStudentMemberships(student);
+  const classesHtml = uniqueClasses.length
+    ? `<div class="flex flex-wrap gap-1.5 mt-1">${uniqueClasses.map(cls => {
+        const label = cls.school_name ? `${cls.school_name} / ${cls.class_name}` : (cls.class_name || cls.name || 'Class');
+        return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 border border-slate-700 text-slate-300">${escape(label)}</span>`;
+      }).join('')}</div>`
+    : '<span class="text-xs text-slate-400 italic">No assigned classes</span>';
+
+  const popup = document.createElement('div');
+  popup.id = 'student-activity-popup';
+  popup.className = 'student-activity-overlay';
+  popup.innerHTML = `
+    <section class="student-activity-dialog" role="dialog" aria-modal="true" aria-labelledby="student-activity-title" tabindex="-1">
+      <header class="student-activity-header">
+        <div class="flex items-center gap-3 min-w-0">
+          <img src="${escape(getStudentAvatarSrc(student))}" class="student-activity-avatar" alt="${escape(getStudentAvatarAlt(student))}" onerror="this.onerror=null;this.src=getAvatarFallbackSrc()">
+          <div class="min-w-0">
+            <h2 id="student-activity-title">${escape(student.student_name || student.name || 'Student')}</h2>
+            <div class="student-activity-joined">
+              <strong>Joined classes</strong>
+              ${classesHtml}
+            </div>
+          </div>
+        </div>
+        <button type="button" class="student-activity-close" aria-label="Close student activity details">×</button>
+      </header>
+      <div class="student-activity-body">
+        <h3 class="student-activity-feed-title">Last 7 Days</h3>
+        ${feedHtml}
+      </div>
+    </section>
+  `;
+  document.body.appendChild(popup);
+  document.body.style.overflow = 'hidden';
+  popup.querySelector('.student-activity-dialog').focus();
   const close = () => { popup.remove(); document.body.style.overflow = ''; row?.focus(); };
-  popup.querySelector('.student-activity-close').addEventListener('click', close); popup.addEventListener('click', event => { if (event.target === popup) close(); }); popup.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
+  popup.querySelector('.student-activity-close').addEventListener('click', close);
+  popup.addEventListener('click', event => { if (event.target === popup) close(); });
+  popup.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
 }
 const studentActivityStyles = document.createElement('style');
-studentActivityStyles.textContent = `.student-activity-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(2,8,18,.78);backdrop-filter:blur(8px)}.student-activity-dialog{width:min(100%,34rem);max-height:92%;overflow:auto;border:1px solid rgba(255,255,255,.35);border-radius:1.2rem;background:linear-gradient(145deg,#1d256e,#0b222d);color:#f5f7ff;box-shadow:0 28px 90px rgba(0,0,0,.65);outline:none}.student-activity-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem;background:linear-gradient(135deg,#1e2a6e,#1b2560)}.student-activity-header h2{color:#fff7cc;font-size:1.2rem;font-weight:900}.student-activity-header p{color:#bae6fd;font-size:.72rem}.student-activity-joined{margin-top:.45rem;color:#d7f4ef;font-size:.7rem}.student-activity-joined strong{display:block;color:#fde68a;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em}.student-activity-joined div{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.25rem}.student-activity-joined span{padding:.2rem .45rem;border:1px solid rgba(255,255,255,.28);border-radius:999px;background:rgba(18,26,69,.5)}.student-activity-avatar{width:3rem;height:3rem;object-fit:contain;border-radius:999px;background:rgba(255,255,255,.14)}.student-activity-close{width:2.4rem;height:2.4rem;border-radius:.7rem;background:rgba(255,255,255,.14);color:#fff;font-size:1.5rem}.student-activity-body{display:grid;gap:.75rem;padding:1rem}.student-activity-card{padding:1rem;border-radius:.9rem;border:1px solid rgba(255,255,255,.25);background:rgba(18,26,69,.82)}.student-activity-card.coin{border-color:rgba(251,191,36,.55)}.student-activity-card.pokemon{border-color:rgba(255,203,5,.5)}.student-activity-card h3{font-weight:900;color:#fef3c7;margin-bottom:.55rem}.student-activity-card p,.student-activity-card time{font-size:.8rem;color:#d7f4ef}.student-activity-value{font-size:1.25rem!important;font-weight:900;color:#fde68a!important}.student-activity-feed-title{font-weight:900;color:#fde68a;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}.student-activity-empty{color:#b9c3e6!important;font-style:italic}.student-activity-pokemon-row{display:flex;align-items:center;gap:.8rem}.student-activity-pokemon-row img{width:4rem;height:4rem;object-fit:contain}@media(max-width:480px){.student-activity-overlay{padding:.5rem}.student-activity-dialog{max-height:94%}}`;
+studentActivityStyles.textContent = `
+.student-activity-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(2,8,18,.78);backdrop-filter:blur(8px)}
+.student-activity-dialog{width:min(100%,34rem);max-height:92%;overflow:auto;border:1px solid rgba(255,255,255,.35);border-radius:1.2rem;background:linear-gradient(145deg,#1d256e,#0b222d);color:#f5f7ff;box-shadow:0 28px 90px rgba(0,0,0,.65);outline:none}
+.student-activity-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem;background:linear-gradient(135deg,#1e2a6e,#1b2560)}
+.student-activity-header h2{color:#fff7cc;font-size:1.2rem;font-weight:900}
+.student-activity-header p{color:#bae6fd;font-size:.72rem}
+.student-activity-joined{margin-top:.45rem;color:#d7f4ef;font-size:.7rem}
+.student-activity-joined strong{display:block;color:#fde68a;font-size:.65rem;text-transform:uppercase;letter-spacing:.06em}
+.student-activity-avatar{width:3rem;height:3rem;object-fit:contain;border-radius:999px;background:rgba(255,255,255,.14)}
+.student-activity-close{width:2.4rem;height:2.4rem;border-radius:.7rem;background:rgba(255,255,255,.14);color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center}
+.student-activity-body{display:grid;gap:.75rem;padding:1rem}
+.student-activity-card{padding:.85rem 1rem;border-radius:.9rem;border:1px solid rgba(255,255,255,.2);background:rgba(18,26,69,.82);transition:border-color .15s ease}
+.student-activity-card.coin{border-color:rgba(251,191,36,.4)}
+.student-activity-card.coin-negative{border-color:rgba(248,113,113,.4)}
+.student-activity-card.pokemon{border-color:rgba(96,165,250,.4)}
+.student-activity-card-row{display:flex;align-items:center;gap:1rem}
+.student-activity-icon-box{width:3.2rem;height:3.2rem;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.student-activity-icon-box img{width:3.2rem;height:3.2rem;object-fit:contain}
+.student-activity-coin-circle{width:3rem;height:3rem;border-radius:9999px;background:radial-gradient(circle,#fde68a 0%,#f59e0b 60%,#b45309 100%);border:2px solid #fef08a;box-shadow:0 3px 10px rgba(245,158,11,.35);display:flex;align-items:center;justify-content:center;font-size:1.4rem;user-select:none}
+.student-activity-coin-circle.negative{background:radial-gradient(circle,#fca5a5 0%,#ef4444 60%,#991b1b 100%);border-color:#fecaca;box-shadow:0 3px 10px rgba(239,68,68,.35)}
+.student-activity-info{flex:1;min-width:0}
+.student-activity-title{font-size:1.05rem;font-weight:900;color:#ffffff;margin:0 0 .15rem 0}
+.student-activity-title.coin-positive{color:#fde68a}
+.student-activity-title.coin-negative{color:#f87171}
+.student-activity-subtitle{font-size:.8rem;color:#cbd5e1;margin:0 0 .2rem 0}
+.student-activity-time{display:block;font-size:.72rem;color:#94a3b8}
+.student-activity-feed-title{font-weight:900;color:#fde68a;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem}
+.student-activity-empty{color:#b9c3e6!important;font-style:italic}
+@media(max-width:480px){.student-activity-overlay{padding:.5rem}.student-activity-dialog{max-height:94%}}
+`;
 document.head.appendChild(studentActivityStyles);
 const ADMIN_STUDENTS_PAGE_SIZE = 20;
 let adminStudentsCurrentPage = 0;
@@ -19709,7 +19913,54 @@ async function awardQuickAnswerCoins(studentName) {
 
 async function logCredit(action, amount, target, options = {}) {
   if (allData.length >= 999) return;
-  const result = await window.dataSdk.create({ type: 'credit_log', school_name: '', class_name: '', student_name: '', coins: 0, pokemon_id: 0, pokemon_name: '', pokemon_rarity: '', pokemon_price: 0, pokemon_power: 0, quiz_question: '', quiz_answer: '', quiz_reward: 0, quiz_solved_by: '', quiz_type: '', quiz_options: '', quiz_image: '', owner: '', created_at: new Date().toISOString(), teacher_name: currentTeacher, teacher_pin: '', teacher_role: '', avatar_pokemon_id: 0, teacher_credits: 0, log_action: action, log_amount: amount, log_target: target, shop_pokemon_id: 0, shop_pokemon_name: '', shop_pokemon_rarity: '', shop_pokemon_price: 0, shop_pokemon_power: 0, shop_pokemon_hp: 0, quiz_folder: '', folder_name: '', archived: false, quiz_attempts: '', quiz_created_by: '', quiz_class: '', quiz_submitted_answers: '' }, options);
+  const targetId = String(options.student_id || options.target_student_id || options.studentId || (typeof target === 'object' ? (target.__backendId || target.id || target.student_id) : '') || '').trim();
+  const targetName = typeof target === 'string' ? target : (target?.student_name || target?.name || '');
+  const adminName = options.admin_name || currentTeacher || '';
+  const result = await window.dataSdk.create({
+    type: 'credit_log',
+    school_name: options.school_name || '',
+    class_name: options.class_name || '',
+    student_name: targetName,
+    student_id: targetId,
+    target_student_id: targetId,
+    coins: 0,
+    pokemon_id: 0,
+    pokemon_name: '',
+    pokemon_rarity: '',
+    pokemon_price: 0,
+    pokemon_power: 0,
+    quiz_question: '',
+    quiz_answer: '',
+    quiz_reward: 0,
+    quiz_solved_by: '',
+    quiz_type: '',
+    quiz_options: '',
+    quiz_image: '',
+    owner: '',
+    created_at: new Date().toISOString(),
+    teacher_name: adminName,
+    admin_name: adminName,
+    teacher_pin: '',
+    teacher_role: '',
+    avatar_pokemon_id: 0,
+    teacher_credits: 0,
+    log_action: action,
+    log_amount: amount,
+    log_target: targetName,
+    shop_pokemon_id: 0,
+    shop_pokemon_name: '',
+    shop_pokemon_rarity: '',
+    shop_pokemon_price: 0,
+    shop_pokemon_power: 0,
+    shop_pokemon_hp: 0,
+    quiz_folder: '',
+    folder_name: '',
+    archived: false,
+    quiz_attempts: '',
+    quiz_created_by: '',
+    quiz_class: '',
+    quiz_submitted_answers: ''
+  }, options);
   if (result?.isOk && result.data && !allData.some(row => row.__backendId === result.data.__backendId)) allData.push(result.data);
 }
 
@@ -20747,7 +20998,21 @@ document.getElementById('award-form').addEventListener('submit', async e => {
       toast('Award failed — coins were not added.');
       return;
     }
-    logCredit('Award', amount, name, { notify:false });
+    const studentTargetId = String(latest.__backendId || latest.id || latest.student_id || '').trim();
+    const parentAdjustFn = window.parent?.adjustStudentCoins || window.adjustStudentCoins;
+    if (typeof parentAdjustFn === 'function' && studentTargetId) {
+      try {
+        await parentAdjustFn(studentTargetId, amount, currentTeacher || 'Teacher', 'Award');
+      } catch (sbErr) {
+        console.warn('adjustStudentCoins remote call error:', sbErr);
+      }
+    }
+    logCredit('Award', amount, name, {
+      notify: false,
+      student_id: studentTargetId,
+      target_student_id: studentTargetId,
+      admin_name: currentTeacher
+    });
   });
 });
 
@@ -28877,7 +29142,22 @@ document.getElementById('profile-adjust-form').addEventListener('submit', async 
     if (amount > 0) await refundTeacherCredits(amount, currentTeacher);
     return;
   }
-  logCredit('Adjust', amount, saved.student_name, { notify:false });
+  const studentTargetId = String(latest.__backendId || latest.id || latest.student_id || '').trim();
+  const parentAdjustFn = window.parent?.adjustStudentCoins || window.adjustStudentCoins;
+  if (typeof parentAdjustFn === 'function' && studentTargetId) {
+    try {
+      await parentAdjustFn(studentTargetId, amount, currentTeacher || 'Admin', 'Admin adjustment');
+    } catch (sbErr) {
+      console.warn('adjustStudentCoins remote call error:', sbErr);
+    }
+  }
+
+  logCredit('Adjust', amount, saved.student_name, {
+    notify: false,
+    student_id: studentTargetId,
+    target_student_id: studentTargetId,
+    admin_name: currentTeacher
+  });
 });
 
 // ==================== BATTLE ARENA ====================
