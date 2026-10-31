@@ -1,7 +1,14 @@
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { streamSpeech } from "@/lib/vocabulary-speech";
-import { fetchClassStudents, removeStudentFromClass, adjustStudentCoins } from "@/lib/class-students";
+import {
+  fetchClassStudents,
+  removeStudentFromClass,
+  adjustStudentCoins,
+  fetchClassActiveGameVocabListIds,
+  updateClassActiveGameVocabListIds,
+  fetchStudentEnrolledClasses,
+} from "@/lib/class-students";
 
 export type Result = { error?: string; name?: string; signedIn?: boolean };
 
@@ -53,6 +60,9 @@ export function setupPokeaymanBridge({
   window.fetchClassStudents = fetchClassStudents;
   window.removeStudentFromClass = removeStudentFromClass;
   window.adjustStudentCoins = adjustStudentCoins;
+  (window as any).fetchClassActiveGameVocabListIds = fetchClassActiveGameVocabListIds;
+  (window as any).updateClassActiveGameVocabListIds = updateClassActiveGameVocabListIds;
+  (window as any).fetchStudentEnrolledClasses = fetchStudentEnrolledClasses;
   (window as any).pokeaymanSupabaseUrl =
     import.meta.env.VITE_SUPABASE_URL || "https://czszbdkdvvxeqkublkgi.supabase.co";
   (window as any).pokeaymanSupabaseKey =

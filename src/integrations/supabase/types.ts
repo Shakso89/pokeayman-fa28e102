@@ -38,6 +38,42 @@ export type Database = {
         }
         Relationships: []
       }
+      classes: {
+        Row: {
+          id: string
+          name: string
+          school_name: string | null
+          class_pin: string | null
+          class_level: string | null
+          teacher_id: string | null
+          school: string | null
+          active_game_vocab_list_ids: string[] | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          school_name?: string | null
+          class_pin?: string | null
+          class_level?: string | null
+          teacher_id?: string | null
+          school?: string | null
+          active_game_vocab_list_ids?: string[] | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          school_name?: string | null
+          class_pin?: string | null
+          class_level?: string | null
+          teacher_id?: string | null
+          school?: string | null
+          active_game_vocab_list_ids?: string[] | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

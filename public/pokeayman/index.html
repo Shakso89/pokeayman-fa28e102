@@ -15110,6 +15110,7 @@ document.getElementById('student-logout-btn')?.addEventListener('click', () => {
 
 
 function enterApp() {
+  try { window.syncAllClassesGameVocabLists?.(); } catch (_) {}
   const launchingTeacher = currentRole === 'teacher';
   if (launchingTeacher) window.pokeaymanShowTeacherStartup?.();
   if (currentRole === 'teacher') {
@@ -17487,39 +17488,91 @@ function renderStudentVocabulary() {
   // Always clear the previous class before deriving the next view.
   listGrid.innerHTML = '';
   empty.classList.add('hidden');
-  if (classLabel) classLabel.textContent = 'Loading vocabulary lists…';
+  if (classLabel) classLabel.textContent = selectedStudentVocabularyScope === 'all' ? 'All joined classes' : 'Study Vocabulary';
 
   const enrolled = getStudentEnrolledClasses();
-  const initialVocabulary = enrolled.find(item => `${item.school_name}||${item.class_name}` === selectedStudentVocabularyClassKey) || enrolled[0];
-  if (initialVocabulary && !selectedStudentVocabularyClassKey) { selectedStudentVocabularyClassKey = `${initialVocabulary.school_name}||${initialVocabulary.class_name}`; setStudentClassContext(initialVocabulary); }
-  const student = selectedStudentVocabularyScope === 'all' ? null : (enrolled.find(s => `${s.school_name}||${s.class_name}` === selectedStudentVocabularyClassKey) || initialVocabulary);
-  if (!student && selectedStudentVocabularyScope !== 'all') {
-    if (classLabel) classLabel.textContent = 'Choose an enrolled class to view vocabulary.';
-    empty.textContent = 'No class selected.';
+  if (!enrolled.length) {
+    if (classLabel) classLabel.textContent = 'No enrolled classes.';
+    empty.textContent = 'No enrolled classes found.';
     empty.classList.remove('hidden');
     return;
   }
 
-  if (student) setStudentClassContext(student);
-  if (classLabel) classLabel.textContent = selectedStudentVocabularyScope === 'all' ? 'All joined classes' : `${student.school_name} · ${student.class_name}`;
-  const existingFilter = listGrid.parentElement.querySelector('.student-class-filter-tabs'); existingFilter?.remove();
+  const existingFilter = listGrid.parentElement.querySelector('.student-class-filter-tabs');
+  existingFilter?.remove();
   listGrid.insertAdjacentHTML('beforebegin', getStudentClassFilterMarkup('vocabulary', selectedStudentVocabularyClassKey));
-  attachStudentClassFilterListeners(listGrid.parentElement, 'vocabulary', key => { if (key === 'all') { selectedStudentVocabularyScope = 'all'; } else { selectedStudentVocabularyScope = 'class'; selectedStudentVocabularyClassKey = key; const [school, className] = key.split('||'); setStudentClassContext({ school_name: school, class_name: className }); } renderStudentVocabulary(); });
-  const lists = selectedStudentVocabularyScope === 'all'
-    ? getVocabLists().filter(list => enrolled.some(item => vocabListInClass(list, item.school_name, item.class_name)))
-    : getVocabLists().filter(list => vocabListInClass(list, student.school_name, student.class_name));
-  listGrid.innerHTML = lists.map(list => {
-    const words = getVocabWords(list.vocab_list_name, list.vocab_list_school, list.vocab_list_class);
-    const safeListName = String(list.vocab_list_name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    const safeName = String(list.vocab_list_name).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\"/g, '&quot;');
-    const coverAction = `role="button" tabindex="0" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault(); event.stopPropagation(); openStudentVocabularyFlashcards('${safeListName}', this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"`; const cover = list.vocab_cover_image_url ? `<div class="student-vocab-cover" ${coverAction}><img src="${String(list.vocab_cover_image_url).replace(/\"/g, '&quot;')}" alt="Cover for ${safeName}" loading="lazy"></div>` : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
-    const flashcardsAction = words.length
-      ? `<button type="button" class="student-vocab-open-button" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault(); event.stopPropagation(); openStudentVocabularyFlashcards('${safeListName}', this);">${words.length} words · Open flashcards</button>`
-      : `<button type="button" class="student-vocab-open-button" disabled aria-label="${safeName} has no words yet">No words yet · Ask your teacher</button>`;
-    return `<article class="vocab-list-card text-left" data-list-name="${safeName}"><div class="flex items-start justify-center gap-3"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name mt-2">${safeName}</span></div>${cover}${flashcardsAction}</article>`;
-  }).join('');
-  empty.textContent = lists.length ? '' : 'No vocabulary lists are available for this class yet.';
-  empty.classList.toggle('hidden', lists.length > 0);
+  attachStudentClassFilterListeners(listGrid.parentElement, 'vocabulary', key => {
+    if (key === 'all') {
+      selectedStudentVocabularyScope = 'all';
+      selectedStudentVocabularyClassKey = '';
+    } else {
+      selectedStudentVocabularyScope = 'class';
+      selectedStudentVocabularyClassKey = key;
+      const [school, className] = key.split('||');
+      setStudentClassContext({ school_name: school, class_name: className });
+    }
+    renderStudentVocabulary();
+  });
+
+  const visibleEnrolled = (selectedStudentVocabularyScope === 'class' && selectedStudentVocabularyClassKey)
+    ? enrolled.filter(c => `${c.school_name}||${c.class_name}` === selectedStudentVocabularyClassKey)
+    : enrolled;
+
+  let totalListsCount = 0;
+  let html = '';
+
+  visibleEnrolled.forEach(cls => {
+    // Unrestricted flashcard access: all vocabulary lists in this class
+    const classLists = getVocabLists().filter(list => vocabListInClass(list, cls.school_name, cls.class_name));
+    totalListsCount += classLists.length;
+    const classTitle = cls.school_name ? `${cls.school_name} · ${cls.class_name}` : cls.class_name;
+    const countLabel = `(${classLists.length} ${classLists.length === 1 ? 'list' : 'lists'})`;
+
+    html += `
+      <div class="col-span-full space-y-3 mb-6" data-study-class="${cls.school_name}||${cls.class_name}">
+        <!-- Class Group Header -->
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-400">
+              ${classTitle}
+            </span>
+            <span class="text-[11px] font-medium text-slate-500">
+              ${countLabel}
+            </span>
+          </div>
+        </div>
+    `;
+
+    if (classLists.length > 0) {
+      html += `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">`;
+      classLists.forEach(list => {
+        const words = getVocabWords(list.vocab_list_name, cls.school_name, cls.class_name);
+        const safeListName = String(list.vocab_list_name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const safeName = String(list.vocab_list_name).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\"/g, '&quot;');
+        const coverAction = `role="button" tabindex="0" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault(); event.stopPropagation(); openStudentVocabularyFlashcards('${safeListName}', this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"`;
+        const cover = list.vocab_cover_image_url
+          ? `<div class="student-vocab-cover" ${coverAction}><img src="${String(list.vocab_cover_image_url).replace(/\"/g, '&quot;')}" alt="Cover for ${safeName}" loading="lazy"></div>`
+          : `<div class="student-vocab-cover student-vocab-cover-fallback" ${coverAction}>📖</div>`;
+        const flashcardsAction = words.length
+          ? `<button type="button" class="student-vocab-open-button" aria-label="Open ${safeName} flashcards" onclick="event.preventDefault(); event.stopPropagation(); openStudentVocabularyFlashcards('${safeListName}', this);">${words.length} words · Open flashcards</button>`
+          : `<button type="button" class="student-vocab-open-button" disabled aria-label="${safeName} has no words yet">No words yet · Ask your teacher</button>`;
+        html += `<article class="vocab-list-card text-left" data-list-name="${safeName}"><div class="flex items-start justify-center gap-3"><span class="vocab-list-emblem" aria-hidden="true">📖</span><span class="student-vocab-list-name vocab-list-name mt-2">${safeName}</span></div>${cover}${flashcardsAction}</article>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `
+        <div class="py-4 px-3 rounded-xl bg-slate-900/40 border border-slate-800/60 text-left">
+          <p class="text-xs text-slate-500 italic">No vocabulary lists are available for this class yet.</p>
+        </div>
+      `;
+    }
+
+    html += `</div>`;
+  });
+
+  listGrid.innerHTML = html;
+  empty.textContent = totalListsCount ? '' : 'No vocabulary lists are available for your classes yet.';
+  empty.classList.toggle('hidden', totalListsCount > 0);
 }
 
 /* Student flashcards: focused learning panel with a calm teal study-room hierarchy. */
@@ -23738,6 +23791,10 @@ function openTeacherMyListsPicker() {
 }
 
 function renderGamesList() {
+  if (!renderGamesList._syncTriggered) {
+    renderGamesList._syncTriggered = true;
+    syncAllClassesGameVocabLists().then(() => renderGamesList());
+  }
   const enrolledClasses = currentRole === 'student' ? getStudentEnrolledClasses() : [{ school_name: navSchool, class_name: navClass }];
   const isStudentGames = currentRole === 'student';
   const selector = document.getElementById(isStudentGames ? 'student-games-list-selector' : 'games-list-selector');
@@ -23824,31 +23881,121 @@ function renderGamesList() {
 
   const gamesListHeading = isStudentGames && selectedStudentGamesScope === 'all' ? 'All joined classes' : 'CHOOSE A VOCABULARY LIST TO PLAY';
   const listenCatchLocked = isStudentGames && !canUseProGames();
-  let html = '<div class="mb-4">' + classFilterHtml + (isStudentGames ? `<button type="button" class="ga-listen-quickplay${listenCatchLocked ? ' is-pro-locked' : ''}" aria-disabled="${listenCatchLocked}" aria-label="Listen and Catch${listenCatchLocked ? ', Pro access required for this class' : ''}"><span><b>Listen and Catch <span class="ga-pro-badge">PRO</span></b><small>${listenCatchLocked ? 'Locked for this class. Ask your main class manager about Pro access.' : 'Uses all vocabulary lists in the selected class automatically.'}</small></span><span aria-hidden="true">${listenCatchLocked ? 'Locked' : '▶'}</span></button>` : '') + `<p class="mb-3 text-xs font-black text-amber-200 tracking-widest uppercase">${gamesListHeading}</p>`;
-  classGroups.forEach(group => {
-    if (showClassHeaders) {
-      html += `<div class="mb-2 mt-4 flex items-center gap-2"><span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-indigo-500 text-[10px] font-black text-slate-900 shadow">📚</span><span class="text-sm font-extrabold text-amber-200 tracking-wide">${group.className}<span class="ml-1.5 text-xs font-bold text-indigo-200/80">· ${group.school}</span></span></div>`;
+  let html = '';
+
+  if (isStudentGames) {
+    let studentGamesHtml = '<div class="space-y-6 student-games-multi-class mb-4">';
+    if (enrolledClasses.length > 1) {
+      studentGamesHtml += classFilterHtml;
     }
-    html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-2">';
-    group.lists.forEach((list, index) => {
-    const [ctxSchool, ctxClass] = String(list.__gamesClassKey || `${list.vocab_list_school || ''}||${list.vocab_list_class || ''}`).split('||');
-    const words = selectedGameSource === 'my_lists' ? getAuthorizedMyListsWords([String(list.vocab_list_id || list.__backendId)]).words || [] : getVocabWords({ vocab_list_id: list.vocab_list_id, vocab_list_name: list.vocab_list_name }, ctxSchool, ctxClass);
-    const playable = words.length >= 2;
-    const isSelected = selectedGameList.some(item => String(typeof item === 'object' ? item.vocab_list_id || item.__backendId : item) === String(selectedGameSource === 'my_lists' ? list.vocab_list_id || list.__backendId : list.vocab_list_name));
-    const accents = ['rose', 'violet', 'sky', 'amber', 'emerald', 'cyan'];
-    const accent = accents[index % accents.length];
-    // For student games, encode the school/class into an onclick that sets context before launching
-    const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
-    const setCtxJs = (currentRole === 'teacher' && selectedGameSource === 'my_lists') ? '' : `navSchool='${String(ctxSchool).replace(/'/g,"\\'")}';navClass='${String(ctxClass).replace(/'/g,"\\'")}';`;
-    html += `<div class="game-vocab-list-card group relative min-h-[150px] rounded-2xl border-2 border-${accent}-200 bg-gradient-to-br from-white to-${accent}-50 p-4 text-center ${isSelected ? `bg-${accent}-100 border-${accent}-500 ring-2 ring-${accent}-300 shadow-md` : ''}">
-      <button type="button" class="absolute inset-0 z-0 rounded-2xl focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-300" aria-label="Select ${list.vocab_list_name}" aria-pressed="${isSelected}" onclick="${setCtxJs} selectGameList(${selectedGameSource === 'my_lists' ? `{vocab_list_id:'${String(list.vocab_list_id).replace(/'/g, "\\'")}',vocab_list_name:'${safeListName}'}` : `'${safeListName}'`})"></button>
-      ${isSelected ? `<span class="absolute left-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-${accent}-600 text-white text-base font-black shadow-md ring-2 ring-white" aria-label="Selected">✓</span>` : ''}
-      <div class="relative z-10 pointer-events-none flex h-full flex-col items-center justify-center gap-2">${list.vocab_cover_image_url ? `<img src="${String(list.vocab_cover_image_url).replace(/"/g, '&quot;')}" class="h-20 w-20 rounded-xl object-cover shadow-md" alt="Cover for ${String(list.vocab_list_name).replace(/"/g, '&quot;')}" loading="lazy">` : ''}<h4 class="font-extrabold tracking-wide text-${accent}-900 text-sm leading-tight break-words">${list.vocab_list_name}</h4><p class="text-xs text-${accent}-700/70 font-medium">${words.length} words</p></div>
-    </div>`;
+    studentGamesHtml += `<button type="button" class="ga-listen-quickplay${listenCatchLocked ? ' is-pro-locked' : ''} mb-4" aria-disabled="${listenCatchLocked}" aria-label="Listen and Catch${listenCatchLocked ? ', Pro access required for this class' : ''}"><span><b>Listen and Catch <span class="ga-pro-badge">PRO</span></b><small>${listenCatchLocked ? 'Locked for this class. Ask your main class manager about Pro access.' : 'Uses all vocabulary lists in the selected class automatically.'}</small></span><span aria-hidden="true">${listenCatchLocked ? 'Locked' : '▶'}</span></button>`;
+
+    const visibleEnrolledClasses = (selectedStudentGamesScope === 'class' && selectedStudentGamesClassKey)
+      ? enrolledClasses.filter(c => `${c.school_name}||${c.class_name}` === selectedStudentGamesClassKey)
+      : enrolledClasses;
+
+    visibleEnrolledClasses.forEach(cls => {
+      const classLists = getVocabLists(cls.school_name, cls.class_name);
+      // Filter lists to only those enabled for games by this class's teacher:
+      const activeLists = classLists.filter(list => isVocabListGameActive(list, cls.school_name, cls.class_name));
+      const classTitle = cls.school_name ? `${cls.school_name} · ${cls.class_name}` : cls.class_name;
+      const countLabel = `(${activeLists.length} active ${activeLists.length === 1 ? 'game' : 'games'})`;
+
+      studentGamesHtml += `
+        <div class="space-y-3 mb-6" data-class-section="${cls.school_name}||${cls.class_name}">
+          <!-- Class Group Header -->
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-400">
+                ${classTitle}
+              </span>
+              <span class="text-[11px] font-medium text-slate-500">
+                ${countLabel}
+              </span>
+            </div>
+          </div>
+      `;
+
+      if (activeLists.length > 0) {
+        studentGamesHtml += `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">`;
+        activeLists.forEach(list => {
+          const words = getVocabWords(list.vocab_list_name, cls.school_name, cls.class_name);
+          const safeName = escapeHtml(list.vocab_list_name);
+          const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
+          const listId = String(list.__backendId || list.id || list.vocab_list_id);
+          const isSelected = selectedGameList.some(item => {
+            const itemKey = typeof item === 'object' ? (item.vocab_list_name || item.name || item.vocab_list_id || item.__backendId) : item;
+            return String(itemKey) === String(list.vocab_list_name) || String(itemKey) === listId;
+          });
+          const coverImg = list.vocab_cover_image_url
+            ? `<img src="${list.vocab_cover_image_url}" alt="${safeName}" class="w-16 h-16 rounded-lg object-cover shadow-sm group-hover:scale-105 transition-transform" />`
+            : `<div class="w-16 h-16 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-sm">${safeName.slice(0, 3)}</div>`;
+
+          studentGamesHtml += `
+            <button
+              key="${listId}"
+              type="button"
+              onclick="handleStudentSelectGameList('${String(cls.school_name).replace(/'/g, "\\'")}', '${String(cls.class_name).replace(/'/g, "\\'")}', '${safeListName}')"
+              class="group relative p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
+                isSelected
+                  ? 'bg-slate-800/90 border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.25)]'
+                  : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+              }"
+            >
+              ${coverImg}
+              <div>
+                <div class="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">
+                  ${safeName}
+                </div>
+                <div class="text-[11px] text-slate-400 mt-0.5">
+                  ${words.length} words
+                </div>
+              </div>
+            </button>
+          `;
+        });
+        studentGamesHtml += `</div>`;
+      } else {
+        studentGamesHtml += `
+          <div class="py-4 px-3 rounded-xl bg-slate-900/40 border border-slate-800/60 text-left">
+            <p class="text-xs text-slate-500 italic">
+              No vocabulary lists are currently active for games in this class.
+            </p>
+          </div>
+        `;
+      }
+
+      studentGamesHtml += `</div>`;
+    });
+
+    studentGamesHtml += '</div>';
+    html = studentGamesHtml;
+  } else {
+    html = '<div class="mb-4">' + classFilterHtml + `<p class="mb-3 text-xs font-black text-amber-200 tracking-widest uppercase">${gamesListHeading}</p>`;
+    classGroups.forEach(group => {
+      if (showClassHeaders) {
+        html += `<div class="mb-2 mt-4 flex items-center gap-2"><span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-indigo-500 text-[10px] font-black text-slate-900 shadow">📚</span><span class="text-sm font-extrabold text-amber-200 tracking-wide">${group.className}<span class="ml-1.5 text-xs font-bold text-indigo-200/80">· ${group.school}</span></span></div>`;
+      }
+      html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-2">';
+      group.lists.forEach((list, index) => {
+      const [ctxSchool, ctxClass] = String(list.__gamesClassKey || `${list.vocab_list_school || ''}||${list.vocab_list_class || ''}`).split('||');
+      const words = selectedGameSource === 'my_lists' ? getAuthorizedMyListsWords([String(list.vocab_list_id || list.__backendId)]).words || [] : getVocabWords({ vocab_list_id: list.vocab_list_id, vocab_list_name: list.vocab_list_name }, ctxSchool, ctxClass);
+      const playable = words.length >= 2;
+      const isSelected = selectedGameList.some(item => String(typeof item === 'object' ? item.vocab_list_id || item.__backendId : item) === String(selectedGameSource === 'my_lists' ? list.vocab_list_id || list.__backendId : list.vocab_list_name));
+      const accents = ['rose', 'violet', 'sky', 'amber', 'emerald', 'cyan'];
+      const accent = accents[index % accents.length];
+      const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
+      const setCtxJs = (currentRole === 'teacher' && selectedGameSource === 'my_lists') ? '' : `navSchool='${String(ctxSchool).replace(/'/g,"\\'")}';navClass='${String(ctxClass).replace(/'/g,"\\'")}';`;
+      html += `<div class="game-vocab-list-card group relative min-h-[150px] rounded-2xl border-2 border-${accent}-200 bg-gradient-to-br from-white to-${accent}-50 p-4 text-center ${isSelected ? `bg-${accent}-100 border-${accent}-500 ring-2 ring-${accent}-300 shadow-md` : ''}">
+        <button type="button" class="absolute inset-0 z-0 rounded-2xl focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-300" aria-label="Select ${list.vocab_list_name}" aria-pressed="${isSelected}" onclick="${setCtxJs} selectGameList(${selectedGameSource === 'my_lists' ? `{vocab_list_id:'${String(list.vocab_list_id).replace(/'/g, "\\'")}',vocab_list_name:'${safeListName}'}` : `'${safeListName}'`})"></button>
+        ${isSelected ? `<span class="absolute left-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-${accent}-600 text-white text-base font-black shadow-md ring-2 ring-white" aria-label="Selected">✓</span>` : ''}
+        <div class="relative z-10 pointer-events-none flex h-full flex-col items-center justify-center gap-2">${list.vocab_cover_image_url ? `<img src="${String(list.vocab_cover_image_url).replace(/"/g, '&quot;')}" class="h-20 w-20 rounded-xl object-cover shadow-md" alt="Cover for ${String(list.vocab_list_name).replace(/"/g, '&quot;')}" loading="lazy">` : ''}<h4 class="font-extrabold tracking-wide text-${accent}-900 text-sm leading-tight break-words">${list.vocab_list_name}</h4><p class="text-xs text-${accent}-700/70 font-medium">${words.length} words</p></div>
+      </div>`;
+      });
+      html += '</div>';
     });
     html += '</div>';
-  });
-  html += '</div>';
+  }
   listArea.insertAdjacentHTML('beforeend', html);
   listArea.querySelector('.ga-listen-quickplay')?.addEventListener('click', () => window.startListenCatch?.());
   
@@ -23889,6 +24036,15 @@ function attachGamesClassFilterListeners(root) {
     });
   });
 }
+
+function handleStudentSelectGameList(school, className, listName) {
+  navSchool = school;
+  navClass = className;
+  setStudentClassContext({ school_name: school, class_name: className });
+  selectGameList(listName);
+  renderGamesList();
+}
+window.handleStudentSelectGameList = handleStudentSelectGameList;
 
 function selectGameList(listRef) {
   const isMyList = Boolean(listRef && typeof listRef === 'object' && listRef.vocab_list_id);
@@ -27855,13 +28011,111 @@ function openVocabCoverPicker(listId, listName) {
   let coverQuery=''; let coverPage=1; let coverPhotos=[]; let coverHasMore=false; let coverLoading=false; let coverRequest=0; const loadMore=modal.querySelector('#vocab-cover-load-more'); const renderCoverPhotos=()=>{results.innerHTML=coverPhotos.map((photo,index)=>`<button type="button" class="vocab-cover-result ${String(selectedId)===String(photo.id||'')?'is-selected':''}" data-photo-index="${index}" aria-label="Select stock photo by ${photo.photographer}"><img src="${photo.src.medium}" alt="Stock photo by ${photo.photographer}" loading="lazy"></button>`).join('');results.querySelectorAll('.vocab-cover-result').forEach(card=>card.addEventListener('click',()=>{const photo=coverPhotos[Number(card.dataset.photoIndex)];selectedId=String(photo.id||photo.src.large||'');selectedUrl=String(photo.src.large||photo.src.original||photo.src.medium||'');results.querySelectorAll('.vocab-cover-result').forEach(item=>item.classList.remove('is-selected'));card.classList.add('is-selected');showPreview()}));loadMore.disabled=coverLoading||!coverHasMore||coverPhotos.length>=100;loadMore.textContent=coverLoading?'Loading photos…':'Load more photos';}; const fetchCoverPhotos=async(reset=false)=>{if(coverLoading)return;const query=modal.querySelector('#vocab-cover-search').value.trim().replace(/\s+/g,' ');if(!query){status.textContent='Enter a keyword to search.';return;}if(reset){coverQuery=query.toLocaleLowerCase();coverPage=1;coverPhotos=[];coverHasMore=true;coverRequest+=1;results.replaceChildren();}if(query.toLocaleLowerCase()!==coverQuery||!coverHasMore||coverPhotos.length>=100)return;const request=coverRequest;coverLoading=true;renderCoverPhotos();status.textContent=coverPhotos.length?`${coverPhotos.length} photos loaded · Loading…`:'Loading licensed stock photos…';try{const response=await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}&per_page=12&page=${coverPage}`,{headers:{'Authorization': ''}});if(!response.ok)throw new Error('search');const data=await response.json();if(request!==coverRequest||coverQuery!==query.toLocaleLowerCase())return;const seen=new Set(coverPhotos.map(photo=>String(photo.id||photo.src?.large||photo.src?.original||'')));const additions=(Array.isArray(data.photos)?data.photos:[]).filter(photo=>{const key=String(photo.id||photo.src?.large||photo.src?.original||'');if(!key||seen.has(key))return false;seen.add(key);return true;}).slice(0,100-coverPhotos.length);coverPhotos.push(...additions);coverPage+=1;coverHasMore=Boolean(data.next_page)&&coverPhotos.length<100;status.textContent=coverPhotos.length?`${coverPhotos.length} photos found.`:'No photos found. Try another keyword.';renderCoverPhotos();}catch(error){if(request===coverRequest){coverHasMore=true;status.textContent=`${coverPhotos.length?coverPhotos.length+' photos loaded · ':''}Photo search failed. Try again.`;}}finally{if(request===coverRequest){coverLoading=false;renderCoverPhotos();}}};modal.querySelector('#vocab-cover-search-btn').addEventListener('click',()=>fetchCoverPhotos(true));loadMore.addEventListener('click',()=>fetchCoverPhotos(false));
   modal.querySelector('#vocab-cover-remove').addEventListener('click',()=>{selectedId='';selectedUrl='';showPreview()}); modal.querySelector('#vocab-cover-apply').addEventListener('click',async()=>{const current=getVocabLists().find(item=>item.__backendId===listId);if(!current){status.textContent='This list is no longer available.';return;}const row=allData.find(r=>['vocab_list','vocabulary_list'].includes(String(r.type||'').toLowerCase())&&normalizeVocabId(r.vocab_list_id??r.list_id??r.vocabulary_list_id??r.parent_list_id)===normalizeVocabId(current.vocab_list_id||listId));if(!row){status.textContent='Could not find this list. Refresh and try again.';return;}const result=await window.dataSdk.update({...row,vocab_cover_image_id:selectedId,vocab_cover_image_url:selectedUrl});if(!result?.isOk){status.textContent='Could not save the cover. Try again.';return;}close();toast(selectedUrl?'List cover saved.':'List cover removed.');}); modal.querySelector('#vocab-cover-search').focus();
 }
+
+window.activeGameVocabCache = window.activeGameVocabCache || new Map();
+
+async function syncAllClassesGameVocabLists() {
+  const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.from('classes').select('id, name, school_name, active_game_vocab_list_ids');
+    if (!error && Array.isArray(data)) {
+      data.forEach(c => {
+        const ids = Array.isArray(c.active_game_vocab_list_ids) ? c.active_game_vocab_list_ids : [];
+        if (c.id) window.activeGameVocabCache.set(c.id, ids);
+        if (c.name && c.school_name) {
+          window.activeGameVocabCache.set(`${c.school_name}||${c.name}`, ids);
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('syncAllClassesGameVocabLists error:', err);
+  }
+}
+window.syncAllClassesGameVocabLists = syncAllClassesGameVocabLists;
+
+function isVocabListGameActive(list, schoolName, className, classId) {
+  if (!list) return false;
+  const ids = window.activeGameVocabCache.get(classId) || window.activeGameVocabCache.get(`${schoolName}||${className}`) || [];
+  if (!Array.isArray(ids) || !ids.length) return false;
+  const cand = [
+    list.__backendId,
+    list.id,
+    list.vocab_list_id,
+    list.list_id,
+    list.vocabulary_list_id
+  ].filter(Boolean).map(String);
+  return cand.some(id => ids.includes(id));
+}
+window.isVocabListGameActive = isVocabListGameActive;
+
+async function handleToggleGameAccess(classId, listId, listName) {
+  const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+  const classKey = `${navSchool}||${navClass}`;
+  
+  let resolvedClassId = classId;
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(resolvedClassId);
+  if (!isUuid && typeof ensureActiveClassId === 'function') {
+    resolvedClassId = await ensureActiveClassId(navSchool, navClass);
+  }
+
+  const listRec = getVocabLists().find(l => 
+    String(l.__backendId || l.id || l.vocab_list_id) === String(listId) ||
+    String(l.vocab_list_name) === String(listName)
+  );
+  const canonicalListId = (listRec && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(listRec.__backendId))
+    ? listRec.__backendId
+    : listId;
+
+  const currentActiveIds = window.activeGameVocabCache.get(classKey) || (resolvedClassId ? window.activeGameVocabCache.get(resolvedClassId) : null) || [];
+  const isCurrentlyActive = currentActiveIds.includes(canonicalListId) || currentActiveIds.includes(listId);
+  
+  const updatedIds = isCurrentlyActive
+    ? currentActiveIds.filter(id => id !== canonicalListId && id !== listId)
+    : [...currentActiveIds, canonicalListId];
+
+  // Optimistic update
+  window.activeGameVocabCache.set(classKey, updatedIds);
+  if (resolvedClassId) window.activeGameVocabCache.set(resolvedClassId, updatedIds);
+  renderVocabLists();
+
+  if (sb && resolvedClassId) {
+    const { error } = await sb
+      .from('classes')
+      .update({ active_game_vocab_list_ids: updatedIds })
+      .eq('id', resolvedClassId);
+
+    if (error) {
+      console.error('Failed to update active game vocabulary lists:', error);
+      window.activeGameVocabCache.set(classKey, currentActiveIds);
+      if (resolvedClassId) window.activeGameVocabCache.set(resolvedClassId, currentActiveIds);
+      renderVocabLists();
+      toast('Failed to update game access. Please try again.');
+      return;
+    }
+  }
+
+  toast(`🎮 Game Access for "${listName}" turned ${!isCurrentlyActive ? 'ON' : 'OFF'} for ${navClass}`);
+}
+window.handleToggleGameAccess = handleToggleGameAccess;
+
 function renderVocabLists() {
+  if (!renderVocabLists._syncTriggered) {
+    renderVocabLists._syncTriggered = true;
+    syncAllClassesGameVocabLists().then(() => renderVocabLists());
+  }
   const lists = getVocabLists().filter(l => vocabListInClass(l, navSchool, navClass));
   const container = document.getElementById('vocab-lists-container');
   const empty = document.getElementById('vocab-lists-empty');
   if (!container || !empty) return;
   if (!lists.length) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
+
+  const classRec = (typeof getClasses === 'function' ? getClasses(navSchool).find(c => c.class_name === navClass) : null) || allData.find(c => c.type === 'class' && c.school_name === navSchool && c.class_name === navClass);
+  const classId = classRec?.__backendId || classRec?.id || classRec?.class_id || '';
+  const classKey = `${navSchool}||${navClass}`;
+  const currentActiveIds = window.activeGameVocabCache.get(classKey) || (classId ? window.activeGameVocabCache.get(classId) : null) || [];
+
   container.innerHTML = lists.map(list => {
     const words = list.words || [];
     const isShared = String(list.vocab_list_class || '') !== String(navClass || '');
@@ -27870,6 +28124,18 @@ function renderVocabLists() {
       ? `unshareVocabListFromClass('${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}','${String(list.vocab_list_name).replace(/'/g, "\\'")}',this)`
       : `removeVocabListFromClass('${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}','${String(list.vocab_list_name).replace(/'/g, "\\'")}',this)`;
     const removeLabel = isShared ? 'Unshare' : 'Remove';
+    const canonicalListId = String(list.__backendId || list.id || list.vocab_list_id || '');
+    const isGameActive = currentActiveIds.includes(canonicalListId) || currentActiveIds.includes(String(list.vocab_list_id || '')) || currentActiveIds.includes(String(list.__backendId || ''));
+    const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
+
+    const gameAccessBtn = `<button class="vocab-game-toggle-btn canva-button flex items-center gap-1.5" type="button" 
+      style="${isGameActive ? 'background:rgba(16,185,129,0.25)!important; border-color:rgba(52,211,153,0.6)!important; color:#a7f3d0!important;' : 'background:rgba(30,41,59,0.7)!important; border-color:rgba(71,85,105,0.6)!important; color:#94a3b8!important;'}"
+      onclick="event.stopPropagation();handleToggleGameAccess('${classId}','${canonicalListId}','${safeListName}')"
+      title="Toggle game access for ${list.vocab_list_name} in ${navClass}">
+      <span>🎮</span>
+      <span>Game Access: <strong style="font-weight:900; color:${isGameActive ? '#6ee7b7' : '#cbd5e1'}">${isGameActive ? 'ON' : 'OFF'}</strong></span>
+    </button>`;
+
     return `<div class="vocab-list-card canva-card p-4 sm:p-5">
       <div class="flex items-start gap-3 mb-1">
         <span class="vocab-list-emblem" aria-hidden="true">📚</span>
@@ -27878,8 +28144,8 @@ function renderVocabLists() {
           <p class="vocab-list-count mt-1">${words.length} word${words.length !== 1 ? 's' : ''}</p>${sharedLabel}
         </div>
       </div>
-      ${list.vocab_cover_image_url ? `<div class="vocab-list-cover" role="button" tabindex="0" aria-label="Open ${String(list.vocab_list_name).replace(/"/g, '&quot;')} flashcards" onclick="openVocabFlashcards('${String(list.vocab_list_name).replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${window.resolvePermanentVocabCover ? window.resolvePermanentVocabCover(list.vocab_cover_image_url, list.vocab_list_name) : list.vocab_cover_image_url}" alt="Cover for ${list.vocab_list_name}" loading="lazy" onerror="window.healBrokenVocabImgElement&&window.healBrokenVocabImgElement(this,this.alt,true)"></div>` : `<div class="vocab-list-cover" role="button" tabindex="0" aria-label="Open ${String(list.vocab_list_name).replace(/"/g, '&quot;')} flashcards" onclick="openVocabFlashcards('${String(list.vocab_list_name).replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"></div>`}
-      ${words.length > 0 ? `<div class="vocab-card-actions"><button class="vocab-card-mode canva-button" type="button" onclick="openVocabFlashcards('${list.vocab_list_name}')">🎴 Flashcard Mode</button></div><div class="vocab-card-actions"><button class="vocab-card-edit canva-button" type="button" onclick="openVocabListEditor('${list.__backendId}','${list.vocab_list_name}')">Edit</button><button class="vocab-cover-button vocab-card-cover canva-button" type="button" onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${String(list.vocab_list_name).replace(/'/g,"\\'")}')">▣ Cover</button><button class="vocab-card-delete canva-button" type="button" onclick="${removeAction}">${removeLabel}</button></div>` : `<div class="vocab-empty-state vocab-list-count italic">No words yet</div><div class="vocab-card-actions vocab-empty-actions"><button class="vocab-card-edit canva-button" type="button" onclick="openVocabListEditor('${list.__backendId}','${list.vocab_list_name}')">Edit</button><button class="vocab-cover-button vocab-card-cover canva-button" type="button" onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${String(list.vocab_list_name).replace(/'/g,"\\'")}')">▣ Cover</button><button class="vocab-card-delete canva-button" type="button" onclick="${removeAction}">${removeLabel}</button></div>`}
+      ${list.vocab_cover_image_url ? `<div class="vocab-list-cover" role="button" tabindex="0" aria-label="Open ${String(list.vocab_list_name).replace(/"/g, '&quot;')} flashcards" onclick="openVocabFlashcards('${safeListName}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"><img src="${window.resolvePermanentVocabCover ? window.resolvePermanentVocabCover(list.vocab_cover_image_url, list.vocab_list_name) : list.vocab_cover_image_url}" alt="Cover for ${list.vocab_list_name}" loading="lazy" onerror="window.healBrokenVocabImgElement&&window.healBrokenVocabImgElement(this,this.alt,true)"></div>` : `<div class="vocab-list-cover" role="button" tabindex="0" aria-label="Open ${String(list.vocab_list_name).replace(/"/g, '&quot;')} flashcards" onclick="openVocabFlashcards('${safeListName}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}"></div>`}
+      ${words.length > 0 ? `<div class="vocab-card-actions mb-1"><button class="vocab-card-mode canva-button" type="button" onclick="openVocabFlashcards('${safeListName}')">🎴 Flashcard Mode</button>${gameAccessBtn}</div><div class="vocab-card-actions"><button class="vocab-card-edit canva-button" type="button" onclick="openVocabListEditor('${list.__backendId}','${safeListName}')">Edit</button><button class="vocab-cover-button vocab-card-cover canva-button" type="button" onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${safeListName}')">▣ Cover</button><button class="vocab-card-delete canva-button" type="button" onclick="${removeAction}">${removeLabel}</button></div>` : `<div class="vocab-empty-state vocab-list-count italic">No words yet</div><div class="vocab-card-actions mb-1">${gameAccessBtn}</div><div class="vocab-card-actions vocab-empty-actions"><button class="vocab-card-edit canva-button" type="button" onclick="openVocabListEditor('${list.__backendId}','${safeListName}')">Edit</button><button class="vocab-cover-button vocab-card-cover canva-button" type="button" onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${safeListName}')">▣ Cover</button><button class="vocab-card-delete canva-button" type="button" onclick="${removeAction}">${removeLabel}</button></div>`}
     </div>`;
   }).join('');
 }

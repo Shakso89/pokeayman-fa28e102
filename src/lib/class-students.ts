@@ -152,3 +152,71 @@ export const adjustStudentCoins = async (
 
   return newBalance ?? 0;
 };
+
+/**
+ * Fetch active game vocabulary list IDs for a specific class.
+ */
+export const fetchClassActiveGameVocabListIds = async (classId: string): Promise<string[]> => {
+  if (!classId) return [];
+  const { data, error } = await supabase
+    .from("classes")
+    .select("active_game_vocab_list_ids")
+    .eq("id", classId)
+    .maybeSingle();
+
+  if (error) {
+    console.warn("Error fetching class active game vocab lists:", error);
+    return [];
+  }
+  return (data?.active_game_vocab_list_ids || []) as string[];
+};
+
+/**
+ * Toggle or update active game vocabulary list IDs for a class.
+ */
+export const updateClassActiveGameVocabListIds = async (
+  classId: string,
+  activeIds: string[]
+): Promise<string[]> => {
+  if (!classId) throw new Error("Class ID is required.");
+  const { error } = await supabase
+    .from("classes")
+    .update({ active_game_vocab_list_ids: activeIds })
+    .eq("id", classId);
+
+  if (error) {
+    console.error("Failed to update active game vocabulary lists:", error);
+    throw error;
+  }
+  return activeIds;
+};
+
+/**
+ * Fetch student enrolled classes including active_game_vocab_list_ids.
+ */
+export const fetchStudentEnrolledClasses = async (studentId: string): Promise<any> => {
+  if (!studentId) return null;
+  const { data, error } = await supabase
+    .from("students")
+    .select(`
+      id,
+      name,
+      class_students (
+        class_id,
+        classes (
+          id,
+          name,
+          school_name,
+          active_game_vocab_list_ids
+        )
+      )
+    `)
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to fetch student enrolled classes:", error);
+    throw error;
+  }
+  return data;
+};
