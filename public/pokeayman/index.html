@@ -19980,26 +19980,186 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
 
   const normalizedName = normalizeStudentIdentity(name);
 
-  // Check if student with this name is already in THIS active class
-  const alreadyInThisClass = getStudents(navSchool, navClass).find(s => normalizeStudentIdentity(s.student_name) === normalizedName);
-  if (alreadyInThisClass) {
-    toast(`"${name}" is already in this class!`);
-    return;
-  }
-
   const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
   const activeClassId = await ensureActiveClassId(navSchool, navClass);
 
-  // Step A: Check for existing matches in Supabase:
+  // Helper to create a brand new student profile
+  const handleCreateBrandNewStudent = async (enteredName, modalToClose) => {
+    const trimmedName = enteredName.trim();
+    const newStudentId = generateUuid();
+    let canonicalNewId = newStudentId;
+
+    const existingPins = new Set(
+      allData
+        .filter(r => r.type === 'student' && normalizeStudentIdentity(r.student_name || r.name) === normalizedName)
+        .map(r => String(r.student_pin || r.pin || '').trim().slice(0, 4))
+        .filter(Boolean)
+    );
+    if (Array.isArray(existingStudents)) {
+      existingStudents.forEach(es => {
+        if (es.pin) existingPins.add(String(es.pin).slice(0, 4));
+      });
+    }
+
+    let distinctPin = String(Math.floor(1000 + Math.random() * 9000));
+    let attempts = 0;
+    while (existingPins.has(distinctPin) && attempts < 100) {
+      distinctPin = String(Math.floor(1000 + Math.random() * 9000));
+      attempts++;
+    }
+
+    const freshTrainerCode = String(Math.floor(100000 + Math.random() * 900000));
+
+    if (sb) {
+      try {
+        let res = await sb
+          .from('students')
+          .insert({
+            id: newStudentId,
+            name: trimmedName,
+            pin: distinctPin,
+            trainer_code: freshTrainerCode,
+            coins: 0,
+            power: 0,
+            avatar_url: ''
+          })
+          .select()
+          .single();
+
+        if (res.error) {
+          // Fallback if trainer_code column doesn't exist in students
+          res = await sb
+            .from('students')
+            .insert({
+              id: newStudentId,
+              name: trimmedName,
+              pin: distinctPin,
+              coins: 0,
+              power: 0,
+              avatar_url: ''
+            })
+            .select()
+            .single();
+        }
+
+        if (res.data?.id) canonicalNewId = String(res.data.id);
+
+        if (activeClassId) {
+          const { error: linkError } = await sb
+            .from('class_students')
+            .insert({
+              class_id: activeClassId,
+              student_id: canonicalNewId
+            });
+          if (linkError) console.warn('Supabase class_students link error:', linkError);
+        }
+      } catch (e) {
+        console.warn('Supabase student insert fallback:', e);
+      }
+    }
+
+    const regStudentPayload = {
+      type: 'student',
+      id: canonicalNewId,
+      student_id: canonicalNewId,
+      __backendId: canonicalNewId,
+      school_name: navSchool,
+      class_name: navClass,
+      class_id: activeClassId,
+      class_memberships: `${navSchool} / ${navClass}`,
+      student_name: trimmedName,
+      name: trimmedName,
+      student_pin: distinctPin,
+      pin: distinctPin,
+      trainer_code: freshTrainerCode,
+      coins: 0,
+      power: 0,
+      badges: [],
+      avatar_pokemon_id: 0,
+      created_at: new Date().toISOString()
+    };
+    await window.dataSdk.create(regStudentPayload);
+    allData.push(regStudentPayload);
+
+    const classStudentPayload = {
+      type: 'class_student',
+      id: generateUuid(),
+      student_id: canonicalNewId,
+      class_id: activeClassId,
+      school_name: navSchool,
+      class_name: navClass,
+      class_memberships: `${navSchool} / ${navClass}`,
+      student_name: trimmedName,
+      name: trimmedName,
+      created_at: new Date().toISOString()
+    };
+    await window.dataSdk.create(classStudentPayload);
+    allData.push(classStudentPayload);
+
+    rebuildCanonicalStudentIndex();
+    canonicalStudentViewsData = null;
+    canonicalStudentViewsCache = [];
+
+    nameInput.value = '';
+    if (modalToClose) modalToClose.remove();
+    toast('Student added to class successfully.');
+    if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
+  };
+
+  // Step 1: Query All Matching Profiles by Name
   let existingStudents = [];
   if (sb) {
     try {
-      const { data, error } = await sb
+      const res = await sb
         .from('students')
-        .select('id, name, pin, avatar_url, coins, power, class_students(class_id, classes(name))')
-        .ilike('name', name);
-      if (!error && Array.isArray(data)) {
-        existingStudents = data;
+        .select(`
+          id,
+          name,
+          pin,
+          trainer_code,
+          avatar_url,
+          avatar_pokemon_id,
+          coins,
+          power,
+          class_students (
+            class_id,
+            classes (
+              id,
+              name,
+              school,
+              school_name
+            )
+          )
+        `)
+        .ilike('name', name.trim());
+      if (!res.error && Array.isArray(res.data)) {
+        existingStudents = res.data;
+      } else {
+        // Fallback without trainer_code if column does not exist
+        const fallbackRes = await sb
+          .from('students')
+          .select(`
+            id,
+            name,
+            pin,
+            avatar_url,
+            avatar_pokemon_id,
+            coins,
+            power,
+            class_students (
+              class_id,
+              classes (
+                id,
+                name,
+                school,
+                school_name
+              )
+            )
+          `)
+          .ilike('name', name.trim());
+        if (!fallbackRes.error && Array.isArray(fallbackRes.data)) {
+          existingStudents = fallbackRes.data;
+        }
       }
     } catch (searchErr) {
       console.warn('Supabase search existing students error:', searchErr);
@@ -20007,89 +20167,157 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
   }
 
   // Also include any local existing students matching name if not already in existingStudents
-  getAllStudents().filter(s => normalizeStudentIdentity(s.student_name) === normalizedName).forEach(localSt => {
+  getAllStudents().filter(s => normalizeStudentIdentity(s.student_name || s.name) === normalizedName).forEach(localSt => {
     const sId = String(localSt.student_id || localSt.__backendId || localSt.id || '');
-    if (!existingStudents.some(es => String(es.id) === sId)) {
+    const found = existingStudents.find(es => String(es.id) === sId);
+    if (!found) {
       existingStudents.push({
         id: sId,
         name: localSt.student_name || localSt.name,
         pin: localSt.student_pin || localSt.pin || '1234',
+        trainer_code: localSt.trainer_code || '',
         avatar_url: localSt.avatar_url || '',
         avatar_pokemon_id: localSt.avatar_pokemon_id || 0,
         coins: Number(localSt.coins) || 0,
         power: Number(localSt.power) || 0,
         class_students: []
       });
+    } else if (!found.trainer_code && localSt.trainer_code) {
+      found.trainer_code = localSt.trainer_code;
     }
   });
 
-  // Check if any matching existing student is already in this class
-  if (existingStudents.some(es => es.class_students && es.class_students.some(cs => String(cs.class_id) === String(activeClassId)))) {
-    toast(`"${name}" is already in this class!`);
+  // If no existing student found with this name -> directly create new profile
+  if (!existingStudents || existingStudents.length === 0) {
+    await handleCreateBrandNewStudent(name);
     return;
   }
 
-  if (existingStudents.length > 0) {
-    // 1 or more matches found: pop up "Choose Student Linking" dialog
-    const selectedExistingStudent = existingStudents[0];
-    const isLight = document.body.classList.contains('ts-bright') || document.documentElement.classList.contains('light');
+  // Helper: check if candidate is already in active class
+  const checkCandidateEnrolled = (cand) => {
+    if (!cand) return false;
+    const cId = String(cand.id || cand.student_id || '');
+    const inSupabaseClass = Array.isArray(cand.class_students) && cand.class_students.some(cs => String(cs.class_id) === String(activeClassId));
+    const inLocalClass = allData.some(r =>
+      (r.type === 'class_student' || r.type === 'student') &&
+      String(r.student_id || r.id || r.__backendId || '') === cId &&
+      ((activeClassId && String(r.class_id) === String(activeClassId)) || (r.school_name === navSchool && r.class_name === navClass))
+    );
+    return inSupabaseClass || inLocalClass;
+  };
 
-    // Get candidate's avatar
-    const avatarId = Number(selectedExistingStudent.avatar_pokemon_id || 0);
-    const avatarHtml = avatarId > 0 
-      ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarId}.png" class="w-12 h-12 object-contain" alt="">`
-      : `<span class="text-xl font-black ${isLight ? 'text-indigo-600' : 'text-slate-300'}">${escapeHtml(name.charAt(0).toUpperCase())}</span>`;
-
-    // Existing PIN (formatted to 4 digits)
-    const existingPin = String(selectedExistingStudent.pin || selectedExistingStudent.student_pin || '1234').trim();
-    const displayPin = (existingPin.length > 4 ? existingPin.slice(0, 4) : existingPin) || '1234';
-
-    // Attended classes
-    const existingStudentId = String(selectedExistingStudent.id);
-    const attendedSet = new Set();
-    if (Array.isArray(selectedExistingStudent.class_students)) {
-      selectedExistingStudent.class_students.forEach(cs => {
-        if (cs.classes?.name) attendedSet.add(cs.classes.name);
+  // Helper: extract formatted list of classes for candidate
+  const getCandidateClassNames = (cand) => {
+    const names = [];
+    if (Array.isArray(cand.class_students)) {
+      cand.class_students.forEach(cs => {
+        if (cs.classes?.name) {
+          const sch = cs.classes.school || cs.classes.school_name;
+          names.push(sch ? `${sch} · ${cs.classes.name}` : cs.classes.name);
+        }
       });
     }
-    allData.filter(r => (r.type === 'student' || r.type === 'class_student' || r.type === 'student_membership') && String(r.student_id || r.id || r.__backendId || '') === existingStudentId).forEach(r => {
-      if (r.school_name && r.class_name) attendedSet.add(`${r.school_name} · ${r.class_name}`);
+    const cId = String(cand.id || cand.student_id || '');
+    allData.filter(r => (r.type === 'student' || r.type === 'class_student' || r.type === 'student_membership') && String(r.student_id || r.id || r.__backendId || '') === cId).forEach(r => {
+      if (r.school_name && r.class_name) names.push(`${r.school_name} · ${r.class_name}`);
+      else if (r.class_name) names.push(r.class_name);
+      if (r.class_memberships) {
+        normalizeStudentMembershipValues(r.class_memberships, []).forEach(m => names.push(m.replace(' / ', ' · ')));
+      }
     });
-    const attendedText = attendedSet.size ? Array.from(attendedSet).join(', ') : 'None recorded';
+    const unique = Array.from(new Set(names.filter(Boolean)));
+    return unique.length ? unique.join(', ') : 'No active classes';
+  };
 
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
-    modal.innerHTML = `<div class="student-linking-card ${isLight ? 'is-bright bg-white border-slate-200 text-slate-900' : 'is-dark bg-slate-900 border-slate-800 text-white'} border rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="student-linking-title">
-      <!-- Standard modal header -->
-      <div class="p-6 pb-4 ${isLight ? 'border-b border-slate-100 bg-slate-50/50' : 'border-b border-slate-800/80 bg-slate-900'}">
-        <h2 id="student-linking-title" class="text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}">Choose Student Linking</h2>
-        <p class="text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-1">A student named <strong class="${isLight ? 'text-indigo-600' : 'text-amber-400'}">${escapeHtml(name)}</strong> already exists.</p>
-      </div>
-      
-      <div class="p-6 space-y-4">
-        <!-- Candidate Card Preview -->
-        <div class="${isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-800/60 border-slate-700/70 text-slate-100'} border rounded-2xl p-4 flex items-center gap-4">
-          <div class="w-14 h-14 rounded-full ${isLight ? 'bg-white border border-slate-200' : 'bg-slate-800 border border-slate-700'} flex-shrink-0 flex items-center justify-center overflow-hidden shadow-sm">
+  // Default select first available (not already enrolled) student, or the first student
+  const firstAvailableStudent = existingStudents.find(s => !checkCandidateEnrolled(s));
+  let selectedStudentId = firstAvailableStudent ? String(firstAvailableStudent.id) : String(existingStudents[0]?.id || '');
+
+  const isLight = document.body.classList.contains('ts-bright') || document.documentElement.classList.contains('light');
+
+  // Render individual candidate card HTML
+  const renderCandidateCardHtml = (cand) => {
+    const isSelected = String(selectedStudentId) === String(cand.id);
+    const isAlreadyEnrolled = checkCandidateEnrolled(cand);
+    const classNames = getCandidateClassNames(cand);
+    const existingPin = String(cand.pin || cand.student_pin || '1234').trim();
+    const displayPin = (existingPin.length > 4 ? existingPin.slice(0, 4) : existingPin) || '1234';
+
+    const avatarId = Number(cand.avatar_pokemon_id || 0);
+    const avatarHtml = cand.avatar_url
+      ? `<img src="${cand.avatar_url}" class="w-10 h-10 rounded-full object-cover" alt="">`
+      : avatarId > 0
+        ? `<img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatarId}.png" class="w-8 h-8 object-contain" alt="">`
+        : `<span class="text-base font-bold ${isLight ? 'text-slate-700' : 'text-slate-200'}">${escapeHtml(cand.name.charAt(0).toUpperCase())}</span>`;
+
+    return `
+      <div
+        data-student-id="${escapeHtml(String(cand.id))}"
+        class="student-candidate-card relative p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
+          isSelected
+            ? (isLight ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-400/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]' : 'bg-slate-800/90 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.2)]')
+            : (isLight ? 'bg-white border-slate-200 hover:border-slate-300' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700')
+        } ${isAlreadyEnrolled ? 'opacity-50 cursor-not-allowed' : ''}"
+      >
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-full ${isLight ? 'bg-slate-100 border border-slate-200' : 'bg-slate-800 border border-slate-700'} flex items-center justify-center font-bold flex-shrink-0 overflow-hidden">
             ${avatarHtml}
           </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center justify-between gap-2">
-              <h3 class="text-base font-bold truncate ${isLight ? 'text-slate-900' : 'text-white'}">${escapeHtml(name)}</h3>
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-semibold ${isLight ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-indigo-950/70 text-indigo-300 border border-indigo-800'}">PIN: ${escapeHtml(displayPin)}</span>
+
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold ${isLight ? 'text-slate-900' : 'text-white'} text-sm truncate">${escapeHtml(cand.name)}</span>
+              ${cand.trainer_code ? `
+                <span class="text-[11px] font-mono px-1.5 py-0.5 rounded ${isLight ? 'bg-slate-100 text-slate-600 border border-slate-200' : 'bg-slate-800 text-slate-400 border border-slate-700'}">
+                  #${escapeHtml(cand.trainer_code)}
+                </span>
+              ` : ''}
             </div>
-            <p class="text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-1 line-clamp-2">
-              Currently in: <span class="font-semibold ${isLight ? 'text-slate-700' : 'text-slate-200'}">${escapeHtml(attendedText)}</span>
+            <p class="text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-0.5 truncate">
+              Currently in: <span class="${isLight ? 'text-slate-700' : 'text-slate-300'} font-medium">${escapeHtml(classNames)}</span>
             </p>
           </div>
         </div>
 
-        <p class="text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'} font-medium">Choose an option:</p>
+        <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+          ${isAlreadyEnrolled ? `
+            <span class="text-[11px] font-bold ${isLight ? 'text-amber-700 bg-amber-50 border border-amber-300' : 'text-amber-400 bg-amber-950/40 border border-amber-800/60'} px-2.5 py-1 rounded-full whitespace-nowrap">
+              Already in class
+            </span>
+          ` : `
+            <span class="text-xs font-mono font-semibold px-2 py-0.5 rounded-lg ${isLight ? 'bg-indigo-50 border border-indigo-200 text-indigo-700' : 'bg-indigo-950/60 border border-indigo-700/50 text-indigo-300'} whitespace-nowrap">
+              PIN: ${escapeHtml(displayPin)}
+            </span>
+          `}
+        </div>
+      </div>
+    `;
+  };
 
-        <!-- Option Buttons -->
+  // Step 2: Modal UI: Selectable Student Card List
+  const modal = document.createElement('div');
+  modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+  modal.innerHTML = `
+    <div class="student-linking-card ${isLight ? 'is-bright bg-white border-slate-200 text-slate-900' : 'is-dark bg-slate-900 border-slate-800 text-white'} border rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="student-linking-title">
+      <!-- Standard modal header -->
+      <div class="p-6 pb-4 ${isLight ? 'border-b border-slate-100 bg-slate-50/50' : 'border-b border-slate-800/80 bg-slate-900'}">
+        <h2 id="student-linking-title" class="text-xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}">Choose Student Linking</h2>
+        <p class="text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'} mt-1">Found ${existingStudents.length} existing student(s) named "<strong class="${isLight ? 'text-indigo-600' : 'text-amber-400'}">${escapeHtml(name)}</strong>". Select the correct account to link, or create a brand new student.</p>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <!-- Scrollable Candidates List -->
+        <div id="candidates-container" class="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+          ${existingStudents.map(student => renderCandidateCardHtml(student)).join('')}
+        </div>
+
+        <p class="text-xs ${isLight ? 'text-slate-600' : 'text-slate-400'} font-medium pt-1">Choose an option:</p>
+
+        <!-- Step 3: Action Buttons & Execution -->
         <div class="space-y-3">
           <button id="link-account-btn" type="button" class="w-full text-left rounded-full px-5 py-3 font-semibold text-sm transition-all shadow-sm flex items-center justify-between gap-3 ${isLight ? 'bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'} active:scale-[0.98]">
             <div class="flex flex-col">
-              <span class="font-bold">Link Student Account</span>
+              <span class="font-bold">Link Selected Student</span>
               <span class="text-xs font-normal opacity-90">Shared profile across classes (re-use profile, coins &amp; PIN)</span>
             </div>
           </button>
@@ -20108,257 +20336,131 @@ document.getElementById('add-student-form').addEventListener('submit', async e =
           </button>
         </div>
       </div>
-    </div>`;
-    document.body.appendChild(modal);
+    </div>
+  `;
+  document.body.appendChild(modal);
 
-    // Option 1: "Link Student Account" (Shared Profile Across Classes)
-    modal.querySelector('#link-account-btn').addEventListener('click', async () => {
-      const studentId = String(selectedExistingStudent.id);
+  const updateSelectionState = () => {
+    const selectedStudent = existingStudents.find(s => String(s.id) === String(selectedStudentId));
+    const isEnrolled = !selectedStudent || checkCandidateEnrolled(selectedStudent);
 
-      // Re-use the existing student's ID in Supabase:
-      if (sb && activeClassId && studentId) {
-        try {
-          const { error: linkError } = await sb
-            .from('class_students')
-            .insert({
-              class_id: activeClassId,
-              student_id: studentId,
-            });
-          if (linkError) console.warn('Supabase class_students insert error:', linkError);
-        } catch (err) {
-          console.warn('Supabase class_students error:', err);
-        }
-      }
+    const candidatesContainer = modal.querySelector('#candidates-container');
+    if (candidatesContainer) {
+      candidatesContainer.querySelectorAll('.student-candidate-card').forEach(card => {
+        const cId = card.getAttribute('data-student-id');
+        const cand = existingStudents.find(s => String(s.id) === String(cId));
+        const candEnrolled = checkCandidateEnrolled(cand);
+        const isSel = String(cId) === String(selectedStudentId);
 
-      // Local storage: create class_student record in allData
-      const classStudentPayload = {
-        type: 'class_student',
-        id: generateUuid(),
-        student_id: studentId,
-        class_id: activeClassId,
-        school_name: navSchool,
-        class_name: navClass,
-        class_memberships: `${navSchool} / ${navClass}`,
-        student_name: selectedExistingStudent.name || name,
-        name: selectedExistingStudent.name || name,
-        created_at: new Date().toISOString()
-      };
-      await window.dataSdk.create(classStudentPayload);
-      allData.push(classStudentPayload);
-
-      // Ensure student's class_memberships includes this class
-      const primaryStudent = allData.find(r => r.type === 'student' && String(r.id || r.__backendId || r.student_id) === studentId);
-      if (primaryStudent) {
-        const curMemberships = normalizeStudentMembershipValues(primaryStudent.class_memberships, []);
-        const newClassKey = `${navSchool} / ${navClass}`;
-        if (!curMemberships.includes(newClassKey)) {
-          curMemberships.push(newClassKey);
-          primaryStudent.class_memberships = curMemberships.join('||');
-          await window.dataSdk.update(primaryStudent);
-        }
-      }
-
-      rebuildCanonicalStudentIndex();
-      canonicalStudentViewsData = null;
-      canonicalStudentViewsCache = [];
-
-      nameInput.value = '';
-      modal.remove();
-      toast('Student added to class successfully.');
-      if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
-    });
-
-    // Option 2: "Brand New Student" (Independent Profile with Separate Student ID)
-    modal.querySelector('#create-new-student-btn').addEventListener('click', async () => {
-      const newStudentId = generateUuid();
-      const trimmedName = name.trim();
-
-      const existingPins = new Set(
-        allData
-          .filter(r => r.type === 'student' && normalizeStudentIdentity(r.student_name || r.name) === normalizedName)
-          .map(r => String(r.student_pin || r.pin || '').trim().slice(0, 4))
-          .filter(Boolean)
-      );
-      if (selectedExistingStudent.pin) existingPins.add(String(selectedExistingStudent.pin).slice(0, 4));
-
-      let distinctPin = String(Math.floor(1000 + Math.random() * 9000));
-      let attempts = 0;
-      while (existingPins.has(distinctPin) && attempts < 100) {
-        distinctPin = String(Math.floor(1000 + Math.random() * 9000));
-        attempts++;
-      }
-
-      let canonicalNewId = newStudentId;
-      // 1. Create independent student record with fresh UUID:
-      if (sb) {
-        try {
-          const { data: newStudent, error: createError } = await sb
-            .from('students')
-            .insert({
-              id: newStudentId,
-              name: trimmedName,
-              pin: distinctPin,
-              coins: 0,
-              power: 0,
-              avatar_url: ''
-            })
-            .select()
-            .single();
-
-          if (createError) console.warn('Supabase student insert error:', createError);
-          if (newStudent?.id) canonicalNewId = String(newStudent.id);
-
-          // 2. Link the NEW UUID to this class only:
-          const { error: linkError } = await sb
-            .from('class_students')
-            .insert({
-              class_id: activeClassId,
-              student_id: canonicalNewId,
-            });
-
-          if (linkError) console.warn('Supabase class_students link error:', linkError);
-        } catch (e) {
-          console.warn('Supabase student insert fallback:', e);
-        }
-      }
-
-      // Local storage: create independent student record
-      const regStudentPayload = {
-        type: 'student',
-        id: canonicalNewId,
-        student_id: canonicalNewId,
-        __backendId: canonicalNewId,
-        school_name: navSchool,
-        class_name: navClass,
-        class_id: activeClassId,
-        class_memberships: `${navSchool} / ${navClass}`,
-        student_name: trimmedName,
-        name: trimmedName,
-        student_pin: distinctPin,
-        pin: distinctPin,
-        coins: 0,
-        power: 0,
-        badges: [],
-        avatar_pokemon_id: 0,
-        created_at: new Date().toISOString()
-      };
-      await window.dataSdk.create(regStudentPayload);
-      allData.push(regStudentPayload);
-
-      // Link NEW UUID to this class only
-      const classStudentPayload = {
-        type: 'class_student',
-        id: generateUuid(),
-        student_id: canonicalNewId,
-        class_id: activeClassId,
-        school_name: navSchool,
-        class_name: navClass,
-        class_memberships: `${navSchool} / ${navClass}`,
-        student_name: trimmedName,
-        name: trimmedName,
-        created_at: new Date().toISOString()
-      };
-      await window.dataSdk.create(classStudentPayload);
-      allData.push(classStudentPayload);
-
-      rebuildCanonicalStudentIndex();
-      canonicalStudentViewsData = null;
-      canonicalStudentViewsCache = [];
-
-      nameInput.value = '';
-      modal.remove();
-      toast('Student added to class successfully.');
-      if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
-    });
-
-    modal.querySelector('#linking-cancel-btn').addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
-    return;
-  }
-
-  // 0 matches found: Automatically create a brand new student
-  const defaultPin = '1234';
-  const newStudentId = generateUuid();
-  const trimmedName = name.trim();
-  let canonicalNewId = newStudentId;
-
-  if (sb) {
-    try {
-      // 1. Create independent student record with fresh UUID
-      const { data: newStudent, error: createError } = await sb
-        .from('students')
-        .insert({
-          id: newStudentId,
-          name: trimmedName,
-          pin: defaultPin,
-          coins: 0,
-          power: 0,
-          avatar_url: ''
-        })
-        .select()
-        .single();
-
-      if (createError) console.warn('Supabase student insert error:', createError);
-      if (newStudent?.id) canonicalNewId = String(newStudent.id);
-
-      // 2. Link the NEW UUID to this class only
-      const { error: linkError } = await sb
-        .from('class_students')
-        .insert({
-          class_id: activeClassId,
-          student_id: canonicalNewId,
-        });
-
-      if (linkError) console.warn('Supabase class_students link error:', linkError);
-    } catch (e) {
-      console.warn('Supabase student insert fallback:', e);
+        card.className = `student-candidate-card relative p-3.5 rounded-xl border transition-all flex items-center justify-between cursor-pointer ${
+          isSel
+            ? (isLight ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-400/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]' : 'bg-slate-800/90 border-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.2)]')
+            : (isLight ? 'bg-white border-slate-200 hover:border-slate-300' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700')
+        } ${candEnrolled ? 'opacity-50 cursor-not-allowed' : ''}`;
+      });
     }
+
+    const linkBtn = modal.querySelector('#link-account-btn');
+    if (linkBtn) {
+      if (isEnrolled) {
+        linkBtn.disabled = true;
+        linkBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+      } else {
+        linkBtn.disabled = false;
+        linkBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+      }
+    }
+  };
+
+  const candidatesContainer = modal.querySelector('#candidates-container');
+  if (candidatesContainer) {
+    candidatesContainer.addEventListener('click', (e) => {
+      const card = e.target.closest('.student-candidate-card');
+      if (!card) return;
+      const sId = card.getAttribute('data-student-id');
+      const candidate = existingStudents.find(s => String(s.id) === String(sId));
+      if (!candidate || checkCandidateEnrolled(candidate)) return;
+      selectedStudentId = sId;
+      updateSelectionState();
+    });
   }
 
-  const regStudentPayload = {
-    type: 'student',
-    id: canonicalNewId,
-    student_id: canonicalNewId,
-    __backendId: canonicalNewId,
-    school_name: navSchool,
-    class_name: navClass,
-    class_id: activeClassId,
-    class_memberships: `${navSchool} / ${navClass}`,
-    student_name: trimmedName,
-    name: trimmedName,
-    student_pin: defaultPin,
-    pin: defaultPin,
-    coins: 0,
-    power: 0,
-    badges: [],
-    avatar_pokemon_id: 0,
-    created_at: new Date().toISOString()
-  };
-  await window.dataSdk.create(regStudentPayload);
-  allData.push(regStudentPayload);
+  updateSelectionState();
 
-  const classStudentPayload = {
-    type: 'class_student',
-    id: generateUuid(),
-    student_id: canonicalNewId,
-    class_id: activeClassId,
-    school_name: navSchool,
-    class_name: navClass,
-    class_memberships: `${navSchool} / ${navClass}`,
-    student_name: trimmedName,
-    name: trimmedName,
-    created_at: new Date().toISOString()
-  };
-  await window.dataSdk.create(classStudentPayload);
-  allData.push(classStudentPayload);
+  // "Link Selected Student" Action Handler
+  modal.querySelector('#link-account-btn').addEventListener('click', async () => {
+    if (!selectedStudentId) return;
+    const selectedStudent = existingStudents.find(s => String(s.id) === String(selectedStudentId));
+    if (!selectedStudent || checkCandidateEnrolled(selectedStudent)) return;
 
-  rebuildCanonicalStudentIndex();
-  canonicalStudentViewsData = null;
-  canonicalStudentViewsCache = [];
+    const sId = String(selectedStudent.id);
 
-  nameInput.value = '';
-  toast('Student added to class successfully.');
-  if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
+    // Insert junction record in Supabase
+    if (sb && activeClassId) {
+      try {
+        const { error: linkError } = await sb
+          .from('class_students')
+          .insert({
+            student_id: sId,
+            class_id: activeClassId
+          });
+        if (linkError) {
+          console.warn('Supabase class_students insert error:', linkError);
+          toast('Failed to link student: ' + linkError.message);
+          return;
+        }
+      } catch (err) {
+        console.warn('Supabase class_students error:', err);
+      }
+    }
+
+    // Local storage: create class_student record in allData
+    const classStudentPayload = {
+      type: 'class_student',
+      id: generateUuid(),
+      student_id: sId,
+      class_id: activeClassId,
+      school_name: navSchool,
+      class_name: navClass,
+      class_memberships: `${navSchool} / ${navClass}`,
+      student_name: selectedStudent.name || name,
+      name: selectedStudent.name || name,
+      created_at: new Date().toISOString()
+    };
+    await window.dataSdk.create(classStudentPayload);
+    allData.push(classStudentPayload);
+
+    // Ensure student's class_memberships includes this class
+    const primaryStudent = allData.find(r => r.type === 'student' && String(r.id || r.__backendId || r.student_id) === sId);
+    if (primaryStudent) {
+      const curMemberships = normalizeStudentMembershipValues(primaryStudent.class_memberships, []);
+      const newClassKey = `${navSchool} / ${navClass}`;
+      if (!curMemberships.includes(newClassKey)) {
+        curMemberships.push(newClassKey);
+        primaryStudent.class_memberships = curMemberships.join('||');
+        await window.dataSdk.update(primaryStudent);
+      }
+    }
+
+    rebuildCanonicalStudentIndex();
+    canonicalStudentViewsData = null;
+    canonicalStudentViewsCache = [];
+
+    nameInput.value = '';
+    modal.remove();
+    toast('Student linked to class successfully!');
+    if (typeof renderTeacherDashboard === 'function') renderTeacherDashboard();
+  });
+
+  // "Brand New Student" Action Handler
+  modal.querySelector('#create-new-student-btn').addEventListener('click', async () => {
+    await handleCreateBrandNewStudent(name, modal);
+  });
+
+  // Cancel Button & Backdrop Click
+  modal.querySelector('#linking-cancel-btn').addEventListener('click', () => modal.remove());
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  return;
 });
 
 document.getElementById('award-form').addEventListener('submit', async e => {
