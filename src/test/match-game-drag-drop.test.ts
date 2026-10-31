@@ -289,5 +289,16 @@ describe("Wordwall-style Drag & Drop Match Words Game", () => {
       expect(html).toContain('ga-word-count-inc');
       expect(html).toContain('ga-word-count-val');
     });
+
+    it("ensures no duplicate word count row exists in openGamePlayersModal", () => {
+      const modalFuncStart = "function openGamePlayersModal(gameType, listName) {";
+      const modalFuncEnd = "function openGameScramble(";
+      const start = html.indexOf(modalFuncStart);
+      const end = html.indexOf(modalFuncEnd, start);
+      const openModalCode = html.slice(start, end);
+
+      expect(openModalCode).not.toContain("${isMatchWords ?");
+      expect(openModalCode).not.toContain("ga-match-word-count-panel w-full");
+    });
   });
 });

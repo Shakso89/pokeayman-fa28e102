@@ -1996,8 +1996,8 @@
         const idx = gameSpecificControls.indexOf(existingMatchCtrl);
         if (idx >= 0) gameSpecificControls.splice(idx, 1);
       }
-      modal.querySelectorAll('.match-word-count-option').forEach(el => {
-        const parent = el.closest('.mb-4, fieldset, .ga-round-setting');
+      modal.querySelectorAll('.match-word-count-option, .ga-match-word-count-panel').forEach(el => {
+        const parent = el.closest('.mb-4, fieldset, .ga-round-setting') || el;
         if (parent) parent.remove();
       });
 
