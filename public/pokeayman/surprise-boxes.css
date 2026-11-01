@@ -555,6 +555,36 @@ html body .baam-stage-portal :is(.baam-reveal-overlay.baam-powerup-reveal, .baam
   font-size: 1rem !important;
   font-weight: 850 !important;
   color: #f8fafc !important;
+  max-width: 100% !important;
+}
+
+html body .baam-stage-portal :is(.baam-reveal-overlay.baam-powerup-reveal, .baam-question-card.baam-powerup-reveal) .baam-impact-chip :is(img, .baam-impact-avatar),
+.baam-impact-chip :is(img, .baam-impact-avatar) {
+  width: 1.85rem !important;
+  height: 1.85rem !important;
+  max-width: 1.85rem !important;
+  max-height: 1.85rem !important;
+  object-fit: contain !important;
+  border-radius: 999px !important;
+  flex: 0 0 1.85rem !important;
+  display: block !important;
+  margin: 0 !important;
+}
+
+html body .baam-stage-portal :is(.baam-reveal-overlay.baam-powerup-reveal, .baam-question-card.baam-powerup-reveal) .baam-impact-chip .baam-impact-name,
+.baam-impact-chip .baam-impact-name {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: 0.95rem !important;
+  font-weight: 850 !important;
+  color: #f8fafc !important;
+}
+
+html body .baam-stage-portal :is(.baam-reveal-overlay.baam-powerup-reveal, .baam-question-card.baam-powerup-reveal) .baam-impact-chip .baam-impact-value,
+.baam-impact-chip .baam-impact-value {
+  font-size: 1.15rem !important;
+  font-weight: 950 !important;
+  flex: 0 0 auto !important;
 }
 
 html body .baam-stage-portal :is(.baam-reveal-overlay.baam-powerup-reveal, .baam-question-card.baam-powerup-reveal) .baam-impact-chip.is-plus {
