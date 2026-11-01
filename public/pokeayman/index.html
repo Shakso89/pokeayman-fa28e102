@@ -4742,7 +4742,7 @@ document.addEventListener('click', function (e) {
   gap: 12px;
   padding: 10px 14px;
   border-radius: 12px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: color-mix(in srgb, var(--ts-surface, #1e2846) 50%, transparent);
   cursor: pointer;
   user-select: none;
@@ -4750,11 +4750,39 @@ document.addEventListener('click', function (e) {
 }
 .ts-teacher-row:hover {
   background: var(--ts-surface, #1e2846);
-  border-color: var(--ts-border, rgba(255, 255, 255, 0.12));
+  border-color: var(--ts-border, rgba(255, 255, 255, 0.18));
 }
 .ts-teacher-row.is-checked {
-  background: color-mix(in srgb, var(--ts-yellow, #ffcb05) 12%, var(--ts-surface, #1e2846));
-  border-color: color-mix(in srgb, var(--ts-yellow, #ffcb05) 45%, transparent);
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.08);
+}
+
+.ts-teacher-checkbox-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1.5px solid #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: transparent;
+  transition: all 0.15s ease;
+  color: #0b1120;
+}
+.ts-teacher-checkbox-box svg {
+  display: none;
+  width: 14px;
+  height: 14px;
+}
+.ts-teacher-row.is-checked .ts-teacher-checkbox-box {
+  background: #fbbf24;
+  border-color: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.35);
+}
+.ts-teacher-row.is-checked .ts-teacher-checkbox-box svg {
+  display: block;
 }
 
 .ts-teacher-checkbox {
@@ -16989,10 +17017,10 @@ function updateRoleUI() {
   }
 }
 
-function canOpenClass(schoolName, className, teacherName = currentTeacher) {
-  if (!teacherName) return false;
+function canOpenClass(schoolName, className, teacherName = currentTeacher, teacherId = currentTeacherRecordId) {
+  if (!teacherName && !teacherId) return false;
   // 1. Admins have access to all classes
-  if (teacherName === 'Ayman' || (typeof canAccessAdmin === 'function' && canAccessAdmin()) || (typeof isAymanTeacher === 'function' && isAymanTeacher())) return true;
+  if (teacherName === 'Ayman' || teacherId === 'ayman' || (typeof canAccessAdmin === 'function' && canAccessAdmin()) || (typeof isAymanTeacher === 'function' && isAymanTeacher())) return true;
   if (typeof getEffectiveTeacherRole === 'function' && getEffectiveTeacherRole(teacherName) === 'admin') return true;
   
   // 2. School Managers have access to all classes in their assigned school
@@ -17000,22 +17028,36 @@ function canOpenClass(schoolName, className, teacherName = currentTeacher) {
   
   const norm = v => String(v || '').replace(/^TR\.\s*/i, '').trim().toLowerCase();
   const target = norm(teacherName);
-  
-  // 3. Explicitly assigned via class record assigned_teachers
+  const myId = String(teacherId || currentTeacherRecordId || '').trim();
+
+  // 3. Explicitly assigned via class record assigned_teacher_ids (UUID match)
+  if (typeof getClasses === 'function') {
+    const cls = getClasses(schoolName).find(c => norm(c.class_name) === norm(className));
+    if (cls) {
+      if (myId && Array.isArray(cls.assigned_teacher_ids) && cls.assigned_teacher_ids.length > 0) {
+        return cls.assigned_teacher_ids.map(id => String(id).trim()).includes(myId);
+      }
+    }
+  }
+
+  // 4. Explicitly assigned via teacher_class_assignment records
+  if (typeof getAssignedClasses === 'function') {
+    const assigned = getAssignedClasses(teacherName, myId);
+    if (assigned.some(a => norm(a.assigned_school) === norm(schoolName) && norm(a.assigned_class) === norm(className))) return true;
+  }
+
+  // 5. Explicitly assigned via class record assigned_teachers (display name fallback)
   if (typeof getClassTeacherNames === 'function') {
     const names = getClassTeacherNames(schoolName, className);
     if (names.some(n => norm(n) === target)) return true;
   }
-  // 4. Explicitly assigned via teacher_class_assignment records
-  if (typeof getAssignedClasses === 'function') {
-    const assigned = getAssignedClasses(teacherName);
-    if (assigned.some(a => norm(a.assigned_school) === norm(schoolName) && norm(a.assigned_class) === norm(className))) return true;
-  }
-  // 5. Legacy fallback only when no assigned_teachers array is configured on the class
+  
+  // 6. Legacy fallback only when no assigned_teachers or assigned_teacher_ids configured on class
   if (typeof getClasses === 'function') {
     const cls = getClasses(schoolName).find(c => norm(c.class_name) === norm(className));
     if (cls) {
-      if (Array.isArray(cls.assigned_teachers) && cls.assigned_teachers.length > 0) {
+      if ((Array.isArray(cls.assigned_teacher_ids) && cls.assigned_teacher_ids.length > 0) ||
+          (Array.isArray(cls.assigned_teachers) && cls.assigned_teachers.length > 0)) {
         return false;
       }
       if (norm(cls.assigned_teacher) === target || norm(cls.teacher_name) === target) return true;
@@ -22241,6 +22283,21 @@ function getTeachersForSchool(schoolName) {
 }
 window.getTeachersForSchool = getTeachersForSchool;
 
+function getClassTeacherIds(schoolName, className) {
+  const norm = v => String(v || '').trim().toLowerCase();
+  const cls = allData.find(c => c.type === 'class' && norm(c.school_name) === norm(schoolName) && norm(c.class_name) === norm(className));
+  const ids = new Set();
+  if (cls && Array.isArray(cls.assigned_teacher_ids)) {
+    cls.assigned_teacher_ids.forEach(id => { if (id) ids.add(String(id).trim()); });
+  }
+  const assignments = allData.filter(r => r.type === 'teacher_class_assignment' && norm(r.assigned_school) === norm(schoolName) && norm(r.assigned_class) === norm(className));
+  assignments.forEach(a => {
+    if (a.assigned_teacher_id) ids.add(String(a.assigned_teacher_id).trim());
+  });
+  return [...ids];
+}
+window.getClassTeacherIds = getClassTeacherIds;
+
 async function saveClassTeacherAssignments(schoolName, className, teacherNamesOrIds) {
   if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) {
     toast('Please sign in as a teacher.');
@@ -22257,40 +22314,85 @@ async function saveClassTeacherAssignments(schoolName, className, teacherNamesOr
   }
 
   const availableTeachers = getTeachersForSchool(schoolName);
-  const availableSet = new Set(availableTeachers.map(t => t.teacher_name));
-  
-  if (!isAymanTeacher()) {
-    for (const item of teacherNamesOrIds) {
-      const name = typeof item === 'object' ? item.teacher_name : (getTeachers().find(t => t.__backendId === item)?.teacher_name || item);
-      if (name !== 'Ayman' && !availableSet.has(name)) {
-        toast(`Permission denied: Teacher "${name}" is not registered at ${schoolName}.`);
-        return { ok: false, error: 'unauthorized_teacher' };
+  const teacherIdMap = new Map();
+  availableTeachers.forEach(t => {
+    if (t.__backendId) teacherIdMap.set(String(t.__backendId).trim(), t);
+  });
+  getTeachers().forEach(t => {
+    if (t.__backendId && !teacherIdMap.has(String(t.__backendId).trim())) {
+      teacherIdMap.set(String(t.__backendId).trim(), t);
+    }
+  });
+
+  const selectedTeacherIds = [];
+  const selectedTeacherNames = [];
+  let hasAyman = false;
+
+  const rawList = Array.isArray(teacherNamesOrIds) ? teacherNamesOrIds : [];
+  for (const item of rawList) {
+    if (!item) continue;
+    let tId = '';
+    let tName = '';
+    if (typeof item === 'object') {
+      tId = String(item.id || item.__backendId || '').trim();
+      tName = String(item.teacher_name || item.name || '').trim();
+    } else {
+      const s = String(item).trim();
+      if (s.toLowerCase() === 'ayman') {
+        hasAyman = true;
+        continue;
       }
+      if (teacherIdMap.has(s)) {
+        tId = s;
+        tName = teacherIdMap.get(s)?.teacher_name || '';
+      } else {
+        const match = getTeachers().find(t => t.teacher_name === s);
+        if (match) {
+          tId = String(match.__backendId || '').trim();
+          tName = match.teacher_name;
+        } else {
+          tName = s;
+        }
+      }
+    }
+    if (tId && !selectedTeacherIds.includes(tId)) {
+      selectedTeacherIds.push(tId);
+    }
+    if (tName && !selectedTeacherNames.includes(tName)) {
+      selectedTeacherNames.push(tName);
     }
   }
 
-  const selectedTeacherNames = [...new Set(teacherNamesOrIds.map(item => {
-    if (typeof item === 'object') return item.teacher_name;
-    const byId = getTeachers().find(t => t.__backendId === item);
-    return byId ? byId.teacher_name : item;
-  }).filter(Boolean))];
+  if (hasAyman && !selectedTeacherNames.includes('Ayman')) {
+    selectedTeacherNames.unshift('Ayman');
+  }
 
   const currentAssignments = allData.filter(r => r.type === 'teacher_class_assignment' && r.assigned_school === schoolName && r.assigned_class === className);
-  const currentAssignedNames = new Set(currentAssignments.map(assignmentTeacherName));
 
-  const toRemove = currentAssignments.filter(a => !selectedTeacherNames.includes(assignmentTeacherName(a)));
-  const toAddNames = selectedTeacherNames.filter(n => !currentAssignedNames.has(n));
+  const toRemove = currentAssignments.filter(a => {
+    const aId = String(a.assigned_teacher_id || '').trim();
+    if (aId) {
+      return !selectedTeacherIds.includes(aId);
+    }
+    return !selectedTeacherNames.includes(assignmentTeacherName(a));
+  });
 
   for (const a of toRemove) {
     await window.dataSdk.delete(a);
     allData = allData.filter(r => r.__backendId !== a.__backendId);
   }
 
+  const existingAssignedIds = new Set(
+    currentAssignments
+      .filter(a => !toRemove.includes(a) && a.assigned_teacher_id)
+      .map(a => String(a.assigned_teacher_id).trim())
+  );
+
   const newlyAssignedRecords = [];
-  for (const name of toAddNames) {
-    if (name === 'Ayman') continue;
-    const teacherRec = getTeachers().find(t => t.teacher_name === name);
-    const teacherId = teacherRec?.__backendId || '';
+  for (const teacherId of selectedTeacherIds) {
+    if (existingAssignedIds.has(teacherId)) continue;
+    const teacherRec = teacherIdMap.get(teacherId) || getTeachers().find(t => String(t.__backendId).trim() === teacherId);
+    const teacherName = teacherRec?.teacher_name || 'Teacher';
     const payload = {
       type: 'teacher_class_assignment',
       school_name: '',
@@ -22332,7 +22434,7 @@ async function saveClassTeacherAssignments(schoolName, className, teacherNamesOr
       quiz_created_by: '',
       quiz_class: '',
       quiz_submitted_answers: '',
-      assigned_teacher: name,
+      assigned_teacher: teacherName,
       assigned_teacher_id: teacherId,
       assigned_school: schoolName,
       assigned_class: className
@@ -22344,14 +22446,29 @@ async function saveClassTeacherAssignments(schoolName, className, teacherNamesOr
     }
   }
 
-  const hasAyman = selectedTeacherNames.includes('Ayman');
   const updatedClass = {
     ...classRec,
+    assigned_teacher_ids: selectedTeacherIds,
     assigned_teachers: selectedTeacherNames,
     show_admin_teacher: hasAyman
   };
   await window.dataSdk.update(updatedClass);
   allData = allData.map(r => r.__backendId === classRec.__backendId ? updatedClass : r);
+
+  // Sync to relational class_teachers junction table if Supabase is connected
+  try {
+    const sb = window.supabaseClient || window.supabase || (typeof supabase !== 'undefined' ? supabase : null);
+    const classId = classRec.id || classRec.__backendId;
+    if (sb && classId && typeof sb.from === 'function') {
+      await sb.from('class_teachers').delete().eq('class_id', classId);
+      if (selectedTeacherIds.length > 0) {
+        const rows = selectedTeacherIds.map(tId => ({ class_id: classId, teacher_id: tId }));
+        await sb.from('class_teachers').insert(rows);
+      }
+    }
+  } catch (syncErr) {
+    console.warn('class_teachers junction table sync note:', syncErr);
+  }
 
   if (newlyAssignedRecords.length && window.sendTeacherNotifications) {
     await window.sendTeacherNotifications(
@@ -22365,7 +22482,7 @@ async function saveClassTeacherAssignments(schoolName, className, teacherNamesOr
 
   try { renderTeacherDashboard(); } catch (_) {}
   try { window.teacherShellSync?.(); } catch (_) {}
-  return { ok: true, assigned: selectedTeacherNames };
+  return { ok: true, assigned: selectedTeacherNames, assignedIds: selectedTeacherIds };
 }
 window.saveClassTeacherAssignments = saveClassTeacherAssignments;
 
@@ -22381,6 +22498,14 @@ function openAssignClassTeachersModal(schoolName, className) {
   }
 
   const assignedNames = new Set(getClassTeacherNames(schoolName, className));
+  const assignedTeacherIds = new Set(getClassTeacherIds(schoolName, className));
+  if (assignedTeacherIds.size === 0) {
+    assignedNames.forEach(name => {
+      const match = getTeachers().find(t => t.teacher_name === name);
+      if (match && match.__backendId) assignedTeacherIds.add(String(match.__backendId).trim());
+    });
+  }
+
   const availableTeachers = getTeachersForSchool(schoolName);
   const esc = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const showAdminOption = isAymanTeacher() || assignedNames.has('Ayman');
@@ -22403,25 +22528,31 @@ function openAssignClassTeachersModal(schoolName, className) {
         </p>
         <div class="ts-modal-list" id="at-teachers-list">
           ${showAdminOption ? `
-            <label class="ts-teacher-row ${assignedNames.has('Ayman') ? 'is-checked' : ''}">
-              <input type="checkbox" class="ts-teacher-checkbox at-checkbox" value="Ayman" ${assignedNames.has('Ayman') ? 'checked' : ''}>
+            <label class="ts-teacher-row ${assignedNames.has('Ayman') ? 'is-checked' : ''}" data-teacher-id="ayman">
+              <input type="checkbox" class="sr-only at-checkbox" value="ayman" data-id="ayman" data-name="Ayman" ${assignedNames.has('Ayman') ? 'checked' : ''}>
+              <span class="ts-teacher-checkbox-box" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </span>
               <span class="ts-teacher-avatar-slot">👑</span>
               <div class="ts-teacher-meta">
                 <div class="ts-teacher-meta-top">
                   <span class="ts-teacher-meta-name">Ayman</span>
                   <span class="ts-teacher-badge is-admin">Admin</span>
                 </div>
-                <small class="ts-teacher-meta-sub">System Administrator</small>
+                <small class="ts-teacher-meta-sub" style="font-family: ui-monospace, monospace; color: #94a3b8; font-size: 11px;">System Administrator</small>
               </div>
             </label>
           ` : ''}
           ${availableTeachers.length ? availableTeachers.map(t => {
-            const isChecked = assignedNames.has(t.teacher_name);
+            const isChecked = t.__backendId ? assignedTeacherIds.has(String(t.__backendId).trim()) : assignedNames.has(t.teacher_name);
             const avatar = teacherAvatarSrc(t.teacher_avatar);
             const isManager = isSchoolManager(t.teacher_name);
             return `
-              <label class="ts-teacher-row ${isChecked ? 'is-checked' : ''}">
-                <input type="checkbox" class="ts-teacher-checkbox at-checkbox" value="${esc(t.teacher_name)}" data-id="${esc(t.__backendId)}" ${isChecked ? 'checked' : ''}>
+              <label class="ts-teacher-row ${isChecked ? 'is-checked' : ''}" data-teacher-id="${esc(t.__backendId || '')}">
+                <input type="checkbox" class="sr-only at-checkbox" value="${esc(t.__backendId || t.teacher_name)}" data-id="${esc(t.__backendId || '')}" data-name="${esc(t.teacher_name)}" ${isChecked ? 'checked' : ''}>
+                <span class="ts-teacher-checkbox-box" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
                 ${avatar ? `<img src="${avatar}" class="ts-teacher-avatar-slot" alt="">` : '<span class="ts-teacher-avatar-slot">🎓</span>'}
                 <div class="ts-teacher-meta">
                   <div class="ts-teacher-meta-top">
@@ -22429,7 +22560,7 @@ function openAssignClassTeachersModal(schoolName, className) {
                     ${isManager ? '<span class="ts-teacher-badge is-manager">School Manager</span>' : ''}
                     ${t.teacher_pro ? '<span class="ts-teacher-badge is-pro">⭐ Pro</span>' : ''}
                   </div>
-                  <small class="ts-teacher-meta-sub">${esc(t.teacher_email || 'Teacher account')}</small>
+                  <small class="ts-teacher-meta-sub" style="font-family: ui-monospace, monospace; color: #94a3b8; font-size: 11px;">${esc(t.teacher_email || 'No email provided')}</small>
                 </div>
               </label>
             `;
@@ -22463,7 +22594,7 @@ function openAssignClassTeachersModal(schoolName, className) {
     const saveBtn = modal.querySelector('#at-save');
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving…';
-    const selected = [...modal.querySelectorAll('.at-checkbox:checked')].map(cb => cb.value);
+    const selected = [...modal.querySelectorAll('.at-checkbox:checked')].map(cb => cb.dataset.id || cb.value);
     const res = await saveClassTeacherAssignments(schoolName, className, selected);
     if (res?.ok) {
       toast(`Updated teachers for ${className}!`);
@@ -22666,19 +22797,39 @@ function classTeacherPill(schoolName, className) {
   return `<div class="class-teacher-pill ${visibleNames.length === 1 ? 'has-single' : 'has-multiple'}">${teachersHtml}${actionChip}</div>`;
 }
 
-function getAssignedClasses(teacherName) {
+function getAssignedClasses(teacherName, teacherId = currentTeacherRecordId) {
   const norm = v => String(v || '').trim().toLocaleLowerCase();
   const targetTeacher = norm(teacherName);
-  const assignments = allData.filter(r => r.type === 'teacher_class_assignment' && assignmentMatchesTeacher(r, teacherName));
+  const targetId = String(teacherId || '').trim();
+  const assignments = allData.filter(r => {
+    if (r.type !== 'teacher_class_assignment') return false;
+    if (targetId && r.assigned_teacher_id) {
+      return String(r.assigned_teacher_id).trim() === targetId;
+    }
+    return assignmentMatchesTeacher(r, teacherName);
+  });
   const assignedKeys = new Set(assignments.map(r => `${norm(r.assigned_school)}||${norm(r.assigned_class)}`));
   const classRecs = allData.filter(r => r.type === 'class');
   classRecs.forEach(c => {
     const key = `${norm(c.school_name)}||${norm(c.class_name)}`;
     if (assignedKeys.has(key)) return;
+    if (targetId && Array.isArray(c.assigned_teacher_ids) && c.assigned_teacher_ids.map(id => String(id).trim()).includes(targetId)) {
+      assignments.push({
+        type: 'teacher_class_assignment',
+        assigned_teacher: teacherName,
+        assigned_teacher_id: targetId,
+        assigned_school: c.school_name,
+        assigned_class: c.class_name,
+        __virtual: true
+      });
+      assignedKeys.add(key);
+      return;
+    }
     if (Array.isArray(c.assigned_teachers) && c.assigned_teachers.some(t => norm(t) === targetTeacher)) {
       assignments.push({
         type: 'teacher_class_assignment',
         assigned_teacher: teacherName,
+        assigned_teacher_id: targetId,
         assigned_school: c.school_name,
         assigned_class: c.class_name,
         __virtual: true
