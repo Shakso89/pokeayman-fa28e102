@@ -171,13 +171,21 @@ describe('Theme Polish: Buttons, Cover Hover & Top 3 Podium', () => {
       expect(css).toContain('.rank-title strong');
       expect(css).toContain('.vocab-assign-pill');
       expect(css).toContain('.vocab-flashcard-pill');
+      expect(css).toContain('.teacher-zone-list-author');
+      expect(css).toContain('.vocab-list-context-pill');
+      expect(css).toContain('#profile-adjust-amount');
+      expect(css).toContain('.student-roster-edit');
+      expect(css).toContain('.student-roster-remove');
+      expect(css).toContain('.shop-rarity-segments');
     });
 
-    it('index.html contains bright mode styles for teacher-vb action pills', () => {
+    it('index.html contains bright mode styles for teacher-vb action pills and meta', () => {
       const html = fs.readFileSync(path.join(__dirname, '../../public/pokeayman/index.html'), 'utf-8');
       expect(html).toContain('#teacher-vb-lists-grid .vocab-flashcard-pill');
       expect(html).toContain('#teacher-vb-lists-grid .vocab-assign-pill');
       expect(html).toContain(':is(html body.ts-bright');
+      expect(html).toContain('vocab-list-context-pill');
+      expect(html).toContain('teacher-zone-wordbank-meta');
     });
   });
 

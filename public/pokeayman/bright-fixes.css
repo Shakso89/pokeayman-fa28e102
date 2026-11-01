@@ -1837,3 +1837,164 @@ body:not(.ts-bright):not(.light):not([data-theme="light"]) :is(#app-screen#app-s
   color: #fb923c !important;
   text-shadow: 0 0 10px rgba(251, 146, 60, 0.4);
 }
+
+
+/* ==========================================================================
+   THEME POLISH 2.0: WORD BANK TITLES/BYLINE, ADJUST AMOUNT, ROSTER BUTTONS, SHOP FILTER BAR
+   ========================================================================== */
+
+/* 1. Word Bank Card Headings, Teacher Byline, and Context Pills in Bright Mode */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.vocab-list-card, article) :is(h3, h4, .vocab-list-name, [class*="text-white"]) {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) .teacher-zone-list-author,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) .teacher-zone-list-author span {
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.vocab-list-card, article) :is(.vocab-list-context-pill, .vocab-list-context-tag, .teacher-zone-wordbank-context, [class*="bg-slate-800"]) {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.vocab-list-card, article) .vb-ghost-action-btn {
+  color: #64748b !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.vocab-list-card, article) .vb-ghost-action-btn:hover {
+  color: #0f172a !important;
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* 2. Student Roster Card Top-Right Action Buttons (Edit & Remove) in Bright Mode */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#app-screen#app-screen#app-screen#app-screen#app-screen, body) #view-students :is(.global-rank-card, .trainer-student-card) :is(.student-roster-edit, .student-roster-remove) {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #334155 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 8px !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#app-screen#app-screen#app-screen#app-screen#app-screen, body) #view-students :is(.global-rank-card, .trainer-student-card) .student-roster-edit:hover {
+  background: #fffbeb !important;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#app-screen#app-screen#app-screen#app-screen#app-screen, body) #view-students :is(.global-rank-card, .trainer-student-card) .student-roster-remove:hover {
+  background: #fef2f2 !important;
+  border-color: #f87171 !important;
+  color: #ef4444 !important;
+}
+
+/* 3. Student Profile Adjust Amount Input in Bright Mode */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#app-screen#app-screen#app-screen, body) #view-student-profile #profile-adjust-amount {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#app-screen#app-screen#app-screen, body) #view-student-profile #profile-adjust-amount::placeholder {
+  color: #94a3b8 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#app-screen#app-screen#app-screen, body) #view-student-profile #profile-adjust-amount:focus {
+  border-color: #f59e0b !important;
+  outline: 2px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+/* 4. Shop Toolbar & Rarity Filter Bar in Bright Mode */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-toolbar {
+  background: transparent !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-toolbar :is(input, select) {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  border-radius: 8px !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-toolbar .shop-search-field svg {
+  color: #64748b !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments {
+  background: #f1f5f9 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  padding: 4px !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button {
+  background: transparent !important;
+  border: 1.5px solid transparent !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  transition: all 0.15s ease !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button:hover:not(.active) {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Button Text Colors in Bright Mode (Unselected) */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button:not(.active) {
+  color: #475569 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button[data-rarity="common"]:not(.active) {
+  color: #475569 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button[data-rarity="uncommon"]:not(.active) {
+  color: #0d9488 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button[data-rarity="rare"]:not(.active) {
+  color: #4f46e5 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button[data-rarity="legendary"]:not(.active) {
+  color: #b45309 !important;
+  text-shadow: none !important;
+}
+
+/* Button Text Colors & Background in Bright Mode (Active State) */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button.active[data-rarity=""],
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button.active:not([data-rarity]) {
+  background: linear-gradient(135deg, #fef08a, #f59e0b) !important;
+  color: #78350f !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3) !important;
+  font-weight: 800 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button.active[data-rarity="common"] {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+  font-weight: 800 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button.active[data-rarity="uncommon"] {
+  background: #ccfbf1 !important;
+  color: #0f766e !important;
+  border-color: #14b8a6 !important;
+  box-shadow: 0 1px 4px rgba(20, 184, 166, 0.2) !important;
+  font-weight: 800 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button.active[data-rarity="rare"] {
+  background: #e0e7ff !important;
+  color: #4338ca !important;
+  border-color: #818cf8 !important;
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.2) !important;
+  font-weight: 800 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#profile-tab-shop, #student-tab-shop, .cp-content, body) .shop-rarity-segments button.active[data-rarity="legendary"] {
+  background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+  color: #92400e !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25) !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+}
