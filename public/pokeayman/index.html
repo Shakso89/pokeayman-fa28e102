@@ -16333,21 +16333,34 @@ teacherVbCardLayoutStyles.textContent = `
   /* Harmonized Change Cover Button with Gold Accents */
   #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn,
   #vocab-lists-container .vocab-list-card .vocab-change-cover-btn {
-    background: rgba(15, 23, 42, 0.92) !important;
-    border: 1.5px solid rgba(251, 191, 36, 0.55) !important;
-    color: #f8fafc !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
-    border-radius: 0.5rem !important;
-    padding: 0.25rem 0.75rem !important;
-    font-size: 0.75rem !important;
-    font-weight: 600 !important;
-    transition: all 0.15s ease !important;
+    background: rgba(15, 23, 42, 0.92);
+    border: 1.5px solid rgba(251, 191, 36, 0.55);
+    color: #f8fafc;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border-radius: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
   }
   #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn:hover,
   #vocab-lists-container .vocab-list-card .vocab-change-cover-btn:hover {
-    background: rgba(30, 41, 59, 0.95) !important;
-    border-color: rgba(251, 191, 36, 0.85) !important;
-    color: #ffffff !important;
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(251, 191, 36, 0.85);
+    color: #ffffff;
+  }
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #vocab-lists-container .vocab-list-card .vocab-change-cover-btn {
+    background: #ffffff !important;
+    border: 1.5px solid #f59e0b !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+  }
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn:hover,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #vocab-lists-container .vocab-list-card .vocab-change-cover-btn:hover {
+    background: #f8fafc !important;
+    border-color: #d97706 !important;
+    color: #020617 !important;
   }
 
   /* Unified Gold-Bordered Action Pills (Image 1 Style) */

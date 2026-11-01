@@ -1265,4 +1265,331 @@ html body.ts-bright #add-pricing-plan-btn:hover {
   color: #b45309 !important;
 }
 
+/* ==========================================================================
+   UI THEME AUDIT: LIGHT MODE OVERRIDES
+   1. Buttons (Transfer Credits, Change Cover, Word Bank action pills)
+   2. Top 3 Podium Student Cards (Metallic gold/silver/bronze)
+   3. Modal Overlays & Backdrops (Translucent dark backdrop blur)
+   4. Pro Game Cards (Listen and Catch & Poké Battle light gradients)
+   ========================================================================== */
+
+/* 1.1 Transfer Credits Button */
+#btn-transfer-credits,
+.th-transfer-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #fbbf24;
+  color: #0f172a;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+#btn-transfer-credits:hover,
+.th-transfer-pill:hover {
+  background: #f59e0b;
+  transform: translateY(-1px);
+}
+#btn-transfer-credits svg,
+.th-transfer-pill svg {
+  color: #0f172a;
+  stroke: currentColor;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #btn-transfer-credits,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .th-transfer-pill {
+  background: #fbbf24 !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(245, 158, 11, 0.5) !important;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #btn-transfer-credits svg,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .th-transfer-pill svg {
+  color: #0f172a !important;
+  stroke: #0f172a !important;
+}
+
+/* 1.2 Change Cover Buttons */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-change-cover-btn,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #vocab-lists-container .vocab-list-card .vocab-change-cover-btn {
+  background: #ffffff !important;
+  border: 1.5px solid #f59e0b !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-change-cover-btn svg,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn svg,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #vocab-lists-container .vocab-list-card .vocab-change-cover-btn svg {
+  color: #d97706 !important;
+  stroke: currentColor !important;
+}
+
+/* 1.3 Word Bank Cards and Action Pills */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #teacher-vb-lists-grid .vocab-list-card,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #vocab-lists-container .vocab-list-card,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #class-subtab-vocab .rounded-2xl.bg-slate-900\/60,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #teacher-vb-lists-grid article {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #teacher-vb-lists-grid .vocab-list-card h3,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #vocab-lists-container .vocab-list-card h3,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #teacher-vb-lists-grid article h3 {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-flashcard-pill {
+  background: #fffbeb !important;
+  border: 1px solid rgba(245, 158, 11, 0.6) !important;
+  color: #92400e !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-flashcard-pill:hover {
+  background: #fef3c7 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-flashcard-pill svg {
+  color: #d97706 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-assign-pill {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-assign-pill:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-assign-pill svg {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-game-pill:not(.is-active) {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-game-pill:not(.is-active):hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vb-ghost-action-btn {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vb-ghost-action-btn:hover {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vb-ghost-delete-btn {
+  color: #e11d48 !important;
+  border-color: #fecdd3 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vb-ghost-delete-btn:hover {
+  background: #fff1f2 !important;
+  color: #be123c !important;
+}
+
+/* 1.4 Monthly Calculation View Pills */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-trigger,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-summary-interactive {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #1e293b !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-trigger:hover,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-summary-interactive:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-trigger.is-active,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-summary-interactive.is-selected {
+  background: rgba(251, 191, 36, 0.15) !important;
+  border-color: #fbbf24 !important;
+  color: #78350f !important;
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.3) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-trigger-meta {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-section {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-heading {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-legend {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-label {
+  color: #d97706 !important;
+}
+
+/* 2. Top 3 Podium Student Cards */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.class-top3-card.rank-1, .student-classmate-card.rank-1, .global-rank-1, #students-list > div:has(.bg-yellow-400)) {
+  background: linear-gradient(180deg, rgba(254, 243, 199, 0.95) 0%, rgba(254, 240, 138, 0.55) 100%) !important;
+  border: 2px solid #fcd34d !important;
+  color: #78350f !important;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.18), 0 0 0 1px rgba(251, 191, 36, 0.25) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.class-top3-card.rank-1, .student-classmate-card.rank-1, .global-rank-1, #students-list > div:has(.bg-yellow-400)) :is(.student-classmate-name, .class-top3-name, strong, h3, h2, p) {
+  color: #78350f !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.class-top3-card.rank-1, .student-classmate-card.rank-1, .global-rank-1) :is(.student-classmate-coins, .class-top3-score) {
+  color: #92400e !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.class-top3-card.rank-2, .student-classmate-card.rank-2, .global-rank-2, #students-list > div:has(.bg-gray-300)) {
+  background: linear-gradient(180deg, #f8fafc 0%, rgba(241, 245, 249, 0.8) 100%) !important;
+  border: 2px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 4px 14px rgba(100, 116, 139, 0.15), 0 0 0 1px rgba(203, 213, 225, 0.3) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.class-top3-card.rank-2, .student-classmate-card.rank-2, .global-rank-2, #students-list > div:has(.bg-gray-300)) :is(.student-classmate-name, .class-top3-name, strong, h3, h2, p) {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.class-top3-card.rank-2, .student-classmate-card.rank-2, .global-rank-2) :is(.student-classmate-coins, .class-top3-score) {
+  color: #334155 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.class-top3-card.rank-3, .student-classmate-card.rank-3, .global-rank-3, #students-list > div:has(.bg-orange-400)) {
+  background: linear-gradient(180deg, rgba(255, 247, 237, 0.95) 0%, rgba(254, 215, 170, 0.55) 100%) !important;
+  border: 2px solid #fdba74 !important;
+  color: #7c2d12 !important;
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.18), 0 0 0 1px rgba(251, 146, 60, 0.25) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.class-top3-card.rank-3, .student-classmate-card.rank-3, .global-rank-3, #students-list > div:has(.bg-orange-400)) :is(.student-classmate-name, .class-top3-name, strong, h3, h2, p) {
+  color: #7c2d12 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.class-top3-card.rank-3, .student-classmate-card.rank-3, .global-rank-3) :is(.student-classmate-coins, .class-top3-score) {
+  color: #9a3412 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.class-top3-card, .student-classmate-card) :is(.student-avatar-frame, .student-avatar-circle, .student-pokemon-frame, .class-top3-avatar-wrap) {
+  background: rgba(254, 243, 199, 0.5) !important;
+  border: 1px solid rgba(252, 211, 77, 0.6) !important;
+}
+
+/* 3. Modal Overlays & Transparent Backdrops */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-popup-portal,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-breakdown-modal {
+  background: transparent !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-popup-backdrop,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-breakdown-backdrop {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-popup-dialog,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-breakdown-panel {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+  border-radius: 1.5rem !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-popup-header,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-breakdown-header {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-popup-header h3,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-breakdown-header h3 {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-breakdown-month {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-breakdown-close {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .school-breakdown-close:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-table {
+  color: #1e293b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-table th {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-table td {
+  border-top: 1px solid #f1f5f9 !important;
+  color: #334155 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-table td:first-child {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .monthly-school-total td {
+  background: #fef9c3 !important;
+  color: #854d0e !important;
+  border-top: 2px solid #facc15 !important;
+}
+
+/* 4. Pro Game Cards in Light Mode */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ga-cart.ga-pro-listen :is(.ga-cart-body, .ga-cart-rect) {
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.95) 0%, rgba(250, 245, 255, 0.85) 50%, #ffffff 100%) !important;
+  border: 1.5px solid #c7d2fe !important;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ga-cart.ga-pro-listen .ga-cart-name {
+  color: #1e1b4b !important;
+  background: none !important;
+  -webkit-text-fill-color: #1e1b4b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ga-cart.ga-pro-listen .ga-cart-desc {
+  color: #475569 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ga-cart.ga-pro-listen .ga-pro-plaque-banner {
+  background: rgba(99, 102, 241, 0.15) !important;
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+  color: #4338ca !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ga-cart.ga-pro-listen .ga-pro-feature-bar {
+  background: rgba(99, 102, 241, 0.08) !important;
+  border: 1px solid rgba(99, 102, 241, 0.2) !important;
+  color: #4338ca !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ga-cart.ga-pro-battle :is(.ga-cart-body, .ga-cart-rect) {
+  background: linear-gradient(135deg, rgba(255, 241, 242, 0.95) 0%, rgba(255, 247, 237, 0.85) 50%, #ffffff 100%) !important;
+  border: 1.5px solid #fecdd3 !important;
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.12) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ga-cart.ga-pro-battle .ga-cart-name {
+  color: #881337 !important;
+  background: none !important;
+  -webkit-text-fill-color: #881337 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ga-cart.ga-pro-battle .ga-cart-desc {
+  color: #475569 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ga-cart.ga-pro-battle .ga-pro-plaque-banner {
+  background: rgba(244, 63, 94, 0.15) !important;
+  border: 1px solid rgba(244, 63, 94, 0.35) !important;
+  color: #be123c !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ga-cart.ga-pro-battle .ga-pro-feature-bar {
+  background: rgba(244, 63, 94, 0.08) !important;
+  border: 1px solid rgba(244, 63, 94, 0.2) !important;
+  color: #be123c !important;
+}
+
+
 

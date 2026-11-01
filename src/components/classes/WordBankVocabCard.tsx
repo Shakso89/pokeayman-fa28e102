@@ -33,23 +33,23 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
 }) => {
   return (
     <article
-      className="group relative p-4 sm:p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+      className="group relative p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 text-slate-900 hover:border-slate-300 shadow-sm hover:shadow-md transition-all flex flex-col justify-between dark:bg-slate-900/70 dark:border-slate-800 dark:hover:border-slate-700 dark:text-white"
       data-testid={`word-bank-card-${list.id}`}
     >
       {/* 1. Header: Title, Info & Top-Right Actions */}
       <div className="flex items-start justify-between gap-3 mb-2.5">
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm sm:text-base font-bold text-white tracking-tight truncate" title={list.title}>
+          <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight truncate" title={list.title}>
             {list.title}
           </h3>
-          <div className="flex items-center flex-wrap gap-2 mt-1 text-xs text-slate-400 font-medium">
+          <div className="flex items-center flex-wrap gap-2 mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
             {list.author_name && <span>By {list.author_name}</span>}
             {list.author_name && <span>•</span>}
             <span>{list.word_count || 0} word{(list.word_count || 0) !== 1 ? 's' : ''}</span>
             {list.school_name && (
               <>
                 <span>•</span>
-                <span className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700/60 text-slate-300 text-[11px]">
+                <span className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700/60 dark:text-slate-300 text-[11px]">
                   {list.school_name} {list.class_name ? `· ${list.class_name}` : ''}
                 </span>
               </>
@@ -66,9 +66,9 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
                 onClick={() => onEditList(list)}
                 title="Edit list"
                 aria-label={`Edit ${list.title}`}
-                className="vb-ghost-action-btn p-1.5 rounded-lg text-slate-400 hover:text-white transition active:scale-95"
+                className="vb-ghost-action-btn p-1.5 rounded-lg border transition bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 active:scale-95"
               >
-                <Pencil className="w-4 h-4" />
+                <Pencil className="w-3.5 h-3.5" />
               </button>
             )}
             {onDeleteList && (
@@ -77,9 +77,9 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
                 onClick={() => onDeleteList(list)}
                 title="Delete list"
                 aria-label={`Delete ${list.title}`}
-                className="vb-ghost-action-btn vb-ghost-delete-btn p-1.5 rounded-lg text-rose-400/80 hover:text-rose-300 transition active:scale-95"
+                className="vb-ghost-action-btn vb-ghost-delete-btn p-1.5 rounded-lg border transition bg-white border-slate-200 text-rose-500 hover:bg-rose-50 hover:text-rose-600 dark:bg-slate-800 dark:border-slate-700 dark:text-rose-400 active:scale-95"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -88,7 +88,7 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
 
       {/* 2. Cover Image Preview with Hover Overlay */}
       <div
-        className="relative group/cover w-full aspect-[16/10] rounded-xl overflow-hidden bg-slate-900/80 border border-slate-700/50 mb-3 cursor-pointer flex items-center justify-center"
+        className="relative group/cover w-full aspect-[16/10] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 dark:bg-slate-900/80 dark:border-slate-700/50 mb-3 cursor-pointer flex items-center justify-center"
         onClick={() => onOpenFlashcards(list)}
       >
         {list.cover_image_url ? (
@@ -98,7 +98,7 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
             className="w-full h-full object-cover group-hover/cover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-500 font-semibold text-xs bg-slate-950/40">
+          <div className="w-full h-full flex items-center justify-center text-slate-500 font-semibold text-xs bg-slate-200/50 dark:bg-slate-950/40">
             No Cover Image
           </div>
         )}
@@ -111,7 +111,7 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
                 e.stopPropagation();
                 onChangeCover(list);
               }}
-              className="vocab-change-cover-btn py-1 px-3 rounded-lg text-white shadow-md text-xs font-semibold flex items-center gap-1.5 transition"
+              className="vocab-change-cover-btn py-1 px-3 rounded-lg bg-white border border-amber-500/60 text-slate-900 dark:bg-slate-900/90 dark:border-amber-400/55 dark:text-white shadow-md text-xs font-semibold flex items-center gap-1.5 transition"
             >
               <span>Change Cover</span>
             </button>
@@ -125,9 +125,9 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
         <button
           type="button"
           onClick={() => onOpenFlashcards(list)}
-          className="vocab-flashcard-pill flex-1 py-2 px-3 rounded-xl bg-amber-400/15 border border-amber-400/50 text-amber-300 hover:bg-amber-400/25 active:scale-95 transition flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm"
+          className="vocab-flashcard-pill flex-1 py-2 px-3 rounded-xl border transition active:scale-95 flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm bg-amber-50 border-amber-300/80 text-amber-800 hover:bg-amber-100/80 dark:bg-amber-400/15 dark:border-amber-400/40 dark:text-amber-300"
         >
-          <BookOpen className="w-3.5 h-3.5 text-amber-300" />
+          <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-300" />
           <span>Flashcards</span>
         </button>
 
@@ -136,9 +136,9 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
           <button
             type="button"
             onClick={() => onAssignToClass(list)}
-            className="vocab-assign-pill flex-1 py-2 px-3 rounded-xl bg-slate-900/80 border border-amber-400/45 text-slate-200 hover:text-white hover:bg-slate-800 active:scale-95 transition flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm"
+            className="vocab-assign-pill flex-1 py-2 px-3 rounded-xl border transition active:scale-95 flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-300"
           >
-            <Share2 className="w-3.5 h-3.5 text-amber-300/80" />
+            <Share2 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
             <span>Assign</span>
           </button>
         )}
