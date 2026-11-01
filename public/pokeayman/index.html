@@ -16363,9 +16363,9 @@ teacherVbCardLayoutStyles.textContent = `
     color: #020617 !important;
   }
 
-  /* Unified Gold-Bordered Action Pills (Image 1 Style) */
-  #teacher-vb-lists-grid .vocab-flashcard-pill,
-  #vocab-lists-container .vocab-flashcard-pill {
+  /* Unified Gold-Bordered Action Pills (Image 1 Style) - Dark Mode Default */
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-vb-lists-grid .vocab-flashcard-pill,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-flashcard-pill {
     background: rgba(251, 191, 36, 0.14) !important;
     border: 1.5px solid rgba(251, 191, 36, 0.5) !important;
     color: #fde68a !important;
@@ -16374,16 +16374,16 @@ teacherVbCardLayoutStyles.textContent = `
     font-weight: 700 !important;
     transition: all 0.18s ease !important;
   }
-  #teacher-vb-lists-grid .vocab-flashcard-pill:hover,
-  #vocab-lists-container .vocab-flashcard-pill:hover {
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-vb-lists-grid .vocab-flashcard-pill:hover,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-flashcard-pill:hover {
     background: rgba(251, 191, 36, 0.24) !important;
     border-color: rgba(251, 191, 36, 0.85) !important;
     color: #ffffff !important;
     box-shadow: 0 4px 14px rgba(251, 191, 36, 0.25) !important;
   }
-  #teacher-vb-lists-grid .vocab-assign-pill,
-  #vocab-lists-container .vocab-assign-pill,
-  #vocab-lists-container .vocab-game-pill:not(.is-active) {
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-vb-lists-grid .vocab-assign-pill,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-assign-pill,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-game-pill:not(.is-active) {
     background: rgba(15, 23, 42, 0.75) !important;
     border: 1.5px solid rgba(251, 191, 36, 0.5) !important;
     color: #f1f5f9 !important;
@@ -16392,13 +16392,57 @@ teacherVbCardLayoutStyles.textContent = `
     font-weight: 700 !important;
     transition: all 0.18s ease !important;
   }
-  #teacher-vb-lists-grid .vocab-assign-pill:hover,
-  #vocab-lists-container .vocab-assign-pill:hover,
-  #vocab-lists-container .vocab-game-pill:not(.is-active):hover {
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-vb-lists-grid .vocab-assign-pill:hover,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-assign-pill:hover,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-game-pill:not(.is-active):hover {
     background: rgba(30, 41, 59, 0.9) !important;
     border-color: rgba(251, 191, 36, 0.85) !important;
     color: #ffffff !important;
     box-shadow: 0 4px 14px rgba(251, 191, 36, 0.2) !important;
+  }
+
+  /* Bright Mode Action Pills (Bright & High Contrast) */
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-flashcard-pill,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-flashcard-pill {
+    background: #fef3c7 !important;
+    border: 1.5px solid rgba(245, 158, 11, 0.7) !important;
+    color: #92400e !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+    border-radius: 0.75rem !important;
+    font-weight: 700 !important;
+  }
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-flashcard-pill:hover,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-flashcard-pill:hover {
+    background: #fde68a !important;
+    border-color: #f59e0b !important;
+    color: #78350f !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2) !important;
+  }
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-flashcard-pill svg,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-flashcard-pill svg {
+    color: #d97706 !important;
+  }
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-assign-pill,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-assign-pill,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-game-pill:not(.is-active) {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #334155 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+    border-radius: 0.75rem !important;
+    font-weight: 700 !important;
+  }
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-assign-pill:hover,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-assign-pill:hover,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-game-pill:not(.is-active):hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  }
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-assign-pill svg,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-assign-pill svg {
+    color: #64748b !important;
   }
 `;
 document.head.appendChild(teacherVbCardLayoutStyles);

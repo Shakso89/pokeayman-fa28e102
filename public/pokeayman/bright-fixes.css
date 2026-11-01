@@ -1684,22 +1684,47 @@ html body.ts-bright .vocab-change-cover-btn:hover {
 }
 
 /* 2. Word Bank Bottom Action Pills (Flashcards & Assign) */
-:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-card-btn-flashcards {
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.vocab-flashcard-pill, .vocab-card-btn-flashcards) {
   background: #fef3c7 !important;
-  border-color: rgba(252, 211, 77, 0.8) !important;
+  border: 1.5px solid rgba(245, 158, 11, 0.7) !important;
   color: #92400e !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
 }
-:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-card-btn-flashcards:hover {
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.vocab-flashcard-pill, .vocab-card-btn-flashcards):hover {
   background: #fde68a !important;
+  border-color: #f59e0b !important;
+  color: #78350f !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.vocab-flashcard-pill, .vocab-card-btn-flashcards) svg {
+  color: #d97706 !important;
 }
 
-:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-card-btn-assign {
-  background: #f8fafc !important;
-  border-color: #e2e8f0 !important;
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.vocab-assign-pill, .vocab-card-btn-assign) {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
   color: #334155 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
 }
-:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-card-btn-assign:hover {
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.vocab-assign-pill, .vocab-card-btn-assign):hover {
   background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.vocab-assign-pill, .vocab-card-btn-assign) svg {
+  color: #64748b !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) .vocab-game-pill:not(.is-active) {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #475569 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#teacher-vb-lists-grid, #vocab-lists-container, body) .vocab-game-pill:not(.is-active):hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
   color: #0f172a !important;
 }
 

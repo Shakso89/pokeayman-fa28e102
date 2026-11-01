@@ -169,6 +169,24 @@ describe('Theme Polish: Buttons, Cover Hover & Top 3 Podium', () => {
       expect(css).toContain('.monthly-school-trigger');
       expect(css).toContain('.global-rank-1');
       expect(css).toContain('.rank-title strong');
+      expect(css).toContain('.vocab-assign-pill');
+      expect(css).toContain('.vocab-flashcard-pill');
+    });
+
+    it('index.html contains bright mode styles for teacher-vb action pills', () => {
+      const html = fs.readFileSync(path.join(__dirname, '../../public/pokeayman/index.html'), 'utf-8');
+      expect(html).toContain('#teacher-vb-lists-grid .vocab-flashcard-pill');
+      expect(html).toContain('#teacher-vb-lists-grid .vocab-assign-pill');
+      expect(html).toContain(':is(html body.ts-bright');
+    });
+  });
+
+  describe('Bright Mode Performance Safeguards', () => {
+    it('bright-fixes.js does not contain synchronous canvas getImageData sweep loop', () => {
+      const js = fs.readFileSync(path.join(__dirname, '../../public/pokeayman/bright-fixes.js'), 'utf-8');
+      expect(js).not.toContain('getImageData');
+      expect(js).not.toContain('ctx.fillRect');
+      expect(js).not.toContain('attributeFilter: [\'class\', \'style\']');
     });
   });
 });
