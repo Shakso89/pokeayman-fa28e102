@@ -550,36 +550,49 @@ html body #view-classes .gym-card .gym-top3-names {
 /* Transfer credits button */
 .th-transfer-pill {
   border-radius: 9999px;
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(51, 65, 85, 1);
-  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.9);
+  border: 2px solid rgba(251, 191, 36, 0.6);
+  color: #fde68a;
   cursor: pointer;
   width: 100%;
   margin-top: 0.75rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  padding: 0.625rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 .th-transfer-pill:hover {
-  background: rgba(51, 65, 85, 1);
-  border-color: rgba(71, 85, 105, 1);
+  background: rgba(30, 41, 59, 1);
+  border-color: rgba(251, 191, 36, 0.85);
   color: #ffffff;
 }
-body.ts-bright .th-transfer-pill {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #1e293b;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .th-transfer-pill,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #btn-transfer-credits {
+  background: #ffffff !important;
+  border: 2px solid rgba(251, 191, 36, 0.8) !important;
+  color: #1e293b !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
 }
-body.ts-bright .th-transfer-pill:hover {
-  background: #f8fafc;
-  border-color: #94a3b8;
-  color: #0f172a;
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .th-transfer-pill:hover,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #btn-transfer-credits:hover {
+  background: #fffbeb !important;
+  border-color: #f59e0b !important;
+  color: #0f172a !important;
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.25) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .th-transfer-pill svg,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #btn-transfer-credits svg {
+  color: #f59e0b !important;
+  stroke: #f59e0b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .th-transfer-pill span,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) #btn-transfer-credits span {
+  color: #1e293b !important;
 }
 
 /* Transfer Credits Modal */

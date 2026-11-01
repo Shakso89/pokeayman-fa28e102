@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Pencil, Trash2, Share2 } from 'lucide-react';
+import { BookOpen, Pencil, Trash2, Share2, Camera } from 'lucide-react';
 
 export interface WordBankCardList {
   id: string;
@@ -104,15 +104,16 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
         )}
 
         {canManage && onChangeCover && (
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px] opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center p-2">
+          <div className="vocab-cover-hover-overlay absolute inset-0 bg-slate-950/20 backdrop-blur-[2px] opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center p-2">
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 onChangeCover(list);
               }}
-              className="vocab-change-cover-btn py-1 px-3 rounded-lg bg-white border border-amber-500/60 text-slate-900 dark:bg-slate-900/90 dark:border-amber-400/55 dark:text-white shadow-md text-xs font-semibold flex items-center gap-1.5 transition"
+              className="vocab-change-cover-btn py-1.5 px-3 rounded-xl bg-white/95 text-slate-800 border border-amber-400/80 shadow-md text-xs font-bold flex items-center gap-1.5 hover:bg-white hover:scale-105 active:scale-95 transition"
             >
+              <Camera className="w-3.5 h-3.5 text-amber-500" />
               <span>Change Cover</span>
             </button>
           </div>
@@ -125,7 +126,7 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
         <button
           type="button"
           onClick={() => onOpenFlashcards(list)}
-          className="vocab-flashcard-pill flex-1 py-2 px-3 rounded-xl border transition active:scale-95 flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm bg-amber-50 border-amber-300/80 text-amber-800 hover:bg-amber-100/80 dark:bg-amber-400/15 dark:border-amber-400/40 dark:text-amber-300"
+          className="vocab-flashcard-pill flex-1 py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 bg-amber-50 border-amber-300/80 text-amber-800 hover:bg-amber-100/70 shadow-sm dark:bg-amber-400/15 dark:border-amber-400/40 dark:text-amber-300"
         >
           <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-300" />
           <span>Flashcards</span>
@@ -136,7 +137,7 @@ export const WordBankVocabCard: React.FC<WordBankVocabCardProps> = ({
           <button
             type="button"
             onClick={() => onAssignToClass(list)}
-            className="vocab-assign-pill flex-1 py-2 px-3 rounded-xl border transition active:scale-95 flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-300"
+            className="vocab-assign-pill flex-1 py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 shadow-sm dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-300"
           >
             <Share2 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
             <span>Assign</span>

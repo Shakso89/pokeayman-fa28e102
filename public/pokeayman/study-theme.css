@@ -59,7 +59,10 @@ html body #teacher-schedule-grid thead tr { background:var(--ts-deep)!important;
 html body #teacher-schedule-grid th { color:var(--ts-ink)!important; border-color:var(--ts-border)!important; }
 html body #app-screen :is(#teacher-zone-financial-panel,#teacher-zone-schedule-panel) .glass-container { background:var(--ts-surface)!important; border-color:var(--ts-border)!important; box-shadow:none!important; }
 html body #teacher-zone-schedule-panel :is(h3,p,span,strong) { color:var(--ts-ink)!important; text-shadow:none!important; }
-html body #teacher-zone-financial-panel :is(.monthly-school-section,.monthly-school-heading,.monthly-school-trigger,.monthly-school-total td) { background:var(--ts-deep)!important; color:var(--ts-ink)!important; border-color:var(--ts-border)!important; box-shadow:none!important; }
+html body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-zone-financial-panel :is(.monthly-school-section,.monthly-school-heading,.monthly-school-trigger,.monthly-school-total td) { background:var(--ts-deep)!important; color:var(--ts-ink)!important; border-color:var(--ts-border)!important; box-shadow:none!important; }
+html body.ts-bright #teacher-zone-financial-panel :is(.monthly-school-trigger) { background:#ffffff!important; color:#334155!important; border:1px solid #e2e8f0!important; box-shadow:0 1px 2px rgba(0,0,0,0.05)!important; }
+html body.ts-bright #teacher-zone-financial-panel :is(.monthly-school-trigger):hover { background:#f8fafc!important; color:#0f172a!important; border-color:#cbd5e1!important; }
+html body.ts-bright #teacher-zone-financial-panel :is(.monthly-school-trigger.is-active) { background:rgba(251,191,36,0.2)!important; border-color:#fbbf24!important; color:#451a03!important; }
 html body #teacher-zone-financial-panel .monthly-school-table { color:var(--ts-ink)!important; }
 html body #teacher-zone-financial-panel .monthly-school-legend { color:var(--ts-muted)!important; }
 html body #teacher-zone-financial-panel .monthly-school-label { color:var(--ts-ink)!important; }
