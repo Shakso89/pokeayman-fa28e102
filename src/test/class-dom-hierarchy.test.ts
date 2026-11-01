@@ -45,4 +45,22 @@ describe('PokeAyman Class & Student Profile DOM Hierarchy', () => {
     expect(gamesSubtab!.parentElement).toBe(quizSubtab!.parentElement);
     expect(battleSubtab!.parentElement).toBe(quizSubtab!.parentElement);
   });
+
+  it('ensures index.html script defines Word Bank cards with Lucide actions, Flashcards and Assign without Game toggle', () => {
+    expect(indexHtml).toContain('function renderTeacherOwnedVocabLists()');
+    expect(indexHtml).toContain('renderWordBankCard');
+    expect(indexHtml).toContain('openVocabSharePopupFor');
+
+    // Confirm Word Bank cards do NOT have Game: ON/OFF
+    const wordBankFnStart = indexHtml.indexOf('function renderTeacherOwnedVocabLists()');
+    const wordBankFnEnd = indexHtml.indexOf('function closeTeacherVbCreateModal()', wordBankFnStart);
+    const wordBankFnBody = indexHtml.slice(wordBankFnStart, wordBankFnEnd);
+
+    expect(wordBankFnBody).not.toContain('Game: ON');
+    expect(wordBankFnBody).not.toContain('handleToggleGameAccess');
+    expect(wordBankFnBody).toContain('openVocabFlashcards');
+    expect(wordBankFnBody).toContain('openVocabListEditor');
+    expect(wordBankFnBody).toContain('openTeacherOwnedVocabDeleteDialog');
+    expect(wordBankFnBody).toContain('openVocabCoverPicker');
+  });
 });
