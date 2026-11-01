@@ -1150,6 +1150,22 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  window.gaFastLaunchList = function (listRef, ctxSchool, ctxClass) {
+    if (ctxSchool && ctxClass) {
+      navSchool = ctxSchool;
+      navClass = ctxClass;
+    }
+    const keyOf = item => typeof item === 'object' ? String(item.vocab_list_id || item.__backendId || '') : String(item);
+    const key = keyOf(listRef);
+    const isSelected = Array.isArray(selectedGameList) && selectedGameList.some(item => keyOf(item) === key);
+    if (!isSelected && typeof selectGameList === 'function') {
+      selectGameList(listRef);
+    }
+    if (!selectedGameList.length) { toast('Please choose at least one vocabulary list'); return; }
+    if (getGameWords(selectedGameList).length < 2) { toast('Choose lists with at least two words.'); return; }
+    window.gaLaunchChosenGame(window.pendingChosenGame, selectedGameList);
+  };
+
   window.gaLaunchChosenGame = function (g, list) {
     if (!g) {
       if (GAMES[0]) g = GAMES[0];
@@ -1363,21 +1379,23 @@
     selector.querySelectorAll('.ga-continue').forEach(el => el.remove());
 
     const bar = document.createElement('div');
-    bar.className = 'ga-continue-bar';
+    bar.className = 'ga-continue-bar sticky bottom-0 left-0 right-0 z-20 mt-4 p-4 bg-[#0b1120]/90 backdrop-blur-md border-t border-slate-800 flex items-center justify-between rounded-b-2xl';
 
-    const hint = document.createElement('div');
-    hint.className = 'ga-continue-hint';
-    hint.innerHTML = count
-      ? `<span class="ga-continue-badge">${count}</span> <span class="ga-continue-label">list${count === 1 ? '' : 's'} selected</span>`
-      : `<span class="ga-continue-empty">Select a vocabulary list to proceed</span>`;
+    const hint = document.createElement('span');
+    hint.className = 'text-xs text-slate-400 ga-continue-hint';
+    hint.textContent = count ? 'Ready to proceed' : 'Select a vocabulary list to proceed';
 
     const next = document.createElement('button');
     next.type = 'button';
-    next.className = 'ga-continue';
-    const gameName = window.pendingChosenGame ? window.pendingChosenGame.name : 'Game';
     next.disabled = !count;
-    next.textContent = count ? `Next: Game Settings for ${gameName} ▶ (${count} list${count === 1 ? '' : 's'})` : `Choose a vocabulary list to play ${gameName} →`;
-    next.setAttribute('aria-label', count ? `Next: Game Settings for ${gameName}, ${count} lists selected` : `Choose a vocabulary list to play ${gameName}`);
+    const gameName = window.pendingChosenGame ? window.pendingChosenGame.name : 'Game';
+    next.className = `ga-continue px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition active:scale-95 ${
+      count
+        ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
+        : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/50'
+    }`;
+    next.innerHTML = `<span>Choose a vocabulary list to play ${esc(gameName)} →</span>`;
+    next.setAttribute('aria-label', count ? `Next: Game Settings for ${gameName}` : `Choose a vocabulary list to play ${gameName}`);
     next.addEventListener('click', () => {
       if (!selectedGameList.length) { toast('Please choose at least one vocabulary list'); return; }
       if (getGameWords(selectedGameList).length < 2) { toast('Choose lists with at least two words.'); return; }

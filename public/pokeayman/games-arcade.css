@@ -224,29 +224,77 @@
 body { --ga-stage-bg: radial-gradient(circle at center, #111a2e 0%, #080d18 70%, #04070d 100%); --ga-stage-surface: var(--ts-surface, #131c2e); --ga-stage-ink: var(--ts-ink, #f5f7ff); --ga-stage-muted: var(--ts-muted, #a5b0cc); --ga-stage-line: var(--ts-border, #344058); --ga-stage-yellow: var(--ts-yellow, #ffcb05); --ga-stage-red: var(--ts-red, #ff5a5f); --ga-stage-chip: var(--ts-chip, #202b42); --ga-stage-action-ink: var(--ts-action-ink, #111827); --ga-stage-blue: var(--ts-blue, #4fa3ff); }
 /* Sticky bottom navigation bar for vocabulary list selection */
 .ga-continue-bar {
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 35;
-  margin-top: 1.5rem;
-  padding: 0.85rem 1.25rem;
-  background: linear-gradient(180deg, rgba(11, 18, 32, 0.9) 0%, rgba(11, 18, 32, 0.98) 100%);
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 1rem 1rem 0 0;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 -8px 30px rgba(2, 6, 23, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 20 !important;
+  margin-top: 1rem !important;
+  padding: 1rem !important;
+  background: rgba(11, 17, 32, 0.92) !important;
+  border-top: 1px solid #1e293b !important;
+  border-bottom-left-radius: 1rem !important;
+  border-bottom-right-radius: 1rem !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
 }
 
 #games-list-selector,
 #student-games-list-selector {
-  padding-bottom: 5.5rem !important;
+  padding-bottom: 0 !important;
+}
+
+.ga-vocab-scroll-area {
+  max-height: 58vh;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(251, 191, 36, 0.4) rgba(15, 23, 42, 0.6);
+}
+
+.ga-vocab-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+.ga-vocab-scroll-area::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 999px;
+}
+.ga-vocab-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(251, 191, 36, 0.4);
+  border-radius: 999px;
+}
+.ga-vocab-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(251, 191, 36, 0.7);
+}
+
+#games-list-selector .game-vocab-list-card,
+#student-games-list-selector .game-vocab-list-card {
+  min-height: unset !important;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+#games-list-selector .game-vocab-list-card.is-selected,
+#student-games-list-selector .game-vocab-list-card.is-selected {
+  border-color: #fbbf24 !important;
+  background: #1e293b !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(251, 191, 36, 0.4) !important;
+}
+
+#games-list-selector .game-vocab-list-card:not(.is-selected),
+#student-games-list-selector .game-vocab-list-card:not(.is-selected) {
+  border-color: #1e293b !important;
+  background: rgba(15, 23, 42, 0.6) !important;
+}
+
+#games-list-selector .game-vocab-list-card:not(.is-selected):hover,
+#student-games-list-selector .game-vocab-list-card:not(.is-selected):hover {
+  border-color: #334155 !important;
 }
 
 .ga-continue-hint {
@@ -283,36 +331,49 @@ body { --ga-stage-bg: radial-gradient(circle at center, #111a2e 0%, #080d18 70%,
   font-style: italic;
 }
 
-.ga-continue, .ga-change-lists {
+.ga-continue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem !important;
+  border-radius: 0.75rem !important;
+  font-weight: 700 !important;
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ga-continue:disabled {
+  background: #1e293b !important;
+  color: #64748b !important;
+  border: 1px solid rgba(51, 65, 85, 0.5) !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+}
+
+.ga-continue:not(:disabled) {
+  background: #fbbf24 !important;
+  color: #020617 !important;
+  border: none !important;
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.3) !important;
+}
+
+.ga-continue:hover:not(:disabled) {
+  background: #fcd34d !important;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.45) !important;
+  transform: translateY(-1px);
+}
+
+.ga-change-lists {
   border-radius: 9999px;
   padding: 0.8rem 1.5rem;
   font-family: 'Figtree', sans-serif;
   font-weight: 800;
   border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.ga-continue {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  background: var(--ga-stage-yellow);
-  color: var(--ga-stage-action-ink);
-  font-size: 0.95rem;
-  box-shadow: 0 4px 16px rgba(255, 203, 5, 0.35);
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-}
-
-.ga-continue:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(255, 203, 5, 0.5);
-}
-
-.ga-continue:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  box-shadow: none;
+  background: var(--ga-stage-chip);
+  color: var(--ga-stage-ink);
 }
 
 .ga-change-lists {
