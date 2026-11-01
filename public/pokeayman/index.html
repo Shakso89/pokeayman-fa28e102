@@ -7244,16 +7244,18 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const isProListen = g.fn === 'startListenCatch';
       const isProBattle = g.fn === 'startVocabBattle';
       const proCardClass = isProListen ? ' ga-pro ga-pro-listen' : (isProBattle ? ' ga-pro ga-pro-battle' : (g.proOnly ? ' ga-pro' : ''));
-      const playText = locked ? (isTeacher ? 'Upgrade to Pro' : 'Locked for class') : 'Choose ▶';
       return `
       <button type="button" class="ga-cart ga-${g.accent}${proCardClass}${locked ? ' ga-pro-locked' : ''}" onclick="${locked ? `window.requireProGame('${esc(g.name)}')` : `window.selectGameToPlay('${g.fn}')`}" aria-disabled="${locked}" aria-label="${locked ? `${g.name}, Pro access required` : `Choose ${g.name}`}" ${locked ? 'title="Pro access required"' : ''}>
-        <span class="ga-cart-art" aria-hidden="true">${g.image ? `<img src="${g.image}" alt="${esc(g.name)}" class="ga-cart-img" loading="lazy">` : `<span>${g.icon}</span>`}</span>
-        <span class="ga-cart-body">
-          <span class="ga-cart-name">${esc(g.name)}${g.proOnly ? '<span class="ga-pro-badge">👑 PRO</span>' : ''}</span>
-          <span class="ga-cart-desc">${esc(g.desc)}</span>
-          <span class="ga-cart-tags">${g.tags.map(t => `<span>${esc(t)}</span>`).join('')}</span>
+        <span class="ga-cart-disc ga-cart-art" aria-hidden="true">
+          ${g.image ? `<img src="${g.image}" alt="${esc(g.name)}" class="ga-cart-img" loading="lazy">` : `<span class="ga-cart-fallback-icon">${g.icon}</span>`}
+          ${g.proOnly ? '<span class="ga-disc-pro-pill" aria-hidden="true">👑 PRO</span>' : ''}
+          ${locked ? '<span class="ga-disc-lock-overlay" aria-hidden="true"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></span>' : ''}
         </span>
-        <span class="ga-cart-play">${playText}</span>
+        <span class="ga-cart-rect ga-cart-body">
+          <span class="ga-cart-name">${esc(g.name)}${g.proOnly ? '<span class="ga-pro-badge">PRO</span>' : ''}</span>
+          <span class="ga-cart-desc">${esc(g.desc)}</span>
+          ${locked ? `<span class="ga-cart-lock-tag">${isTeacher ? 'Upgrade to Pro' : 'Locked for class'}</span>` : ''}
+        </span>
       </button>`;
     }).join('');
     return `<section class="ga-hub" aria-label="Game arcade">

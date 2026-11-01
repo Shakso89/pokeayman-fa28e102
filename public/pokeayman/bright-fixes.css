@@ -25,7 +25,12 @@ html body.ts-bright #leaderboard-modal-content > div:has(.bg-gray-300) img,
 html body.ts-bright #leaderboard-modal-content > div:has(.bg-orange-400) img { filter: none !important; }
 
 /* Bright-mode readability fixes + Poké Battle player picker. Loaded last. */
-html body.ts-bright .ga-cart,
+html body.ts-bright .ga-cart {
+  background: transparent !important; border: none !important; box-shadow: none !important;
+}
+html body.ts-bright .ga-cart :is(.ga-cart-body, .ga-cart-rect) {
+  background: var(--color-surface) !important; border: 1px solid var(--color-border) !important; color: var(--color-text-primary) !important;
+}
 html body.ts-bright .game-vocab-list-card,
 html body.ts-bright .battle-arena-panel,
 html body.ts-bright .battle-arena-panel > .flex:first-child {
@@ -75,18 +80,18 @@ html body.ts-bright .pk-bf-ink { color: var(--color-text-primary) !important; -w
 
 /* Legacy ID-scoped gradients beat class-only overrides. Clear the whole
    background, not just its colour, and cover decorative pseudo-elements. */
-html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.vocab-list-card, .game-vocab-list-card, .ga-cart, .battle-arena-panel, .teacher-avatar-option),
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.vocab-list-card, .game-vocab-list-card, .battle-arena-panel, .teacher-avatar-option),
 html body.ts-bright .th-grid .teacher-avatar-option {
   background: var(--color-surface) !important;
   border-color: var(--color-border) !important;
   color: var(--color-text-primary) !important;
   box-shadow: var(--shadow-card) !important;
 }
-html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.vocab-list-card, .game-vocab-list-card, .ga-cart, .battle-arena-panel)::before,
-html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.vocab-list-card, .game-vocab-list-card, .ga-cart, .battle-arena-panel)::after {
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.vocab-list-card, .game-vocab-list-card, .battle-arena-panel)::before,
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.vocab-list-card, .game-vocab-list-card, .battle-arena-panel)::after {
   background: none !important;
 }
-html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.ga-cart-body, .battle-arena-panel > .flex.items-center.justify-between) {
+html body.ts-bright:is(body, #view-students):is(body, #class-subtab-battle) :is(.ga-cart-body, .ga-cart-rect, .battle-arena-panel > .flex.items-center.justify-between) {
   background: var(--color-surface) !important;
   border-color: var(--color-border) !important;
   box-shadow: none !important;
@@ -124,17 +129,20 @@ html body.ts-bright {
   --arena-shadow: var(--shadow-card);
 }
 
-html body.ts-bright :is(#games-options-container, #student-games-options-container) > div,
-html body.ts-bright :is(#games-options-container, #student-games-options-container) [role="group"] .ga-cart,
-html body.ts-bright :is(#games-options-container, #student-games-options-container) [role="group"] .ga-cart > .ga-cart-body {
+html body.ts-bright :is(#games-options-container, #student-games-options-container) > div {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+html body.ts-bright :is(#games-options-container, #student-games-options-container) [role="group"] .ga-cart {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+html body.ts-bright :is(#games-options-container, #student-games-options-container) [role="group"] .ga-cart :is(.ga-cart-body, .ga-cart-rect) {
   background: var(--color-surface) !important;
   color: var(--color-text-primary) !important;
-  border-color: var(--color-border) !important;
+  border: 1px solid var(--color-border) !important;
   box-shadow: var(--shadow-card) !important;
-}
-html body.ts-bright :is(#games-options-container, #student-games-options-container) [role="group"] .ga-cart > .ga-cart-play {
-  background: var(--color-brand) !important;
-  color: var(--color-text-on-brand) !important;
 }
 html body.ts-bright .trainer-hub :is(.th-panel, .th-progress, .th-grid) {
   background: var(--color-surface) !important;
