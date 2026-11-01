@@ -24373,8 +24373,13 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
         chip.querySelector('.baam-impact-name').textContent = impactPlayer?.student_name || `Player ${entry.index + 1}`;
         impactStack.appendChild(chip);
       });
-      const statusEl = baamQ('#baam-answer-status');
-      scoreStage.insertBefore(impactStack, statusEl && statusEl.parentElement === scoreStage ? statusEl : null);
+      const pictureEl = baamQ('#baam-picture');
+      if (pictureEl && pictureEl.parentElement === scoreStage) {
+        pictureEl.insertAdjacentElement('afterend', impactStack);
+      } else {
+        const statusEl = baamQ('#baam-answer-status');
+        scoreStage.insertBefore(impactStack, statusEl && statusEl.parentElement === scoreStage ? statusEl : null);
+      }
     }
     if (power === 'Bomb') { const shakeEl = modal.querySelector('#baam-board'); shakeEl?.classList.remove('baam-shake'); void modal.offsetWidth; shakeEl?.classList.add('baam-shake'); }
     advanceGameTurn();
@@ -24455,31 +24460,42 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
     revealPanel.classList.remove('hidden'); word.classList.add('hidden'); status.textContent = '';
     status.className = '';
     revealPanel.querySelector('.baam-impact-stack')?.remove();
-    revealPanel.classList.remove('baam-powerup-reveal');
+    const questionCard = baamQ('#baam-reveal .baam-question-card') || baamQ('#baam-reveal .baam-reveal-panel');
+    const allPowerClasses = ['baam-powerup-reveal', 'baam-powerup-star', 'baam-powerup-rocket', 'baam-powerup-steal', 'baam-powerup-bomb', 'baam-powerup-swap', 'baam-powerup-gift', 'baam-powerup-trap'];
+    revealPanel.classList.remove(...allPowerClasses);
+    questionCard?.classList.remove(...allPowerClasses);
+    const kickerEl = baamQ('.baam-question-kicker');
+    if (kickerEl) kickerEl.textContent = 'SURPRISE BOXES';
+
     if (w.powerUp) {
       const info = BAAM_POWER_INFO[w.powerUp] || { name: w.powerUp, emoji: '✨', desc: '' };
-      const activePlayer = baamPlayers[activeGamePlayerIndex];
       picture.innerHTML = `<div class="baam-power-stage" aria-label="${info.name} power-up">
         <div class="baam-powerup-icon"><span class="baam-power-badge" aria-hidden="true">${info.emoji}</span></div>
         <h3 class="baam-power-name">${info.name}</h3>
         <p class="baam-power-desc">${info.desc}</p>
-        ${activePlayer ? `<div class="baam-power-player">${gameStudentAvatarMarkup(activePlayer, 'baam-power-avatar')}<span>${activePlayer.student_name}</span></div>` : ''}
       </div>`;
-      revealPanel.classList.add('baam-powerup-reveal', `baam-powerup-${w.powerUp.toLowerCase()}`);
-      status.textContent = 'Power-up activated!';
+      const pKey = w.powerUp.toLowerCase();
+      revealPanel.classList.add('baam-powerup-reveal', `baam-powerup-${pKey}`);
+      questionCard?.classList.add('baam-powerup-reveal', `baam-powerup-${pKey}`);
+      if (kickerEl) kickerEl.textContent = '⚡ POWER-UP!';
+      status.textContent = '';
       try { window.pokeSfx?.play('pop'); setTimeout(() => window.pokeSfx?.play(({ Star: 'star', Bomb: 'boom', Steal: 'whoosh', Rocket: 'rocket', Swap: 'whoosh', Gift: 'coin', Trap: 'wrong' })[w.powerUp] || 'star'), 500); } catch (e) {}
-      status.className = 'text-sm font-bold mt-2 min-h-5 text-purple-600';
       if (answerControls) {
-        answerControls.classList.add('hidden');
         answerControls.replaceChildren();
+        const continueBtn = document.createElement('button');
+        continueBtn.type = 'button';
+        continueBtn.className = 'baam-power-continue-btn';
+        continueBtn.textContent = 'Continue →';
+        continueBtn.addEventListener('click', closeBaamRevealAsWrong);
+        answerControls.appendChild(continueBtn);
+        answerControls.classList.remove('hidden');
       }
       setTimeout(() => {
         if (revealPanel.classList.contains('baam-powerup-reveal')) {
-          // Resolve the power-up and update scores before checking for completion.
           status.innerHTML = applyPowerUp(w.powerUp);
-          if (chosenCards.size === deck.length) setTimeout(endBaamboozle, 650);
+          if (chosenCards.size === deck.length) setTimeout(endBaamboozle, 1200);
         }
-      }, 850);
+      }, 700);
       selectedCard = null; return;
     }
     picture.innerHTML = w.vocab_image ? `<img src="${w.vocab_image}" class="w-80 h-56 max-w-full rounded-lg object-contain mx-auto" alt="Picture prompt for ${w.vocab_word}" onerror="this.style.display='none'">` : `<div class="w-80 h-56 max-w-full rounded-lg bg-white border border-amber-200 flex items-center justify-center text-sm text-slate-400">No picture available</div>`;
