@@ -16,21 +16,21 @@
 .ga-listen-quickplay:focus-visible { outline:3px solid var(--ga-yellow); outline-offset:3px; }
 @media(prefers-reduced-motion:reduce) { .ga-listen-quickplay { transition:none; } .ga-listen-quickplay:hover { transform:none; } }
 
-.ga-cart { --a: #ffcb05; position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; border-radius: 0; overflow: visible; cursor: pointer;
+.ga-cart { --a: #ffcb05; position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; border-radius: 0; overflow: visible; cursor: pointer;
   background: transparent; border: none; color: var(--ga-ink); width: 100%; max-width: 230px; margin: 0 auto;
   transition: transform .18s ease; }
-.ga-cart:focus-visible { outline: 3px solid var(--ga-yellow); outline-offset: 3px; }
+.ga-cart:hover, .ga-cart:focus-visible { outline: none; z-index: 30; }
 .ga-pink { --a: #ff6fb5; } .ga-red { --a: #ff5a5f; } .ga-violet { --a: #a78bfa; } .ga-blue { --a: #4fa3ff; } .ga-yellow { --a: #ffcb05; } .ga-mint { --a: #34d399; }
 
 /* Rounded Card shaped like the logo */
-.ga-cart-disc, .ga-cart-art { position: relative; width: 148px; height: 148px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; margin: 0 auto;
+.ga-cart-disc, .ga-cart-art { position: relative; z-index: 2; width: 148px; height: 148px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; margin: 0 auto;
   background: radial-gradient(circle, color-mix(in srgb, var(--a) 25%, var(--ga-surface)), var(--ga-surface) 72%);
   border: 3.5px solid color-mix(in srgb, var(--a) 75%, white 25%);
-  box-shadow: 0 8px 24px -4px rgba(0,0,0,.45), 0 0 16px -2px color-mix(in srgb, var(--a) 30%, transparent);
+  box-shadow: 0 8px 24px -4px rgba(0,0,0,.45), 0 0 18px 0px color-mix(in srgb, var(--a) 45%, transparent);
   display: grid; place-items: center; transition: transform .25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .25s ease, border-color .25s ease; }
 .ga-cart:hover :is(.ga-cart-disc, .ga-cart-art), .ga-cart:focus-visible :is(.ga-cart-disc, .ga-cart-art) {
   transform: translateY(-5px) scale(1.05); border-color: #ffffff;
-  box-shadow: 0 16px 36px -4px rgba(0,0,0,.6), 0 0 28px color-mix(in srgb, var(--a) 60%, transparent); }
+  box-shadow: 0 16px 36px -4px rgba(0,0,0,.6), 0 0 30px 4px color-mix(in srgb, var(--a) 75%, transparent); z-index: 25; }
 .ga-cart-art::after, .ga-cart-disc::after { display: none !important; }
 .ga-cart-img { width: 100% !important; height: 100% !important; object-fit: cover !important; border-radius: 50% !important; display: block !important; transition: transform .25s ease !important; }
 .ga-cart:hover .ga-cart-img { transform: scale(1.08) !important; }
