@@ -16269,6 +16269,96 @@ teacherVbCardLayoutStyles.textContent = `
     box-shadow: 0 14px 30px rgba(2, 6, 23, 0.4), 0 0 12px rgba(251, 191, 36, 0.08) !important;
   }
   @media(max-width:640px){ #teacher-vb-lists-grid { grid-template-columns:1fr; gap:.85rem; } }
+
+  /* Ghost Quick Action Buttons (Edit / Delete) - Borderless Minimal Icons */
+  #teacher-vb-lists-grid .vocab-list-card .vb-ghost-action-btn,
+  #vocab-lists-container .vocab-list-card .vb-ghost-action-btn {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    box-shadow: none !important;
+    color: #94a3b8 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.375rem !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.15s ease !important;
+  }
+  #teacher-vb-lists-grid .vocab-list-card .vb-ghost-action-btn:hover,
+  #vocab-lists-container .vocab-list-card .vb-ghost-action-btn:hover {
+    background: rgba(30, 41, 59, 0.8) !important;
+    border-color: rgba(148, 163, 184, 0.25) !important;
+    color: #ffffff !important;
+  }
+  #teacher-vb-lists-grid .vocab-list-card .vb-ghost-delete-btn,
+  #vocab-lists-container .vocab-list-card .vb-ghost-delete-btn {
+    color: rgba(251, 113, 133, 0.85) !important;
+  }
+  #teacher-vb-lists-grid .vocab-list-card .vb-ghost-delete-btn:hover,
+  #vocab-lists-container .vocab-list-card .vb-ghost-delete-btn:hover {
+    background: rgba(244, 63, 94, 0.15) !important;
+    border-color: rgba(244, 63, 94, 0.35) !important;
+    color: #fda4af !important;
+  }
+
+  /* Harmonized Change Cover Button with Gold Accents */
+  #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn,
+  #vocab-lists-container .vocab-list-card .vocab-change-cover-btn {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border: 1.5px solid rgba(251, 191, 36, 0.55) !important;
+    color: #f8fafc !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    border-radius: 0.5rem !important;
+    padding: 0.25rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    transition: all 0.15s ease !important;
+  }
+  #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn:hover,
+  #vocab-lists-container .vocab-list-card .vocab-change-cover-btn:hover {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border-color: rgba(251, 191, 36, 0.85) !important;
+    color: #ffffff !important;
+  }
+
+  /* Unified Gold-Bordered Action Pills (Image 1 Style) */
+  #teacher-vb-lists-grid .vocab-flashcard-pill,
+  #vocab-lists-container .vocab-flashcard-pill {
+    background: rgba(251, 191, 36, 0.14) !important;
+    border: 1.5px solid rgba(251, 191, 36, 0.5) !important;
+    color: #fde68a !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 0.75rem !important;
+    font-weight: 700 !important;
+    transition: all 0.18s ease !important;
+  }
+  #teacher-vb-lists-grid .vocab-flashcard-pill:hover,
+  #vocab-lists-container .vocab-flashcard-pill:hover {
+    background: rgba(251, 191, 36, 0.24) !important;
+    border-color: rgba(251, 191, 36, 0.85) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(251, 191, 36, 0.25) !important;
+  }
+  #teacher-vb-lists-grid .vocab-assign-pill,
+  #vocab-lists-container .vocab-assign-pill,
+  #vocab-lists-container .vocab-game-pill:not(.is-active) {
+    background: rgba(15, 23, 42, 0.75) !important;
+    border: 1.5px solid rgba(251, 191, 36, 0.5) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 0.75rem !important;
+    font-weight: 700 !important;
+    transition: all 0.18s ease !important;
+  }
+  #teacher-vb-lists-grid .vocab-assign-pill:hover,
+  #vocab-lists-container .vocab-assign-pill:hover,
+  #vocab-lists-container .vocab-game-pill:not(.is-active):hover {
+    background: rgba(30, 41, 59, 0.9) !important;
+    border-color: rgba(251, 191, 36, 0.85) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(251, 191, 36, 0.2) !important;
+  }
 `;
 document.head.appendChild(teacherVbCardLayoutStyles);
 
@@ -16522,7 +16612,7 @@ function renderTeacherOwnedVocabLists() {
               onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabListEditor('${safeId}','${safeEscapedName}')"
               title="Edit ${safeName}"
               aria-label="Edit ${safeName}"
-              class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition active:scale-95 cursor-pointer"
+              class="vb-ghost-action-btn p-1.5 rounded-lg text-slate-400 hover:text-white transition active:scale-95 cursor-pointer"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
             </button>
@@ -16531,7 +16621,7 @@ function renderTeacherOwnedVocabLists() {
               onclick="openTeacherOwnedVocabDeleteDialog('${safeId}','${safeEscapedName}',this)"
               title="Delete ${safeName}"
               aria-label="Delete ${safeName}"
-              class="p-1.5 rounded-lg text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/15 transition active:scale-95 cursor-pointer"
+              class="vb-ghost-action-btn vb-ghost-delete-btn p-1.5 rounded-lg text-rose-400/80 hover:text-rose-300 transition active:scale-95 cursor-pointer"
             >
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </button>
@@ -16551,7 +16641,7 @@ function renderTeacherOwnedVocabLists() {
           `}
           ${canManageList ? `
           <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px] opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center p-2">
-            <button type="button" onclick="event.stopPropagation();openVocabCoverPicker('${safeId}','${safeEscapedName}')" class="py-1 px-3 rounded-lg bg-slate-800/95 border border-slate-600/80 text-white shadow-md text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-700 transition cursor-pointer">
+            <button type="button" onclick="event.stopPropagation();openVocabCoverPicker('${safeId}','${safeEscapedName}')" class="vocab-change-cover-btn py-1 px-3 rounded-lg text-white shadow-md text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
               <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
               <span>Change Cover</span>
             </button>
@@ -16564,7 +16654,7 @@ function renderTeacherOwnedVocabLists() {
           <button
             type="button"
             onclick="navSchool='${String(list.vocab_list_school || '').replace(/'/g, "\\'")}';navClass='${String(list.vocab_list_class || '').replace(/'/g, "\\'")}';openVocabFlashcards('${safeEscapedName}')"
-            class="flex-1 py-2 px-3 rounded-xl bg-amber-400/15 border border-amber-400/40 text-amber-300 hover:bg-amber-400/25 active:scale-95 transition flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm cursor-pointer"
+            class="vocab-flashcard-pill flex-1 py-2 px-3 rounded-xl bg-amber-400/15 border border-amber-400/50 text-amber-300 hover:bg-amber-400/25 active:scale-95 transition flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm cursor-pointer"
           >
             <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
             <span>Flashcards</span>
@@ -16574,9 +16664,9 @@ function renderTeacherOwnedVocabLists() {
           <button
             type="button"
             onclick="openVocabSharePopupFor('${safeId}','${safeEscapedName}')"
-            class="flex-1 py-2 px-3 rounded-xl bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-700 active:scale-95 transition flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer"
+            class="vocab-assign-pill flex-1 py-2 px-3 rounded-xl bg-slate-900/80 border border-amber-400/45 text-slate-200 hover:text-white hover:bg-slate-800 active:scale-95 transition flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer shadow-sm"
           >
-            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <svg class="w-3.5 h-3.5 text-amber-300/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             <span>Assign</span>
           </button>
         </div>
@@ -28901,14 +28991,14 @@ function renderVocabLists() {
         <div class="flex items-center gap-1 shrink-0">
           <button 
             type="button" 
-            class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition active:scale-95" 
+            class="vb-ghost-action-btn p-1.5 rounded-lg text-slate-400 hover:text-white transition active:scale-95 cursor-pointer" 
             onclick="openVocabListEditor('${list.__backendId}','${safeListName}')" 
             title="Edit ${list.vocab_list_name}">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
           </button>
           <button 
             type="button" 
-            class="p-1.5 rounded-lg text-rose-400/80 hover:text-rose-300 hover:bg-rose-500/15 transition active:scale-95" 
+            class="vb-ghost-action-btn vb-ghost-delete-btn p-1.5 rounded-lg text-rose-400/80 hover:text-rose-300 transition active:scale-95 cursor-pointer" 
             onclick="${removeAction}" 
             title="${removeLabel} ${list.vocab_list_name}">
             ${isShared
@@ -28929,9 +29019,9 @@ function renderVocabLists() {
           <button 
             type="button" 
             onclick="event.stopPropagation();openVocabCoverPicker('${list.__backendId}','${safeListName}')" 
-            class="py-1 px-3 rounded-lg bg-slate-800/95 border border-slate-600/80 text-white shadow-md text-xs font-semibold flex items-center gap-1.5 hover:bg-slate-700 transition">
+            class="vocab-change-cover-btn py-1 px-3 rounded-lg text-white shadow-md text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
             <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-            Change Cover
+            <span>Change Cover</span>
           </button>
         </div>
       </div>
@@ -28941,7 +29031,7 @@ function renderVocabLists() {
         <button
           type="button"
           onclick="openVocabFlashcards('${safeListName}')"
-          class="vocab-flashcard-pill flex-1 py-2 px-3 rounded-xl bg-amber-400/15 border border-amber-400/40 text-amber-300 hover:bg-amber-400/25 active:scale-95 transition flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm"
+          class="vocab-flashcard-pill flex-1 py-2 px-3 rounded-xl bg-amber-400/15 border border-amber-400/50 text-amber-300 hover:bg-amber-400/25 active:scale-95 transition flex items-center justify-center gap-1.5 text-xs font-bold shadow-sm cursor-pointer"
         >
           <svg class="w-3.5 h-3.5 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
           <span>Flashcards</span>
@@ -28950,10 +29040,10 @@ function renderVocabLists() {
         <button
           type="button"
           onclick="event.stopPropagation();handleToggleGameAccess('${classId}','${canonicalListId}','${safeListName}')"
-          class="vocab-game-pill flex-1 py-2 px-3 rounded-xl border transition active:scale-95 flex items-center justify-center gap-1.5 text-xs font-bold ${
+          class="vocab-game-pill flex-1 py-2 px-3 rounded-xl border transition active:scale-95 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer ${
             isGameActive
-              ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.15)]'
-              : 'bg-slate-800/60 border-slate-700/60 text-slate-400 hover:text-slate-300 hover:bg-slate-800'
+              ? 'is-active bg-emerald-500/20 border-emerald-400/60 text-emerald-300 shadow-[0_0_10px_rgba(52,211,153,0.15)]'
+              : 'bg-slate-900/80 border-amber-400/45 text-slate-300 hover:text-white hover:bg-slate-800'
           }"
         >
           <svg class="w-3.5 h-3.5 ${isGameActive ? 'text-emerald-400' : 'text-slate-400'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/></svg>
