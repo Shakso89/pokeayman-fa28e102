@@ -9786,16 +9786,25 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
         <!-- Subtab 3: Quick Award -->
         <div id="quiz-subtab-quick" class="quiz-subtab-content hidden w-full space-y-4">
-         <div class="quiz-panel-card rounded-2xl p-4 sm:p-5">
-          <div>
-           <h3 class="font-bold text-base sm:text-lg text-white flex items-center gap-1.5"><svg class="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Quick Answer Award</span></h3>
-           <p class="text-xs sm:text-sm text-slate-300 mt-1">Tap any student below to instantly award +5 coins for quick answers in class.</p>
+         <div class="p-5 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 mb-6">
+          <!-- Card Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+           <div>
+            <div class="flex items-center gap-2">
+             <svg class="w-4 h-4 text-amber-400 fill-amber-400 shrink-0" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+             <h3 class="text-sm font-bold text-white tracking-wide">Quick Answer Award</h3>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Tap any student below to instantly award <span id="quick-award-amount-label" class="text-amber-400 font-bold">+5 coins</span> for quick answers.</p>
+           </div>
+           <!-- Reward Amount Selector -->
+           <div id="quick-award-preset-selector" class="flex items-center gap-1.5 self-start sm:self-center bg-slate-900/80 border border-slate-800 p-1 rounded-xl"></div>
           </div>
+          <!-- Student Grid -->
+          <div id="quick-answer-students-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3"></div>
+          <p id="quick-answer-empty" class="text-center text-gray-400 py-12 text-sm hidden">No students in this class.</p>
          </div>
-         <div id="quick-answer-students-grid" class="flex w-full flex-wrap items-center justify-center gap-3 sm:gap-5"></div>
-         <p id="quick-answer-empty" class="text-center text-gray-400 py-12 text-sm hidden">No students in this class.</p>
         </div>
-       </div><!-- Vocabulary sub-tab -->
+       <!-- Vocabulary sub-tab -->
        <div id="class-subtab-vocab" class="class-subtab-content hidden">
         <div class="glass-container rounded-xl p-6 mb-6">
          <div class="mb-6 flex gap-3 items-end">
@@ -20084,33 +20093,150 @@ async function loadShop() {
   hydrateCanonicalPokemonCatalog();
 }
 
+const REWARD_PRESETS = [1, 5, 10, 20];
+
+function getQuickAwardAmount() {
+  try {
+    const saved = localStorage.getItem('quick_award_amount');
+    const num = saved ? Number(saved) : 5;
+    return Number.isFinite(num) && num >= 1 ? Math.min(100, num) : 5;
+  } catch (_) {
+    return 5;
+  }
+}
+
+function setQuickAwardAmount(amount) {
+  const safeAmount = Math.max(1, Math.min(100, Number(amount) || 5));
+  try {
+    localStorage.setItem('quick_award_amount', safeAmount.toString());
+  } catch (_) {}
+  renderQuickAwardHeader();
+  renderQuickAnswerStudents();
+}
+
+function renderQuickAwardHeader() {
+  const amount = getQuickAwardAmount();
+  const label = document.getElementById('quick-award-amount-label');
+  if (label) {
+    label.textContent = `+${amount} coins`;
+  }
+  const selector = document.getElementById('quick-award-preset-selector');
+  if (!selector) return;
+  selector.innerHTML = `
+    ${REWARD_PRESETS.map(amt => `
+      <button
+        type="button"
+        onclick="setQuickAwardAmount(${amt})"
+        class="px-2.5 py-1 rounded-lg text-xs font-black transition active:scale-95 cursor-pointer ${
+          amount === amt
+            ? 'bg-amber-400 text-slate-950 shadow-[0_0_10px_rgba(251,191,36,0.25)]'
+            : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+        }"
+      >
+        +${amt}
+      </button>
+    `).join('')}
+    <div class="flex items-center border-l border-slate-800 pl-1.5 ml-0.5">
+      <button
+        type="button"
+        onclick="setQuickAwardAmount(${amount - 1})"
+        ${amount <= 1 ? 'disabled' : ''}
+        class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 rounded text-xs font-bold cursor-pointer"
+        aria-label="Decrease reward amount"
+      >
+        −
+      </button>
+      <button
+        type="button"
+        onclick="setQuickAwardAmount(${amount + 1})"
+        ${amount >= 100 ? 'disabled' : ''}
+        class="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 rounded text-xs font-bold cursor-pointer"
+        aria-label="Increase reward amount"
+      >
+        +
+      </button>
+    </div>
+  `;
+}
+
 function renderQuickAnswerStudents() {
   const students = getStudents(navSchool, navClass);
   const container = document.getElementById('quick-answer-students-grid');
   const empty = document.getElementById('quick-answer-empty');
-  if (!students.length) { container.innerHTML = ''; empty.classList.remove('hidden'); return; }
-  empty.classList.add('hidden');
-  const accents = [
-    { border: 'border-indigo-300', tint: 'to-indigo-50', ring: 'focus-visible:ring-indigo-300' },
-    { border: 'border-sky-300', tint: 'to-sky-50', ring: 'focus-visible:ring-sky-300' },
-    { border: 'border-amber-300', tint: 'to-amber-50', ring: 'focus-visible:ring-amber-300' }
-  ];
-  container.innerHTML = students.map((s, index) => {
-    const accent = accents[index % accents.length];
+  renderQuickAwardHeader();
+  if (!container) return;
+  if (!students.length) {
+    container.innerHTML = '';
+    if (empty) empty.classList.remove('hidden');
+    return;
+  }
+  if (empty) empty.classList.add('hidden');
+  const rewardAmount = getQuickAwardAmount();
+  container.className = 'grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3';
+  container.innerHTML = students.map((s) => {
     const avatar = Number(s.avatar_pokemon_id);
-    const avatarSrc = Number.isInteger(avatar) && avatar > 0 && getCanonicalPokemon(avatar) ? `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatar}.png` : getAvatarFallbackSrc();
-    const avatarAlt = Number.isInteger(avatar) && avatar > 0 && getCanonicalPokemon(avatar) ? `${s.student_name}'s avatar Pokémon` : 'Poké Ball avatar';
+    const avatarSrc = Number.isInteger(avatar) && avatar > 0 && getCanonicalPokemon(avatar)
+      ? `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatar}.png`
+      : getAvatarFallbackSrc();
+    const avatarAlt = Number.isInteger(avatar) && avatar > 0 && getCanonicalPokemon(avatar)
+      ? `${s.student_name}'s avatar Pokémon`
+      : 'Poké Ball avatar';
     const safeName = String(s.student_name || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    return `<button type="button" class="quick-award-card group flex min-h-[9.5rem] w-32 shrink-0 flex-col items-center justify-between rounded-2xl border-2 ${accent.border} bg-gradient-to-br from-white/95 ${accent.tint} p-2.5 text-center text-slate-800 shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus:outline-none ${accent.ring} focus-visible:ring-4 active:translate-y-0 active:scale-95" onclick="awardQuickAnswerCoins('${String(s.student_name).replace(/'/g, "\\'")}')" title="Tap to award 5 coins to ${safeName}"><div class="quick-award-avatar-wrap relative w-12 h-12 shrink-0 flex items-center justify-center my-0.5"><img class="w-12 h-12 object-contain transition-transform duration-200 group-hover:scale-110" src="${avatarSrc}" alt="${avatarAlt}" loading="lazy" onerror="this.onerror=null;this.src=getAvatarFallbackSrc();this.alt='Poké Ball avatar';"></div><div class="quick-award-name-container flex flex-1 items-center justify-center w-full px-1 py-1 my-0.5"><span class="quick-award-student-name block text-xs font-bold text-slate-800 dark:text-slate-100 text-center leading-tight break-words max-w-full">${safeName}</span></div><div class="quick-award-coin-pill mt-auto shrink-0 inline-flex items-center justify-center gap-1 text-[11px] font-extrabold text-amber-700 dark:text-amber-300 bg-amber-100/90 dark:bg-amber-950/60 border border-amber-300/60 dark:border-amber-500/40 px-2 py-0.5 rounded-full shadow-xs"><span>+5</span><svg class="w-3 h-3 text-amber-500 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M15 9.5a2.5 2.5 0 0 0-2.5-2.5H10a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4h-4.5A2.5 2.5 0 0 1 7 14.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div></button>`;
+    return `<button
+      type="button"
+      onclick="awardQuickAnswerCoins('${String(s.student_name).replace(/'/g, "\\'")}', ${rewardAmount})"
+      class="group relative p-3 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-amber-400/80 hover:bg-slate-800/50 transition-all flex flex-col items-center justify-between gap-2.5 active:scale-95 shadow-sm cursor-pointer"
+      title="Tap to award ${rewardAmount} coins to ${safeName}"
+    >
+      <img
+        src="${avatarSrc}"
+        alt="${avatarAlt}"
+        loading="lazy"
+        onerror="this.onerror=null;this.src=getAvatarFallbackSrc();this.alt='Poké Ball avatar';"
+        class="w-12 h-12 object-contain group-hover:scale-105 transition-transform"
+      />
+      <span class="text-xs font-bold text-slate-200 truncate max-w-[90px]">
+        ${safeName}
+      </span>
+      <div class="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-950/80 border border-amber-400/30 text-amber-300 font-extrabold text-[11px] group-hover:border-amber-400 group-hover:bg-amber-400/10">
+        <span>+${rewardAmount}</span>
+        <div class="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-sm"></div>
+      </div>
+    </button>`;
   }).join('');
 }
 
-async function awardQuickAnswerCoins(studentName) {
+async function awardQuickAnswerCoins(studentName, amount) {
+  const rewardAmount = Math.max(1, Math.min(100, Number(amount ?? getQuickAwardAmount() ?? 5)));
   const student = getAllStudents().find(s => s.student_name === studentName);
   if (!student) return;
-  if (!(await deductTeacherCredits(5))) return;
-  await window.dataSdk.update({ ...student, coins: (student.coins || 0) + 5 });
-  await logCredit('Quick Answer', 5, studentName);
+  if (!(await deductTeacherCredits(rewardAmount))) return;
+  
+  // 1. Optimistic / local update
+  const newCoins = (student.coins || 0) + rewardAmount;
+  await window.dataSdk.update({ ...student, coins: newCoins });
+  
+  // 2. Strict UUID adjustment via Supabase if studentId is present
+  const studentId = student.__backendId || student.id || student.student_id;
+  if (studentId && typeof window.adjustStudentCoins === 'function') {
+    try {
+      await window.adjustStudentCoins(studentId, rewardAmount, currentTeacher || 'Teacher', 'quick_award');
+    } catch (err) {
+      console.warn('adjustStudentCoins warning:', err);
+    }
+  } else if (studentId && window.supabaseClient) {
+    try {
+      await window.supabaseClient.rpc('increment_student_coins', {
+        target_student_id: studentId,
+        coin_delta: rewardAmount,
+        reason: 'quick_award',
+      });
+    } catch (err) {
+      console.warn('RPC increment_student_coins warning:', err);
+    }
+  }
+
+  await logCredit('Quick Answer', rewardAmount, studentName);
   
   // Create a quiz record to track for Top Solvers ranking
   if (allData.length < 999) {
@@ -20127,7 +20253,7 @@ async function awardQuickAnswerCoins(studentName) {
       pokemon_power: 0, 
       quiz_question: '⚡ Quick Answer Award', 
       quiz_answer: 'quick-answer', 
-      quiz_reward: 5, 
+      quiz_reward: rewardAmount, 
       quiz_solved_by: studentName, 
       quiz_type: 'quick', 
       quiz_options: '', 
@@ -20158,8 +20284,9 @@ async function awardQuickAnswerCoins(studentName) {
     });
   }
   
-  playTransactionSound('reward'); toast(`⚡ +5 coins to ${studentName}!`);
-  showStudentAwardCelebration(student, 5);
+  playTransactionSound('reward');
+  toast(`⚡ +${rewardAmount} coins to ${studentName}!`);
+  showStudentAwardCelebration(student, rewardAmount);
 }
 
 async function logCredit(action, amount, target, options = {}) {
