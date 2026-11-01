@@ -381,17 +381,62 @@ html body .baam-stage-portal .baam-question-card :is(.baam-power-name, .baam-pow
   padding: .25rem 0 !important; min-height: 1.5rem; text-align: center; font-weight: 800;
 }
 
-/* Power-up reveals keep a compact player pill and fit badge, name, description and pill inside the picture box. */
+/* Power-up reveals: provide ample vertical room, generous top padding, and overflow visible so the glowing halo and bounce animation are never cropped */
+html body .baam-stage-portal .baam-reveal-panel.baam-powerup-reveal,
+.surprise-boxes-game .baam-reveal-panel.baam-powerup-reveal {
+  overflow: visible !important;
+}
+
+html body .baam-stage-portal .baam-question-card.baam-powerup-reveal #baam-picture,
+.surprise-boxes-game .baam-reveal-panel.baam-powerup-reveal #baam-picture {
+  height: auto !important;
+  min-height: min(300px, 48vh) !important;
+  max-height: none !important;
+  padding: 34px 20px 22px !important;
+  margin: 0 24px 14px !important;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
 html body .baam-stage-portal .baam-question-card #baam-picture img.baam-power-avatar,
 html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-player img {
   width: 2rem !important; height: 2rem !important; max-width: 2rem !important; max-height: 2rem !important;
   object-fit: contain !important; flex: 0 0 auto !important; border-radius: 999px;
 }
-html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-player { flex: 0 0 auto; max-width: 100%; }
-html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-stage { width: 100%; max-height: 100%; padding: .45rem 0; }
-html body .baam-stage-portal .baam-question-card #baam-picture .baam-powerup-icon { min-height: 0; margin-top: 0; }
-html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-badge {
-  width: min(6rem, 14vh); height: min(6rem, 14vh); font-size: min(3.2rem, 7vh); border-width: 3px;
+html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-player {
+  flex: 0 0 auto;
+  max-width: 100%;
+  margin-top: .4rem;
+}
+html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-stage,
+.surprise-boxes-game .baam-reveal-panel #baam-picture .baam-power-stage {
+  width: 100% !important;
+  max-height: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  gap: .4rem !important;
+}
+html body .baam-stage-portal .baam-question-card #baam-picture .baam-powerup-icon,
+.surprise-boxes-game .baam-reveal-panel #baam-picture .baam-powerup-icon {
+  min-height: 0 !important;
+  margin-top: 0 !important;
+  overflow: visible !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 6px 0 !important;
+}
+html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-badge,
+.surprise-boxes-game .baam-reveal-panel #baam-picture .baam-power-badge {
+  width: min(5.4rem, 13vh) !important;
+  height: min(5.4rem, 13vh) !important;
+  font-size: min(2.8rem, 6.5vh) !important;
+  border-width: 3px !important;
+  overflow: visible !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 0 0 6px rgba(255,255,255,.08), 0 0 32px var(--baam-glow, #facc15), inset 0 -6px 14px rgba(0,0,0,.4) !important;
 }
 
 /* Power-up reveals: one chip per student whose score changed, laid out in the
@@ -430,6 +475,13 @@ html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-badge
 @keyframes baamImpactValuePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 @media (prefers-reduced-motion: reduce) { .baam-impact-chip, .baam-impact-chip .baam-impact-value { animation: none !important; } }
 @media (max-height: 600px) {
-  html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-badge { width: 4.5rem; height: 4.5rem; font-size: 2.4rem; }
-  html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-name { font-size: 1.3rem; }
+  html body .baam-stage-portal .baam-question-card.baam-powerup-reveal #baam-picture,
+  .surprise-boxes-game .baam-reveal-panel.baam-powerup-reveal #baam-picture {
+    min-height: 230px !important;
+    padding: 24px 14px 16px !important;
+    margin-bottom: 10px !important;
+  }
+  html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-badge,
+  .surprise-boxes-game .baam-reveal-panel #baam-picture .baam-power-badge { width: 4.4rem !important; height: 4.4rem !important; font-size: 2.3rem !important; }
+  html body .baam-stage-portal .baam-question-card #baam-picture .baam-power-name { font-size: 1.25rem !important; }
 }
