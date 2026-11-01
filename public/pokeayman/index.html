@@ -24121,6 +24121,10 @@ function selectGameList(listRef) {
 
 // Surprise Boxes-style vocabulary board with an optional kid-friendly power-up setup.
 const baamboozlePowerUps = ['Star','Steal','Rocket','Bomb','Swap','Gift','Trap'];
+const formatBaamScoreDelta = (text) => String(text || '')
+  .replace(/(\+\d+)/g, '<span class="baam-num-plus">$1</span>')
+  .replace(/([−-]\d+)/g, '<span class="baam-num-minus">$1</span>');
+
 const BAAM_POWER_INFO = {
   Star:   { name: 'Star Boost',   emoji: '⭐', desc: '+25 points for you!' },
   Steal:  { name: 'Zap Steal',    emoji: '⚡', desc: 'Steal 15 points from the leader!' },
@@ -24367,9 +24371,10 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
       changedEntries.forEach((entry, order) => {
         const impactPlayer = baamPlayers[entry.index];
         const chip = document.createElement('div');
-        chip.className = `baam-impact-chip ${entry.impact > 0 ? 'is-plus' : 'is-minus'}`;
+        const isScorePlus = entry.impact > 0;
+        chip.className = `baam-impact-chip ${isScorePlus ? 'is-plus' : 'is-minus'}`;
         chip.style.setProperty('--baam-impact-order', String(order));
-        chip.innerHTML = `${impactPlayer ? gameStudentAvatarMarkup(impactPlayer, 'baam-impact-avatar') : ''}<span class="baam-impact-name"></span><strong class="baam-impact-value">${entry.impact > 0 ? '+' : '−'}${Math.abs(entry.impact)}</strong>`;
+        chip.innerHTML = `${impactPlayer ? gameStudentAvatarMarkup(impactPlayer, 'baam-impact-avatar') : ''}<span class="baam-impact-name"></span><strong class="baam-impact-value ${isScorePlus ? 'is-plus' : 'is-minus'}">${isScorePlus ? '+' : '−'}${Math.abs(entry.impact)}</strong>`;
         chip.querySelector('.baam-impact-name').textContent = impactPlayer?.student_name || `Player ${entry.index + 1}`;
         impactStack.appendChild(chip);
       });
@@ -24472,7 +24477,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
       picture.innerHTML = `<div class="baam-power-stage" aria-label="${info.name} power-up">
         <div class="baam-powerup-icon"><span class="baam-power-badge" aria-hidden="true">${info.emoji}</span></div>
         <h3 class="baam-power-name">${info.name}</h3>
-        <p class="baam-power-desc">${info.desc}</p>
+        <p class="baam-power-desc">${formatBaamScoreDelta(info.desc)}</p>
       </div>`;
       const pKey = w.powerUp.toLowerCase();
       revealPanel.classList.add('baam-powerup-reveal', `baam-powerup-${pKey}`);
@@ -24492,7 +24497,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
       }
       setTimeout(() => {
         if (revealPanel.classList.contains('baam-powerup-reveal')) {
-          status.innerHTML = applyPowerUp(w.powerUp);
+          status.innerHTML = formatBaamScoreDelta(applyPowerUp(w.powerUp));
           if (chosenCards.size === deck.length) setTimeout(endBaamboozle, 1200);
         }
       }, 700);
@@ -24559,7 +24564,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
 
           if (isCorrect) {
             btn.classList.add('is-correct');
-            status.textContent = '✓ Correct! +10 points';
+            status.innerHTML = '✓ Correct! <span class="baam-num-plus">+10</span> points';
             status.className = 'baam-answer-feedback is-correct';
             try { window.pokeSfx?.play('correct'); } catch (e) {}
           } else {

@@ -125,9 +125,9 @@
   font-size: 3rem; font-weight: 950; line-height: 1; -webkit-text-stroke: 2px rgba(2,6,23,.8);
   animation: baamFloatUp 1.8s cubic-bezier(.2,.85,.25,1) forwards;
 }
-.baam-float.is-plus { color: #4ade80; text-shadow: 0 0 18px rgba(74,222,128,.8); }
-.baam-float.is-minus { color: #f87171; text-shadow: 0 0 18px rgba(248,113,113,.8); animation-name: baamFloatDown; }
-.baam-float.is-zero { color: #93c5fd; text-shadow: 0 0 18px rgba(147,197,253,.8); }
+.baam-float.is-plus { color: #4ade80 !important; text-shadow: 0 0 18px rgba(74,222,128,.8) !important; }
+.baam-float.is-minus { color: #f87171 !important; text-shadow: 0 0 18px rgba(248,113,113,.8) !important; animation-name: baamFloatDown; }
+.baam-float.is-zero { color: #93c5fd !important; text-shadow: 0 0 18px rgba(147,197,253,.8) !important; }
 @keyframes baamFloatUp { 0% { opacity: 0; transform: translate(-50%, 20px) scale(.4); } 20% { opacity: 1; transform: translate(-50%, -10px) scale(1.3); } 70% { opacity: 1; transform: translate(-50%, -40px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -80px) scale(.9); } }
 @keyframes baamFloatDown { 0% { opacity: 0; transform: translate(-50%, -30px) scale(.4); } 20% { opacity: 1; transform: translate(-50%, 0) scale(1.3); } 45% { transform: translate(-50%, -8px) scale(1); } 70% { opacity: 1; transform: translate(-50%, 10px); } 100% { opacity: 0; transform: translate(-50%, 50px); } }
 .baam-card-hit-plus { animation: baamHitPlus .9s ease; }
@@ -591,6 +591,23 @@ html body .baam-stage-portal :is(.baam-reveal-overlay.baam-powerup-reveal, .baam
   border-color: rgba(74, 222, 128, 0.6) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(74, 222, 128, 0.3) !important;
 }
+
+html body .baam-stage-portal :is(.baam-reveal-overlay.baam-powerup-reveal, .baam-question-card.baam-powerup-reveal) .baam-impact-chip.is-plus .baam-impact-value,
+.baam-impact-chip.is-plus .baam-impact-value,
+.baam-impact-value.is-plus,
+.baam-num-plus {
+  color: #4ade80 !important;
+  text-shadow: 0 0 12px rgba(74, 222, 128, 0.65) !important;
+}
+
+html body .baam-stage-portal :is(.baam-reveal-overlay.baam-powerup-reveal, .baam-question-card.baam-powerup-reveal) .baam-impact-chip.is-minus .baam-impact-value,
+.baam-impact-chip.is-minus .baam-impact-value,
+.baam-impact-value.is-minus,
+.baam-num-minus {
+  color: #f87171 !important;
+  text-shadow: 0 0 12px rgba(248, 113, 113, 0.65) !important;
+}
+
 
 html body .baam-stage-portal :is(.baam-reveal-overlay.baam-powerup-reveal, .baam-question-card.baam-powerup-reveal) .baam-impact-chip.is-minus {
   border-color: rgba(248, 113, 113, 0.6) !important;
