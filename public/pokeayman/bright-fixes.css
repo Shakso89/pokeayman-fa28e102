@@ -1591,5 +1591,64 @@ html body.ts-bright #add-pricing-plan-btn:hover {
   color: #be123c !important;
 }
 
+/* ---- Universal ts-modal Light Theme Support ---- */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-modal-card {
+  background: var(--color-surface, #ffffff) !important;
+  border-color: var(--color-border, #e2e8f0) !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25) !important;
+  color: var(--color-text-primary, #0f172a) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-modal-header {
+  background: var(--color-surface, #f8fafc) !important;
+  border-color: var(--color-border, #e2e8f0) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-modal-title {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.ts-modal-kicker, .ts-modal-subtitle, .ts-modal-desc, .ts-modal-hint, .ts-teacher-meta-sub) {
+  color: var(--color-text-secondary, #64748b) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-modal-close-btn {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-modal-body {
+  background: var(--color-surface, #ffffff) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-modal-list {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-teacher-row {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-teacher-row:hover {
+  background: #f1f5f9 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-teacher-row.is-checked {
+  background: #fef9c3 !important;
+  border-color: #facc15 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-teacher-meta-name {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-modal-footer {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .ts-modal-btn-cancel {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.ts-form-input, .ts-form-select) {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+
 
 
