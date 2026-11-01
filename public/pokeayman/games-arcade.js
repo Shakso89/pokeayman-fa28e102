@@ -1056,7 +1056,20 @@
       picker.querySelectorAll('[data-ga-theme-choice]').forEach(btn => {
         const active = btn.dataset.gaThemeChoice === theme.id;
         btn.classList.toggle('is-selected', active);
+        btn.classList.toggle('bg-slate-800/90', active);
+        btn.classList.toggle('border-amber-400', active);
+        btn.classList.toggle('ring-2', active);
+        btn.classList.toggle('ring-amber-400/30', active);
+        btn.classList.toggle('bg-slate-900/60', !active);
+        btn.classList.toggle('border-slate-800', !active);
         btn.setAttribute('aria-checked', String(active));
+        const badge = btn.querySelector('.ga-theme-check-badge');
+        if (badge) badge.classList.toggle('hidden', !active);
+        const nameEl = btn.querySelector('.ga-theme-card-name');
+        if (nameEl) {
+          nameEl.classList.toggle('text-amber-300', active);
+          nameEl.classList.toggle('text-white', !active);
+        }
       });
     });
     document.querySelectorAll('.ga-stage').forEach(stage => {
@@ -1073,12 +1086,25 @@
   function renderThemeCardsMarkup(selectedId) {
     return GAME_THEMES.map(theme => {
       const active = theme.id === selectedId;
-      return `<button type="button" class="ga-theme-card${active ? ' is-selected' : ''}" role="radio" aria-checked="${active}" data-ga-theme-choice="${esc(theme.id)}" title="${esc(theme.name)} — ${esc(theme.subtitle)}">
-        <span class="ga-theme-thumb">${theme.thumbSvg}</span>
-        <span class="ga-theme-meta">
-          <strong class="ga-theme-name">${esc(theme.name)}</strong>
-          <small class="ga-theme-sub">${esc(theme.subtitle)}</small>
-        </span>
+      const previewContent = theme.previewUrl
+        ? `<img src="${theme.previewUrl}" alt="${esc(theme.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform">`
+        : `<div class="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform">${theme.thumbSvg}</div>`;
+      return `<button
+        type="button"
+        class="ga-theme-card relative rounded-xl border p-2 flex flex-col gap-1.5 text-left transition group ${active ? 'is-selected bg-slate-800/90 border-amber-400 ring-2 ring-amber-400/30' : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'}"
+        role="radio"
+        aria-checked="${active}"
+        data-ga-theme-choice="${esc(theme.id)}"
+        title="${esc(theme.name)} — ${esc(theme.subtitle)}"
+      >
+        <div class="ga-theme-thumb-box relative rounded-lg overflow-hidden h-14 w-full bg-slate-950 flex items-center justify-center">
+          ${previewContent}
+          <div class="ga-theme-check-badge absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center text-[10px] font-black z-10 ${active ? '' : 'hidden'}">✓</div>
+        </div>
+        <div>
+          <div class="ga-theme-card-name text-xs font-bold ${active ? 'text-amber-300' : 'text-white'} group-hover:text-amber-300 transition-colors truncate">${esc(theme.name)}</div>
+          <div class="ga-theme-card-sub text-[10px] text-slate-400 truncate">${esc(theme.subtitle)}</div>
+        </div>
       </button>`;
     }).join('');
   }
@@ -1616,24 +1642,22 @@
   function createCustomStepper({ iconSvg, title, subtitleGetter, options, initialIndex = 0, onChange }) {
     let currentIndex = Math.max(0, Math.min(options.length - 1, initialIndex));
     const panel = document.createElement('div');
-    panel.className = 'ga-stepper-panel bg-[#0f172a]/90 border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between shadow-sm transition-all duration-200 focus-within:border-yellow-500/60 focus-within:shadow-[0_0_12px_rgba(234,179,8,0.15)] hover:border-slate-700';
+    panel.className = 'ga-stepper-panel flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800';
 
-    panel.innerHTML = `<div class="flex items-center gap-3 min-w-0">
-      <div class="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-amber-400 shrink-0">
-        ${iconSvg}
-      </div>
+    panel.innerHTML = `<div class="flex items-center gap-2.5 text-xs font-bold text-slate-300 min-w-0">
+      <span class="text-slate-500 shrink-0">${iconSvg}</span>
       <div class="flex flex-col min-w-0 text-left">
-        <span class="font-bold text-white text-sm tracking-tight truncate">${esc(title)}</span>
-        <span class="ga-stepper-subtitle text-xs text-amber-300 font-medium truncate mt-0.5"></span>
+        <span class="truncate">${esc(title)}</span>
+        <span class="ga-stepper-subtitle text-[10px] text-amber-400 font-medium truncate hidden"></span>
       </div>
     </div>
-    <div class="bg-[#0b1120] border border-slate-800 rounded-xl p-1 flex items-center gap-1.5 shrink-0">
-      <button type="button" class="ga-stepper-dec w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer" aria-label="Decrease ${esc(title)}">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <div class="flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0">
+      <button type="button" class="ga-stepper-dec w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer" aria-label="Decrease ${esc(title)}">
+        −
       </button>
-      <span class="ga-stepper-val px-3 py-1.5 bg-slate-800/60 rounded-lg border border-slate-700/40 text-xs font-bold text-slate-200 select-none text-center min-w-[70px]"></span>
-      <button type="button" class="ga-stepper-inc w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer" aria-label="Increase ${esc(title)}">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span class="ga-stepper-val min-w-[70px] text-center text-xs font-black text-slate-200 px-1 select-none"></span>
+      <button type="button" class="ga-stepper-inc w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer" aria-label="Increase ${esc(title)}">
+        +
       </button>
     </div>`;
 
@@ -1696,18 +1720,18 @@
   function createQuickMousePanel({ iconSvg, title, value, min, max, step = 1, format = v => String(v), onChange }) {
     let current = value;
     const panel = document.createElement('div');
-    panel.className = 'ga-qpanel';
-    panel.innerHTML = `<div class="ga-qleft">
-      <span class="ga-qicon" aria-hidden="true">${iconSvg}</span>
-      <span class="ga-qlabel">${esc(title)}</span>
+    panel.className = 'ga-qpanel flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800';
+    panel.innerHTML = `<div class="flex items-center gap-2.5 text-xs font-bold text-slate-300 min-w-0">
+      <span class="text-slate-500 shrink-0 ga-qicon">${iconSvg}</span>
+      <span class="truncate ga-qlabel">${esc(title)}</span>
     </div>
-    <div class="ga-qcounter" role="group" aria-label="${esc(title)} counter">
-      <button type="button" class="ga-qbtn ga-qbtn-dec" aria-label="Decrease ${esc(title)}">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <div class="ga-qcounter flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0" role="group" aria-label="${esc(title)} counter">
+      <button type="button" class="ga-qbtn ga-qbtn-dec w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer" aria-label="Decrease ${esc(title)}">
+        −
       </button>
-      <span class="ga-qvalue"></span>
-      <button type="button" class="ga-qbtn ga-qbtn-inc" aria-label="Increase ${esc(title)}">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span class="ga-qvalue min-w-[70px] text-center text-xs font-black text-slate-200 px-1 select-none"></span>
+      <button type="button" class="ga-qbtn ga-qbtn-inc w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer" aria-label="Increase ${esc(title)}">
+        +
       </button>
     </div>`;
 
@@ -1793,19 +1817,47 @@
     const players = document.createElement('section');
     players.className = 'ga-players-section';
     const bar = document.createElement('div');
-    bar.className = 'ga-quick';
+    bar.className = 'ga-quick flex items-center justify-between mb-3';
     if (isSoloGame) {
-      bar.innerHTML = `<div class="ga-player-heading"><h3>Player</h3><span class="ga-player-count" aria-live="polite">0 / 1 selected</span></div>
-        <div class="ga-pick-tools"><button type="button" data-q="random" aria-label="Pick random student" title="Pick random student">⤨ Random</button><button type="button" data-q="clear" class="ga-pick-clear-btn" aria-label="Clear selected student" title="Clear selected student">Clear</button></div>`;
+      bar.innerHTML = `<div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-slate-200">Player</span>
+        <span class="ga-player-count text-[11px] font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20" aria-live="polite">0 / 1 selected</span>
+        <span class="ga-player-class-count text-[11px] text-slate-500">· ${checks.length} in class</span>
+      </div>
+      <div class="flex items-center gap-1.5 ga-pick-tools">
+        <button type="button" data-q="random" title="Pick random student" aria-label="Pick random student" class="h-8 px-2.5 rounded-lg bg-slate-800/90 border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 text-xs font-bold text-slate-200 hover:text-white transition cursor-pointer">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.5-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg>
+          <span>Random</span>
+        </button>
+        <button type="button" data-q="clear" title="Clear selection" aria-label="Clear selected student" class="ga-pick-clear-btn h-8 px-2.5 rounded-lg bg-slate-800/90 border border-slate-700 hover:border-rose-500/50 text-xs font-semibold text-slate-400 hover:text-rose-400 transition cursor-pointer hidden">Clear</button>
+      </div>`;
     } else {
-      bar.innerHTML = `<div class="ga-player-heading"><h3>Players</h3><span class="ga-player-count" aria-live="polite">0 / 4 selected</span></div>
-        <div class="ga-pick-tools"><select aria-label="Random player count">${[1, 2, 3, 4].filter(n => n <= checks.length).map(n => `<option value="${n}" ${n === Math.min(2, checks.length) ? 'selected' : ''}>Random ${n}</option>`).join('')}</select><button type="button" data-q="random" aria-label="Pick random players" title="Pick random players">⤨</button><button type="button" data-q="clear" class="ga-pick-clear-btn" aria-label="Clear selected players" title="Clear selected players">Clear</button></div>`;
+      const maxChoices = Math.min(4, checks.length);
+      const randomOptions = [2, 3, 4].filter(n => n <= maxChoices);
+      if (randomOptions.length === 0 && maxChoices > 0) randomOptions.push(maxChoices);
+      bar.innerHTML = `<div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-slate-200">Players</span>
+        <span class="ga-player-count text-[11px] font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20" aria-live="polite">0 / 4 selected</span>
+        <span class="ga-player-class-count text-[11px] text-slate-500">· ${checks.length} in class</span>
+      </div>
+      <div class="flex items-center gap-1.5 ga-pick-tools">
+        <select class="h-8 px-2.5 rounded-lg bg-slate-800/90 border border-slate-700 text-xs font-bold text-slate-200 focus:outline-none focus:border-amber-400 cursor-pointer" aria-label="Quick pick player count">
+          ${randomOptions.map((n, i) => `<option value="${n}" ${i === 0 ? 'selected' : ''}>Random ${n}</option>`).join('')}
+        </select>
+        <button type="button" data-q="random" title="Shuffle Selection" aria-label="Shuffle selection" class="h-8 w-8 rounded-lg bg-slate-800/90 border border-slate-700 hover:border-slate-600 flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.5-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg>
+        </button>
+        <button type="button" data-q="clear" title="Clear selection" aria-label="Clear selected players" class="ga-pick-clear-btn h-8 px-2.5 rounded-lg bg-slate-800/90 border border-slate-700 hover:border-rose-500/50 text-xs font-semibold text-slate-400 hover:text-rose-400 transition cursor-pointer hidden">Clear</button>
+      </div>`;
     }
+    const clearBtn = bar.querySelector('.ga-pick-clear-btn');
+    const countBadge = bar.querySelector('.ga-player-count');
     const update = () => {
       const count = checks.filter(c => c.checked).length;
+      if (clearBtn) clearBtn.classList.toggle('hidden', count === 0);
       if (isSoloGame) {
         const sel = checks.find(c => c.checked);
-        bar.querySelector('.ga-player-count').textContent = sel ? `1 / 1 selected · ${sel.value}` : `0 / 1 selected · ${checks.length} in class`;
+        if (countBadge) countBadge.textContent = `${count} / 1 selected`;
         if (next) next.textContent = sel ? `Start game · ${sel.value} →` : 'Select a student to play →';
         const blocked = !sel;
         if (next) {
@@ -1818,7 +1870,7 @@
         }
         return;
       }
-      bar.querySelector('.ga-player-count').textContent = `${count} / 4 selected · ${checks.length} in class`;
+      if (countBadge) countBadge.textContent = `${count} / 4 selected`;
       if (next) next.textContent = count ? `Start game · ${count} player${count === 1 ? '' : 's'} →` : 'Start game →';
       if (requiresTwoPlayers) {
         const blocked = count < 2;
@@ -1854,6 +1906,15 @@
         checks[0].checked = true;
       }
     }
+    const quickSelect = bar.querySelector('select');
+    if (quickSelect) {
+      quickSelect.addEventListener('change', () => {
+        const n = Number(quickSelect.value || 2);
+        const shuffled = [...checks];
+        for (let i = shuffled.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+        set(shuffled.slice(0, n));
+      });
+    }
     bar.addEventListener('click', e => {
       const q = e.target.closest('button')?.dataset.q; if (!q) return;
       if (q === 'clear') {
@@ -1865,7 +1926,7 @@
       if (isSoloGame) {
         set(q === 'random' && shuffled[0] ? [shuffled[0]] : []);
       } else {
-        set(q === 'random' ? shuffled.slice(0, Number(bar.querySelector('select')?.value || 1)) : []);
+        set(q === 'random' ? shuffled.slice(0, Number(quickSelect?.value || 2)) : []);
       }
     });
     list.before(players);
@@ -2219,11 +2280,11 @@
       const themeSection = document.createElement('section');
       themeSection.className = 'ga-theme-picker ga-round-setting';
       themeSection.setAttribute('aria-label', 'Visual style');
-      themeSection.innerHTML = `<div class="ga-theme-picker-head">
-        <h3>Visual style</h3>
-        <span class="ga-theme-active-label" aria-live="polite">${esc(selectedTheme.name)} · ${esc(selectedTheme.subtitle)}</span>
+      themeSection.innerHTML = `<div class="ga-theme-picker-head flex items-center justify-between mb-3">
+        <span class="text-xs font-bold text-slate-200">Visual style</span>
+        <span class="ga-theme-active-label text-[11px] text-amber-400 font-semibold" aria-live="polite">${esc(selectedTheme.name)} · ${esc(selectedTheme.subtitle)}</span>
       </div>
-      <div class="ga-theme-grid" role="radiogroup" aria-label="Choose visual style">${renderThemeCardsMarkup(selectedTheme.id)}</div>`;
+      <div class="ga-theme-grid grid grid-cols-2 gap-2.5 max-h-[340px] overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]" role="radiogroup" aria-label="Choose visual style">${renderThemeCardsMarkup(selectedTheme.id)}</div>`;
       themeSection.addEventListener('click', event => {
         const card = event.target.closest('[data-ga-theme-choice]');
         if (!card) return;
