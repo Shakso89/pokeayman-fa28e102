@@ -1,15 +1,15 @@
 // Arcade games hub, lobby helpers and 3-2-1 countdown. Only presentation; game logic stays in index.html.
 (function () {
   const GAMES = [
-    { fn: 'chooseBaamboozlePowerUps', icon: '🎁', name: 'Surprise Boxes', desc: 'Open mystery boxes full of power-ups, traps and score swaps.', tags: ['1–4 players', 'Class favourite'], accent: 'pink', teacherOnly: true },
-    { fn: 'chooseMatchWordCount', icon: '🎯', name: 'Match Words', desc: 'Race to match each word with its picture.', tags: ['1–4 players', 'Fast reflexes'], accent: 'red' },
-    { fn: 'chooseMemoryDifficulty', icon: '🧠', name: 'Memory Flip', desc: 'Flip the tiles and find the matching pairs.', tags: ['1–4 players', 'Focus'], accent: 'violet' },
-    { fn: 'chooseScrambleWordCount', icon: '🔤', name: 'Unscramble', desc: 'Put the mixed-up letters back in order.', tags: ['1–4 players', 'Spelling'], accent: 'blue' },
-    { fn: 'chooseHangmanWordCount', icon: '🎮', name: 'Hangman', desc: 'Guess the secret word letter by letter.', tags: ['1–4 players', 'Classic'], accent: 'yellow' },
-    { fn: 'chooseCrossword', icon: '▦', name: 'Crosswords', desc: 'Solve vocabulary clues and fill the intersecting word grid.', tags: ['1–4 players', 'Vocabulary'], accent: 'mint' },
-    { fn: 'chooseFindMeScore', icon: '🕵️', name: 'Find Me', desc: 'Spot the right word as fast as you can.', tags: ['1–4 players', 'Quick recall'], accent: 'mint' },
-    { fn: 'startListenCatch', icon: '🔊', name: 'Listen and Catch', desc: 'Hear a word, catch the right answer, and fill your Catchdex.', tags: ['Solo', 'Listening'], accent: 'violet', proOnly: true },
-    { fn: 'startVocabBattle', icon: '⚔️', name: 'Poké Battle', desc: 'Defeat a wild Pokémon and send its reward to your teacher for approval.', tags: ['Solo', 'Teacher-approved reward'], accent: 'red', proOnly: true },
+    { fn: 'chooseBaamboozlePowerUps', icon: '🎁', image: '/pokeayman/assets/games/surprise-boxes.jpg', name: 'Surprise Boxes', desc: 'Open mystery boxes full of power-ups, traps and score swaps.', tags: ['1–4 players', 'Class favourite'], accent: 'pink', teacherOnly: true },
+    { fn: 'chooseMatchWordCount', icon: '🎯', image: '/pokeayman/assets/games/match-words.jpg', name: 'Match Words', desc: 'Race to match each word with its picture.', tags: ['1–4 players', 'Fast reflexes'], accent: 'red' },
+    { fn: 'chooseMemoryDifficulty', icon: '🧠', image: '/pokeayman/assets/games/memory-flip.jpg', name: 'Memory Flip', desc: 'Flip the tiles and find the matching pairs.', tags: ['1–4 players', 'Focus'], accent: 'violet' },
+    { fn: 'chooseScrambleWordCount', icon: '🔤', image: '/pokeayman/assets/games/unscramble.jpg', name: 'Unscramble', desc: 'Put the mixed-up letters back in order.', tags: ['1–4 players', 'Spelling'], accent: 'blue' },
+    { fn: 'chooseHangmanWordCount', icon: '🎮', image: '/pokeayman/assets/games/hangman.jpg', name: 'Hangman', desc: 'Guess the secret word letter by letter.', tags: ['1–4 players', 'Classic'], accent: 'yellow' },
+    { fn: 'chooseCrossword', icon: '▦', image: '/pokeayman/assets/games/crosswords.jpg', name: 'Crosswords', desc: 'Solve vocabulary clues and fill the intersecting word grid.', tags: ['1–4 players', 'Vocabulary'], accent: 'mint' },
+    { fn: 'chooseFindMeScore', icon: '🕵️', image: '/pokeayman/assets/games/find-me.jpg', name: 'Find Me', desc: 'Spot the right word as fast as you can.', tags: ['1–4 players', 'Quick recall'], accent: 'mint' },
+    { fn: 'startListenCatch', icon: '🔊', image: '/pokeayman/assets/games/listen-catch.jpg', name: 'Listen and Catch', desc: 'Hear a word, catch the right answer, and fill your Catchdex.', tags: ['Solo', 'Listening'], accent: 'violet', proOnly: true },
+    { fn: 'startVocabBattle', icon: '⚔️', image: '/pokeayman/assets/games/poke-battle.jpg', name: 'Poké Battle', desc: 'Defeat a wild Pokémon and send its reward to your teacher for approval.', tags: ['Solo', 'Teacher-approved reward'], accent: 'red', proOnly: true },
   ];
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -1181,7 +1181,7 @@
       const playText = locked ? (isTeacher ? 'Upgrade to Pro' : 'Locked for class') : 'Choose ▶';
       return `
       <button type="button" class="ga-cart ga-${g.accent}${proCardClass}${locked ? ' ga-pro-locked' : ''}" onclick="${locked ? `window.requireProGame('${esc(g.name)}')` : `window.selectGameToPlay('${g.fn}')`}" aria-disabled="${locked}" aria-label="${locked ? `${g.name}, Pro access required` : `Choose ${g.name}`}" ${locked ? 'title="Pro access required"' : ''}>
-        <span class="ga-cart-art" aria-hidden="true"><span>${g.icon}</span></span>
+        <span class="ga-cart-art" aria-hidden="true">${g.image ? `<img src="${g.image}" alt="${esc(g.name)}" class="ga-cart-img" loading="lazy">` : `<span>${g.icon}</span>`}</span>
         <span class="ga-cart-body">
           <span class="ga-cart-name">${esc(g.name)}${g.proOnly ? '<span class="ga-pro-badge">👑 PRO</span>' : ''}</span>
           <span class="ga-cart-desc">${esc(g.desc)}</span>
@@ -1220,7 +1220,8 @@
       const panel = document.createElement('section');
       panel.className = 'game-inline-view ga-student-setup ga-hub';
       panel.setAttribute('aria-label', `${game.name} visual style and setup`);
-      panel.innerHTML = `<header class="ga-hub-head"><h2>${game.icon} ${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header>
+      const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-full object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
+      panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header>
         <section class="ga-theme-picker ga-round-setting" aria-label="Visual style">
           <div class="ga-theme-picker-head">
             <h3>Visual style</h3>
@@ -1297,7 +1298,8 @@
     const panel = document.createElement('section');
     panel.className = 'game-inline-view ga-student-setup ga-hub';
     panel.setAttribute('aria-label', `${game.name} word count`);
-    panel.innerHTML = `<header class="ga-hub-head"><h2>${game.icon} ${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of words">${[5, 10, 15].map(count => `<button type="button" class="btn-primary" data-count="${count}" ${words.length < count ? 'disabled' : ''}><strong>${count}</strong><span>words</span></button>`).join('')}</div>`;
+    const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-full object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
+    panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of words">${[5, 10, 15].map(count => `<button type="button" class="btn-primary" data-count="${count}" ${words.length < count ? 'disabled' : ''}><strong>${count}</strong><span>words</span></button>`).join('')}</div>`;
     panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
     panel.querySelectorAll('[data-count]').forEach(button => button.addEventListener('click', () => {
       const count = Number(button.dataset.count);
@@ -1721,7 +1723,10 @@
       modal.prepend(closeBtn);
     }
     const h2 = modal.querySelector('h2');
-    if (h2 && game) h2.innerHTML = `<span class="ga-lobby-icon" aria-hidden="true">${game.icon}</span> ${esc(game.name)}`;
+    if (h2 && game) {
+      const iconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-full object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `<span class="ga-lobby-icon" aria-hidden="true">${game.icon}</span> `;
+      h2.innerHTML = `${iconHtml}${esc(game.name)}`;
+    }
     const p = h2?.nextElementSibling;
     if (p && game) p.textContent = 'Round setup';
     const list = modal.querySelector('#game-player-list');

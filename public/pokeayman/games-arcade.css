@@ -26,6 +26,10 @@
 .ga-cart-art::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(135deg, rgba(255,255,255,.08) 0 10px, transparent 10px 20px); }
 .ga-cart-art span { font-size: 2.6rem; filter: drop-shadow(0 6px 8px rgba(0,0,0,.3)); transition: transform .25s; position: relative; z-index: 1; }
 .ga-cart:hover .ga-cart-art span { transform: scale(1.15) rotate(-6deg); }
+.ga-cart-art:has(.ga-cart-img) { background: transparent !important; padding: 0 !important; }
+.ga-cart-art:has(.ga-cart-img)::after { display: none !important; }
+.ga-cart-img { width: 100% !important; height: 100% !important; object-fit: cover !important; border-radius: inherit !important; display: block !important; transition: transform .25s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
+.ga-cart:hover .ga-cart-img { transform: scale(1.08) !important; }
 .ga-cart-body { display: flex; flex-direction: column; gap: .35rem; padding: .8rem .9rem .3rem; flex: 1; }
 .ga-cart-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.1rem; }
 .ga-cart-desc { font-size: .82rem; color: var(--ga-muted); line-height: 1.35; }

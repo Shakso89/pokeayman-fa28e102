@@ -96,4 +96,24 @@ describe("Teacher Game Vocabulary Assignment & Multi-Class Student Dashboard Iso
     expect(teacherShellJs).not.toContain('data-hero="assign-teachers"');
     expect(teacherShellJs).not.toContain("ts-hero-assign-btn");
   });
+
+  it("9. Arcade games configure illustrated badges for all 9 games with existing asset files", () => {
+    const gamesArcadeJs = readFileSync(path.join(root, "public", "pokeayman", "games-arcade.js"), "utf8");
+    const expectedGames = [
+      "surprise-boxes.jpg",
+      "match-words.jpg",
+      "memory-flip.jpg",
+      "unscramble.jpg",
+      "hangman.jpg",
+      "crosswords.jpg",
+      "find-me.jpg",
+      "listen-catch.jpg",
+      "poke-battle.jpg",
+    ];
+    for (const imgName of expectedGames) {
+      expect(gamesArcadeJs).toContain(`/pokeayman/assets/games/${imgName}`);
+      const filePath = path.join(root, "public", "pokeayman", "assets", "games", imgName);
+      expect(readFileSync(filePath).length).toBeGreaterThan(1000);
+    }
+  });
 });

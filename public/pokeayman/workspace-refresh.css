@@ -252,7 +252,7 @@ html body:is(body, #pk-refresh):is(body, #pk-refresh):is(body, #pk-refresh) {
   & .ga-cart.ga-pro .ga-pro-badge { display: inline-flex; align-items: center; margin-left: 8px; padding: 2px 8px; border: 1px solid rgba(255,213,75,.72); border-radius: 999px; background: linear-gradient(135deg, rgba(255,203,5,.24), rgba(255,203,5,.08)); color: #ffe38a !important; font-size: 10px; font-weight: 800; letter-spacing: .08em; box-shadow: 0 0 12px rgba(255,203,5,.13); vertical-align: middle; }
   & .ga-cart.ga-pro-ribbon, & .ga-pro-ribbon { display: none !important; }
   & .ga-cart.ga-pro > .ga-cart-play { border: 1px solid rgba(255,255,255,.18); box-shadow: 0 4px 14px color-mix(in srgb, #ffcb05 28%, transparent); }
-  & .ga-cart > .ga-cart-art { grid-column: 1; grid-row: 1; width: 56px !important; height: 56px !important; margin: 0 !important; background: color-mix(in srgb,var(--a) 14%,var(--ui-surface)) !important; border-radius: 8px; color: var(--ui-ink) !important; }
+  & .ga-cart > .ga-cart-art { grid-column: 1; grid-row: 1; width: 56px !important; height: 56px !important; margin: 0 !important; background: color-mix(in srgb,var(--a) 14%,var(--ui-surface)) !important; border-radius: 50% !important; overflow: hidden !important; border: 1.5px solid color-mix(in srgb, var(--a, #ffcb05) 55%, rgba(255,255,255,.2)) !important; box-shadow: 0 4px 12px rgba(0,0,0,.35) !important; color: var(--ui-ink) !important; padding: 0 !important; }
   & .ga-cart-art::after { display: none; }
   & .ga-cart-art span { font-size: 30px !important; filter: none !important; }
   & .ga-cart > .ga-cart-body { display: contents !important; background: transparent !important; }
