@@ -250,13 +250,221 @@ html body:is(body, #pk-refresh):is(body, #pk-refresh):is(body, #pk-refresh) {
   & .ga-cart:hover .ga-cart-img { transform: scale(1.08) !important; }
   & .ga-cart-fallback-icon { font-size: 48px !important; }
   
-  /* Pro variations on the rounded card */
-  & .ga-cart.ga-pro-listen :is(.ga-cart-art, .ga-cart-disc) { border-color: #c084fc !important; box-shadow: 0 8px 24px -4px rgba(0,0,0,.45), 0 0 20px rgba(168, 85, 247, .45) !important; }
-  & .ga-cart.ga-pro-listen:hover :is(.ga-cart-art, .ga-cart-disc) { border-color: #e9d5ff !important; box-shadow: 0 16px 36px -4px rgba(0,0,0,.6), 0 0 32px rgba(168, 85, 247, .75) !important; }
-  & .ga-cart.ga-pro-battle :is(.ga-cart-art, .ga-cart-disc) { border-color: #f87171 !important; box-shadow: 0 8px 24px -4px rgba(0,0,0,.45), 0 0 20px rgba(239, 68, 68, .45) !important; }
-  & .ga-cart.ga-pro-battle:hover :is(.ga-cart-art, .ga-cart-disc) { border-color: #fecaca !important; box-shadow: 0 16px 36px -4px rgba(0,0,0,.6), 0 0 32px rgba(239, 68, 68, .75) !important; }
-  & .ga-disc-pro-pill { position: absolute !important; bottom: 8px !important; left: 50% !important; transform: translateX(-50%) !important; background: linear-gradient(135deg, #f59e0b, #ef4444) !important; color: #ffffff !important; font-size: 10px !important; font-weight: 900 !important; padding: 2px 9px !important; border-radius: 999px !important; letter-spacing: .06em !important; box-shadow: 0 3px 10px rgba(0,0,0,.6), 0 0 12px rgba(245, 158, 11, .5) !important; border: 1.5px solid rgba(255, 255, 255, .75) !important; z-index: 3 !important; white-space: nowrap !important; }
-  & .ga-disc-lock-overlay { position: absolute !important; inset: 0 !important; background: rgba(10, 15, 28, 0.65) !important; backdrop-filter: blur(2px) !important; display: grid !important; place-items: center !important; color: #fde047 !important; z-index: 4 !important; }
+  /* ========================================================
+     PREMIUM PRO CARDS (Listen and Catch & Poké Battle)
+     Distinctive Medallion & Ornate Plaque Design
+     ======================================================== */
+  & .ga-cart.ga-pro { position: relative !important; overflow: visible !important; }
+  
+  /* The Pro Crown Crest atop the medallion */
+  & .ga-cart.ga-pro .ga-pro-disc-crest {
+    position: absolute !important;
+    top: -11px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 30px !important;
+    height: 22px !important;
+    border-radius: 999px !important;
+    background: linear-gradient(135deg, #fef08a 0%, #f59e0b 60%, #b45309 100%) !important;
+    border: 1.5px solid #ffffff !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45), 0 0 10px rgba(250, 204, 21, 0.65) !important;
+    display: grid !important;
+    place-items: center !important;
+    color: #78350f !important;
+    z-index: 6 !important;
+    transition: transform .25s ease, box-shadow .25s ease !important;
+  }
+  & .ga-cart.ga-pro .ga-pro-crest-svg {
+    width: 14px !important;
+    height: 14px !important;
+    filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.5));
+  }
+  & .ga-cart.ga-pro:hover .ga-pro-disc-crest {
+    transform: translateX(-50%) scale(1.18) translateY(-2px) !important;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5), 0 0 16px rgba(250, 204, 21, 0.9) !important;
+  }
+
+  /* Ornate Gilded Medallion Frame */
+  & .ga-cart.ga-pro :is(.ga-cart-art, .ga-cart-disc) {
+    width: 152px !important;
+    height: 152px !important;
+    border: 3.5px solid #facc15 !important;
+  }
+
+  /* Listen and Catch Cosmic Halo */
+  & .ga-cart.ga-pro-listen :is(.ga-cart-art, .ga-cart-disc) {
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.6), 0 0 0 6px rgba(250, 204, 21, 0.35), 0 12px 30px -4px rgba(139, 92, 246, 0.65), inset 0 0 20px rgba(168, 85, 247, 0.4) !important;
+  }
+  & .ga-cart.ga-pro-listen:hover :is(.ga-cart-art, .ga-cart-disc) {
+    border-color: #ffffff !important;
+    transform: translateY(-7px) scale(1.06) !important;
+    box-shadow: 0 0 0 4px #c084fc, 0 0 0 9px rgba(168, 85, 247, 0.45), 0 20px 40px rgba(139, 92, 246, 0.8), inset 0 0 26px rgba(192, 132, 252, 0.55) !important;
+  }
+
+  /* Poké Battle Elemental Clash Halo */
+  & .ga-cart.ga-pro-battle :is(.ga-cart-art, .ga-cart-disc) {
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.65), 0 0 0 6px rgba(245, 158, 11, 0.4), 0 12px 30px -4px rgba(239, 68, 68, 0.7), inset 0 0 20px rgba(245, 158, 11, 0.4) !important;
+  }
+  & .ga-cart.ga-pro-battle:hover :is(.ga-cart-art, .ga-cart-disc) {
+    border-color: #ffffff !important;
+    transform: translateY(-7px) scale(1.06) !important;
+    box-shadow: 0 0 0 4px #f87171, 0 0 0 9px rgba(245, 158, 11, 0.45), 0 20px 40px rgba(239, 68, 68, 0.85), inset 0 0 26px rgba(248, 113, 113, 0.55) !important;
+  }
+
+  /* Pro Medallion Pill Seal */
+  & .ga-cart.ga-pro .ga-disc-pro-pill {
+    position: absolute !important;
+    bottom: 7px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 9.5px !important;
+    font-weight: 900 !important;
+    padding: 2.5px 10px !important;
+    border-radius: 999px !important;
+    letter-spacing: .08em !important;
+    z-index: 5 !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+  & .ga-cart.ga-pro-listen .ga-disc-pro-pill {
+    background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%) !important;
+    color: #fef08a !important;
+    border: 1.5px solid #facc15 !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,.6), 0 0 12px rgba(168, 85, 247, .55) !important;
+  }
+  & .ga-cart.ga-pro-battle .ga-disc-pro-pill {
+    background: linear-gradient(135deg, #450a0a 0%, #991b1b 100%) !important;
+    color: #fef08a !important;
+    border: 1.5px solid #facc15 !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,.6), 0 0 12px rgba(239, 68, 68, .55) !important;
+  }
+
+  /* Ornate Pro Description Plaque */
+  & .ga-cart.ga-pro :is(.ga-cart-body, .ga-cart-rect) {
+    position: relative !important;
+    overflow: hidden !important;
+    width: 100% !important;
+    max-width: 232px !important;
+    margin-top: 12px !important;
+    padding: 10px 12px 10px !important;
+    border-radius: 16px !important;
+    gap: 3px !important;
+    transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease, background .25s ease !important;
+  }
+
+  /* Plaque Background & Border - Listen and Catch */
+  & .ga-cart.ga-pro-listen :is(.ga-cart-body, .ga-cart-rect) {
+    background: radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.28) 0%, rgba(15, 23, 42, 0.95) 75%) !important;
+    border: 1.5px solid rgba(192, 132, 252, 0.55) !important;
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45), 0 0 20px -2px rgba(168, 85, 247, 0.3) !important;
+  }
+  & .ga-cart.ga-pro-listen:hover :is(.ga-cart-body, .ga-cart-rect) {
+    border-color: #facc15 !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.55), 0 0 28px rgba(168, 85, 247, 0.5) !important;
+  }
+
+  /* Plaque Background & Border - Poké Battle */
+  & .ga-cart.ga-pro-battle :is(.ga-cart-body, .ga-cart-rect) {
+    background: radial-gradient(ellipse at 50% 0%, rgba(239, 68, 68, 0.28) 0%, rgba(20, 15, 25, 0.95) 75%) !important;
+    border: 1.5px solid rgba(248, 113, 113, 0.55) !important;
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45), 0 0 20px -2px rgba(239, 68, 68, 0.3) !important;
+  }
+  & .ga-cart.ga-pro-battle:hover :is(.ga-cart-body, .ga-cart-rect) {
+    border-color: #facc15 !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.55), 0 0 28px rgba(239, 68, 68, 0.5) !important;
+  }
+
+  /* Plaque Header Banner Tag */
+  & .ga-pro-plaque-banner {
+    font-size: 9px !important;
+    font-weight: 900 !important;
+    letter-spacing: .12em !important;
+    text-transform: uppercase !important;
+    padding: 2px 9px !important;
+    border-radius: 999px !important;
+    margin-bottom: 2px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+  }
+  & .ga-cart.ga-pro-listen .ga-pro-plaque-banner {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(99, 102, 241, 0.25)) !important;
+    border: 1px solid rgba(216, 180, 254, 0.5) !important;
+    color: #f5d0fe !important;
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.3) !important;
+  }
+  & .ga-cart.ga-pro-battle .ga-pro-plaque-banner {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.35), rgba(245, 158, 11, 0.25)) !important;
+    border: 1px solid rgba(252, 165, 165, 0.5) !important;
+    color: #fef08a !important;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3) !important;
+  }
+  & .ga-pro-sparkle { font-size: 8px !important; color: #ffd700 !important; }
+
+  /* Pro Plaque Shimmering Gold Title */
+  & .ga-cart.ga-pro .ga-cart-name {
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 15.5px !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+    background: linear-gradient(135deg, #ffffff 15%, #fef08a 60%, #f59e0b 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    letter-spacing: .02em !important;
+    margin: 1px 0 !important;
+    display: inline-block !important;
+  }
+  & .ga-cart.ga-pro .ga-cart-desc {
+    font-size: 11.5px !important;
+    line-height: 1.35 !important;
+    color: #e2e8f0 !important;
+  }
+
+  /* Bottom Feature Ribbon */
+  & .ga-pro-feature-bar {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    margin-top: 4px !important;
+    width: 100% !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  & .ga-cart.ga-pro-listen .ga-pro-feature-bar {
+    background: rgba(168, 85, 247, 0.16) !important;
+    border: 1px solid rgba(168, 85, 247, 0.32) !important;
+    color: #d8b4fe !important;
+  }
+  & .ga-cart.ga-pro-battle .ga-pro-feature-bar {
+    background: rgba(239, 68, 68, 0.16) !important;
+    border: 1px solid rgba(239, 68, 68, 0.32) !important;
+    color: #fca5a5 !important;
+  }
+
+  /* Holographic Foil Sweep on Hover */
+  & .ga-pro-foil {
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, 0.05) 40%, rgba(250, 204, 21, 0.18) 50%, rgba(255, 255, 255, 0.05) 60%, transparent 80%) !important;
+    transform: translateX(-100%) !important;
+    transition: transform .6s ease !important;
+  }
+  & .ga-cart.ga-pro:hover .ga-pro-foil {
+    transform: translateX(100%) !important;
+  }
+
+  & .ga-disc-lock-overlay { position: absolute !important; inset: 0 !important; background: rgba(10, 15, 28, 0.65) !important; backdrop-filter: blur(2px) !important; display: grid !important; place-items: center !important; color: #fde047 !important; z-index: 7 !important; }
   & .ga-cart.ga-pro-locked :is(.ga-cart-art, .ga-cart-disc) { filter: grayscale(.85) brightness(.65) !important; }
 
   /* Small rectangle below each card with a brief description */

@@ -31,6 +31,45 @@ html body.ts-bright .ga-cart {
 html body.ts-bright .ga-cart :is(.ga-cart-body, .ga-cart-rect) {
   background: var(--color-surface) !important; border: 1px solid var(--color-border) !important; color: var(--color-text-primary) !important;
 }
+html body.ts-bright .ga-cart.ga-pro-listen :is(.ga-cart-body, .ga-cart-rect) {
+  background: linear-gradient(145deg, #ffffff 0%, #f5f3ff 100%) !important;
+  border: 1.5px solid #c084fc !important;
+  box-shadow: 0 6px 20px -4px rgba(147, 51, 234, 0.22) !important;
+}
+html body.ts-bright .ga-cart.ga-pro-battle :is(.ga-cart-body, .ga-cart-rect) {
+  background: linear-gradient(145deg, #ffffff 0%, #fff1f2 100%) !important;
+  border: 1.5px solid #f87171 !important;
+  box-shadow: 0 6px 20px -4px rgba(220, 38, 38, 0.22) !important;
+}
+html body.ts-bright .ga-cart.ga-pro .ga-cart-name {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  color: var(--color-text-primary) !important;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
+}
+html body.ts-bright .ga-cart.ga-pro .ga-cart-desc {
+  color: var(--color-text-secondary) !important;
+}
+html body.ts-bright .ga-cart.ga-pro-listen .ga-pro-plaque-banner {
+  background: #f3e8ff !important;
+  color: #6b21a8 !important;
+  border-color: #d8b4fe !important;
+}
+html body.ts-bright .ga-cart.ga-pro-battle .ga-pro-plaque-banner {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+  border-color: #fca5a5 !important;
+}
+html body.ts-bright .ga-cart.ga-pro-listen .ga-pro-feature-bar {
+  background: #f5f3ff !important;
+  color: #7c3aed !important;
+  border-color: #ddd6fe !important;
+}
+html body.ts-bright .ga-cart.ga-pro-battle .ga-pro-feature-bar {
+  background: #fff1f2 !important;
+  color: #e11d48 !important;
+  border-color: #fecdd3 !important;
+}
 html body.ts-bright .game-vocab-list-card,
 html body.ts-bright .battle-arena-panel,
 html body.ts-bright .battle-arena-panel > .flex:first-child {

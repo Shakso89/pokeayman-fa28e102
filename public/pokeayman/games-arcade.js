@@ -1177,17 +1177,47 @@
       const locked = Boolean(g.proOnly && !window.canUseProGames?.());
       const isProListen = g.fn === 'startListenCatch';
       const isProBattle = g.fn === 'startVocabBattle';
-      const proCardClass = isProListen ? ' ga-pro ga-pro-listen' : (isProBattle ? ' ga-pro ga-pro-battle' : (g.proOnly ? ' ga-pro' : ''));
+      const isPro = Boolean(g.proOnly);
+      const proCardClass = isProListen ? ' ga-pro ga-pro-listen' : (isProBattle ? ' ga-pro ga-pro-battle' : (isPro ? ' ga-pro' : ''));
+      
+      const proCrownHtml = isPro ? `
+        <span class="ga-pro-disc-crest" aria-hidden="true" title="Pro Exclusive">
+          <svg viewBox="0 0 24 24" class="ga-pro-crest-svg" fill="currentColor">
+            <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1Z"/>
+          </svg>
+        </span>` : '';
+      
+      const proPillHtml = isPro ? `
+        <span class="ga-disc-pro-pill" aria-hidden="true">${isProBattle ? '⚔️ BATTLE PRO' : '🎧 AUDIO PRO'}</span>` : '';
+
+      const proPlaqueBannerHtml = isPro ? `
+        <span class="ga-pro-plaque-banner" aria-hidden="true">
+          <span class="ga-pro-sparkle">✦</span>
+          <span>${isProBattle ? 'CHAMPION ARENA' : 'COSMIC ARCADE'}</span>
+          <span class="ga-pro-sparkle">✦</span>
+        </span>` : '';
+
+      const proFeatureBarHtml = isPro ? `
+        <span class="ga-pro-feature-bar" aria-hidden="true">
+          <span>${isProBattle ? '🔥 Boss Battles · Rewards' : '🌌 Catchdex · Speech Audio'}</span>
+        </span>` : '';
+
+      const proFoilHtml = isPro ? `<span class="ga-pro-foil" aria-hidden="true"></span>` : '';
+
       return `
       <button type="button" class="ga-cart ga-${g.accent}${proCardClass}${locked ? ' ga-pro-locked' : ''}" onclick="${locked ? `window.requireProGame('${esc(g.name)}')` : `window.selectGameToPlay('${g.fn}')`}" aria-disabled="${locked}" aria-label="${locked ? `${g.name}, Pro access required` : `Choose ${g.name}`}" ${locked ? 'title="Pro access required"' : ''}>
         <span class="ga-cart-disc ga-cart-art" aria-hidden="true">
+          ${proCrownHtml}
           ${g.image ? `<img src="${g.image}" alt="${esc(g.name)}" class="ga-cart-img" loading="lazy">` : `<span class="ga-cart-fallback-icon">${g.icon}</span>`}
-          ${g.proOnly ? '<span class="ga-disc-pro-pill" aria-hidden="true">👑 PRO</span>' : ''}
+          ${proPillHtml}
           ${locked ? '<span class="ga-disc-lock-overlay" aria-hidden="true"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></span>' : ''}
         </span>
         <span class="ga-cart-rect ga-cart-body">
-          <span class="ga-cart-name">${esc(g.name)}${g.proOnly ? '<span class="ga-pro-badge">PRO</span>' : ''}</span>
+          ${proFoilHtml}
+          ${proPlaqueBannerHtml}
+          <span class="ga-cart-name">${esc(g.name)}</span>
           <span class="ga-cart-desc">${esc(g.desc)}</span>
+          ${proFeatureBarHtml}
           ${locked ? `<span class="ga-cart-lock-tag">${isTeacher ? 'Upgrade to Pro' : 'Locked for class'}</span>` : ''}
         </span>
       </button>`;
