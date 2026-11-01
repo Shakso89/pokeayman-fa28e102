@@ -24007,7 +24007,6 @@ function renderGamesList() {
         activeLists.forEach(list => {
           const words = getVocabWords(list.vocab_list_name, cls.school_name, cls.class_name);
           const safeName = escapeHtml(list.vocab_list_name);
-          const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
           const listId = String(list.__backendId || list.id || list.vocab_list_id);
           const isSelected = selectedGameList.some(item => {
             const itemKey = typeof item === 'object' ? (item.vocab_list_name || item.name || item.vocab_list_id || item.__backendId) : item;
@@ -24021,8 +24020,9 @@ function renderGamesList() {
             <div
               key="${listId}"
               data-list-name="${safeName}"
-              onclick="handleStudentSelectGameList('${String(cls.school_name).replace(/'/g, "\\'")}', '${String(cls.class_name).replace(/'/g, "\\'")}', '${safeListName}')"
-              ondblclick="window.gaFastLaunchList('${safeListName}', '${String(cls.school_name).replace(/'/g, "\\'")}', '${String(cls.class_name).replace(/'/g, "\\')}')"
+              data-school="${escapeHtml(cls.school_name || '')}"
+              data-class="${escapeHtml(cls.class_name || '')}"
+              data-list-title="${safeName}"
               class="game-vocab-list-card group relative p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer select-none ${
                 isSelected
                   ? 'border-amber-400 bg-slate-800 shadow-md ring-2 ring-amber-400/40 is-selected'
@@ -24073,20 +24073,18 @@ function renderGamesList() {
         const words = selectedGameSource === 'my_lists' ? getAuthorizedMyListsWords([String(list.vocab_list_id || list.__backendId)]).words || [] : getVocabWords({ vocab_list_id: list.vocab_list_id, vocab_list_name: list.vocab_list_name }, ctxSchool, ctxClass);
         const playable = words.length >= 2;
         const isSelected = selectedGameList.some(item => String(typeof item === 'object' ? item.vocab_list_id || item.__backendId : item) === String(selectedGameSource === 'my_lists' ? list.vocab_list_id || list.__backendId : list.vocab_list_name));
-        const safeListName = String(list.vocab_list_name || '').replace(/'/g, "\\'");
         const safeTitleAttr = String(list.vocab_list_name || '').replace(/"/g, '&quot;');
-        const setCtxJs = (currentRole === 'teacher' && selectedGameSource === 'my_lists') ? '' : `navSchool='${String(ctxSchool).replace(/'/g,"\\\'")}';navClass='${String(ctxClass).replace(/'/g,"\\\'")}';`;
         const listId = String(list.vocab_list_id || list.__backendId || list.id || list.vocab_list_name);
-        const listArgJs = selectedGameSource === 'my_lists' ? `{vocab_list_id:'${String(list.vocab_list_id || list.__backendId).replace(/'/g, "\\'")}',vocab_list_name:'${safeListName}'}` : `'${safeListName}'`;
-        const safeCtxSchool = String(ctxSchool || '').replace(/'/g, "\\'");
-        const safeCtxClass = String(ctxClass || '').replace(/'/g, "\\'");
+        const isMyListSource = selectedGameSource === 'my_lists';
 
         html += `
           <div
             key="${listId}"
             data-list-name="${safeTitleAttr}"
-            onclick="${setCtxJs} selectGameList(${listArgJs});"
-            ondblclick="${setCtxJs} window.gaFastLaunchList(${listArgJs}, '${safeCtxSchool}', '${safeCtxClass}');"
+            data-list-id="${listId}"
+            data-school="${escapeHtml(ctxSchool || '')}"
+            data-class="${escapeHtml(ctxClass || '')}"
+            data-is-my-list="${isMyListSource ? 'true' : 'false'}"
             class="game-vocab-list-card group relative p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer select-none ${
               isSelected
                 ? 'border-amber-400 bg-slate-800 shadow-md ring-2 ring-amber-400/40 is-selected'
@@ -24117,6 +24115,38 @@ function renderGamesList() {
   listArea.insertAdjacentHTML('beforeend', html);
   selector.appendChild(listArea);
   
+  // Attach delegated click & double-click listeners on the cards cleanly!
+  listArea.addEventListener('click', (e) => {
+    const card = e.target.closest('.game-vocab-list-card');
+    if (!card) return;
+    const isMyList = card.dataset.isMyList === 'true';
+    const listId = card.dataset.listId;
+    const listName = card.dataset.listName || card.dataset.listTitle;
+    const school = card.dataset.school;
+    const className = card.dataset.class;
+    if (isStudentGames) {
+      handleStudentSelectGameList(school, className, listName);
+    } else {
+      if (school && className) {
+        navSchool = school;
+        navClass = className;
+      }
+      selectGameList(isMyList ? { vocab_list_id: listId, vocab_list_name: listName } : listName);
+    }
+  });
+
+  listArea.addEventListener('dblclick', (e) => {
+    const card = e.target.closest('.game-vocab-list-card');
+    if (!card) return;
+    const isMyList = card.dataset.isMyList === 'true';
+    const listId = card.dataset.listId;
+    const listName = card.dataset.listName || card.dataset.listTitle;
+    const school = card.dataset.school;
+    const className = card.dataset.class;
+    const listRef = (isMyList && !isStudentGames) ? { vocab_list_id: listId, vocab_list_name: listName } : listName;
+    window.gaFastLaunchList?.(listRef, school, className);
+  });
+
   // Attach search filter listener
   const searchInput = selector.querySelector('#ga-vocab-search-input');
   if (searchInput) {
@@ -24146,156 +24176,6 @@ function renderGamesList() {
     }
   }
 
-  // Attach class filter listeners for student games
-  if (isStudentGames && enrolledClasses.length > 1) {
-    attachGamesClassFilterListeners(selector);
-  }
-  
-  // Always render the game arcade hub so it shows even before a list is selected
-  if (gamesContainer && window.gaRenderHub) {
-    const listLabel = selectedGameList.length ? selectedGameList.map(item => typeof item === 'object' ? item.vocab_list_name : item).join(', ') : '';
-    gamesContainer.innerHTML = window.gaRenderHub(listLabel, !isStudentGames);
-  } else if (gamesContainer) {
-    gamesContainer.innerHTML = '';
-  }
-  window.gaListStep?.(selector, gamesContainer, selectedGameList.length);
-}
-
-
-  // Group lists by class for student view
-  const groupedByClass = {};
-  validLists.forEach(list => {
-    const key = list.__gamesClassKey || `${list.vocab_list_school}||${list.vocab_list_class}`;
-    if (!groupedByClass[key]) groupedByClass[key] = { school: list.vocab_list_school, className: list.vocab_list_class, lists: [] };
-    groupedByClass[key].lists.push(list);
-  });
-  const classGroups = Object.values(groupedByClass);
-  const showClassHeaders = isStudentGames && classGroups.length > 1 && selectedStudentGamesScope === 'all';
-
-  // Build class filter tabs for student games
-  let classFilterHtml = '';
-  if (isStudentGames && enrolledClasses.length > 1) {
-    classFilterHtml = getStudentClassFilterMarkup('games', selectedStudentGamesClassKey);
-  }
-
-  const gamesListHeading = isStudentGames && selectedStudentGamesScope === 'all' ? 'All joined classes' : 'CHOOSE A VOCABULARY LIST TO PLAY';
-  const listenCatchLocked = isStudentGames && !canUseProGames();
-  let html = '';
-
-  if (isStudentGames) {
-    let studentGamesHtml = '<div class="space-y-6 student-games-multi-class mb-4">';
-    if (enrolledClasses.length > 1) {
-      studentGamesHtml += classFilterHtml;
-    }
-
-    const visibleEnrolledClasses = (selectedStudentGamesScope === 'class' && selectedStudentGamesClassKey)
-      ? enrolledClasses.filter(c => `${c.school_name}||${c.class_name}` === selectedStudentGamesClassKey)
-      : enrolledClasses;
-
-    visibleEnrolledClasses.forEach(cls => {
-      const classLists = getVocabLists(cls.school_name, cls.class_name);
-      // Filter lists to only those enabled for games by this class's teacher:
-      const activeLists = classLists.filter(list => isVocabListGameActive(list, cls.school_name, cls.class_name));
-      const classTitle = cls.school_name ? `${cls.school_name} · ${cls.class_name}` : cls.class_name;
-      const countLabel = `(${activeLists.length} active ${activeLists.length === 1 ? 'game' : 'games'})`;
-
-      studentGamesHtml += `
-        <div class="space-y-3 mb-6" data-class-section="${cls.school_name}||${cls.class_name}">
-          <!-- Class Group Header -->
-          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold uppercase tracking-wider text-amber-400">
-                ${classTitle}
-              </span>
-              <span class="text-[11px] font-medium text-slate-500">
-                ${countLabel}
-              </span>
-            </div>
-          </div>
-      `;
-
-      if (activeLists.length > 0) {
-        studentGamesHtml += `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">`;
-        activeLists.forEach(list => {
-          const words = getVocabWords(list.vocab_list_name, cls.school_name, cls.class_name);
-          const safeName = escapeHtml(list.vocab_list_name);
-          const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
-          const listId = String(list.__backendId || list.id || list.vocab_list_id);
-          const isSelected = selectedGameList.some(item => {
-            const itemKey = typeof item === 'object' ? (item.vocab_list_name || item.name || item.vocab_list_id || item.__backendId) : item;
-            return String(itemKey) === String(list.vocab_list_name) || String(itemKey) === listId;
-          });
-          const coverImg = list.vocab_cover_image_url
-            ? `<img src="${list.vocab_cover_image_url}" alt="${safeName}" class="w-16 h-16 rounded-lg object-cover shadow-sm group-hover:scale-105 transition-transform" />`
-            : `<div class="w-16 h-16 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-sm">${safeName.slice(0, 3)}</div>`;
-
-          studentGamesHtml += `
-            <button
-              key="${listId}"
-              type="button"
-              onclick="handleStudentSelectGameList('${String(cls.school_name).replace(/'/g, "\\'")}', '${String(cls.class_name).replace(/'/g, "\\'")}', '${safeListName}')"
-              class="group relative p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-2 ${
-                isSelected
-                  ? 'bg-slate-800/90 border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.25)]'
-                  : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-              }"
-            >
-              ${coverImg}
-              <div>
-                <div class="text-sm font-bold text-white group-hover:text-amber-300 transition-colors">
-                  ${safeName}
-                </div>
-                <div class="text-[11px] text-slate-400 mt-0.5">
-                  ${words.length} words
-                </div>
-              </div>
-            </button>
-          `;
-        });
-        studentGamesHtml += `</div>`;
-      } else {
-        studentGamesHtml += `
-          <div class="py-4 px-3 rounded-xl bg-slate-900/40 border border-slate-800/60 text-left">
-            <p class="text-xs text-slate-500 italic">
-              No vocabulary lists are currently active for games in this class.
-            </p>
-          </div>
-        `;
-      }
-
-      studentGamesHtml += `</div>`;
-    });
-
-    studentGamesHtml += '</div>';
-    html = studentGamesHtml;
-  } else {
-    html = '<div class="mb-4">' + classFilterHtml + `<p class="mb-3 text-xs font-black text-amber-200 tracking-widest uppercase">${gamesListHeading}</p>`;
-    classGroups.forEach(group => {
-      if (showClassHeaders) {
-        html += `<div class="mb-2 mt-4 flex items-center gap-2"><span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-to-br from-amber-400 to-indigo-500 text-[10px] font-black text-slate-900 shadow">📚</span><span class="text-sm font-extrabold text-amber-200 tracking-wide">${group.className}<span class="ml-1.5 text-xs font-bold text-indigo-200/80">· ${group.school}</span></span></div>`;
-      }
-      html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-2">';
-      group.lists.forEach((list, index) => {
-      const [ctxSchool, ctxClass] = String(list.__gamesClassKey || `${list.vocab_list_school || ''}||${list.vocab_list_class || ''}`).split('||');
-      const words = selectedGameSource === 'my_lists' ? getAuthorizedMyListsWords([String(list.vocab_list_id || list.__backendId)]).words || [] : getVocabWords({ vocab_list_id: list.vocab_list_id, vocab_list_name: list.vocab_list_name }, ctxSchool, ctxClass);
-      const playable = words.length >= 2;
-      const isSelected = selectedGameList.some(item => String(typeof item === 'object' ? item.vocab_list_id || item.__backendId : item) === String(selectedGameSource === 'my_lists' ? list.vocab_list_id || list.__backendId : list.vocab_list_name));
-      const accents = ['rose', 'violet', 'sky', 'amber', 'emerald', 'cyan'];
-      const accent = accents[index % accents.length];
-      const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
-      const setCtxJs = (currentRole === 'teacher' && selectedGameSource === 'my_lists') ? '' : `navSchool='${String(ctxSchool).replace(/'/g,"\\'")}';navClass='${String(ctxClass).replace(/'/g,"\\'")}';`;
-      html += `<div class="game-vocab-list-card group relative min-h-[150px] rounded-2xl border-2 border-${accent}-200 bg-gradient-to-br from-white to-${accent}-50 p-4 text-center ${isSelected ? `bg-${accent}-100 border-${accent}-500 ring-2 ring-${accent}-300 shadow-md` : ''}">
-        <button type="button" class="absolute inset-0 z-0 rounded-2xl focus-visible:outline focus-visible:outline-4 focus-visible:outline-amber-300" aria-label="Select ${list.vocab_list_name}" aria-pressed="${isSelected}" onclick="${setCtxJs} selectGameList(${selectedGameSource === 'my_lists' ? `{vocab_list_id:'${String(list.vocab_list_id).replace(/'/g, "\\'")}',vocab_list_name:'${safeListName}'}` : `'${safeListName}'`})"></button>
-        ${isSelected ? `<span class="absolute left-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-${accent}-600 text-white text-base font-black shadow-md ring-2 ring-white" aria-label="Selected">✓</span>` : ''}
-        <div class="relative z-10 pointer-events-none flex h-full flex-col items-center justify-center gap-2">${list.vocab_cover_image_url ? `<img src="${String(list.vocab_cover_image_url).replace(/"/g, '&quot;')}" class="h-20 w-20 rounded-xl object-cover shadow-md" alt="Cover for ${String(list.vocab_list_name).replace(/"/g, '&quot;')}" loading="lazy">` : ''}<h4 class="font-extrabold tracking-wide text-${accent}-900 text-sm leading-tight break-words">${list.vocab_list_name}</h4><p class="text-xs text-${accent}-700/70 font-medium">${words.length} words</p></div>
-      </div>`;
-      });
-      html += '</div>';
-    });
-    html += '</div>';
-  }
-  listArea.insertAdjacentHTML('beforeend', html);
-  
   // Attach class filter listeners for student games
   if (isStudentGames && enrolledClasses.length > 1) {
     attachGamesClassFilterListeners(selector);
