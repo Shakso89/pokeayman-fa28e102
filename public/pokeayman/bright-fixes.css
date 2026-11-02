@@ -2600,9 +2600,19 @@ html body.ts-bright #vocab-image-search-clear:hover {
 }
 
 /* 3D Fanned Game Deck Carousel (Polaroid Trading Cards) */
+#game-deck-carousel-root,
+#game-deck-cards-stage,
 .game-deck-container {
   perspective: 1200px !important;
   -webkit-perspective: 1200px !important;
+  overflow: visible !important;
+}
+html body #games-options-container,
+html body #student-games-options-container,
+html body #class-subtab-games > .glass-container,
+html body #student-tab-games > .glass-container,
+html body .ga-hub {
+  overflow: visible !important;
 }
 .game-deck-card-wrapper {
   will-change: transform, opacity;

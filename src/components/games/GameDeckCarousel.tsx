@@ -41,7 +41,7 @@ export const GameDeckCarousel: React.FC<GameDeckCarouselProps> = ({
   const activeGame = gamesList[activeIndex] || gamesList[0];
 
   return (
-    <div className="w-full flex flex-col items-center justify-center py-10 overflow-hidden" data-testid="game-deck-carousel">
+    <div className="w-full flex flex-col items-center justify-center py-10 overflow-visible" data-testid="game-deck-carousel">
       {/* Step Header */}
       <div className="text-center mb-12">
         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Step 1</h2>
@@ -50,7 +50,7 @@ export const GameDeckCarousel: React.FC<GameDeckCarouselProps> = ({
       </div>
 
       {/* 3D Fanned Deck Container */}
-      <div className="relative w-full h-[400px] flex items-center justify-center perspective-[1200px]" data-testid="deck-container">
+      <div className="relative w-full h-[400px] flex items-center justify-center perspective-[1200px] overflow-visible" data-testid="deck-container">
         {gamesList.map((game, index) => {
           const offset = index - activeIndex;
           const absOffset = Math.abs(offset);
@@ -62,7 +62,7 @@ export const GameDeckCarousel: React.FC<GameDeckCarouselProps> = ({
           const rotateZ = offset * 10; // Rotate outer cards
           const scale = isCenter ? 1.15 : Math.max(0.85, 1 - absOffset * 0.05); // Center pops out
           const zIndex = 50 - absOffset; // Center is on top
-          const opacity = absOffset > 3 ? 0 : 1; // Hide cards outside the viewable arc
+          const opacity = absOffset > 2 ? 0 : (absOffset === 2 ? 0.75 : 1); // Hide cards outside the 5-card viewable arc
 
           return (
             <div
@@ -74,7 +74,7 @@ export const GameDeckCarousel: React.FC<GameDeckCarouselProps> = ({
                 transform: `translateX(${translateX}px) translateY(${translateY}px) scale(${scale}) rotateZ(${rotateZ}deg)`,
                 zIndex,
                 opacity,
-                pointerEvents: opacity === 0 ? 'none' : 'auto',
+                pointerEvents: absOffset > 2 ? 'none' : 'auto',
               }}
             >
               {/* Polaroid-Style Card (Matching Homepage UI exactly) */}

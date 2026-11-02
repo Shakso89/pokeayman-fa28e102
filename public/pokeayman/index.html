@@ -8069,12 +8069,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         const rotateZ = offset * 10;
         const scale = isCenter ? 1.15 : Math.max(0.85, 1 - absOffset * 0.05);
         const zIndex = 50 - absOffset;
-        const opacity = absOffset > 3 ? 0 : 1;
+        const opacity = absOffset > 2 ? 0 : (absOffset === 2 ? 0.75 : 1);
 
         cardEl.style.transform = `translateX(${translateX}px) translateY(${translateY}px) scale(${scale}) rotateZ(${rotateZ}deg)`;
         cardEl.style.zIndex = String(zIndex);
         cardEl.style.opacity = String(opacity);
-        cardEl.style.pointerEvents = opacity === 0 ? 'none' : 'auto';
+        cardEl.style.pointerEvents = absOffset > 2 ? 'none' : 'auto';
 
         const inner = cardEl.querySelector('.game-deck-inner-card');
         if (inner) {
@@ -8181,8 +8181,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     setTimeout(() => {
       window.initGameDeckCarousel?.();
     }, 0);
-    return `<section class="ga-hub" aria-label="Game arcade">
-      <div class="w-full flex flex-col items-center justify-center py-6 sm:py-10 overflow-hidden" id="game-deck-carousel-root">
+    return `<section class="ga-hub overflow-visible" aria-label="Game arcade" style="overflow: visible !important;">
+      <div class="w-full flex flex-col items-center justify-center py-6 sm:py-10 overflow-visible" id="game-deck-carousel-root" style="overflow: visible !important;">
         <!-- Step Header -->
         <div class="text-center mb-8 sm:mb-12">
           <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Step 1</span>
@@ -8191,7 +8191,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         </div>
 
         <!-- 3D Fanned Deck Container -->
-        <div class="relative w-full h-[360px] sm:h-[400px] flex items-center justify-center game-deck-container" style="perspective: 1200px;" id="game-deck-cards-stage">
+        <div class="relative w-full h-[360px] sm:h-[400px] flex items-center justify-center game-deck-container overflow-visible" style="perspective: 1200px; overflow: visible !important;" id="game-deck-cards-stage">
         </div>
 
         <!-- Navigation Controls & Description -->
