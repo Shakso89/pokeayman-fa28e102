@@ -1216,65 +1216,217 @@
     }
   };
 
-  window.gaRenderHub = function (listLabel, isTeacher) {
-    const cards = GAMES.filter(g => !(isTeacher ? g.studentOnly : g.teacherOnly)).map(g => {
-      const locked = Boolean(g.proOnly && !window.canUseProGames?.());
-      const isProListen = g.fn === 'startListenCatch';
-      const isProBattle = g.fn === 'startVocabBattle';
-      const isPro = Boolean(g.proOnly);
-      const proCardClass = isProListen ? ' ga-pro ga-pro-listen' : (isProBattle ? ' ga-pro ga-pro-battle' : (isPro ? ' ga-pro' : ''));
-      
-      const proCrownHtml = isPro ? `
-        <span class="ga-pro-disc-crest" aria-hidden="true" title="Pro Exclusive">
-          <svg viewBox="0 0 24 24" class="ga-pro-crest-svg" fill="currentColor">
-            <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5m14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1Z"/>
-          </svg>
-        </span>` : '';
-      
-      const proPillHtml = isPro ? `
-        <span class="ga-disc-pro-pill" aria-hidden="true">${isProBattle ? '⚔️ BATTLE PRO' : '🎧 AUDIO PRO'}</span>` : '';
+  window.initGameDeckCarousel = function (container) {
+    const root = (container && container.querySelector ? (container.matches?.('#game-deck-carousel-root') ? container : container.querySelector('#game-deck-carousel-root')) : null) || document.getElementById('game-deck-carousel-root');
+    if (!root) return;
+    const stage = root.querySelector('#game-deck-cards-stage');
+    const prevBtn = root.querySelector('#game-deck-prev');
+    const nextBtn = root.querySelector('#game-deck-next');
+    const counter = root.querySelector('#game-deck-counter');
+    const descEl = root.querySelector('#game-deck-desc');
+    const proceedBtn = root.querySelector('#game-deck-proceed');
+    const proceedLabel = root.querySelector('#game-deck-proceed-label');
+    if (!stage) return;
 
-      const proPlaqueBannerHtml = isPro ? `
-        <span class="ga-pro-plaque-banner" aria-hidden="true">
-          <span class="ga-pro-sparkle">✦</span>
-          <span>${isProBattle ? 'CHAMPION ARENA' : 'COSMIC ARCADE'}</span>
-          <span class="ga-pro-sparkle">✦</span>
-        </span>` : '';
+    const isTeacher = typeof currentRole !== 'undefined' ? currentRole === 'teacher' : true;
+    const activeGames = GAMES.filter(g => !(isTeacher ? g.studentOnly : g.teacherOnly));
+    if (!activeGames.length) return;
 
-      const proFeatureBarHtml = isPro ? `
-        <span class="ga-pro-feature-bar" aria-hidden="true">
-          <span>${isProBattle ? '🔥 Boss Battles · Rewards' : '🌌 Catchdex · Speech Audio'}</span>
-        </span>` : '';
+    let activeIndex = typeof window._lastChosenGameIndex === 'number' && window._lastChosenGameIndex >= 0 && window._lastChosenGameIndex < activeGames.length
+      ? window._lastChosenGameIndex
+      : Math.floor(activeGames.length / 2);
 
-      const proFoilHtml = isPro ? `<span class="ga-pro-foil" aria-hidden="true"></span>` : '';
+    function update() {
+      window._lastChosenGameIndex = activeIndex;
+      const currentGame = activeGames[activeIndex] || activeGames[0];
+      const locked = Boolean(currentGame.proOnly && !window.canUseProGames?.());
 
-      return `
-      <button type="button" class="ga-cart ga-${g.accent}${proCardClass}${locked ? ' ga-pro-locked' : ''}" onclick="${locked ? `window.requireProGame('${esc(g.name)}')` : `window.selectGameToPlay('${g.fn}')`}" aria-disabled="${locked}" aria-label="${locked ? `${g.name}, Pro access required` : `Choose ${g.name}`}" ${locked ? 'title="Pro access required"' : ''}>
-        <span class="ga-cart-disc ga-cart-art" aria-hidden="true">
-          ${proCrownHtml}
-          ${g.image ? `<img src="${g.image}" alt="${esc(g.name)}" class="ga-cart-img" loading="lazy">` : `<span class="ga-cart-fallback-icon">${g.icon}</span>`}
-          ${proPillHtml}
-          ${locked ? '<span class="ga-disc-lock-overlay" aria-hidden="true"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></span>' : ''}
-        </span>
-        <span class="ga-cart-rect ga-cart-body">
-          ${proFoilHtml}
-          ${proPlaqueBannerHtml}
-          <span class="ga-cart-name">${esc(g.name)}</span>
-          <span class="ga-cart-desc">${esc(g.desc)}</span>
-          ${proFeatureBarHtml}
-          ${locked ? `<span class="ga-cart-lock-tag">${isTeacher ? 'Upgrade to Pro' : 'Locked for class'}</span>` : ''}
-        </span>
-      </button>`;
-    }).join('');
-    return `<section class="ga-hub" aria-label="Game arcade">
-      <header class="ga-hub-head">
-        <div>
-          <span class="ga-hub-kicker">STEP 1</span>
-          <h2 class="arena-title text-xl sm:text-2xl font-black text-white">Choose a Game to Play</h2>
-          <p class="text-xs text-amber-200/80 mt-1">Select any game below, then pick the vocabulary lists for the game content.</p>
+      if (counter) counter.textContent = `${String(activeIndex + 1).padStart(2, '0')} / ${String(activeGames.length).padStart(2, '0')}`;
+      if (descEl) descEl.textContent = currentGame.desc;
+      if (prevBtn) prevBtn.disabled = activeIndex === 0;
+      if (nextBtn) nextBtn.disabled = activeIndex === activeGames.length - 1;
+      if (proceedLabel) {
+        proceedLabel.textContent = locked ? `Unlock ${currentGame.name} (Pro)` : `Select ${currentGame.name}`;
+      }
+
+      stage.querySelectorAll('.game-deck-card-wrapper').forEach((cardEl, index) => {
+        const offset = index - activeIndex;
+        const absOffset = Math.abs(offset);
+        const isCenter = offset === 0;
+
+        // Fanning Math (matching exact formula requested)
+        const translateX = offset * 130;
+        const translateY = absOffset * 35;
+        const rotateZ = offset * 10;
+        const scale = isCenter ? 1.15 : Math.max(0.85, 1 - absOffset * 0.05);
+        const zIndex = 50 - absOffset;
+        const opacity = absOffset > 3 ? 0 : 1;
+
+        cardEl.style.transform = `translateX(${translateX}px) translateY(${translateY}px) scale(${scale}) rotateZ(${rotateZ}deg)`;
+        cardEl.style.zIndex = String(zIndex);
+        cardEl.style.opacity = String(opacity);
+        cardEl.style.pointerEvents = opacity === 0 ? 'none' : 'auto';
+
+        const inner = cardEl.querySelector('.game-deck-inner-card');
+        if (inner) {
+          if (isCenter) {
+            inner.classList.add('ring-4', 'ring-amber-400');
+            inner.style.boxShadow = '0 20px 50px rgba(0,0,0,0.5)';
+          } else {
+            inner.classList.remove('ring-4', 'ring-amber-400');
+            inner.style.boxShadow = '';
+          }
+        }
+      });
+    }
+
+    stage.innerHTML = activeGames.map((game, index) => {
+      const isPro = Boolean(game.proOnly);
+      const locked = Boolean(isPro && !window.canUseProGames?.());
+
+      return `<div
+        class="game-deck-card-wrapper absolute top-0 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] cursor-pointer origin-bottom select-none"
+        data-game-index="${index}"
+        data-game-fn="${game.fn}"
+        role="button"
+        tabindex="0"
+        aria-label="Select ${esc(game.name)}"
+      >
+        <div class="game-deck-inner-card w-[200px] sm:w-[220px] h-[280px] sm:h-[310px] bg-white rounded-xl shadow-2xl flex flex-col p-2.5 transition-all relative">
+          ${isPro ? `<span class="absolute top-2.5 right-2.5 bg-amber-400 text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded-full shadow-sm z-10">${locked ? '🔒 PRO' : '★ PRO'}</span>` : ''}
+          <div class="w-full text-center pb-1.5 pt-0.5 text-[11px] font-black text-slate-800 tracking-wider">
+            #${String(index + 1).padStart(3, '0')}
+          </div>
+          <div class="w-full flex-1 bg-slate-100 rounded-lg overflow-hidden relative border border-slate-200/50">
+            <img
+              src="${game.image || ''}"
+              alt="${esc(game.name)}"
+              class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              loading="${index === 0 ? 'eager' : 'lazy'}"
+              onerror="this.onerror=null;this.src='/pokeayman/assets/avatars/pokeayman-logo.png';"
+            />
+          </div>
+          <div class="w-full text-center pt-3 pb-1">
+            <h3 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-none truncate px-1">
+              ${esc(game.name)}
+            </h3>
+            <p class="text-[9px] font-black text-slate-400 mt-1.5 tracking-[0.2em] uppercase">
+              PokéAyman
+            </p>
+          </div>
         </div>
-      </header>
-      <div class="ga-grid" role="group" aria-label="Choose a vocabulary game">${cards}</div>
+      </div>`;
+    }).join('');
+
+    stage.querySelectorAll('.game-deck-card-wrapper').forEach((card) => {
+      card.addEventListener('click', () => {
+        const idx = parseInt(card.dataset.gameIndex, 10);
+        if (idx === activeIndex) {
+          const g = activeGames[activeIndex];
+          if (g) {
+            const locked = Boolean(g.proOnly && !window.canUseProGames?.());
+            if (locked) {
+              if (typeof window.requireProGame === 'function') window.requireProGame(g.name);
+              else toast(g.name + ' requires Pro access');
+            } else {
+              window.selectGameToPlay(g.fn);
+            }
+          }
+        } else {
+          activeIndex = idx;
+          update();
+        }
+      });
+    });
+
+    prevBtn?.addEventListener('click', () => {
+      if (activeIndex > 0) {
+        activeIndex--;
+        update();
+      }
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      if (activeIndex < activeGames.length - 1) {
+        activeIndex++;
+        update();
+      }
+    });
+
+    proceedBtn?.addEventListener('click', () => {
+      const g = activeGames[activeIndex];
+      if (!g) return;
+      const locked = Boolean(g.proOnly && !window.canUseProGames?.());
+      if (locked) {
+        if (typeof window.requireProGame === 'function') window.requireProGame(g.name);
+        else toast(g.name + ' requires Pro access');
+      } else {
+        window.selectGameToPlay(g.fn);
+      }
+    });
+
+    update();
+  };
+
+  window.gaRenderHub = function (listLabel, isTeacher) {
+    setTimeout(() => {
+      window.initGameDeckCarousel?.();
+    }, 0);
+    return `<section class="ga-hub" aria-label="Game arcade">
+      <div class="w-full flex flex-col items-center justify-center py-6 sm:py-10 overflow-hidden" id="game-deck-carousel-root">
+        <!-- Step Header -->
+        <div class="text-center mb-8 sm:mb-12">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1 block">Step 1</span>
+          <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Choose a Game to Play</h1>
+          <p class="text-xs sm:text-sm text-slate-400 mt-2">Select a game below, then pick the vocabulary lists.</p>
+        </div>
+
+        <!-- 3D Fanned Deck Container -->
+        <div class="relative w-full h-[360px] sm:h-[400px] flex items-center justify-center game-deck-container" style="perspective: 1200px;" id="game-deck-cards-stage">
+        </div>
+
+        <!-- Navigation Controls & Description -->
+        <div class="mt-6 max-w-lg w-full flex flex-col items-center px-4">
+          <div class="flex items-center gap-4 sm:gap-6 mb-6 sm:mb-8 w-full">
+            <button 
+              type="button"
+              id="game-deck-prev" 
+              aria-label="Previous game"
+              class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-white disabled:opacity-30 hover:bg-slate-700 hover:scale-105 transition active:scale-95 cursor-pointer disabled:cursor-not-allowed shrink-0"
+            >
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            
+            <div class="text-center flex-1 min-w-0">
+              <div id="game-deck-counter" class="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">
+                01 / 06
+              </div>
+              <p id="game-deck-desc" class="text-sm sm:text-base font-medium text-slate-200 min-h-[48px] flex items-center justify-center line-clamp-2">
+                Loading...
+              </p>
+            </div>
+
+            <button 
+              type="button"
+              id="game-deck-next"
+              aria-label="Next game"
+              class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-white disabled:opacity-30 hover:bg-slate-700 hover:scale-105 transition active:scale-95 cursor-pointer disabled:cursor-not-allowed shrink-0"
+            >
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+
+          <!-- Proceed Button -->
+          <button
+            type="button"
+            id="game-deck-proceed"
+            class="px-8 sm:px-10 py-3 sm:py-3.5 rounded-full bg-amber-400 text-slate-950 font-black text-sm flex items-center gap-2 hover:bg-amber-300 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(251,191,36,0.3)] cursor-pointer"
+          >
+            <span id="game-deck-proceed-label">Select Game</span>
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+        </div>
+      </div>
     </section>`;
   };
 
