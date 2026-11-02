@@ -141,8 +141,22 @@
 
     const p1 = activeGamePlayers[0];
     const p2 = activeGamePlayers[1];
-    const p1AvatarUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p1.avatar_pokemon_id || 25}.png`;
-    const p2AvatarUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p2.avatar_pokemon_id || 133}.png`;
+    const p1Name = p1?.student_name || p1?.name || 'Player 1';
+    const p2Name = p2?.student_name || p2?.name || 'Player 2';
+    const p1AvatarUrl = p1?.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p1?.avatar_pokemon_id || 25}.png`;
+    const p2AvatarUrl = p2?.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p2?.avatar_pokemon_id || 133}.png`;
+
+    const themeGridHtml = typeof window.renderThemeCardsMarkup === 'function'
+      ? window.renderThemeCardsMarkup(initialThemeObj.id)
+      : themes.map(t => `
+          <button type="button" class="ga-theme-card ${t.id === initialThemeObj.id ? 'is-selected' : ''}" data-ga-theme-choice="${t.id}" role="radio" aria-checked="${t.id === initialThemeObj.id}">
+            <div class="ga-theme-card-thumb">${t.thumbSvg || '<span class="text-lg">🎨</span>'}</div>
+            <div class="ga-theme-card-info">
+              <strong class="ga-theme-card-name">${esc(t.name)}</strong>
+              <span class="ga-theme-card-sub">${esc(t.subtitle || '')}</span>
+            </div>
+          </button>
+        `).join('');
 
     modal.innerHTML = `
       <!-- 1. Header Bar: Title, Theme Selector & Stage Controls (NO Score Box in Header) -->
@@ -165,15 +179,7 @@
             <div class="ga-stage-theme-popover" id="dots-theme-popover" role="dialog" aria-label="Visual style" hidden>
               <div class="ga-stage-theme-popover-head"><strong>Visual style</strong><span>Switch live</span></div>
               <div class="ga-theme-grid ga-theme-grid-compact" role="radiogroup" aria-label="Choose visual style">
-                ${themes.map(t => `
-                  <button type="button" class="ga-theme-card ${t.id === initialThemeObj.id ? 'is-selected' : ''}" data-ga-theme-choice="${t.id}" role="radio" aria-checked="${t.id === initialThemeObj.id}">
-                    <div class="ga-theme-card-thumb">${t.previewUrl ? `<img src="${t.previewUrl}" alt="">` : '<span class="text-lg">🎨</span>'}</div>
-                    <div class="ga-theme-card-info">
-                      <strong class="ga-theme-card-name">${esc(t.name)}</strong>
-                      <span class="ga-theme-card-sub">${esc(t.subtitle || '')}</span>
-                    </div>
-                  </button>
-                `).join('')}
+                ${themeGridHtml}
               </div>
             </div>
           </div>
@@ -188,17 +194,17 @@
       <div class="dots-hud-banner game-player-hud-slot">
         <div class="dots-duel-hud">
           <div class="dots-player-badge p1 is-active" id="dots-badge-p1">
-            <img src="${p1AvatarUrl}" class="dots-player-avatar" alt="${esc(p1.student_name)}">
+            <img src="${p1AvatarUrl}" class="dots-player-avatar" alt="${esc(p1Name)}">
             <div class="dots-player-info">
-              <span class="dots-player-name text-amber-300">${esc(p1.student_name)}</span>
+              <span class="dots-player-name text-amber-300">${esc(p1Name)}</span>
               <span class="dots-player-score" id="dots-score-p1">0 boxes</span>
             </div>
           </div>
           <span class="text-xs font-black text-slate-400 uppercase tracking-widest px-2">VS</span>
           <div class="dots-player-badge p2" id="dots-badge-p2">
-            <img src="${p2AvatarUrl}" class="dots-player-avatar" alt="${esc(p2.student_name)}">
+            <img src="${p2AvatarUrl}" class="dots-player-avatar" alt="${esc(p2Name)}">
             <div class="dots-player-info">
-              <span class="dots-player-name text-cyan-300">${esc(p2.student_name)}</span>
+              <span class="dots-player-name text-cyan-300">${esc(p2Name)}</span>
               <span class="dots-player-score" id="dots-score-p2">0 boxes</span>
             </div>
           </div>
@@ -208,7 +214,7 @@
       <!-- 3. Dynamic Turn Status Notification Banner -->
       <div class="dots-status-banner" id="dots-status-banner">
         <span id="dots-status-text">
-          ${esc(p1.student_name)}'s Turn: Answer the vocabulary question to draw a line!
+          ${esc(p1Name)}'s Turn: Answer the vocabulary question to draw a line!
         </span>
       </div>
 
@@ -242,6 +248,7 @@
     `;
 
     document.body.appendChild(modal);
+    document.body.classList.add('ga-playing');
 
     // Apply active theme immediately
     if (typeof window.gaApplyThemeToStage === 'function') {
@@ -322,7 +329,10 @@
       if (typeof stopPlayerTurnTimer === 'function') stopPlayerTurnTimer(modal);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       modal.remove();
-      if (typeof window.gaExitSetupToArcade === 'function') {
+      document.body.classList.remove('ga-playing');
+      if (typeof endActiveGames === 'function') {
+        endActiveGames();
+      } else if (typeof window.gaExitSetupToArcade === 'function') {
         window.gaExitSetupToArcade();
       }
     };
@@ -330,6 +340,7 @@
 
     const updateStatus = () => {
       const activePlayer = activeGamePlayerIndex === 0 ? p1 : p2;
+      const activePlayerName = activePlayer?.student_name || activePlayer?.name || (activeGamePlayerIndex === 0 ? 'Player 1' : 'Player 2');
       const isP1 = activeGamePlayerIndex === 0;
       const statusText = modal.querySelector('#dots-status-text');
       const badgeP1 = modal.querySelector('#dots-badge-p1');
@@ -349,15 +360,15 @@
       if (boxesLeft) boxesLeft.textContent = String(totalPossibleBoxes - completed);
 
       if (turnIndicator) {
-        turnIndicator.textContent = activePlayer.student_name;
+        turnIndicator.textContent = activePlayerName;
         turnIndicator.className = isP1 ? 'text-xs font-bold text-amber-300' : 'text-xs font-bold text-cyan-300';
       }
 
       if (statusText) {
         if (phase === 'MCQ') {
-          statusText.innerHTML = `<span class="${isP1 ? 'text-amber-300' : 'text-cyan-300'} font-black">${esc(activePlayer.student_name)}</span>'s Turn: Choose the correct word for the picture!`;
+          statusText.innerHTML = `<span class="${isP1 ? 'text-amber-300' : 'text-cyan-300'} font-black">${esc(activePlayerName)}</span>'s Turn: Choose the correct word for the picture!`;
         } else if (phase === 'DRAW_LINE') {
-          statusText.innerHTML = `⭐ Correct! <span class="${isP1 ? 'text-amber-300' : 'text-cyan-300'} font-black">${esc(activePlayer.student_name)}</span>, click any available horizontal or vertical line!`;
+          statusText.innerHTML = `⭐ Correct! <span class="${isP1 ? 'text-amber-300' : 'text-cyan-300'} font-black">${esc(activePlayerName)}</span>, click any available horizontal or vertical line!`;
         } else if (phase === 'ROUND_OVER') {
           statusText.innerHTML = `<span class="text-emerald-400 font-black">Match Complete!</span> Calculating winner...`;
         }

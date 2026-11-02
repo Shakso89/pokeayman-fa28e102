@@ -362,8 +362,57 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     i % 2 === 0 ? '18px' : 'minmax(50px, 80px)'
   ).join(' ');
 
+  const THEME_STYLES: Record<string, { bg: string; border: string; cardBg: string; gridBg: string; dotBg: string; dotBorder: string; dotGlow: string }> = {
+    classroom: {
+      bg: 'bg-[#0f291e]',
+      border: 'border-[#2d5a45]',
+      cardBg: 'bg-[#0c2219]/90',
+      gridBg: 'bg-[#081d14]',
+      dotBg: 'bg-amber-300',
+      dotBorder: 'border-white',
+      dotGlow: 'shadow-[0_0_8px_rgba(253,224,71,0.6)]',
+    },
+    jungle: {
+      bg: 'bg-[#041f12]',
+      border: 'border-[#15803d]',
+      cardBg: 'bg-[#052114]/90',
+      gridBg: 'bg-[#02170d]',
+      dotBg: 'bg-lime-400',
+      dotBorder: 'border-lime-100',
+      dotGlow: 'shadow-[0_0_8px_rgba(163,230,53,0.6)]',
+    },
+    toybox: {
+      bg: 'bg-[#1a0f2e]',
+      border: 'border-[#6366f1]',
+      cardBg: 'bg-[#1c1034]/90',
+      gridBg: 'bg-[#100820]',
+      dotBg: 'bg-pink-400',
+      dotBorder: 'border-pink-100',
+      dotGlow: 'shadow-[0_0_8px_rgba(244,114,182,0.6)]',
+    },
+    halloween: {
+      bg: 'bg-[#140a17]',
+      border: 'border-[#9a3412]',
+      cardBg: 'bg-[#160b19]/90',
+      gridBg: 'bg-[#0d0510]',
+      dotBg: 'bg-orange-400',
+      dotBorder: 'border-amber-100',
+      dotGlow: 'shadow-[0_0_8px_rgba(251,146,60,0.6)]',
+    },
+    classic: {
+      bg: 'bg-slate-950',
+      border: 'border-slate-800',
+      cardBg: 'bg-slate-900/60',
+      gridBg: 'bg-[#020617]',
+      dotBg: 'bg-amber-400',
+      dotBorder: 'border-amber-200',
+      dotGlow: 'shadow-[0_0_8px_rgba(251,191,36,0.6)]',
+    },
+  };
+  const themeStyle = THEME_STYLES[activeTheme] || THEME_STYLES.classic;
+
   return (
-    <div className="w-full max-w-5xl mx-auto rounded-3xl bg-slate-950 border border-slate-800 p-4 sm:p-6 shadow-2xl flex flex-col gap-6 text-slate-100 relative overflow-hidden select-none">
+    <div className={`w-full max-w-5xl mx-auto rounded-3xl ${themeStyle.bg} border ${themeStyle.border} p-4 sm:p-6 shadow-2xl flex flex-col gap-6 text-slate-100 relative overflow-hidden select-none transition-colors duration-300`}>
       {/* Background ambient gradient */}
       <div
         className={`absolute -top-32 -left-32 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors duration-500 ${
@@ -525,7 +574,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       {/* 2-Column Split: Left MCQ Question Card | Right Dots & Boxes Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Left Section: Question Card */}
-        <div className="lg:col-span-5 flex flex-col justify-between bg-slate-900/70 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+        <div className={`lg:col-span-5 flex flex-col justify-between ${themeStyle.cardBg} border ${themeStyle.border} rounded-2xl p-5 shadow-xl relative overflow-hidden transition-colors duration-300`}>
           {/* Active Turn Header */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-800/60 mb-3">
             <div className="flex items-center gap-2">
@@ -612,7 +661,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
         </div>
 
         {/* Right Section: Interactive Dots & Boxes Board */}
-        <div className="lg:col-span-7 flex flex-col items-center justify-center bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl relative min-h-[420px]">
+        <div className={`lg:col-span-7 flex flex-col items-center justify-center ${themeStyle.cardBg} border ${themeStyle.border} rounded-2xl p-6 shadow-xl relative min-h-[420px] transition-colors duration-300`}>
           {/* Turn banner helper */}
           <div className="text-center mb-5">
             <span
@@ -630,7 +679,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
 
           {/* Board Grid Container */}
           <div
-            className="grid items-center justify-center gap-0 p-4 rounded-2xl bg-slate-950/90 border border-slate-800/80 shadow-2xl"
+            className={`grid items-center justify-center gap-0 p-4 rounded-2xl ${themeStyle.gridBg} border ${themeStyle.border} shadow-2xl transition-colors duration-300`}
             style={{
               gridTemplateColumns: gridTemplate,
               gridTemplateRows: gridTemplate,
@@ -645,7 +694,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                     gridRow: 2 * r + 1,
                     gridColumn: 2 * c + 1,
                   }}
-                  className="w-4 h-4 rounded-full bg-gradient-to-tr from-amber-400 to-amber-200 border-2 border-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.5)] z-20 mx-auto"
+                  className={`w-4 h-4 rounded-full ${themeStyle.dotBg} border-2 ${themeStyle.dotBorder} ${themeStyle.dotGlow} z-20 mx-auto transition-all duration-300`}
                 />
               ))
             )}

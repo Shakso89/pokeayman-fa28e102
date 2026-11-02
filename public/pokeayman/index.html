@@ -5476,10 +5476,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/leaderboard-views.css">
 <link rel="stylesheet" href="/pokeayman/profile-workspace.css">
 <link rel="stylesheet" href="/pokeayman/vocab-editor.css">
-<link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261102-dots-and-boxes-v4">
+<link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261102-dots-and-boxes-v5">
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/crossword.css?v=20261028-crosswords-v11">
-<link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261102-dots-and-boxes-v4">
+<link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261102-dots-and-boxes-v5">
 <link rel="stylesheet" href="/pokeayman/vocab-battle.css">
 <link rel="stylesheet" href="/pokeayman/study-theme.css">
 <link rel="stylesheet" href="/pokeayman/components.css">
@@ -6236,8 +6236,22 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
     const p1 = activeGamePlayers[0];
     const p2 = activeGamePlayers[1];
-    const p1AvatarUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p1.avatar_pokemon_id || 25}.png`;
-    const p2AvatarUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p2.avatar_pokemon_id || 133}.png`;
+    const p1Name = p1?.student_name || p1?.name || 'Player 1';
+    const p2Name = p2?.student_name || p2?.name || 'Player 2';
+    const p1AvatarUrl = p1?.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p1?.avatar_pokemon_id || 25}.png`;
+    const p2AvatarUrl = p2?.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p2?.avatar_pokemon_id || 133}.png`;
+
+    const themeGridHtml = typeof window.renderThemeCardsMarkup === 'function'
+      ? window.renderThemeCardsMarkup(initialThemeObj.id)
+      : themes.map(t => `
+          <button type="button" class="ga-theme-card ${t.id === initialThemeObj.id ? 'is-selected' : ''}" data-ga-theme-choice="${t.id}" role="radio" aria-checked="${t.id === initialThemeObj.id}">
+            <div class="ga-theme-card-thumb">${t.thumbSvg || '<span class="text-lg">🎨</span>'}</div>
+            <div class="ga-theme-card-info">
+              <strong class="ga-theme-card-name">${esc(t.name)}</strong>
+              <span class="ga-theme-card-sub">${esc(t.subtitle || '')}</span>
+            </div>
+          </button>
+        `).join('');
 
     modal.innerHTML = `
       <!-- 1. Header Bar: Title, Theme Selector & Stage Controls (NO Score Box in Header) -->
@@ -6260,15 +6274,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             <div class="ga-stage-theme-popover" id="dots-theme-popover" role="dialog" aria-label="Visual style" hidden>
               <div class="ga-stage-theme-popover-head"><strong>Visual style</strong><span>Switch live</span></div>
               <div class="ga-theme-grid ga-theme-grid-compact" role="radiogroup" aria-label="Choose visual style">
-                ${themes.map(t => `
-                  <button type="button" class="ga-theme-card ${t.id === initialThemeObj.id ? 'is-selected' : ''}" data-ga-theme-choice="${t.id}" role="radio" aria-checked="${t.id === initialThemeObj.id}">
-                    <div class="ga-theme-card-thumb">${t.previewUrl ? `<img src="${t.previewUrl}" alt="">` : '<span class="text-lg">🎨</span>'}</div>
-                    <div class="ga-theme-card-info">
-                      <strong class="ga-theme-card-name">${esc(t.name)}</strong>
-                      <span class="ga-theme-card-sub">${esc(t.subtitle || '')}</span>
-                    </div>
-                  </button>
-                `).join('')}
+                ${themeGridHtml}
               </div>
             </div>
           </div>
@@ -6283,17 +6289,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       <div class="dots-hud-banner game-player-hud-slot">
         <div class="dots-duel-hud">
           <div class="dots-player-badge p1 is-active" id="dots-badge-p1">
-            <img src="${p1AvatarUrl}" class="dots-player-avatar" alt="${esc(p1.student_name)}">
+            <img src="${p1AvatarUrl}" class="dots-player-avatar" alt="${esc(p1Name)}">
             <div class="dots-player-info">
-              <span class="dots-player-name text-amber-300">${esc(p1.student_name)}</span>
+              <span class="dots-player-name text-amber-300">${esc(p1Name)}</span>
               <span class="dots-player-score" id="dots-score-p1">0 boxes</span>
             </div>
           </div>
           <span class="text-xs font-black text-slate-400 uppercase tracking-widest px-2">VS</span>
           <div class="dots-player-badge p2" id="dots-badge-p2">
-            <img src="${p2AvatarUrl}" class="dots-player-avatar" alt="${esc(p2.student_name)}">
+            <img src="${p2AvatarUrl}" class="dots-player-avatar" alt="${esc(p2Name)}">
             <div class="dots-player-info">
-              <span class="dots-player-name text-cyan-300">${esc(p2.student_name)}</span>
+              <span class="dots-player-name text-cyan-300">${esc(p2Name)}</span>
               <span class="dots-player-score" id="dots-score-p2">0 boxes</span>
             </div>
           </div>
@@ -6303,7 +6309,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       <!-- 3. Dynamic Turn Status Notification Banner -->
       <div class="dots-status-banner" id="dots-status-banner">
         <span id="dots-status-text">
-          ${esc(p1.student_name)}'s Turn: Answer the vocabulary question to draw a line!
+          ${esc(p1Name)}'s Turn: Answer the vocabulary question to draw a line!
         </span>
       </div>
 
@@ -6337,6 +6343,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     `;
 
     document.body.appendChild(modal);
+    document.body.classList.add('ga-playing');
 
     // Apply active theme immediately
     if (typeof window.gaApplyThemeToStage === 'function') {
@@ -6417,7 +6424,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       if (typeof stopPlayerTurnTimer === 'function') stopPlayerTurnTimer(modal);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       modal.remove();
-      if (typeof window.gaExitSetupToArcade === 'function') {
+      document.body.classList.remove('ga-playing');
+      if (typeof endActiveGames === 'function') {
+        endActiveGames();
+      } else if (typeof window.gaExitSetupToArcade === 'function') {
         window.gaExitSetupToArcade();
       }
     };
@@ -6425,6 +6435,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
     const updateStatus = () => {
       const activePlayer = activeGamePlayerIndex === 0 ? p1 : p2;
+      const activePlayerName = activePlayer?.student_name || activePlayer?.name || (activeGamePlayerIndex === 0 ? 'Player 1' : 'Player 2');
       const isP1 = activeGamePlayerIndex === 0;
       const statusText = modal.querySelector('#dots-status-text');
       const badgeP1 = modal.querySelector('#dots-badge-p1');
@@ -6444,15 +6455,15 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       if (boxesLeft) boxesLeft.textContent = String(totalPossibleBoxes - completed);
 
       if (turnIndicator) {
-        turnIndicator.textContent = activePlayer.student_name;
+        turnIndicator.textContent = activePlayerName;
         turnIndicator.className = isP1 ? 'text-xs font-bold text-amber-300' : 'text-xs font-bold text-cyan-300';
       }
 
       if (statusText) {
         if (phase === 'MCQ') {
-          statusText.innerHTML = `<span class="${isP1 ? 'text-amber-300' : 'text-cyan-300'} font-black">${esc(activePlayer.student_name)}</span>'s Turn: Choose the correct word for the picture!`;
+          statusText.innerHTML = `<span class="${isP1 ? 'text-amber-300' : 'text-cyan-300'} font-black">${esc(activePlayerName)}</span>'s Turn: Choose the correct word for the picture!`;
         } else if (phase === 'DRAW_LINE') {
-          statusText.innerHTML = `⭐ Correct! <span class="${isP1 ? 'text-amber-300' : 'text-cyan-300'} font-black">${esc(activePlayer.student_name)}</span>, click any available horizontal or vertical line!`;
+          statusText.innerHTML = `⭐ Correct! <span class="${isP1 ? 'text-amber-300' : 'text-cyan-300'} font-black">${esc(activePlayerName)}</span>, click any available horizontal or vertical line!`;
         } else if (phase === 'ROUND_OVER') {
           statusText.innerHTML = `<span class="text-emerald-400 font-black">Match Complete!</span> Calculating winner...`;
         }
@@ -8148,16 +8159,16 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   };
 
   window.gaMountStage = function (view) {
-    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, .lc-main, .vb-arena, .cdx-main');
+    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, .lc-main, .vb-arena, .cdx-main');
     if (!board || view.querySelector('#game-player-list') || (view.classList.contains('ga-stage') && view.querySelector('.ga-stage-controls'))) return;
     view.classList.add('ga-stage');
     view.classList.remove('fixed', 'inset-0', 'bg-black/50', 'bg-black/60', 'z-50', 'p-4');
-    const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .match-game-shell, .find-me-game-shell, .crossword-game-shell, .surprise-boxes-game, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
+    const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .match-game-shell, .find-me-game-shell, .crossword-game-shell, .surprise-boxes-game, .dots-game-shell, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
     if (!shell) return;
     shell.classList.add('ga-stage-shell');
     let parent = shell.parentElement;
     while (parent && parent !== view) { parent.classList.add('ga-stage-wrapper'); parent = parent.parentElement; }
-    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .crossword-header, .hangman-game-shell > div:first-child, .lc-head, .vb-head, .cdx-head, .sticky.top-0') || shell.firstElementChild;
+    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .crossword-header, .dots-header, .hangman-game-shell > div:first-child, .lc-head, .vb-head, .cdx-head, .sticky.top-0') || shell.firstElementChild;
     if (header) {
       header.classList.add('ga-stage-header');
       header.querySelector('[data-games-back]')?.remove();
@@ -8212,7 +8223,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       });
       const expand = document.createElement('button'); expand.type = 'button'; expand.textContent = '⛶'; expand.setAttribute('aria-label', 'Expand to browser fullscreen'); expand.title = 'Browser fullscreen';
       expand.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await view.requestFullscreen(); } catch (_) {} });
-      const close = view.querySelector('#baam-close, #find-me-close, #game-close, #scramble-close, #hangman-close, #crossword-close, [data-lc="close"], [data-vb="close"], [data-cdx="close"]') || document.createElement('button');
+      const close = view.querySelector('#baam-close, #find-me-close, #game-close, #scramble-close, #hangman-close, #crossword-close, #dots-close-btn, [data-lc="close"], [data-vb="close"], [data-cdx="close"]') || document.createElement('button');
       close.type = 'button'; close.textContent = '×'; close.classList.add('ga-stage-exit'); close.setAttribute('aria-label', 'Close game'); close.title = 'Close game';
       close.addEventListener('click', event => {
         event.preventDefault();
@@ -8252,7 +8263,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   });
   const observeStages = () => new MutationObserver(() => {
     document.querySelectorAll('#class-subtab-games > .game-inline-view, #student-tab-games > .game-inline-view').forEach(view => window.gaMountStage(view));
-    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, .lc-main, .vb-arena, .cdx-main')) view.remove(); });
+    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, .lc-main, .vb-arena, .cdx-main')) view.remove(); });
     if (!document.querySelector('.ga-stage') && document.body.classList.contains('ga-playing')) {
       document.body.classList.remove('ga-playing');
       delete document.body.dataset.gaActiveTheme;
@@ -26264,7 +26275,7 @@ function endActiveGames({ returnToList = true } = {}) {
     window.closeVocabBattle?.();
     window.closeCatchdex?.();
     document.querySelectorAll('body > .ga-stage').forEach(view => {
-      view.querySelectorAll('.game-popup-modal, .memory-game-shell, .hangman-game-shell, .cipher-lab-shell').forEach(game => stopGameFinishedActivity(game));
+      view.querySelectorAll('.game-popup-modal, .memory-game-shell, .hangman-game-shell, .cipher-lab-shell, .dots-game-shell, .dots-game-modal').forEach(game => stopGameFinishedActivity(game));
       stopGameFinishedActivity(view);
       view._cleanupGameFullscreen?.();
       view._cleanupMemoryFit?.();
@@ -26277,7 +26288,7 @@ function endActiveGames({ returnToList = true } = {}) {
     const areas = [document.getElementById('class-subtab-games'), document.getElementById('student-tab-games')].filter(Boolean);
     areas.forEach(area => {
       area.querySelectorAll(':scope > .game-inline-view, :scope > .game-popup-modal').forEach(view => {
-        view.querySelectorAll('.game-popup-modal, .memory-game-shell, .hangman-game-shell, .cipher-lab-shell').forEach(game => stopGameFinishedActivity(game));
+        view.querySelectorAll('.game-popup-modal, .memory-game-shell, .hangman-game-shell, .cipher-lab-shell, .dots-game-shell, .dots-game-modal').forEach(game => stopGameFinishedActivity(game));
         stopGameFinishedActivity(view);
         view._cleanupGameFullscreen?.();
         view._cleanupMemoryFit?.();
@@ -26285,7 +26296,7 @@ function endActiveGames({ returnToList = true } = {}) {
       });
     });
     document.querySelectorAll('.single-player-timeout-overlay, .baam-final-overlay, .game-celebration-overlay, .student-class-chooser, .game-setup-panel').forEach(overlay => overlay.remove());
-    document.querySelectorAll('.game-popup-modal, #memory-grid, #hangman-game-body, #scramble-tiles, #find-me-box, #baam-board').forEach(node => { node._stopPlayerTurnTimer?.(); node._cleanupGameFullscreen?.(); node._cleanupMemoryFit?.(); });
+    document.querySelectorAll('.game-popup-modal, #memory-grid, #hangman-game-body, #scramble-tiles, #find-me-box, #baam-board, #dots-board-grid').forEach(node => { node._stopPlayerTurnTimer?.(); node._cleanupGameFullscreen?.(); node._cleanupMemoryFit?.(); });
     document.querySelectorAll('.hidden[id$="-setup"], .game-setup-panel').forEach(node => node.remove());
     document.querySelectorAll('[data-game-exit], [data-games-back]').forEach(node => { node.onclick = null; });
     activeGamePlayers = [];
@@ -26355,7 +26366,7 @@ document.head.appendChild(inlineGamePinnedLayoutStyle);
 const gamesAreaObserver = new MutationObserver(records => {
   for (const record of records) for (const node of record.addedNodes) {
     if (!(node instanceof HTMLElement) || node.dataset.inGamesHub === 'true' || node.matches('.ga-stage, .lc-stage, .vb-stage, .cdx-stage') || node.querySelector?.('.lc-stage, .vb-stage, .cdx-stage, .lc-main, .vb-arena, .cdx-main')) continue;
-    const isGame = node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .fixed.inset-0') && (node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell') || node.querySelector('#words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #find-me-box, #baam-board'));
+    const isGame = node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .dots-game-shell, .dots-game-modal, .fixed.inset-0') && (node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .dots-game-shell, .dots-game-modal') || node.querySelector('#words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #find-me-box, #baam-board, #dots-board-grid'));
     if (!isGame) continue;
     const area = document.getElementById(currentRole === 'student' ? 'student-tab-games' : 'class-subtab-games');
     const hub = area?.querySelector(':scope > .glass-container');
@@ -26499,7 +26510,7 @@ let activeGamePlayerRemaining = [];
 let lastGameReplay = null;
 function setGameReplay(replay) { lastGameReplay = replay; }
 function returnToGamesTab() {
-  document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #memory-grid, #scramble-tiles, #hangman-letters')) view.remove(); });
+  document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, .lc-main, .vb-arena, .cdx-main')) view.remove(); });
   if (!document.querySelector('body > .ga-stage')) {
     document.body.classList.remove('ga-playing');
     document.body.style.removeProperty('overflow');

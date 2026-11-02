@@ -1435,16 +1435,16 @@
   };
 
   window.gaMountStage = function (view) {
-    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, .lc-main, .vb-arena, .cdx-main');
+    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, .lc-main, .vb-arena, .cdx-main');
     if (!board || view.querySelector('#game-player-list') || (view.classList.contains('ga-stage') && view.querySelector('.ga-stage-controls'))) return;
     view.classList.add('ga-stage');
     view.classList.remove('fixed', 'inset-0', 'bg-black/50', 'bg-black/60', 'z-50', 'p-4');
-    const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .match-game-shell, .find-me-game-shell, .crossword-game-shell, .surprise-boxes-game, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
+    const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .match-game-shell, .find-me-game-shell, .crossword-game-shell, .surprise-boxes-game, .dots-game-shell, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
     if (!shell) return;
     shell.classList.add('ga-stage-shell');
     let parent = shell.parentElement;
     while (parent && parent !== view) { parent.classList.add('ga-stage-wrapper'); parent = parent.parentElement; }
-    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .crossword-header, .hangman-game-shell > div:first-child, .lc-head, .vb-head, .cdx-head, .sticky.top-0') || shell.firstElementChild;
+    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .crossword-header, .dots-header, .hangman-game-shell > div:first-child, .lc-head, .vb-head, .cdx-head, .sticky.top-0') || shell.firstElementChild;
     if (header) {
       header.classList.add('ga-stage-header');
       header.querySelector('[data-games-back]')?.remove();
@@ -1499,7 +1499,7 @@
       });
       const expand = document.createElement('button'); expand.type = 'button'; expand.textContent = '⛶'; expand.setAttribute('aria-label', 'Expand to browser fullscreen'); expand.title = 'Browser fullscreen';
       expand.addEventListener('click', async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await view.requestFullscreen(); } catch (_) {} });
-      const close = view.querySelector('#baam-close, #find-me-close, #game-close, #scramble-close, #hangman-close, #crossword-close, [data-lc="close"], [data-vb="close"], [data-cdx="close"]') || document.createElement('button');
+      const close = view.querySelector('#baam-close, #find-me-close, #game-close, #scramble-close, #hangman-close, #crossword-close, #dots-close-btn, [data-lc="close"], [data-vb="close"], [data-cdx="close"]') || document.createElement('button');
       close.type = 'button'; close.textContent = '×'; close.classList.add('ga-stage-exit'); close.setAttribute('aria-label', 'Close game'); close.title = 'Close game';
       close.addEventListener('click', event => {
         event.preventDefault();
@@ -1539,7 +1539,7 @@
   });
   const observeStages = () => new MutationObserver(() => {
     document.querySelectorAll('#class-subtab-games > .game-inline-view, #student-tab-games > .game-inline-view').forEach(view => window.gaMountStage(view));
-    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, .lc-main, .vb-arena, .cdx-main')) view.remove(); });
+    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, .lc-main, .vb-arena, .cdx-main')) view.remove(); });
     if (!document.querySelector('.ga-stage') && document.body.classList.contains('ga-playing')) {
       document.body.classList.remove('ga-playing');
       delete document.body.dataset.gaActiveTheme;

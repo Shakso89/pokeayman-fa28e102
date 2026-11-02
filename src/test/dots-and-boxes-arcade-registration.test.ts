@@ -77,6 +77,17 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
     expect(dotsCss).toContain('[data-ga-theme="halloween"]');
   });
 
+  it('whitelists Dots and Boxes in gaMountStage and observeStages to prevent premature removal', () => {
+    const arcadeJsPath = path.join(root, 'public', 'pokeayman', 'games-arcade.js');
+    const arcadeJs = fs.readFileSync(arcadeJsPath, 'utf8');
+    expect(arcadeJs).toContain('#dots-board-grid');
+    expect(arcadeJs).toContain('.dots-game-shell');
+
+    const htmlPath = path.join(root, 'public', 'pokeayman', 'index.html');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    expect(html).toContain('#dots-board-grid');
+  });
+
   it('preserves teacher class context when selecting lists from My lists', () => {
     const htmlPath = path.join(root, 'public', 'pokeayman', 'index.html');
     const html = fs.readFileSync(htmlPath, 'utf8');
