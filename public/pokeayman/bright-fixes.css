@@ -110,9 +110,38 @@ html body.ts-bright .teacher-avatar-option span:first-of-type { color: var(--col
 .vb-picker-btn { padding: .8rem .6rem; border-radius: .9rem; border: 1px solid var(--color-border); background: var(--color-surface-hover); color: var(--color-text-primary); font-weight: 800; cursor: pointer; }
 .vb-picker-btn:hover { border-color: var(--color-brand); background: var(--color-surface-selected); }
 
-/* Runtime-tagged legacy dark surfaces / pale text (see bright-fixes.js) */
-html body.ts-bright .pk-bf-dark { background: var(--color-surface) !important; background-image: none !important; border-color: var(--color-border) !important; color: var(--color-text-primary) !important; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 6px 18px -10px rgba(15,23,42,.18) !important; }
-html body.ts-bright .pk-bf-ink { color: var(--color-text-primary) !important; -webkit-text-fill-color: currentColor !important; text-shadow: none !important; }
+/* Declarative legacy dark surface and pale text neutralization (Pure CSS - zero JS runtime overhead) */
+html body.ts-bright :is(
+  .pk-bf-dark,
+  .bg-slate-900,
+  .bg-slate-800,
+  .bg-gray-900,
+  .bg-gray-800,
+  .bg-slate-950,
+  .bg-gray-950,
+  .dark-surface
+):not(#home-screen *):not(.game-popup-modal *):not(.ga-stage *):not(.pk-login-overlay *):not(.vocab-word-edit-card *):not(.vocab-word-edit-del-confirm *):not(.quiz-win-card *):not(.coin-celebration-card *):not(.game-celebration-card *):not(.ve-workspace *):not([class*="celebrat"] *):not([class*="confetti"] *):not(.coin-particles *) {
+  background: var(--color-surface) !important;
+  background-image: none !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 6px 18px -10px rgba(15,23,42,.18) !important;
+}
+
+html body.ts-bright :is(
+  .pk-bf-ink,
+  .text-slate-100,
+  .text-slate-200,
+  .text-slate-300,
+  .text-gray-100,
+  .text-gray-200,
+  .text-gray-300,
+  .text-white
+):not(#home-screen *):not(.game-popup-modal *):not(.ga-stage *):not(.pk-login-overlay *):not(.vocab-word-edit-card *):not(.vocab-word-edit-del-confirm *):not(.quiz-win-card *):not(.coin-celebration-card *):not(.game-celebration-card *):not(.ve-workspace *):not(.btn-primary):not(.btn-primary *):not([class*="badge"]):not(.pk-badge *):not(button[class*="bg-amber"]):not(button[class*="bg-amber"] *):not(button[class*="bg-indigo"]):not(button[class*="bg-indigo"] *):not(button[class*="bg-blue"]):not(button[class*="bg-blue"] *):not(button[class*="bg-purple"]):not(button[class*="bg-purple"] *):not(button[class*="bg-red"]):not(button[class*="bg-red"] *):not(button[class*="bg-rose"]):not(button[class*="bg-rose"] *):not(button[class*="bg-emerald"]):not(button[class*="bg-emerald"] *):not(button[class*="bg-green"]):not(button[class*="bg-green"] *):not([class*="celebrat"] *):not([class*="confetti"] *):not(.coin-particles *) {
+  color: var(--color-text-primary) !important;
+  -webkit-text-fill-color: currentColor !important;
+  text-shadow: none !important;
+}
 
 /* Tab buttons: text only, no emoji icons */
 #ts-sidebar .ts-item > span[aria-hidden="true"], .ts-mnav .ts-item > span[aria-hidden="true"], .ts-tools .ts-item > span[aria-hidden="true"] { display: none !important; }
