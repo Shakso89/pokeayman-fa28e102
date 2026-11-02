@@ -176,6 +176,16 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   const [winner, setWinner] = useState<Student | null | 'tie'>(null);
   const [isAwardingCoins, setIsAwardingCoins] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [activeTheme, setActiveTheme] = useState<string>(theme || 'classroom');
+  const [themePopoverOpen, setThemePopoverOpen] = useState(false);
+
+  const GAME_THEMES = [
+    { id: 'classroom', name: 'Classroom', subtitle: 'Chalkboard style' },
+    { id: 'jungle', name: 'Jungle', subtitle: 'Wild expedition' },
+    { id: 'toybox', name: 'Toybox', subtitle: 'Playful blocks' },
+    { id: 'halloween', name: 'Haunted Manor', subtitle: 'Spooky thrill' },
+    { id: 'classic', name: 'Classic', subtitle: 'Arcade neon' },
+  ];
 
   // Initialize first question if not yet set
   useEffect(() => {
@@ -361,10 +371,10 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
         }`}
       />
 
-      {/* Top Bar: Player 1 vs Player 2 Banner */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
-        {/* Left: Exit & Sound buttons */}
-        <div className="flex items-center gap-2">
+      {/* Top Header Bar: Title, Theme Selector & Stage Controls (NO Score Box in Header) */}
+      <div className="flex items-center justify-between gap-4 pb-3 border-b border-slate-800/80 relative z-20">
+        {/* Left: Exit & Sound buttons + Title */}
+        <div className="flex items-center gap-3">
           {onExit && (
             <button
               type="button"
@@ -383,13 +393,63 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
           >
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
+          <div className="hidden sm:block">
+            <h2 className="text-sm font-black text-white leading-tight">Dots & Boxes</h2>
+            <p className="text-[11px] text-amber-400 font-semibold">{gridDots}×{gridDots} Dots · {totalPossibleBoxes} Boxes</p>
+          </div>
         </div>
 
-        {/* Center: Duelists HUD */}
-        <div className="flex items-center gap-3 sm:gap-6 bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-2 shadow-inner">
+        {/* Right: Theme Selector & Board Info */}
+        <div className="flex items-center gap-2">
+          {/* Visual Style / Theme Selector */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setThemePopoverOpen(!themePopoverOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 transition"
+              title="Change visual style"
+            >
+              <span>🎨</span>
+              <span className="capitalize">{activeTheme}</span>
+            </button>
+
+            {themePopoverOpen && (
+              <div className="absolute right-0 top-full mt-2 w-48 p-2 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl z-50 flex flex-col gap-1">
+                <span className="text-[10px] font-black uppercase text-slate-400 px-2 py-1">Visual Style</span>
+                {GAME_THEMES.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveTheme(t.id);
+                      setThemePopoverOpen(false);
+                    }}
+                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                      activeTheme === t.id
+                        ? 'bg-amber-400/20 text-amber-300 border border-amber-400/60'
+                        : 'text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>{t.name}</span>
+                    <span className="text-[10px] text-slate-500">{t.subtitle}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="sm:hidden flex items-center text-[11px] font-bold text-slate-400 bg-slate-900 px-2.5 py-1 rounded-xl border border-slate-800">
+            {gridDots}×{gridDots}
+          </div>
+        </div>
+      </div>
+
+      {/* Sub-Header: Duelists Score HUD (Placed UNDER the header) */}
+      <div className="flex justify-center w-full py-1">
+        <div className="flex items-center gap-3 sm:gap-6 bg-slate-900/90 border border-slate-800 rounded-full px-4 sm:px-6 py-2 shadow-lg">
           {/* Player 1 HUD */}
           <div
-            className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all duration-300 ${
+            className={`flex items-center gap-2.5 px-3 py-1.5 rounded-full transition-all duration-300 ${
               activePlayerIndex === 0
                 ? 'bg-amber-400/15 border-2 border-amber-400/80 shadow-[0_0_15px_rgba(251,191,36,0.3)] scale-105'
                 : 'opacity-60 border border-transparent'
@@ -413,11 +473,11 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             )}
           </div>
 
-          <span className="text-xs font-black text-slate-500 tracking-widest">VS</span>
+          <span className="text-xs font-black text-slate-500 tracking-widest px-1">VS</span>
 
           {/* Player 2 HUD */}
           <div
-            className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all duration-300 ${
+            className={`flex items-center gap-2.5 px-3 py-1.5 rounded-full transition-all duration-300 ${
               activePlayerIndex === 1
                 ? 'bg-cyan-400/15 border-2 border-cyan-400/80 shadow-[0_0_15px_rgba(56,189,248,0.3)] scale-105'
                 : 'opacity-60 border border-transparent'
@@ -440,13 +500,6 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
               className="w-8 h-8 rounded-full object-contain bg-slate-950 border border-cyan-400/60 p-0.5"
             />
           </div>
-        </div>
-
-        {/* Right: Board Size / Info */}
-        <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-400 bg-slate-900/60 px-3 py-1.5 rounded-xl border border-slate-800">
-          <span>{gridDots}×{gridDots} Dots</span>
-          <span>·</span>
-          <span>{totalPossibleBoxes} Boxes</span>
         </div>
       </div>
 

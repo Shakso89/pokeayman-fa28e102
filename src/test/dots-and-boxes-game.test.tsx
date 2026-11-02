@@ -90,6 +90,10 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
       const gridSizePlus = allPlusButtons[0];
       fireEvent.click(gridSizePlus);
       expect(screen.getByText('4×4 (9 boxes)')).toBeInTheDocument();
+
+      // Test Grid Size stepper increase to 5x5 (16 boxes)
+      fireEvent.click(gridSizePlus);
+      expect(screen.getByText('5×5 (16 boxes)')).toBeInTheDocument();
       expect(gridSizePlus).toBeDisabled();
 
       // Test coin rewards stepper (second stepper row)
@@ -123,8 +127,8 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
           expect.objectContaining({ name: 'Gary Oak' }),
         ],
         expect.objectContaining({
-          gridDots: 4,
-          gridSize: 4,
+          gridDots: 5,
+          gridSize: 5,
           winnerCoins: 5,
         })
       );

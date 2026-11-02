@@ -12,33 +12,55 @@
   box-sizing: border-box;
 }
 
+/* Header: Standard Arcade Navigation Header (Title + Controls, NO Score Box) */
 .dots-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1.25rem;
-  background: rgba(15, 23, 42, 0.75);
+  padding: 0.65rem 1.25rem;
+  background: rgba(15, 23, 42, 0.85);
   border-bottom: 1px solid rgba(51, 65, 85, 0.6);
   backdrop-filter: blur(12px);
   gap: 1rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 20;
+}
+
+.dots-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Sub-Header: Dedicated Duelists Score Banner (Placed UNDER the header) */
+.dots-hud-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1rem 0.2rem;
+  width: 100%;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 
 .dots-duel-hud {
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: rgba(10, 15, 30, 0.85);
-  border: 1px solid rgba(51, 65, 85, 0.8);
+  background: rgba(10, 15, 30, 0.9);
+  border: 1.5px solid rgba(51, 65, 85, 0.8);
   border-radius: 999px;
-  padding: 0.35rem 1rem;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+  padding: 0.35rem 1.25rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), inset 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .dots-player-badge {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.25rem 0.75rem;
+  padding: 0.25rem 0.85rem;
   border-radius: 999px;
   transition: all 0.25s ease;
   border: 1.5px solid transparent;
@@ -49,24 +71,24 @@
 }
 
 .dots-player-badge.p1.is-active {
-  background: rgba(251, 191, 36, 0.15);
+  background: rgba(251, 191, 36, 0.18);
   border-color: #fbbf24;
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.4);
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.45);
 }
 
 .dots-player-badge.p2.is-active {
-  background: rgba(56, 189, 248, 0.15);
+  background: rgba(56, 189, 248, 0.18);
   border-color: #38bdf8;
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.45);
 }
 
 .dots-player-avatar {
-  width: 2rem;
-  height: 2rem;
+  width: 2.15rem;
+  height: 2.15rem;
   border-radius: 50%;
   object-fit: contain;
   background: #020617;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
 }
 
 .dots-player-info {
@@ -75,22 +97,32 @@
 }
 
 .dots-player-name {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 800;
   line-height: 1.1;
 }
 
 .dots-player-score {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: #cbd5e1;
+}
+
+.dots-status-banner {
+  padding: 0.45rem 1rem;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.7);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .dots-arena-layout {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
-  padding: 1.25rem;
+  gap: 1.25rem;
+  padding: 1rem 1.25rem 2rem;
   max-width: 1100px;
   margin: 0 auto;
   width: 100%;
@@ -100,7 +132,7 @@
 
 @media (min-width: 900px) {
   .dots-arena-layout {
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: 360px 1fr;
   }
 }
 
@@ -111,13 +143,14 @@
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.85rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
 }
 
 .dots-clue-img-box {
   width: 100%;
-  max-height: 220px;
+  max-height: 210px;
   border-radius: 0.85rem;
   background: #020617;
   border: 1px solid rgba(51, 65, 85, 0.6);
@@ -129,7 +162,7 @@
 }
 
 .dots-clue-img-box img {
-  max-height: 200px;
+  max-height: 190px;
   max-width: 100%;
   object-fit: contain;
   border-radius: 0.5rem;
@@ -186,23 +219,26 @@
   background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(51, 65, 85, 0.7);
   border-radius: 1.5rem;
-  padding: 1.5rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
 }
 
 .dots-board-grid {
   display: grid;
-  align-items: center;
   justify-content: center;
+  align-content: center;
   padding: 1.25rem;
   background: #020617;
   border: 1px solid rgba(51, 65, 85, 0.9);
   border-radius: 1.25rem;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+  box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 .dots-node {
@@ -216,9 +252,11 @@
   margin: auto;
 }
 
+/* Horizontal Lines (Between horizontal dots) */
 .dots-line-h {
   width: 100%;
-  height: 100%;
+  height: 24px;
+  min-height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -226,19 +264,26 @@
   border: none;
   padding: 0;
   cursor: pointer;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .dots-line-h-bar {
   width: 100%;
-  height: 7px;
+  min-width: 32px;
+  height: 8px;
   border-radius: 4px;
-  background: rgba(51, 65, 85, 0.5);
+  background: rgba(71, 85, 105, 0.65);
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
+/* Vertical Lines (Between vertical dots) - Full clickable height and visible bar */
 .dots-line-v {
-  width: 100%;
+  width: 24px;
+  min-width: 24px;
   height: 100%;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -246,34 +291,53 @@
   border: none;
   padding: 0;
   cursor: pointer;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .dots-line-v-bar {
-  width: 7px;
+  width: 8px;
   height: 100%;
+  min-height: 32px;
   border-radius: 4px;
-  background: rgba(51, 65, 85, 0.5);
+  background: rgba(71, 85, 105, 0.65);
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
+/* Drawn Lines */
 .dots-line-drawn-p1 {
   background: #fbbf24 !important;
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.8) !important;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.85) !important;
 }
 
 .dots-line-drawn-p2 {
   background: #38bdf8 !important;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.8) !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.85) !important;
+}
+
+/* Clickable Line States during DRAW_LINE Phase */
+.dots-line-clickable .dots-line-h-bar,
+.dots-line-clickable .dots-line-v-bar {
+  background: rgba(148, 163, 184, 0.5);
+  box-shadow: 0 0 6px rgba(148, 163, 184, 0.35);
+}
+
+.dots-line-clickable:hover .dots-line-h-bar,
+.dots-line-clickable:hover .dots-line-v-bar {
+  transform: scale(1.15);
 }
 
 .dots-line-clickable:hover .dots-line-h-bar.p1-turn,
 .dots-line-clickable:hover .dots-line-v-bar.p1-turn {
-  background: rgba(251, 191, 36, 0.7);
+  background: #fbbf24 !important;
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.9) !important;
 }
 
 .dots-line-clickable:hover .dots-line-h-bar.p2-turn,
 .dots-line-clickable:hover .dots-line-v-bar.p2-turn {
-  background: rgba(56, 189, 248, 0.7);
+  background: #38bdf8 !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.9) !important;
 }
 
 .dots-box-cell {
@@ -285,6 +349,7 @@
   border-radius: 0.6rem;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   padding: 0.25rem;
+  box-sizing: border-box;
 }
 
 .dots-box-claimed-p1 {
@@ -302,8 +367,140 @@
 }
 
 .dots-box-avatar {
-  width: 2rem;
-  height: 2rem;
+  width: 2.2rem;
+  height: 2.2rem;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* ==========================================================================
+   THEME STYLES (Classroom, Jungle, Toybox, Halloween, Classic)
+   ========================================================================== */
+
+/* 1. Classroom Chalkboard Theme */
+html body > .ga-stage[data-ga-theme="classroom"],
+.dots-game-modal[data-ga-theme="classroom"] {
+  background: #0f291e !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .dots-header,
+.dots-game-modal[data-ga-theme="classroom"] .dots-header {
+  background: rgba(10, 30, 22, 0.9) !important;
+  border-bottom-color: rgba(45, 90, 69, 0.8) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .dots-board-wrapper,
+.dots-game-modal[data-ga-theme="classroom"] .dots-board-wrapper {
+  background: rgba(14, 38, 28, 0.75) !important;
+  border-color: #2d5a45 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .dots-board-grid,
+.dots-game-modal[data-ga-theme="classroom"] .dots-board-grid {
+  background: #081d14 !important;
+  border-color: #3f7e61 !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(45, 90, 69, 0.2) !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .dots-question-card,
+.dots-game-modal[data-ga-theme="classroom"] .dots-question-card {
+  background: rgba(12, 34, 25, 0.9) !important;
+  border-color: #2d5a45 !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .dots-node,
+.dots-game-modal[data-ga-theme="classroom"] .dots-node {
+  background: radial-gradient(circle, #fef08a 30%, #eab308 80%) !important;
+  border-color: #ffffff !important;
+}
+
+/* 2. Jungle Theme */
+html body > .ga-stage[data-ga-theme="jungle"],
+.dots-game-modal[data-ga-theme="jungle"] {
+  background: #041f12 !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .dots-header,
+.dots-game-modal[data-ga-theme="jungle"] .dots-header {
+  background: rgba(4, 28, 17, 0.9) !important;
+  border-bottom-color: rgba(21, 128, 61, 0.8) !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .dots-board-wrapper,
+.dots-game-modal[data-ga-theme="jungle"] .dots-board-wrapper {
+  background: rgba(5, 33, 20, 0.75) !important;
+  border-color: #15803d !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .dots-board-grid,
+.dots-game-modal[data-ga-theme="jungle"] .dots-board-grid {
+  background: #02170d !important;
+  border-color: #22c55e !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .dots-question-card,
+.dots-game-modal[data-ga-theme="jungle"] .dots-question-card {
+  background: rgba(5, 33, 20, 0.9) !important;
+  border-color: #15803d !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .dots-node,
+.dots-game-modal[data-ga-theme="jungle"] .dots-node {
+  background: radial-gradient(circle, #bef264 30%, #84cc16 80%) !important;
+  border-color: #f7fee7 !important;
+  box-shadow: 0 0 10px rgba(132, 204, 22, 0.7) !important;
+}
+
+/* 3. Toybox Theme */
+html body > .ga-stage[data-ga-theme="toybox"],
+.dots-game-modal[data-ga-theme="toybox"] {
+  background: #1a0f2e !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .dots-header,
+.dots-game-modal[data-ga-theme="toybox"] .dots-header {
+  background: rgba(23, 13, 42, 0.9) !important;
+  border-bottom-color: rgba(99, 102, 241, 0.8) !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .dots-board-wrapper,
+.dots-game-modal[data-ga-theme="toybox"] .dots-board-wrapper {
+  background: rgba(28, 16, 52, 0.75) !important;
+  border-color: #6366f1 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .dots-board-grid,
+.dots-game-modal[data-ga-theme="toybox"] .dots-board-grid {
+  background: #100820 !important;
+  border-color: #818cf8 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .dots-question-card,
+.dots-game-modal[data-ga-theme="toybox"] .dots-question-card {
+  background: rgba(28, 16, 52, 0.9) !important;
+  border-color: #6366f1 !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .dots-node,
+.dots-game-modal[data-ga-theme="toybox"] .dots-node {
+  background: radial-gradient(circle, #f472b6 30%, #ec4899 80%) !important;
+  border-color: #fdf2f8 !important;
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.7) !important;
+}
+
+/* 4. Halloween Theme */
+html body > .ga-stage[data-ga-theme="halloween"],
+.dots-game-modal[data-ga-theme="halloween"] {
+  background: #140a17 !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .dots-header,
+.dots-game-modal[data-ga-theme="halloween"] .dots-header {
+  background: rgba(18, 9, 21, 0.9) !important;
+  border-bottom-color: rgba(194, 65, 12, 0.8) !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .dots-board-wrapper,
+.dots-game-modal[data-ga-theme="halloween"] .dots-board-wrapper {
+  background: rgba(22, 11, 25, 0.75) !important;
+  border-color: #9a3412 !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .dots-board-grid,
+.dots-game-modal[data-ga-theme="halloween"] .dots-board-grid {
+  background: #0d0510 !important;
+  border-color: #ea580c !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .dots-question-card,
+.dots-game-modal[data-ga-theme="halloween"] .dots-question-card {
+  background: rgba(22, 11, 25, 0.9) !important;
+  border-color: #9a3412 !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .dots-node,
+.dots-game-modal[data-ga-theme="halloween"] .dots-node {
+  background: radial-gradient(circle, #fdba74 30%, #ea580c 80%) !important;
+  border-color: #fff7ed !important;
+  box-shadow: 0 0 10px rgba(234, 88, 12, 0.75) !important;
 }

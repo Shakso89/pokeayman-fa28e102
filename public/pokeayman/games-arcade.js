@@ -1178,7 +1178,8 @@
   };
 
   window.gaFastLaunchList = function (listRef, ctxSchool, ctxClass) {
-    if (ctxSchool && ctxClass) {
+    const isMyList = Boolean(listRef && typeof listRef === 'object' && (listRef.vocab_list_id || listRef.__backendId));
+    if (!isMyList && ctxSchool && ctxClass) {
       navSchool = ctxSchool;
       navClass = ctxClass;
     }
@@ -2216,7 +2217,8 @@
         title: 'Grid size',
         options: [
           { dots: 4, label: '4×4 dots · 9 boxes' },
-          { dots: 3, label: '3×3 dots · 4 boxes' }
+          { dots: 3, label: '3×3 dots · 4 boxes' },
+          { dots: 5, label: '5×5 dots · 16 boxes' }
         ],
         initialIndex: 0,
         onChange: (opt) => {

@@ -47,4 +47,40 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
     expect(html).toContain('window.chooseDotsAndBoxes');
     expect(html).toContain('isDotsAndBoxes');
   });
+
+  it('supports 5x5 grid option, in-game theme switching, under-header duel score HUD, and visible vertical lines', () => {
+    const arcadeJsPath = path.join(root, 'public', 'pokeayman', 'games-arcade.js');
+    const arcadeJs = fs.readFileSync(arcadeJsPath, 'utf8');
+    expect(arcadeJs).toContain("dots: 5, label: '5×5 dots · 16 boxes'");
+
+    const dotsJsPath = path.join(root, 'public', 'pokeayman', 'dots-and-boxes.js');
+    const dotsJs = fs.readFileSync(dotsJsPath, 'utf8');
+    // Live theme switcher inside the game
+    expect(dotsJs).toContain('dots-theme-btn');
+    expect(dotsJs).toContain('dots-theme-popover');
+    expect(dotsJs).toContain('data-ga-theme-choice');
+    // Duel score HUD placed in dots-hud-banner outside/under the header
+    expect(dotsJs).toContain('dots-hud-banner');
+    expect(dotsJs).toContain('dots-duel-hud');
+    // Vertical line with full clickable height
+    expect(dotsJs).toContain('dots-line-v');
+    expect(dotsJs).toContain('dots-line-v-bar');
+
+    const dotsCssPath = path.join(root, 'public', 'pokeayman', 'dots-and-boxes.css');
+    const dotsCss = fs.readFileSync(dotsCssPath, 'utf8');
+    expect(dotsCss).toContain('.dots-hud-banner');
+    expect(dotsCss).toContain('.dots-line-v');
+    expect(dotsCss).toContain('.dots-line-v-bar');
+    expect(dotsCss).toContain('[data-ga-theme="classroom"]');
+    expect(dotsCss).toContain('[data-ga-theme="jungle"]');
+    expect(dotsCss).toContain('[data-ga-theme="toybox"]');
+    expect(dotsCss).toContain('[data-ga-theme="halloween"]');
+  });
+
+  it('preserves teacher class context when selecting lists from My lists', () => {
+    const htmlPath = path.join(root, 'public', 'pokeayman', 'index.html');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    // When clicking a card in My lists, do not overwrite navSchool / navClass
+    expect(html).toContain('if (!isMyList && school && className)');
+  });
 });

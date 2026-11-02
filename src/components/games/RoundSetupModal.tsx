@@ -263,9 +263,9 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                   label="Grid size"
                   valueDisplay={`${gridDots}×${gridDots} (${(gridDots - 1) * (gridDots - 1)} boxes)`}
                   onDecrease={() => setGridDots((v) => Math.max(3, v - 1))}
-                  onIncrease={() => setGridDots((v) => Math.min(4, v + 1))}
+                  onIncrease={() => setGridDots((v) => Math.min(5, v + 1))}
                   canDecrease={gridDots > 3}
-                  canIncrease={gridDots < 4}
+                  canIncrease={gridDots < 5}
                 />
               )}
 
