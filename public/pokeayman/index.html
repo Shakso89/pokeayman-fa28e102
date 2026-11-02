@@ -29739,7 +29739,26 @@ function openVocabCoverPicker(listId, listName) {
   });
 
   const renderCoverPhotos = () => {
-    results.innerHTML = coverPhotos.map((photo, index) => {
+    if (coverPhotos.length === 0) {
+      results.innerHTML = `
+        <div class="col-span-full py-12 text-center flex flex-col items-center justify-center gap-2.5 px-4">
+          <span class="text-3xl">🔍</span>
+          <p class="text-xs font-bold ${isBright ? 'text-slate-700' : 'text-slate-300'}">No covers found for &ldquo;${escape(coverQuery)}&rdquo;.</p>
+          ${coverType !== 'all' ? `
+            <button type="button" id="vocab-cover-switch-all-btn" class="mt-1 px-4 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 transition active:scale-95 shadow-md flex items-center gap-1.5 cursor-pointer">
+              <span>✨</span><span>Search in "All"</span>
+            </button>
+          ` : `
+            <p class="text-[11px] ${isBright ? 'text-slate-500' : 'text-slate-400'}">Try searching for a simpler keyword or related topic.</p>
+          `}
+        </div>
+      `;
+      results.querySelector('#vocab-cover-switch-all-btn')?.addEventListener('click', () => {
+        const allBtn = modal.querySelector('#vocab-cover-type-pills .vocab-cover-type-pill[data-image-type="all"]');
+        allBtn?.click();
+      });
+    } else {
+      results.innerHTML = coverPhotos.map((photo, index) => {
       const isSelected = selectedUrl && (selectedUrl === photo.src.large || selectedUrl === photo.src.original || selectedUrl === photo.src.medium);
       return `<button type="button" class="vocab-cover-result ${isSelected ? 'is-selected' : ''}" data-photo-index="${index}" aria-label="Select stock photo by ${photo.photographer}">
         <img src="${photo.src.medium}" alt="Stock photo by ${photo.photographer}" loading="lazy">
@@ -29763,6 +29782,7 @@ function openVocabCoverPicker(listId, listName) {
       updateSelectedBadge();
       toast('Cover photo selected! Click Apply to save.');
     }));
+    }
 
     if (loadMore) {
       if (coverPhotos.length === 0) {
@@ -30517,6 +30537,10 @@ function openVocabListEditor(listId, listName) {
       picker.querySelector('#vocab-photo-picker-grid')?.addEventListener('scroll', onPickerScroll);
       picker.querySelector('#vocab-photo-picker-use-url').addEventListener('click', () => { const url = picker.querySelector('#vocab-photo-picker-url').value.trim(); if (url) { addWordImageInput.value = url; close(); } });
     }
+    vocabPhotoType = 'all';
+    picker.querySelectorAll('#vocab-photo-type-pills .vocab-photo-type-pill').forEach(b => {
+      b.classList.toggle('is-active', b.dataset.imageType === 'all');
+    });
     picker.querySelector('#vocab-photo-picker-search').value = vocabPhotoQuery;
     picker.querySelector('#vocab-photo-picker-url').value = addWordImageInput.value.trim();
     picker.querySelector('#vocab-photo-picker-search-btn').click();
@@ -30524,7 +30548,9 @@ function openVocabListEditor(listId, listName) {
   };
   let vocabPhotoType = 'all';
   const fetchVocabPhotos = async (reset, requestId = vocabPhotoSearchRequestId, query = vocabPhotoQuery) => {
-    const picker = document.getElementById('vocab-photo-picker'); if (!picker || vocabPhotoLoading) return;
+    const picker = document.getElementById('vocab-photo-picker'); 
+    if (!picker) return;
+    if (!reset && vocabPhotoLoading) return;
     if (requestId !== vocabPhotoSearchRequestId || query !== vocabPhotoQuery) return;
     if (reset) { vocabPhotoPage = 1; vocabPhotoItems = []; vocabPhotoHasMore = true; }
     const status = picker.querySelector('#vocab-photo-picker-status');
@@ -30565,7 +30591,23 @@ function openVocabListEditor(listId, listName) {
       if (grid) {
         if (reset) grid.innerHTML = '';
         if (vocabPhotoItems.length === 0) {
-          grid.innerHTML = '<p class="col-span-full py-10 text-center text-xs opacity-60">No photos or clipart found. Try another search or clicking "All".</p>';
+          grid.innerHTML = `
+            <div class="col-span-full py-12 text-center flex flex-col items-center justify-center gap-2.5 px-4">
+              <span class="text-3xl">🔍</span>
+              <p class="text-xs font-bold text-slate-300">No ${vocabPhotoType === 'illustration' ? 'clipart or cartoons' : vocabPhotoType === 'photo' ? 'photos' : 'results'} found for &ldquo;${requestQuery}&rdquo;.</p>
+              ${vocabPhotoType !== 'all' ? `
+                <button type="button" id="vocab-photo-switch-all-btn" class="mt-1 px-4 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 transition active:scale-95 shadow-md flex items-center gap-1.5 cursor-pointer">
+                  <span>✨</span><span>Search in "All"</span>
+                </button>
+              ` : `
+                <p class="text-[11px] text-slate-400">Try searching for a simpler keyword or related word.</p>
+              `}
+            </div>
+          `;
+          grid.querySelector('#vocab-photo-switch-all-btn')?.addEventListener('click', () => {
+            const allBtn = picker.querySelector('#vocab-photo-type-pills .vocab-photo-type-pill[data-image-type="all"]');
+            allBtn?.click();
+          });
         } else {
           const itemsToAppend = reset ? vocabPhotoItems : additions;
           itemsToAppend.forEach((photo, idx) => {
@@ -31017,7 +31059,23 @@ function editVocabWord(wordId, currentWord, currentImage) {
       }
 
       if (editWordPhotos.length === 0 && additions.length === 0) {
-        resultsContainer.innerHTML = `<div class="col-span-full text-center py-10 px-4 text-xs ${isBright ? 'text-slate-400' : 'text-slate-500'}">No ${editWordType === 'illustration' ? 'clipart' : editWordType === 'photo' ? 'photos' : 'results'} found for &ldquo;${escape(editWordQuery)}&rdquo;. Try searching another word or clicking "All".</div>`;
+        resultsContainer.innerHTML = `
+          <div class="col-span-full py-12 text-center flex flex-col items-center justify-center gap-2.5 px-4">
+            <span class="text-3xl">🔍</span>
+            <p class="text-xs font-bold ${isBright ? 'text-slate-700' : 'text-slate-300'}">No ${editWordType === 'illustration' ? 'clipart' : editWordType === 'photo' ? 'photos' : 'results'} found for &ldquo;${escape(editWordQuery)}&rdquo;.</p>
+            ${editWordType !== 'all' ? `
+              <button type="button" id="vocab-word-switch-all-btn" class="mt-1 px-4 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 transition active:scale-95 shadow-md flex items-center gap-1.5 cursor-pointer">
+                <span>✨</span><span>Search in "All"</span>
+              </button>
+            ` : `
+              <p class="text-[11px] ${isBright ? 'text-slate-500' : 'text-slate-400'}">Try searching for a simpler keyword or related word.</p>
+            `}
+          </div>
+        `;
+        resultsContainer.querySelector('#vocab-word-switch-all-btn')?.addEventListener('click', () => {
+          const allBtn = modal.querySelector('#vocab-image-type-pills .vocab-type-pill[data-image-type="all"]');
+          allBtn?.click();
+        });
         editWordHasMore = false;
         if (statusLabel) statusLabel.textContent = '0 results';
         if (loadMoreBtn) loadMoreBtn.style.display = 'none';

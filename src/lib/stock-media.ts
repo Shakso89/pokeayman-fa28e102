@@ -137,22 +137,84 @@ export async function searchStockMedia(
       const data: { hits?: PixabayHit[]; totalHits?: number } = await res.json();
       const hits = Array.isArray(data.hits) ? data.hits : [];
       const photos: StockPhoto[] = hits
-        .filter((hit) => imageType === "all" || hit.type === imageType || (imageType === "vector" && String(hit.type).startsWith("vector")))
-        .map((hit) => ({
-          id: hit.id,
-          photographer: hit.user || "Pixabay Artist",
-          photographer_url: hit.pageURL || "",
-          url: hit.pageURL || "",
-          alt: hit.tags || query,
-          type: isMediaType(hit.type) ? hit.type : "photo",
-          src: {
-            original: hit.largeImageURL || hit.webformatURL || hit.previewURL || "",
-            large: hit.webformatURL || hit.previewURL || "",
-            medium: hit.webformatURL || hit.previewURL || "",
-            small: hit.previewURL || hit.webformatURL || "",
-            tiny: hit.previewURL || hit.webformatURL || "",
-          },
-        })).map(normalizePixabayPhoto);
+        .filter((hit) => {
+          if (imageType === "all") return true;
+          const hitType = String(hit.type || "").toLowerCase();
+          if (imageType === "illustration" || imageType === "vector") {
+            return hitType === "illustration" || hitType.startsWith("vector");
+          }
+          if (imageType === "photo") {
+            return hitType === "photo";
+          }
+          return hitType === imageType;
+        })
+        .map((hit) => {
+          const hitType = String(hit.type || "").toLowerCase();
+          const normType: MediaType = hitType.startsWith("vector")
+            ? "vector"
+            : hitType === "illustration"
+            ? "illustration"
+            : "photo";
+          return {
+            id: hit.id,
+            photographer: hit.user || "Pixabay Artist",
+            photographer_url: hit.pageURL || "",
+            url: hit.pageURL || "",
+            alt: hit.tags || query,
+            type: normType,
+            src: {
+              original: hit.largeImageURL || hit.webformatURL || hit.previewURL || "",
+              large: hit.webformatURL || hit.previewURL || "",
+              medium: hit.webformatURL || hit.previewURL || "",
+              small: hit.previewURL || hit.webformatURL || "",
+              tiny: hit.previewURL || hit.webformatURL || "",
+            },
+          };
+        }).map(normalizePixabayPhoto);
+
+      // If illustration or vector returned 0 hits, try alternate vector/illustration Pixabay query
+      if (photos.length === 0 && (imageType === "illustration" || imageType === "vector")) {
+        const altType = imageType === "illustration" ? "vector" : "illustration";
+        const altParams = new URLSearchParams({
+          key: pixabayKey,
+          q: query,
+          image_type: altType,
+          safesearch: "true",
+          per_page: String(perPage),
+          page: String(page),
+        });
+        const altRes = await fetch(`https://pixabay.com/api/?${altParams}`, {
+          signal: AbortSignal.timeout(6000),
+        }).catch(() => null);
+        if (altRes && altRes.ok) {
+          const altData: { hits?: PixabayHit[]; totalHits?: number } = await altRes.json();
+          const altHits = Array.isArray(altData.hits) ? altData.hits : [];
+          for (const hit of altHits) {
+            const hitType = String(hit.type || "").toLowerCase();
+            const normType: MediaType = hitType.startsWith("vector")
+              ? "vector"
+              : hitType === "illustration"
+              ? "illustration"
+              : "photo";
+            photos.push(normalizePixabayPhoto({
+              id: hit.id,
+              photographer: hit.user || "Pixabay Artist",
+              photographer_url: hit.pageURL || "",
+              url: hit.pageURL || "",
+              alt: hit.tags || query,
+              type: normType,
+              src: {
+                original: hit.largeImageURL || hit.webformatURL || hit.previewURL || "",
+                large: hit.webformatURL || hit.previewURL || "",
+                medium: hit.webformatURL || hit.previewURL || "",
+                small: hit.previewURL || hit.webformatURL || "",
+                tiny: hit.previewURL || hit.webformatURL || "",
+              },
+            }));
+          }
+        }
+      }
+
       if (photos.length || imageType === "vector" || imageType === "illustration") {
         const total = Number(data.totalHits) || (photos.length ? 500 : 0);
         const hasNext = page * perPage < total || hits.length >= perPage;
@@ -168,6 +230,7 @@ export async function searchStockMedia(
     /* Photo requests can use the secondary provider below. */
   }
   if (imageType === "vector" || imageType === "illustration") return empty;
+
   const pexelsKey =
     process.env["PEXELS_API_KEY"] || (globalThis as any).__env__?.["PEXELS_API_KEY"];
   if (!pexelsKey) return empty;
