@@ -32669,9 +32669,10 @@ function updateManualBattleStagePokemon(side, studentName, pokemon) {
     return;
   }
 
-  const pwrVal = pokemon.power || pokemon.level || 10;
-  const hpVal = pokemon.hp || 100;
-  const rarityVal = pokemon.rarity || 'Common';
+  const pwrVal = Number(pokemon.pokemon_power ?? pokemon.power ?? pokemon.level) || 50;
+  const maxHpVal = typeof getMaxHP === 'function' ? getMaxHP(pokemon) : (pwrVal + 30);
+  const curHpVal = typeof getHealedHP === 'function' ? getHealedHP(pokemon) : (pokemon.current_hp ?? maxHpVal);
+  const rarityVal = pokemon.pokemon_rarity ? (pokemon.pokemon_rarity.charAt(0).toUpperCase() + pokemon.pokemon_rarity.slice(1)) : (pokemon.rarity || 'Common');
   const artwork = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${pokemon.pokemon_id}.png`;
 
   if (ped) ped.classList.add('pedestal-active');
@@ -32680,7 +32681,7 @@ function updateManualBattleStagePokemon(side, studentName, pokemon) {
   if (img) { img.src = artwork; img.alt = pokemon.pokemon_name; }
   if (name) name.textContent = pokemon.pokemon_name;
   if (pwr) pwr.textContent = `⚡ ${pwrVal} PWR`;
-  if (hp) hp.textContent = `❤️ ${hpVal} HP`;
+  if (hp) hp.textContent = `❤️ ${curHpVal}/${maxHpVal} HP`;
   if (rar) rar.textContent = rarityVal;
 }
 
@@ -32756,14 +32757,16 @@ function populateBattleSelects() {
       } else {
         p1Grid.innerHTML = pokes.map(p => {
           const pokeImg = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png`;
-          const pwr = p.power || p.level || 10;
-          const hp = p.hp || 100;
+          const pwr = Number(p.pokemon_power ?? p.power ?? p.level) || 50;
+          const maxHp = typeof getMaxHP === 'function' ? getMaxHP(p) : (pwr + 30);
+          const curHp = typeof getHealedHP === 'function' ? getHealedHP(p) : (p.current_hp ?? maxHp);
+          const hpLabel = curHp < maxHp ? `${curHp}/${maxHp}` : `${curHp}`;
           return `<button type="button" class="battle-p1-btn pokemon-battle-card" data-id="${p.__backendId}" data-name="${escapeHtml(p.pokemon_name)}">
             <img src="${pokeImg}" class="p-card-img" alt="${escapeHtml(p.pokemon_name)}" loading="lazy" onerror="this.onerror=null;this.src=getAvatarFallbackSrc();">
             <span class="card-p-name">${escapeHtml(p.pokemon_name)}</span>
             <div class="card-p-stats">
-              <span class="chip-power">⚡ ${pwr}</span>
-              <span class="chip-hp">❤️ ${hp}</span>
+              <span class="chip-power" title="Power: ${pwr}">⚡ ${pwr}</span>
+              <span class="chip-hp" title="HP: ${curHp}/${maxHp}">❤️ ${hpLabel}</span>
             </div>
           </button>`;
         }).join('');
@@ -32808,14 +32811,16 @@ function populateBattleSelects() {
       } else {
         p2Grid.innerHTML = pokes.map(p => {
           const pokeImg = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png`;
-          const pwr = p.power || p.level || 10;
-          const hp = p.hp || 100;
+          const pwr = Number(p.pokemon_power ?? p.power ?? p.level) || 50;
+          const maxHp = typeof getMaxHP === 'function' ? getMaxHP(p) : (pwr + 30);
+          const curHp = typeof getHealedHP === 'function' ? getHealedHP(p) : (p.current_hp ?? maxHp);
+          const hpLabel = curHp < maxHp ? `${curHp}/${maxHp}` : `${curHp}`;
           return `<button type="button" class="battle-p2-btn pokemon-battle-card" data-id="${p.__backendId}" data-name="${escapeHtml(p.pokemon_name)}">
             <img src="${pokeImg}" class="p-card-img" alt="${escapeHtml(p.pokemon_name)}" loading="lazy" onerror="this.onerror=null;this.src=getAvatarFallbackSrc();">
             <span class="card-p-name">${escapeHtml(p.pokemon_name)}</span>
             <div class="card-p-stats">
-              <span class="chip-power">⚡ ${pwr}</span>
-              <span class="chip-hp">❤️ ${hp}</span>
+              <span class="chip-power" title="Power: ${pwr}">⚡ ${pwr}</span>
+              <span class="chip-hp" title="HP: ${curHp}/${maxHp}">❤️ ${hpLabel}</span>
             </div>
           </button>`;
         }).join('');
