@@ -2557,3 +2557,19 @@ html body:not(.ts-bright) .vocab-load-more-pill:hover:not(:disabled) {
 .schedule-color-picker-box .item-color.is-selected .item-color-check {
   opacity: 1;
 }
+
+/* Disable native WebKit/Blink search cancel button to prevent duplicate 'x' clear buttons */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration,
+input::-webkit-search-cancel-button,
+input::-webkit-search-decoration,
+input::-webkit-search-results-button,
+input::-webkit-search-results-decoration {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}

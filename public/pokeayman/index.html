@@ -10558,7 +10558,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
              <div class="quiz-image-picker-body">
               <div class="quiz-image-search-row">
                <div class="quiz-image-search-field">
-                <input id="quiz-image-search" type="search" placeholder="Search photos"><button type="button" id="quiz-image-search-clear" aria-label="Clear search">×</button>
+                <input id="quiz-image-search" type="text" autocomplete="off" spellcheck="false" placeholder="Search photos"><button type="button" id="quiz-image-search-clear" aria-label="Clear search">×</button>
                </div><button id="quiz-image-search-btn" type="button" class="quiz-image-search-submit">Search</button>
               </div>
               <p id="quiz-image-status" class="quiz-image-status" aria-live="polite"></p>
@@ -22710,9 +22710,15 @@ const loadQuizImagePage = async reset => {
   } catch (error) { quizImageHasMore = true; if (quizImageStatus) quizImageStatus.textContent = quizImagePhotos.length ? `${quizImagePhotos.length} photos loaded · Load more to retry` : 'Search failed. Try again.'; toast('Search error. Try again.'); }
   finally { quizImageLoading = false; renderQuizImageResults(); }
 };
-quizImageSearchOpen?.addEventListener('click', () => { quizImagePickerModal?.classList.remove('hidden'); quizImageSearch?.focus(); });
+quizImageSearchOpen?.addEventListener('click', () => { quizImagePickerModal?.classList.remove('hidden'); updateQuizImageClearBtn(); quizImageSearch?.focus(); });
 quizImagePickerModal?.querySelectorAll('[data-quiz-image-close]').forEach(button => button.addEventListener('click', () => quizImagePickerModal.classList.add('hidden')));
-document.getElementById('quiz-image-search-clear')?.addEventListener('click', () => { quizImageSearch.value = ''; quizImageResults.innerHTML = ''; quizImageResults.classList.add('hidden'); quizImagePhotos = []; quizImagePage = 1; quizImageHasMore = false; quizImageLoadMore.disabled = true; quizImageLoadMore.textContent = 'Load more photos'; if (quizImageStatus) quizImageStatus.textContent = ''; quizImageSearch.focus(); });
+const updateQuizImageClearBtn = () => {
+  const clr = document.getElementById('quiz-image-search-clear');
+  if (clr && quizImageSearch) clr.style.display = quizImageSearch.value ? 'block' : 'none';
+};
+quizImageSearch?.addEventListener('input', updateQuizImageClearBtn);
+document.getElementById('quiz-image-search-clear')?.addEventListener('click', () => { quizImageSearch.value = ''; updateQuizImageClearBtn(); quizImageResults.innerHTML = ''; quizImageResults.classList.add('hidden'); quizImagePhotos = []; quizImagePage = 1; quizImageHasMore = false; quizImageLoadMore.disabled = true; quizImageLoadMore.textContent = 'Load more photos'; if (quizImageStatus) quizImageStatus.textContent = ''; quizImageSearch.focus(); });
+updateQuizImageClearBtn();
 quizImageSearchBtn?.addEventListener('click', async () => { if (quizImageLoading) return; quizImageSearchBtn.disabled = true; quizImageSearchBtn.textContent = 'Searching...'; await loadQuizImagePage(true); quizImageSearchBtn.disabled = false; quizImageSearchBtn.textContent = 'Search'; });
 quizImageLoadMore?.addEventListener('click', () => loadQuizImagePage(false));
 quizImageResults?.addEventListener('scroll', () => { if (quizImageResults.scrollTop + quizImageResults.clientHeight >= quizImageResults.scrollHeight - 80) loadQuizImagePage(false); });
@@ -30503,7 +30509,7 @@ function openVocabListEditor(listId, listName) {
           <!-- Search Bar with Clear Button -->
           <div class="flex gap-2">
             <div class="relative flex-1">
-              <input id="vocab-photo-picker-search" class="vocab-editor-input w-full pr-8" type="search" aria-label="Search photos" placeholder="Search photos, clipart, illustrations...">
+              <input id="vocab-photo-picker-search" class="vocab-editor-input w-full pr-8" type="text" autocomplete="off" spellcheck="false" aria-label="Search photos" placeholder="Search photos, clipart, illustrations...">
               <button type="button" id="vocab-photo-picker-search-clear" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-sm font-bold p-1 cursor-pointer" aria-label="Clear search">✕</button>
             </div>
             <button type="button" id="vocab-photo-picker-search-btn" class="vocab-editor-primary">Search</button>
@@ -30542,9 +30548,21 @@ function openVocabListEditor(listId, listName) {
       picker.addEventListener('click', event => { if (event.target === picker) close(); });
       picker.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
 
-      picker.querySelector('#vocab-photo-picker-search-clear')?.addEventListener('click', () => {
-        const inp = picker.querySelector('#vocab-photo-picker-search');
-        if (inp) { inp.value = ''; inp.focus(); }
+      const photoSearchInput = picker.querySelector('#vocab-photo-picker-search');
+      const photoSearchClear = picker.querySelector('#vocab-photo-picker-search-clear');
+      const updatePhotoClearBtn = () => {
+        if (photoSearchClear) {
+          photoSearchClear.style.display = photoSearchInput?.value ? 'block' : 'none';
+        }
+      };
+      photoSearchClear?.addEventListener('click', () => {
+        if (photoSearchInput) {
+          photoSearchInput.value = '';
+          updatePhotoClearBtn();
+          photoSearchInput.focus();
+          clearTimeout(vocabPhotoSearchDebounce);
+          runVocabPhotoSearch();
+        }
       });
 
       // Type filter pills
@@ -30588,10 +30606,10 @@ function openVocabListEditor(listId, listName) {
       };
       let vocabPhotoSearchDebounce = null;
       const scheduleVocabPhotoSearch = () => {
+        updatePhotoClearBtn();
         clearTimeout(vocabPhotoSearchDebounce);
         vocabPhotoSearchDebounce = setTimeout(runVocabPhotoSearch, 320);
       };
-      const photoSearchInput = picker.querySelector('#vocab-photo-picker-search');
       photoSearchInput.addEventListener('input', scheduleVocabPhotoSearch);
       photoSearchInput.addEventListener('keydown', event => {
         if (event.key !== 'Enter') return;
@@ -30627,6 +30645,8 @@ function openVocabListEditor(listId, listName) {
       b.classList.toggle('is-active', b.dataset.imageType === 'all');
     });
     picker.querySelector('#vocab-photo-picker-search').value = vocabPhotoQuery;
+    const clrBtn = picker.querySelector('#vocab-photo-picker-search-clear');
+    if (clrBtn) clrBtn.style.display = vocabPhotoQuery ? 'block' : 'none';
     picker.querySelector('#vocab-photo-picker-url').value = addWordImageInput.value.trim();
     picker.querySelector('#vocab-photo-picker-search-btn').click();
     picker.querySelector('#vocab-photo-picker-search').focus();
@@ -31034,10 +31054,16 @@ function editVocabWord(wordId, currentWord, currentImage) {
   modal.querySelectorAll('#edit-word-close, #edit-word-close-btn, #edit-word-cancel').forEach(btn => btn.addEventListener('click', close));
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
 
+  const updateSearchClearVisibility = () => {
+    if (searchClear) searchClear.style.display = searchInput.value ? 'block' : 'none';
+  };
+  searchInput.addEventListener('input', updateSearchClearVisibility);
   searchClear?.addEventListener('click', () => {
     searchInput.value = '';
+    updateSearchClearVisibility();
     searchInput.focus();
   });
+  updateSearchClearVisibility();
 
   const aiBtn = modal.querySelector('#edit-word-ai-btn');
   aiBtn?.addEventListener('click', async () => {
