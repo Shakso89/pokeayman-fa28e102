@@ -784,9 +784,9 @@ html body.ts-bright .ve-workspace .ve-footer {
   display: flex !important;
   flex-direction: column !important;
   width: 100% !important;
-  height: 6.25rem !important;
-  min-height: 6.25rem !important;
-  max-height: 6.25rem !important;
+  aspect-ratio: 16 / 9 !important;
+  min-height: 0 !important;
+  max-height: none !important;
   padding: 3px !important;
   border-radius: 0.85rem !important;
   overflow: hidden !important;
@@ -794,12 +794,20 @@ html body.ts-bright .ve-workspace .ve-footer {
   cursor: pointer !important;
   background: #1e293b !important;
   border: 1px solid #334155 !important;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease, z-index 0.2s ease !important;
+  z-index: 0 !important;
 }
 .vocab-word-edit-photo-card:hover {
-  transform: translateY(-2px) !important;
+  z-index: 10 !important;
+  transform: scale(1.05) !important;
   border-color: #fbbf24 !important;
-  box-shadow: 0 4px 14px rgba(251, 191, 36, 0.25) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(251, 191, 36, 0.25) !important;
+}
+.vocab-word-edit-photo-card.is-selected {
+  z-index: 10 !important;
+  transform: scale(1.05) !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 12px 28px -4px rgba(245, 158, 11, 0.35) !important;
 }
 .vocab-word-edit-photo-card img {
   display: block !important;
@@ -1147,15 +1155,19 @@ html body.light .vocab-cover-dialog .vocab-cover-result,
 html body.ts-bright .vocab-cover-dialog .vocab-cover-result:hover,
 html body.light .vocab-cover-dialog .vocab-cover-result:hover,
 .vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-result:hover {
+  z-index: 10 !important;
+  transform: scale(1.05) !important;
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(99, 102, 241, 0.25) !important;
 }
 
 html body.ts-bright .vocab-cover-dialog .vocab-cover-result.is-selected,
 html body.light .vocab-cover-dialog .vocab-cover-result.is-selected,
 .vocab-cover-popover.is-light .vocab-cover-dialog .vocab-cover-result.is-selected {
+  z-index: 10 !important;
+  transform: scale(1.05) !important;
   border-color: #6366f1 !important;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35) !important;
+  box-shadow: 0 12px 28px -4px rgba(99, 102, 241, 0.35) !important;
 }
 
 /* Student Inventory & Credit Log Bright Mode Overrides */
@@ -2238,26 +2250,32 @@ html body:not(.ts-bright) .vocab-load-more-pill:hover:not(:disabled) {
   box-shadow: none !important;
 }
 
-/* 3. Cover Dialog & 16:10 Wide Results Grid */
+/* 3. Cover Dialog & 16:9 Wide Results Grid with Stacking Context */
 .vocab-cover-dialog {
   display: flex !important;
   flex-direction: column !important;
-  width: min(100%, 48rem) !important;
-  max-height: min(92vh, 46rem) !important;
+  width: min(100%, 52rem) !important;
+  max-height: min(92vh, 48rem) !important;
   overflow: hidden !important;
 }
 .vocab-cover-results {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 0.65rem !important;
-  max-height: 20rem !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0.75rem 1rem !important;
+  max-height: 22rem !important;
   min-height: 180px !important;
   overflow-y: auto !important;
-  padding: 4px !important;
+  padding: 0.5rem !important;
+}
+@media (max-width: 860px) {
+  .vocab-cover-results {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
 }
 @media (max-width: 640px) {
   .vocab-cover-results {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
   }
 }
 .vocab-cover-result {
@@ -2265,28 +2283,32 @@ html body:not(.ts-bright) .vocab-load-more-pill:hover:not(:disabled) {
   aspect-ratio: 16 / 10 !important;
   border-radius: 0.75rem !important;
   overflow: hidden !important;
-  border: 2px solid transparent !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease, z-index 0.2s ease !important;
   background: #0f172a !important;
+  z-index: 0 !important;
 }
 .vocab-cover-result:hover {
-  transform: translateY(-2px) !important;
+  z-index: 10 !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3) !important;
   border-color: #fbbf24 !important;
-  box-shadow: 0 4px 14px rgba(251, 191, 36, 0.25) !important;
 }
 .vocab-cover-result.is-selected {
+  z-index: 10 !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 12px 28px -4px rgba(245, 158, 11, 0.35) !important;
   border-color: #f59e0b !important;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.4) !important;
 }
 .vocab-cover-result img {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
   display: block !important;
+  background: #0f172a !important;
 }
 
-/* 4. Choose Photo Modal Flex Containment */
+/* 4. Choose Photo Modal Flex Containment & Stacking Context */
 .vocab-photo-picker-dialog {
   display: flex !important;
   flex-direction: column !important;
@@ -2306,14 +2328,49 @@ html body:not(.ts-bright) .vocab-load-more-pill:hover:not(:disabled) {
 .vocab-photo-picker-grid {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 0.65rem !important;
+  gap: 0.75rem 1rem !important;
   min-height: 200px !important;
-  max-height: 360px !important;
+  max-height: 380px !important;
   overflow-y: auto !important;
   flex-shrink: 0 !important;
+  padding: 0.5rem !important;
+}
+@media (max-width: 860px) {
+  .vocab-photo-picker-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
 }
 @media (max-width: 640px) {
   .vocab-photo-picker-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
   }
+}
+.vocab-photo-option {
+  position: relative !important;
+  aspect-ratio: 16 / 9 !important;
+  overflow: hidden !important;
+  border-radius: 0.75rem !important;
+  background: #1b2638 !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease, z-index 0.2s ease !important;
+  z-index: 0 !important;
+}
+.vocab-photo-option:hover, .vocab-photo-option:focus-visible {
+  z-index: 10 !important;
+  transform: scale(1.05) !important;
+  border-color: #ffd84d !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 18px rgba(255, 203, 5, 0.22) !important;
+  outline: none !important;
+}
+.vocab-photo-option.is-selected {
+  z-index: 10 !important;
+  transform: scale(1.05) !important;
+  border-color: #fbbf24 !important;
+  box-shadow: 0 12px 28px -4px rgba(251, 191, 36, 0.35) !important;
+}
+.vocab-photo-option img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
 }

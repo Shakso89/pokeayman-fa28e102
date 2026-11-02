@@ -29755,8 +29755,8 @@ function openVocabCoverPicker(listId, listName) {
       <p id="vocab-cover-status" class="text-xs font-semibold shrink-0 text-slate-400" aria-live="polite"></p>
     </div>
 
-    <!-- 16:10 Cover Results Grid -->
-    <div id="vocab-cover-results" class="vocab-cover-results"></div>
+    <!-- 16:9 Cover Results Grid with Stacking Context -->
+    <div id="vocab-cover-results" class="vocab-cover-results grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4 p-2 overflow-y-auto"></div>
 
     <!-- Sleek Centered Trigger Pill -->
     <div class="flex justify-center my-2">
@@ -29809,6 +29809,18 @@ function openVocabCoverPicker(listId, listName) {
   searchClear?.addEventListener('click', () => {
     searchInput.value = '';
     searchInput.focus();
+    fetchCoverPhotos(true);
+  });
+
+  let coverInputDebounce = null;
+  searchInput?.addEventListener('input', () => {
+    if (coverInputDebounce) clearTimeout(coverInputDebounce);
+    coverInputDebounce = setTimeout(() => {
+      const q = searchInput.value.trim();
+      if (q && q.toLowerCase() !== coverQuery) {
+        fetchCoverPhotos(true);
+      }
+    }, 320);
   });
 
   let coverQuery = '';
@@ -29818,6 +29830,7 @@ function openVocabCoverPicker(listId, listName) {
   let coverLoading = false;
   let coverType = 'all';
   let coverRequest = 0;
+  let coverAbortController = null;
 
   // Type filter pills
   modal.querySelectorAll('#vocab-cover-type-pills .vocab-cover-type-pill').forEach(btn => {
@@ -29830,11 +29843,20 @@ function openVocabCoverPicker(listId, listName) {
   });
 
   const renderCoverPhotos = () => {
+    if (coverLoading && coverPhotos.length === 0) {
+      results.innerHTML = `
+        <div class="col-span-full py-12 text-center flex flex-col items-center justify-center gap-2.5 px-4">
+          <span class="animate-spin text-3xl">⏳</span>
+          <p class="text-xs font-semibold ${isBright ? 'text-slate-600' : 'text-slate-300'}">Searching covers for &ldquo;${escape(coverQuery || searchInput.value || '')}&rdquo;…</p>
+        </div>
+      `;
+      return;
+    }
     if (coverPhotos.length === 0) {
       results.innerHTML = `
         <div class="col-span-full py-12 text-center flex flex-col items-center justify-center gap-2.5 px-4">
           <span class="text-3xl">🔍</span>
-          <p class="text-xs font-bold ${isBright ? 'text-slate-700' : 'text-slate-300'}">No covers found for &ldquo;${escape(coverQuery)}&rdquo;.</p>
+          <p class="text-xs font-bold ${isBright ? 'text-slate-700' : 'text-slate-300'}">No covers found for &ldquo;${escape(coverQuery || searchInput.value || '')}&rdquo;.</p>
           ${coverType !== 'all' ? `
             <button type="button" id="vocab-cover-switch-all-btn" class="mt-1 px-4 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 transition active:scale-95 shadow-md flex items-center gap-1.5 cursor-pointer">
               <span>✨</span><span>Search in "All"</span>
@@ -29850,29 +29872,50 @@ function openVocabCoverPicker(listId, listName) {
       });
     } else {
       results.innerHTML = coverPhotos.map((photo, index) => {
-      const isSelected = selectedUrl && (selectedUrl === photo.src.large || selectedUrl === photo.src.original || selectedUrl === photo.src.medium);
-      return `<button type="button" class="vocab-cover-result ${isSelected ? 'is-selected' : ''}" data-photo-index="${index}" aria-label="Select stock photo by ${photo.photographer}">
-        <img src="${photo.src.medium}" alt="Stock photo by ${photo.photographer}" loading="lazy">
-        ${isSelected ? '<div class="absolute top-2 right-2 bg-amber-400 text-slate-950 rounded-full w-5 h-5 flex items-center justify-center text-xs font-black shadow-md">✓</div>' : ''}
-      </button>`;
-    }).join('');
+        const isSelected = selectedUrl && (selectedUrl === photo.src.large || selectedUrl === photo.src.original || selectedUrl === photo.src.medium);
+        return `<button
+          key="${photo.id || index}"
+          type="button"
+          data-photo-index="${index}"
+          aria-label="Select stock photo by ${escape(photo.photographer || 'Photographer')}"
+          class="vocab-cover-result relative group rounded-xl overflow-hidden aspect-video transition-all duration-200 cursor-pointer ${
+            isSelected
+              ? 'is-selected z-10 ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900 scale-105 shadow-xl'
+              : 'z-0 border-2 border-transparent hover:z-10 hover:scale-105 hover:shadow-lg'
+          }">
+          <img
+            src="${photo.src.medium}"
+            alt="${escape(photo.photographer || photo.alt || 'Search result')}"
+            class="w-full h-full object-cover bg-slate-800"
+            loading="lazy"
+          />
+          ${isSelected ? `
+            <div class="absolute top-2 right-2 w-6 h-6 bg-amber-400 text-slate-950 rounded-full flex items-center justify-center shadow-md font-black text-xs">
+              ✓
+            </div>
+          ` : ''}
+        </button>`;
+      }).join('');
 
-    results.querySelectorAll('.vocab-cover-result').forEach(card => card.addEventListener('click', () => {
-      const photo = coverPhotos[Number(card.dataset.photoIndex)];
-      selectedId = String(photo.id || photo.src.large || '');
-      selectedUrl = String(photo.src.large || photo.src.original || photo.src.medium || '');
-      results.querySelectorAll('.vocab-cover-result').forEach(item => {
-        item.classList.remove('is-selected');
-        item.querySelector('.absolute.top-2.right-2')?.remove();
-      });
-      card.classList.add('is-selected');
-      const check = document.createElement('div');
-      check.className = 'absolute top-2 right-2 bg-amber-400 text-slate-950 rounded-full w-5 h-5 flex items-center justify-center text-xs font-black shadow-md';
-      check.textContent = '✓';
-      card.appendChild(check);
-      updateSelectedBadge();
-      toast('Cover photo selected! Click Apply to save.');
-    }));
+      results.querySelectorAll('.vocab-cover-result').forEach(card => card.addEventListener('click', () => {
+        const photo = coverPhotos[Number(card.dataset.photoIndex)];
+        if (!photo) return;
+        selectedId = String(photo.id || photo.src.large || '');
+        selectedUrl = String(photo.src.large || photo.src.original || photo.src.medium || '');
+        results.querySelectorAll('.vocab-cover-result').forEach(item => {
+          item.classList.remove('is-selected', 'z-10', 'ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-slate-900', 'scale-105', 'shadow-xl');
+          item.classList.add('z-0', 'border-2', 'border-transparent');
+          item.querySelector('.absolute.top-2.right-2')?.remove();
+        });
+        card.classList.remove('z-0', 'border-2', 'border-transparent');
+        card.classList.add('is-selected', 'z-10', 'ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-slate-900', 'scale-105', 'shadow-xl');
+        const check = document.createElement('div');
+        check.className = 'absolute top-2 right-2 w-6 h-6 bg-amber-400 text-slate-950 rounded-full flex items-center justify-center shadow-md font-black text-xs';
+        check.textContent = '✓';
+        card.appendChild(check);
+        updateSelectedBadge();
+        toast('Cover photo selected! Click Apply to save.');
+      }));
     }
 
     if (loadMore) {
@@ -29895,16 +29938,36 @@ function openVocabCoverPicker(listId, listName) {
   };
 
   const fetchCoverPhotos = async (reset = false) => {
-    if (coverLoading) return;
+    if (!reset && coverLoading) return;
     const query = modal.querySelector('#vocab-cover-search').value.trim().replace(/\s+/g, ' ');
     if (reset) {
-      if (!query) { status.textContent = 'Enter a keyword to search.'; return; }
+      if (coverAbortController) {
+        try { coverAbortController.abort(); } catch (_) {}
+        coverAbortController = null;
+      }
+      if (!query) {
+        status.textContent = 'Enter a keyword to search.';
+        coverQuery = '';
+        coverPhotos = [];
+        results.innerHTML = `
+          <div class="col-span-full py-12 text-center flex flex-col items-center justify-center gap-2.5 px-4">
+            <span class="text-3xl">🔍</span>
+            <p class="text-xs font-semibold ${isBright ? 'text-slate-600' : 'text-slate-400'}">Enter a keyword to search wide covers.</p>
+          </div>
+        `;
+        if (loadMore) {
+          loadMore.style.setProperty('display', 'none', 'important');
+          loadMore.classList.add('hidden');
+        }
+        return;
+      }
       coverQuery = query.toLocaleLowerCase();
       coverPage = 1;
       coverPhotos = [];
       coverHasMore = true;
       coverRequest += 1;
-      results.replaceChildren();
+      coverLoading = true;
+      renderCoverPhotos();
       if (loadMore) {
         loadMore.style.setProperty('display', 'none', 'important');
         loadMore.classList.add('hidden');
@@ -29914,13 +29977,16 @@ function openVocabCoverPicker(listId, listName) {
     if (!coverQuery || !coverHasMore || coverPhotos.length >= 100) return;
     const request = coverRequest;
     coverLoading = true;
-    renderCoverPhotos();
     status.textContent = coverPhotos.length ? `${coverPhotos.length} of 100 loaded · Loading…` : 'Loading covers…';
     try {
+      coverAbortController = new AbortController();
       const remaining = 100 - coverPhotos.length;
       const perPage = Math.min(20, remaining);
       const typeParam = coverType !== 'all' ? '&image_type=' + encodeURIComponent(coverType) : '';
-      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}${typeParam}&per_page=${perPage}&page=${coverPage}`, { headers: { 'Authorization': '' } });
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}${typeParam}&per_page=${perPage}&page=${coverPage}`, {
+        headers: { 'Authorization': '' },
+        signal: coverAbortController.signal
+      });
       if (!response.ok) throw new Error('search');
       const data = await response.json();
       if (request !== coverRequest) return;
@@ -29942,11 +30008,13 @@ function openVocabCoverPicker(listId, listName) {
       status.textContent = coverPhotos.length ? (reachedMax ? '100 of 100 loaded' : `${coverPhotos.length} of 100 loaded`) : 'No covers found. Try another keyword.';
       renderCoverPhotos();
     } catch (error) {
+      if (error?.name === 'AbortError') return;
       if (request === coverRequest) {
         coverHasMore = true;
         status.textContent = `${coverPhotos.length ? coverPhotos.length + ' photos loaded · ' : ''}Search failed. Click below to retry.`;
         if (loadMore && coverPhotos.length > 0) {
-          loadMore.style.display = 'inline-flex';
+          loadMore.classList.remove('hidden');
+          loadMore.style.removeProperty('display');
           loadMore.disabled = false;
           loadMore.innerHTML = '<span>⚠️</span><span>Retry loading covers</span>';
         }
@@ -30052,10 +30120,8 @@ function openVocabCoverPicker(listId, listName) {
   });
 
   const defaultSearch = String(displayName).replace(/[_-]+/g, ' ').trim();
-  if (defaultSearch && !selectedUrl) {
-    searchInput.value = defaultSearch;
-    fetchCoverPhotos(true);
-  }
+  searchInput.value = defaultSearch || 'nature';
+  fetchCoverPhotos(true);
 }
 
 
@@ -30707,20 +30773,37 @@ function openVocabListEditor(listId, listName) {
           const itemsToAppend = reset ? vocabPhotoItems : additions;
           itemsToAppend.forEach((photo, idx) => {
             const globalIndex = reset ? idx : (startIndex + idx);
+            const isSelected = addWordImageInput.value === photo.src.large;
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = `vocab-photo-option ${addWordImageInput.value === photo.src.large ? 'is-selected' : ''}`;
+            btn.className = `vocab-photo-option relative group rounded-xl overflow-hidden aspect-video transition-all duration-200 cursor-pointer ${
+              isSelected
+                ? 'is-selected z-10 ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900 scale-105 shadow-xl'
+                : 'z-0 border-2 border-transparent hover:z-10 hover:scale-105 hover:shadow-lg'
+            }`;
             btn.dataset.photoIndex = String(globalIndex);
             btn.setAttribute('aria-label', `Choose photo by ${photo.photographer || 'Artist'}`);
-            btn.innerHTML = `<img src="${photo.src.medium}" alt="Photo by ${photo.photographer || 'Artist'}" loading="lazy">`;
+            btn.innerHTML = `
+              <img src="${photo.src.medium}" alt="${photo.photographer || 'Search result'}" class="w-full h-full object-cover bg-slate-800" loading="lazy">
+              ${isSelected ? '<div class="absolute top-2 right-2 w-6 h-6 bg-amber-400 text-slate-950 rounded-full flex items-center justify-center shadow-md font-black text-xs">✓</div>' : ''}
+            `;
             btn.addEventListener('click', () => {
               const selectedUrl = String(photo?.src?.large || photo?.src?.original || photo?.src?.medium || '').trim();
               if (!selectedUrl) return;
               addWordImageInput.value = selectedUrl;
               addWordImageInput.dispatchEvent(new Event('input', { bubbles: true }));
               picker.querySelector('#vocab-photo-picker-url').value = selectedUrl;
-              grid.querySelectorAll('.vocab-photo-option').forEach(item => item.classList.remove('is-selected'));
-              btn.classList.add('is-selected');
+              grid.querySelectorAll('.vocab-photo-option').forEach(item => {
+                item.classList.remove('is-selected', 'z-10', 'ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-slate-900', 'scale-105', 'shadow-xl');
+                item.classList.add('z-0', 'border-2', 'border-transparent');
+                item.querySelector('.absolute.top-2.right-2')?.remove();
+              });
+              btn.classList.remove('z-0', 'border-2', 'border-transparent');
+              btn.classList.add('is-selected', 'z-10', 'ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-slate-900', 'scale-105', 'shadow-xl');
+              const check = document.createElement('div');
+              check.className = 'absolute top-2 right-2 w-6 h-6 bg-amber-400 text-slate-950 rounded-full flex items-center justify-center shadow-md font-black text-xs';
+              check.textContent = '✓';
+              btn.appendChild(check);
               toast(`Selected image from ${photo.photographer || 'Artist'}`);
               picker.remove();
               addWordInput.focus();
@@ -31205,13 +31288,17 @@ function editVocabWord(wordId, currentWord, currentImage) {
         btn.type = 'button';
         btn.dataset.photoIndex = String(globalIdx);
         const isCurrentSelected = selectedImageUrl && (selectedImageUrl === photo.src.large || selectedImageUrl === photo.src.original || selectedImageUrl === photo.src.medium);
-        btn.className = `vocab-word-edit-photo-card vocab-image-option relative rounded-2xl overflow-hidden group cursor-pointer border transition-all duration-200 aspect-video p-1 flex items-center justify-center ${isCurrentSelected ? 'ring-2 ring-amber-400 border-amber-400' : ''} ${isBright ? 'border-slate-200 hover:border-amber-400 bg-white shadow-sm' : 'border-slate-800 hover:border-amber-400 bg-slate-900'}`;
+        btn.className = `vocab-word-edit-photo-card vocab-image-option relative rounded-xl overflow-hidden group cursor-pointer transition-all duration-200 aspect-video flex items-center justify-center ${
+          isCurrentSelected
+            ? 'is-selected z-10 ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900 scale-105 shadow-xl'
+            : 'z-0 border-2 border-transparent hover:z-10 hover:scale-105 hover:shadow-lg'
+        } ${isBright ? 'bg-white shadow-sm' : 'bg-slate-900'}`;
         btn.innerHTML = `
           <img src="${photo.src.medium}" class="w-full h-full object-cover rounded-xl transition duration-200 group-hover:scale-105" alt="${escape(photo.photographer || 'Photo')}">
-          <div class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-2xl p-1">
+          <div class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-xl p-1">
             <span class="text-slate-950 font-bold text-[11px] bg-amber-400 px-2.5 py-1 rounded-xl shadow-md">Select</span>
           </div>
-          ${isCurrentSelected ? '<div class="absolute top-2 right-2 bg-amber-400 text-slate-950 rounded-full w-5 h-5 flex items-center justify-center text-xs font-black shadow-md">✓</div>' : ''}
+          ${isCurrentSelected ? '<div class="absolute top-2 right-2 w-6 h-6 bg-amber-400 text-slate-950 rounded-full flex items-center justify-center text-xs font-black shadow-md">✓</div>' : ''}
         `;
 
         btn.addEventListener('click', e => {
@@ -31230,12 +31317,14 @@ function editVocabWord(wordId, currentWord, currentImage) {
           updateBadge(true);
 
           resultsContainer.querySelectorAll('.vocab-image-option').forEach(b => {
-            b.classList.remove('ring-2', 'ring-amber-400', 'border-amber-400');
+            b.classList.remove('is-selected', 'z-10', 'ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-slate-900', 'scale-105', 'shadow-xl');
+            b.classList.add('z-0', 'border-2', 'border-transparent');
             b.querySelector('.absolute.top-2.right-2')?.remove();
           });
-          btn.classList.add('ring-2', 'ring-amber-400', 'border-amber-400');
+          btn.classList.remove('z-0', 'border-2', 'border-transparent');
+          btn.classList.add('is-selected', 'z-10', 'ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-slate-900', 'scale-105', 'shadow-xl');
           const check = document.createElement('div');
-          check.className = 'absolute top-2 right-2 bg-amber-400 text-slate-950 rounded-full w-5 h-5 flex items-center justify-center text-xs font-black shadow-md';
+          check.className = 'absolute top-2 right-2 w-6 h-6 bg-amber-400 text-slate-950 rounded-full flex items-center justify-center text-xs font-black shadow-md';
           check.textContent = '✓';
           btn.appendChild(check);
           toast(`Photo selected! Click Save to apply.`);
