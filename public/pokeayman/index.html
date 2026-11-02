@@ -10845,17 +10845,140 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </div><p id="arena-callout" class="arena-callout" aria-live="polite">The trainers are ready.</p><div class="arena-actions"><button id="start-battle-btn" data-sfx="vs" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-bold text-lg transition">Start Battle</button><button type="button" id="arena-new-match-btn" class="arena-next-btn hidden">Choose the next battle</button></div>
          </div><!-- Manual selection UI -->
          <div id="manual-select-ui" class="hidden">
-          <div class="grid grid-cols-2 gap-4">
-           <div class="bg-gray-800 rounded-lg p-4"><label class="text-white text-xs font-bold block mb-2">Student 1</label>
-            <div id="battle-student-1-grid" class="grid grid-cols-2 gap-2 mb-4 max-h-32 overflow-y-auto"></div><label class="text-white text-xs font-bold block mb-2">Pokémon</label>
-            <div id="battle-pokemon-1-grid" class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto"></div>
+          <!-- 1. Live VS Arena Stage -->
+          <div class="manual-vs-arena-stage mb-5" id="manual-vs-stage">
+           <!-- Side 1 Fighter Pod -->
+           <div class="manual-vs-pod" id="mvs-pod-1">
+            <div class="mvs-trainer-bar">
+             <span class="mvs-corner-tag tag-blue">Trainer 1</span>
+             <div class="mvs-trainer-tag">
+              <div class="mvs-avatar-wrap">
+               <img id="mvs-avatar-1" src="" class="hidden" alt="Trainer 1">
+               <span id="mvs-avatar-ph-1" class="mvs-avatar-ph">?</span>
+              </div>
+              <span id="mvs-name-1" class="mvs-trainer-name">Choose Trainer</span>
+             </div>
+            </div>
+            <div class="mvs-pedestal" id="mvs-pedestal-1">
+             <div class="mvs-empty-slot" id="mvs-empty-1">
+              <div class="mvs-pokeball-beacon">
+               <svg class="mvs-pokeball-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+              </div>
+              <span class="mvs-slot-hint">Select PokAcmon</span>
+             </div>
+             <div class="mvs-active-pokemon hidden" id="mvs-active-1">
+              <div class="mvs-artwork-container">
+               <div class="mvs-energy-disc disc-blue"></div>
+               <img id="mvs-poke-img-1" src="" class="mvs-poke-artwork" alt="">
+              </div>
+              <div class="mvs-poke-meta">
+               <h4 id="mvs-poke-name-1" class="mvs-poke-title">-</h4>
+               <div class="mvs-poke-stats">
+                <span id="mvs-poke-power-1" class="mvs-stat-chip chip-power">&#9889; 0 PWR</span>
+                <span id="mvs-poke-hp-1" class="mvs-stat-chip chip-hp">&#10084;&#65039; 0 HP</span>
+                <span id="mvs-poke-rarity-1" class="mvs-stat-chip chip-rarity">Common</span>
+               </div>
+              </div>
+             </div>
+            </div>
            </div>
-           <div class="bg-gray-800 rounded-lg p-4"><label class="text-white text-xs font-bold block mb-2">Student 2</label>
-            <div id="battle-student-2-grid" class="grid grid-cols-2 gap-2 mb-4 max-h-32 overflow-y-auto"></div><label class="text-white text-xs font-bold block mb-2">Pokémon</label>
-            <div id="battle-pokemon-2-grid" class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto"></div>
+
+           <!-- Center VS Clash -->
+           <div class="mvs-center-clash">
+            <div class="mvs-vs-emblem">VS</div>
+           </div>
+
+           <!-- Side 2 Fighter Pod -->
+           <div class="manual-vs-pod" id="mvs-pod-2">
+            <div class="mvs-trainer-bar">
+             <span class="mvs-corner-tag tag-red">Trainer 2</span>
+             <div class="mvs-trainer-tag">
+              <div class="mvs-avatar-wrap">
+               <img id="mvs-avatar-2" src="" class="hidden" alt="Trainer 2">
+               <span id="mvs-avatar-ph-2" class="mvs-avatar-ph">?</span>
+              </div>
+              <span id="mvs-name-2" class="mvs-trainer-name">Choose Trainer</span>
+             </div>
+            </div>
+            <div class="mvs-pedestal" id="mvs-pedestal-2">
+             <div class="mvs-empty-slot" id="mvs-empty-2">
+              <div class="mvs-pokeball-beacon">
+               <svg class="mvs-pokeball-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+              </div>
+              <span class="mvs-slot-hint">Select PokAcmon</span>
+             </div>
+             <div class="mvs-active-pokemon hidden" id="mvs-active-2">
+              <div class="mvs-artwork-container">
+               <div class="mvs-energy-disc disc-red"></div>
+               <img id="mvs-poke-img-2" src="" class="mvs-poke-artwork" alt="">
+              </div>
+              <div class="mvs-poke-meta">
+               <h4 id="mvs-poke-name-2" class="mvs-poke-title">-</h4>
+               <div class="mvs-poke-stats">
+                <span id="mvs-poke-power-2" class="mvs-stat-chip chip-power">&#9889; 0 PWR</span>
+                <span id="mvs-poke-hp-2" class="mvs-stat-chip chip-hp">&#10084;&#65039; 0 HP</span>
+                <span id="mvs-poke-rarity-2" class="mvs-stat-chip chip-rarity">Common</span>
+               </div>
+              </div>
+             </div>
+            </div>
            </div>
           </div>
-          <p id="manual-battle-instruction" class="text-center text-xs text-amber-200 mt-3 min-h-5" aria-live="polite">Select one student and one Pokémon on each side.</p><button id="confirm-manual-battle" type="button" class="w-full mt-2 btn-primary" disabled="" aria-disabled="true">Start Battle</button>
+
+          <!-- 2. Interactive Draft Stations (Side-by-Side Roster & Deck) -->
+          <div class="manual-draft-stations">
+           <!-- Station 1 (Blue Corner) -->
+           <div class="draft-station station-blue">
+            <div class="station-header">
+             <div class="station-title-badge">
+              <span class="station-dot dot-blue"></span>
+              <span>Trainer 1 Draft</span>
+             </div>
+             <span class="station-hint">Pick trainer, then choose fighter</span>
+            </div>
+            <div class="station-sub-header">
+             <span class="station-sub-title">1. Select Trainer</span>
+             <span class="station-sub-desc">Click student</span>
+            </div>
+            <div id="battle-student-1-grid"></div>
+            <div class="station-sub-header">
+             <span class="station-sub-title">2. Select Battle PokAcmon</span>
+             <span class="station-sub-desc">Click card to assign</span>
+            </div>
+            <div id="battle-pokemon-1-grid"></div>
+           </div>
+
+           <!-- Station 2 (Red Corner) -->
+           <div class="draft-station station-red">
+            <div class="station-header">
+             <div class="station-title-badge">
+              <span class="station-dot dot-red"></span>
+              <span>Trainer 2 Draft</span>
+             </div>
+             <span class="station-hint">Pick opponent, then choose fighter</span>
+            </div>
+            <div class="station-sub-header">
+             <span class="station-sub-title">1. Select Trainer</span>
+             <span class="station-sub-desc">Click student</span>
+            </div>
+            <div id="battle-student-2-grid"></div>
+            <div class="station-sub-header">
+             <span class="station-sub-title">2. Select Battle PokAcmon</span>
+             <span class="station-sub-desc">Click card to assign</span>
+            </div>
+            <div id="battle-pokemon-2-grid"></div>
+           </div>
+          </div>
+
+          <!-- 3. Dynamic Footer Instruction & Battle Starter -->
+          <div class="manual-battle-footer mt-5">
+           <div class="manual-instruction-pill">
+            <p id="manual-battle-instruction" aria-live="polite">Select one student and one PokAcmon on each side.</p>
+           </div>
+           <button id="confirm-manual-battle" type="button" class="btn-primary" disabled="" aria-disabled="true">
+            <span>&#9876;&#65039; Start Manual Battle</span>
+           </button>
+          </div>
          </div>
         </div>
        </div>
@@ -32408,78 +32531,224 @@ document.getElementById('profile-adjust-form').addEventListener('submit', async 
 // ==================== BATTLE ARENA ====================
 let battleState = { left: null, right: null, leftPokemon: null, rightPokemon: null, running: false };
 
+function resetManualBattleStage() {
+  const stage = document.getElementById('manual-vs-stage');
+  if (stage) stage.classList.remove('stage-ready');
+  
+  // Reset side 1 pod
+  const av1 = document.getElementById('mvs-avatar-1');
+  const ph1 = document.getElementById('mvs-avatar-ph-1');
+  const nm1 = document.getElementById('mvs-name-1');
+  const ped1 = document.getElementById('mvs-pedestal-1');
+  const emp1 = document.getElementById('mvs-empty-1');
+  const act1 = document.getElementById('mvs-active-1');
+  if (av1) { av1.src = ''; av1.classList.add('hidden'); }
+  if (ph1) ph1.classList.remove('hidden');
+  if (nm1) nm1.textContent = 'Choose Trainer';
+  if (ped1) ped1.classList.remove('pedestal-active');
+  if (emp1) emp1.classList.remove('hidden');
+  if (act1) act1.classList.add('hidden');
+  
+  // Reset side 2 pod
+  const av2 = document.getElementById('mvs-avatar-2');
+  const ph2 = document.getElementById('mvs-avatar-ph-2');
+  const nm2 = document.getElementById('mvs-name-2');
+  const ped2 = document.getElementById('mvs-pedestal-2');
+  const emp2 = document.getElementById('mvs-empty-2');
+  const act2 = document.getElementById('mvs-active-2');
+  if (av2) { av2.src = ''; av2.classList.add('hidden'); }
+  if (ph2) ph2.classList.remove('hidden');
+  if (nm2) nm2.textContent = 'Choose Trainer';
+  if (ped2) ped2.classList.remove('pedestal-active');
+  if (emp2) emp2.classList.remove('hidden');
+  if (act2) act2.classList.add('hidden');
+}
+
+function updateManualBattleStagePokemon(side, studentName, pokemon) {
+  const isOne = side === 1;
+  const ped = document.getElementById(isOne ? 'mvs-pedestal-1' : 'mvs-pedestal-2');
+  const emp = document.getElementById(isOne ? 'mvs-empty-1' : 'mvs-empty-2');
+  const act = document.getElementById(isOne ? 'mvs-active-1' : 'mvs-active-2');
+  const img = document.getElementById(isOne ? 'mvs-poke-img-1' : 'mvs-poke-img-2');
+  const name = document.getElementById(isOne ? 'mvs-poke-name-1' : 'mvs-poke-name-2');
+  const pwr = document.getElementById(isOne ? 'mvs-poke-power-1' : 'mvs-poke-power-2');
+  const hp = document.getElementById(isOne ? 'mvs-poke-hp-1' : 'mvs-poke-hp-2');
+  const rar = document.getElementById(isOne ? 'mvs-poke-rarity-1' : 'mvs-poke-rarity-2');
+
+  if (!pokemon) {
+    if (ped) ped.classList.remove('pedestal-active');
+    if (emp) emp.classList.remove('hidden');
+    if (act) act.classList.add('hidden');
+    return;
+  }
+
+  const pwrVal = pokemon.power || pokemon.level || 10;
+  const hpVal = pokemon.hp || 100;
+  const rarityVal = pokemon.rarity || 'Common';
+  const artwork = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${pokemon.pokemon_id}.png`;
+
+  if (ped) ped.classList.add('pedestal-active');
+  if (emp) emp.classList.add('hidden');
+  if (act) act.classList.remove('hidden');
+  if (img) { img.src = artwork; img.alt = pokemon.pokemon_name; }
+  if (name) name.textContent = pokemon.pokemon_name;
+  if (pwr) pwr.textContent = `⚡ ${pwrVal} PWR`;
+  if (hp) hp.textContent = `❤️ ${hpVal} HP`;
+  if (rar) rar.textContent = rarityVal;
+}
+
+function updateManualBattleStageTrainer(side, studentName, avatarSrc) {
+  const isOne = side === 1;
+  const av = document.getElementById(isOne ? 'mvs-avatar-1' : 'mvs-avatar-2');
+  const ph = document.getElementById(isOne ? 'mvs-avatar-ph-1' : 'mvs-avatar-ph-2');
+  const nm = document.getElementById(isOne ? 'mvs-name-1' : 'mvs-name-2');
+  if (av) {
+    if (avatarSrc) {
+      av.src = avatarSrc;
+      av.classList.remove('hidden');
+      if (ph) ph.classList.add('hidden');
+    } else {
+      av.classList.add('hidden');
+      if (ph) ph.classList.remove('hidden');
+    }
+  }
+  if (nm) nm.textContent = studentName || 'Choose Trainer';
+}
+
 function populateBattleSelects() {
   const students = getStudents(navSchool, navClass);
   const s1Grid = document.getElementById('battle-student-1-grid');
   const s2Grid = document.getElementById('battle-student-2-grid');
-  
-  s1Grid.innerHTML = students.map((s, index) => {
-    const avatar = Number(s.avatar_pokemon_id);
-    const avatarSrc = Number.isInteger(avatar) && avatar > 0 && getCanonicalPokemon(avatar) ? `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatar}.png` : getAvatarFallbackSrc();
-    const avatarAlt = Number.isInteger(avatar) && avatar > 0 && getCanonicalPokemon(avatar) ? `${s.student_name}'s avatar Pokémon` : 'Poké Ball avatar';
-    return `<button type="button" class="battle-s1-btn px-2 py-2 rounded-lg text-xs font-semibold border-2 border-gray-600 bg-gray-700 text-white hover:border-blue-400 hover:bg-blue-600 transition" data-name="${s.student_name}"><img src="${avatarSrc}" class="battle-student-avatar" alt="${avatarAlt}" loading="lazy" onerror="this.onerror=null;this.src=getAvatarFallbackSrc();this.alt='Poké Ball avatar';"><span class="battle-student-name">${s.student_name}</span></button>`;
-  }).join('');
-  
-  s2Grid.innerHTML = students.map((s, index) => {
-    const avatar = Number(s.avatar_pokemon_id);
-    const avatarSrc = Number.isInteger(avatar) && avatar > 0 && getCanonicalPokemon(avatar) ? `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatar}.png` : getAvatarFallbackSrc();
-    const avatarAlt = Number.isInteger(avatar) && avatar > 0 && getCanonicalPokemon(avatar) ? `${s.student_name}'s avatar Pokémon` : 'Poké Ball avatar';
-    return `<button type="button" class="battle-s2-btn px-2 py-2 rounded-lg text-xs font-semibold border-2 border-gray-600 bg-gray-700 text-white hover:border-purple-400 hover:bg-purple-600 transition" data-name="${s.student_name}"><img src="${avatarSrc}" class="battle-student-avatar" alt="${avatarAlt}" loading="lazy" onerror="this.onerror=null;this.src=getAvatarFallbackSrc();this.alt='Poké Ball avatar';"><span class="battle-student-name">${s.student_name}</span></button>`;
-  }).join('');
-  
-  // Student 1 selection
+  const p1Grid = document.getElementById('battle-pokemon-1-grid');
+  const p2Grid = document.getElementById('battle-pokemon-2-grid');
+
+  if (p1Grid) p1Grid.innerHTML = '<div class="empty-pokemon-deck"><span>Select Trainer 1</span><small>to view available Pokémon cards</small></div>';
+  if (p2Grid) p2Grid.innerHTML = '<div class="empty-pokemon-deck"><span>Select Trainer 2</span><small>to view available Pokémon cards</small></div>';
+
+  resetManualBattleStage();
+
+  const renderTrainerList = (sideClass) => {
+    return students.map((s) => {
+      const avatar = Number(s.avatar_pokemon_id);
+      const avatarSrc = Number.isInteger(avatar) && avatar > 0 && getCanonicalPokemon(avatar)
+        ? `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatar}.png`
+        : getAvatarFallbackSrc();
+      const studentPokes = getPokemons().filter(p => p.owner === s.student_name);
+      const count = studentPokes.length;
+      return `<button type="button" class="${sideClass} trainer-select-pill" data-name="${escapeHtml(s.student_name)}" data-avatar="${avatarSrc}">
+        <img src="${avatarSrc}" class="battle-student-avatar" alt="${escapeHtml(s.student_name)}" loading="lazy" onerror="this.onerror=null;this.src=getAvatarFallbackSrc();">
+        <div class="trainer-pill-meta">
+          <span class="battle-student-name">${escapeHtml(s.student_name)}</span>
+          <span class="trainer-poke-count">⚡ ${count} Pokémon</span>
+        </div>
+      </button>`;
+    }).join('');
+  };
+
+  s1Grid.innerHTML = renderTrainerList('battle-s1-btn');
+  s2Grid.innerHTML = renderTrainerList('battle-s2-btn');
+
+  // Student 1 click
   s1Grid.querySelectorAll('.battle-s1-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.preventDefault();
       s1Grid.querySelectorAll('.battle-s1-btn').forEach(b => b.classList.remove('border-blue-400', 'bg-blue-600'));
       btn.classList.add('border-blue-400', 'bg-blue-600');
       const name = btn.dataset.name;
+      const avatarSrc = btn.dataset.avatar;
+      updateManualBattleStageTrainer(1, name, avatarSrc);
+
+      // Clear previous pokemon selection for side 1
+      document.getElementById('battle-selected-s1').dataset.student = name;
+      document.getElementById('battle-selected-s1').dataset.pokemonId = '';
+      updateManualBattleStagePokemon(1, name, null);
+
       const pokes = getPokemons().filter(p => p.owner === name);
-      const p1Grid = document.getElementById('battle-pokemon-1-grid');
-      p1Grid.innerHTML = pokes.map(p => 
-        `<button type="button" class="battle-p1-btn px-2 py-1 rounded-lg text-xs font-semibold border-2 border-gray-600 bg-gray-700 text-white hover:border-green-400 hover:bg-green-600 transition" data-id="${p.__backendId}" data-name="${p.pokemon_name}"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png" class="w-8 h-8 object-contain" alt="${p.pokemon_name}"><div>${p.pokemon_name}</div></button>`
-      ).join('');
-      p1Grid.querySelectorAll('.battle-p1-btn').forEach(btn2 => {
-        btn2.addEventListener('click', e2 => {
-          e2.preventDefault();
-          p1Grid.querySelectorAll('.battle-p1-btn').forEach(b => b.classList.remove('border-green-400', 'bg-green-600'));
-          btn2.classList.add('border-green-400', 'bg-green-600');
-          const selectedPokemon = allData.find(r => r.__backendId === btn2.dataset.id && r.type === 'pokemon');
-          if (!selectedPokemon) return;
-          document.getElementById('battle-selected-s1').innerHTML = `<span>${name} - ${selectedPokemon.pokemon_name}</span>`;
-          document.getElementById('battle-selected-s1').dataset.student = name;
-          document.getElementById('battle-selected-s1').dataset.pokemonId = selectedPokemon.__backendId;
-          updateManualBattleStartState();
+      if (pokes.length === 0) {
+        p1Grid.innerHTML = '<div class="empty-pokemon-deck"><span>No Pokémon found for this trainer</span><small>Add Pokémon to their collection first</small></div>';
+      } else {
+        p1Grid.innerHTML = pokes.map(p => {
+          const pokeImg = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png`;
+          const pwr = p.power || p.level || 10;
+          const hp = p.hp || 100;
+          return `<button type="button" class="battle-p1-btn pokemon-battle-card" data-id="${p.__backendId}" data-name="${escapeHtml(p.pokemon_name)}">
+            <img src="${pokeImg}" class="p-card-img" alt="${escapeHtml(p.pokemon_name)}" loading="lazy" onerror="this.onerror=null;this.src=getAvatarFallbackSrc();">
+            <span class="card-p-name">${escapeHtml(p.pokemon_name)}</span>
+            <div class="card-p-stats">
+              <span class="chip-power">⚡ ${pwr}</span>
+              <span class="chip-hp">❤️ ${hp}</span>
+            </div>
+          </button>`;
+        }).join('');
+
+        p1Grid.querySelectorAll('.battle-p1-btn').forEach(btn2 => {
+          btn2.addEventListener('click', e2 => {
+            e2.preventDefault();
+            p1Grid.querySelectorAll('.battle-p1-btn').forEach(b => b.classList.remove('border-green-400', 'bg-green-600'));
+            btn2.classList.add('border-green-400', 'bg-green-600');
+            const selectedPokemon = allData.find(r => r.__backendId === btn2.dataset.id && r.type === 'pokemon');
+            if (!selectedPokemon) return;
+            document.getElementById('battle-selected-s1').innerHTML = `<span>${name} - ${selectedPokemon.pokemon_name}</span>`;
+            document.getElementById('battle-selected-s1').dataset.student = name;
+            document.getElementById('battle-selected-s1').dataset.pokemonId = selectedPokemon.__backendId;
+            updateManualBattleStagePokemon(1, name, selectedPokemon);
+            updateManualBattleStartState();
+          });
         });
-      });
+      }
+      updateManualBattleStartState();
     });
   });
-  
-  // Student 2 selection
+
+  // Student 2 click
   s2Grid.querySelectorAll('.battle-s2-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.preventDefault();
       s2Grid.querySelectorAll('.battle-s2-btn').forEach(b => b.classList.remove('border-purple-400', 'bg-purple-600'));
       btn.classList.add('border-purple-400', 'bg-purple-600');
       const name = btn.dataset.name;
+      const avatarSrc = btn.dataset.avatar;
+      updateManualBattleStageTrainer(2, name, avatarSrc);
+
+      // Clear previous pokemon selection for side 2
+      document.getElementById('battle-selected-s2').dataset.student = name;
+      document.getElementById('battle-selected-s2').dataset.pokemonId = '';
+      updateManualBattleStagePokemon(2, name, null);
+
       const pokes = getPokemons().filter(p => p.owner === name);
-      const p2Grid = document.getElementById('battle-pokemon-2-grid');
-      p2Grid.innerHTML = pokes.map(p => 
-        `<button type="button" class="battle-p2-btn px-2 py-1 rounded-lg text-xs font-semibold border-2 border-gray-600 bg-gray-700 text-white hover:border-pink-400 hover:bg-pink-600 transition" data-id="${p.__backendId}" data-name="${p.pokemon_name}"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png" class="w-8 h-8 object-contain" alt="${p.pokemon_name}"><div>${p.pokemon_name}</div></button>`
-      ).join('');
-      p2Grid.querySelectorAll('.battle-p2-btn').forEach(btn2 => {
-        btn2.addEventListener('click', e2 => {
-          e2.preventDefault();
-          p2Grid.querySelectorAll('.battle-p2-btn').forEach(b => b.classList.remove('border-pink-400', 'bg-pink-600'));
-          btn2.classList.add('border-pink-400', 'bg-pink-600');
-          const selectedPokemon = allData.find(r => r.__backendId === btn2.dataset.id && r.type === 'pokemon');
-          if (!selectedPokemon) return;
-          document.getElementById('battle-selected-s2').innerHTML = `<span>${name} - ${selectedPokemon.pokemon_name}</span>`;
-          document.getElementById('battle-selected-s2').dataset.student = name;
-          document.getElementById('battle-selected-s2').dataset.pokemonId = selectedPokemon.__backendId;
-          updateManualBattleStartState();
+      if (pokes.length === 0) {
+        p2Grid.innerHTML = '<div class="empty-pokemon-deck"><span>No Pokémon found for this trainer</span><small>Add Pokémon to their collection first</small></div>';
+      } else {
+        p2Grid.innerHTML = pokes.map(p => {
+          const pokeImg = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p.pokemon_id}.png`;
+          const pwr = p.power || p.level || 10;
+          const hp = p.hp || 100;
+          return `<button type="button" class="battle-p2-btn pokemon-battle-card" data-id="${p.__backendId}" data-name="${escapeHtml(p.pokemon_name)}">
+            <img src="${pokeImg}" class="p-card-img" alt="${escapeHtml(p.pokemon_name)}" loading="lazy" onerror="this.onerror=null;this.src=getAvatarFallbackSrc();">
+            <span class="card-p-name">${escapeHtml(p.pokemon_name)}</span>
+            <div class="card-p-stats">
+              <span class="chip-power">⚡ ${pwr}</span>
+              <span class="chip-hp">❤️ ${hp}</span>
+            </div>
+          </button>`;
+        }).join('');
+
+        p2Grid.querySelectorAll('.battle-p2-btn').forEach(btn2 => {
+          btn2.addEventListener('click', e2 => {
+            e2.preventDefault();
+            p2Grid.querySelectorAll('.battle-p2-btn').forEach(b => b.classList.remove('border-pink-400', 'bg-pink-600'));
+            btn2.classList.add('border-pink-400', 'bg-pink-600');
+            const selectedPokemon = allData.find(r => r.__backendId === btn2.dataset.id && r.type === 'pokemon');
+            if (!selectedPokemon) return;
+            document.getElementById('battle-selected-s2').innerHTML = `<span>${name} - ${selectedPokemon.pokemon_name}</span>`;
+            document.getElementById('battle-selected-s2').dataset.student = name;
+            document.getElementById('battle-selected-s2').dataset.pokemonId = selectedPokemon.__backendId;
+            updateManualBattleStagePokemon(2, name, selectedPokemon);
+            updateManualBattleStartState();
+          });
         });
-      });
+      }
+      updateManualBattleStartState();
     });
   });
 }
@@ -32533,15 +32802,51 @@ function getManualBattleDraft() {
   const sideTwoPokemon = allData.find(r => r.__backendId === (right?.dataset.pokemonId || '') && r.type === 'pokemon');
   return { sideOneStudent, sideOnePokemon, sideTwoStudent, sideTwoPokemon };
 }
+
 function updateManualBattleStartState() {
   const draft = getManualBattleDraft();
   const start = document.getElementById('confirm-manual-battle');
   const instruction = document.getElementById('manual-battle-instruction');
+  const stage = document.getElementById('manual-vs-stage');
   if (!start) return;
-  const ready = Boolean(draft.sideOneStudent && draft.sideOnePokemon && draft.sideTwoStudent && draft.sideTwoPokemon && draft.sideOneStudent !== draft.sideTwoStudent);
+
+  const hasS1 = Boolean(draft.sideOneStudent);
+  const hasS2 = Boolean(draft.sideTwoStudent);
+  const sameTrainer = hasS1 && hasS2 && draft.sideOneStudent === draft.sideTwoStudent;
+  const hasP1 = Boolean(draft.sideOnePokemon);
+  const hasP2 = Boolean(draft.sideTwoPokemon);
+
+  const ready = Boolean(hasS1 && hasP1 && hasS2 && hasP2 && !sameTrainer);
   start.disabled = !ready;
   start.setAttribute('aria-disabled', String(!ready));
-  if (instruction) instruction.textContent = ready ? 'Both sides ready.' : 'Select one student and one Pokémon on each side.';
+
+  if (stage) {
+    if (ready) {
+      stage.classList.add('stage-ready');
+    } else {
+      stage.classList.remove('stage-ready');
+    }
+  }
+
+  if (instruction) {
+    if (ready) {
+      instruction.innerHTML = '<span class="ready-badge">🔥 Both Champions Ready! Start the Battle!</span>';
+    } else if (!hasS1 && !hasS2) {
+      instruction.textContent = 'Select Trainer 1 and Trainer 2 to begin draft.';
+    } else if (sameTrainer) {
+      instruction.textContent = 'Select two different trainers for the battle.';
+    } else if (!hasS1) {
+      instruction.textContent = 'Select Trainer 1 in the blue corner.';
+    } else if (!hasS2) {
+      instruction.textContent = 'Select Trainer 2 in the red corner.';
+    } else if (!hasP1) {
+      instruction.textContent = `Choose a battle Pokémon for ${draft.sideOneStudent}.`;
+    } else if (!hasP2) {
+      instruction.textContent = `Choose a battle Pokémon for ${draft.sideTwoStudent}.`;
+    } else {
+      instruction.textContent = 'Select one student and one Pokémon on each side.';
+    }
+  }
 }
 
 document.getElementById('confirm-manual-battle').addEventListener('click', event => {
