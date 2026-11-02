@@ -2573,3 +2573,28 @@ input::-webkit-search-results-decoration {
   width: 0 !important;
   height: 0 !important;
 }
+
+/* Ensure search clear buttons are never blue and only show when explicitly styled */
+#quiz-image-search-clear,
+#vocab-photo-picker-search-clear,
+#vocab-image-search-clear {
+  color: #94a3b8 !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+#quiz-image-search-clear:hover,
+#vocab-photo-picker-search-clear:hover,
+#vocab-image-search-clear:hover {
+  color: #f8fafc !important;
+}
+html body.ts-bright #quiz-image-search-clear,
+html body.ts-bright #vocab-photo-picker-search-clear,
+html body.ts-bright #vocab-image-search-clear {
+  color: #64748b !important;
+}
+html body.ts-bright #quiz-image-search-clear:hover,
+html body.ts-bright #vocab-photo-picker-search-clear:hover,
+html body.ts-bright #vocab-image-search-clear:hover {
+  color: #1e293b !important;
+}
