@@ -41,7 +41,7 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
   it('inlines dots-and-boxes and links its stylesheet in index.html', () => {
     const htmlPath = path.join(root, 'public', 'pokeayman', 'index.html');
     const html = fs.readFileSync(htmlPath, 'utf8');
-    expect(html).toContain('href="/pokeayman/dots-and-boxes.css"');
+    expect(html).toMatch(/href="\/pokeayman\/dots-and-boxes\.css(?:\?v=[^"]+)?"/);
     expect(html).toContain('data-pokeayman-inline="dots-and-boxes"');
     expect(html).toContain('Dots and Boxes Turn-Based Vocabulary Mini-Game');
     expect(html).toContain('window.chooseDotsAndBoxes');
