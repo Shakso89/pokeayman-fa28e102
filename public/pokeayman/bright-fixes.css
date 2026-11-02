@@ -2124,3 +2124,93 @@ body:not(.ts-bright):not(.light):not([data-theme="light"]) :is(#app-screen#app-s
   font-weight: 800 !important;
   text-shadow: none !important;
 }
+
+/* ==========================================================================
+   PHOTO SEARCH & LOAD MORE BUTTON STYLES (All 3 Pickers)
+   1. Edit Word Modal (#vocab-image-load-more)
+   2. Choose Photo Modal (#vocab-photo-load-more)
+   3. Change Cover Modal (#vocab-cover-load-more)
+   ========================================================================== */
+
+/* Place 2 Dialog Flex Containment: Prevent button clipping */
+.vocab-photo-picker-dialog {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(100%, 52rem) !important;
+  max-height: min(92vh, 46rem) !important;
+  overflow: hidden !important;
+}
+.vocab-photo-picker-body {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 1rem !important;
+  gap: 0.75rem !important;
+}
+.vocab-photo-picker-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0.65rem !important;
+  min-height: 180px !important;
+  max-height: 330px !important;
+  overflow-y: auto !important;
+  flex-shrink: 0 !important;
+}
+
+/* Universal Button Base for All 3 Load More Triggers */
+:is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  min-height: 2.65rem !important;
+  margin-top: 0.45rem !important;
+  padding: 0.625rem 1rem !important;
+  border-radius: 0.85rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+}
+
+/* Dark Mode Theme Styles (Default) */
+html body:not(.ts-bright) :is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more) {
+  background: #1e293b !important;
+  border: 1.5px solid rgba(251, 191, 36, 0.45) !important;
+  color: #fde047 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+html body:not(.ts-bright) :is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more):hover:not(:disabled) {
+  background: #334155 !important;
+  border-color: #fbbf24 !important;
+  color: #fef08a !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 14px rgba(251, 191, 36, 0.2) !important;
+}
+
+/* Bright Mode Theme Styles */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more) {
+  background: #fef3c7 !important;
+  border: 1.5px solid #f59e0b !important;
+  color: #92400e !important;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more):hover:not(:disabled) {
+  background: #fde68a !important;
+  border-color: #d97706 !important;
+  color: #78350f !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.25) !important;
+}
+
+/* Disabled / Completed State */
+:is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more):disabled {
+  opacity: 0.65 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
