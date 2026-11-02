@@ -25420,6 +25420,7 @@ function renderGamesList() {
   if (gamesContainer && window.gaRenderHub) {
     const listLabel = (selectedGameList && selectedGameList.length) ? selectedGameList.map(item => typeof item === 'object' ? item.vocab_list_name : item).join(', ') : '';
     gamesContainer.innerHTML = window.gaRenderHub(listLabel, !isStudentGames);
+    window.initGameDeckCarousel?.(gamesContainer);
   }
 
   // Re-render the selector in place so repeated data refreshes never stack duplicate VB cards.
@@ -25729,6 +25730,7 @@ function renderGamesList() {
   if (gamesContainer && window.gaRenderHub) {
     const listLabel = selectedGameList.length ? selectedGameList.map(item => typeof item === 'object' ? item.vocab_list_name : item).join(', ') : '';
     gamesContainer.innerHTML = window.gaRenderHub(listLabel, !isStudentGames);
+    window.initGameDeckCarousel?.(gamesContainer);
   } else if (gamesContainer) {
     gamesContainer.innerHTML = '';
   }

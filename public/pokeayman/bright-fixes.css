@@ -2598,3 +2598,15 @@ html body.ts-bright #vocab-photo-picker-search-clear:hover,
 html body.ts-bright #vocab-image-search-clear:hover {
   color: #1e293b !important;
 }
+
+/* 3D Fanned Game Deck Carousel (Polaroid Trading Cards) */
+.game-deck-container {
+  perspective: 1200px !important;
+  -webkit-perspective: 1200px !important;
+}
+.game-deck-card-wrapper {
+  will-change: transform, opacity;
+}
+.game-deck-inner-card {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
