@@ -177,6 +177,10 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   const [isAwardingCoins, setIsAwardingCoins] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [activeTheme, setActiveTheme] = useState<string>(theme || 'classroom');
+
+  useEffect(() => {
+    if (theme) setActiveTheme(theme);
+  }, [theme]);
   const [themePopoverOpen, setThemePopoverOpen] = useState(false);
 
   const GAME_THEMES = [
@@ -362,7 +366,18 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     i % 2 === 0 ? '18px' : 'minmax(50px, 80px)'
   ).join(' ');
 
-  const THEME_STYLES: Record<string, { bg: string; border: string; cardBg: string; gridBg: string; dotBg: string; dotBorder: string; dotGlow: string }> = {
+  const THEME_STYLES: Record<string, {
+    bg: string;
+    border: string;
+    cardBg: string;
+    gridBg: string;
+    dotBg: string;
+    dotBorder: string;
+    dotGlow: string;
+    hudBg: string;
+    choiceBtn: string;
+    choiceLetter: string;
+  }> = {
     classroom: {
       bg: 'bg-[#0f291e]',
       border: 'border-[#2d5a45]',
@@ -371,6 +386,9 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       dotBg: 'bg-amber-300',
       dotBorder: 'border-white',
       dotGlow: 'shadow-[0_0_8px_rgba(253,224,71,0.6)]',
+      hudBg: 'bg-gradient-to-b from-[#2a563d] to-[#1d3f2c] border-2 border-[#b5804c] shadow-[0_4px_0_#6e4522]',
+      choiceBtn: 'bg-[#224a34] hover:bg-[#2d6144] border-2 border-[#3f7e61] hover:border-amber-400 text-[#fffbeb]',
+      choiceLetter: 'bg-[#0f271b] text-amber-300 border border-[#3f7e61]',
     },
     jungle: {
       bg: 'bg-[#041f12]',
@@ -380,6 +398,9 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       dotBg: 'bg-lime-400',
       dotBorder: 'border-lime-100',
       dotGlow: 'shadow-[0_0_8px_rgba(163,230,53,0.6)]',
+      hudBg: 'bg-gradient-to-b from-[#5c340e] to-[#3b1f06] border-2 border-[#d97706] shadow-[0_4px_0_#231102]',
+      choiceBtn: 'bg-[#4d2807] hover:bg-[#63340b] border-2 border-[#b45309] hover:border-green-400 text-[#fef3c7]',
+      choiceLetter: 'bg-[#251203] text-green-400 border border-[#78350f]',
     },
     toybox: {
       bg: 'bg-[#1a0f2e]',
@@ -389,6 +410,9 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       dotBg: 'bg-pink-400',
       dotBorder: 'border-pink-100',
       dotGlow: 'shadow-[0_0_8px_rgba(244,114,182,0.6)]',
+      hudBg: 'bg-white border-2 border-[#6366f1] shadow-[0_4px_0_#4338ca]',
+      choiceBtn: 'bg-white hover:bg-indigo-50 border-2 border-indigo-200 hover:border-indigo-500 text-slate-900',
+      choiceLetter: 'bg-indigo-600 text-white border-transparent',
     },
     halloween: {
       bg: 'bg-[#140a17]',
@@ -398,6 +422,9 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       dotBg: 'bg-orange-400',
       dotBorder: 'border-amber-100',
       dotGlow: 'shadow-[0_0_8px_rgba(251,146,60,0.6)]',
+      hudBg: 'bg-gradient-to-b from-[#261230] to-[#15091c] border-2 border-[#ea580c] shadow-[0_4px_0_#7c2d12]',
+      choiceBtn: 'bg-[#2d163a] hover:bg-[#3d1d4e] border-2 border-[#7c2d12] hover:border-orange-500 text-orange-100',
+      choiceLetter: 'bg-[#ea580c] text-white border-transparent',
     },
     classic: {
       bg: 'bg-slate-950',
@@ -407,6 +434,9 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       dotBg: 'bg-amber-400',
       dotBorder: 'border-amber-200',
       dotGlow: 'shadow-[0_0_8px_rgba(251,191,36,0.6)]',
+      hudBg: 'bg-slate-900/90 border border-slate-800 shadow-lg',
+      choiceBtn: 'bg-slate-800/80 hover:bg-slate-800 border-slate-700 hover:border-amber-400 text-slate-200',
+      choiceLetter: 'bg-slate-950 text-slate-400 border border-slate-700/80',
     },
   };
   const themeStyle = THEME_STYLES[activeTheme] || THEME_STYLES.classic;
@@ -495,7 +525,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
 
       {/* Sub-Header: Duelists Score HUD (Placed UNDER the header) */}
       <div className="flex justify-center w-full py-1">
-        <div className="flex items-center gap-3 sm:gap-6 bg-slate-900/90 border border-slate-800 rounded-full px-4 sm:px-6 py-2 shadow-lg">
+        <div className={`flex items-center gap-3 sm:gap-6 ${themeStyle.hudBg} rounded-full px-4 sm:px-6 py-2 transition-all duration-300`}>
           {/* Player 1 HUD */}
           <div
             className={`flex items-center gap-2.5 px-3 py-1.5 rounded-full transition-all duration-300 ${
@@ -550,25 +580,6 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             />
           </div>
         </div>
-      </div>
-
-      {/* Dynamic Status Notification Banner */}
-      <div
-        className={`w-full py-2 px-4 rounded-xl text-center text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border transition-all duration-300 ${
-          phase === 'DRAW_LINE'
-            ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-            : activePlayerIndex === 0
-            ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
-            : 'bg-cyan-500/10 border-cyan-500/30 text-cyan-200'
-        }`}
-      >
-        <Sparkles className="w-4 h-4 flex-shrink-0" />
-        <span>
-          {statusMessage ||
-            (phase === 'DRAW_LINE'
-              ? 'Awesome! Draw a line on the grid.'
-              : `${activePlayer.name}'s turn: Answer the vocabulary question!`)}
-        </span>
       </div>
 
       {/* 2-Column Split: Left MCQ Question Card | Right Dots & Boxes Grid */}
@@ -644,11 +655,11 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                   onClick={() => handleAnswerMCQ(option)}
                   className={`group relative p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all duration-150 ${
                     isLocked
-                      ? 'bg-slate-900/40 border-slate-800/60 text-slate-500 cursor-not-allowed'
-                      : 'bg-slate-800/80 hover:bg-slate-800 border-slate-700 hover:border-amber-400 active:scale-95 shadow-sm text-slate-200'
+                      ? 'opacity-40 cursor-not-allowed border-transparent'
+                      : `${themeStyle.choiceBtn} active:scale-95 shadow-sm`
                   }`}
                 >
-                  <span className="w-6 h-6 rounded-lg bg-slate-950 border border-slate-700/80 text-[11px] font-black text-slate-400 flex items-center justify-center group-hover:text-amber-300 group-hover:border-amber-400/60">
+                  <span className={`w-6 h-6 rounded-lg ${themeStyle.choiceLetter} text-[11px] font-black flex items-center justify-center flex-shrink-0`}>
                     {letter}
                   </span>
                   <span className="text-xs sm:text-sm font-bold truncate">

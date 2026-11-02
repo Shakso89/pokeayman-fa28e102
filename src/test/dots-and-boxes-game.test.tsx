@@ -196,7 +196,6 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
 
       // Player 2 gets the turn immediately
       expect(screen.getByText("Gary Oak's Challenge")).toBeInTheDocument();
-      expect(screen.getByText(/Oops! -1 penalty/i)).toBeInTheDocument();
     });
 
     it('unlocks line drawing phase upon correct MCQ answer', () => {
@@ -215,7 +214,6 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
       fireEvent.click(correctBtn);
 
       // DRAW_LINE phase unlocked
-      expect(screen.getByText('Awesome! Draw a line on the grid.')).toBeInTheDocument();
       expect(screen.getByText('Grid Unlocked')).toBeInTheDocument();
 
       // Horizontal line is now clickable
@@ -326,6 +324,40 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
           );
         });
       }
+    });
+
+    it('adapts the score HUD and answer buttons UI dynamically based on the active theme', () => {
+      const { rerender } = render(
+        <DotsAndBoxesGame
+          players={mockStudents.slice(0, 2)}
+          vocabItems={mockVocabItems}
+          theme="classroom"
+        />
+      );
+
+      // In classroom theme, score HUD has chalkboard styling
+      const scoreHud = document.querySelector('.flex.justify-center.w-full > div');
+      expect(scoreHud?.className).toContain('from-[#2a563d]');
+      expect(scoreHud?.className).toContain('border-[#b5804c]');
+
+      // Answer buttons have classroom styling
+      const optionBtn = screen.getByTestId('mcq-option-0');
+      expect(optionBtn.className).toContain('bg-[#224a34]');
+      expect(optionBtn.className).toContain('border-[#3f7e61]');
+
+      // Switch to toybox theme
+      rerender(
+        <DotsAndBoxesGame
+          players={mockStudents.slice(0, 2)}
+          vocabItems={mockVocabItems}
+          theme="toybox"
+        />
+      );
+
+      expect(scoreHud?.className).toContain('bg-white');
+      expect(scoreHud?.className).toContain('border-[#6366f1]');
+      expect(optionBtn.className).toContain('bg-white');
+      expect(optionBtn.className).toContain('border-indigo-200');
     });
   });
 });
