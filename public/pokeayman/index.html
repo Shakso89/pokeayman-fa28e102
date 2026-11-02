@@ -29679,14 +29679,14 @@ function openVocabCoverPicker(listId, listName) {
       showPreview();
     }));
     loadMore.disabled = coverLoading || !coverHasMore || coverPhotos.length >= 100;
-    loadMore.textContent = coverLoading ? 'Loading photos…' : 'Load more photos';
+    loadMore.textContent = coverLoading ? 'Loading photos…' : (coverHasMore ? 'Load more photos' : 'End of results');
   };
 
   const fetchCoverPhotos = async (reset = false) => {
     if (coverLoading) return;
     const query = modal.querySelector('#vocab-cover-search').value.trim().replace(/\s+/g, ' ');
-    if (!query) { status.textContent = 'Enter a keyword to search.'; return; }
     if (reset) {
+      if (!query) { status.textContent = 'Enter a keyword to search.'; return; }
       coverQuery = query.toLocaleLowerCase();
       coverPage = 1;
       coverPhotos = [];
@@ -29694,27 +29694,30 @@ function openVocabCoverPicker(listId, listName) {
       coverRequest += 1;
       results.replaceChildren();
     }
-    if (query.toLocaleLowerCase() !== coverQuery || !coverHasMore || coverPhotos.length >= 100) return;
+    if (!coverQuery || !coverHasMore || coverPhotos.length >= 100) return;
     const request = coverRequest;
     coverLoading = true;
     renderCoverPhotos();
     status.textContent = coverPhotos.length ? `${coverPhotos.length} photos loaded · Loading…` : 'Loading licensed stock photos…';
     try {
-      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}&per_page=12&page=${coverPage}`, { headers: { 'Authorization': '' } });
+      const remaining = 100 - coverPhotos.length;
+      const perPage = Math.min(12, remaining);
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}&per_page=${perPage}&page=${coverPage}`, { headers: { 'Authorization': '' } });
       if (!response.ok) throw new Error('search');
       const data = await response.json();
-      if (request !== coverRequest || coverQuery !== query.toLocaleLowerCase()) return;
+      if (request !== coverRequest) return;
+      const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
       const seen = new Set(coverPhotos.map(photo => String(photo.id || photo.src?.large || photo.src?.original || '')));
-      const additions = (Array.isArray(data.photos) ? data.photos : []).filter(photo => {
+      const additions = rawPhotos.filter(photo => {
         const key = String(photo.id || photo.src?.large || photo.src?.original || '');
         if (!key || seen.has(key)) return false;
         seen.add(key);
         return true;
-      }).slice(0, 100 - coverPhotos.length);
+      }).slice(0, remaining);
       coverPhotos.push(...additions);
       coverPage += 1;
-      coverHasMore = Boolean(data.next_page) && coverPhotos.length < 100;
-      status.textContent = coverPhotos.length ? `${coverPhotos.length} photos found.` : 'No photos found. Try another keyword.';
+      coverHasMore = rawPhotos.length > 0 && additions.length > 0 && coverPhotos.length < 100;
+      status.textContent = coverPhotos.length ? `${coverPhotos.length} of 100 photos ${coverHasMore ? 'loaded.' : 'loaded · End of results.'}` : 'No photos found. Try another keyword.';
       renderCoverPhotos();
     } catch (error) {
       if (request === coverRequest) {
@@ -29738,6 +29741,13 @@ function openVocabCoverPicker(listId, listName) {
     }
   });
   loadMore.addEventListener('click', () => fetchCoverPhotos(false));
+  results.addEventListener('scroll', () => {
+    if (results.scrollTop + results.clientHeight >= results.scrollHeight - 160) {
+      if (!coverLoading && coverHasMore && coverPhotos.length < 100) {
+        fetchCoverPhotos(false);
+      }
+    }
+  });
 
   modal.querySelector('#vocab-cover-remove').addEventListener('click', () => {
     selectedId = '';
@@ -30274,6 +30284,7 @@ function openVocabListEditor(listId, listName) {
   let vocabPhotoLoading = false;
   let vocabPhotoQuery = '';
   let vocabPhotoItems = [];
+  let vocabPhotoHasMore = true;
   let vocabPhotoSearchRequestId = 0;
   let vocabPhotoAbortController = null;
   const openVocabPhotoPicker = () => {
@@ -30290,8 +30301,6 @@ function openVocabListEditor(listId, listName) {
       picker.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
       const runVocabPhotoSearch = () => {
         const nextQuery = picker.querySelector('#vocab-photo-picker-search').value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
-        // Invalidate every older request before touching the network so an old
-        // response can never append into the newly requested word's gallery.
         vocabPhotoSearchRequestId += 1;
         const requestId = vocabPhotoSearchRequestId;
         vocabPhotoAbortController?.abort();
@@ -30300,6 +30309,7 @@ function openVocabListEditor(listId, listName) {
         vocabPhotoPage = 1;
         vocabPhotoItems = [];
         vocabPhotoLoading = false;
+        vocabPhotoHasMore = true;
         const grid = picker.querySelector('#vocab-photo-picker-grid');
         const status = picker.querySelector('#vocab-photo-picker-status');
         const more = picker.querySelector('#vocab-photo-load-more');
@@ -30334,54 +30344,95 @@ function openVocabListEditor(listId, listName) {
         runVocabPhotoSearch();
       });
       picker.querySelector('#vocab-photo-load-more').addEventListener('click', () => fetchVocabPhotos(false));
-      picker.querySelector('#vocab-photo-picker-grid').addEventListener('scroll', event => {
-        const grid = event.currentTarget;
-        if (grid.scrollTop + grid.clientHeight >= grid.scrollHeight - 180) fetchVocabPhotos(false);
-      });
+      const onPickerScroll = (event) => {
+        const el = event.currentTarget;
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 220) {
+          if (!vocabPhotoLoading && vocabPhotoHasMore && vocabPhotoItems.length < 100) {
+            fetchVocabPhotos(false);
+          }
+        }
+      };
+      picker.querySelector('#vocab-photo-picker-grid')?.addEventListener('scroll', onPickerScroll);
+      picker.querySelector('.vocab-photo-picker-body')?.addEventListener('scroll', onPickerScroll);
       picker.querySelector('#vocab-photo-picker-use-url').addEventListener('click', () => { const url = picker.querySelector('#vocab-photo-picker-url').value.trim(); if (url) { addWordImageInput.value = url; close(); } });
     }
     picker.querySelector('#vocab-photo-picker-search').value = vocabPhotoQuery;
     picker.querySelector('#vocab-photo-picker-url').value = addWordImageInput.value.trim();
-    // Always start a brand-new 20-result session, including repeated searches.
     picker.querySelector('#vocab-photo-picker-search-btn').click();
     picker.querySelector('#vocab-photo-picker-search').focus();
   };
   const fetchVocabPhotos = async (reset, requestId = vocabPhotoSearchRequestId, query = vocabPhotoQuery) => {
     const picker = document.getElementById('vocab-photo-picker'); if (!picker || vocabPhotoLoading) return;
     if (requestId !== vocabPhotoSearchRequestId || query !== vocabPhotoQuery) return;
-    if (reset) { vocabPhotoPage = 1; vocabPhotoItems = []; }
-    if (vocabPhotoItems.length >= 100) {
+    if (reset) { vocabPhotoPage = 1; vocabPhotoItems = []; vocabPhotoHasMore = true; }
+    if (vocabPhotoItems.length >= 100 || !vocabPhotoHasMore) {
       const status = picker.querySelector('#vocab-photo-picker-status'); const more = picker.querySelector('#vocab-photo-load-more');
-      status.textContent = '100 of 100 photos loaded · End of results'; more.disabled = true; return;
+      if (status) status.textContent = `${vocabPhotoItems.length} of 100 photos loaded · End of results`;
+      if (more) { more.disabled = true; more.textContent = 'End of results'; }
+      return;
     }
     vocabPhotoLoading = true;
     const status = picker.querySelector('#vocab-photo-picker-status'); const more = picker.querySelector('#vocab-photo-load-more');
-    status.textContent = `${vocabPhotoItems.length} of 100 photos loaded · Loading…`; more.disabled = true;
+    if (status) status.textContent = `${vocabPhotoItems.length} of 100 photos loaded · Loading…`;
+    if (more) more.disabled = true;
     try {
       const remaining = 100 - vocabPhotoItems.length;
       const requestQuery = String(query || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
       vocabPhotoAbortController = new AbortController();
-      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(requestQuery)}&per_page=${Math.min(20, remaining)}&page=${vocabPhotoPage}&_=${Date.now()}`, { cache: 'no-store', signal: vocabPhotoAbortController.signal, headers: { 'Authorization': '', 'Cache-Control': 'no-cache' } });
+      const perPage = Math.min(20, remaining);
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(requestQuery)}&per_page=${perPage}&page=${vocabPhotoPage}&_=${Date.now()}`, { cache: 'no-store', signal: vocabPhotoAbortController.signal, headers: { 'Authorization': '', 'Cache-Control': 'no-cache' } });
       if (!response.ok) throw new Error('Photo search failed');
       const data = await response.json();
       if (requestId !== vocabPhotoSearchRequestId || query !== vocabPhotoQuery) return;
-      const existing = new Set(vocabPhotoItems.map(photo => photo.id || photo.src?.large || photo.src?.original));
-      const additions = (data.photos || []).filter(photo => { const key = photo.id || photo.src?.large || photo.src?.original; if (existing.has(key)) return false; existing.add(key); return true; }).slice(0, remaining);
+      const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+      const existing = new Set(vocabPhotoItems.map(photo => String(photo.id || photo.src?.large || photo.src?.original || photo.src?.medium || '')));
+      const additions = rawPhotos.filter(photo => { const key = String(photo.id || photo.src?.large || photo.src?.original || photo.src?.medium || ''); if (!key || existing.has(key)) return false; existing.add(key); return true; }).slice(0, remaining);
+      const startIndex = vocabPhotoItems.length;
       vocabPhotoItems = [...vocabPhotoItems, ...additions];
       const grid = picker.querySelector('#vocab-photo-picker-grid');
       if (requestId !== vocabPhotoSearchRequestId || query !== vocabPhotoQuery) return;
-      grid.innerHTML = vocabPhotoItems.length ? vocabPhotoItems.map((photo, index) => `<button type="button" class="vocab-photo-option ${addWordImageInput.value === photo.src.large ? 'is-selected' : ''}" data-photo-index="${index}" aria-label="Choose photo by ${photo.photographer}"><img src="${photo.src.medium}" alt="Photo by ${photo.photographer}" loading="lazy"></button>`).join('') : '<p class="col-span-full">No photos found. Try another search.</p>';
-      grid.querySelectorAll('.vocab-photo-option').forEach(button => button.addEventListener('click', () => { const photo = vocabPhotoItems[Number(button.dataset.photoIndex)]; const selectedUrl = String(photo?.src?.large || photo?.src?.original || photo?.src?.medium || '').trim(); if (!selectedUrl) return; addWordImageInput.value = selectedUrl; addWordImageInput.dispatchEvent(new Event('input', { bubbles: true })); picker.querySelector('#vocab-photo-picker-url').value = selectedUrl; grid.querySelectorAll('.vocab-photo-option').forEach(item => item.classList.remove('is-selected')); button.classList.add('is-selected'); toast(`Selected image from ${photo.photographer}`); picker.remove(); addWordInput.focus(); }));
-      const hasMore = Boolean(data.photos?.length) && vocabPhotoItems.length < 100 && vocabPhotoItems.length < Number(data.total_results || Infinity);
-      status.textContent = vocabPhotoItems.length ? `${vocabPhotoItems.length} of 100 photos loaded${hasMore ? '' : ' · End of results'}` : 'No photos found.';
-      more.disabled = !hasMore; vocabPhotoPage += 1;
+      if (grid) {
+        if (reset) grid.innerHTML = '';
+        if (vocabPhotoItems.length === 0) {
+          grid.innerHTML = '<p class="col-span-full py-8 text-center text-xs opacity-60">No photos found. Try another search.</p>';
+        } else {
+          const itemsToAppend = reset ? vocabPhotoItems : additions;
+          itemsToAppend.forEach((photo, idx) => {
+            const globalIndex = reset ? idx : (startIndex + idx);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `vocab-photo-option ${addWordImageInput.value === photo.src.large ? 'is-selected' : ''}`;
+            btn.dataset.photoIndex = String(globalIndex);
+            btn.setAttribute('aria-label', `Choose photo by ${photo.photographer || 'Artist'}`);
+            btn.innerHTML = `<img src="${photo.src.medium}" alt="Photo by ${photo.photographer || 'Artist'}" loading="lazy">`;
+            btn.addEventListener('click', () => {
+              const selectedUrl = String(photo?.src?.large || photo?.src?.original || photo?.src?.medium || '').trim();
+              if (!selectedUrl) return;
+              addWordImageInput.value = selectedUrl;
+              addWordImageInput.dispatchEvent(new Event('input', { bubbles: true }));
+              picker.querySelector('#vocab-photo-picker-url').value = selectedUrl;
+              grid.querySelectorAll('.vocab-photo-option').forEach(item => item.classList.remove('is-selected'));
+              btn.classList.add('is-selected');
+              toast(`Selected image from ${photo.photographer || 'Artist'}`);
+              picker.remove();
+              addWordInput.focus();
+            });
+            grid.appendChild(btn);
+          });
+        }
+      }
+      vocabPhotoHasMore = rawPhotos.length > 0 && additions.length > 0 && vocabPhotoItems.length < 100;
+      if (status) status.textContent = vocabPhotoItems.length ? `${vocabPhotoItems.length} of 100 photos loaded${vocabPhotoHasMore ? '' : ' · End of results'}` : 'No photos found.';
+      if (more) {
+        more.disabled = !vocabPhotoHasMore;
+        more.textContent = vocabPhotoHasMore ? 'Load more photos' : 'End of results';
+      }
+      vocabPhotoPage += 1;
     } catch (error) {
       if (requestId !== vocabPhotoSearchRequestId || query !== vocabPhotoQuery) return;
       if (requestId === vocabPhotoSearchRequestId && query === vocabPhotoQuery) {
-        const grid = picker.querySelector('#vocab-photo-picker-grid');
-        if (grid) grid.replaceChildren();
-        status.textContent = 'Photo search failed. Try again.';
-        more.disabled = false;
+        if (status) status.textContent = 'Photo search failed. Try again.';
+        if (more) { more.disabled = false; more.textContent = 'Retry load photos'; }
       }
     }
     finally {
@@ -30663,65 +30714,156 @@ function editVocabWord(wordId, currentWord, currentImage) {
     deleteConfirmModal.addEventListener('click', ev => { if (ev.target === deleteConfirmModal) deleteConfirmModal.remove(); });
   });
 
-  // Image search handler
-  searchBtn.addEventListener('click', async () => {
-    const query = searchInput.value.trim();
-    if (!query) { toast('Enter a search term'); return; }
-    searchBtn.disabled = true;
-    searchBtn.innerHTML = `<span class="animate-pulse">Searching...</span>`;
+  // Image search handler with pagination and infinite scroll up to 100 photos
+  let editWordPage = 1;
+  let editWordPhotos = [];
+  let editWordLoading = false;
+  let editWordHasMore = true;
+  let editWordQuery = '';
+  let editWordRequestId = 0;
+
+  const fetchEditWordPhotos = async (reset = false) => {
+    const rawQuery = searchInput.value.trim().replace(/\s+/g, ' ');
+    if (reset) {
+      if (!rawQuery) { toast('Enter a search term'); return; }
+      editWordQuery = rawQuery;
+      editWordPage = 1;
+      editWordPhotos = [];
+      editWordHasMore = true;
+      editWordRequestId += 1;
+      resultsContainer.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-10 text-center px-4"><span class="animate-spin text-2xl mb-2">⏳</span><p class="text-xs ${isBright ? 'text-slate-500' : 'text-slate-400'}">Searching photos for &ldquo;${escape(editWordQuery)}&rdquo;…</p></div>`;
+      searchBtn.disabled = true;
+      searchBtn.innerHTML = `<span class="animate-pulse">Searching...</span>`;
+    } else {
+      if (!editWordQuery || editWordLoading || !editWordHasMore || editWordPhotos.length >= 100) return;
+      let loader = resultsContainer.querySelector('#edit-word-more-loader');
+      if (!loader) {
+        loader = document.createElement('div');
+        loader.id = 'edit-word-more-loader';
+        loader.className = 'col-span-full py-2.5 text-center text-xs font-semibold ' + (isBright ? 'text-amber-700' : 'text-amber-400');
+        loader.innerHTML = '<span class="animate-pulse">Loading more photos…</span>';
+        resultsContainer.appendChild(loader);
+      }
+    }
+
+    const currentReq = editWordRequestId;
+    editWordLoading = true;
+
     try {
-      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(query)}&per_page=15`, {
+      const remaining = 100 - editWordPhotos.length;
+      const perPage = Math.min(18, remaining);
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(editWordQuery)}&per_page=${perPage}&page=${editWordPage}`, {
         headers: { 'Authorization': '' }
       });
+      if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
-      if (data.photos && data.photos.length > 0) {
-        resultsContainer.innerHTML = data.photos.map((photo, pIdx) => `
-          <button type="button" data-photo-index="${pIdx}" class="vocab-word-edit-photo-card vocab-image-option relative rounded-2xl overflow-hidden group cursor-pointer border transition-all duration-200 aspect-video p-1 flex items-center justify-center ${isBright ? 'border-slate-200 hover:border-amber-400 bg-white shadow-sm' : 'border-slate-800 hover:border-amber-400 bg-slate-900'}">
-            <img src="${photo.src.medium}" class="w-full h-full object-cover rounded-xl transition duration-200 group-hover:scale-105" alt="${escape(photo.photographer)}">
-            <div class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-2xl p-1">
-              <span class="text-slate-950 font-bold text-[11px] bg-amber-400 px-2.5 py-1 rounded-xl shadow-md">Select</span>
-            </div>
-          </button>
-        `).join('');
+      if (currentReq !== editWordRequestId) return;
 
-        resultsContainer.querySelectorAll('.vocab-image-option').forEach(btn => {
-          btn.addEventListener('click', e => {
-            e.preventDefault();
-            const idx = Number(btn.dataset.photoIndex);
-            const photo = data.photos[idx];
-            if (!photo) return;
-            const url = photo.src.large;
-            selectedImageUrl = url;
-            imageInput.value = url;
+      const loader = resultsContainer.querySelector('#edit-word-more-loader');
+      if (loader) loader.remove();
 
-            // Context for AI sentence generation
-            const sentenceField = modal.querySelector('#edit-word-sentence');
-            if (sentenceField) {
-              const photoContext = String(photo.alt || searchInput.value || '').trim().slice(0, 200);
-              if (photoContext) sentenceField.dataset.pictureContext = photoContext;
-            }
+      const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+      const seen = new Set(editWordPhotos.map(p => String(p.id || p.src?.large || p.src?.original || p.src?.medium || '')));
+      const additions = rawPhotos.filter(p => {
+        const key = String(p.id || p.src?.large || p.src?.original || p.src?.medium || '');
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, remaining);
 
-            preview.innerHTML = `<img id="selected-image-preview" src="${escape(url)}" class="max-h-44 w-auto max-w-full object-contain rounded-lg shadow-sm" alt="Selected">`;
-            updateBadge(true);
+      if (reset) {
+        resultsContainer.innerHTML = '';
+      }
 
-            // Highlight selected card
-            resultsContainer.querySelectorAll('.vocab-image-option').forEach(b => {
-              b.classList.remove('ring-2', 'ring-amber-400', 'border-amber-400');
-            });
-            btn.classList.add('ring-2', 'ring-amber-400', 'border-amber-400');
+      if (editWordPhotos.length === 0 && additions.length === 0) {
+        resultsContainer.innerHTML = `<div class="col-span-full text-center py-8 text-xs ${isBright ? 'text-slate-400' : 'text-slate-500'}">No photos found for &ldquo;${escape(editWordQuery)}&rdquo;. Try another search.</div>`;
+        editWordHasMore = false;
+        return;
+      }
 
-            toast(`Photo selected! Click Save to apply.`);
+      const startIndex = editWordPhotos.length;
+      editWordPhotos.push(...additions);
+      editWordPage += 1;
+      editWordHasMore = rawPhotos.length > 0 && additions.length > 0 && editWordPhotos.length < 100;
+
+      additions.forEach((photo, idx) => {
+        const globalIdx = startIndex + idx;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.photoIndex = String(globalIdx);
+        btn.className = `vocab-word-edit-photo-card vocab-image-option relative rounded-2xl overflow-hidden group cursor-pointer border transition-all duration-200 aspect-video p-1 flex items-center justify-center ${isBright ? 'border-slate-200 hover:border-amber-400 bg-white shadow-sm' : 'border-slate-800 hover:border-amber-400 bg-slate-900'}`;
+        btn.innerHTML = `
+          <img src="${photo.src.medium}" class="w-full h-full object-cover rounded-xl transition duration-200 group-hover:scale-105" alt="${escape(photo.photographer || 'Photo')}">
+          <div class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-2xl p-1">
+            <span class="text-slate-950 font-bold text-[11px] bg-amber-400 px-2.5 py-1 rounded-xl shadow-md">Select</span>
+          </div>
+        `;
+
+        btn.addEventListener('click', e => {
+          e.preventDefault();
+          const url = photo.src.large || photo.src.original || photo.src.medium;
+          selectedImageUrl = url;
+          imageInput.value = url;
+
+          const sentenceField = modal.querySelector('#edit-word-sentence');
+          if (sentenceField) {
+            const photoContext = String(photo.alt || searchInput.value || '').trim().slice(0, 200);
+            if (photoContext) sentenceField.dataset.pictureContext = photoContext;
+          }
+
+          preview.innerHTML = `<img id="selected-image-preview" src="${escape(url)}" class="max-h-44 w-auto max-w-full object-contain rounded-lg shadow-sm" alt="Selected">`;
+          updateBadge(true);
+
+          resultsContainer.querySelectorAll('.vocab-image-option').forEach(b => {
+            b.classList.remove('ring-2', 'ring-amber-400', 'border-amber-400');
           });
+          btn.classList.add('ring-2', 'ring-amber-400', 'border-amber-400');
+          toast(`Photo selected! Click Save to apply.`);
         });
-      } else {
-        resultsContainer.innerHTML = `<div class="col-span-full text-center py-8 text-xs ${isBright ? 'text-slate-400' : 'text-slate-500'}">No photos found for &ldquo;${escape(query)}&rdquo;. Try another search.</div>`;
+
+        resultsContainer.appendChild(btn);
+      });
+
+      let endNotice = resultsContainer.querySelector('#edit-word-end-notice');
+      if (!editWordHasMore && editWordPhotos.length > 0) {
+        if (!endNotice) {
+          endNotice = document.createElement('div');
+          endNotice.id = 'edit-word-end-notice';
+          endNotice.className = `col-span-full py-2.5 text-center text-[11px] font-bold ${isBright ? 'text-slate-500' : 'text-slate-400'}`;
+          resultsContainer.appendChild(endNotice);
+        }
+        endNotice.textContent = `${editWordPhotos.length} of 100 photos loaded · End of results`;
       }
     } catch (error) {
-      toast('Search error. Try again.');
-      resultsContainer.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-rose-400">Search failed. Check your internet connection.</div>`;
+      if (currentReq === editWordRequestId) {
+        const loader = resultsContainer.querySelector('#edit-word-more-loader');
+        if (loader) loader.remove();
+        if (reset) {
+          resultsContainer.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-rose-400">Search failed. Check your internet connection.</div>`;
+        }
+        toast('Search error. Try again.');
+      }
     } finally {
-      searchBtn.disabled = false;
-      searchBtn.textContent = 'Search';
+      if (currentReq === editWordRequestId) {
+        editWordLoading = false;
+        searchBtn.disabled = false;
+        searchBtn.textContent = 'Search';
+      }
+    }
+  };
+
+  searchBtn.addEventListener('click', () => fetchEditWordPhotos(true));
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      fetchEditWordPhotos(true);
+    }
+  });
+  resultsContainer.addEventListener('scroll', () => {
+    if (resultsContainer.scrollTop + resultsContainer.clientHeight >= resultsContainer.scrollHeight - 160) {
+      if (!editWordLoading && editWordHasMore && editWordPhotos.length < 100) {
+        fetchEditWordPhotos(false);
+      }
     }
   });
 

@@ -154,12 +154,13 @@ export async function searchStockMedia(
           },
         })).map(normalizePixabayPhoto);
       if (photos.length || imageType === "vector" || imageType === "illustration") {
-        const total = Number(data.totalHits) || photos.length;
+        const total = Number(data.totalHits) || (photos.length ? 500 : 0);
+        const hasNext = page * perPage < total || hits.length >= perPage;
         return remember({
           ...empty,
           photos,
           total_results: total,
-          next_page: page * perPage < total ? page + 1 : null,
+          next_page: hasNext ? page + 1 : null,
         });
       }
     }
@@ -186,11 +187,13 @@ export async function searchStockMedia(
       ...photo,
       type: "photo",
     }));
+    const total = Number(data.total_results) || (photos.length ? 500 : 0);
+    const hasNext = Boolean(data.next_page) || photos.length >= perPage;
     return remember({
       ...empty,
       photos,
-      total_results: Number(data.total_results) || photos.length,
-      next_page: data.next_page ? page + 1 : null,
+      total_results: total,
+      next_page: hasNext ? page + 1 : null,
     });
   } catch {
     return empty;
