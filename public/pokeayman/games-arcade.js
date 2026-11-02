@@ -1812,6 +1812,7 @@
     const cancel = modal.querySelector('#game-players-cancel');
     const error = modal.querySelector('#game-player-error');
     const requiresTwoPlayers = resolvedFnName === 'chooseBaamboozlePowerUps';
+    const isDotsAndBoxes = resolvedFnName === 'chooseDotsAndBoxes';
     const isSoloGame = resolvedFnName === 'startListenCatch' || resolvedFnName === 'startVocabBattle';
     const footer = next?.parentElement;
     if (!root || !footer) return;
@@ -1833,12 +1834,12 @@
         <button type="button" data-q="clear" title="Clear selection" aria-label="Clear selected student" class="ga-pick-clear-btn h-8 px-2.5 rounded-lg bg-slate-800/90 border border-slate-700 hover:border-rose-500/50 text-xs font-semibold text-slate-400 hover:text-rose-400 transition cursor-pointer hidden">Clear</button>
       </div>`;
     } else {
-      const maxChoices = Math.min(4, checks.length);
-      const randomOptions = [2, 3, 4].filter(n => n <= maxChoices);
+      const maxChoices = isDotsAndBoxes ? Math.min(2, checks.length) : Math.min(4, checks.length);
+      const randomOptions = isDotsAndBoxes ? [2].filter(n => n <= maxChoices) : [2, 3, 4].filter(n => n <= maxChoices);
       if (randomOptions.length === 0 && maxChoices > 0) randomOptions.push(maxChoices);
       bar.innerHTML = `<div class="flex items-center gap-2">
         <span class="text-xs font-bold text-slate-200">Players</span>
-        <span class="ga-player-count text-[11px] font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20" aria-live="polite">0 / 4 selected</span>
+        <span class="ga-player-count text-[11px] font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20" aria-live="polite">0 / ${isDotsAndBoxes ? 2 : 4} selected</span>
         <span class="ga-player-class-count text-[11px] text-slate-500">· ${checks.length} in class</span>
       </div>
       <div class="flex items-center gap-1.5 ga-pick-tools">
@@ -1867,6 +1868,20 @@
         }
         if (error) {
           error.textContent = blocked ? 'Select a student to play.' : '';
+          error.classList.toggle('hidden', !blocked);
+        }
+        return;
+      }
+      if (isDotsAndBoxes) {
+        if (countBadge) countBadge.textContent = `${count} / 2 selected`;
+        if (next) next.textContent = count === 2 ? 'Start game · 2 players →' : 'Select 2 players to play →';
+        const blocked = count !== 2;
+        if (next) {
+          next.disabled = blocked;
+          next.setAttribute('aria-disabled', String(blocked));
+        }
+        if (error) {
+          error.textContent = blocked ? 'Dots and Boxes requires exactly 2 students to start.' : '';
           error.classList.toggle('hidden', !blocked);
         }
         return;
@@ -2173,6 +2188,81 @@
         { seconds: 60, label: '60s' },
         { seconds: 90, label: '90s' },
         { seconds: 120, label: '2 min' }
+      ];
+
+      const timerStepper = createCustomStepper({
+        iconSvg: timerIcon,
+        title: 'Timer',
+        options: timerOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaTimerSeconds = String(opt.seconds);
+          window.pendingGameTimerSeconds = opt.seconds;
+          modal.querySelectorAll('.game-timer-option').forEach(btn => {
+            const active = Number(btn.dataset.seconds || 0) === opt.seconds;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-pressed', String(active));
+          });
+        }
+      });
+      modal.dataset.gaTimerSeconds = '0';
+      window.pendingGameTimerSeconds = 0;
+      paramsSection.appendChild(timerStepper.element);
+    } else if (resolvedFnName === 'chooseDotsAndBoxes') {
+      // 1. Grid Size Stepper (4x4 dots = 9 boxes, 3x3 dots = 4 boxes)
+      const gridIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>`;
+      const gridStepper = createCustomStepper({
+        iconSvg: gridIcon,
+        title: 'Grid size',
+        options: [
+          { dots: 4, label: '4×4 dots · 9 boxes' },
+          { dots: 3, label: '3×3 dots · 4 boxes' }
+        ],
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaGridDots = String(opt.dots);
+          window.selectedDotsAndBoxesGrid = opt.dots;
+        }
+      });
+      modal.dataset.gaGridDots = '4';
+      window.selectedDotsAndBoxesGrid = 4;
+      paramsSection.appendChild(gridStepper.element);
+
+      // 2. Winner reward coins Stepper
+      const coinIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h6a1.5 1.5 0 0 1 0 3H9a1.5 1.5 0 0 0 0 3h6"/></svg>`;
+      const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : 20;
+      const rewardMax = (availableCredits === Infinity || !Number.isFinite(availableCredits)) ? 100 : Math.max(0, Math.floor(availableCredits / 5) * 5);
+      const coinOptions = [{ value: 0, label: 'No coins' }];
+      for (let c = 5; c <= Math.max(20, rewardMax); c += 5) {
+        coinOptions.push({ value: c, label: `${c} coins` });
+      }
+
+      const rewardStepper = createCustomStepper({
+        iconSvg: coinIcon,
+        title: 'Winner reward coins',
+        options: coinOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaRewardCoins = String(opt.value);
+          window.pendingGameReward = opt.value;
+          modal.querySelectorAll('.game-reward-option').forEach(btn => {
+            const active = Number(btn.dataset.reward || 0) === opt.value;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-checked', String(active));
+          });
+        }
+      });
+      modal.dataset.gaRewardCoins = '0';
+      window.pendingGameReward = 0;
+      paramsSection.appendChild(rewardStepper.element);
+
+      // 3. Timer Stepper
+      const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+      const timerOptions = [
+        { seconds: 0, label: 'No timer' },
+        { seconds: 60, label: '1 min' },
+        { seconds: 180, label: '3 min' },
+        { seconds: 300, label: '5 min' }
       ];
 
       const timerStepper = createCustomStepper({

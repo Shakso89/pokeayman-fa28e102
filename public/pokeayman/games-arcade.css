@@ -20,7 +20,7 @@
   background: transparent; border: none; color: var(--ga-ink); width: 100%; max-width: 230px; margin: 0 auto;
   transition: transform .18s ease; }
 .ga-cart:hover, .ga-cart:focus-visible { outline: none; z-index: 30; }
-.ga-pink { --a: #ff6fb5; } .ga-red { --a: #ff5a5f; } .ga-violet { --a: #a78bfa; } .ga-blue { --a: #4fa3ff; } .ga-yellow { --a: #ffcb05; } .ga-mint { --a: #34d399; }
+.ga-pink { --a: #ff6fb5; } .ga-red { --a: #ff5a5f; } .ga-violet { --a: #a78bfa; } .ga-blue { --a: #4fa3ff; } .ga-yellow { --a: #ffcb05; } .ga-mint { --a: #34d399; } .ga-amber { --a: #f59e0b; }
 
 /* Rounded Card shaped like the logo */
 .ga-cart-disc, .ga-cart-art { position: relative; z-index: 2; width: 148px; height: 148px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; margin: 0 auto;
