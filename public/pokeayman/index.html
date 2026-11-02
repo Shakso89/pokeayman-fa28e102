@@ -2778,49 +2778,140 @@
   
   
   <script>
-  // Pexels photo search through the app's backend (keeps the API key private).
+  // Robust stock photo and clipart search with multi-tier fallback (Workers, Lovable dev/prod, and direct Pixabay).
   window.pexelsFetch = async function(path, opts){
     opts = opts || {};
     const plain = { cache: 'no-store', signal: opts.signal };
-    const bases = ['', 'https://project--af78e400-d2aa-4584-8316-ae12b8d0c19c-dev.lovable.app', 'https://project--af78e400-d2aa-4584-8316-ae12b8d0c19c.lovable.app'];
-    let last;
+    const bases = [
+      '',
+      'https://pokeayman.pokeayman.workers.dev',
+      'https://project--af78e400-d2aa-4584-8316-ae12b8d0c19c.lovable.app',
+      'https://project--af78e400-d2aa-4584-8316-ae12b8d0c19c-dev.lovable.app'
+    ];
+    let lastResponse = null;
+
+    const normalizePixabaySrc = (photos) => {
+      if (!Array.isArray(photos)) return;
+      photos.forEach(p => {
+        if (p && p.src) {
+          const preview = String(p.src.tiny || p.src.small || p.src.medium || '');
+          if (preview.includes('cdn.pixabay.com')) {
+            const ext = preview.slice(preview.lastIndexOf('.'));
+            const base = preview.slice(0, preview.lastIndexOf('_'));
+            if (base && ext) {
+              const p640 = base + '_640' + ext;
+              if (!p.src.large || String(p.src.large).includes('pixabay.com/get/')) p.src.large = p640;
+              if (!p.src.original || String(p.src.original).includes('pixabay.com/get/')) p.src.original = p640;
+              if (!p.src.medium || String(p.src.medium).includes('pixabay.com/get/')) p.src.medium = p640;
+              if (!p.src.small || String(p.src.small).includes('pixabay.com/get/')) p.src.small = p640;
+            }
+          }
+        }
+      });
+    };
+
     for (const base of bases) {
       try {
-        const res = await fetch(base + path, plain);
+        const fullUrl = base ? (base.replace(/\/+$/, '') + path) : path;
+        const res = await fetch(fullUrl, plain);
         if (res.ok) {
-          const origJson = res.json.bind(res);
-          res.json = async () => {
-            const data = await origJson();
-            if (data && Array.isArray(data.photos)) {
-              data.photos.forEach(p => {
-                if (p && p.src) {
-                  const preview = String(p.src.tiny || p.src.small || '');
-                  if (preview.includes('cdn.pixabay.com')) {
-                    const ext = preview.slice(preview.lastIndexOf('.'));
-                    const base = preview.slice(0, preview.lastIndexOf('_'));
-                    if (base && ext) {
-                      const p640 = base + '_640' + ext;
-                      if (!p.src.large || String(p.src.large).includes('pixabay.com/get/')) p.src.large = p640;
-                      if (!p.src.original || String(p.src.original).includes('pixabay.com/get/')) p.src.original = p640;
-                      if (!p.src.medium || String(p.src.medium).includes('pixabay.com/get/')) p.src.medium = p640;
-                      if (!p.src.small || String(p.src.small).includes('pixabay.com/get/')) p.src.small = p640;
-                    }
-                  }
-                }
-              });
-            }
-            return data;
-          };
-          return res;
+          const data = await res.json().catch(() => null);
+          if (data && Array.isArray(data.photos) && data.photos.length > 0) {
+            normalizePixabaySrc(data.photos);
+            return new Response(JSON.stringify(data), {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+          if (data && Array.isArray(data.photos)) {
+            lastResponse = data;
+          }
         }
-        last = res;
       } catch (e) {
         if (e && e.name === 'AbortError') throw e;
-        last = e;
       }
     }
-    if (last instanceof Response) return last;
-    throw last || new Error('Photo search failed');
+
+    // Direct Pixabay API fallback if all backend endpoints failed or returned 0 results
+    try {
+      const urlObj = new URL(path, (typeof window !== 'undefined' && window.location?.origin) || 'http://localhost');
+      const query = (urlObj.searchParams.get('query') || '').trim();
+      if (query) {
+        const requestedType = urlObj.searchParams.get('image_type') || 'all';
+        const perPage = Math.min(Math.max(parseInt(urlObj.searchParams.get('per_page') || '12', 10), 3), 40);
+        const page = Math.min(Math.max(parseInt(urlObj.searchParams.get('page') || '1', 10), 1), 50);
+        const pixabayKey = '58123311-8a89c5e2df18a2650add733fa';
+        const searchDirect = async (imgType) => {
+          const params = new URLSearchParams({
+            key: pixabayKey,
+            q: query,
+            image_type: imgType,
+            safesearch: 'true',
+            per_page: String(perPage),
+            page: String(page)
+          });
+          const pbRes = await fetch('https://pixabay.com/api/?' + params, { signal: opts.signal });
+          return pbRes.ok ? await pbRes.json().catch(() => null) : null;
+        };
+
+        const targetType = (requestedType === 'illustration' || requestedType === 'vector') ? 'illustration' : (requestedType === 'photo' ? 'photo' : 'all');
+        let pbData = await searchDirect(targetType);
+        let hits = Array.isArray(pbData?.hits) ? pbData.hits : [];
+        if (hits.length === 0 && targetType === 'illustration') {
+          pbData = await searchDirect('vector');
+          hits = Array.isArray(pbData?.hits) ? pbData.hits : [];
+        }
+        if (hits.length > 0) {
+          const photos = hits.map(hit => {
+            const preview = hit.previewURL || hit.webformatURL || '';
+            const ext = preview.slice(preview.lastIndexOf('.'));
+            const base = preview.slice(0, preview.lastIndexOf('_'));
+            const p640 = (base && ext) ? (base + '_640' + ext) : (hit.webformatURL || preview);
+            const p1280 = (base && ext) ? (base + '_1280' + ext) : (hit.largeImageURL || p640);
+            const hitType = String(hit.type || '').toLowerCase();
+            const normType = hitType.startsWith('vector') ? 'vector' : (hitType === 'illustration' ? 'illustration' : 'photo');
+            return {
+              id: hit.id,
+              photographer: hit.user || 'Pixabay Artist',
+              photographer_url: hit.pageURL || '',
+              url: hit.pageURL || '',
+              alt: hit.tags || query,
+              type: normType,
+              src: {
+                original: p1280,
+                large: p1280,
+                medium: p640,
+                small: p640,
+                tiny: preview
+              }
+            };
+          });
+          return new Response(JSON.stringify({
+            photos,
+            page,
+            per_page: perPage,
+            total_results: Number(pbData?.totalHits) || photos.length,
+            next_page: (page * perPage < (pbData?.totalHits || 0)) ? page + 1 : null
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      }
+    } catch (e) {
+      if (e && e.name === 'AbortError') throw e;
+    }
+
+    if (lastResponse) {
+      return new Response(JSON.stringify(lastResponse), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    return new Response(JSON.stringify({ photos: [], page: 1, per_page: 12, total_results: 0, next_page: null }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   };
   </script>
   <script>
@@ -29786,9 +29877,11 @@ function openVocabCoverPicker(listId, listName) {
 
     if (loadMore) {
       if (coverPhotos.length === 0) {
-        loadMore.style.display = 'none';
+        loadMore.style.setProperty('display', 'none', 'important');
+        loadMore.classList.add('hidden');
       } else {
-        loadMore.style.display = 'inline-flex';
+        loadMore.classList.remove('hidden');
+        loadMore.style.removeProperty('display');
         const reachedMax = coverPhotos.length >= 100;
         const apiDone = !coverHasMore;
         loadMore.disabled = coverLoading || reachedMax || apiDone;
@@ -29813,7 +29906,8 @@ function openVocabCoverPicker(listId, listName) {
       coverRequest += 1;
       results.replaceChildren();
       if (loadMore) {
-        loadMore.style.display = 'none';
+        loadMore.style.setProperty('display', 'none', 'important');
+        loadMore.classList.add('hidden');
         loadMore.disabled = true;
       }
     }
@@ -30495,7 +30589,8 @@ function openVocabListEditor(listId, listName) {
         }
         if (status) status.textContent = nextQuery ? 'Loading photos…' : 'Enter a search term.';
         if (more) {
-          more.style.display = 'none';
+          more.style.setProperty('display', 'none', 'important');
+          more.classList.add('hidden');
           more.disabled = true;
           more.textContent = 'Load more photos';
         }
@@ -30652,9 +30747,11 @@ function openVocabListEditor(listId, listName) {
       }
       if (more) {
         if (vocabPhotoItems.length === 0) {
-          more.style.display = 'none';
+          more.style.setProperty('display', 'none', 'important');
+          more.classList.add('hidden');
         } else {
-          more.style.display = 'inline-flex';
+          more.classList.remove('hidden');
+          more.style.removeProperty('display');
           const isDone = reachedMax || (apiEmpty && vocabPhotoItems.length > 0);
           more.disabled = isDone;
           more.innerHTML = isDone
@@ -30667,9 +30764,13 @@ function openVocabListEditor(listId, listName) {
       if (requestId === vocabPhotoSearchRequestId && query === vocabPhotoQuery) {
         if (status) status.textContent = `${vocabPhotoItems.length ? vocabPhotoItems.length + ' of 100 photos loaded · ' : ''}Photo search failed. Click below to retry.`;
         if (more && vocabPhotoItems.length > 0) {
-          more.style.display = 'inline-flex';
+          more.classList.remove('hidden');
+          more.style.removeProperty('display');
           more.disabled = false;
           more.innerHTML = '<span>⚠️</span><span>Retry loading photos</span>';
+        } else if (more) {
+          more.style.setProperty('display', 'none', 'important');
+          more.classList.add('hidden');
         }
       }
     }
@@ -31078,7 +31179,10 @@ function editVocabWord(wordId, currentWord, currentImage) {
         });
         editWordHasMore = false;
         if (statusLabel) statusLabel.textContent = '0 results';
-        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        if (loadMoreBtn) {
+          loadMoreBtn.style.setProperty('display', 'none', 'important');
+          loadMoreBtn.classList.add('hidden');
+        }
         return;
       }
 
@@ -31142,9 +31246,11 @@ function editVocabWord(wordId, currentWord, currentImage) {
 
       if (loadMoreBtn) {
         if (editWordPhotos.length === 0) {
-          loadMoreBtn.style.display = 'none';
+          loadMoreBtn.style.setProperty('display', 'none', 'important');
+          loadMoreBtn.classList.add('hidden');
         } else {
-          loadMoreBtn.style.display = 'inline-flex';
+          loadMoreBtn.classList.remove('hidden');
+          loadMoreBtn.style.removeProperty('display');
           const isDone = reachedMax || (apiEmpty && editWordPhotos.length > 0);
           loadMoreBtn.disabled = isDone;
           loadMoreBtn.innerHTML = isDone
