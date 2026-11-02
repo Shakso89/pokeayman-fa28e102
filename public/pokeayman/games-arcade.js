@@ -1969,10 +1969,96 @@
     const isSoloGame = resolvedFnName === 'startListenCatch' || resolvedFnName === 'startVocabBattle';
     const footer = next?.parentElement;
     if (!root || !footer) return;
+
+    // Enhance marquee header
+    const h2El = modal.querySelector('h2');
+    if (h2El && game && !h2El.querySelector('.ga-lobby-marquee')) {
+      const iconHtml = game.image
+        ? `<div class="ga-lobby-game-art"><img src="${game.image}" alt="" class="w-10 h-10 rounded-xl object-cover ring-2 ring-amber-400/50 shadow-md"></div>`
+        : `<div class="ga-lobby-game-art"><span class="ga-lobby-icon text-2xl" aria-hidden="true">${game.icon}</span></div>`;
+      h2El.innerHTML = `<div class="ga-lobby-marquee">
+        ${iconHtml}
+        <div class="ga-lobby-title-wrap">
+          <div class="ga-lobby-badge-row">
+            <span class="ga-lobby-pill">🕹️ MATCH LOBBY</span>
+            <span class="ga-lobby-step">ROUND SETUP</span>
+          </div>
+          <span class="ga-lobby-game-title">${esc(game.name)}</span>
+        </div>
+      </div>`;
+      const pSubtitle = h2El.nextElementSibling;
+      if (pSubtitle && pSubtitle.tagName.toLowerCase() === 'p') pSubtitle.style.display = 'none';
+    }
+
     const players = document.createElement('section');
     players.className = 'ga-players-section';
     const bar = document.createElement('div');
-    bar.className = 'ga-quick flex items-center justify-between mb-3';
+    bar.className = 'ga-quick flex items-center justify-between mb-2.5';
+
+    // Interactive Challenger Lineup Podiums
+    const maxAllowed = isSoloGame ? 1 : (isDotsAndBoxes ? 2 : 4);
+    const lineupStage = document.createElement('div');
+    lineupStage.className = `ga-lineup-stage ${isDotsAndBoxes ? 'stage-2p' : (isSoloGame ? 'stage-1p' : 'stage-4p')}`;
+
+    const renderLineup = () => {
+      const checkedBoxes = checks.filter(c => c.checked);
+      lineupStage.innerHTML = '';
+      for (let i = 0; i < maxAllowed; i++) {
+        const chk = checkedBoxes[i];
+        const slot = document.createElement('div');
+        const pNum = i + 1;
+        const pCol = ['blue', 'red', 'green', 'amber'][i] || 'blue';
+        slot.className = `ga-podium-slot slot-p${pNum} ${chk ? 'slot-filled' : 'slot-empty'}`;
+        if (chk) {
+          const card = chk.closest('.game-player-card-option');
+          const imgEl = card?.querySelector('img, svg');
+          const imgSrc = imgEl?.tagName?.toLowerCase() === 'img' ? imgEl.src : '';
+          slot.innerHTML = `
+            <div class="podium-p-tag tag-${pCol}">P${pNum}</div>
+            <div class="podium-avatar-wrap">
+              ${imgSrc ? `<img src="${imgSrc}" class="podium-avatar-img" alt="${esc(chk.value)}">` : `<div class="podium-avatar-ph">⚡</div>`}
+            </div>
+            <span class="podium-name">${esc(chk.value)}</span>
+            <button type="button" class="podium-remove-btn" title="Remove ${esc(chk.value)}" aria-label="Remove ${esc(chk.value)}">×</button>
+          `;
+          slot.querySelector('.podium-remove-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            chk.checked = false;
+            refresh?.();
+            update();
+          });
+        } else {
+          slot.innerHTML = `
+            <div class="podium-empty-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+            </div>
+            <span class="podium-empty-text">+ P${pNum}</span>
+          `;
+        }
+        lineupStage.appendChild(slot);
+      }
+
+      // Update student cards with player badges
+      checks.forEach(c => {
+        const card = c.closest('.game-player-card-option');
+        if (!card) return;
+        const playerIdx = checkedBoxes.indexOf(c);
+        card.classList.remove('is-p1', 'is-p2', 'is-p3', 'is-p4');
+        let badge = card.querySelector('.ga-player-badge');
+        if (playerIdx >= 0) {
+          const pNum = playerIdx + 1;
+          card.classList.add(`is-p${pNum}`);
+          if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'ga-player-badge';
+            card.prepend(badge);
+          }
+          badge.textContent = `P${pNum}`;
+        } else {
+          if (badge) badge.remove();
+        }
+      });
+    };
     if (isSoloGame) {
       bar.innerHTML = `<div class="flex items-center gap-2">
         <span class="text-xs font-bold text-slate-200">Player</span>
@@ -2010,6 +2096,7 @@
     const update = () => {
       const count = checks.filter(c => c.checked).length;
       if (clearBtn) clearBtn.classList.toggle('hidden', count === 0);
+      renderLineup();
       if (isSoloGame) {
         const sel = checks.find(c => c.checked);
         if (countBadge) countBadge.textContent = `${count} / 1 selected`;
@@ -2099,7 +2186,7 @@
       }
     });
     list.before(players);
-    players.append(bar, list);
+    players.append(bar, lineupStage, list);
     checks.forEach(c => c.addEventListener('change', update));
 
     const existingScoreInput = modal.querySelector('#shared-winning-score');
