@@ -417,48 +417,221 @@ body:has(#contact-pricing-modal:not(.hidden)) #home-screen {
   box-shadow: 0 4px 14px rgba(255, 203, 5, 0.35) !important;
 }
 
-/* Contact Tab Content */
+/* Contact Tab Content - Uiverse quick-fish-43 4-Quadrant UI */
+.contact-tab-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+.contact-wheel-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 480px;
+}
+.contact-wheel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.5rem;
+  user-select: none;
+}
+.contact-wheel-row {
+  display: flex;
+  flex-direction: row;
+  gap: 0.65rem;
+  justify-content: center;
+}
+.contact-quad {
+  width: 102px;
+  height: 102px;
+  outline: none;
+  border: none;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 4px 12px -2px, rgba(0, 0, 0, 0.3) 0px 2px 6px -1px;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.25s ease;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (max-width: 400px) {
+  .contact-quad {
+    width: 86px;
+    height: 86px;
+  }
+}
+
+/* 1. Gmail - Top Left */
+.quad-gmail {
+  border-radius: 95px 8px 8px 8px;
+  padding-top: 14px;
+  padding-left: 14px;
+}
+.quad-gmail svg {
+  fill: #EA4335;
+  transition: fill 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.quad-gmail:hover, .quad-gmail:focus-visible {
+  background: #EA4335;
+  transform: scale(1.12) translate(-2px, -2px);
+  box-shadow: 0 16px 36px rgba(234, 67, 53, 0.5);
+  z-index: 10;
+}
+.quad-gmail:hover svg, .quad-gmail:focus-visible svg {
+  fill: #ffffff;
+  transform: scale(1.1);
+}
+
+/* 2. Instagram - Top Right */
+.quad-instagram {
+  border-radius: 8px 95px 8px 8px;
+  padding-top: 14px;
+  padding-right: 14px;
+}
+.quad-instagram svg {
+  fill: #E1306C;
+  transition: fill 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.quad-instagram:hover, .quad-instagram:focus-visible {
+  background: #E1306C;
+  transform: scale(1.12) translate(2px, -2px);
+  box-shadow: 0 16px 36px rgba(225, 48, 108, 0.5);
+  z-index: 10;
+}
+.quad-instagram:hover svg, .quad-instagram:focus-visible svg {
+  fill: #ffffff;
+  transform: scale(1.1);
+}
+
+/* 3. Phone Call - Bottom Left */
+.quad-phone {
+  border-radius: 8px 8px 8px 95px;
+  padding-bottom: 14px;
+  padding-left: 14px;
+}
+.quad-phone svg {
+  stroke: #0284C7;
+  transition: stroke 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.quad-phone:hover, .quad-phone:focus-visible {
+  background: #0284C7;
+  transform: scale(1.12) translate(-2px, 2px);
+  box-shadow: 0 16px 36px rgba(2, 132, 199, 0.5);
+  z-index: 10;
+}
+.quad-phone:hover svg, .quad-phone:focus-visible svg {
+  stroke: #ffffff;
+  transform: scale(1.1);
+}
+
+/* 4. LINE - Bottom Right */
+.quad-line {
+  border-radius: 8px 8px 95px 8px;
+  padding-bottom: 14px;
+  padding-right: 14px;
+}
+.quad-line .line-bubble {
+  fill: #06C755;
+  transition: fill 0.2s ease;
+}
+.quad-line .line-text {
+  fill: #ffffff;
+  transition: fill 0.2s ease;
+}
+.quad-line svg {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.quad-line:hover, .quad-line:focus-visible {
+  background: #06C755;
+  transform: scale(1.12) translate(2px, 2px);
+  box-shadow: 0 16px 36px rgba(6, 199, 85, 0.5);
+  z-index: 10;
+}
+.quad-line:hover .line-bubble, .quad-line:focus-visible .line-bubble {
+  fill: #ffffff;
+}
+.quad-line:hover .line-text, .quad-line:focus-visible .line-text {
+  fill: #06C755;
+}
+.quad-line:hover svg, .quad-line:focus-visible svg {
+  transform: scale(1.1);
+}
+
+/* Live dynamic status pill */
+.contact-live-status {
+  min-height: 42px;
+  padding: 0.45rem 1.25rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  transition: all 0.2s ease;
+  text-align: center;
+  max-width: 95%;
+}
+
+/* Bottom details badges */
+.contact-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+.contact-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.contact-mini-badge:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+.contact-mini-badge .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.contact-mini-badge .badge-label {
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
 #contact-tab-content > div:first-child {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
   padding: 0 !important;
 }
-#contact-tab-content > div:first-child > .space-y-5 {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: 0.85rem;
-}
-#contact-tab-content > div:first-child > .space-y-5 > * { margin: 0 !important; }
-#contact-tab-content .flex.items-start {
-  padding: 0.9rem !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.04) !important;
-  transition: border-color .2s, transform .2s, background .2s;
-}
-#contact-tab-content .flex.items-start:hover {
-  border-color: var(--home-yellow, #ffcb05) !important;
-  background: rgba(255, 255, 255, 0.07) !important;
-  transform: translateY(-2px);
-}
-#contact-tab-content .text-3xl {
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 0.8rem;
-  background: rgba(94, 231, 242, 0.12) !important;
-  font-size: 1.35rem !important;
-}
-#contact-tab-content .text-purple-200 { color: var(--home-yellow, #ffcb05) !important; font-size: 0.72rem; letter-spacing: 0.06em; }
 #contact-tab-content a {
-  color: #f8fafc !important;
-  font-weight: 600;
   text-decoration: none;
-  transition: color .2s;
 }
-#contact-tab-content a:hover { color: var(--home-cyan, #5ee7f2) !important; }
 #contact-pricing-modal .text-purple-100 { color: var(--home-muted, #a9b5d3) !important; }
 
 /* Pricing Plans Component System */
@@ -800,28 +973,27 @@ html body.ts-bright #contact-pricing-modal:has(#contact-tab-content.hidden) #pri
 }
 
 /* Contact Tab Bright Mode */
-html body.ts-bright #contact-tab-content .flex.items-start {
-  background: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
-}
-html body.ts-bright #contact-tab-content .flex.items-start:hover {
+html body.ts-bright .contact-quad {
   background: #ffffff !important;
-  border-color: #3b82f6 !important;
-  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.12) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
 }
-html body.ts-bright #contact-tab-content .text-3xl {
-  background: #eff6ff !important;
-  border: 1px solid #dbeafe !important;
+html body.ts-bright .contact-live-status {
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+  border-color: #cbd5e1 !important;
 }
-html body.ts-bright #contact-tab-content .text-purple-200 {
-  color: #64748b !important;
+html body.ts-bright .contact-mini-badge {
+  background: #f8fafc !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
 }
-html body.ts-bright #contact-tab-content a {
+html body.ts-bright .contact-mini-badge:hover {
+  background: #ffffff !important;
   color: #0f172a !important;
+  border-color: #94a3b8 !important;
 }
-html body.ts-bright #contact-tab-content a:hover {
-  color: #2563eb !important;
+html body.ts-bright .contact-mini-badge .badge-label {
+  color: #0f172a !important;
 }
 html body.ts-bright #contact-pricing-modal .text-purple-100 {
   color: #64748b !important;

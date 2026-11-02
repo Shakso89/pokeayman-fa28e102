@@ -11466,44 +11466,64 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       <button id="pricing-tab-btn" type="button" class="px-5 py-1.5 rounded-full font-bold text-sm transition" data-tab="pricing">Pricing Plans</button>
     </div><!-- Tab Content -->
     <div class="p-4 sm:p-6"><!-- Contact Tab -->
-     <div id="contact-tab-content" class="space-y-5">
-      <div>
-       <div class="space-y-5"><!-- Email -->
-        <div class="flex items-start gap-4">
-         <div class="text-3xl flex-shrink-0">
-          📧
-         </div>
-         <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Email</p><a href="mailto:ayman.soliman.tr@gmail.com" class="text-base font-semibold transition break-all">ayman.soliman.tr@gmail.com</a>
-         </div>
-        </div><!-- Instagram -->
-        <div class="flex items-start gap-4">
-         <div class="text-3xl flex-shrink-0">
-          📷
-         </div>
-         <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Instagram</p><a href="https://instagram.com/shakso" target="_blank" rel="noopener noreferrer" class="text-base font-semibold transition">@shakso</a>
-         </div>
-        </div><!-- Phone -->
-        <div class="flex items-start gap-4">
-         <div class="text-3xl flex-shrink-0">
-          📱
-         </div>
-         <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Phone</p><a href="tel:+886900170038" class="text-base font-semibold transition">+886 900 170 038</a>
-         </div>
-        </div><!-- LINE -->
-        <div class="flex items-start gap-4">
-         <div class="text-3xl flex-shrink-0">
-          💬
-         </div>
-         <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-purple-200 uppercase tracking-widest mb-1.5">Line</p><a href="https://line.me/ti/p/~ayman.soliman" target="_blank" rel="noopener noreferrer" class="text-base font-semibold transition">Connect on LINE</a>
-         </div>
+     <div id="contact-tab-content" class="contact-tab-container">
+      <div class="contact-wheel-wrap">
+       <div class="contact-wheel" role="group" aria-label="Quick contact links">
+        <div class="contact-wheel-row">
+         <!-- 1. Gmail (Top Left) -->
+         <a href="mailto:ayman.soliman.tr@gmail.com" class="contact-quad quad-gmail" aria-label="Gmail: ayman.soliman.tr@gmail.com" title="Email: ayman.soliman.tr@gmail.com">
+          <svg class="contact-svg-icon" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" aria-hidden="true">
+           <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
+          </svg>
+         </a>
+         <!-- 2. Instagram (Top Right) -->
+         <a href="https://instagram.com/shakso" target="_blank" rel="noopener noreferrer" class="contact-quad quad-instagram" aria-label="Instagram: @shakso" title="Instagram: @shakso">
+          <svg class="contact-svg-icon" xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">
+           <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+          </svg>
+         </a>
+        </div>
+        <div class="contact-wheel-row">
+         <!-- 3. Phone Call (Bottom Left) -->
+         <a href="tel:+886900170038" class="contact-quad quad-phone" aria-label="Phone: +886 900 170 038" title="Phone: +886 900 170 038">
+          <svg class="contact-svg-icon" xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+           <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+           <path d="M14.05 2a9 9 0 0 1 8 7.94"/>
+           <path d="M14.05 6A5 5 0 0 1 18 10"/>
+          </svg>
+         </a>
+         <!-- 4. LINE (Bottom Right) -->
+         <a href="https://line.me/ti/p/~ayman.soliman" target="_blank" rel="noopener noreferrer" class="contact-quad quad-line" aria-label="LINE: Connect on LINE" title="LINE: Connect on LINE">
+          <svg class="contact-svg-icon line-svg" xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" aria-hidden="true">
+           <path class="line-bubble" d="M12 1.5C6.2 1.5 1.5 5.2 1.5 9.8c0 4.1 3.7 7.5 8.7 8.2.3.1.8.2.9.6.1.3.1.7 0 1l-.2.9c-.1.3-.2 1.1.9.6 1.1-.5 6-3.6 8.2-6.1C21.9 13.3 22.5 11.6 22.5 9.8 22.5 5.2 17.8 1.5 12 1.5z"/>
+           <path class="line-text" d="M7 8h1.2v3H10v1H7V8zm3.6 0h1.2v4h-1.2V8zm1.8 0h1.2l1.6 2.3V8h1.2v4h-1.1l-1.7-2.4V12h-1.2V8zm5.8 0h2.8v1h-1.6v.5h1.5v1h-1.5v.5h1.6v1h-2.8V8z"/>
+          </svg>
+         </a>
         </div>
        </div>
+
+       <!-- Dynamic Hover / Active Status Pill -->
+       <div id="contact-live-status" class="contact-live-status">
+        <span>Click or tap any icon to reach out directly</span>
+       </div>
+
+       <!-- Direct details badges with instant action -->
+       <div class="contact-badges-row">
+        <a href="mailto:ayman.soliman.tr@gmail.com" class="contact-mini-badge" title="Send email to ayman.soliman.tr@gmail.com">
+         <span class="dot" style="background:#EA4335"></span><span class="badge-label">Gmail:</span> ayman.soliman.tr@gmail.com
+        </a>
+        <a href="https://instagram.com/shakso" target="_blank" rel="noopener noreferrer" class="contact-mini-badge" title="Open Instagram @shakso">
+         <span class="dot" style="background:#E1306C"></span><span class="badge-label">Instagram:</span> @shakso
+        </a>
+        <a href="tel:+886900170038" class="contact-mini-badge" title="Call +886 900 170 038">
+         <span class="dot" style="background:#0284C7"></span><span class="badge-label">Phone:</span> +886 900 170 038
+        </a>
+        <a href="https://line.me/ti/p/~ayman.soliman" target="_blank" rel="noopener noreferrer" class="contact-mini-badge" title="Connect on LINE">
+         <span class="dot" style="background:#06C755"></span><span class="badge-label">LINE:</span> ayman.soliman
+        </a>
+       </div>
       </div>
-      <p class="text-center text-purple-100 text-sm italic">We're happy to help with any questions or to discuss custom plans for your school!</p>
+      <p class="text-center text-purple-100 text-xs sm:text-sm italic mt-3">We're happy to help with any questions or to discuss custom plans for your school!</p>
      </div><!-- Pricing Tab -->
      <div id="pricing-tab-content" class="hidden"></div>
     </div>
@@ -15106,10 +15126,47 @@ document.getElementById('contact-pricing-modal')?.addEventListener('click', e =>
 });
 
 // Contact & Pricing modal tabs
+function initContactWheel() {
+  const quads = document.querySelectorAll('.contact-quad');
+  const statusEl = document.getElementById('contact-live-status');
+  if (!quads.length || !statusEl) return;
+  const infoMap = {
+    'quad-gmail': { name: 'Gmail', val: 'ayman.soliman.tr@gmail.com', color: '#EA4335' },
+    'quad-instagram': { name: 'Instagram', val: '@shakso', color: '#E1306C' },
+    'quad-phone': { name: 'Phone Call', val: '+886 900 170 038', color: '#0284C7' },
+    'quad-line': { name: 'LINE', val: 'ayman.soliman', color: '#06C755' }
+  };
+  quads.forEach(quad => {
+    if (quad.dataset.wheelBound) return;
+    quad.dataset.wheelBound = 'true';
+    const key = [...quad.classList].find(c => infoMap[c]);
+    if (!key) return;
+    const item = infoMap[key];
+    const show = () => {
+      statusEl.innerHTML = `<span style="color:${item.color}; font-weight:800;">${item.name}</span><span style="opacity:0.6;">•</span><span>${item.val}</span>`;
+      statusEl.style.borderColor = item.color;
+      statusEl.style.background = 'rgba(255,255,255,0.1)';
+    };
+    const reset = () => {
+      statusEl.innerHTML = `<span>Click or tap any icon to reach out directly</span>`;
+      statusEl.style.borderColor = '';
+      statusEl.style.background = '';
+    };
+    quad.addEventListener('mouseenter', show);
+    quad.addEventListener('focus', show);
+    quad.addEventListener('mouseleave', reset);
+    quad.addEventListener('blur', reset);
+  });
+}
+
 document.getElementById('contact-tab-btn')?.addEventListener('click', () => {
   document.getElementById('contact-tab-content')?.classList.remove('hidden');
   document.getElementById('pricing-tab-content')?.classList.add('hidden');
+  initContactWheel();
 });
+
+document.addEventListener('DOMContentLoaded', initContactWheel);
+initContactWheel();
 
 document.getElementById('pricing-tab-btn')?.addEventListener('click', () => {
   document.getElementById('pricing-tab-content')?.classList.remove('hidden');
