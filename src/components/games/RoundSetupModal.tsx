@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Shuffle, X, Check, Search } from 'lucide-react';
+import { Shuffle, X } from 'lucide-react';
 
 export interface SettingRowProps {
   icon: React.ReactNode;
@@ -64,9 +64,13 @@ export interface GameTheme {
 
 export interface RoundSetupModalProps {
   gameTitle?: string;
+  gameId?: string;
   classStudents?: Student[];
   themes?: GameTheme[];
   selectedThemeId?: string;
+  defaultGridSize?: number;
+  minPlayers?: number;
+  maxPlayers?: number;
   onSelectTheme?: (themeId: string) => void;
   onStartGame?: (selectedStudents: Student[], settings: any) => void;
   onClose?: () => void;
@@ -74,18 +78,27 @@ export interface RoundSetupModalProps {
 
 export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
   gameTitle = 'Match Words',
+  gameId,
   classStudents = [],
   themes = [],
   selectedThemeId = 'halloween',
+  defaultGridSize = 4,
+  minPlayers,
+  maxPlayers,
   onSelectTheme,
   onStartGame,
   onClose,
 }) => {
+  const isDotsAndBoxes = gameId === 'dots_and_boxes' || gameTitle.toLowerCase().includes('dots');
+  const effectiveMaxPlayers = isDotsAndBoxes ? 2 : (maxPlayers ?? 4);
+  const effectiveMinPlayers = isDotsAndBoxes ? 2 : (minPlayers ?? 1);
+
   const [selectedPlayers, setSelectedPlayers] = useState<Student[]>([]);
   const [quickPickCount, setQuickPickCount] = useState<number>(2);
   const [pointsToWin, setPointsToWin] = useState<number>(5);
   const [winnerCoins, setWinnerCoins] = useState<number>(0);
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
+  const [gridDots, setGridDots] = useState<number>(defaultGridSize);
   const [currentTheme, setCurrentTheme] = useState<string>(selectedThemeId);
 
   const togglePlayer = (student: Student) => {
@@ -94,20 +107,22 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
       if (exists) {
         return prev.filter((p) => p.id !== student.id);
       }
-      if (prev.length >= 4) return prev;
+      if (prev.length >= effectiveMaxPlayers) return prev;
       return [...prev, student];
     });
   };
 
   const handleQuickPick = (count: number) => {
-    setQuickPickCount(count);
+    const capped = Math.min(count, effectiveMaxPlayers);
+    setQuickPickCount(capped);
     const shuffled = [...classStudents].sort(() => 0.5 - Math.random());
-    setSelectedPlayers(shuffled.slice(0, Math.min(count, 4)));
+    setSelectedPlayers(shuffled.slice(0, capped));
   };
 
   const handleShuffleSelection = () => {
+    const capped = Math.min(quickPickCount, effectiveMaxPlayers);
     const shuffled = [...classStudents].sort(() => 0.5 - Math.random());
-    setSelectedPlayers(shuffled.slice(0, Math.min(quickPickCount, 4)));
+    setSelectedPlayers(shuffled.slice(0, capped));
   };
 
   const handleClearSelection = () => {
@@ -119,6 +134,10 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
     [themes, currentTheme]
   );
 
+  const canStart =
+    selectedPlayers.length >= effectiveMinPlayers &&
+    selectedPlayers.length <= effectiveMaxPlayers;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
       <div className="relative w-full max-w-4xl rounded-2xl bg-slate-950 border border-slate-800 p-6 shadow-2xl">
@@ -128,7 +147,9 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               {gameTitle}
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Round setup</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {isDotsAndBoxes ? 'Round setup · 2-Player Strategy' : 'Round setup'}
+            </p>
           </div>
           {onClose && (
             <button
@@ -150,22 +171,32 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-slate-200">Players</span>
                 <span className="text-[11px] font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
-                  {selectedPlayers.length} / 4 selected
+                  {selectedPlayers.length} / {effectiveMaxPlayers} selected
                 </span>
                 <span className="text-[11px] text-slate-500">· {classStudents.length} in class</span>
               </div>
 
               <div className="flex items-center gap-1.5">
                 {/* Quick Pick Dropdown */}
-                <select
-                  value={quickPickCount}
-                  onChange={(e) => handleQuickPick(Number(e.target.value))}
-                  className="h-8 px-2.5 rounded-lg bg-slate-800/90 border border-slate-700 text-xs font-bold text-slate-200 focus:outline-none focus:border-amber-400"
-                >
-                  <option value={2}>Random 2</option>
-                  <option value={3}>Random 3</option>
-                  <option value={4}>Random 4</option>
-                </select>
+                {isDotsAndBoxes ? (
+                  <button
+                    type="button"
+                    onClick={() => handleQuickPick(2)}
+                    className="h-8 px-2.5 rounded-lg bg-slate-800/90 border border-slate-700 text-xs font-bold text-slate-200 hover:border-amber-400 transition"
+                  >
+                    Quick Pick 2
+                  </button>
+                ) : (
+                  <select
+                    value={quickPickCount}
+                    onChange={(e) => handleQuickPick(Number(e.target.value))}
+                    className="h-8 px-2.5 rounded-lg bg-slate-800/90 border border-slate-700 text-xs font-bold text-slate-200 focus:outline-none focus:border-amber-400"
+                  >
+                    <option value={2}>Random 2</option>
+                    <option value={3}>Random 3</option>
+                    <option value={4}>Random 4</option>
+                  </select>
+                )}
 
                 {/* Shuffle Button */}
                 <button
@@ -226,15 +257,29 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
 
             {/* Unified Stepper Rows */}
             <div className="flex flex-col gap-2.5 mt-2">
-              <SettingStepperRow
-                icon={<span className="text-sm">🎯</span>}
-                label="Points to win"
-                valueDisplay={`${pointsToWin} pts`}
-                onDecrease={() => setPointsToWin((v) => Math.max(1, v - 1))}
-                onIncrease={() => setPointsToWin((v) => Math.min(20, v + 1))}
-                canDecrease={pointsToWin > 1}
-                canIncrease={pointsToWin < 20}
-              />
+              {isDotsAndBoxes && (
+                <SettingStepperRow
+                  icon={<span className="text-sm">▦</span>}
+                  label="Grid size"
+                  valueDisplay={`${gridDots}×${gridDots} (${(gridDots - 1) * (gridDots - 1)} boxes)`}
+                  onDecrease={() => setGridDots((v) => Math.max(3, v - 1))}
+                  onIncrease={() => setGridDots((v) => Math.min(4, v + 1))}
+                  canDecrease={gridDots > 3}
+                  canIncrease={gridDots < 4}
+                />
+              )}
+
+              {!isDotsAndBoxes && (
+                <SettingStepperRow
+                  icon={<span className="text-sm">🎯</span>}
+                  label="Points to win"
+                  valueDisplay={`${pointsToWin} pts`}
+                  onDecrease={() => setPointsToWin((v) => Math.max(1, v - 1))}
+                  onIncrease={() => setPointsToWin((v) => Math.min(20, v + 1))}
+                  canDecrease={pointsToWin > 1}
+                  canIncrease={pointsToWin < 20}
+                />
+              )}
 
               <SettingStepperRow
                 icon={<span className="text-sm">🪙</span>}
@@ -322,17 +367,19 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
           </button>
           <button
             type="button"
-            disabled={selectedPlayers.length === 0}
+            disabled={!canStart}
             onClick={() =>
               onStartGame?.(selectedPlayers, {
                 theme: currentTheme,
                 pointsToWin,
                 winnerCoins,
                 timerSeconds,
+                gridDots,
+                gridSize: gridDots,
               })
             }
             className={`px-5 py-2.5 rounded-xl text-xs font-bold transition ${
-              selectedPlayers.length > 0
+              canStart
                 ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed'
             }`}
