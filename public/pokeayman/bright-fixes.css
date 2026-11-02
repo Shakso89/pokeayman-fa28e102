@@ -2126,18 +2126,166 @@ body:not(.ts-bright):not(.light):not([data-theme="light"]) :is(#app-screen#app-s
 }
 
 /* ==========================================================================
-   PHOTO SEARCH & LOAD MORE BUTTON STYLES (All 3 Pickers)
-   1. Edit Word Modal (#vocab-image-load-more)
-   2. Choose Photo Modal (#vocab-photo-load-more)
-   3. Change Cover Modal (#vocab-cover-load-more)
+   UNIFIED IMAGE & COVER SEARCH OVERHAUL (All 3 Pickers)
+   1. Edit Word Modal
+   2. Choose Photo Modal
+   3. Change Cover Modal
    ========================================================================== */
 
-/* Place 2 Dialog Flex Containment: Prevent button clipping */
+/* 1. Filter Type Pills */
+.vocab-type-pill,
+.vocab-photo-type-pill,
+.vocab-cover-type-pill {
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 0.75rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  white-space: nowrap !important;
+}
+
+/* Dark Theme Pills */
+html body:not(.ts-bright) :is(.vocab-type-pill, .vocab-photo-type-pill, .vocab-cover-type-pill) {
+  background: rgba(30, 41, 59, 0.7) !important;
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
+  color: #94a3b8 !important;
+}
+html body:not(.ts-bright) :is(.vocab-type-pill, .vocab-photo-type-pill, .vocab-cover-type-pill):hover {
+  background: #334155 !important;
+  color: #f8fafc !important;
+  border-color: rgba(251, 191, 36, 0.4) !important;
+}
+html body:not(.ts-bright) :is(.vocab-type-pill, .vocab-photo-type-pill, .vocab-cover-type-pill).is-active {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.2)) !important;
+  border-color: #fbbf24 !important;
+  color: #fde047 !important;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.2) !important;
+}
+
+/* Bright Theme Pills */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.vocab-type-pill, .vocab-photo-type-pill, .vocab-cover-type-pill) {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.vocab-type-pill, .vocab-photo-type-pill, .vocab-cover-type-pill):hover {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(.vocab-type-pill, .vocab-photo-type-pill, .vocab-cover-type-pill).is-active {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #92400e !important;
+  box-shadow: 0 1px 4px rgba(245, 158, 11, 0.25) !important;
+}
+
+/* 2. Sleek Centered Load-More Trigger Pill */
+.vocab-load-more-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  padding: 0.55rem 1.35rem !important;
+  border-radius: 9999px !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Dark Theme Load-More Pill */
+html body:not(.ts-bright) .vocab-load-more-pill {
+  background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+  border: 1.5px solid rgba(251, 191, 36, 0.5) !important;
+  color: #fde047 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3) !important;
+}
+html body:not(.ts-bright) .vocab-load-more-pill:hover:not(:disabled) {
+  background: linear-gradient(135deg, #334155, #1e293b) !important;
+  border-color: #fbbf24 !important;
+  color: #fef08a !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.25) !important;
+}
+
+/* Bright Theme Load-More Pill */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-load-more-pill {
+  background: #ffffff !important;
+  border: 1.5px solid #f59e0b !important;
+  color: #92400e !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) .vocab-load-more-pill:hover:not(:disabled) {
+  background: #fffbeb !important;
+  border-color: #d97706 !important;
+  color: #78350f !important;
+  transform: translateY(-2px) scale(1.02) !important;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.3) !important;
+}
+
+.vocab-load-more-pill:disabled {
+  opacity: 0.65 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* 3. Cover Dialog & 16:10 Wide Results Grid */
+.vocab-cover-dialog {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(100%, 48rem) !important;
+  max-height: min(92vh, 46rem) !important;
+  overflow: hidden !important;
+}
+.vocab-cover-results {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.65rem !important;
+  max-height: 20rem !important;
+  min-height: 180px !important;
+  overflow-y: auto !important;
+  padding: 4px !important;
+}
+@media (max-width: 640px) {
+  .vocab-cover-results {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+.vocab-cover-result {
+  position: relative !important;
+  aspect-ratio: 16 / 10 !important;
+  border-radius: 0.75rem !important;
+  overflow: hidden !important;
+  border: 2px solid transparent !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  background: #0f172a !important;
+}
+.vocab-cover-result:hover {
+  transform: translateY(-2px) !important;
+  border-color: #fbbf24 !important;
+  box-shadow: 0 4px 14px rgba(251, 191, 36, 0.25) !important;
+}
+.vocab-cover-result.is-selected {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.4) !important;
+}
+.vocab-cover-result img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* 4. Choose Photo Modal Flex Containment */
 .vocab-photo-picker-dialog {
   display: flex !important;
   flex-direction: column !important;
-  width: min(100%, 52rem) !important;
-  max-height: min(92vh, 46rem) !important;
+  width: min(100%, 54rem) !important;
+  max-height: min(92vh, 48rem) !important;
   overflow: hidden !important;
 }
 .vocab-photo-picker-body {
@@ -2146,71 +2294,20 @@ body:not(.ts-bright):not(.light):not([data-theme="light"]) :is(#app-screen#app-s
   flex: 1 1 auto !important;
   min-height: 0 !important;
   overflow-y: auto !important;
-  padding: 1rem !important;
+  padding: 1.25rem !important;
   gap: 0.75rem !important;
 }
 .vocab-photo-picker-grid {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   gap: 0.65rem !important;
-  min-height: 180px !important;
-  max-height: 330px !important;
+  min-height: 200px !important;
+  max-height: 360px !important;
   overflow-y: auto !important;
   flex-shrink: 0 !important;
 }
-
-/* Universal Button Base for All 3 Load More Triggers */
-:is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more) {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0.5rem !important;
-  width: 100% !important;
-  min-height: 2.65rem !important;
-  margin-top: 0.45rem !important;
-  padding: 0.625rem 1rem !important;
-  border-radius: 0.85rem !important;
-  font-size: 0.75rem !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  transition: all 0.15s ease !important;
-  flex-shrink: 0 !important;
-}
-
-/* Dark Mode Theme Styles (Default) */
-html body:not(.ts-bright) :is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more) {
-  background: #1e293b !important;
-  border: 1.5px solid rgba(251, 191, 36, 0.45) !important;
-  color: #fde047 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
-}
-html body:not(.ts-bright) :is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more):hover:not(:disabled) {
-  background: #334155 !important;
-  border-color: #fbbf24 !important;
-  color: #fef08a !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 14px rgba(251, 191, 36, 0.2) !important;
-}
-
-/* Bright Mode Theme Styles */
-:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more) {
-  background: #fef3c7 !important;
-  border: 1.5px solid #f59e0b !important;
-  color: #92400e !important;
-  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.15) !important;
-}
-:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, html[data-theme="light"] body, body.ts-bright, body.light, [data-theme="light"]) :is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more):hover:not(:disabled) {
-  background: #fde68a !important;
-  border-color: #d97706 !important;
-  color: #78350f !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.25) !important;
-}
-
-/* Disabled / Completed State */
-:is(#vocab-image-load-more, #vocab-photo-load-more, #vocab-cover-load-more, .vocab-word-edit-load-more, .vocab-photo-load-more, .vocab-cover-load-more):disabled {
-  opacity: 0.65 !important;
-  cursor: not-allowed !important;
-  transform: none !important;
-  box-shadow: none !important;
+@media (max-width: 640px) {
+  .vocab-photo-picker-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }

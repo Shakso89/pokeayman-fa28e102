@@ -29618,15 +29618,11 @@ function openVocabCoverPicker(listId, listName) {
 
   if (!row && !list && typeof allData !== 'undefined' && Array.isArray(allData)) {
     row = allData.find(r => {
-      const rName = String(r.vocab_list_name || r.name || '').trim().toLowerCase();
-      return normName && rName === normName;
+      if (!['vocab_list', 'vocabulary_list'].includes(String(r.type || '').toLowerCase())) return false;
+      const target = normalizeVocabId(r.vocab_list_name);
+      return target && (target === normId || target === normName);
     });
-    list = row;
-  }
-
-  if (!row && !list) {
-    if (typeof toast === 'function') toast('Could not find this vocabulary list. Refresh and try again.');
-    return;
+    if (row) list = row;
   }
 
   const isLight = document.body.classList.contains('ts-bright') ||
@@ -29636,7 +29632,60 @@ function openVocabCoverPicker(listId, listName) {
   const modal = document.createElement('div');
   modal.className = 'vocab-cover-popover' + (isLight ? ' is-light' : ' is-dark');
   const displayName = listName || (row && row.vocab_list_name) || (list && list.vocab_list_name) || 'this list';
-  modal.innerHTML = `<section class="vocab-cover-dialog" role="dialog" aria-modal="true" aria-labelledby="vocab-cover-title"><div class="flex items-start justify-between gap-3 mb-3"><div><h2 id="vocab-cover-title" class="heading-font text-lg font-bold">Set list cover</h2><p class="vocab-cover-subtitle text-xs mt-1">Choose a licensed stock photo for “${String(displayName).replace(/</g,'&lt;')}”.</p></div><button type="button" class="vocab-editor-close" data-cover-close aria-label="Close cover picker">×</button></div><label for="vocab-cover-search" class="sr-only">Search stock photos</label><div class="flex gap-2"><input id="vocab-cover-search" class="vocab-editor-input vocab-cover-search-input flex-1" type="search" placeholder="Search photos by keyword"><button id="vocab-cover-search-btn" type="button" class="vocab-editor-primary vocab-cover-btn-primary">Search</button></div><p id="vocab-cover-status" class="min-h-5 mt-2 text-xs" aria-live="polite"></p><div id="vocab-cover-results" class="vocab-cover-results"></div><button type="button" id="vocab-cover-load-more" class="vocab-photo-load-more vocab-cover-load-more w-full mt-3" disabled>Load more photos</button><div class="vocab-cover-preview-box mt-3 rounded-lg p-2.5"><p class="vocab-cover-preview-label text-xs font-bold mb-2">Selected preview</p><div id="vocab-cover-preview" class="w-full max-w-[16rem] aspect-square h-auto mx-auto rounded-lg overflow-hidden flex items-center justify-center text-xs">No cover selected</div></div><div class="flex gap-2 mt-4"><button id="vocab-cover-remove" type="button" class="vocab-editor-secondary vocab-cover-btn-secondary flex-1">Remove cover</button><button id="vocab-cover-cancel" type="button" class="vocab-editor-secondary vocab-cover-btn-secondary flex-1">Cancel</button><button id="vocab-cover-apply" type="button" class="vocab-editor-primary vocab-cover-btn-primary flex-1">Apply</button></div></section>`;
+  modal.innerHTML = `<section class="vocab-cover-dialog" role="dialog" aria-modal="true" aria-labelledby="vocab-cover-title">
+    <!-- Header -->
+    <div class="flex items-start justify-between gap-3 mb-3">
+      <div class="flex items-center gap-2.5">
+        <span class="text-xl">🌄</span>
+        <div>
+          <h2 id="vocab-cover-title" class="heading-font text-base sm:text-lg font-bold">Set List Cover</h2>
+          <p class="vocab-cover-subtitle text-xs text-slate-400">Choose a wide cover artwork for “${String(displayName).replace(/</g,'&lt;')}”.</p>
+        </div>
+      </div>
+      <button type="button" class="vocab-editor-close" data-cover-close aria-label="Close cover picker">×</button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="flex gap-2 mb-2">
+      <div class="relative flex-1">
+        <input id="vocab-cover-search" class="vocab-editor-input vocab-cover-search-input w-full pr-8" type="search" placeholder="Search covers (e.g. nature, books, animals, space)...">
+        <button type="button" id="vocab-cover-search-clear" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-sm font-bold p-1 cursor-pointer" aria-label="Clear search">✕</button>
+      </div>
+      <button id="vocab-cover-search-btn" type="button" class="vocab-editor-primary vocab-cover-btn-primary">Search</button>
+    </div>
+
+    <!-- Type Filters & Status -->
+    <div class="flex items-center justify-between gap-2 mb-2.5">
+      <div id="vocab-cover-type-pills" class="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+        <button type="button" class="vocab-cover-type-pill text-xs font-bold px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer is-active" data-image-type="all">✨ All</button>
+        <button type="button" class="vocab-cover-type-pill text-xs font-bold px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer" data-image-type="photo">📸 Photos</button>
+        <button type="button" class="vocab-cover-type-pill text-xs font-bold px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer" data-image-type="illustration">🎨 Illustrations</button>
+      </div>
+      <p id="vocab-cover-status" class="text-xs font-semibold shrink-0 text-slate-400" aria-live="polite"></p>
+    </div>
+
+    <!-- 16:10 Cover Results Grid -->
+    <div id="vocab-cover-results" class="vocab-cover-results"></div>
+
+    <!-- Sleek Centered Trigger Pill -->
+    <div class="flex justify-center my-2">
+      <button type="button" id="vocab-cover-load-more" class="vocab-load-more-pill" style="display: none;">
+        ⬇ Load 20 more covers
+      </button>
+    </div>
+
+    <!-- Compact Selected Status & Action Row -->
+    <div class="flex items-center justify-between gap-3 pt-3 border-t border-slate-700/50 mt-1">
+      <div id="vocab-cover-selected-badge" class="text-xs font-semibold flex items-center gap-2 text-slate-400 min-w-0 truncate">
+        No cover selected
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="vocab-cover-remove" type="button" class="vocab-editor-secondary vocab-cover-btn-secondary px-3 py-2 text-xs font-bold">Remove</button>
+        <button id="vocab-cover-cancel" type="button" class="vocab-editor-secondary vocab-cover-btn-secondary px-3 py-2 text-xs font-bold">Cancel</button>
+        <button id="vocab-cover-apply" type="button" class="vocab-editor-primary vocab-cover-btn-primary px-5 py-2 text-xs font-bold">Apply Cover</button>
+      </div>
+    </div>
+  </section>`;
   document.body.appendChild(modal);
 
   let selectedId = String((row && row.vocab_cover_image_id) || (list && list.vocab_cover_image_id) || '');
@@ -29646,51 +29695,88 @@ function openVocabCoverPicker(listId, listName) {
   }
 
   const results = modal.querySelector('#vocab-cover-results');
-  const preview = modal.querySelector('#vocab-cover-preview');
+  const selectedBadge = modal.querySelector('#vocab-cover-selected-badge');
   const status = modal.querySelector('#vocab-cover-status');
+  const searchInput = modal.querySelector('#vocab-cover-search');
+  const searchClear = modal.querySelector('#vocab-cover-search-clear');
+  const loadMore = modal.querySelector('#vocab-cover-load-more');
 
-  const showPreview = () => {
-    preview.innerHTML = selectedUrl
-      ? `<img src="${selectedUrl}" alt="Selected cover preview" class="w-full h-full object-cover">`
-      : 'No cover selected';
+  const updateSelectedBadge = () => {
+    if (!selectedBadge) return;
+    if (selectedUrl) {
+      selectedBadge.innerHTML = `<span class="w-7 h-5 rounded overflow-hidden shrink-0 inline-block border border-amber-400/80"><img src="${selectedUrl}" class="w-full h-full object-cover"></span><span class="text-emerald-400 font-bold truncate">Cover selected</span>`;
+    } else {
+      selectedBadge.textContent = 'No cover selected';
+    }
   };
-  showPreview();
+  updateSelectedBadge();
 
   const close = () => modal.remove();
   modal.querySelectorAll('[data-cover-close],#vocab-cover-cancel').forEach(btn => btn.addEventListener('click', close));
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  searchClear?.addEventListener('click', () => {
+    searchInput.value = '';
+    searchInput.focus();
+  });
 
   let coverQuery = '';
   let coverPage = 1;
   let coverPhotos = [];
   let coverHasMore = false;
   let coverLoading = false;
+  let coverType = 'all';
   let coverRequest = 0;
-  const loadMore = modal.querySelector('#vocab-cover-load-more');
+
+  // Type filter pills
+  modal.querySelectorAll('#vocab-cover-type-pills .vocab-cover-type-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modal.querySelectorAll('#vocab-cover-type-pills .vocab-cover-type-pill').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      coverType = btn.dataset.imageType || 'all';
+      fetchCoverPhotos(true);
+    });
+  });
 
   const renderCoverPhotos = () => {
-    results.innerHTML = coverPhotos.map((photo, index) => `<button type="button" class="vocab-cover-result ${String(selectedId) === String(photo.id || '') ? 'is-selected' : ''}" data-photo-index="${index}" aria-label="Select stock photo by ${photo.photographer}"><img src="${photo.src.medium}" alt="Stock photo by ${photo.photographer}" loading="lazy"></button>`).join('');
+    results.innerHTML = coverPhotos.map((photo, index) => {
+      const isSelected = selectedUrl && (selectedUrl === photo.src.large || selectedUrl === photo.src.original || selectedUrl === photo.src.medium);
+      return `<button type="button" class="vocab-cover-result ${isSelected ? 'is-selected' : ''}" data-photo-index="${index}" aria-label="Select stock photo by ${photo.photographer}">
+        <img src="${photo.src.medium}" alt="Stock photo by ${photo.photographer}" loading="lazy">
+        ${isSelected ? '<div class="absolute top-2 right-2 bg-amber-400 text-slate-950 rounded-full w-5 h-5 flex items-center justify-center text-xs font-black shadow-md">✓</div>' : ''}
+      </button>`;
+    }).join('');
+
     results.querySelectorAll('.vocab-cover-result').forEach(card => card.addEventListener('click', () => {
       const photo = coverPhotos[Number(card.dataset.photoIndex)];
       selectedId = String(photo.id || photo.src.large || '');
       selectedUrl = String(photo.src.large || photo.src.original || photo.src.medium || '');
-      results.querySelectorAll('.vocab-cover-result').forEach(item => item.classList.remove('is-selected'));
+      results.querySelectorAll('.vocab-cover-result').forEach(item => {
+        item.classList.remove('is-selected');
+        item.querySelector('.absolute.top-2.right-2')?.remove();
+      });
       card.classList.add('is-selected');
-      showPreview();
+      const check = document.createElement('div');
+      check.className = 'absolute top-2 right-2 bg-amber-400 text-slate-950 rounded-full w-5 h-5 flex items-center justify-center text-xs font-black shadow-md';
+      check.textContent = '✓';
+      card.appendChild(check);
+      updateSelectedBadge();
+      toast('Cover photo selected! Click Apply to save.');
     }));
+
     if (loadMore) {
       if (coverPhotos.length === 0) {
         loadMore.style.display = 'none';
       } else {
-        loadMore.style.display = 'flex';
+        loadMore.style.display = 'inline-flex';
         const reachedMax = coverPhotos.length >= 100;
         const apiDone = !coverHasMore;
         loadMore.disabled = coverLoading || reachedMax || apiDone;
         loadMore.innerHTML = coverLoading
-          ? '<span>⏳</span><span>Loading more photos…</span>'
+          ? '<span>⏳</span><span>Loading more…</span>'
           : (reachedMax || apiDone)
             ? '<span>✓</span><span>End of results (' + coverPhotos.length + ' of 100 photos loaded)</span>'
-            : '<span>➕</span><span>Load more photos (' + coverPhotos.length + ' of 100 loaded)</span>';
+            : '<span>⬇</span><span>Load 20 more covers (' + coverPhotos.length + ' of 100 loaded)</span>';
       }
     }
   };
@@ -29715,11 +29801,12 @@ function openVocabCoverPicker(listId, listName) {
     const request = coverRequest;
     coverLoading = true;
     renderCoverPhotos();
-    status.textContent = coverPhotos.length ? `${coverPhotos.length} of 100 photos loaded · Loading…` : 'Loading licensed stock photos…';
+    status.textContent = coverPhotos.length ? `${coverPhotos.length} of 100 loaded · Loading…` : 'Loading covers…';
     try {
       const remaining = 100 - coverPhotos.length;
       const perPage = Math.min(20, remaining);
-      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}&per_page=${perPage}&page=${coverPage}`, { headers: { 'Authorization': '' } });
+      const typeParam = coverType !== 'all' ? '&image_type=' + encodeURIComponent(coverType) : '';
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(coverQuery)}${typeParam}&per_page=${perPage}&page=${coverPage}`, { headers: { 'Authorization': '' } });
       if (!response.ok) throw new Error('search');
       const data = await response.json();
       if (request !== coverRequest) return;
@@ -29738,16 +29825,16 @@ function openVocabCoverPicker(listId, listName) {
       const reachedMax = coverPhotos.length >= 100;
       const apiEmpty = rawPhotos.length === 0;
       coverHasMore = !reachedMax && (!apiEmpty || coverPhotos.length < 20);
-      status.textContent = coverPhotos.length ? `${coverPhotos.length} of 100 photos ${coverHasMore ? 'loaded.' : 'loaded · End of results.'}` : 'No photos found. Try another keyword.';
+      status.textContent = coverPhotos.length ? (reachedMax ? '100 of 100 loaded' : `${coverPhotos.length} of 100 loaded`) : 'No covers found. Try another keyword.';
       renderCoverPhotos();
     } catch (error) {
       if (request === coverRequest) {
         coverHasMore = true;
-        status.textContent = `${coverPhotos.length ? coverPhotos.length + ' photos loaded · ' : ''}Photo search failed. Click below to retry.`;
+        status.textContent = `${coverPhotos.length ? coverPhotos.length + ' photos loaded · ' : ''}Search failed. Click below to retry.`;
         if (loadMore && coverPhotos.length > 0) {
-          loadMore.style.display = 'flex';
+          loadMore.style.display = 'inline-flex';
           loadMore.disabled = false;
-          loadMore.innerHTML = '<span>⚠️</span><span>Retry loading photos</span>';
+          loadMore.innerHTML = '<span>⚠️</span><span>Retry loading covers</span>';
         }
       }
     } finally {
@@ -29758,7 +29845,6 @@ function openVocabCoverPicker(listId, listName) {
     }
   };
 
-  const searchInput = modal.querySelector('#vocab-cover-search');
   modal.querySelector('#vocab-cover-search-btn').addEventListener('click', () => fetchCoverPhotos(true));
   searchInput?.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
@@ -29785,7 +29871,12 @@ function openVocabCoverPicker(listId, listName) {
   modal.querySelector('#vocab-cover-remove').addEventListener('click', () => {
     selectedId = '';
     selectedUrl = '';
-    showPreview();
+    results.querySelectorAll('.vocab-cover-result').forEach(item => {
+      item.classList.remove('is-selected');
+      item.querySelector('.absolute.top-2.right-2')?.remove();
+    });
+    updateSelectedBadge();
+    toast('Cover removed. Click Apply to save.');
   });
 
   modal.querySelector('#vocab-cover-apply').addEventListener('click', async () => {
@@ -29808,84 +29899,51 @@ function openVocabCoverPicker(listId, listName) {
       });
     }
 
-    if (!row) {
-      if (status) status.textContent = 'Could not find this list in database. Refresh and try again.';
-      if (applyBtn) {
-        applyBtn.disabled = false;
-        applyBtn.textContent = 'Apply';
-      }
-      return;
-    }
-
     const payload = {
-      ...row,
-      vocab_cover_image_id: selectedId,
+      type: 'vocab_list',
+      vocab_list_id: listId,
+      vocab_list_name: displayName,
       vocab_cover_image_url: selectedUrl,
-      __backendId: row.__backendId || row.id,
+      vocab_cover_image_id: selectedId,
+      updated_at: new Date().toISOString()
     };
 
     try {
-      const result = await window.dataSdk.update(payload);
-      if (!result?.isOk) {
-        if (status) status.textContent = 'Could not save the cover. Try again.';
-        if (applyBtn) {
-          applyBtn.disabled = false;
-          applyBtn.textContent = 'Apply';
-        }
-        return;
+      const backendId = row?.__backendId || row?.id || (list && (list.__backendId || list.id));
+      if (backendId && window.dataSdk?.update) {
+        await window.dataSdk.update(backendId, payload);
+      } else if (window.dataSdk?.create) {
+        const created = await window.dataSdk.create(payload);
+        if (created && created.__backendId && row) row.__backendId = created.__backendId;
       }
-
-      // Update in-memory objects
-      row.vocab_cover_image_id = selectedId;
-      row.vocab_cover_image_url = selectedUrl;
-      if (list) {
-        list.vocab_cover_image_id = selectedId;
+      if (row) {
+        row.vocab_cover_image_url = selectedUrl;
+        row.vocab_cover_image_id = selectedId;
+      }
+      if (list && list !== row) {
         list.vocab_cover_image_url = selectedUrl;
+        list.vocab_cover_image_id = selectedId;
       }
-      if (typeof allData !== 'undefined' && Array.isArray(allData)) {
-        const canonical = normalizeVocabId(row.vocab_list_id || row.list_id || row.vocabulary_list_id || row.__backendId);
-        allData.forEach(r => {
-          if (['vocab_list', 'vocabulary_list'].includes(String(r.type || '').toLowerCase())) {
-            const cid = normalizeVocabId(r.vocab_list_id || r.list_id || r.vocabulary_list_id || r.__backendId);
-            if (cid === canonical || r.__backendId === row.__backendId) {
-              r.vocab_cover_image_id = selectedId;
-              r.vocab_cover_image_url = selectedUrl;
-            }
-          }
-        });
-      }
-
-      try {
-        if (typeof renderVocabLists === 'function') renderVocabLists();
-        if (typeof renderTeacherOwnedVocabLists === 'function') renderTeacherOwnedVocabLists();
-        if (typeof renderStudentVocabulary === 'function') renderStudentVocabulary();
-      } catch (_) {}
-
+      toast('Cover updated successfully!');
       close();
-      if (typeof toast === 'function') {
-        toast(selectedUrl ? 'List cover saved.' : 'List cover removed.');
-      }
+      if (typeof renderTeacherOwnedVocabLists === 'function') renderTeacherOwnedVocabLists();
+      if (typeof renderVocabLists === 'function') renderVocabLists();
     } catch (err) {
-      console.error('Failed to update list cover:', err);
-      if (status) status.textContent = 'Could not save the cover. Try again.';
       if (applyBtn) {
         applyBtn.disabled = false;
-        applyBtn.textContent = 'Apply';
+        applyBtn.textContent = 'Apply Cover';
       }
+      toast('Failed to save cover image.');
     }
   });
 
-  const initialKeyword = String(displayName).replace(/^VB\s*\d+\s*[-:]*\s*/i, '').trim();
-  if (initialKeyword && searchInput) {
-    searchInput.value = initialKeyword;
-    if (initialKeyword.length > 2 && !/^VB\s*\d+$/i.test(initialKeyword)) {
-      fetchCoverPhotos(true);
-    }
+  const defaultSearch = String(displayName).replace(/[_-]+/g, ' ').trim();
+  if (defaultSearch && !selectedUrl) {
+    searchInput.value = defaultSearch;
+    fetchCoverPhotos(true);
   }
-  searchInput?.focus();
 }
 
-window.activeGameVocabCache = window.activeGameVocabCache || new Map();
 
 function toDeterministicUuid(str) {
   if (!str) return '00000000-0000-0000-0000-000000000000';
@@ -30326,12 +30384,75 @@ function openVocabListEditor(listId, listName) {
     if (!picker) {
       picker = document.createElement('div');
       picker.id = 'vocab-photo-picker'; picker.className = 'vocab-photo-picker';
-      picker.innerHTML = `<section class="vocab-photo-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="vocab-photo-picker-title"><header class="vocab-photo-picker-header"><div><h3 id="vocab-photo-picker-title" class="font-bold text-base">Choose a photo</h3><p class="text-[11px] text-purple-100">Select an image for this vocabulary word</p></div><button type="button" class="vocab-photo-picker-close" aria-label="Close photo picker">×</button></header><div class="vocab-photo-picker-body"><div class="flex gap-2"><input id="vocab-photo-picker-search" class="vocab-editor-input flex-1" type="search" aria-label="Search photos" placeholder="Search photos"><button type="button" id="vocab-photo-picker-search-btn" class="vocab-editor-primary">Search</button></div><div id="vocab-photo-picker-status" class="vocab-photo-picker-status" aria-live="polite"></div><div id="vocab-photo-picker-grid" class="vocab-photo-picker-grid"></div><button type="button" id="vocab-photo-load-more" class="vocab-photo-load-more" style="display: none;">Load more photos</button><div class="flex gap-2"><input id="vocab-photo-picker-url" class="vocab-editor-input flex-1" type="url" placeholder="Or paste image URL directly" aria-label="Image URL"><button type="button" id="vocab-photo-picker-use-url" class="vocab-editor-secondary">Use URL</button></div></div></section>`;
+      picker.innerHTML = `<section class="vocab-photo-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="vocab-photo-picker-title">
+        <header class="vocab-photo-picker-header">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">🖼️</span>
+            <div>
+              <h3 id="vocab-photo-picker-title" class="font-bold text-base">Choose Photo or Clipart</h3>
+              <p class="text-[11px] text-purple-100/80">Select an image for this vocabulary word</p>
+            </div>
+          </div>
+          <button type="button" class="vocab-photo-picker-close" aria-label="Close photo picker">×</button>
+        </header>
+        <div class="vocab-photo-picker-body">
+          <!-- Search Bar with Clear Button -->
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <input id="vocab-photo-picker-search" class="vocab-editor-input w-full pr-8" type="search" aria-label="Search photos" placeholder="Search photos, clipart, illustrations...">
+              <button type="button" id="vocab-photo-picker-search-clear" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-sm font-bold p-1 cursor-pointer" aria-label="Clear search">✕</button>
+            </div>
+            <button type="button" id="vocab-photo-picker-search-btn" class="vocab-editor-primary">Search</button>
+          </div>
+
+          <!-- Type Filters -->
+          <div class="flex items-center justify-between gap-2">
+            <div id="vocab-photo-type-pills" class="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+              <button type="button" class="vocab-photo-type-pill text-xs font-bold px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer is-active" data-image-type="all">✨ All</button>
+              <button type="button" class="vocab-photo-type-pill text-xs font-bold px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer" data-image-type="illustration">🎨 Clipart & Cartoons</button>
+              <button type="button" class="vocab-photo-type-pill text-xs font-bold px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer" data-image-type="photo">📸 Real Photos</button>
+            </div>
+            <div id="vocab-photo-picker-status" class="vocab-photo-picker-status text-xs font-semibold shrink-0" aria-live="polite"></div>
+          </div>
+
+          <!-- Grid Container -->
+          <div id="vocab-photo-picker-grid" class="vocab-photo-picker-grid"></div>
+
+          <!-- Sleek Centered Trigger Pill -->
+          <div class="flex justify-center my-1">
+            <button type="button" id="vocab-photo-load-more" class="vocab-load-more-pill" style="display: none;">
+              ⬇ Load 20 more photos
+            </button>
+          </div>
+
+          <!-- Manual URL Row -->
+          <div class="flex gap-2 pt-1.5 border-t border-slate-700/40">
+            <input id="vocab-photo-picker-url" class="vocab-editor-input flex-1 text-xs" type="url" placeholder="Or paste direct image URL (https://...)" aria-label="Image URL">
+            <button type="button" id="vocab-photo-picker-use-url" class="vocab-editor-secondary text-xs font-bold px-4 py-2">Use URL</button>
+          </div>
+        </div>
+      </section>`;
       document.body.appendChild(picker);
       const close = () => picker.remove();
       picker.querySelector('.vocab-photo-picker-close').addEventListener('click', close);
       picker.addEventListener('click', event => { if (event.target === picker) close(); });
       picker.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
+
+      picker.querySelector('#vocab-photo-picker-search-clear')?.addEventListener('click', () => {
+        const inp = picker.querySelector('#vocab-photo-picker-search');
+        if (inp) { inp.value = ''; inp.focus(); }
+      });
+
+      // Type filter pills
+      picker.querySelectorAll('#vocab-photo-type-pills .vocab-photo-type-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          picker.querySelectorAll('#vocab-photo-type-pills .vocab-photo-type-pill').forEach(b => b.classList.remove('is-active'));
+          btn.classList.add('is-active');
+          vocabPhotoType = btn.dataset.imageType || 'all';
+          runVocabPhotoSearch();
+        });
+      });
+
       const runVocabPhotoSearch = () => {
         const nextQuery = picker.querySelector('#vocab-photo-picker-search').value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
         vocabPhotoSearchRequestId += 1;
@@ -30401,6 +30522,7 @@ function openVocabListEditor(listId, listName) {
     picker.querySelector('#vocab-photo-picker-search-btn').click();
     picker.querySelector('#vocab-photo-picker-search').focus();
   };
+  let vocabPhotoType = 'all';
   const fetchVocabPhotos = async (reset, requestId = vocabPhotoSearchRequestId, query = vocabPhotoQuery) => {
     const picker = document.getElementById('vocab-photo-picker'); if (!picker || vocabPhotoLoading) return;
     if (requestId !== vocabPhotoSearchRequestId || query !== vocabPhotoQuery) return;
@@ -30408,27 +30530,28 @@ function openVocabListEditor(listId, listName) {
     const status = picker.querySelector('#vocab-photo-picker-status');
     const more = picker.querySelector('#vocab-photo-load-more');
     if (vocabPhotoItems.length >= 100) {
-      if (status) status.textContent = '100 of 100 photos loaded · End of results';
+      if (status) status.textContent = '100 of 100 photos loaded';
       if (more) {
-        more.style.display = 'flex';
+        more.style.display = 'inline-flex';
         more.disabled = true;
         more.innerHTML = '<span>✓</span><span>End of results (100 of 100 photos loaded)</span>';
       }
       return;
     }
     vocabPhotoLoading = true;
-    if (status) status.textContent = `${vocabPhotoItems.length} of 100 photos loaded · Loading…`;
+    if (status) status.textContent = `${vocabPhotoItems.length} of 100 loaded · Loading…`;
     if (more && vocabPhotoItems.length > 0) {
-      more.style.display = 'flex';
+      more.style.display = 'inline-flex';
       more.disabled = true;
-      more.innerHTML = '<span>⏳</span><span>Loading more photos…</span>';
+      more.innerHTML = '<span>⏳</span><span>Loading more…</span>';
     }
     try {
       const remaining = 100 - vocabPhotoItems.length;
       const requestQuery = String(query || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
       vocabPhotoAbortController = new AbortController();
       const perPage = Math.min(20, remaining);
-      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(requestQuery)}&per_page=${perPage}&page=${vocabPhotoPage}&_=${Date.now()}`, { cache: 'no-store', signal: vocabPhotoAbortController.signal, headers: { 'Authorization': '', 'Cache-Control': 'no-cache' } });
+      const typeParam = vocabPhotoType !== 'all' ? '&image_type=' + encodeURIComponent(vocabPhotoType) : '';
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(requestQuery)}${typeParam}&per_page=${perPage}&page=${vocabPhotoPage}&_=${Date.now()}`, { cache: 'no-store', signal: vocabPhotoAbortController.signal, headers: { 'Authorization': '', 'Cache-Control': 'no-cache' } });
       if (!response.ok) throw new Error('Photo search failed');
       const data = await response.json();
       if (requestId !== vocabPhotoSearchRequestId || query !== vocabPhotoQuery) return;
@@ -30442,7 +30565,7 @@ function openVocabListEditor(listId, listName) {
       if (grid) {
         if (reset) grid.innerHTML = '';
         if (vocabPhotoItems.length === 0) {
-          grid.innerHTML = '<p class="col-span-full py-8 text-center text-xs opacity-60">No photos found. Try another search.</p>';
+          grid.innerHTML = '<p class="col-span-full py-10 text-center text-xs opacity-60">No photos or clipart found. Try another search or clicking "All".</p>';
         } else {
           const itemsToAppend = reset ? vocabPhotoItems : additions;
           itemsToAppend.forEach((photo, idx) => {
@@ -30478,23 +30601,23 @@ function openVocabListEditor(listId, listName) {
 
       if (status) {
         if (reachedMax) {
-          status.textContent = '100 of 100 photos loaded · End of results';
+          status.textContent = '100 of 100 loaded';
         } else if (apiEmpty && vocabPhotoItems.length > 0) {
-          status.textContent = `${vocabPhotoItems.length} photos loaded · End of results`;
+          status.textContent = `${vocabPhotoItems.length} loaded · End of results`;
         } else {
-          status.textContent = `${vocabPhotoItems.length} of 100 photos loaded`;
+          status.textContent = `${vocabPhotoItems.length} of 100 loaded`;
         }
       }
       if (more) {
         if (vocabPhotoItems.length === 0) {
           more.style.display = 'none';
         } else {
-          more.style.display = 'flex';
+          more.style.display = 'inline-flex';
           const isDone = reachedMax || (apiEmpty && vocabPhotoItems.length > 0);
           more.disabled = isDone;
           more.innerHTML = isDone
             ? '<span>✓</span><span>End of results (' + vocabPhotoItems.length + ' of 100 photos loaded)</span>'
-            : '<span>➕</span><span>Load more photos (' + vocabPhotoItems.length + ' of 100 loaded)</span>';
+            : '<span>⬇</span><span>Load 20 more photos (' + vocabPhotoItems.length + ' of 100 loaded)</span>';
         }
       }
     } catch (error) {
@@ -30502,7 +30625,7 @@ function openVocabListEditor(listId, listName) {
       if (requestId === vocabPhotoSearchRequestId && query === vocabPhotoQuery) {
         if (status) status.textContent = `${vocabPhotoItems.length ? vocabPhotoItems.length + ' of 100 photos loaded · ' : ''}Photo search failed. Click below to retry.`;
         if (more && vocabPhotoItems.length > 0) {
-          more.style.display = 'flex';
+          more.style.display = 'inline-flex';
           more.disabled = false;
           more.innerHTML = '<span>⚠️</span><span>Retry loading photos</span>';
         }
@@ -30585,24 +30708,22 @@ function openVocabListEditor(listId, listName) {
 }
 
 function editVocabWord(wordId, currentWord, currentImage) {
-  let selectedImageUrl = currentImage || '';
-  const isBright = document.body.classList.contains('ts-bright');
   const escape = value => String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
+  const isBright = document.body.classList.contains('ts-bright') || 
+                   document.body.classList.contains('light') || 
+                   document.documentElement.classList.contains('light') ||
+                   document.documentElement.getAttribute('data-theme') === 'light';
 
-  const findWordRecord = () => {
-    if (typeof allData === 'undefined' || !Array.isArray(allData)) return null;
-    return allData.find(w => String(w.__backendId) === String(wordId) || String(w.vocab_word_id) === String(wordId) || String(w.id) === String(wordId))
-      || allData.find(w => ['vocab_word', 'word', 'vocab_item', 'vocabulary_word'].includes(String(w.type || '').toLowerCase()) && String(w.__backendId) === String(wordId))
-      || allData.find(w => ['vocab_word', 'word', 'vocab_item', 'vocabulary_word'].includes(String(w.type || '').toLowerCase()) && w.vocab_word === currentWord);
-  };
-
-  const initialWord = findWordRecord();
+  let selectedImageUrl = currentImage || '';
+  const initialWord = (typeof allData !== 'undefined' && Array.isArray(allData) ? allData : []).find(r => 
+    r.__backendId === wordId || r.id === wordId || r.vocab_word === currentWord
+  );
   const currentSentence = initialWord?.vocab_sentence || '';
 
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-slate-950/75 backdrop-blur-md flex items-center justify-center z-[10000] p-3 sm:p-5 animate-in fade-in duration-200';
   modal.innerHTML = `
-    <div class="vocab-word-edit-card max-w-3xl w-full max-h-[90vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl transition-all duration-200 border ${isBright ? 'bg-white text-slate-900 border-slate-200' : 'bg-slate-900 text-slate-100 border-slate-800'}">
+    <div class="vocab-word-edit-card max-w-4xl w-full max-h-[92vh] flex flex-col rounded-3xl overflow-hidden shadow-2xl transition-all duration-200 border ${isBright ? 'bg-white text-slate-900 border-slate-200' : 'bg-slate-900 text-slate-100 border-slate-800'}">
       <!-- Header -->
       <div class="vocab-word-edit-header px-6 py-4 flex items-center justify-between flex-shrink-0 border-b ${isBright ? 'bg-slate-50/90 border-slate-200' : 'bg-slate-900/90 border-slate-800'}">
         <div class="flex items-center gap-3">
@@ -30610,8 +30731,8 @@ function editVocabWord(wordId, currentWord, currentImage) {
             ✏️
           </div>
           <div>
-            <h2 class="text-base sm:text-lg font-bold tracking-tight ${isBright ? 'text-slate-900' : 'text-white'}">Edit Word</h2>
-            <p class="text-xs ${isBright ? 'text-slate-500' : 'text-slate-400'}">Update word details, example sentence, or photo</p>
+            <h2 class="text-base sm:text-lg font-bold tracking-tight ${isBright ? 'text-slate-900' : 'text-white'}">Edit Word & Media</h2>
+            <p class="text-xs ${isBright ? 'text-slate-500' : 'text-slate-400'}">Update word details, example sentence, or find photos & clipart</p>
           </div>
         </div>
         <button id="edit-word-close" type="button" class="w-8 h-8 rounded-full flex items-center justify-center text-lg font-bold transition leading-none ${isBright ? 'bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}" aria-label="Close">&times;</button>
@@ -30630,7 +30751,7 @@ function editVocabWord(wordId, currentWord, currentImage) {
             <input id="edit-word-text" type="text" value="${escape(currentWord)}" placeholder="e.g. apple" class="vocab-word-edit-input w-full rounded-2xl px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-amber-400 ${isBright ? 'bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white' : 'bg-slate-800/80 border border-slate-700 text-white focus:border-amber-400'}" required>
           </div>
 
-          <!-- Sentence Field (wrapped by sentence-generator.js for AI Generate button) -->
+          <!-- Sentence Field -->
           <div>
             <label for="edit-word-sentence" class="vocab-word-edit-label block text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 ${isBright ? 'text-slate-700' : 'text-slate-300'}">
               <span class="text-indigo-400">💬</span> Example Sentence
@@ -30661,15 +30782,28 @@ function editVocabWord(wordId, currentWord, currentImage) {
         </div>
 
         <!-- Right Column: Search Photos & Clipart -->
-        <div class="flex flex-col">
-          <label for="vocab-image-search" class="vocab-word-edit-label block text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 ${isBright ? 'text-slate-700' : 'text-slate-300'}">
-            <span class="text-amber-500">🔍</span> Search Photos & Clipart
-          </label>
-          <div class="flex gap-2 mb-2.5">
-            <input id="vocab-image-search" type="text" value="${escape(currentWord)}" placeholder="e.g. orange, fruit, animal" class="vocab-word-edit-input flex-1 rounded-2xl px-4 py-2.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-amber-400 ${isBright ? 'bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white' : 'bg-slate-800/80 border border-slate-700 text-white focus:border-amber-400'}">
-            <button id="vocab-image-search-btn" type="button" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2.5 rounded-2xl text-xs transition shadow-sm flex items-center justify-center shrink-0 active:scale-95">
+        <div class="flex flex-col flex-1 min-w-0">
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="vocab-image-search" class="vocab-word-edit-label block text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${isBright ? 'text-slate-700' : 'text-slate-300'}">
+              <span class="text-amber-500">🔍</span> Search Media
+            </label>
+            <span id="vocab-image-status" class="text-[11px] font-semibold ${isBright ? 'text-slate-500' : 'text-slate-400'}"></span>
+          </div>
+          <div class="flex gap-2 mb-2">
+            <div class="relative flex-1">
+              <input id="vocab-image-search" type="text" value="${escape(currentWord)}" placeholder="Search clipart or photo..." class="vocab-word-edit-input w-full rounded-2xl pl-3.5 pr-8 py-2.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-amber-400 ${isBright ? 'bg-slate-50 border border-slate-200 text-slate-900 focus:bg-white' : 'bg-slate-800/80 border border-slate-700 text-white focus:border-amber-400'}">
+              <button type="button" id="vocab-image-search-clear" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold p-1 cursor-pointer" aria-label="Clear search">✕</button>
+            </div>
+            <button id="vocab-image-search-btn" type="button" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2.5 rounded-2xl text-xs transition shadow-sm flex items-center justify-center shrink-0 active:scale-95 cursor-pointer">
               Search
             </button>
+          </div>
+
+          <!-- Type Filter Pills -->
+          <div id="vocab-image-type-pills" class="flex items-center gap-1.5 mb-2.5 overflow-x-auto pb-0.5">
+            <button type="button" class="vocab-type-pill text-xs font-bold px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer is-active" data-image-type="all">✨ All</button>
+            <button type="button" class="vocab-type-pill text-xs font-bold px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer" data-image-type="illustration">🎨 Clipart</button>
+            <button type="button" class="vocab-type-pill text-xs font-bold px-3 py-1.5 rounded-xl border transition active:scale-95 cursor-pointer" data-image-type="photo">📸 Photos</button>
           </div>
 
           <!-- Results Container -->
@@ -30679,9 +30813,13 @@ function editVocabWord(wordId, currentWord, currentImage) {
               <p class="text-xs font-semibold ${isBright ? 'text-slate-500' : 'text-slate-400'}">Click Search to find photos & clipart for &ldquo;${escape(currentWord)}&rdquo;</p>
             </div>
           </div>
-          <button type="button" id="vocab-image-load-more" class="vocab-word-edit-load-more w-full mt-2.5 py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border active:scale-95 cursor-pointer shadow-sm ${isBright ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'}" style="display: none;">
-            Load more photos
-          </button>
+
+          <!-- Sleek Centered Trigger Pill -->
+          <div class="flex justify-center mt-2.5">
+            <button type="button" id="vocab-image-load-more" class="vocab-load-more-pill" style="display: none;">
+              ⬇ Load 20 more photos
+            </button>
+          </div>
         </div>
 
       </div>
@@ -30707,8 +30845,10 @@ function editVocabWord(wordId, currentWord, currentImage) {
   
   const searchBtn = modal.querySelector('#vocab-image-search-btn');
   const searchInput = modal.querySelector('#vocab-image-search');
+  const searchClear = modal.querySelector('#vocab-image-search-clear');
   const resultsContainer = modal.querySelector('#vocab-image-results');
   const loadMoreBtn = modal.querySelector('#vocab-image-load-more');
+  const statusLabel = modal.querySelector('#vocab-image-status');
   const imageInput = modal.querySelector('#edit-word-image');
   const wordInput = modal.querySelector('#edit-word-text');
   const deleteBtn = modal.querySelector('#edit-word-delete');
@@ -30743,6 +30883,11 @@ function editVocabWord(wordId, currentWord, currentImage) {
   const close = () => modal.remove();
   modal.querySelectorAll('#edit-word-close, #edit-word-close-btn, #edit-word-cancel').forEach(btn => btn.addEventListener('click', close));
   modal.addEventListener('click', e => { if (e.target === modal) close(); });
+
+  searchClear?.addEventListener('click', () => {
+    searchInput.value = '';
+    searchInput.focus();
+  });
 
   const aiBtn = modal.querySelector('#edit-word-ai-btn');
   aiBtn?.addEventListener('click', async () => {
@@ -30799,13 +30944,24 @@ function editVocabWord(wordId, currentWord, currentImage) {
     deleteConfirmModal.addEventListener('click', ev => { if (ev.target === deleteConfirmModal) deleteConfirmModal.remove(); });
   });
 
-  // Image search handler with pagination and dedicated Load More button up to 100 photos
+  // Image search handler with type filters, pagination, and dedicated Load More button up to 100 photos
   let editWordPage = 1;
   let editWordPhotos = [];
   let editWordLoading = false;
   let editWordHasMore = true;
   let editWordQuery = '';
+  let editWordType = 'all';
   let editWordRequestId = 0;
+
+  // Type filter pills click
+  modal.querySelectorAll('#vocab-image-type-pills .vocab-type-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modal.querySelectorAll('#vocab-image-type-pills .vocab-type-pill').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      editWordType = btn.dataset.imageType || 'all';
+      fetchEditWordPhotos(true);
+    });
+  });
 
   const fetchEditWordPhotos = async (reset = false) => {
     const rawQuery = searchInput.value.trim().replace(/\s+/g, ' ');
@@ -30816,9 +30972,10 @@ function editVocabWord(wordId, currentWord, currentImage) {
       editWordPhotos = [];
       editWordHasMore = true;
       editWordRequestId += 1;
-      resultsContainer.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-10 text-center px-4"><span class="animate-spin text-2xl mb-2">⏳</span><p class="text-xs ${isBright ? 'text-slate-500' : 'text-slate-400'}">Searching photos for &ldquo;${escape(editWordQuery)}&rdquo;…</p></div>`;
+      resultsContainer.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-10 text-center px-4"><span class="animate-spin text-2xl mb-2">⏳</span><p class="text-xs ${isBright ? 'text-slate-500' : 'text-slate-400'}">Searching ${editWordType === 'illustration' ? 'clipart' : editWordType === 'photo' ? 'photos' : 'media'} for &ldquo;${escape(editWordQuery)}&rdquo;…</p></div>`;
       searchBtn.disabled = true;
       searchBtn.innerHTML = `<span class="animate-pulse">Searching...</span>`;
+      if (statusLabel) statusLabel.textContent = 'Searching…';
       if (loadMoreBtn) {
         loadMoreBtn.style.display = 'none';
         loadMoreBtn.disabled = true;
@@ -30826,17 +30983,9 @@ function editVocabWord(wordId, currentWord, currentImage) {
     } else {
       if (!editWordQuery || editWordLoading || !editWordHasMore || editWordPhotos.length >= 100) return;
       if (loadMoreBtn && editWordPhotos.length > 0) {
-        loadMoreBtn.style.display = 'flex';
+        loadMoreBtn.style.display = 'inline-flex';
         loadMoreBtn.disabled = true;
-        loadMoreBtn.innerHTML = '<span>⏳</span><span>Loading more photos…</span>';
-      }
-      let loader = resultsContainer.querySelector('#edit-word-more-loader');
-      if (!loader) {
-        loader = document.createElement('div');
-        loader.id = 'edit-word-more-loader';
-        loader.className = 'col-span-full py-2.5 text-center text-xs font-semibold ' + (isBright ? 'text-amber-700' : 'text-amber-400');
-        loader.innerHTML = '<span class="animate-pulse">Loading more photos…</span>';
-        resultsContainer.appendChild(loader);
+        loadMoreBtn.innerHTML = '<span>⏳</span><span>Loading more…</span>';
       }
     }
 
@@ -30846,15 +30995,13 @@ function editVocabWord(wordId, currentWord, currentImage) {
     try {
       const remaining = 100 - editWordPhotos.length;
       const perPage = Math.min(20, remaining);
-      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(editWordQuery)}&per_page=${perPage}&page=${editWordPage}`, {
+      const typeParam = editWordType !== 'all' ? '&image_type=' + encodeURIComponent(editWordType) : '';
+      const response = await window.pexelsFetch(`/api/public/pexels?query=${encodeURIComponent(editWordQuery)}${typeParam}&per_page=${perPage}&page=${editWordPage}`, {
         headers: { 'Authorization': '' }
       });
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
       if (currentReq !== editWordRequestId) return;
-
-      const loader = resultsContainer.querySelector('#edit-word-more-loader');
-      if (loader) loader.remove();
 
       const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
       const seen = new Set(editWordPhotos.map(p => String(p.id || p.src?.large || p.src?.original || p.src?.medium || '')));
@@ -30870,8 +31017,9 @@ function editVocabWord(wordId, currentWord, currentImage) {
       }
 
       if (editWordPhotos.length === 0 && additions.length === 0) {
-        resultsContainer.innerHTML = `<div class="col-span-full text-center py-8 text-xs ${isBright ? 'text-slate-400' : 'text-slate-500'}">No photos found for &ldquo;${escape(editWordQuery)}&rdquo;. Try another search.</div>`;
+        resultsContainer.innerHTML = `<div class="col-span-full text-center py-10 px-4 text-xs ${isBright ? 'text-slate-400' : 'text-slate-500'}">No ${editWordType === 'illustration' ? 'clipart' : editWordType === 'photo' ? 'photos' : 'results'} found for &ldquo;${escape(editWordQuery)}&rdquo;. Try searching another word or clicking "All".</div>`;
         editWordHasMore = false;
+        if (statusLabel) statusLabel.textContent = '0 results';
         if (loadMoreBtn) loadMoreBtn.style.display = 'none';
         return;
       }
@@ -30885,17 +31033,23 @@ function editVocabWord(wordId, currentWord, currentImage) {
       const apiEmpty = rawPhotos.length === 0;
       editWordHasMore = !reachedMax && (!apiEmpty || editWordPhotos.length < 20);
 
+      if (statusLabel) {
+        statusLabel.textContent = reachedMax ? '100 of 100 loaded' : `${editWordPhotos.length} loaded`;
+      }
+
       additions.forEach((photo, idx) => {
         const globalIdx = startIndex + idx;
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.dataset.photoIndex = String(globalIdx);
-        btn.className = `vocab-word-edit-photo-card vocab-image-option relative rounded-2xl overflow-hidden group cursor-pointer border transition-all duration-200 aspect-video p-1 flex items-center justify-center ${isBright ? 'border-slate-200 hover:border-amber-400 bg-white shadow-sm' : 'border-slate-800 hover:border-amber-400 bg-slate-900'}`;
+        const isCurrentSelected = selectedImageUrl && (selectedImageUrl === photo.src.large || selectedImageUrl === photo.src.original || selectedImageUrl === photo.src.medium);
+        btn.className = `vocab-word-edit-photo-card vocab-image-option relative rounded-2xl overflow-hidden group cursor-pointer border transition-all duration-200 aspect-video p-1 flex items-center justify-center ${isCurrentSelected ? 'ring-2 ring-amber-400 border-amber-400' : ''} ${isBright ? 'border-slate-200 hover:border-amber-400 bg-white shadow-sm' : 'border-slate-800 hover:border-amber-400 bg-slate-900'}`;
         btn.innerHTML = `
           <img src="${photo.src.medium}" class="w-full h-full object-cover rounded-xl transition duration-200 group-hover:scale-105" alt="${escape(photo.photographer || 'Photo')}">
           <div class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center rounded-2xl p-1">
             <span class="text-slate-950 font-bold text-[11px] bg-amber-400 px-2.5 py-1 rounded-xl shadow-md">Select</span>
           </div>
+          ${isCurrentSelected ? '<div class="absolute top-2 right-2 bg-amber-400 text-slate-950 rounded-full w-5 h-5 flex items-center justify-center text-xs font-black shadow-md">✓</div>' : ''}
         `;
 
         btn.addEventListener('click', e => {
@@ -30915,8 +31069,13 @@ function editVocabWord(wordId, currentWord, currentImage) {
 
           resultsContainer.querySelectorAll('.vocab-image-option').forEach(b => {
             b.classList.remove('ring-2', 'ring-amber-400', 'border-amber-400');
+            b.querySelector('.absolute.top-2.right-2')?.remove();
           });
           btn.classList.add('ring-2', 'ring-amber-400', 'border-amber-400');
+          const check = document.createElement('div');
+          check.className = 'absolute top-2 right-2 bg-amber-400 text-slate-950 rounded-full w-5 h-5 flex items-center justify-center text-xs font-black shadow-md';
+          check.textContent = '✓';
+          btn.appendChild(check);
           toast(`Photo selected! Click Save to apply.`);
         });
 
@@ -30927,23 +31086,21 @@ function editVocabWord(wordId, currentWord, currentImage) {
         if (editWordPhotos.length === 0) {
           loadMoreBtn.style.display = 'none';
         } else {
-          loadMoreBtn.style.display = 'flex';
+          loadMoreBtn.style.display = 'inline-flex';
           const isDone = reachedMax || (apiEmpty && editWordPhotos.length > 0);
           loadMoreBtn.disabled = isDone;
           loadMoreBtn.innerHTML = isDone
             ? '<span>✓</span><span>End of results (' + editWordPhotos.length + ' of 100 photos loaded)</span>'
-            : '<span>➕</span><span>Load more photos (' + editWordPhotos.length + ' of 100 loaded)</span>';
+            : '<span>⬇</span><span>Load 20 more photos (' + editWordPhotos.length + ' of 100 loaded)</span>';
         }
       }
     } catch (error) {
       if (currentReq === editWordRequestId) {
-        const loader = resultsContainer.querySelector('#edit-word-more-loader');
-        if (loader) loader.remove();
         if (reset) {
           resultsContainer.innerHTML = `<div class="col-span-full text-center py-8 text-xs text-rose-400">Search failed. Check your internet connection.</div>`;
         }
         if (loadMoreBtn && editWordPhotos.length > 0) {
-          loadMoreBtn.style.display = 'flex';
+          loadMoreBtn.style.display = 'inline-flex';
           loadMoreBtn.disabled = false;
           loadMoreBtn.innerHTML = '<span>⚠️</span><span>Retry loading photos</span>';
         }
@@ -30984,131 +31141,70 @@ function editVocabWord(wordId, currentWord, currentImage) {
   // Save changes handler: updates backend, in-memory state, closes modal, and refreshes UI
   saveBtn.addEventListener('click', async () => {
     const newWord = modal.querySelector('#edit-word-text').value.trim();
-    const newImage = imageInput.value.trim();
     const newSentence = modal.querySelector('#edit-word-sentence').value.trim();
+    const newImageUrl = selectedImageUrl || imageInput.value.trim();
 
     if (!newWord) {
-      toast('Word cannot be empty');
+      toast('Please enter a word');
       return;
     }
 
-    if (saveBtn.dataset.busy === 'true') return;
-    saveBtn.dataset.busy = 'true';
     saveBtn.disabled = true;
-    saveBtn.setAttribute('aria-busy', 'true');
-    const originalSaveText = saveBtn.innerHTML;
-    saveBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 inline text-slate-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
+    saveBtn.innerHTML = '<span class="animate-spin">⏳</span> Saving…';
 
     try {
-      const latestWord = findWordRecord();
-      if (!latestWord) {
-        toast('This word is no longer available. Refresh and try again.');
-        saveBtn.dataset.busy = 'false';
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = originalSaveText;
-        return;
-      }
-
-      const canonicalListId = normalizeVocabId(latestWord.vocab_list_id || latestWord.list_id || latestWord.vocabulary_list_id);
-      const stableWordId = String(latestWord.vocab_word_id || latestWord.word_id || latestWord.__backendId || '').trim();
-      const payload = Object.fromEntries(
-        Object.entries({
-          ...latestWord,
-          vocab_list_id: canonicalListId,
-          list_id: canonicalListId,
-          vocabulary_list_id: canonicalListId,
-          vocab_word_id: stableWordId,
-          word_id: stableWordId,
-          vocab_word: newWord,
-          vocab_image: newImage || '',
-          vocab_sentence: newSentence || '',
-          __backendId: latestWord.__backendId
-        }).filter(([, value]) => value !== undefined)
+      const row = (typeof allData !== 'undefined' && Array.isArray(allData) ? allData : []).find(r => 
+        r.__backendId === wordId || r.id === wordId || r.vocab_word === currentWord
       );
 
-      let saveSuccessful = false;
+      const canonicalListId = typeof normalizeVocabId === 'function' ? normalizeVocabId(row?.vocab_list_id || row?.list_id || row?.vocabulary_list_id) : (row?.vocab_list_id || row?.list_id);
+      const stableWordId = String(row?.vocab_word_id || row?.word_id || row?.__backendId || wordId || '').trim();
+
+      const updatedPayload = {
+        ...(row || {}),
+        vocab_list_id: canonicalListId,
+        list_id: canonicalListId,
+        vocabulary_list_id: canonicalListId,
+        vocab_word_id: stableWordId,
+        word_id: stableWordId,
+        vocab_word: newWord,
+        vocab_sentence: newSentence,
+        vocab_image: newImageUrl,
+        __backendId: row?.__backendId || wordId,
+        updated_at: new Date().toISOString()
+      };
+
       if (window.dataSdk?.update) {
-        const result = await window.dataSdk.update(payload);
-        saveSuccessful = Boolean(result?.isOk || result?.data || result?.id || result?.success !== false);
-      } else {
-        saveSuccessful = true;
+        await window.dataSdk.update(updatedPayload);
+      } else if (window.dataSdk?.create) {
+        await window.dataSdk.create({
+          type: 'vocab_word',
+          ...updatedPayload
+        });
       }
 
-      const diagnostics = {
-        parentListId: canonicalListId,
-        wordId: stableWordId,
-        payloadFields: Object.keys(payload).sort(),
-        source: 'child:vocab_word',
-        requestVersion: Date.now(),
-        writeResult: saveSuccessful,
-        readBackResult: true
-      };
-      window.__pokeymanVocabDiagnostics = {
-        ...(window.__pokeymanVocabDiagnostics || {}),
-        lastWordMutation: diagnostics
-      };
-
-      if (!saveSuccessful) {
-        toast('Could not save the word. Please try again.');
-        saveBtn.dataset.busy = 'false';
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = originalSaveText;
-        return;
+      if (row) {
+        Object.assign(row, updatedPayload);
+      } else if (typeof allData !== 'undefined' && Array.isArray(allData)) {
+        allData.push(updatedPayload);
       }
 
-      // Optimistically update in-memory allData
-      if (typeof allData !== 'undefined' && Array.isArray(allData)) {
-        const recordIndex = allData.findIndex(r => String(r.__backendId) === String(latestWord.__backendId) || (r.type === latestWord.type && r.vocab_word === currentWord));
-        if (recordIndex !== -1) {
-          allData[recordIndex] = { ...allData[recordIndex], ...payload };
-        }
-      }
-
-      // Update global permanent image mapping
       if (window.PERMANENT_VOCAB_WORDS && newWord) {
-        window.PERMANENT_VOCAB_WORDS[newWord.toLowerCase()] = newImage || '';
+        window.PERMANENT_VOCAB_WORDS[newWord.toLowerCase()] = newImageUrl || '';
       }
 
-      // Close modal immediately and notify teacher
       toast('Word updated successfully!');
       modal.remove();
 
-      // Refresh list UI in workspace and class pages
-      try { renderVocabLists(); } catch (e) {}
-      try { renderTeacherOwnedVocabLists(); } catch (e) {}
-      try {
-        document.querySelectorAll('.ve-workspace').forEach(m => {
-          if (typeof m.__renderVocabWords === 'function') m.__renderVocabWords();
-        });
-      } catch (e) {}
-
-      // Background silent refresh
-      if (window.dataSdk?.refresh) {
-        window.dataSdk.refresh().then(refreshed => {
-          if (Array.isArray(refreshed)) {
-            allData = refreshed;
-            try { renderVocabLists(); } catch (e) {}
-            try { renderTeacherOwnedVocabLists(); } catch (e) {}
-            try {
-              document.querySelectorAll('.ve-workspace').forEach(m => {
-                if (typeof m.__renderVocabWords === 'function') m.__renderVocabWords();
-              });
-            } catch (e) {}
-          }
-        }).catch(() => {});
-      }
+      if (typeof renderVocabLists === 'function') renderVocabLists();
+      if (typeof renderTeacherOwnedVocabLists === 'function') renderTeacherOwnedVocabLists();
     } catch (err) {
-      console.error('Error saving vocab word:', err);
-      toast('Error saving word. Please try again.');
-      saveBtn.dataset.busy = 'false';
+      console.error(err);
       saveBtn.disabled = false;
-      saveBtn.innerHTML = originalSaveText;
+      saveBtn.innerHTML = '<span>✓</span><span>Save</span>';
+      toast('Failed to save word changes');
     }
   });
-
-  modal.querySelector('#edit-word-close').addEventListener('click', () => modal.remove());
-  modal.querySelector('#edit-word-cancel').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
 async function deleteVocabWord(wordId, listId, options = {}) {
