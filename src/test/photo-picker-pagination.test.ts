@@ -50,21 +50,16 @@ describe('Photo Pickers Pagination & Dedicated Load More Pills (All 3 Places)', 
     expect(brightFixes).toContain('overflow-y: auto !important;');
   });
 
-  it('Place 3: openVocabCoverPicker modal has #vocab-cover-load-more with click trigger, 16:10 wide cards, and up to 100 photos', () => {
-    // Button element query & click listener
-    expect(indexHtml).toContain('id="vocab-cover-load-more"');
-    expect(indexHtml).toContain('vocab-cover-type-pill');
-    expect(indexHtml).toContain("loadMore?.addEventListener('click', () => {");
-    expect(indexHtml).toContain('fetchCoverPhotos(false);');
-    // 20 per page batching
-    expect(indexHtml).toContain('const perPage = Math.min(20, remaining);');
-    // Live loaded count formatting
-    expect(indexHtml).toContain("Load 20 more covers (' + coverPhotos.length + ' of 100 loaded)");
-    expect(indexHtml).toContain("End of results (' + coverPhotos.length + ' of 100 photos loaded)");
-    // Scroll listener on results container
-    expect(indexHtml).toContain("results.addEventListener('scroll', () => {");
-    expect(indexHtml).toContain('100 - coverPhotos.length');
-    // 16:10 aspect ratio in CSS
+  it('Place 3: openVocabCoverPicker modal selects cover directly from list word photos (no external photo search)', () => {
+    // Collects words belonging to the list and extracts word photos
+    expect(indexHtml).toContain('function openVocabCoverPicker(listId, listName)');
+    expect(indexHtml).toContain('vocab-cover-dialog');
+    expect(indexHtml).toContain('wordPhotos');
+    expect(indexHtml).toContain('id="vocab-cover-results"');
+    expect(indexHtml).toContain('vocab-cover-result');
+    expect(indexHtml).toContain('vocab-cover-selected-badge');
+    expect(indexHtml).toContain('vocab-cover-apply');
+    // 16:10 wide cards in CSS
     expect(brightFixes).toContain('aspect-ratio: 16 / 10 !important;');
   });
 
