@@ -728,18 +728,81 @@ html body.ts-bright .ve-workspace .ve-footer {
   border-top: 1px solid #e2e8f0 !important;
 }
 
-/* Edit Word Modal - Dual Mode Instant (Zero-flash) Styles */
+/* Edit Word Modal - Dual Mode Modern Theme Styles */
 .vocab-word-edit-card {
-  box-shadow: 0 25px 60px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.12) !important;
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
 }
+.vocab-word-edit-header {
+  background: #0f172a !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+.vocab-word-edit-input {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+  color: #f8fafc !important;
+}
+.vocab-word-edit-input:focus {
+  border-color: #fbbf24 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3) !important;
+}
+.vocab-word-edit-preview-card {
+  background: rgba(30, 41, 59, 0.35) !important;
+  border: 1px solid #1e293b !important;
+}
+.vocab-word-edit-preview-bay {
+  background: #090d16 !important;
+  border: 1px solid #1e293b !important;
+}
+.vocab-word-edit-results {
+  background: rgba(9, 13, 22, 0.6) !important;
+  border: 1px solid #1e293b !important;
+}
+.vocab-word-edit-results::-webkit-scrollbar {
+  width: 6px;
+}
+.vocab-word-edit-results::-webkit-scrollbar-track {
+  background: transparent;
+}
+.vocab-word-edit-results::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+.vocab-word-edit-photo-card {
+  background: #1e293b !important;
+  border: 1px solid #334155 !important;
+}
+.vocab-word-edit-footer {
+  background: #0f172a !important;
+  border-top: 1px solid #1e293b !important;
+}
+.vocab-word-edit-cancel-btn {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #334155 !important;
+}
+.vocab-word-edit-cancel-btn:hover {
+  background: #334155 !important;
+  color: #ffffff !important;
+}
+.vocab-word-edit-del-confirm {
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Light / Bright Theme Overrides */
 html body.ts-bright .vocab-word-edit-card {
   background: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
+  border: 1px solid #e2e8f0 !important;
   color: #0f172a !important;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.22) !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12) !important;
 }
 html body.ts-bright .vocab-word-edit-header {
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9) !important;
+  background: #f8fafc !important;
   border-bottom: 1px solid #e2e8f0 !important;
 }
 html body.ts-bright .vocab-word-edit-header h2 { color: #0f172a !important; }
@@ -747,13 +810,13 @@ html body.ts-bright .vocab-word-edit-header p { color: #64748b !important; }
 html body.ts-bright .vocab-word-edit-close {
   background: rgba(0, 0, 0, 0.05) !important;
   color: #475569 !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 html body.ts-bright .vocab-word-edit-close:hover {
   background: rgba(0, 0, 0, 0.1) !important;
   color: #0f172a !important;
 }
-html body.ts-bright .vocab-word-edit-label { color: #475569 !important; }
+html body.ts-bright .vocab-word-edit-label { color: #334155 !important; }
 html body.ts-bright .vocab-word-edit-input {
   background: #f8fafc !important;
   border: 1px solid #cbd5e1 !important;
@@ -762,7 +825,8 @@ html body.ts-bright .vocab-word-edit-input {
 html body.ts-bright .vocab-word-edit-input::placeholder { color: #94a3b8 !important; }
 html body.ts-bright .vocab-word-edit-input:focus {
   border-color: #f59e0b !important;
-  outline: 2px solid #f59e0b !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25) !important;
   background: #ffffff !important;
 }
 html body.ts-bright .vocab-word-edit-preview-card {
@@ -771,7 +835,7 @@ html body.ts-bright .vocab-word-edit-preview-card {
 }
 html body.ts-bright .vocab-word-edit-preview-bay {
   background: #ffffff !important;
-  border: 1px dashed #cbd5e1 !important;
+  border: 1px solid #e2e8f0 !important;
 }
 html body.ts-bright .vocab-word-edit-results {
   background: #f8fafc !important;
@@ -796,7 +860,7 @@ html body.ts-bright .vocab-word-edit-cancel-btn:hover {
 }
 html body.ts-bright .vocab-word-edit-del-confirm {
   background: #ffffff !important;
-  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  border: 1px solid #e2e8f0 !important;
   color: #0f172a !important;
 }
 html body.ts-bright .vocab-word-edit-del-confirm h3 { color: #0f172a !important; }
