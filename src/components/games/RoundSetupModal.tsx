@@ -152,25 +152,15 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
       <div className="relative w-full max-w-4xl rounded-3xl bg-radial from-slate-900 via-slate-950 to-slate-950 border border-slate-700/60 p-6 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),0_0_35px_rgba(245,158,11,0.12)]">
-        {/* Header Marquee */}
+        {/* Header: Game Title Only */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-md">
-              <Sparkles className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300">
-                  🕹️ Match Lobby
-                </span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  {isDotsAndBoxes ? 'Round setup · 2-Player Strategy' : 'Round setup'}
-                </span>
-              </div>
-              <h2 className="text-2xl font-black text-white tracking-tight leading-none">
-                {gameTitle}
-              </h2>
-            </div>
+          <div>
+            <h2 className="text-2xl font-black text-white tracking-tight leading-none">
+              {gameTitle}
+            </h2>
+            {isDotsAndBoxes && (
+              <span className="sr-only">2-Player Strategy</span>
+            )}
           </div>
           {onClose && (
             <button
@@ -398,7 +388,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 max-h-[340px] overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]">
+            <div className="flex flex-col gap-2">
               {themes.map((th) => {
                 const isSelected = currentTheme === th.id;
                 return (
@@ -409,31 +399,37 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                       setCurrentTheme(th.id);
                       onSelectTheme?.(th.id);
                     }}
-                    className={`relative rounded-2xl border p-2 flex flex-col gap-1.5 text-left transition-all group ${
+                    className={`w-full flex items-center justify-between p-2 rounded-xl border transition-all duration-150 group text-left ${
                       isSelected
-                        ? 'bg-slate-900/90 border-amber-400 ring-2 ring-amber-400/30 shadow-[0_0_15px_rgba(251,191,36,0.25)]'
-                        : 'bg-slate-900/50 border-slate-800/80 hover:border-slate-700'
+                        ? 'bg-gradient-to-r from-amber-500/15 via-slate-900/90 to-slate-900/80 border-amber-400/80 shadow-[0_0_15px_rgba(245,158,11,0.15)] ring-1 ring-amber-400/40 translate-x-1'
+                        : 'bg-slate-900/50 border-slate-800/80 hover:bg-slate-800/60 hover:border-slate-700 hover:translate-x-0.5'
                     }`}
                   >
-                    <div className="relative rounded-xl overflow-hidden h-14 w-full bg-slate-950">
-                      <img
-                        src={th.previewUrl || '/themes/default.png'}
-                        alt={th.name}
-                        className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-300"
-                      />
-                      {isSelected && (
-                        <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center text-[10px] font-black shadow-md">
-                          ✓
-                        </div>
-                      )}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-14 h-9.5 rounded-lg overflow-hidden bg-slate-950 flex-shrink-0 border border-white/10 flex items-center justify-center">
+                        <img
+                          src={th.previewUrl || '/themes/default.png'}
+                          alt={th.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                      <div className="min-w-0 flex flex-col">
+                        <span className={`text-xs font-bold truncate ${isSelected ? 'text-amber-300' : 'text-slate-200 group-hover:text-white'}`}>
+                          {th.name}
+                        </span>
+                        <span className={`text-[10.5px] truncate ${isSelected ? 'text-amber-200/70' : 'text-slate-400'}`}>
+                          {th.subtitle}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-xs font-black text-white group-hover:text-amber-300 transition-colors">
-                        {th.name}
-                      </div>
-                      <div className="text-[10px] text-slate-400 truncate">
-                        {th.subtitle}
-                      </div>
+                    <div
+                      className={`shrink-0 w-4.5 h-4.5 rounded-full border flex items-center justify-center transition-all ${
+                        isSelected
+                          ? 'border-amber-400 bg-amber-400 text-slate-950 font-black text-[10px] shadow-[0_0_8px_rgba(245,158,11,0.6)]'
+                          : 'border-slate-700 bg-slate-950/60 group-hover:border-slate-500'
+                      }`}
+                    >
+                      {isSelected ? '✓' : ''}
                     </div>
                   </button>
                 );

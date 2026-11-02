@@ -27535,8 +27535,9 @@ function chooseGamePlayers(listName, nextStep) {
       showFirstPlayerReveal(() => openGameFindMe(listName, sharedScore, timerSeconds), listName);
     } else if (isSurpriseBoxes) {
       const enabled = modal.querySelector('#shared-baam-powerups')?.checked ? baamboozlePowerUps : [];
-      const selectedTimerSeconds = Number.isFinite(timerSeconds) && timerSeconds > 0 ? timerSeconds : 0;
-      showFirstPlayerReveal(() => openBaamboozle(listName, enabled, selectedBaamCardCount, selectedTimerSeconds), listName);
+      const finalCardCount = Number(modal.dataset.gaBaamCardCount || window.selectedBaamCardCount || selectedBaamCardCount || 8);
+      const selectedTimerSeconds = modal.dataset.gaTimerSeconds ? Number(modal.dataset.gaTimerSeconds) : (Number.isFinite(timerSeconds) && timerSeconds > 0 ? timerSeconds : 0);
+      showFirstPlayerReveal(() => openBaamboozle(listName, enabled, finalCardCount, selectedTimerSeconds), listName);
     } else if (isCrossword) {
       showFirstPlayerReveal(() => {
         try {
