@@ -1448,7 +1448,7 @@
       const panel = document.createElement('section');
       panel.className = 'game-inline-view ga-student-setup ga-hub';
       panel.setAttribute('aria-label', `${game.name} visual style and setup`);
-      const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-full object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
+      const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
       panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header>
         <section class="ga-theme-picker ga-round-setting" aria-label="Visual style">
           <div class="ga-theme-picker-head">
@@ -1526,7 +1526,7 @@
     const panel = document.createElement('section');
     panel.className = 'game-inline-view ga-student-setup ga-hub';
     panel.setAttribute('aria-label', `${game.name} word count`);
-    const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-full object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
+    const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
     panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of words">${[5, 10, 15].map(count => `<button type="button" class="btn-primary" data-count="${count}" ${words.length < count ? 'disabled' : ''}><strong>${count}</strong><span>words</span></button>`).join('')}</div>`;
     panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
     panel.querySelectorAll('[data-count]').forEach(button => button.addEventListener('click', () => {
@@ -1952,7 +1952,7 @@
     }
     const h2 = modal.querySelector('h2');
     if (h2 && game) {
-      const iconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-full object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `<span class="ga-lobby-icon" aria-hidden="true">${game.icon}</span> `;
+      const iconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `<span class="ga-lobby-icon" aria-hidden="true">${game.icon}</span> `;
       h2.innerHTML = `${iconHtml}${esc(game.name)}`;
     }
     const p = h2?.nextElementSibling;

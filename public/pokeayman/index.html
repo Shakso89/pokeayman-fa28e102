@@ -8257,7 +8257,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const panel = document.createElement('section');
       panel.className = 'game-inline-view ga-student-setup ga-hub';
       panel.setAttribute('aria-label', `${game.name} visual style and setup`);
-      const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-full object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
+      const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
       panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header>
         <section class="ga-theme-picker ga-round-setting" aria-label="Visual style">
           <div class="ga-theme-picker-head">
@@ -8335,7 +8335,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const panel = document.createElement('section');
     panel.className = 'game-inline-view ga-student-setup ga-hub';
     panel.setAttribute('aria-label', `${game.name} word count`);
-    const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-full object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
+    const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
     panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of words">${[5, 10, 15].map(count => `<button type="button" class="btn-primary" data-count="${count}" ${words.length < count ? 'disabled' : ''}><strong>${count}</strong><span>words</span></button>`).join('')}</div>`;
     panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
     panel.querySelectorAll('[data-count]').forEach(button => button.addEventListener('click', () => {
@@ -8761,7 +8761,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     }
     const h2 = modal.querySelector('h2');
     if (h2 && game) {
-      const iconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-full object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `<span class="ga-lobby-icon" aria-hidden="true">${game.icon}</span> `;
+      const iconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `<span class="ga-lobby-icon" aria-hidden="true">${game.icon}</span> `;
       h2.innerHTML = `${iconHtml}${esc(game.name)}`;
     }
     const p = h2?.nextElementSibling;
@@ -25580,7 +25580,7 @@ function renderGamesList() {
   if (!window.arcadeOpen && window.pendingChosenGame) {
     const banner = document.createElement('div');
     banner.className = 'flex items-center justify-between p-3.5 mb-4 rounded-xl bg-gradient-to-r from-amber-500/20 to-indigo-600/20 border border-amber-300/30 text-white shadow-sm';
-    banner.innerHTML = '<div class="flex items-center gap-3">' + (window.pendingChosenGame.image ? '<img src="' + window.pendingChosenGame.image + '" alt="" class="w-10 h-10 rounded-full object-cover ring-2 ring-amber-400/50 shadow-md">' : '<span class="text-3xl">' + (window.pendingChosenGame.icon || '🎮') + '</span>') + '<div><span class="text-[11px] font-black uppercase tracking-wider text-amber-300">Step 2: Choose Vocabulary Lists</span><h3 class="text-base sm:text-lg font-black text-white leading-tight">' + window.pendingChosenGame.name + '</h3></div></div><div class="flex items-center gap-2"><button type="button" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-amber-200 border border-amber-300/40 transition flex items-center gap-1.5" onclick="window.gaExitSetupToArcade()">&#x2190; Change Game</button><button type="button" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-rose-500/30 text-base font-bold text-amber-200 hover:text-white border border-amber-300/40 transition flex items-center justify-center" onclick="window.gaExitSetupToArcade()" aria-label="Close setup and return to games" title="Close setup">✕</button></div>';
+    banner.innerHTML = '<div class="flex items-center gap-3">' + (window.pendingChosenGame.image ? '<img src="' + window.pendingChosenGame.image + '" alt="" class="w-10 h-10 rounded-lg object-cover ring-2 ring-amber-400/50 shadow-md">' : '<span class="text-3xl">' + (window.pendingChosenGame.icon || '🎮') + '</span>') + '<div><span class="text-[11px] font-black uppercase tracking-wider text-amber-300">Step 2: Choose Vocabulary Lists</span><h3 class="text-base sm:text-lg font-black text-white leading-tight">' + window.pendingChosenGame.name + '</h3></div></div><div class="flex items-center gap-2"><button type="button" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold text-amber-200 border border-amber-300/40 transition flex items-center gap-1.5" onclick="window.gaExitSetupToArcade()">&#x2190; Change Game</button><button type="button" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-rose-500/30 text-base font-bold text-amber-200 hover:text-white border border-amber-300/40 transition flex items-center justify-center" onclick="window.gaExitSetupToArcade()" aria-label="Close setup and return to games" title="Close setup">✕</button></div>';
     selector.appendChild(banner);
   }
   if (currentRole === 'teacher' && (!navSchool || !navClass)) {
