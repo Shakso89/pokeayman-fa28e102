@@ -30344,16 +30344,18 @@ function openVocabListEditor(listId, listName) {
         runVocabPhotoSearch();
       });
       picker.querySelector('#vocab-photo-load-more').addEventListener('click', () => fetchVocabPhotos(false));
+      let vocabPhotoScrollThrottle = null;
       const onPickerScroll = (event) => {
+        if (vocabPhotoScrollThrottle) return;
+        vocabPhotoScrollThrottle = setTimeout(() => { vocabPhotoScrollThrottle = null; }, 180);
         const el = event.currentTarget;
-        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 220) {
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 160) {
           if (!vocabPhotoLoading && vocabPhotoHasMore && vocabPhotoItems.length < 100) {
             fetchVocabPhotos(false);
           }
         }
       };
       picker.querySelector('#vocab-photo-picker-grid')?.addEventListener('scroll', onPickerScroll);
-      picker.querySelector('.vocab-photo-picker-body')?.addEventListener('scroll', onPickerScroll);
       picker.querySelector('#vocab-photo-picker-use-url').addEventListener('click', () => { const url = picker.querySelector('#vocab-photo-picker-url').value.trim(); if (url) { addWordImageInput.value = url; close(); } });
     }
     picker.querySelector('#vocab-photo-picker-search').value = vocabPhotoQuery;
@@ -30365,16 +30367,16 @@ function openVocabListEditor(listId, listName) {
     const picker = document.getElementById('vocab-photo-picker'); if (!picker || vocabPhotoLoading) return;
     if (requestId !== vocabPhotoSearchRequestId || query !== vocabPhotoQuery) return;
     if (reset) { vocabPhotoPage = 1; vocabPhotoItems = []; vocabPhotoHasMore = true; }
-    if (vocabPhotoItems.length >= 100 || !vocabPhotoHasMore) {
+    if (vocabPhotoItems.length >= 100) {
       const status = picker.querySelector('#vocab-photo-picker-status'); const more = picker.querySelector('#vocab-photo-load-more');
-      if (status) status.textContent = `${vocabPhotoItems.length} of 100 photos loaded · End of results`;
+      if (status) status.textContent = '100 of 100 photos loaded · End of results';
       if (more) { more.disabled = true; more.textContent = 'End of results'; }
       return;
     }
     vocabPhotoLoading = true;
     const status = picker.querySelector('#vocab-photo-picker-status'); const more = picker.querySelector('#vocab-photo-load-more');
     if (status) status.textContent = `${vocabPhotoItems.length} of 100 photos loaded · Loading…`;
-    if (more) more.disabled = true;
+    if (more) { more.disabled = true; more.textContent = 'Loading photos…'; }
     try {
       const remaining = 100 - vocabPhotoItems.length;
       const requestQuery = String(query || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
@@ -30421,17 +30423,30 @@ function openVocabListEditor(listId, listName) {
           });
         }
       }
-      vocabPhotoHasMore = rawPhotos.length > 0 && additions.length > 0 && vocabPhotoItems.length < 100;
-      if (status) status.textContent = vocabPhotoItems.length ? `${vocabPhotoItems.length} of 100 photos loaded${vocabPhotoHasMore ? '' : ' · End of results'}` : 'No photos found.';
-      if (more) {
-        more.disabled = !vocabPhotoHasMore;
-        more.textContent = vocabPhotoHasMore ? 'Load more photos' : 'End of results';
+      if (rawPhotos.length > 0) {
+        vocabPhotoPage += 1;
       }
-      vocabPhotoPage += 1;
+      const reachedMax = vocabPhotoItems.length >= 100;
+      const apiEmpty = rawPhotos.length === 0;
+      vocabPhotoHasMore = !reachedMax && (!apiEmpty || vocabPhotoItems.length < 20);
+
+      if (status) {
+        if (reachedMax) {
+          status.textContent = '100 of 100 photos loaded · End of results';
+        } else if (apiEmpty && vocabPhotoItems.length > 0) {
+          status.textContent = `${vocabPhotoItems.length} photos loaded · End of results`;
+        } else {
+          status.textContent = `${vocabPhotoItems.length} of 100 photos loaded`;
+        }
+      }
+      if (more) {
+        more.disabled = reachedMax || (apiEmpty && vocabPhotoItems.length > 0);
+        more.textContent = (reachedMax || (apiEmpty && vocabPhotoItems.length > 0)) ? 'End of results' : `Load more photos (${vocabPhotoItems.length} of 100 loaded)`;
+      }
     } catch (error) {
       if (requestId !== vocabPhotoSearchRequestId || query !== vocabPhotoQuery) return;
       if (requestId === vocabPhotoSearchRequestId && query === vocabPhotoQuery) {
-        if (status) status.textContent = 'Photo search failed. Try again.';
+        if (status) status.textContent = `${vocabPhotoItems.length ? vocabPhotoItems.length + ' of 100 photos loaded · ' : ''}Photo search failed. Click to retry.`;
         if (more) { more.disabled = false; more.textContent = 'Retry load photos'; }
       }
     }
@@ -30606,6 +30621,9 @@ function editVocabWord(wordId, currentWord, currentImage) {
               <p class="text-xs font-semibold ${isBright ? 'text-slate-500' : 'text-slate-400'}">Click Search to find photos & clipart for &ldquo;${escape(currentWord)}&rdquo;</p>
             </div>
           </div>
+          <button type="button" id="vocab-image-load-more" class="vocab-word-edit-load-more w-full mt-2.5 py-2.5 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border active:scale-95 cursor-pointer shadow-sm ${isBright ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'}" style="display: none;">
+            Load more photos
+          </button>
         </div>
 
       </div>

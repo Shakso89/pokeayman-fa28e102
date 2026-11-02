@@ -758,6 +758,14 @@ html body.ts-bright .ve-workspace .ve-footer {
   border: 1px solid #1e293b !important;
 }
 .vocab-word-edit-results {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 0.65rem !important;
+  min-height: 240px !important;
+  max-height: 360px !important;
+  overflow-y: auto !important;
+  align-content: start !important;
+  box-sizing: border-box !important;
   background: rgba(9, 13, 22, 0.6) !important;
   border: 1px solid #1e293b !important;
 }
@@ -772,8 +780,33 @@ html body.ts-bright .ve-workspace .ve-footer {
   border-radius: 9999px;
 }
 .vocab-word-edit-photo-card {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  height: 6.25rem !important;
+  min-height: 6.25rem !important;
+  max-height: 6.25rem !important;
+  padding: 3px !important;
+  border-radius: 0.85rem !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
   background: #1e293b !important;
   border: 1px solid #334155 !important;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+.vocab-word-edit-photo-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #fbbf24 !important;
+  box-shadow: 0 4px 14px rgba(251, 191, 36, 0.25) !important;
+}
+.vocab-word-edit-photo-card img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 0.65rem !important;
 }
 .vocab-word-edit-footer {
   background: #0f172a !important;
