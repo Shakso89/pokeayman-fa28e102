@@ -65,7 +65,7 @@ function Index() {
       key={frameKey}
       className="imported-app"
       title="PokéAyman"
-      src="/pokeayman/index.html?v=20261103-sidebars-v2"
+      src="/pokeayman/index.html?v=20261103-logout-btn-v1"
       allowFullScreen
     />
   );

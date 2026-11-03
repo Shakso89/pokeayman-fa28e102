@@ -97,4 +97,17 @@ describe('Mutually Exclusive Collapsible Sidebars', () => {
     expect(railCollapsed).toBe(false);
     expect(collapsed).toBe(true);
   });
+
+  it('implements uiverse thin-duck-22 logout button style and structure', () => {
+    // Button element has .sign and .text containers
+    expect(teacherShellJs).toContain('class="ts-logout Btn"');
+    expect(teacherShellJs).toContain('<div class="sign">');
+    expect(teacherShellJs).toContain('<div class="text">Logout</div>');
+
+    // CSS defines circular initial state and hover expansion
+    expect(teacherShellCss).toContain('.ts-logout .sign');
+    expect(teacherShellCss).toContain('.ts-logout .text');
+    expect(teacherShellCss).toContain('.ts-logout:hover');
+    expect(teacherShellCss).toContain('width: 125px;');
+  });
 });
