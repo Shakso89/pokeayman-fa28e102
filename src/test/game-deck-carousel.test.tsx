@@ -94,4 +94,16 @@ describe('GameDeckCarousel Component', () => {
     fireEvent.click(proceedBtn);
     expect(handleSelect).toHaveBeenCalledWith(midGame.id);
   });
+
+  it('renders Option 1 Holographic Gold Secret Rare styling for Pro games', () => {
+    const handleSelect = vi.fn();
+    render(<GameDeckCarousel onSelectGame={handleSelect} />);
+
+    // Listen & Catch and Poké Battle are pro games
+    const proCards = screen.getAllByText('PRO');
+    expect(proCards.length).toBeGreaterThanOrEqual(2);
+
+    expect(screen.getAllByText(/POKÉAYMAN PRO/).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('Poké Battle')).toBeDefined();
+  });
 });

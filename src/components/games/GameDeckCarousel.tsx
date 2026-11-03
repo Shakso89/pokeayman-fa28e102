@@ -77,37 +77,81 @@ export const GameDeckCarousel: React.FC<GameDeckCarouselProps> = ({
                 pointerEvents: absOffset > 2 ? 'none' : 'auto',
               }}
             >
-              {/* Polaroid-Style Card (Matching Homepage UI exactly) */}
-              <div
-                className={`w-[220px] h-[310px] bg-white rounded-xl shadow-2xl flex flex-col p-2.5 transition-all ${
-                  isCenter ? 'ring-4 ring-amber-400 shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'hover:shadow-xl'
-                }`}
-              >
-                {/* Top ID Number */}
-                <div className="w-full text-center pb-2 pt-1 text-[11px] font-black text-slate-800 tracking-wider">
-                  #{String(index + 1).padStart(3, '0')}
-                </div>
+              {/* Option 1: Holographic Gold Secret Rare for Pro Games vs Classic Polaroid for Standard */}
+              {game.proOnly ? (
+                <div
+                  className={`ga-pro-gold-card w-[220px] h-[310px] rounded-xl shadow-2xl flex flex-col p-2.5 transition-all relative overflow-hidden ${
+                    isCenter ? 'ring-4 ring-amber-300 shadow-[0_0_35px_rgba(251,191,36,0.6),0_20px_50px_rgba(0,0,0,0.7)]' : 'hover:shadow-xl'
+                  }`}
+                >
+                  <div className="ga-pro-gold-foil absolute inset-0 pointer-events-none rounded-xl" />
+                  
+                  {/* Upgraded Golden Crown Badge */}
+                  <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-[9px] tracking-wide px-2 py-0.5 rounded-full shadow-[0_2px_10px_rgba(245,158,11,0.5)] border border-yellow-200/60">
+                    <span className="text-[10px] leading-none">👑</span>
+                    <span>PRO</span>
+                  </div>
 
-                {/* Center Artwork */}
-                <div className="w-full flex-1 bg-slate-100 rounded-lg overflow-hidden relative border border-slate-200/50">
-                  <img
-                    src={game.img}
-                    alt={game.title}
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                  />
-                </div>
+                  {/* Top ID Number with Star */}
+                  <div className="w-full text-center pb-2 pt-1 text-[11px] font-black text-amber-300/90 tracking-widest flex items-center justify-center gap-1">
+                    <span className="text-amber-400 text-[9px]">★</span>
+                    <span>#{String(index + 1).padStart(3, '0')}</span>
+                  </div>
 
-                {/* Bottom Title & Subtitle */}
-                <div className="w-full text-center pt-4 pb-2">
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none truncate px-1">
-                    {game.title}
-                  </h3>
-                  <p className="text-[9px] font-black text-slate-400 mt-1.5 tracking-[0.2em] uppercase">
-                    PokéAyman
-                  </p>
+                  {/* Center Artwork with Metallic Gold Frame */}
+                  <div className="w-full flex-1 bg-gradient-to-b from-[#181d2c] to-[#0a0d16] rounded-lg overflow-hidden relative border-2 border-amber-400/50 shadow-[inset_0_0_14px_rgba(251,191,36,0.2)]">
+                    <img
+                      src={game.img}
+                      alt={game.title}
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                    />
+                  </div>
+
+                  {/* Bottom Title & Subtitle with Gold Accents */}
+                  <div className="w-full text-center pt-4 pb-2 relative z-10">
+                    <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-yellow-200 to-amber-300 tracking-tight leading-none truncate px-1 filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                      {game.title}
+                    </h3>
+                    <p className="text-[9px] font-black text-amber-400/90 mt-1.5 tracking-[0.25em] uppercase flex items-center justify-center gap-1">
+                      <span>✦</span>
+                      <span>POKÉAYMAN PRO</span>
+                      <span>✦</span>
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div
+                  className={`w-[220px] h-[310px] bg-white rounded-xl shadow-2xl flex flex-col p-2.5 transition-all ${
+                    isCenter ? 'ring-4 ring-amber-400 shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'hover:shadow-xl'
+                  }`}
+                >
+                  {/* Top ID Number */}
+                  <div className="w-full text-center pb-2 pt-1 text-[11px] font-black text-slate-800 tracking-wider">
+                    #{String(index + 1).padStart(3, '0')}
+                  </div>
+
+                  {/* Center Artwork */}
+                  <div className="w-full flex-1 bg-slate-100 rounded-lg overflow-hidden relative border border-slate-200/50">
+                    <img
+                      src={game.img}
+                      alt={game.title}
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                    />
+                  </div>
+
+                  {/* Bottom Title & Subtitle */}
+                  <div className="w-full text-center pt-4 pb-2">
+                    <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none truncate px-1">
+                      {game.title}
+                    </h3>
+                    <p className="text-[9px] font-black text-slate-400 mt-1.5 tracking-[0.2em] uppercase">
+                      PokéAyman
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}

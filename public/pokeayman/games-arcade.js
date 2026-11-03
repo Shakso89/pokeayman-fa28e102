@@ -1298,12 +1298,18 @@
         cardEl.style.pointerEvents = 'auto';
 
         const inner = cardEl.querySelector('.game-deck-inner-card');
+        const isPro = cardEl.dataset.isPro === 'true';
         if (inner) {
           if (isCenter) {
-            inner.classList.add('ring-4', 'ring-amber-400');
-            inner.style.boxShadow = '0 20px 50px rgba(0,0,0,0.5)';
+            if (isPro) {
+              inner.classList.add('ring-4', 'ring-amber-300');
+              inner.style.boxShadow = '0 0 35px rgba(251, 191, 36, 0.55), 0 20px 50px rgba(0, 0, 0, 0.7)';
+            } else {
+              inner.classList.add('ring-4', 'ring-amber-400');
+              inner.style.boxShadow = '0 20px 50px rgba(0,0,0,0.5)';
+            }
           } else {
-            inner.classList.remove('ring-4', 'ring-amber-400');
+            inner.classList.remove('ring-4', 'ring-amber-300', 'ring-amber-400');
             inner.style.boxShadow = '';
           }
         }
@@ -1314,6 +1320,49 @@
       const isPro = Boolean(game.proOnly);
       const locked = Boolean(isPro && !window.canUseProGames?.());
 
+      if (isPro) {
+        return `<div
+        class="game-deck-card-wrapper absolute top-0 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] cursor-pointer origin-bottom select-none"
+        data-game-index="${index}"
+        data-game-fn="${game.fn}"
+        data-is-pro="true"
+        role="button"
+        tabindex="0"
+        aria-label="Select ${esc(game.name)} (Pro Game)"
+      >
+        <div class="game-deck-inner-card ga-pro-gold-card w-[200px] sm:w-[220px] h-[280px] sm:h-[310px] rounded-xl shadow-2xl flex flex-col p-2.5 transition-all relative overflow-hidden">
+          <div class="ga-pro-gold-foil absolute inset-0 pointer-events-none rounded-xl"></div>
+          <div class="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-slate-950 font-black text-[9px] tracking-wide px-2 py-0.5 rounded-full shadow-[0_2px_10px_rgba(245,158,11,0.5)] border border-yellow-200/60">
+            <span class="text-[10px] leading-none">${locked ? '🔒' : '👑'}</span>
+            <span>PRO</span>
+          </div>
+          <div class="w-full text-center pb-1.5 pt-0.5 text-[11px] font-black text-amber-300/90 tracking-widest flex items-center justify-center gap-1">
+            <span class="text-amber-400 text-[9px]">★</span>
+            <span>#${String(index + 1).padStart(3, '0')}</span>
+          </div>
+          <div class="w-full flex-1 bg-gradient-to-b from-[#181d2c] to-[#0a0d16] rounded-lg overflow-hidden relative border-2 border-amber-400/50 shadow-[inset_0_0_14px_rgba(251,191,36,0.2)]">
+            <img
+              src="${game.image || ''}"
+              alt="${esc(game.name)}"
+              class="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+              loading="${index === 0 ? 'eager' : 'lazy'}"
+              onerror="this.onerror=null;this.src='/pokeayman/assets/avatars/pokeayman-logo.png';"
+            />
+          </div>
+          <div class="w-full text-center pt-3 pb-1 relative z-10">
+            <h3 class="text-lg sm:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-yellow-200 to-amber-300 tracking-tight leading-none truncate px-1 filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+              ${esc(game.name)}
+            </h3>
+            <p class="text-[9px] font-black text-amber-400/90 mt-1.5 tracking-[0.25em] uppercase flex items-center justify-center gap-1">
+              <span>✦</span>
+              <span>POKÉAYMAN PRO</span>
+              <span>✦</span>
+            </p>
+          </div>
+        </div>
+      </div>`;
+      }
+
       return `<div
         class="game-deck-card-wrapper absolute top-0 transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] cursor-pointer origin-bottom select-none"
         data-game-index="${index}"
@@ -1323,7 +1372,6 @@
         aria-label="Select ${esc(game.name)}"
       >
         <div class="game-deck-inner-card w-[200px] sm:w-[220px] h-[280px] sm:h-[310px] bg-white rounded-xl shadow-2xl flex flex-col p-2.5 transition-all relative">
-          ${isPro ? `<span class="absolute top-2.5 right-2.5 bg-amber-400 text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded-full shadow-sm z-10">${locked ? '🔒 PRO' : '★ PRO'}</span>` : ''}
           <div class="w-full text-center pb-1.5 pt-0.5 text-[11px] font-black text-slate-800 tracking-wider">
             #${String(index + 1).padStart(3, '0')}
           </div>
