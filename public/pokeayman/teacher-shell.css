@@ -293,8 +293,7 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition-duration: 0.3s;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.25);
   background-color: rgb(255, 65, 65);
   padding: 0;
@@ -303,18 +302,20 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
 }
 
 .ts-logout .sign {
-  width: 100%;
-  transition-duration: 0.3s;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-sizing: border-box;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ts-logout .sign svg {
   width: 18px;
   height: 18px;
+  flex-shrink: 0;
 }
 
 .ts-logout .sign svg path {
@@ -323,42 +324,39 @@ body.ts-on.ts-rail-on #view-students #students-list { grid-template-columns: rep
 
 .ts-logout .text {
   position: absolute;
-  right: 0%;
-  width: 0%;
+  left: 44px;
   opacity: 0;
   color: white;
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  font-family: 'Outfit', sans-serif;
-  transition-duration: 0.3s;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Outfit', system-ui, sans-serif;
   white-space: nowrap;
-  overflow: hidden;
+  pointer-events: none;
+  transform: translateX(-6px);
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Hover effect on button width */
-.ts-logout:hover {
+.ts-logout:hover,
+.ts-logout:focus-visible {
   width: 125px;
   border-radius: 40px;
-  transition-duration: 0.3s;
   background-color: rgb(240, 50, 50);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
 }
 
-.ts-logout:hover .sign {
-  width: 32%;
-  transition-duration: 0.3s;
-  padding-left: 14px;
-  justify-content: center;
+.ts-logout:hover .sign,
+.ts-logout:focus-visible .sign {
+  width: 40px;
+  transform: translateX(-2px);
 }
 
 /* Hover effect button text */
-.ts-logout:hover .text {
+.ts-logout:hover .text,
+.ts-logout:focus-visible .text {
   opacity: 1;
-  width: 68%;
-  transition-duration: 0.3s;
-  padding-right: 12px;
-  text-align: center;
+  transform: translateX(0);
 }
 
 /* Active click effect */
