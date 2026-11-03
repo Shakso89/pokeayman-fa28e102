@@ -18529,7 +18529,11 @@ function navigateTo(level, school, cls, studentName) {
   } else if (level === 'students') {
     document.getElementById('view-students').classList.remove('hidden');
     trail.push(link('Schools', "navigateTo('schools')"), link(school, `navigateTo('classes','${js(school)}')`), cur(cls));
-    renderVocabLists();
+    try {
+      renderVocabLists();
+    } catch (err) {
+      console.warn('renderVocabLists error:', err);
+    }
     if (typeof syncClassRosterFromSupabase === 'function') {
       syncClassRosterFromSupabase(school, cls).then(synced => {
         if (synced && synced.length > 0 && navSchool === school && navClass === cls) {
@@ -30585,7 +30589,10 @@ function toDeterministicUuid(str) {
 }
 window.toDeterministicUuid = toDeterministicUuid;
 
+window.activeGameVocabCache = window.activeGameVocabCache || new Map();
+
 async function syncAllClassesGameVocabLists() {
+  window.activeGameVocabCache = window.activeGameVocabCache || new Map();
   const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
   if (!sb) return;
   try {
@@ -30607,6 +30614,7 @@ window.syncAllClassesGameVocabLists = syncAllClassesGameVocabLists;
 
 function isVocabListGameActive(list, schoolName, className, classId) {
   if (!list) return false;
+  window.activeGameVocabCache = window.activeGameVocabCache || new Map();
   const ids = (
     window.activeGameVocabCache.get(classId) || 
     window.activeGameVocabCache.get(`${schoolName}||${className}`) || 
@@ -30630,6 +30638,7 @@ function isVocabListGameActive(list, schoolName, className, classId) {
 window.isVocabListGameActive = isVocabListGameActive;
 
 async function handleToggleGameAccess(classId, listId, listName) {
+  window.activeGameVocabCache = window.activeGameVocabCache || new Map();
   const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
   const classKey = `${navSchool}||${navClass}`;
   
@@ -30692,6 +30701,7 @@ async function handleToggleGameAccess(classId, listId, listName) {
 window.handleToggleGameAccess = handleToggleGameAccess;
 
 function renderVocabLists() {
+  window.activeGameVocabCache = window.activeGameVocabCache || new Map();
   if (!renderVocabLists._syncTriggered) {
     renderVocabLists._syncTriggered = true;
     syncAllClassesGameVocabLists().then(() => renderVocabLists());
