@@ -291,6 +291,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: stretch;
+  justify-self: center;
   background: transparent;
   border: none;
   padding: 0;
@@ -300,13 +302,17 @@
 }
 
 .dots-line-v-bar {
+  display: block;
   width: 8px;
-  height: 100%;
-  min-height: 32px;
+  min-width: 8px;
+  height: 38px;
+  min-height: 28px;
+  max-height: 52px;
   border-radius: 4px;
   background: rgba(71, 85, 105, 0.65);
   transition: all 0.2s ease;
   box-sizing: border-box;
+  margin: auto;
 }
 
 /* Drawn Lines */

@@ -510,9 +510,14 @@
             if (drawnBy !== null || phase !== 'DRAW_LINE') {
               btn.disabled = drawnBy !== null || phase !== 'DRAW_LINE';
             }
+            btn.style.alignSelf = 'stretch';
+            btn.style.justifySelf = 'center';
 
             const bar = document.createElement('span');
             bar.className = 'dots-line-v-bar';
+            const barHeight = N >= 5 ? '30px' : (N === 4 ? '38px' : '48px');
+            bar.style.height = barHeight;
+            bar.style.minHeight = barHeight;
             if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
             else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
             else if (phase === 'DRAW_LINE') bar.classList.add(turnClass);

@@ -776,6 +776,8 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                       : 'bg-slate-700/80 group-hover:bg-cyan-400/80';
                 }
 
+                const vBarHeight = gridDots >= 5 ? 30 : (gridDots === 4 ? 38 : 48);
+
                 return (
                   <button
                     key={`v-${r}-${c}`}
@@ -788,12 +790,13 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                       gridRow: 2 * r + 2,
                       gridColumn: 2 * c + 1,
                     }}
-                    className={`group w-full h-full flex items-center justify-center p-0 relative transition-transform ${
+                    className={`group w-full h-full flex items-center justify-center p-0 relative transition-transform self-stretch ${
                       canDraw ? 'cursor-pointer' : isDrawn ? 'cursor-default' : 'cursor-not-allowed opacity-40'
                     }`}
                   >
                     <div
-                      className={`w-2 h-full rounded transition-all duration-200 ${lineClass}`}
+                      style={{ height: `${vBarHeight}px`, width: '8px' }}
+                      className={`rounded transition-all duration-200 ${lineClass}`}
                     />
                   </button>
                 );

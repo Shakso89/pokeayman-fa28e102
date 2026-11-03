@@ -5571,7 +5571,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261103-pro-gold-v2">
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/crossword.css?v=20261028-crosswords-v11">
-<link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261102-dots-and-boxes-v5">
+<link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261103-vertical-lines-fix">
 <link rel="stylesheet" href="/pokeayman/vocab-battle.css">
 <link rel="stylesheet" href="/pokeayman/study-theme.css">
 <link rel="stylesheet" href="/pokeayman/components.css">
@@ -6697,9 +6697,14 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             if (drawnBy !== null || phase !== 'DRAW_LINE') {
               btn.disabled = drawnBy !== null || phase !== 'DRAW_LINE';
             }
+            btn.style.alignSelf = 'stretch';
+            btn.style.justifySelf = 'center';
 
             const bar = document.createElement('span');
             bar.className = 'dots-line-v-bar';
+            const barHeight = N >= 5 ? '30px' : (N === 4 ? '38px' : '48px');
+            bar.style.height = barHeight;
+            bar.style.minHeight = barHeight;
             if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
             else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
             else if (phase === 'DRAW_LINE') bar.classList.add(turnClass);
