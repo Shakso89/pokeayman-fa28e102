@@ -1632,7 +1632,7 @@
     const gameName = window.pendingChosenGame ? window.pendingChosenGame.name : 'Game';
 
     const bar = document.createElement('div');
-    bar.className = 'ga-continue-bar fixed bottom-5 left-1/2 -translate-x-1/2 z-[99999] w-[calc(100%-2rem)] max-w-4xl p-4 sm:p-5 bg-[#0b1120]/95 backdrop-blur-xl border-2 border-amber-400/60 shadow-[0_10px_40px_rgba(0,0,0,0.9),0_0_30px_rgba(251,191,36,0.3)] flex items-center justify-between rounded-2xl transition-all';
+    bar.className = 'ga-continue-bar fixed bottom-5 z-[99999] p-4 sm:p-5 bg-[#0b1120]/95 backdrop-blur-xl border-2 border-amber-400/60 shadow-[0_10px_40px_rgba(0,0,0,0.9),0_0_30px_rgba(251,191,36,0.3)] flex items-center justify-between rounded-2xl transition-all';
 
     const hint = document.createElement('div');
     hint.className = 'text-xs text-slate-400 ga-continue-hint flex items-center gap-2';

@@ -45,6 +45,23 @@
     return window.matchMedia('(min-width: 1025px)').matches;
   }
 
+  function updateContentOffsets() {
+    if (!isDesktopView() || !document.body.classList.contains('ts-on')) {
+      document.body.style.removeProperty('--ts-content-left');
+      document.body.style.removeProperty('--ts-content-right');
+      return;
+    }
+    const isLeftCollapsed = document.body.classList.contains('ts-collapsed');
+    const hasRail = document.body.classList.contains('ts-rail-on');
+    const isRailCollapsed = document.body.classList.contains('ts-rail-collapsed');
+
+    const leftOffset = isLeftCollapsed ? '38px' : '280px';
+    const rightOffset = hasRail ? (isRailCollapsed ? '38px' : '320px') : '0px';
+
+    document.body.style.setProperty('--ts-content-left', leftOffset);
+    document.body.style.setProperty('--ts-content-right', rightOffset);
+  }
+
   function applySidebar() {
     const isDesktop = isDesktopView();
     // Only apply ts-collapsed on desktop view
@@ -58,6 +75,7 @@
     }
     const side = $('ts-sidebar');
     if (side) side.inert = isDesktop && collapsed;
+    updateContentOffsets();
   }
 
   function applyRail() {
@@ -73,6 +91,7 @@
     }
     const rail = $('ts-rail');
     if (rail) rail.inert = isDesktop && railCollapsed;
+    updateContentOffsets();
   }
 
   function toggleSidebar(forceOpen) {

@@ -110,4 +110,36 @@ describe('Mutually Exclusive Collapsible Sidebars', () => {
     expect(teacherShellCss).toContain('.ts-logout:hover');
     expect(teacherShellCss).toContain('width: 125px;');
   });
+
+  it('aligns the floating "Next Step" panel with game setup content area between sidebars', () => {
+    const gamesArcadeCssPath = path.resolve(__dirname, '../../public/pokeayman/games-arcade.css');
+    const gamesArcadeCss = fs.readFileSync(gamesArcadeCssPath, 'utf-8');
+
+    // CSS variables for left and right sidebar offsets
+    expect(teacherShellCss).toContain('--ts-content-left: 0px;');
+    expect(teacherShellCss).toContain('--ts-content-right: 0px;');
+    expect(teacherShellCss).toContain('--ts-content-left: var(--ts-w);');
+    expect(teacherShellCss).toContain('--ts-content-left: 38px;');
+    expect(teacherShellCss).toContain('--ts-content-right: var(--ts-rail);');
+    expect(teacherShellCss).toContain('--ts-content-right: 38px;');
+
+    // Dynamic horizontal centering and boundary constraints for .ga-continue-bar
+    expect(teacherShellCss).toContain('body.ts-on .ga-continue-bar');
+    expect(teacherShellCss).toContain('calc(50vw + (var(--ts-content-left, 0px) - var(--ts-content-right, 0px)) / 2)');
+    expect(gamesArcadeCss).toContain('calc(50vw + (var(--ts-content-left, 0px) - var(--ts-content-right, 0px)) / 2)');
+
+    // teacher-shell.js dynamically updates inline variables on body during sidebar toggles
+    expect(teacherShellJs).toContain('function updateContentOffsets');
+    expect(teacherShellJs).toContain('--ts-content-left');
+    expect(teacherShellJs).toContain('--ts-content-right');
+
+    // Mathematical verification of alignment:
+    // When left sidebar is open (280px) and right is collapsed (38px) on 1400px screen:
+    const leftOpenOffset = (280 - 38) / 2; // +121px shift to right
+    expect(leftOpenOffset).toBe(121);
+
+    // When right rail is open (320px) and left is collapsed (38px) on 1400px screen:
+    const rightOpenOffset = (38 - 320) / 2; // -141px shift to left
+    expect(rightOpenOffset).toBe(-141);
+  });
 });

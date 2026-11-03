@@ -1,6 +1,8 @@
 /* Teacher 3-column shell (sidebar + content + rail). Active only with body.ts-on. */
 :root {
   --ts-w: 280px; --ts-rail: 320px;
+  --ts-content-left: 0px;
+  --ts-content-right: 0px;
   --ts-ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ts-duration: 0.3s;
   --ts-bg: oklch(0.185 0.029 263);
@@ -26,6 +28,20 @@ body.ga-playing #ts-rail-toggle {
    Mutually exclusive collapsible sidebars with smooth animations
    ============================================================ */
 @media (min-width: 1025px) {
+  body.ts-on {
+    --ts-content-left: var(--ts-w);
+    --ts-content-right: 0px;
+  }
+  body.ts-on.ts-collapsed {
+    --ts-content-left: 38px;
+  }
+  body.ts-on.ts-rail-on {
+    --ts-content-right: var(--ts-rail);
+  }
+  body.ts-on.ts-rail-on.ts-rail-collapsed {
+    --ts-content-right: 38px;
+  }
+
   body.ts-on #ts-sidebar {
     display: flex;
     flex-direction: column;
@@ -203,6 +219,19 @@ body.ga-playing #ts-rail-toggle {
   }
   body.ts-on.ts-rail-on.ts-rail-collapsed #app-screen {
     padding-right: 38px !important;
+  }
+
+  /* Keep floating Next Step panel dynamically aligned with the game setup between sidebars */
+  body.ts-on .ga-continue-bar {
+    left: calc(50vw + (var(--ts-content-left, 0px) - var(--ts-content-right, 0px)) / 2) !important;
+    transform: translateX(-50%) !important;
+    width: min(calc(100vw - var(--ts-content-left, 0px) - var(--ts-content-right, 0px) - 2rem), 56rem) !important;
+    max-width: min(calc(100vw - var(--ts-content-left, 0px) - var(--ts-content-right, 0px) - 2rem), 56rem) !important;
+    transition: left var(--ts-duration) var(--ts-ease),
+                width var(--ts-duration) var(--ts-ease),
+                max-width var(--ts-duration) var(--ts-ease),
+                box-shadow 0.2s ease,
+                border-color 0.2s ease !important;
   }
 }
 

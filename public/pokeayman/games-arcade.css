@@ -351,9 +351,10 @@ body { --ga-stage-bg: radial-gradient(circle at center, #111a2e 0%, #080d18 70%,
 .ga-continue-bar {
   position: fixed !important;
   bottom: 1.25rem !important;
-  left: 50% !important;
+  left: calc(50vw + (var(--ts-content-left, 0px) - var(--ts-content-right, 0px)) / 2) !important;
   transform: translateX(-50%) !important;
-  width: min(calc(100% - 2rem), 56rem) !important;
+  width: min(calc(100vw - var(--ts-content-left, 0px) - var(--ts-content-right, 0px) - 2rem), 56rem) !important;
+  max-width: min(calc(100vw - var(--ts-content-left, 0px) - var(--ts-content-right, 0px) - 2rem), 56rem) !important;
   z-index: 99999 !important;
   margin-top: 0 !important;
   padding: 1rem 1.5rem !important;
@@ -367,6 +368,12 @@ body { --ga-stage-bg: radial-gradient(circle at center, #111a2e 0%, #080d18 70%,
   align-items: center !important;
   justify-content: space-between !important;
   gap: 1rem !important;
+  box-sizing: border-box !important;
+  transition: left var(--ts-duration, 0.3s) var(--ts-ease, cubic-bezier(0.4, 0, 0.2, 1)),
+              width var(--ts-duration, 0.3s) var(--ts-ease, cubic-bezier(0.4, 0, 0.2, 1)),
+              max-width var(--ts-duration, 0.3s) var(--ts-ease, cubic-bezier(0.4, 0, 0.2, 1)),
+              box-shadow 0.2s ease,
+              border-color 0.2s ease !important;
 }
 
 #games-list-selector,
@@ -381,7 +388,6 @@ body { --ga-stage-bg: radial-gradient(circle at center, #111a2e 0%, #080d18 70%,
   min-height: 280px !important;
   overflow-y: auto !important;
   padding-bottom: 6rem !important;
-}
   padding-right: 0.25rem;
   scrollbar-width: thin;
   scrollbar-color: rgba(251, 191, 36, 0.4) rgba(15, 23, 42, 0.6);
