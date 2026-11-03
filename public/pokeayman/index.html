@@ -5568,7 +5568,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/leaderboard-views.css">
 <link rel="stylesheet" href="/pokeayman/profile-workspace.css">
 <link rel="stylesheet" href="/pokeayman/vocab-editor.css">
-<link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261103-pro-gold-v1">
+<link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261103-pro-gold-v2">
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/crossword.css?v=20261028-crosswords-v11">
 <link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261102-dots-and-boxes-v5">
@@ -8111,14 +8111,14 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         if (inner) {
           if (isCenter) {
             if (isPro) {
-              inner.classList.add('ring-4', 'ring-amber-300');
-              inner.style.boxShadow = '0 0 35px rgba(251, 191, 36, 0.55), 0 20px 50px rgba(0, 0, 0, 0.7)';
+              inner.classList.add('ga-pro-center');
+              inner.style.boxShadow = '0 0 35px rgba(251, 191, 36, 0.5), 0 20px 50px rgba(0, 0, 0, 0.7)';
             } else {
               inner.classList.add('ring-4', 'ring-amber-400');
               inner.style.boxShadow = '0 20px 50px rgba(0,0,0,0.5)';
             }
           } else {
-            inner.classList.remove('ring-4', 'ring-amber-300', 'ring-amber-400');
+            inner.classList.remove('ga-pro-center', 'ring-4', 'ring-amber-300', 'ring-amber-400');
             inner.style.boxShadow = '';
           }
         }

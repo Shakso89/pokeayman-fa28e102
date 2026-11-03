@@ -1302,14 +1302,14 @@
         if (inner) {
           if (isCenter) {
             if (isPro) {
-              inner.classList.add('ring-4', 'ring-amber-300');
-              inner.style.boxShadow = '0 0 35px rgba(251, 191, 36, 0.55), 0 20px 50px rgba(0, 0, 0, 0.7)';
+              inner.classList.add('ga-pro-center');
+              inner.style.boxShadow = '0 0 35px rgba(251, 191, 36, 0.5), 0 20px 50px rgba(0, 0, 0, 0.7)';
             } else {
               inner.classList.add('ring-4', 'ring-amber-400');
               inner.style.boxShadow = '0 20px 50px rgba(0,0,0,0.5)';
             }
           } else {
-            inner.classList.remove('ring-4', 'ring-amber-300', 'ring-amber-400');
+            inner.classList.remove('ga-pro-center', 'ring-4', 'ring-amber-300', 'ring-amber-400');
             inner.style.boxShadow = '';
           }
         }

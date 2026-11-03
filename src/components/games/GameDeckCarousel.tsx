@@ -81,7 +81,7 @@ export const GameDeckCarousel: React.FC<GameDeckCarouselProps> = ({
               {game.proOnly ? (
                 <div
                   className={`ga-pro-gold-card w-[220px] h-[310px] rounded-xl shadow-2xl flex flex-col p-2.5 transition-all relative overflow-hidden ${
-                    isCenter ? 'ring-4 ring-amber-300 shadow-[0_0_35px_rgba(251,191,36,0.6),0_20px_50px_rgba(0,0,0,0.7)]' : 'hover:shadow-xl'
+                    isCenter ? 'ga-pro-center shadow-[0_0_35px_rgba(251,191,36,0.5),0_20px_50px_rgba(0,0,0,0.7)]' : 'hover:shadow-xl'
                   }`}
                 >
                   <div className="ga-pro-gold-foil absolute inset-0 pointer-events-none rounded-xl" />

@@ -7852,69 +7852,54 @@ html body.ts-bright .ga-lobby #game-players-cancel {
 
 /* ============================================================
    PRO GAMES CARD: Option 1 (Holographic Gold "Secret Rare" Edition)
+   Seamless, unified border with integrated ambient golden sheen
    ============================================================ */
 .ga-pro-gold-card {
-  background: linear-gradient(165deg, #1c1810 0%, #111524 45%, #080b15 100%) !important;
+  background: radial-gradient(circle at 50% 18%, rgba(251, 191, 36, 0.12) 0%, transparent 65%),
+              linear-gradient(175deg, #181d2a 0%, #0d111c 50%, #080b13 100%) !important;
+  border: 2px solid #f59e0b !important;
+  border-radius: 14px !important;
   position: relative !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(245, 158, 11, 0.22) !important;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.6), 0 0 16px rgba(245, 158, 11, 0.16) !important;
+  overflow: hidden !important;
 }
 
-/* Polished metallic gold double-ring border */
-.ga-pro-gold-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  padding: 2.5px;
-  background: linear-gradient(135deg, #fef08a 0%, #f59e0b 30%, #b45309 55%, #fbbf24 80%, #fef08a 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 5;
+/* When selected in center of deck */
+.ga-pro-gold-card.ga-pro-center,
+.game-deck-card-wrapper[style*="scale(1.15)"] .ga-pro-gold-card {
+  border-color: #fde047 !important;
+  box-shadow: 0 0 32px rgba(251, 191, 36, 0.48), 0 20px 50px rgba(0, 0, 0, 0.75) !important;
 }
 
-/* Inner gold hairline border */
-.ga-pro-gold-card::after {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border-radius: 8px;
-  border: 1px solid rgba(251, 191, 36, 0.28);
-  pointer-events: none;
-  z-index: 5;
-}
-
-/* Animated Holographic foil sheen reflection sweep */
+/* Subtle, smooth ambient sheen sweep that stays fully integrated on the card */
 .ga-pro-gold-foil {
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
   background: linear-gradient(
-    115deg,
-    transparent 20%,
-    rgba(254, 240, 138, 0.12) 36%,
-    rgba(251, 191, 36, 0.28) 48%,
-    rgba(255, 255, 255, 0.45) 50%,
-    rgba(251, 191, 36, 0.28) 52%,
-    rgba(254, 240, 138, 0.12) 64%,
-    transparent 80%
-  );
-  opacity: 0.65;
-  mix-blend-mode: color-dodge;
-  animation: ga-gold-shimmer 7s infinite ease-in-out;
-  pointer-events: none;
-  z-index: 6;
+    120deg,
+    transparent 25%,
+    rgba(254, 240, 138, 0.06) 42%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(254, 240, 138, 0.06) 58%,
+    transparent 75%
+  ) !important;
+  background-size: 250% 250% !important;
+  animation: ga-gold-sheen 6.5s ease-in-out infinite !important;
+  mix-blend-mode: overlay !important;
+  z-index: 6 !important;
 }
 
-@keyframes ga-gold-shimmer {
-  0%, 100% {
-    opacity: 0.4;
-    transform: translateX(-40%) rotate(4deg);
+@keyframes ga-gold-sheen {
+  0% {
+    background-position: -120% -120%;
   }
-  50% {
-    opacity: 0.85;
-    transform: translateX(40%) rotate(-4deg);
+  45%, 100% {
+    background-position: 220% 220%;
   }
 }
 
-.game-deck-card-wrapper:hover .ga-pro-gold-foil {
-  opacity: 1;
+.game-deck-card-wrapper:hover .ga-pro-gold-card {
+  border-color: #fde047 !important;
 }
