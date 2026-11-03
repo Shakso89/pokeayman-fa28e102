@@ -3688,20 +3688,22 @@ html body > .ga-stage[data-ga-theme] .find-me-difficulty-btn.is-active {
   border-color: #713f12 !important;
   box-shadow: 0 3px 0 #713f12, 0 0 12px rgba(250, 204, 21, 0.45) !important;
 }
-html body > .ga-stage[data-ga-theme] #find-me-feedback:not(:empty) {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  margin: 0.25rem auto 0 !important;
-  padding: 0.38rem 1.1rem !important;
-  border-radius: 999px !important;
-  background: rgba(15, 23, 42, 0.85) !important;
-  border: 2px solid rgba(255, 255, 255, 0.22) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28) !important;
-  font-family: 'Outfit', sans-serif !important;
-  font-weight: 900 !important;
-  font-size: 0.9rem !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+/* Hide under-the-board text feedback pills across all games (Find Me, Memory, Hangman, Crossword, etc.) */
+html body #find-me-feedback,
+html body .find-me-feedback,
+html body #memory-status,
+html body .memory-game-status,
+html body #hangman-feedback,
+html body #crossword-feedback,
+html body #scramble-feedback {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  pointer-events: none !important;
 }
 
 /* Find Me: Word Option Correct / Wrong / Hint States (Overrides all themes) */
@@ -6894,7 +6896,7 @@ body > .ga-stage .find-me-board-layout { align-items:stretch!important; flex:1 1
 body > .ga-stage .find-me-board-layout > div:first-child { height:100%!important; min-height:0!important; }
 body > .ga-stage #find-me-picture { height:100%!important; max-height:100%!important; }
 body > .ga-stage #find-me-box { height:100%!important; min-height:0!important; aspect-ratio:auto!important; padding:.6rem!important; }
-body > .ga-stage #find-me-feedback { margin:.15rem auto 0!important; min-height:1.25rem!important; line-height:1.2!important; font-size:.9rem!important; flex:0 0 auto!important; }
+body > .ga-stage #find-me-feedback { display: none !important; margin: 0 !important; min-height: 0 !important; height: 0 !important; flex: 0 0 0 !important; }
 body > .ga-stage .game-player-card { min-width:0!important; overflow:hidden!important; }
 body > .ga-stage .game-player-name { min-width:0!important; }
 
