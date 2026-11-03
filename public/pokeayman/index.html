@@ -5571,7 +5571,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261103-pro-gold-v2">
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/crossword.css?v=20261028-crosswords-v11">
-<link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261103-vertical-full-lines">
+<link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261103-pull-animated-lines">
 <link rel="stylesheet" href="/pokeayman/vocab-battle.css">
 <link rel="stylesheet" href="/pokeayman/study-theme.css">
 <link rel="stylesheet" href="/pokeayman/components.css">
@@ -6308,6 +6308,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
     let phase = 'MCQ'; // 'MCQ' | 'DRAW_LINE' | 'ROUND_OVER'
     let currentQuestion = generateMCQ(allWords, null);
+    let lastDrawn = null; // { type: 'H' | 'V', r: number, c: number }
+    let pullState = null;
 
     const modal = document.createElement('div');
     modal.className = 'dots-game-modal ga-stage';
@@ -6420,7 +6422,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         <section class="dots-board-wrapper">
           <div class="dots-board-info mb-3 flex items-center justify-between w-full max-w-sm px-2 text-xs font-bold text-slate-400">
             <span>Boxes remaining: <strong class="text-white" id="dots-boxes-left">${totalPossibleBoxes}</strong></span>
-            <span>Total: <strong class="text-amber-300">${totalPossibleBoxes} boxes (${N}×${N} dots)</strong></span>
+            <span class="dots-draw-hint flex items-center gap-1 text-[11px] text-amber-300 font-bold bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/30 animate-pulse">
+              <span>✨ Pull dot-to-dot or tap line</span>
+            </span>
           </div>
           <div class="dots-board-grid" id="dots-board-grid"></div>
         </section>
@@ -6622,14 +6626,136 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       }
     };
 
+    const startPullFromDot = (e, startR, startC, startDotEl) => {
+      if (phase !== 'DRAW_LINE') return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const grid = modal.querySelector('#dots-board-grid');
+      if (!grid) return;
+
+      let svg = grid.querySelector('.dots-pull-overlay');
+      if (!svg) {
+        svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'dots-pull-overlay');
+        grid.appendChild(svg);
+      }
+      svg.innerHTML = '';
+
+      const gridRect = grid.getBoundingClientRect();
+      const dotRect = startDotEl.getBoundingClientRect();
+      const startX = dotRect.left + dotRect.width / 2 - gridRect.left;
+      const startY = dotRect.top + dotRect.height / 2 - gridRect.top;
+
+      const isP1 = activeGamePlayerIndex === 0;
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', String(startX));
+      line.setAttribute('y1', String(startY));
+      line.setAttribute('x2', String(startX));
+      line.setAttribute('y2', String(startY));
+      line.setAttribute('class', `dots-pull-live-line ${isP1 ? 'p1-pull' : 'p2-pull'}`);
+      svg.appendChild(line);
+
+      startDotEl.classList.add('is-pulling-origin');
+
+      pullState = {
+        startR,
+        startC,
+        startX,
+        startY,
+        startDotEl,
+        svg,
+        line,
+        activeTargetDot: null,
+        targetLine: null
+      };
+
+      try { window.pokeSfx?.play?.('click'); } catch (_) {}
+
+      const onPointerMove = (moveEv) => {
+        if (!pullState) return;
+        const curGridRect = grid.getBoundingClientRect();
+        const curX = moveEv.clientX - curGridRect.left;
+        const curY = moveEv.clientY - curGridRect.top;
+
+        // Orthogonal neighbor candidates
+        const candidates = [
+          { r: pullState.startR - 1, c: pullState.startC, type: 'V', lineR: pullState.startR - 1, lineC: pullState.startC }, // Up
+          { r: pullState.startR + 1, c: pullState.startC, type: 'V', lineR: pullState.startR, lineC: pullState.startC },     // Down
+          { r: pullState.startR, c: pullState.startC - 1, type: 'H', lineR: pullState.startR, lineC: pullState.startC - 1 }, // Left
+          { r: pullState.startR, c: pullState.startC + 1, type: 'H', lineR: pullState.startR, lineC: pullState.startC }      // Right
+        ].filter((cand) => cand.r >= 0 && cand.r < N && cand.c >= 0 && cand.c < N);
+
+        let closestNeighbor = null;
+        let minDistance = 46;
+
+        for (const cand of candidates) {
+          const dotEl = grid.querySelector(`.dots-node[data-r="${cand.r}"][data-c="${cand.c}"]`);
+          if (!dotEl) continue;
+          const dRect = dotEl.getBoundingClientRect();
+          const dX = dRect.left + dRect.width / 2 - curGridRect.left;
+          const dY = dRect.top + dRect.height / 2 - curGridRect.top;
+          const dist = Math.hypot(curX - dX, curY - dY);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestNeighbor = { ...cand, dotEl, snapX: dX, snapY: dY };
+          }
+        }
+
+        if (pullState.activeTargetDot && pullState.activeTargetDot !== closestNeighbor?.dotEl) {
+          pullState.activeTargetDot.classList.remove('is-pull-target');
+          pullState.activeTargetDot = null;
+          pullState.targetLine = null;
+        }
+
+        if (closestNeighbor) {
+          pullState.line.setAttribute('x2', String(closestNeighbor.snapX));
+          pullState.line.setAttribute('y2', String(closestNeighbor.snapY));
+          closestNeighbor.dotEl.classList.add('is-pull-target');
+          pullState.activeTargetDot = closestNeighbor.dotEl;
+          pullState.targetLine = closestNeighbor;
+        } else {
+          pullState.line.setAttribute('x2', String(curX));
+          pullState.line.setAttribute('y2', String(curY));
+        }
+      };
+
+      const onPointerUp = () => {
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+
+        if (!pullState) return;
+        const target = pullState.targetLine;
+
+        if (pullState.startDotEl) pullState.startDotEl.classList.remove('is-pulling-origin');
+        if (pullState.activeTargetDot) pullState.activeTargetDot.classList.remove('is-pull-target');
+        if (pullState.svg) pullState.svg.innerHTML = '';
+
+        pullState = null;
+
+        if (target) {
+          const key = `${target.lineR}-${target.lineC}`;
+          const isDrawn = target.type === 'H' ? horizontalLines[key] !== null : verticalLines[key] !== null;
+          if (!isDrawn) {
+            handleDrawLine(target.type, target.lineR, target.lineC);
+          }
+        }
+      };
+
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+    };
+
     const renderBoard = () => {
       const grid = modal.querySelector('#dots-board-grid');
       if (!grid) return;
       const isP1 = activeGamePlayerIndex === 0;
       const turnClass = isP1 ? 'p1-turn' : 'p2-turn';
 
-      // Responsive track sizing for 3x3, 4x4, and 5x5 dots
-      const boxSize = N >= 5 ? 'minmax(38px, 56px)' : (N === 4 ? 'minmax(48px, 68px)' : 'minmax(60px, 86px)');
+      // Uniform square box sizing for 3x3, 4x4, and 5x5 dots
+      const boxSize = N >= 5 ? 'clamp(44px, 11vw, 56px)' : (N === 4 ? 'clamp(54px, 14vw, 70px)' : 'clamp(66px, 18vw, 88px)');
       const colDefs = [];
       const rowDefs = [];
       for (let i = 0; i < N - 1; i++) {
@@ -6643,6 +6769,11 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       grid.style.gridTemplateRows = rowDefs.join(' ');
       grid.innerHTML = '';
 
+      // Persistent SVG layer for animated live pull gesture
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'dots-pull-overlay');
+      grid.appendChild(svg);
+
       const totalGridRows = 2 * N - 1;
       const totalGridCols = 2 * N - 1;
 
@@ -6653,11 +6784,20 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
           if (isEvenR && isEvenC) {
             // Dot Node
+            const dotR = gr / 2;
+            const dotC = gc / 2;
             const dot = document.createElement('div');
-            dot.className = 'dots-node';
+            dot.className = `dots-node ${phase === 'DRAW_LINE' ? 'is-pullable' : ''}`;
+            dot.dataset.r = String(dotR);
+            dot.dataset.c = String(dotC);
+            dot.setAttribute('aria-label', `Dot at row ${dotR}, col ${dotC}`);
+
+            if (phase === 'DRAW_LINE') {
+              dot.addEventListener('pointerdown', (e) => startPullFromDot(e, dotR, dotC, dot));
+            }
             grid.appendChild(dot);
           } else if (isEvenR && !isEvenC) {
-            // Horizontal line button
+            // Horizontal line button (Full line stretching between horizontal dots)
             const r = gr / 2;
             const c = (gc - 1) / 2;
             const key = `${r}-${c}`;
@@ -6670,12 +6810,28 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             if (drawnBy !== null || phase !== 'DRAW_LINE') {
               btn.disabled = drawnBy !== null || phase !== 'DRAW_LINE';
             }
+            btn.style.width = '100%';
+            btn.style.height = '24px';
+            btn.style.justifySelf = 'stretch';
+            btn.style.alignSelf = 'center';
+            btn.style.display = 'flex';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'center';
 
             const bar = document.createElement('span');
             bar.className = 'dots-line-h-bar';
+            bar.style.display = 'block';
+            bar.style.width = '100%';
+            bar.style.minWidth = '100%';
+            bar.style.height = '8px';
+            bar.style.flex = '1 1 100%';
             if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
             else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
             else if (phase === 'DRAW_LINE') bar.classList.add(turnClass);
+
+            if (lastDrawn && lastDrawn.type === 'H' && lastDrawn.r === r && lastDrawn.c === c) {
+              bar.classList.add('dots-line-drawn-anim-h');
+            }
 
             btn.appendChild(bar);
 
@@ -6684,7 +6840,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             }
             grid.appendChild(btn);
           } else if (!isEvenR && isEvenC) {
-            // Vertical line button (with explicit height & stretch so vertical lines are 100% visible)
+            // Vertical line button (Full line stretching between vertical dots)
             const r = (gr - 1) / 2;
             const c = gc / 2;
             const key = `${r}-${c}`;
@@ -6700,6 +6856,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             btn.style.alignSelf = 'stretch';
             btn.style.justifySelf = 'center';
             btn.style.height = '100%';
+            btn.style.width = '24px';
             btn.style.display = 'flex';
             btn.style.flexDirection = 'column';
             btn.style.alignItems = 'center';
@@ -6715,6 +6872,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
             else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
             else if (phase === 'DRAW_LINE') bar.classList.add(turnClass);
+
+            if (lastDrawn && lastDrawn.type === 'V' && lastDrawn.r === r && lastDrawn.c === c) {
+              bar.classList.add('dots-line-drawn-anim-v');
+            }
 
             btn.appendChild(bar);
 
@@ -6742,6 +6903,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           }
         }
       }
+
+      lastDrawn = null;
     };
 
     const handleDrawLine = (type, row, col) => {
@@ -6750,6 +6913,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
       if (type === 'H' && horizontalLines[key] !== null) return;
       if (type === 'V' && verticalLines[key] !== null) return;
+
+      lastDrawn = { type, r: row, c: col };
 
       if (type === 'H') horizontalLines[key] = activeGamePlayerIndex;
       if (type === 'V') verticalLines[key] = activeGamePlayerIndex;
