@@ -48,7 +48,7 @@ function ClassesPage() {
       key={frameKey}
       className="imported-app"
       title="PokéAyman Classes"
-      src="/pokeayman/index.html?v=20261103-sidebars-v1&enter=classes"
+      src="/pokeayman/index.html?v=20261103-sidebars-v2&enter=classes"
       allowFullScreen
     />
   );

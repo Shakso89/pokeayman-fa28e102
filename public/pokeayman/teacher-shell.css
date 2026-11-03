@@ -13,7 +13,7 @@
   --ts-blue: oklch(0.55 0.19 255); --ts-pink: oklch(0.95 0.035 10); --ts-mint: oklch(0.95 0.045 167);
 }
 #ts-sidebar, #ts-rail { display: none; }
-#ts-sidebar-toggle, #ts-rail-toggle { display: none; }
+#ts-sidebar-toggle, #ts-rail-toggle { display: none !important; }
 body.ga-playing #ts-sidebar,
 body.ga-playing #ts-rail,
 body.ga-playing #ts-sidebar-toggle,
@@ -21,208 +21,192 @@ body.ga-playing #ts-rail-toggle {
   display: none !important;
 }
 
-/* Sidebar & Rail Inner Fixed-Width Wrappers: Prevents text squishing during transitions */
-.ts-sidebar-inner {
-  width: var(--ts-w);
-  min-width: var(--ts-w);
-  max-width: var(--ts-w);
-  height: 100%;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px 14px;
-  overflow-y: auto;
-  overflow-x: hidden;
+/* ============================================================
+   DESKTOP VISION ONLY (min-width: 1025px):
+   Mutually exclusive collapsible sidebars with smooth animations
+   ============================================================ */
+@media (min-width: 1025px) {
+  body.ts-on #ts-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--ts-w);
+    padding: 18px 14px;
+    z-index: 40;
+    background: var(--ts-bg);
+    border-right: 1px solid var(--ts-border);
+    backdrop-filter: blur(14px);
+    color: var(--ts-ink);
+    font-family: 'Outfit', sans-serif;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    transition: width var(--ts-duration) var(--ts-ease),
+                transform var(--ts-duration) var(--ts-ease),
+                border-color var(--ts-duration) var(--ts-ease);
+  }
+
+  /* Fixed child widths prevent text squishing or re-wrapping during width transition */
+  body.ts-on #ts-sidebar > * {
+    width: calc(var(--ts-w) - 28px);
+    min-width: calc(var(--ts-w) - 28px);
+    max-width: calc(var(--ts-w) - 28px);
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  body.ts-on.ts-rail-on #ts-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: var(--ts-rail);
+    padding: 18px 14px;
+    z-index: 40;
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-family: 'Outfit', sans-serif;
+    color: var(--ts-ink);
+    box-sizing: border-box;
+    background: var(--ts-bg);
+    border-left: 1px solid var(--ts-border);
+    backdrop-filter: blur(14px);
+    transition: width var(--ts-duration) var(--ts-ease),
+                transform var(--ts-duration) var(--ts-ease),
+                border-color var(--ts-duration) var(--ts-ease);
+  }
+
+  /* Fixed child widths prevent card squishing during width transition */
+  body.ts-on.ts-rail-on #ts-rail > * {
+    width: calc(var(--ts-rail) - 28px);
+    min-width: calc(var(--ts-rail) - 28px);
+    max-width: calc(var(--ts-rail) - 28px);
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  /* Left Edge Toggle Pill */
+  body.ts-on #ts-sidebar-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 24px;
+    left: calc(var(--ts-w) - 13px);
+    z-index: 50;
+    width: 26px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid #334155;
+    border-radius: 9999px;
+    background: #1e293b;
+    color: #94a3b8;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    transition: left var(--ts-duration) var(--ts-ease),
+                background var(--ts-duration) var(--ts-ease),
+                color var(--ts-duration) var(--ts-ease),
+                border-radius var(--ts-duration) var(--ts-ease),
+                border var(--ts-duration) var(--ts-ease),
+                box-shadow var(--ts-duration) var(--ts-ease);
+  }
+  body.ts-on #ts-sidebar-toggle:hover {
+    background: #334155;
+    color: #ffffff;
+    border-color: #475569;
+  }
+  body.ts-on #ts-sidebar-toggle:focus-visible {
+    outline: 2px solid var(--ts-yellow);
+    outline-offset: 2px;
+  }
+
+  /* Right Edge Toggle Pill */
+  body.ts-on.ts-rail-on #ts-rail-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 24px;
+    right: calc(var(--ts-rail) - 13px);
+    z-index: 50;
+    width: 26px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid #334155;
+    border-radius: 9999px;
+    background: #1e293b;
+    color: #94a3b8;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    transition: right var(--ts-duration) var(--ts-ease),
+                background var(--ts-duration) var(--ts-ease),
+                color var(--ts-duration) var(--ts-ease),
+                border-radius var(--ts-duration) var(--ts-ease),
+                border var(--ts-duration) var(--ts-ease),
+                box-shadow var(--ts-duration) var(--ts-ease);
+  }
+  body.ts-on.ts-rail-on #ts-rail-toggle:hover {
+    background: #334155;
+    color: #ffffff;
+    border-color: #475569;
+  }
+  body.ts-on.ts-rail-on #ts-rail-toggle:focus-visible {
+    outline: 2px solid var(--ts-yellow);
+    outline-offset: 2px;
+  }
+
+  /* Collapsed Left Sidebar state on desktop */
+  body.ts-on.ts-collapsed #ts-sidebar {
+    width: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-right-color: transparent !important;
+    pointer-events: none;
+  }
+  body.ts-on.ts-collapsed #ts-sidebar-toggle {
+    left: 0px !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left: 0 !important;
+  }
+
+  /* Collapsed Right Rail state on desktop */
+  body.ts-on.ts-rail-on.ts-rail-collapsed #ts-rail {
+    width: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-left-color: transparent !important;
+    pointer-events: none;
+  }
+  body.ts-on.ts-rail-on.ts-rail-collapsed #ts-rail-toggle {
+    right: 0px !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: 0 !important;
+  }
+
+  /* Smooth padding transition for Center Content Area (#app-screen) on desktop */
+  body.ts-on #app-screen {
+    padding-left: var(--ts-w);
+    padding-right: 0;
+    box-sizing: border-box;
+    transition: padding var(--ts-duration) var(--ts-ease);
+  }
+  body.ts-on.ts-collapsed #app-screen {
+    padding-left: 38px !important;
+  }
+  body.ts-on.ts-rail-on #app-screen {
+    padding-right: var(--ts-rail);
+  }
+  body.ts-on.ts-rail-on.ts-rail-collapsed #app-screen {
+    padding-right: 38px !important;
+  }
 }
 
-.ts-rail-inner {
-  width: var(--ts-rail);
-  min-width: var(--ts-rail);
-  max-width: var(--ts-rail);
-  height: 100%;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px 14px;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* Left Sidebar Base */
-body.ts-on #ts-sidebar {
-  display: flex;
-  position: fixed;
-  inset: 0 auto 0 0;
-  width: var(--ts-w);
-  height: 100vh;
-  padding: 0;
-  z-index: 40;
-  background: var(--ts-bg);
-  border-right: 1px solid var(--ts-border);
-  backdrop-filter: blur(14px);
-  color: var(--ts-ink);
-  font-family: 'Outfit', sans-serif;
-  overflow: hidden;
-  box-sizing: border-box;
-  transition: width var(--ts-duration) var(--ts-ease),
-              transform var(--ts-duration) var(--ts-ease),
-              border-color var(--ts-duration) var(--ts-ease);
-}
-
-/* Right Rail Base */
-body.ts-on.ts-rail-on #ts-rail {
-  display: flex;
-  position: fixed;
-  inset: 0 0 0 auto;
-  width: var(--ts-rail);
-  height: 100vh;
-  padding: 0;
-  z-index: 40;
-  background: var(--ts-bg);
-  border-left: 1px solid var(--ts-border);
-  backdrop-filter: blur(14px);
-  color: var(--ts-ink);
-  font-family: 'Outfit', sans-serif;
-  overflow: hidden;
-  box-sizing: border-box;
-  transition: width var(--ts-duration) var(--ts-ease),
-              transform var(--ts-duration) var(--ts-ease),
-              border-color var(--ts-duration) var(--ts-ease);
-}
-
-/* Left Toggle Button (Pill attached to edge) */
-body.ts-on #ts-sidebar-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: fixed;
-  top: 24px;
-  left: calc(var(--ts-w) - 13px);
-  z-index: 50;
-  width: 26px;
-  height: 40px;
-  padding: 0;
-  border: 1px solid #334155;
-  border-radius: 9999px;
-  background: #1e293b;
-  color: #94a3b8;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  transition: left var(--ts-duration) var(--ts-ease),
-              background var(--ts-duration) var(--ts-ease),
-              color var(--ts-duration) var(--ts-ease),
-              border-radius var(--ts-duration) var(--ts-ease),
-              border var(--ts-duration) var(--ts-ease),
-              box-shadow var(--ts-duration) var(--ts-ease);
-}
-body.ts-on #ts-sidebar-toggle:hover {
-  background: #334155;
-  color: #ffffff;
-  border-color: #475569;
-}
-body.ts-on #ts-sidebar-toggle:focus-visible {
-  outline: 2px solid var(--ts-yellow);
-  outline-offset: 2px;
-}
-
-/* Right Toggle Button (Pill attached to edge) */
-body.ts-on.ts-rail-on #ts-rail-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: fixed;
-  top: 24px;
-  right: calc(var(--ts-rail) - 13px);
-  z-index: 50;
-  width: 26px;
-  height: 40px;
-  padding: 0;
-  border: 1px solid #334155;
-  border-radius: 9999px;
-  background: #1e293b;
-  color: #94a3b8;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
-  transition: right var(--ts-duration) var(--ts-ease),
-              background var(--ts-duration) var(--ts-ease),
-              color var(--ts-duration) var(--ts-ease),
-              border-radius var(--ts-duration) var(--ts-ease),
-              border var(--ts-duration) var(--ts-ease),
-              box-shadow var(--ts-duration) var(--ts-ease);
-}
-body.ts-on.ts-rail-on #ts-rail-toggle:hover {
-  background: #334155;
-  color: #ffffff;
-  border-color: #475569;
-}
-body.ts-on.ts-rail-on #ts-rail-toggle:focus-visible {
-  outline: 2px solid var(--ts-yellow);
-  outline-offset: 2px;
-}
-
-/* Collapsed Left Sidebar state */
-body.ts-on.ts-collapsed #ts-sidebar {
-  width: 0 !important;
-  border-right-color: transparent !important;
-  pointer-events: none;
-}
-body.ts-on.ts-collapsed #ts-sidebar-toggle {
-  left: 0px !important;
-  border-top-left-radius: 0 !important;
-  border-bottom-left-radius: 0 !important;
-  border-left: 0 !important;
-}
-
-/* Collapsed Right Rail state */
-body.ts-on.ts-rail-on.ts-rail-collapsed #ts-rail {
-  width: 0 !important;
-  border-left-color: transparent !important;
-  pointer-events: none;
-}
-body.ts-on.ts-rail-on.ts-rail-collapsed #ts-rail-toggle {
-  right: 0px !important;
-  border-top-right-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-  border-right: 0 !important;
-}
-
-/* Smooth padding transition for Center Content Area (#app-screen) */
-body.ts-on #app-screen {
-  padding-left: var(--ts-w);
-  padding-right: 0;
-  box-sizing: border-box;
-  transition: padding var(--ts-duration) var(--ts-ease);
-}
-body.ts-on.ts-collapsed #app-screen {
-  padding-left: 38px !important;
-}
-body.ts-on.ts-rail-on #app-screen {
-  padding-right: var(--ts-rail);
-}
-body.ts-on.ts-rail-on.ts-rail-collapsed #app-screen {
-  padding-right: 38px !important;
-}
-
-/* Mobile backdrop dimming overlay */
-#ts-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(11, 15, 25, 0.65);
-  backdrop-filter: blur(4px);
-  z-index: 35;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--ts-duration) var(--ts-ease);
-}
-#ts-backdrop.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-@media (min-width: 901px) {
-  #ts-backdrop { display: none !important; }
-}
+/* Base styles common to desktop layout elements */
 body.ts-on #app-screen > nav.sticky .tab-btn,
 body.ts-on #app-screen > nav.sticky #logged-in-name-container,
 body.ts-on #app-screen > nav.sticky #logout-btn,
@@ -301,31 +285,19 @@ body.ts-on #ts-sidebar-tools #ts-theme-toggle .ts-theme-icon { display: block; f
 .ts-top3 .m3 .ts-medal { background: linear-gradient(135deg, #f0b58a, #a2582a); }
 .ts-empty { color: var(--ts-muted); font-size: 13px; }
 
+/* ============================================================
+   TABLET & MOBILE VISION (max-width: 1024px / 900px):
+   Restores exact previous mobile/tablet navigation without sidebars
+   ============================================================ */
+@media (max-width: 1024px) {
+  #ts-sidebar-toggle, #ts-rail-toggle {
+    display: none !important;
+  }
+}
+
 @media (max-width: 900px) {
-  body.ts-on #ts-sidebar {
-    position: fixed;
-    z-index: 60;
-    transform: translateX(0);
-    width: min(var(--ts-w), 85vw);
-  }
-  body.ts-on.ts-collapsed #ts-sidebar {
-    transform: translateX(-100%);
-    width: 0 !important;
-  }
-  body.ts-on.ts-rail-on #ts-rail {
-    position: fixed;
-    z-index: 60;
-    transform: translateX(0);
-    width: min(var(--ts-rail), 85vw);
-  }
-  body.ts-on.ts-rail-on.ts-rail-collapsed #ts-rail {
-    transform: translateX(100%);
-    width: 0 !important;
-  }
-  body.ts-on #app-screen {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-  }
+  body.ts-on #ts-sidebar { display: none; }
+  body.ts-on #app-screen { padding-left: 0 !important; padding-right: 0 !important; }
   body.ts-on #app-screen > nav.sticky .tab-btn:not([style*="none"]):not(.hidden),
   body.ts-on #app-screen > nav.sticky #logged-in-name-container,
   body.ts-on #app-screen > nav.sticky #logout-btn, body.ts-on #teacher-header-showcase { display: revert !important; }

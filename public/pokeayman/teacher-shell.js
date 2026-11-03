@@ -41,30 +41,14 @@
   const CHEVRON_LEFT_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>';
   const CHEVRON_RIGHT_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>';
 
-  function syncBackdrop() {
-    let backdrop = $('ts-backdrop');
-    const isMobile = window.matchMedia('(max-width: 900px)').matches;
-    const isRailActive = document.body.classList.contains('ts-rail-on');
-    const anyOpen = (!collapsed) || (!railCollapsed && isRailActive);
-    if (isMobile && anyOpen) {
-      if (!backdrop) {
-        backdrop = document.createElement('div');
-        backdrop.id = 'ts-backdrop';
-        backdrop.className = 'ts-backdrop';
-        backdrop.addEventListener('click', () => {
-          if (!collapsed) toggleSidebar(false);
-          if (!railCollapsed) toggleRail(false);
-        });
-        document.body.appendChild(backdrop);
-      }
-      backdrop.classList.add('visible');
-    } else if (backdrop) {
-      backdrop.classList.remove('visible');
-    }
+  function isDesktopView() {
+    return window.matchMedia('(min-width: 1025px)').matches;
   }
 
   function applySidebar() {
-    document.body.classList.toggle('ts-collapsed', collapsed);
+    const isDesktop = isDesktopView();
+    // Only apply ts-collapsed on desktop view
+    document.body.classList.toggle('ts-collapsed', isDesktop && collapsed);
     const control = $('ts-sidebar-toggle');
     if (control) {
       control.innerHTML = collapsed ? CHEVRON_RIGHT_SVG : CHEVRON_LEFT_SVG;
@@ -73,12 +57,13 @@
       control.title = control.getAttribute('aria-label');
     }
     const side = $('ts-sidebar');
-    if (side) side.inert = collapsed && !window.matchMedia('(max-width: 900px)').matches;
-    syncBackdrop();
+    if (side) side.inert = isDesktop && collapsed;
   }
 
   function applyRail() {
-    document.body.classList.toggle('ts-rail-collapsed', railCollapsed);
+    const isDesktop = isDesktopView();
+    // Only apply ts-rail-collapsed on desktop view
+    document.body.classList.toggle('ts-rail-collapsed', isDesktop && railCollapsed);
     const control = $('ts-rail-toggle');
     if (control) {
       control.innerHTML = railCollapsed ? CHEVRON_LEFT_SVG : CHEVRON_RIGHT_SVG;
@@ -87,11 +72,11 @@
       control.title = control.getAttribute('aria-label');
     }
     const rail = $('ts-rail');
-    if (rail) rail.inert = railCollapsed && !window.matchMedia('(max-width: 900px)').matches;
-    syncBackdrop();
+    if (rail) rail.inert = isDesktop && railCollapsed;
   }
 
   function toggleSidebar(forceOpen) {
+    if (!isDesktopView()) return; // Sidebars only collapse/toggle on desktop view
     const nextOpen = forceOpen !== undefined ? forceOpen : collapsed;
     collapsed = !nextOpen;
     if (!collapsed) {
@@ -107,6 +92,7 @@
   }
 
   function toggleRail(forceOpen) {
+    if (!isDesktopView()) return; // Sidebars only collapse/toggle on desktop view
     const nextOpen = forceOpen !== undefined ? forceOpen : railCollapsed;
     railCollapsed = !nextOpen;
     if (!railCollapsed) {
@@ -222,35 +208,31 @@
     side.id = 'ts-sidebar';
     side.setAttribute('aria-label', 'Teacher navigation');
     side.innerHTML = `
-      <div id="ts-sidebar-inner" class="ts-sidebar-inner">
-        <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile" title="Open teacher profile"><span class="ts-avatar-wrap"><span id="ts-avatar" class="ts-avatar"><span class="ts-avatar-fallback" role="img" aria-label="Teacher avatar loading">🎓</span></span><span id="ts-account-badge" class="ts-account-badge" hidden></span></span><span class="ts-me-info"><strong id="ts-name"></strong><small id="ts-role"></small></span></button></div>
-        <button type="button" class="ts-logout" data-ts="logout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5H4v14h5M14 8l4 4-4 4M8 12h12"/></svg><span>Log out</span></button>
-        <div class="ts-switch-wrap"><button type="button" class="ts-switch" data-ts="switch" aria-haspopup="dialog" aria-expanded="false"><span class="ts-switch-label" id="ts-current-school">Schools &amp; classes</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">⇄</span></button></div>
-        <nav class="ts-nav">
-          <div id="ts-class"><button type="button" class="ts-section-toggle" data-ts-toggle="class" aria-expanded="true" aria-controls="ts-class-content"><span>Classroom</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-class-content">
-          ${CLASS_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-class="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
-          <div id="ts-zone"><button type="button" class="ts-section-toggle" data-ts-toggle="zone" aria-expanded="false" aria-controls="ts-zone-content"><span>Teacher Zone</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-zone-content" hidden>
-          ${ZONE_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-zone="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
-          <div id="ts-admin" hidden><button type="button" class="ts-section-toggle" data-ts-toggle="admin" aria-expanded="false" aria-controls="ts-admin-content"><span>Admin Hub</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-admin-content" hidden>
-          <button type="button" class="ts-item" data-ts="admin-users">Users</button><button type="button" class="ts-item" data-ts="admin-controls">Controls</button><button type="button" class="ts-item" data-ts="admin-analytics">Analytics</button></div></div>
-        </nav>
-      </div>
+      <div class="ts-me"><button type="button" class="ts-me-main" data-ts-zone="profile" title="Open teacher profile"><span class="ts-avatar-wrap"><span id="ts-avatar" class="ts-avatar"><span class="ts-avatar-fallback" role="img" aria-label="Teacher avatar loading">🎓</span></span><span id="ts-account-badge" class="ts-account-badge" hidden></span></span><span class="ts-me-info"><strong id="ts-name"></strong><small id="ts-role"></small></span></button></div>
+      <button type="button" class="ts-logout" data-ts="logout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5H4v14h5M14 8l4 4-4 4M8 12h12"/></svg><span>Log out</span></button>
+      <div class="ts-switch-wrap"><button type="button" class="ts-switch" data-ts="switch" aria-haspopup="dialog" aria-expanded="false"><span class="ts-switch-label" id="ts-current-school">Schools &amp; classes</span><strong id="ts-current">Choose a class</strong><span aria-hidden="true">⇄</span></button></div>
+      <nav class="ts-nav">
+        <div id="ts-class"><button type="button" class="ts-section-toggle" data-ts-toggle="class" aria-expanded="true" aria-controls="ts-class-content"><span>Classroom</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-class-content">
+        ${CLASS_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-class="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
+        <div id="ts-zone"><button type="button" class="ts-section-toggle" data-ts-toggle="zone" aria-expanded="false" aria-controls="ts-zone-content"><span>Teacher Zone</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-zone-content" hidden>
+        ${ZONE_ITEMS.map(([k, i, l]) => `<button type="button" class="ts-item" data-ts-zone="${k}"><span aria-hidden="true">${i}</span>${l}</button>`).join('')}</div></div>
+        <div id="ts-admin" hidden><button type="button" class="ts-section-toggle" data-ts-toggle="admin" aria-expanded="false" aria-controls="ts-admin-content"><span>Admin Hub</span><span class="ts-chevron" aria-hidden="true">›</span></button><div id="ts-admin-content" hidden>
+        <button type="button" class="ts-item" data-ts="admin-users">Users</button><button type="button" class="ts-item" data-ts="admin-controls">Controls</button><button type="button" class="ts-item" data-ts="admin-analytics">Analytics</button></div></div>
+      </nav>
 `;
     const rail = document.createElement('aside');
     rail.id = 'ts-rail';
     rail.setAttribute('aria-label', 'Class tools');
     rail.innerHTML = `
-      <div id="ts-rail-inner" class="ts-rail-inner">
-        <button type="button" class="ts-award-go ts-rail-add" id="ts-rail-add">＋ Add student</button>
-        <section class="ts-card"><h3>Quick Award</h3><p>Give coins to a student instantly</p>
-          <label class="sr-only" for="ts-award-student">Student</label><select id="ts-award-student"></select>
-          <div class="ts-amounts">${[10, 50, 100].map((n) => `<button type="button" data-amt="${n}"${n === 10 ? ' class="on"' : ''}>+${n}</button>`).join('')}</div>
-          <button type="button" class="ts-award-go" id="ts-award-go">Award coins</button></section>
-        <section class="ts-card"><h3>🏆 Top 3 Students</h3><ol id="ts-top3" class="ts-top3"></ol></section>
-        <section class="ts-card ts-gift ts-streak"${isStreakDismissed() ? ' hidden' : ''}><button type="button" class="ts-streak-close" data-ts-streak-close aria-label="Close login streak card" title="Close">×</button><h3>🔥 Login Streak</h3><p id="ts-streak-text">Log in 7 days in a row to unlock a Streak Box</p>
-          <div class="ts-streak-dots" id="ts-streak-dots"></div>
-          <button type="button" class="ts-award-go" id="ts-box-open">🎁 Open Streak Box</button></section>
-      </div>`;
+      <button type="button" class="ts-award-go ts-rail-add" id="ts-rail-add">＋ Add student</button>
+      <section class="ts-card"><h3>Quick Award</h3><p>Give coins to a student instantly</p>
+        <label class="sr-only" for="ts-award-student">Student</label><select id="ts-award-student"></select>
+        <div class="ts-amounts">${[10, 50, 100].map((n) => `<button type="button" data-amt="${n}"${n === 10 ? ' class="on"' : ''}>+${n}</button>`).join('')}</div>
+        <button type="button" class="ts-award-go" id="ts-award-go">Award coins</button></section>
+      <section class="ts-card"><h3>🏆 Top 3 Students</h3><ol id="ts-top3" class="ts-top3"></ol></section>
+      <section class="ts-card ts-gift ts-streak"${isStreakDismissed() ? ' hidden' : ''}><button type="button" class="ts-streak-close" data-ts-streak-close aria-label="Close login streak card" title="Close">×</button><h3>🔥 Login Streak</h3><p id="ts-streak-text">Log in 7 days in a row to unlock a Streak Box</p>
+        <div class="ts-streak-dots" id="ts-streak-dots"></div>
+        <button type="button" class="ts-award-go" id="ts-box-open">🎁 Open Streak Box</button></section>`;
     document.body.append(side, rail);
     rail.addEventListener('click', (e) => {
       const closeBtn = e.target.closest('[data-ts-streak-close]');
@@ -287,9 +269,8 @@
     notifications.className = 'ts-notification-button'; notifications.dataset.ts = 'notifications';
     notifications.setAttribute('aria-label', 'Open notifications'); notifications.title = 'Notifications';
     notifications.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><strong id="ts-notification-count" class="ts-notification-count" aria-live="polite" hidden>0</strong>';
-    const innerSide = side.querySelector('#ts-sidebar-inner') || side;
-    tools.append(innerSide.querySelector('.ts-logout'), theme, notifications);
-    innerSide.insertBefore(tools, innerSide.querySelector('.ts-switch-wrap'));
+    tools.append(side.querySelector('.ts-logout'), theme, notifications);
+    side.insertBefore(tools, side.querySelector('.ts-switch-wrap'));
     theme.addEventListener('click', () => {
       setThemeMode(!bright);
     });

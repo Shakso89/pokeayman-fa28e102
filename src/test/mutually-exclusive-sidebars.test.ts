@@ -1,35 +1,45 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
 describe('Mutually Exclusive Collapsible Sidebars', () => {
   const teacherShellJsPath = path.resolve(__dirname, '../../public/pokeayman/teacher-shell.js');
   const teacherShellCssPath = path.resolve(__dirname, '../../public/pokeayman/teacher-shell.css');
+  const responsiveCssPath = path.resolve(__dirname, '../../public/pokeayman/responsive.css');
+
   const teacherShellJs = fs.readFileSync(teacherShellJsPath, 'utf-8');
   const teacherShellCss = fs.readFileSync(teacherShellCssPath, 'utf-8');
+  const responsiveCss = fs.readFileSync(responsiveCssPath, 'utf-8');
 
-  it('defines mutually exclusive toggleSidebar and toggleRail logic', () => {
-    // Both toggle functions must be defined and enforce mutual exclusivity
+  it('defines mutually exclusive toggleSidebar and toggleRail logic for desktop', () => {
     expect(teacherShellJs).toContain('function toggleSidebar');
     expect(teacherShellJs).toContain('function toggleRail');
     expect(teacherShellJs).toContain('railCollapsed = true');
     expect(teacherShellJs).toContain('collapsed = true');
+    expect(teacherShellJs).toContain('isDesktopView');
   });
 
-  it('ensures DOM includes inner fixed-width wrappers to avoid text squishing during transitions', () => {
-    expect(teacherShellJs).toContain('id="ts-sidebar-inner"');
-    expect(teacherShellJs).toContain('class="ts-sidebar-inner"');
-    expect(teacherShellJs).toContain('id="ts-rail-inner"');
-    expect(teacherShellJs).toContain('class="ts-rail-inner"');
+  it('ensures sidebar collapsing is strictly restricted to desktop vision (min-width: 1025px)', () => {
+    // Desktop only media query
+    expect(teacherShellCss).toContain('@media (min-width: 1025px)');
+    // Toggle buttons hidden on tablet/mobile
+    expect(teacherShellCss).toContain('@media (max-width: 1024px)');
+    expect(teacherShellCss).toMatch(/@media \(max-width: 1024px\)[\s\S]*?#ts-sidebar-toggle,[\s\S]*?#ts-rail-toggle[\s\S]*?display:\s*none !important/);
   });
 
-  it('contains polished CSS transitions with cubic-bezier(0.4, 0, 0.2, 1)', () => {
+  it('preserves mobile & tablet navigation in responsive.css without collision', () => {
+    // Ensures mobile bottom navigation bar and sub-nav strip rules exist
+    expect(responsiveCss).toContain('#ts-bottom');
+    expect(responsiveCss).toContain('html body.ts-on #ts-sidebar > .ts-nav');
+    expect(responsiveCss).toContain('@media (max-width: 1024px)');
+  });
+
+  it('contains polished desktop CSS transitions with cubic-bezier(0.4, 0, 0.2, 1)', () => {
     expect(teacherShellCss).toContain('cubic-bezier(0.4, 0, 0.2, 1)');
-    expect(teacherShellCss).toContain('.ts-sidebar-inner');
-    expect(teacherShellCss).toContain('.ts-rail-inner');
     expect(teacherShellCss).toContain('#ts-sidebar-toggle');
     expect(teacherShellCss).toContain('#ts-rail-toggle');
     expect(teacherShellCss).toContain('transition: padding');
+    expect(teacherShellCss).toContain('body.ts-on #ts-sidebar > *');
   });
 
   it('simulates mutually exclusive sidebar state transitions', () => {
