@@ -1278,7 +1278,7 @@
       if (prevBtn) prevBtn.disabled = activeIndex === 0;
       if (nextBtn) nextBtn.disabled = activeIndex === activeGames.length - 1;
       if (proceedLabel) {
-        proceedLabel.textContent = locked ? `Unlock ${currentGame.name} (Pro)` : `Select ${currentGame.name}`;
+        proceedLabel.textContent = locked ? `Unlock ${currentGame.name} (Pro)` : `Select ${currentGame.name} →`;
       }
 
       stage.querySelectorAll('.game-deck-card-wrapper').forEach((cardEl, index) => {
@@ -1286,18 +1286,18 @@
         const absOffset = Math.abs(offset);
         const isCenter = offset === 0;
 
-        // Fanning Math (matching exact formula requested)
+        // Fanning Math (smooth and always interactive)
         const translateX = offset * 130;
         const translateY = absOffset * 35;
         const rotateZ = offset * 10;
         const scale = isCenter ? 1.15 : Math.max(0.85, 1 - absOffset * 0.05);
         const zIndex = 50 - absOffset;
-        const opacity = absOffset > 2 ? 0 : (absOffset === 2 ? 0.75 : 1);
+        const opacity = absOffset > 3 ? 0 : (absOffset === 3 ? 0.35 : (absOffset === 2 ? 0.75 : 1));
 
         cardEl.style.transform = `translateX(${translateX}px) translateY(${translateY}px) scale(${scale}) rotateZ(${rotateZ}deg)`;
         cardEl.style.zIndex = String(zIndex);
         cardEl.style.opacity = String(opacity);
-        cardEl.style.pointerEvents = absOffset > 2 ? 'none' : 'auto';
+        cardEl.style.pointerEvents = 'auto';
 
         const inner = cardEl.querySelector('.game-deck-inner-card');
         if (inner) {
@@ -1350,23 +1350,39 @@
       </div>`;
     }).join('');
 
+    function launchGameByIndex(targetIndex) {
+      const g = activeGames[targetIndex];
+      if (!g) return;
+      const locked = Boolean(g.proOnly && !window.canUseProGames?.());
+      if (locked) {
+        if (typeof window.requireProGame === 'function') window.requireProGame(g.name);
+        else toast(g.name + ' requires Pro access');
+      } else {
+        window.selectGameToPlay(g.fn);
+      }
+    }
+
     stage.querySelectorAll('.game-deck-card-wrapper').forEach((card) => {
       card.addEventListener('click', () => {
         const idx = parseInt(card.dataset.gameIndex, 10);
         if (idx === activeIndex) {
-          const g = activeGames[activeIndex];
-          if (g) {
-            const locked = Boolean(g.proOnly && !window.canUseProGames?.());
-            if (locked) {
-              if (typeof window.requireProGame === 'function') window.requireProGame(g.name);
-              else toast(g.name + ' requires Pro access');
-            } else {
-              window.selectGameToPlay(g.fn);
-            }
-          }
+          launchGameByIndex(activeIndex);
         } else {
           activeIndex = idx;
           update();
+        }
+      });
+
+      card.addEventListener('dblclick', () => {
+        const idx = parseInt(card.dataset.gameIndex, 10);
+        launchGameByIndex(idx);
+      });
+
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const idx = parseInt(card.dataset.gameIndex, 10);
+          launchGameByIndex(idx);
         }
       });
     });
@@ -1386,14 +1402,23 @@
     });
 
     proceedBtn?.addEventListener('click', () => {
-      const g = activeGames[activeIndex];
-      if (!g) return;
-      const locked = Boolean(g.proOnly && !window.canUseProGames?.());
-      if (locked) {
-        if (typeof window.requireProGame === 'function') window.requireProGame(g.name);
-        else toast(g.name + ' requires Pro access');
-      } else {
-        window.selectGameToPlay(g.fn);
+      launchGameByIndex(activeIndex);
+    });
+
+    // Keyboard navigation on stage
+    root.tabIndex = 0;
+    root.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' && activeIndex > 0) {
+        e.preventDefault();
+        activeIndex--;
+        update();
+      } else if (e.key === 'ArrowRight' && activeIndex < activeGames.length - 1) {
+        e.preventDefault();
+        activeIndex++;
+        update();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        launchGameByIndex(activeIndex);
       }
     });
 
@@ -1590,28 +1615,43 @@
     document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
     selector.querySelectorAll('.ga-continue').forEach(el => el.remove());
 
-    const bar = document.createElement('div');
-    bar.className = 'ga-continue-bar sticky bottom-0 left-0 right-0 z-20 mt-4 p-4 bg-[#0b1120]/90 backdrop-blur-md border-t border-slate-800 flex items-center justify-between rounded-b-2xl';
+    if (!window.pendingChosenGame && typeof GAMES !== 'undefined' && GAMES.length) {
+      window.pendingChosenGame = GAMES[0];
+    }
 
-    const hint = document.createElement('span');
-    hint.className = 'text-xs text-slate-400 ga-continue-hint';
-    hint.textContent = count ? 'Ready to proceed' : 'Select a vocabulary list to proceed';
+    const totalWords = (typeof getGameWords === 'function' && Array.isArray(selectedGameList)) ? getGameWords(selectedGameList).length : 0;
+    const gameName = window.pendingChosenGame ? window.pendingChosenGame.name : 'Game';
+
+    const bar = document.createElement('div');
+    bar.className = 'ga-continue-bar sticky bottom-0 left-0 right-0 z-50 mt-6 p-4 sm:p-5 bg-[#0b1120]/95 backdrop-blur-xl border border-amber-400/40 shadow-[0_10px_35px_rgba(0,0,0,0.8),0_0_25px_rgba(251,191,36,0.2)] flex items-center justify-between rounded-2xl';
+
+    const hint = document.createElement('div');
+    hint.className = 'text-xs text-slate-400 ga-continue-hint flex items-center gap-2';
+    if (count > 0) {
+      hint.innerHTML = `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400 text-slate-950 text-xs font-black shadow-sm">✓</span><span class="text-xs sm:text-sm font-bold text-white">${count} list${count > 1 ? 's' : ''} selected</span><span class="text-xs text-amber-300/90 font-semibold">(${totalWords} words total)</span>`;
+    } else {
+      hint.innerHTML = `<span class="text-xs text-slate-400 font-medium">Select one or more vocabulary lists to proceed</span>`;
+    }
 
     const next = document.createElement('button');
     next.type = 'button';
     next.disabled = !count;
-    const gameName = window.pendingChosenGame ? window.pendingChosenGame.name : 'Game';
-    next.className = `ga-continue px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition active:scale-95 ${
+    next.className = `ga-continue px-6 py-3 rounded-xl font-black text-sm flex items-center gap-2.5 transition active:scale-95 cursor-pointer disabled:cursor-not-allowed ${
       count
-        ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
-        : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/50'
+        ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.35)]'
+        : 'bg-slate-800 text-slate-500 border border-slate-700/50 opacity-60'
     }`;
-    next.innerHTML = `<span>Choose a vocabulary list to play ${esc(gameName)} →</span>`;
-    next.setAttribute('aria-label', count ? `Next: Game Settings for ${gameName}` : `Choose a vocabulary list to play ${gameName}`);
+    if (count > 0) {
+      next.innerHTML = `<span>Next: ${esc(gameName)} Setup</span><svg class="w-4 h-4 fill-none stroke-current stroke-[2.5]" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
+    } else {
+      next.innerHTML = `<span>Select a List to Continue</span>`;
+    }
+    next.setAttribute('aria-label', count ? `Next: Game Settings for ${gameName}` : `Select a vocabulary list to play ${gameName}`);
     next.addEventListener('click', () => {
       if (!selectedGameList.length) { toast('Please choose at least one vocabulary list'); return; }
       if (getGameWords(selectedGameList).length < 2) { toast('Choose lists with at least two words.'); return; }
-      window.gaLaunchChosenGame(window.pendingChosenGame, selectedGameList);
+      const targetGame = window.pendingChosenGame || (typeof GAMES !== 'undefined' ? GAMES[0] : null);
+      window.gaLaunchChosenGame(targetGame, selectedGameList);
     });
 
     bar.append(hint, next);
