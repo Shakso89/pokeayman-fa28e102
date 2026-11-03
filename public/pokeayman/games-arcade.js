@@ -1124,20 +1124,17 @@
         data-ga-theme-choice="${esc(th.id)}"
         role="radio"
         aria-checked="${isSelected}"
-        class="ga-theme-card relative flex-none w-[160px] snap-start rounded-2xl border p-2 flex flex-col gap-2 text-left transition-all duration-300 cursor-pointer ${
+        class="ga-theme-card relative flex-none w-[138px] snap-center rounded-2xl border p-2 flex flex-col gap-1.5 text-left transition-all duration-300 cursor-pointer ${
           isSelected
-            ? 'is-selected bg-slate-800 border-amber-400 ring-1 ring-amber-400/50 shadow-lg'
-            : 'bg-slate-900/40 border-slate-800 hover:bg-slate-800/80'
+            ? 'is-selected bg-slate-800 border-amber-400 ring-1 ring-amber-400/50 shadow-lg scale-[1.02]'
+            : 'bg-slate-900/40 border-slate-800 hover:bg-slate-800/80 hover:border-slate-700 opacity-80 hover:opacity-100'
         }"
       >
-        <div class="ga-theme-thumb-box relative rounded-xl overflow-hidden h-24 bg-slate-950 border border-slate-800/50 flex items-center justify-center">
+        <div class="ga-theme-thumb-box relative rounded-xl overflow-hidden h-20 bg-slate-950 border border-slate-800/50 flex items-center justify-center">
           ${previewContent}
-          ${isSelected ? `<div class="absolute bottom-2 right-2 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center text-slate-950 shadow-md">
-            <svg class="w-3.5 h-3.5 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>` : ''}
         </div>
-        <div class="px-1 pb-1">
-          <div class="text-[11px] font-bold text-white truncate">${esc(th.name)}</div>
+        <div class="px-0.5 pb-0.5">
+          <div class="text-[11px] font-bold ${isSelected ? 'text-amber-300' : 'text-white'} truncate">${esc(th.name)}</div>
         </div>
       </button>`;
     }).join('');
@@ -2741,27 +2738,111 @@
     setupRight.appendChild(matchRulesSection);
 
     if (window.gaIsTeacherThemeEnabled()) {
-      const selectedThemeId = window.gaGetTheme();
+      let currentThemeId = window.gaGetTheme();
+      let currentThemeIndex = GAME_THEMES.findIndex(t => t.id === currentThemeId);
+      if (currentThemeIndex === -1) currentThemeIndex = 0;
+      currentThemeId = GAME_THEMES[currentThemeIndex].id;
+
       const themeSection = document.createElement('div');
-      themeSection.className = 'ga-theme-picker flex flex-col gap-4';
+      themeSection.className = 'ga-theme-picker flex flex-col gap-3';
       themeSection.setAttribute('aria-label', 'Visual style');
       themeSection.innerHTML = `
-        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Visual Style</h3>
-        <div class="relative w-full">
-          <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-950 to-transparent z-10 pointer-events-none"></div>
-          <div class="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-950 to-transparent z-10 pointer-events-none"></div>
-          <div class="ga-theme-filmstrip flex gap-3 overflow-x-auto pb-4 pt-1 px-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none]" role="radiogroup" aria-label="Choose visual style">
-            ${renderThemeFilmstripMarkup(selectedThemeId)}
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Visual Style</h3>
+            <span class="ga-theme-badge text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/30">${esc(GAME_THEMES[currentThemeIndex].name)} (${currentThemeIndex + 1}/${GAME_THEMES.length})</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button type="button" class="ga-theme-prev p-1.5 rounded-lg border border-slate-700/60 bg-slate-900/60 text-slate-300 hover:text-white hover:bg-slate-800 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer" aria-label="Previous theme" title="Previous theme">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <button type="button" class="ga-theme-next p-1.5 rounded-lg border border-slate-700/60 bg-slate-900/60 text-slate-300 hover:text-white hover:bg-slate-800 transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer" aria-label="Next theme" title="Next theme">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+        <div class="relative w-full group">
+          <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-950 via-slate-950/40 to-transparent z-10 pointer-events-none"></div>
+          <div class="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-slate-950 via-slate-950/40 to-transparent z-10 pointer-events-none"></div>
+          <div class="ga-theme-filmstrip flex gap-3 overflow-x-auto pb-3 pt-1 px-2 scroll-smooth snap-x snap-mandatory [scrollbar-width:none]" role="radiogroup" aria-label="Choose visual style">
+            ${renderThemeFilmstripMarkup(currentThemeId)}
           </div>
         </div>
       `;
-      themeSection.addEventListener('click', event => {
-        const card = event.target.closest('[data-ga-theme-choice]');
-        if (!card) return;
-        window.gaSetTheme(card.dataset.gaThemeChoice);
-        const filmstrip = themeSection.querySelector('.ga-theme-filmstrip');
-        if (filmstrip) filmstrip.innerHTML = renderThemeFilmstripMarkup(card.dataset.gaThemeChoice);
+
+      const filmstrip = themeSection.querySelector('.ga-theme-filmstrip');
+      const prevBtn = themeSection.querySelector('.ga-theme-prev');
+      const nextBtn = themeSection.querySelector('.ga-theme-next');
+      const badge = themeSection.querySelector('.ga-theme-badge');
+
+      function syncTheme(index, scroll = true) {
+        if (index < 0) index = 0;
+        if (index >= GAME_THEMES.length) index = GAME_THEMES.length - 1;
+        currentThemeIndex = index;
+        const targetTheme = GAME_THEMES[currentThemeIndex];
+        currentThemeId = targetTheme.id;
+        window.gaSetTheme(currentThemeId);
+
+        if (badge) badge.textContent = `${targetTheme.name} (${currentThemeIndex + 1}/${GAME_THEMES.length})`;
+        if (prevBtn) prevBtn.disabled = currentThemeIndex === 0;
+        if (nextBtn) nextBtn.disabled = currentThemeIndex === GAME_THEMES.length - 1;
+
+        if (filmstrip) {
+          filmstrip.innerHTML = renderThemeFilmstripMarkup(currentThemeId);
+          if (scroll) {
+            const activeCard = filmstrip.querySelector(`[data-ga-theme-choice="${currentThemeId}"]`);
+            if (activeCard) {
+              activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+          }
+        }
+      }
+
+      prevBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (currentThemeIndex > 0) syncTheme(currentThemeIndex - 1);
       });
+
+      nextBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (currentThemeIndex < GAME_THEMES.length - 1) syncTheme(currentThemeIndex + 1);
+      });
+
+      // Mouse wheel support - spin like a wheel through themes
+      let lastWheelTime = 0;
+      filmstrip?.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const now = Date.now();
+        if (now - lastWheelTime < 160) return;
+        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        if (Math.abs(delta) < 5) return;
+        lastWheelTime = now;
+        if (delta > 0 && currentThemeIndex < GAME_THEMES.length - 1) {
+          syncTheme(currentThemeIndex + 1);
+        } else if (delta < 0 && currentThemeIndex > 0) {
+          syncTheme(currentThemeIndex - 1);
+        }
+      }, { passive: false });
+
+      filmstrip?.addEventListener('click', (e) => {
+        const card = e.target.closest('[data-ga-theme-choice]');
+        if (!card) return;
+        const choiceId = card.dataset.gaThemeChoice;
+        const newIdx = GAME_THEMES.findIndex(t => t.id === choiceId);
+        if (newIdx !== -1) syncTheme(newIdx);
+      });
+
+      // Initial scroll to selected theme
+      setTimeout(() => {
+        const activeCard = filmstrip?.querySelector(`[data-ga-theme-choice="${currentThemeId}"]`);
+        activeCard?.scrollIntoView({ behavior: 'instant', inline: 'center', block: 'nearest' });
+        if (prevBtn) prevBtn.disabled = currentThemeIndex === 0;
+        if (nextBtn) nextBtn.disabled = currentThemeIndex === GAME_THEMES.length - 1;
+      }, 50);
+
       setupRight.appendChild(themeSection);
     }
 
