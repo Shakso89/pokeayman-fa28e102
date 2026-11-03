@@ -512,12 +512,19 @@
             }
             btn.style.alignSelf = 'stretch';
             btn.style.justifySelf = 'center';
+            btn.style.height = '100%';
+            btn.style.display = 'flex';
+            btn.style.flexDirection = 'column';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'center';
 
             const bar = document.createElement('span');
             bar.className = 'dots-line-v-bar';
-            const barHeight = N >= 5 ? '30px' : (N === 4 ? '38px' : '48px');
-            bar.style.height = barHeight;
-            bar.style.minHeight = barHeight;
+            bar.style.display = 'block';
+            bar.style.width = '8px';
+            bar.style.height = '100%';
+            bar.style.minHeight = '100%';
+            bar.style.flex = '1 1 100%';
             if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
             else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
             else if (phase === 'DRAW_LINE') bar.classList.add(turnClass);

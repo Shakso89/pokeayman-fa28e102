@@ -282,37 +282,38 @@
   box-sizing: border-box;
 }
 
-/* Vertical Lines (Between vertical dots) - Full clickable height and visible bar */
+/* Vertical Lines (Between vertical dots) - Full line matching horizontal */
 .dots-line-v {
   width: 24px;
   min-width: 24px;
   height: 100%;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  justify-self: center;
-  background: transparent;
-  border: none;
-  padding: 0;
+  min-height: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: stretch !important;
+  justify-self: center !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
   cursor: pointer;
   position: relative;
   box-sizing: border-box;
 }
 
 .dots-line-v-bar {
-  display: block;
-  width: 8px;
-  min-width: 8px;
-  height: 38px;
-  min-height: 28px;
-  max-height: 52px;
-  border-radius: 4px;
+  display: block !important;
+  width: 8px !important;
+  min-width: 8px !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  flex: 1 1 100% !important;
+  border-radius: 4px !important;
   background: rgba(71, 85, 105, 0.65);
   transition: all 0.2s ease;
   box-sizing: border-box;
-  margin: auto;
+  margin: 0 auto !important;
 }
 
 /* Drawn Lines */
