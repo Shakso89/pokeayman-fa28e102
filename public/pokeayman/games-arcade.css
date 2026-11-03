@@ -7812,3 +7812,39 @@ html body.ts-bright .ga-lobby #game-players-cancel {
   border-color: #cbd5e1 !important;
   color: #334155 !important;
 }
+
+
+/* Responsive mobile fixes for game setup lobby */
+.ga-players-bar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.625rem !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 600px) {
+  .ga-lobby {
+    padding: 1rem 0.85rem !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+  .ga-players-bar {
+    gap: 0.5rem !important;
+  }
+  .ga-players-bar > :last-child {
+    margin-left: auto !important;
+  }
+  .ga-lobby #game-player-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+  .ga-lineup-stage {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.5rem !important;
+  }
+}

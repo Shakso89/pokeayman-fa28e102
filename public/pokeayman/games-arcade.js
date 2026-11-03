@@ -2063,23 +2063,23 @@
     const players = document.createElement('section');
     players.className = 'ga-players-section flex-1 flex flex-col gap-4';
     const bar = document.createElement('div');
-    bar.className = 'flex items-center justify-between';
+    bar.className = 'ga-players-bar flex flex-wrap items-center justify-between gap-2.5 w-full';
 
     const maxAllowed = isSoloGame ? 1 : (isDotsAndBoxes ? 2 : 4);
     bar.innerHTML = `
-      <div class="flex items-center gap-2">
-        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+      <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
+        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
           Select Players
         </h3>
-        <span class="ga-player-count text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/30" aria-live="polite">0 / ${maxAllowed} selected</span>
-        <span class="text-[11px] text-slate-500 font-medium">· ${checks.length} in class</span>
+        <span class="ga-player-count text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2 sm:px-2.5 py-0.5 rounded-full border border-amber-400/30 whitespace-nowrap" aria-live="polite">0 / ${maxAllowed} selected</span>
+        <span class="text-[11px] text-slate-500 font-medium whitespace-nowrap">· ${checks.length} in class</span>
       </div>
-      <div class="flex items-center gap-2">
-        <button type="button" data-q="clear" class="ga-pick-clear-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs font-bold cursor-pointer">
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" data-q="clear" class="ga-pick-clear-btn flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs font-bold cursor-pointer">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           <span>Clear</span>
         </button>
-        <button type="button" data-q="random" class="ga-pick-random-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs font-bold cursor-pointer">
+        <button type="button" data-q="random" class="ga-pick-random-btn flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs font-bold cursor-pointer">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.5-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></svg>
           <span>Random</span>
         </button>
@@ -2088,7 +2088,7 @@
 
     // Active slots
     const lineupStage = document.createElement('div');
-    lineupStage.className = `grid gap-3 ${maxAllowed === 2 ? 'grid-cols-2' : (maxAllowed === 1 ? 'grid-cols-1' : 'grid-cols-4')}`;
+    lineupStage.className = `ga-lineup-stage grid gap-2 sm:gap-3 ${maxAllowed === 2 ? 'grid-cols-2' : (maxAllowed === 1 ? 'grid-cols-1' : 'grid-cols-4')}`;
 
     const renderLineup = () => {
       const checkedBoxes = checks.filter(c => c.checked);
@@ -2238,7 +2238,7 @@
         set(q === 'random' ? shuffled.slice(0, maxAllowed) : []);
       }
     });
-    list.className = 'grid grid-cols-4 gap-3 mt-2 overflow-y-auto max-h-[240px] pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]';
+    list.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 mt-2 overflow-y-auto max-h-[240px] pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]';
     list.before(players);
     players.append(bar, lineupStage, list);
     checks.forEach(c => c.addEventListener('change', () => {
