@@ -8833,7 +8833,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const game = GAMES.find(g => g.fn === resolvedFnName);
     modal.classList.add('ga-lobby');
 
-    // 1. Clean Header (game title on left, subtle circular close button on right)
+    document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
     const existingOldClose = modal.querySelector('.ga-lobby-close, .ga-lobby-close-btn');
     if (existingOldClose) existingOldClose.remove();
 
@@ -9053,7 +9053,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     list.className = 'grid grid-cols-4 gap-3 mt-2 overflow-y-auto max-h-[240px] pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]';
     list.before(players);
     players.append(bar, lineupStage, list);
-    checks.forEach(c => c.addEventListener('change', update));
+    checks.forEach(c => c.addEventListener('change', () => {
+      refresh?.();
+      update();
+    }));
 
     const existingScoreInput = modal.querySelector('#shared-winning-score');
     const isScrambleOrFindMe = resolvedFnName === 'chooseScrambleWordCount' || resolvedFnName === 'chooseFindMeScore' || (window.pendingChosenGame && (window.pendingChosenGame.fn === 'chooseScrambleWordCount' || window.pendingChosenGame.fn === 'chooseFindMeScore'));
@@ -9576,10 +9579,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const oldSettings = modal.querySelector('.game-settings-grid');
     if (oldSettings) oldSettings.remove();
 
-    if (p && p.parentElement === root) {
-      p.after(setupLayout);
+    if (error && error.parentElement === root) {
+      error.before(setupLayout);
+    } else if (footer && footer.parentElement === root) {
+      footer.before(setupLayout);
     } else {
-      root.prepend(setupLayout);
+      root.appendChild(setupLayout);
     }
 
     footer.className = 'ga-lobby-footer mt-6 flex justify-between items-center pt-6 border-t border-slate-800/80 w-full';
