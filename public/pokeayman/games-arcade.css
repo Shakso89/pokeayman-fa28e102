@@ -347,19 +347,20 @@
 
 /* List → arcade → edge-to-edge play. All stage colours follow the shared theme. */
 body { --ga-stage-bg: radial-gradient(circle at center, #111a2e 0%, #080d18 70%, #04070d 100%); --ga-stage-surface: var(--ts-surface, #131c2e); --ga-stage-ink: var(--ts-ink, #f5f7ff); --ga-stage-muted: var(--ts-muted, #a5b0cc); --ga-stage-line: var(--ts-border, #344058); --ga-stage-yellow: var(--ts-yellow, #ffcb05); --ga-stage-red: var(--ts-red, #ff5a5f); --ga-stage-chip: var(--ts-chip, #202b42); --ga-stage-action-ink: var(--ts-action-ink, #111827); --ga-stage-blue: var(--ts-blue, #4fa3ff); }
-/* Sticky bottom navigation bar for vocabulary list selection */
+/* Fixed bottom navigation bar for vocabulary list selection */
 .ga-continue-bar {
-  position: sticky !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 50 !important;
-  margin-top: 1.5rem !important;
-  padding: 1rem 1.25rem !important;
-  background: rgba(11, 17, 32, 0.95) !important;
-  border: 1px solid rgba(251, 191, 36, 0.35) !important;
-  border-radius: 1rem !important;
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.8), 0 0 20px rgba(251, 191, 36, 0.15) !important;
+  position: fixed !important;
+  bottom: 1.25rem !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(calc(100% - 2rem), 56rem) !important;
+  z-index: 99999 !important;
+  margin-top: 0 !important;
+  padding: 1rem 1.5rem !important;
+  background: rgba(11, 17, 32, 0.96) !important;
+  border: 1.5px solid rgba(251, 191, 36, 0.6) !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9), 0 0 25px rgba(251, 191, 36, 0.25) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   display: flex !important;
@@ -376,8 +377,11 @@ body { --ga-stage-bg: radial-gradient(circle at center, #111a2e 0%, #080d18 70%,
 }
 
 .ga-vocab-scroll-area {
-  max-height: 58vh;
-  overflow-y: auto;
+  max-height: calc(100vh - 280px) !important;
+  min-height: 280px !important;
+  overflow-y: auto !important;
+  padding-bottom: 6rem !important;
+}
   padding-right: 0.25rem;
   scrollbar-width: thin;
   scrollbar-color: rgba(251, 191, 36, 0.4) rgba(15, 23, 42, 0.6);
