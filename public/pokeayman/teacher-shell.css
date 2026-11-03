@@ -1,6 +1,8 @@
 /* Teacher 3-column shell (sidebar + content + rail). Active only with body.ts-on. */
 :root {
-  --ts-w: 248px; --ts-rail: 300px;
+  --ts-w: 280px; --ts-rail: 320px;
+  --ts-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ts-duration: 0.3s;
   --ts-bg: oklch(0.185 0.029 263);
   --ts-surface: oklch(0.23 0.035 263); --ts-ink: oklch(0.98 0.01 265); --ts-muted: oklch(0.78 0.04 265);
   --ts-yellow: oklch(0.86 0.18 91); --ts-red: oklch(0.61 0.21 29); --ts-deep: oklch(0.185 0.029 263);
@@ -11,31 +13,216 @@
   --ts-blue: oklch(0.55 0.19 255); --ts-pink: oklch(0.95 0.035 10); --ts-mint: oklch(0.95 0.045 167);
 }
 #ts-sidebar, #ts-rail { display: none; }
-#ts-sidebar-toggle { display: none; }
+#ts-sidebar-toggle, #ts-rail-toggle { display: none; }
 body.ga-playing #ts-sidebar,
 body.ga-playing #ts-rail,
-body.ga-playing #ts-sidebar-toggle {
+body.ga-playing #ts-sidebar-toggle,
+body.ga-playing #ts-rail-toggle {
   display: none !important;
 }
-@media (min-width: 901px) {
-  body.ts-on #ts-sidebar-toggle { display: grid; place-items: center; position: fixed; top: 16px; left: calc(var(--ts-w) - 14px); z-index: 60; width: 30px; height: 34px; border: 1px solid var(--ts-border); border-radius: 6px; background: var(--ts-surface); color: var(--ts-ink); font-size: 24px; cursor: pointer; }
-  body.ts-on.ts-collapsed #ts-sidebar { display: none; }
-  body.ts-on.ts-collapsed #app-screen { padding-left: 0 !important; }
-  body.ts-on.ts-collapsed #ts-sidebar-toggle { left: 12px; }
-  body.ts-on.ts-collapsed #app-screen > header { padding-left: 42px; }
-  body.ts-on #ts-sidebar-toggle:focus-visible { outline: 2px solid var(--ts-yellow); outline-offset: 3px; }
+
+/* Sidebar & Rail Inner Fixed-Width Wrappers: Prevents text squishing during transitions */
+.ts-sidebar-inner {
+  width: var(--ts-w);
+  min-width: var(--ts-w);
+  max-width: var(--ts-w);
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
+
+.ts-rail-inner {
+  width: var(--ts-rail);
+  min-width: var(--ts-rail);
+  max-width: var(--ts-rail);
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Left Sidebar Base */
 body.ts-on #ts-sidebar {
-  display: flex; flex-direction: column; gap: 14px; position: fixed; inset: 0 auto 0 0; width: var(--ts-w);
-  padding: 18px 14px; z-index: 40; background: var(--ts-bg); border-right: 1px solid var(--ts-border);
-  backdrop-filter: blur(14px); color: var(--ts-ink); font-family: 'Outfit', sans-serif; overflow-y: auto;
+  display: flex;
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--ts-w);
+  height: 100vh;
+  padding: 0;
+  z-index: 40;
+  background: var(--ts-bg);
+  border-right: 1px solid var(--ts-border);
+  backdrop-filter: blur(14px);
+  color: var(--ts-ink);
+  font-family: 'Outfit', sans-serif;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: width var(--ts-duration) var(--ts-ease),
+              transform var(--ts-duration) var(--ts-ease),
+              border-color var(--ts-duration) var(--ts-ease);
 }
+
+/* Right Rail Base */
 body.ts-on.ts-rail-on #ts-rail {
-  display: flex; flex-direction: column; gap: 14px; position: fixed; inset: 0 0 0 auto; width: var(--ts-rail);
-  padding: 18px 14px; z-index: 40; overflow-y: auto; font-family: 'Outfit', sans-serif; color: var(--ts-ink);
+  display: flex;
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: var(--ts-rail);
+  height: 100vh;
+  padding: 0;
+  z-index: 40;
+  background: var(--ts-bg);
+  border-left: 1px solid var(--ts-border);
+  backdrop-filter: blur(14px);
+  color: var(--ts-ink);
+  font-family: 'Outfit', sans-serif;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: width var(--ts-duration) var(--ts-ease),
+              transform var(--ts-duration) var(--ts-ease),
+              border-color var(--ts-duration) var(--ts-ease);
 }
-body.ts-on #app-screen { padding-left: var(--ts-w); }
-body.ts-on.ts-rail-on #app-screen { padding-right: var(--ts-rail); }
+
+/* Left Toggle Button (Pill attached to edge) */
+body.ts-on #ts-sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 24px;
+  left: calc(var(--ts-w) - 13px);
+  z-index: 50;
+  width: 26px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #334155;
+  border-radius: 9999px;
+  background: #1e293b;
+  color: #94a3b8;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: left var(--ts-duration) var(--ts-ease),
+              background var(--ts-duration) var(--ts-ease),
+              color var(--ts-duration) var(--ts-ease),
+              border-radius var(--ts-duration) var(--ts-ease),
+              border var(--ts-duration) var(--ts-ease),
+              box-shadow var(--ts-duration) var(--ts-ease);
+}
+body.ts-on #ts-sidebar-toggle:hover {
+  background: #334155;
+  color: #ffffff;
+  border-color: #475569;
+}
+body.ts-on #ts-sidebar-toggle:focus-visible {
+  outline: 2px solid var(--ts-yellow);
+  outline-offset: 2px;
+}
+
+/* Right Toggle Button (Pill attached to edge) */
+body.ts-on.ts-rail-on #ts-rail-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 24px;
+  right: calc(var(--ts-rail) - 13px);
+  z-index: 50;
+  width: 26px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #334155;
+  border-radius: 9999px;
+  background: #1e293b;
+  color: #94a3b8;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: right var(--ts-duration) var(--ts-ease),
+              background var(--ts-duration) var(--ts-ease),
+              color var(--ts-duration) var(--ts-ease),
+              border-radius var(--ts-duration) var(--ts-ease),
+              border var(--ts-duration) var(--ts-ease),
+              box-shadow var(--ts-duration) var(--ts-ease);
+}
+body.ts-on.ts-rail-on #ts-rail-toggle:hover {
+  background: #334155;
+  color: #ffffff;
+  border-color: #475569;
+}
+body.ts-on.ts-rail-on #ts-rail-toggle:focus-visible {
+  outline: 2px solid var(--ts-yellow);
+  outline-offset: 2px;
+}
+
+/* Collapsed Left Sidebar state */
+body.ts-on.ts-collapsed #ts-sidebar {
+  width: 0 !important;
+  border-right-color: transparent !important;
+  pointer-events: none;
+}
+body.ts-on.ts-collapsed #ts-sidebar-toggle {
+  left: 0px !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-left: 0 !important;
+}
+
+/* Collapsed Right Rail state */
+body.ts-on.ts-rail-on.ts-rail-collapsed #ts-rail {
+  width: 0 !important;
+  border-left-color: transparent !important;
+  pointer-events: none;
+}
+body.ts-on.ts-rail-on.ts-rail-collapsed #ts-rail-toggle {
+  right: 0px !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  border-right: 0 !important;
+}
+
+/* Smooth padding transition for Center Content Area (#app-screen) */
+body.ts-on #app-screen {
+  padding-left: var(--ts-w);
+  padding-right: 0;
+  box-sizing: border-box;
+  transition: padding var(--ts-duration) var(--ts-ease);
+}
+body.ts-on.ts-collapsed #app-screen {
+  padding-left: 38px !important;
+}
+body.ts-on.ts-rail-on #app-screen {
+  padding-right: var(--ts-rail);
+}
+body.ts-on.ts-rail-on.ts-rail-collapsed #app-screen {
+  padding-right: 38px !important;
+}
+
+/* Mobile backdrop dimming overlay */
+#ts-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 15, 25, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 35;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ts-duration) var(--ts-ease);
+}
+#ts-backdrop.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (min-width: 901px) {
+  #ts-backdrop { display: none !important; }
+}
 body.ts-on #app-screen > nav.sticky .tab-btn,
 body.ts-on #app-screen > nav.sticky #logged-in-name-container,
 body.ts-on #app-screen > nav.sticky #logout-btn,
@@ -114,27 +301,50 @@ body.ts-on #ts-sidebar-tools #ts-theme-toggle .ts-theme-icon { display: block; f
 .ts-top3 .m3 .ts-medal { background: linear-gradient(135deg, #f0b58a, #a2582a); }
 .ts-empty { color: var(--ts-muted); font-size: 13px; }
 
-#ts-rail-toggle { display: none; }
-@media (min-width: 1281px) {
-  body.ts-on.ts-rail-on #ts-rail-toggle { display: grid; place-items: center; position: fixed; top: 16px; right: 12px; z-index: 60; width: 30px; height: 34px; border: 1px solid var(--ts-border); border-radius: 6px; background: var(--ts-surface); color: var(--ts-ink); font-size: 24px; cursor: pointer; }
-  body.ts-on.ts-rail-on #ts-rail { padding-top: 64px; }
-  body.ts-on.ts-rail-on.ts-rail-collapsed #ts-rail { display: none; }
-  body.ts-on.ts-rail-on.ts-rail-collapsed #app-screen { padding-right: 54px; }
-  body.ts-on.ts-rail-on.ts-rail-collapsed #ts-rail-toggle { right: 12px; }
-  body.ts-on #ts-rail-toggle:focus-visible { outline: 2px solid var(--ts-yellow); outline-offset: 3px; }
-}
-
-@media (max-width: 1280px) {
-  body.ts-on.ts-rail-on #ts-rail { display: none; }
-  body.ts-on.ts-rail-on #app-screen { padding-right: 0; }
-}
 @media (max-width: 900px) {
-  body.ts-on #ts-sidebar { display: none; }
-  body.ts-on #app-screen { padding-left: 0; }
+  body.ts-on #ts-sidebar {
+    position: fixed;
+    z-index: 60;
+    transform: translateX(0);
+    width: min(var(--ts-w), 85vw);
+  }
+  body.ts-on.ts-collapsed #ts-sidebar {
+    transform: translateX(-100%);
+    width: 0 !important;
+  }
+  body.ts-on.ts-rail-on #ts-rail {
+    position: fixed;
+    z-index: 60;
+    transform: translateX(0);
+    width: min(var(--ts-rail), 85vw);
+  }
+  body.ts-on.ts-rail-on.ts-rail-collapsed #ts-rail {
+    transform: translateX(100%);
+    width: 0 !important;
+  }
+  body.ts-on #app-screen {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
   body.ts-on #app-screen > nav.sticky .tab-btn:not([style*="none"]):not(.hidden),
   body.ts-on #app-screen > nav.sticky #logged-in-name-container,
   body.ts-on #app-screen > nav.sticky #logout-btn, body.ts-on #teacher-header-showcase { display: revert !important; }
   html body.ts-on #app-screen #view-students #class-tabs-container { display: grid !important; }
+}
+
+/* Bright mode styling for edge toggle pills */
+body.ts-on.ts-bright #ts-sidebar-toggle,
+body.ts-on.ts-bright #ts-rail-toggle {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+body.ts-on.ts-bright #ts-sidebar-toggle:hover,
+body.ts-on.ts-bright #ts-rail-toggle:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
 }
 
 /* ---- Unified stage (matches sidebar/rail surfaces) ---- */
