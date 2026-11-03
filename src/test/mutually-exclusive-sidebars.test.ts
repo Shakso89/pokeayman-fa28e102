@@ -98,17 +98,15 @@ describe('Mutually Exclusive Collapsible Sidebars', () => {
     expect(collapsed).toBe(true);
   });
 
-  it('implements uiverse thin-duck-22 logout button style and structure', () => {
-    // Button element has .sign and .text containers
-    expect(teacherShellJs).toContain('class="ts-logout Btn"');
-    expect(teacherShellJs).toContain('<div class="sign">');
-    expect(teacherShellJs).toContain('<div class="text">Logout</div>');
+  it('restores the classic logout button style and structure', () => {
+    // Button element has classic SVG and label
+    expect(teacherShellJs).toContain('<button type="button" class="ts-logout" data-ts="logout">');
+    expect(teacherShellJs).toContain('<span>Log out</span>');
 
-    // CSS defines circular initial state and hover expansion
-    expect(teacherShellCss).toContain('.ts-logout .sign');
-    expect(teacherShellCss).toContain('.ts-logout .text');
-    expect(teacherShellCss).toContain('.ts-logout:hover');
-    expect(teacherShellCss).toContain('width: 125px;');
+    // CSS defines classic layout and hover states
+    expect(teacherShellCss).toContain('.ts-logout { display: flex; align-items: center; justify-content: center; gap: 7px;');
+    expect(teacherShellCss).toContain('.ts-logout:hover { color: var(--ts-red); border-color: var(--ts-red); }');
+    expect(teacherShellCss).toContain('body.ts-on #ts-sidebar-tools .ts-logout { align-self: stretch; width: auto; min-width: 0; flex: 1 1 0; }');
   });
 
   it('aligns the floating "Next Step" panel with game setup content area between sidebars', () => {
