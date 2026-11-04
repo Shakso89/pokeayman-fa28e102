@@ -123,6 +123,69 @@
     let currentQuestion = generateMCQ(allWords, null);
     let lastDrawn = null; // { type: 'H' | 'V', r: number, c: number }
     let pullState = null;
+    let consecutiveTurnsRemaining = 0;
+
+    let turnTimeLimit = Number(timerSeconds) || 0;
+    let turnTimeLeft = turnTimeLimit;
+    let timerInterval = null;
+
+    const stopTurnTimer = () => {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    };
+
+    const updateTimerDisplay = () => {
+      const timerVal = modal.querySelector('#dots-timer-val');
+      const timerPill = modal.querySelector('#dots-hud-timer');
+      if (!timerVal || !timerPill) return;
+      timerVal.textContent = `${turnTimeLeft}s`;
+      if (turnTimeLeft <= 5) {
+        timerPill.classList.add('is-danger');
+        timerPill.classList.remove('is-warn');
+      } else if (turnTimeLeft <= 10) {
+        timerPill.classList.add('is-warn');
+        timerPill.classList.remove('is-danger');
+      } else {
+        timerPill.classList.remove('is-danger', 'is-warn');
+      }
+    };
+
+    const startTurnTimer = () => {
+      stopTurnTimer();
+      if (turnTimeLimit <= 0 || phase === 'ROUND_OVER') return;
+      turnTimeLeft = turnTimeLimit;
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        if (!document.body.contains(modal) || phase === 'ROUND_OVER') {
+          stopTurnTimer();
+          return;
+        }
+        turnTimeLeft--;
+        updateTimerDisplay();
+        if (turnTimeLeft <= 0) {
+          stopTurnTimer();
+          handleTimeout();
+        }
+      }, 1000);
+    };
+
+    const handleTimeout = () => {
+      if (phase === 'ROUND_OVER') return;
+      try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+      if (typeof toast === 'function') {
+        toast('⏱ Time ran out! Opponent gets 2 turns!');
+      }
+      consecutiveTurnsRemaining = 2;
+      activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+      currentQuestion = generateMCQ(allWords, currentQuestion?.wordItem);
+      phase = 'MCQ';
+      updateStatus();
+      renderQuestion();
+      renderBoard();
+      startTurnTimer();
+    };
 
     const modal = document.createElement('div');
     modal.className = 'dots-game-modal ga-stage';
@@ -192,7 +255,7 @@
         </div>
       </header>
 
-      <!-- 2. Sub-Header: Duelists Score HUD (Placed UNDER the header) -->
+      <!-- 2. Sub-Header: Duelists Score HUD with Timer (Placed UNDER the header) -->
       <div class="dots-hud-banner game-player-hud-slot">
         <div class="dots-duel-hud">
           <div class="dots-player-badge p1 is-active" id="dots-badge-p1">
@@ -202,7 +265,15 @@
               <span class="dots-player-score" id="dots-score-p1">0 boxes</span>
             </div>
           </div>
-          <span class="text-xs font-black text-slate-400 uppercase tracking-widest px-2">VS</span>
+          <div class="dots-hud-center-col flex flex-col items-center justify-center px-1">
+            <span class="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">VS</span>
+            ${turnTimeLimit > 0 ? `
+              <div class="dots-hud-timer mt-1 flex items-center gap-1" id="dots-hud-timer" role="timer" aria-label="Turn timer">
+                <span class="dots-timer-icon">⏱</span>
+                <span id="dots-timer-val">${turnTimeLimit}s</span>
+              </div>
+            ` : ''}
+          </div>
           <div class="dots-player-badge p2" id="dots-badge-p2">
             <img src="${p2AvatarUrl}" class="dots-player-avatar" alt="${esc(p2Name)}">
             <div class="dots-player-info">
@@ -217,28 +288,25 @@
       <main class="dots-arena-layout dots-game-shell">
         <!-- Question Card (Left) -->
         <section class="dots-question-card" id="dots-question-section">
-          <div class="dots-card-header flex items-center justify-between pb-2 border-b border-slate-700/60">
-            <span class="text-xs font-black uppercase tracking-wider text-amber-400" id="dots-q-kicker">Vocabulary Challenge</span>
-            <span class="text-xs font-semibold text-slate-400" id="dots-turn-indicator">${esc(p1.student_name)}</span>
+          <div class="dots-card-header flex items-center gap-2.5 pb-2 border-b border-slate-700/60" id="dots-card-header">
+            <img src="${p1AvatarUrl}" class="w-8 h-8 rounded-full object-contain bg-slate-950 border border-amber-400/60 shadow-sm" id="dots-q-avatar" alt="">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+              <span class="text-sm sm:text-base font-black text-amber-300 truncate" id="dots-q-student-name">${esc(p1Name)}</span>
+              <span id="dots-turn-badge" class="dots-turn-badge text-[10px] font-black px-2 py-0.5 rounded-full hidden"></span>
+            </div>
           </div>
 
           <div class="dots-clue-img-box" id="dots-clue-box"></div>
 
           <div class="dots-choices-grid" id="dots-choices-grid"></div>
 
-          <div class="dots-penalty-hint text-center text-[11px] text-slate-400 mt-1">
-            ⚠️ Wrong answer = −1 point and turn is passed to your opponent!
+          <div class="dots-penalty-hint text-center text-xs font-semibold text-amber-300/80 mt-1" id="dots-penalty-hint">
+            ⚡ Wrong answer gives your opponent 2 turns to play!
           </div>
         </section>
 
-        <!-- Board (Right) -->
+        <!-- Board (Right: removed text above the game box) -->
         <section class="dots-board-wrapper">
-          <div class="dots-board-info mb-3 flex items-center justify-between w-full max-w-sm px-2 text-xs font-bold text-slate-400">
-            <span>Boxes remaining: <strong class="text-white" id="dots-boxes-left">${totalPossibleBoxes}</strong></span>
-            <span class="dots-draw-hint flex items-center gap-1 text-[11px] text-amber-300 font-bold bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/30 animate-pulse">
-              <span>✨ Pull dot-to-dot or tap line</span>
-            </span>
-          </div>
           <div class="dots-board-grid" id="dots-board-grid"></div>
         </section>
       </main>
@@ -323,6 +391,7 @@
     });
 
     const cleanupAndClose = () => {
+      stopTurnTimer();
       if (typeof stopPlayerTurnTimer === 'function') stopPlayerTurnTimer(modal);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       modal.remove();
@@ -339,13 +408,16 @@
       const activePlayer = activeGamePlayerIndex === 0 ? p1 : p2;
       const activePlayerName = activePlayer?.student_name || activePlayer?.name || (activeGamePlayerIndex === 0 ? 'Player 1' : 'Player 2');
       const isP1 = activeGamePlayerIndex === 0;
+      const activeAvatar = isP1 ? p1AvatarUrl : p2AvatarUrl;
       const statusText = modal.querySelector('#dots-status-text');
       const badgeP1 = modal.querySelector('#dots-badge-p1');
       const badgeP2 = modal.querySelector('#dots-badge-p2');
-      const turnIndicator = modal.querySelector('#dots-turn-indicator');
       const scoreP1 = modal.querySelector('#dots-score-p1');
       const scoreP2 = modal.querySelector('#dots-score-p2');
       const boxesLeft = modal.querySelector('#dots-boxes-left');
+      const qAvatar = modal.querySelector('#dots-q-avatar');
+      const qName = modal.querySelector('#dots-q-student-name');
+      const turnBadge = modal.querySelector('#dots-turn-badge');
 
       badgeP1?.classList.toggle('is-active', isP1);
       badgeP2?.classList.toggle('is-active', !isP1);
@@ -356,9 +428,31 @@
       const completed = Object.values(boxes).filter((b) => b !== null).length;
       if (boxesLeft) boxesLeft.textContent = String(totalPossibleBoxes - completed);
 
-      if (turnIndicator) {
-        turnIndicator.textContent = activePlayerName;
-        turnIndicator.className = isP1 ? 'text-xs font-bold text-amber-300' : 'text-xs font-bold text-cyan-300';
+      if (qAvatar) {
+        if (activeAvatar) {
+          qAvatar.src = activeAvatar;
+          qAvatar.style.display = 'block';
+          qAvatar.className = `w-8 h-8 rounded-full object-contain bg-slate-950 border ${isP1 ? 'border-amber-400/80 ring-2 ring-amber-400/30' : 'border-cyan-400/80 ring-2 ring-cyan-400/30'} shadow-sm`;
+        } else {
+          qAvatar.style.display = 'none';
+        }
+      }
+
+      if (qName) {
+        qName.textContent = activePlayerName;
+        qName.className = `text-sm sm:text-base font-black truncate ${isP1 ? 'text-amber-300' : 'text-cyan-300'}`;
+      }
+
+      if (turnBadge) {
+        if (consecutiveTurnsRemaining === 2) {
+          turnBadge.textContent = '⚡ 2 Turns (Turn 1)';
+          turnBadge.className = `dots-turn-badge text-[10px] font-black px-2 py-0.5 rounded-full ${isP1 ? 'bg-amber-400/20 text-amber-300 border-amber-400/40' : 'bg-cyan-400/20 text-cyan-300 border-cyan-400/40'} border`;
+        } else if (consecutiveTurnsRemaining === 1) {
+          turnBadge.textContent = '⚡ Bonus Turn (Turn 2)';
+          turnBadge.className = `dots-turn-badge text-[10px] font-black px-2 py-0.5 rounded-full ${isP1 ? 'bg-amber-400/20 text-amber-300 border-amber-400/40' : 'bg-cyan-400/20 text-cyan-300 border-cyan-400/40'} border animate-pulse`;
+        } else {
+          turnBadge.className = 'hidden';
+        }
       }
 
       if (statusText) {
@@ -416,26 +510,58 @@
 
       if (selected === currentQuestion.correctAnswer) {
         try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+        stopTurnTimer();
+        btn.classList.add('is-correct');
         btn.style.borderColor = '#10b981';
-        btn.style.backgroundColor = 'rgba(16, 185, 129, 0.2)';
+        btn.style.backgroundColor = 'rgba(16, 185, 129, 0.35)';
+        btn.style.boxShadow = '0 0 18px rgba(16, 185, 129, 0.7)';
+
+        modal.querySelectorAll('.dots-choice-btn').forEach((b) => {
+          b.disabled = true;
+          if (b !== btn) {
+            b.style.opacity = '0.35';
+          }
+        });
+
         phase = 'DRAW_LINE';
         updateStatus();
         renderBoard();
       } else {
         try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        stopTurnTimer();
+        btn.classList.add('is-wrong', 'dots-choice-shake');
         btn.style.borderColor = '#ef4444';
-        btn.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
-        activeGameScores[activeGamePlayerIndex] = Math.max(0, activeGameScores[activeGamePlayerIndex] - 1);
+        btn.style.backgroundColor = 'rgba(239, 68, 68, 0.35)';
+        btn.style.boxShadow = '0 0 18px rgba(239, 68, 68, 0.7)';
 
-        activeGamePlayerIndex = 1 - activeGamePlayerIndex;
-        currentQuestion = generateMCQ(allWords, currentQuestion.wordItem);
-        phase = 'MCQ';
+        modal.querySelectorAll('.dots-choice-btn').forEach((b) => {
+          b.disabled = true;
+        });
+
+        const correctBtn = modal.querySelector(`.dots-choice-btn[data-option="${esc(currentQuestion.correctAnswer)}"]`);
+        if (correctBtn) {
+          correctBtn.style.borderColor = '#10b981';
+          correctBtn.style.backgroundColor = 'rgba(16, 185, 129, 0.25)';
+        }
+
+        // New game rule: NO -1 point deduction! Opponent gets 2 turns!
+        consecutiveTurnsRemaining = 2;
+        if (typeof toast === 'function') {
+          const nextPlayer = activeGamePlayerIndex === 0 ? p2 : p1;
+          const nextName = nextPlayer?.student_name || nextPlayer?.name || 'Opponent';
+          toast(`⚡ Wrong! ${nextName} gets 2 turns in a row!`);
+        }
 
         setTimeout(() => {
+          activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+          currentQuestion = generateMCQ(allWords, currentQuestion.wordItem);
+          phase = 'MCQ';
+
           updateStatus();
           renderQuestion();
           renderBoard();
-        }, 700);
+          startTurnTimer();
+        }, 850);
       }
     };
 
@@ -567,16 +693,16 @@
       const isP1 = activeGamePlayerIndex === 0;
       const turnClass = isP1 ? 'p1-turn' : 'p2-turn';
 
-      // Uniform square box sizing for 3x3, 4x4, and 5x5 dots
-      const boxSize = N >= 5 ? 'clamp(44px, 11vw, 56px)' : (N === 4 ? 'clamp(54px, 14vw, 70px)' : 'clamp(66px, 18vw, 88px)');
+      // 30% bigger box sizing for 3x3, 4x4, and 5x5 dots
+      const boxSize = N >= 5 ? 'clamp(58px, 14vw, 74px)' : (N === 4 ? 'clamp(70px, 18vw, 92px)' : 'clamp(86px, 23vw, 115px)');
       const colDefs = [];
       const rowDefs = [];
       for (let i = 0; i < N - 1; i++) {
-        colDefs.push('24px', boxSize);
-        rowDefs.push('24px', boxSize);
+        colDefs.push('28px', boxSize);
+        rowDefs.push('28px', boxSize);
       }
-      colDefs.push('24px');
-      rowDefs.push('24px');
+      colDefs.push('28px');
+      rowDefs.push('28px');
 
       grid.style.gridTemplateColumns = colDefs.join(' ');
       grid.style.gridTemplateRows = rowDefs.join(' ');
@@ -624,7 +750,7 @@
               btn.disabled = drawnBy !== null || phase !== 'DRAW_LINE';
             }
             btn.style.width = '100%';
-            btn.style.height = '24px';
+            btn.style.height = '28px';
             btn.style.justifySelf = 'stretch';
             btn.style.alignSelf = 'center';
             btn.style.display = 'flex';
@@ -636,7 +762,8 @@
             bar.style.display = 'block';
             bar.style.width = '100%';
             bar.style.minWidth = '100%';
-            bar.style.height = '8px';
+            bar.style.height = '12px';
+            bar.style.borderRadius = '6px';
             bar.style.flex = '1 1 100%';
             if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
             else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
@@ -669,7 +796,7 @@
             btn.style.alignSelf = 'stretch';
             btn.style.justifySelf = 'center';
             btn.style.height = '100%';
-            btn.style.width = '24px';
+            btn.style.width = '28px';
             btn.style.display = 'flex';
             btn.style.flexDirection = 'column';
             btn.style.alignItems = 'center';
@@ -678,9 +805,11 @@
             const bar = document.createElement('span');
             bar.className = 'dots-line-v-bar';
             bar.style.display = 'block';
-            bar.style.width = '8px';
+            bar.style.width = '12px';
+            bar.style.minWidth = '12px';
             bar.style.height = '100%';
             bar.style.minHeight = '100%';
+            bar.style.borderRadius = '6px';
             bar.style.flex = '1 1 100%';
             if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
             else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
@@ -759,6 +888,7 @@
 
       const totalClaimed = Object.values(boxes).filter((b) => b !== null).length;
       if (totalClaimed >= totalPossibleBoxes) {
+        stopTurnTimer();
         phase = 'ROUND_OVER';
         updateStatus();
         renderBoard();
@@ -776,9 +906,21 @@
         return;
       }
 
-      // Bonus turn if scored, otherwise pass turn
+      // Check turn progression:
+      // If boxes completed: player gets another turn (standard Dots & Boxes rule)
+      // If NO boxes completed:
       if (boxesCompleted === 0) {
-        activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+        if (consecutiveTurnsRemaining > 1) {
+          consecutiveTurnsRemaining--;
+          if (typeof toast === 'function') {
+            const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+            const curName = curPlayer?.student_name || curPlayer?.name || 'Player';
+            toast(`⚡ ${curName} gets their 2nd turn!`);
+          }
+        } else {
+          consecutiveTurnsRemaining = 0;
+          activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+        }
       }
 
       currentQuestion = generateMCQ(allWords, currentQuestion.wordItem);
@@ -787,10 +929,12 @@
       updateStatus();
       renderQuestion();
       renderBoard();
+      startTurnTimer();
     };
 
     updateStatus();
     renderQuestion();
     renderBoard();
+    startTurnTimer();
   };
 })();

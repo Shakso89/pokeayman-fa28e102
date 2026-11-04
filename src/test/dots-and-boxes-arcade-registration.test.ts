@@ -94,4 +94,40 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
     // When clicking a card in My lists, do not overwrite navSchool / navClass
     expect(html).toContain('if (!isMyList && school && className)');
   });
+
+  it('implements turn timer in HUD, student avatar header, double-turn penalty rule, and thick neon drawn lines', () => {
+    const dotsJsPath = path.join(root, 'public', 'pokeayman', 'dots-and-boxes.js');
+    const dotsJs = fs.readFileSync(dotsJsPath, 'utf8');
+
+    // Timer support
+    expect(dotsJs).toContain('dots-hud-timer');
+    expect(dotsJs).toContain('turnTimeLimit');
+    expect(dotsJs).toContain('startTurnTimer');
+
+    // Student avatar & name in card header (no Vocabulary Challenge header)
+    expect(dotsJs).toContain('dots-q-avatar');
+    expect(dotsJs).toContain('dots-q-student-name');
+    expect(dotsJs).not.toContain('Vocabulary Challenge');
+
+    // Rule: Wrong answer grants opponent 2 consecutive turns, NO -1 deduction
+    expect(dotsJs).toContain('consecutiveTurnsRemaining = 2');
+    expect(dotsJs).not.toContain('Math.max(0, pScores[activeGamePlayerIndex] - 1)');
+
+    // Persistent green answer highlight and shake on wrong
+    expect(dotsJs).toContain('is-correct');
+    expect(dotsJs).toContain('dots-choice-shake');
+
+    // Sizing: 28px tracks and thicker lines
+    expect(dotsJs).toContain("colDefs.push('28px'");
+    expect(dotsJs).toContain("bar.style.height = '12px'");
+    expect(dotsJs).toContain("bar.style.width = '12px'");
+
+    const dotsCssPath = path.join(root, 'public', 'pokeayman', 'dots-and-boxes.css');
+    const dotsCss = fs.readFileSync(dotsCssPath, 'utf8');
+    expect(dotsCss).toContain('.dots-hud-timer');
+    expect(dotsCss).toContain('.dots-choice-btn.is-correct');
+    expect(dotsCss).toContain('.dots-choice-btn.is-wrong');
+    expect(dotsCss).toContain('.dots-line-h-bar');
+    expect(dotsCss).toContain('box-shadow: 0 0 14px #fbbf24');
+  });
 });

@@ -170,8 +170,8 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
         />
       );
 
-      // HUD indicates Player 1's turn
-      expect(screen.getByText("Ash Ketchum's Challenge")).toBeInTheDocument();
+      // HUD and Card Header indicate Player 1's turn
+      expect(screen.getAllByText("Ash Ketchum").length).toBeGreaterThanOrEqual(2);
       expect(screen.getByText(/Locked: Answer question on the left to draw/i)).toBeInTheDocument();
 
       // A horizontal line should be disabled/unclickable in MCQ phase
@@ -179,7 +179,7 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
       expect(lineH00).toBeDisabled();
     });
 
-    it('penalizes incorrect answer by -1 (floor 0) and immediately transfers turn to Player 2', () => {
+    it('awards opponent 2 turns on incorrect answer without deducting points', async () => {
       render(
         <DotsAndBoxesGame
           players={mockStudents.slice(0, 2)}
@@ -194,11 +194,14 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
 
       fireEvent.click(incorrectBtn);
 
-      // Player 2 gets the turn immediately
-      expect(screen.getByText("Gary Oak's Challenge")).toBeInTheDocument();
+      // Player 2 gets the turn after wrong feedback
+      await waitFor(() => {
+        expect(screen.getByText("Gary Oak")).toBeInTheDocument();
+        expect(screen.getByText(/Bonus Turn/i)).toBeInTheDocument();
+      });
     });
 
-    it('unlocks line drawing phase upon correct MCQ answer', () => {
+    it('unlocks line drawing phase and keeps answer green upon correct MCQ answer', () => {
       render(
         <DotsAndBoxesGame
           players={mockStudents.slice(0, 2)}
@@ -214,7 +217,8 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
       fireEvent.click(correctBtn);
 
       // DRAW_LINE phase unlocked
-      expect(screen.getByText('Grid Unlocked')).toBeInTheDocument();
+      expect(screen.getByText('Draw Line')).toBeInTheDocument();
+      expect(correctBtn.className).toContain('bg-emerald-600/90');
 
       // Horizontal line is now clickable
       const lineH00 = screen.getByTestId('line-h-0-0');

@@ -172,7 +172,9 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   const [phase, setPhase] = useState<'MCQ' | 'DRAW_LINE' | 'ROUND_OVER'>('MCQ');
   const [currentQuestion, setCurrentQuestion] = useState<any>(() => generateMCQQuestion(vocabItems));
   const [statusMessage, setStatusMessage] = useState<string>('');
+  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
   const [lastAnswerStatus, setLastAnswerStatus] = useState<'correct' | 'wrong' | null>(null);
+  const [consecutiveTurns, setConsecutiveTurns] = useState<number>(0);
   const [winner, setWinner] = useState<Student | null | 'tie'>(null);
   const [isAwardingCoins, setIsAwardingCoins] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
@@ -218,29 +220,29 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   // MCQ Answer Handler
   const handleAnswerMCQ = (selectedOption: string) => {
     if (!currentQuestion || phase !== 'MCQ') return;
+    setSelectedChoice(selectedOption);
 
     if (selectedOption === currentQuestion.correctAnswer) {
-      // Correct! Unlock the line drawing phase
+      // Correct! Keep green and unlock line drawing phase
       if (soundEnabled) playAudio('correct');
       setLastAnswerStatus('correct');
       setPhase('DRAW_LINE');
       setStatusMessage('Awesome! Draw a line on the grid.');
     } else {
-      // Wrong! Apply -1 penalty and pass turn
+      // Wrong! Mark red, no score deduction; next player gets 2 turns in a row!
       if (soundEnabled) playAudio('wrong');
       setLastAnswerStatus('wrong');
-      setPlayerScores((prev) => {
-        const updated = [...prev] as [number, number];
-        updated[activePlayerIndex] = Math.max(0, updated[activePlayerIndex] - 1);
-        return updated;
-      });
+      setConsecutiveTurns(2);
 
-      // Switch player and load next question
       const nextPlayer: 0 | 1 = activePlayerIndex === 0 ? 1 : 0;
-      setActivePlayerIndex(nextPlayer);
-      setCurrentQuestion(generateMCQQuestion(vocabItems));
-      setPhase('MCQ');
-      setStatusMessage(`Oops! -1 penalty. ${roster[nextPlayer].name}'s turn: Answer the question`);
+      setTimeout(() => {
+        setSelectedChoice(null);
+        setLastAnswerStatus(null);
+        setActivePlayerIndex(nextPlayer);
+        setCurrentQuestion(generateMCQQuestion(vocabItems));
+        setPhase('MCQ');
+        setStatusMessage(`Wrong answer! ${roster[nextPlayer].name} gets 2 turns in a row!`);
+      }, 700);
     }
   };
 
@@ -322,20 +324,26 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       return;
     }
 
-    // 5. If player scored a box, they get a bonus turn; otherwise pass turn
+    // 5. If player scored a box, they get a bonus turn; otherwise pass turn (unless 2nd consecutive turn remains)
     let nextPlayer = activePlayerIndex;
     if (boxesCompletedCount > 0) {
       // Bonus turn: activePlayerIndex remains the same
       if (soundEnabled) playAudio('box_captured');
       setStatusMessage(`🎉 Box captured! ${activePlayer.name} earns a bonus turn!`);
     } else {
-      // Next player turn
-      nextPlayer = activePlayerIndex === 0 ? 1 : 0;
-      setActivePlayerIndex(nextPlayer);
-      setStatusMessage(`${roster[nextPlayer].name}'s turn: Answer the question`);
+      if (consecutiveTurns > 1) {
+        setConsecutiveTurns((prev) => prev - 1);
+        setStatusMessage(`⚡ ${activePlayer.name} gets their 2nd turn in a row!`);
+      } else {
+        setConsecutiveTurns(0);
+        nextPlayer = activePlayerIndex === 0 ? 1 : 0;
+        setActivePlayerIndex(nextPlayer);
+        setStatusMessage(`${roster[nextPlayer].name}'s turn: Answer the question`);
+      }
     }
 
     // Next round of MCQ
+    setSelectedChoice(null);
     setLastAnswerStatus(null);
     setCurrentQuestion(generateMCQQuestion(vocabItems));
     setPhase('MCQ');
@@ -586,17 +594,22 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Left Section: Question Card */}
         <div className={`lg:col-span-5 flex flex-col justify-between ${themeStyle.cardBg} border ${themeStyle.border} rounded-2xl p-5 shadow-xl relative overflow-hidden transition-colors duration-300`}>
-          {/* Active Turn Header */}
+          {/* Active Turn Header with Student Avatar and Name */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-800/60 mb-3">
-            <div className="flex items-center gap-2">
-              <span
-                className={`w-2.5 h-2.5 rounded-full ${
-                  activePlayerIndex === 0 ? 'bg-amber-400' : 'bg-cyan-400'
-                }`}
+            <div className="flex items-center gap-2.5">
+              <img
+                src={activePlayer.avatar_url || '/default-pokemon.png'}
+                alt={activePlayer.name}
+                className="w-7 h-7 rounded-full object-contain bg-slate-950 border border-amber-400/60"
               />
-              <span className="text-xs font-black tracking-wide text-white uppercase">
-                {activePlayer.name}'s Challenge
+              <span className="text-sm font-black tracking-wide text-white">
+                {activePlayer.name}
               </span>
+              {consecutiveTurns > 0 && (
+                <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40 animate-pulse">
+                  Bonus Turn
+                </span>
+              )}
             </div>
             <span
               className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
@@ -605,7 +618,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                   : 'bg-slate-800 text-slate-400 border-slate-700'
               }`}
             >
-              {phase === 'DRAW_LINE' ? 'Grid Unlocked' : 'MCQ Step'}
+              {phase === 'DRAW_LINE' ? 'Draw Line' : 'Answer MCQ'}
             </span>
           </div>
 
@@ -644,22 +657,32 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             {currentQuestion?.options.map((option: string, idx: number) => {
               const letter = String.fromCharCode(65 + idx);
               const isLocked = phase !== 'MCQ';
+              const isSelected = selectedChoice === option;
+              const isCorrectAnswer = option === currentQuestion?.correctAnswer;
+              const isMarkedCorrect = (isSelected && isCorrectAnswer) || (phase === 'DRAW_LINE' && isCorrectAnswer);
+              const isMarkedWrong = isSelected && !isCorrectAnswer;
+
+              let btnClasses = `${themeStyle.choiceBtn} active:scale-95 shadow-sm`;
+              if (isMarkedCorrect) {
+                btnClasses = 'bg-emerald-600/90 text-white border-2 border-emerald-300 shadow-[0_0_16px_rgba(16,185,129,0.7)] scale-[1.02]';
+              } else if (isMarkedWrong) {
+                btnClasses = 'bg-rose-600/90 text-white border-2 border-rose-400 shadow-[0_0_16px_rgba(244,63,94,0.7)] animate-bounce';
+              } else if (isLocked) {
+                btnClasses = 'opacity-40 cursor-not-allowed border-transparent';
+              }
+
               return (
                 <button
                   key={`${option}-${idx}`}
                   type="button"
                   data-testid={`mcq-option-${idx}`}
                   data-option={option}
-                  data-correct={option === currentQuestion?.correctAnswer}
+                  data-correct={isCorrectAnswer}
                   disabled={isLocked}
                   onClick={() => handleAnswerMCQ(option)}
-                  className={`group relative p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all duration-150 ${
-                    isLocked
-                      ? 'opacity-40 cursor-not-allowed border-transparent'
-                      : `${themeStyle.choiceBtn} active:scale-95 shadow-sm`
-                  }`}
+                  className={`group relative p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all duration-150 ${btnClasses}`}
                 >
-                  <span className={`w-6 h-6 rounded-lg ${themeStyle.choiceLetter} text-[11px] font-black flex items-center justify-center flex-shrink-0`}>
+                  <span className={`w-6 h-6 rounded-lg ${isMarkedCorrect ? 'bg-emerald-800 text-emerald-100' : isMarkedWrong ? 'bg-rose-800 text-rose-100' : themeStyle.choiceLetter} text-[11px] font-black flex items-center justify-center flex-shrink-0`}>
                     {letter}
                   </span>
                   <span className="text-xs sm:text-sm font-bold truncate">
