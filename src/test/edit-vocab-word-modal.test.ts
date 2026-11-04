@@ -100,4 +100,80 @@ describe('Edit Vocab Word Modal', () => {
     expect(document.querySelector('.vocab-word-edit-card')).toBeNull();
     expect(toastMock).toHaveBeenCalledWith('Word updated successfully!');
   });
+
+  it('updates all image fields and invokes onSaved callback upon saving a selected image', async () => {
+    document.body.innerHTML = '<div class="ve-workspace"></div>';
+    
+    const toastMock = vi.fn();
+    (window as any).toast = toastMock;
+    
+    const updateMock = vi.fn().mockResolvedValue({ isOk: true });
+    (window as any).dataSdk = {
+      update: updateMock,
+      refresh: vi.fn().mockResolvedValue([]),
+    };
+    (window as any).normalizeVocabId = (id: any) => String(id || '');
+    (window as any).PERMANENT_VOCAB_WORDS = {};
+
+    const mockWord = {
+      __backendId: 'rec_pencil_1',
+      vocab_word_id: 'word_pencil_1',
+      vocab_list_id: 'list_stationery',
+      type: 'vocab_word',
+      vocab_word: 'pencil',
+      vocab_sentence: 'Sharpen your pencil.',
+      vocab_image: 'https://example.com/old_pencil.jpg'
+    };
+    (window as any).allData = [mockWord];
+
+    const fnStart = indexHtml.indexOf('function editVocabWord(');
+    const fnEnd = indexHtml.indexOf('async function deleteVocabWord(', fnStart);
+    const fnSource = indexHtml.substring(fnStart, fnEnd).trim();
+
+    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    const fn = new AsyncFunction('allData', 'wordId', 'currentWord', 'currentImage', 'options', `
+      let window = globalThis;
+      let toast = window.toast;
+      let normalizeVocabId = window.normalizeVocabId;
+      let renderVocabLists = () => {};
+      let renderTeacherOwnedVocabLists = () => {};
+      ${fnSource}
+      editVocabWord(wordId, currentWord, currentImage, options);
+    `);
+
+    const onSavedMock = vi.fn();
+    await fn((window as any).allData, 'rec_pencil_1', 'pencil', 'https://example.com/old_pencil.jpg', {
+      listId: 'list_stationery',
+      onSaved: onSavedMock,
+      wordRecord: mockWord
+    });
+
+    const imageInput = document.getElementById('edit-word-image') as HTMLInputElement;
+    const saveBtn = document.getElementById('edit-word-save') as HTMLButtonElement;
+
+    expect(imageInput).not.toBeNull();
+    imageInput.value = 'https://cdn.pixabay.com/photo/new_pencil.png';
+    imageInput.dispatchEvent(new Event('input'));
+
+    saveBtn.click();
+    await new Promise(r => setTimeout(r, 50));
+
+    expect(updateMock).toHaveBeenCalled();
+    const payload = updateMock.mock.calls[0][0];
+    expect(payload.vocab_image).toBe('https://cdn.pixabay.com/photo/new_pencil.png');
+    expect(payload.image_url).toBe('https://cdn.pixabay.com/photo/new_pencil.png');
+    expect(payload.image).toBe('https://cdn.pixabay.com/photo/new_pencil.png');
+    expect(payload.vocab_media_policy).toBe('sentence-reviewed-v1');
+    expect(onSavedMock).toHaveBeenCalledTimes(1);
+    expect((window as any).PERMANENT_VOCAB_WORDS['pencil']).toBe('https://cdn.pixabay.com/photo/new_pencil.png');
+  });
+
+  it('verifies bright-fixes.css contains non-collapsing grid rules for vocab-word-edit-results and cards', () => {
+    const cssPath = path.resolve(__dirname, '../../public/pokeayman/bright-fixes.css');
+    const cssContent = fs.readFileSync(cssPath, 'utf-8');
+    expect(cssContent).toContain('.vocab-word-edit-results');
+    expect(cssContent).toContain('grid-auto-rows: minmax(72px, auto)');
+    expect(cssContent).toContain('.vocab-word-edit-photo-card');
+    expect(cssContent).toContain('min-height: 72px !important;');
+  });
 });

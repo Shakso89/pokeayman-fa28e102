@@ -760,6 +760,7 @@ html body.ts-bright .ve-workspace .ve-footer {
 .vocab-word-edit-results {
   display: grid !important;
   grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-auto-rows: minmax(72px, auto) !important;
   gap: 0.65rem !important;
   min-height: 240px !important;
   max-height: 360px !important;
@@ -768,6 +769,13 @@ html body.ts-bright .ve-workspace .ve-footer {
   box-sizing: border-box !important;
   background: rgba(9, 13, 22, 0.6) !important;
   border: 1px solid #1e293b !important;
+  padding: 0.5rem !important;
+}
+@media (max-width: 640px) {
+  .vocab-word-edit-results {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-auto-rows: minmax(80px, auto) !important;
+  }
 }
 .vocab-word-edit-results::-webkit-scrollbar {
   width: 6px;
@@ -781,31 +789,34 @@ html body.ts-bright .ve-workspace .ve-footer {
 }
 .vocab-word-edit-photo-card {
   position: relative !important;
-  display: flex !important;
-  flex-direction: column !important;
+  display: block !important;
   width: 100% !important;
   aspect-ratio: 16 / 9 !important;
-  min-height: 0 !important;
+  min-height: 72px !important;
+  height: auto !important;
   max-height: none !important;
-  padding: 3px !important;
+  padding: 0 !important;
+  margin: 0 !important;
   border-radius: 0.85rem !important;
   overflow: hidden !important;
   box-sizing: border-box !important;
   cursor: pointer !important;
   background: #1e293b !important;
-  border: 1px solid #334155 !important;
+  border: 2px solid transparent !important;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease, z-index 0.2s ease !important;
   z-index: 0 !important;
+  isolation: isolate !important;
+  flex-shrink: 0 !important;
 }
 .vocab-word-edit-photo-card:hover {
   z-index: 10 !important;
-  transform: scale(1.05) !important;
+  transform: scale(1.04) !important;
   border-color: #fbbf24 !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(251, 191, 36, 0.25) !important;
 }
 .vocab-word-edit-photo-card.is-selected {
   z-index: 10 !important;
-  transform: scale(1.05) !important;
+  transform: scale(1.04) !important;
   border-color: #f59e0b !important;
   box-shadow: 0 12px 28px -4px rgba(245, 158, 11, 0.35) !important;
 }
@@ -814,7 +825,7 @@ html body.ts-bright .ve-workspace .ve-footer {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  border-radius: 0.65rem !important;
+  border-radius: 0.75rem !important;
 }
 .vocab-word-edit-footer {
   background: #0f172a !important;

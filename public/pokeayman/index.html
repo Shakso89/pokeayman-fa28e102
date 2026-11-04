@@ -31316,7 +31316,15 @@ function openVocabListEditor(listId, listName) {
     const currentWords = getVocabWords({ vocab_list_id: canonicalListId }, listSchool, listClass);
     modal.querySelector('#ve-word-count').textContent = `${currentWords.length} words`;
     wordsList.innerHTML = currentWords.length ? currentWords.map((word, index) => `<div class="ve-word">${word.vocab_image ? `<img src="${escape(window.resolvePermanentVocabImage ? window.resolvePermanentVocabImage(word.vocab_image, word.vocab_word) : word.vocab_image)}" alt="${escape(word.vocab_word)}" loading="lazy" onerror="window.healBrokenVocabImgElement&&window.healBrokenVocabImgElement(this,this.alt,false)">` : '<span class="ve-word-placeholder" aria-hidden="true">▧</span>'}<div class="flex-1 min-w-0"><p class="font-medium text-sm">${escape(word.vocab_word)}</p>${word.vocab_sentence ? `<small>${escape(word.vocab_sentence)}</small>` : ''}</div><div class="ve-word-actions"><button type="button" data-edit-word="${index}" aria-label="Edit ${escape(word.vocab_word)}" title="Edit word"><svg viewBox="0 0 24 24"><path d="m16 3 5 5-12 12-6 1 1-6Z M14 5l5 5"/></svg></button><button type="button" data-delete-word="${index}" aria-label="Delete ${escape(word.vocab_word)}" title="Delete word"><svg viewBox="0 0 24 24"><path d="M3 6h18 M9 6V3h6v3 M5 6l1 15h12l1-15 M10 10v7 M14 10v7"/></svg></button></div></div>`).join('') : '<p class="ve-status">No words yet</p>';
-    wordsList.querySelectorAll('[data-edit-word]').forEach(button => button.onclick = () => { const word = currentWords[Number(button.dataset.editWord)]; editVocabWord(word.__backendId, word.vocab_word, word.vocab_image || ''); });
+    wordsList.querySelectorAll('[data-edit-word]').forEach(button => button.onclick = () => {
+      const word = currentWords[Number(button.dataset.editWord)];
+      if (!word) return;
+      editVocabWord(word.__backendId || word.word_id || word.vocab_word_id, word.vocab_word, word.vocab_image || '', {
+        listId: canonicalListId,
+        onSaved: renderWordsInModal,
+        wordRecord: word
+      });
+    });
     wordsList.querySelectorAll('[data-delete-word]').forEach(button => button.onclick = async () => {
       const word = currentWords[Number(button.dataset.deleteWord)];
       if (!word) return;
@@ -31766,6 +31774,10 @@ function openVocabListEditor(listId, listName) {
 }
 
 function editVocabWord(wordId, currentWord, currentImage) {
+  let options = arguments[3] || {};
+  if (typeof options === 'function') options = { onSaved: options };
+  const targetListId = options?.listId || options?.wordRecord?.vocab_list_id || options?.wordRecord?.list_id;
+
   const escape = value => String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
   const isBright = document.body.classList.contains('ts-bright') || 
                    document.body.classList.contains('light') || 
@@ -31773,8 +31785,10 @@ function editVocabWord(wordId, currentWord, currentImage) {
                    document.documentElement.getAttribute('data-theme') === 'light';
 
   let selectedImageUrl = currentImage || '';
-  const initialWord = (typeof allData !== 'undefined' && Array.isArray(allData) ? allData : []).find(r => 
-    r.__backendId === wordId || r.id === wordId || r.vocab_word === currentWord
+  const initialWord = options?.wordRecord || (typeof allData !== 'undefined' && Array.isArray(allData) ? allData : []).find(r => 
+    (wordId && (r.__backendId === wordId || r.id === wordId || r.vocab_word_id === wordId || r.word_id === wordId)) ||
+    (targetListId && normalizeVocabId(r.vocab_list_id || r.list_id || r.vocabulary_list_id) === normalizeVocabId(targetListId) && String(r.vocab_word || '').trim().toLowerCase() === String(currentWord || '').trim().toLowerCase()) ||
+    (r.vocab_word === currentWord && ['vocab_word', 'word'].includes(String(r.type || '').toLowerCase()))
   );
   const currentSentence = initialWord?.vocab_sentence || '';
 
@@ -32002,7 +32016,20 @@ function editVocabWord(wordId, currentWord, currentImage) {
     deleteConfirmModal.querySelector('#delete-confirm-btn').addEventListener('click', async () => {
       deleteConfirmModal.remove();
       modal.remove();
-      await deleteVocabWord(wordId, currentWord);
+      const targetId = initialWord?.__backendId || wordId;
+      const canonicalListId = typeof normalizeVocabId === 'function'
+        ? normalizeVocabId(targetListId || initialWord?.vocab_list_id || initialWord?.list_id || initialWord?.vocabulary_list_id)
+        : (targetListId || initialWord?.vocab_list_id || initialWord?.list_id);
+      await deleteVocabWord(targetId, canonicalListId, {
+        onDeleted: () => {
+          if (typeof options?.onSaved === 'function') {
+            try { options.onSaved(); } catch (e) { console.warn(e); }
+          }
+          document.querySelectorAll('.ve-workspace, [data-vocab-modal]').forEach(m => {
+            try { m.__renderVocabWords?.(); } catch (e) { console.warn(e); }
+          });
+        }
+      });
     });
     
     deleteConfirmModal.addEventListener('click', ev => { if (ev.target === deleteConfirmModal) deleteConfirmModal.remove(); });
@@ -32244,15 +32271,40 @@ function editVocabWord(wordId, currentWord, currentImage) {
     saveBtn.innerHTML = '<span class="animate-spin">⏳</span> Saving…';
 
     try {
-      const row = (typeof allData !== 'undefined' && Array.isArray(allData) ? allData : []).find(r => 
-        r.__backendId === wordId || r.id === wordId || r.vocab_word === currentWord
+      let row = (typeof allData !== 'undefined' && Array.isArray(allData) ? allData : []).find(r => 
+        (wordId && (r.__backendId === wordId || r.id === wordId || r.vocab_word_id === wordId || r.word_id === wordId))
       );
 
-      const canonicalListId = typeof normalizeVocabId === 'function' ? normalizeVocabId(row?.vocab_list_id || row?.list_id || row?.vocabulary_list_id) : (row?.vocab_list_id || row?.list_id);
-      const stableWordId = String(row?.vocab_word_id || row?.word_id || row?.__backendId || wordId || '').trim();
+      if (!row && targetListId) {
+        row = (allData || []).find(r => 
+          ['vocab_word', 'word', 'vocab_item', 'vocabulary_word'].includes(String(r.type || '').toLowerCase()) &&
+          normalizeVocabId(r.vocab_list_id || r.list_id || r.vocabulary_list_id) === normalizeVocabId(targetListId) &&
+          String(r.vocab_word || r.word || '').trim().toLowerCase() === String(currentWord || '').trim().toLowerCase()
+        );
+      }
+
+      if (!row) {
+        row = (allData || []).find(r => 
+          ['vocab_word', 'word', 'vocab_item', 'vocabulary_word'].includes(String(r.type || '').toLowerCase()) &&
+          String(r.vocab_word || r.word || '').trim().toLowerCase() === String(currentWord || '').trim().toLowerCase()
+        );
+      }
+
+      if (!row) {
+        row = (allData || []).find(r => 
+          (wordId && (r.__backendId === wordId || r.id === wordId)) ||
+          (currentWord && (r.vocab_word === currentWord || r.word === currentWord))
+        );
+      }
+
+      const canonicalListId = typeof normalizeVocabId === 'function' 
+        ? normalizeVocabId(targetListId || row?.vocab_list_id || row?.list_id || row?.vocabulary_list_id) 
+        : (targetListId || row?.vocab_list_id || row?.list_id);
+      const stableWordId = String(row?.vocab_word_id || row?.word_id || row?.__backendId || wordId || `vocab-word-${canonicalListId || 'temp'}-${Date.now()}`).trim();
 
       const updatedPayload = {
         ...(row || {}),
+        type: 'vocab_word',
         vocab_list_id: canonicalListId,
         list_id: canonicalListId,
         vocabulary_list_id: canonicalListId,
@@ -32261,7 +32313,10 @@ function editVocabWord(wordId, currentWord, currentImage) {
         vocab_word: newWord,
         vocab_sentence: newSentence,
         vocab_image: newImageUrl,
-        __backendId: row?.__backendId || wordId,
+        image_url: newImageUrl,
+        image: newImageUrl,
+        vocab_media_policy: 'sentence-reviewed-v1',
+        __backendId: row?.__backendId || wordId || stableWordId,
         updated_at: new Date().toISOString()
       };
 
@@ -32274,21 +32329,67 @@ function editVocabWord(wordId, currentWord, currentImage) {
         });
       }
 
+      if (canonicalListId && typeof allData !== 'undefined' && Array.isArray(allData)) {
+        const parentRec = allData.find(r => 
+          ['vocab_list', 'vocabulary_list'].includes(String(r.type || '').toLowerCase()) &&
+          normalizeVocabId(r.vocab_list_id || r.list_id || r.vocabulary_list_id || r.__backendId) === canonicalListId
+        );
+        if (parentRec) {
+          let embeddedUpdated = false;
+          ['words', 'items', 'vocab_words', 'word_items'].forEach(prop => {
+            if (Array.isArray(parentRec[prop])) {
+              parentRec[prop].forEach(w => {
+                if (w && typeof w === 'object') {
+                  const matchesId = (wordId && (w.word_id === wordId || w.vocab_word_id === wordId || w.__backendId === wordId || w.id === wordId));
+                  const matchesWord = String(w.vocab_word || w.word || w.term || '').trim().toLowerCase() === String(currentWord || '').trim().toLowerCase();
+                  if (matchesId || matchesWord) {
+                    w.vocab_word = newWord;
+                    w.vocab_sentence = newSentence;
+                    w.vocab_image = newImageUrl;
+                    w.image_url = newImageUrl;
+                    w.image = newImageUrl;
+                    w.vocab_media_policy = 'sentence-reviewed-v1';
+                    embeddedUpdated = true;
+                  }
+                }
+              });
+            }
+          });
+          if (embeddedUpdated && window.dataSdk?.update) {
+            window.dataSdk.update(parentRec).catch(e => console.warn('Could not update parent embedded words', e));
+          }
+        }
+      }
+
       if (row) {
         Object.assign(row, updatedPayload);
       } else if (typeof allData !== 'undefined' && Array.isArray(allData)) {
         allData.push(updatedPayload);
       }
 
-      if (window.PERMANENT_VOCAB_WORDS && newWord) {
-        window.PERMANENT_VOCAB_WORDS[newWord.toLowerCase()] = newImageUrl || '';
+      if (window.PERMANENT_VOCAB_WORDS) {
+        if (newWord) window.PERMANENT_VOCAB_WORDS[newWord.toLowerCase()] = newImageUrl || '';
+        if (currentWord) window.PERMANENT_VOCAB_WORDS[currentWord.toLowerCase()] = newImageUrl || '';
+      }
+      if (window._healedQueryCache) {
+        if (newWord) delete window._healedQueryCache['w:' + newWord.toLowerCase()];
+        if (currentWord) delete window._healedQueryCache['w:' + currentWord.toLowerCase()];
       }
 
       toast('Word updated successfully!');
       modal.remove();
 
+      if (typeof options?.onSaved === 'function') {
+        try { options.onSaved(); } catch (e) { console.warn(e); }
+      }
+
+      document.querySelectorAll('.ve-workspace, [data-vocab-modal]').forEach(m => {
+        try { m.__renderVocabWords?.(); } catch (e) { console.warn(e); }
+      });
+
       if (typeof renderVocabLists === 'function') renderVocabLists();
       if (typeof renderTeacherOwnedVocabLists === 'function') renderTeacherOwnedVocabLists();
+      if (typeof renderGamesList === 'function') renderGamesList();
     } catch (err) {
       console.error(err);
       saveBtn.disabled = false;
