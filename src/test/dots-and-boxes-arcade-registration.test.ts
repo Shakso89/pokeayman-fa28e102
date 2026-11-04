@@ -118,10 +118,9 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
     expect(dotsJs).toContain('is-correct');
     expect(dotsJs).toContain('dots-choice-shake');
 
-    // Sizing: 28px tracks and thicker lines
+    // Sizing: 28px tracks, subtle un-drawn guides and 12px neon drawn lines
     expect(dotsJs).toContain("colDefs.push('28px'");
-    expect(dotsJs).toContain("bar.style.height = '12px'");
-    expect(dotsJs).toContain("bar.style.width = '12px'");
+    expect(dotsJs).toContain("isDrawn ? 'is-drawn' : 'is-empty'");
 
     const dotsCssPath = path.join(root, 'public', 'pokeayman', 'dots-and-boxes.css');
     const dotsCss = fs.readFileSync(dotsCssPath, 'utf8');
@@ -133,7 +132,9 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
     expect(dotsCss).toContain('font-size: 1.75rem');
     expect(dotsCss).toContain('.dots-choice-btn.is-correct');
     expect(dotsCss).toContain('.dots-choice-btn.is-wrong');
-    expect(dotsCss).toContain('.dots-line-h-bar');
-    expect(dotsCss).toContain('box-shadow: 0 0 14px #fbbf24');
+    expect(dotsCss).toContain('.dots-line-h-bar.is-empty');
+    expect(dotsCss).toContain('.dots-line-h-bar.is-drawn');
+    expect(dotsCss).toContain('#facc15');
+    expect(dotsCss).toContain('#00f0ff');
   });
 });

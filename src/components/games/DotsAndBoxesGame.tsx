@@ -741,17 +741,17 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                 const isDrawn = drawnOwner !== null && drawnOwner !== undefined;
                 const canDraw = phase === 'DRAW_LINE' && !isDrawn;
 
-                let lineClass = 'bg-slate-800/50';
+                let lineClass = 'h-1 bg-white/10 rounded-full';
                 if (isDrawn) {
                   lineClass =
                     drawnOwner === 0
-                      ? 'bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]'
-                      : 'bg-cyan-400 shadow-[0_0_12px_rgba(56,189,248,0.8)]';
+                      ? 'h-3 bg-[#facc15] border-2 border-white shadow-[0_0_14px_rgba(250,204,21,0.9)] rounded-full z-10'
+                      : 'h-3 bg-[#00f0ff] border-2 border-white shadow-[0_0_14px_rgba(0,240,255,0.9)] rounded-full z-10';
                 } else if (canDraw) {
                   lineClass =
                     activePlayerIndex === 0
-                      ? 'bg-slate-700/80 group-hover:bg-amber-400/80'
-                      : 'bg-slate-700/80 group-hover:bg-cyan-400/80';
+                      ? 'h-1 bg-white/20 group-hover:h-2.5 group-hover:bg-[#facc15] group-hover:shadow-[0_0_10px_#facc15] rounded-full'
+                      : 'h-1 bg-white/20 group-hover:h-2.5 group-hover:bg-[#00f0ff] group-hover:shadow-[0_0_10px_#00f0ff] rounded-full';
                 }
 
                 return (
@@ -771,7 +771,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                     }`}
                   >
                     <div
-                      className={`w-full h-2 rounded transition-all duration-200 ${lineClass}`}
+                      className={`w-full transition-all duration-200 ${lineClass}`}
                     />
                   </button>
                 );
@@ -786,17 +786,17 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                 const isDrawn = drawnOwner !== null && drawnOwner !== undefined;
                 const canDraw = phase === 'DRAW_LINE' && !isDrawn;
 
-                let lineClass = 'bg-slate-800/50';
+                let lineClass = 'w-1 h-full bg-white/10 rounded-full';
                 if (isDrawn) {
                   lineClass =
                     drawnOwner === 0
-                      ? 'bg-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.8)]'
-                      : 'bg-cyan-400 shadow-[0_0_12px_rgba(56,189,248,0.8)]';
+                      ? 'w-3 h-full bg-[#facc15] border-2 border-white shadow-[0_0_14px_rgba(250,204,21,0.9)] rounded-full z-10'
+                      : 'w-3 h-full bg-[#00f0ff] border-2 border-white shadow-[0_0_14px_rgba(0,240,255,0.9)] rounded-full z-10';
                 } else if (canDraw) {
                   lineClass =
                     activePlayerIndex === 0
-                      ? 'bg-slate-700/80 group-hover:bg-amber-400/80'
-                      : 'bg-slate-700/80 group-hover:bg-cyan-400/80';
+                      ? 'w-1 h-full bg-white/20 group-hover:w-2.5 group-hover:bg-[#facc15] group-hover:shadow-[0_0_10px_#facc15] rounded-full'
+                      : 'w-1 h-full bg-white/20 group-hover:w-2.5 group-hover:bg-[#00f0ff] group-hover:shadow-[0_0_10px_#00f0ff] rounded-full';
                 }
 
                 return (
@@ -816,8 +816,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                     }`}
                   >
                     <div
-                      style={{ height: '100%', width: '8px' }}
-                      className={`w-2 h-full rounded transition-all duration-200 ${lineClass}`}
+                      className={`h-full transition-all duration-200 ${lineClass}`}
                     />
                   </button>
                 );

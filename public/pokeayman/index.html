@@ -6927,13 +6927,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             const key = `${r}-${c}`;
             const drawnBy = horizontalLines[key];
 
+            const isDrawn = drawnBy !== null;
+
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = `dots-line-h ${phase === 'DRAW_LINE' && drawnBy === null ? 'dots-line-clickable' : ''}`;
+            btn.className = `dots-line-h ${phase === 'DRAW_LINE' && !isDrawn ? 'dots-line-clickable' : ''}`;
             btn.setAttribute('aria-label', `Horizontal line at row ${r}, col ${c}`);
-            if (drawnBy !== null || phase !== 'DRAW_LINE') {
-              btn.disabled = drawnBy !== null || phase !== 'DRAW_LINE';
-            }
+            btn.disabled = isDrawn || phase !== 'DRAW_LINE';
             btn.style.width = '100%';
             btn.style.height = '28px';
             btn.style.justifySelf = 'stretch';
@@ -6943,16 +6943,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             btn.style.justifyContent = 'center';
 
             const bar = document.createElement('span');
-            bar.className = 'dots-line-h-bar';
+            bar.className = `dots-line-h-bar ${isDrawn ? 'is-drawn' : 'is-empty'}`;
             bar.style.display = 'block';
             bar.style.width = '100%';
             bar.style.minWidth = '100%';
-            bar.style.height = '12px';
-            bar.style.borderRadius = '6px';
             bar.style.flex = '1 1 100%';
-            if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
-            else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
-            else if (phase === 'DRAW_LINE') bar.classList.add(turnClass);
+            if (isDrawn) {
+              if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
+              else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
+            } else if (phase === 'DRAW_LINE') {
+              bar.classList.add(turnClass);
+            }
 
             if (lastDrawn && lastDrawn.type === 'H' && lastDrawn.r === r && lastDrawn.c === c) {
               bar.classList.add('dots-line-drawn-anim-h');
@@ -6960,7 +6961,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
             btn.appendChild(bar);
 
-            if (phase === 'DRAW_LINE' && drawnBy === null) {
+            if (phase === 'DRAW_LINE' && !isDrawn) {
               btn.addEventListener('click', () => handleDrawLine('H', r, c));
             }
             grid.appendChild(btn);
@@ -6970,14 +6971,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             const c = gc / 2;
             const key = `${r}-${c}`;
             const drawnBy = verticalLines[key];
+            const isDrawn = drawnBy !== null;
 
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = `dots-line-v ${phase === 'DRAW_LINE' && drawnBy === null ? 'dots-line-clickable' : ''}`;
+            btn.className = `dots-line-v ${phase === 'DRAW_LINE' && !isDrawn ? 'dots-line-clickable' : ''}`;
             btn.setAttribute('aria-label', `Vertical line at row ${r}, col ${c}`);
-            if (drawnBy !== null || phase !== 'DRAW_LINE') {
-              btn.disabled = drawnBy !== null || phase !== 'DRAW_LINE';
-            }
+            btn.disabled = isDrawn || phase !== 'DRAW_LINE';
             btn.style.alignSelf = 'stretch';
             btn.style.justifySelf = 'center';
             btn.style.height = '100%';
@@ -6988,17 +6988,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             btn.style.justifyContent = 'center';
 
             const bar = document.createElement('span');
-            bar.className = 'dots-line-v-bar';
+            bar.className = `dots-line-v-bar ${isDrawn ? 'is-drawn' : 'is-empty'}`;
             bar.style.display = 'block';
-            bar.style.width = '12px';
-            bar.style.minWidth = '12px';
             bar.style.height = '100%';
             bar.style.minHeight = '100%';
-            bar.style.borderRadius = '6px';
             bar.style.flex = '1 1 100%';
-            if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
-            else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
-            else if (phase === 'DRAW_LINE') bar.classList.add(turnClass);
+            if (isDrawn) {
+              if (drawnBy === 0) bar.classList.add('dots-line-drawn-p1');
+              else if (drawnBy === 1) bar.classList.add('dots-line-drawn-p2');
+            } else if (phase === 'DRAW_LINE') {
+              bar.classList.add(turnClass);
+            }
 
             if (lastDrawn && lastDrawn.type === 'V' && lastDrawn.r === r && lastDrawn.c === c) {
               bar.classList.add('dots-line-drawn-anim-v');
@@ -7006,7 +7006,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
             btn.appendChild(bar);
 
-            if (phase === 'DRAW_LINE' && drawnBy === null) {
+            if (phase === 'DRAW_LINE' && !isDrawn) {
               btn.addEventListener('click', () => handleDrawLine('V', r, c));
             }
             grid.appendChild(btn);
