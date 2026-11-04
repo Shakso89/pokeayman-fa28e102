@@ -594,25 +594,25 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* Left Section: Question Card */}
         <div className={`lg:col-span-5 flex flex-col justify-between ${themeStyle.cardBg} border ${themeStyle.border} rounded-2xl p-5 shadow-xl relative overflow-hidden transition-colors duration-300`}>
-          {/* Active Turn Header with Student Avatar and Name */}
-          <div className="flex items-center justify-between pb-3 border-b border-slate-800/60 mb-3">
-            <div className="flex items-center gap-2.5">
+          {/* Active Turn Header with Student Avatar and Name Centered */}
+          <div className="flex items-center justify-center gap-3 pb-3 border-b border-slate-800/60 mb-3 w-full text-center relative" id="dots-card-header">
+            <div className="flex items-center justify-center gap-3">
               <img
                 src={activePlayer.avatar_url || '/default-pokemon.png'}
                 alt={activePlayer.name}
-                className="w-7 h-7 rounded-full object-contain bg-slate-950 border border-amber-400/60"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-contain bg-slate-950 border-2 border-amber-400 shadow-md flex-shrink-0"
               />
-              <span className="text-sm font-black tracking-wide text-white">
+              <span className="text-xl sm:text-2xl font-black tracking-wide text-white truncate max-w-[240px] sm:max-w-[320px]">
                 {activePlayer.name}
               </span>
               {consecutiveTurns > 0 && (
-                <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40 animate-pulse">
-                  Bonus Turn
+                <span className="text-xs font-black uppercase px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 animate-pulse">
+                  ⚡ 2 Turns!
                 </span>
               )}
             </div>
             <span
-              className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+              className={`hidden sm:inline-flex absolute right-0 text-[11px] font-bold px-2 py-0.5 rounded-full border ${
                 phase === 'DRAW_LINE'
                   ? 'bg-emerald-400/20 text-emerald-300 border-emerald-400/30'
                   : 'bg-slate-800 text-slate-400 border-slate-700'

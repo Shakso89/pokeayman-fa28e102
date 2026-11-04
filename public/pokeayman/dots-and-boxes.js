@@ -288,12 +288,10 @@
       <main class="dots-arena-layout dots-game-shell">
         <!-- Question Card (Left) -->
         <section class="dots-question-card" id="dots-question-section">
-          <div class="dots-card-header flex items-center gap-2.5 pb-2 border-b border-slate-700/60" id="dots-card-header">
-            <img src="${p1AvatarUrl}" class="w-8 h-8 rounded-full object-contain bg-slate-950 border border-amber-400/60 shadow-sm" id="dots-q-avatar" alt="">
-            <div class="flex items-center gap-2 flex-1 min-w-0">
-              <span class="text-sm sm:text-base font-black text-amber-300 truncate" id="dots-q-student-name">${esc(p1Name)}</span>
-              <span id="dots-turn-badge" class="dots-turn-badge text-[10px] font-black px-2 py-0.5 rounded-full hidden"></span>
-            </div>
+          <div class="dots-card-header flex items-center justify-center gap-3 pb-3 border-b border-slate-700/60 w-full text-center" id="dots-card-header">
+            <img src="${p1AvatarUrl}" class="dots-q-avatar rounded-full object-contain bg-slate-950 border-2 border-amber-400 ring-2 ring-amber-400/40 shadow-md flex-shrink-0" id="dots-q-avatar" alt="">
+            <span class="dots-q-student-name font-black text-amber-300 tracking-wide truncate" id="dots-q-student-name">${esc(p1Name)}</span>
+            <span id="dots-turn-badge" class="dots-turn-badge text-xs font-black uppercase px-2.5 py-1 rounded-full hidden"></span>
           </div>
 
           <div class="dots-clue-img-box" id="dots-clue-box"></div>
@@ -432,7 +430,7 @@
         if (activeAvatar) {
           qAvatar.src = activeAvatar;
           qAvatar.style.display = 'block';
-          qAvatar.className = `w-8 h-8 rounded-full object-contain bg-slate-950 border ${isP1 ? 'border-amber-400/80 ring-2 ring-amber-400/30' : 'border-cyan-400/80 ring-2 ring-cyan-400/30'} shadow-sm`;
+          qAvatar.className = `dots-q-avatar rounded-full object-contain bg-slate-950 border-2 ${isP1 ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-[0_0_14px_rgba(251,191,36,0.5)]' : 'border-cyan-400 ring-2 ring-cyan-400/40 shadow-[0_0_14px_rgba(56,189,248,0.5)]'} flex-shrink-0`;
         } else {
           qAvatar.style.display = 'none';
         }
@@ -440,16 +438,16 @@
 
       if (qName) {
         qName.textContent = activePlayerName;
-        qName.className = `text-sm sm:text-base font-black truncate ${isP1 ? 'text-amber-300' : 'text-cyan-300'}`;
+        qName.className = `dots-q-student-name font-black tracking-wide truncate ${isP1 ? 'text-amber-300' : 'text-cyan-300'}`;
       }
 
       if (turnBadge) {
         if (consecutiveTurnsRemaining === 2) {
           turnBadge.textContent = '⚡ 2 Turns (Turn 1)';
-          turnBadge.className = `dots-turn-badge text-[10px] font-black px-2 py-0.5 rounded-full ${isP1 ? 'bg-amber-400/20 text-amber-300 border-amber-400/40' : 'bg-cyan-400/20 text-cyan-300 border-cyan-400/40'} border`;
+          turnBadge.className = `dots-turn-badge text-xs font-black uppercase px-2.5 py-1 rounded-full ${isP1 ? 'bg-amber-400/20 text-amber-300 border-amber-400/50' : 'bg-cyan-400/20 text-cyan-300 border-cyan-400/50'} border animate-pulse`;
         } else if (consecutiveTurnsRemaining === 1) {
           turnBadge.textContent = '⚡ Bonus Turn (Turn 2)';
-          turnBadge.className = `dots-turn-badge text-[10px] font-black px-2 py-0.5 rounded-full ${isP1 ? 'bg-amber-400/20 text-amber-300 border-amber-400/40' : 'bg-cyan-400/20 text-cyan-300 border-cyan-400/40'} border animate-pulse`;
+          turnBadge.className = `dots-turn-badge text-xs font-black uppercase px-2.5 py-1 rounded-full ${isP1 ? 'bg-amber-400/20 text-amber-300 border-amber-400/50' : 'bg-cyan-400/20 text-cyan-300 border-cyan-400/50'} border animate-pulse`;
         } else {
           turnBadge.className = 'hidden';
         }

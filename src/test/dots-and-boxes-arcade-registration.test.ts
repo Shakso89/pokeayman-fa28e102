@@ -104,7 +104,8 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
     expect(dotsJs).toContain('turnTimeLimit');
     expect(dotsJs).toContain('startTurnTimer');
 
-    // Student avatar & name in card header (no Vocabulary Challenge header)
+    // Student avatar & name centered in card header with larger text
+    expect(dotsJs).toContain('dots-card-header flex items-center justify-center');
     expect(dotsJs).toContain('dots-q-avatar');
     expect(dotsJs).toContain('dots-q-student-name');
     expect(dotsJs).not.toContain('Vocabulary Challenge');
@@ -125,6 +126,11 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
     const dotsCssPath = path.join(root, 'public', 'pokeayman', 'dots-and-boxes.css');
     const dotsCss = fs.readFileSync(dotsCssPath, 'utf8');
     expect(dotsCss).toContain('.dots-hud-timer');
+    expect(dotsCss).toContain('[data-ga-theme="toybox"] .dots-hud-timer');
+    expect(dotsCss).toContain('background: #4f46e5');
+    expect(dotsCss).toContain('.dots-card-header');
+    expect(dotsCss).toContain('.dots-q-student-name');
+    expect(dotsCss).toContain('font-size: 1.75rem');
     expect(dotsCss).toContain('.dots-choice-btn.is-correct');
     expect(dotsCss).toContain('.dots-choice-btn.is-wrong');
     expect(dotsCss).toContain('.dots-line-h-bar');

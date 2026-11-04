@@ -196,8 +196,8 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
 
       // Player 2 gets the turn after wrong feedback
       await waitFor(() => {
-        expect(screen.getByText("Gary Oak")).toBeInTheDocument();
-        expect(screen.getByText(/Bonus Turn/i)).toBeInTheDocument();
+        expect(screen.getAllByText("Gary Oak").length).toBeGreaterThanOrEqual(2);
+        expect(screen.getByText(/2 Turns!/i)).toBeInTheDocument();
       });
     });
 
