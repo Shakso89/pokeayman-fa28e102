@@ -1702,8 +1702,7 @@
       document.querySelector(
         '.vocab-word-edit-card, ' +
         '.vocab-editor-overlay:not(.hidden), ' +
-        '#edit-word-modal:not(.hidden), ' +
-        '[role="dialog"]:not(.ga-stage):not(.ga-stage-theme-popover):not(.hidden):not([hidden])'
+        '#edit-word-modal:not(.hidden)'
       )
     );
 
@@ -1722,7 +1721,7 @@
     const gameName = window.pendingChosenGame ? window.pendingChosenGame.name : 'Game';
 
     const bar = document.createElement('div');
-    bar.className = 'ga-continue-bar fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-3xl animate-in slide-in-from-bottom-5 fade-in duration-300';
+    bar.className = 'ga-continue-bar fixed bottom-6 left-1/2 -translate-x-1/2 z-[99999] w-[90%] max-w-3xl animate-in slide-in-from-bottom-5 fade-in duration-300';
 
     bar.innerHTML = `
       <div class="flex items-center gap-3">
@@ -1757,7 +1756,7 @@
       window.gaLaunchChosenGame(targetGame, selectedGameList);
     });
 
-    selector.appendChild(bar);
+    document.body.appendChild(bar);
   };
 
   window.gaMountStage = function (view) {
@@ -3024,11 +3023,9 @@
       );
       const isModalOpen = Boolean(
         document.querySelector(
-          '.fixed.inset-0:not(.hidden):not(#app-screen):not(#splash-screen):not(.ga-stage), ' +
           '.vocab-word-edit-card, ' +
-          '.vocab-editor-overlay, ' +
-          '#edit-word-modal:not(.hidden), ' +
-          '[role="dialog"]:not(.ga-stage)'
+          '.vocab-editor-overlay:not(.hidden), ' +
+          '#edit-word-modal:not(.hidden)'
         )
       );
       if ((!isTeacherGamesVisible && !isStudentGamesVisible) || isModalOpen) {
