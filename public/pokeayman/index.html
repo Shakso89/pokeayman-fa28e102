@@ -5568,7 +5568,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/leaderboard-views.css">
 <link rel="stylesheet" href="/pokeayman/profile-workspace.css">
 <link rel="stylesheet" href="/pokeayman/vocab-editor.css">
-<link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261103-pro-gold-v2">
+<link rel="stylesheet" href="/pokeayman/games-arcade.css?v=20261105-continue-bar-fix">
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/crossword.css?v=20261028-crosswords-v11">
 <link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261103-pull-animated-lines">
@@ -8456,6 +8456,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   };
 
   window.gaLaunchChosenGame = function (g, list) {
+    document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
     if (!g) {
       if (GAMES[0]) g = GAMES[0];
       else return;
@@ -8879,6 +8880,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     area.appendChild(panel);
   };
 
+  window.gaRemoveContinueBar = function () {
+    document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
+  };
+
   window.gaListStep = function (selector, container, count) {
     if (!selector || !container) return;
     const isArcade = Boolean(window.arcadeOpen);
@@ -8889,6 +8894,41 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       container.style.removeProperty('display');
       container.style.display = 'block';
       container.hidden = false;
+      document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
+      return;
+    }
+
+    // Verify games tab is currently active and visible, and no modal is open
+    const teacherArea = document.getElementById('class-subtab-games');
+    const studentArea = document.getElementById('student-tab-games');
+    const viewStudents = document.getElementById('view-students');
+    const isTeacherGamesVisible = Boolean(
+      teacherArea &&
+      !teacherArea.classList.contains('hidden') &&
+      !teacherArea.hidden &&
+      viewStudents &&
+      !viewStudents.classList.contains('hidden') &&
+      !viewStudents.hidden &&
+      (teacherArea.offsetParent !== null || teacherArea.getClientRects().length > 0)
+    );
+    const isStudentGamesVisible = Boolean(
+      studentArea &&
+      !studentArea.classList.contains('hidden') &&
+      !studentArea.hidden &&
+      (studentArea.offsetParent !== null || studentArea.getClientRects().length > 0)
+    );
+    const isGamesTabVisible = isTeacherGamesVisible || isStudentGamesVisible;
+    const isAnyModalOpen = Boolean(
+      document.querySelector(
+        '.fixed.inset-0:not(.hidden):not(#app-screen):not(#splash-screen):not(.ga-stage), ' +
+        '.vocab-word-edit-card, ' +
+        '.vocab-editor-overlay, ' +
+        '#edit-word-modal:not(.hidden), ' +
+        '[role="dialog"]:not(.ga-stage)'
+      )
+    );
+
+    if (!isGamesTabVisible || isAnyModalOpen) {
       document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
       return;
     }
@@ -10183,6 +10223,68 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     ov.querySelector('.ga-cd-skip').addEventListener('click', finish);
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) setTimeout(finish, 900);
   };
+
+  // Automatic cleanup observer: ensures .ga-continue-bar is immediately removed whenever leaving the games tab or opening modals
+  if (typeof window !== 'undefined' && !window._gaContinueBarObserverInitialized) {
+    window._gaContinueBarObserverInitialized = true;
+    const pruneFloatingBars = () => {
+      const bars = document.querySelectorAll('.ga-continue-bar');
+      if (!bars.length) return;
+      const teacherArea = document.getElementById('class-subtab-games');
+      const studentArea = document.getElementById('student-tab-games');
+      const viewStudents = document.getElementById('view-students');
+      const isTeacherGamesVisible = Boolean(
+        teacherArea &&
+        !teacherArea.classList.contains('hidden') &&
+        !teacherArea.hidden &&
+        viewStudents &&
+        !viewStudents.classList.contains('hidden') &&
+        !viewStudents.hidden &&
+        (teacherArea.offsetParent !== null || teacherArea.getClientRects().length > 0)
+      );
+      const isStudentGamesVisible = Boolean(
+        studentArea &&
+        !studentArea.classList.contains('hidden') &&
+        !studentArea.hidden &&
+        (studentArea.offsetParent !== null || studentArea.getClientRects().length > 0)
+      );
+      const isModalOpen = Boolean(
+        document.querySelector(
+          '.fixed.inset-0:not(.hidden):not(#app-screen):not(#splash-screen):not(.ga-stage), ' +
+          '.vocab-word-edit-card, ' +
+          '.vocab-editor-overlay, ' +
+          '#edit-word-modal:not(.hidden), ' +
+          '[role="dialog"]:not(.ga-stage)'
+        )
+      );
+      if ((!isTeacherGamesVisible && !isStudentGamesVisible) || isModalOpen) {
+        bars.forEach(el => el.remove());
+      }
+    };
+
+    if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined' && document.body) {
+      const observer = new MutationObserver(() => pruneFloatingBars());
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style', 'hidden']
+      });
+    }
+
+    document.addEventListener('click', (event) => {
+      const target = event.target.closest('button, [role="tab"], a');
+      if (!target) return;
+      const isGamesBtn = target.matches('.student-dashboard-tab[data-tab="games"], .class-view-tab[data-classtab="games"]');
+      const isNavigation = target.matches(
+        '.student-dashboard-tab, .student-nav-group-button, .class-view-tab, .profile-tab-btn, .quiz-sub-tab, .admin-sub-tab, .users-subtab, .tab-btn, [role="tab"], [data-tab], [data-classtab]'
+      );
+      const isModalTrigger = target.matches('[data-edit-word], [data-delete-word], #open-create-vocab-list, .vocab-add-word-btn, .ts-btn');
+      if ((isNavigation && !isGamesBtn) || isModalTrigger) {
+        pruneFloatingBars();
+      }
+    }, true);
+  }
 })();
 
 </script>
@@ -17375,6 +17477,9 @@ function showMainTab(tabName) {
     button.classList.toggle('tab-active', active);
     button.classList.toggle('tab-inactive', !active);
   });
+  document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
+  window.arcadeOpen = true;
+  window.pendingChosenGame = null;
   document.querySelectorAll('.tab-content').forEach(panel => panel.classList.add('hidden'));
   if (tabName === 'teacher-zone') {
     adminView?.classList.add('teacher-zone-standalone');
@@ -17410,6 +17515,9 @@ function showMainTab(tabName) {
 // Main Tabs
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
+    window.arcadeOpen = true;
+    window.pendingChosenGame = null;
     if (['dashboard', 'teacher-zone', 'admin', 'leaderboard', 'trainer'].includes(btn.dataset.tab)) {
       showMainTab(btn.dataset.tab);
       return;
@@ -17545,7 +17653,14 @@ function openStudentDashboardTab(btn) {
   if (btn.dataset.tab === 'classes') renderStudentClasses();
   if (btn.dataset.tab === 'catchdex') window.renderListenCatchTab?.();
   if (btn.dataset.tab === 'vocabulary') renderStudentVocabulary();
-  if (btn.dataset.tab === 'games') { window.arcadeOpen = true; renderGamesList(); }
+  if (btn.dataset.tab === 'games') {
+    window.arcadeOpen = true;
+    renderGamesList();
+  } else {
+    document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
+    window.arcadeOpen = true;
+    window.pendingChosenGame = null;
+  }
 }
 document.querySelectorAll('.student-nav-group-button').forEach(button => button.addEventListener('click', () => {
   const menu = document.getElementById(button.getAttribute('aria-controls'));
@@ -18936,7 +19051,14 @@ document.querySelectorAll('.class-view-tab').forEach(btn => {
     document.getElementById('class-subtab-' + btn.dataset.classtab).classList.remove('hidden');
     if (btn.dataset.classtab === 'quiz') { renderQuickAnswerStudents(); renderOngoingQuizzes(); renderQuizHistory(); }
     if (btn.dataset.classtab === 'battle') populateBattleSelects();
-    if (btn.dataset.classtab === 'games') { window.arcadeOpen = true; renderGamesList(); }
+    if (btn.dataset.classtab === 'games') {
+      window.arcadeOpen = true;
+      renderGamesList();
+    } else {
+      document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
+      window.arcadeOpen = true;
+      window.pendingChosenGame = null;
+    }
   });
 });
 
@@ -19596,6 +19718,7 @@ function renderTeacherDashboard() {
     if (tabsContainer) tabsContainer.style.display = 'none';
 
     // Ensure non-student subtab containers are hidden
+    document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
     document.querySelectorAll('.class-subtab-content').forEach(c => c.classList.add('hidden'));
     document.getElementById('class-subtab-students')?.classList.remove('hidden');
 
@@ -27613,6 +27736,18 @@ function endActiveGames({ returnToList = true } = {}) {
 }
 function resetToFreshGames() { endActiveGames({ returnToList: true }); }
 document.addEventListener('click', event => {
+  const continueBar = document.querySelector('.ga-continue-bar');
+  const target = event.target.closest('button, [role="tab"]');
+  if (continueBar && target) {
+    const isGamesDestination = target.matches('.student-dashboard-tab[data-tab="games"], .class-view-tab[data-classtab="games"]');
+    const isNavigation = target.matches('.student-dashboard-tab, .student-nav-group-button, .class-view-tab, .profile-tab-btn, .quiz-sub-tab, .admin-sub-tab, .users-subtab, .tab-btn, [role="tab"], [data-tab], [data-classtab]');
+    const isModalTrigger = target.matches('[data-edit-word], [data-delete-word], #open-create-vocab-list, .vocab-add-word-btn, .ts-btn');
+    if ((isNavigation && !isGamesDestination) || isModalTrigger) {
+      document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
+      window.arcadeOpen = true;
+      window.pendingChosenGame = null;
+    }
+  }
   const activeView = document.querySelector('#class-subtab-games > .game-inline-view, #student-tab-games > .game-inline-view, #class-subtab-games > .game-popup-modal, #student-tab-games > .game-popup-modal');
   if (!activeView) return;
   const target = event.target.closest('button, [role="tab"]');
@@ -28025,6 +28160,7 @@ function showFirstPlayerReveal(nextStep, listName) {
 }
 
 function chooseGamePlayers(listName, nextStep) {
+  document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
   selectedGameSource = getGameSource(listName);
   if (selectedGameSource === 'my_lists') selectedGameSession = { source: 'my_lists', listIds: (Array.isArray(listName) ? listName : [listName]).map(list => String(typeof list === 'object' ? list.vocab_list_id || list.__backendId : list)), lists: Array.isArray(listName) ? listName : [listName], words: [] };
   if (selectedGameSource === 'class_lists') {
@@ -31451,6 +31587,7 @@ async function unshareVocabListFromClass(listId, listName, button) {
 }
 
 function openVocabListEditor(listId, listName) {
+  document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
   const selectedList = allData.find(record => ['vocab_list', 'vocabulary_list'].includes(record.type) && (normalizeVocabId(record.__backendId) === normalizeVocabId(listId) || normalizeVocabId(record.vocab_list_id || record.list_id || record.vocabulary_list_id) === normalizeVocabId(listId)));
   if (!selectedList) { toast('This vocabulary list is no longer available. Refresh and try again.'); return; }
   const myTeacherId = String(verifiedTeacherIdentity() || (typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : '') || '').trim();
@@ -32021,6 +32158,7 @@ function openVocabListEditor(listId, listName) {
 }
 
 function editVocabWord(wordId, currentWord, currentImage) {
+  document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
   let options = arguments[3] || {};
   if (typeof options === 'function') options = { onSaved: options };
   const targetListId = options?.listId || options?.wordRecord?.vocab_list_id || options?.wordRecord?.list_id;

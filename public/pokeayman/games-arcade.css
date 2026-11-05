@@ -376,6 +376,19 @@ body { --ga-stage-bg: radial-gradient(circle at center, #111a2e 0%, #080d18 70%,
               border-color 0.2s ease !important;
 }
 
+/* Floating playlist/game list confirmation bar: ONLY show when Games tab is actively visible and no modal is open */
+body:not(:has(#view-students:not(.hidden) #class-subtab-games:not(.hidden))):not(:has(#student-tab-games:not(.hidden))) .ga-continue-bar,
+body:has(#edit-word-modal:not(.hidden)) .ga-continue-bar,
+body:has(.vocab-word-edit-card) .ga-continue-bar,
+body:has(.vocab-editor-overlay) .ga-continue-bar,
+body:has(.fixed.inset-0:not(.ga-stage):not(#app-screen):not(#splash-screen):not(.hidden)) .ga-continue-bar,
+body:has([role="dialog"]:not(.ga-stage)) .ga-continue-bar {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 #games-list-selector,
 #student-games-list-selector {
   max-height: none !important;
