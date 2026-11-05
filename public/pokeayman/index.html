@@ -4350,6 +4350,11 @@
   window.resolvePermanentVocabCover = function(url, listName, record) {
     if (record && record.vocab_media_policy === 'sentence-reviewed-v1') return url || '';
     const normName = String(listName || '').trim();
+    try {
+      const saved = (normName && (localStorage.getItem('vocab_cover_' + normName.toLowerCase()) || localStorage.getItem('vocab_cover_' + normName))) ||
+                    (record && record.vocab_list_id && (localStorage.getItem('vocab_cover_' + record.vocab_list_id) || localStorage.getItem('vocab_cover_' + String(record.vocab_list_id).toLowerCase())));
+      if (saved) return saved;
+    } catch (_) {}
     const ciKey = window.PERMANENT_VOCAB_COVERS ? Object.keys(window.PERMANENT_VOCAB_COVERS).find(k => k.toLowerCase() === normName.toLowerCase()) : null;
     if (ciKey && (!url || String(url).includes('pixabay.com/get/'))) {
       return window.PERMANENT_VOCAB_COVERS[ciKey];
@@ -31261,36 +31266,98 @@ function openVocabCoverPicker(listId, listName) {
       });
     }
 
-    const payload = {
+    const targetBackendId = row?.__backendId || row?.id || (list && (list.__backendId || list.id));
+    const effectiveListId = listId || (row && row.vocab_list_id) || (list && list.vocab_list_id) || normId || targetBackendId || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'vocab-list-' + Date.now());
+    const existingRecord = (row || list || {});
+
+    const updateRecord = {
+      ...existingRecord,
       type: 'vocab_list',
-      vocab_list_id: listId,
+      vocab_list_id: effectiveListId,
       vocab_list_name: displayName,
       vocab_cover_image_url: selectedUrl,
       vocab_cover_image_id: selectedId,
+      vocab_media_policy: 'sentence-reviewed-v1',
       updated_at: new Date().toISOString()
     };
+    if (targetBackendId) {
+      updateRecord.__backendId = targetBackendId;
+      updateRecord.id = targetBackendId;
+    }
 
     try {
-      const backendId = row?.__backendId || row?.id || (list && (list.__backendId || list.id));
-      if (backendId && window.dataSdk?.update) {
-        await window.dataSdk.update(backendId, payload);
-      } else if (window.dataSdk?.create) {
-        const created = await window.dataSdk.create(payload);
-        if (created && created.__backendId && row) row.__backendId = created.__backendId;
+      let updateRes = null;
+      if (targetBackendId && window.dataSdk?.update) {
+        updateRes = await window.dataSdk.update(updateRecord);
       }
+      if ((!updateRes || !updateRes.isOk) && window.dataSdk?.create) {
+        updateRes = await window.dataSdk.create(updateRecord);
+        if (updateRes?.data?.__backendId) {
+          if (row) row.__backendId = updateRes.data.__backendId;
+          if (list) list.__backendId = updateRes.data.__backendId;
+        }
+      }
+
       if (row) {
         row.vocab_cover_image_url = selectedUrl;
         row.vocab_cover_image_id = selectedId;
+        row.vocab_media_policy = 'sentence-reviewed-v1';
       }
       if (list && list !== row) {
         list.vocab_cover_image_url = selectedUrl;
         list.vocab_cover_image_id = selectedId;
+        list.vocab_media_policy = 'sentence-reviewed-v1';
       }
+
+      if (typeof allData !== 'undefined' && Array.isArray(allData)) {
+        let matched = false;
+        allData.forEach(r => {
+          if (!['vocab_list', 'vocabulary_list'].includes(String(r.type || '').toLowerCase())) return;
+          const rId = normalizeVocabId(r.vocab_list_id ?? r.list_id ?? r.vocabulary_list_id ?? r.parent_list_id);
+          const rBackend = normalizeVocabId(r.__backendId || r.id);
+          const rName = String(r.vocab_list_name || '').trim().toLowerCase();
+          if ((normId && (rId === normId || rBackend === normId || r.__backendId === listId || r.id === listId)) || (normName && rName === normName)) {
+            r.vocab_cover_image_url = selectedUrl;
+            r.vocab_cover_image_id = selectedId;
+            r.vocab_media_policy = 'sentence-reviewed-v1';
+            matched = true;
+          }
+        });
+        if (!matched && updateRes?.data) {
+          allData.push(updateRes.data);
+        }
+      }
+
+      try {
+        if (normName) {
+          localStorage.setItem('vocab_cover_' + normName, selectedUrl);
+          localStorage.setItem('vocab_cover_' + normName.toLowerCase(), selectedUrl);
+        }
+        if (normId) {
+          localStorage.setItem('vocab_cover_' + normId, selectedUrl);
+          localStorage.setItem('vocab_cover_' + normId.toLowerCase(), selectedUrl);
+        }
+        if (listId) {
+          localStorage.setItem('vocab_cover_' + listId, selectedUrl);
+        }
+        if (displayName) {
+          localStorage.setItem('vocab_cover_' + displayName.trim().toLowerCase(), selectedUrl);
+        }
+      } catch (_) {}
+
+      if (window.PERMANENT_VOCAB_COVERS) {
+        if (displayName) window.PERMANENT_VOCAB_COVERS[displayName] = selectedUrl;
+        if (normName) window.PERMANENT_VOCAB_COVERS[normName] = selectedUrl;
+        window.PERMANENT_VOCAB_COVERS[displayName.toLowerCase()] = selectedUrl;
+      }
+
       toast('Cover updated successfully!');
       close();
       if (typeof renderTeacherOwnedVocabLists === 'function') renderTeacherOwnedVocabLists();
       if (typeof renderVocabLists === 'function') renderVocabLists();
+      if (typeof renderGamesList === 'function') renderGamesList();
     } catch (err) {
+      console.error('Failed to save cover image:', err);
       if (applyBtn) {
         applyBtn.disabled = false;
         applyBtn.textContent = 'Apply Cover';
