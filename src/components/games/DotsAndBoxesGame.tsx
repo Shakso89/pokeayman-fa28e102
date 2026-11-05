@@ -666,17 +666,17 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       {/* Main Game Wrapper: Fluid Flexbox with min-h-0 and aspect-square */}
       <div className="flex-1 min-h-0 w-full flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 p-2 lg:p-4 z-10 overflow-hidden">
         {/* LEFT SIDE: MCQ Card Container */}
-        <div className="w-full lg:w-[420px] h-full min-h-0 flex flex-col justify-center flex-shrink-0">
-          <div className={`${themeStyle.cardBg} border ${themeStyle.border} rounded-3xl p-4 sm:p-5 shadow-2xl flex flex-col h-full min-h-0 max-h-[660px] relative overflow-hidden transition-colors duration-300`}>
+        <div className="w-full lg:w-[380px] h-full min-h-0 flex flex-col justify-center flex-shrink-0">
+          <div className={`${themeStyle.cardBg} border ${themeStyle.border} rounded-3xl p-3 sm:p-4 shadow-2xl flex flex-col h-full min-h-0 max-h-[660px] relative overflow-hidden transition-colors duration-300`}>
             {/* Active Turn Header with Student Avatar and Name Centered */}
             <div className="flex-none flex items-center justify-center gap-3 pb-2 border-b border-slate-800/60 mb-2 w-full text-center relative" id="dots-card-header">
               <div className="flex items-center justify-center gap-3">
                 <img
                   src={activePlayer.avatar_url || '/default-pokemon.png'}
                   alt={activePlayer.name}
-                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-contain bg-slate-950 border-2 border-amber-400 shadow-md flex-shrink-0"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-contain bg-slate-950 border-2 border-amber-400 shadow-md flex-shrink-0"
                 />
-                <span className="text-xl sm:text-2xl font-black tracking-wide text-white truncate max-w-[180px] sm:max-w-[240px]">
+                <span className="text-lg sm:text-xl font-black tracking-wide text-white truncate max-w-[180px] sm:max-w-[240px]">
                   {activePlayer.name}
                 </span>
                 {consecutiveTurns > 0 && (
@@ -699,7 +699,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             {/* Dynamic Content Area: Image + 2x2 Options */}
             <div className="flex-1 flex flex-col min-h-0 justify-between">
               {/* Clue Area: Image Container with flex-1 and min-h-0 lets image dynamically shrink */}
-              <div className="flex-1 min-h-0 rounded-2xl overflow-hidden bg-slate-950 mb-2 sm:mb-3 border border-slate-800 flex items-center justify-center p-2">
+              <div className="flex-1 min-h-0 h-0 rounded-2xl overflow-hidden bg-slate-950 mb-2 border border-slate-800 flex items-center justify-center p-2">
                 {currentQuestion?.wordItem?.image_url ||
                 currentQuestion?.wordItem?.vocab_image ||
                 currentQuestion?.wordItem?.image ? (
@@ -710,7 +710,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                       currentQuestion.wordItem.image
                     }
                     alt="Question clue"
-                    className="w-full h-full object-contain rounded-lg"
+                    className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
                   />
                 ) : (
                   <div className="w-full h-full rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col items-center justify-center text-slate-500 gap-2">
@@ -720,14 +720,14 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                 )}
               </div>
 
-              <p className="flex-none text-xs font-semibold text-slate-400 text-center mb-2">
+              <p className="flex-none text-xs font-semibold text-slate-400 text-center mb-1.5">
                 {phase === 'DRAW_LINE'
                   ? `Correct! Now tap any line on the grid.`
                   : 'Select the word that matches this picture:'}
               </p>
 
               {/* 2x2 Grid for Options: flex-none ensures options never get cut off */}
-              <div className="flex-none grid grid-cols-2 gap-2 sm:gap-2.5">
+              <div className="flex-none grid grid-cols-2 gap-2">
                 {currentQuestion?.options.map((option: string, idx: number) => {
                   const letter = String.fromCharCode(65 + idx);
                   const isLocked = phase !== 'MCQ';
