@@ -27778,7 +27778,6 @@ document.addEventListener('click', event => {
   }
   const activeView = document.querySelector('#class-subtab-games > .game-inline-view, #student-tab-games > .game-inline-view, #class-subtab-games > .game-popup-modal, #student-tab-games > .game-popup-modal');
   if (!activeView) return;
-  const target = event.target.closest('button, [role="tab"]');
   if (!target) return;
   const isGameExit = target.matches('#game-close, #find-me-close, #baam-close, #hangman-game-over-close, #celebration-close, #baam-final-close, #games-back, [data-games-back]');
   const isSetupCancel = target.textContent.trim().toLowerCase() === 'cancel' || /cancel/i.test(target.id || '') || target.matches('[data-game-exit]');

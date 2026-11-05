@@ -60,4 +60,17 @@ describe('Games Continue Bar Visibility & Modal Isolation', () => {
     expect(htmlContent).toContain('const savedScrollTop = prevScrollArea ? prevScrollArea.scrollTop : (selector.__lastScrollTop || 0);');
     expect(htmlContent).toContain('listArea.scrollTop = savedScrollTop;');
   });
+
+  it('ensures all inline scripts in index.html have zero parse or syntax errors', () => {
+    const scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+    let match: RegExpExecArray | null;
+    let count = 0;
+    while ((match = scriptRegex.exec(htmlContent)) !== null) {
+      count++;
+      const code = match[1];
+      if (!code.trim()) continue;
+      expect(() => new Function(code), `Script #${count} has syntax errors`).not.toThrow();
+    }
+    expect(count).toBeGreaterThan(10);
+  });
 });
