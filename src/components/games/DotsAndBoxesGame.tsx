@@ -433,7 +433,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   // Compute CSS Grid Track Template for the interactive board
   const numTracks = gridDots * 2 - 1;
   const gridTemplate = Array.from({ length: numTracks }, (_, i) =>
-    i % 2 === 0 ? '18px' : 'minmax(50px, 80px)'
+    i % 2 === 0 ? '20px' : '1fr'
   ).join(' ');
 
   const THEME_STYLES: Record<string, {
@@ -799,10 +799,10 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             </span>
           </div>
 
-          <div className={`relative w-full max-w-[800px] max-h-full aspect-square ${themeStyle.cardBg} rounded-3xl shadow-2xl border ${themeStyle.border} p-4 lg:p-8 flex items-center justify-center transition-colors duration-300`}>
+          <div className="relative w-full max-w-[600px] max-h-full aspect-square flex items-center justify-center min-h-0">
             {/* Board Grid Container */}
             <div
-              className={`grid items-center justify-center gap-0 p-4 rounded-2xl ${themeStyle.gridBg} border ${themeStyle.border} shadow-2xl transition-colors duration-300`}
+              className={`w-full h-full max-w-full max-h-full aspect-square grid items-center justify-center gap-0 p-3 sm:p-5 rounded-3xl ${themeStyle.gridBg} border ${themeStyle.border} shadow-2xl transition-colors duration-300`}
               style={{
                 gridTemplateColumns: gridTemplate,
                 gridTemplateRows: gridTemplate,

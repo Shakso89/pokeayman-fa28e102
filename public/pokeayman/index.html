@@ -6314,11 +6314,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     let consecutiveTurnsRemaining = 0;
 
     const turnTimeLimit = Math.max(0, Number(timerSeconds) || 0);
-    // Each player has a persistent time bank (like other arcade games)
+    // Persistent dual-player time banks
     let playerTimeRemaining = [turnTimeLimit, turnTimeLimit];
     if (typeof activeGamePlayerRemaining !== 'undefined') {
       activeGamePlayerRemaining = playerTimeRemaining;
     }
+    let activeTurnTimeRemaining = turnTimeLimit;
     let timerInterval = null;
     let lastTick = Date.now();
 
@@ -6341,77 +6342,38 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
     const updateTimerDisplay = () => {
       if (turnTimeLimit <= 0) return;
-      const curP1 = Math.max(0, Math.ceil(playerTimeRemaining[0] || 0));
-      const curP2 = Math.max(0, Math.ceil(playerTimeRemaining[1] || 0));
-      const activeLeft = activeGamePlayerIndex === 0 ? curP1 : curP2;
+      const curLeft = Math.max(0, Math.ceil(activeTurnTimeRemaining || 0));
+      const curP1 = activeGamePlayerIndex === 0 ? curLeft : Math.max(0, Math.ceil(playerTimeRemaining[0] || 0));
+      const curP2 = activeGamePlayerIndex === 1 ? curLeft : Math.max(0, Math.ceil(playerTimeRemaining[1] || 0));
 
       // 1. Center VS Timer
       const timerVal = modal?.querySelector?.('#dots-timer-val');
       const timerPill = modal?.querySelector?.('#dots-hud-timer');
-      if (timerVal) timerVal.textContent = formatTime(activeLeft);
+      if (timerVal) timerVal.textContent = formatTime(curLeft);
       if (timerPill) {
-        const isDanger = activeLeft <= 5 || (turnTimeLimit > 0 && activeLeft / turnTimeLimit <= 0.2);
-        const isWarn = !isDanger && (activeLeft <= 10 || (turnTimeLimit > 0 && activeLeft / turnTimeLimit <= 0.4));
+        const isDanger = curLeft <= 5 || (turnTimeLimit > 0 && curLeft / turnTimeLimit <= 0.2);
+        const isWarn = !isDanger && (curLeft <= 10 || (turnTimeLimit > 0 && curLeft / turnTimeLimit <= 0.4));
         timerPill.classList.toggle('is-danger', isDanger);
         timerPill.classList.toggle('is-warn', isWarn);
       }
 
       // 2. Player 1 Badge Timer
       const p1Timer = modal?.querySelector?.('#dots-timer-p1');
-      if (p1Timer) {
-        p1Timer.textContent = `⏱ ${formatTime(curP1)}`;
-        p1Timer.classList.toggle('text-rose-400', curP1 <= 5);
-        p1Timer.classList.toggle('border-rose-500/50', curP1 <= 5);
-      }
+      if (p1Timer) p1Timer.textContent = `⏱ ${formatTime(curP1)}`;
 
       // 3. Player 2 Badge Timer
       const p2Timer = modal?.querySelector?.('#dots-timer-p2');
-      if (p2Timer) {
-        p2Timer.textContent = `⏱ ${formatTime(curP2)}`;
-        p2Timer.classList.toggle('text-rose-400', curP2 <= 5);
-        p2Timer.classList.toggle('border-rose-500/50', curP2 <= 5);
-      }
+      if (p2Timer) p2Timer.textContent = `⏱ ${formatTime(curP2)}`;
 
       // 4. Question Card Header Timer
       const qTimer = modal?.querySelector?.('#dots-q-timer');
-      if (qTimer) {
-        qTimer.textContent = `⏱ ${formatTime(activeLeft)}`;
-        qTimer.classList.toggle('text-rose-400', activeLeft <= 5);
-      }
+      if (qTimer) qTimer.textContent = `⏱ ${formatTime(curLeft)}`;
     };
 
     const handleTimeout = () => {
       if (phase === 'ROUND_OVER') return;
       try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
 
-      const p1Time = playerTimeRemaining[0];
-      const p2Time = playerTimeRemaining[1];
-
-      // If BOTH players have no time left: Game over!
-      if (p1Time <= 0 && p2Time <= 0) {
-        stopTurnTimer();
-        phase = 'ROUND_OVER';
-        updateStatus();
-        renderBoard();
-
-        const p1Score = activeGameScores[0];
-        const p2Score = activeGameScores[1];
-        const tied = p1Score === p2Score;
-        const winner = tied ? null : (p1Score > p2Score ? p1 : p2);
-
-        if (typeof toast === 'function') {
-          toast('⏱ Time is up for both players!');
-        }
-
-        setTimeout(() => {
-          if (typeof showGameCelebration === 'function') {
-            showGameCelebration(modal, 'Time is up!', '', winner);
-          }
-        }, 800);
-        return;
-      }
-
-      // One player timed out
       const timedOutPlayer = activeGamePlayers[activeGamePlayerIndex];
       const timedOutName = timedOutPlayer?.student_name || timedOutPlayer?.name || 'Player';
       const nextIndex = 1 - activeGamePlayerIndex;
@@ -6424,6 +6386,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
       consecutiveTurnsRemaining = 0;
       activeGamePlayerIndex = nextIndex;
+      activeTurnTimeRemaining = turnTimeLimit;
       lastTick = Date.now();
       currentQuestion = generateMCQ(allWords, currentQuestion?.wordItem);
       phase = 'MCQ';
@@ -6447,15 +6410,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         const elapsed = Math.max(0, (now - lastTick) / 1000);
         lastTick = now;
 
-        if (playerTimeRemaining[activeGamePlayerIndex] > 0) {
-          playerTimeRemaining[activeGamePlayerIndex] = Math.max(0, playerTimeRemaining[activeGamePlayerIndex] - elapsed);
-          if (typeof activeGamePlayerRemaining !== 'undefined' && Array.isArray(activeGamePlayerRemaining)) {
-            activeGamePlayerRemaining[activeGamePlayerIndex] = playerTimeRemaining[activeGamePlayerIndex];
-          }
-        }
+        activeTurnTimeRemaining = Math.max(0, activeTurnTimeRemaining - elapsed);
         updateTimerDisplay();
 
-        if (playerTimeRemaining[activeGamePlayerIndex] <= 0) {
+        if (activeTurnTimeRemaining <= 0) {
           handleTimeout();
         }
       }, 250);
@@ -6723,11 +6681,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         qName.className = `dots-q-student-name font-black tracking-wide truncate ${isP1 ? 'text-amber-300' : 'text-cyan-300'}`;
       }
 
-      const qTimer = modal.querySelector('#dots-q-timer');
-      if (qTimer) {
-        qTimer.className = `dots-q-timer text-xs font-black px-2.5 py-0.5 rounded-full bg-slate-900 border ${isP1 ? 'border-amber-400/50 text-amber-300' : 'border-cyan-400/50 text-cyan-300'}`;
-      }
-
       if (turnBadge) {
         if (consecutiveTurnsRemaining === 2) {
           turnBadge.textContent = '⚡ 2 Turns (Turn 1)';
@@ -6841,6 +6794,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         setTimeout(() => {
           if (phase === 'ROUND_OVER') return;
           activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+          activeTurnTimeRemaining = turnTimeLimit;
           lastTick = Date.now();
           currentQuestion = generateMCQ(allWords, currentQuestion.wordItem);
           phase = 'MCQ';
@@ -6981,13 +6935,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const isP1 = activeGamePlayerIndex === 0;
       const turnClass = isP1 ? 'p1-turn' : 'p2-turn';
 
-      // 30% bigger box sizing for 3x3, 4x4, and 5x5 dots
-      const boxSize = N >= 5 ? 'clamp(58px, 14vw, 74px)' : (N === 4 ? 'clamp(70px, 18vw, 92px)' : 'clamp(86px, 23vw, 115px)');
+      // Dynamic grid track sizing: 28px dot tracks, boxes take 1fr to fill available square
+      const dotTrack = '28px';
       const colDefs = [];
       const rowDefs = [];
       for (let i = 0; i < N - 1; i++) {
-        colDefs.push('28px', boxSize);
-        rowDefs.push('28px', boxSize);
+        colDefs.push('28px', '1fr');
+        rowDefs.push('28px', '1fr');
       }
       colDefs.push('28px');
       rowDefs.push('28px');
@@ -7038,7 +6992,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             btn.setAttribute('aria-label', `Horizontal line at row ${r}, col ${c}`);
             btn.disabled = isDrawn || phase !== 'DRAW_LINE';
             btn.style.width = '100%';
-            btn.style.height = '28px';
+            btn.style.height = dotTrack;
             btn.style.justifySelf = 'stretch';
             btn.style.alignSelf = 'center';
             btn.style.display = 'flex';
@@ -7084,7 +7038,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             btn.style.alignSelf = 'stretch';
             btn.style.justifySelf = 'center';
             btn.style.height = '100%';
-            btn.style.width = '28px';
+            btn.style.width = dotTrack;
             btn.style.display = 'flex';
             btn.style.flexDirection = 'column';
             btn.style.alignItems = 'center';
@@ -7195,6 +7149,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       }
 
       // Check turn progression:
+      activeTurnTimeRemaining = turnTimeLimit;
       // If boxes completed: player gets another turn (standard Dots & Boxes rule)
       // If NO boxes completed:
       if (boxesCompleted === 0) {
