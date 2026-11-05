@@ -1,6 +1,6 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { gamesConfig, getGameConfig } from '../components/games/gamesConfig';
 import { RoundSetupModal } from '../components/games/RoundSetupModal';
 import {
@@ -362,6 +362,84 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
       expect(scoreHud?.className).toContain('border-[#6366f1]');
       expect(optionBtn.className).toContain('bg-white');
       expect(optionBtn.className).toContain('border-indigo-200');
+    });
+  });
+
+  describe('6. Continuous Timer Countdown Behavior', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('counts down continuously across MCQ and DRAW_LINE without resetting on correct answer', async () => {
+      render(
+        <DotsAndBoxesGame
+          players={mockStudents.slice(0, 2)}
+          vocabItems={mockVocabItems}
+          gridDots={3}
+          timerSeconds={60}
+        />
+      );
+
+      // Verify timer pill displays 1m (60s)
+      expect(screen.getByText('1m')).toBeInTheDocument();
+
+      // Advance 10 seconds during MCQ phase
+      act(() => {
+        vi.advanceTimersByTime(10000);
+      });
+      expect(screen.getByText('50s')).toBeInTheDocument();
+
+      // Click correct answer to transition from MCQ to DRAW_LINE phase
+      const correctBtn = document.querySelector('[data-correct="true"]') as HTMLButtonElement;
+      expect(correctBtn).not.toBeNull();
+      fireEvent.click(correctBtn);
+
+      // DRAW_LINE phase is active
+      expect(screen.getByText('Draw Line')).toBeInTheDocument();
+
+      // Timer should NOT have reset back to 60s; it should still be 50s!
+      expect(screen.getByText('50s')).toBeInTheDocument();
+
+      // Advance another 15 seconds during DRAW_LINE phase
+      act(() => {
+        vi.advanceTimersByTime(15000);
+      });
+      expect(screen.getByText('35s')).toBeInTheDocument();
+
+      // Now place line on grid: turn passes to Player 2
+      fireEvent.click(screen.getByTestId('line-h-0-0'));
+
+      // Now that turn passed to Player 2, timer resets back to 60s (1m)
+      expect(screen.getByText('1m')).toBeInTheDocument();
+      expect(screen.getAllByText('Gary Oak').length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('forces turn pass with double-turn penalty when countdown reaches 0', async () => {
+      render(
+        <DotsAndBoxesGame
+          players={mockStudents.slice(0, 2)}
+          vocabItems={mockVocabItems}
+          gridDots={3}
+          timerSeconds={30}
+        />
+      );
+
+      expect(screen.getByText('30s')).toBeInTheDocument();
+      expect(screen.getAllByText('Ash Ketchum').length).toBeGreaterThanOrEqual(2);
+
+      // Advance 30 seconds to timeout
+      act(() => {
+        vi.advanceTimersByTime(30000);
+      });
+
+      // Player 2 should now have the turn with 2-turn penalty
+      expect(screen.getAllByText('Gary Oak').length).toBeGreaterThanOrEqual(2);
+      expect(screen.getByText(/2 Turns!/i)).toBeInTheDocument();
+      expect(screen.getByText('30s')).toBeInTheDocument();
     });
   });
 });

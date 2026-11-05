@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Trophy, ArrowLeft, RotateCcw, Volume2, VolumeX, Sparkles, AlertCircle } from 'lucide-react';
+import { Trophy, ArrowLeft, RotateCcw, Volume2, VolumeX, Sparkles, AlertCircle, Timer } from 'lucide-react';
 import type { Student } from './RoundSetupModal';
+import { formatTimer } from './RoundSetupModal';
 import { adjustStudentCoins } from '@/lib/class-students';
 
 export interface GameState {
@@ -23,6 +24,7 @@ export interface DotsAndBoxesGameProps {
   vocabItems: any[];
   gridDots?: number;
   winnerCoins?: number;
+  timerSeconds?: number;
   theme?: string;
   adminId?: string;
   onExit?: () => void;
@@ -125,6 +127,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   vocabItems = [],
   gridDots = 4, // 4x4 dots = 3x3 boxes (9 total boxes)
   winnerCoins = 0,
+  timerSeconds = 0,
   theme = 'classroom',
   adminId = '',
   onExit,
@@ -164,6 +167,9 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     return { hLines, vLines, bxs };
   }, [gridDots, numBoxes]);
 
+  const initialTimerValue = timerSeconds || 0;
+  const [timeLeft, setTimeLeft] = useState<number>(initialTimerValue);
+
   const [horizontalLines, setHorizontalLines] = useState<Record<string, number | null>>(() => initBoard().hLines);
   const [verticalLines, setVerticalLines] = useState<Record<string, number | null>>(() => initBoard().vLines);
   const [boxes, setBoxes] = useState<Record<string, number | null>>(() => initBoard().bxs);
@@ -179,6 +185,11 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   const [isAwardingCoins, setIsAwardingCoins] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [activeTheme, setActiveTheme] = useState<string>(theme || 'classroom');
+
+  // Synchronize timeLeft when initialTimerValue prop changes
+  useEffect(() => {
+    setTimeLeft(initialTimerValue);
+  }, [initialTimerValue]);
 
   useEffect(() => {
     if (theme) setActiveTheme(theme);
@@ -202,6 +213,52 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
 
   const activePlayer = roster[activePlayerIndex];
 
+  // Helper to force pass turn on timeout
+  const handleTimeUp = useCallback(() => {
+    if (soundEnabled) playAudio('wrong');
+    setConsecutiveTurns(2);
+    const nextPlayer: 0 | 1 = activePlayerIndex === 0 ? 1 : 0;
+    setActivePlayerIndex(nextPlayer);
+    setPhase('MCQ');
+    setTimeLeft(initialTimerValue);
+    setSelectedChoice(null);
+    setLastAnswerStatus(null);
+    setCurrentQuestion(generateMCQQuestion(vocabItems));
+    setStatusMessage(`⏰ Time's up! ${roster[nextPlayer].name} gets 2 turns in a row!`);
+  }, [activePlayerIndex, initialTimerValue, roster, soundEnabled, vocabItems]);
+
+  // Continuous timer countdown spanning both MCQ and DRAW_LINE uninterrupted
+  useEffect(() => {
+    // Do not run if timer is off or game is over
+    if (initialTimerValue === 0 || phase === 'ROUND_OVER') return;
+
+    const intervalId = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(intervalId);
+          handleTimeUp(); // Force pass turn to next player
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+
+    // CRITICAL FIX: Remove `phase` from the dependency array. 
+    // It should ONLY depend on activePlayerIndex so it spans both MCQ and DRAW_LINE uninterrupted.
+  }, [activePlayerIndex, initialTimerValue, phase === 'ROUND_OVER', handleTimeUp]);
+
+  // Helper to pass turn (called when time is up, wrong answer, or line placed without closing a box)
+  const passTurnToNextPlayer = useCallback(() => {
+    setActivePlayerIndex((prev) => (prev === 0 ? 1 : 0));
+    setPhase('MCQ');
+    setTimeLeft(initialTimerValue); // Reset clock for the new player
+    setSelectedChoice(null);
+    setLastAnswerStatus(null);
+    setCurrentQuestion(generateMCQQuestion(vocabItems));
+  }, [initialTimerValue, vocabItems]);
+
   // Reset or restart game
   const handleRestartGame = () => {
     const { hLines, vLines, bxs } = initBoard();
@@ -210,6 +267,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     setBoxes(bxs);
     setPlayerScores([0, 0]);
     setActivePlayerIndex(0);
+    setTimeLeft(initialTimerValue);
     setPhase('MCQ');
     setCurrentQuestion(generateMCQQuestion(vocabItems));
     setStatusMessage(`${roster[0].name}'s turn: Answer the question`);
@@ -223,7 +281,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     setSelectedChoice(selectedOption);
 
     if (selectedOption === currentQuestion.correctAnswer) {
-      // Correct! Keep green and unlock line drawing phase
+      // Correct! Keep green and unlock line drawing phase (Clock continues ticking without pause!)
       if (soundEnabled) playAudio('correct');
       setLastAnswerStatus('correct');
       setPhase('DRAW_LINE');
@@ -239,6 +297,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
         setSelectedChoice(null);
         setLastAnswerStatus(null);
         setActivePlayerIndex(nextPlayer);
+        setTimeLeft(initialTimerValue);
         setCurrentQuestion(generateMCQQuestion(vocabItems));
         setPhase('MCQ');
         setStatusMessage(`Wrong answer! ${roster[nextPlayer].name} gets 2 turns in a row!`);
@@ -330,14 +389,17 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       // Bonus turn: activePlayerIndex remains the same
       if (soundEnabled) playAudio('box_captured');
       setStatusMessage(`🎉 Box captured! ${activePlayer.name} earns a bonus turn!`);
+      setTimeLeft(initialTimerValue);
     } else {
       if (consecutiveTurns > 1) {
         setConsecutiveTurns((prev) => prev - 1);
         setStatusMessage(`⚡ ${activePlayer.name} gets their 2nd turn in a row!`);
+        setTimeLeft(initialTimerValue);
       } else {
         setConsecutiveTurns(0);
         nextPlayer = activePlayerIndex === 0 ? 1 : 0;
         setActivePlayerIndex(nextPlayer);
+        setTimeLeft(initialTimerValue);
         setStatusMessage(`${roster[nextPlayer].name}'s turn: Answer the question`);
       }
     }
@@ -560,7 +622,27 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             )}
           </div>
 
-          <span className="text-xs font-black text-slate-500 tracking-widest px-1">VS</span>
+          {/* Center: VS and continuous countdown timer pill */}
+          {initialTimerValue > 0 ? (
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-xs font-black text-slate-500 tracking-widest">VS</span>
+              <div
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-black transition-all ${
+                  timeLeft <= 10
+                    ? 'bg-rose-500/20 text-rose-300 border-rose-500/70 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse'
+                    : timeLeft <= 30
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/60'
+                    : 'bg-slate-950/80 text-amber-400 border-amber-400/60 shadow-sm'
+                }`}
+                title="Continuous Turn Timer"
+              >
+                <span>⏱️</span>
+                <span>{formatTimer(timeLeft)}</span>
+              </div>
+            </div>
+          ) : (
+            <span className="text-xs font-black text-slate-500 tracking-widest px-1">VS</span>
+          )}
 
           {/* Player 2 HUD */}
           <div
@@ -590,114 +672,120 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
         </div>
       </div>
 
-      {/* 2-Column Split: Left MCQ Question Card | Right Dots & Boxes Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* Left Section: Question Card */}
-        <div className={`lg:col-span-5 flex flex-col justify-between ${themeStyle.cardBg} border ${themeStyle.border} rounded-2xl p-5 shadow-xl relative overflow-hidden transition-colors duration-300`}>
-          {/* Active Turn Header with Student Avatar and Name Centered */}
-          <div className="flex items-center justify-center gap-3 pb-3 border-b border-slate-800/60 mb-3 w-full text-center relative" id="dots-card-header">
-            <div className="flex items-center justify-center gap-3">
-              <img
-                src={activePlayer.avatar_url || '/default-pokemon.png'}
-                alt={activePlayer.name}
-                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-contain bg-slate-950 border-2 border-amber-400 shadow-md flex-shrink-0"
-              />
-              <span className="text-xl sm:text-2xl font-black tracking-wide text-white truncate max-w-[240px] sm:max-w-[320px]">
-                {activePlayer.name}
-              </span>
-              {consecutiveTurns > 0 && (
-                <span className="text-xs font-black uppercase px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 animate-pulse">
-                  ⚡ 2 Turns!
-                </span>
-              )}
-            </div>
-            <span
-              className={`hidden sm:inline-flex absolute right-0 text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                phase === 'DRAW_LINE'
-                  ? 'bg-emerald-400/20 text-emerald-300 border-emerald-400/30'
-                  : 'bg-slate-800 text-slate-400 border-slate-700'
-              }`}
-            >
-              {phase === 'DRAW_LINE' ? 'Draw Line' : 'Answer MCQ'}
-            </span>
-          </div>
-
-          {/* Clue Area: Image or Visual Prompt */}
-          <div className="flex-1 flex flex-col items-center justify-center p-2 min-h-[190px]">
-            {currentQuestion?.wordItem?.image_url ||
-            currentQuestion?.wordItem?.vocab_image ||
-            currentQuestion?.wordItem?.image ? (
-              <div className="relative group rounded-xl overflow-hidden bg-slate-950/80 border border-slate-700/80 p-2 shadow-md max-h-48 flex items-center justify-center">
+      {/* Main Game Wrapper: Fluid Flexbox with min-h-0 and aspect-square */}
+      <div className="flex flex-col lg:flex-row items-stretch justify-center gap-6 lg:gap-12 w-full h-full min-h-0 p-2 sm:p-4 lg:p-6 flex-1">
+        {/* LEFT SIDE: MCQ Card Container */}
+        <div className="w-full lg:w-1/3 max-w-md flex flex-col justify-center min-h-0 mx-auto">
+          <div className={`${themeStyle.cardBg} border ${themeStyle.border} rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col h-full max-h-[600px] relative overflow-hidden transition-colors duration-300`}>
+            {/* Active Turn Header with Student Avatar and Name Centered */}
+            <div className="flex items-center justify-center gap-3 pb-3 border-b border-slate-800/60 mb-3 w-full text-center relative" id="dots-card-header">
+              <div className="flex items-center justify-center gap-3">
                 <img
-                  src={
-                    currentQuestion.wordItem.image_url ||
-                    currentQuestion.wordItem.vocab_image ||
-                    currentQuestion.wordItem.image
-                  }
-                  alt="Vocabulary clue"
-                  className="max-h-40 max-w-full object-contain rounded-lg transition-transform group-hover:scale-105"
+                  src={activePlayer.avatar_url || '/default-pokemon.png'}
+                  alt={activePlayer.name}
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-contain bg-slate-950 border-2 border-amber-400 shadow-md flex-shrink-0"
                 />
-              </div>
-            ) : (
-              <div className="w-full h-36 rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col items-center justify-center text-slate-500 gap-2">
-                <span className="text-3xl">🖼️</span>
-                <span className="text-xs font-semibold">Vocabulary Clue</span>
-              </div>
-            )}
-
-            <p className="text-xs font-semibold text-slate-400 text-center mt-3">
-              {phase === 'DRAW_LINE'
-                ? `Correct! The target word was "${currentQuestion?.correctAnswer}". Now tap any line on the grid.`
-                : 'Select the word that matches this picture:'}
-            </p>
-          </div>
-
-          {/* 4 Choices Buttons */}
-          <div className="grid grid-cols-2 gap-2.5 mt-3">
-            {currentQuestion?.options.map((option: string, idx: number) => {
-              const letter = String.fromCharCode(65 + idx);
-              const isLocked = phase !== 'MCQ';
-              const isSelected = selectedChoice === option;
-              const isCorrectAnswer = option === currentQuestion?.correctAnswer;
-              const isMarkedCorrect = (isSelected && isCorrectAnswer) || (phase === 'DRAW_LINE' && isCorrectAnswer);
-              const isMarkedWrong = isSelected && !isCorrectAnswer;
-
-              let btnClasses = `${themeStyle.choiceBtn} active:scale-95 shadow-sm`;
-              if (isMarkedCorrect) {
-                btnClasses = 'bg-emerald-600/90 text-white border-2 border-emerald-300 shadow-[0_0_16px_rgba(16,185,129,0.7)] scale-[1.02]';
-              } else if (isMarkedWrong) {
-                btnClasses = 'bg-rose-600/90 text-white border-2 border-rose-400 shadow-[0_0_16px_rgba(244,63,94,0.7)] animate-bounce';
-              } else if (isLocked) {
-                btnClasses = 'opacity-40 cursor-not-allowed border-transparent';
-              }
-
-              return (
-                <button
-                  key={`${option}-${idx}`}
-                  type="button"
-                  data-testid={`mcq-option-${idx}`}
-                  data-option={option}
-                  data-correct={isCorrectAnswer}
-                  disabled={isLocked}
-                  onClick={() => handleAnswerMCQ(option)}
-                  className={`group relative p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all duration-150 ${btnClasses}`}
-                >
-                  <span className={`w-6 h-6 rounded-lg ${isMarkedCorrect ? 'bg-emerald-800 text-emerald-100' : isMarkedWrong ? 'bg-rose-800 text-rose-100' : themeStyle.choiceLetter} text-[11px] font-black flex items-center justify-center flex-shrink-0`}>
-                    {letter}
+                <span className="text-xl sm:text-2xl font-black tracking-wide text-white truncate max-w-[200px] sm:max-w-[260px]">
+                  {activePlayer.name}
+                </span>
+                {consecutiveTurns > 0 && (
+                  <span className="text-xs font-black uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 animate-pulse">
+                    ⚡ 2 Turns!
                   </span>
-                  <span className="text-xs sm:text-sm font-bold truncate">
-                    {option}
-                  </span>
-                </button>
-              );
-            })}
+                )}
+              </div>
+              <span
+                className={`hidden sm:inline-flex absolute right-0 text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                  phase === 'DRAW_LINE'
+                    ? 'bg-emerald-400/20 text-emerald-300 border-emerald-400/30'
+                    : 'bg-slate-800 text-slate-400 border-slate-700'
+                }`}
+              >
+                {phase === 'DRAW_LINE' ? 'Draw Line' : 'Answer MCQ'}
+              </span>
+            </div>
+
+            {/* Dynamic Content Area: Image + 2x2 Options */}
+            <div className="flex-1 flex flex-col min-h-0 justify-between">
+              {/* Clue Area: Image or Visual Prompt */}
+              <div className="flex-1 flex flex-col items-center justify-center p-2 min-h-[160px] max-h-[240px] overflow-hidden">
+                {currentQuestion?.wordItem?.image_url ||
+                currentQuestion?.wordItem?.vocab_image ||
+                currentQuestion?.wordItem?.image ? (
+                  <div className="relative group rounded-xl overflow-hidden bg-slate-950/80 border border-slate-700/80 p-2 shadow-md w-full h-full flex items-center justify-center">
+                    <img
+                      src={
+                        currentQuestion.wordItem.image_url ||
+                        currentQuestion.wordItem.vocab_image ||
+                        currentQuestion.wordItem.image
+                      }
+                      alt="Vocabulary clue"
+                      className="max-h-full max-w-full object-contain rounded-lg transition-transform group-hover:scale-105"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-full min-h-[140px] rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col items-center justify-center text-slate-500 gap-2">
+                    <span className="text-3xl">🖼️</span>
+                    <span className="text-xs font-semibold">Vocabulary Clue</span>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs font-semibold text-slate-400 text-center my-2">
+                {phase === 'DRAW_LINE'
+                  ? `Correct! Now tap any line on the grid.`
+                  : 'Select the word that matches this picture:'}
+              </p>
+
+              {/* 2x2 Grid for Options */}
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mt-auto">
+                {currentQuestion?.options.map((option: string, idx: number) => {
+                  const letter = String.fromCharCode(65 + idx);
+                  const isLocked = phase !== 'MCQ';
+                  const isSelected = selectedChoice === option;
+                  const isCorrectAnswer = option === currentQuestion?.correctAnswer;
+                  const isMarkedCorrect = (isSelected && isCorrectAnswer) || (phase === 'DRAW_LINE' && isCorrectAnswer);
+                  const isMarkedWrong = isSelected && !isCorrectAnswer;
+
+                  let btnClasses = `${themeStyle.choiceBtn} active:scale-95 shadow-sm`;
+                  if (isMarkedCorrect) {
+                    btnClasses = 'bg-emerald-600/90 text-white border-2 border-emerald-300 shadow-[0_0_16px_rgba(16,185,129,0.7)] scale-[1.02]';
+                  } else if (isMarkedWrong) {
+                    btnClasses = 'bg-rose-600/90 text-white border-2 border-rose-400 shadow-[0_0_16px_rgba(244,63,94,0.7)] animate-bounce';
+                  } else if (isLocked) {
+                    btnClasses = 'opacity-40 cursor-not-allowed border-transparent';
+                  }
+
+                  return (
+                    <button
+                      key={`${option}-${idx}`}
+                      type="button"
+                      data-testid={`mcq-option-${idx}`}
+                      data-option={option}
+                      data-correct={isCorrectAnswer}
+                      disabled={isLocked}
+                      onClick={() => handleAnswerMCQ(option)}
+                      className={`group relative p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all duration-150 ${btnClasses}`}
+                    >
+                      <span className={`w-6 h-6 rounded-lg ${isMarkedCorrect ? 'bg-emerald-800 text-emerald-100' : isMarkedWrong ? 'bg-rose-800 text-rose-100' : themeStyle.choiceLetter} text-[11px] font-black flex items-center justify-center flex-shrink-0`}>
+                        {letter}
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold truncate">
+                        {option}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right Section: Interactive Dots & Boxes Board */}
-        <div className={`lg:col-span-7 flex flex-col items-center justify-center ${themeStyle.cardBg} border ${themeStyle.border} rounded-2xl p-6 shadow-xl relative min-h-[420px] transition-colors duration-300`}>
+        {/* RIGHT SIDE: Game Board */}
+        {/* aspect-square ensures it always stays a perfect grid, taking up maximum available height without overflowing */}
+        <div className="w-full lg:w-2/3 flex flex-col items-center justify-center min-h-0">
           {/* Turn banner helper */}
-          <div className="text-center mb-5">
+          <div className="text-center mb-3">
             <span
               className={`text-xs font-bold px-3 py-1 rounded-full border ${
                 phase === 'DRAW_LINE'
@@ -711,14 +799,15 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             </span>
           </div>
 
-          {/* Board Grid Container */}
-          <div
-            className={`grid items-center justify-center gap-0 p-4 rounded-2xl ${themeStyle.gridBg} border ${themeStyle.border} shadow-2xl transition-colors duration-300`}
-            style={{
-              gridTemplateColumns: gridTemplate,
-              gridTemplateRows: gridTemplate,
-            }}
-          >
+          <div className={`relative w-full max-w-[800px] max-h-full aspect-square ${themeStyle.cardBg} rounded-3xl shadow-2xl border ${themeStyle.border} p-4 lg:p-8 flex items-center justify-center transition-colors duration-300`}>
+            {/* Board Grid Container */}
+            <div
+              className={`grid items-center justify-center gap-0 p-4 rounded-2xl ${themeStyle.gridBg} border ${themeStyle.border} shadow-2xl transition-colors duration-300`}
+              style={{
+                gridTemplateColumns: gridTemplate,
+                gridTemplateRows: gridTemplate,
+              }}
+            >
             {/* Render Nodes (Dots) */}
             {Array.from({ length: gridDots }).map((_, r) =>
               Array.from({ length: gridDots }).map((__, c) => (
@@ -869,6 +958,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
           </div>
         </div>
       </div>
+    </div>
 
       {/* Game Over Victory Overlay Modal */}
       {phase === 'ROUND_OVER' && (

@@ -105,6 +105,18 @@ export interface GameTheme {
   previewUrl?: string;
 }
 
+// Allowed timer intervals in seconds (0 = No timer)
+export const TIMER_OPTIONS = [0, 30, 60, 90, 120, 150, 180, 240, 300, 420, 600, 900];
+
+// Helper to format the display pill
+export const formatTimer = (val: number) => {
+  if (val === 0) return 'No timer';
+  if (val < 60) return `${val}s`;
+  const mins = Math.floor(val / 60);
+  const secs = val % 60;
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+};
+
 export interface RoundSetupModalProps {
   gameTitle?: string;
   gameId?: string;
@@ -142,6 +154,20 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [gridDots, setGridDots] = useState<number>(defaultGridSize);
   const [currentTheme, setCurrentTheme] = useState<string>(selectedThemeId);
+
+  const incTimer = () => {
+    const currentIndex = TIMER_OPTIONS.indexOf(timerSeconds);
+    if (currentIndex < TIMER_OPTIONS.length - 1) {
+      setTimerSeconds(TIMER_OPTIONS[currentIndex + 1]);
+    }
+  };
+
+  const decTimer = () => {
+    const currentIndex = TIMER_OPTIONS.indexOf(timerSeconds);
+    if (currentIndex > 0) {
+      setTimerSeconds(TIMER_OPTIONS[currentIndex - 1]);
+    }
+  };
 
   const togglePlayer = (student: Student) => {
     setSelectedPlayers((prev) => {
@@ -358,26 +384,11 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                   </div>
                   <Stepper
                     value={timerSeconds}
-                    onDecrease={() => {
-                      if (timerSeconds <= 0) return;
-                      if (timerSeconds <= 30) setTimerSeconds(0);
-                      else if (timerSeconds <= 60) setTimerSeconds(30);
-                      else setTimerSeconds((v) => Math.max(60, v - 60));
-                    }}
-                    onIncrease={() => {
-                      if (timerSeconds === 0) setTimerSeconds(30);
-                      else if (timerSeconds === 30) setTimerSeconds(60);
-                      else setTimerSeconds((v) => Math.min(900, v + 60));
-                    }}
-                    format={(v) => {
-                      if (v === 0) return 'No timer';
-                      if (v < 60) return `${v} sec`;
-                      const mins = Math.floor(v / 60);
-                      const remSecs = v % 60;
-                      return remSecs > 0 ? `${mins}m ${remSecs}s` : `${mins} min`;
-                    }}
-                    disabledDec={timerSeconds <= 0}
-                    disabledInc={timerSeconds >= 900}
+                    onDecrease={decTimer}
+                    onIncrease={incTimer}
+                    format={formatTimer}
+                    disabledDec={timerSeconds <= TIMER_OPTIONS[0]}
+                    disabledInc={timerSeconds >= TIMER_OPTIONS[TIMER_OPTIONS.length - 1]}
                   />
                 </div>
               </div>

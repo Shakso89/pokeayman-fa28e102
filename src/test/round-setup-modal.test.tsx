@@ -1,9 +1,19 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
-import { SettingStepperRow, RoundSetupModal } from '../components/games/RoundSetupModal';
+import { SettingStepperRow, RoundSetupModal, TIMER_OPTIONS, formatTimer } from '../components/games/RoundSetupModal';
 
 describe('RoundSetupModal and SettingStepperRow', () => {
+  it('formats timer intervals correctly and provides comprehensive range from 30s to 15m', () => {
+    expect(TIMER_OPTIONS).toEqual([0, 30, 60, 90, 120, 150, 180, 240, 300, 420, 600, 900]);
+    expect(formatTimer(0)).toBe('No timer');
+    expect(formatTimer(30)).toBe('30s');
+    expect(formatTimer(60)).toBe('1m');
+    expect(formatTimer(90)).toBe('1m 30s');
+    expect(formatTimer(120)).toBe('2m');
+    expect(formatTimer(150)).toBe('2m 30s');
+    expect(formatTimer(900)).toBe('15m');
+  });
   it('renders SettingStepperRow correctly and handles decrease/increase', () => {
     const onDecrease = vi.fn();
     const onIncrease = vi.fn();
