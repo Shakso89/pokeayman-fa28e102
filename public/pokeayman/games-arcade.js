@@ -1710,6 +1710,11 @@
 
     document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
 
+    // Only render floating bar if actively selecting vocab for a game and selectedLists.length > 0
+    if (!count || count <= 0) {
+      return;
+    }
+
     if (!window.pendingChosenGame && typeof window.GAMES !== 'undefined' && window.GAMES.length) {
       window.pendingChosenGame = window.GAMES[0];
     } else if (!window.pendingChosenGame && typeof GAMES !== 'undefined' && GAMES.length) {
@@ -1720,30 +1725,34 @@
     const gameName = window.pendingChosenGame ? window.pendingChosenGame.name : 'Game';
 
     const bar = document.createElement('div');
-    bar.className = 'ga-continue-bar fixed bottom-5 z-[99999] p-4 sm:p-5 bg-[#0b1120]/95 backdrop-blur-xl border-2 border-amber-400/60 shadow-[0_10px_40px_rgba(0,0,0,0.9),0_0_30px_rgba(251,191,36,0.3)] flex items-center justify-between rounded-2xl transition-all';
+    bar.className = 'ga-continue-bar fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-3xl animate-in slide-in-from-bottom-5 fade-in duration-300';
 
-    const hint = document.createElement('div');
-    hint.className = 'text-xs text-slate-400 ga-continue-hint flex items-center gap-2';
-    if (count > 0) {
-      hint.innerHTML = `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400 text-slate-950 text-xs font-black shadow-sm">✓</span><span class="text-xs sm:text-sm font-bold text-white">${count} list${count > 1 ? 's' : ''} selected</span><span class="text-xs text-amber-300 font-bold">(${totalWords} words total)</span>`;
-    } else {
-      hint.innerHTML = `<span class="text-xs text-slate-400 font-medium">Select one or more vocabulary lists to proceed</span>`;
-    }
+    bar.innerHTML = `
+      <div class="flex items-center gap-3">
+        <div class="w-6 h-6 bg-amber-400 rounded-full flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-slate-900 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div>
+          <span class="text-white font-bold">${count} list${count > 1 ? 's' : ''} selected</span>
+          <span class="text-amber-400/80 text-sm ml-2">(${totalWords} words total)</span>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="ga-continue px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-amber-400/20 cursor-pointer flex-shrink-0"
+        aria-label="Next: Game Settings for ${esc(gameName)}"
+      >
+        <span>Next: ${esc(gameName)} Setup</span>
+        <svg class="w-4 h-4 fill-none stroke-current stroke-[2.5]" viewBox="0 0 24 24">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+    `;
 
-    const next = document.createElement('button');
-    next.type = 'button';
-    next.disabled = !count;
-    next.className = `ga-continue px-6 py-3 rounded-xl font-black text-sm flex items-center gap-2.5 transition active:scale-95 cursor-pointer disabled:cursor-not-allowed ${
-      count
-        ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-[0_0_25px_rgba(251,191,36,0.4)]'
-        : 'bg-slate-800 text-slate-500 border border-slate-700/50 opacity-60'
-    }`;
-    if (count > 0) {
-      next.innerHTML = `<span>Next: ${esc(gameName)} Setup</span><svg class="w-4 h-4 fill-none stroke-current stroke-[2.5]" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
-    } else {
-      next.innerHTML = `<span>Select a List to Continue</span>`;
-    }
-    next.setAttribute('aria-label', count ? `Next: Game Settings for ${gameName}` : `Select a vocabulary list to play ${gameName}`);
+    const next = bar.querySelector('.ga-continue');
     next.addEventListener('click', () => {
       if (!selectedGameList.length) { toast('Please choose at least one vocabulary list'); return; }
       if (getGameWords(selectedGameList).length < 2) { toast('Choose lists with at least two words.'); return; }
@@ -1751,8 +1760,7 @@
       window.gaLaunchChosenGame(targetGame, selectedGameList);
     });
 
-    bar.append(hint, next);
-    document.body.appendChild(bar);
+    selector.appendChild(bar);
   };
 
   window.gaMountStage = function (view) {

@@ -350,18 +350,18 @@ body { --ga-stage-bg: radial-gradient(circle at center, #111a2e 0%, #080d18 70%,
 /* Fixed bottom navigation bar for vocabulary list selection */
 .ga-continue-bar {
   position: fixed !important;
-  bottom: 1.25rem !important;
+  bottom: 1.5rem !important;
   left: calc(50vw + (var(--ts-content-left, 0px) - var(--ts-content-right, 0px)) / 2) !important;
   transform: translateX(-50%) !important;
-  width: min(calc(100vw - var(--ts-content-left, 0px) - var(--ts-content-right, 0px) - 2rem), 56rem) !important;
-  max-width: min(calc(100vw - var(--ts-content-left, 0px) - var(--ts-content-right, 0px) - 2rem), 56rem) !important;
+  width: min(calc(100vw - var(--ts-content-left, 0px) - var(--ts-content-right, 0px) - 2rem), 48rem) !important;
+  max-width: min(calc(100vw - var(--ts-content-left, 0px) - var(--ts-content-right, 0px) - 2rem), 48rem) !important;
   z-index: 99999 !important;
   margin-top: 0 !important;
   padding: 1rem 1.5rem !important;
-  background: rgba(11, 17, 32, 0.96) !important;
-  border: 1.5px solid rgba(251, 191, 36, 0.6) !important;
-  border-radius: 1.25rem !important;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9), 0 0 25px rgba(251, 191, 36, 0.25) !important;
+  background: #111827 !important;
+  border: 1px solid rgba(251, 191, 36, 0.5) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 25px rgba(251, 191, 36, 0.2) !important;
   backdrop-filter: blur(16px) !important;
   -webkit-backdrop-filter: blur(16px) !important;
   display: flex !important;
@@ -369,11 +369,7 @@ body { --ga-stage-bg: radial-gradient(circle at center, #111a2e 0%, #080d18 70%,
   justify-content: space-between !important;
   gap: 1rem !important;
   box-sizing: border-box !important;
-  transition: left var(--ts-duration, 0.3s) var(--ts-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-              width var(--ts-duration, 0.3s) var(--ts-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-              max-width var(--ts-duration, 0.3s) var(--ts-ease, cubic-bezier(0.4, 0, 0.2, 1)),
-              box-shadow 0.2s ease,
-              border-color 0.2s ease !important;
+  transition: opacity 0.3s ease, transform 0.3s ease !important;
 }
 
 /* Floating playlist/game list confirmation bar: ONLY show when Games tab is actively visible and no modal is open */

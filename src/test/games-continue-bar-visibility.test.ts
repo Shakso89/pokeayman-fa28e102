@@ -47,4 +47,17 @@ describe('Games Continue Bar Visibility & Modal Isolation', () => {
     expect(jsContent).toContain('pruneFloatingBars');
     expect(jsContent).toContain('_gaContinueBarObserverInitialized');
   });
+
+  it('only displays continue bar when count > 0 and mounts inside selector container', () => {
+    expect(jsContent).toContain('if (!count || count <= 0) {');
+    expect(jsContent).toContain('selector.appendChild(bar);');
+    expect(jsContent).not.toContain('document.body.appendChild(bar);');
+  });
+
+  it('renders vocabulary cards as button elements with stable keys and restores scroll position', () => {
+    expect(htmlContent).toContain('<button\n              type="button"\n              key="${listId}"');
+    expect(htmlContent).toContain('<button\n            type="button"\n            key="${listId}"');
+    expect(htmlContent).toContain('const savedScrollTop = prevScrollArea ? prevScrollArea.scrollTop : (selector.__lastScrollTop || 0);');
+    expect(htmlContent).toContain('listArea.scrollTop = savedScrollTop;');
+  });
 });
