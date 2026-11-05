@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Trophy, ArrowLeft, RotateCcw, Volume2, VolumeX, Sparkles, AlertCircle, Timer } from 'lucide-react';
 import type { Student } from './RoundSetupModal';
 import { formatTimer } from './RoundSetupModal';
@@ -168,12 +168,15 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   }, [gridDots, numBoxes]);
 
   const initialTimerValue = timerSeconds || 0;
-  const [timeLeft, setTimeLeft] = useState<number>(initialTimerValue);
+  const [matchTimeLeft, setMatchTimeLeft] = useState<number>(initialTimerValue);
 
   const [horizontalLines, setHorizontalLines] = useState<Record<string, number | null>>(() => initBoard().hLines);
   const [verticalLines, setVerticalLines] = useState<Record<string, number | null>>(() => initBoard().vLines);
   const [boxes, setBoxes] = useState<Record<string, number | null>>(() => initBoard().bxs);
   const [playerScores, setPlayerScores] = useState<[number, number]>([0, 0]);
+  const playerScoresRef = useRef(playerScores);
+  playerScoresRef.current = playerScores;
+
   const [activePlayerIndex, setActivePlayerIndex] = useState<0 | 1>(0);
   const [phase, setPhase] = useState<'MCQ' | 'DRAW_LINE' | 'ROUND_OVER'>('MCQ');
   const [currentQuestion, setCurrentQuestion] = useState<any>(() => generateMCQQuestion(vocabItems));
@@ -186,9 +189,9 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [activeTheme, setActiveTheme] = useState<string>(theme || 'classroom');
 
-  // Synchronize timeLeft when initialTimerValue prop changes
+  // Synchronize match timer when initialTimerValue prop changes
   useEffect(() => {
-    setTimeLeft(initialTimerValue);
+    setMatchTimeLeft(initialTimerValue);
   }, [initialTimerValue]);
 
   useEffect(() => {
@@ -213,30 +216,41 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
 
   const activePlayer = roster[activePlayerIndex];
 
-  // Helper to force pass turn on timeout
-  const handleTimeUp = useCallback(() => {
-    if (soundEnabled) playAudio('wrong');
-    setConsecutiveTurns(2);
-    const nextPlayer: 0 | 1 = activePlayerIndex === 0 ? 1 : 0;
-    setActivePlayerIndex(nextPlayer);
-    setPhase('MCQ');
-    setTimeLeft(initialTimerValue);
-    setSelectedChoice(null);
-    setLastAnswerStatus(null);
-    setCurrentQuestion(generateMCQQuestion(vocabItems));
-    setStatusMessage(`⏰ Time's up! ${roster[nextPlayer].name} gets 2 turns in a row!`);
-  }, [activePlayerIndex, initialTimerValue, roster, soundEnabled, vocabItems]);
+  // Finalize game handler: computes winner, triggers sounds, awards coins, and notifies parent
+  const handleFinalizeGame = useCallback((overrideScores?: [number, number]) => {
+    const finalScores = overrideScores || playerScoresRef.current;
+    setPhase('ROUND_OVER');
+    if (soundEnabled) playAudio('fanfare');
 
-  // Continuous timer countdown spanning both MCQ and DRAW_LINE uninterrupted
+    let matchWinner: Student | null | 'tie' = null;
+    if (finalScores[0] > finalScores[1]) {
+      matchWinner = roster[0];
+    } else if (finalScores[1] > finalScores[0]) {
+      matchWinner = roster[1];
+    } else {
+      matchWinner = 'tie';
+    }
+    setWinner(matchWinner);
+
+    if (matchWinner && matchWinner !== 'tie' && winnerCoins > 0 && matchWinner.id) {
+      setIsAwardingCoins(true);
+      adjustStudentCoins(String(matchWinner.id), winnerCoins, adminId || 'admin', 'Dots and Boxes victory reward')
+        .catch((err) => console.warn('Could not award winner coins:', err))
+        .finally(() => setIsAwardingCoins(false));
+    }
+
+    onGameOver?.(matchWinner === 'tie' ? null : matchWinner, finalScores);
+  }, [adminId, onGameOver, roster, soundEnabled, winnerCoins]);
+
+  // Continuous global match timer countdown
   useEffect(() => {
-    // Do not run if timer is off or game is over
     if (initialTimerValue === 0 || phase === 'ROUND_OVER') return;
 
     const intervalId = setInterval(() => {
-      setTimeLeft((prev) => {
+      setMatchTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(intervalId);
-          handleTimeUp(); // Force pass turn to next player
+          handleFinalizeGame();
           return 0;
         }
         return prev - 1;
@@ -244,20 +258,16 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     }, 1000);
 
     return () => clearInterval(intervalId);
+  }, [initialTimerValue, phase === 'ROUND_OVER', handleFinalizeGame]);
 
-    // CRITICAL FIX: Remove `phase` from the dependency array. 
-    // It should ONLY depend on activePlayerIndex so it spans both MCQ and DRAW_LINE uninterrupted.
-  }, [activePlayerIndex, initialTimerValue, phase === 'ROUND_OVER', handleTimeUp]);
-
-  // Helper to pass turn (called when time is up, wrong answer, or line placed without closing a box)
+  // Helper to pass turn (called when wrong answer or line placed without closing a box)
   const passTurnToNextPlayer = useCallback(() => {
     setActivePlayerIndex((prev) => (prev === 0 ? 1 : 0));
     setPhase('MCQ');
-    setTimeLeft(initialTimerValue); // Reset clock for the new player
     setSelectedChoice(null);
     setLastAnswerStatus(null);
     setCurrentQuestion(generateMCQQuestion(vocabItems));
-  }, [initialTimerValue, vocabItems]);
+  }, [vocabItems]);
 
   // Reset or restart game
   const handleRestartGame = () => {
@@ -267,7 +277,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     setBoxes(bxs);
     setPlayerScores([0, 0]);
     setActivePlayerIndex(0);
-    setTimeLeft(initialTimerValue);
+    setMatchTimeLeft(initialTimerValue);
     setPhase('MCQ');
     setCurrentQuestion(generateMCQQuestion(vocabItems));
     setStatusMessage(`${roster[0].name}'s turn: Answer the question`);
@@ -297,7 +307,6 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
         setSelectedChoice(null);
         setLastAnswerStatus(null);
         setActivePlayerIndex(nextPlayer);
-        setTimeLeft(initialTimerValue);
         setCurrentQuestion(generateMCQQuestion(vocabItems));
         setPhase('MCQ');
         setStatusMessage(`Wrong answer! ${roster[nextPlayer].name} gets 2 turns in a row!`);
@@ -358,28 +367,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     const completedTotal = Object.values(newBoxes).filter((val) => val !== null).length;
 
     if (completedTotal >= totalPossibleBoxes) {
-      setPhase('ROUND_OVER');
-      if (soundEnabled) playAudio('fanfare');
-
-      let matchWinner: Student | null | 'tie' = null;
-      if (updatedScores[0] > updatedScores[1]) {
-        matchWinner = roster[0];
-      } else if (updatedScores[1] > updatedScores[0]) {
-        matchWinner = roster[1];
-      } else {
-        matchWinner = 'tie';
-      }
-      setWinner(matchWinner);
-
-      // Award coins to winner in Supabase
-      if (matchWinner && matchWinner !== 'tie' && winnerCoins > 0 && matchWinner.id) {
-        setIsAwardingCoins(true);
-        adjustStudentCoins(String(matchWinner.id), winnerCoins, adminId || 'admin', 'Dots and Boxes victory reward')
-          .catch((err) => console.warn('Could not award winner coins:', err))
-          .finally(() => setIsAwardingCoins(false));
-      }
-
-      onGameOver?.(matchWinner === 'tie' ? null : matchWinner, updatedScores);
+      handleFinalizeGame(updatedScores);
       return;
     }
 
@@ -389,17 +377,14 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       // Bonus turn: activePlayerIndex remains the same
       if (soundEnabled) playAudio('box_captured');
       setStatusMessage(`🎉 Box captured! ${activePlayer.name} earns a bonus turn!`);
-      setTimeLeft(initialTimerValue);
     } else {
       if (consecutiveTurns > 1) {
         setConsecutiveTurns((prev) => prev - 1);
         setStatusMessage(`⚡ ${activePlayer.name} gets their 2nd turn in a row!`);
-        setTimeLeft(initialTimerValue);
       } else {
         setConsecutiveTurns(0);
         nextPlayer = activePlayerIndex === 0 ? 1 : 0;
         setActivePlayerIndex(nextPlayer);
-        setTimeLeft(initialTimerValue);
         setStatusMessage(`${roster[nextPlayer].name}'s turn: Answer the question`);
       }
     }
@@ -512,7 +497,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   const themeStyle = THEME_STYLES[activeTheme] || THEME_STYLES.classic;
 
   return (
-    <div className={`w-full max-w-5xl mx-auto rounded-3xl ${themeStyle.bg} border ${themeStyle.border} p-4 sm:p-6 shadow-2xl flex flex-col gap-6 text-slate-100 relative overflow-hidden select-none transition-colors duration-300`}>
+    <div className={`w-full h-[100dvh] max-h-screen overflow-hidden flex flex-col ${themeStyle.bg} border ${themeStyle.border} p-2 sm:p-4 shadow-2xl text-slate-100 relative select-none transition-colors duration-300`}>
       {/* Background ambient gradient */}
       <div
         className={`absolute -top-32 -left-32 w-96 h-96 rounded-full blur-3xl opacity-20 pointer-events-none transition-colors duration-500 ${
@@ -521,7 +506,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       />
 
       {/* Top Header Bar: Title, Theme Selector & Stage Controls (NO Score Box in Header) */}
-      <div className="flex items-center justify-between gap-4 pb-3 border-b border-slate-800/80 relative z-20">
+      <div className="flex-none flex items-center justify-between gap-4 pb-2 border-b border-slate-800/80 relative z-20">
         {/* Left: Exit & Sound buttons + Title */}
         <div className="flex items-center gap-3">
           {onExit && (
@@ -594,8 +579,8 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       </div>
 
       {/* Sub-Header: Duelists Score HUD (Placed UNDER the header) */}
-      <div className="flex justify-center w-full py-1">
-        <div className={`flex items-center gap-3 sm:gap-6 ${themeStyle.hudBg} rounded-full px-4 sm:px-6 py-2 transition-all duration-300`}>
+      <div className="flex-none flex justify-center w-full py-1 z-10">
+        <div className={`flex items-center gap-3 sm:gap-6 ${themeStyle.hudBg} rounded-full px-4 sm:px-6 py-1.5 transition-all duration-300`}>
           {/* Player 1 HUD */}
           <div
             className={`flex items-center gap-2.5 px-3 py-1.5 rounded-full transition-all duration-300 ${
@@ -613,8 +598,11 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
               <span className="text-xs font-black text-amber-300 truncate max-w-[80px] sm:max-w-[100px]">
                 {player1.name}
               </span>
-              <span className="text-[11px] font-bold text-slate-300">
-                {playerScores[0]} {playerScores[0] === 1 ? 'box' : 'boxes'}
+              <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                <span>{playerScores[0]} {playerScores[0] === 1 ? 'box' : 'boxes'}</span>
+                {initialTimerValue > 0 && (
+                  <span className="text-[10px] font-bold text-amber-300/80">⏱ {formatTimer(matchTimeLeft)}</span>
+                )}
               </span>
             </div>
             {activePlayerIndex === 0 && (
@@ -622,22 +610,22 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             )}
           </div>
 
-          {/* Center: VS and continuous countdown timer pill */}
+          {/* Center: VS and continuous global match timer pill */}
           {initialTimerValue > 0 ? (
             <div className="flex items-center gap-2 px-1">
               <span className="text-xs font-black text-slate-500 tracking-widest">VS</span>
               <div
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-black transition-all ${
-                  timeLeft <= 10
+                  matchTimeLeft <= 10
                     ? 'bg-rose-500/20 text-rose-300 border-rose-500/70 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse'
-                    : timeLeft <= 30
+                    : matchTimeLeft <= 30
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/60'
                     : 'bg-slate-950/80 text-amber-400 border-amber-400/60 shadow-sm'
                 }`}
-                title="Continuous Turn Timer"
+                title="Continuous Match Timer"
               >
                 <span>⏱️</span>
-                <span>{formatTimer(timeLeft)}</span>
+                <span>{formatTimer(matchTimeLeft)}</span>
               </div>
             </div>
           ) : (
@@ -659,8 +647,11 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
               <span className="text-xs font-black text-cyan-300 truncate max-w-[80px] sm:max-w-[100px]">
                 {player2.name}
               </span>
-              <span className="text-[11px] font-bold text-slate-300">
-                {playerScores[1]} {playerScores[1] === 1 ? 'box' : 'boxes'}
+              <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                {initialTimerValue > 0 && (
+                  <span className="text-[10px] font-bold text-cyan-300/80">⏱ {formatTimer(matchTimeLeft)}</span>
+                )}
+                <span>{playerScores[1]} {playerScores[1] === 1 ? 'box' : 'boxes'}</span>
               </span>
             </div>
             <img
@@ -673,19 +664,19 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       </div>
 
       {/* Main Game Wrapper: Fluid Flexbox with min-h-0 and aspect-square */}
-      <div className="flex flex-col lg:flex-row items-stretch justify-center gap-6 lg:gap-12 w-full h-full min-h-0 p-2 sm:p-4 lg:p-6 flex-1">
+      <div className="flex-1 min-h-0 w-full flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 p-2 lg:p-4 z-10 overflow-hidden">
         {/* LEFT SIDE: MCQ Card Container */}
-        <div className="w-full lg:w-1/3 max-w-md flex flex-col justify-center min-h-0 mx-auto">
-          <div className={`${themeStyle.cardBg} border ${themeStyle.border} rounded-3xl p-5 sm:p-6 shadow-2xl flex flex-col h-full max-h-[600px] relative overflow-hidden transition-colors duration-300`}>
+        <div className="w-full lg:w-[420px] h-full min-h-0 flex flex-col justify-center flex-shrink-0">
+          <div className={`${themeStyle.cardBg} border ${themeStyle.border} rounded-3xl p-4 sm:p-5 shadow-2xl flex flex-col h-full min-h-0 max-h-[660px] relative overflow-hidden transition-colors duration-300`}>
             {/* Active Turn Header with Student Avatar and Name Centered */}
-            <div className="flex items-center justify-center gap-3 pb-3 border-b border-slate-800/60 mb-3 w-full text-center relative" id="dots-card-header">
+            <div className="flex-none flex items-center justify-center gap-3 pb-2 border-b border-slate-800/60 mb-2 w-full text-center relative" id="dots-card-header">
               <div className="flex items-center justify-center gap-3">
                 <img
                   src={activePlayer.avatar_url || '/default-pokemon.png'}
                   alt={activePlayer.name}
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-contain bg-slate-950 border-2 border-amber-400 shadow-md flex-shrink-0"
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-contain bg-slate-950 border-2 border-amber-400 shadow-md flex-shrink-0"
                 />
-                <span className="text-xl sm:text-2xl font-black tracking-wide text-white truncate max-w-[200px] sm:max-w-[260px]">
+                <span className="text-xl sm:text-2xl font-black tracking-wide text-white truncate max-w-[180px] sm:max-w-[240px]">
                   {activePlayer.name}
                 </span>
                 {consecutiveTurns > 0 && (
@@ -707,38 +698,36 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
 
             {/* Dynamic Content Area: Image + 2x2 Options */}
             <div className="flex-1 flex flex-col min-h-0 justify-between">
-              {/* Clue Area: Image or Visual Prompt */}
-              <div className="flex-1 flex flex-col items-center justify-center p-2 min-h-[160px] max-h-[240px] overflow-hidden">
+              {/* Clue Area: Image Container with flex-1 and min-h-0 lets image dynamically shrink */}
+              <div className="flex-1 min-h-0 rounded-2xl overflow-hidden bg-slate-950 mb-2 sm:mb-3 border border-slate-800 flex items-center justify-center p-2">
                 {currentQuestion?.wordItem?.image_url ||
                 currentQuestion?.wordItem?.vocab_image ||
                 currentQuestion?.wordItem?.image ? (
-                  <div className="relative group rounded-xl overflow-hidden bg-slate-950/80 border border-slate-700/80 p-2 shadow-md w-full h-full flex items-center justify-center">
-                    <img
-                      src={
-                        currentQuestion.wordItem.image_url ||
-                        currentQuestion.wordItem.vocab_image ||
-                        currentQuestion.wordItem.image
-                      }
-                      alt="Vocabulary clue"
-                      className="max-h-full max-w-full object-contain rounded-lg transition-transform group-hover:scale-105"
-                    />
-                  </div>
+                  <img
+                    src={
+                      currentQuestion.wordItem.image_url ||
+                      currentQuestion.wordItem.vocab_image ||
+                      currentQuestion.wordItem.image
+                    }
+                    alt="Question clue"
+                    className="w-full h-full object-contain rounded-lg"
+                  />
                 ) : (
-                  <div className="w-full h-full min-h-[140px] rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col items-center justify-center text-slate-500 gap-2">
+                  <div className="w-full h-full rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col items-center justify-center text-slate-500 gap-2">
                     <span className="text-3xl">🖼️</span>
                     <span className="text-xs font-semibold">Vocabulary Clue</span>
                   </div>
                 )}
               </div>
 
-              <p className="text-xs font-semibold text-slate-400 text-center my-2">
+              <p className="flex-none text-xs font-semibold text-slate-400 text-center mb-2">
                 {phase === 'DRAW_LINE'
                   ? `Correct! Now tap any line on the grid.`
                   : 'Select the word that matches this picture:'}
               </p>
 
-              {/* 2x2 Grid for Options */}
-              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mt-auto">
+              {/* 2x2 Grid for Options: flex-none ensures options never get cut off */}
+              <div className="flex-none grid grid-cols-2 gap-2 sm:gap-2.5">
                 {currentQuestion?.options.map((option: string, idx: number) => {
                   const letter = String.fromCharCode(65 + idx);
                   const isLocked = phase !== 'MCQ';
@@ -765,7 +754,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                       data-correct={isCorrectAnswer}
                       disabled={isLocked}
                       onClick={() => handleAnswerMCQ(option)}
-                      className={`group relative p-3 rounded-xl border text-left flex items-center gap-2.5 transition-all duration-150 ${btnClasses}`}
+                      className={`group relative p-2.5 sm:p-3 rounded-xl border text-left flex items-center gap-2 transition-all duration-150 ${btnClasses}`}
                     >
                       <span className={`w-6 h-6 rounded-lg ${isMarkedCorrect ? 'bg-emerald-800 text-emerald-100' : isMarkedWrong ? 'bg-rose-800 text-rose-100' : themeStyle.choiceLetter} text-[11px] font-black flex items-center justify-center flex-shrink-0`}>
                         {letter}
@@ -781,11 +770,11 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
           </div>
         </div>
 
-        {/* RIGHT SIDE: Game Board */}
+        {/* RIGHT SIDE: Game Board Container */}
         {/* aspect-square ensures it always stays a perfect grid, taking up maximum available height without overflowing */}
-        <div className="w-full lg:w-2/3 flex flex-col items-center justify-center min-h-0">
+        <div className="flex-1 w-full h-full min-h-0 flex flex-col items-center justify-center overflow-hidden">
           {/* Turn banner helper */}
-          <div className="text-center mb-3">
+          <div className="flex-none text-center mb-2">
             <span
               className={`text-xs font-bold px-3 py-1 rounded-full border ${
                 phase === 'DRAW_LINE'
@@ -799,10 +788,10 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             </span>
           </div>
 
-          <div className="relative w-full max-w-[600px] max-h-full aspect-square flex items-center justify-center min-h-0">
+          <div className="h-full max-h-full max-w-full aspect-square bg-slate-900/90 border border-slate-800 rounded-3xl p-3 sm:p-6 shadow-2xl relative flex items-center justify-center min-h-0">
             {/* Board Grid Container */}
             <div
-              className={`w-full h-full max-w-full max-h-full aspect-square grid items-center justify-center gap-0 p-3 sm:p-5 rounded-3xl ${themeStyle.gridBg} border ${themeStyle.border} shadow-2xl transition-colors duration-300`}
+              className={`w-full h-full max-w-full max-h-full aspect-square grid items-center justify-center gap-0 p-2 sm:p-4 rounded-2xl ${themeStyle.gridBg} border ${themeStyle.border} shadow-inner transition-colors duration-300`}
               style={{
                 gridTemplateColumns: gridTemplate,
                 gridTemplateRows: gridTemplate,

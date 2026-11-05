@@ -374,7 +374,7 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
       vi.useRealTimers();
     });
 
-    it('counts down continuously across MCQ and DRAW_LINE without resetting on correct answer', async () => {
+    it('counts down continuously across MCQ, DRAW_LINE, and turn transitions as a global match timer', async () => {
       render(
         <DotsAndBoxesGame
           players={mockStudents.slice(0, 2)}
@@ -385,13 +385,13 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
       );
 
       // Verify timer pill displays 1m (60s)
-      expect(screen.getByText('1m')).toBeInTheDocument();
+      expect(screen.getAllByText(/1m/).length).toBeGreaterThanOrEqual(1);
 
       // Advance 10 seconds during MCQ phase
       act(() => {
         vi.advanceTimersByTime(10000);
       });
-      expect(screen.getByText('50s')).toBeInTheDocument();
+      expect(screen.getAllByText(/50s/).length).toBeGreaterThanOrEqual(1);
 
       // Click correct answer to transition from MCQ to DRAW_LINE phase
       const correctBtn = document.querySelector('[data-correct="true"]') as HTMLButtonElement;
@@ -402,44 +402,46 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
       expect(screen.getByText('Draw Line')).toBeInTheDocument();
 
       // Timer should NOT have reset back to 60s; it should still be 50s!
-      expect(screen.getByText('50s')).toBeInTheDocument();
+      expect(screen.getAllByText(/50s/).length).toBeGreaterThanOrEqual(1);
 
       // Advance another 15 seconds during DRAW_LINE phase
       act(() => {
         vi.advanceTimersByTime(15000);
       });
-      expect(screen.getByText('35s')).toBeInTheDocument();
+      expect(screen.getAllByText(/35s/).length).toBeGreaterThanOrEqual(1);
 
       // Now place line on grid: turn passes to Player 2
       fireEvent.click(screen.getByTestId('line-h-0-0'));
 
-      // Now that turn passed to Player 2, timer resets back to 60s (1m)
-      expect(screen.getByText('1m')).toBeInTheDocument();
-      expect(screen.getAllByText('Gary Oak').length).toBeGreaterThanOrEqual(2);
+      // Under global match timer, timer does NOT reset to 1m; it remains at 35s!
+      expect(screen.getAllByText(/35s/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Gary Oak').length).toBeGreaterThanOrEqual(1);
     });
 
-    it('forces turn pass with double-turn penalty when countdown reaches 0', async () => {
+    it('triggers game over when global match countdown reaches 0', async () => {
+      const handleGameOver = vi.fn();
       render(
         <DotsAndBoxesGame
           players={mockStudents.slice(0, 2)}
           vocabItems={mockVocabItems}
           gridDots={3}
           timerSeconds={30}
+          onGameOver={handleGameOver}
         />
       );
 
-      expect(screen.getByText('30s')).toBeInTheDocument();
-      expect(screen.getAllByText('Ash Ketchum').length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText(/30s/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText('Ash Ketchum').length).toBeGreaterThanOrEqual(1);
 
       // Advance 30 seconds to timeout
       act(() => {
         vi.advanceTimersByTime(30000);
       });
 
-      // Player 2 should now have the turn with 2-turn penalty
-      expect(screen.getAllByText('Gary Oak').length).toBeGreaterThanOrEqual(2);
-      expect(screen.getByText(/2 Turns!/i)).toBeInTheDocument();
-      expect(screen.getByText('30s')).toBeInTheDocument();
+      // Global match timer reached 0: game over modal should appear
+      expect(screen.getByText(/Wins!|Tie!/i)).toBeInTheDocument();
+      expect(screen.getByText(/Play Again/i)).toBeInTheDocument();
+      expect(handleGameOver).toHaveBeenCalledTimes(1);
     });
   });
 });

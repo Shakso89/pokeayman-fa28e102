@@ -199,19 +199,20 @@
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(51, 65, 85, 0.8);
   border-radius: 1.35rem;
-  padding: clamp(0.75rem, 1.8vh, 1.25rem);
+  padding: clamp(0.5rem, 1.4vh, 1rem);
   display: flex;
   flex-direction: column;
-  gap: clamp(0.35rem, 1vh, 0.65rem);
-  flex: 1 1 340px;
-  max-width: 440px;
+  gap: clamp(0.25rem, 0.8vh, 0.5rem);
+  flex: 0 1 clamp(280px, 32vw, 420px);
+  max-width: 420px;
   width: 100%;
   height: 100%;
-  max-height: min(600px, 100%);
+  max-height: 100%;
   min-height: 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .dots-card-header {
@@ -219,17 +220,18 @@
   align-items: center !important;
   justify-content: center !important;
   gap: 0.65rem !important;
-  padding-bottom: 0.35rem !important;
+  padding-bottom: 0.25rem !important;
   width: 100% !important;
   text-align: center !important;
   flex-shrink: 0 !important;
+  flex-grow: 0 !important;
   border-bottom: 1px solid rgba(51, 65, 85, 0.5) !important;
 }
 
 .dots-q-avatar {
-  width: clamp(2.2rem, 4.5vh, 2.85rem) !important;
-  height: clamp(2.2rem, 4.5vh, 2.85rem) !important;
-  min-width: clamp(2.2rem, 4.5vh, 2.85rem) !important;
+  width: clamp(2rem, 4vh, 2.75rem) !important;
+  height: clamp(2rem, 4vh, 2.75rem) !important;
+  min-width: clamp(2rem, 4vh, 2.75rem) !important;
   border-radius: 999px !important;
   object-fit: contain !important;
   flex-shrink: 0 !important;
@@ -238,7 +240,7 @@
 
 .dots-q-student-name {
   font-size: 1.75rem !important;
-  font-size: clamp(1.2rem, 2.8vh, 1.85rem) !important;
+  font-size: clamp(1.15rem, 2.5vh, 1.75rem) !important;
   line-height: 1.15 !important;
   font-weight: 900 !important;
   letter-spacing: -0.01em !important;
@@ -248,12 +250,12 @@
 .dots-clue-img-box {
   width: 100%;
   flex: 1 1 0;
-  min-height: 70px;
+  min-height: 0;
   max-height: 100%;
   border-radius: 0.85rem;
   background: #020617;
   border: 1.5px solid rgba(51, 65, 85, 0.6);
-  padding: 0.35rem;
+  padding: 0.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -264,8 +266,8 @@
 .dots-clue-img-box img {
   max-height: 100%;
   max-width: 100%;
-  width: auto;
-  height: auto;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   border-radius: 0.5rem;
 }
@@ -273,8 +275,9 @@
 .dots-choices-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(0.35rem, 0.9vh, 0.6rem);
+  gap: clamp(0.3rem, 0.8vh, 0.55rem);
   flex-shrink: 0;
+  flex-grow: 0;
   width: 100%;
 }
 
@@ -282,15 +285,15 @@
   background: rgba(30, 41, 59, 0.8);
   border: 2px solid rgba(71, 85, 105, 0.6);
   border-radius: 0.75rem;
-  padding: clamp(0.35rem, 0.9vh, 0.7rem) clamp(0.5rem, 1vw, 0.8rem);
+  padding: clamp(0.3rem, 0.8vh, 0.65rem) clamp(0.5rem, 1vw, 0.8rem);
   color: #f1f5f9;
-  font-size: clamp(0.85rem, 1.8vh, 1.05rem);
+  font-size: clamp(0.8rem, 1.6vh, 1rem);
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-height: clamp(2.35rem, 4.8vh, 3.25rem);
+  min-height: clamp(2.2rem, 4.4vh, 3rem);
   transition: all 0.15s ease;
   text-align: left;
   user-select: none;
@@ -348,12 +351,11 @@
 }
 
 .dots-board-wrapper {
-  flex: 1 1 auto;
-  height: 100%;
-  max-height: min(600px, 100%);
-  max-width: min(600px, 100%);
-  aspect-ratio: 1 / 1;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 0;
+  height: 100%;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -365,16 +367,17 @@
   padding: 0 !important;
   box-shadow: none !important;
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .dots-board-grid {
   display: grid;
-  width: 100%;
   height: 100%;
-  max-width: 100%;
   max-height: 100%;
+  max-width: 100%;
   aspect-ratio: 1 / 1;
-  padding: clamp(0.75rem, 1.8vh, 1.35rem);
+  width: auto;
+  padding: clamp(0.5rem, 1.4vh, 1.25rem);
   background: #020617;
   border: 1.5px solid rgba(51, 65, 85, 0.9);
   border-radius: 1.4rem;

@@ -127,12 +127,13 @@
     let consecutiveTurnsRemaining = 0;
 
     const turnTimeLimit = Math.max(0, Number(timerSeconds) || 0);
+    const matchTimeLimit = turnTimeLimit;
     // Persistent dual-player time banks
     let playerTimeRemaining = [turnTimeLimit, turnTimeLimit];
     if (typeof activeGamePlayerRemaining !== 'undefined') {
       activeGamePlayerRemaining = playerTimeRemaining;
     }
-    let activeTurnTimeRemaining = turnTimeLimit;
+    let matchTimeRemaining = turnTimeLimit;
     let timerInterval = null;
     let lastTick = Date.now();
 
@@ -146,91 +147,93 @@
       return `${s}s`;
     };
 
-    const stopTurnTimer = () => {
+    const stopMatchTimer = () => {
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
       }
     };
+    const stopTurnTimer = stopMatchTimer;
 
     const updateTimerDisplay = () => {
-      if (turnTimeLimit <= 0) return;
-      const curLeft = Math.max(0, Math.ceil(activeTurnTimeRemaining || 0));
-      const curP1 = activeGamePlayerIndex === 0 ? curLeft : Math.max(0, Math.ceil(playerTimeRemaining[0] || 0));
-      const curP2 = activeGamePlayerIndex === 1 ? curLeft : Math.max(0, Math.ceil(playerTimeRemaining[1] || 0));
+      if (matchTimeLimit <= 0) return;
+      const curLeft = Math.max(0, Math.ceil(matchTimeRemaining || 0));
+      playerTimeRemaining[0] = curLeft;
+      playerTimeRemaining[1] = curLeft;
 
       // 1. Center VS Timer
       const timerVal = modal?.querySelector?.('#dots-timer-val');
       const timerPill = modal?.querySelector?.('#dots-hud-timer');
       if (timerVal) timerVal.textContent = formatTime(curLeft);
       if (timerPill) {
-        const isDanger = curLeft <= 5 || (turnTimeLimit > 0 && curLeft / turnTimeLimit <= 0.2);
-        const isWarn = !isDanger && (curLeft <= 10 || (turnTimeLimit > 0 && curLeft / turnTimeLimit <= 0.4));
+        const isDanger = curLeft <= 10 || (matchTimeLimit > 0 && curLeft / matchTimeLimit <= 0.15);
+        const isWarn = !isDanger && (curLeft <= 30 || (matchTimeLimit > 0 && curLeft / matchTimeLimit <= 0.35));
         timerPill.classList.toggle('is-danger', isDanger);
         timerPill.classList.toggle('is-warn', isWarn);
       }
 
       // 2. Player 1 Badge Timer
       const p1Timer = modal?.querySelector?.('#dots-timer-p1');
-      if (p1Timer) p1Timer.textContent = `⏱ ${formatTime(curP1)}`;
+      if (p1Timer) p1Timer.textContent = `⏱ ${formatTime(curLeft)}`;
 
       // 3. Player 2 Badge Timer
       const p2Timer = modal?.querySelector?.('#dots-timer-p2');
-      if (p2Timer) p2Timer.textContent = `⏱ ${formatTime(curP2)}`;
+      if (p2Timer) p2Timer.textContent = `⏱ ${formatTime(curLeft)}`;
 
       // 4. Question Card Header Timer
       const qTimer = modal?.querySelector?.('#dots-q-timer');
       if (qTimer) qTimer.textContent = `⏱ ${formatTime(curLeft)}`;
     };
 
-    const handleTimeout = () => {
+    const handleMatchTimeout = () => {
       if (phase === 'ROUND_OVER') return;
-      try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+      stopMatchTimer();
+      phase = 'ROUND_OVER';
+      updateStatus();
+      renderBoard();
 
-      const timedOutPlayer = activeGamePlayers[activeGamePlayerIndex];
-      const timedOutName = timedOutPlayer?.student_name || timedOutPlayer?.name || 'Player';
-      const nextIndex = 1 - activeGamePlayerIndex;
-      const nextPlayer = activeGamePlayers[nextIndex];
-      const nextName = nextPlayer?.student_name || nextPlayer?.name || 'Opponent';
+      try { window.pokeSfx?.play?.('fanfare'); } catch (e) {}
+
+      const p1Score = activeGameScores[0];
+      const p2Score = activeGameScores[1];
+      const tied = p1Score === p2Score;
+      const winner = tied ? null : (p1Score > p2Score ? p1 : p2);
+      const winnerName = winner ? (winner.student_name || winner.name || 'Winner') : null;
 
       if (typeof toast === 'function') {
-        toast(`⏱ ${timedOutName}'s time ran out! Turn passes to ${nextName}!`);
+        toast(tied ? `⏱ Time's up! Match ended in a tie!` : `⏱ Time's up! ${winnerName} won the match!`);
       }
 
-      consecutiveTurnsRemaining = 0;
-      activeGamePlayerIndex = nextIndex;
-      activeTurnTimeRemaining = turnTimeLimit;
-      lastTick = Date.now();
-      currentQuestion = generateMCQ(allWords, currentQuestion?.wordItem);
-      phase = 'MCQ';
-      updateStatus();
-      renderQuestion();
-      renderBoard();
-      updateTimerDisplay();
+      setTimeout(() => {
+        if (typeof showGameCelebration === 'function') {
+          showGameCelebration(modal, tied ? "It's a Tie!" : `${winnerName} Wins!`, `Final Score: ${p1Score} - ${p2Score}`, winner);
+        }
+      }, 700);
     };
 
-    const startTurnTimer = () => {
-      if (turnTimeLimit <= 0 || phase === 'ROUND_OVER') return;
+    const startMatchTimer = () => {
+      if (matchTimeLimit <= 0 || phase === 'ROUND_OVER') return;
       lastTick = Date.now();
       updateTimerDisplay();
       if (timerInterval !== null) return;
       timerInterval = setInterval(() => {
         if (!document.body.contains(modal) || phase === 'ROUND_OVER') {
-          stopTurnTimer();
+          stopMatchTimer();
           return;
         }
         const now = Date.now();
         const elapsed = Math.max(0, (now - lastTick) / 1000);
         lastTick = now;
 
-        activeTurnTimeRemaining = Math.max(0, activeTurnTimeRemaining - elapsed);
+        matchTimeRemaining = Math.max(0, matchTimeRemaining - elapsed);
         updateTimerDisplay();
 
-        if (activeTurnTimeRemaining <= 0) {
-          handleTimeout();
+        if (matchTimeRemaining <= 0) {
+          handleMatchTimeout();
         }
       }, 250);
     };
+    const startTurnTimer = startMatchTimer;
 
     const modal = document.createElement('div');
     modal.className = 'dots-game-modal ga-stage';
@@ -248,7 +251,7 @@
     const initialThemeId = (typeof window.gaGetTheme === 'function' ? window.gaGetTheme() : 'classroom') || 'classroom';
     const initialThemeObj = themes.find((t) => t.id === initialThemeId) || themes[0];
     modal.dataset.gaTheme = initialThemeObj.id;
-    modal._stopPlayerTurnTimer = stopTurnTimer;
+    modal._stopPlayerTurnTimer = stopMatchTimer;
 
     const p1 = activeGamePlayers[0];
     const p2 = activeGamePlayers[1];
@@ -310,16 +313,16 @@
               <span class="dots-player-name text-amber-300">${esc(p1Name)}</span>
               <div class="flex items-center gap-1.5 mt-0.5">
                 <span class="dots-player-score" id="dots-score-p1">0 boxes</span>
-                ${turnTimeLimit > 0 ? `<span class="dots-badge-timer text-[11px] font-black text-amber-300 bg-amber-400/15 border border-amber-400/40 px-1.5 py-0.2 rounded-full" id="dots-timer-p1">⏱ ${formatTime(turnTimeLimit)}</span>` : ''}
+                ${matchTimeLimit > 0 ? `<span class="dots-badge-timer text-[11px] font-black text-amber-300 bg-amber-400/15 border border-amber-400/40 px-1.5 py-0.2 rounded-full" id="dots-timer-p1">⏱ ${formatTime(matchTimeLimit)}</span>` : ''}
               </div>
             </div>
           </div>
           <div class="dots-hud-center-col flex flex-col items-center justify-center px-1">
             <span class="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">VS</span>
-            ${turnTimeLimit > 0 ? `
+            ${matchTimeLimit > 0 ? `
               <div class="dots-hud-timer mt-1 flex items-center gap-1 font-black text-xs" id="dots-hud-timer" role="timer" aria-label="Turn timer">
                 <span class="dots-timer-icon">⏱</span>
-                <span id="dots-timer-val">${formatTime(turnTimeLimit)}</span>
+                <span id="dots-timer-val">${formatTime(matchTimeLimit)}</span>
               </div>
             ` : ''}
           </div>
@@ -329,7 +332,7 @@
               <span class="dots-player-name text-cyan-300">${esc(p2Name)}</span>
               <div class="flex items-center gap-1.5 mt-0.5">
                 <span class="dots-player-score" id="dots-score-p2">0 boxes</span>
-                ${turnTimeLimit > 0 ? `<span class="dots-badge-timer text-[11px] font-black text-cyan-300 bg-cyan-400/15 border border-cyan-400/40 px-1.5 py-0.2 rounded-full" id="dots-timer-p2">⏱ ${formatTime(turnTimeLimit)}</span>` : ''}
+                ${matchTimeLimit > 0 ? `<span class="dots-badge-timer text-[11px] font-black text-cyan-300 bg-cyan-400/15 border border-cyan-400/40 px-1.5 py-0.2 rounded-full" id="dots-timer-p2">⏱ ${formatTime(matchTimeLimit)}</span>` : ''}
               </div>
             </div>
           </div>
@@ -343,7 +346,7 @@
           <div class="dots-card-header flex items-center justify-center gap-3 pb-3 border-b border-slate-700/60 w-full text-center" id="dots-card-header">
             <img src="${p1AvatarUrl}" class="dots-q-avatar rounded-full object-contain bg-slate-950 border-2 border-amber-400 ring-2 ring-amber-400/40 shadow-md flex-shrink-0" id="dots-q-avatar" alt="">
             <span class="dots-q-student-name font-black text-amber-300 tracking-wide truncate" id="dots-q-student-name">${esc(p1Name)}</span>
-            ${turnTimeLimit > 0 ? `<span id="dots-q-timer" class="dots-q-timer text-xs font-black px-2.5 py-0.5 rounded-full bg-slate-900 border border-amber-400/50 text-amber-300">⏱ ${formatTime(turnTimeLimit)}</span>` : ''}
+            ${matchTimeLimit > 0 ? `<span id="dots-q-timer" class="dots-q-timer text-xs font-black px-2.5 py-0.5 rounded-full bg-slate-900 border border-amber-400/50 text-amber-300">⏱ ${formatTime(matchTimeLimit)}</span>` : ''}
             <span id="dots-turn-badge" class="dots-turn-badge text-xs font-black uppercase px-2.5 py-1 rounded-full hidden"></span>
           </div>
 
@@ -442,7 +445,7 @@
     });
 
     const cleanupAndClose = () => {
-      stopTurnTimer();
+      stopMatchTimer();
       if (typeof stopPlayerTurnTimer === 'function') stopPlayerTurnTimer(modal);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       modal.remove();
@@ -607,7 +610,6 @@
         setTimeout(() => {
           if (phase === 'ROUND_OVER') return;
           activeGamePlayerIndex = 1 - activeGamePlayerIndex;
-          activeTurnTimeRemaining = turnTimeLimit;
           lastTick = Date.now();
           currentQuestion = generateMCQ(allWords, currentQuestion.wordItem);
           phase = 'MCQ';
@@ -615,7 +617,7 @@
           updateStatus();
           renderQuestion();
           renderBoard();
-          startTurnTimer();
+          startMatchTimer();
         }, 850);
       }
     };
@@ -943,7 +945,7 @@
 
       const totalClaimed = Object.values(boxes).filter((b) => b !== null).length;
       if (totalClaimed >= totalPossibleBoxes) {
-        stopTurnTimer();
+        stopMatchTimer();
         phase = 'ROUND_OVER';
         updateStatus();
         renderBoard();
@@ -961,8 +963,7 @@
         return;
       }
 
-      // Check turn progression:
-      activeTurnTimeRemaining = turnTimeLimit;
+      // Check turn progression (no timer reset: continuous match countdown!)
       // If boxes completed: player gets another turn (standard Dots & Boxes rule)
       // If NO boxes completed:
       if (boxesCompleted === 0) {
@@ -985,12 +986,12 @@
       updateStatus();
       renderQuestion();
       renderBoard();
-      startTurnTimer();
+      startMatchTimer();
     };
 
     updateStatus();
     renderQuestion();
     renderBoard();
-    startTurnTimer();
+    startMatchTimer();
   };
 })();
