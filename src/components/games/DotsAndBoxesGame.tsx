@@ -670,8 +670,8 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
       {/* Main Game Wrapper: Fluid Flexbox with min-h-0 and aspect-square */}
       <div className="flex-1 min-h-0 w-full flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 p-2 lg:p-4 z-10 overflow-hidden">
         {/* LEFT SIDE: MCQ Card Container */}
-        <div className="w-full lg:w-[380px] h-full min-h-0 flex flex-col justify-center flex-shrink-0">
-          <div className={`${themeStyle.cardBg} border ${themeStyle.border} rounded-3xl p-3 sm:p-4 shadow-2xl flex flex-col h-full min-h-0 max-h-[660px] relative overflow-hidden transition-colors duration-300`}>
+        <div className="w-full lg:w-[360px] h-full min-h-0 flex flex-col justify-center items-center flex-shrink-0">
+          <div className={`${themeStyle.cardBg} border ${themeStyle.border} rounded-3xl p-3 sm:p-4 shadow-2xl flex flex-col h-[80%] min-h-0 max-h-[500px] w-full relative overflow-hidden transition-colors duration-300`}>
             {/* Active Turn Header with Student Avatar and Name Centered */}
             <div className="flex-none flex items-center justify-center gap-3 pb-2 border-b border-slate-800/60 mb-2 w-full text-center relative" id="dots-card-header">
               <div className="flex items-center justify-center gap-3">
@@ -792,7 +792,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             </span>
           </div>
 
-          <div className="h-full max-h-full max-w-full aspect-square bg-slate-900/90 border border-slate-800 rounded-3xl p-3 sm:p-6 shadow-2xl relative flex items-center justify-center min-h-0">
+          <div className="h-[80%] max-h-[500px] max-w-[500px] aspect-square bg-slate-900/90 border border-slate-800 rounded-3xl p-2 sm:p-4 shadow-2xl relative flex items-center justify-center min-h-0">
             {/* Board Grid Container */}
             <div
               className={`w-full h-full max-w-full max-h-full aspect-square grid items-center justify-center gap-0 p-2 sm:p-4 rounded-2xl ${themeStyle.gridBg} border ${themeStyle.border} shadow-inner transition-colors duration-300`}
