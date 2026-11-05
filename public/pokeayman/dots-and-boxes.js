@@ -91,6 +91,7 @@
     if (typeof setGameReplay === 'function') {
       setGameReplay(() => {
         if (typeof resetGameTurnState === 'function') resetGameTurnState();
+        if (typeof activeGamePlayerRemaining !== 'undefined') activeGamePlayerRemaining = [];
         window.openGameDotsAndBoxes(listName, gridDots, timerSeconds);
       });
     }
@@ -125,9 +126,16 @@
     let pullState = null;
     let consecutiveTurnsRemaining = 0;
 
-    let turnTimeLimit = Number(timerSeconds) || 0;
-    let turnTimeLeft = turnTimeLimit;
+    const turnTimeLimit = Number(timerSeconds) || 0;
+    // Each player has a persistent time bank (like other arcade games)
+    let playerTimeRemaining = [turnTimeLimit, turnTimeLimit];
+    if (typeof activeGamePlayerRemaining !== 'undefined' && Array.isArray(activeGamePlayerRemaining) && activeGamePlayerRemaining.length === 2 && activeGamePlayerRemaining[0] > 0) {
+      playerTimeRemaining = activeGamePlayerRemaining;
+    } else if (typeof activeGamePlayerRemaining !== 'undefined') {
+      activeGamePlayerRemaining = playerTimeRemaining;
+    }
     let timerInterval = null;
+    let lastTick = Date.now();
 
     const stopTurnTimer = () => {
       if (timerInterval) {
@@ -137,14 +145,17 @@
     };
 
     const updateTimerDisplay = () => {
-      const timerVal = modal.querySelector('#dots-timer-val');
-      const timerPill = modal.querySelector('#dots-hud-timer');
+      if (turnTimeLimit <= 0) return;
+      const timerVal = modal?.querySelector?.('#dots-timer-val');
+      const timerPill = modal?.querySelector?.('#dots-hud-timer');
       if (!timerVal || !timerPill) return;
-      timerVal.textContent = `${turnTimeLeft}s`;
-      if (turnTimeLeft <= 5) {
+      const curLeft = Math.max(0, Math.ceil(playerTimeRemaining[activeGamePlayerIndex] || 0));
+      timerVal.textContent = `${curLeft}s`;
+      const percent = (curLeft / Math.max(1, turnTimeLimit)) * 100;
+      if (percent <= 25 || curLeft <= 5) {
         timerPill.classList.add('is-danger');
         timerPill.classList.remove('is-warn');
-      } else if (turnTimeLeft <= 10) {
+      } else if (percent <= 55 || curLeft <= 10) {
         timerPill.classList.add('is-warn');
         timerPill.classList.remove('is-danger');
       } else {
@@ -152,39 +163,85 @@
       }
     };
 
-    const startTurnTimer = () => {
-      stopTurnTimer();
-      if (turnTimeLimit <= 0 || phase === 'ROUND_OVER') return;
-      turnTimeLeft = turnTimeLimit;
-      updateTimerDisplay();
-      timerInterval = setInterval(() => {
-        if (!document.body.contains(modal) || phase === 'ROUND_OVER') {
-          stopTurnTimer();
-          return;
-        }
-        turnTimeLeft--;
-        updateTimerDisplay();
-        if (turnTimeLeft <= 0) {
-          stopTurnTimer();
-          handleTimeout();
-        }
-      }, 1000);
-    };
-
     const handleTimeout = () => {
       if (phase === 'ROUND_OVER') return;
       try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
-      if (typeof toast === 'function') {
-        toast('⏱ Time ran out! Opponent gets 2 turns!');
+
+      const p1Time = playerTimeRemaining[0];
+      const p2Time = playerTimeRemaining[1];
+
+      // If BOTH players have no time left: Game over!
+      if (p1Time <= 0 && p2Time <= 0) {
+        stopTurnTimer();
+        phase = 'ROUND_OVER';
+        updateStatus();
+        renderBoard();
+
+        const p1Score = activeGameScores[0];
+        const p2Score = activeGameScores[1];
+        const tied = p1Score === p2Score;
+        const winner = tied ? null : (p1Score > p2Score ? p1 : p2);
+
+        if (typeof toast === 'function') {
+          toast('⏱ Time is up for both players!');
+        }
+
+        setTimeout(() => {
+          if (typeof showGameCelebration === 'function') {
+            showGameCelebration(modal, 'Time is up!', '', winner);
+          }
+        }, 800);
+        return;
       }
-      consecutiveTurnsRemaining = 2;
-      activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+
+      // One player timed out
+      const timedOutPlayer = activeGamePlayers[activeGamePlayerIndex];
+      const timedOutName = timedOutPlayer?.student_name || timedOutPlayer?.name || 'Player';
+      const nextIndex = 1 - activeGamePlayerIndex;
+      const nextPlayer = activeGamePlayers[nextIndex];
+      const nextName = nextPlayer?.student_name || nextPlayer?.name || 'Opponent';
+
+      if (typeof toast === 'function') {
+        toast(`⏱ ${timedOutName}'s time ran out! Turn passes to ${nextName}!`);
+      }
+
+      consecutiveTurnsRemaining = 0;
+      activeGamePlayerIndex = nextIndex;
+      lastTick = Date.now();
       currentQuestion = generateMCQ(allWords, currentQuestion?.wordItem);
       phase = 'MCQ';
       updateStatus();
       renderQuestion();
       renderBoard();
-      startTurnTimer();
+      updateTimerDisplay();
+    };
+
+    const startTurnTimer = () => {
+      if (turnTimeLimit <= 0 || phase === 'ROUND_OVER') return;
+      lastTick = Date.now();
+      updateTimerDisplay();
+      if (timerInterval !== null) return;
+      timerInterval = setInterval(() => {
+        if (!document.body.contains(modal) || phase === 'ROUND_OVER') {
+          stopTurnTimer();
+          return;
+        }
+        const now = Date.now();
+        const elapsed = Math.max(0, (now - lastTick) / 1000);
+        lastTick = now;
+
+        if (playerTimeRemaining[activeGamePlayerIndex] > 0) {
+          playerTimeRemaining[activeGamePlayerIndex] = Math.max(0, playerTimeRemaining[activeGamePlayerIndex] - elapsed);
+          if (typeof activeGamePlayerRemaining !== 'undefined' && Array.isArray(activeGamePlayerRemaining)) {
+            activeGamePlayerRemaining[activeGamePlayerIndex] = playerTimeRemaining[activeGamePlayerIndex];
+          }
+        }
+        updateTimerDisplay();
+
+        if (playerTimeRemaining[activeGamePlayerIndex] <= 0) {
+          handleTimeout();
+        }
+      }, 250);
     };
 
     const modal = document.createElement('div');
@@ -203,6 +260,7 @@
     const initialThemeId = (typeof window.gaGetTheme === 'function' ? window.gaGetTheme() : 'classroom') || 'classroom';
     const initialThemeObj = themes.find((t) => t.id === initialThemeId) || themes[0];
     modal.dataset.gaTheme = initialThemeObj.id;
+    modal._stopPlayerTurnTimer = stopTurnTimer;
 
     const p1 = activeGamePlayers[0];
     const p2 = activeGamePlayers[1];
@@ -462,6 +520,8 @@
           statusText.innerHTML = `<span class="text-emerald-400 font-black">Match Complete!</span> Calculating winner...`;
         }
       }
+
+      updateTimerDisplay();
     };
 
     const renderQuestion = () => {
@@ -508,7 +568,7 @@
 
       if (selected === currentQuestion.correctAnswer) {
         try { window.pokeSfx?.play?.('correct'); } catch (e) {}
-        stopTurnTimer();
+        // Do NOT pause or stop the timer: clock keeps running continuously during DRAW_LINE!
         btn.classList.add('is-correct');
         btn.style.borderColor = '#10b981';
         btn.style.backgroundColor = 'rgba(16, 185, 129, 0.35)';
@@ -526,7 +586,6 @@
         renderBoard();
       } else {
         try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
-        stopTurnTimer();
         btn.classList.add('is-wrong', 'dots-choice-shake');
         btn.style.borderColor = '#ef4444';
         btn.style.backgroundColor = 'rgba(239, 68, 68, 0.35)';
@@ -551,7 +610,9 @@
         }
 
         setTimeout(() => {
+          if (phase === 'ROUND_OVER') return;
           activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+          lastTick = Date.now();
           currentQuestion = generateMCQ(allWords, currentQuestion.wordItem);
           phase = 'MCQ';
 
