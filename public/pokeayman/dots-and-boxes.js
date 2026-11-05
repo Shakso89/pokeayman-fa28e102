@@ -156,31 +156,33 @@
     const stopTurnTimer = stopMatchTimer;
 
     const updateTimerDisplay = () => {
-      if (matchTimeLimit <= 0) return;
-      const curLeft = Math.max(0, Math.ceil(matchTimeRemaining || 0));
-      playerTimeRemaining[0] = curLeft;
-      playerTimeRemaining[1] = curLeft;
+      if (turnTimeLimit <= 0) return;
+      const p1Sec = Math.max(0, Math.ceil(playerTimeRemaining[0] || 0));
+      const p2Sec = Math.max(0, Math.ceil(playerTimeRemaining[1] || 0));
+      const activeIdx = activeGamePlayerIndex === 1 ? 1 : 0;
+      const curLeft = activeIdx === 0 ? p1Sec : p2Sec;
+      matchTimeRemaining = curLeft;
 
-      // 1. Center VS Timer
+      // 1. Center VS Timer (displays active player's remaining bank)
       const timerVal = modal?.querySelector?.('#dots-timer-val');
       const timerPill = modal?.querySelector?.('#dots-hud-timer');
       if (timerVal) timerVal.textContent = formatTime(curLeft);
       if (timerPill) {
-        const isDanger = curLeft <= 10 || (matchTimeLimit > 0 && curLeft / matchTimeLimit <= 0.15);
-        const isWarn = !isDanger && (curLeft <= 30 || (matchTimeLimit > 0 && curLeft / matchTimeLimit <= 0.35));
+        const isDanger = curLeft <= 10 || (turnTimeLimit > 0 && curLeft / turnTimeLimit <= 0.15);
+        const isWarn = !isDanger && (curLeft <= 30 || (turnTimeLimit > 0 && curLeft / turnTimeLimit <= 0.35));
         timerPill.classList.toggle('is-danger', isDanger);
         timerPill.classList.toggle('is-warn', isWarn);
       }
 
-      // 2. Player 1 Badge Timer
+      // 2. Player 1 Badge Timer (SEPARATE: counts down ONLY when Player 1 is active)
       const p1Timer = modal?.querySelector?.('#dots-timer-p1');
-      if (p1Timer) p1Timer.textContent = `⏱ ${formatTime(curLeft)}`;
+      if (p1Timer) p1Timer.textContent = `⏱ ${formatTime(p1Sec)}`;
 
-      // 3. Player 2 Badge Timer
+      // 3. Player 2 Badge Timer (SEPARATE: counts down ONLY when Player 2 is active)
       const p2Timer = modal?.querySelector?.('#dots-timer-p2');
-      if (p2Timer) p2Timer.textContent = `⏱ ${formatTime(curLeft)}`;
+      if (p2Timer) p2Timer.textContent = `⏱ ${formatTime(p2Sec)}`;
 
-      // 4. Question Card Header Timer
+      // 4. Question Card Header Timer (displays active player's remaining bank)
       const qTimer = modal?.querySelector?.('#dots-q-timer');
       if (qTimer) qTimer.textContent = `⏱ ${formatTime(curLeft)}`;
     };
@@ -212,7 +214,7 @@
     };
 
     const startMatchTimer = () => {
-      if (matchTimeLimit <= 0 || phase === 'ROUND_OVER') return;
+      if (turnTimeLimit <= 0 || phase === 'ROUND_OVER') return;
       lastTick = Date.now();
       updateTimerDisplay();
       if (timerInterval !== null) return;
@@ -225,10 +227,11 @@
         const elapsed = Math.max(0, (now - lastTick) / 1000);
         lastTick = now;
 
-        matchTimeRemaining = Math.max(0, matchTimeRemaining - elapsed);
+        const activeIdx = activeGamePlayerIndex === 1 ? 1 : 0;
+        playerTimeRemaining[activeIdx] = Math.max(0, playerTimeRemaining[activeIdx] - elapsed);
         updateTimerDisplay();
 
-        if (matchTimeRemaining <= 0) {
+        if (playerTimeRemaining[activeIdx] <= 0) {
           handleMatchTimeout();
         }
       }, 250);
@@ -977,6 +980,7 @@
         } else {
           consecutiveTurnsRemaining = 0;
           activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+          lastTick = Date.now();
         }
       }
 

@@ -168,7 +168,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   }, [gridDots, numBoxes]);
 
   const initialTimerValue = timerSeconds || 0;
-  const [matchTimeLeft, setMatchTimeLeft] = useState<number>(initialTimerValue);
+  const [playerTimes, setPlayerTimes] = useState<[number, number]>([initialTimerValue, initialTimerValue]);
 
   const [horizontalLines, setHorizontalLines] = useState<Record<string, number | null>>(() => initBoard().hLines);
   const [verticalLines, setVerticalLines] = useState<Record<string, number | null>>(() => initBoard().vLines);
@@ -178,6 +178,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   playerScoresRef.current = playerScores;
 
   const [activePlayerIndex, setActivePlayerIndex] = useState<0 | 1>(0);
+  const activeTimeLeft = playerTimes[activePlayerIndex];
   const [phase, setPhase] = useState<'MCQ' | 'DRAW_LINE' | 'ROUND_OVER'>('MCQ');
   const [currentQuestion, setCurrentQuestion] = useState<any>(() => generateMCQQuestion(vocabItems));
   const [statusMessage, setStatusMessage] = useState<string>('');
@@ -189,9 +190,9 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [activeTheme, setActiveTheme] = useState<string>(theme || 'classroom');
 
-  // Synchronize match timer when initialTimerValue prop changes
+  // Synchronize player timer banks when initialTimerValue prop changes
   useEffect(() => {
-    setMatchTimeLeft(initialTimerValue);
+    setPlayerTimes([initialTimerValue, initialTimerValue]);
   }, [initialTimerValue]);
 
   useEffect(() => {
@@ -242,23 +243,26 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     onGameOver?.(matchWinner === 'tie' ? null : matchWinner, finalScores);
   }, [adminId, onGameOver, roster, soundEnabled, winnerCoins]);
 
-  // Continuous global match timer countdown
+  // Dual-player independent time bank countdown: ONLY the active player's clock ticks down
   useEffect(() => {
     if (initialTimerValue === 0 || phase === 'ROUND_OVER') return;
 
     const intervalId = setInterval(() => {
-      setMatchTimeLeft((prev) => {
-        if (prev <= 1) {
+      setPlayerTimes((prev) => {
+        const next: [number, number] = [prev[0], prev[1]];
+        if (next[activePlayerIndex] <= 1) {
+          next[activePlayerIndex] = 0;
           clearInterval(intervalId);
           handleFinalizeGame();
-          return 0;
+          return next;
         }
-        return prev - 1;
+        next[activePlayerIndex] = next[activePlayerIndex] - 1;
+        return next;
       });
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [initialTimerValue, phase === 'ROUND_OVER', handleFinalizeGame]);
+  }, [initialTimerValue, phase === 'ROUND_OVER', activePlayerIndex, handleFinalizeGame]);
 
   // Helper to pass turn (called when wrong answer or line placed without closing a box)
   const passTurnToNextPlayer = useCallback(() => {
@@ -277,7 +281,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     setBoxes(bxs);
     setPlayerScores([0, 0]);
     setActivePlayerIndex(0);
-    setMatchTimeLeft(initialTimerValue);
+    setPlayerTimes([initialTimerValue, initialTimerValue]);
     setPhase('MCQ');
     setCurrentQuestion(generateMCQQuestion(vocabItems));
     setStatusMessage(`${roster[0].name}'s turn: Answer the question`);
@@ -601,7 +605,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
               <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
                 <span>{playerScores[0]} {playerScores[0] === 1 ? 'box' : 'boxes'}</span>
                 {initialTimerValue > 0 && (
-                  <span className="text-[10px] font-bold text-amber-300/80">⏱ {formatTimer(matchTimeLeft)}</span>
+                  <span className="text-[10px] font-bold text-amber-300/80">⏱ {formatTimer(playerTimes[0])}</span>
                 )}
               </span>
             </div>
@@ -610,22 +614,22 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             )}
           </div>
 
-          {/* Center: VS and continuous global match timer pill */}
+          {/* Center: VS and active player's remaining time bank pill */}
           {initialTimerValue > 0 ? (
             <div className="flex items-center gap-2 px-1">
               <span className="text-xs font-black text-slate-500 tracking-widest">VS</span>
               <div
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-black transition-all ${
-                  matchTimeLeft <= 10
+                  activeTimeLeft <= 10
                     ? 'bg-rose-500/20 text-rose-300 border-rose-500/70 shadow-[0_0_12px_rgba(244,63,94,0.6)] animate-pulse'
-                    : matchTimeLeft <= 30
+                    : activeTimeLeft <= 30
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/60'
                     : 'bg-slate-950/80 text-amber-400 border-amber-400/60 shadow-sm'
                 }`}
-                title="Continuous Match Timer"
+                title="Active Player Time Bank"
               >
                 <span>⏱️</span>
-                <span>{formatTimer(matchTimeLeft)}</span>
+                <span>{formatTimer(activeTimeLeft)}</span>
               </div>
             </div>
           ) : (
@@ -649,7 +653,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
               </span>
               <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
                 {initialTimerValue > 0 && (
-                  <span className="text-[10px] font-bold text-cyan-300/80">⏱ {formatTimer(matchTimeLeft)}</span>
+                  <span className="text-[10px] font-bold text-cyan-300/80">⏱ {formatTimer(playerTimes[1])}</span>
                 )}
                 <span>{playerScores[1]} {playerScores[1] === 1 ? 'box' : 'boxes'}</span>
               </span>
