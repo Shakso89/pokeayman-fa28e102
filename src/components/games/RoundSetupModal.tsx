@@ -358,11 +358,26 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                   </div>
                   <Stepper
                     value={timerSeconds}
-                    onDecrease={() => setTimerSeconds((v) => Math.max(0, v - 30))}
-                    onIncrease={() => setTimerSeconds((v) => Math.min(600, v + 30))}
-                    format={(v) => (v === 0 ? 'No timer' : `00:${v.toString().padStart(2, '0')}`)}
+                    onDecrease={() => {
+                      if (timerSeconds <= 0) return;
+                      if (timerSeconds <= 30) setTimerSeconds(0);
+                      else if (timerSeconds <= 60) setTimerSeconds(30);
+                      else setTimerSeconds((v) => Math.max(60, v - 60));
+                    }}
+                    onIncrease={() => {
+                      if (timerSeconds === 0) setTimerSeconds(30);
+                      else if (timerSeconds === 30) setTimerSeconds(60);
+                      else setTimerSeconds((v) => Math.min(900, v + 60));
+                    }}
+                    format={(v) => {
+                      if (v === 0) return 'No timer';
+                      if (v < 60) return `${v} sec`;
+                      const mins = Math.floor(v / 60);
+                      const remSecs = v % 60;
+                      return remSecs > 0 ? `${mins}m ${remSecs}s` : `${mins} min`;
+                    }}
                     disabledDec={timerSeconds <= 0}
-                    disabledInc={timerSeconds >= 600}
+                    disabledInc={timerSeconds >= 900}
                   />
                 </div>
               </div>

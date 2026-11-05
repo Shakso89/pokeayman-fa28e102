@@ -126,16 +126,24 @@
     let pullState = null;
     let consecutiveTurnsRemaining = 0;
 
-    const turnTimeLimit = Number(timerSeconds) || 0;
+    const turnTimeLimit = Math.max(0, Number(timerSeconds) || 0);
     // Each player has a persistent time bank (like other arcade games)
     let playerTimeRemaining = [turnTimeLimit, turnTimeLimit];
-    if (typeof activeGamePlayerRemaining !== 'undefined' && Array.isArray(activeGamePlayerRemaining) && activeGamePlayerRemaining.length === 2 && activeGamePlayerRemaining[0] > 0) {
-      playerTimeRemaining = activeGamePlayerRemaining;
-    } else if (typeof activeGamePlayerRemaining !== 'undefined') {
+    if (typeof activeGamePlayerRemaining !== 'undefined') {
       activeGamePlayerRemaining = playerTimeRemaining;
     }
     let timerInterval = null;
     let lastTick = Date.now();
+
+    const formatTime = (seconds) => {
+      const s = Math.max(0, Math.ceil(seconds || 0));
+      if (s >= 60) {
+        const m = Math.floor(s / 60);
+        const rem = s % 60;
+        return `${m}:${String(rem).padStart(2, '0')}`;
+      }
+      return `${s}s`;
+    };
 
     const stopTurnTimer = () => {
       if (timerInterval) {
@@ -146,20 +154,42 @@
 
     const updateTimerDisplay = () => {
       if (turnTimeLimit <= 0) return;
+      const curP1 = Math.max(0, Math.ceil(playerTimeRemaining[0] || 0));
+      const curP2 = Math.max(0, Math.ceil(playerTimeRemaining[1] || 0));
+      const activeLeft = activeGamePlayerIndex === 0 ? curP1 : curP2;
+
+      // 1. Center VS Timer
       const timerVal = modal?.querySelector?.('#dots-timer-val');
       const timerPill = modal?.querySelector?.('#dots-hud-timer');
-      if (!timerVal || !timerPill) return;
-      const curLeft = Math.max(0, Math.ceil(playerTimeRemaining[activeGamePlayerIndex] || 0));
-      timerVal.textContent = `${curLeft}s`;
-      const percent = (curLeft / Math.max(1, turnTimeLimit)) * 100;
-      if (percent <= 25 || curLeft <= 5) {
-        timerPill.classList.add('is-danger');
-        timerPill.classList.remove('is-warn');
-      } else if (percent <= 55 || curLeft <= 10) {
-        timerPill.classList.add('is-warn');
-        timerPill.classList.remove('is-danger');
-      } else {
-        timerPill.classList.remove('is-danger', 'is-warn');
+      if (timerVal) timerVal.textContent = formatTime(activeLeft);
+      if (timerPill) {
+        const isDanger = activeLeft <= 5 || (turnTimeLimit > 0 && activeLeft / turnTimeLimit <= 0.2);
+        const isWarn = !isDanger && (activeLeft <= 10 || (turnTimeLimit > 0 && activeLeft / turnTimeLimit <= 0.4));
+        timerPill.classList.toggle('is-danger', isDanger);
+        timerPill.classList.toggle('is-warn', isWarn);
+      }
+
+      // 2. Player 1 Badge Timer
+      const p1Timer = modal?.querySelector?.('#dots-timer-p1');
+      if (p1Timer) {
+        p1Timer.textContent = `⏱ ${formatTime(curP1)}`;
+        p1Timer.classList.toggle('text-rose-400', curP1 <= 5);
+        p1Timer.classList.toggle('border-rose-500/50', curP1 <= 5);
+      }
+
+      // 3. Player 2 Badge Timer
+      const p2Timer = modal?.querySelector?.('#dots-timer-p2');
+      if (p2Timer) {
+        p2Timer.textContent = `⏱ ${formatTime(curP2)}`;
+        p2Timer.classList.toggle('text-rose-400', curP2 <= 5);
+        p2Timer.classList.toggle('border-rose-500/50', curP2 <= 5);
+      }
+
+      // 4. Question Card Header Timer
+      const qTimer = modal?.querySelector?.('#dots-q-timer');
+      if (qTimer) {
+        qTimer.textContent = `⏱ ${formatTime(activeLeft)}`;
+        qTimer.classList.toggle('text-rose-400', activeLeft <= 5);
       }
     };
 
@@ -320,15 +350,18 @@
             <img src="${p1AvatarUrl}" class="dots-player-avatar" alt="${esc(p1Name)}">
             <div class="dots-player-info">
               <span class="dots-player-name text-amber-300">${esc(p1Name)}</span>
-              <span class="dots-player-score" id="dots-score-p1">0 boxes</span>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="dots-player-score" id="dots-score-p1">0 boxes</span>
+                ${turnTimeLimit > 0 ? `<span class="dots-badge-timer text-[11px] font-black text-amber-300 bg-amber-400/15 border border-amber-400/40 px-1.5 py-0.2 rounded-full" id="dots-timer-p1">⏱ ${formatTime(turnTimeLimit)}</span>` : ''}
+              </div>
             </div>
           </div>
           <div class="dots-hud-center-col flex flex-col items-center justify-center px-1">
             <span class="text-xs font-black text-slate-400 uppercase tracking-widest leading-none">VS</span>
             ${turnTimeLimit > 0 ? `
-              <div class="dots-hud-timer mt-1 flex items-center gap-1" id="dots-hud-timer" role="timer" aria-label="Turn timer">
+              <div class="dots-hud-timer mt-1 flex items-center gap-1 font-black text-xs" id="dots-hud-timer" role="timer" aria-label="Turn timer">
                 <span class="dots-timer-icon">⏱</span>
-                <span id="dots-timer-val">${turnTimeLimit}s</span>
+                <span id="dots-timer-val">${formatTime(turnTimeLimit)}</span>
               </div>
             ` : ''}
           </div>
@@ -336,7 +369,10 @@
             <img src="${p2AvatarUrl}" class="dots-player-avatar" alt="${esc(p2Name)}">
             <div class="dots-player-info">
               <span class="dots-player-name text-cyan-300">${esc(p2Name)}</span>
-              <span class="dots-player-score" id="dots-score-p2">0 boxes</span>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="dots-player-score" id="dots-score-p2">0 boxes</span>
+                ${turnTimeLimit > 0 ? `<span class="dots-badge-timer text-[11px] font-black text-cyan-300 bg-cyan-400/15 border border-cyan-400/40 px-1.5 py-0.2 rounded-full" id="dots-timer-p2">⏱ ${formatTime(turnTimeLimit)}</span>` : ''}
+              </div>
             </div>
           </div>
         </div>
@@ -349,6 +385,7 @@
           <div class="dots-card-header flex items-center justify-center gap-3 pb-3 border-b border-slate-700/60 w-full text-center" id="dots-card-header">
             <img src="${p1AvatarUrl}" class="dots-q-avatar rounded-full object-contain bg-slate-950 border-2 border-amber-400 ring-2 ring-amber-400/40 shadow-md flex-shrink-0" id="dots-q-avatar" alt="">
             <span class="dots-q-student-name font-black text-amber-300 tracking-wide truncate" id="dots-q-student-name">${esc(p1Name)}</span>
+            ${turnTimeLimit > 0 ? `<span id="dots-q-timer" class="dots-q-timer text-xs font-black px-2.5 py-0.5 rounded-full bg-slate-900 border border-amber-400/50 text-amber-300">⏱ ${formatTime(turnTimeLimit)}</span>` : ''}
             <span id="dots-turn-badge" class="dots-turn-badge text-xs font-black uppercase px-2.5 py-1 rounded-full hidden"></span>
           </div>
 
@@ -497,6 +534,11 @@
       if (qName) {
         qName.textContent = activePlayerName;
         qName.className = `dots-q-student-name font-black tracking-wide truncate ${isP1 ? 'text-amber-300' : 'text-cyan-300'}`;
+      }
+
+      const qTimer = modal.querySelector('#dots-q-timer');
+      if (qTimer) {
+        qTimer.className = `dots-q-timer text-xs font-black px-2.5 py-0.5 rounded-full bg-slate-900 border ${isP1 ? 'border-amber-400/50 text-amber-300' : 'border-cyan-400/50 text-cyan-300'}`;
       }
 
       if (turnBadge) {

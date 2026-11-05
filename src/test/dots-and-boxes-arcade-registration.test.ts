@@ -137,4 +137,24 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
     expect(dotsCss).toContain('#facc15');
     expect(dotsCss).toContain('#00f0ff');
   });
+
+  it('supports setting time from 30 sec up to 15 min and persistent dual-player time banks without pausing on drawing', () => {
+    const arcadeJsPath = path.join(root, 'public', 'pokeayman', 'games-arcade.js');
+    const arcadeJs = fs.readFileSync(arcadeJsPath, 'utf8');
+    // Verifies 30 sec option and up to 15 min
+    expect(arcadeJs).toContain("seconds: 30, label: '30 sec'");
+    expect(arcadeJs).toContain("seconds: m * 60, label: `${m} min`");
+
+    const dotsJsPath = path.join(root, 'public', 'pokeayman', 'dots-and-boxes.js');
+    const dotsJs = fs.readFileSync(dotsJsPath, 'utf8');
+    // Persistent dual-player time banks
+    expect(dotsJs).toContain('playerTimeRemaining = [turnTimeLimit, turnTimeLimit]');
+    expect(dotsJs).toContain('dots-timer-p1');
+    expect(dotsJs).toContain('dots-timer-p2');
+    expect(dotsJs).toContain('dots-q-timer');
+    expect(dotsJs).toContain('formatTime');
+
+    // Timer does not pause after answering MCQ: no stopTurnTimer in correct answer branch
+    expect(dotsJs).toContain('// Do NOT pause or stop the timer: clock keeps running continuously during DRAW_LINE!');
+  });
 });

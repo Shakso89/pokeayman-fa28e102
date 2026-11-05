@@ -2592,10 +2592,11 @@
       const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
       const timerOptions = [
         { seconds: 0, label: 'No timer' },
-        { seconds: 60, label: '1 min' },
-        { seconds: 180, label: '3 min' },
-        { seconds: 300, label: '5 min' }
+        { seconds: 30, label: '30 sec' }
       ];
+      for (let m = 1; m <= 15; m++) {
+        timerOptions.push({ seconds: m * 60, label: `${m} min` });
+      }
 
       const timerStepper = createCustomStepper({
         iconSvg: timerIcon,
@@ -2676,10 +2677,11 @@
       const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
       const timerOptions = [
         { seconds: 0, label: 'No timer' },
-        { seconds: 60, label: '1 min' },
-        { seconds: 180, label: '3 min' },
-        { seconds: 300, label: '5 min' }
+        { seconds: 30, label: '30 sec' }
       ];
+      for (let m = 1; m <= 15; m++) {
+        timerOptions.push({ seconds: m * 60, label: `${m} min` });
+      }
 
       const timerStepper = createCustomStepper({
         iconSvg: timerIcon,
@@ -2761,7 +2763,7 @@
         title: 'Timer',
         value: 0,
         min: 0,
-        max: 10,
+        max: 15,
         step: 1,
         format: v => v === 0 ? 'No timer' : `${v} min`,
         onChange: v => {
