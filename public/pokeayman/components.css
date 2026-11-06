@@ -2086,3 +2086,80 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   outline-offset: 3px;
   border-radius: 30px;
 }
+
+
+/* ==========================================================================
+   White Elephant 70 Toggle Switch (Uiverse.io by Javierrocadev)
+   https://uiverse.io/Javierrocadev/white-elephant-70
+   ========================================================================== */
+.uiverse-white-elephant {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.uiverse-white-elephant input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.uiverse-white-elephant .uiverse-elephant-track {
+  position: relative;
+  width: 56px;
+  height: 30px;
+  border-radius: 9999px;
+  outline: none;
+  transition: background-image 0.5s ease, background-color 0.5s ease, box-shadow 0.3s ease;
+  box-shadow: 1px 3px 0px 0px #000, 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  background-image: linear-gradient(to right, #fb7185, #7f1d1d);
+  flex-shrink: 0;
+}
+
+.uiverse-white-elephant .uiverse-elephant-track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: conic-gradient(from 135deg, #b2a9a9, #b2a8a8, #ffffff, #d7dbd9, #ffffff, #b2a8a8);
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0, 0, 0, 0.4);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(0) rotate(0deg);
+}
+
+.uiverse-white-elephant:hover .uiverse-elephant-track::after {
+  transform: translateX(0) rotate(0deg) scale(1.1);
+}
+
+.uiverse-white-elephant input:checked + .uiverse-elephant-track {
+  background-image: linear-gradient(to right, #10b981, #064e3b);
+}
+
+.uiverse-white-elephant input:checked + .uiverse-elephant-track::after {
+  transform: translateX(26px) rotate(180deg);
+}
+
+.uiverse-white-elephant:hover input:checked + .uiverse-elephant-track::after {
+  transform: translateX(26px) rotate(180deg) scale(1.1);
+}
+
+.uiverse-white-elephant:focus-within {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+  border-radius: 9999px;
+}

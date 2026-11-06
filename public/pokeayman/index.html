@@ -9952,55 +9952,47 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       }
       check.checked = initialPowerupsEnabled;
 
-      // Add a sleek toggle switch inside the label area (left side of the stepper row)
-      const labelArea = powerupStepper.element.querySelector('.ga-stepper-panel > div:first-child');
-      if (labelArea) {
-        const powerupSwitch = document.createElement('button');
-        powerupSwitch.type = 'button';
-        powerupSwitch.setAttribute('role', 'switch');
-        powerupSwitch.setAttribute('aria-checked', String(initialPowerupsEnabled));
-        powerupSwitch.setAttribute('aria-label', 'Enable surprise boxes');
-        powerupSwitch.dataset.testid = 'surprise-powerups-toggle';
-        const updateSwitchUI = (val) => {
-          powerupSwitch.setAttribute('aria-checked', String(val));
-          powerupSwitch.style.cssText = `position:relative;display:inline-flex;height:20px;width:36px;flex-shrink:0;cursor:pointer;border-radius:9999px;border:none;padding:2px;transition:background-color 200ms ease-in-out;outline:none;background-color:${val ? '#f59e0b' : '#475569'};`;
-          const knob = powerupSwitch.querySelector('.ga-switch-knob');
-          if (knob) {
-            knob.style.cssText = `pointer-events:none;display:inline-block;height:16px;width:16px;border-radius:9999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform 200ms ease-in-out;transform:translateX(${val ? '16px' : '0px'});`;
+      // Replace right-side controls with the White Elephant 70 switch and status badge
+      const rightCtrl = powerupStepper.element.querySelector('.ga-stepper-panel > div:last-child');
+      if (rightCtrl) {
+        rightCtrl.className = 'flex items-center gap-2.5 shrink-0 select-none';
+        rightCtrl.style.background = 'transparent';
+        rightCtrl.style.border = 'none';
+        rightCtrl.style.padding = '0';
+        rightCtrl.innerHTML = `
+          <span class="ga-stepper-val text-xs font-black tracking-wide ${initialPowerupsEnabled ? 'text-emerald-400' : 'text-rose-400'} select-none cursor-pointer" title="Click to toggle surprise boxes">${initialPowerupsEnabled ? 'Enabled' : 'Disabled'}</span>
+          <label class="uiverse-white-elephant relative inline-flex items-center cursor-pointer select-none" data-testid="surprise-powerups-toggle" role="switch" aria-checked="${initialPowerupsEnabled}" aria-label="Enable surprise boxes" title="Toggle surprise boxes">
+            <input type="checkbox" class="sr-only" ${initialPowerupsEnabled ? 'checked' : ''} />
+            <div class="uiverse-elephant-track"></div>
+          </label>
+        `;
+
+        const chk = rightCtrl.querySelector('input[type="checkbox"]');
+        const toggleLabel = rightCtrl.querySelector('.uiverse-white-elephant');
+        const valSpan = rightCtrl.querySelector('.ga-stepper-val');
+
+        const updateElephantUI = (val) => {
+          if (chk) chk.checked = val;
+          if (toggleLabel) toggleLabel.setAttribute('aria-checked', String(val));
+          if (valSpan) {
+            valSpan.textContent = val ? 'Enabled' : 'Disabled';
+            valSpan.className = `ga-stepper-val text-xs font-black tracking-wide ${val ? 'text-emerald-400' : 'text-rose-400'} select-none cursor-pointer`;
           }
         };
-        powerupSwitch.innerHTML = `<span class="ga-switch-knob"></span>`;
-        updateSwitchUI(initialPowerupsEnabled);
-        powerupSwitch.addEventListener('click', (e) => {
+
+        const handleToggle = (e) => {
           e.preventDefault();
           e.stopPropagation();
           const cur = powerupStepper.getValue();
           powerupStepper.setValue(!cur.value);
-        });
-
-        syncPowerupSwitch = (val) => {
-          updateSwitchUI(val);
         };
 
-        // Insert the toggle between the icon and the text
-        const iconSpan = labelArea.querySelector('.text-slate-500');
-        if (iconSpan && iconSpan.nextSibling) {
-          labelArea.insertBefore(powerupSwitch, iconSpan.nextSibling);
-        } else {
-          labelArea.appendChild(powerupSwitch);
-        }
-      }
+        toggleLabel?.addEventListener('click', handleToggle);
+        valSpan?.addEventListener('click', handleToggle);
 
-      const powerupValSpan = powerupStepper.element.querySelector('.ga-stepper-val');
-      if (powerupValSpan) {
-        powerupValSpan.style.cursor = 'pointer';
-        powerupValSpan.title = 'Click to toggle surprise boxes';
-        powerupValSpan.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const cur = powerupStepper.getValue();
-          powerupStepper.setValue(!cur.value);
-        });
+        syncPowerupSwitch = (val) => {
+          updateElephantUI(val);
+        };
       }
       powerupStepper.element.dataset.testid = 'surprise-powerups-stepper';
       paramsSection.appendChild(powerupStepper.element);

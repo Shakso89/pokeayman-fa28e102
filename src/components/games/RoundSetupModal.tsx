@@ -375,31 +375,30 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                           {powerUpsEnabled ? 'Power-ups, traps and score swaps' : 'Vocabulary questions only'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setPowerUpsEnabled((v) => !v)}
+                      <div className="flex items-center gap-3 select-none">
+                        <span className={`text-xs font-black tracking-wide ${powerUpsEnabled ? 'text-emerald-400' : 'text-rose-400'} select-none`}>
+                          {powerUpsEnabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                        <label
                           data-testid="surprise-powerups-toggle"
                           role="switch"
                           aria-checked={powerUpsEnabled}
                           aria-label="Enable surprise boxes"
-                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            powerUpsEnabled ? 'bg-amber-500' : 'bg-slate-700'
-                          }`}
+                          title="Toggle surprise boxes"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setPowerUpsEnabled((v) => !v);
+                          }}
+                          className="uiverse-white-elephant relative inline-flex items-center cursor-pointer select-none"
                         >
-                          <span
-                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                              powerUpsEnabled ? 'translate-x-5' : 'translate-x-0'
-                            }`}
+                          <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={powerUpsEnabled}
+                            readOnly
                           />
-                        </button>
-                        <Stepper
-                          value={powerUpsEnabled ? 'Enabled' : 'Disabled'}
-                          onDecrease={() => setPowerUpsEnabled(false)}
-                          onIncrease={() => setPowerUpsEnabled(true)}
-                          disabledDec={!powerUpsEnabled}
-                          disabledInc={powerUpsEnabled}
-                        />
+                          <div className="uiverse-elephant-track" />
+                        </label>
                       </div>
                     </div>
                   </>
