@@ -29097,18 +29097,53 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
       wrongTargets.delete(targetIndex);
       correctAnswers++;
 
-      if (activeGamePlayers.length) {
-        activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+      const isBombWord = /^(?:bomb|mega[\s_-]?bomb|💣)$/i.test(String(target.vocab_word || '').trim()) ||
+                         /^(?:bomb|mega[\s_-]?bomb|💣)$/i.test(String(wordObj.vocab_word || '').trim()) ||
+                         Boolean(target.isBomb || wordObj.isBomb);
+
+      if (isBombWord) {
+        try { playTransactionSound('deduction'); } catch (_) {}
+        const shell = modal.querySelector('.match-game-shell') || board;
+        shell?.classList.remove('ga-board-shake');
+        void shell?.offsetWidth;
+        shell?.classList.add('ga-board-shake');
+        setTimeout(() => shell?.classList.remove('ga-board-shake'), 650);
+
+        if (activeGamePlayers.length > 1) {
+          activeGamePlayers.forEach((p, idx) => {
+            if (idx !== activeGamePlayerIndex) {
+              activeGameScores[idx] = Math.max(0, (activeGameScores[idx] || 0) - 1);
+            }
+          });
+        } else if (activeGamePlayers.length === 1) {
+          activeGameScores[0] = Math.max(0, (activeGameScores[0] || 0) - 1);
+        }
+
+        if (activeGamePlayers.length === 2) {
+          const otherIdx = activeGamePlayerIndex === 0 ? 1 : 0;
+          const otherName = activeGamePlayers[otherIdx]?.student_name || 'Opponent';
+          statusEl.innerHTML = `<span class="text-rose-500 font-extrabold animate-bounce">💣 BOOM! -1 Point to ${escapeText(otherName)}!</span>`;
+        } else if (activeGamePlayers.length > 2) {
+          statusEl.innerHTML = '<span class="text-rose-500 font-extrabold animate-bounce">💣 BOOM! -1 Point to each other player!</span>';
+        } else {
+          statusEl.innerHTML = '<span class="text-rose-500 font-extrabold animate-bounce">💣 BOOM! -1 Point!</span>';
+        }
+
+        if (activeGamePlayers.length > 1) {
+          advanceGameTurn();
+        }
+      } else {
+        if (activeGamePlayers.length) {
+          activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+        }
+
+        unlockGameSound();
+        playGameSound('success');
+        showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+        statusEl.textContent = `✅ Correct! "${target.vocab_word}" matched!`;
       }
 
-      unlockGameSound();
-      playGameSound('success');
-      showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
       updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
-
-      progressCurrentEl.textContent = String(correctAnswers);
-      progressFillEl.style.width = `${Math.round((correctAnswers / totalWords) * 100)}%`;
-      statusEl.textContent = `✅ Correct! "${target.vocab_word}" matched!`;
       renderBoard();
 
       // Auto-Completion: Trigger victory modal when all pairs matched
@@ -29988,7 +30023,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       if (firstCard.type === 'powerup' || firstCard.type === 'mystery') {
         const kind = firstCard.powerup || firstCard.mystery?.kind || 'bomb';
         if (kind === 'bomb') {
-          // 💣 Bomb: Deducts 1 point from active player and ends the turn.
+          // 💣 Bomb: Deducts 1 point from active player and ends the turn. (Updated: in multiplayer, deducts 1 point from other player(s))
           playTransactionSound('deduction');
           const shell = modal.querySelector('.memory-game-shell') || grid;
           shell.classList.remove('ga-board-shake');
@@ -29996,13 +30031,29 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
           shell.classList.add('ga-board-shake');
           setTimeout(() => shell.classList.remove('ga-board-shake'), 650);
 
-          if (activeGamePlayers.length) {
-            activeGameScores[activeGamePlayerIndex] = Math.max(0, (activeGameScores[activeGamePlayerIndex] || 0) - 1);
+          if (activeGamePlayers.length > 1) {
+            activeGamePlayers.forEach((p, idx) => {
+              if (idx !== activeGamePlayerIndex) {
+                activeGameScores[idx] = Math.max(0, (activeGameScores[idx] || 0) - 1);
+              }
+            });
             updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
+          } else if (activeGamePlayers.length === 1) {
+            activeGameScores[0] = Math.max(0, (activeGameScores[0] || 0) - 1);
+            updateGamePlayerHud(modal, selectedWords.length, 0);
           }
+
           const status = modal.querySelector('#memory-status');
           if (status) {
-            status.innerHTML = '<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point! Turn ended!</span>';
+            if (activeGamePlayers.length === 2) {
+              const otherIdx = activeGamePlayerIndex === 0 ? 1 : 0;
+              const otherName = activeGamePlayers[otherIdx]?.student_name || 'Opponent';
+              status.innerHTML = `<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point to ${escapeHtml(otherName)}!</span>`;
+            } else if (activeGamePlayers.length > 2) {
+              status.innerHTML = '<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point to each other player!</span>';
+            } else {
+              status.innerHTML = '<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point! Turn ended!</span>';
+            }
           }
           // Ends turn
           advanceGameTurn();
