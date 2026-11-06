@@ -100,18 +100,18 @@ describe('RoundSetupModal and SettingStepperRow', () => {
     expect(screen.getByText('Number of cards')).toBeInTheDocument();
     expect(screen.getByText('8 cards')).toBeInTheDocument();
 
-    // Power-ups stepper
-    expect(screen.getByText('Power-ups')).toBeInTheDocument();
-    expect(screen.getByText('Traps, stars, swaps & gifts')).toBeInTheDocument();
+    // Power-ups / Enable surprise boxes toggle & stepper
+    expect(screen.getByText('Enable surprise boxes')).toBeInTheDocument();
+    expect(screen.getByText('Power-ups, traps and score swaps')).toBeInTheDocument();
     expect(screen.getByText('Enabled')).toBeInTheDocument();
 
     // Select players to enable Start Game
     fireEvent.click(screen.getByText('Ceanna'));
     fireEvent.click(screen.getByText('Yumi'));
 
-    // Toggle powerups to disabled
-    const powerupsDec = screen.getAllByRole('button', { name: '−' })[1];
-    fireEvent.click(powerupsDec);
+    // Toggle powerups to disabled using the toggle switch
+    const toggleSwitch = screen.getByTestId('surprise-powerups-toggle');
+    fireEvent.click(toggleSwitch);
     expect(screen.getByText('Disabled')).toBeInTheDocument();
     expect(screen.getByText('Vocabulary questions only')).toBeInTheDocument();
 

@@ -51,12 +51,16 @@ describe('Surprise Boxes Lobby DOM rendering', () => {
     expect(stepperPanels.length).toBe(4);
 
     const labels = stepperPanels.map(p => p.querySelector('.truncate')?.textContent?.trim());
-    expect(labels).toEqual(['Number of cards', 'Power-ups', 'Winner reward coins', 'Timer']);
+    expect(labels).toEqual(['Number of cards', 'Enable surprise boxes', 'Winner reward coins', 'Timer']);
 
-    // Verify Power-ups defaults to Enabled
+    // Verify Enable surprise boxes defaults to Enabled and has toggle switch
     const powerupPanel = stepperPanels[1];
     expect(powerupPanel.getAttribute('data-testid')).toBe('surprise-powerups-stepper');
     const val = powerupPanel.querySelector('.ga-stepper-val')?.textContent?.trim();
     expect(val).toBe('Enabled');
+
+    const toggle = powerupPanel.querySelector('[data-testid="surprise-powerups-toggle"]');
+    expect(toggle).not.toBeNull();
+    expect(toggle?.getAttribute('aria-checked')).toBe('true');
   });
 });

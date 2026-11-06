@@ -9,23 +9,24 @@ describe('Surprise Boxes Power-ups Setup Integration', () => {
   const classesRoutePath = path.join(root, 'src', 'routes', 'classes.tsx');
   const indexRoutePath = path.join(root, 'src', 'routes', 'index.tsx');
 
-  it('includes Power-ups stepper in games-arcade.js for chooseBaamboozlePowerUps', () => {
+  it('includes Enable surprise boxes toggle and stepper in games-arcade.js for chooseBaamboozlePowerUps', () => {
     const arcadeJs = fs.readFileSync(arcadeJsPath, 'utf8');
     expect(arcadeJs).toContain("resolvedFnName === 'chooseBaamboozlePowerUps'");
     expect(arcadeJs).toContain("isSurpriseBoxesGame");
-    expect(arcadeJs).toContain("title: 'Power-ups'");
+    expect(arcadeJs).toContain("title: 'Enable surprise boxes'");
     expect(arcadeJs).toContain("{ value: false, label: 'Disabled' }");
     expect(arcadeJs).toContain("{ value: true, label: 'Enabled' }");
-    expect(arcadeJs).toContain("opt.value ? 'Traps, stars, swaps & gifts' : 'Vocabulary questions only'");
+    expect(arcadeJs).toContain("opt.value ? 'Power-ups, traps and score swaps' : 'Vocabulary questions only'");
     expect(arcadeJs).toContain('modal.dataset.gaBaamPowerups = String(opt.value)');
     expect(arcadeJs).toContain("modal.querySelector('#shared-baam-powerups')");
+    expect(arcadeJs).toContain("surprise-powerups-toggle");
   });
 
-  it('inlines Power-ups stepper into index.html via sync-pokeayman-game-modules', () => {
+  it('inlines Enable surprise boxes toggle into index.html via sync-pokeayman-game-modules', () => {
     const html = fs.readFileSync(htmlPath, 'utf8');
     expect(html).toContain('data-pokeayman-inline="games-arcade"');
-    expect(html).toContain("title: 'Power-ups'");
-    expect(html).toContain("opt.value ? 'Traps, stars, swaps & gifts' : 'Vocabulary questions only'");
+    expect(html).toContain("title: 'Enable surprise boxes'");
+    expect(html).toContain("opt.value ? 'Power-ups, traps and score swaps' : 'Vocabulary questions only'");
   });
 
   it('routes chooseBaamboozlePowerUps to chooseGamePlayers and assigns to window', () => {
@@ -44,8 +45,8 @@ describe('Surprise Boxes Power-ups Setup Integration', () => {
   it('uses updated cache buster on iframe in classes.tsx and index.tsx', () => {
     const classesRoute = fs.readFileSync(classesRoutePath, 'utf8');
     const indexRoute = fs.readFileSync(indexRoutePath, 'utf8');
-    expect(classesRoute).toContain('v=20261106-powerups-default-enabled-v1');
-    expect(indexRoute).toContain('v=20261106-powerups-default-enabled-v1');
+    expect(classesRoute).toContain('v=20261106-surprise-boxes-no-repeat-v2');
+    expect(indexRoute).toContain('v=20261106-surprise-boxes-no-repeat-v2');
   });
 
   it('includes no-cache headers in public/_headers and index.html meta tags', () => {

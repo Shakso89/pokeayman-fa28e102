@@ -9911,12 +9911,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       window.selectedBaamCardCount = 8;
       paramsSection.appendChild(cardsStepper.element);
 
-      // Power-ups stepper (Enabled / Disabled)
+      // Enable surprise boxes toggle & stepper (Enabled / Disabled)
       const powerupIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`;
+      let syncPowerupSwitch = null;
       const powerupStepper = createCustomStepper({
         iconSvg: powerupIcon,
-        title: 'Power-ups',
-        subtitleGetter: (opt) => opt.value ? 'Traps, stars, swaps & gifts' : 'Vocabulary questions only',
+        title: 'Enable surprise boxes',
+        subtitleGetter: (opt) => opt.value ? 'Power-ups, traps and score swaps' : 'Vocabulary questions only',
         options: [
           { value: false, label: 'Disabled' },
           { value: true, label: 'Enabled' }
@@ -9934,6 +9935,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             modal.appendChild(check);
           }
           check.checked = opt.value;
+          if (typeof syncPowerupSwitch === 'function') {
+            syncPowerupSwitch(opt.value);
+          }
         }
       });
       modal.dataset.gaBaamPowerups = String(initialPowerupsEnabled);
@@ -9948,10 +9952,45 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       }
       check.checked = initialPowerupsEnabled;
 
+      // Add clickable toggle switch alongside stepper
+      const stepperControls = powerupStepper.element.querySelector('.ga-stepper-panel > div:last-child');
+      if (stepperControls) {
+        const toggleWrapper = document.createElement('div');
+        toggleWrapper.className = 'flex items-center gap-2';
+        stepperControls.parentNode.insertBefore(toggleWrapper, stepperControls);
+
+        const powerupSwitch = document.createElement('button');
+        powerupSwitch.type = 'button';
+        powerupSwitch.setAttribute('role', 'switch');
+        powerupSwitch.setAttribute('aria-checked', String(initialPowerupsEnabled));
+        powerupSwitch.setAttribute('aria-label', 'Enable surprise boxes');
+        powerupSwitch.dataset.testid = 'surprise-powerups-toggle';
+        powerupSwitch.className = `ga-powerup-switch relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${initialPowerupsEnabled ? 'bg-amber-500' : 'bg-slate-700'}`;
+        powerupSwitch.innerHTML = `<span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${initialPowerupsEnabled ? 'translate-x-5' : 'translate-x-0'}"></span>`;
+        powerupSwitch.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const cur = powerupStepper.getValue();
+          powerupStepper.setValue(!cur.value);
+        });
+
+        syncPowerupSwitch = (val) => {
+          powerupSwitch.setAttribute('aria-checked', String(val));
+          powerupSwitch.className = `ga-powerup-switch relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${val ? 'bg-amber-500' : 'bg-slate-700'}`;
+          const knob = powerupSwitch.querySelector('span');
+          if (knob) {
+            knob.className = `pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${val ? 'translate-x-5' : 'translate-x-0'}`;
+          }
+        };
+
+        toggleWrapper.appendChild(powerupSwitch);
+        toggleWrapper.appendChild(stepperControls);
+      }
+
       const powerupValSpan = powerupStepper.element.querySelector('.ga-stepper-val');
       if (powerupValSpan) {
         powerupValSpan.style.cursor = 'pointer';
-        powerupValSpan.title = 'Click to toggle power-ups';
+        powerupValSpan.title = 'Click to toggle surprise boxes';
         powerupValSpan.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -27158,32 +27197,62 @@ window.chooseBaamboozlePowerUps = chooseBaamboozlePowerUps;
 function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSeconds = 0) {
   setGameReplay(() => { resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount, timerSeconds); });
   const normalizedTimerSeconds = Number.isFinite(Number(timerSeconds)) && Number(timerSeconds) > 0 ? Number(timerSeconds) : 0;
-  const words = getGameWords(listName).filter(w => w.vocab_word);
+  const words = getGameWords(listName).filter(w => w && w.vocab_word);
   if (!words.length) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'Add vocabulary words first'); return; }
-  // Build the selected deck at the requested size, targeting an 80/20 mix.
-  const shuffledWords = words.slice().sort(() => Math.random() - 0.5);
-  const powerUpCards = enabledPowerUps.length
-    ? enabledPowerUps.map(powerUp => ({ powerUp, vocab_word: '' }))
-    : [];
-  const isTwentyFourCardMode = Number(cardCount) === 24;
-  // Twenty-four-card mode always owns a complete 24-slot deck and board.
-  const roundSize = isTwentyFourCardMode ? 24 : Math.min(cardCount, shuffledWords.length + powerUpCards.length);
-  const targetWordCount = Math.min(shuffledWords.length, Math.ceil(roundSize * 0.8));
-  const targetPowerUpCount = roundSize - targetWordCount;
-  const selectedWords = shuffledWords.slice(0, targetWordCount);
+
+  // 1. Deduplicate words by normalized word text so NO word can ever repeat
+  const seenNorm = new Set();
+  const uniqueWords = [];
+  for (const w of words) {
+    const norm = String(w?.vocab_word || '').trim().toLowerCase();
+    if (norm && !seenNorm.has(norm)) {
+      seenNorm.add(norm);
+      uniqueWords.push(w);
+    }
+  }
+  if (!uniqueWords.length) {
+    toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'Add vocabulary words first');
+    return;
+  }
+
+  const shuffledWords = uniqueWords.slice().sort(() => Math.random() - 0.5);
+  const roundSize = Number(cardCount) || 8;
+  const isPowerupsExplicitlyEnabled = Array.isArray(enabledPowerUps) && enabledPowerUps.length > 0;
+  const powerUpPool = isPowerupsExplicitlyEnabled
+    ? enabledPowerUps
+    : (Array.isArray(baamboozlePowerUps) && baamboozlePowerUps.length > 0 ? baamboozlePowerUps : ['Star','Steal','Rocket','Bomb','Swap','Gift','Trap']);
+
+  let selectedWords = [];
+  let neededPowerUps = 0;
+
+  if (shuffledWords.length < roundSize) {
+    // If list words are not enough for the cards (e.g. 5 words for 8 cards),
+    // use each unique word exactly once, and complete the rest with power-ups by default!
+    selectedWords = shuffledWords.slice();
+    neededPowerUps = roundSize - selectedWords.length;
+  } else if (isPowerupsExplicitlyEnabled) {
+    // Words are sufficient and power-ups are enabled: mix of unique words and surprise power-ups
+    const targetPowerUps = Math.max(1, Math.min(Math.round(roundSize * 0.25), roundSize - 1));
+    const targetWords = roundSize - targetPowerUps;
+    selectedWords = shuffledWords.slice(0, targetWords);
+    neededPowerUps = roundSize - selectedWords.length;
+  } else {
+    // Words are sufficient and power-ups are disabled: all unique vocabulary cards
+    selectedWords = shuffledWords.slice(0, roundSize);
+    neededPowerUps = 0;
+  }
+
   const selectedPowerUps = [];
-  if (powerUpCards.length) {
-    for (let i = 0; i < targetPowerUpCount; i++) selectedPowerUps.push(powerUpCards[i % powerUpCards.length]);
+  if (neededPowerUps > 0 && powerUpPool.length > 0) {
+    const shuffledPool = powerUpPool.slice().sort(() => Math.random() - 0.5);
+    for (let i = 0; i < neededPowerUps; i++) {
+      const pType = shuffledPool[i % shuffledPool.length];
+      selectedPowerUps.push({ powerUp: pType, vocab_word: '' });
+    }
   }
-  // If power-ups are disabled or the vocabulary list is short, fill the 24
-  // authoritative slots with available vocabulary cards rather than dropping
-  // the final board positions.
+
   const selectedCards = [...selectedWords, ...selectedPowerUps];
-  const fallbackCards = shuffledWords.length ? shuffledWords : [{ vocab_word: 'Review', vocab_image: '' }];
-  for (let i = selectedCards.length; i < roundSize; i++) {
-    selectedCards.push(fallbackCards[i % fallbackCards.length]);
-  }
-  const deck = selectedCards.slice(0, roundSize).sort(() => Math.random() - 0.5);
+  const deck = selectedCards.sort(() => Math.random() - 0.5);
   let index = 0;
   let roundEnded = false;
   // Track every tile chosen at least once; completion is based only on this set.
@@ -27415,7 +27484,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
     mountGameCelebrationOverlay(modal, overlay);
     const closeResult = () => { overlay.remove(); modal.remove(); returnToGamesTab(); };
     overlay.querySelector('#baam-final-close').addEventListener('click', closeResult);
-    overlay.querySelector('#baam-final-replay').addEventListener('click', () => { overlay.remove(); modal.remove(); resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount); });
+    overlay.querySelector('#baam-final-replay').addEventListener('click', () => { overlay.remove(); modal.remove(); resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount, timerSeconds); });
     overlay.addEventListener('click', event => { /* Result popup closes only through its Replay/Close buttons. */ });
     overlay.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); closeResult(); } });
     overlay.querySelector('.game-celebration-card').focus();

@@ -2712,12 +2712,13 @@
       window.selectedBaamCardCount = 8;
       paramsSection.appendChild(cardsStepper.element);
 
-      // Power-ups stepper (Enabled / Disabled)
+      // Enable surprise boxes toggle & stepper (Enabled / Disabled)
       const powerupIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`;
+      let syncPowerupSwitch = null;
       const powerupStepper = createCustomStepper({
         iconSvg: powerupIcon,
-        title: 'Power-ups',
-        subtitleGetter: (opt) => opt.value ? 'Traps, stars, swaps & gifts' : 'Vocabulary questions only',
+        title: 'Enable surprise boxes',
+        subtitleGetter: (opt) => opt.value ? 'Power-ups, traps and score swaps' : 'Vocabulary questions only',
         options: [
           { value: false, label: 'Disabled' },
           { value: true, label: 'Enabled' }
@@ -2735,6 +2736,9 @@
             modal.appendChild(check);
           }
           check.checked = opt.value;
+          if (typeof syncPowerupSwitch === 'function') {
+            syncPowerupSwitch(opt.value);
+          }
         }
       });
       modal.dataset.gaBaamPowerups = String(initialPowerupsEnabled);
@@ -2749,10 +2753,45 @@
       }
       check.checked = initialPowerupsEnabled;
 
+      // Add clickable toggle switch alongside stepper
+      const stepperControls = powerupStepper.element.querySelector('.ga-stepper-panel > div:last-child');
+      if (stepperControls) {
+        const toggleWrapper = document.createElement('div');
+        toggleWrapper.className = 'flex items-center gap-2';
+        stepperControls.parentNode.insertBefore(toggleWrapper, stepperControls);
+
+        const powerupSwitch = document.createElement('button');
+        powerupSwitch.type = 'button';
+        powerupSwitch.setAttribute('role', 'switch');
+        powerupSwitch.setAttribute('aria-checked', String(initialPowerupsEnabled));
+        powerupSwitch.setAttribute('aria-label', 'Enable surprise boxes');
+        powerupSwitch.dataset.testid = 'surprise-powerups-toggle';
+        powerupSwitch.className = `ga-powerup-switch relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${initialPowerupsEnabled ? 'bg-amber-500' : 'bg-slate-700'}`;
+        powerupSwitch.innerHTML = `<span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${initialPowerupsEnabled ? 'translate-x-5' : 'translate-x-0'}"></span>`;
+        powerupSwitch.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const cur = powerupStepper.getValue();
+          powerupStepper.setValue(!cur.value);
+        });
+
+        syncPowerupSwitch = (val) => {
+          powerupSwitch.setAttribute('aria-checked', String(val));
+          powerupSwitch.className = `ga-powerup-switch relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${val ? 'bg-amber-500' : 'bg-slate-700'}`;
+          const knob = powerupSwitch.querySelector('span');
+          if (knob) {
+            knob.className = `pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${val ? 'translate-x-5' : 'translate-x-0'}`;
+          }
+        };
+
+        toggleWrapper.appendChild(powerupSwitch);
+        toggleWrapper.appendChild(stepperControls);
+      }
+
       const powerupValSpan = powerupStepper.element.querySelector('.ga-stepper-val');
       if (powerupValSpan) {
         powerupValSpan.style.cursor = 'pointer';
-        powerupValSpan.title = 'Click to toggle power-ups';
+        powerupValSpan.title = 'Click to toggle surprise boxes';
         powerupValSpan.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();

@@ -368,19 +368,39 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                       <div className="flex flex-col text-left">
                         <div className="flex items-center gap-2.5 text-sm font-bold text-slate-300">
                           <Gift className="w-4 h-4 text-amber-400" />
-                          <span>Power-ups</span>
+                          <span>Enable surprise boxes</span>
+                          <span className="sr-only">Power-ups</span>
                         </div>
                         <span className="text-[10px] text-amber-400 font-medium pl-6.5">
-                          {powerUpsEnabled ? 'Traps, stars, swaps & gifts' : 'Vocabulary questions only'}
+                          {powerUpsEnabled ? 'Power-ups, traps and score swaps' : 'Vocabulary questions only'}
                         </span>
                       </div>
-                      <Stepper
-                        value={powerUpsEnabled ? 'Enabled' : 'Disabled'}
-                        onDecrease={() => setPowerUpsEnabled(false)}
-                        onIncrease={() => setPowerUpsEnabled(true)}
-                        disabledDec={!powerUpsEnabled}
-                        disabledInc={powerUpsEnabled}
-                      />
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setPowerUpsEnabled((v) => !v)}
+                          data-testid="surprise-powerups-toggle"
+                          role="switch"
+                          aria-checked={powerUpsEnabled}
+                          aria-label="Enable surprise boxes"
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            powerUpsEnabled ? 'bg-amber-500' : 'bg-slate-700'
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                              powerUpsEnabled ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                        <Stepper
+                          value={powerUpsEnabled ? 'Enabled' : 'Disabled'}
+                          onDecrease={() => setPowerUpsEnabled(false)}
+                          onIncrease={() => setPowerUpsEnabled(true)}
+                          disabledDec={!powerUpsEnabled}
+                          disabledInc={powerUpsEnabled}
+                        />
+                      </div>
                     </div>
                   </>
                 ) : (
