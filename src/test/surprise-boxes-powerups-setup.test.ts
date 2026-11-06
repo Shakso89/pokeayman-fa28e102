@@ -44,8 +44,18 @@ describe('Surprise Boxes Power-ups Setup Integration', () => {
   it('uses updated cache buster on iframe in classes.tsx and index.tsx', () => {
     const classesRoute = fs.readFileSync(classesRoutePath, 'utf8');
     const indexRoute = fs.readFileSync(indexRoutePath, 'utf8');
-    expect(classesRoute).toContain('v=20261106-timeout-elimination-v5');
-    expect(indexRoute).toContain('v=20261106-timeout-elimination-v5');
+    expect(classesRoute).toContain('v=20261106-powerups-default-enabled-v1');
+    expect(indexRoute).toContain('v=20261106-powerups-default-enabled-v1');
+  });
+
+  it('includes no-cache headers in public/_headers and index.html meta tags', () => {
+    const headersPath = path.join(root, 'public', '_headers');
+    const headers = fs.readFileSync(headersPath, 'utf8');
+    expect(headers).toContain('/pokeayman/index.html');
+    expect(headers).toContain('no-cache, no-store, must-revalidate');
+
+    const html = fs.readFileSync(htmlPath, 'utf8');
+    expect(html).toContain('<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">');
   });
 
   it('provides standard timer options up to 15 min for match words in games-arcade.js and index.html', () => {

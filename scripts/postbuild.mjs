@@ -33,3 +33,19 @@ try {
 } catch (e) {
   console.warn("Could not patch wrangler.json:", e.message);
 }
+
+// Ensure .output/public/_headers prevents caching for /pokeayman/*
+try {
+  const headersPath = resolve(process.cwd(), ".output/public/_headers");
+  let headersContent = "";
+  try {
+    headersContent = readFileSync(headersPath, "utf8");
+  } catch {}
+  const noCacheRule = `\n/pokeayman/*\n  cache-control: no-cache, no-store, must-revalidate\n/pokeayman/index.html\n  cache-control: no-cache, no-store, must-revalidate\n`;
+  if (!headersContent.includes("/pokeayman/index.html")) {
+    writeFileSync(headersPath, headersContent + noCacheRule, "utf8");
+    console.log("Updated .output/public/_headers with no-cache rules for /pokeayman/*");
+  }
+} catch (e) {
+  console.warn("Could not patch _headers:", e.message);
+}

@@ -1,0 +1,11 @@
+/pokeayman/*
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pokeayman/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pokeayman/games-arcade.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/pokeayman/games-arcade.css
+  Cache-Control: no-cache, no-store, must-revalidate

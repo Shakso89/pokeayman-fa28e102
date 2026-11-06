@@ -2674,6 +2674,9 @@
       window.pendingGameTimerSeconds = 0;
       paramsSection.appendChild(timerStepper.element);
     } else if (isSurpriseBoxesGame) {
+      if (window.selectedBaamPowerupsEnabled === undefined) {
+        window.selectedBaamPowerupsEnabled = true;
+      }
       const existingPowerupCheckbox = modal.querySelector('#shared-baam-powerups');
       const initialPowerupsEnabled = modal.dataset.gaBaamPowerups !== undefined
         ? modal.dataset.gaBaamPowerups === 'true'
@@ -2757,6 +2760,7 @@
           powerupStepper.setValue(!cur.value);
         });
       }
+      powerupStepper.element.dataset.testid = 'surprise-powerups-stepper';
       paramsSection.appendChild(powerupStepper.element);
 
       const coinIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h6a1.5 1.5 0 0 1 0 3H9a1.5 1.5 0 0 0 0 3h6"/></svg>`;

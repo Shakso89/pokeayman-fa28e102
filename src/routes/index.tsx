@@ -65,7 +65,7 @@ function Index() {
       key={frameKey}
       className="imported-app"
       title="PokéAyman"
-      src="/pokeayman/index.html?v=20261106-timeout-elimination-v5"
+      src="/pokeayman/index.html?v=20261106-powerups-default-enabled-v1"
       allowFullScreen
     />
   );

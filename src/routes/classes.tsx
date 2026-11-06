@@ -48,7 +48,7 @@ function ClassesPage() {
       key={frameKey}
       className="imported-app"
       title="PokéAyman Classes"
-      src="/pokeayman/index.html?v=20261106-timeout-elimination-v5&enter=classes"
+      src="/pokeayman/index.html?v=20261106-powerups-default-enabled-v1&enter=classes"
       allowFullScreen
     />
   );
