@@ -2117,9 +2117,19 @@
 
   window.gaEnhanceLobby = function (modal, fnName, refresh) {
     if (modal.classList.contains('ga-lobby')) return;
-    const resolvedFnName = fnName || (window.pendingChosenGame ? window.pendingChosenGame.fn : '');
-    const game = GAMES.find(g => g.fn === resolvedFnName);
+    const resolvedFnName = fnName || (window.pendingChosenGame ? window.pendingChosenGame.fn : '') || modal.dataset.gaGameFn || '';
+    const game = GAMES.find(g => g.fn === resolvedFnName || g.name === resolvedFnName || (window.pendingChosenGame && g.fn === window.pendingChosenGame.fn)) || window.pendingChosenGame;
     modal.classList.add('ga-lobby');
+
+    const isSurpriseBoxesGame = resolvedFnName === 'chooseBaamboozlePowerUps' ||
+      resolvedFnName === 'openBaamboozle' ||
+      resolvedFnName === 'surprise_boxes' ||
+      resolvedFnName === 'Surprise Boxes' ||
+      modal.dataset.gaGameFn === 'chooseBaamboozlePowerUps' ||
+      (modal.dataset.gaGameName && modal.dataset.gaGameName.toLowerCase().includes('surprise')) ||
+      modal.querySelector('.shared-baam-count, #shared-baam-powerups') !== null ||
+      Boolean(game && (game.fn === 'chooseBaamboozlePowerUps' || (game.name && game.name.toLowerCase().includes('surprise')))) ||
+      Boolean(window.pendingChosenGame && (window.pendingChosenGame.fn === 'chooseBaamboozlePowerUps' || (window.pendingChosenGame.name && window.pendingChosenGame.name.toLowerCase().includes('surprise')) || window.pendingChosenGame.id === 'surprise_boxes'));
 
     document.querySelectorAll('.ga-continue-bar').forEach(el => el.remove());
     const existingOldClose = modal.querySelector('.ga-lobby-close, .ga-lobby-close-btn');
@@ -2154,7 +2164,7 @@
     const next = modal.querySelector('#game-players-next');
     const cancel = modal.querySelector('#game-players-cancel');
     const error = modal.querySelector('#game-player-error');
-    const requiresTwoPlayers = resolvedFnName === 'chooseBaamboozlePowerUps';
+    const requiresTwoPlayers = isSurpriseBoxesGame;
     const isDotsAndBoxes = resolvedFnName === 'chooseDotsAndBoxes';
     const isSoloGame = resolvedFnName === 'startListenCatch' || resolvedFnName === 'startVocabBattle';
     const footer = next?.parentElement;
@@ -2669,9 +2679,11 @@
       modal.dataset.gaTimerSeconds = '0';
       window.pendingGameTimerSeconds = 0;
       paramsSection.appendChild(timerStepper.element);
-    } else if (resolvedFnName === 'chooseBaamboozlePowerUps') {
+    } else if (isSurpriseBoxesGame) {
       const existingPowerupCheckbox = modal.querySelector('#shared-baam-powerups');
-      const initialPowerupsEnabled = existingPowerupCheckbox ? existingPowerupCheckbox.checked : true;
+      const initialPowerupsEnabled = modal.dataset.gaBaamPowerups !== undefined
+        ? modal.dataset.gaBaamPowerups === 'true'
+        : (existingPowerupCheckbox ? existingPowerupCheckbox.checked : (window.selectedBaamPowerupsEnabled ?? true));
 
       const existingBaamCtrl = gameSpecificControls.find(el => el.querySelector('.shared-baam-count'));
       if (existingBaamCtrl) {
