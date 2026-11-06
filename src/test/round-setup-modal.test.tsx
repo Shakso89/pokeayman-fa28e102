@@ -79,4 +79,54 @@ describe('RoundSetupModal and SettingStepperRow', () => {
     fireEvent.click(screen.getByText('Clear'));
     expect(screen.getByText('0 / 4 selected')).toBeInTheDocument();
   });
+
+  it('renders Surprise Boxes setup with Number of Cards and Power-ups stepper, toggling enabled/disabled', () => {
+    const onStartGame = vi.fn();
+    const students = [
+      { id: '1', name: 'Ceanna', avatar_url: '/poke1.png' },
+      { id: '2', name: 'Yumi', avatar_url: '/poke2.png' },
+    ];
+
+    render(
+      <RoundSetupModal
+        gameTitle="Surprise Boxes"
+        gameId="surprise_boxes"
+        classStudents={students}
+        onStartGame={onStartGame}
+      />
+    );
+
+    // Number of cards
+    expect(screen.getByText('Number of cards')).toBeInTheDocument();
+    expect(screen.getByText('8 cards')).toBeInTheDocument();
+
+    // Power-ups stepper
+    expect(screen.getByText('Power-ups')).toBeInTheDocument();
+    expect(screen.getByText('Traps, stars, swaps & gifts')).toBeInTheDocument();
+    expect(screen.getByText('Enabled')).toBeInTheDocument();
+
+    // Select players to enable Start Game
+    fireEvent.click(screen.getByText('Ceanna'));
+    fireEvent.click(screen.getByText('Yumi'));
+
+    // Toggle powerups to disabled
+    const powerupsDec = screen.getAllByRole('button', { name: '−' })[1];
+    fireEvent.click(powerupsDec);
+    expect(screen.getByText('Disabled')).toBeInTheDocument();
+    expect(screen.getByText('Vocabulary questions only')).toBeInTheDocument();
+
+    // Increase cards to 18
+    const cardsInc = screen.getAllByRole('button', { name: '+' })[0];
+    fireEvent.click(cardsInc);
+    expect(screen.getByText('18 cards')).toBeInTheDocument();
+
+    // Start game
+    const startBtn = screen.getByRole('button', { name: /START GAME/i });
+    fireEvent.click(startBtn);
+
+    expect(onStartGame).toHaveBeenCalledTimes(1);
+    const passedSettings = onStartGame.mock.calls[0][1];
+    expect(passedSettings.cardCount).toBe(18);
+    expect(passedSettings.powerUpsEnabled).toBe(false);
+  });
 });

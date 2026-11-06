@@ -10,6 +10,7 @@ import {
   Coins,
   Timer,
   Grid,
+  Gift,
 } from 'lucide-react';
 
 export interface StepperProps {
@@ -145,11 +146,14 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
   onClose,
 }) => {
   const isDotsAndBoxes = gameId === 'dots_and_boxes' || gameTitle.toLowerCase().includes('dots');
+  const isSurpriseBoxes = gameId === 'surprise_boxes' || gameId === 'surprise-boxes' || gameTitle.toLowerCase().includes('surprise');
   const effectiveMaxPlayers = isDotsAndBoxes ? 2 : (maxPlayers ?? 4);
   const effectiveMinPlayers = isDotsAndBoxes ? 2 : (minPlayers ?? 1);
 
   const [selectedPlayers, setSelectedPlayers] = useState<Student[]>([]);
   const [pointsToWin, setPointsToWin] = useState<number>(5);
+  const [baamCardCount, setBaamCardCount] = useState<number>(8);
+  const [powerUpsEnabled, setPowerUpsEnabled] = useState<boolean>(true);
   const [winnerCoins, setWinnerCoins] = useState<number>(0);
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [gridDots, setGridDots] = useState<number>(defaultGridSize);
@@ -345,6 +349,40 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                       disabledInc={gridDots >= 5}
                     />
                   </div>
+                ) : isSurpriseBoxes ? (
+                  <>
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+                      <div className="flex items-center gap-2.5 text-sm font-bold text-slate-300">
+                        <Grid className="w-4 h-4 text-slate-500" />
+                        <span>Number of cards</span>
+                      </div>
+                      <Stepper
+                        value={`${baamCardCount} cards`}
+                        onDecrease={() => setBaamCardCount((v) => (v === 24 ? 18 : 8))}
+                        onIncrease={() => setBaamCardCount((v) => (v === 8 ? 18 : 24))}
+                        disabledDec={baamCardCount <= 8}
+                        disabledInc={baamCardCount >= 24}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+                      <div className="flex flex-col text-left">
+                        <div className="flex items-center gap-2.5 text-sm font-bold text-slate-300">
+                          <Gift className="w-4 h-4 text-amber-400" />
+                          <span>Power-ups</span>
+                        </div>
+                        <span className="text-[10px] text-amber-400 font-medium pl-6.5">
+                          {powerUpsEnabled ? 'Traps, stars, swaps & gifts' : 'Vocabulary questions only'}
+                        </span>
+                      </div>
+                      <Stepper
+                        value={powerUpsEnabled ? 'Enabled' : 'Disabled'}
+                        onDecrease={() => setPowerUpsEnabled(false)}
+                        onIncrease={() => setPowerUpsEnabled(true)}
+                        disabledDec={!powerUpsEnabled}
+                        disabledInc={powerUpsEnabled}
+                      />
+                    </div>
+                  </>
                 ) : (
                   <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
                     <div className="flex items-center gap-2.5 text-sm font-bold text-slate-300">
@@ -469,6 +507,8 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                 timerSeconds,
                 gridDots,
                 gridSize: gridDots,
+                cardCount: baamCardCount,
+                powerUpsEnabled,
               })
             }
             disabled={!canStart}
