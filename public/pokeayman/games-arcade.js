@@ -1876,10 +1876,12 @@
   if (document.body) observeStages(); else document.addEventListener('DOMContentLoaded', observeStages, { once: true });
 
   function createWordCountStepper({ totalWords, initialCount, onChange }) {
+    const allowRepeat = Boolean(arguments[0]?.allowRepeat);
     const total = Math.max(2, Number(totalWords) || 2);
-    const steps = [5, 8, 10, 12, 15, 18, 20, 25, 30].filter(n => n < total);
-    const options = [...steps, total];
-    let currentIndex = options.length - 1;
+    const standardSteps = [5, 8, 10, 12, 15, 18, 20, 25, 30];
+    const steps = allowRepeat ? standardSteps : standardSteps.filter(n => n < total);
+    const options = Array.from(new Set([...steps, total])).sort((a, b) => a - b);
+    let currentIndex = options.indexOf(total);
     if (initialCount && options.includes(Number(initialCount))) {
       currentIndex = options.indexOf(Number(initialCount));
     }
@@ -1921,7 +1923,13 @@
 
     function update() {
       const count = options[currentIndex];
-      valBadge.textContent = count === total ? `All (${count})` : `${count} words`;
+      if (count === total) {
+        valBadge.textContent = `All (${count})`;
+      } else if (count > total) {
+        valBadge.textContent = `${count} cards`;
+      } else {
+        valBadge.textContent = `${count} words`;
+      }
       valBadge.dataset.value = String(count);
       const atMin = currentIndex <= 0;
       const atMax = currentIndex >= options.length - 1;
@@ -2520,6 +2528,7 @@
 
       const wordCountStepper = createWordCountStepper({
         totalWords,
+        allowRepeat: true,
         initialCount: modal.dataset.gaMatchWordCount ? Number(modal.dataset.gaMatchWordCount) : totalWords,
         onChange: (count) => {
           modal.dataset.gaMatchWordCount = String(count);

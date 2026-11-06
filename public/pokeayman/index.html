@@ -9072,10 +9072,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   if (document.body) observeStages(); else document.addEventListener('DOMContentLoaded', observeStages, { once: true });
 
   function createWordCountStepper({ totalWords, initialCount, onChange }) {
+    const allowRepeat = Boolean(arguments[0]?.allowRepeat);
     const total = Math.max(2, Number(totalWords) || 2);
-    const steps = [5, 8, 10, 12, 15, 18, 20, 25, 30].filter(n => n < total);
-    const options = [...steps, total];
-    let currentIndex = options.length - 1;
+    const standardSteps = [5, 8, 10, 12, 15, 18, 20, 25, 30];
+    const steps = allowRepeat ? standardSteps : standardSteps.filter(n => n < total);
+    const options = Array.from(new Set([...steps, total])).sort((a, b) => a - b);
+    let currentIndex = options.indexOf(total);
     if (initialCount && options.includes(Number(initialCount))) {
       currentIndex = options.indexOf(Number(initialCount));
     }
@@ -9117,7 +9119,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
     function update() {
       const count = options[currentIndex];
-      valBadge.textContent = count === total ? `All (${count})` : `${count} words`;
+      if (count === total) {
+        valBadge.textContent = `All (${count})`;
+      } else if (count > total) {
+        valBadge.textContent = `${count} cards`;
+      } else {
+        valBadge.textContent = `${count} words`;
+      }
       valBadge.dataset.value = String(count);
       const atMin = currentIndex <= 0;
       const atMax = currentIndex >= options.length - 1;
@@ -9716,6 +9724,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
       const wordCountStepper = createWordCountStepper({
         totalWords,
+        allowRepeat: true,
         initialCount: modal.dataset.gaMatchWordCount ? Number(modal.dataset.gaMatchWordCount) : totalWords,
         onChange: (count) => {
           modal.dataset.gaMatchWordCount = String(count);
@@ -28642,9 +28651,10 @@ function chooseMatchWordCount(listName) {
   const available = getGameWords(listName, true).filter(w => w.vocab_image && w.vocab_image.trim());
   if (available.length < 2) { toast('List needs at least 2 words with images'); return; }
     const totalAvailable = available.length;
-  const wordCountSteps = [5, 8, 10, 12, 15, 18, 20, 25, 30].filter(n => n < totalAvailable);
-  const wordCountOptions = [...wordCountSteps, totalAvailable];
-  let curIndex = wordCountOptions.length - 1;
+  const wordCountSteps = [5, 8, 10, 12, 15, 18, 20, 25, 30];
+  const wordCountOptions = Array.from(new Set([...wordCountSteps, totalAvailable])).sort((a, b) => a - b);
+  let curIndex = wordCountOptions.indexOf(totalAvailable);
+  if (curIndex < 0) curIndex = 0;
   let selectedMatchWordCount = wordCountOptions[curIndex];
 
   const modal = document.createElement('div');
@@ -28687,7 +28697,15 @@ function chooseMatchWordCount(listName) {
     const c = wordCountOptions[curIndex];
     selectedMatchWordCount = c;
     modal.dataset.gaMatchWordCount = String(c);
-    if (valSpan) valSpan.textContent = c === totalAvailable ? `All (${c})` : `${c} words`;
+    if (valSpan) {
+      if (c === totalAvailable) {
+        valSpan.textContent = `All (${c})`;
+      } else if (c > totalAvailable) {
+        valSpan.textContent = `${c} cards`;
+      } else {
+        valSpan.textContent = `${c} words`;
+      }
+    }
     if (decBtn) {
       decBtn.disabled = curIndex <= 0;
       decBtn.setAttribute('aria-disabled', String(curIndex <= 0));
@@ -28734,9 +28752,18 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   const wordsWithImages = words.filter(w => w.vocab_image && w.vocab_image.trim());
   if (wordsWithImages.length < 2) { toast('List needs at least 2 words with images'); return; }
   
-  // Randomly select the requested number of words for this round.
-  const chosenCount = Math.min(wordsWithImages.length, wordCount || wordsWithImages.length);
-  const selectedItems = wordsWithImages.slice().sort(() => Math.random() - 0.5).slice(0, chosenCount);
+  // Select the requested number of words for this round.
+  // If the list word count does not cover the requested amount of cards, repeat words to reach the count.
+  const requestedCount = Number(wordCount) && Number(wordCount) > 0 ? Number(wordCount) : wordsWithImages.length;
+  const shuffledAvailable = wordsWithImages.slice().sort(() => Math.random() - 0.5);
+  const selectedItems = [];
+  if (requestedCount <= shuffledAvailable.length) {
+    selectedItems.push(...shuffledAvailable.slice(0, requestedCount));
+  } else {
+    for (let i = 0; i < requestedCount; i++) {
+      selectedItems.push(shuffledAvailable[i % shuffledAvailable.length]);
+    }
+  }
   const totalWords = selectedItems.length;
 
   // Target picture cards: stationary cards shuffled into random order
@@ -29060,7 +29087,8 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
 
     selectedWordId = null;
 
-    const isCorrect = String(target.vocab_word || '').trim().toLowerCase() === String(wordObj.vocab_word || '').trim().toLowerCase();
+    const normMatch = s => String(s || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const isCorrect = normMatch(target.vocab_word) === normMatch(wordObj.vocab_word);
 
     if (isCorrect) {
       // 1. Correct Match: Immediately lock into slot & badge
@@ -29939,7 +29967,15 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     const card1 = grid.querySelector('.memory-card[data-index="' + idx1 + '"]');
     const card2 = grid.querySelector('.memory-card[data-index="' + idx2 + '"]');
 
-    if (firstCard.pairId === secondCard.pairId && firstCard.cardId !== secondCard.cardId) {
+    const isSamePair = firstCard.pairId === secondCard.pairId && firstCard.cardId !== secondCard.cardId;
+    const normWord = s => String(s || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const isMatchingVocabPair = firstCard.cardId !== secondCard.cardId &&
+      firstCard.type !== secondCard.type &&
+      (firstCard.type === 'word' || firstCard.type === 'image') &&
+      (secondCard.type === 'word' || secondCard.type === 'image') &&
+      normWord(firstCard.word?.vocab_word) === normWord(secondCard.word?.vocab_word);
+
+    if (isSamePair || isMatchingVocabPair) {
       // Correct match!
       clearMemoryRoundTimers();
       matched.add(idx1);
