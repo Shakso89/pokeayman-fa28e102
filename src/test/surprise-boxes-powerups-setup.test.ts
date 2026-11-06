@@ -44,8 +44,8 @@ describe('Surprise Boxes Power-ups Setup Integration', () => {
   it('uses updated cache buster on iframe in classes.tsx and index.tsx', () => {
     const classesRoute = fs.readFileSync(classesRoutePath, 'utf8');
     const indexRoute = fs.readFileSync(indexRoutePath, 'utf8');
-    expect(classesRoute).toContain('v=20261106-match-timer-v4');
-    expect(indexRoute).toContain('v=20261106-match-timer-v4');
+    expect(classesRoute).toContain('v=20261106-timeout-elimination-v5');
+    expect(indexRoute).toContain('v=20261106-timeout-elimination-v5');
   });
 
   it('provides standard timer options up to 15 min for match words in games-arcade.js and index.html', () => {

@@ -27642,10 +27642,14 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
   if (!gameModal || gameModal.querySelector(':scope > .game-celebration-overlay')) return;
   stopGameFinishedActivity(gameModal);
   const scores = Array.isArray(activeGameScores) ? activeGameScores.map(score => Number(score) || 0) : [];
-  const highestScore = scores.length ? Math.max(...scores) : 0;
-  const tied = scores.length > 1 && scores.every(score => score === highestScore);
-  const winnerIndex = tied ? -1 : scores.indexOf(highestScore);
-  const winner = tied ? null : (winnerOverride || activeGamePlayers[winnerIndex] || activeGamePlayers[0]);
+  const eligibleIndices = activeGamePlayers.map((_, i) => i).filter(i => !activeGamePlayerEliminated || !activeGamePlayerEliminated[i]);
+  const candidateIndices = eligibleIndices.length > 0 ? eligibleIndices : activeGamePlayers.map((_, i) => i);
+  const eligibleScores = candidateIndices.map(i => scores[i] ?? 0);
+  const highestScore = eligibleScores.length ? Math.max(...eligibleScores) : 0;
+  const winnersWithHighest = candidateIndices.filter(i => scores[i] === highestScore);
+  const tied = winnerOverride ? false : (winnersWithHighest.length > 1);
+  const winnerIndex = tied ? -1 : (winnersWithHighest[0] !== undefined ? winnersWithHighest[0] : (candidateIndices[0] ?? 0));
+  const winner = winnerOverride || (tied ? null : (activeGamePlayers[winnerIndex] || activeGamePlayers[0]));
   const winnerName = winner?.student_name || 'Champion';
   const winnerAvatar = winner?.avatar_pokemon_id || 25;
   const winnerAvatarUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png`;
@@ -27974,6 +27978,7 @@ let activeGamePlayers = [];
 let activeGamePlayerIndex = 0;
 let activeGameScores = [];
 let activeGamePlayerRemaining = [];
+let activeGamePlayerEliminated = [];
 let lastGameReplay = null;
 function setGameReplay(replay) { lastGameReplay = replay; }
 function returnToGamesTab() {
@@ -27995,9 +28000,20 @@ function resetGameTurnState() {
   activeGameScores = activeGamePlayers.map(() => 0);
   // Each player receives one shared time budget for the entire game session.
   activeGamePlayerRemaining = [];
+  activeGamePlayerEliminated = activeGamePlayers.map(() => false);
 }
 function advanceGameTurn() {
-  if (activeGamePlayers.length > 1) activeGamePlayerIndex = (activeGamePlayerIndex + 1) % activeGamePlayers.length;
+  if (activeGamePlayers.length > 1) {
+    const total = activeGamePlayers.length;
+    let nextIndex = activeGamePlayerIndex;
+    for (let i = 0; i < total; i++) {
+      nextIndex = (nextIndex + 1) % total;
+      if (!activeGamePlayerEliminated || !activeGamePlayerEliminated[nextIndex]) {
+        activeGamePlayerIndex = nextIndex;
+        return;
+      }
+    }
+  }
 }
 function renderGamePlayerHud(modal, total, progress = 0, targetScore = null) {
   if (!activeGamePlayers.length || !modal) return;
@@ -28006,12 +28022,13 @@ function renderGamePlayerHud(modal, total, progress = 0, targetScore = null) {
   hud.setAttribute('aria-label', 'Player progress and scores');
   hud.innerHTML = activeGamePlayers.map((player, index) => {
     const avatar = player.avatar_pokemon_id || 25;
-    const active = index === activeGamePlayerIndex;
-    return `<div class="game-player-card ${active ? 'is-active' : ''}" data-player-index="${index}">
+    const isEliminated = Boolean(activeGamePlayerEliminated && activeGamePlayerEliminated[index]);
+    const active = index === activeGamePlayerIndex && !isEliminated;
+    return `<div class="game-player-card ${active ? 'is-active' : ''} ${isEliminated ? 'is-eliminated' : ''}" data-player-index="${index}">
       <div class="game-player-avatar-wrap">${gameStudentAvatarMarkup(player)}</div>
       <p class="game-player-name font-bold text-xs truncate cursor-pointer" title="Show encouragement">${player.student_name}</p>
       <div class="game-turn-timer hidden" role="timer" aria-label="Remaining turn time"><span class="game-turn-timer-track"><span class="game-turn-timer-fill"></span></span><span class="game-turn-timer-number">⏱ 0s</span></div>
-      <p class="game-player-turn text-[11px] font-black" aria-hidden="true"></p>
+      <p class="game-player-turn text-[11px] font-black" aria-hidden="true">${isEliminated ? 'OUT' : ''}</p>
       <p class="game-player-score" aria-label="Player score">${activeGameScores[index] || 0}</p>
     </div>`;
   }).join('');
@@ -28054,10 +28071,17 @@ function updateGamePlayerHud(modal, _total, activeIndex = activeGamePlayerIndex)
   }
   modal._lastAudioScores = currentScores.slice();
   hud.querySelectorAll('.game-player-card').forEach((card, index) => {
-    card.classList.toggle('is-active', index === activeIndex);
+    const isEliminated = Boolean(activeGamePlayerEliminated && activeGamePlayerEliminated[index]);
+    card.classList.toggle('is-eliminated', isEliminated);
+    card.classList.toggle('is-active', index === activeIndex && !isEliminated);
     const turn = card.querySelector('.game-player-turn');
-    turn.textContent = '';
-    turn.className = 'game-player-turn text-[11px] font-black';
+    if (isEliminated) {
+      turn.textContent = 'OUT';
+      turn.className = 'game-player-turn text-[11px] font-black text-red-500 uppercase';
+    } else {
+      turn.textContent = '';
+      turn.className = 'game-player-turn text-[11px] font-black';
+    }
     const score = card.querySelector('.game-player-score');
     const timer = card.querySelector('.game-turn-timer');
     const previousValue = score.dataset.scoreValue;
@@ -28065,9 +28089,17 @@ function updateGamePlayerHud(modal, _total, activeIndex = activeGamePlayerIndex)
     score.dataset.scoreValue = nextValue;
     score.textContent = nextValue;
     if (timer) {
-      const timerVisible = Boolean(modal.dataset.timerSeconds) && index === activeIndex;
-      timer.classList.toggle('hidden', !timerVisible);
-      timer.setAttribute('aria-label', timerVisible ? `Remaining turn time for ${activeGamePlayers[index]?.student_name || 'current player'}` : 'Turn timer inactive');
+      if (isEliminated) {
+        timer.classList.remove('hidden');
+        timer.classList.add('is-danger');
+        const countdown = timer.querySelector('.game-turn-timer-number');
+        if (countdown) countdown.textContent = '⏱ 0s (Out)';
+        timer.setAttribute('aria-label', `${activeGamePlayers[index]?.student_name || 'Player'} is eliminated`);
+      } else {
+        const timerVisible = Boolean(modal.dataset.timerSeconds) && index === activeIndex;
+        timer.classList.toggle('hidden', !timerVisible);
+        timer.setAttribute('aria-label', timerVisible ? `Remaining turn time for ${activeGamePlayers[index]?.student_name || 'current player'}` : 'Turn timer inactive');
+      }
     }
     if (previousValue !== undefined && previousValue !== nextValue) {
       score.classList.remove('game-player-score-number-change');
@@ -28083,6 +28115,9 @@ function startPlayerTurnTimer(modal, seconds) {
   // Reuse each player's remaining budget when a turn or word view changes.
   if (activeGamePlayerRemaining.length !== activeGamePlayers.length) {
     activeGamePlayerRemaining = activeGamePlayers.map(() => seconds);
+  }
+  if (!Array.isArray(activeGamePlayerEliminated) || activeGamePlayerEliminated.length !== activeGamePlayers.length) {
+    activeGamePlayerEliminated = activeGamePlayers.map(() => false);
   }
   modal._playerTimerRemaining = activeGamePlayerRemaining;
   modal._playerTimerLastTick = Date.now();
@@ -28108,6 +28143,14 @@ function startPlayerTurnTimer(modal, seconds) {
     const elapsedSeconds = Math.max(0, (now - modal._playerTimerLastTick) / 1000);
     modal._playerTimerLastTick = now;
     const activeIndex = activeGamePlayerIndex;
+
+    // If active player is already eliminated, advance turn
+    if (activeGamePlayerEliminated && activeGamePlayerEliminated[activeIndex]) {
+      advanceGameTurn();
+      updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
+      return;
+    }
+
     if (modal._playerTimerRemaining[activeIndex] > 0) {
       modal._playerTimerRemaining[activeIndex] = Math.max(0, modal._playerTimerRemaining[activeIndex] - elapsedSeconds);
     }
@@ -28138,36 +28181,118 @@ function startPlayerTurnTimer(modal, seconds) {
       fill.style.background = percent <= 25 ? 'linear-gradient(90deg, #ff1744, #ff6d00)' : 'linear-gradient(90deg, #5369ff, #5166ff 65%, #facc15)';
     }
     if (modal._playerTimerRemaining[activeIndex] <= 0) {
-      const everyoneTimedOut = modal._playerTimerRemaining.every(time => time <= 0);
-      if (everyoneTimedOut) {
+      // 1. Single-player mode
+      if (activeGamePlayers.length <= 1) {
         clearInterval(timerId);
         modal._playerTimerExpired = true;
         modal.querySelectorAll('button').forEach(button => { button.disabled = true; });
         const status = modal.querySelector('#match-status, #memory-status, #hangman-feedback');
         if (status) status.textContent = '⏱ Time is up!';
-        if (activeGamePlayers.length === 1) {
-          const timeoutOverlay = document.createElement('div');
-          timeoutOverlay.className = 'game-celebration-overlay single-player-timeout-overlay';
-          timeoutOverlay.innerHTML = `<div class="game-celebration-card" role="alertdialog" aria-modal="true" aria-labelledby="single-player-timeout-title" tabindex="-1"><h2 id="single-player-timeout-title" class="heading-font text-4xl sm:text-5xl font-bold text-red-600 relative z-10">Sorry, you lose</h2><button type="button" id="single-player-timeout-close" class="btn-primary w-full mt-6 relative z-10">Close</button></div>`;
-          document.body.appendChild(timeoutOverlay);
-          const closeTimeout = () => { timeoutOverlay.remove(); if (document.body.contains(modal)) modal.remove(); returnToGamesTab(); };
-          timeoutOverlay.querySelector('#single-player-timeout-close').addEventListener('click', closeTimeout);
-          timeoutOverlay.querySelector('.game-celebration-card').focus();
-        } else if (modal.dataset.noWinnerOnTimeout === 'true') {
-          const timeoutFeedback = modal.querySelector('#find-me-feedback, #crossword-feedback');
-          if (timeoutFeedback) {
-            timeoutFeedback.textContent = modal.querySelector('#crossword-feedback') ? 'Time is up. The crossword timer has ended.' : '⏱ Time is up — reach the target score to win.';
-            timeoutFeedback.className = 'min-h-8 mt-4 text-lg font-bold text-orange-600';
-          }
-        } else {
-          setTimeout(() => {
-            if (document.body.contains(modal)) showGameCelebration(modal, 'Time is up!');
-          }, 250);
-        }
+        const timeoutOverlay = document.createElement('div');
+        timeoutOverlay.className = 'game-celebration-overlay single-player-timeout-overlay';
+        timeoutOverlay.innerHTML = `<div class="game-celebration-card" role="alertdialog" aria-modal="true" aria-labelledby="single-player-timeout-title" tabindex="-1"><h2 id="single-player-timeout-title" class="heading-font text-4xl sm:text-5xl font-bold text-red-600 relative z-10">Sorry, you lose</h2><button type="button" id="single-player-timeout-close" class="btn-primary w-full mt-6 relative z-10">Close</button></div>`;
+        document.body.appendChild(timeoutOverlay);
+        const closeTimeout = () => { timeoutOverlay.remove(); if (document.body.contains(modal)) modal.remove(); returnToGamesTab(); };
+        timeoutOverlay.querySelector('#single-player-timeout-close').addEventListener('click', closeTimeout);
+        timeoutOverlay.querySelector('.game-celebration-card').focus();
         return;
       }
+
+      // 2. Exactly 2 players:
+      // "in any game if there are only 2 players and timer set and one player runs out of time he should lose regardless his score"
+      if (activeGamePlayers.length === 2) {
+        stopPlayerTurnTimer();
+        modal._playerTimerExpired = true;
+        if (activeGamePlayerEliminated) activeGamePlayerEliminated[activeIndex] = true;
+        updateGamePlayerHud(modal, 0, activeIndex);
+        modal.querySelectorAll('button:not(#game-players-cancel):not(.game-fullscreen-btn), .match-target-card, .match-word-chip, .memory-card, .baam-card').forEach(el => {
+          if (el.tagName === 'BUTTON') el.disabled = true;
+          el.style.pointerEvents = 'none';
+        });
+
+        const winnerIndex = 1 - activeIndex;
+        const winner = activeGamePlayers[winnerIndex];
+        const loser = activeGamePlayers[activeIndex];
+        const winnerName = winner?.student_name || 'Player';
+        const loserName = loser?.student_name || 'Opponent';
+
+        try { window.pokeSfx?.play?.('fanfare'); } catch (e) {}
+        if (typeof toast === 'function') {
+          toast(`⏱ Time's up! ${loserName} ran out of time! ${winnerName} wins!`);
+        }
+
+        setTimeout(() => {
+          if (document.body.contains(modal)) {
+            showGameCelebration(modal, `${winnerName} wins!`, `${loserName} ran out of time!`, winner);
+          }
+        }, 500);
+        return;
+      }
+
+      // 3. More than 2 players:
+      // "if there ar emore than 2 he should be eliminated from the rest of the game"
+      if (activeGamePlayerEliminated) activeGamePlayerEliminated[activeIndex] = true;
+      const eliminatedPlayer = activeGamePlayers[activeIndex];
+      const eliminatedName = eliminatedPlayer?.student_name || 'Player';
+
+      try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+      if (typeof toast === 'function') {
+        toast(`⏱ ${eliminatedName} ran out of time and is eliminated!`);
+      }
+
+      updateGamePlayerHud(modal, 0, activeIndex);
+
+      const remainingIndices = activeGamePlayers.map((_, i) => i).filter(i => !activeGamePlayerEliminated || !activeGamePlayerEliminated[i]);
+
+      // If only 1 player is left standing:
+      if (remainingIndices.length === 1) {
+        stopPlayerTurnTimer();
+        modal._playerTimerExpired = true;
+        modal.querySelectorAll('button:not(#game-players-cancel):not(.game-fullscreen-btn), .match-target-card, .match-word-chip, .memory-card, .baam-card').forEach(el => {
+          if (el.tagName === 'BUTTON') el.disabled = true;
+          el.style.pointerEvents = 'none';
+        });
+
+        const lastPlayerIndex = remainingIndices[0];
+        const lastPlayer = activeGamePlayers[lastPlayerIndex];
+        const lastPlayerName = lastPlayer?.student_name || 'Player';
+
+        try { window.pokeSfx?.play?.('fanfare'); } catch (e) {}
+        if (typeof toast === 'function') {
+          toast(`🏆 ${lastPlayerName} is the last player standing and wins!`);
+        }
+
+        setTimeout(() => {
+          if (document.body.contains(modal)) {
+            showGameCelebration(modal, `${lastPlayerName} wins!`, 'Last player standing!', lastPlayer);
+          }
+        }, 500);
+        return;
+      }
+
+      // If all players eliminated:
+      if (remainingIndices.length === 0) {
+        stopPlayerTurnTimer();
+        modal._playerTimerExpired = true;
+        showGameCelebration(modal, 'Time is up!', 'All players ran out of time!');
+        return;
+      }
+
+      // 2 or more players still remaining: pass turn to the next non-eliminated player!
       advanceGameTurn();
       updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
+
+      // Clean up any pending state from the eliminated player
+      document.querySelectorAll('.match-drag-ghost').forEach(g => g.remove());
+      modal.querySelectorAll('.memory-card.memory-flipped:not(.memory-matched)').forEach(c => c.classList.remove('memory-flipped'));
+      const baamReveal = modal.querySelector('#baam-reveal');
+      if (baamReveal) baamReveal.classList.add('hidden');
+
+      const nextActiveName = activeGamePlayers[activeGamePlayerIndex]?.student_name || 'Next player';
+      const status = modal.querySelector('#match-status, #memory-status, #hangman-feedback, #find-me-feedback');
+      if (status) {
+        status.textContent = `⏱ ${eliminatedName} was eliminated! ${nextActiveName}'s turn!`;
+      }
     }
   };
   timerId = setInterval(tick, 1000);

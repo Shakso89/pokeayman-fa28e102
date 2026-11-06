@@ -218,13 +218,15 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   const activePlayer = roster[activePlayerIndex];
 
   // Finalize game handler: computes winner, triggers sounds, awards coins, and notifies parent
-  const handleFinalizeGame = useCallback((overrideScores?: [number, number]) => {
+  const handleFinalizeGame = useCallback((overrideScores?: [number, number], winnerOverride?: Student | null) => {
     const finalScores = overrideScores || playerScoresRef.current;
     setPhase('ROUND_OVER');
     if (soundEnabled) playAudio('fanfare');
 
     let matchWinner: Student | null | 'tie' = null;
-    if (finalScores[0] > finalScores[1]) {
+    if (winnerOverride !== undefined) {
+      matchWinner = winnerOverride;
+    } else if (finalScores[0] > finalScores[1]) {
       matchWinner = roster[0];
     } else if (finalScores[1] > finalScores[0]) {
       matchWinner = roster[1];
@@ -253,7 +255,10 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
         if (next[activePlayerIndex] <= 1) {
           next[activePlayerIndex] = 0;
           clearInterval(intervalId);
-          handleFinalizeGame();
+          // In a 2-player match when one player runs out of time, that player loses regardless of score!
+          const opponentIndex = activePlayerIndex === 0 ? 1 : 0;
+          const opponentWinner = roster[opponentIndex];
+          handleFinalizeGame(undefined, opponentWinner);
           return next;
         }
         next[activePlayerIndex] = next[activePlayerIndex] - 1;
@@ -262,7 +267,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
     }, 1000);
 
     return () => clearInterval(intervalId);
-  }, [initialTimerValue, phase === 'ROUND_OVER', activePlayerIndex, handleFinalizeGame]);
+  }, [initialTimerValue, phase === 'ROUND_OVER', activePlayerIndex, handleFinalizeGame, roster]);
 
   // Helper to pass turn (called when wrong answer or line placed without closing a box)
   const passTurnToNextPlayer = useCallback(() => {

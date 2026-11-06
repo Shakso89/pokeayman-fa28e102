@@ -65,7 +65,7 @@ function Index() {
       key={frameKey}
       className="imported-app"
       title="PokéAyman"
-      src="/pokeayman/index.html?v=20261106-match-timer-v4"
+      src="/pokeayman/index.html?v=20261106-timeout-elimination-v5"
       allowFullScreen
     />
   );
