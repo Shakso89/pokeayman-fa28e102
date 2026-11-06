@@ -9952,21 +9952,25 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       }
       check.checked = initialPowerupsEnabled;
 
-      // Add clickable toggle switch alongside stepper
-      const stepperControls = powerupStepper.element.querySelector('.ga-stepper-panel > div:last-child');
-      if (stepperControls) {
-        const toggleWrapper = document.createElement('div');
-        toggleWrapper.className = 'flex items-center gap-2';
-        stepperControls.parentNode.insertBefore(toggleWrapper, stepperControls);
-
+      // Add a sleek toggle switch inside the label area (left side of the stepper row)
+      const labelArea = powerupStepper.element.querySelector('.ga-stepper-panel > div:first-child');
+      if (labelArea) {
         const powerupSwitch = document.createElement('button');
         powerupSwitch.type = 'button';
         powerupSwitch.setAttribute('role', 'switch');
         powerupSwitch.setAttribute('aria-checked', String(initialPowerupsEnabled));
         powerupSwitch.setAttribute('aria-label', 'Enable surprise boxes');
         powerupSwitch.dataset.testid = 'surprise-powerups-toggle';
-        powerupSwitch.className = `ga-powerup-switch relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${initialPowerupsEnabled ? 'bg-amber-500' : 'bg-slate-700'}`;
-        powerupSwitch.innerHTML = `<span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${initialPowerupsEnabled ? 'translate-x-5' : 'translate-x-0'}"></span>`;
+        const updateSwitchUI = (val) => {
+          powerupSwitch.setAttribute('aria-checked', String(val));
+          powerupSwitch.style.cssText = `position:relative;display:inline-flex;height:20px;width:36px;flex-shrink:0;cursor:pointer;border-radius:9999px;border:none;padding:2px;transition:background-color 200ms ease-in-out;outline:none;background-color:${val ? '#f59e0b' : '#475569'};`;
+          const knob = powerupSwitch.querySelector('.ga-switch-knob');
+          if (knob) {
+            knob.style.cssText = `pointer-events:none;display:inline-block;height:16px;width:16px;border-radius:9999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform 200ms ease-in-out;transform:translateX(${val ? '16px' : '0px'});`;
+          }
+        };
+        powerupSwitch.innerHTML = `<span class="ga-switch-knob"></span>`;
+        updateSwitchUI(initialPowerupsEnabled);
         powerupSwitch.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -9975,16 +9979,16 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         });
 
         syncPowerupSwitch = (val) => {
-          powerupSwitch.setAttribute('aria-checked', String(val));
-          powerupSwitch.className = `ga-powerup-switch relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${val ? 'bg-amber-500' : 'bg-slate-700'}`;
-          const knob = powerupSwitch.querySelector('span');
-          if (knob) {
-            knob.className = `pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${val ? 'translate-x-5' : 'translate-x-0'}`;
-          }
+          updateSwitchUI(val);
         };
 
-        toggleWrapper.appendChild(powerupSwitch);
-        toggleWrapper.appendChild(stepperControls);
+        // Insert the toggle between the icon and the text
+        const iconSpan = labelArea.querySelector('.text-slate-500');
+        if (iconSpan && iconSpan.nextSibling) {
+          labelArea.insertBefore(powerupSwitch, iconSpan.nextSibling);
+        } else {
+          labelArea.appendChild(powerupSwitch);
+        }
       }
 
       const powerupValSpan = powerupStepper.element.querySelector('.ga-stepper-val');
@@ -27258,7 +27262,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
   // Track every tile chosen at least once; completion is based only on this set.
   const chosenCards = new Set();
   const modal = document.createElement('div'); modal.className = 'game-popup-modal fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  const tileCount = isTwentyFourCardMode ? 24 : deck.length;
+  const tileCount = deck.length;
   const tileNumbers = Array.from({length: tileCount}, (_, i) => i + 1);
   const blankTiles = new Set();
   modal.innerHTML = `<div class="surprise-boxes-game bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden">
