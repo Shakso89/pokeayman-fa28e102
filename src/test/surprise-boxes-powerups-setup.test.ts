@@ -44,7 +44,13 @@ describe('Surprise Boxes Power-ups Setup Integration', () => {
   it('uses updated cache buster on iframe in classes.tsx and index.tsx', () => {
     const classesRoute = fs.readFileSync(classesRoutePath, 'utf8');
     const indexRoute = fs.readFileSync(indexRoutePath, 'utf8');
-    expect(classesRoute).toContain('v=20261106-surprise-powerups-v3');
-    expect(indexRoute).toContain('v=20261106-surprise-powerups-v3');
+    expect(classesRoute).toContain('v=20261106-match-timer-v4');
+    expect(indexRoute).toContain('v=20261106-match-timer-v4');
+  });
+
+  it('provides standard timer options up to 15 min for match words in games-arcade.js and index.html', () => {
+    const arcadeJs = fs.readFileSync(arcadeJsPath, 'utf8');
+    expect(arcadeJs).toContain('getStandardTimerOptions');
+    expect(arcadeJs).toContain("{ seconds: m * 60, label: `${m} min` }");
   });
 });

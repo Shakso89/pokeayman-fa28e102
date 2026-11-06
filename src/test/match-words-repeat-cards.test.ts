@@ -147,4 +147,13 @@ describe("Match Words Game: Repeated Cards & Free Matching", () => {
     decBtn.click();
     expect(valBadge?.textContent?.trim()).toBe("All (4)");
   });
+
+  it("provides extended timer options up to 15 min for Match Words in gaEnhanceLobby", () => {
+    const arcadeJs = readFileSync("public/pokeayman/games-arcade.js", "utf8");
+    expect(arcadeJs).toContain("function getStandardTimerOptions");
+    expect(arcadeJs).toContain("const timerOptions = getStandardTimerOptions();");
+    
+    // In index.html, startPlayerTurnTimer formats timer display in MM:SS when >= 60s
+    expect(html).toContain("Math.floor(remaining / 60)");
+  });
 });

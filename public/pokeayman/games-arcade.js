@@ -2115,6 +2115,18 @@
     };
   }
 
+  function getStandardTimerOptions() {
+    const options = [
+      { seconds: 0, label: 'No timer' },
+      { seconds: 30, label: '30 sec' },
+      { seconds: 45, label: '45 sec' }
+    ];
+    for (let m = 1; m <= 15; m++) {
+      options.push({ seconds: m * 60, label: `${m} min` });
+    }
+    return options;
+  }
+
   window.gaEnhanceLobby = function (modal, fnName, refresh) {
     if (modal.classList.contains('ga-lobby')) return;
     const resolvedFnName = fnName || (window.pendingChosenGame ? window.pendingChosenGame.fn : '') || modal.dataset.gaGameFn || '';
@@ -2494,12 +2506,7 @@
       paramsSection.appendChild(rewardStepper.element);
 
       const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
-      const timerOptions = [
-        { seconds: 0, label: 'No timer' },
-        { seconds: 30, label: '30s' },
-        { seconds: 45, label: '45s' },
-        { seconds: 60, label: '60s' }
-      ];
+      const timerOptions = getStandardTimerOptions();
 
       const timerStepper = createCustomStepper({
         iconSvg: timerIcon,
@@ -2578,14 +2585,7 @@
       paramsSection.appendChild(rewardStepper.element);
 
       const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
-      const timerOptions = [
-        { seconds: 0, label: 'No timer' },
-        { seconds: 30, label: '30s' },
-        { seconds: 45, label: '45s' },
-        { seconds: 60, label: '60s' },
-        { seconds: 90, label: '90s' },
-        { seconds: 120, label: '2 min' }
-      ];
+      const timerOptions = getStandardTimerOptions();
 
       const timerStepper = createCustomStepper({
         iconSvg: timerIcon,
@@ -2653,13 +2653,7 @@
       paramsSection.appendChild(rewardStepper.element);
 
       const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
-      const timerOptions = [
-        { seconds: 0, label: 'No timer' },
-        { seconds: 30, label: '30 sec' }
-      ];
-      for (let m = 1; m <= 15; m++) {
-        timerOptions.push({ seconds: m * 60, label: `${m} min` });
-      }
+      const timerOptions = getStandardTimerOptions();
 
       const timerStepper = createCustomStepper({
         iconSvg: timerIcon,
@@ -2793,13 +2787,7 @@
       paramsSection.appendChild(rewardStepper.element);
 
       const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
-      const timerOptions = [
-        { seconds: 0, label: 'No timer' },
-        { seconds: 30, label: '30 sec' }
-      ];
-      for (let m = 1; m <= 15; m++) {
-        timerOptions.push({ seconds: m * 60, label: `${m} min` });
-      }
+      const timerOptions = getStandardTimerOptions();
 
       const timerStepper = createCustomStepper({
         iconSvg: timerIcon,
