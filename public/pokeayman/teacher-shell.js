@@ -135,7 +135,10 @@
       toggle.setAttribute('aria-checked', String(bright));
       toggle.setAttribute('aria-label', bright ? 'Switch to dark mode' : 'Switch to bright mode');
       toggle.title = bright ? 'Switch to dark mode' : 'Switch to bright mode';
-      toggle.querySelector('.ts-theme-icon').textContent = bright ? '☀' : '☾';
+      const chk = toggle.querySelector('input[type="checkbox"]');
+      if (chk) chk.checked = bright;
+      const ic = toggle.querySelector('.ts-theme-icon');
+      if (ic) ic.textContent = bright ? '☀' : '☾';
     }
     const mobileToggle = document.querySelector('#ts-bottom [data-tsb="theme"]');
     if (mobileToggle) {
@@ -148,10 +151,14 @@
     const studentToggle = $('student-theme-toggle');
     if (studentToggle) {
       studentToggle.setAttribute('aria-checked', String(bright));
-      studentToggle.setAttribute('aria-label', 'Bright mode');
+      studentToggle.setAttribute('aria-label', bright ? 'Switch to dark mode' : 'Switch to bright mode');
       studentToggle.title = bright ? 'Switch to dark mode' : 'Switch to bright mode';
-      studentToggle.querySelector('.student-theme-icon').textContent = bright ? '☀' : '☾';
-      studentToggle.querySelector('.student-theme-label').textContent = bright ? 'Bright mode' : 'Dark mode';
+      const chk = studentToggle.querySelector('input[type="checkbox"]');
+      if (chk) chk.checked = bright;
+      const ic = studentToggle.querySelector('.student-theme-icon');
+      if (ic) ic.textContent = bright ? '☀' : '☾';
+      const lbl = studentToggle.querySelector('.student-theme-label');
+      if (lbl) lbl.textContent = bright ? 'Bright mode' : 'Dark mode';
     }
   }
   applyTheme();
@@ -275,12 +282,15 @@
     railToggle.id = 'ts-rail-toggle'; railToggle.type = 'button'; railToggle.setAttribute('aria-controls', 'ts-rail');
     railToggle.addEventListener('click', () => toggleRail());
     document.body.appendChild(railToggle); applyRail();
-    const theme = document.createElement('button');
+    const theme = document.createElement('label');
     theme.id = 'ts-theme-toggle';
-    theme.type = 'button';
+    theme.className = 'ts-theme-fireant uiverse-fireant-switch';
+    theme.setAttribute('for', 'ts-theme-checkbox');
     theme.setAttribute('role', 'switch');
-    theme.setAttribute('aria-label', 'Bright mode');
-    theme.innerHTML = '<span class="ts-theme-icon" aria-hidden="true"></span><span>Bright mode</span><span class="ts-theme-track" aria-hidden="true"><span></span></span>';
+    theme.setAttribute('aria-checked', String(bright));
+    theme.setAttribute('aria-label', bright ? 'Switch to dark mode' : 'Switch to bright mode');
+    theme.title = bright ? 'Switch to dark mode' : 'Switch to bright mode';
+    theme.innerHTML = '<input id="ts-theme-checkbox" type="checkbox"' + (bright ? ' checked' : '') + ' /><span class="slider"></span><span class="decoration"></span><span class="ts-theme-icon sr-only" aria-hidden="true">' + (bright ? '☀' : '☾') + '</span>';
     const tools = document.createElement('div');
     tools.id = 'ts-sidebar-tools'; tools.className = 'ts-sidebar-tools';
     const notifications = document.createElement('button');
@@ -290,8 +300,15 @@
     notifications.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><strong id="ts-notification-count" class="ts-notification-count" aria-live="polite" hidden>0</strong>';
     tools.append(side.querySelector('.ts-logout'), theme, notifications);
     side.insertBefore(tools, side.querySelector('.ts-switch-wrap'));
-    theme.addEventListener('click', () => {
+    theme.addEventListener('click', (e) => {
+      e.preventDefault();
       setThemeMode(!bright);
+    });
+    theme.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        setThemeMode(!bright);
+      }
     });
     applyTheme();
     const chooser = document.createElement('dialog');
@@ -875,7 +892,16 @@
   window.pokeaymanRefreshTeacherShell = refreshShell;
   function start() {
     const studentToggle = $('student-theme-toggle');
-    studentToggle?.addEventListener('click', () => setThemeMode(!bright));
+    studentToggle?.addEventListener('click', (e) => {
+      e.preventDefault();
+      setThemeMode(!bright);
+    });
+    studentToggle?.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        setThemeMode(!bright);
+      }
+    });
     refreshShell(); setInterval(refreshShell, 700); window.addEventListener('resize', refreshShell, { passive: true });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

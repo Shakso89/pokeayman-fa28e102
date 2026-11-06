@@ -366,16 +366,13 @@ html body #student-dashboard#student-dashboard #student-tab-shop .stc-dot {
 
 /* Student display mode switch shares the teacher theme preference. */
 html body #student-dashboard #student-theme-toggle {
-  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-  min-height: 2.75rem; margin: 0; padding: .55rem .85rem; flex: 0 0 auto;
-  border: 1px solid var(--color-border-strong); border-radius: .8rem;
-  background: var(--color-surface); color: var(--color-text-primary);
-  box-shadow: var(--shadow-card); font: 750 .82rem/1 Figtree, sans-serif;
-  cursor: pointer; transition: background .18s ease, border-color .18s ease, transform .18s ease;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin: 0; padding: 0; flex: 0 0 auto;
+  border: none; background: transparent; box-shadow: none;
+  cursor: pointer; transition: transform .18s ease;
 }
-html body #student-dashboard #student-theme-toggle:hover { border-color: var(--color-brand-secondary); transform: translateY(-1px); }
-html body #student-dashboard #student-theme-toggle:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 3px; }
-html body #student-dashboard #student-theme-toggle .student-theme-icon { font-size: 1.05rem; }
+html body #student-dashboard #student-theme-toggle:hover { transform: translateY(-1px); }
+html body #student-dashboard #student-theme-toggle:focus-visible { outline: none; }
 @media (max-width: 520px) {
   html body #student-dashboard > .max-w-5xl > .flex.gap-6 > .stat-card-glass > .student-profile-actions {
     grid-column: 1 / -1 !important; grid-row: 5 !important; justify-self: center; align-self: center;
