@@ -181,4 +181,41 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('extractKeywordsForGrammarRule');
     expect(js).toContain('fetchMediaForGrammarSearch');
   });
+
+  it('ensures grammar practice modal matches prototype design specifications', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+
+    // 1. Amber gold glowing card border
+    expect(js).toContain('border-amber-400/80 shadow-[0_0_40px_rgba(251,191,36,0.22)]');
+
+    // 2. Multi-color centered formula chips
+    expect(js).toContain('formatFormulaChips');
+    expect(js).toContain('border-sky-400 bg-sky-500/15 text-sky-300');
+    expect(js).toContain('border-amber-400 bg-amber-500/15 text-amber-300');
+    expect(js).toContain('border-emerald-400 bg-emerald-500/15 text-emerald-300');
+
+    // 3. Floating context clue badge without obscuring bottom banner
+    expect(js).toContain('absolute top-3 left-3 px-3 py-1 rounded-full bg-slate-950/85');
+    expect(js).not.toContain('absolute bottom-2 inset-x-2');
+
+    // 4. Large target sentence with intelligent grammar syntax highlighting
+    expect(js).toContain('formatSyntaxHighlightedSentence');
+    expect(js).toContain('text-2xl sm:text-3xl md:text-4xl font-black text-white');
+
+    // 5. Flanking circular navigation arrows with cyan glow
+    expect(js).toContain('id="gp-prev-btn"');
+    expect(js).toContain('id="gp-next-btn"');
+    expect(js).toContain('bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-xl sm:text-2xl flex items-center justify-center transition shadow-[0_0_25px_rgba(6,182,212,0.6)]');
+
+    // 6. Sleek inline quick check bar
+    expect(js).toContain('⚡ Quick Check:');
+    expect(js).toContain('gp-quiz-opt');
+    expect(js).toContain('ring-2 ring-cyan-400/50 bg-cyan-950/90 text-cyan-200');
+
+    // 7. Deck Preview selector strip
+    expect(js).toContain('Deck Preview');
+    expect(js).toContain('gp-deck-previews-strip');
+    expect(js).toContain('gp-switch-deck-btn');
+    expect(js).toContain('gp-open-ai-gen-btn');
+  });
 });

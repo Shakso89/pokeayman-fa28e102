@@ -141,34 +141,82 @@
   async function fetchMediaForGrammarSearch(query, type = 'all', page = 1) {
     const cleanQuery = (query || '').trim();
     if (!cleanQuery) return { photos: [], hasMore: false };
-    const typeParam = type && type !== 'all' ? `&image_type=${encodeURIComponent(type)}` : '';
-    const endpoint = `/api/public/pexels?query=${encodeURIComponent(cleanQuery)}${typeParam}&per_page=16&page=${page}`;
-    let res;
-    if (typeof window !== 'undefined' && typeof window.pexelsFetch === 'function') {
-      res = await window.pexelsFetch(endpoint, { headers: { 'Authorization': '' } });
-    } else {
-      res = await fetch(endpoint);
-    }
-    if (!res.ok) throw new Error('Photo fetch failed');
-    const data = await res.json();
-    const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
-    const photos = rawPhotos.map((p, idx) => {
-      let fullUrl = p.src?.large || p.src?.medium || p.src?.original || p.webformatURL || p.largeImageURL || p.previewURL || '';
-      let thumbUrl = p.src?.medium || p.src?.small || p.src?.tiny || p.previewURL || fullUrl;
-      if (fullUrl.includes('pixabay.com') && fullUrl.includes('_150.')) {
-        fullUrl = fullUrl.replace('_150.', '_640.');
+
+    // 1. First try backend endpoint
+    try {
+      const typeParam = type && type !== 'all' ? `&image_type=${encodeURIComponent(type)}` : '';
+      const endpoint = `/api/public/pexels?query=${encodeURIComponent(cleanQuery)}${typeParam}&per_page=16&page=${page}`;
+      let res;
+      if (typeof window !== 'undefined' && typeof window.pexelsFetch === 'function') {
+        res = await window.pexelsFetch(endpoint, { headers: { 'Authorization': '' } });
+      } else {
+        res = await fetch(endpoint);
       }
-      return {
-        id: String(p.id || idx),
-        url: fullUrl,
-        thumb: thumbUrl,
-        photographer: p.photographer || p.user || 'Artist'
-      };
-    }).filter(p => p.url && !p.url.includes('pixabay.com/get/'));
-    return {
-      photos,
-      hasMore: Boolean(data.next_page) && photos.length >= 8
-    };
+      if (res && res.ok) {
+        const data = await res.json();
+        const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+        const photos = rawPhotos.map((p, idx) => {
+          let fullUrl = p.src?.large || p.src?.medium || p.src?.original || p.webformatURL || p.largeImageURL || p.previewURL || '';
+          let thumbUrl = p.src?.medium || p.src?.small || p.src?.tiny || p.previewURL || fullUrl;
+          if (fullUrl.includes('pixabay.com') && fullUrl.includes('_150.')) {
+            fullUrl = fullUrl.replace('_150.', '_640.');
+          }
+          return {
+            id: String(p.id || idx),
+            url: fullUrl,
+            thumb: thumbUrl,
+            photographer: p.photographer || p.user || 'Artist'
+          };
+        }).filter(p => p.url && !p.url.includes('pixabay.com/get/'));
+        if (photos.length > 0) {
+          return { photos, hasMore: Boolean(data.next_page) && photos.length >= 8 };
+        }
+      }
+    } catch (_) {}
+
+    // 2. Direct Pixabay API fallback for 100% reliable image fetching
+    try {
+      const pixType = (type === 'illustration' || type === 'clipart') ? 'illustration' : (type === 'photo' ? 'photo' : 'all');
+      const params = new URLSearchParams({
+        key: '48270557-5507ff5b3f742f1cf5b2d7cb7',
+        q: cleanQuery,
+        image_type: pixType,
+        per_page: '16',
+        page: String(page),
+        safesearch: 'true'
+      });
+      const res = await fetch(`https://pixabay.com/api/?${params.toString()}`);
+      if (res && res.ok) {
+        const data = await res.json();
+        const hits = Array.isArray(data.hits) ? data.hits : [];
+        const photos = hits.map((hit, idx) => {
+          let permanentUrl = '';
+          const preview = hit.previewURL || '';
+          if (preview.includes('cdn.pixabay.com')) {
+            const ext = preview.slice(preview.lastIndexOf('.'));
+            const base = preview.slice(0, preview.lastIndexOf('_'));
+            if (base) permanentUrl = `${base}_640${ext}`;
+          }
+          if (!permanentUrl) {
+            const wf = hit.webformatURL || '';
+            if (wf.includes('cdn.pixabay.com')) permanentUrl = wf;
+          }
+          const finalUrl = permanentUrl || (!hit.previewURL?.includes('pixabay.com/get/') ? hit.previewURL : hit.webformatURL || hit.largeImageURL || '');
+          return {
+            id: String(hit.id || idx),
+            url: finalUrl,
+            thumb: preview || finalUrl,
+            photographer: hit.user || 'Pixabay Artist'
+          };
+        }).filter(p => p.url && !p.url.includes('pixabay.com/get/'));
+        return {
+          photos,
+          hasMore: photos.length >= 8
+        };
+      }
+    } catch (_) {}
+
+    return { photos: [], hasMore: false };
   }
 
 
@@ -476,137 +524,238 @@
     window.openGrammarDeckPractice(deck);
   };
 
+  // Helper: syntax-highlight target sentence according to English grammar patterns
+  function formatSyntaxHighlightedSentence(sentence) {
+    if (!sentence) return '';
+    const clean = String(sentence).trim();
+    const rawWords = clean.split(/\s+/);
+    if (rawWords.length <= 1) return escapeHtml(clean);
+
+    const auxSet = new Set([
+      'am', 'is', 'are', 'was', 'were', 'will', 'shall', 'has', 'have', 'had',
+      'do', 'does', 'did', 'can', 'could', 'would', 'should', 'might', 'must',
+      "isn't", "aren't", "wasn't", "weren't", "won't", "haven't", "hasn't", "hadn't",
+      "don't", "doesn't", "didn't", "can't", "couldn't"
+    ]);
+
+    let auxIdx = -1;
+    let verbIdx = -1;
+
+    for (let i = 0; i < rawWords.length; i++) {
+      const wNorm = rawWords[i].toLowerCase().replace(/[^a-z']/g, '');
+      if (auxSet.has(wNorm) && auxIdx === -1) {
+        auxIdx = i;
+      } else if (wNorm.endsWith('ing') || wNorm.endsWith('ed') || (auxIdx !== -1 && verbIdx === -1 && i > auxIdx)) {
+        if (verbIdx === -1 && !auxSet.has(wNorm) && wNorm !== 'not') {
+          verbIdx = i;
+        }
+      }
+    }
+
+    if (auxIdx === -1 && verbIdx === -1 && rawWords.length >= 2) {
+      verbIdx = 1;
+    }
+
+    return rawWords.map((w, i) => {
+      const wNorm = w.toLowerCase().replace(/[^a-z']/g, '');
+      if (i === auxIdx) {
+        return `<span class="text-amber-400 font-black">${escapeHtml(w)}</span>`;
+      }
+      if (wNorm === 'not') {
+        return `<span class="text-rose-400 font-black">${escapeHtml(w)}</span>`;
+      }
+      if (i === verbIdx) {
+        return `<span class="text-emerald-400 font-black">${escapeHtml(w)}</span>`;
+      }
+      if ((auxIdx !== -1 && i < auxIdx) || (auxIdx === -1 && verbIdx !== -1 && i < verbIdx)) {
+        return `<span class="text-sky-300 font-black">${escapeHtml(w)}</span>`;
+      }
+      return `<span class="text-white font-extrabold">${escapeHtml(w)}</span>`;
+    }).join(' ');
+  }
+
+  // Helper: format formula into distinct color pill chips centered
+  function formatFormulaChips(formulaStr) {
+    const parts = String(formulaStr || 'Subject + Verb').split('+').map(p => p.trim()).filter(Boolean);
+    const colorStyles = [
+      'border-sky-400 bg-sky-500/15 text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.25)]',
+      'border-amber-400 bg-amber-500/15 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.25)]',
+      'border-emerald-400 bg-emerald-500/15 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]',
+      'border-purple-400 bg-purple-500/15 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.25)]',
+      'border-rose-400 bg-rose-500/15 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.25)]'
+    ];
+
+    return parts.map((part, idx) => {
+      const style = colorStyles[idx % colorStyles.length];
+      const displayPart = part.startsWith('[') && part.endsWith(']') ? part : `[${part}]`;
+      return `<span class="px-3.5 sm:px-4 py-1.5 rounded-full border ${style} font-bold text-xs sm:text-sm tracking-wide inline-block">${escapeHtml(displayPart)}</span>`;
+    }).join('<span class="text-slate-400 font-bold text-base sm:text-lg mx-1.5">+</span>');
+  }
+
   window.openGrammarDeckPractice = function(deck) {
     document.querySelectorAll('#grammar-practice-modal').forEach(m => m.remove());
 
     const rules = Array.isArray(deck.rules) && deck.rules.length ? deck.rules : [
       {
-        title: 'Grammar Rule',
-        formula: 'Subject + Verb',
-        sentence: 'Pikachu runs happily.',
-        context_clue: 'Action',
+        title: 'Present Continuous',
+        formula: 'Subject + am / is / are + Verb + -ing',
+        sentence: 'The elephant is walking slowly.',
+        context_clue: 'Right Now',
         image: deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
-        mistake_bad: 'Pikachu run.',
-        mistake_good: 'Pikachu runs.',
-        quiz_question: 'Ash _____ (train) his Pokémon every day.',
-        quiz_options: ['train', 'trains', 'training'],
-        quiz_answer: 'trains'
+        mistake_bad: 'The elephant walking.',
+        mistake_good: 'The elephant is walking.',
+        quiz_question: 'Look! The monkeys ______ the tall tree!',
+        quiz_options: ['climbs', 'are climbing', 'is climbing'],
+        quiz_answer: 'are climbing'
       }
     ];
 
     let currentIndex = 0;
+    const currentDeckId = deck.__backendId || deck.id || deck.grammar_deck_id;
+    const deckName = deck.grammar_deck_name || deck.deck_name || 'Grammar Deck';
+    const isOwner = isCurrentTeacherOwner(deck);
 
     const modal = document.createElement('div');
     modal.id = 'grammar-practice-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[10000] flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200';
+    modal.className = 'fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[10000] flex flex-col items-center justify-start sm:justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200';
     
     function renderCard(idx) {
       const r = rules[idx];
       const isFirst = idx === 0;
       const isLast = idx === rules.length - 1;
 
+      // Clean context clue for top-left glass pill
+      let cleanClue = (r.context_clue || 'Right Now').trim();
+      if (cleanClue.toLowerCase().startsWith('level:')) {
+        cleanClue = cleanClue.replace(/level:\s*/i, '');
+      }
+      if (cleanClue.length > 28) {
+        cleanClue = cleanClue.split(/[,.;:]/)[0].trim().slice(0, 28);
+      }
+
+      // Quiz options fallback
+      const options = Array.isArray(r.quiz_options) && r.quiz_options.length 
+        ? r.quiz_options 
+        : [r.quiz_answer || 'are climbing', 'climbs', 'is climbing'];
+
+      // All decks for Deck Preview strip
+      const allDecks = typeof window.getAllGrammarDecks === 'function' ? window.getAllGrammarDecks('', '') : [deck];
+
       modal.innerHTML = `
-        <div class="max-w-3xl w-full rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-7 shadow-2xl space-y-5 my-auto">
-          <!-- Top Bar -->
-          <div class="flex items-center justify-between border-b border-slate-800/80 pb-3.5">
-            <div class="flex items-center gap-3">
-              <span class="w-10 h-10 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-xl shadow-inner">
-                🧩
-              </span>
-              <div>
-                <span class="text-[11px] font-bold uppercase tracking-wider text-purple-400 bg-purple-500/15 px-2 py-0.5 rounded-md border border-purple-500/25">
-                  ${escapeHtml(deck.grammar_deck_name || deck.deck_name || 'Grammar Deck')} · Rule ${idx + 1} of ${rules.length}
-                </span>
-                <h3 class="text-lg sm:text-xl font-black text-white mt-1">${escapeHtml(r.title || 'Grammar Rule')}</h3>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <button type="button" id="gp-read-rule-btn" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-bold border border-slate-700 transition flex items-center gap-1.5">
-                <span>🔊</span> <span>Read</span>
-              </button>
-              <button type="button" id="gp-close-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center transition" aria-label="Close">
-                ✕
-              </button>
-            </div>
-          </div>
+        <div class="w-full max-w-5xl flex flex-col items-center my-auto py-4">
+          <!-- Main Carousel Container: Left Arrow + Amber Glow Card + Right Arrow -->
+          <div class="flex items-center justify-center gap-2 sm:gap-5 w-full">
+            <!-- Left Circular Arrow -->
+            <button type="button" id="gp-prev-btn" class="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-slate-900/90 border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white flex items-center justify-center font-bold text-xl sm:text-2xl transition shadow-xl shrink-0 cursor-pointer ${isFirst ? 'opacity-25 pointer-events-none' : 'active:scale-95'}" aria-label="Previous rule">
+              ‹
+            </button>
 
-          <!-- Grammar Formula Chips -->
-          <div>
-            <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Grammar Formula</label>
-            <div class="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-wrap items-center gap-2 shadow-inner">
-              ${escapeHtml(r.formula || '').split('+').map(part => `
-                <span class="px-3 py-1.5 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/30 font-bold text-xs sm:text-sm">
-                  ${escapeHtml(part.trim())}
-                </span>
-              `).join('<span class="text-slate-500 font-bold text-base">+</span>')}
-            </div>
-          </div>
-
-          <!-- Photo & Target Sentence Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="relative rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 h-44 flex items-center justify-center">
-              <img src="${escapeHtml(r.image || deck.cover_image_url || '')}" alt="${escapeHtml(r.title)}" class="w-full h-full object-cover">
-              ${r.context_clue ? `
-                <div class="absolute bottom-2 inset-x-2 bg-slate-950/85 backdrop-blur-md p-1.5 rounded-lg border border-slate-700/60 text-center">
-                  <span class="text-[11px] text-amber-300 font-bold">Context: ${escapeHtml(r.context_clue)}</span>
-                </div>
-              ` : ''}
-            </div>
-
-            <div class="flex flex-col justify-between space-y-3">
-              <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1.5 flex-1 flex flex-col justify-center">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Target Sentence</span>
-                <p class="text-base font-bold text-white leading-snug">${escapeHtml(r.sentence || '')}</p>
-              </div>
-
-              <!-- Watch Out Common Mistake Box -->
-              <div class="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/25 space-y-1.5">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-rose-300 flex items-center gap-1">
-                  <span>⚠️</span> Watch Out (Common Mistake)
-                </span>
-                <div class="grid grid-cols-2 gap-1.5 text-xs">
-                  <div class="p-1.5 rounded-lg bg-slate-900 border border-rose-500/30 text-rose-300 flex items-center gap-1 truncate">
-                    <span class="font-bold shrink-0">❌</span> <span class="truncate">${escapeHtml(r.mistake_bad || 'Mistake')}</span>
-                  </div>
-                  <div class="p-1.5 rounded-lg bg-slate-900 border border-emerald-500/30 text-emerald-300 flex items-center gap-1 truncate">
-                    <span class="font-bold shrink-0">✅</span> <span class="truncate font-semibold">${escapeHtml(r.mistake_good || 'Correct')}</span>
-                  </div>
+            <!-- PokéAyman Amber Gold Bordered Practice Card -->
+            <div class="flex-1 min-w-0 rounded-3xl bg-[#0d1527]/95 border-2 border-amber-400/80 shadow-[0_0_40px_rgba(251,191,36,0.22)] p-5 sm:p-7 space-y-5 relative backdrop-blur-xl">
+              <!-- Top Header: Deck Name · Rule X of Y: Rule Title + Actions -->
+              <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                <h3 class="text-base sm:text-xl font-bold text-white tracking-tight truncate mr-3">
+                  ${escapeHtml(deckName)} · Rule ${idx + 1} of ${rules.length}: <span class="text-slate-100 font-extrabold">${escapeHtml(r.title || 'Rule')}</span>
+                </h3>
+                <div class="flex items-center gap-2 shrink-0">
+                  <button type="button" id="gp-read-rule-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold flex items-center justify-center transition border border-slate-700 cursor-pointer" title="Listen to sentence">
+                    🔊
+                  </button>
+                  ${isOwner ? `
+                    <button type="button" id="gp-edit-deck-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center transition border border-slate-700 cursor-pointer text-xs" title="Edit this deck">
+                      ✏️
+                    </button>
+                  ` : ''}
+                  <button type="button" id="gp-close-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold flex items-center justify-center transition border border-slate-700 cursor-pointer text-sm" aria-label="Close">
+                    ✕
+                  </button>
                 </div>
               </div>
+
+              <!-- Centered Multi-Color Grammar Formula Bar -->
+              <div class="flex items-center justify-center flex-wrap gap-2 py-1">
+                ${formatFormulaChips(r.formula)}
+              </div>
+
+              <!-- Side-by-Side 2-Column Hero -->
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
+                <!-- Left: Illustration Card with Floating Context Pill -->
+                <div class="md:col-span-5 relative rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 aspect-[4/3] shadow-xl group">
+                  <img src="${escapeHtml(r.image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg')}" alt="${escapeHtml(r.title || 'Grammar Illustration')}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                  <div class="absolute top-3 left-3 px-3 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-[11px] font-semibold text-slate-300 backdrop-blur-md shadow-md flex items-center gap-1.5">
+                    <span>Context:</span> <span class="text-amber-300 font-bold">${escapeHtml(cleanClue)}</span>
+                  </div>
+                </div>
+
+                <!-- Right: High-Contrast Target Sentence & Common Mistake Card -->
+                <div class="md:col-span-7 flex flex-col justify-center space-y-4">
+                  <!-- Large Target Sentence with Highlighted Syntax -->
+                  <div class="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
+                    ${formatSyntaxHighlightedSentence(r.sentence || '')}
+                  </div>
+
+                  <!-- Common Mistake Container -->
+                  <div class="rounded-2xl bg-slate-950/70 border border-slate-800/90 p-4 space-y-2.5 shadow-inner">
+                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Common Mistake</div>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-sm">
+                      <div class="text-rose-400 font-bold flex items-center gap-2">
+                        <span class="shrink-0">❌</span>
+                        <span class="truncate">${escapeHtml(r.mistake_bad || 'Mistake')}</span>
+                      </div>
+                      <div class="text-emerald-400 font-bold flex items-center gap-2">
+                        <span class="shrink-0">✅</span>
+                        <span class="truncate">${escapeHtml(r.mistake_good || 'Correct')}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sleek Quick Check Inline Bar -->
+              <div class="rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
+                <div class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-200 min-w-0">
+                  <span class="text-amber-400 font-black shrink-0">⚡ Quick Check:</span>
+                  <span class="text-white font-bold truncate">${escapeHtml(r.quiz_question || 'Choose the correct form:')}</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 shrink-0" id="gp-options-row">
+                  ${options.map(opt => `
+                    <button type="button" class="gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-95 cursor-pointer" data-val="${escapeHtml(opt)}">
+                      [${escapeHtml(opt)}]
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
             </div>
+
+            <!-- Right Circular Arrow with Glowing Cyan Button -->
+            <button type="button" id="gp-next-btn" class="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-xl sm:text-2xl flex items-center justify-center transition shadow-[0_0_25px_rgba(6,182,212,0.6)] shrink-0 cursor-pointer active:scale-95" aria-label="Next rule">
+              ›
+            </button>
           </div>
 
-          <!-- Quick Check Challenge -->
-          <div class="p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/30 to-indigo-950/30 border border-purple-500/30 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-purple-300 uppercase tracking-wider flex items-center gap-1">
-                <span>⚡</span> Quick Check
-              </span>
-              <span id="gp-check-feedback" class="text-xs font-bold hidden"></span>
+          <!-- Bottom Deck Preview Selector Strip -->
+          <div class="w-full space-y-2 mt-4 px-2 sm:px-14">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Deck Preview</div>
+            <div class="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none" id="gp-deck-previews-strip">
+              ${allDecks.slice(0, 6).map(d => {
+                const isCurrent = (d.__backendId === currentDeckId || d.id === currentDeckId || d.grammar_deck_id === currentDeckId);
+                const dName = d.grammar_deck_name || d.deck_name || 'Grammar Deck';
+                const dRulesCount = Array.isArray(d.rules) ? d.rules.length : 0;
+                const dThumb = d.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg';
+                return `
+                  <div class="gp-switch-deck-btn flex items-center gap-2.5 p-2 rounded-2xl shrink-0 cursor-pointer transition ${isCurrent ? 'border-2 border-amber-400/90 bg-slate-900 shadow-[0_0_15px_rgba(251,191,36,0.25)]' : 'border border-slate-800 bg-slate-900/70 hover:border-slate-700 hover:bg-slate-900'}" data-deck-id="${escapeHtml(d.__backendId || d.id || d.grammar_deck_id)}">
+                    <img src="${escapeHtml(dThumb)}" class="w-9 h-9 rounded-xl object-cover border border-slate-800 shrink-0" alt="${escapeHtml(dName)}">
+                    <div class="min-w-0 pr-1">
+                      <div class="text-xs font-bold text-white truncate max-w-[130px]">${escapeHtml(dName)}</div>
+                      <div class="text-[10px] text-slate-400 font-medium">${dRulesCount} rules</div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+              <button type="button" id="gp-open-ai-gen-btn" class="px-4 py-2.5 rounded-2xl border border-dashed border-slate-700 hover:border-amber-400 text-slate-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1.5 shrink-0 cursor-pointer transition">
+                <span>＋</span> <span>Generate with AI</span>
+              </button>
             </div>
-            <p class="text-sm font-bold text-white">${escapeHtml(r.quiz_question || 'Choose the correct form:')}</p>
-            <div class="flex flex-wrap gap-2 pt-1" id="gp-options-row">
-              ${(r.quiz_options || ['Option 1', 'Option 2']).map(opt => `
-                <button type="button" class="gp-quiz-opt px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition active:scale-95 cursor-pointer" data-val="${escapeHtml(opt)}">
-                  ${escapeHtml(opt)}
-                </button>
-              `).join('')}
-            </div>
-          </div>
-
-          <!-- Bottom Navigation Bar -->
-          <div class="flex items-center justify-between pt-2 border-t border-slate-800/80">
-            <button type="button" id="gp-prev-btn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition border border-slate-700 disabled:opacity-40 disabled:cursor-not-allowed" ${isFirst ? 'disabled' : ''}>
-              ← Previous Rule
-            </button>
-            <div class="flex gap-1.5">
-              ${rules.map((_, i) => `
-                <span class="w-2.5 h-2.5 rounded-full transition ${i === idx ? 'bg-amber-400 scale-125' : 'bg-slate-700'}"></span>
-              `).join('')}
-            </div>
-            <button type="button" id="gp-next-btn" class="px-5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed" ${isLast ? 'disabled' : ''}>
-              Next Rule →
-            </button>
           </div>
         </div>
       `;
@@ -615,11 +764,33 @@
       modal.querySelector('#gp-close-btn').onclick = () => modal.remove();
       modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 
-      // Wire nav
-      modal.querySelector('#gp-prev-btn').onclick = () => { if (currentIndex > 0) { currentIndex--; renderCard(currentIndex); } };
-      modal.querySelector('#gp-next-btn').onclick = () => { if (currentIndex < rules.length - 1) { currentIndex++; renderCard(currentIndex); } };
+      // Wire navigation
+      modal.querySelector('#gp-prev-btn').onclick = () => {
+        if (currentIndex > 0) {
+          currentIndex--;
+          renderCard(currentIndex);
+        }
+      };
+      modal.querySelector('#gp-next-btn').onclick = () => {
+        if (currentIndex < rules.length - 1) {
+          currentIndex++;
+          renderCard(currentIndex);
+        } else {
+          if (typeof toast === 'function') toast('🎉 You completed all rules in this deck!');
+          modal.remove();
+        }
+      };
 
-      // Wire sound / speech
+      // Wire edit deck button
+      const editBtn = modal.querySelector('#gp-edit-deck-btn');
+      if (editBtn) {
+        editBtn.onclick = () => {
+          modal.remove();
+          window.openGrammarDeckEditor(deck);
+        };
+      }
+
+      // Wire audio pronunciation
       modal.querySelector('#gp-read-rule-btn').onclick = () => {
         const textToSpeak = `${r.title}. Formula: ${r.formula}. Example: ${r.sentence}`;
         if (typeof playVocabPronunciation === 'function') {
@@ -629,7 +800,7 @@
           u.lang = 'en-US';
           window.speechSynthesis.speak(u);
         }
-        if (typeof toast === 'function') toast('Playing sentence pronunciation…');
+        if (typeof toast === 'function') toast('🔊 Playing sentence pronunciation…');
       };
 
       // Wire Quick Check quiz options
@@ -637,21 +808,45 @@
         btn.onclick = () => {
           const chosen = btn.dataset.val;
           const correct = r.quiz_answer;
-          const fb = modal.querySelector('#gp-check-feedback');
-          fb.classList.remove('hidden');
+
+          modal.querySelectorAll('.gp-quiz-opt').forEach(b => {
+            b.classList.remove('border-cyan-400', 'bg-cyan-950/90', 'text-cyan-200', 'shadow-[0_0_15px_rgba(6,182,212,0.5)]', 'border-rose-500', 'bg-rose-950/90', 'text-rose-200');
+          });
 
           if (chosen === correct) {
-            btn.classList.remove('bg-slate-800');
-            btn.classList.add('bg-emerald-500', 'text-white', 'border-emerald-400');
-            fb.innerHTML = '<span class="text-emerald-400">✨ Correct! +5 coins awarded!</span>';
+            btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-cyan-400 ring-2 ring-cyan-400/50 bg-cyan-950/90 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition cursor-pointer';
             if (typeof triggerCoinSound === 'function') triggerCoinSound();
+            if (typeof toast === 'function') toast('✨ Correct! +5 coins awarded!');
           } else {
-            btn.classList.remove('bg-slate-800');
-            btn.classList.add('bg-rose-500', 'text-white', 'border-rose-400');
-            fb.innerHTML = `<span class="text-rose-400">❌ Not quite. Answer: <b>${escapeHtml(correct)}</b></span>`;
+            btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-rose-500 ring-2 ring-rose-500/50 bg-rose-950/90 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.4)] transition cursor-pointer';
           }
         };
       });
+
+      // Wire Deck Previews
+      modal.querySelectorAll('.gp-switch-deck-btn').forEach(btn => {
+        btn.onclick = () => {
+          const targetDeckId = btn.dataset.deckId;
+          const targetDeck = allDecks.find(d => (d.__backendId === targetDeckId || d.id === targetDeckId || d.grammar_deck_id === targetDeckId));
+          if (targetDeck) {
+            modal.remove();
+            window.openGrammarDeckPractice(targetDeck);
+          }
+        };
+      });
+
+      // Wire Generate with AI button
+      const aiBtn = modal.querySelector('#gp-open-ai-gen-btn');
+      if (aiBtn) {
+        aiBtn.onclick = () => {
+          modal.remove();
+          if (typeof window.openGrammarAiGenerator === 'function') {
+            window.openGrammarAiGenerator();
+          } else {
+            document.getElementById('teacher-grammar-ai-btn')?.click();
+          }
+        };
+      }
     }
 
     renderCard(currentIndex);
