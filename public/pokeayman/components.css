@@ -2092,13 +2092,21 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
    White Elephant 70 Toggle Switch (Uiverse.io by Javierrocadev)
    https://uiverse.io/Javierrocadev/white-elephant-70
    ========================================================================== */
-.uiverse-white-elephant {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-  vertical-align: middle;
+.uiverse-white-elephant,
+.game-setup-panel label.uiverse-white-elephant,
+.game-setup-panel label:has(input[type="checkbox"]).uiverse-white-elephant {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  vertical-align: middle !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+  box-shadow: none !important;
 }
 
 .uiverse-white-elephant input {
@@ -2117,12 +2125,12 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 
 .uiverse-white-elephant .uiverse-elephant-track {
   position: relative;
-  width: 56px;
-  height: 30px;
+  width: 48px;
+  height: 26px;
   border-radius: 9999px;
   outline: none;
   transition: background-image 0.5s ease, background-color 0.5s ease, box-shadow 0.3s ease;
-  box-shadow: 1px 3px 0px 0px #000, 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  box-shadow: 1px 2px 0px 0px #000, 0 3px 5px -1px rgba(0, 0, 0, 0.4);
   background-image: linear-gradient(to right, #fb7185, #7f1d1d);
   flex-shrink: 0;
 }
@@ -2132,8 +2140,8 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 9999px;
   background: conic-gradient(from 135deg, #b2a9a9, #b2a8a8, #ffffff, #d7dbd9, #ffffff, #b2a8a8);
   outline: none;
@@ -2143,7 +2151,7 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 }
 
 .uiverse-white-elephant:hover .uiverse-elephant-track::after {
-  transform: translateX(0) rotate(0deg) scale(1.1);
+  transform: translateX(0) rotate(0deg) scale(1.08);
 }
 
 .uiverse-white-elephant input:checked + .uiverse-elephant-track {
@@ -2151,11 +2159,11 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 }
 
 .uiverse-white-elephant input:checked + .uiverse-elephant-track::after {
-  transform: translateX(26px) rotate(180deg);
+  transform: translateX(22px) rotate(180deg);
 }
 
 .uiverse-white-elephant:hover input:checked + .uiverse-elephant-track::after {
-  transform: translateX(26px) rotate(180deg) scale(1.1);
+  transform: translateX(22px) rotate(180deg) scale(1.08);
 }
 
 .uiverse-white-elephant:focus-within {

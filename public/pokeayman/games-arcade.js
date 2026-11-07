@@ -2753,15 +2753,12 @@
       }
       check.checked = initialPowerupsEnabled;
 
-      // Replace right-side controls with the White Elephant 70 switch and status badge
+      // Replace right-side controls with the White Elephant 70 switch and status badge, aligned to 136px
       const rightCtrl = powerupStepper.element.querySelector('.ga-stepper-panel > div:last-child');
       if (rightCtrl) {
-        rightCtrl.className = 'flex items-center gap-2.5 shrink-0 select-none';
-        rightCtrl.style.background = 'transparent';
-        rightCtrl.style.border = 'none';
-        rightCtrl.style.padding = '0';
+        rightCtrl.className = 'ga-powerups-ctrl flex items-center justify-between w-[136px] min-w-[136px] max-w-[136px] h-9 bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 shrink-0 select-none cursor-pointer box-border';
         rightCtrl.innerHTML = `
-          <span class="ga-stepper-val text-xs font-black tracking-wide ${initialPowerupsEnabled ? 'text-emerald-400' : 'text-rose-400'} select-none cursor-pointer" title="Click to toggle surprise boxes">${initialPowerupsEnabled ? 'Enabled' : 'Disabled'}</span>
+          <span class="ga-stepper-val text-xs font-black tracking-wide ${initialPowerupsEnabled ? 'text-emerald-400' : 'text-rose-400'} select-none" title="Click to toggle surprise boxes">${initialPowerupsEnabled ? 'Enabled' : 'Disabled'}</span>
           <label class="uiverse-white-elephant relative inline-flex items-center cursor-pointer select-none" data-testid="surprise-powerups-toggle" role="switch" aria-checked="${initialPowerupsEnabled}" aria-label="Enable surprise boxes" title="Toggle surprise boxes">
             <input type="checkbox" class="sr-only" ${initialPowerupsEnabled ? 'checked' : ''} />
             <div class="uiverse-elephant-track"></div>
@@ -2777,7 +2774,7 @@
           if (toggleLabel) toggleLabel.setAttribute('aria-checked', String(val));
           if (valSpan) {
             valSpan.textContent = val ? 'Enabled' : 'Disabled';
-            valSpan.className = `ga-stepper-val text-xs font-black tracking-wide ${val ? 'text-emerald-400' : 'text-rose-400'} select-none cursor-pointer`;
+            valSpan.className = `ga-stepper-val text-xs font-black tracking-wide ${val ? 'text-emerald-400' : 'text-rose-400'} select-none`;
           }
         };
 
@@ -2788,8 +2785,7 @@
           powerupStepper.setValue(!cur.value);
         };
 
-        toggleLabel?.addEventListener('click', handleToggle);
-        valSpan?.addEventListener('click', handleToggle);
+        rightCtrl.addEventListener('click', handleToggle);
 
         syncPowerupSwitch = (val) => {
           updateElephantUI(val);

@@ -32,7 +32,7 @@ export const Stepper: React.FC<StepperProps> = ({
   disabledDec,
   disabledInc,
 }) => (
-  <div className="flex items-center bg-slate-950/80 border border-slate-800 rounded-lg p-1">
+  <div className="flex items-center justify-between w-[136px] min-w-[136px] max-w-[136px] h-9 bg-slate-950/80 border border-slate-800 rounded-lg p-1 px-1.5 shrink-0 box-border">
     <button
       type="button"
       onClick={onDecrease}
@@ -375,7 +375,10 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                           {powerUpsEnabled ? 'Power-ups, traps and score swaps' : 'Vocabulary questions only'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 select-none">
+                      <div
+                        onClick={() => setPowerUpsEnabled((v) => !v)}
+                        className="flex items-center justify-between w-[136px] min-w-[136px] max-w-[136px] h-9 bg-slate-950/80 border border-slate-800 rounded-lg p-1 px-2.5 shrink-0 select-none cursor-pointer box-border"
+                      >
                         <span className={`text-xs font-black tracking-wide ${powerUpsEnabled ? 'text-emerald-400' : 'text-rose-400'} select-none`}>
                           {powerUpsEnabled ? 'Enabled' : 'Disabled'}
                         </span>
@@ -387,6 +390,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                           title="Toggle surprise boxes"
                           onClick={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             setPowerUpsEnabled((v) => !v);
                           }}
                           className="uiverse-white-elephant relative inline-flex items-center cursor-pointer select-none"

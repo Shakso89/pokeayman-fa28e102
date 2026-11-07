@@ -6366,12 +6366,18 @@ body > .ga-stage .game-player-hud.has-target-score:has(> .game-player-card:nth-c
 .ga-lobby .ga-stepper-panel > div:last-child {
   display: flex !important;
   align-items: center !important;
+  justify-content: space-between !important;
+  width: 136px !important;
+  min-width: 136px !important;
+  max-width: 136px !important;
+  height: 36px !important;
   background: rgba(2, 6, 23, 0.8) !important;
   border: 1px solid #1e293b !important;
   border-radius: 0.5rem !important;
-  padding: 0.25rem !important;
+  padding: 0.25rem 0.5rem !important;
   box-shadow: none !important;
   flex-shrink: 0 !important;
+  box-sizing: border-box !important;
 }
 
 /* Stepper Buttons − and + */
