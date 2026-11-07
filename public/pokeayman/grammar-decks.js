@@ -1001,72 +1001,336 @@
 
       const btn = modal.querySelector('#g-ai-submit');
       btn.disabled = true;
-      btn.innerHTML = '<span class="inline-block animate-spin">⏳</span> Generating…';
+      btn.innerHTML = '<span class="inline-block animate-spin">✨</span> Generating with AI…';
 
-      // Create generated deck
-      const newDeckId = 'grammar-deck-' + Date.now();
       const currentTeacherName = typeof currentTeacher !== 'undefined' ? currentTeacher : 'Teacher Ayman';
-      const currentSchool = typeof navSchool !== 'undefined' ? navSchool : 'Daya Stanford';
-      const currentClass = typeof navClass !== 'undefined' ? navClass : 'ESL2';
+      const currentSchool = typeof navSchool !== 'undefined' && navSchool ? navSchool : 'Daya Stanford';
+      const currentClass = typeof navClass !== 'undefined' && navClass ? navClass : 'ESL2';
+      const newDeckId = 'grammar-deck-' + Date.now();
+
+      let generatedRules = [];
+      let finalDeckName = topic;
+
+      // 1. Try real server AI generation via /api/generate-vocab-list (mode: "grammar")
+      try {
+        const res = await fetch('/api/generate-vocab-list', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'grammar', topic, level })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.rules) && data.rules.length > 0) {
+            generatedRules = data.rules;
+            if (data.deck_name) finalDeckName = data.deck_name;
+          }
+        }
+      } catch (err) {
+        console.warn('API grammar generation failed, using intelligent pedagogical synthesizer:', err);
+      }
+
+      // 2. High-quality pedagogical fallback if AI endpoint did not return rules
+      if (!generatedRules.length) {
+        generatedRules = synthesizeGrammarRules(topic, level);
+      }
 
       const generatedDeck = {
         __backendId: newDeckId,
         id: newDeckId,
         grammar_deck_id: newDeckId,
-        grammar_deck_name: topic,
-        deck_name: topic,
+        grammar_deck_name: finalDeckName,
+        deck_name: finalDeckName,
         school_name: currentSchool,
         class_name: currentClass,
         teacher_name: currentTeacherName,
         owner: currentTeacherName,
         created_by: currentTeacherName,
         created_at: new Date().toISOString(),
-        cover_image_url: 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
+        cover_image_url: generatedRules[0]?.image || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
         type: 'grammar_deck',
-        rules: [
-          {
-            rule_id: 'rule-gen-1',
-            title: `${topic} · Core Rule`,
-            formula: 'Subject + Verb + Object',
-            sentence: `The students practiced ${topic} in English class today.`,
-            context_clue: `Level: ${level}`,
-            image: 'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg',
-            mistake_bad: 'Mistake without rule.',
-            mistake_good: `Correct form for ${topic}.`,
-            quiz_question: `Which sentence uses ${topic} correctly?`,
-            quiz_options: [`Correct: ${topic}`, 'Wrong option A', 'Wrong option B'],
-            quiz_answer: `Correct: ${topic}`
-          },
-          {
-            rule_id: 'rule-gen-2',
-            title: `${topic} · Common Exception`,
-            formula: 'Special Word Pattern',
-            sentence: 'Remember to pay attention to irregular forms.',
-            context_clue: 'Watch out for exceptions',
-            image: 'https://cdn.pixabay.com/photo/2019/06/13/09/41/business-4271251_640.png',
-            mistake_bad: 'Incorrect exception usage.',
-            mistake_good: 'Correct exception usage.',
-            quiz_question: 'Find the correct exception form:',
-            quiz_options: ['Correct exception', 'Wrong spelling', 'Normal regular form'],
-            quiz_answer: 'Correct exception'
-          }
-        ]
+        rules: generatedRules
       };
 
-      if (window.dataSdk?.create) {
-        await window.dataSdk.create(generatedDeck);
-      }
-      if (typeof allData !== 'undefined' && Array.isArray(allData)) {
-        allData.push(generatedDeck);
-        window.allData = allData;
-      }
+      await window.saveOrUpdateGrammarDeck(generatedDeck);
 
       modal.remove();
-      if (typeof toast === 'function') toast(`Generated grammar deck "${topic}"!`);
+      if (typeof toast === 'function') toast(`Generated grammar deck "${finalDeckName}"!`);
       window.renderClassGrammarDecks();
       window.renderTeacherOwnedGrammarDecks();
+      window.openGrammarDeckEditor(newDeckId, finalDeckName);
     };
   };
+
+  // ==========================================
+  // PEDAGOGICAL GRAMMAR SYNTHESIZER
+  // ==========================================
+  function synthesizeGrammarRules(topic, level) {
+    const t = topic.toLowerCase();
+    const rules = [];
+
+    // Check for specific Wh- question components
+    const hasWhatColor = t.includes('what color') || t.includes('what colour');
+    const hasHowMany = t.includes('how many') || t.includes('how much');
+    const hasWhat = t.includes('what') && !hasWhatColor;
+    const hasWhere = t.includes('where');
+    const hasWhen = t.includes('when');
+    const hasWhy = t.includes('why');
+    const hasWho = t.includes('who');
+
+    if (hasWhat || hasWhere || hasWhatColor || hasHowMany || hasWhen || hasWhy || hasWho) {
+      if (hasWhat) {
+        rules.push({
+          rule_id: 'rule-gen-what-' + Date.now(),
+          title: 'Asking with "What" (Things & Objects)',
+          formula: 'What + is / are + Subject ?',
+          sentence: 'What is inside your school backpack?',
+          context_clue: 'Use "What" to ask about things, objects, or actions.',
+          mistake_bad: 'Where is your favorite movie?',
+          mistake_good: 'What is your favorite movie?',
+          quiz_question: '_____ is your favorite animal in the zoo?',
+          quiz_options: ['What', 'Where', 'How many'],
+          quiz_answer: 'What',
+          image: 'https://cdn.pixabay.com/photo/2019/06/13/09/41/business-4271251_640.png'
+        });
+      }
+      if (hasWhere) {
+        rules.push({
+          rule_id: 'rule-gen-where-' + Date.now(),
+          title: 'Asking with "Where" (Places & Locations)',
+          formula: 'Where + is / are + Subject ?',
+          sentence: 'Where is the sleeping cat?',
+          context_clue: 'Use "Where" to ask about places or locations.',
+          mistake_bad: 'What is the library located?',
+          mistake_good: 'Where is the library located?',
+          quiz_question: '_____ are the students playing soccer?',
+          quiz_options: ['Where', 'What color', 'How many'],
+          quiz_answer: 'Where',
+          image: 'https://cdn.pixabay.com/photo/2022/10/15/16/44/night-view-7523474_640.jpg'
+        });
+      }
+      if (hasWhatColor) {
+        rules.push({
+          rule_id: 'rule-gen-color-' + Date.now(),
+          title: 'Asking with "What color" (Colors & Shades)',
+          formula: 'What color + is / are + Subject ?',
+          sentence: 'What color is your bicycle?',
+          context_clue: 'Use "What color" to ask about appearance and shades.',
+          mistake_bad: 'How many is your new shirt?',
+          mistake_good: 'What color is your new shirt?',
+          quiz_question: '_____ is the sky on a sunny afternoon?',
+          quiz_options: ['What color', 'Where', 'What'],
+          quiz_answer: 'What color',
+          image: 'https://cdn.pixabay.com/photo/2018/07/20/14/01/grapes-3550729_640.jpg'
+        });
+      }
+      if (hasHowMany) {
+        rules.push({
+          rule_id: 'rule-gen-many-' + Date.now(),
+          title: 'Asking with "How many" (Countable Quantities)',
+          formula: 'How many + Plural Noun + are there ?',
+          sentence: 'How many apples are in the basket?',
+          context_clue: 'Use "How many" to ask about numbers of countable items.',
+          mistake_bad: 'Where pencils do you have in your bag?',
+          mistake_good: 'How many pencils do you have in your bag?',
+          quiz_question: '_____ pencils are on the teacher\'s desk?',
+          quiz_options: ['How many', 'What color', 'Where'],
+          quiz_answer: 'How many',
+          image: 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg'
+        });
+      }
+      if (hasWhen) {
+        rules.push({
+          rule_id: 'rule-gen-when-' + Date.now(),
+          title: 'Asking with "When" (Time & Occasions)',
+          formula: 'When + does / do + Subject + Verb ?',
+          sentence: 'When does the English lesson begin?',
+          context_clue: 'Use "When" to ask about time, days, or moments.',
+          mistake_bad: 'Where time does the lesson start?',
+          mistake_good: 'When does the lesson start?',
+          quiz_question: '_____ do you eat lunch at school?',
+          quiz_options: ['When', 'What color', 'Where'],
+          quiz_answer: 'When',
+          image: 'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg'
+        });
+      }
+      if (hasWhy) {
+        rules.push({
+          rule_id: 'rule-gen-why-' + Date.now(),
+          title: 'Asking with "Why" (Reasons & Explanations)',
+          formula: 'Why + is / are + Subject + ... ?',
+          sentence: 'Why are you smiling so brightly today?',
+          context_clue: 'Use "Why" to ask for reasons (answered with "Because").',
+          mistake_bad: 'What are you happy today?',
+          mistake_good: 'Why are you happy today?',
+          quiz_question: '_____ are the children wearing raincoats?',
+          quiz_options: ['Why', 'How many', 'What color'],
+          quiz_answer: 'Why',
+          image: 'https://cdn.pixabay.com/photo/2021/02/08/16/03/dinosaur-5995333_640.png'
+        });
+      }
+      if (hasWho) {
+        rules.push({
+          rule_id: 'rule-gen-who-' + Date.now(),
+          title: 'Asking with "Who" (People & Characters)',
+          formula: 'Who + is / are + Subject ?',
+          sentence: 'Who is the friendly new student?',
+          context_clue: 'Use "Who" to ask about a person.',
+          mistake_bad: 'What is sitting next to you?',
+          mistake_good: 'Who is sitting next to you?',
+          quiz_question: '_____ is your partner for the game?',
+          quiz_options: ['Who', 'Where', 'What color'],
+          quiz_answer: 'Who',
+          image: 'https://cdn.pixabay.com/photo/2019/06/13/09/41/business-4271251_640.png'
+        });
+      }
+    }
+
+    if (!rules.length) {
+      const isPast = t.includes('past') || t.includes('yesterday') || t.includes('did');
+      const isContinuous = t.includes('continuous') || t.includes('progressive') || t.includes('ing');
+      const isComparative = t.includes('comparative') || t.includes('than') || t.includes('superlative');
+      const isModal = t.includes('can') || t.includes('modal') || t.includes('should') || t.includes('must');
+
+      if (isPast) {
+        rules.push({
+          rule_id: 'rule-gen-1-' + Date.now(),
+          title: 'Past Regular Verbs (-ed)',
+          formula: 'Subject + Verb-ed',
+          sentence: 'Yesterday, the children played soccer in the park.',
+          context_clue: 'Use -ed for finished actions in the past.',
+          mistake_bad: 'Yesterday, they play soccer.',
+          mistake_good: 'Yesterday, they played soccer.',
+          quiz_question: 'Last night, Liam _____ (watch) a cartoon.',
+          quiz_options: ['watched', 'watches', 'watching'],
+          quiz_answer: 'watched',
+          image: 'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-2-' + Date.now(),
+          title: 'Past Irregular Verbs (Special Changes)',
+          formula: 'Subject + Irregular Past Form',
+          sentence: 'Maya went to the library this morning.',
+          context_clue: 'No -ed! Memorize special past words (go -> went, eat -> ate).',
+          mistake_bad: 'Maya goed to the library.',
+          mistake_good: 'Maya went to the library.',
+          quiz_question: 'He _____ (see) a funny bird in the garden.',
+          quiz_options: ['saw', 'seed', 'seen'],
+          quiz_answer: 'saw',
+          image: 'https://cdn.pixabay.com/photo/2022/10/15/16/44/night-view-7523474_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-3-' + Date.now(),
+          title: 'Negative Past Actions (did not + base verb)',
+          formula: 'Subject + did not (didn\'t) + Base Verb',
+          sentence: 'We did not eat ice cream yesterday.',
+          context_clue: 'After "did not", keep the verb in base form!',
+          mistake_bad: 'We did not ate ice cream.',
+          mistake_good: 'We did not eat ice cream.',
+          quiz_question: 'She didn\'t _____ (finish) her homework yet.',
+          quiz_options: ['finish', 'finished', 'finishing'],
+          quiz_answer: 'finish',
+          image: 'https://cdn.pixabay.com/photo/2018/07/20/14/01/grapes-3550729_640.jpg'
+        });
+      } else if (isComparative) {
+        rules.push({
+          rule_id: 'rule-gen-1-' + Date.now(),
+          title: 'Short Adjectives (-er + than)',
+          formula: 'Subject + is / are + Adjective-er + than + Noun',
+          sentence: 'The giraffe is taller than the elephant.',
+          context_clue: 'Add -er and "than" to compare two things.',
+          mistake_bad: 'The giraffe is more tall than the elephant.',
+          mistake_good: 'The giraffe is taller than the elephant.',
+          quiz_question: 'An airplane is _____ (fast) than a bicycle.',
+          quiz_options: ['faster', 'more fast', 'fastest'],
+          quiz_answer: 'faster',
+          image: 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-2-' + Date.now(),
+          title: 'Long Adjectives (more + Adjective + than)',
+          formula: 'Subject + is / are + more + Adjective + than + Noun',
+          sentence: 'The butterfly is more colorful than the moth.',
+          context_clue: 'Use "more" for long words (2+ syllables).',
+          mistake_bad: 'The butterfly is colorfuler than the moth.',
+          mistake_good: 'The butterfly is more colorful than the moth.',
+          quiz_question: 'Science is _____ (interesting) than maths.',
+          quiz_options: ['more interesting', 'interestinger', 'most interesting'],
+          quiz_answer: 'more interesting',
+          image: 'https://cdn.pixabay.com/photo/2018/07/20/14/01/grapes-3550729_640.jpg'
+        });
+      } else if (isModal) {
+        rules.push({
+          rule_id: 'rule-gen-1-' + Date.now(),
+          title: 'Ability with "Can" (Base Verb)',
+          formula: 'Subject + can + Base Verb',
+          sentence: 'The little bird can sing a sweet song.',
+          context_clue: 'Use "can" for abilities. Never add -s to the verb!',
+          mistake_bad: 'The bird can sings a song.',
+          mistake_good: 'The bird can sing a song.',
+          quiz_question: 'Dolphins can _____ (swim) very fast.',
+          quiz_options: ['swim', 'swims', 'swimming'],
+          quiz_answer: 'swim',
+          image: 'https://cdn.pixabay.com/photo/2021/02/08/16/03/dinosaur-5995333_640.png'
+        });
+        rules.push({
+          rule_id: 'rule-gen-2-' + Date.now(),
+          title: 'Negative Ability (cannot / can\'t)',
+          formula: 'Subject + cannot (can\'t) + Base Verb',
+          sentence: 'Penguins cannot fly in the sky.',
+          context_clue: 'Saying NO to an ability.',
+          mistake_bad: 'Penguins can\'t flying.',
+          mistake_good: 'Penguins can\'t fly.',
+          quiz_question: 'Elephants _____ jump high into the air.',
+          quiz_options: ['cannot', 'can', 'not can'],
+          quiz_answer: 'cannot',
+          image: 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg'
+        });
+      } else {
+        // Core Affirmative, Negative, and Inversion patterns
+        rules.push({
+          rule_id: 'rule-gen-1-' + Date.now(),
+          title: `${topic} · Affirmative Pattern`,
+          formula: 'Subject + Helping Verb + Main Verb',
+          sentence: 'The cheerful puppy is running in the yard.',
+          context_clue: 'Positive statement demonstrating the core pattern.',
+          mistake_bad: 'The puppy running in the yard.',
+          mistake_good: 'The puppy is running in the yard.',
+          quiz_question: 'The students _____ working quietly on their project.',
+          quiz_options: ['are', 'is', 'am'],
+          quiz_answer: 'are',
+          image: 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-2-' + Date.now(),
+          title: `${topic} · Negative Pattern`,
+          formula: 'Subject + Helping Verb + NOT + Main Verb',
+          sentence: 'The kitten is not making any noise right now.',
+          context_clue: 'Insert "not" after the helping verb.',
+          mistake_bad: 'The kitten not is making noise.',
+          mistake_good: 'The kitten is not making noise.',
+          quiz_question: 'They are _____ playing video games right now.',
+          quiz_options: ['not', 'no', 'don\'t'],
+          quiz_answer: 'not',
+          image: 'https://cdn.pixabay.com/photo/2021/02/08/16/03/dinosaur-5995333_640.png'
+        });
+        rules.push({
+          rule_id: 'rule-gen-3-' + Date.now(),
+          title: `${topic} · Question Form (Inversion)`,
+          formula: 'Helping Verb + Subject + Main Verb ?',
+          sentence: 'Are you listening carefully to the instructions?',
+          context_clue: 'Move the helping verb to the front to ask a question.',
+          mistake_bad: 'You are listening carefully?',
+          mistake_good: 'Are you listening carefully?',
+          quiz_question: '_____ the train arriving on platform two?',
+          quiz_options: ['Is', 'Are', 'Do'],
+          quiz_answer: 'Is',
+          image: 'https://cdn.pixabay.com/photo/2022/10/15/16/44/night-view-7523474_640.jpg'
+        });
+      }
+    }
+
+    return rules;
+  }
 
   // Wire creation buttons
   window.initGrammarDecksListeners = function() {

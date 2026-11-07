@@ -55,9 +55,8 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
           return Response.json(result, { headers: { ...CORS, "Cache-Control": "no-store" } });
         }
 
-        const mode = input?.mode === "photo" ? "photo" : "words";
-
-        const askGemini = askSentenceModel;
+        
+        // askGemini defined above
 
         const parseJson = (text: string): unknown => {
           const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
@@ -70,6 +69,118 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
             return null;
           }
         };
+
+        if (input?.mode === "grammar") {
+          const topic = String(input.topic || "").trim().slice(0, 150);
+          const level = String(input.level || "Beginner").trim();
+          if (!topic) {
+            return Response.json({ message: "Please provide a grammar topic." }, { status: 400, headers: CORS });
+          }
+
+          const prompt = `You are an expert ESL/EFL English language curriculum developer and teacher for young elementary students.
+The teacher wants a Grammar Pattern Deck for the topic: "${topic}" (Target Level: ${level}).
+
+Generate between 2 to 4 distinct, pedagogically sound grammar rules / patterns for this topic.
+CRITICAL PEDAGOGICAL INSTRUCTIONS:
+1. If the topic mentions specific question words or structures (such as "What, Where, What color, How many", etc.), generate ONE separate, focused rule for EACH specified question word / structure.
+2. If the topic is a tense or grammatical category (such as "Present Continuous", "Past Simple", "Comparatives", etc.), generate:
+   - Rule 1: Affirmative / Core Pattern
+   - Rule 2: Negative Form or Common Exception
+   - Rule 3: Question Form / Word Order Inversion
+3. For each rule:
+   - "title": A clear educational title (e.g. "Asking with 'Where' (Places and Locations)" or "Affirmative Actions (Happening Now)").
+   - "formula": The exact formula with "+" signs (e.g. "Where + is / are + Subject ?" or "Subject + am / is / are + Verb-ing" or "How many + Plural Noun + are there ?"). NEVER use a generic "Subject + Verb + Object" unless teaching basic SVO!
+   - "sentence": A realistic, natural, kid-friendly example sentence demonstrating this exact rule (e.g. "Where is the sleeping cat?" or "What color is your bicycle?" or "The elephant is walking slowly in the grass."). NEVER write meta-sentences like "The students practiced..." or "This is a rule."!
+   - "context_clue": A 3 to 7 word helpful hint explaining when or why to use this rule (e.g. "Use 'Where' to ask about places" or "Use for actions happening right now").
+   - "mistake_bad": A realistic common student error (e.g. "Where is your favorite color?" or "The dinosaur not sleeping today." or "How many pencils does you have?").
+   - "mistake_good": The exact corrected sentence (e.g. "What is your favorite color?" or "The dinosaur is not sleeping today." or "How many pencils do you have?").
+   - "quiz_question": A fill-in-the-blank or multiple choice challenge question testing this exact rule (e.g. "_____ are the keys? - In my pocket." or "Look! The monkey _____ (climb) the tree!").
+   - "quiz_options": Array of 3 distinct, plausible answer choices (e.g. ["Where", "What", "How many"] or ["is climbing", "are climbing", "climbs"]).
+   - "quiz_answer": The exact string matching the correct option.
+   - "image_search": 2-3 word query to find a matching photo (e.g. "sleeping cat", "school backpack", "colorful bicycle", "colored pencils").
+
+Reply with valid JSON only in this exact format:
+{
+  "deck_name": "${topic}",
+  "rules": [
+    {
+      "title": "...",
+      "formula": "...",
+      "sentence": "...",
+      "context_clue": "...",
+      "mistake_bad": "...",
+      "mistake_good": "...",
+      "quiz_question": "...",
+      "quiz_options": ["...", "...", "..."],
+      "quiz_answer": "...",
+      "image_search": "..."
+    }
+  ]
+}`;
+
+          try {
+            const rawText = await askGemini({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.3, responseMimeType: "application/json", maxOutputTokens: 2500 },
+            });
+            const parsed = parseJson(rawText) as any;
+            let rules = Array.isArray(parsed?.rules) ? parsed.rules : (Array.isArray(parsed) ? parsed : []);
+
+            if (rules.length === 0) {
+              throw new Error("No rules returned by AI model.");
+            }
+
+            for (let i = 0; i < rules.length; i++) {
+              const r = rules[i];
+              r.rule_id = `rule-gen-${i + 1}-${Date.now()}`;
+              if (!r.title) r.title = `Rule ${i + 1}`;
+              if (!r.formula) r.formula = 'Pattern';
+              if (!r.sentence) r.sentence = 'Example sentence.';
+              if (!Array.isArray(r.quiz_options) || r.quiz_options.length === 0) {
+                r.quiz_options = [r.quiz_answer || 'Option A', 'Option B', 'Option C'];
+              }
+              if (!r.quiz_answer) r.quiz_answer = r.quiz_options[0];
+
+              // Try finding image
+              const query = String(r.image_search || r.sentence.slice(0, 30) || topic).trim();
+              try {
+                const stock = await matchVocabularyMedia({
+                  id: r.rule_id,
+                  word: query.split(' ')[0] || 'study',
+                  sentence: r.sentence,
+                  action: 'search',
+                  query: query,
+                  page: 1
+                });
+                const goodPhoto = stock?.candidates?.find((p: any) => p.imageUrl && !p.imageUrl.includes('pixabay.com/get/'));
+                if (goodPhoto) {
+                  r.image = goodPhoto.imageUrl;
+                }
+              } catch (_) {}
+              if (!r.image) {
+                const fallbacks = [
+                  'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
+                  'https://cdn.pixabay.com/photo/2021/02/08/16/03/dinosaur-5995333_640.png',
+                  'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg',
+                  'https://cdn.pixabay.com/photo/2018/07/20/14/01/grapes-3550729_640.jpg'
+                ];
+                r.image = fallbacks[i % fallbacks.length];
+              }
+            }
+
+            return Response.json({
+              deck_name: String(parsed?.deck_name || topic).trim(),
+              rules
+            }, { headers: { ...CORS, "Cache-Control": "no-store" } });
+          } catch (err: any) {
+            console.error("[grammar-ai] Error:", err);
+            return Response.json({ message: err?.message || "Failed to generate grammar deck with AI." }, { status: 500, headers: CORS });
+          }
+        }
+
+        const mode = input?.mode === "photo" ? "photo" : "words";
+
+        
 
         if (mode === "words") {
           let rawItems: Array<{ word: string; picture: string }> = [];

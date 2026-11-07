@@ -133,4 +133,26 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(html).toContain('id="teacher-grammar-create-class"');
     expect(html).toContain('id="teacher-grammar-create-submit"');
   });
+
+  it('ensures AI grammar deck generator produces real pedagogical rules and does not use mock placeholders', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+    const apiRoutePath = path.resolve(__dirname, '../../src/routes/api/generate-vocab-list.ts');
+    const apiRoute = fs.readFileSync(apiRoutePath, 'utf-8');
+
+    // No mock placeholder strings
+    expect(js).not.toContain('Mistake without rule');
+    expect(js).not.toContain('The students practiced ${topic}');
+
+    // Calls AI endpoint and provides smart pedagogical synthesizer
+    expect(js).toContain("mode: 'grammar'");
+    expect(js).toContain('synthesizeGrammarRules');
+    expect(js).toContain('What + is / are + Subject ?');
+    expect(js).toContain('Where + is / are + Subject ?');
+    expect(js).toContain('What color + is / are + Subject ?');
+    expect(js).toContain('How many + Plural Noun + are there ?');
+
+    // API route handles grammar mode with Gemini
+    expect(apiRoute).toContain('input?.mode === "grammar"');
+    expect(apiRoute).toContain('Grammar Pattern Deck for the topic');
+  });
 });
