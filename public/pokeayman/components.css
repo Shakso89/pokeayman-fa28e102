@@ -1484,7 +1484,9 @@ html body:is(#pk-ds, body, html) :is(
   margin: 0 !important;
 }
 
-:is(#teacher-vb-lists-grid, #vocab-lists-container, body) .teacher-zone-wordbank-meta .ai-generated-badge {
+:is(#teacher-vb-lists-grid, #vocab-lists-container, body) .teacher-zone-wordbank-meta .ai-generated-badge,
+.ai-generated-badge {
+  display: none !important;
   margin: 0 !important;
   white-space: nowrap !important;
 }

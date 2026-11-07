@@ -100,6 +100,7 @@ function chooseMatchWordCount(listName) {
 window.chooseMatchWordCount = chooseMatchWordCount;
 
 function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
+  document.querySelectorAll('.match-drag-ghost').forEach(g => g.remove());
   const escapeText = typeof escapeHtml === 'function' ? escapeHtml : s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   setGameReplay(() => { resetGameTurnState(); openGameMatch(listName, wordCount, timerSeconds); });
   const words = getGameWords(listName);
@@ -566,6 +567,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   renderBoard();
 
   modal.querySelector('#game-close').addEventListener('click', () => {
+    document.querySelectorAll('.match-drag-ghost').forEach(g => g.remove());
     modal._cleanupMemoryFit?.();
     modal.remove();
   });
