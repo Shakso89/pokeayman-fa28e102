@@ -8447,7 +8447,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   };
 
   window.initGameDeckCarousel = function (container) {
-    const root = (container && container.querySelector ? (container.matches?.('#game-deck-carousel-root') ? container : container.querySelector('#game-deck-carousel-root')) : null) || document.getElementById('game-deck-carousel-root');
+    const activeContainer = (typeof currentRole !== 'undefined' && currentRole === 'student')
+      ? document.getElementById('student-games-options-container')
+      : document.getElementById('games-options-container');
+    const root = (container && container.querySelector ? (container.matches?.('#game-deck-carousel-root') ? container : container.querySelector('#game-deck-carousel-root')) : null)
+      || (activeContainer && activeContainer.querySelector ? activeContainer.querySelector('#game-deck-carousel-root') : null)
+      || document.getElementById('game-deck-carousel-root');
     if (!root) return;
     const stage = root.querySelector('#game-deck-cards-stage');
     const prevBtn = root.querySelector('#game-deck-prev');
@@ -8672,9 +8677,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   };
 
   window.gaRenderHub = function (listLabel, isTeacher) {
-    setTimeout(() => {
-      window.initGameDeckCarousel?.();
-    }, 0);
     return `<section class="ga-hub overflow-visible" aria-label="Game arcade" style="overflow: visible !important;">
       <div class="w-full flex flex-col items-center justify-center py-6 sm:py-10 overflow-visible" id="game-deck-carousel-root" style="overflow: visible !important;">
         <!-- Step Header -->
@@ -17730,7 +17732,17 @@ function openStudentDashboardTab(btn) {
   }
 }
 document.querySelectorAll('.student-nav-group-button').forEach(button => button.addEventListener('click', () => {
-  const menu = document.getElementById(button.getAttribute('aria-controls'));
+  const menuId = button.getAttribute('aria-controls');
+  if (menuId === 'student-nav-games-menu') {
+    const gamesBtn = document.querySelector('.student-dashboard-tab[data-tab="games"]');
+    if (gamesBtn) {
+      document.querySelectorAll('.student-nav-menu').forEach(item => item.classList.add('hidden'));
+      document.querySelectorAll('.student-nav-group-button').forEach(item => item.setAttribute('aria-expanded', 'false'));
+      gamesBtn.click();
+      return;
+    }
+  }
+  const menu = document.getElementById(menuId);
   const willOpen = menu?.classList.contains('hidden');
   document.querySelectorAll('.student-nav-menu').forEach(item => item.classList.add('hidden'));
   document.querySelectorAll('.student-nav-group-button').forEach(item => item.setAttribute('aria-expanded', 'false'));
@@ -26809,9 +26821,6 @@ function renderGamesList() {
   if (!validLists.length && currentRole !== 'teacher') {
     listArea.innerHTML = (isStudentGames && enrolledClasses.length > 1 ? getStudentClassFilterMarkup('games', selectedStudentGamesClassKey) : '') + '<div class="student-games-empty rounded-xl border border-indigo-200/30 bg-indigo-950/50 p-5 text-center"><p class="text-sm font-semibold text-indigo-100">No vocabulary lists are available for this class yet.</p><p class="mt-1 text-xs text-indigo-200">Add at least 2 words to a vocabulary list to play.</p></div>';
     if (isStudentGames && enrolledClasses.length > 1) attachGamesClassFilterListeners(listArea);
-    selector.appendChild(listArea);
-    window.gaListStep?.(selector, gamesContainer, selectedGameList.length);
-    return;
   }
 
   // Group lists by class for student view

@@ -1248,7 +1248,12 @@
   };
 
   window.initGameDeckCarousel = function (container) {
-    const root = (container && container.querySelector ? (container.matches?.('#game-deck-carousel-root') ? container : container.querySelector('#game-deck-carousel-root')) : null) || document.getElementById('game-deck-carousel-root');
+    const activeContainer = (typeof currentRole !== 'undefined' && currentRole === 'student')
+      ? document.getElementById('student-games-options-container')
+      : document.getElementById('games-options-container');
+    const root = (container && container.querySelector ? (container.matches?.('#game-deck-carousel-root') ? container : container.querySelector('#game-deck-carousel-root')) : null)
+      || (activeContainer && activeContainer.querySelector ? activeContainer.querySelector('#game-deck-carousel-root') : null)
+      || document.getElementById('game-deck-carousel-root');
     if (!root) return;
     const stage = root.querySelector('#game-deck-cards-stage');
     const prevBtn = root.querySelector('#game-deck-prev');
@@ -1473,9 +1478,6 @@
   };
 
   window.gaRenderHub = function (listLabel, isTeacher) {
-    setTimeout(() => {
-      window.initGameDeckCarousel?.();
-    }, 0);
     return `<section class="ga-hub overflow-visible" aria-label="Game arcade" style="overflow: visible !important;">
       <div class="w-full flex flex-col items-center justify-center py-6 sm:py-10 overflow-visible" id="game-deck-carousel-root" style="overflow: visible !important;">
         <!-- Step Header -->

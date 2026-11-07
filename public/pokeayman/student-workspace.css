@@ -206,6 +206,15 @@ html body #student-dashboard#student-dashboard :is(.vocab-list-card, .game-playe
   border-radius: 1.5rem !important; box-shadow: 0 8px 18px rgba(125, 211, 252, .22) !important;
   color: var(--kid-ink) !important;
 }
+html body #student-dashboard#student-dashboard #student-games-options-container > .ga-hub,
+html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard #student-games-options-container > .ga-hub,
+html body #student-dashboard#student-dashboard #student-games-options-container > div,
+html body:not(.ts-bright):has(#student-dashboard:not(.hidden)) #student-dashboard #student-games-options-container > div {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
 html body #student-dashboard#student-dashboard :is(.vocab-list-card, .game-player-card, #student-games-list-selector > *, #student-vocabulary-lists > *) :is(h3, h4, p, span) { color: inherit !important; }
 html body #student-dashboard#student-dashboard :is(.vocab-list-card, .game-player-card) :is(.text-gray-400, .text-gray-500, .text-slate-400) { color: #94A3B8 !important; }
 
