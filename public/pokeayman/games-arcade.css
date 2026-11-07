@@ -686,7 +686,7 @@ body:has(.vocab-editor-overlay) .ga-continue-bar {
 .match-word-speak-btn:hover { transform: scale(1.2); color: var(--ga-stage-blue); }
 
 /* Drag Ghost following pointer */
-.match-drag-ghost { position: fixed; z-index: 9999999; pointer-events: none; display: inline-flex; align-items: center; gap: .5rem; padding: .45rem 1.15rem; border-radius: 9999px; background: #047857; border: 2px solid #34d399; color: #ffffff; font: 800 .98rem/1.2 'Figtree', sans-serif; box-shadow: 0 20px 35px -5px rgba(0,0,0,.5), 0 0 0 3px rgba(52,211,153,.4); transform: translate3d(-50%, -50%, 0) scale(1.05); transition: none; will-change: transform, left, top; user-select: none; -webkit-user-select: none; }
+.match-drag-ghost { position: fixed !important; z-index: 2147483647 !important; pointer-events: none !important; display: inline-flex !important; align-items: center !important; gap: .5rem !important; padding: .45rem 1.15rem !important; border-radius: 9999px !important; background: #047857 !important; border: 2px solid #34d399 !important; color: #ffffff !important; font: 800 .98rem/1.2 'Figtree', sans-serif !important; box-shadow: 0 20px 35px -5px rgba(0,0,0,.6), 0 0 0 3px rgba(52,211,153,.5) !important; transform: translate3d(-50%, -50%, 0) scale(1.08) !important; transition: none !important; will-change: transform, left, top !important; user-select: none !important; -webkit-user-select: none !important; }
 .match-drag-ghost .match-grip-svg { width: 14px; height: 14px; color: rgba(167,243,208,.85); flex-shrink: 0; }
 
 /* Legacy tile fallback classes if referenced */
@@ -6948,30 +6948,9 @@ html body > .ga-stage .match-game-summary .game-player-hud-slot { width:100%!imp
 html body > .ga-stage .match-game-summary .game-player-hud { width:min(100%,1100px)!important; max-width:1100px!important; }
 html body > .ga-stage .match-game-summary .game-player-card { min-width:0!important; }
 
-/* Match Game: Word Count Capsule Stepper */
+/* Match Game: Word Count Stepper (Unified with Game Stepper Panels) */
 .ga-word-count-panel,
-.ga-match-word-count-panel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0.875rem 1rem;
-  border-radius: 0.75rem;
-  background: rgba(17, 25, 40, 0.8);
-  border: 1px solid rgba(30, 41, 59, 0.8);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  box-sizing: border-box;
-  transition: all 0.2s ease;
-}
-.ga-word-count-panel:hover,
-.ga-word-count-panel:focus-within,
-.ga-match-word-count-panel:hover,
-.ga-match-word-count-panel:focus-within {
-  border-color: rgba(234, 179, 8, 0.5);
-  box-shadow: 0 0 12px rgba(234, 179, 8, 0.15);
-}
-
-/* Memory Game: Custom Stepper UI & Animations */
+.ga-match-word-count-panel,
 .ga-stepper-panel {
   display: flex;
   align-items: center;
@@ -6985,8 +6964,12 @@ html body > .ga-stage .match-game-summary .game-player-card { min-width:0!import
   box-sizing: border-box;
   transition: all 0.2s ease;
 }
-.ga-stepper-panel:focus-within,
-.ga-stepper-panel:hover {
+.ga-word-count-panel:hover,
+.ga-word-count-panel:focus-within,
+.ga-match-word-count-panel:hover,
+.ga-match-word-count-panel:focus-within,
+.ga-stepper-panel:hover,
+.ga-stepper-panel:focus-within {
   border-color: rgba(234, 179, 8, 0.6);
   box-shadow: 0 0 12px rgba(234, 179, 8, 0.15);
 }

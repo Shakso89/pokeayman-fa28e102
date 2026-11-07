@@ -9092,33 +9092,35 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     }
 
     const panel = document.createElement('div');
-    panel.className = 'ga-word-count-panel w-full bg-[#111928]/80 border border-slate-800/80 rounded-xl px-4 py-3.5 flex items-center justify-between shadow-sm transition-all hover:border-yellow-500/50';
-    panel.innerHTML = `<div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-yellow-400">
+    panel.className = 'ga-stepper-panel ga-word-count-panel flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800';
+    panel.innerHTML = `<div class="flex items-center gap-2.5 text-xs font-bold text-slate-300 min-w-0">
+      <span class="text-slate-500 shrink-0">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
           <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
           <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
         </svg>
+      </span>
+      <div class="flex flex-col min-w-0 text-left">
+        <span class="truncate">Word count</span>
       </div>
-      <span class="font-bold text-white text-sm">Word count</span>
     </div>
-    <div class="bg-[#0b1120] border border-slate-800 rounded-xl p-1 flex items-center gap-1.5">
+    <div class="flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0">
       <button
         type="button"
-        class="ga-word-count-dec w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 cursor-pointer"
+        class="ga-stepper-dec ga-word-count-dec w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer"
         aria-label="Decrease word count"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        −
       </button>
-      <div class="ga-word-count-val min-w-[80px] px-3 py-1.5 bg-slate-800/70 rounded-lg border border-slate-700/40 text-xs font-bold text-slate-100 text-center select-none">
-      </div>
+      <span class="ga-stepper-label ga-word-count-val px-2 text-xs font-bold text-slate-200 min-w-[70px] text-center select-none truncate">
+      </span>
       <button
         type="button"
-        class="ga-word-count-inc w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 cursor-pointer"
+        class="ga-stepper-inc ga-word-count-inc w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer"
         aria-label="Increase word count"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        +
       </button>
     </div>`;
 
@@ -12594,26 +12596,28 @@ function chooseMatchWordCount(listName) {
   modal.className = 'game-inline-view game-setup-panel mx-auto my-4';
   modal.innerHTML = `<div class="game-setup-panel text-center">
     <h2 class="heading-font text-2xl font-bold text-amber-100 mb-2">🎯 Match Words</h2>
-    <div class="ga-match-word-count-panel w-full bg-[#111928]/80 border border-slate-800/80 rounded-xl px-4 py-3.5 flex items-center justify-between shadow-sm transition-all hover:border-yellow-500/50 mb-4">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-yellow-400">
+    <div class="ga-stepper-panel ga-word-count-panel ga-match-word-count-panel flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800 mb-4">
+      <div class="flex items-center gap-2.5 text-xs font-bold text-slate-300 min-w-0">
+        <span class="text-slate-500 shrink-0">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
             <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
             <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
           </svg>
+        </span>
+        <div class="flex flex-col min-w-0 text-left">
+          <span class="truncate">Word count</span>
         </div>
-        <span class="font-bold text-white text-sm">Word count</span>
       </div>
-      <div class="bg-[#0b1120] border border-slate-800 rounded-xl p-1 flex items-center gap-1.5">
-        <button type="button" class="ga-word-count-dec w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95" aria-label="Decrease word count">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <div class="flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0">
+        <button type="button" class="ga-stepper-dec ga-word-count-dec w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer" aria-label="Decrease word count">
+          −
         </button>
-        <div class="ga-word-count-val min-w-[80px] px-3 py-1.5 bg-slate-800/70 rounded-lg border border-slate-700/40 text-xs font-bold text-slate-100 text-center select-none">
+        <span class="ga-stepper-label ga-word-count-val px-2 text-xs font-bold text-slate-200 min-w-[70px] text-center select-none truncate">
           All (${totalAvailable})
-        </div>
-        <button type="button" class="ga-word-count-inc w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95" disabled aria-disabled="true" aria-label="Increase word count">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </span>
+        <button type="button" class="ga-stepper-inc ga-word-count-inc w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer" disabled aria-disabled="true" aria-label="Increase word count">
+          +
         </button>
       </div>
     </div>
@@ -12910,19 +12914,28 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
     hasDragged = false;
 
     const sourceEl = source.el;
+    sourceEl.style.touchAction = 'none';
+    const preventDrag = (ev) => ev.preventDefault();
+    sourceEl.addEventListener('dragstart', preventDrag);
     try { sourceEl.setPointerCapture?.(e.pointerId); } catch (_) {}
 
     function onPointerMove(ev) {
-      if (ev.pointerId !== activePointerId) return;
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
+      if (ev.pointerId !== activePointerId && activePointerId !== null) return;
+      const curX = Number.isFinite(ev.clientX) ? ev.clientX : startX;
+      const curY = Number.isFinite(ev.clientY) ? ev.clientY : startY;
+      const dx = curX - startX;
+      const dy = curY - startY;
 
-      if (!hasDragged && Math.hypot(dx, dy) > 5) {
+      if (!hasDragged && Math.hypot(dx, dy) > 3) {
         hasDragged = true;
         sourceEl.classList.add('is-being-dragged');
 
         ghostEl = document.createElement('div');
         ghostEl.className = 'match-drag-ghost';
+        ghostEl.setAttribute('aria-hidden', 'true');
+        ghostEl.style.position = 'fixed';
+        ghostEl.style.zIndex = '2147483647';
+        ghostEl.style.pointerEvents = 'none';
         ghostEl.innerHTML = `
           <svg class="match-grip-svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
             <circle cx="9" cy="12" r="1.5"></circle><circle cx="9" cy="5" r="1.5"></circle><circle cx="9" cy="19" r="1.5"></circle>
@@ -12930,17 +12943,17 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
           </svg>
           <span class="match-word-text">${escapeText(source.vocab_word)}</span>
         `;
-        ghostEl.style.left = `${ev.clientX}px`;
-        ghostEl.style.top = `${ev.clientY}px`;
-        document.body.appendChild(ghostEl);
+        ghostEl.style.left = `${curX}px`;
+        ghostEl.style.top = `${curY}px`;
+        (modal || document.body).appendChild(ghostEl);
       }
 
       if (hasDragged && ghostEl) {
-        ghostEl.style.left = `${ev.clientX}px`;
-        ghostEl.style.top = `${ev.clientY}px`;
+        ghostEl.style.left = `${curX}px`;
+        ghostEl.style.top = `${curY}px`;
 
         // Detect hover over the entire card container
-        const elements = typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(ev.clientX, ev.clientY) : [];
+        const elements = typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(curX, curY) : [];
         let card = elements.find(el => el.classList && el.classList.contains('match-target-card'));
         if (!card) {
           const inner = elements.find(el => el.closest && el.closest('.match-target-card'));
@@ -12963,10 +12976,14 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
     }
 
     function onPointerEnd(ev) {
-      if (ev.pointerId !== activePointerId) return;
+      if (ev.pointerId !== activePointerId && activePointerId !== null) return;
+      sourceEl.removeEventListener('dragstart', preventDrag);
       sourceEl.removeEventListener('pointermove', onPointerMove);
       sourceEl.removeEventListener('pointerup', onPointerEnd);
       sourceEl.removeEventListener('pointercancel', onPointerEnd);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerEnd);
+      window.removeEventListener('pointercancel', onPointerEnd);
       try { sourceEl.releasePointerCapture?.(ev.pointerId); } catch (_) {}
 
       if (hoveredCardEl) {
@@ -12978,7 +12995,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         sourceEl.classList.remove('is-being-dragged');
         if (ghostEl) { ghostEl.remove(); ghostEl = null; }
 
-        const elements = typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(ev.clientX, ev.clientY) : [];
+        const curX = Number.isFinite(ev.clientX) ? ev.clientX : startX;
+        const curY = Number.isFinite(ev.clientY) ? ev.clientY : startY;
+        const elements = typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(curX, curY) : [];
         let card = elements.find(el => el.classList && el.classList.contains('match-target-card'));
         if (!card) {
           const inner = elements.find(el => el.closest && el.closest('.match-target-card'));
@@ -13000,6 +13019,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
     sourceEl.addEventListener('pointermove', onPointerMove);
     sourceEl.addEventListener('pointerup', onPointerEnd);
     sourceEl.addEventListener('pointercancel', onPointerEnd);
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerEnd);
+    window.addEventListener('pointercancel', onPointerEnd);
   }
 
   function handleTapBank(wordId) {

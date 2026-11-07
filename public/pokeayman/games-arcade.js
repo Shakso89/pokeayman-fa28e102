@@ -1893,33 +1893,35 @@
     }
 
     const panel = document.createElement('div');
-    panel.className = 'ga-word-count-panel w-full bg-[#111928]/80 border border-slate-800/80 rounded-xl px-4 py-3.5 flex items-center justify-between shadow-sm transition-all hover:border-yellow-500/50';
-    panel.innerHTML = `<div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-yellow-400">
+    panel.className = 'ga-stepper-panel ga-word-count-panel flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800';
+    panel.innerHTML = `<div class="flex items-center gap-2.5 text-xs font-bold text-slate-300 min-w-0">
+      <span class="text-slate-500 shrink-0">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/>
           <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/>
           <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>
         </svg>
+      </span>
+      <div class="flex flex-col min-w-0 text-left">
+        <span class="truncate">Word count</span>
       </div>
-      <span class="font-bold text-white text-sm">Word count</span>
     </div>
-    <div class="bg-[#0b1120] border border-slate-800 rounded-xl p-1 flex items-center gap-1.5">
+    <div class="flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0">
       <button
         type="button"
-        class="ga-word-count-dec w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 cursor-pointer"
+        class="ga-stepper-dec ga-word-count-dec w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer"
         aria-label="Decrease word count"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        −
       </button>
-      <div class="ga-word-count-val min-w-[80px] px-3 py-1.5 bg-slate-800/70 rounded-lg border border-slate-700/40 text-xs font-bold text-slate-100 text-center select-none">
-      </div>
+      <span class="ga-stepper-label ga-word-count-val px-2 text-xs font-bold text-slate-200 min-w-[70px] text-center select-none truncate">
+      </span>
       <button
         type="button"
-        class="ga-word-count-inc w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition active:scale-95 cursor-pointer"
+        class="ga-stepper-inc ga-word-count-inc w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer"
         aria-label="Increase word count"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        +
       </button>
     </div>`;
 

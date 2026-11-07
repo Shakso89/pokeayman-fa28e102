@@ -219,19 +219,20 @@ describe("Wordwall-style Drag & Drop Match Words Game", () => {
       const panel = stepper.element;
       expect(panel).not.toBeNull();
 
-      // UI Layout Specs
+      // UI Layout Specs matching other game steppers (Winner coins, Timer)
       expect(panel.className).toContain("ga-word-count-panel");
-      expect(panel.className).toContain("bg-[#111928]/80");
-      expect(panel.className).toContain("border-slate-800/80");
+      expect(panel.className).toContain("ga-stepper-panel");
+      expect(panel.className).toContain("bg-slate-900/60");
+      expect(panel.className).toContain("border-slate-800");
 
       // Icon & Title
       const icon = panel.querySelector("svg");
       expect(icon).not.toBeNull();
-      const label = panel.querySelector(".font-bold.text-white.text-sm");
+      const label = panel.querySelector(".truncate");
       expect(label?.textContent).toBe("Word count");
 
-      // Right side capsule housing
-      const housing = panel.querySelector(".bg-\\[\\#0b1120\\]");
+      // Right side stepper housing
+      const housing = panel.querySelector(".bg-slate-950\\/70");
       expect(housing).not.toBeNull();
 
       // Initial value display: All (17)
@@ -299,6 +300,44 @@ describe("Wordwall-style Drag & Drop Match Words Game", () => {
 
       expect(openModalCode).not.toContain("${isMatchWords ?");
       expect(openModalCode).not.toContain("ga-match-word-count-panel w-full");
+    });
+
+    it("displays moving word ghost with ultra-high z-index following pointer during drag", () => {
+      app.openGameMatch("TestList");
+      const modal = document.querySelector(".game-match-root") as HTMLElement;
+      expect(modal).not.toBeNull();
+
+      const chip = modal.querySelector(".match-word-chip:not(.is-placed)") as HTMLElement;
+      expect(chip).not.toBeNull();
+      const chipWord = chip.querySelector(".match-word-text")?.textContent?.trim() || "";
+      expect(chipWord.length).toBeGreaterThan(0);
+
+      // Initiate pointer drag
+      chip.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, clientX: 100, clientY: 500 } as any));
+
+      // Move pointer beyond 3px threshold
+      window.dispatchEvent(new MouseEvent("pointermove", { bubbles: true, clientX: 180, clientY: 320 } as any));
+
+      // Ghost element should be created and visible
+      const ghost = document.querySelector(".match-drag-ghost") as HTMLElement;
+      expect(ghost).not.toBeNull();
+      expect(ghost.textContent).toContain(chipWord);
+      expect(ghost.style.position).toBe("fixed");
+      expect(ghost.style.zIndex).toBe("2147483647");
+      expect(ghost.style.pointerEvents).toBe("none");
+      expect(ghost.style.left).toBe("180px");
+      expect(ghost.style.top).toBe("320px");
+
+      // Move pointer further across the screen
+      window.dispatchEvent(new MouseEvent("pointermove", { bubbles: true, clientX: 250, clientY: 150 } as any));
+      expect(ghost.style.left).toBe("250px");
+      expect(ghost.style.top).toBe("150px");
+
+      // Release pointer drag
+      window.dispatchEvent(new MouseEvent("pointerup", { bubbles: true, clientX: 250, clientY: 150 } as any));
+      expect(document.querySelector(".match-drag-ghost")).toBeNull();
+
+      modal.remove();
     });
   });
 });
