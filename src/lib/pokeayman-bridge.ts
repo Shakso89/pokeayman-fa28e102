@@ -1,6 +1,13 @@
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { streamSpeech } from "@/lib/vocabulary-speech";
+import {
+  streamSpeech,
+  requestPersistentStorage,
+  getCachedAudio,
+  saveCachedAudio,
+  getAudioCacheStats,
+  clearAudioCache,
+} from "@/lib/vocabulary-speech";
 import {
   fetchClassStudents,
   removeStudentFromClass,
@@ -53,6 +60,16 @@ export function setupPokeaymanBridge({
     }
     activeSpeechController = new AbortController();
     return streamSpeech("/api/vocabulary-speech", text, level, activeSpeechController.signal);
+  };
+
+  // Expose permanent audio cache management & trigger persistent storage request
+  requestPersistentStorage().catch(() => {});
+  (window as any).pokeaymanAudioCache = {
+    getCachedAudio,
+    saveCachedAudio,
+    getAudioCacheStats,
+    clearAudioCache,
+    requestPersistentStorage,
   };
 
   window.supabaseClient = supabase;

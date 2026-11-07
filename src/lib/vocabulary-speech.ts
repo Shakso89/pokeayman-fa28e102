@@ -1,11 +1,21 @@
 import { createParser } from "eventsource-parser";
+import {
+  getCachedAudio,
+  saveCachedAudio,
+  pcmToWavBlob,
+  requestPersistentStorage,
+  getAudioCacheStats,
+  clearAudioCache,
+} from "./audio-cache";
 
-// Purge any stale audio caches that may have recorded prompt text or conversational chatter.
-if (typeof caches !== "undefined") {
-  caches.delete("pokeayman-natural-voice-v3").catch(() => {});
-  caches.delete("pokeayman-natural-voice-v2").catch(() => {});
-  caches.delete("pokeayman-natural-voice-v1").catch(() => {});
-}
+export {
+  getCachedAudio,
+  saveCachedAudio,
+  pcmToWavBlob,
+  requestPersistentStorage,
+  getAudioCacheStats,
+  clearAudioCache,
+};
 
 export function decodePCM(pending: Uint8Array, incoming: Uint8Array) {
   const bytes = new Uint8Array(pending.length + incoming.length);
@@ -54,6 +64,54 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
   try {
     if (context.state === "suspended") await context.resume();
     const normalizedLevel = /^P[1-6]$/.test(level) ? level : "P3";
+
+    // 1. Check permanent IndexedDB audio cache (0ms latency, survives browser restarts)
+    const cachedBlob = await getCachedAudio(cleanText, normalizedLevel, "kore").catch(() => null);
+    if (cachedBlob) {
+      try {
+        const arrayBuffer =
+          typeof cachedBlob.arrayBuffer === "function"
+            ? await cachedBlob.arrayBuffer()
+            : await new Response(cachedBlob).arrayBuffer();
+        const audioBuffer = await new Promise<AudioBuffer>((resolve, reject) => {
+          const promise = context.decodeAudioData(arrayBuffer, resolve, reject);
+          if (promise && typeof promise.then === "function") {
+            promise.then(resolve, reject);
+          }
+        });
+
+        const source = context.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(masterGain);
+        sources.add(source);
+
+        playback = new Promise<void>((resolve) => {
+          source.onended = () => {
+            sources.delete(source);
+            resolve();
+          };
+        });
+
+        playhead = Math.max(context.currentTime + 0.02, 0);
+        source.start(playhead);
+        playhead += audioBuffer.duration;
+
+        if (playhead > context.currentTime) {
+          const fadeStart = Math.max(context.currentTime, playhead - 0.02);
+          masterGain.gain.setValueAtTime(1, fadeStart);
+          masterGain.gain.linearRampToValueAtTime(0, playhead);
+        }
+
+        await playback;
+        signal?.throwIfAborted();
+        await new Promise((r) => setTimeout(r, 60));
+        return;
+      } catch (cacheDecodeErr) {
+        console.warn("[vocabulary-speech] Cached audio playback fallback to network:", cacheDecodeErr);
+      }
+    }
+
+    // 2. Fallback to CacheStorage or network streaming
     const cacheKey = new Request(`${location.origin}/__vocabulary_audio/kore-v4/${normalizedLevel}/${encodeURIComponent(cleanText)}`);
     const cache = await caches.open("pokeayman-natural-voice-v4").catch(() => null);
     const cached = await cache?.match(cacheKey);
@@ -73,6 +131,8 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
       throw new Error(message);
     }
     const reusable = cached ? null : response.clone();
+    const pcmChunks: Uint8Array[] = [];
+
     const parser = createParser({
       onEvent(event) {
         const payload = JSON.parse(event.data) as { type: string; audio?: string; message?: string; error?: { message?: string } };
@@ -83,9 +143,13 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
         }
         if (payload.type !== "speech.audio.delta") return;
         if (completed || !payload.audio) throw new Error("Invalid speech audio event");
+
+        const rawChunk = Uint8Array.from(atob(payload.audio), (c) => c.charCodeAt(0));
+        pcmChunks.push(rawChunk);
+
         const decoded = decodePCM(
           pending,
-          Uint8Array.from(atob(payload.audio), (c) => c.charCodeAt(0)),
+          rawChunk,
         );
         pending = new Uint8Array(decoded.pending);
         if (!decoded.samples.length) return;
@@ -121,6 +185,19 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
     }
     if (!completed || !samplesPlayed || pending.length) throw new Error("Incomplete speech stream");
     if (cache && reusable) await cache.put(cacheKey, reusable).catch(() => {});
+
+    // Save permanently to IndexedDB so subsequent plays are instant and offline-ready
+    if (pcmChunks.length > 0) {
+      const totalBytes = pcmChunks.reduce((sum, c) => sum + c.byteLength, 0);
+      const combinedPcm = new Uint8Array(totalBytes);
+      let offset = 0;
+      for (const chunk of pcmChunks) {
+        combinedPcm.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      const wavBlob = pcmToWavBlob(combinedPcm, 24000);
+      saveCachedAudio(cleanText, normalizedLevel, wavBlob, "kore").catch(() => {});
+    }
 
     // Smooth de-click fade at the end of the scheduled audio to prevent DC offset clicks
     if (playhead > context.currentTime) {

@@ -22592,8 +22592,9 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
   const level = typeof toReadingLevelCode === 'function' ? toReadingLevelCode(rawLevel) : (/^P[1-6]$/.test(rawLevel) ? rawLevel : 'P4');
 
   try {
-    if (typeof window.parent?.pokeaymanSpeak === 'function') {
-      await window.parent.pokeaymanSpeak(clean, level);
+    const speaker = window.pokeaymanSpeak || window.parent?.pokeaymanSpeak;
+    if (typeof speaker === 'function') {
+      await speaker(clean, level);
     } else {
       throw new Error('The natural voice is not ready yet. Please reopen the app.');
     }
