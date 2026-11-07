@@ -115,6 +115,63 @@
     return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  // Helper to extract clean search keywords for grammar rules
+  function extractKeywordsForGrammarRule(rule, deck) {
+    const sentence = (rule?.sentence || '').trim();
+    const title = (rule?.title || '').trim();
+    const text = sentence || title || (deck?.grammar_deck_name || deck?.deck_name || '');
+    if (!text) return 'grammar';
+    const clean = text.replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    const stopWords = new Set([
+      'the', 'a', 'an', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'am', 'be', 'been', 'being',
+      'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'against', 'between', 'into', 'through',
+      'during', 'before', 'after', 'above', 'below', 'from', 'up', 'down', 'of', 'off', 'over', 'under',
+      'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'what', 'which',
+      'who', 'whom', 'whose', 'where', 'when', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',
+      'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very',
+      'can', 'will', 'just', 'should', 'now', 'today', 'right', 'rule', 'formula', 'practice'
+    ]);
+    const words = clean.split(' ').filter(w => w.length > 2 && !stopWords.has(w.toLowerCase()));
+    if (words.length >= 2) return `${words[0]} ${words[1]}`;
+    if (words.length === 1) return words[0];
+    return clean.split(' ').slice(0, 2).join(' ') || 'classroom';
+  }
+
+  // Robust photo and clipart search for grammar deck rules
+  async function fetchMediaForGrammarSearch(query, type = 'all', page = 1) {
+    const cleanQuery = (query || '').trim();
+    if (!cleanQuery) return { photos: [], hasMore: false };
+    const typeParam = type && type !== 'all' ? `&image_type=${encodeURIComponent(type)}` : '';
+    const endpoint = `/api/public/pexels?query=${encodeURIComponent(cleanQuery)}${typeParam}&per_page=16&page=${page}`;
+    let res;
+    if (typeof window !== 'undefined' && typeof window.pexelsFetch === 'function') {
+      res = await window.pexelsFetch(endpoint, { headers: { 'Authorization': '' } });
+    } else {
+      res = await fetch(endpoint);
+    }
+    if (!res.ok) throw new Error('Photo fetch failed');
+    const data = await res.json();
+    const rawPhotos = Array.isArray(data.photos) ? data.photos : [];
+    const photos = rawPhotos.map((p, idx) => {
+      let fullUrl = p.src?.large || p.src?.medium || p.src?.original || p.webformatURL || p.largeImageURL || p.previewURL || '';
+      let thumbUrl = p.src?.medium || p.src?.small || p.src?.tiny || p.previewURL || fullUrl;
+      if (fullUrl.includes('pixabay.com') && fullUrl.includes('_150.')) {
+        fullUrl = fullUrl.replace('_150.', '_640.');
+      }
+      return {
+        id: String(p.id || idx),
+        url: fullUrl,
+        thumb: thumbUrl,
+        photographer: p.photographer || p.user || 'Artist'
+      };
+    }).filter(p => p.url && !p.url.includes('pixabay.com/get/'));
+    return {
+      photos,
+      hasMore: Boolean(data.next_page) && photos.length >= 8
+    };
+  }
+
+
   // Retrieve all grammar decks from allData (with starter fallback)
   window.getAllGrammarDecks = function(schoolName = '', className = '') {
     const list = (typeof allData !== 'undefined' && Array.isArray(allData)) ? allData : [];
@@ -148,15 +205,23 @@
 
   function isCurrentTeacherOwner(deck) {
     if (!deck) return false;
-    const currentName = String(typeof currentTeacher !== 'undefined' ? currentTeacher : '').trim().toLowerCase();
-    const currentId = String(typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : (typeof verifiedTeacherIdentity === 'function' ? verifiedTeacherIdentity() : '')).trim();
     if (typeof isAymanTeacher === 'function' && isAymanTeacher()) return true;
 
-    const deckTeacher = String(deck.teacher_name || deck.created_by || deck.owner || '').trim().toLowerCase();
+    const norm = n => String(n || '').trim().toLowerCase().replace(/^teacher\s+/i, '');
+    const currentName = norm(typeof currentTeacher !== 'undefined' ? currentTeacher : '');
+    const currentId = String(typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : (typeof verifiedTeacherIdentity === 'function' ? verifiedTeacherIdentity() : '')).trim();
+
+    const deckTeacher = norm(deck.teacher_name || deck.created_by || deck.owner || '');
     const deckOwnerId = String(deck.owner_id || deck.teacher_id || deck.cloud_user_id || '').trim();
 
-    if (currentName && deckTeacher === currentName) return true;
-    if (currentId && deckOwnerId === currentId) return true;
+    // If starter deck, allow teacher to customize and edit
+    if (deck.__backendId?.startsWith('starter-') || deck.id?.startsWith('starter-') || deck.grammar_deck_id?.startsWith('starter-')) {
+      return true;
+    }
+
+    if (currentName && deckTeacher && currentName === deckTeacher) return true;
+    if (currentId && deckOwnerId && currentId === deckOwnerId) return true;
+    if (deck.created_by === currentTeacher || deck.owner === currentTeacher) return true;
     return false;
   }
 
@@ -218,10 +283,10 @@
               Assign
             </button>
             ${isOwner ? `
-              <button type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition" title="Edit Deck" onclick="window.openGrammarDeckEditor('${escapeHtml(deckId)}', '${escapeHtml(name)}')">
+              <button type="button" class="cg-edit-btn p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition cursor-pointer" data-deck-id="${escapeHtml(deckId)}" data-deck-name="${escapeHtml(name)}" title="Edit Deck">
                 ✏️
               </button>
-              <button type="button" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 transition" title="Delete Deck" onclick="window.deleteGrammarDeck('${escapeHtml(deckId)}')">
+              <button type="button" class="cg-del-btn p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 transition cursor-pointer" data-deck-id="${escapeHtml(deckId)}" title="Delete Deck">
                 🗑️
               </button>
             ` : ''}
@@ -229,6 +294,19 @@
         </div>
       `;
     }).join('');
+
+    container.querySelectorAll('.cg-edit-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        window.openGrammarDeckEditor(btn.dataset.deckId, btn.dataset.deckName);
+      };
+    });
+    container.querySelectorAll('.cg-del-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        window.deleteGrammarDeck(btn.dataset.deckId);
+      };
+    });
   };
 
   // ==========================================
@@ -309,24 +387,24 @@
       const isOwner = isCurrentTeacherOwner(deck);
 
       return `
-        <div class="rounded-2xl bg-slate-900 border border-slate-800 p-4 sm:p-5 flex flex-col justify-between hover:border-slate-700 transition shadow-xl space-y-4" data-grammar-deck-id="${escapeHtml(deckId)}">
+        <article class="vocab-list-card teacher-zone-wordbank-card grammar-deck-card rounded-2xl bg-slate-900 border border-slate-800 p-4 sm:p-5 flex flex-col justify-between hover:border-slate-700 transition shadow-xl space-y-3" data-grammar-deck-id="${escapeHtml(deckId)}">
           <div>
             <div class="flex items-center justify-between gap-2 mb-2">
               <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[11px] font-bold">Grammar</span>
               <span class="text-xs text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/20">${rules.length} rules</span>
             </div>
             
-            <h4 class="text-lg font-bold text-white truncate hover:text-amber-300 transition cursor-pointer" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
+            <h4 class="text-base font-bold text-white truncate hover:text-amber-300 transition cursor-pointer tg-open-practice" data-deck-id="${escapeHtml(deckId)}">
               ${escapeHtml(name)}
             </h4>
             
             <!-- Marked by the teacher who created it -->
-            <div class="flex items-center gap-1.5 text-xs text-slate-400 mt-1 mb-3">
-              <span>👤</span> By <span class="text-amber-300 font-semibold">${escapeHtml(teacher)}</span> · <span class="text-slate-500">${escapeHtml(cls)} (${escapeHtml(school)})</span>
+            <div class="flex items-center gap-1.5 text-xs text-slate-400 mt-1 mb-2.5">
+              <span>👤</span> By <span class="text-amber-300 font-semibold">${escapeHtml(teacher)}</span> · <span class="text-slate-500">${escapeHtml(cls)}</span>
             </div>
 
-            <!-- Cover Image Preview -->
-            <div class="relative group/cover rounded-xl overflow-hidden aspect-[16/10] bg-slate-950 border border-slate-800 cursor-pointer" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
+            <!-- Compact Cover Image Preview -->
+            <div class="grammar-cover-box relative group/cover rounded-xl overflow-hidden bg-slate-950 border border-slate-800 cursor-pointer tg-open-practice" data-deck-id="${escapeHtml(deckId)}" style="height: 145px; max-height: 145px;">
               <img src="${escapeHtml(cover)}" alt="${escapeHtml(name)}" class="w-full h-full object-cover transition duration-300 group-hover/cover:scale-105">
               <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover/cover:opacity-100 transition flex items-center justify-center">
                 <span class="px-3 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-bold text-xs shadow-md">Open Practice</span>
@@ -335,29 +413,55 @@
           </div>
 
           <!-- Bottom Action Buttons -->
-          <div class="flex items-center justify-between pt-3 border-t border-slate-800/80">
+          <div class="flex items-center justify-between pt-2.5 border-t border-slate-800/80">
             <div class="flex items-center gap-1.5">
-              <button type="button" class="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-sm active:scale-95" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
+              <button type="button" class="tg-practice-btn px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-sm active:scale-95 cursor-pointer" data-deck-id="${escapeHtml(deckId)}">
                 Practice
               </button>
-              <button type="button" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition" onclick="window.openGrammarSharePopupFor('${escapeHtml(deckId)}', '${escapeHtml(name)}')">
+              <button type="button" class="tg-assign-btn px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition cursor-pointer" data-deck-id="${escapeHtml(deckId)}" data-deck-name="${escapeHtml(name)}">
                 Assign
               </button>
             </div>
             ${isOwner ? `
               <div class="flex items-center gap-1">
-                <button type="button" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition text-xs" title="Edit Deck" onclick="window.openGrammarDeckEditor('${escapeHtml(deckId)}', '${escapeHtml(name)}')">
+                <button type="button" class="tg-edit-btn p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition text-xs cursor-pointer" data-deck-id="${escapeHtml(deckId)}" data-deck-name="${escapeHtml(name)}" title="Edit Deck">
                   ✏️
                 </button>
-                <button type="button" class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 transition text-xs" title="Delete Deck" onclick="window.deleteGrammarDeck('${escapeHtml(deckId)}')">
+                <button type="button" class="tg-del-btn p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 transition text-xs cursor-pointer" data-deck-id="${escapeHtml(deckId)}" title="Delete Deck">
                   🗑️
                 </button>
               </div>
             ` : ''}
           </div>
-        </div>
+        </article>
       `;
     }).join('');
+
+    // Wire listeners
+    grid.querySelectorAll('.tg-edit-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        window.openGrammarDeckEditor(btn.dataset.deckId, btn.dataset.deckName);
+      };
+    });
+    grid.querySelectorAll('.tg-del-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        window.deleteGrammarDeck(btn.dataset.deckId);
+      };
+    });
+    grid.querySelectorAll('.tg-practice-btn, .tg-open-practice').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        window.openGrammarDeckPracticeById(btn.dataset.deckId);
+      };
+    });
+    grid.querySelectorAll('.tg-assign-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        window.openGrammarSharePopupFor(btn.dataset.deckId, btn.dataset.deckName);
+      };
+    });
   };
 
   // ==========================================
@@ -614,8 +718,14 @@
   window.openGrammarDeckEditor = function(deckId, deckName) {
     document.querySelectorAll('#grammar-editor-modal').forEach(m => m.remove());
 
-    const deck = window.getAllGrammarDecks().find(d => (d.__backendId === deckId || d.id === deckId || d.grammar_deck_id === deckId));
+    const all = typeof window.getAllGrammarDecks === 'function' ? window.getAllGrammarDecks('', '') : [];
+    const targetId = typeof deckId === 'object' && deckId !== null ? (deckId.__backendId || deckId.id || deckId.grammar_deck_id) : deckId;
+    const deck = (typeof deckId === 'object' && deckId !== null)
+      ? deckId
+      : all.find(d => String(d.__backendId) === String(targetId) || String(d.id) === String(targetId) || String(d.grammar_deck_id) === String(targetId));
+
     if (!deck) {
+      console.warn('openGrammarDeckEditor: deck not found for id', deckId);
       if (typeof toast === 'function') toast('Deck not found.');
       return;
     }

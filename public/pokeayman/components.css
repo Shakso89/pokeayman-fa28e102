@@ -1409,17 +1409,42 @@ html body:is(#pk-ds, body, html) :is(
    Vocabulary Card Header Layout & Title Wrapping & Responsive Grid
    ========================================================================== */
 #teacher-vb-lists-grid,
+#teacher-grammar-decks-grid,
 #vocab-lists-container {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  gap: 16px !important;
   align-items: stretch !important;
 }
 
 @media (max-width: 640px) {
   #teacher-vb-lists-grid,
+  #teacher-grammar-decks-grid,
   #vocab-lists-container {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)) !important;
+    gap: 12px !important;
   }
+}
+
+#teacher-grammar-decks-grid .grammar-deck-card {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+#teacher-grammar-decks-grid .grammar-deck-card .grammar-cover-box {
+  width: 100% !important;
+  height: 150px !important;
+  max-height: 150px !important;
+  overflow: hidden !important;
+  border-radius: 0.75rem !important;
+}
+
+#teacher-grammar-decks-grid .grammar-deck-card .grammar-cover-box img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
 }
 
 :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.teacher-zone-wordbank-header, .teacher-zone-wordbank-heading) {
