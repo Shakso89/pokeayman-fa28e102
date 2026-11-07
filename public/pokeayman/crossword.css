@@ -676,6 +676,17 @@ html body > .ga-stage[data-ga-theme="toybox"] .crossword-cell.is-wrong {
 }
 
 /* Theme: Halloween */
+html body > .ga-stage[data-ga-theme="halloween"] .crossword-cell:not(.is-correct):not(.is-wrong) input,
+html body > .ga-stage[data-ga-theme="halloween"] .crossword-cell:not(.is-correct):not(.is-wrong) input[data-cell-key],
+html body > .ga-stage[data-ga-theme="halloween"] .crossword-cell input:not(:read-only),
+html body .crossword-game-root[data-ga-theme="halloween"] .crossword-cell:not(.is-correct):not(.is-wrong) input,
+html body .crossword-game-root[data-ga-theme="halloween"] .crossword-cell:not(.is-correct):not(.is-wrong) input[data-cell-key] {
+  color: #fff7ed !important;
+  -webkit-text-fill-color: #fff7ed !important;
+  caret-color: #fb923c !important;
+  text-shadow: 0 0 10px rgba(251, 146, 60, 0.45), 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+  font-weight: 950 !important;
+}
 html body > .ga-stage[data-ga-theme="halloween"] .crossword-cell.is-correct {
   background: linear-gradient(180deg, #dcfce7 0%, #4ade80 100%) !important;
   border-color: #22c55e !important;

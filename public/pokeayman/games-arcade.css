@@ -6852,10 +6852,19 @@ html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) 
   box-shadow: inset 0 1px 0 rgba(251, 146, 60, 0.3), 0 3px 0 #0d051a, 0 6px 12px rgba(0, 0, 0, 0.4) !important;
 }
 
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell:not(.is-correct):not(.is-wrong) input,
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell:not(.is-correct):not(.is-wrong) input[data-cell-key],
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell input,
-.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell input {
-  color: #fed7aa !important;
-  font-weight: 900 !important;
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell input[data-cell-key],
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell:not(.is-correct):not(.is-wrong) input,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell:not(.is-correct):not(.is-wrong) input[data-cell-key],
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell input,
+.ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell input[data-cell-key] {
+  color: #fff7ed !important;
+  -webkit-text-fill-color: #fff7ed !important;
+  caret-color: #fb923c !important;
+  text-shadow: 0 0 10px rgba(251, 146, 60, 0.45), 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+  font-weight: 950 !important;
 }
 
 html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .crossword-cell small,
