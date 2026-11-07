@@ -11419,6 +11419,973 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 })();
 
 </script>
+<script data-pokeayman-inline="surprise-boxes">
+/* Surprise Boxes (Baamboozle-style) game module: setup modal and board gameplay */
+(function () {
+  const baamboozlePowerUps = ['Star','Steal','Rocket','Bomb','Swap','Gift','Trap'];
+  window.baamboozlePowerUps = baamboozlePowerUps;
+
+  const formatBaamScoreDelta = (text) => String(text || '')
+    .replace(/(\+\d+)/g, '<span class="baam-num-plus">$1</span>')
+    .replace(/([−-]\d+)/g, '<span class="baam-num-minus">$1</span>');
+  window.formatBaamScoreDelta = formatBaamScoreDelta;
+
+  const BAAM_POWER_INFO = {
+    Star:   { name: 'Star Boost',   emoji: '⭐', desc: '+25 points for you!' },
+    Steal:  { name: 'Zap Steal',    emoji: '⚡', desc: 'Steal 15 points from the leader!' },
+    Rocket: { name: 'Rocket Blast', emoji: '🚀', desc: 'Blast 5 points above first place!' },
+    Bomb:   { name: 'Mega Bomb',    emoji: '💣', desc: 'Oh no! −20 points.' },
+    Swap:   { name: 'Score Swap',   emoji: '🔄', desc: 'Swap scores with the leader!' },
+    Gift:   { name: 'Mystery Gift', emoji: '🎁', desc: 'Everyone else gets +10 points.' },
+    Trap:   { name: 'Sticky Trap',  emoji: '🕸️', desc: 'Trapped! No points this turn.' }
+  };
+  window.BAAM_POWER_INFO = BAAM_POWER_INFO;
+
+  function chooseBaamboozlePowerUps(listName) {
+    if (typeof chooseGamePlayers === 'function') {
+      chooseGamePlayers(listName, chooseBaamboozlePowerUps);
+      return;
+    }
+    const availableWords = getGameWords(listName).filter(w => w.vocab_word);
+    if (!availableWords.length) { toast('Add vocabulary words first'); return; }
+    const maxCards = 16;
+    const modal = document.createElement('div');
+    modal.className = 'surprise-boxes-setup game-inline-view game-setup-panel mx-auto my-4';
+    modal.innerHTML = `<div class="game-setup-panel">
+      <h2 class="heading-font text-2xl font-bold text-gray-800 text-center mb-1">🎁 Surprise Boxes</h2>
+      <p class="text-sm text-gray-500 text-center mb-3">Choose how many cards to play with.</p>
+      <label for="baam-card-count" class="sr-only">Number of cards</label>
+      <div class="grid grid-cols-3 gap-2 mb-4" role="group" aria-label="Number of cards">
+        ${[8, 18, 24].map(n => `<button type="button" class="baam-card-count rounded-lg border-2 border-orange-200 bg-orange-50 px-3 py-3 text-sm font-bold text-gray-700 transition hover:border-orange-400 ${n === Math.min(24, Math.max(8, availableWords.length)) ? 'border-orange-500 bg-orange-100 ring-2 ring-orange-300' : ''}" data-count="${n}">${n} cards</button>`).join('')}
+      </div>
+      <p class="text-sm text-gray-500 text-center mb-3">Power-ups for this round</p>
+      <button type="button" id="baam-power-toggle" class="w-full btn-primary mb-2">All power-ups enabled</button>
+      <p id="baam-powerup-status" class="text-xs text-orange-600 text-center">All power-ups enabled</p>
+      <div class="flex gap-2 mt-5"><button type="button" id="baam-start" class="flex-1 btn-success">Start game</button><button type="button" id="baam-cancel" class="flex-1 btn-outline">Cancel</button></div>
+    </div>`;
+    document.body.appendChild(modal);
+    let selectedCardCount = Math.min(16, Math.max(8, availableWords.length));
+    let powerUpsEnabled = true;
+    const status = modal.querySelector('#baam-powerup-status');
+    modal.querySelectorAll('.baam-card-count').forEach(button => button.addEventListener('click', () => {
+      selectedCardCount = Number(button.dataset.count);
+      modal.querySelectorAll('.baam-card-count').forEach(card => card.classList.remove('border-orange-500', 'bg-orange-100', 'ring-2', 'ring-orange-300'));
+      button.classList.add('border-orange-500', 'bg-orange-100', 'ring-2', 'ring-orange-300');
+    }));
+    modal.querySelector('#baam-power-toggle').addEventListener('click', () => {
+      powerUpsEnabled = !powerUpsEnabled;
+      const label = powerUpsEnabled ? 'All power-ups enabled' : 'All power-ups disabled';
+      modal.querySelector('#baam-power-toggle').textContent = label;
+      status.textContent = label;
+    });
+    modal.querySelector('#baam-cancel').addEventListener('click', () => modal.remove());
+    modal.querySelector('#baam-start').addEventListener('click', () => { const enabled = powerUpsEnabled ? baamboozlePowerUps : []; modal.remove(); openBaamboozle(listName, enabled, selectedCardCount); });
+    modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the setup. */ });
+  }
+  window.chooseBaamboozlePowerUps = chooseBaamboozlePowerUps;
+
+  function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSeconds = 0) {
+    setGameReplay(() => { resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount, timerSeconds); });
+    const normalizedTimerSeconds = Number.isFinite(Number(timerSeconds)) && Number(timerSeconds) > 0 ? Number(timerSeconds) : 0;
+    const words = getGameWords(listName).filter(w => w && w.vocab_word);
+    if (!words.length) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'Add vocabulary words first'); return; }
+
+    // 1. Deduplicate words by normalized word text so NO word can ever repeat
+    const seenNorm = new Set();
+    const uniqueWords = [];
+    for (const w of words) {
+      const norm = String(w?.vocab_word || '').trim().toLowerCase();
+      if (norm && !seenNorm.has(norm)) {
+        seenNorm.add(norm);
+        uniqueWords.push(w);
+      }
+    }
+    if (!uniqueWords.length) {
+      toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'Add vocabulary words first');
+      return;
+    }
+
+    const shuffledWords = uniqueWords.slice().sort(() => Math.random() - 0.5);
+    const roundSize = Number(cardCount) || 8;
+    const isPowerupsExplicitlyEnabled = Array.isArray(enabledPowerUps) && enabledPowerUps.length > 0;
+    const powerUpPool = isPowerupsExplicitlyEnabled
+      ? enabledPowerUps
+      : (Array.isArray(baamboozlePowerUps) && baamboozlePowerUps.length > 0 ? baamboozlePowerUps : ['Star','Steal','Rocket','Bomb','Swap','Gift','Trap']);
+
+    let selectedWords = [];
+    let neededPowerUps = 0;
+
+    if (shuffledWords.length < roundSize) {
+      // If list words are not enough for the cards (e.g. 5 words for 8 cards),
+      // use each unique word exactly once, and complete the rest with power-ups by default!
+      selectedWords = shuffledWords.slice();
+      neededPowerUps = roundSize - selectedWords.length;
+    } else if (isPowerupsExplicitlyEnabled) {
+      // Words are sufficient and power-ups are enabled: mix of unique words and surprise power-ups
+      const targetPowerUps = Math.max(1, Math.min(Math.round(roundSize * 0.25), roundSize - 1));
+      const targetWords = roundSize - targetPowerUps;
+      selectedWords = shuffledWords.slice(0, targetWords);
+      neededPowerUps = roundSize - selectedWords.length;
+    } else {
+      // Words are sufficient and power-ups are disabled: all unique vocabulary cards
+      selectedWords = shuffledWords.slice(0, roundSize);
+      neededPowerUps = 0;
+    }
+
+    const selectedPowerUps = [];
+    if (neededPowerUps > 0 && powerUpPool.length > 0) {
+      const shuffledPool = powerUpPool.slice().sort(() => Math.random() - 0.5);
+      for (let i = 0; i < neededPowerUps; i++) {
+        const pType = shuffledPool[i % shuffledPool.length];
+        selectedPowerUps.push({ powerUp: pType, vocab_word: '' });
+      }
+    }
+
+    const selectedCards = [...selectedWords, ...selectedPowerUps];
+    const deck = selectedCards.sort(() => Math.random() - 0.5);
+    let index = 0;
+    let roundEnded = false;
+    // Track every tile chosen at least once; completion is based only on this set.
+    const chosenCards = new Set();
+    const modal = document.createElement('div'); modal.className = 'game-popup-modal fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+    const tileCount = deck.length;
+    const tileNumbers = Array.from({length: tileCount}, (_, i) => i + 1);
+    const blankTiles = new Set();
+    modal.innerHTML = `<div class="surprise-boxes-game bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden">
+      <div class="surprise-boxes-header bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 px-3 sm:px-5 py-3 flex items-center gap-2 sm:gap-4 border-b-4 border-white relative">
+        <h2 class="game-title-bright heading-font text-xl sm:text-3xl font-bold text-slate-800 text-center flex-1 min-w-0 truncate">🎁 Surprise boxes</h2>
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 relative z-10">
+          <div class="flex items-center gap-1 rounded-xl border-2 border-amber-700/40 bg-white/35 p-1 shadow-lg backdrop-blur-md">
+            <button type="button" id="baam-size-decrease" class="text-slate-900 hover:bg-white/60 hover:text-amber-900 text-base font-black w-9 h-9 rounded-lg bg-white/45 transition-all duration-200 shadow-inner" aria-label="Show fewer boxes per row" title="Fewer boxes">−</button>
+            <button type="button" id="baam-size-increase" class="text-slate-900 hover:bg-white/60 hover:text-amber-900 text-base font-black w-9 h-9 rounded-lg bg-white/45 transition-all duration-200 shadow-inner" aria-label="Show more boxes per row" title="More boxes">+</button>
+          </div>
+          <button type="button" id="baam-close" class="text-slate-900 hover:bg-white/60 hover:text-amber-900 text-2xl font-black w-10 h-9 rounded-lg bg-white/45 border-2 border-amber-700/40 transition-all shadow-lg" aria-label="Close game" title="Close">×</button>
+        </div>
+      </div>
+      <div class="surprise-boxes-body p-3 sm:p-5 bg-slate-50"><div id="baam-player-hud" class="game-player-hud justify-center mt-0 mb-4 max-w-[900px]"></div><div id="baam-board" class="grid grid-cols-4 gap-1.5 sm:gap-2"></div>
+        <div id="baam-reveal" class="hidden baam-reveal-overlay"><div class="baam-reveal-panel baam-question-card" role="dialog" aria-modal="true" aria-labelledby="baam-question-title"><header class="baam-question-header"><div><span class="baam-question-kicker">SURPRISE BOXES</span><h3 id="baam-question-title">Box 01</h3></div><button type="button" id="baam-reveal-close" class="btn-outline baam-question-close" aria-label="Close question" title="Close question">×</button></header><div id="baam-question-player" class="baam-question-player"></div><div id="baam-picture" class="baam-question-picture"></div><p id="baam-word" class="hidden"></p><div id="baam-answer-controls" class="baam-question-actions"></div><p id="baam-answer-status" aria-live="polite"></p></div></div>
+      </div></div>`;
+    document.body.appendChild(modal);
+    // Surprise Boxes stays inside the normal page view; other games retain fullscreen behavior.
+    // Preserve the exact 2–4 students chosen in the pre-game chooser.
+    const baamPlayers = (activeGamePlayers || []).slice(0, 4);
+    const baamQ = sel => modal.querySelector(sel) || document.querySelector('.baam-stage-portal ' + sel);
+    if (baamPlayers.length < 2) { toast('Select at least two students for Surprise Boxes'); modal.remove(); return; }
+    activeGamePlayers = baamPlayers;
+    activeGamePlayerIndex = 0;
+    activeGameScores = baamPlayers.map(() => 0);
+    const playerHud = modal.querySelector('#baam-player-hud');
+    playerHud.innerHTML = baamPlayers.map((player, index) => {
+      const avatar = player.avatar_pokemon_id || 25;
+      return `<div class="game-player-card ${index === 0 ? 'is-active' : ''}" data-player-index="${index}">
+        <div class="game-player-avatar-wrap">${gameStudentAvatarMarkup(player, 'game-player-avatar baam-player-avatar')}</div>
+        <p class="game-player-name font-bold text-xs text-slate-700 baam-player-name">${player.student_name}</p>
+        <p class="game-player-turn text-[11px] font-black" aria-hidden="true"></p>
+        <div class="game-turn-timer hidden" role="timer" aria-label="Remaining turn time"><span class="game-turn-timer-track"><span class="game-turn-timer-fill"></span></span><span class="game-turn-timer-number">⏱ 0s</span></div>
+        <p class="game-player-score" aria-label="Player score"><strong class="baam-player-score-value">0</strong></p>
+      </div>`;
+    }).join('');
+    playerHud.style.gridTemplateColumns = `repeat(${baamPlayers.length}, minmax(0, 1fr))`;
+    if (normalizedTimerSeconds > 0) startPlayerTurnTimer(modal, normalizedTimerSeconds);
+    else { modal.dataset.timerSeconds = ''; updateGamePlayerHud(modal, 0, activeGamePlayerIndex); }
+    const board = modal.querySelector('#baam-board');
+    const baamGridConfig = deck.length <= 8 ? { columns: 4, rows: Math.max(2, Math.ceil(deck.length / 4)) } : deck.length <= 12 ? { columns: 4, rows: 3 } : deck.length <= 18 ? { columns: 6, rows: 3 } : { columns: 6, rows: 4 };
+    let baamGridColumns = baamGridConfig.columns;
+    let baamGridRows = baamGridConfig.rows;
+    const fitBaamBoard = () => {
+      const body = modal.querySelector('.surprise-boxes-body');
+      if (!body || !board) return;
+      const bodyStyle = window.getComputedStyle(body);
+      const boardStyle = window.getComputedStyle(board);
+      const bodyPadX = (parseFloat(bodyStyle.paddingLeft) || 0) + (parseFloat(bodyStyle.paddingRight) || 0);
+      const bodyPadY = (parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0);
+      const boardPadX = (parseFloat(boardStyle.paddingLeft) || 0) + (parseFloat(boardStyle.paddingRight) || 0);
+      const boardPadY = (parseFloat(boardStyle.paddingTop) || 0) + (parseFloat(boardStyle.paddingBottom) || 0);
+      const boardBorderX = (parseFloat(boardStyle.borderLeftWidth) || 0) + (parseFloat(boardStyle.borderRightWidth) || 0);
+      const boardBorderY = (parseFloat(boardStyle.borderTopWidth) || 0) + (parseFloat(boardStyle.borderBottomWidth) || 0);
+      const hud = playerHud?.offsetHeight || 0;
+      const rawBoardInnerW = board.clientWidth > 0
+        ? (board.clientWidth - boardPadX)
+        : (body.clientWidth - bodyPadX - boardPadX - boardBorderX);
+      const rawBoardInnerH = (body.clientHeight - hud - bodyPadY - boardPadY - boardBorderY);
+      const availableWidth = Math.max(1, rawBoardInnerW - 16);
+      const availableHeight = Math.max(1, rawBoardInnerH - 16);
+      const gap = Math.max(8, Math.min(16, Math.floor(Math.min(availableWidth / baamGridColumns, availableHeight / baamGridRows) * .075)));
+      const boxRatio = 1.25; // Locked gift box aspect ratio: width = height * 1.25
+      const maxBoxWidth = (availableWidth - gap * (baamGridColumns - 1)) / baamGridColumns;
+      const maxBoxHeight = (availableHeight - gap * (baamGridRows - 1)) / baamGridRows;
+      const boxWidth = Math.max(54, Math.min(maxBoxWidth, maxBoxHeight * boxRatio));
+      const boxHeight = boxWidth / boxRatio;
+      board.style.gridTemplateColumns = `repeat(${baamGridColumns}, ${Math.floor(boxWidth)}px)`;
+      board.style.gridTemplateRows = `repeat(${baamGridRows}, ${Math.floor(boxHeight)}px)`;
+      board.style.gap = `${gap}px`;
+      board.style.justifyContent = 'center';
+      board.style.alignContent = 'center';
+    };
+    const updateBaamGridDensity = () => { baamGridColumns = baamGridConfig.columns; baamGridRows = baamGridConfig.rows; fitBaamBoard(); requestAnimationFrame(fitBaamBoard); };
+    let baamDensityStep = 1;
+    const baamDensityLimits = { min: 0, max: 2 };
+    const updateBaamDensityControls = () => {
+      const decrease = modal.querySelector('#baam-size-decrease');
+      const increase = modal.querySelector('#baam-size-increase');
+      decrease.disabled = baamDensityStep <= baamDensityLimits.min;
+      increase.disabled = baamDensityStep >= baamDensityLimits.max;
+      decrease.setAttribute('aria-disabled', String(decrease.disabled));
+      increase.setAttribute('aria-disabled', String(increase.disabled));
+    };
+    const adjustBaamDensity = direction => {
+      const next = Math.max(baamDensityLimits.min, Math.min(baamDensityLimits.max, baamDensityStep + direction));
+      if (next === baamDensityStep) return;
+      baamDensityStep = next;
+      // The controls adjust the board layout only; the selected deck and game state stay intact.
+      const columns = Math.max(4, Math.min(8, baamGridConfig.columns + (baamDensityStep - 1) * 2));
+      const rows = Math.ceil(tileCount / columns);
+      baamGridColumns = columns;
+      baamGridRows = rows;
+      updateBaamDensityControls();
+      fitBaamBoard();
+    };
+    modal.querySelector('#baam-size-decrease').addEventListener('click', () => adjustBaamDensity(-1));
+    modal.querySelector('#baam-size-increase').addEventListener('click', () => adjustBaamDensity(1));
+    updateBaamDensityControls();
+    window.addEventListener('resize', fitBaamBoard);
+    window.visualViewport?.addEventListener('resize', fitBaamBoard);
+    const activeBaamThemeId = modal.dataset.gaTheme || (typeof window.gaGetTheme === 'function' ? window.gaGetTheme() : (document.body.dataset.gaActiveTheme || 'classic'));
+    modal.dataset.gaTheme = activeBaamThemeId;
+    const getThemeBallSrc = (themeId) => {
+      if (themeId === 'jungle') return '/pokeayman/assets/balls/6.png';
+      if (themeId === 'toybox') return '/pokeayman/assets/balls/11.png';
+      if (themeId === 'halloween') return '/pokeayman/assets/balls/4.png';
+      return '/pokeayman/assets/balls/1.png';
+    };
+    const baamBallSrc = getThemeBallSrc(activeBaamThemeId);
+    board.innerHTML = tileNumbers.map(n => blankTiles.has(n) ? `<button type="button" class="aspect-[1.25] rounded-lg bg-slate-50 text-slate-300 text-3xl font-black shadow-sm" disabled>×</button>` : `<button type="button" class="baam-tile baam-giftbox" data-tile="${n}" aria-label="Open box ${n}" style="--d:${(n % 8) * 0.18}s"><span class="baam-box-lid" aria-hidden="true"></span><span class="baam-box-body" aria-hidden="true"><span class="baam-box-seal"><img class="baam-seal-ball" src="${baamBallSrc}" alt="Poké Ball" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('is-fallback')"></span></span><span class="baam-box-num">${n}</span></button>`).join('');
+    updateBaamGridDensity();
+    let selectedCard = null;
+    const updateTeamScores = () => {
+      modal.querySelectorAll('.game-player-card').forEach((card, index) => {
+        const score = card.querySelector('.baam-player-score-value');
+        if (score) score.textContent = activeGameScores[index] || 0;
+      });
+    };
+    const applyPowerUp = (power) => {
+      const current = activeGamePlayerIndex;
+      const opponents = activeGameScores.map((_, index) => index).filter(index => index !== current);
+      const before = [...activeGameScores];
+      const leader = opponents.slice().sort((a, b) => activeGameScores[b] - activeGameScores[a])[0];
+      if (power === 'Star') {
+        try { window.pokeSfx?.play?.('star'); } catch (e) {}
+        activeGameScores[current] += 25;
+      } else if (power === 'Steal' && leader !== undefined) {
+        try { window.pokeSfx?.play?.('whoosh'); } catch (e) {}
+        const taken = Math.min(15, Math.max(0, activeGameScores[leader]));
+        activeGameScores[leader] -= taken; activeGameScores[current] += taken;
+      } else if (power === 'Rocket') {
+        try { window.pokeSfx?.play?.('rocket'); } catch (e) {}
+        activeGameScores[current] = Math.max(...activeGameScores) + 5;
+      } else if (power === 'Bomb') {
+        try { window.pokeSfx?.play?.('boom'); } catch (e) {}
+        activeGameScores[current] = Math.max(0, activeGameScores[current] - 20);
+      } else if (power === 'Swap' && leader !== undefined) {
+        try { window.pokeSfx?.play?.('whoosh'); } catch (e) {}
+        [activeGameScores[current], activeGameScores[leader]] = [activeGameScores[leader], activeGameScores[current]];
+      } else if (power === 'Gift') {
+        try { window.pokeSfx?.play?.('plus'); } catch (e) {}
+        opponents.forEach(index => { activeGameScores[index] += 10; });
+      } else if (power === 'Trap') {
+        try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+      }
+      const impacts = activeGameScores.map((score, index) => score - before[index]);
+      const updateTeamScores = () => {
+        modal.querySelectorAll('.game-player-card').forEach((card, index) => {
+          const score = card.querySelector('.baam-player-score-value');
+          if (score) {
+            const previousValue = score.dataset.scoreValue;
+            const nextValue = String(activeGameScores[index] || 0);
+            score.dataset.scoreValue = nextValue;
+            score.textContent = nextValue;
+            if (previousValue !== undefined && previousValue !== nextValue) {
+              score.classList.remove('game-player-score-number-change');
+              void score.offsetWidth;
+              score.classList.add('game-player-score-number-change');
+            }
+          }
+        });
+      };
+      updateTeamScores();
+      // Show every student the power-up changed, not just the current player:
+      // one staggered chip per score change, laid out in the panel's own flow
+      // after the card so it can never cover the player pill, and used instead of
+      // repeating the same numbers as plain text in the status line.
+      const changedEntries = impacts.map((impact, index) => ({ impact, index })).filter(entry => entry.impact);
+      const scoreStage = baamQ('#baam-reveal .baam-reveal-panel');
+      scoreStage?.querySelector('.baam-impact-stack')?.remove();
+      if (changedEntries.length && scoreStage) {
+        const impactStack = document.createElement('div');
+        impactStack.className = 'baam-impact-stack';
+        impactStack.setAttribute('aria-hidden', 'true');
+        changedEntries.forEach((entry, order) => {
+          const impactPlayer = baamPlayers[entry.index];
+          const chip = document.createElement('div');
+          const isScorePlus = entry.impact > 0;
+          chip.className = `baam-impact-chip ${isScorePlus ? 'is-plus' : 'is-minus'}`;
+          chip.style.setProperty('--baam-impact-order', String(order));
+          chip.innerHTML = `${impactPlayer ? gameStudentAvatarMarkup(impactPlayer, 'baam-impact-avatar') : ''}<span class="baam-impact-name"></span><strong class="baam-impact-value ${isScorePlus ? 'is-plus' : 'is-minus'}">${isScorePlus ? '+' : '−'}${Math.abs(entry.impact)}</strong>`;
+          chip.querySelector('.baam-impact-name').textContent = impactPlayer?.student_name || `Player ${entry.index + 1}`;
+          impactStack.appendChild(chip);
+        });
+        const pictureEl = baamQ('#baam-picture');
+        if (pictureEl && pictureEl.parentElement === scoreStage) {
+          pictureEl.insertAdjacentElement('afterend', impactStack);
+        } else {
+          const statusEl = baamQ('#baam-answer-status');
+          scoreStage.insertBefore(impactStack, statusEl && statusEl.parentElement === scoreStage ? statusEl : null);
+        }
+      }
+      if (power === 'Bomb') { const shakeEl = modal.querySelector('#baam-board'); shakeEl?.classList.remove('baam-shake'); void modal.offsetWidth; shakeEl?.classList.add('baam-shake'); }
+      advanceGameTurn();
+      updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
+      if (power === 'Trap') return 'Trapped! No points this turn.';
+      // The chips above already show who gained or lost what; repeating it here
+      // would print the same numbers twice.
+      return changedEntries.length ? '' : 'No score change';
+    };
+    const endBaamboozle = async () => {
+      if (roundEnded || chosenCards.size < deck.length) return;
+      roundEnded = true;
+      const winnerIndex = activeGameScores[0] === activeGameScores[1] ? -1 : (activeGameScores[0] > activeGameScores[1] ? 0 : 1);
+      const winnerName = winnerIndex >= 0 ? (baamPlayers[winnerIndex]?.student_name || `Player ${winnerIndex + 1}`) : '';
+      const winner = winnerIndex < 0 ? "It's a tie!" : `${winnerName} wins!`;
+      const winnerNames = `${baamPlayers[0]?.student_name || 'Player 1'} ${activeGameScores[0]} · ${baamPlayers[1]?.student_name || 'Player 2'} ${activeGameScores[1]}`;
+      const winnerPlayer = winnerIndex >= 0 ? baamPlayers[winnerIndex] : null;
+      const winnerAvatar = winnerPlayer?.avatar_pokemon_id || 25;
+      const winnerAvatarAlt = winnerPlayer ? `${winnerPlayer.student_name}'s avatar Pokémon` : 'Pokémon game tie';
+      const baamConfiguredPrize = Math.max(0, Math.floor(Number(activeGameReward) || 0));
+      let baamAwardedPrize = 0;
+      if (winnerPlayer && baamConfiguredPrize > 0 && !activeGameRewardClaimed) {
+        activeGameRewardClaimed = true;
+        const winnerRecord = getAllStudents().find(student => student.__backendId === winnerPlayer.__backendId) || getAllStudents().find(student => student.student_name === winnerName);
+        if (winnerRecord) {
+          const awardResult = await window.dataSdk.update({ ...winnerRecord, coins: (Number(winnerRecord.coins) || 0) + baamConfiguredPrize, claimed_via_battle: true });
+          if (awardResult?.isOk) {
+            baamAwardedPrize = baamConfiguredPrize;
+            toast(`${winnerName} was awarded ${baamAwardedPrize} coins!`);
+          } else {
+            activeGameRewardClaimed = false;
+            toast('Could not award the Surprise Boxes prize. Please try again.');
+          }
+        } else {
+          activeGameRewardClaimed = false;
+        }
+      }
+      const baamPrizeNotice = baamAwardedPrize > 0 ? `<p class="relative z-10 mt-3 rounded-xl border-2 border-yellow-300 bg-slate-950 px-4 py-2 text-lg font-black text-yellow-200 shadow-lg" aria-live="polite">Prize: ${baamAwardedPrize} coins</p>` : '';
+      baamQ('#baam-reveal')?.classList.add('hidden');
+      modal.querySelectorAll('.baam-tile').forEach(tile => { tile.disabled = true; });
+      const overlay = document.createElement('div');
+      overlay.className = 'game-celebration-overlay baam-final-overlay';
+      overlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="baam-final-title" tabindex="-1"><img class="game-celebration-pikachu battle-winner-celebrate" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png" alt="${winnerAvatarAlt}"><div class="text-4xl mb-1 relative z-10" aria-hidden="true">🏆</div><h2 id="baam-final-title" class="heading-font text-3xl font-black text-amber-700 relative z-10">${winner}</h2><p class="mt-1 text-base font-bold text-slate-700 relative z-10">${winnerNames}</p>${baamPrizeNotice}<div class="flex gap-3 mt-5 relative z-10"><button type="button" id="baam-final-replay" class="btn-primary flex-1">Play again</button><button type="button" id="baam-final-hub" class="btn-outline flex-1">🎮 Other Games</button><button type="button" id="baam-final-close" class="btn-outline flex-1">Close</button></div></div>`;
+      mountGameCelebrationOverlay(modal, overlay);
+      const closeResult = () => { overlay.remove(); modal.remove(); returnToGamesTab(); };
+      overlay.querySelector('#baam-final-close').addEventListener('click', closeResult);
+      overlay.querySelector('#baam-final-hub')?.addEventListener('click', () => {
+        overlay.remove();
+        modal.remove();
+        if (typeof window.gaExitSetupToArcade === 'function') {
+          window.gaExitSetupToArcade();
+        } else {
+          returnToGamesTab();
+        }
+      });
+      overlay.querySelector('#baam-final-replay').addEventListener('click', () => { overlay.remove(); modal.remove(); resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount, timerSeconds); });
+      overlay.addEventListener('click', event => { /* Result popup closes only through its Replay/Close buttons. */ });
+      overlay.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); closeResult(); } });
+      overlay.querySelector('.game-celebration-card').focus();
+    };
+    let answerProgressionTimer = null;
+    const clearAnswerTimer = () => {
+      if (answerProgressionTimer) {
+        clearTimeout(answerProgressionTimer);
+        answerProgressionTimer = null;
+      }
+    };
+    const reveal = () => {
+      clearAnswerTimer();
+      const w = deck[index % deck.length];
+      selectedCard = w;
+      const revealPanel = baamQ('#baam-reveal');
+      const picture = baamQ('#baam-picture');
+      const word = baamQ('#baam-word');
+      const status = baamQ('#baam-answer-status');
+      const answerControls = baamQ('#baam-answer-controls');
+      baamQ('#baam-question-title').textContent = `Box ${String(index + 1).padStart(2, '0')}`;
+      const playerChip = baamQ('#baam-question-player');
+      const questionPlayer = baamPlayers[activeGamePlayerIndex];
+      playerChip.replaceChildren();
+      if (questionPlayer) {
+        playerChip.innerHTML = gameStudentAvatarMarkup(questionPlayer, 'baam-question-avatar');
+        const playerName = document.createElement('span');
+        playerName.textContent = questionPlayer.student_name;
+        playerChip.appendChild(playerName);
+      }
+      revealPanel.classList.remove('hidden'); word.classList.add('hidden'); status.textContent = '';
+      status.className = '';
+      revealPanel.querySelector('.baam-impact-stack')?.remove();
+      const questionCard = baamQ('#baam-reveal .baam-question-card') || baamQ('#baam-reveal .baam-reveal-panel');
+      const allPowerClasses = ['baam-powerup-reveal', 'baam-powerup-star', 'baam-powerup-rocket', 'baam-powerup-steal', 'baam-powerup-bomb', 'baam-powerup-swap', 'baam-powerup-gift', 'baam-powerup-trap'];
+      revealPanel.classList.remove(...allPowerClasses);
+      questionCard?.classList.remove(...allPowerClasses);
+      const kickerEl = baamQ('.baam-question-kicker');
+      if (kickerEl) kickerEl.textContent = 'SURPRISE BOXES';
+
+      if (w.powerUp) {
+        const info = BAAM_POWER_INFO[w.powerUp] || { name: w.powerUp, emoji: '✨', desc: '' };
+        picture.innerHTML = `<div class="baam-power-stage" aria-label="${info.name} power-up">
+          <div class="baam-powerup-icon"><span class="baam-power-badge" aria-hidden="true">${info.emoji}</span></div>
+          <h3 class="baam-power-name">${info.name}</h3>
+          <p class="baam-power-desc">${formatBaamScoreDelta(info.desc)}</p>
+        </div>`;
+        const pKey = w.powerUp.toLowerCase();
+        revealPanel.classList.add('baam-powerup-reveal', `baam-powerup-${pKey}`);
+        questionCard?.classList.add('baam-powerup-reveal', `baam-powerup-${pKey}`);
+        if (kickerEl) kickerEl.textContent = '⚡ POWER-UP!';
+        status.textContent = '';
+        try { window.pokeSfx?.play('pop'); setTimeout(() => window.pokeSfx?.play(({ Star: 'star', Bomb: 'boom', Steal: 'whoosh', Rocket: 'rocket', Swap: 'whoosh', Gift: 'coin', Trap: 'wrong' })[w.powerUp] || 'star'), 500); } catch (e) {}
+        if (answerControls) {
+          answerControls.replaceChildren();
+          const continueBtn = document.createElement('button');
+          continueBtn.type = 'button';
+          continueBtn.className = 'baam-power-continue-btn';
+          continueBtn.textContent = 'Continue →';
+          continueBtn.addEventListener('click', closeBaamRevealAsWrong);
+          answerControls.appendChild(continueBtn);
+          answerControls.classList.remove('hidden');
+        }
+        setTimeout(() => {
+          if (revealPanel.classList.contains('baam-powerup-reveal')) {
+            status.innerHTML = formatBaamScoreDelta(applyPowerUp(w.powerUp));
+            if (chosenCards.size === deck.length) setTimeout(endBaamboozle, 1200);
+          }
+        }, 700);
+        selectedCard = null; return;
+      }
+      picture.innerHTML = w.vocab_image ? `<img src="${w.vocab_image}" class="w-80 h-56 max-w-full rounded-lg object-contain mx-auto" alt="Picture prompt for ${w.vocab_word}" onerror="this.style.display='none'">` : `<div class="w-80 h-56 max-w-full rounded-lg bg-white border border-amber-200 flex items-center justify-center text-sm text-slate-400">No picture available</div>`;
+
+      // Four answer options from selected vocabulary list: 1 correct + up to 3 unique distractors
+      const targetWord = String(w.vocab_word || '').trim();
+      const normalizedTarget = targetWord.toLowerCase();
+      const seenWords = new Set([normalizedTarget]);
+      const distractorPool = [];
+      const shuffledSource = words.slice().sort(() => Math.random() - 0.5);
+      for (const item of shuffledSource) {
+        const candidate = String(item?.vocab_word || '').trim();
+        const candKey = candidate.toLowerCase();
+        if (!candKey || seenWords.has(candKey)) continue;
+        seenWords.add(candKey);
+        distractorPool.push(candidate);
+        if (distractorPool.length >= 3) break;
+      }
+      const choices = [targetWord, ...distractorPool].sort(() => Math.random() - 0.5);
+
+      if (answerControls) {
+        answerControls.replaceChildren();
+        let choiceLocked = false;
+        choices.forEach((choiceText, choiceIdx) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'baam-choice-btn';
+          btn.dataset.choice = choiceText;
+          btn.dataset.sfx = 'none';
+
+          if (choices.length % 2 === 1 && choiceIdx === choices.length - 1) {
+            btn.classList.add('baam-choice-btn-full');
+          }
+
+          const badge = document.createElement('span');
+          badge.className = 'baam-choice-badge';
+          badge.setAttribute('aria-hidden', 'true');
+          badge.textContent = ['A', 'B', 'C', 'D'][choiceIdx] || String(choiceIdx + 1);
+
+          const label = document.createElement('span');
+          label.className = 'baam-choice-text';
+          label.textContent = choiceText;
+
+          btn.appendChild(badge);
+          btn.appendChild(label);
+
+          btn.addEventListener('click', () => {
+            if (choiceLocked) return;
+            choiceLocked = true;
+            clearAnswerTimer();
+
+            const isCorrect = choiceText.trim().toLowerCase() === normalizedTarget;
+
+            // Lock all choices and highlight the correct one
+            answerControls.querySelectorAll('.baam-choice-btn').forEach(b => {
+              b.disabled = true;
+              if (String(b.dataset.choice || '').trim().toLowerCase() === normalizedTarget) {
+                b.classList.add('is-revealed-correct');
+              }
+            });
+
+            if (isCorrect) {
+              btn.classList.add('is-correct');
+              status.innerHTML = '✓ Correct! <span class="baam-num-plus">+10</span> points';
+              status.className = 'baam-answer-feedback is-correct';
+              try { window.pokeSfx?.play('correct'); } catch (e) {}
+            } else {
+              btn.classList.add('is-wrong');
+              status.textContent = `✕ Not quite! Answer: ${targetWord}`;
+              status.className = 'baam-answer-feedback is-wrong';
+              try { window.pokeSfx?.play('wrong'); } catch (e) {}
+            }
+
+            word.textContent = targetWord;
+            word.classList.remove('hidden');
+
+            answerProgressionTimer = setTimeout(() => {
+              answerProgressionTimer = null;
+              markAnswer(isCorrect);
+            }, 850);
+          });
+
+          answerControls.appendChild(btn);
+        });
+        answerControls.classList.remove('hidden');
+      }
+    };
+    const closeBaamRevealAsWrong = () => {
+      clearAnswerTimer();
+      // Always dismiss the reveal overlay, including after a power-up resolves.
+      const revealPanel = baamQ('#baam-reveal');
+      if (!revealPanel) return;
+      if (selectedCard && !selectedCard.powerUp) {
+        advanceGameTurn();
+        updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
+      }
+      selectedCard = null;
+      revealPanel.classList.add('hidden');
+      if (chosenCards.size === deck.length) endBaamboozle();
+    };
+    const markAnswer = (isCorrect) => {
+      clearAnswerTimer();
+      if (!selectedCard || selectedCard.powerUp) return;
+      const word = baamQ('#baam-word');
+      const currentPlayer = activeGamePlayerIndex;
+      if (isCorrect) {
+        try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+        showCorrectAnswerCelebration(modal, currentPlayer);
+        activeGameScores[currentPlayer] = (activeGameScores[currentPlayer] || 0) + 10;
+        updateTeamScores();
+        word.textContent = selectedCard.vocab_word;
+        word.classList.remove('hidden');
+        advanceGameTurn();
+        updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
+      } else {
+        try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        showWrongAnswerCelebration(modal, currentPlayer);
+        advanceGameTurn();
+        updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
+      }
+      selectedCard = null;
+      baamQ('#baam-reveal').classList.add('hidden');
+      if (chosenCards.size >= deck.length) endBaamboozle();
+    };
+    const baamPortal = document.createElement('div');
+    baamPortal.className = 'baam-stage-portal';
+    baamPortal.appendChild(modal.querySelector('#baam-reveal'));
+    document.body.appendChild(baamPortal);
+    const baamPortalWatch = setInterval(() => { if (!modal.isConnected) { clearAnswerTimer(); baamPortal.remove(); clearInterval(baamPortalWatch); } }, 1000);
+    baamQ('#baam-reveal-close')?.addEventListener('click', closeBaamRevealAsWrong);
+    baamQ('#baam-reveal')?.addEventListener('click', event => {
+      /* Clicks outside the question card intentionally do not dismiss or mark it wrong. */
+    });
+    baamQ('#baam-correct')?.addEventListener('click', () => markAnswer(true));
+    baamQ('#baam-wrong')?.addEventListener('click', () => markAnswer(false));
+    const powerStyle = document.createElement('style');
+    powerStyle.textContent = `.baam-reveal-panel{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;width:min(100%,34rem);min-height:22rem;max-height:calc(100 * min(var(--vh, 1vh), 1vh) - 2rem);padding:2.5rem 1.5rem 1.5rem!important;background:#07111f!important;border:2px solid rgba(135,171,255,.72);border-radius:1.5rem!important;color:#f8fafc;box-shadow:0 0 0 1px rgba(253,224,71,.18),inset 0 1px 0 rgba(255,255,255,.2),0 24px 70px rgba(2,6,23,.78),0 0 34px var(--baam-glow,rgba(255,203,5,.3));text-align:center}.baam-reveal-panel #baam-picture{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:min(100%,18rem);min-height:8rem;max-height:11rem;margin:0 auto .25rem}.baam-reveal-panel #baam-picture img{display:block;max-width:100%;max-height:11rem;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5))}.baam-reveal-panel #baam-word{position:relative;z-index:2;max-width:100%;margin:.25rem auto 0;color:#fff7a8!important;font-size:clamp(2.4rem,9vw,5rem)!important;font-weight:950!important;line-height:1.05;overflow-wrap:anywhere;text-align:center;text-shadow:0 3px 0 rgba(2,6,23,.9),0 0 16px rgba(250,204,21,.5)}.baam-reveal-panel #baam-answer-status{position:relative;z-index:2;max-width:100%;margin:.25rem auto 0;padding:.45rem .8rem;border:1px solid rgba(125,211,252,.42);border-radius:999px;background:rgba(2,6,23,.72);color:#e0f2fe!important;font-size:clamp(.9rem,2.5vw,1.1rem)!important;font-weight:850;line-height:1.35;overflow-wrap:anywhere}.baam-reveal-panel #baam-answer-controls{position:relative;z-index:2;width:min(100%,22rem);margin-top:.5rem}.baam-reveal-panel #baam-answer-controls button{min-height:3rem;font-size:1rem;font-weight:900}.baam-reveal-panel #baam-reveal-close{z-index:4;width:2.5rem;height:2.5rem;border-radius:.75rem;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28)}.baam-reveal-panel.baam-powerup-reveal::before{content:'SUPERPOWER';position:absolute;top:.7rem;left:50%;z-index:2;transform:translateX(-50%);padding:.22rem .7rem;border:1px solid rgba(253,224,71,.55);border-radius:999px;background:rgba(2,6,23,.55);color:#fde68a;font-size:.58rem;font-weight:950;letter-spacing:.22em;line-height:1;box-shadow:0 4px 12px rgba(2,6,23,.25)}.baam-reveal-panel::after{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background-image:radial-gradient(circle,#fff 0 1px,transparent 1.8px),radial-gradient(circle,#fde68a 0 1px,transparent 1.8px),linear-gradient(115deg,transparent 25%,rgba(125,211,252,.14) 50%,transparent 75%);background-size:72px 58px,96px 86px,220% 100%;background-position:12% 20%,78% 28%,-120% 0;opacity:.72;animation:baamParticleDrift 2.2s ease-out both,baamRaySweep 3.8s ease-in-out infinite}.baam-reveal-panel.baam-powerup-reveal{animation:baamRevealBurst .85s cubic-bezier(.2,.85,.25,1) both,baamPanelSettle 2.8s ease-in-out .85s infinite;overflow:visible!important}.baam-reveal-panel.baam-powerup-reveal #baam-picture{height:auto!important;max-height:none!important;min-height:16rem!important;padding:2rem 1.2rem 1.2rem!important;overflow:visible!important}.baam-powerup-reveal .baam-powerup-icon{position:relative;display:flex;align-items:center;justify-content:center;min-height:9rem;margin-top:1rem;font-size:clamp(5rem,18vw,8rem);line-height:1;filter:drop-shadow(0 0 12px var(--baam-glow,#a855f7)) drop-shadow(0 10px 12px rgba(0,0,0,.45));animation:baamPowerDrama .85s cubic-bezier(.2,.85,.25,1) both,baamHeroGlow 2.4s ease-in-out .85s infinite}.baam-reveal-panel #baam-answer-status{display:inline-block;margin:.6rem auto .15rem;padding:.3rem .72rem;border:1px solid rgba(125,211,252,.35);border-radius:999px;background:rgba(18,26,69,.62);color:#bae6fd!important;font-size:.7rem;font-weight:850;letter-spacing:.04em;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.baam-reveal-panel [class*='point'],.baam-reveal-panel [class*='Point']{position:relative;z-index:2;color:#fff7a8!important;-webkit-text-stroke:1px rgba(30,20,5,.8);text-shadow:0 3px 0 rgba(30,20,5,.72),0 0 12px var(--baam-glow,#facc15),0 0 24px rgba(250,204,21,.42);animation:superUpPointsPop 520ms cubic-bezier(.2,.85,.25,1) both,superUpPointsPulse 1.8s ease-in-out 520ms infinite}.baam-powerup-reveal .baam-powerup-icon::before{content:'';position:absolute;width:10rem;height:10rem;border-radius:50%;background:radial-gradient(circle,var(--baam-core,rgba(168,85,247,.42)),transparent 68%);filter:blur(12px);z-index:-1;animation:baamCoreFlash .85s ease-out both}.baam-powerup-reveal .baam-powerup-icon::after{content:'✦ · ✧ · ✦';position:absolute;inset:0;display:grid;place-items:center;color:var(--baam-glow,#c4b5fd);font-size:1.15rem;letter-spacing:1.5rem;opacity:.9;animation:baamSparkBurst 1.1s ease-out both} @keyframes baamRaySweep{0%,100%{background-position:12% 20%,78% 28%,-120% 0}55%{background-position:12% 20%,78% 28%,120% 0}} @keyframes baamPanelSettle{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}} @keyframes baamHeroGlow{0%,100%{filter:drop-shadow(0 0 12px var(--baam-glow,#a855f7)) drop-shadow(0 10px 12px rgba(0,0,0,.45))}50%{filter:drop-shadow(0 0 24px var(--baam-glow,#a855f7)) drop-shadow(0 10px 12px rgba(0,0,0,.45))}}.baam-powerup-reveal .baam-powerup-icon::before{content:'';position:absolute;width:8rem;height:8rem;border-radius:50%;background:var(--baam-core,rgba(168,85,247,.32));filter:blur(10px);z-index:-1;animation:baamCoreFlash .85s ease-out both}.baam-powerup-reveal .baam-powerup-icon::after{content:'✦  ·  ✧  ·  ✦';position:absolute;inset:0;display:grid;place-items:center;color:var(--baam-glow,#c4b5fd);font-size:1.2rem;letter-spacing:1.6rem;opacity:.9;animation:baamSparkBurst 1.1s ease-out both}.baam-powerup-reveal .baam-powerup-icon + *{position:relative}.baam-powerup-star{--baam-glow:#facc15;--baam-core:rgba(250,204,21,.45);--baam-aura:radial-gradient(circle,rgba(245,158,11,.65),transparent 68%)}.baam-powerup-rocket{--baam-glow:#fb923c;--baam-core:rgba(249,115,22,.4);--baam-aura:linear-gradient(90deg,transparent,rgba(249,115,22,.55),transparent)}.baam-powerup-rocket .baam-powerup-icon::after{content:'» » »';letter-spacing:1.1rem}.baam-powerup-virus,.baam-powerup-boom{--baam-glow:#fb7185;--baam-core:rgba(239,68,68,.36)}.baam-powerup-gold{--baam-glow:#facc15;--baam-core:rgba(251,191,36,.42)}.baam-powerup-fairy,.baam-powerup-heart,.baam-powerup-gift{--baam-glow:#f0abfc;--baam-core:rgba(217,70,239,.36)}.baam-powerup-thief,.baam-powerup-shark,.baam-powerup-magnet{--baam-glow:#ffcb05;--baam-core:rgba(255,203,5,.34)}.baam-powerup-trap,.baam-powerup-baam{--baam-glow:#a78bfa;--baam-core:rgba(124,58,237,.38)}.baam-powerup-eraser{--baam-glow:#ffd84d;--baam-core:rgba(120,152,255,.34)}.baam-powerup-seesaw{--baam-glow:#fde68a;--baam-core:rgba(253,224,71,.35)}.baam-powerup-virus .baam-powerup-icon,.baam-powerup-boom .baam-powerup-icon{animation:baamPowerDrama .85s ease both,baamPowerShake .85s ease both}@keyframes baamRevealBurst{0%{opacity:0;transform:scale(.72);filter:brightness(2.2)}35%{opacity:1;transform:scale(1.03);filter:brightness(1.35)}100%{transform:scale(1);filter:brightness(1)}}@keyframes baamPowerDrama{0%{opacity:0;transform:scale(.2) rotate(-25deg)}55%{opacity:1;transform:scale(1.35) rotate(12deg)}100%{transform:scale(1) rotate(0)}}@keyframes baamCoreFlash{0%{opacity:0;transform:scale(.25)}35%{opacity:1;transform:scale(1.35)}100%{opacity:.8;transform:scale(1)}}@keyframes baamSparkBurst{0%{opacity:0;transform:scale(.2) rotate(-18deg)}45%{opacity:1;transform:scale(1.2) rotate(8deg)}100%{opacity:.72;transform:scale(1) rotate(0)}}@keyframes baamParticleDrift{0%{opacity:0;transform:scale(.7) translateY(10px)}30%{opacity:.9}100%{opacity:.45;transform:scale(1.08) translateY(-6px)}}@keyframes baamAuraPulse{0%,100%{opacity:.52;transform:scale(.86)}50%{opacity:.9;transform:scale(1.08)}}@keyframes baamPowerShake{0%,100%{transform:translateX(0) scale(1)}25%{transform:translateX(-12px) rotate(-8deg) scale(1.15)}75%{transform:translateX(12px) rotate(8deg) scale(1.15)}}@media(max-width:640px){.baam-reveal-panel{width:min(100%,calc(100vw - 1.5rem));min-height:18rem;padding:2.25rem 1rem 1rem!important;border-radius:1.25rem!important}.baam-reveal-panel #baam-picture{min-height:6rem;max-height:8rem}.baam-reveal-panel #baam-picture img{max-height:8rem}.baam-reveal-panel #baam-answer-controls{width:100%;gap:.6rem}.baam-reveal-panel #baam-answer-controls button{min-height:2.8rem;font-size:.95rem}}@media(prefers-reduced-motion:reduce){.baam-reveal-panel,.baam-reveal-panel::before,.baam-reveal-panel::after,.baam-powerup-reveal .baam-powerup-icon,.baam-powerup-reveal .baam-powerup-icon::before,.baam-powerup-reveal .baam-powerup-icon::after{animation:none!important}.baam-reveal-panel{filter:none!important}}`;
+    document.head.appendChild(powerStyle);
+    if (!document.getElementById('baam-surprise-css')) { const l = document.createElement('link'); l.id = 'baam-surprise-css'; l.rel = 'stylesheet'; l.href = 'surprise-boxes.css'; document.head.appendChild(l); }
+    board.querySelectorAll('.baam-tile').forEach(tile => tile.addEventListener('click', () => {
+      try { window.pokeSfx?.play?.('pop'); } catch (e) {}
+      // A card counts as chosen immediately, but completion waits for resolution.
+      index = Number(tile.dataset.tile) - 1;
+      chosenCards.add(index);
+      reveal();
+      tile.disabled = true;
+      tile.classList.add('is-opened');
+    }));
+    modal.querySelector('#baam-close')?.addEventListener('click', () => { clearAnswerTimer(); stopGameFinishedActivity(modal); modal.remove(); returnToGamesTab(); }); modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
+  }
+  window.openBaamboozle = openBaamboozle;
+})();
+
+</script>
+<script data-pokeayman-inline="hangman">
+/* Hangman game module: setup modal and drawing-based word guessing gameplay */
+(function () {
+  let hangmanSession = null;
+  // Expose hangmanSession getter/setter on window for any legacy external callers
+  Object.defineProperty(window, 'hangmanSession', {
+    get() { return hangmanSession; },
+    set(val) { hangmanSession = val; },
+    configurable: true
+  });
+
+  function chooseHangmanWordCount(listName) {
+    if (currentRole === 'student') { window.gaStudentSetup(listName, 'chooseHangmanWordCount'); return; }
+    const available = getVocabWords(listName, navSchool, navClass);
+    if (!available.length) { toast('List needs at least 1 word'); return; }
+    const modal = document.createElement('div');
+    modal.className = 'game-inline-view game-setup-panel mx-auto my-4';
+    modal.innerHTML = `<div class="game-setup-panel text-center"><h2 class="heading-font text-2xl font-bold text-gray-800 mb-2">🎮 Hangman</h2><p class="text-sm text-gray-500 text-center mb-4">The player with the higher score wins when the word is solved.</p><div class="rounded-lg border border-red-200 bg-red-50 p-3 mb-4 text-left"><label class="flex items-center gap-2 text-sm font-semibold text-gray-700"><input id="hangman-timer-enabled" type="checkbox" class="accent-red-500"> Enable per-player timer</label><div id="hangman-timer-settings" class="hidden mt-2"><span class="text-xs font-medium text-gray-600">Time for each player</span><div class="grid grid-cols-4 gap-2 mt-1" role="group" aria-label="Hangman timer duration"><input type="hidden" id="hangman-timer-seconds" value="300"><button type="button" class="hangman-timer-option rounded-lg border-2 border-red-200 bg-white px-2 py-2 text-xs font-semibold text-gray-700 transition hover:border-red-400" data-seconds="60">1 min</button><button type="button" class="hangman-timer-option rounded-lg border-2 border-red-200 bg-white px-2 py-2 text-xs font-semibold text-gray-700 transition hover:border-red-400" data-seconds="180">3 min</button><button type="button" class="hangman-timer-option rounded-lg border-2 border-red-500 bg-red-100 px-2 py-2 text-xs font-semibold text-gray-700 ring-2 ring-red-300" data-seconds="300">5 min</button><button type="button" class="hangman-timer-option rounded-lg border-2 border-red-200 bg-white px-2 py-2 text-xs font-semibold text-gray-700 transition hover:border-red-400" data-seconds="600">10 min</button></div></div></div><div class="flex gap-2"><button type="button" id="hangman-count-start" class="flex-1 btn-primary">Start Game</button><button type="button" id="hangman-count-cancel" class="flex-1 btn-outline">Cancel</button></div></div>`;
+    document.body.appendChild(modal);
+    const hangmanTimerToggle = modal.querySelector('#hangman-timer-enabled');
+    hangmanTimerToggle.addEventListener('change', () => modal.querySelector('#hangman-timer-settings').classList.toggle('hidden', !hangmanTimerToggle.checked));
+    modal.querySelectorAll('.hangman-timer-option').forEach(option => option.addEventListener('click', () => {
+      modal.querySelector('#hangman-timer-seconds').value = option.dataset.seconds;
+      modal.querySelectorAll('.hangman-timer-option').forEach(button => button.classList.remove('border-red-500', 'bg-red-100', 'ring-2', 'ring-red-300', 'is-selected'));
+      option.classList.add('border-red-500', 'bg-red-100', 'ring-2', 'ring-red-300', 'is-selected');
+    }));
+    modal.querySelector('#hangman-count-start').addEventListener('click', () => { const timerSeconds = hangmanTimerToggle.checked ? Number(modal.querySelector('#hangman-timer-seconds').value) : 0; modal.remove(); hangmanSession = null; resetGameTurnState(); openGameHangman(listName, 0, timerSeconds, 'easy', true); });
+    modal.querySelector('#hangman-count-cancel').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  }
+  window.chooseHangmanWordCount = chooseHangmanWordCount;
+
+  function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty = 'easy', freshRound = false, studentRound = null) {
+    const difficultyConfig = { easy: { maxWrong: 8, showClue: true }, hard: { maxWrong: 8, showClue: false } };
+    difficulty = difficultyConfig[difficulty] ? difficulty : 'easy';
+    const activeDifficulty = difficultyConfig[difficulty];
+    // A new round must never hydrate the previous lost word or guessed letters.
+    if (freshRound) hangmanSession = null;
+    setGameReplay(() => { resetGameTurnState(); hangmanSession = null; openGameHangman(listName, wordCount, timerSeconds, difficulty, true); });
+    const words = getGameWords(listName);
+    if (words.length < 1) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'List needs at least 1 word'); return; }
+    if (currentRole === 'student' && !studentRound) studentRound = { words: words.slice().sort(() => Math.random() - 0.5).slice(0, wordCount), index: 0 };
+    const sessionIsValid = hangmanSession && hangmanSession.listName === listName && hangmanSession.difficulty === difficulty && hangmanSession.word && !hangmanSession.ended;
+    if (!sessionIsValid) hangmanSession = { listName, difficulty, guessed: [], wrongGuesses: 0, word: (studentRound ? studentRound.words[studentRound.index] : words[Math.floor(Math.random() * words.length)]).vocab_word.toUpperCase(), ended: false };
+    hangmanSession.difficulty = difficulty;
+    hangmanSession.guessed = [...new Set(Array.isArray(hangmanSession.guessed) ? hangmanSession.guessed : [])].filter(letter => /^[A-Z]$/.test(letter));
+    hangmanSession.wrongGuesses = Math.max(0, Math.min(activeDifficulty.maxWrong, Number(hangmanSession.wrongGuesses) || 0));
+    const word = hangmanSession.word;
+    const currentWordRecord = words.find(w => (w.vocab_word || '').toUpperCase() === word);
+    const guessed = hangmanSession.guessed;
+    const isMediumDifficulty = difficulty === 'medium';
+    const maxWrong = activeDifficulty.maxWrong;
+    let wrongGuesses = hangmanSession.wrongGuesses;
+    let gameEnded = false;
+    
+    // Eight misses, eight visible stages; completed strokes stay mounted.
+    const drawingStages = [
+      '<path class="hm-line hm-scaffold" pathLength="1" d="M54 214 V38"/>',
+      '<path class="hm-line hm-scaffold" pathLength="1" d="M54 38 H146 M54 68 L84 38"/>',
+      '<path class="hm-line hm-scaffold" pathLength="1" d="M146 38 V70"/>',
+      '<circle class="hm-line hm-character" pathLength="1" cx="146" cy="89" r="19"/>',
+      '<path class="hm-line hm-character" pathLength="1" d="M146 108 V160"/>',
+      '<path class="hm-line hm-character" pathLength="1" d="M146 121 L118 143 M146 121 L174 143"/>',
+      '<path class="hm-line hm-character" pathLength="1" d="M146 160 L123 193 M146 160 L169 193"/>',
+      '<path class="hm-line hm-face" pathLength="1" d="M136 83 L141 88 M141 83 L136 88 M151 83 L156 88 M156 83 L151 88 M138 99 Q146 93 154 99"/>',
+    ];
+    const impactPoints = [[54,130],[108,38],[146,57],[146,89],[146,135],[174,143],[169,193],[146,89]];
+    let drawnWrongCount = -1;
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `<div class="hangman-game-shell bg-white rounded-2xl shadow-2xl max-w-5xl w-full">
+      <div class="bg-gradient-to-r from-red-500 to-red-600 p-4 flex items-center justify-between rounded-t-2xl">
+        <h2 class="heading-font text-3xl font-bold text-white text-center flex-1">🎮 Hangman</h2>
+        <div class="flex items-center gap-2">
+          <button type="button" class="game-fullscreen-btn text-white hover:bg-white/20 rounded-lg w-9 h-8 font-bold" aria-label="Enter fullscreen" title="Fullscreen">⛶</button>
+          <button id="game-close" class="text-white hover:text-gray-200 text-3xl font-bold" aria-label="Close game">×</button>
+        </div>
+      </div>
+      <div class="game-player-hud-slot flex justify-center w-full px-4 pt-3"></div>
+      <div id="hangman-game-body" class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.85fr)] gap-5 md:gap-8 items-center">
+        <!-- Compact centered hangman board -->
+        <div id="hangman-drawing-panel" class="flex flex-col items-center justify-center min-w-0">
+          <div id="hangman-clue" class="mb-3 flex h-24 w-36 items-center justify-center overflow-hidden rounded-xl border-2 border-red-200 bg-red-50" aria-label="Picture clue"></div>
+          <p id="hangman-word" class="font-mono text-center break-words"></p>
+          <div id="hangman-solved-image" class="hidden mb-3 flex justify-center"></div>
+          <svg id="hangman-drawing" width="220" height="260" viewBox="0 0 220 260" role="img" aria-label="Hangman: no wrong guesses">
+            <path class="hm-grid" d="M20 60 H200 M20 110 H200 M20 160 H200 M20 210 H200 M60 20 V210 M110 20 V210 M160 20 V210"/>
+            <rect class="hm-platform" x="25" y="211" width="170" height="9" rx="4"/>
+            <g class="hm-stages"></g><g class="hm-effects" aria-hidden="true"></g>
+            <g aria-hidden="true">${Array.from({length: maxWrong}, (_, i) => `<circle class="hm-life" cx="${47 + i * 18}" cy="239" r="4"/>`).join('')}</g>
+          </svg>
+          <p class="text-center mt-2 text-base font-bold">
+            Wrong letters: <span id="hangman-wrong" class="text-red-600">${wrongGuesses}</span>/<span class="text-red-600">${maxWrong}</span>
+          </p>
+        </div>
+        
+        <!-- Letters and controls aligned in a compact right column -->
+        <div id="hangman-content" class="w-full max-w-md mx-auto text-center flex flex-col items-center justify-center gap-3">
+          <div class="hangman-difficulty-selector mb-2 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Hangman difficulty">
+            <button type="button" id="hangman-easy-btn" class="hangman-difficulty-btn hangman-difficulty-easy bg-green-200 text-green-900 border-2 border-green-500 rounded-lg px-3 py-2 text-xs font-black hover:bg-green-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300" aria-pressed="true">Easy</button>
+            <button type="button" id="hangman-hard-btn" class="hangman-difficulty-btn hangman-difficulty-hard bg-rose-200 text-rose-900 border-2 border-rose-600 rounded-lg px-3 py-2 text-xs font-black hover:bg-rose-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300" aria-pressed="false">Hard</button>
+          </div>
+          <div id="hangman-letters" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 mb-3"></div>
+          <div id="hangman-feedback" class="text-base sm:text-lg font-semibold min-h-8 mb-3"></div>
+        </div>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+    attachGameFullscreen(modal);
+    renderGamePlayerHud(modal, Math.min(wordCount, words.length), 0);
+    startPlayerTurnTimer(modal, timerSeconds);
+    let hangmanLetterSize = 48;
+    const updateHangmanLetterSize = () => {
+      modal.querySelectorAll('.hangman-letter').forEach(button => {
+        button.style.height = `${hangmanLetterSize}px`;
+        button.style.fontSize = `${Math.max(16, Math.round(hangmanLetterSize * 0.44))}px`;
+      });
+    };
+    modal.querySelector('#hangman-letter-decrease')?.addEventListener('click', () => { hangmanLetterSize = Math.max(36, hangmanLetterSize - 4); updateHangmanLetterSize(); });
+    modal.querySelector('#hangman-letter-increase')?.addEventListener('click', () => { hangmanLetterSize = Math.min(68, hangmanLetterSize + 4); updateHangmanLetterSize(); });
+    
+    function drawHangman() {
+      const svg = modal.querySelector('#hangman-drawing');
+      if (drawnWrongCount === wrongGuesses) return;
+      const animate = drawnWrongCount >= 0 && wrongGuesses > drawnWrongCount;
+      const stages = svg.querySelector('.hm-stages');
+      stages.querySelectorAll('.hm-new').forEach(part => part.classList.remove('hm-new'));
+      for (let i = Math.max(0, drawnWrongCount); i < wrongGuesses; i++) {
+        stages.insertAdjacentHTML('beforeend', `<g class="hm-stage ${animate ? 'hm-new' : ''}" data-stage="${i + 1}">${drawingStages[i]}</g>`);
+      }
+      svg.dataset.wrong = String(wrongGuesses);
+      svg.setAttribute('aria-label', `Hangman: ${wrongGuesses} of ${maxWrong} wrong guesses`);
+      svg.querySelectorAll('.hm-life').forEach((life, i) => life.classList.toggle('is-lost', i < wrongGuesses));
+      if (animate) {
+        const [x, y] = impactPoints[wrongGuesses - 1];
+        const letter = guessed[guessed.length - 1];
+        svg.querySelector('.hm-effects').innerHTML = `<circle class="hm-impact" cx="${x}" cy="${y}" r="12"/><text class="hm-miss" x="190" y="${Math.max(40, y - 12)}" text-anchor="end">${letter} ✕</text>`;
+        svg.classList.remove('hm-hit');
+        void svg.getBoundingClientRect();
+        svg.classList.add('hm-hit');
+      }
+      drawnWrongCount = wrongGuesses;
+    }
+    
+    const updateHangmanDifficulty = nextDifficulty => {
+      const normalized = nextDifficulty === 'hard' ? 'hard' : 'easy';
+      if (normalized === difficulty) return;
+      modal.remove();
+      hangmanSession = null;
+      openGameHangman(listName, wordCount, timerSeconds, normalized);
+    };
+    modal.querySelector('#hangman-easy-btn').addEventListener('click', () => updateHangmanDifficulty('easy'));
+    modal.querySelector('#hangman-hard-btn').addEventListener('click', () => updateHangmanDifficulty('hard'));
+    const clue = modal.querySelector('#hangman-clue');
+    if (difficulty === 'easy' && currentWordRecord?.vocab_image) clue.innerHTML = `<img src="${currentWordRecord.vocab_image}" class="h-full w-full object-contain" alt="Picture clue for ${word}">`;
+    else clue.innerHTML = `<img src="${document.getElementById('hangman-hard-mode-image-loader')?.src || ''}" class="h-full w-full object-contain" alt="Ash and Pikachu">`;
+    ['easy', 'hard'].forEach(mode => {
+      const button = modal.querySelector(`#hangman-${mode}-btn`);
+      if (!button) return;
+      const active = difficulty === mode;
+      button.setAttribute('aria-pressed', String(active));
+      button.classList.toggle('ring-4', active);
+      button.classList.toggle('ring-yellow-300', active);
+    });
+
+    function render() {
+      const display = word.split('').map(l => guessed.includes(l) ? l : '_').join(' ');
+      modal.querySelector('#hangman-word').textContent = display;
+      modal.querySelector('#hangman-wrong').textContent = wrongGuesses;
+      drawHangman();
+      
+      const letters = modal.querySelector('#hangman-letters');
+      letters.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l => {
+        const isGuessed = guessed.includes(l);
+        const isCorrect = isGuessed && word.includes(l);
+        const isWrong = isGuessed && !word.includes(l);
+        const colStyle = l === 'V' ? 'style="grid-column-start: 2;"' : '';
+        let statusClass = 'is-available';
+        let badge = '';
+        if (isCorrect) {
+          statusClass = 'is-correct';
+          badge = '<span class="letter-badge letter-badge-correct" aria-hidden="true">✓</span>';
+        } else if (isWrong) {
+          statusClass = 'is-wrong';
+          badge = '<span class="letter-badge letter-badge-wrong" aria-hidden="true">✕</span>';
+        }
+        return `<button type="button" class="hangman-letter ${statusClass}" ${colStyle} data-letter="${l}" ${isGuessed ? 'disabled aria-disabled="true"' : ''} title="${isWrong ? `${l} (Wrong - blocked)` : isCorrect ? `${l} (Correct)` : `Guess ${l}`}"><span class="letter-char">${l}</span>${badge}</button>`;
+      }).join('');
+      updateHangmanLetterSize();
+      
+      letters.querySelectorAll('.hangman-letter').forEach(btn => {
+        if (!guessed.includes(btn.dataset.letter)) {
+          btn.addEventListener('click', () => {
+            const letter = btn.dataset.letter;
+            guessed.push(letter);
+            if (!word.includes(letter)) {
+              try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+              wrongGuesses++;
+              hangmanSession.wrongGuesses = wrongGuesses;
+              modal.querySelector('#hangman-wrong').textContent = wrongGuesses;
+              drawHangman();
+              if (activeGamePlayers.length) {
+                activeGameScores[activeGamePlayerIndex] -= 1;
+                hangmanSession.playerWrongGuesses = hangmanSession.playerWrongGuesses || {};
+                const playerKey = activeGamePlayers[activeGamePlayerIndex]?.student_name || '__solo__';
+                hangmanSession.playerWrongGuesses[playerKey] = (hangmanSession.playerWrongGuesses[playerKey] || 0) + 1;
+              }
+              // The eighth miss ends the shared round immediately; neither player wins.
+              if (wrongGuesses >= maxWrong) {
+                gameEnded = true;
+                render();
+                const wordDisplay = modal.querySelector('#hangman-word');
+                wordDisplay.classList.add('animate-pulse');
+                wordDisplay.style.color = '#dc2626';
+                modal.querySelector('#hangman-feedback').textContent = `😢 Game Over! The word was: ${word}`;
+                modal.querySelector('#hangman-feedback').className = 'text-base sm:text-lg font-semibold min-h-0 mb-0 text-red-600';
+                const solvedImage = modal.querySelector('#hangman-solved-image');
+                if (difficulty === 'easy' && currentWordRecord?.vocab_image) {
+                  solvedImage.innerHTML = `<div class="flex flex-col items-center justify-center gap-2"><p class="text-lg font-black text-red-600 text-center leading-tight">${word}</p><img src="${currentWordRecord.vocab_image}" class="w-36 max-w-full max-h-28 rounded-xl object-contain shadow-md mx-auto" alt="Picture for ${word}"></div>`;
+                  solvedImage.className = 'w-full mb-2 flex flex-col items-center justify-center text-center gap-2';
+                  modal.querySelector('#hangman-content').prepend(solvedImage);
+                }
+                modal.querySelector('#hangman-drawing-panel').classList.remove('hidden');
+                modal.querySelectorAll('.hangman-letter').forEach(b => { b.disabled = true; b.classList.add('opacity-50'); });
+                const gameOverOverlay = document.createElement('div');
+                gameOverOverlay.className = 'game-celebration-overlay hangman-game-over-overlay';
+                gameOverOverlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="hangman-game-over-title" tabindex="-1">
+                  <h2 id="hangman-game-over-title" class="heading-font text-4xl font-bold text-red-600 relative z-10">Game Over</h2>
+                  <div class="relative z-10 mt-4 rounded-xl border border-red-200 bg-white/70 px-4 py-3 text-center">
+                    <p class="text-lg font-black text-slate-700">Word: ${word}</p>
+                    ${currentWordRecord?.vocab_image ? `<img src="${currentWordRecord.vocab_image}" class="mx-auto mt-3 h-28 w-40 rounded-lg object-contain" alt="Picture for ${word}">` : ''}
+                  </div>
+                  <div class="flex gap-3 mt-6 relative z-10">
+                    <button type="button" id="hangman-game-over-again" class="btn-primary flex-1">Play again</button>
+                    <button type="button" id="hangman-game-over-hub" class="btn-outline flex-1">🎮 Other Games</button>
+                    <button type="button" id="hangman-game-over-close" class="btn-outline flex-1">Close</button>
+                  </div>
+                </div>`;
+                // Mount the result dialog inside the active game/fullscreen root so it stays above the game.
+                setTimeout(() => {
+                  if (!modal.isConnected) return;
+                  mountGameCelebrationOverlay(modal, gameOverOverlay);
+                  gameOverOverlay.querySelector('.game-celebration-card')?.focus();
+                }, 850);
+                gameOverOverlay.style.zIndex = '2147483647';
+                gameOverOverlay.style.pointerEvents = 'auto';
+                const closeGameOver = () => { gameOverOverlay.remove(); modal.remove(); returnToGamesTab(); };
+                gameOverOverlay.querySelector('#hangman-game-over-close').addEventListener('click', closeGameOver);
+                gameOverOverlay.querySelector('#hangman-game-over-hub')?.addEventListener('click', () => {
+                  gameOverOverlay.remove();
+                  modal.remove();
+                  hangmanSession = null;
+                  if (typeof window.gaExitSetupToArcade === 'function') {
+                    window.gaExitSetupToArcade();
+                  } else {
+                    returnToGamesTab();
+                  }
+                });
+                gameOverOverlay.querySelector('#hangman-game-over-again').addEventListener('click', () => {
+                  gameOverOverlay.remove();
+                  modal.remove();
+                  hangmanSession = null;
+                  resetGameTurnState();
+                  openGameHangman(listName, wordCount, timerSeconds, difficulty, true);
+                });
+                return;
+              }
+              // Wrong letter ends the turn while preserving shared guesses and blocked letters.
+              btn.classList.add('animate-shake', 'is-wrong');
+              btn.disabled = true;
+              btn.setAttribute('aria-disabled', 'true');
+              const prevPlayerIndex = activeGamePlayerIndex;
+              advanceGameTurn();
+              updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
+              showWrongAnswerCelebration(modal, prevPlayerIndex);
+              setTimeout(() => {
+                btn.classList.remove('animate-shake');
+                render();
+              }, 400);
+              return;
+            } else {
+              try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+              btn.classList.add('animate-bounce', 'is-correct');
+              btn.disabled = true;
+              btn.setAttribute('aria-disabled', 'true');
+              showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+              // Regular letters award 1 point; the final completing letter awards 3.
+              const completesWord = word.split('').every(l => guessed.includes(l));
+              const letterPoints = completesWord ? 3 : 1;
+              if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += letterPoints;
+              updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
+              setTimeout(() => {
+                btn.classList.remove('animate-bounce');
+              }, 600);
+            }
+            if (word.split('').every(l => guessed.includes(l))) {
+              updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
+              // Victory animation
+              const wordDisplay = modal.querySelector('#hangman-word');
+              wordDisplay.classList.add('animate-bounce', 'text-center', 'text-5xl', 'sm:text-6xl', 'w-full');
+              wordDisplay.style.color = '#4052d6';
+              modal.querySelector('#hangman-feedback').textContent = '';
+              modal.querySelector('#hangman-feedback').className = 'text-base sm:text-lg font-semibold min-h-0 mb-0';
+              modal.querySelector('.game-player-card.is-active')?.classList.add('victory-winner');
+              const solvedImage = modal.querySelector('#hangman-solved-image');
+              if (difficulty === 'easy' && currentWordRecord?.vocab_image) {
+                solvedImage.innerHTML = `<div class="flex flex-col items-center justify-center gap-2"><p class="text-lg font-black text-amber-600 text-center leading-tight">${word}</p><img src="${currentWordRecord.vocab_image}" class="w-36 max-w-full max-h-28 rounded-xl object-contain shadow-md mx-auto" alt="Picture for ${word}"></div>`;
+                solvedImage.className = 'w-full mb-2 flex flex-col items-center justify-center text-center gap-2';
+                modal.querySelector('#hangman-content').prepend(solvedImage);
+              }
+              modal.querySelector('#hangman-drawing-panel').classList.add('hidden');
+              modal.querySelector('#hangman-letters').classList.add('hidden');
+              modal.querySelector('#hangman-game-body').classList.remove('gap-8');
+              modal.querySelector('#hangman-game-body').classList.add('justify-center');
+              modal.querySelector('#hangman-content').classList.remove('flex-1');
+              modal.querySelector('#hangman-content').classList.add('w-full', 'max-w-md');
+              showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+              modal.querySelector('#hangman-feedback').classList.add('text-green-600');
+              const rankedPlayers = activeGamePlayers.map((player, index) => ({
+                player,
+                score: activeGameScores[index] || 0,
+                wrongGuesses: index === activeGamePlayerIndex ? wrongGuesses : (hangmanSession.playerWrongGuesses?.[player.student_name] || 0)
+              })).sort((a, b) => b.score - a.score || a.wrongGuesses - b.wrongGuesses);
+              const winningEntry = rankedPlayers[0];
+              const winningPlayer = winningEntry?.player || activeGamePlayers[activeGamePlayerIndex];
+              const winningName = winningPlayer?.student_name || 'Player';
+              setTimeout(() => {
+                if (!document.body.contains(modal)) return;
+                if (currentRole === 'student' && studentRound && studentRound.index + 1 < studentRound.words.length) {
+                  studentRound.index += 1;
+                  modal.remove();
+                  openGameHangman(listName, wordCount, 0, difficulty, true, studentRound);
+                  return;
+                }
+                hangmanSession = { listName, winningScore: wordCount, guessed: [], wrongGuesses: 0, word: null };
+                showGameCelebration(modal, `Good job ${winningName}!`, word, winningPlayer, currentWordRecord?.vocab_image || '');
+              }, 650);
+              letters.querySelectorAll('.hangman-letter').forEach(b => b.disabled = true);
+            }
+            render();
+          });
+        }
+      });
+    }
+    
+    const handleHangmanKeydown = event => {
+      if (gameEnded || event.ctrlKey || event.metaKey || event.altKey) return;
+      const letter = String(event.key || '').toUpperCase();
+      if (!/^[A-Z]$/.test(letter) || guessed.includes(letter)) return;
+      const button = modal.querySelector(`[data-letter="${letter}"]`);
+      if (button && !button.disabled) button.click();
+    };
+    modal.addEventListener('keydown', handleHangmanKeydown);
+    render();
+    const resetAndCloseHangman = () => {
+      hangmanSession = { listName, winningScore: wordCount, guessed: [], wrongGuesses: 0, word: null };
+      modal.remove();
+    };
+    modal.querySelector('#game-close').addEventListener('click', resetAndCloseHangman);
+    modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
+  }
+  window.openGameHangman = openGameHangman;
+})();
+
+</script>
 <script src="/pokeayman/teacher-shell.js?v=20261103-logout-restore-v1" defer></script>
 <script src="/pokeayman/shop-catalog.js"></script>
 </head>
@@ -27142,595 +28109,8 @@ function selectGameList(listRef) {
   renderGamesList();
 }
 
-// Surprise Boxes-style vocabulary board with an optional kid-friendly power-up setup.
-const baamboozlePowerUps = ['Star','Steal','Rocket','Bomb','Swap','Gift','Trap'];
-const formatBaamScoreDelta = (text) => String(text || '')
-  .replace(/(\+\d+)/g, '<span class="baam-num-plus">$1</span>')
-  .replace(/([−-]\d+)/g, '<span class="baam-num-minus">$1</span>');
+// Surprise Boxes logic moved to /pokeayman/surprise-boxes.js
 
-const BAAM_POWER_INFO = {
-  Star:   { name: 'Star Boost',   emoji: '⭐', desc: '+25 points for you!' },
-  Steal:  { name: 'Zap Steal',    emoji: '⚡', desc: 'Steal 15 points from the leader!' },
-  Rocket: { name: 'Rocket Blast', emoji: '🚀', desc: 'Blast 5 points above first place!' },
-  Bomb:   { name: 'Mega Bomb',    emoji: '💣', desc: 'Oh no! −20 points.' },
-  Swap:   { name: 'Score Swap',   emoji: '🔄', desc: 'Swap scores with the leader!' },
-  Gift:   { name: 'Mystery Gift', emoji: '🎁', desc: 'Everyone else gets +10 points.' },
-  Trap:   { name: 'Sticky Trap',  emoji: '🕸️', desc: 'Trapped! No points this turn.' }
-};
-function chooseBaamboozlePowerUps(listName) {
-  if (typeof chooseGamePlayers === 'function') {
-    chooseGamePlayers(listName, chooseBaamboozlePowerUps);
-    return;
-  }
-  const availableWords = getGameWords(listName).filter(w => w.vocab_word);
-  if (!availableWords.length) { toast('Add vocabulary words first'); return; }
-  const maxCards = 16;
-  const modal = document.createElement('div');
-  modal.className = 'surprise-boxes-setup game-inline-view game-setup-panel mx-auto my-4';
-  modal.innerHTML = `<div class="game-setup-panel">
-    <h2 class="heading-font text-2xl font-bold text-gray-800 text-center mb-1">🎁 Surprise Boxes</h2>
-    <p class="text-sm text-gray-500 text-center mb-3">Choose how many cards to play with.</p>
-    <label for="baam-card-count" class="sr-only">Number of cards</label>
-    <div class="grid grid-cols-3 gap-2 mb-4" role="group" aria-label="Number of cards">
-      ${[8, 18, 24].map(n => `<button type="button" class="baam-card-count rounded-lg border-2 border-orange-200 bg-orange-50 px-3 py-3 text-sm font-bold text-gray-700 transition hover:border-orange-400 ${n === Math.min(24, Math.max(8, availableWords.length)) ? 'border-orange-500 bg-orange-100 ring-2 ring-orange-300' : ''}" data-count="${n}">${n} cards</button>`).join('')}
-    </div>
-    <p class="text-sm text-gray-500 text-center mb-3">Power-ups for this round</p>
-    <button type="button" id="baam-power-toggle" class="w-full btn-primary mb-2">All power-ups enabled</button>
-    <p id="baam-powerup-status" class="text-xs text-orange-600 text-center">All power-ups enabled</p>
-    <div class="flex gap-2 mt-5"><button type="button" id="baam-start" class="flex-1 btn-success">Start game</button><button type="button" id="baam-cancel" class="flex-1 btn-outline">Cancel</button></div>
-  </div>`;
-  document.body.appendChild(modal);
-  let selectedCardCount = Math.min(16, Math.max(8, availableWords.length));
-  let powerUpsEnabled = true;
-  const status = modal.querySelector('#baam-powerup-status');
-  modal.querySelectorAll('.baam-card-count').forEach(button => button.addEventListener('click', () => {
-    selectedCardCount = Number(button.dataset.count);
-    modal.querySelectorAll('.baam-card-count').forEach(card => card.classList.remove('border-orange-500', 'bg-orange-100', 'ring-2', 'ring-orange-300'));
-    button.classList.add('border-orange-500', 'bg-orange-100', 'ring-2', 'ring-orange-300');
-  }));
-  modal.querySelector('#baam-power-toggle').addEventListener('click', () => {
-    powerUpsEnabled = !powerUpsEnabled;
-    const label = powerUpsEnabled ? 'All power-ups enabled' : 'All power-ups disabled';
-    modal.querySelector('#baam-power-toggle').textContent = label;
-    status.textContent = label;
-  });
-  modal.querySelector('#baam-cancel').addEventListener('click', () => modal.remove());
-  modal.querySelector('#baam-start').addEventListener('click', () => { const enabled = powerUpsEnabled ? baamboozlePowerUps : []; modal.remove(); openBaamboozle(listName, enabled, selectedCardCount); });
-  modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the setup. */ });
-}
-window.chooseBaamboozlePowerUps = chooseBaamboozlePowerUps;
-function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSeconds = 0) {
-  setGameReplay(() => { resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount, timerSeconds); });
-  const normalizedTimerSeconds = Number.isFinite(Number(timerSeconds)) && Number(timerSeconds) > 0 ? Number(timerSeconds) : 0;
-  const words = getGameWords(listName).filter(w => w && w.vocab_word);
-  if (!words.length) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'Add vocabulary words first'); return; }
-
-  // 1. Deduplicate words by normalized word text so NO word can ever repeat
-  const seenNorm = new Set();
-  const uniqueWords = [];
-  for (const w of words) {
-    const norm = String(w?.vocab_word || '').trim().toLowerCase();
-    if (norm && !seenNorm.has(norm)) {
-      seenNorm.add(norm);
-      uniqueWords.push(w);
-    }
-  }
-  if (!uniqueWords.length) {
-    toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'Add vocabulary words first');
-    return;
-  }
-
-  const shuffledWords = uniqueWords.slice().sort(() => Math.random() - 0.5);
-  const roundSize = Number(cardCount) || 8;
-  const isPowerupsExplicitlyEnabled = Array.isArray(enabledPowerUps) && enabledPowerUps.length > 0;
-  const powerUpPool = isPowerupsExplicitlyEnabled
-    ? enabledPowerUps
-    : (Array.isArray(baamboozlePowerUps) && baamboozlePowerUps.length > 0 ? baamboozlePowerUps : ['Star','Steal','Rocket','Bomb','Swap','Gift','Trap']);
-
-  let selectedWords = [];
-  let neededPowerUps = 0;
-
-  if (shuffledWords.length < roundSize) {
-    // If list words are not enough for the cards (e.g. 5 words for 8 cards),
-    // use each unique word exactly once, and complete the rest with power-ups by default!
-    selectedWords = shuffledWords.slice();
-    neededPowerUps = roundSize - selectedWords.length;
-  } else if (isPowerupsExplicitlyEnabled) {
-    // Words are sufficient and power-ups are enabled: mix of unique words and surprise power-ups
-    const targetPowerUps = Math.max(1, Math.min(Math.round(roundSize * 0.25), roundSize - 1));
-    const targetWords = roundSize - targetPowerUps;
-    selectedWords = shuffledWords.slice(0, targetWords);
-    neededPowerUps = roundSize - selectedWords.length;
-  } else {
-    // Words are sufficient and power-ups are disabled: all unique vocabulary cards
-    selectedWords = shuffledWords.slice(0, roundSize);
-    neededPowerUps = 0;
-  }
-
-  const selectedPowerUps = [];
-  if (neededPowerUps > 0 && powerUpPool.length > 0) {
-    const shuffledPool = powerUpPool.slice().sort(() => Math.random() - 0.5);
-    for (let i = 0; i < neededPowerUps; i++) {
-      const pType = shuffledPool[i % shuffledPool.length];
-      selectedPowerUps.push({ powerUp: pType, vocab_word: '' });
-    }
-  }
-
-  const selectedCards = [...selectedWords, ...selectedPowerUps];
-  const deck = selectedCards.sort(() => Math.random() - 0.5);
-  let index = 0;
-  let roundEnded = false;
-  // Track every tile chosen at least once; completion is based only on this set.
-  const chosenCards = new Set();
-  const modal = document.createElement('div'); modal.className = 'game-popup-modal fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  const tileCount = deck.length;
-  const tileNumbers = Array.from({length: tileCount}, (_, i) => i + 1);
-  const blankTiles = new Set();
-  modal.innerHTML = `<div class="surprise-boxes-game bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden">
-    <div class="surprise-boxes-header bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-300 px-3 sm:px-5 py-3 flex items-center gap-2 sm:gap-4 border-b-4 border-white relative">
-      <h2 class="game-title-bright heading-font text-xl sm:text-3xl font-bold text-slate-800 text-center flex-1 min-w-0 truncate">🎁 Surprise boxes</h2>
-      <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 relative z-10">
-        <div class="flex items-center gap-1 rounded-xl border-2 border-amber-700/40 bg-white/35 p-1 shadow-lg backdrop-blur-md">
-          <button type="button" id="baam-size-decrease" class="text-slate-900 hover:bg-white/60 hover:text-amber-900 text-base font-black w-9 h-9 rounded-lg bg-white/45 transition-all duration-200 shadow-inner" aria-label="Show fewer boxes per row" title="Fewer boxes">−</button>
-          <button type="button" id="baam-size-increase" class="text-slate-900 hover:bg-white/60 hover:text-amber-900 text-base font-black w-9 h-9 rounded-lg bg-white/45 transition-all duration-200 shadow-inner" aria-label="Show more boxes per row" title="More boxes">+</button>
-        </div>
-        <button type="button" id="baam-close" class="text-slate-900 hover:bg-white/60 hover:text-amber-900 text-2xl font-black w-10 h-9 rounded-lg bg-white/45 border-2 border-amber-700/40 transition-all shadow-lg" aria-label="Close game" title="Close">×</button>
-      </div>
-    </div>
-    <div class="surprise-boxes-body p-3 sm:p-5 bg-slate-50"><div id="baam-player-hud" class="game-player-hud justify-center mt-0 mb-4 max-w-[900px]"></div><div id="baam-board" class="grid grid-cols-4 gap-1.5 sm:gap-2"></div>
-      <div id="baam-reveal" class="hidden baam-reveal-overlay"><div class="baam-reveal-panel baam-question-card" role="dialog" aria-modal="true" aria-labelledby="baam-question-title"><header class="baam-question-header"><div><span class="baam-question-kicker">SURPRISE BOXES</span><h3 id="baam-question-title">Box 01</h3></div><button type="button" id="baam-reveal-close" class="btn-outline baam-question-close" aria-label="Close question" title="Close question">×</button></header><div id="baam-question-player" class="baam-question-player"></div><div id="baam-picture" class="baam-question-picture"></div><p id="baam-word" class="hidden"></p><div id="baam-answer-controls" class="baam-question-actions"></div><p id="baam-answer-status" aria-live="polite"></p></div></div>
-    </div></div>`;
-  document.body.appendChild(modal);
-  // Surprise Boxes stays inside the normal page view; other games retain fullscreen behavior.
-  // Preserve the exact 2–4 students chosen in the pre-game chooser.
-  const baamPlayers = (activeGamePlayers || []).slice(0, 4);
-  const baamQ = sel => modal.querySelector(sel) || document.querySelector('.baam-stage-portal ' + sel);
-  if (baamPlayers.length < 2) { toast('Select at least two students for Surprise Boxes'); modal.remove(); return; }
-  activeGamePlayers = baamPlayers;
-  activeGamePlayerIndex = 0;
-  activeGameScores = baamPlayers.map(() => 0);
-  const playerHud = modal.querySelector('#baam-player-hud');
-  playerHud.innerHTML = baamPlayers.map((player, index) => {
-    const avatar = player.avatar_pokemon_id || 25;
-    return `<div class="game-player-card ${index === 0 ? 'is-active' : ''}" data-player-index="${index}">
-      <div class="game-player-avatar-wrap">${gameStudentAvatarMarkup(player, 'game-player-avatar baam-player-avatar')}</div>
-      <p class="game-player-name font-bold text-xs text-slate-700 baam-player-name">${player.student_name}</p>
-      <p class="game-player-turn text-[11px] font-black" aria-hidden="true"></p>
-      <div class="game-turn-timer hidden" role="timer" aria-label="Remaining turn time"><span class="game-turn-timer-track"><span class="game-turn-timer-fill"></span></span><span class="game-turn-timer-number">⏱ 0s</span></div>
-      <p class="game-player-score" aria-label="Player score"><strong class="baam-player-score-value">0</strong></p>
-    </div>`;
-  }).join('');
-  playerHud.style.gridTemplateColumns = `repeat(${baamPlayers.length}, minmax(0, 1fr))`;
-  if (normalizedTimerSeconds > 0) startPlayerTurnTimer(modal, normalizedTimerSeconds);
-  else { modal.dataset.timerSeconds = ''; updateGamePlayerHud(modal, 0, activeGamePlayerIndex); }
-  const board = modal.querySelector('#baam-board');
-  const baamGridConfig = deck.length <= 8 ? { columns: 4, rows: Math.max(2, Math.ceil(deck.length / 4)) } : deck.length <= 12 ? { columns: 4, rows: 3 } : deck.length <= 18 ? { columns: 6, rows: 3 } : { columns: 6, rows: 4 };
-  let baamGridColumns = baamGridConfig.columns;
-  let baamGridRows = baamGridConfig.rows;
-  const fitBaamBoard = () => {
-    const body = modal.querySelector('.surprise-boxes-body');
-    if (!body || !board) return;
-    const bodyStyle = window.getComputedStyle(body);
-    const boardStyle = window.getComputedStyle(board);
-    const bodyPadX = (parseFloat(bodyStyle.paddingLeft) || 0) + (parseFloat(bodyStyle.paddingRight) || 0);
-    const bodyPadY = (parseFloat(bodyStyle.paddingTop) || 0) + (parseFloat(bodyStyle.paddingBottom) || 0);
-    const boardPadX = (parseFloat(boardStyle.paddingLeft) || 0) + (parseFloat(boardStyle.paddingRight) || 0);
-    const boardPadY = (parseFloat(boardStyle.paddingTop) || 0) + (parseFloat(boardStyle.paddingBottom) || 0);
-    const boardBorderX = (parseFloat(boardStyle.borderLeftWidth) || 0) + (parseFloat(boardStyle.borderRightWidth) || 0);
-    const boardBorderY = (parseFloat(boardStyle.borderTopWidth) || 0) + (parseFloat(boardStyle.borderBottomWidth) || 0);
-    const hud = playerHud?.offsetHeight || 0;
-    const rawBoardInnerW = board.clientWidth > 0
-      ? (board.clientWidth - boardPadX)
-      : (body.clientWidth - bodyPadX - boardPadX - boardBorderX);
-    const rawBoardInnerH = (body.clientHeight - hud - bodyPadY - boardPadY - boardBorderY);
-    const availableWidth = Math.max(1, rawBoardInnerW - 16);
-    const availableHeight = Math.max(1, rawBoardInnerH - 16);
-    const gap = Math.max(8, Math.min(16, Math.floor(Math.min(availableWidth / baamGridColumns, availableHeight / baamGridRows) * .075)));
-    const boxRatio = 1.25; // Locked gift box aspect ratio: width = height * 1.25
-    const maxBoxWidth = (availableWidth - gap * (baamGridColumns - 1)) / baamGridColumns;
-    const maxBoxHeight = (availableHeight - gap * (baamGridRows - 1)) / baamGridRows;
-    const boxWidth = Math.max(54, Math.min(maxBoxWidth, maxBoxHeight * boxRatio));
-    const boxHeight = boxWidth / boxRatio;
-    board.style.gridTemplateColumns = `repeat(${baamGridColumns}, ${Math.floor(boxWidth)}px)`;
-    board.style.gridTemplateRows = `repeat(${baamGridRows}, ${Math.floor(boxHeight)}px)`;
-    board.style.gap = `${gap}px`;
-    board.style.justifyContent = 'center';
-    board.style.alignContent = 'center';
-  };
-  const updateBaamGridDensity = () => { baamGridColumns = baamGridConfig.columns; baamGridRows = baamGridConfig.rows; fitBaamBoard(); requestAnimationFrame(fitBaamBoard); };
-  let baamDensityStep = 1;
-  const baamDensityLimits = { min: 0, max: 2 };
-  const updateBaamDensityControls = () => {
-    const decrease = modal.querySelector('#baam-size-decrease');
-    const increase = modal.querySelector('#baam-size-increase');
-    decrease.disabled = baamDensityStep <= baamDensityLimits.min;
-    increase.disabled = baamDensityStep >= baamDensityLimits.max;
-    decrease.setAttribute('aria-disabled', String(decrease.disabled));
-    increase.setAttribute('aria-disabled', String(increase.disabled));
-  };
-  const adjustBaamDensity = direction => {
-    const next = Math.max(baamDensityLimits.min, Math.min(baamDensityLimits.max, baamDensityStep + direction));
-    if (next === baamDensityStep) return;
-    baamDensityStep = next;
-    // The controls adjust the board layout only; the selected deck and game state stay intact.
-    const columns = Math.max(4, Math.min(8, baamGridConfig.columns + (baamDensityStep - 1) * 2));
-    const rows = Math.ceil(tileCount / columns);
-    baamGridColumns = columns;
-    baamGridRows = rows;
-    updateBaamDensityControls();
-    fitBaamBoard();
-  };
-  modal.querySelector('#baam-size-decrease').addEventListener('click', () => adjustBaamDensity(-1));
-  modal.querySelector('#baam-size-increase').addEventListener('click', () => adjustBaamDensity(1));
-  updateBaamDensityControls();
-  window.addEventListener('resize', fitBaamBoard);
-  window.visualViewport?.addEventListener('resize', fitBaamBoard);
-  const activeBaamThemeId = modal.dataset.gaTheme || (typeof window.gaGetTheme === 'function' ? window.gaGetTheme() : (document.body.dataset.gaActiveTheme || 'classic'));
-  modal.dataset.gaTheme = activeBaamThemeId;
-  const getThemeBallSrc = (themeId) => {
-    if (themeId === 'jungle') return '/pokeayman/assets/balls/6.png';
-    if (themeId === 'toybox') return '/pokeayman/assets/balls/11.png';
-    if (themeId === 'halloween') return '/pokeayman/assets/balls/4.png';
-    return '/pokeayman/assets/balls/1.png';
-  };
-  const baamBallSrc = getThemeBallSrc(activeBaamThemeId);
-  board.innerHTML = tileNumbers.map(n => blankTiles.has(n) ? `<button type="button" class="aspect-[1.25] rounded-lg bg-slate-50 text-slate-300 text-3xl font-black shadow-sm" disabled>×</button>` : `<button type="button" class="baam-tile baam-giftbox" data-tile="${n}" aria-label="Open box ${n}" style="--d:${(n % 8) * 0.18}s"><span class="baam-box-lid" aria-hidden="true"></span><span class="baam-box-body" aria-hidden="true"><span class="baam-box-seal"><img class="baam-seal-ball" src="${baamBallSrc}" alt="Poké Ball" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('is-fallback')"></span></span><span class="baam-box-num">${n}</span></button>`).join('');
-  updateBaamGridDensity();
-  let selectedCard = null;
-  const updateTeamScores = () => {
-    modal.querySelectorAll('.game-player-card').forEach((card, index) => {
-      const score = card.querySelector('.baam-player-score-value');
-      if (score) score.textContent = activeGameScores[index] || 0;
-    });
-  };
-  const applyPowerUp = (power) => {
-    const current = activeGamePlayerIndex;
-    const opponents = activeGameScores.map((_, index) => index).filter(index => index !== current);
-    const before = [...activeGameScores];
-    const leader = opponents.slice().sort((a, b) => activeGameScores[b] - activeGameScores[a])[0];
-    if (power === 'Star') {
-      try { window.pokeSfx?.play?.('star'); } catch (e) {}
-      activeGameScores[current] += 25;
-    } else if (power === 'Steal' && leader !== undefined) {
-      try { window.pokeSfx?.play?.('whoosh'); } catch (e) {}
-      const taken = Math.min(15, Math.max(0, activeGameScores[leader]));
-      activeGameScores[leader] -= taken; activeGameScores[current] += taken;
-    } else if (power === 'Rocket') {
-      try { window.pokeSfx?.play?.('rocket'); } catch (e) {}
-      activeGameScores[current] = Math.max(...activeGameScores) + 5;
-    } else if (power === 'Bomb') {
-      try { window.pokeSfx?.play?.('boom'); } catch (e) {}
-      activeGameScores[current] = Math.max(0, activeGameScores[current] - 20);
-    } else if (power === 'Swap' && leader !== undefined) {
-      try { window.pokeSfx?.play?.('whoosh'); } catch (e) {}
-      [activeGameScores[current], activeGameScores[leader]] = [activeGameScores[leader], activeGameScores[current]];
-    } else if (power === 'Gift') {
-      try { window.pokeSfx?.play?.('plus'); } catch (e) {}
-      opponents.forEach(index => { activeGameScores[index] += 10; });
-    } else if (power === 'Trap') {
-      try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
-    }
-    const impacts = activeGameScores.map((score, index) => score - before[index]);
-    const updateTeamScores = () => {
-      modal.querySelectorAll('.game-player-card').forEach((card, index) => {
-        const score = card.querySelector('.baam-player-score-value');
-        if (score) {
-          const previousValue = score.dataset.scoreValue;
-          const nextValue = String(activeGameScores[index] || 0);
-          score.dataset.scoreValue = nextValue;
-          score.textContent = nextValue;
-          if (previousValue !== undefined && previousValue !== nextValue) {
-            score.classList.remove('game-player-score-number-change');
-            void score.offsetWidth;
-            score.classList.add('game-player-score-number-change');
-          }
-        }
-      });
-    };
-    updateTeamScores();
-    // Show every student the power-up changed, not just the current player:
-    // one staggered chip per score change, laid out in the panel's own flow
-    // after the card so it can never cover the player pill, and used instead of
-    // repeating the same numbers as plain text in the status line.
-    const changedEntries = impacts.map((impact, index) => ({ impact, index })).filter(entry => entry.impact);
-    const scoreStage = baamQ('#baam-reveal .baam-reveal-panel');
-    scoreStage?.querySelector('.baam-impact-stack')?.remove();
-    if (changedEntries.length && scoreStage) {
-      const impactStack = document.createElement('div');
-      impactStack.className = 'baam-impact-stack';
-      impactStack.setAttribute('aria-hidden', 'true');
-      changedEntries.forEach((entry, order) => {
-        const impactPlayer = baamPlayers[entry.index];
-        const chip = document.createElement('div');
-        const isScorePlus = entry.impact > 0;
-        chip.className = `baam-impact-chip ${isScorePlus ? 'is-plus' : 'is-minus'}`;
-        chip.style.setProperty('--baam-impact-order', String(order));
-        chip.innerHTML = `${impactPlayer ? gameStudentAvatarMarkup(impactPlayer, 'baam-impact-avatar') : ''}<span class="baam-impact-name"></span><strong class="baam-impact-value ${isScorePlus ? 'is-plus' : 'is-minus'}">${isScorePlus ? '+' : '−'}${Math.abs(entry.impact)}</strong>`;
-        chip.querySelector('.baam-impact-name').textContent = impactPlayer?.student_name || `Player ${entry.index + 1}`;
-        impactStack.appendChild(chip);
-      });
-      const pictureEl = baamQ('#baam-picture');
-      if (pictureEl && pictureEl.parentElement === scoreStage) {
-        pictureEl.insertAdjacentElement('afterend', impactStack);
-      } else {
-        const statusEl = baamQ('#baam-answer-status');
-        scoreStage.insertBefore(impactStack, statusEl && statusEl.parentElement === scoreStage ? statusEl : null);
-      }
-    }
-    if (power === 'Bomb') { const shakeEl = modal.querySelector('#baam-board'); shakeEl?.classList.remove('baam-shake'); void modal.offsetWidth; shakeEl?.classList.add('baam-shake'); }
-    advanceGameTurn();
-    updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
-    if (power === 'Trap') return 'Trapped! No points this turn.';
-    // The chips above already show who gained or lost what; repeating it here
-    // would print the same numbers twice.
-    return changedEntries.length ? '' : 'No score change';
-  };
-  const endBaamboozle = async () => {
-    if (roundEnded || chosenCards.size < deck.length) return;
-    roundEnded = true;
-    const winnerIndex = activeGameScores[0] === activeGameScores[1] ? -1 : (activeGameScores[0] > activeGameScores[1] ? 0 : 1);
-    const winnerName = winnerIndex >= 0 ? (baamPlayers[winnerIndex]?.student_name || `Player ${winnerIndex + 1}`) : '';
-    const winner = winnerIndex < 0 ? "It's a tie!" : `${winnerName} wins!`;
-    const winnerNames = `${baamPlayers[0]?.student_name || 'Player 1'} ${activeGameScores[0]} · ${baamPlayers[1]?.student_name || 'Player 2'} ${activeGameScores[1]}`;
-    const winnerPlayer = winnerIndex >= 0 ? baamPlayers[winnerIndex] : null;
-    const winnerAvatar = winnerPlayer?.avatar_pokemon_id || 25;
-    const winnerAvatarAlt = winnerPlayer ? `${winnerPlayer.student_name}'s avatar Pokémon` : 'Pokémon game tie';
-    const baamConfiguredPrize = Math.max(0, Math.floor(Number(activeGameReward) || 0));
-    let baamAwardedPrize = 0;
-    if (winnerPlayer && baamConfiguredPrize > 0 && !activeGameRewardClaimed) {
-      activeGameRewardClaimed = true;
-      const winnerRecord = getAllStudents().find(student => student.__backendId === winnerPlayer.__backendId) || getAllStudents().find(student => student.student_name === winnerName);
-      if (winnerRecord) {
-        const awardResult = await window.dataSdk.update({ ...winnerRecord, coins: (Number(winnerRecord.coins) || 0) + baamConfiguredPrize, claimed_via_battle: true });
-        if (awardResult?.isOk) {
-          baamAwardedPrize = baamConfiguredPrize;
-          toast(`${winnerName} was awarded ${baamAwardedPrize} coins!`);
-        } else {
-          activeGameRewardClaimed = false;
-          toast('Could not award the Surprise Boxes prize. Please try again.');
-        }
-      } else {
-        activeGameRewardClaimed = false;
-      }
-    }
-    const baamPrizeNotice = baamAwardedPrize > 0 ? `<p class="relative z-10 mt-3 rounded-xl border-2 border-yellow-300 bg-slate-950 px-4 py-2 text-lg font-black text-yellow-200 shadow-lg" aria-live="polite">Prize: ${baamAwardedPrize} coins</p>` : '';
-    baamQ('#baam-reveal')?.classList.add('hidden');
-    modal.querySelectorAll('.baam-tile').forEach(tile => { tile.disabled = true; });
-    const overlay = document.createElement('div');
-    overlay.className = 'game-celebration-overlay baam-final-overlay';
-    overlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="baam-final-title" tabindex="-1"><img class="game-celebration-pikachu battle-winner-celebrate" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png" alt="${winnerAvatarAlt}"><div class="text-4xl mb-1 relative z-10" aria-hidden="true">🏆</div><h2 id="baam-final-title" class="heading-font text-3xl font-black text-amber-700 relative z-10">${winner}</h2><p class="mt-1 text-base font-bold text-slate-700 relative z-10">${winnerNames}</p>${baamPrizeNotice}<div class="flex gap-3 mt-5 relative z-10"><button type="button" id="baam-final-replay" class="btn-primary flex-1">Play again</button><button type="button" id="baam-final-hub" class="btn-outline flex-1">🎮 Other Games</button><button type="button" id="baam-final-close" class="btn-outline flex-1">Close</button></div></div>`;
-    mountGameCelebrationOverlay(modal, overlay);
-    const closeResult = () => { overlay.remove(); modal.remove(); returnToGamesTab(); };
-    overlay.querySelector('#baam-final-close').addEventListener('click', closeResult);
-    overlay.querySelector('#baam-final-hub')?.addEventListener('click', () => {
-      overlay.remove();
-      modal.remove();
-      if (typeof window.gaExitSetupToArcade === 'function') {
-        window.gaExitSetupToArcade();
-      } else {
-        returnToGamesTab();
-      }
-    });
-    overlay.querySelector('#baam-final-replay').addEventListener('click', () => { overlay.remove(); modal.remove(); resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount, timerSeconds); });
-    overlay.addEventListener('click', event => { /* Result popup closes only through its Replay/Close buttons. */ });
-    overlay.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); closeResult(); } });
-    overlay.querySelector('.game-celebration-card').focus();
-  };
-  let answerProgressionTimer = null;
-  const clearAnswerTimer = () => {
-    if (answerProgressionTimer) {
-      clearTimeout(answerProgressionTimer);
-      answerProgressionTimer = null;
-    }
-  };
-  const reveal = () => {
-    clearAnswerTimer();
-    const w = deck[index % deck.length];
-    selectedCard = w;
-    const revealPanel = baamQ('#baam-reveal');
-    const picture = baamQ('#baam-picture');
-    const word = baamQ('#baam-word');
-    const status = baamQ('#baam-answer-status');
-    const answerControls = baamQ('#baam-answer-controls');
-    baamQ('#baam-question-title').textContent = `Box ${String(index + 1).padStart(2, '0')}`;
-    const playerChip = baamQ('#baam-question-player');
-    const questionPlayer = baamPlayers[activeGamePlayerIndex];
-    playerChip.replaceChildren();
-    if (questionPlayer) {
-      playerChip.innerHTML = gameStudentAvatarMarkup(questionPlayer, 'baam-question-avatar');
-      const playerName = document.createElement('span');
-      playerName.textContent = questionPlayer.student_name;
-      playerChip.appendChild(playerName);
-    }
-    revealPanel.classList.remove('hidden'); word.classList.add('hidden'); status.textContent = '';
-    status.className = '';
-    revealPanel.querySelector('.baam-impact-stack')?.remove();
-    const questionCard = baamQ('#baam-reveal .baam-question-card') || baamQ('#baam-reveal .baam-reveal-panel');
-    const allPowerClasses = ['baam-powerup-reveal', 'baam-powerup-star', 'baam-powerup-rocket', 'baam-powerup-steal', 'baam-powerup-bomb', 'baam-powerup-swap', 'baam-powerup-gift', 'baam-powerup-trap'];
-    revealPanel.classList.remove(...allPowerClasses);
-    questionCard?.classList.remove(...allPowerClasses);
-    const kickerEl = baamQ('.baam-question-kicker');
-    if (kickerEl) kickerEl.textContent = 'SURPRISE BOXES';
-
-    if (w.powerUp) {
-      const info = BAAM_POWER_INFO[w.powerUp] || { name: w.powerUp, emoji: '✨', desc: '' };
-      picture.innerHTML = `<div class="baam-power-stage" aria-label="${info.name} power-up">
-        <div class="baam-powerup-icon"><span class="baam-power-badge" aria-hidden="true">${info.emoji}</span></div>
-        <h3 class="baam-power-name">${info.name}</h3>
-        <p class="baam-power-desc">${formatBaamScoreDelta(info.desc)}</p>
-      </div>`;
-      const pKey = w.powerUp.toLowerCase();
-      revealPanel.classList.add('baam-powerup-reveal', `baam-powerup-${pKey}`);
-      questionCard?.classList.add('baam-powerup-reveal', `baam-powerup-${pKey}`);
-      if (kickerEl) kickerEl.textContent = '⚡ POWER-UP!';
-      status.textContent = '';
-      try { window.pokeSfx?.play('pop'); setTimeout(() => window.pokeSfx?.play(({ Star: 'star', Bomb: 'boom', Steal: 'whoosh', Rocket: 'rocket', Swap: 'whoosh', Gift: 'coin', Trap: 'wrong' })[w.powerUp] || 'star'), 500); } catch (e) {}
-      if (answerControls) {
-        answerControls.replaceChildren();
-        const continueBtn = document.createElement('button');
-        continueBtn.type = 'button';
-        continueBtn.className = 'baam-power-continue-btn';
-        continueBtn.textContent = 'Continue →';
-        continueBtn.addEventListener('click', closeBaamRevealAsWrong);
-        answerControls.appendChild(continueBtn);
-        answerControls.classList.remove('hidden');
-      }
-      setTimeout(() => {
-        if (revealPanel.classList.contains('baam-powerup-reveal')) {
-          status.innerHTML = formatBaamScoreDelta(applyPowerUp(w.powerUp));
-          if (chosenCards.size === deck.length) setTimeout(endBaamboozle, 1200);
-        }
-      }, 700);
-      selectedCard = null; return;
-    }
-    picture.innerHTML = w.vocab_image ? `<img src="${w.vocab_image}" class="w-80 h-56 max-w-full rounded-lg object-contain mx-auto" alt="Picture prompt for ${w.vocab_word}" onerror="this.style.display='none'">` : `<div class="w-80 h-56 max-w-full rounded-lg bg-white border border-amber-200 flex items-center justify-center text-sm text-slate-400">No picture available</div>`;
-
-    // Four answer options from selected vocabulary list: 1 correct + up to 3 unique distractors
-    const targetWord = String(w.vocab_word || '').trim();
-    const normalizedTarget = targetWord.toLowerCase();
-    const seenWords = new Set([normalizedTarget]);
-    const distractorPool = [];
-    const shuffledSource = words.slice().sort(() => Math.random() - 0.5);
-    for (const item of shuffledSource) {
-      const candidate = String(item?.vocab_word || '').trim();
-      const candKey = candidate.toLowerCase();
-      if (!candKey || seenWords.has(candKey)) continue;
-      seenWords.add(candKey);
-      distractorPool.push(candidate);
-      if (distractorPool.length >= 3) break;
-    }
-    const choices = [targetWord, ...distractorPool].sort(() => Math.random() - 0.5);
-
-    if (answerControls) {
-      answerControls.replaceChildren();
-      let choiceLocked = false;
-      choices.forEach((choiceText, choiceIdx) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'baam-choice-btn';
-        btn.dataset.choice = choiceText;
-        btn.dataset.sfx = 'none';
-
-        if (choices.length % 2 === 1 && choiceIdx === choices.length - 1) {
-          btn.classList.add('baam-choice-btn-full');
-        }
-
-        const badge = document.createElement('span');
-        badge.className = 'baam-choice-badge';
-        badge.setAttribute('aria-hidden', 'true');
-        badge.textContent = ['A', 'B', 'C', 'D'][choiceIdx] || String(choiceIdx + 1);
-
-        const label = document.createElement('span');
-        label.className = 'baam-choice-text';
-        label.textContent = choiceText;
-
-        btn.appendChild(badge);
-        btn.appendChild(label);
-
-        btn.addEventListener('click', () => {
-          if (choiceLocked) return;
-          choiceLocked = true;
-          clearAnswerTimer();
-
-          const isCorrect = choiceText.trim().toLowerCase() === normalizedTarget;
-
-          // Lock all choices and highlight the correct one
-          answerControls.querySelectorAll('.baam-choice-btn').forEach(b => {
-            b.disabled = true;
-            if (String(b.dataset.choice || '').trim().toLowerCase() === normalizedTarget) {
-              b.classList.add('is-revealed-correct');
-            }
-          });
-
-          if (isCorrect) {
-            btn.classList.add('is-correct');
-            status.innerHTML = '✓ Correct! <span class="baam-num-plus">+10</span> points';
-            status.className = 'baam-answer-feedback is-correct';
-            try { window.pokeSfx?.play('correct'); } catch (e) {}
-          } else {
-            btn.classList.add('is-wrong');
-            status.textContent = `✕ Not quite! Answer: ${targetWord}`;
-            status.className = 'baam-answer-feedback is-wrong';
-            try { window.pokeSfx?.play('wrong'); } catch (e) {}
-          }
-
-          word.textContent = targetWord;
-          word.classList.remove('hidden');
-
-          answerProgressionTimer = setTimeout(() => {
-            answerProgressionTimer = null;
-            markAnswer(isCorrect);
-          }, 850);
-        });
-
-        answerControls.appendChild(btn);
-      });
-      answerControls.classList.remove('hidden');
-    }
-  };
-  const closeBaamRevealAsWrong = () => {
-    clearAnswerTimer();
-    // Always dismiss the reveal overlay, including after a power-up resolves.
-    const revealPanel = baamQ('#baam-reveal');
-    if (!revealPanel) return;
-    if (selectedCard && !selectedCard.powerUp) {
-      advanceGameTurn();
-      updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
-    }
-    selectedCard = null;
-    revealPanel.classList.add('hidden');
-    if (chosenCards.size === deck.length) endBaamboozle();
-  };
-  const markAnswer = (isCorrect) => {
-    clearAnswerTimer();
-    if (!selectedCard || selectedCard.powerUp) return;
-    const word = baamQ('#baam-word');
-    const currentPlayer = activeGamePlayerIndex;
-    if (isCorrect) {
-      try { window.pokeSfx?.play?.('correct'); } catch (e) {}
-      showCorrectAnswerCelebration(modal, currentPlayer);
-      activeGameScores[currentPlayer] = (activeGameScores[currentPlayer] || 0) + 10;
-      updateTeamScores();
-      word.textContent = selectedCard.vocab_word;
-      word.classList.remove('hidden');
-      advanceGameTurn();
-      updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
-    } else {
-      try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
-      showWrongAnswerCelebration(modal, currentPlayer);
-      advanceGameTurn();
-      updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
-    }
-    selectedCard = null;
-    baamQ('#baam-reveal').classList.add('hidden');
-    if (chosenCards.size >= deck.length) endBaamboozle();
-  };
-  const baamPortal = document.createElement('div');
-  baamPortal.className = 'baam-stage-portal';
-  baamPortal.appendChild(modal.querySelector('#baam-reveal'));
-  document.body.appendChild(baamPortal);
-  const baamPortalWatch = setInterval(() => { if (!modal.isConnected) { clearAnswerTimer(); baamPortal.remove(); clearInterval(baamPortalWatch); } }, 1000);
-  baamQ('#baam-reveal-close')?.addEventListener('click', closeBaamRevealAsWrong);
-  baamQ('#baam-reveal')?.addEventListener('click', event => {
-    /* Clicks outside the question card intentionally do not dismiss or mark it wrong. */
-  });
-  baamQ('#baam-correct')?.addEventListener('click', () => markAnswer(true));
-  baamQ('#baam-wrong')?.addEventListener('click', () => markAnswer(false));
-  const powerStyle = document.createElement('style');
-  powerStyle.textContent = `.baam-reveal-panel{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;width:min(100%,34rem);min-height:22rem;max-height:calc(100 * min(var(--vh, 1vh), 1vh) - 2rem);padding:2.5rem 1.5rem 1.5rem!important;background:#07111f!important;border:2px solid rgba(135,171,255,.72);border-radius:1.5rem!important;color:#f8fafc;box-shadow:0 0 0 1px rgba(253,224,71,.18),inset 0 1px 0 rgba(255,255,255,.2),0 24px 70px rgba(2,6,23,.78),0 0 34px var(--baam-glow,rgba(255,203,5,.3));text-align:center}.baam-reveal-panel #baam-picture{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:min(100%,18rem);min-height:8rem;max-height:11rem;margin:0 auto .25rem}.baam-reveal-panel #baam-picture img{display:block;max-width:100%;max-height:11rem;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5))}.baam-reveal-panel #baam-word{position:relative;z-index:2;max-width:100%;margin:.25rem auto 0;color:#fff7a8!important;font-size:clamp(2.4rem,9vw,5rem)!important;font-weight:950!important;line-height:1.05;overflow-wrap:anywhere;text-align:center;text-shadow:0 3px 0 rgba(2,6,23,.9),0 0 16px rgba(250,204,21,.5)}.baam-reveal-panel #baam-answer-status{position:relative;z-index:2;max-width:100%;margin:.25rem auto 0;padding:.45rem .8rem;border:1px solid rgba(125,211,252,.42);border-radius:999px;background:rgba(2,6,23,.72);color:#e0f2fe!important;font-size:clamp(.9rem,2.5vw,1.1rem)!important;font-weight:850;line-height:1.35;overflow-wrap:anywhere}.baam-reveal-panel #baam-answer-controls{position:relative;z-index:2;width:min(100%,22rem);margin-top:.5rem}.baam-reveal-panel #baam-answer-controls button{min-height:3rem;font-size:1rem;font-weight:900}.baam-reveal-panel #baam-reveal-close{z-index:4;width:2.5rem;height:2.5rem;border-radius:.75rem;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.28)}.baam-reveal-panel.baam-powerup-reveal::before{content:'SUPERPOWER';position:absolute;top:.7rem;left:50%;z-index:2;transform:translateX(-50%);padding:.22rem .7rem;border:1px solid rgba(253,224,71,.55);border-radius:999px;background:rgba(2,6,23,.55);color:#fde68a;font-size:.58rem;font-weight:950;letter-spacing:.22em;line-height:1;box-shadow:0 4px 12px rgba(2,6,23,.25)}.baam-reveal-panel::after{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background-image:radial-gradient(circle,#fff 0 1px,transparent 1.8px),radial-gradient(circle,#fde68a 0 1px,transparent 1.8px),linear-gradient(115deg,transparent 25%,rgba(125,211,252,.14) 50%,transparent 75%);background-size:72px 58px,96px 86px,220% 100%;background-position:12% 20%,78% 28%,-120% 0;opacity:.72;animation:baamParticleDrift 2.2s ease-out both,baamRaySweep 3.8s ease-in-out infinite}.baam-reveal-panel.baam-powerup-reveal{animation:baamRevealBurst .85s cubic-bezier(.2,.85,.25,1) both,baamPanelSettle 2.8s ease-in-out .85s infinite;overflow:visible!important}.baam-reveal-panel.baam-powerup-reveal #baam-picture{height:auto!important;max-height:none!important;min-height:16rem!important;padding:2rem 1.2rem 1.2rem!important;overflow:visible!important}.baam-powerup-reveal .baam-powerup-icon{position:relative;display:flex;align-items:center;justify-content:center;min-height:9rem;margin-top:1rem;font-size:clamp(5rem,18vw,8rem);line-height:1;filter:drop-shadow(0 0 12px var(--baam-glow,#a855f7)) drop-shadow(0 10px 12px rgba(0,0,0,.45));animation:baamPowerDrama .85s cubic-bezier(.2,.85,.25,1) both,baamHeroGlow 2.4s ease-in-out .85s infinite}.baam-reveal-panel #baam-answer-status{display:inline-block;margin:.6rem auto .15rem;padding:.3rem .72rem;border:1px solid rgba(125,211,252,.35);border-radius:999px;background:rgba(18,26,69,.62);color:#bae6fd!important;font-size:.7rem;font-weight:850;letter-spacing:.04em;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.baam-reveal-panel [class*='point'],.baam-reveal-panel [class*='Point']{position:relative;z-index:2;color:#fff7a8!important;-webkit-text-stroke:1px rgba(30,20,5,.8);text-shadow:0 3px 0 rgba(30,20,5,.72),0 0 12px var(--baam-glow,#facc15),0 0 24px rgba(250,204,21,.42);animation:superUpPointsPop 520ms cubic-bezier(.2,.85,.25,1) both,superUpPointsPulse 1.8s ease-in-out 520ms infinite}.baam-powerup-reveal .baam-powerup-icon::before{content:'';position:absolute;width:10rem;height:10rem;border-radius:50%;background:radial-gradient(circle,var(--baam-core,rgba(168,85,247,.42)),transparent 68%);filter:blur(12px);z-index:-1;animation:baamCoreFlash .85s ease-out both}.baam-powerup-reveal .baam-powerup-icon::after{content:'✦ · ✧ · ✦';position:absolute;inset:0;display:grid;place-items:center;color:var(--baam-glow,#c4b5fd);font-size:1.15rem;letter-spacing:1.5rem;opacity:.9;animation:baamSparkBurst 1.1s ease-out both} @keyframes baamRaySweep{0%,100%{background-position:12% 20%,78% 28%,-120% 0}55%{background-position:12% 20%,78% 28%,120% 0}} @keyframes baamPanelSettle{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}} @keyframes baamHeroGlow{0%,100%{filter:drop-shadow(0 0 12px var(--baam-glow,#a855f7)) drop-shadow(0 10px 12px rgba(0,0,0,.45))}50%{filter:drop-shadow(0 0 24px var(--baam-glow,#a855f7)) drop-shadow(0 10px 12px rgba(0,0,0,.45))}}.baam-powerup-reveal .baam-powerup-icon::before{content:'';position:absolute;width:8rem;height:8rem;border-radius:50%;background:var(--baam-core,rgba(168,85,247,.32));filter:blur(10px);z-index:-1;animation:baamCoreFlash .85s ease-out both}.baam-powerup-reveal .baam-powerup-icon::after{content:'✦  ·  ✧  ·  ✦';position:absolute;inset:0;display:grid;place-items:center;color:var(--baam-glow,#c4b5fd);font-size:1.2rem;letter-spacing:1.6rem;opacity:.9;animation:baamSparkBurst 1.1s ease-out both}.baam-powerup-reveal .baam-powerup-icon + *{position:relative}.baam-powerup-star{--baam-glow:#facc15;--baam-core:rgba(250,204,21,.45);--baam-aura:radial-gradient(circle,rgba(245,158,11,.65),transparent 68%)}.baam-powerup-rocket{--baam-glow:#fb923c;--baam-core:rgba(249,115,22,.4);--baam-aura:linear-gradient(90deg,transparent,rgba(249,115,22,.55),transparent)}.baam-powerup-rocket .baam-powerup-icon::after{content:'» » »';letter-spacing:1.1rem}.baam-powerup-virus,.baam-powerup-boom{--baam-glow:#fb7185;--baam-core:rgba(239,68,68,.36)}.baam-powerup-gold{--baam-glow:#facc15;--baam-core:rgba(251,191,36,.42)}.baam-powerup-fairy,.baam-powerup-heart,.baam-powerup-gift{--baam-glow:#f0abfc;--baam-core:rgba(217,70,239,.36)}.baam-powerup-thief,.baam-powerup-shark,.baam-powerup-magnet{--baam-glow:#ffcb05;--baam-core:rgba(255,203,5,.34)}.baam-powerup-trap,.baam-powerup-baam{--baam-glow:#a78bfa;--baam-core:rgba(124,58,237,.38)}.baam-powerup-eraser{--baam-glow:#ffd84d;--baam-core:rgba(120,152,255,.34)}.baam-powerup-seesaw{--baam-glow:#fde68a;--baam-core:rgba(253,224,71,.35)}.baam-powerup-virus .baam-powerup-icon,.baam-powerup-boom .baam-powerup-icon{animation:baamPowerDrama .85s ease both,baamPowerShake .85s ease both}@keyframes baamRevealBurst{0%{opacity:0;transform:scale(.72);filter:brightness(2.2)}35%{opacity:1;transform:scale(1.03);filter:brightness(1.35)}100%{transform:scale(1);filter:brightness(1)}}@keyframes baamPowerDrama{0%{opacity:0;transform:scale(.2) rotate(-25deg)}55%{opacity:1;transform:scale(1.35) rotate(12deg)}100%{transform:scale(1) rotate(0)}}@keyframes baamCoreFlash{0%{opacity:0;transform:scale(.25)}35%{opacity:1;transform:scale(1.35)}100%{opacity:.8;transform:scale(1)}}@keyframes baamSparkBurst{0%{opacity:0;transform:scale(.2) rotate(-18deg)}45%{opacity:1;transform:scale(1.2) rotate(8deg)}100%{opacity:.72;transform:scale(1) rotate(0)}}@keyframes baamParticleDrift{0%{opacity:0;transform:scale(.7) translateY(10px)}30%{opacity:.9}100%{opacity:.45;transform:scale(1.08) translateY(-6px)}}@keyframes baamAuraPulse{0%,100%{opacity:.52;transform:scale(.86)}50%{opacity:.9;transform:scale(1.08)}}@keyframes baamPowerShake{0%,100%{transform:translateX(0) scale(1)}25%{transform:translateX(-12px) rotate(-8deg) scale(1.15)}75%{transform:translateX(12px) rotate(8deg) scale(1.15)}}@media(max-width:640px){.baam-reveal-panel{width:min(100%,calc(100vw - 1.5rem));min-height:18rem;padding:2.25rem 1rem 1rem!important;border-radius:1.25rem!important}.baam-reveal-panel #baam-picture{min-height:6rem;max-height:8rem}.baam-reveal-panel #baam-picture img{max-height:8rem}.baam-reveal-panel #baam-answer-controls{width:100%;gap:.6rem}.baam-reveal-panel #baam-answer-controls button{min-height:2.8rem;font-size:.95rem}}@media(prefers-reduced-motion:reduce){.baam-reveal-panel,.baam-reveal-panel::before,.baam-reveal-panel::after,.baam-powerup-reveal .baam-powerup-icon,.baam-powerup-reveal .baam-powerup-icon::before,.baam-powerup-reveal .baam-powerup-icon::after{animation:none!important}.baam-reveal-panel{filter:none!important}}`;
-  document.head.appendChild(powerStyle);
-  if (!document.getElementById('baam-surprise-css')) { const l = document.createElement('link'); l.id = 'baam-surprise-css'; l.rel = 'stylesheet'; l.href = 'surprise-boxes.css'; document.head.appendChild(l); }
-  board.querySelectorAll('.baam-tile').forEach(tile => tile.addEventListener('click', () => {
-    try { window.pokeSfx?.play?.('pop'); } catch (e) {}
-    // A card counts as chosen immediately, but completion waits for resolution.
-    index = Number(tile.dataset.tile) - 1;
-    chosenCards.add(index);
-    reveal();
-    tile.disabled = true;
-    tile.classList.add('is-opened');
-  }));
-  modal.querySelector('#baam-close')?.addEventListener('click', () => { clearAnswerTimer(); stopGameFinishedActivity(modal); modal.remove(); returnToGamesTab(); }); modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
-}
 
 function mountGameCelebrationOverlay(gameModal, overlay) {
   if (!overlay) return;
@@ -30595,28 +30975,7 @@ function chooseScrambleWordCount(listName) {
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
-function chooseHangmanWordCount(listName) {
-  if (currentRole === 'student') { window.gaStudentSetup(listName, 'chooseHangmanWordCount'); return; }
-  const available = getVocabWords(listName, navSchool, navClass);
-  if (!available.length) { toast('List needs at least 1 word'); return; }
-  const modal = document.createElement('div');
-  modal.className = 'game-inline-view game-setup-panel mx-auto my-4';
-  modal.innerHTML = `<div class="game-setup-panel text-center"><h2 class="heading-font text-2xl font-bold text-gray-800 mb-2">🎮 Hangman</h2><p class="text-sm text-gray-500 text-center mb-4">The player with the higher score wins when the word is solved.</p><div class="rounded-lg border border-red-200 bg-red-50 p-3 mb-4 text-left"><label class="flex items-center gap-2 text-sm font-semibold text-gray-700"><input id="hangman-timer-enabled" type="checkbox" class="accent-red-500"> Enable per-player timer</label><div id="hangman-timer-settings" class="hidden mt-2"><span class="text-xs font-medium text-gray-600">Time for each player</span><div class="grid grid-cols-4 gap-2 mt-1" role="group" aria-label="Hangman timer duration"><input type="hidden" id="hangman-timer-seconds" value="300"><button type="button" class="hangman-timer-option rounded-lg border-2 border-red-200 bg-white px-2 py-2 text-xs font-semibold text-gray-700 transition hover:border-red-400" data-seconds="60">1 min</button><button type="button" class="hangman-timer-option rounded-lg border-2 border-red-200 bg-white px-2 py-2 text-xs font-semibold text-gray-700 transition hover:border-red-400" data-seconds="180">3 min</button><button type="button" class="hangman-timer-option rounded-lg border-2 border-red-500 bg-red-100 px-2 py-2 text-xs font-semibold text-gray-700 ring-2 ring-red-300" data-seconds="300">5 min</button><button type="button" class="hangman-timer-option rounded-lg border-2 border-red-200 bg-white px-2 py-2 text-xs font-semibold text-gray-700 transition hover:border-red-400" data-seconds="600">10 min</button></div></div></div><div class="flex gap-2"><button type="button" id="hangman-count-start" class="flex-1 btn-primary">Start Game</button><button type="button" id="hangman-count-cancel" class="flex-1 btn-outline">Cancel</button></div></div>`;
-  document.body.appendChild(modal);
-  const hangmanTimerToggle = modal.querySelector('#hangman-timer-enabled');
-  hangmanTimerToggle.addEventListener('change', () => modal.querySelector('#hangman-timer-settings').classList.toggle('hidden', !hangmanTimerToggle.checked));
-  modal.querySelectorAll('.hangman-timer-option').forEach(option => option.addEventListener('click', () => {
-    modal.querySelector('#hangman-timer-seconds').value = option.dataset.seconds;
-    modal.querySelectorAll('.hangman-timer-option').forEach(button => button.classList.remove('border-red-500', 'bg-red-100', 'ring-2', 'ring-red-300', 'is-selected'));
-    option.classList.add('border-red-500', 'bg-red-100', 'ring-2', 'ring-red-300', 'is-selected');
-  }));
-  modal.querySelector('#hangman-count-start').addEventListener('click', () => { const timerSeconds = hangmanTimerToggle.checked ? Number(modal.querySelector('#hangman-timer-seconds').value) : 0; modal.remove(); hangmanSession = null; resetGameTurnState(); openGameHangman(listName, 0, timerSeconds, 'easy', true); });
-  modal.querySelector('#hangman-count-cancel').addEventListener('click', () => modal.remove());
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
-}
-
-let scrambleSession = null;
-let hangmanSession = null;
+// Hangman setup moved to /pokeayman/hangman.js
 
 // Scramble Game
 function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
@@ -31010,337 +31369,8 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
 }
 
-// Hangman Game with Classic Drawing
-function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty = 'easy', freshRound = false, studentRound = null) {
-  const difficultyConfig = { easy: { maxWrong: 8, showClue: true }, hard: { maxWrong: 8, showClue: false } };
-  difficulty = difficultyConfig[difficulty] ? difficulty : 'easy';
-  const activeDifficulty = difficultyConfig[difficulty];
-  // A new round must never hydrate the previous lost word or guessed letters.
-  if (freshRound) hangmanSession = null;
-  setGameReplay(() => { resetGameTurnState(); hangmanSession = null; openGameHangman(listName, wordCount, timerSeconds, difficulty, true); });
-  const words = getGameWords(listName);
-  if (words.length < 1) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'List needs at least 1 word'); return; }
-  if (currentRole === 'student' && !studentRound) studentRound = { words: words.slice().sort(() => Math.random() - 0.5).slice(0, wordCount), index: 0 };
-  const sessionIsValid = hangmanSession && hangmanSession.listName === listName && hangmanSession.difficulty === difficulty && hangmanSession.word && !hangmanSession.ended;
-  if (!sessionIsValid) hangmanSession = { listName, difficulty, guessed: [], wrongGuesses: 0, word: (studentRound ? studentRound.words[studentRound.index] : words[Math.floor(Math.random() * words.length)]).vocab_word.toUpperCase(), ended: false };
-  hangmanSession.difficulty = difficulty;
-  hangmanSession.guessed = [...new Set(Array.isArray(hangmanSession.guessed) ? hangmanSession.guessed : [])].filter(letter => /^[A-Z]$/.test(letter));
-  hangmanSession.wrongGuesses = Math.max(0, Math.min(activeDifficulty.maxWrong, Number(hangmanSession.wrongGuesses) || 0));
-  const word = hangmanSession.word;
-  const currentWordRecord = words.find(w => (w.vocab_word || '').toUpperCase() === word);
-  const guessed = hangmanSession.guessed;
-  const isMediumDifficulty = difficulty === 'medium';
-  const maxWrong = activeDifficulty.maxWrong;
-  let wrongGuesses = hangmanSession.wrongGuesses;
-  let gameEnded = false;
-  
-  // Eight misses, eight visible stages; completed strokes stay mounted.
-  const drawingStages = [
-    '<path class="hm-line hm-scaffold" pathLength="1" d="M54 214 V38"/>',
-    '<path class="hm-line hm-scaffold" pathLength="1" d="M54 38 H146 M54 68 L84 38"/>',
-    '<path class="hm-line hm-scaffold" pathLength="1" d="M146 38 V70"/>',
-    '<circle class="hm-line hm-character" pathLength="1" cx="146" cy="89" r="19"/>',
-    '<path class="hm-line hm-character" pathLength="1" d="M146 108 V160"/>',
-    '<path class="hm-line hm-character" pathLength="1" d="M146 121 L118 143 M146 121 L174 143"/>',
-    '<path class="hm-line hm-character" pathLength="1" d="M146 160 L123 193 M146 160 L169 193"/>',
-    '<path class="hm-line hm-face" pathLength="1" d="M136 83 L141 88 M141 83 L136 88 M151 83 L156 88 M156 83 L151 88 M138 99 Q146 93 154 99"/>',
-  ];
-  const impactPoints = [[54,130],[108,38],[146,57],[146,89],[146,135],[174,143],[169,193],[146,89]];
-  let drawnWrongCount = -1;
-  
-  const modal = document.createElement('div');
-  modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-  modal.innerHTML = `<div class="hangman-game-shell bg-white rounded-2xl shadow-2xl max-w-5xl w-full">
-    <div class="bg-gradient-to-r from-red-500 to-red-600 p-4 flex items-center justify-between rounded-t-2xl">
-      <h2 class="heading-font text-3xl font-bold text-white text-center flex-1">🎮 Hangman</h2>
-      <div class="flex items-center gap-2">
-        <button type="button" class="game-fullscreen-btn text-white hover:bg-white/20 rounded-lg w-9 h-8 font-bold" aria-label="Enter fullscreen" title="Fullscreen">⛶</button>
-        <button id="game-close" class="text-white hover:text-gray-200 text-3xl font-bold" aria-label="Close game">×</button>
-      </div>
-    </div>
-    <div class="game-player-hud-slot flex justify-center w-full px-4 pt-3"></div>
-    <div id="hangman-game-body" class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.85fr)] gap-5 md:gap-8 items-center">
-      <!-- Compact centered hangman board -->
-      <div id="hangman-drawing-panel" class="flex flex-col items-center justify-center min-w-0">
-        <div id="hangman-clue" class="mb-3 flex h-24 w-36 items-center justify-center overflow-hidden rounded-xl border-2 border-red-200 bg-red-50" aria-label="Picture clue"></div>
-        <p id="hangman-word" class="font-mono text-center break-words"></p>
-        <div id="hangman-solved-image" class="hidden mb-3 flex justify-center"></div>
-        <svg id="hangman-drawing" width="220" height="260" viewBox="0 0 220 260" role="img" aria-label="Hangman: no wrong guesses">
-          <path class="hm-grid" d="M20 60 H200 M20 110 H200 M20 160 H200 M20 210 H200 M60 20 V210 M110 20 V210 M160 20 V210"/>
-          <rect class="hm-platform" x="25" y="211" width="170" height="9" rx="4"/>
-          <g class="hm-stages"></g><g class="hm-effects" aria-hidden="true"></g>
-          <g aria-hidden="true">${Array.from({length: maxWrong}, (_, i) => `<circle class="hm-life" cx="${47 + i * 18}" cy="239" r="4"/>`).join('')}</g>
-        </svg>
-        <p class="text-center mt-2 text-base font-bold">
-          Wrong letters: <span id="hangman-wrong" class="text-red-600">${wrongGuesses}</span>/<span class="text-red-600">${maxWrong}</span>
-        </p>
-      </div>
-      
-      <!-- Letters and controls aligned in a compact right column -->
-      <div id="hangman-content" class="w-full max-w-md mx-auto text-center flex flex-col items-center justify-center gap-3">
-        <div class="hangman-difficulty-selector mb-2 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Hangman difficulty">
-          <button type="button" id="hangman-easy-btn" class="hangman-difficulty-btn hangman-difficulty-easy bg-green-200 text-green-900 border-2 border-green-500 rounded-lg px-3 py-2 text-xs font-black hover:bg-green-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300" aria-pressed="true">Easy</button>
-          <button type="button" id="hangman-hard-btn" class="hangman-difficulty-btn hangman-difficulty-hard bg-rose-200 text-rose-900 border-2 border-rose-600 rounded-lg px-3 py-2 text-xs font-black hover:bg-rose-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300" aria-pressed="false">Hard</button>
-        </div>
-        <div id="hangman-letters" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 mb-3"></div>
-        <div id="hangman-feedback" class="text-base sm:text-lg font-semibold min-h-8 mb-3"></div>
-      </div>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-  attachGameFullscreen(modal);
-  renderGamePlayerHud(modal, Math.min(wordCount, words.length), 0);
-  startPlayerTurnTimer(modal, timerSeconds);
-  let hangmanLetterSize = 48;
-  const updateHangmanLetterSize = () => {
-    modal.querySelectorAll('.hangman-letter').forEach(button => {
-      button.style.height = `${hangmanLetterSize}px`;
-      button.style.fontSize = `${Math.max(16, Math.round(hangmanLetterSize * 0.44))}px`;
-    });
-  };
-  modal.querySelector('#hangman-letter-decrease')?.addEventListener('click', () => { hangmanLetterSize = Math.max(36, hangmanLetterSize - 4); updateHangmanLetterSize(); });
-  modal.querySelector('#hangman-letter-increase')?.addEventListener('click', () => { hangmanLetterSize = Math.min(68, hangmanLetterSize + 4); updateHangmanLetterSize(); });
-  
-  function drawHangman() {
-    const svg = modal.querySelector('#hangman-drawing');
-    if (drawnWrongCount === wrongGuesses) return;
-    const animate = drawnWrongCount >= 0 && wrongGuesses > drawnWrongCount;
-    const stages = svg.querySelector('.hm-stages');
-    stages.querySelectorAll('.hm-new').forEach(part => part.classList.remove('hm-new'));
-    for (let i = Math.max(0, drawnWrongCount); i < wrongGuesses; i++) {
-      stages.insertAdjacentHTML('beforeend', `<g class="hm-stage ${animate ? 'hm-new' : ''}" data-stage="${i + 1}">${drawingStages[i]}</g>`);
-    }
-    svg.dataset.wrong = String(wrongGuesses);
-    svg.setAttribute('aria-label', `Hangman: ${wrongGuesses} of ${maxWrong} wrong guesses`);
-    svg.querySelectorAll('.hm-life').forEach((life, i) => life.classList.toggle('is-lost', i < wrongGuesses));
-    if (animate) {
-      const [x, y] = impactPoints[wrongGuesses - 1];
-      const letter = guessed[guessed.length - 1];
-      svg.querySelector('.hm-effects').innerHTML = `<circle class="hm-impact" cx="${x}" cy="${y}" r="12"/><text class="hm-miss" x="190" y="${Math.max(40, y - 12)}" text-anchor="end">${letter} ✕</text>`;
-      svg.classList.remove('hm-hit');
-      void svg.getBoundingClientRect();
-      svg.classList.add('hm-hit');
-    }
-    drawnWrongCount = wrongGuesses;
-  }
-  
-  const updateHangmanDifficulty = nextDifficulty => {
-    const normalized = nextDifficulty === 'hard' ? 'hard' : 'easy';
-    if (normalized === difficulty) return;
-    modal.remove();
-    hangmanSession = null;
-    openGameHangman(listName, wordCount, timerSeconds, normalized);
-  };
-  modal.querySelector('#hangman-easy-btn').addEventListener('click', () => updateHangmanDifficulty('easy'));
-  modal.querySelector('#hangman-hard-btn').addEventListener('click', () => updateHangmanDifficulty('hard'));
-  const clue = modal.querySelector('#hangman-clue');
-  if (difficulty === 'easy' && currentWordRecord?.vocab_image) clue.innerHTML = `<img src="${currentWordRecord.vocab_image}" class="h-full w-full object-contain" alt="Picture clue for ${word}">`;
-  else clue.innerHTML = `<img src="${document.getElementById('hangman-hard-mode-image-loader')?.src || ''}" class="h-full w-full object-contain" alt="Ash and Pikachu">`;
-  ['easy', 'hard'].forEach(mode => {
-    const button = modal.querySelector(`#hangman-${mode}-btn`);
-    if (!button) return;
-    const active = difficulty === mode;
-    button.setAttribute('aria-pressed', String(active));
-    button.classList.toggle('ring-4', active);
-    button.classList.toggle('ring-yellow-300', active);
-  });
+// Hangman game engine moved to /pokeayman/hangman.js
 
-  function render() {
-    const display = word.split('').map(l => guessed.includes(l) ? l : '_').join(' ');
-    modal.querySelector('#hangman-word').textContent = display;
-    modal.querySelector('#hangman-wrong').textContent = wrongGuesses;
-    drawHangman();
-    
-    const letters = modal.querySelector('#hangman-letters');
-    letters.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l => {
-      const isGuessed = guessed.includes(l);
-      const isCorrect = isGuessed && word.includes(l);
-      const isWrong = isGuessed && !word.includes(l);
-      const colStyle = l === 'V' ? 'style="grid-column-start: 2;"' : '';
-      let statusClass = 'is-available';
-      let badge = '';
-      if (isCorrect) {
-        statusClass = 'is-correct';
-        badge = '<span class="letter-badge letter-badge-correct" aria-hidden="true">✓</span>';
-      } else if (isWrong) {
-        statusClass = 'is-wrong';
-        badge = '<span class="letter-badge letter-badge-wrong" aria-hidden="true">✕</span>';
-      }
-      return `<button type="button" class="hangman-letter ${statusClass}" ${colStyle} data-letter="${l}" ${isGuessed ? 'disabled aria-disabled="true"' : ''} title="${isWrong ? `${l} (Wrong - blocked)` : isCorrect ? `${l} (Correct)` : `Guess ${l}`}"><span class="letter-char">${l}</span>${badge}</button>`;
-    }).join('');
-    updateHangmanLetterSize();
-    
-    letters.querySelectorAll('.hangman-letter').forEach(btn => {
-      if (!guessed.includes(btn.dataset.letter)) {
-        btn.addEventListener('click', () => {
-          const letter = btn.dataset.letter;
-          guessed.push(letter);
-          if (!word.includes(letter)) {
-            try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
-            wrongGuesses++;
-            hangmanSession.wrongGuesses = wrongGuesses;
-            modal.querySelector('#hangman-wrong').textContent = wrongGuesses;
-            drawHangman();
-            if (activeGamePlayers.length) {
-              activeGameScores[activeGamePlayerIndex] -= 1;
-              hangmanSession.playerWrongGuesses = hangmanSession.playerWrongGuesses || {};
-              const playerKey = activeGamePlayers[activeGamePlayerIndex]?.student_name || '__solo__';
-              hangmanSession.playerWrongGuesses[playerKey] = (hangmanSession.playerWrongGuesses[playerKey] || 0) + 1;
-            }
-            // The eighth miss ends the shared round immediately; neither player wins.
-            if (wrongGuesses >= maxWrong) {
-              gameEnded = true;
-              render();
-              const wordDisplay = modal.querySelector('#hangman-word');
-              wordDisplay.classList.add('animate-pulse');
-              wordDisplay.style.color = '#dc2626';
-              modal.querySelector('#hangman-feedback').textContent = `😢 Game Over! The word was: ${word}`;
-              modal.querySelector('#hangman-feedback').className = 'text-base sm:text-lg font-semibold min-h-0 mb-0 text-red-600';
-              const solvedImage = modal.querySelector('#hangman-solved-image');
-              if (difficulty === 'easy' && currentWordRecord?.vocab_image) {
-                solvedImage.innerHTML = `<div class="flex flex-col items-center justify-center gap-2"><p class="text-lg font-black text-red-600 text-center leading-tight">${word}</p><img src="${currentWordRecord.vocab_image}" class="w-36 max-w-full max-h-28 rounded-xl object-contain shadow-md mx-auto" alt="Picture for ${word}"></div>`;
-                solvedImage.className = 'w-full mb-2 flex flex-col items-center justify-center text-center gap-2';
-                modal.querySelector('#hangman-content').prepend(solvedImage);
-              }
-              modal.querySelector('#hangman-drawing-panel').classList.remove('hidden');
-              modal.querySelectorAll('.hangman-letter').forEach(b => { b.disabled = true; b.classList.add('opacity-50'); });
-              const gameOverOverlay = document.createElement('div');
-              gameOverOverlay.className = 'game-celebration-overlay hangman-game-over-overlay';
-              gameOverOverlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="hangman-game-over-title" tabindex="-1">
-                <h2 id="hangman-game-over-title" class="heading-font text-4xl font-bold text-red-600 relative z-10">Game Over</h2>
-                <div class="relative z-10 mt-4 rounded-xl border border-red-200 bg-white/70 px-4 py-3 text-center">
-                  <p class="text-lg font-black text-slate-700">Word: ${word}</p>
-                  ${currentWordRecord?.vocab_image ? `<img src="${currentWordRecord.vocab_image}" class="mx-auto mt-3 h-28 w-40 rounded-lg object-contain" alt="Picture for ${word}">` : ''}
-                </div>
-                <div class="flex gap-3 mt-6 relative z-10">
-                  <button type="button" id="hangman-game-over-again" class="btn-primary flex-1">Play again</button>
-                  <button type="button" id="hangman-game-over-hub" class="btn-outline flex-1">🎮 Other Games</button>
-                  <button type="button" id="hangman-game-over-close" class="btn-outline flex-1">Close</button>
-                </div>
-              </div>`;
-              // Mount the result dialog inside the active game/fullscreen root so it stays above the game.
-              setTimeout(() => {
-                if (!modal.isConnected) return;
-                mountGameCelebrationOverlay(modal, gameOverOverlay);
-                gameOverOverlay.querySelector('.game-celebration-card')?.focus();
-              }, 850);
-              gameOverOverlay.style.zIndex = '2147483647';
-              gameOverOverlay.style.pointerEvents = 'auto';
-              const closeGameOver = () => { gameOverOverlay.remove(); modal.remove(); returnToGamesTab(); };
-              gameOverOverlay.querySelector('#hangman-game-over-close').addEventListener('click', closeGameOver);
-              gameOverOverlay.querySelector('#hangman-game-over-hub')?.addEventListener('click', () => {
-                gameOverOverlay.remove();
-                modal.remove();
-                hangmanSession = null;
-                if (typeof window.gaExitSetupToArcade === 'function') {
-                  window.gaExitSetupToArcade();
-                } else {
-                  returnToGamesTab();
-                }
-              });
-              gameOverOverlay.querySelector('#hangman-game-over-again').addEventListener('click', () => {
-                gameOverOverlay.remove();
-                modal.remove();
-                hangmanSession = null;
-                resetGameTurnState();
-                openGameHangman(listName, wordCount, timerSeconds, difficulty, true);
-              });
-              return;
-            }
-            // Wrong letter ends the turn while preserving shared guesses and blocked letters.
-            btn.classList.add('animate-shake', 'is-wrong');
-            btn.disabled = true;
-            btn.setAttribute('aria-disabled', 'true');
-            const prevPlayerIndex = activeGamePlayerIndex;
-            advanceGameTurn();
-            updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
-            showWrongAnswerCelebration(modal, prevPlayerIndex);
-            setTimeout(() => {
-              btn.classList.remove('animate-shake');
-              render();
-            }, 400);
-            return;
-          } else {
-            try { window.pokeSfx?.play?.('correct'); } catch (e) {}
-            btn.classList.add('animate-bounce', 'is-correct');
-            btn.disabled = true;
-            btn.setAttribute('aria-disabled', 'true');
-            showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
-            // Regular letters award 1 point; the final completing letter awards 3.
-            const completesWord = word.split('').every(l => guessed.includes(l));
-            const letterPoints = completesWord ? 3 : 1;
-            if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += letterPoints;
-            updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
-            setTimeout(() => {
-              btn.classList.remove('animate-bounce');
-            }, 600);
-          }
-          if (word.split('').every(l => guessed.includes(l))) {
-            updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
-            // Victory animation
-            const wordDisplay = modal.querySelector('#hangman-word');
-            wordDisplay.classList.add('animate-bounce', 'text-center', 'text-5xl', 'sm:text-6xl', 'w-full');
-            wordDisplay.style.color = '#4052d6';
-            modal.querySelector('#hangman-feedback').textContent = '';
-            modal.querySelector('#hangman-feedback').className = 'text-base sm:text-lg font-semibold min-h-0 mb-0';
-            modal.querySelector('.game-player-card.is-active')?.classList.add('victory-winner');
-            const solvedImage = modal.querySelector('#hangman-solved-image');
-            if (difficulty === 'easy' && currentWordRecord?.vocab_image) {
-              solvedImage.innerHTML = `<div class="flex flex-col items-center justify-center gap-2"><p class="text-lg font-black text-amber-600 text-center leading-tight">${word}</p><img src="${currentWordRecord.vocab_image}" class="w-36 max-w-full max-h-28 rounded-xl object-contain shadow-md mx-auto" alt="Picture for ${word}"></div>`;
-              solvedImage.className = 'w-full mb-2 flex flex-col items-center justify-center text-center gap-2';
-              modal.querySelector('#hangman-content').prepend(solvedImage);
-            }
-            modal.querySelector('#hangman-drawing-panel').classList.add('hidden');
-            modal.querySelector('#hangman-letters').classList.add('hidden');
-            modal.querySelector('#hangman-game-body').classList.remove('gap-8');
-            modal.querySelector('#hangman-game-body').classList.add('justify-center');
-            modal.querySelector('#hangman-content').classList.remove('flex-1');
-            modal.querySelector('#hangman-content').classList.add('w-full', 'max-w-md');
-            showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
-            modal.querySelector('#hangman-feedback').classList.add('text-green-600');
-            const rankedPlayers = activeGamePlayers.map((player, index) => ({
-              player,
-              score: activeGameScores[index] || 0,
-              wrongGuesses: index === activeGamePlayerIndex ? wrongGuesses : (hangmanSession.playerWrongGuesses?.[player.student_name] || 0)
-            })).sort((a, b) => b.score - a.score || a.wrongGuesses - b.wrongGuesses);
-            const winningEntry = rankedPlayers[0];
-            const winningPlayer = winningEntry?.player || activeGamePlayers[activeGamePlayerIndex];
-            const winningName = winningPlayer?.student_name || 'Player';
-            setTimeout(() => {
-              if (!document.body.contains(modal)) return;
-              if (currentRole === 'student' && studentRound && studentRound.index + 1 < studentRound.words.length) {
-                studentRound.index += 1;
-                modal.remove();
-                openGameHangman(listName, wordCount, 0, difficulty, true, studentRound);
-                return;
-              }
-              hangmanSession = { listName, winningScore: wordCount, guessed: [], wrongGuesses: 0, word: null };
-              showGameCelebration(modal, `Good job ${winningName}!`, word, winningPlayer, currentWordRecord?.vocab_image || '');
-            }, 650);
-            letters.querySelectorAll('.hangman-letter').forEach(b => b.disabled = true);
-          }
-          render();
-        });
-      }
-    });
-  }
-  
-  const handleHangmanKeydown = event => {
-    if (gameEnded || event.ctrlKey || event.metaKey || event.altKey) return;
-    const letter = String(event.key || '').toUpperCase();
-    if (!/^[A-Z]$/.test(letter) || guessed.includes(letter)) return;
-    const button = modal.querySelector(`[data-letter="${letter}"]`);
-    if (button && !button.disabled) button.click();
-  };
-  modal.addEventListener('keydown', handleHangmanKeydown);
-  render();
-  const resetAndCloseHangman = () => {
-    hangmanSession = { listName, winningScore: wordCount, guessed: [], wrongGuesses: 0, word: null };
-    modal.remove();
-  };
-  modal.querySelector('#game-close').addEventListener('click', resetAndCloseHangman);
-  modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
-}
 
 async function openMergeVocabLists(sourceId, sourceName) {
   const source = getVocabLists().find(list => list.__backendId === sourceId);

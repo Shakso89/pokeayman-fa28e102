@@ -7,7 +7,7 @@ const legacyDir = path.join(root, "public", "pokeayman");
 const htmlPath = path.join(legacyDir, "index.html");
 let html = await readFile(htmlPath, "utf8");
 
-const modules = ["games-arcade", "listen-catch", "crossword", "dots-and-boxes"];
+const modules = ["games-arcade", "listen-catch", "crossword", "dots-and-boxes", "surprise-boxes", "hangman"];
 for (const name of modules) {
   const marker = `data-pokeayman-inline="${name}"`;
   const startTag = `<script ${marker}>`;
