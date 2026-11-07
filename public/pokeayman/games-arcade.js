@@ -2,7 +2,7 @@
 (function () {
   const GAMES = [
     { fn: 'chooseDotsAndBoxes', icon: '⚄', image: '/pokeayman/assets/games/dots-and-boxes.jpg', name: 'Dots and Boxes', desc: 'Answer vocabulary questions to draw lines, claim boxes, and outsmart your opponent.', tags: ['2-Player', 'Strategy', 'Vocab MCQ'], accent: 'amber' },
-    { fn: 'chooseBaamboozlePowerUps', icon: '🎁', image: '/pokeayman/assets/games/surprise-boxes.jpg', name: 'Surprise Boxes', desc: 'Open mystery boxes full of power-ups, traps and score swaps.', tags: ['1–4 players', 'Class favourite'], accent: 'pink', teacherOnly: true },
+    { fn: 'chooseBaamboozlePowerUps', icon: '🎁', image: '/pokeayman/assets/games/surprise-boxes.jpg', name: 'Surprise Boxes', desc: 'Open mystery boxes full of power-ups, traps and score swaps.', tags: ['1–4 players', 'Class favourite'], accent: 'pink' },
     { fn: 'chooseMatchWordCount', icon: '🎯', image: '/pokeayman/assets/games/match-words.jpg', name: 'Match Words', desc: 'Race to match each word with its picture.', tags: ['1–4 players', 'Fast reflexes'], accent: 'red' },
     { fn: 'chooseMemoryDifficulty', icon: '🧠', image: '/pokeayman/assets/games/memory-flip.jpg', name: 'Memory Flip', desc: 'Flip the tiles and find the matching pairs.', tags: ['1–4 players', 'Focus'], accent: 'violet' },
     { fn: 'chooseScrambleWordCount', icon: '🔤', image: '/pokeayman/assets/games/unscramble.jpg', name: 'Unscramble', desc: 'Put the mixed-up letters back in order.', tags: ['1–4 players', 'Spelling'], accent: 'blue' },
@@ -1631,9 +1631,12 @@
     if (hub) hub.hidden = true;
     const panel = document.createElement('section');
     panel.className = 'game-inline-view ga-student-setup ga-hub';
-    panel.setAttribute('aria-label', `${game.name} word count`);
+    const isBaam = fnName === 'chooseBaamboozlePowerUps';
+    const counts = isBaam ? [8, 16] : [5, 10, 15];
+    const unitLabel = isBaam ? 'cards' : 'words';
+    panel.setAttribute('aria-label', `${game.name} ${unitLabel}`);
     const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
-    panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of words">${[5, 10, 15].map(count => `<button type="button" class="btn-primary" data-count="${count}" ${words.length < count ? 'disabled' : ''}><strong>${count}</strong><span>words</span></button>`).join('')}</div>`;
+    panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of ${unitLabel}">${counts.map(count => `<button type="button" class="btn-primary" data-count="${count}" ${(isBaam ? words.length < 1 : words.length < count) ? 'disabled' : ''}><strong>${count}</strong><span>${unitLabel}</span></button>`).join('')}</div>`;
     panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
     panel.querySelectorAll('[data-count]').forEach(button => button.addEventListener('click', () => {
       const count = Number(button.dataset.count);
@@ -1647,6 +1650,7 @@
       else if (fnName === 'chooseScrambleWordCount') { scrambleSession = null; openGameScramble(listName, count, 0); }
       else if (fnName === 'chooseFindMeScore') openGameFindMe(listName, count, 0);
       else if (fnName === 'chooseHangmanWordCount') openGameHangman(listName, count, 0, 'easy', true);
+      else if (fnName === 'chooseBaamboozlePowerUps') openBaamboozle(listName, typeof baamboozlePowerUps !== 'undefined' ? baamboozlePowerUps : [], count);
     }));
     area.appendChild(panel);
   };

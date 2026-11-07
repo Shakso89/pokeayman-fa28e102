@@ -7201,7 +7201,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 (function () {
   const GAMES = [
     { fn: 'chooseDotsAndBoxes', icon: '⚄', image: '/pokeayman/assets/games/dots-and-boxes.jpg', name: 'Dots and Boxes', desc: 'Answer vocabulary questions to draw lines, claim boxes, and outsmart your opponent.', tags: ['2-Player', 'Strategy', 'Vocab MCQ'], accent: 'amber' },
-    { fn: 'chooseBaamboozlePowerUps', icon: '🎁', image: '/pokeayman/assets/games/surprise-boxes.jpg', name: 'Surprise Boxes', desc: 'Open mystery boxes full of power-ups, traps and score swaps.', tags: ['1–4 players', 'Class favourite'], accent: 'pink', teacherOnly: true },
+    { fn: 'chooseBaamboozlePowerUps', icon: '🎁', image: '/pokeayman/assets/games/surprise-boxes.jpg', name: 'Surprise Boxes', desc: 'Open mystery boxes full of power-ups, traps and score swaps.', tags: ['1–4 players', 'Class favourite'], accent: 'pink' },
     { fn: 'chooseMatchWordCount', icon: '🎯', image: '/pokeayman/assets/games/match-words.jpg', name: 'Match Words', desc: 'Race to match each word with its picture.', tags: ['1–4 players', 'Fast reflexes'], accent: 'red' },
     { fn: 'chooseMemoryDifficulty', icon: '🧠', image: '/pokeayman/assets/games/memory-flip.jpg', name: 'Memory Flip', desc: 'Flip the tiles and find the matching pairs.', tags: ['1–4 players', 'Focus'], accent: 'violet' },
     { fn: 'chooseScrambleWordCount', icon: '🔤', image: '/pokeayman/assets/games/unscramble.jpg', name: 'Unscramble', desc: 'Put the mixed-up letters back in order.', tags: ['1–4 players', 'Spelling'], accent: 'blue' },
@@ -8830,9 +8830,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (hub) hub.hidden = true;
     const panel = document.createElement('section');
     panel.className = 'game-inline-view ga-student-setup ga-hub';
-    panel.setAttribute('aria-label', `${game.name} word count`);
+    const isBaam = fnName === 'chooseBaamboozlePowerUps';
+    const counts = isBaam ? [8, 16] : [5, 10, 15];
+    const unitLabel = isBaam ? 'cards' : 'words';
+    panel.setAttribute('aria-label', `${game.name} ${unitLabel}`);
     const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
-    panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of words">${[5, 10, 15].map(count => `<button type="button" class="btn-primary" data-count="${count}" ${words.length < count ? 'disabled' : ''}><strong>${count}</strong><span>words</span></button>`).join('')}</div>`;
+    panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of ${unitLabel}">${counts.map(count => `<button type="button" class="btn-primary" data-count="${count}" ${(isBaam ? words.length < 1 : words.length < count) ? 'disabled' : ''}><strong>${count}</strong><span>${unitLabel}</span></button>`).join('')}</div>`;
     panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
     panel.querySelectorAll('[data-count]').forEach(button => button.addEventListener('click', () => {
       const count = Number(button.dataset.count);
@@ -8846,6 +8849,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       else if (fnName === 'chooseScrambleWordCount') { scrambleSession = null; openGameScramble(listName, count, 0); }
       else if (fnName === 'chooseFindMeScore') openGameFindMe(listName, count, 0);
       else if (fnName === 'chooseHangmanWordCount') openGameHangman(listName, count, 0, 'easy', true);
+      else if (fnName === 'chooseBaamboozlePowerUps') openBaamboozle(listName, typeof baamboozlePowerUps !== 'undefined' ? baamboozlePowerUps : [], count);
     }));
     area.appendChild(panel);
   };
@@ -27384,15 +27388,28 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
     const opponents = activeGameScores.map((_, index) => index).filter(index => index !== current);
     const before = [...activeGameScores];
     const leader = opponents.slice().sort((a, b) => activeGameScores[b] - activeGameScores[a])[0];
-    if (power === 'Star') activeGameScores[current] += 25;
-    else if (power === 'Steal' && leader !== undefined) {
+    if (power === 'Star') {
+      try { window.pokeSfx?.play?.('star'); } catch (e) {}
+      activeGameScores[current] += 25;
+    } else if (power === 'Steal' && leader !== undefined) {
+      try { window.pokeSfx?.play?.('whoosh'); } catch (e) {}
       const taken = Math.min(15, Math.max(0, activeGameScores[leader]));
       activeGameScores[leader] -= taken; activeGameScores[current] += taken;
-    } else if (power === 'Rocket') activeGameScores[current] = Math.max(...activeGameScores) + 5;
-    else if (power === 'Bomb') activeGameScores[current] = Math.max(0, activeGameScores[current] - 20);
-    else if (power === 'Swap' && leader !== undefined) {
+    } else if (power === 'Rocket') {
+      try { window.pokeSfx?.play?.('rocket'); } catch (e) {}
+      activeGameScores[current] = Math.max(...activeGameScores) + 5;
+    } else if (power === 'Bomb') {
+      try { window.pokeSfx?.play?.('boom'); } catch (e) {}
+      activeGameScores[current] = Math.max(0, activeGameScores[current] - 20);
+    } else if (power === 'Swap' && leader !== undefined) {
+      try { window.pokeSfx?.play?.('whoosh'); } catch (e) {}
       [activeGameScores[current], activeGameScores[leader]] = [activeGameScores[leader], activeGameScores[current]];
-    } else if (power === 'Gift') opponents.forEach(index => { activeGameScores[index] += 10; });
+    } else if (power === 'Gift') {
+      try { window.pokeSfx?.play?.('plus'); } catch (e) {}
+      opponents.forEach(index => { activeGameScores[index] += 10; });
+    } else if (power === 'Trap') {
+      try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+    }
     const impacts = activeGameScores.map((score, index) => score - before[index]);
     const updateTeamScores = () => {
       modal.querySelectorAll('.game-player-card').forEach((card, index) => {
@@ -27481,10 +27498,19 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
     modal.querySelectorAll('.baam-tile').forEach(tile => { tile.disabled = true; });
     const overlay = document.createElement('div');
     overlay.className = 'game-celebration-overlay baam-final-overlay';
-    overlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="baam-final-title" tabindex="-1"><img class="game-celebration-pikachu battle-winner-celebrate" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png" alt="${winnerAvatarAlt}"><div class="text-4xl mb-1 relative z-10" aria-hidden="true">🏆</div><h2 id="baam-final-title" class="heading-font text-3xl font-black text-amber-700 relative z-10">${winner}</h2><p class="mt-1 text-base font-bold text-slate-700 relative z-10">${winnerNames}</p>${baamPrizeNotice}<div class="flex gap-3 mt-5 relative z-10"><button type="button" id="baam-final-replay" class="btn-primary flex-1">Play again</button><button type="button" id="baam-final-close" class="btn-outline flex-1">Close</button></div></div>`;
+    overlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="baam-final-title" tabindex="-1"><img class="game-celebration-pikachu battle-winner-celebrate" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png" alt="${winnerAvatarAlt}"><div class="text-4xl mb-1 relative z-10" aria-hidden="true">🏆</div><h2 id="baam-final-title" class="heading-font text-3xl font-black text-amber-700 relative z-10">${winner}</h2><p class="mt-1 text-base font-bold text-slate-700 relative z-10">${winnerNames}</p>${baamPrizeNotice}<div class="flex gap-3 mt-5 relative z-10"><button type="button" id="baam-final-replay" class="btn-primary flex-1">Play again</button><button type="button" id="baam-final-hub" class="btn-outline flex-1">🎮 Other Games</button><button type="button" id="baam-final-close" class="btn-outline flex-1">Close</button></div></div>`;
     mountGameCelebrationOverlay(modal, overlay);
     const closeResult = () => { overlay.remove(); modal.remove(); returnToGamesTab(); };
     overlay.querySelector('#baam-final-close').addEventListener('click', closeResult);
+    overlay.querySelector('#baam-final-hub')?.addEventListener('click', () => {
+      overlay.remove();
+      modal.remove();
+      if (typeof window.gaExitSetupToArcade === 'function') {
+        window.gaExitSetupToArcade();
+      } else {
+        returnToGamesTab();
+      }
+    });
     overlay.querySelector('#baam-final-replay').addEventListener('click', () => { overlay.remove(); modal.remove(); resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount, timerSeconds); });
     overlay.addEventListener('click', event => { /* Result popup closes only through its Replay/Close buttons. */ });
     overlay.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); closeResult(); } });
@@ -27661,6 +27687,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
     const word = baamQ('#baam-word');
     const currentPlayer = activeGamePlayerIndex;
     if (isCorrect) {
+      try { window.pokeSfx?.play?.('correct'); } catch (e) {}
       showCorrectAnswerCelebration(modal, currentPlayer);
       activeGameScores[currentPlayer] = (activeGameScores[currentPlayer] || 0) + 10;
       updateTeamScores();
@@ -27669,6 +27696,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
       advanceGameTurn();
       updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
     } else {
+      try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
       showWrongAnswerCelebration(modal, currentPlayer);
       advanceGameTurn();
       updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
@@ -27693,6 +27721,7 @@ function openBaamboozle(listName, enabledPowerUps = [], cardCount = 16, timerSec
   document.head.appendChild(powerStyle);
   if (!document.getElementById('baam-surprise-css')) { const l = document.createElement('link'); l.id = 'baam-surprise-css'; l.rel = 'stylesheet'; l.href = 'surprise-boxes.css'; document.head.appendChild(l); }
   board.querySelectorAll('.baam-tile').forEach(tile => tile.addEventListener('click', () => {
+    try { window.pokeSfx?.play?.('pop'); } catch (e) {}
     // A card counts as chosen immediately, but completion waits for resolution.
     index = Number(tile.dataset.tile) - 1;
     chosenCards.add(index);
@@ -27756,7 +27785,7 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
     <p class="${isFindMeResult ? 'find-me-result-message' : 'text-lg'} font-semibold text-slate-700 mt-2 relative z-10">${title}</p>
     ${solvedWord ? `<div class="relative z-10 mt-4 rounded-xl border border-amber-200 bg-white/70 px-4 py-3 text-center"><p class="text-lg font-black text-slate-700">Word: ${solvedWord}</p>${solvedImage ? `<img src="${solvedImage}" class="mx-auto mt-3 h-28 w-40 rounded-lg object-contain" alt="Picture for ${solvedWord}">` : ''}</div>` : ''}
     ${prizeMarkup}
-    ${solvedWord ? `<p class="text-sm font-semibold text-slate-600 mt-1 relative z-10">Great work with your Pokémon partner!</p>` : ''}<div class="flex gap-3 mt-6 relative z-10"><button type="button" id="celebration-again" class="${isFindMeResult ? 'find-me-result-primary' : 'btn-primary'} flex-1">Play Again</button><button type="button" id="celebration-close" class="${isFindMeResult ? 'find-me-result-secondary' : 'btn-outline'} flex-1">Close</button></div>
+    ${solvedWord ? `<p class="text-sm font-semibold text-slate-600 mt-1 relative z-10">Great work with your Pokémon partner!</p>` : ''}<div class="flex gap-3 mt-6 relative z-10"><button type="button" id="celebration-again" class="${isFindMeResult ? 'find-me-result-primary' : 'btn-primary'} flex-1">Play Again</button><button type="button" id="celebration-hub" class="${isFindMeResult ? 'find-me-result-secondary' : 'btn-outline'} flex-1">🎮 Other Games</button><button type="button" id="celebration-close" class="${isFindMeResult ? 'find-me-result-secondary' : 'btn-outline'} flex-1">Close</button></div>
   </div>`;
   mountGameCelebrationOverlay(gameModal, overlay);
   overlay.querySelector('#celebration-claim-reward')?.addEventListener('click', async event => {
@@ -27772,6 +27801,15 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
     overlay.remove();
     if (gameModal && document.body.contains(gameModal)) gameModal.remove();
     returnToGamesTab();
+  });
+  overlay.querySelector('#celebration-hub')?.addEventListener('click', () => {
+    overlay.remove();
+    if (gameModal && document.body.contains(gameModal)) gameModal.remove();
+    if (typeof window.gaExitSetupToArcade === 'function') {
+      window.gaExitSetupToArcade();
+    } else {
+      returnToGamesTab();
+    }
   });
   overlay.querySelector('#celebration-again').addEventListener('click', () => {
     overlay.remove();
@@ -27794,10 +27832,19 @@ function showBattleWinnerCelebration(gameModal, winnerPokemon) {
     <img class="game-celebration-pikachu battle-winner-celebration-image" loading="eager" alt="${winnerName} celebrating a battle victory" src="${winnerImage}">
     <h2 id="battle-celebration-title" class="heading-font text-4xl font-bold text-amber-600 relative z-10">🏆 Victory!</h2>
     <p class="text-lg font-semibold text-slate-700 mt-2 relative z-10">${winnerName} wins the battle!</p>
-    <div class="flex gap-3 mt-6 relative z-10"><button type="button" id="battle-celebration-again" class="btn-primary flex-1">Battle Again</button><button type="button" id="battle-celebration-close" class="btn-outline flex-1">Close</button></div>
+    <div class="flex gap-3 mt-6 relative z-10"><button type="button" id="battle-celebration-again" class="btn-primary flex-1">Battle Again</button><button type="button" id="battle-celebration-hub" class="btn-outline flex-1">🎮 Other Games</button><button type="button" id="battle-celebration-close" class="btn-outline flex-1">Close</button></div>
   </div>`;
   mountGameCelebrationOverlay(gameModal, overlay);
   overlay.querySelector('#battle-celebration-close').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('#battle-celebration-hub')?.addEventListener('click', () => {
+    overlay.remove();
+    if (gameModal && document.body.contains(gameModal)) gameModal.remove();
+    if (typeof window.gaExitSetupToArcade === 'function') {
+      window.gaExitSetupToArcade();
+    } else {
+      returnToGamesTab();
+    }
+  });
   overlay.querySelector('#battle-celebration-again').addEventListener('click', () => { overlay.remove(); gameModal?.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
   overlay.addEventListener('click', e => { /* Battle results close only through Close. */ });
 }
@@ -29561,6 +29608,13 @@ function playScoreDeltaSound(delta) {
 }
 
 function playGameSound(kind) {
+  if (window.pokeSfx && !window.pokeSfx.isMuted()) {
+    if (kind === 'select') window.pokeSfx.play('whoosh');
+    else if (kind === 'success') window.pokeSfx.play('correct');
+    else if (kind === 'wrong') window.pokeSfx.play('wrong');
+    else if (kind === 'complete') window.pokeSfx.play('fanfare');
+    return;
+  }
   if (gameSoundState.muted || !gameSoundState.unlocked) return;
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -30239,6 +30293,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
         const kind = firstCard.powerup || firstCard.mystery?.kind || 'bomb';
         if (kind === 'bomb') {
           // 💣 Bomb: Deducts 1 point from active player and ends the turn. (Updated: in multiplayer, deducts 1 point from other player(s))
+          try { window.pokeSfx?.play?.('boom'); } catch (e) {}
           playTransactionSound('deduction');
           const shell = modal.querySelector('.memory-game-shell') || grid;
           shell.classList.remove('ga-board-shake');
@@ -30275,6 +30330,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
           updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
         } else if (kind === 'magnet' || kind === 'radar') {
           // 🧲 Magnet: Auto-reveals and matches one hidden vocabulary pair on board, awarding points to the active player.
+          try { window.pokeSfx?.play?.('star'); } catch (e) {}
           playGameSound('success');
           if (activeGamePlayers.length) {
             activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
@@ -30330,6 +30386,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
           }
         } else if (kind === 'shuffle' || kind === 'ditto') {
           // 🔄 Shuffle: Randomizes grid positions of remaining unflipped cards.
+          try { window.pokeSfx?.play?.('whoosh'); } catch (e) {}
           playGameSound('select');
           if (activeGamePlayers.length) {
             activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
@@ -31119,6 +31176,7 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
           const letter = btn.dataset.letter;
           guessed.push(letter);
           if (!word.includes(letter)) {
+            try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
             wrongGuesses++;
             hangmanSession.wrongGuesses = wrongGuesses;
             modal.querySelector('#hangman-wrong').textContent = wrongGuesses;
@@ -31155,8 +31213,9 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
                   ${currentWordRecord?.vocab_image ? `<img src="${currentWordRecord.vocab_image}" class="mx-auto mt-3 h-28 w-40 rounded-lg object-contain" alt="Picture for ${word}">` : ''}
                 </div>
                 <div class="flex gap-3 mt-6 relative z-10">
-                  <button type="button" id="hangman-game-over-close" class="btn-outline flex-1">Close</button>
                   <button type="button" id="hangman-game-over-again" class="btn-primary flex-1">Play again</button>
+                  <button type="button" id="hangman-game-over-hub" class="btn-outline flex-1">🎮 Other Games</button>
+                  <button type="button" id="hangman-game-over-close" class="btn-outline flex-1">Close</button>
                 </div>
               </div>`;
               // Mount the result dialog inside the active game/fullscreen root so it stays above the game.
@@ -31169,6 +31228,16 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
               gameOverOverlay.style.pointerEvents = 'auto';
               const closeGameOver = () => { gameOverOverlay.remove(); modal.remove(); returnToGamesTab(); };
               gameOverOverlay.querySelector('#hangman-game-over-close').addEventListener('click', closeGameOver);
+              gameOverOverlay.querySelector('#hangman-game-over-hub')?.addEventListener('click', () => {
+                gameOverOverlay.remove();
+                modal.remove();
+                hangmanSession = null;
+                if (typeof window.gaExitSetupToArcade === 'function') {
+                  window.gaExitSetupToArcade();
+                } else {
+                  returnToGamesTab();
+                }
+              });
               gameOverOverlay.querySelector('#hangman-game-over-again').addEventListener('click', () => {
                 gameOverOverlay.remove();
                 modal.remove();
@@ -31192,6 +31261,7 @@ function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty =
             }, 400);
             return;
           } else {
+            try { window.pokeSfx?.play?.('correct'); } catch (e) {}
             btn.classList.add('animate-bounce', 'is-correct');
             btn.disabled = true;
             btn.setAttribute('aria-disabled', 'true');
