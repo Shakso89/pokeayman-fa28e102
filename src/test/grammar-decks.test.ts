@@ -195,7 +195,7 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('border-emerald-400 bg-emerald-500/15 text-emerald-300');
 
     // 3. Floating context clue badge without obscuring bottom banner
-    expect(js).toContain('absolute top-3 left-3 px-3 py-1 rounded-full bg-slate-950/85');
+    expect(js).toContain('absolute top-3 left-3 max-w-[88%] px-3 py-1 rounded-full bg-slate-950/85');
     expect(js).not.toContain('absolute bottom-2 inset-x-2');
 
     // 4. Large target sentence with intelligent grammar syntax highlighting
@@ -217,5 +217,55 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('gp-deck-previews-strip');
     expect(js).toContain('gp-switch-deck-btn');
     expect(js).toContain('gp-open-ai-gen-btn');
+  });
+
+  it('correctly syntax-highlights questions, prepositions, possessives, and verbs without miscoloring function words', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+    const mockWindow: any = {
+      document: {
+        readyState: 'complete',
+        addEventListener: () => {},
+        getElementById: () => null,
+        querySelectorAll: () => []
+      },
+      addEventListener: () => {}
+    };
+    new Function('window', 'document', js)(mockWindow, mockWindow.document);
+
+    const formatSentence = mockWindow.formatSyntaxHighlightedSentence;
+    expect(typeof formatSentence).toBe('function');
+
+    // Case 1: "How many apples are in the basket?" -> "in" MUST NOT be green!
+    const res1 = formatSentence('How many apples are in the basket?');
+    expect(res1).toContain('<span class="text-sky-300 font-black">How</span>');
+    expect(res1).toContain('<span class="text-sky-300 font-black">many</span>');
+    expect(res1).toContain('<span class="text-sky-300 font-black">apples</span>');
+    expect(res1).toContain('<span class="text-amber-400 font-black">are</span>');
+    expect(res1).toContain('<span class="text-white font-extrabold">in</span>');
+    expect(res1).not.toContain('<span class="text-emerald-400 font-black">in</span>');
+
+    // Case 2: "Where is the sleeping cat?" -> "the" MUST NOT be green, "sleeping" IS green!
+    const res2 = formatSentence('Where is the sleeping cat?');
+    expect(res2).toContain('<span class="text-sky-300 font-black">Where</span>');
+    expect(res2).toContain('<span class="text-amber-400 font-black">is</span>');
+    expect(res2).toContain('<span class="text-white font-extrabold">the</span>');
+    expect(res2).not.toContain('<span class="text-emerald-400 font-black">the</span>');
+    expect(res2).toContain('<span class="text-emerald-400 font-black">sleeping</span>');
+
+    // Case 3: "What color is your bicycle?" -> "your" MUST NOT be green!
+    const res3 = formatSentence('What color is your bicycle?');
+    expect(res3).toContain('<span class="text-sky-300 font-black">What</span>');
+    expect(res3).toContain('<span class="text-sky-300 font-black">color</span>');
+    expect(res3).toContain('<span class="text-amber-400 font-black">is</span>');
+    expect(res3).toContain('<span class="text-white font-extrabold">your</span>');
+    expect(res3).not.toContain('<span class="text-emerald-400 font-black">your</span>');
+
+    // Case 4: "Are you studying for the quiz right now?" -> "Are" is blue, "you" is amber, "studying" is green!
+    const res4 = formatSentence('Are you studying for the quiz right now?');
+    expect(res4).toContain('<span class="text-sky-300 font-black">Are</span>');
+    expect(res4).toContain('<span class="text-amber-400 font-black">you</span>');
+    expect(res4).toContain('<span class="text-emerald-400 font-black">studying</span>');
+    expect(res4).toContain('<span class="text-white font-extrabold">for</span>');
+    expect(res4).not.toContain('<span class="text-emerald-400 font-black">you</span>');
   });
 });

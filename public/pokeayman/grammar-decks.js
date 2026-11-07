@@ -525,44 +525,171 @@
   };
 
   // Helper: syntax-highlight target sentence according to English grammar patterns
-  function formatSyntaxHighlightedSentence(sentence) {
+  function formatSyntaxHighlightedSentence(sentence, formula = '') {
     if (!sentence) return '';
     const clean = String(sentence).trim();
     const rawWords = clean.split(/\s+/);
     if (rawWords.length <= 1) return escapeHtml(clean);
 
-    const auxSet = new Set([
+    const AUX_VERBS = new Set([
       'am', 'is', 'are', 'was', 'were', 'will', 'shall', 'has', 'have', 'had',
       'do', 'does', 'did', 'can', 'could', 'would', 'should', 'might', 'must',
       "isn't", "aren't", "wasn't", "weren't", "won't", "haven't", "hasn't", "hadn't",
       "don't", "doesn't", "didn't", "can't", "couldn't"
     ]);
 
-    let auxIdx = -1;
-    let verbIdx = -1;
+    const QUESTION_WORDS = new Set([
+      'what', 'where', 'when', 'why', 'who', 'whom', 'whose', 'which', 'how'
+    ]);
 
-    for (let i = 0; i < rawWords.length; i++) {
-      const wNorm = rawWords[i].toLowerCase().replace(/[^a-z']/g, '');
-      if (auxSet.has(wNorm) && auxIdx === -1) {
-        auxIdx = i;
-      } else if (wNorm.endsWith('ing') || wNorm.endsWith('ed') || (auxIdx !== -1 && verbIdx === -1 && i > auxIdx)) {
-        if (verbIdx === -1 && !auxSet.has(wNorm) && wNorm !== 'not') {
+    // Words that are function words, articles, prepositions, pronouns, or nouns that MUST NEVER be colored as action verbs
+    const NON_VERB_WORDS = new Set([
+      'the', 'a', 'an',
+      'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'about', 'into', 'through', 'over', 'under', 'between', 'among', 'out', 'off', 'above', 'below', 'behind', 'near', 'across', 'up', 'down',
+      'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them',
+      'my', 'your', 'his', 'her', 'its', 'our', 'their', 'mine', 'yours', 'hers', 'ours', 'theirs',
+      'this', 'that', 'these', 'those', 'there', 'here',
+      'some', 'any', 'many', 'much', 'few', 'little', 'all', 'every', 'each', 'both', 'either', 'neither', 'no',
+      'what', 'where', 'when', 'why', 'who', 'whom', 'whose', 'which', 'how',
+      'and', 'but', 'or', 'so', 'because', 'if', 'while', 'as', 'than',
+      'not', 'very', 'too', 'quite', 'just', 'already', 'still', 'yet', 'always', 'never', 'often', 'sometimes',
+      'color', 'basket', 'bicycle', 'shirt', 'cat', 'dog', 'apples', 'today', 'tomorrow', 'yesterday', 'now', 'right'
+    ]);
+
+    const cleanWords = rawWords.map(w => w.toLowerCase().replace(/[^a-z']/g, ''));
+
+    // Check if sentence is an inverted question: starts with Aux verb (e.g. "Are you studying...")
+    const startsWithAux = cleanWords.length > 1 && AUX_VERBS.has(cleanWords[0]);
+
+    // Check if sentence starts with question word (e.g. "Where is...", "What color is...", "How many...")
+    const startsWithQuestion = cleanWords.length > 1 && QUESTION_WORDS.has(cleanWords[0]);
+
+    if (startsWithAux) {
+      // INVERTED QUESTION: [Aux] (Blue) + [Subject] (Amber) + [Verb-ing/Base] (Green) + [Rest] (White)
+      // Matches formula: [Am / Is / Are] (Blue) + [Subject] (Amber) + [Verb-ing ?] (Green)
+      let verbIdx = -1;
+      for (let i = 2; i < cleanWords.length; i++) {
+        const w = cleanWords[i];
+        if ((w.endsWith('ing') || w.endsWith('ed')) && !NON_VERB_WORDS.has(w)) {
           verbIdx = i;
+          break;
+        }
+      }
+      if (verbIdx === -1) {
+        for (let i = 2; i < cleanWords.length; i++) {
+          if (!NON_VERB_WORDS.has(cleanWords[i])) {
+            verbIdx = i;
+            break;
+          }
+        }
+      }
+
+      return rawWords.map((w, i) => {
+        if (i === 0) {
+          // Aux in inverted question corresponds to Part 0 of formula [Am / Is / Are] -> Blue
+          return `<span class="text-sky-300 font-black">${escapeHtml(w)}</span>`;
+        }
+        if (i === 1 || (verbIdx !== -1 && i > 0 && i < verbIdx)) {
+          // Subject corresponds to Part 1 of formula [Subject] -> Amber
+          return `<span class="text-amber-400 font-black">${escapeHtml(w)}</span>`;
+        }
+        if (i === verbIdx) {
+          // Verb corresponds to Part 2 of formula [Verb-ing] -> Green
+          return `<span class="text-emerald-400 font-black">${escapeHtml(w)}</span>`;
+        }
+        return `<span class="text-white font-extrabold">${escapeHtml(w)}</span>`;
+      }).join(' ');
+    }
+
+    if (startsWithQuestion) {
+      // WH-QUESTION: [Question Phrase] (Blue) + [Aux] (Amber) + [Rest / Lexical Verb] (White / Green)
+      // Example: "Where is the sleeping cat?", "What color is your bicycle?", "How many apples are in the basket?"
+      let auxIdx = -1;
+      for (let i = 1; i < cleanWords.length; i++) {
+        if (AUX_VERBS.has(cleanWords[i])) {
+          auxIdx = i;
+          break;
+        }
+      }
+
+      // Check if there is an actual action verb (like "sleeping", "located")
+      let verbIdx = -1;
+      if (auxIdx !== -1) {
+        for (let i = auxIdx + 1; i < cleanWords.length; i++) {
+          const w = cleanWords[i];
+          if ((w.endsWith('ing') || w.endsWith('ed')) && !NON_VERB_WORDS.has(w)) {
+            verbIdx = i;
+            break;
+          }
+        }
+      }
+
+      return rawWords.map((w, i) => {
+        if (auxIdx !== -1 && i < auxIdx) {
+          // Question phrase (e.g. "Where", "What color", "How many apples") -> Blue
+          return `<span class="text-sky-300 font-black">${escapeHtml(w)}</span>`;
+        }
+        if (i === auxIdx) {
+          // Helping verb / be verb (e.g. "is", "are") -> Amber
+          return `<span class="text-amber-400 font-black">${escapeHtml(w)}</span>`;
+        }
+        if (i === verbIdx) {
+          // Only actual action verb (e.g. "sleeping") -> Green
+          return `<span class="text-emerald-400 font-black">${escapeHtml(w)}</span>`;
+        }
+        // Function words, prepositions, pronouns, articles, nouns -> White
+        return `<span class="text-white font-extrabold">${escapeHtml(w)}</span>`;
+      }).join(' ');
+    }
+
+    // STANDARD AFFIRMATIVE / NEGATIVE SENTENCE
+    // Example: "The elephant is walking slowly." or "The dinosaur is not sleeping today."
+    let auxIdx = -1;
+    for (let i = 0; i < cleanWords.length; i++) {
+      if (AUX_VERBS.has(cleanWords[i])) {
+        auxIdx = i;
+        break;
+      }
+    }
+
+    let verbIdx = -1;
+    if (auxIdx !== -1) {
+      for (let i = auxIdx + 1; i < cleanWords.length; i++) {
+        const w = cleanWords[i];
+        if (w === 'not') continue;
+        if ((w.endsWith('ing') || w.endsWith('ed')) && !NON_VERB_WORDS.has(w)) {
+          verbIdx = i;
+          break;
+        }
+      }
+      if (verbIdx === -1) {
+        // Base verb (e.g. "will play", "can run")
+        for (let i = auxIdx + 1; i < cleanWords.length; i++) {
+          const w = cleanWords[i];
+          if (w !== 'not' && !NON_VERB_WORDS.has(w)) {
+            verbIdx = i;
+            break;
+          }
+        }
+      }
+    } else {
+      // Present Simple without aux (e.g. "Pikachu runs happily.")
+      for (let i = 1; i < cleanWords.length; i++) {
+        const w = cleanWords[i];
+        if (!NON_VERB_WORDS.has(w)) {
+          verbIdx = i;
+          break;
         }
       }
     }
 
-    if (auxIdx === -1 && verbIdx === -1 && rawWords.length >= 2) {
-      verbIdx = 1;
-    }
-
     return rawWords.map((w, i) => {
-      const wNorm = w.toLowerCase().replace(/[^a-z']/g, '');
-      if (i === auxIdx) {
-        return `<span class="text-amber-400 font-black">${escapeHtml(w)}</span>`;
-      }
+      const wNorm = cleanWords[i];
       if (wNorm === 'not') {
         return `<span class="text-rose-400 font-black">${escapeHtml(w)}</span>`;
+      }
+      if (i === auxIdx) {
+        return `<span class="text-amber-400 font-black">${escapeHtml(w)}</span>`;
       }
       if (i === verbIdx) {
         return `<span class="text-emerald-400 font-black">${escapeHtml(w)}</span>`;
@@ -591,6 +718,9 @@
       return `<span class="px-3.5 sm:px-4 py-1.5 rounded-full border ${style} font-bold text-xs sm:text-sm tracking-wide inline-block">${escapeHtml(displayPart)}</span>`;
     }).join('<span class="text-slate-400 font-bold text-base sm:text-lg mx-1.5">+</span>');
   }
+
+  window.formatSyntaxHighlightedSentence = formatSyntaxHighlightedSentence;
+  window.formatFormulaChips = formatFormulaChips;
 
   window.openGrammarDeckPractice = function(deck) {
     document.querySelectorAll('#grammar-practice-modal').forEach(m => m.remove());
@@ -628,9 +758,6 @@
       let cleanClue = (r.context_clue || 'Right Now').trim();
       if (cleanClue.toLowerCase().startsWith('level:')) {
         cleanClue = cleanClue.replace(/level:\s*/i, '');
-      }
-      if (cleanClue.length > 28) {
-        cleanClue = cleanClue.split(/[,.;:]/)[0].trim().slice(0, 28);
       }
 
       // Quiz options fallback
@@ -682,8 +809,8 @@
                 <!-- Left: Illustration Card with Floating Context Pill -->
                 <div class="md:col-span-5 relative rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 aspect-[4/3] shadow-xl group">
                   <img src="${escapeHtml(r.image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg')}" alt="${escapeHtml(r.title || 'Grammar Illustration')}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                  <div class="absolute top-3 left-3 px-3 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-[11px] font-semibold text-slate-300 backdrop-blur-md shadow-md flex items-center gap-1.5">
-                    <span>Context:</span> <span class="text-amber-300 font-bold">${escapeHtml(cleanClue)}</span>
+                  <div class="absolute top-3 left-3 max-w-[88%] px-3 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-[11px] font-semibold text-slate-300 backdrop-blur-md shadow-md flex items-center gap-1.5 truncate">
+                    <span class="shrink-0 text-slate-400">Context:</span> <span class="text-amber-300 font-bold truncate">${escapeHtml(cleanClue)}</span>
                   </div>
                 </div>
 
@@ -691,7 +818,7 @@
                 <div class="md:col-span-7 flex flex-col justify-center space-y-4">
                   <!-- Large Target Sentence with Highlighted Syntax -->
                   <div class="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
-                    ${formatSyntaxHighlightedSentence(r.sentence || '')}
+                    ${formatSyntaxHighlightedSentence(r.sentence || '', r.formula || '')}
                   </div>
 
                   <!-- Common Mistake Container -->
