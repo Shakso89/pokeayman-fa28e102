@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SentenceAiError, askSentenceModel, normalizeWord, sentenceHasWord } from "@/lib/vocab-sentences";
+import { SentenceAiError, askSentenceModel, normalizeWord, sentenceHasWord, callGemini } from "@/lib/vocab-sentences";
 import { matchVocabularyMedia } from "@/lib/vocab-media";
-import { isMediaType } from "@/lib/stock-media";
+import { isMediaType, searchStockMedia } from "@/lib/stock-media";
 
 const requests = new Map<string, { count: number; reset: number }>();
 
@@ -58,6 +58,21 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
         
         // askGemini defined above
 
+        
+        const extractKeywordsFromSentence = (sentence: string): string => {
+          if (!sentence) return '';
+          const clean = sentence.replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+          const stopWords = new Set([
+            'the', 'a', 'an', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'am', 'be', 'been', 'being',
+            'will', 'going', 'not', 'won', 't', 'don', 'doesn', 'didn', 'can', 'could', 'should', 'would',
+            'in', 'on', 'at', 'to', 'for', 'with', 'by', 'about', 'from', 'up', 'down', 'of', 'off', 'over', 'under',
+            'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'we', 'they', 'you',
+            'he', 'she', 'it', 'me', 'him', 'us', 'them', 'tomorrow', 'yesterday', 'today', 'now', 'soon'
+          ]);
+          const words = clean.split(' ').filter(w => w.length > 2 && !stopWords.has(w.toLowerCase()));
+          return words.slice(0, 2).join(' ');
+        };
+
         const parseJson = (text: string): unknown => {
           const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/, "").trim();
           const start = Math.min(...[cleaned.indexOf("["), cleaned.indexOf("{")].filter((i) => i >= 0));
@@ -78,26 +93,31 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
           }
 
           const prompt = `You are an expert ESL/EFL English language curriculum developer and teacher for young elementary students.
-The teacher wants a Grammar Pattern Deck for the topic: "${topic}" (Target Level: ${level}).
+The teacher wants a Grammar Pattern Deck strictly for the topic: "${topic}" (Target Level: ${level}).
 
-Generate between 2 to 4 distinct, pedagogically sound grammar rules / patterns for this topic.
-CRITICAL PEDAGOGICAL INSTRUCTIONS:
-1. If the topic mentions specific question words or structures (such as "What, Where, What color, How many", etc.), generate ONE separate, focused rule for EACH specified question word / structure.
-2. If the topic is a tense or grammatical category (such as "Present Continuous", "Past Simple", "Comparatives", etc.), generate:
+CRITICAL INSTRUCTIONS:
+1. ALL generated rules, formulas, sentences, mistakes, and quizzes MUST strictly match and teach "${topic}".
+   - For example:
+     - If the topic is about Future (e.g. "Simple future", "will", "going to"), EVERY rule MUST teach future forms (e.g. "will + base verb", "will not / won't + base verb", "am/is/are going to + base verb", "Will + Subject + base verb?"). NEVER generate present simple or present continuous sentences for a future topic!
+     - If the topic is about Past (e.g. "Past simple", "irregular past"), EVERY rule MUST teach past tense (regular -ed, irregular past, didn't + base verb).
+     - If the topic is about Present Simple, teach habitual facts with base verb / -s / -es and do/does.
+     - If the topic is about Present Continuous, teach actions happening right now with am/is/are + verb-ing.
+     - If the topic specifies questions (e.g. "What, Where, How many"), generate one rule per specified question word.
+2. Generate 2 to 4 distinct, pedagogically clear rules for "${topic}":
    - Rule 1: Affirmative / Core Pattern
-   - Rule 2: Negative Form or Common Exception
-   - Rule 3: Question Form / Word Order Inversion
-3. For each rule:
-   - "title": A clear educational title (e.g. "Asking with 'Where' (Places and Locations)" or "Affirmative Actions (Happening Now)").
-   - "formula": The exact formula with "+" signs (e.g. "Where + is / are + Subject ?" or "Subject + am / is / are + Verb-ing" or "How many + Plural Noun + are there ?"). NEVER use a generic "Subject + Verb + Object" unless teaching basic SVO!
-   - "sentence": A realistic, natural, kid-friendly example sentence demonstrating this exact rule (e.g. "Where is the sleeping cat?" or "What color is your bicycle?" or "The elephant is walking slowly in the grass."). NEVER write meta-sentences like "The students practiced..." or "This is a rule."!
-   - "context_clue": A 3 to 7 word helpful hint explaining when or why to use this rule (e.g. "Use 'Where' to ask about places" or "Use for actions happening right now").
-   - "mistake_bad": A realistic common student error (e.g. "Where is your favorite color?" or "The dinosaur not sleeping today." or "How many pencils does you have?").
-   - "mistake_good": The exact corrected sentence (e.g. "What is your favorite color?" or "The dinosaur is not sleeping today." or "How many pencils do you have?").
-   - "quiz_question": A fill-in-the-blank or multiple choice challenge question testing this exact rule (e.g. "_____ are the keys? - In my pocket." or "Look! The monkey _____ (climb) the tree!").
-   - "quiz_options": Array of 3 distinct, plausible answer choices (e.g. ["Where", "What", "How many"] or ["is climbing", "are climbing", "climbs"]).
-   - "quiz_answer": The exact string matching the correct option.
-   - "image_search": 2-3 word query to find a matching photo (e.g. "sleeping cat", "school backpack", "colorful bicycle", "colored pencils").
+   - Rule 2: Negative Form (e.g. won't / didn't / is not)
+   - Rule 3: Question Form / Word Order Inversion (e.g. Will you...? / Did you...?)
+3. For EACH rule:
+   - "title": A clear educational title matching ${topic} (e.g. "Simple Future (will + Base Verb)", "Negative Future (won't)").
+   - "formula": The exact formula with "+" signs (e.g. "Subject + will + Base Verb" or "Subject + will not (won't) + Base Verb" or "Will + Subject + Base Verb ?"). NEVER use a generic "Subject + Verb + Object" unless teaching basic SVO!
+   - "sentence": A clear, natural, concrete sentence illustrating this exact rule for young learners with vivid nouns/actions (e.g. "Tomorrow, the students will build a robot in science class." or "She will read a book about dinosaurs tonight.").
+   - "context_clue": A concise 3-7 word tip (e.g. "Use 'will' for future predictions or promises").
+   - "mistake_bad": A realistic student mistake for this exact rule (e.g. "She will visits the zoo tomorrow.").
+   - "mistake_good": The corrected sentence (e.g. "She will visit the zoo tomorrow.").
+   - "quiz_question": A fill-in-the-blank question testing this exact rule (e.g. "Tomorrow, the astronaut _____ (travel) to the Moon.").
+   - "quiz_options": Array of 3 distinct choices (e.g. ["will travel", "traveling", "traveled"]).
+   - "quiz_answer": The exact correct option (e.g. "will travel").
+   - "image_keywords": 2 to 3 concrete nouns/verbs taken directly from the example sentence to find a photo illustrating that specific sentence (e.g. "robot build", "space astronaut", "dinosaur book").
 
 Reply with valid JSON only in this exact format:
 {
@@ -113,15 +133,15 @@ Reply with valid JSON only in this exact format:
       "quiz_question": "...",
       "quiz_options": ["...", "...", "..."],
       "quiz_answer": "...",
-      "image_search": "..."
+      "image_keywords": "..."
     }
   ]
 }`;
 
           try {
-            const rawText = await askGemini({
+            const rawText = await callGemini({
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.3, responseMimeType: "application/json", maxOutputTokens: 2500 },
+              generationConfig: { temperature: 0.2, responseMimeType: "application/json", maxOutputTokens: 2500 },
             });
             const parsed = parseJson(rawText) as any;
             let rules = Array.isArray(parsed?.rules) ? parsed.rules : (Array.isArray(parsed) ? parsed : []);
@@ -141,30 +161,39 @@ Reply with valid JSON only in this exact format:
               }
               if (!r.quiz_answer) r.quiz_answer = r.quiz_options[0];
 
-              // Try finding image
-              const query = String(r.image_search || r.sentence.slice(0, 30) || topic).trim();
-              try {
-                const stock = await matchVocabularyMedia({
-                  id: r.rule_id,
-                  word: query.split(' ')[0] || 'study',
-                  sentence: r.sentence,
-                  action: 'search',
-                  query: query,
-                  page: 1
-                });
-                const goodPhoto = stock?.candidates?.find((p: any) => p.imageUrl && !p.imageUrl.includes('pixabay.com/get/'));
-                if (goodPhoto) {
-                  r.image = goodPhoto.imageUrl;
+              // Pick photo strictly related to the example sentence
+              let photoFound = false;
+              const searchCandidates = [
+                String(r.image_keywords || '').trim(),
+                extractKeywordsFromSentence(r.sentence),
+                topic
+              ].filter(Boolean);
+
+              for (const queryStr of searchCandidates) {
+                try {
+                  const stock = await searchStockMedia(queryStr, "all", 6);
+                  const goodPhoto = stock?.photos?.find((p: any) => {
+                    const url = p?.src?.medium || p?.src?.large;
+                    return url && !url.includes('pixabay.com/get/');
+                  });
+                  if (goodPhoto) {
+                    r.image = goodPhoto.src.medium || goodPhoto.src.large;
+                    photoFound = true;
+                    break;
+                  }
+                } catch (e) {
+                  console.warn(`[grammar-ai] Stock search failed for "${queryStr}":`, e);
                 }
-              } catch (_) {}
-              if (!r.image) {
-                const fallbacks = [
+              }
+
+              if (!photoFound || !r.image) {
+                const curated = [
                   'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
                   'https://cdn.pixabay.com/photo/2021/02/08/16/03/dinosaur-5995333_640.png',
                   'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg',
                   'https://cdn.pixabay.com/photo/2018/07/20/14/01/grapes-3550729_640.jpg'
                 ];
-                r.image = fallbacks[i % fallbacks.length];
+                r.image = curated[i % curated.length];
               }
             }
 

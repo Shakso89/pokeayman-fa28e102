@@ -1318,6 +1318,20 @@
         generatedRules = synthesizeGrammarRules(topic, level);
       }
 
+      // 3. Ensure each rule has a photo directly matching its example sentence
+      for (let i = 0; i < generatedRules.length; i++) {
+        const r = generatedRules[i];
+        if (!r.image || r.image.includes('elephant-10098979') || r.image.includes('dinosaur-5995333')) {
+          try {
+            const kw = extractKeywordsForGrammarRule(r, { grammar_deck_name: finalDeckName });
+            const media = await fetchMediaForGrammarSearch(kw, 'all', 1);
+            if (media.photos && media.photos.length > 0) {
+              r.image = media.photos[0].url;
+            }
+          } catch (_) {}
+        }
+      }
+
       const generatedDeck = {
         __backendId: newDeckId,
         id: newDeckId,
@@ -1470,10 +1484,94 @@
     }
 
     if (!rules.length) {
+      const isFuture = t.includes('future') || t.includes('will') || t.includes('going to') || t.includes('tomorrow');
       const isPast = t.includes('past') || t.includes('yesterday') || t.includes('did');
-      const isContinuous = t.includes('continuous') || t.includes('progressive') || t.includes('ing');
+      const isContinuous = t.includes('continuous') || t.includes('progressive') || (t.includes('ing') && !isFuture);
+      const isPresentSimple = t.includes('simple present') || t.includes('present simple') || t.includes('habit') || t.includes('routine');
       const isComparative = t.includes('comparative') || t.includes('than') || t.includes('superlative');
       const isModal = t.includes('can') || t.includes('modal') || t.includes('should') || t.includes('must');
+
+      if (isFuture) {
+        rules.push({
+          rule_id: 'rule-gen-1-' + Date.now(),
+          title: 'Simple Future (will + Base Verb)',
+          formula: 'Subject + will + Base Verb',
+          sentence: 'Tomorrow, the students will build a robot in science class.',
+          context_clue: 'Use "will" + base verb for future predictions and promises.',
+          mistake_bad: 'The students will builds a robot.',
+          mistake_good: 'The students will build a robot.',
+          quiz_question: 'Tomorrow, our class _____ (visit) the science museum.',
+          quiz_options: ['will visit', 'visiting', 'visited'],
+          quiz_answer: 'will visit',
+          image: 'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-2-' + Date.now(),
+          title: 'Negative Future (will not / won\'t)',
+          formula: 'Subject + will not (won\'t) + Base Verb',
+          sentence: 'The astronaut won\'t leave Earth until the spaceship is ready.',
+          context_clue: 'Use "will not" or "won\'t" for things that will not happen.',
+          mistake_bad: 'The astronaut won\'t to leave Earth.',
+          mistake_good: 'The astronaut won\'t leave Earth.',
+          quiz_question: 'Liam _____ (not forget) to bring his jacket tomorrow.',
+          quiz_options: ['won\'t forget', 'not will forget', 'forgetting'],
+          quiz_answer: 'won\'t forget',
+          image: 'https://cdn.pixabay.com/photo/2022/10/15/16/44/night-view-7523474_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-3-' + Date.now(),
+          title: 'Future with "be going to" (Planned Actions)',
+          formula: 'Subject + am / is / are + going to + Base Verb',
+          sentence: 'They are going to travel to the sunny beach next Saturday.',
+          context_clue: 'Use "going to" for plans already decided.',
+          mistake_bad: 'They are going to traveling to the beach.',
+          mistake_good: 'They are going to travel to the beach.',
+          quiz_question: 'Look at those dark clouds! It is _____ rain.',
+          quiz_options: ['going to', 'will to', 'go to'],
+          quiz_answer: 'going to',
+          image: 'https://cdn.pixabay.com/photo/2018/07/20/14/01/grapes-3550729_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-4-' + Date.now(),
+          title: 'Asking Questions with "Will" (Future Inversion)',
+          formula: 'Will + Subject + Base Verb ?',
+          sentence: 'Will the chef bake a chocolate cake for the party?',
+          context_clue: 'Move "Will" to the front of the sentence to ask.',
+          mistake_bad: 'You will bake a cake?',
+          mistake_good: 'Will you bake a cake?',
+          quiz_question: '_____ the doctor see the patient soon?',
+          quiz_options: ['Will', 'Are', 'Is'],
+          quiz_answer: 'Will',
+          image: 'https://cdn.pixabay.com/photo/2019/06/13/09/41/business-4271251_640.png'
+        });
+      } else if (isPresentSimple) {
+        rules.push({
+          rule_id: 'rule-gen-1-' + Date.now(),
+          title: 'Present Simple (He / She / It + -s / -es)',
+          formula: 'He / She / It + Verb-s / Verb-es',
+          sentence: 'The chef bakes fresh bread every morning.',
+          context_clue: 'Add -s or -es for he, she, or it in the present.',
+          mistake_bad: 'The chef bake fresh bread every morning.',
+          mistake_good: 'The chef bakes fresh bread every morning.',
+          quiz_question: 'My sister _____ (read) a story before bedtime.',
+          quiz_options: ['reads', 'read', 'reading'],
+          quiz_answer: 'reads',
+          image: 'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-2-' + Date.now(),
+          title: 'Negative Present Simple (don\'t / doesn\'t)',
+          formula: 'Subject + don\'t / doesn\'t + Base Verb',
+          sentence: 'Lions do not eat plants or grass.',
+          context_clue: 'Use "doesn\'t" for he/she/it, "don\'t" for others.',
+          mistake_bad: 'He doesn\'t likes broccoli.',
+          mistake_good: 'He doesn\'t like broccoli.',
+          quiz_question: 'Sarah _____ (not like) cold winter mornings.',
+          quiz_options: ['doesn\'t like', 'don\'t like', 'not likes'],
+          quiz_answer: 'doesn\'t like',
+          image: 'https://cdn.pixabay.com/photo/2021/02/08/16/03/dinosaur-5995333_640.png'
+        });
+      } else
 
       if (isPast) {
         rules.push({

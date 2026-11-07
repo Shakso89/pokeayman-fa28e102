@@ -151,9 +151,14 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('What color + is / are + Subject ?');
     expect(js).toContain('How many + Plural Noun + are there ?');
 
-    // API route handles grammar mode with Gemini
+    // API route handles grammar mode with Gemini and stock media sentence search
     expect(apiRoute).toContain('input?.mode === "grammar"');
-    expect(apiRoute).toContain('Grammar Pattern Deck for the topic');
+    expect(apiRoute).toContain('Grammar Pattern Deck');
+    expect(apiRoute).toContain('callGemini');
+    expect(apiRoute).toContain('searchStockMedia');
+    expect(apiRoute).toContain('extractKeywordsFromSentence');
+    expect(js).toContain('Simple Future (will + Base Verb)');
+    expect(js).toContain('extractKeywordsForGrammarRule');
   });
 
   it('ensures grammar rule editor includes interactive image search & picker matching vocab lists', () => {
