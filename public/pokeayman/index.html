@@ -4052,6 +4052,7 @@
     #view-students #class-tabs-container .class-tab-vocab-active,
     #view-students #class-tabs-container .class-tab-games-active,
     #view-students #class-tabs-container .class-tab-battle-active,
+    #view-students #class-tabs-container .class-tab-grammar-active,
     #breadcrumb > button.pointer-events-none {
       background: linear-gradient(135deg, #3d52d5, #1e2a6e) !important;
       border-color: rgba(255,229,138,.52) !important;
@@ -15723,7 +15724,7 @@ window.openGameScramble = openGameScramble;
       <div id="view-students" class="hidden">
        <!-- Class tabs -->
        <div id="class-tabs-container" class="mb-6 flex gap-2 flex-wrap">
-        <button class="class-view-tab class-tab-students-active px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="students">👩‍🎓 Students</button> <button class="class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="quiz">📝 Quiz</button> <button class="class-view-tab class-tab-vocab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="vocab">📚 Vocabulary</button> <button class="class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="games">🎮 Games</button> <button class="class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="battle">⚔️ Battle Arena</button>
+        <button class="class-view-tab class-tab-students-active px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="students">👩‍🎓 Students</button> <button class="class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="quiz">📝 Quiz</button> <button class="class-view-tab class-tab-vocab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="vocab">📚 Vocabulary</button> <button class="class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="grammar">🧩 Grammar</button> <button class="class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="games">🎮 Games</button> <button class="class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition" data-classtab="battle">⚔️ Battle Arena</button>
        </div><!-- Students sub-tab -->
        <div id="class-subtab-students" class="class-subtab-content">
         <div class="class-action-console glass-container rounded-lg p-4 mb-4">
@@ -15913,6 +15914,16 @@ window.openGameScramble = openGameScramble;
         </div>
         <div id="vocab-lists-container" class="space-y-4"></div>
         <p id="vocab-lists-empty" class="text-center text-gray-400 py-8 text-sm hidden">No vocabulary lists yet.</p>
+       </div><!-- Grammar sub-tab -->
+       <div id="class-subtab-grammar" class="class-subtab-content hidden">
+        <div class="glass-container rounded-xl p-6 mb-6">
+         <div class="mb-6 flex gap-3 items-end">
+          <div class="flex-1"><label class="text-xs text-slate-300 font-semibold block mb-1.5 uppercase tracking-wider">Create New Grammar Deck</label> <input id="new-grammar-deck-name" type="text" placeholder="Deck name (e.g., 'Present Continuous')" class="quiz-input w-full px-3.5 py-2.5 text-sm" required="">
+          </div><button id="create-grammar-deck-btn" class="btn-primary rounded-full" style="border-radius:9999px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:8px 20px !important;">Create</button> <button id="generate-grammar-deck-btn" type="button" class="btn-ai-generate" title="Generate grammar deck with AI"><svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate with AI</span></button>
+         </div>
+        </div>
+        <div id="grammar-decks-container" class="space-y-4"></div>
+        <p id="grammar-decks-empty" class="text-center text-gray-400 py-8 text-sm hidden">No grammar decks yet.</p>
        </div><!-- Games sub-tab -->
        <div id="class-subtab-games" class="class-subtab-content hidden">
         <div class="glass-container rounded-xl p-6 mb-6">
@@ -16189,7 +16200,7 @@ window.openGameScramble = openGameScramble;
     </div>
     <div id="admin-subtab-teacher-zone" class="admin-subtab-content hidden">
      <div class="flex gap-2 mb-4" role="tablist" aria-label="Teacher Zone sections">
-      <button id="teacher-zone-schedule-tab" type="button" class="teacher-zone-tab btn-primary text-sm" role="tab" aria-selected="true" aria-controls="teacher-zone-schedule-panel">Schedule</button><button id="teacher-zone-financial-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-financial-panel">Financial</button><button id="teacher-zone-history-tab" type="button" class="teacher-zone-tab btn-outline text-sm hidden" role="tab" aria-selected="false" aria-controls="teacher-zone-history-panel" style="display:none !important">History</button><button id="teacher-zone-vb-lists-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-vb-lists-panel">Word Bank</button><button id="teacher-zone-battle-claims-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-battle-claims-panel">Pocket Battle Claims</button><button id="teacher-zone-profile-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-profile-panel">Profile</button>
+      <button id="teacher-zone-schedule-tab" type="button" class="teacher-zone-tab btn-primary text-sm" role="tab" aria-selected="true" aria-controls="teacher-zone-schedule-panel">Schedule</button><button id="teacher-zone-financial-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-financial-panel">Financial</button><button id="teacher-zone-history-tab" type="button" class="teacher-zone-tab btn-outline text-sm hidden" role="tab" aria-selected="false" aria-controls="teacher-zone-history-panel" style="display:none !important">History</button><button id="teacher-zone-vb-lists-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-vb-lists-panel">Word Bank</button><button id="teacher-zone-grammar-decks-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-grammar-decks-panel">Grammar Bank</button><button id="teacher-zone-battle-claims-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-battle-claims-panel">Pocket Battle Claims</button><button id="teacher-zone-profile-tab" type="button" class="teacher-zone-tab btn-outline text-sm" role="tab" aria-selected="false" aria-controls="teacher-zone-profile-panel">Profile</button>
      </div>
      <section id="teacher-zone-profile-panel" class="hidden" role="tabpanel" aria-labelledby="teacher-zone-profile-tab"><div id="tab-trainer"></div></section>
      <div id="teacher-zone-schedule-panel" role="tabpanel" aria-labelledby="teacher-zone-schedule-tab">
@@ -16413,6 +16424,16 @@ window.openGameScramble = openGameScramble;
        <div class="teacher-vb-search"><label for="teacher-vb-search-field">Search lists</label><select id="teacher-vb-search-field" aria-label="Search filter"><option value="all">All fields</option><option value="list">List name</option><option value="teacher">Teacher name</option><option value="word">Word</option><option value="class">Class or school</option></select><input id="teacher-vb-search-query" type="text" autocomplete="off" spellcheck="false" placeholder="Search by list, teacher, word, class…" autocomplete="off"></div>
        <p id="teacher-vb-lists-status" class="teacher-zone-status" aria-live="polite">Loading your lists…</p>
        <div id="teacher-vb-lists-grid"></div>
+      </div>
+     </section>
+     <section id="teacher-zone-grammar-decks-panel" class="hidden teacher-zone-content-panel" role="tabpanel" aria-labelledby="teacher-zone-grammar-decks-tab">
+      <div class="teacher-zone-content-card">
+       <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">🧩</span><div><p class="teacher-zone-page-kicker">GRAMMAR BANK</p><h3 id="teacher-grammar-decks-title">All Decks</h3><p id="teacher-grammar-decks-description">Review, edit, practice, or assign your grammar pattern decks.</p></div></header>
+       <div class="teacher-vb-list-modes" role="group" aria-label="Grammar deck view"><button id="teacher-grammar-mode-mine" type="button" class="btn-primary rounded-full is-active" aria-pressed="true">All Decks</button><button id="teacher-grammar-mode-school" type="button" class="btn-secondary rounded-full" aria-pressed="false">School Decks</button></div>
+       <div class="teacher-vb-create-actions"><button id="teacher-grammar-open-create" type="button" class="btn-primary teacher-vb-open-create rounded-full" style="border-radius:9999px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:8px 20px !important;">+ Create Deck</button><button id="teacher-grammar-open-ai" type="button" class="btn-ai-generate teacher-vb-open-create teacher-vb-open-ai" title="Generate grammar deck with AI"><svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate with AI</span></button></div>
+       <div class="teacher-vb-search"><label for="teacher-grammar-search-field">Search decks</label><select id="teacher-grammar-search-field" aria-label="Search filter"><option value="all">All fields</option><option value="deck">Deck name</option><option value="teacher">Teacher name</option><option value="pattern">Pattern / Rule</option><option value="class">Class or school</option></select><input id="teacher-grammar-search-query" type="text" autocomplete="off" spellcheck="false" placeholder="Search by deck, teacher, rule, class…" autocomplete="off"></div>
+       <p id="teacher-grammar-decks-status" class="teacher-zone-status" aria-live="polite">Loading grammar decks…</p>
+       <div id="teacher-grammar-decks-grid" class="teacher-vb-lists-grid"></div>
       </div>
      </section>
 
@@ -23216,12 +23237,13 @@ function setTeacherZonePanel(panelId, tabId) {
   if (!scope || scope !== teacherZoneOwnerScope) return;
   if (panelId === 'teacher-zone-history-panel') { panelId = 'teacher-zone-financial-panel'; tabId = 'teacher-zone-financial-tab'; }
   teacherZoneInternalTab = panelId;
-  ['teacher-zone-schedule-panel','teacher-zone-financial-panel','teacher-zone-vb-lists-panel','teacher-zone-battle-claims-panel','teacher-zone-profile-panel'].forEach(id => document.getElementById(id)?.classList.toggle('hidden', id !== panelId));
-  ['teacher-zone-schedule-tab','teacher-zone-financial-tab','teacher-zone-vb-lists-tab','teacher-zone-battle-claims-tab','teacher-zone-profile-tab'].forEach(id => { const el=document.getElementById(id); if(el) { const active=id===tabId; el.className=`teacher-zone-tab ${active?'btn-primary':'btn-outline'} text-sm`; el.setAttribute('aria-selected',String(active)); } });
+  ['teacher-zone-schedule-panel','teacher-zone-financial-panel','teacher-zone-vb-lists-panel','teacher-zone-grammar-decks-panel','teacher-zone-battle-claims-panel','teacher-zone-profile-panel'].forEach(id => document.getElementById(id)?.classList.toggle('hidden', id !== panelId));
+  ['teacher-zone-schedule-tab','teacher-zone-financial-tab','teacher-zone-vb-lists-tab','teacher-zone-grammar-decks-tab','teacher-zone-battle-claims-tab','teacher-zone-profile-tab'].forEach(id => { const el=document.getElementById(id); if(el) { const active=id===tabId; el.className=`teacher-zone-tab ${active?'btn-primary':'btn-outline'} text-sm`; el.setAttribute('aria-selected',String(active)); } });
   if (panelId === 'teacher-zone-financial-panel') renderTeacherZoneHistory();
 }
 document.getElementById('teacher-zone-profile-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-profile-panel','teacher-zone-profile-tab'); renderTrainerTab(); });
 document.getElementById('teacher-zone-vb-lists-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-vb-lists-panel','teacher-zone-vb-lists-tab'); renderTeacherOwnedVocabLists(); });
+document.getElementById('teacher-zone-grammar-decks-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-grammar-decks-panel','teacher-zone-grammar-decks-tab'); if (typeof renderTeacherOwnedGrammarDecks === 'function') renderTeacherOwnedGrammarDecks(); });
 document.getElementById('teacher-zone-battle-claims-tab')?.addEventListener('click', () => { setTeacherZonePanel('teacher-zone-battle-claims-panel','teacher-zone-battle-claims-tab'); renderBattleClaims(); });
 // Admin sub-tabs
 document.querySelectorAll('.admin-sub-tab').forEach(btn => {
@@ -23321,7 +23343,7 @@ document.querySelectorAll('.class-view-tab').forEach(btn => {
       if (typeof toast === 'function') toast(`Access denied: You are not assigned to ${navClass}.`);
       return;
     }
-    const activeClasses = { students: 'class-tab-students-active', quiz: 'class-tab-quiz-active', vocab: 'class-tab-vocab-active', games: 'class-tab-games-active', gift: 'class-tab-gift-active', battle: 'class-tab-battle-active' };
+    const activeClasses = { students: 'class-tab-students-active', quiz: 'class-tab-quiz-active', vocab: 'class-tab-vocab-active', grammar: 'class-tab-grammar-active', games: 'class-tab-games-active', gift: 'class-tab-gift-active', battle: 'class-tab-battle-active' };
     document.querySelectorAll('.class-view-tab').forEach(b => { b.className = 'class-view-tab class-tab-inactive px-4 py-2 text-sm font-semibold rounded-full transition'; });
     btn.className = `class-view-tab ${activeClasses[btn.dataset.classtab]} px-4 py-2 text-sm font-semibold rounded-full transition`;
     // Reset only when actually leaving Battle; never interrupt an active manual picker.
@@ -23330,6 +23352,7 @@ document.querySelectorAll('.class-view-tab').forEach(btn => {
     document.querySelectorAll('.class-subtab-content').forEach(c => c.classList.add('hidden'));
     document.getElementById('class-subtab-' + btn.dataset.classtab).classList.remove('hidden');
     if (btn.dataset.classtab === 'quiz') { renderQuickAnswerStudents(); renderOngoingQuizzes(); renderQuizHistory(); }
+    if (btn.dataset.classtab === 'grammar') { if (typeof renderClassGrammarDecks === 'function') renderClassGrammarDecks(); }
     if (btn.dataset.classtab === 'battle') populateBattleSelects();
     if (btn.dataset.classtab === 'games') {
       window.arcadeOpen = true;
@@ -32610,11 +32633,12 @@ function openVocabCoverPicker(listId, listName) {
   wordsInList.forEach(w => {
     const wordText = String(w.vocab_word || w.word || '').trim();
     let imgUrl = String(w.vocab_image || w.image || '').trim();
-    if (!imgUrl && typeof resolvePermanentVocabImage === 'function' && wordText) {
-      imgUrl = resolvePermanentVocabImage('', wordText) || '';
+    if (typeof resolvePermanentVocabImage === 'function' && wordText) {
+      const permanent = resolvePermanentVocabImage(imgUrl, wordText);
+      if (permanent) imgUrl = permanent;
     }
-    if (!imgUrl && window.PERMANENT_VOCAB_WORDS && wordText) {
-      imgUrl = window.PERMANENT_VOCAB_WORDS[wordText.toLowerCase()] || '';
+    if ((!imgUrl || imgUrl.includes('pixabay.com/get/')) && window.PERMANENT_VOCAB_WORDS && wordText) {
+      imgUrl = window.PERMANENT_VOCAB_WORDS[wordText.toLowerCase()] || imgUrl;
     }
     if (imgUrl && !seenPhotoUrls.has(imgUrl)) {
       seenPhotoUrls.add(imgUrl);
@@ -33349,6 +33373,26 @@ function openVocabListEditor(listId, listName) {
           }
           if (!nextUrl) {
             try {
+              const pbRes = await fetch('https://pixabay.com/api/?key=58123311-8a89c5e2df18a2650add733fa&q=' + encodeURIComponent(cleanLabel) + '&safesearch=true&per_page=6');
+              if (pbRes.ok) {
+                const pbData = await pbRes.json();
+                const hits = Array.isArray(pbData?.hits) ? pbData.hits : [];
+                for (const h of hits) {
+                  const preview = String(h.previewURL || '');
+                  if (preview.includes('cdn.pixabay.com')) {
+                    const ext = preview.slice(preview.lastIndexOf('.'));
+                    const base = preview.slice(0, preview.lastIndexOf('_'));
+                    if (base && ext) {
+                      nextUrl = base + '_640' + ext;
+                      break;
+                    }
+                  }
+                }
+              }
+            } catch (_) {}
+          }
+          if (!nextUrl) {
+            try {
               const wikiUrl = 'https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=' + encodeURIComponent(cleanLabel) + '&gsrlimit=3&prop=imageinfo&iiprop=url|mime&format=json&origin=*';
               const wRes = await fetch(wikiUrl);
               if (wRes && wRes.ok) {
@@ -33421,7 +33465,7 @@ function openVocabListEditor(listId, listName) {
                 embeddedUpdated = true;
               }
               if (embeddedUpdated && window.dataSdk?.update) {
-                try { await window.dataSdk.update(parentRec, { notify: false }); } catch (_) {}
+                try { await window.dataSdk.update(parentRec); } catch (_) {}
               }
             }
           }
@@ -37065,5 +37109,5 @@ lucide.createIcons();
 if(document.readyState!=='loading')mv();else document.addEventListener('DOMContentLoaded',mv);})();
 </script>
 <script src="/pokeayman/sentence-generator.js"></script>
-<link rel="stylesheet" href="/pokeayman/responsive.css"><link rel="stylesheet" href="/pokeayman/theme-bridge.css"><link rel="stylesheet" href="/pokeayman/bright-fixes.css"><script src="/pokeayman/bright-fixes.js"></script><link rel="stylesheet" href="/pokeayman/workspace-refresh.css"><link rel="stylesheet" href="/pokeayman/admin-analytics.css"><script src="/pokeayman/admin-analytics.js"></script><script src="/pokeayman/responsive.js"></script><script src="/pokeayman/home-light-rays.js"></script>  <script src="/pokeayman/vocab-list-generator.js"></script>
+<link rel="stylesheet" href="/pokeayman/responsive.css"><link rel="stylesheet" href="/pokeayman/theme-bridge.css"><link rel="stylesheet" href="/pokeayman/bright-fixes.css"><script src="/pokeayman/bright-fixes.js"></script><link rel="stylesheet" href="/pokeayman/workspace-refresh.css"><link rel="stylesheet" href="/pokeayman/admin-analytics.css"><script src="/pokeayman/admin-analytics.js"></script><script src="/pokeayman/responsive.js"></script><script src="/pokeayman/home-light-rays.js"></script>  <script src="/pokeayman/vocab-list-generator.js"></script>  <script src="/pokeayman/grammar-decks.js"></script>
 </body></html>

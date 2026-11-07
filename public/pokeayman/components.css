@@ -308,7 +308,7 @@ html body.ts-bright :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-
   min-height: 46px !important;
 }
 /* Anti-clipping safeguards for AI Generate button hover glow across all views */
-html body :is(#class-subtab-vocab, #class-subtab-vocab > .glass-container, #class-subtab-vocab > .glass-container > div, #view-students #class-subtab-vocab, #view-students #class-subtab-vocab > .glass-container, .teacher-vb-create-actions) {
+html body :is(#class-subtab-vocab, #class-subtab-grammar, #class-subtab-vocab > .glass-container, #class-subtab-grammar > .glass-container, #class-subtab-vocab > .glass-container > div, #class-subtab-grammar > .glass-container > div, #view-students #class-subtab-vocab, #view-students #class-subtab-grammar, #view-students #class-subtab-vocab > .glass-container, #view-students #class-subtab-grammar > .glass-container, .teacher-vb-create-actions) {
   overflow: visible !important;
 }
 html body .teacher-vb-create-actions {
@@ -337,11 +337,15 @@ html body .teacher-vb-search {
 /* Uniform fully rounded pill styling across header buttons and mode tabs */
 html body:is(#pk-ds, body) :is(
   #create-vocab-list-btn,
+  #create-grammar-deck-btn,
   #teacher-vb-open-create,
+  #teacher-grammar-open-create,
   .teacher-vb-open-create:not(.btn-ai-generate),
   .teacher-vb-list-modes button,
   #teacher-vb-mode-mine,
-  #teacher-vb-mode-school
+  #teacher-vb-mode-school,
+  #teacher-grammar-mode-mine,
+  #teacher-grammar-mode-school
 ) {
   position: relative !important;
   display: inline-flex !important;

@@ -464,13 +464,26 @@
         if (!res.ok) return [];
         const data = await res.json();
         const hits = Array.isArray(data.hits) ? data.hits : [];
-        return hits.map(hit => ({
-          id: String(hit.id),
-          imageUrl: hit.webformatURL || hit.largeImageURL || hit.previewURL,
-          type: hit.type || 'photo',
-          source: hit.user || 'Pixabay Artist',
-          sourceUrl: hit.pageURL || ''
-        }));
+        return hits.map(hit => {
+          let permanentUrl = '';
+          const preview = String(hit.previewURL || '');
+          if (preview.includes('cdn.pixabay.com')) {
+            const ext = preview.slice(preview.lastIndexOf('.'));
+            const base = preview.slice(0, preview.lastIndexOf('_'));
+            if (base && ext) permanentUrl = base + '_640' + ext;
+          }
+          if (!permanentUrl) {
+            const wf = String(hit.webformatURL || '');
+            if (wf.includes('cdn.pixabay.com')) permanentUrl = wf;
+          }
+          return {
+            id: String(hit.id),
+            imageUrl: permanentUrl || (hit.previewURL && !hit.previewURL.includes('pixabay.com/get/') ? hit.previewURL : hit.webformatURL || hit.largeImageURL || hit.previewURL),
+            type: hit.type || 'photo',
+            source: hit.user || 'Pixabay Artist',
+            sourceUrl: hit.pageURL || ''
+          };
+        });
       } catch (err) {
         console.warn('[vocab] Direct client Pixabay search error:', err);
         return [];
