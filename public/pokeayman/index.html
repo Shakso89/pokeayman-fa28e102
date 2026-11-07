@@ -12760,7 +12760,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
       <div class="match-bank-tray" role="region" aria-label="Word Bank">
         <div class="match-bank-header">
           <div class="match-bank-info">
-            <span class="match-bank-title">🔤 Word Bank</span>
+            <span class="match-bank-title"><span class="match-bank-icon">🔤</span> Word Bank</span>
             <span id="match-bank-counter" class="match-bank-counter">${totalWords} remaining</span>
           </div>
         </div>
@@ -12931,6 +12931,8 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         ghostEl = document.createElement('div');
         ghostEl.className = 'match-drag-ghost';
         ghostEl.setAttribute('aria-hidden', 'true');
+        const activeTheme = modal?.getAttribute('data-ga-theme') || document.body?.getAttribute('data-ga-active-theme') || '';
+        if (activeTheme) ghostEl.setAttribute('data-ga-theme', activeTheme);
         ghostEl.style.position = 'fixed';
         ghostEl.style.zIndex = '2147483647';
         ghostEl.style.pointerEvents = 'none';

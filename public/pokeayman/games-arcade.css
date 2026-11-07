@@ -673,21 +673,21 @@ body:has(.vocab-editor-overlay) .ga-continue-bar {
 
 /* Draggable Word Chips in Bank */
 .match-bank-chips { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .55rem .7rem; max-height: 8.5rem; overflow-y: auto; padding: .2rem; }
-.match-word-chip { position: relative; display: inline-flex; align-items: center; gap: .5rem; padding: .42rem .95rem; border-radius: 9999px; background: rgba(6,78,59,.85); border: 1px solid rgba(5,150,105,.6); color: #ffffff; font: 700 .92rem/1.2 'Figtree', sans-serif; box-shadow: 0 2px 6px rgba(0,0,0,.15); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; transition: background .16s ease, transform .16s ease, border-color .16s ease, box-shadow .16s ease, opacity .2s ease; }
-.match-word-chip:hover:not(.is-placed) { background: #047857; border-color: #34d399; transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 16px rgba(0,0,0,.25); }
+.match-word-chip { position: relative; display: inline-flex; align-items: center; gap: .5rem; padding: .42rem .95rem; border-radius: 9999px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 1.5px solid #334155; color: #f8fafc; font: 750 .92rem/1.2 'Figtree', sans-serif; box-shadow: 0 2px 6px rgba(0,0,0,.2); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; transition: background .16s ease, transform .16s ease, border-color .16s ease, box-shadow .16s ease, opacity .2s ease; }
+.match-word-chip:hover:not(.is-placed) { background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%); border-color: #60a5fa; color: #ffffff; transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 16px rgba(37,99,235,.35); }
 .match-word-chip:active:not(.is-placed) { cursor: grabbing; }
-.match-word-chip.is-selected { background: #047857; border-color: #34d399; box-shadow: 0 0 0 3px rgba(52,211,153,.4), 0 8px 20px rgba(0,0,0,.3); transform: translateY(-2px) scale(1.04); }
-.match-word-chip.is-placed { opacity: .2; border-style: dashed; border-color: rgba(255,255,255,.2); background: transparent; color: rgba(255,255,255,.35); cursor: default; transform: none; box-shadow: none; pointer-events: none; }
+.match-word-chip.is-selected { background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%); border-color: #93c5fd; color: #ffffff; box-shadow: 0 0 0 3px rgba(96,165,250,.45), 0 8px 20px rgba(0,0,0,.3); transform: translateY(-2px) scale(1.04); }
+.match-word-chip.is-placed { opacity: .25; border-style: dashed; border-color: rgba(255,255,255,.2); background: transparent; color: rgba(255,255,255,.35); cursor: default; transform: none; box-shadow: none; pointer-events: none; }
 .match-word-chip.is-being-dragged { opacity: .25; }
-.match-grip-svg { width: 14px; height: 14px; color: rgba(110,231,183,.75); flex-shrink: 0; }
+.match-grip-svg { width: 14px; height: 14px; color: #94a3b8; flex-shrink: 0; }
 
 .match-drag-grip { color: var(--ga-stage-muted); font-size: .85rem; letter-spacing: -2px; opacity: .7; }
 .match-word-speak-btn { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; border: 0; background: transparent; color: var(--ga-stage-muted); font-size: .85rem; cursor: pointer; border-radius: 50%; transition: transform .15s ease, color .15s ease; }
 .match-word-speak-btn:hover { transform: scale(1.2); color: var(--ga-stage-blue); }
 
 /* Drag Ghost following pointer */
-.match-drag-ghost { position: fixed !important; z-index: 2147483647 !important; pointer-events: none !important; display: inline-flex !important; align-items: center !important; gap: .5rem !important; padding: .45rem 1.15rem !important; border-radius: 9999px !important; background: #047857 !important; border: 2px solid #34d399 !important; color: #ffffff !important; font: 800 .98rem/1.2 'Figtree', sans-serif !important; box-shadow: 0 20px 35px -5px rgba(0,0,0,.6), 0 0 0 3px rgba(52,211,153,.5) !important; transform: translate3d(-50%, -50%, 0) scale(1.08) !important; transition: none !important; will-change: transform, left, top !important; user-select: none !important; -webkit-user-select: none !important; }
-.match-drag-ghost .match-grip-svg { width: 14px; height: 14px; color: rgba(167,243,208,.85); flex-shrink: 0; }
+.match-drag-ghost { position: fixed !important; z-index: 2147483647 !important; pointer-events: none !important; display: inline-flex !important; align-items: center !important; gap: .5rem !important; padding: .45rem 1.15rem !important; border-radius: 9999px !important; background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%) !important; border: 2px solid #60a5fa !important; color: #ffffff !important; font: 800 .98rem/1.2 'Figtree', sans-serif !important; box-shadow: 0 20px 35px -5px rgba(0,0,0,.6), 0 0 0 3px rgba(96,165,250,.5) !important; transform: translate3d(-50%, -50%, 0) scale(1.08) !important; transition: none !important; will-change: transform, left, top !important; user-select: none !important; -webkit-user-select: none !important; }
+.match-drag-ghost .match-grip-svg { width: 14px; height: 14px; color: #bfdbfe; flex-shrink: 0; }
 
 /* Legacy tile fallback classes if referenced */
 .match-tile { position: relative; display: flex; min-width: 0; min-height: clamp(6.1rem, 12vw, 9rem); align-items: center; justify-content: center; overflow: hidden; padding: .85rem; border: 1px solid var(--ga-stage-line); border-radius: .9rem; background: var(--ga-stage-surface); color: var(--ga-stage-ink); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 5px 12px rgba(2,6,23,.12); cursor: pointer; }
@@ -2257,6 +2257,132 @@ html body > .ga-stage[data-ga-theme="classroom"] .match-tile.is-selected {
   border-color: #292524 !important;
   box-shadow: 0 0 0 3px #fde047, 0 5px 0 #292524 !important;
 }
+
+/* Classroom Match Words: Chalkboard & Oak Desk Tray, Cream & Chalk-Yellow Word Chips */
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-bank-tray,
+html body[data-ga-active-theme="classroom"] .match-bank-tray {
+  background: linear-gradient(180deg, #1e4535 0%, #132e23 100%) !important;
+  border-top: 4px solid #7c4a22 !important;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.12), 0 -8px 26px rgba(0, 0, 0, 0.4) !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-bank-title,
+html body[data-ga-active-theme="classroom"] .match-bank-title {
+  color: #fffdf8 !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 850 !important;
+  text-shadow: 0 2px 0 #0f241c !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-bank-counter,
+html body[data-ga-active-theme="classroom"] .match-bank-counter {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1.5px solid rgba(255, 253, 248, 0.3) !important;
+  color: #fef08a !important;
+  font-weight: 800 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-word-chip,
+html body[data-ga-active-theme="classroom"] .match-word-chip {
+  background: linear-gradient(180deg, #fffdf8 0%, #f5ebd9 100%) !important;
+  border: 2px solid #5a3617 !important;
+  color: #2c1a0e !important;
+  font-family: 'Figtree', sans-serif !important;
+  font-weight: 850 !important;
+  box-shadow: 0 3px 0 #3d220c, 0 5px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-word-chip .match-grip-svg,
+html body[data-ga-active-theme="classroom"] .match-word-chip .match-grip-svg {
+  color: #83552d !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-word-chip:hover:not(.is-placed),
+html body[data-ga-active-theme="classroom"] .match-word-chip:hover:not(.is-placed) {
+  background: linear-gradient(180deg, #fef9c3 0%, #fef08a 100%) !important;
+  border-color: #3d220c !important;
+  color: #221206 !important;
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: 0 5px 0 #3d220c, 0 8px 18px rgba(0, 0, 0, 0.3) !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-word-chip.is-selected,
+html body[data-ga-active-theme="classroom"] .match-word-chip.is-selected {
+  background: linear-gradient(180deg, #fef08a 0%, #facc15 100%) !important;
+  border-color: #3d220c !important;
+  color: #221206 !important;
+  box-shadow: 0 0 0 3.5px #facc15, 0 4px 0 #3d220c !important;
+  transform: translateY(-2px) scale(1.04) !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-word-chip.is-placed,
+html body[data-ga-active-theme="classroom"] .match-word-chip.is-placed {
+  opacity: 0.3 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1.5px dashed rgba(255, 255, 255, 0.3) !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: none !important;
+}
+
+html body[data-ga-active-theme="classroom"] .match-drag-ghost,
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-drag-ghost,
+.match-drag-ghost[data-ga-theme="classroom"] {
+  background: linear-gradient(180deg, #fef9c3 0%, #fef08a 100%) !important;
+  border: 2.5px solid #3d220c !important;
+  color: #221206 !important;
+  font-family: 'Figtree', sans-serif !important;
+  font-weight: 850 !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5), 0 0 0 3px #facc15 !important;
+}
+
+html body[data-ga-active-theme="classroom"] .match-drag-ghost .match-grip-svg,
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-drag-ghost .match-grip-svg,
+.match-drag-ghost[data-ga-theme="classroom"] .match-grip-svg {
+  color: #83552d !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-target-card,
+html body[data-ga-active-theme="classroom"] .match-target-card {
+  background: linear-gradient(180deg, #244e3c 0%, #173629 100%) !important;
+  border: 2.5px solid #5a3617 !important;
+  box-shadow: 0 4px 0 #3d220c, 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-drop-slot,
+html body[data-ga-active-theme="classroom"] .match-drop-slot {
+  background: rgba(16, 40, 30, 0.7) !important;
+  border: 2px dashed rgba(254, 240, 138, 0.45) !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-slot-placeholder,
+html body[data-ga-active-theme="classroom"] .match-slot-placeholder {
+  color: #fef08a !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-slot-icon,
+html body[data-ga-active-theme="classroom"] .match-slot-icon {
+  color: #facc15 !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-drop-slot.is-drag-over,
+html body[data-ga-active-theme="classroom"] .match-drop-slot.is-drag-over {
+  border: 2px solid #facc15 !important;
+  background: rgba(250, 204, 21, 0.2) !important;
+  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.35) !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-placed-chip,
+html body[data-ga-active-theme="classroom"] .match-placed-chip {
+  background: linear-gradient(180deg, #fffdf8 0%, #f5ebd9 100%) !important;
+  border: 2px solid #5a3617 !important;
+  color: #2c1a0e !important;
+  box-shadow: 0 3px 0 #3d220c !important;
+}
+
+html body > .ga-stage[data-ga-theme="classroom"]:not([data-ga-theme="classic"]) .match-placed-chip .match-grip-svg,
+html body[data-ga-active-theme="classroom"] .match-placed-chip .match-grip-svg {
+  color: #83552d !important;
+}
 html body > .ga-stage[data-ga-theme="classroom"] .memory-card {
   border-radius: 14px !important;
   box-shadow: 0 6px 0 #1c1917, 0 10px 20px rgba(0, 0, 0, 0.38) !important;
@@ -2781,6 +2907,132 @@ html body > .ga-stage[data-ga-theme="jungle"] .match-tile.is-selected {
   background: linear-gradient(180deg, #bef264 0%, #84cc16 100%) !important;
   border-color: #1a2e05 !important;
   box-shadow: 0 0 0 3px #4ade80, 0 5px 0 #1a2e05 !important;
+}
+
+/* Jungle Match Words: Rainforest Tray, Emerald & Lime Word Chips */
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-bank-tray,
+html body[data-ga-active-theme="jungle"] .match-bank-tray {
+  background: linear-gradient(180deg, #0d4226 0%, #062615 100%) !important;
+  border-top: 3.5px solid #65a30d !important;
+  box-shadow: inset 0 2px 0 rgba(163, 230, 53, 0.2), 0 -8px 26px rgba(0, 0, 0, 0.5) !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-bank-title,
+html body[data-ga-active-theme="jungle"] .match-bank-title {
+  color: #f7fee7 !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 850 !important;
+  text-shadow: 0 2px 0 #052010 !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-bank-counter,
+html body[data-ga-active-theme="jungle"] .match-bank-counter {
+  background: rgba(101, 163, 13, 0.22) !important;
+  border: 1.5px solid #84cc16 !important;
+  color: #d9f99d !important;
+  font-weight: 800 !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-word-chip,
+html body[data-ga-active-theme="jungle"] .match-word-chip {
+  background: linear-gradient(180deg, #15803d 0%, #0e5628 100%) !important;
+  border: 2px solid #86efac !important;
+  color: #ffffff !important;
+  font-family: 'Figtree', sans-serif !important;
+  font-weight: 850 !important;
+  box-shadow: 0 3px 0 #052e16, 0 6px 14px rgba(0, 0, 0, 0.3) !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-word-chip .match-grip-svg,
+html body[data-ga-active-theme="jungle"] .match-word-chip .match-grip-svg {
+  color: #86efac !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-word-chip:hover:not(.is-placed),
+html body[data-ga-active-theme="jungle"] .match-word-chip:hover:not(.is-placed) {
+  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%) !important;
+  border-color: #bbf7d0 !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: 0 5px 0 #052e16, 0 10px 20px rgba(34, 197, 94, 0.4) !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-word-chip.is-selected,
+html body[data-ga-active-theme="jungle"] .match-word-chip.is-selected {
+  background: linear-gradient(180deg, #eab308 0%, #ca8a04 100%) !important;
+  border-color: #fef08a !important;
+  color: #1c1917 !important;
+  box-shadow: 0 0 0 3.5px #fde047, 0 4px 0 #052e16 !important;
+  transform: translateY(-2px) scale(1.04) !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-word-chip.is-placed,
+html body[data-ga-active-theme="jungle"] .match-word-chip.is-placed {
+  opacity: 0.3 !important;
+  background: rgba(21, 128, 61, 0.15) !important;
+  border: 1.5px dashed rgba(134, 239, 172, 0.35) !important;
+  color: rgba(217, 249, 157, 0.45) !important;
+  box-shadow: none !important;
+}
+
+html body[data-ga-active-theme="jungle"] .match-drag-ghost,
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-drag-ghost,
+.match-drag-ghost[data-ga-theme="jungle"] {
+  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%) !important;
+  border: 2.5px solid #bbf7d0 !important;
+  color: #ffffff !important;
+  font-family: 'Figtree', sans-serif !important;
+  font-weight: 850 !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55), 0 0 0 3px #84cc16 !important;
+}
+
+html body[data-ga-active-theme="jungle"] .match-drag-ghost .match-grip-svg,
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-drag-ghost .match-grip-svg,
+.match-drag-ghost[data-ga-theme="jungle"] .match-grip-svg {
+  color: #bbf7d0 !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-target-card,
+html body[data-ga-active-theme="jungle"] .match-target-card {
+  background: linear-gradient(180deg, #0d3d23 0%, #062414 100%) !important;
+  border: 2.5px solid #166534 !important;
+  box-shadow: 0 4px 0 #052010, 0 8px 20px rgba(0, 0, 0, 0.35) !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-drop-slot,
+html body[data-ga-active-theme="jungle"] .match-drop-slot {
+  background: rgba(6, 40, 22, 0.7) !important;
+  border: 2px dashed rgba(132, 204, 22, 0.5) !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-slot-placeholder,
+html body[data-ga-active-theme="jungle"] .match-slot-placeholder {
+  color: #a3e635 !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-slot-icon,
+html body[data-ga-active-theme="jungle"] .match-slot-icon {
+  color: #bef264 !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-drop-slot.is-drag-over,
+html body[data-ga-active-theme="jungle"] .match-drop-slot.is-drag-over {
+  border: 2px solid #bef264 !important;
+  background: rgba(132, 204, 22, 0.22) !important;
+  box-shadow: 0 0 0 4px rgba(190, 242, 100, 0.35) !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-placed-chip,
+html body[data-ga-active-theme="jungle"] .match-placed-chip {
+  background: linear-gradient(180deg, #15803d 0%, #0e5628 100%) !important;
+  border: 2px solid #86efac !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 0 #052e16 !important;
+}
+
+html body > .ga-stage[data-ga-theme="jungle"]:not([data-ga-theme="classic"]) .match-placed-chip .match-grip-svg,
+html body[data-ga-active-theme="jungle"] .match-placed-chip .match-grip-svg {
+  color: #86efac !important;
 }
 html body > .ga-stage[data-ga-theme="jungle"] .memory-card {
   border-radius: 14px !important;
@@ -3332,6 +3584,134 @@ html body > .ga-stage[data-ga-theme="toybox"] .match-tile.is-selected {
   background: linear-gradient(180deg, #fef08a 0%, #facc15 100%) !important;
   border-color: #ca8a04 !important;
   box-shadow: 0 0 0 3px #fde047, 0 6px 0 #a16207 !important;
+}
+
+/* Toybox Match Words: Retro Arcade Tray, Electric Cyan & Candy Pink Word Chips */
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-bank-tray,
+html body[data-ga-active-theme="toybox"] .match-bank-tray {
+  background: linear-gradient(180deg, #2a154d 0%, #15092a 100%) !important;
+  border-top: 4px solid #ec4899 !important;
+  box-shadow: inset 0 2px 0 rgba(236, 72, 153, 0.3), 0 -8px 26px rgba(0, 0, 0, 0.5) !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-bank-title,
+html body[data-ga-active-theme="toybox"] .match-bank-title {
+  color: #fff5b8 !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 0 #1e0b3c !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-bank-counter,
+html body[data-ga-active-theme="toybox"] .match-bank-counter {
+  background: rgba(236, 72, 153, 0.25) !important;
+  border: 1.5px solid #ec4899 !important;
+  color: #fbcfe8 !important;
+  font-weight: 850 !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-word-chip,
+html body[data-ga-active-theme="toybox"] .match-word-chip {
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%) !important;
+  border: 2.5px solid #082f49 !important;
+  color: #082f49 !important;
+  font-family: 'Figtree', sans-serif !important;
+  font-weight: 900 !important;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.65), 0 3px 0 #082f49, 0 6px 14px rgba(0, 0, 0, 0.3) !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-word-chip .match-grip-svg,
+html body[data-ga-active-theme="toybox"] .match-word-chip .match-grip-svg {
+  color: #082f49 !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-word-chip:hover:not(.is-placed),
+html body[data-ga-active-theme="toybox"] .match-word-chip:hover:not(.is-placed) {
+  background: linear-gradient(180deg, #f472b6 0%, #ec4899 100%) !important;
+  border-color: #082f49 !important;
+  color: #ffffff !important;
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.65), 0 5px 0 #082f49, 0 10px 20px rgba(236, 72, 153, 0.4) !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-word-chip.is-selected,
+html body[data-ga-active-theme="toybox"] .match-word-chip.is-selected {
+  background: linear-gradient(180deg, #fde047 0%, #eab308 100%) !important;
+  border-color: #082f49 !important;
+  color: #422006 !important;
+  box-shadow: 0 0 0 3.5px #f43f5e, 0 4px 0 #082f49 !important;
+  transform: translateY(-2px) scale(1.04) !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-word-chip.is-placed,
+html body[data-ga-active-theme="toybox"] .match-word-chip.is-placed {
+  opacity: 0.3 !important;
+  background: rgba(56, 189, 248, 0.15) !important;
+  border: 1.5px dashed rgba(56, 189, 248, 0.45) !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: none !important;
+}
+
+html body[data-ga-active-theme="toybox"] .match-drag-ghost,
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-drag-ghost,
+.match-drag-ghost[data-ga-theme="toybox"] {
+  background: linear-gradient(180deg, #f472b6 0%, #ec4899 100%) !important;
+  border: 3px solid #082f49 !important;
+  color: #ffffff !important;
+  font-family: 'Figtree', sans-serif !important;
+  font-weight: 900 !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6), 0 0 0 3.5px #fde047 !important;
+}
+
+html body[data-ga-active-theme="toybox"] .match-drag-ghost .match-grip-svg,
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-drag-ghost .match-grip-svg,
+.match-drag-ghost[data-ga-theme="toybox"] .match-grip-svg {
+  color: #ffffff !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-target-card,
+html body[data-ga-active-theme="toybox"] .match-target-card {
+  background: linear-gradient(180deg, #2c1650 0%, #180a30 100%) !important;
+  border: 2.5px solid #082f49 !important;
+  box-shadow: 0 4px 0 #082f49, 0 8px 20px rgba(0, 0, 0, 0.35) !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-drop-slot,
+html body[data-ga-active-theme="toybox"] .match-drop-slot {
+  background: rgba(18, 9, 36, 0.7) !important;
+  border: 2.5px dashed #38bdf8 !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-slot-placeholder,
+html body[data-ga-active-theme="toybox"] .match-slot-placeholder {
+  color: #38bdf8 !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-slot-icon,
+html body[data-ga-active-theme="toybox"] .match-slot-icon {
+  color: #f472b6 !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-drop-slot.is-drag-over,
+html body[data-ga-active-theme="toybox"] .match-drop-slot.is-drag-over {
+  border: 2.5px solid #fde047 !important;
+  background: rgba(253, 224, 71, 0.2) !important;
+  box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.35) !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-placed-chip,
+html body[data-ga-active-theme="toybox"] .match-placed-chip {
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%) !important;
+  border: 2.5px solid #082f49 !important;
+  color: #082f49 !important;
+  font-family: 'Figtree', sans-serif !important;
+  font-weight: 900 !important;
+  box-shadow: 0 3px 0 #082f49 !important;
+}
+
+html body > .ga-stage[data-ga-theme="toybox"]:not([data-ga-theme="classic"]) .match-placed-chip .match-grip-svg,
+html body[data-ga-active-theme="toybox"] .match-placed-chip .match-grip-svg {
+  color: #082f49 !important;
 }
 html body > .ga-stage[data-ga-theme="toybox"] .memory-card {
   border-radius: 14px !important;
@@ -4810,6 +5190,141 @@ html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) 
     0 0 0 3px rgba(251, 191, 36, 0.7),
     0 4px 0 var(--hlw-ink),
     0 12px 24px rgba(251, 191, 36, 0.35) !important;
+}
+
+/* Halloween Match Words: Spooky Word Bank Tray, Glowing Pumpkin Word Chips, Harvest-Gold Drag Ghost */
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-bank-tray,
+html body[data-ga-active-theme="halloween"] .match-bank-tray {
+  background: linear-gradient(180deg, rgba(42, 19, 79, 0.98) 0%, rgba(20, 8, 40, 0.99) 100%) !important;
+  border-top: 3.5px solid #ea580c !important;
+  box-shadow: inset 0 2px 0 rgba(251, 191, 36, 0.25), 0 -8px 28px rgba(0, 0, 0, 0.65) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-bank-title,
+html body[data-ga-active-theme="halloween"] .match-bank-title {
+  color: #fffdf8 !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 900 !important;
+  text-shadow: 0 2px 0 #0b0417 !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-bank-counter,
+html body[data-ga-active-theme="halloween"] .match-bank-counter {
+  background: linear-gradient(180deg, rgba(234, 88, 12, 0.28) 0%, rgba(124, 58, 237, 0.35) 100%) !important;
+  border: 1.5px solid #f97316 !important;
+  color: #fdba74 !important;
+  font-weight: 850 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-word-chip,
+html body[data-ga-active-theme="halloween"] .match-word-chip {
+  background: linear-gradient(180deg, #fdba74 0%, #fb923c 45%, #ea580c 100%) !important;
+  border: 2px solid #2a1040 !important;
+  color: #240a02 !important;
+  font-family: 'Figtree', sans-serif !important;
+  font-weight: 900 !important;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.6), 0 3px 0 #1b0728, 0 6px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-word-chip .match-grip-svg,
+html body[data-ga-active-theme="halloween"] .match-word-chip .match-grip-svg {
+  color: #7c2d12 !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-word-chip:hover:not(.is-placed),
+html body[data-ga-active-theme="halloween"] .match-word-chip:hover:not(.is-placed) {
+  background: linear-gradient(180deg, #fffdf8 0%, #fde68a 50%, #f59e0b 100%) !important;
+  border-color: #2a1040 !important;
+  color: #1f0b03 !important;
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: inset 0 1.5px 0 #ffffff, 0 5px 0 #1b0728, 0 10px 22px rgba(249, 115, 22, 0.45) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-word-chip.is-selected,
+html body[data-ga-active-theme="halloween"] .match-word-chip.is-selected {
+  background: linear-gradient(180deg, #fde68a 0%, #f59e0b 100%) !important;
+  border-color: #2a1040 !important;
+  color: #1f0b03 !important;
+  box-shadow: 0 0 0 3.5px #fbbf24, 0 4px 0 #1b0728, 0 12px 24px rgba(251, 191, 36, 0.5) !important;
+  transform: translateY(-2px) scale(1.04) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-word-chip.is-placed,
+html body[data-ga-active-theme="halloween"] .match-word-chip.is-placed {
+  opacity: 0.28 !important;
+  background: rgba(234, 88, 12, 0.12) !important;
+  border: 1.5px dashed rgba(249, 115, 22, 0.45) !important;
+  color: rgba(253, 232, 196, 0.5) !important;
+  box-shadow: none !important;
+}
+
+html body .match-drag-ghost[data-ga-theme="halloween"],
+html body[data-ga-active-theme="halloween"] .match-drag-ghost,
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-drag-ghost {
+  background: linear-gradient(180deg, #fffdf8 0%, #fde68a 50%, #f59e0b 100%) !important;
+  border: 2.5px solid #2a1040 !important;
+  color: #1f0b03 !important;
+  font-family: 'Figtree', sans-serif !important;
+  font-weight: 900 !important;
+  box-shadow: inset 0 1.5px 0 #ffffff, 0 16px 36px rgba(0, 0, 0, 0.65), 0 0 0 4px #ea580c !important;
+}
+
+html body .match-drag-ghost[data-ga-theme="halloween"] .match-grip-svg,
+html body[data-ga-active-theme="halloween"] .match-drag-ghost .match-grip-svg,
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-drag-ghost .match-grip-svg {
+  color: #7c2d12 !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-target-card,
+html body[data-ga-active-theme="halloween"] .match-target-card {
+  background: linear-gradient(180deg, #2a124a 0%, #17092c 100%) !important;
+  border: 2.5px solid #4c1d95 !important;
+  box-shadow: 0 4px 0 #0b0417, 0 10px 22px rgba(0, 0, 0, 0.45) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-target-card.is-drag-over,
+html body[data-ga-active-theme="halloween"] .match-target-card.is-drag-over {
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 0 4px #ea580c, 0 14px 32px rgba(234, 88, 12, 0.5) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-drop-slot,
+html body[data-ga-active-theme="halloween"] .match-drop-slot {
+  background: rgba(30, 11, 54, 0.75) !important;
+  border: 2px dashed rgba(249, 115, 22, 0.5) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-slot-placeholder,
+html body[data-ga-active-theme="halloween"] .match-slot-placeholder {
+  color: #fdba74 !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-slot-icon,
+html body[data-ga-active-theme="halloween"] .match-slot-icon {
+  color: #fb923c !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-drop-slot.is-drag-over,
+html body[data-ga-active-theme="halloween"] .match-drop-slot.is-drag-over {
+  border: 2px solid #fbbf24 !important;
+  background: rgba(249, 115, 22, 0.25) !important;
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.4), 0 8px 24px rgba(249, 115, 22, 0.35) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-placed-chip,
+html body[data-ga-active-theme="halloween"] .match-placed-chip {
+  background: linear-gradient(180deg, #fdba74 0%, #f97316 100%) !important;
+  border: 2px solid #2a1040 !important;
+  color: #240a02 !important;
+  font-family: 'Figtree', sans-serif !important;
+  font-weight: 900 !important;
+  box-shadow: 0 3px 0 #1b0728, 0 6px 14px rgba(0, 0, 0, 0.35) !important;
+}
+
+html body > .ga-stage[data-ga-theme="halloween"]:not([data-ga-theme="classic"]) .match-placed-chip .match-grip-svg,
+html body[data-ga-active-theme="halloween"] .match-placed-chip .match-grip-svg {
+  color: #7c2d12 !important;
 }
 
 /* Memory Flip: Jack-o'-Lantern Poké-Crest card backs & pumpkin-framed revealed faces */
