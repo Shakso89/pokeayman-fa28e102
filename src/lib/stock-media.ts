@@ -44,11 +44,23 @@ function pixabayCdnVariant(url: string, size: 640 | 1280): string | null {
   }
 }
 
-function normalizePixabayPhoto(photo: StockPhoto): StockPhoto {
+function normalizePixabayPhoto(photo: StockPhoto): StockPhoto | null {
   const preview = photo.src.tiny || photo.src.small || photo.src.medium;
   const large = pixabayCdnVariant(preview, 1280);
   const medium = pixabayCdnVariant(preview, 640);
-  if (!large || !medium) return photo;
+  if (!large || !medium) {
+    try {
+      const parsed = new URL(preview);
+      if (parsed.protocol === "https:" && parsed.hostname === "cdn.pixabay.com" && !parsed.port) {
+        return {
+          ...photo,
+          src: { ...photo.src, original: preview, large: preview, medium: preview, small: preview, tiny: preview },
+        };
+      }
+    } catch {}
+    // Discard any hit with temporary /get/ URLs that cannot be mapped to permanent CDN
+    return null;
+  }
   return {
     ...photo,
     src: { ...photo.src, original: large, large: medium, medium, small: medium, tiny: preview },
@@ -170,7 +182,9 @@ export async function searchStockMedia(
               tiny: hit.previewURL || hit.webformatURL || "",
             },
           };
-        }).map(normalizePixabayPhoto);
+        })
+        .map(normalizePixabayPhoto)
+        .filter((p): p is StockPhoto => Boolean(p));
 
       // If illustration or vector returned 0 hits, try alternate vector/illustration Pixabay query
       if (photos.length === 0 && (imageType === "illustration" || imageType === "vector")) {
@@ -196,7 +210,7 @@ export async function searchStockMedia(
               : hitType === "illustration"
               ? "illustration"
               : "photo";
-            photos.push(normalizePixabayPhoto({
+            const norm = normalizePixabayPhoto({
               id: hit.id,
               photographer: hit.user || "Pixabay Artist",
               photographer_url: hit.pageURL || "",
@@ -210,7 +224,8 @@ export async function searchStockMedia(
                 small: hit.previewURL || hit.webformatURL || "",
                 tiny: hit.previewURL || hit.webformatURL || "",
               },
-            }));
+            });
+            if (norm) photos.push(norm);
           }
         }
       }
@@ -233,14 +248,36 @@ export async function searchStockMedia(
 
   const pexelsKey =
     process.env["PEXELS_API_KEY"] || (globalThis as any).__env__?.["PEXELS_API_KEY"];
-  if (!pexelsKey) return empty;
+  if (!pexelsKey) {
+    const wikiPhotos = await searchWikimedia(query, perPage);
+    if (wikiPhotos.length) {
+      return remember({
+        ...empty,
+        photos: wikiPhotos,
+        total_results: wikiPhotos.length,
+        next_page: null,
+      });
+    }
+    return empty;
+  }
   try {
     const params = new URLSearchParams({ query, per_page: String(perPage), page: String(page) });
     const res = await fetch(`https://api.pexels.com/v1/search?${params}`, {
       headers: { Authorization: pexelsKey },
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return empty;
+    if (!res.ok) {
+      const wikiPhotos = await searchWikimedia(query, perPage);
+      if (wikiPhotos.length) {
+        return remember({
+          ...empty,
+          photos: wikiPhotos,
+          total_results: wikiPhotos.length,
+          next_page: null,
+        });
+      }
+      return empty;
+    }
     const data: {
       photos?: Omit<StockPhoto, "type">[];
       total_results?: number;
@@ -250,6 +287,17 @@ export async function searchStockMedia(
       ...photo,
       type: "photo",
     }));
+    if (photos.length === 0) {
+      const wikiPhotos = await searchWikimedia(query, perPage);
+      if (wikiPhotos.length) {
+        return remember({
+          ...empty,
+          photos: wikiPhotos,
+          total_results: wikiPhotos.length,
+          next_page: null,
+        });
+      }
+    }
     const total = Number(data.total_results) || (photos.length ? 500 : 0);
     const hasNext = Boolean(data.next_page) || photos.length >= perPage;
     return remember({

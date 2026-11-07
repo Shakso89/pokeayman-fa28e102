@@ -39,7 +39,7 @@ export const Route = createFileRoute("/api/public/pexels")({
               small: `${base}_640${ext}`,
             },
           };
-        });
+        }).filter((photo) => !String(photo.src.medium || "").includes("pixabay.com/get/"));
         return Response.json(
           { ...result, photos },
           { headers: { ...CORS, "Cache-Control": "no-store" } },

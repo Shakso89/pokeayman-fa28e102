@@ -233,7 +233,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
 
       return `<div class="match-target-card${isMatched ? ' is-matched is-correct' : ''}${isWrong ? ' is-wrong' : ''}" data-target-index="${index}" role="button" aria-label="Picture card ${index + 1} for ${escapeText(target.vocab_word)}">
         <div class="match-target-img-wrap pointer-events-none">
-          <img class="match-target-img" src="${target.vocab_image}" alt="Picture for ${escapeText(target.vocab_word)}" onerror="this.src='https://via.placeholder.com/300?text=Image+Not+Found'">
+          <img class="match-target-img" src="${target.vocab_image}" alt="${escapeText(target.vocab_word)}" onerror="window.healBrokenVocabImgElement ? window.healBrokenVocabImgElement(this, this.alt, false) : (this.src='https://via.placeholder.com/300?text=Image+Not+Found')">
           ${isMatched ? '<span class="match-card-badge check" aria-label="Correct match">✓</span>' : ''}
           ${isWrong ? '<span class="match-card-badge cross" aria-label="Wrong match">✕</span>' : ''}
         </div>
