@@ -226,11 +226,11 @@
 
   const CLASS_ITEMS = [
     ['students', '👩‍🎓', 'Class Roster'], ['quiz', '📝', 'Quizzes'], ['vocab', '📚', 'Vocabulary'],
-    ['games', '🎁', 'Games'], ['battle', '⚔️', 'Battle Arena'],
+    ['grammar', '🧩', 'Grammar'], ['games', '🎁', 'Games'], ['battle', '⚔️', 'Battle Arena'],
   ];
   const ZONE_ITEMS = [
     ['schedule', '🗓️', 'Schedule'], ['financial', '💰', 'Financial'],
-    ['vb-lists', '🔖', 'Word Bank'], ['battle-claims', '⚔️', 'Battle Claims'],
+    ['vb-lists', '🔖', 'Word Bank'], ['grammar-decks', '🧩', 'Grammar Bank'], ['battle-claims', '⚔️', 'Battle Claims'],
   ];
 
   function build() {
@@ -378,9 +378,12 @@
     } else if (zone) {
       const isVocabLists = zone === 'vb-lists';
       if (isVocabLists) window.vbListsMode = 'mine';
+      const isGrammarDecks = zone === 'grammar-decks';
+      if (isGrammarDecks) window.grammarDecksMode = 'mine';
       g(() => showMainTab('teacher-zone'));
       $(`teacher-zone-${zone}-tab`)?.click();
       if (isVocabLists) g(() => renderTeacherOwnedVocabLists());
+      if (isGrammarDecks) g(() => window.renderTeacherOwnedGrammarDecks?.());
     } else if (act === 'schools') { g(() => showMainTab('dashboard')); }
     else if (act === 'admin') { g(() => showMainTab('admin')); }
     else if (act === 'leaders') { $('global-leaderboard-trigger')?.click(); }

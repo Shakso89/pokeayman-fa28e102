@@ -12,7 +12,7 @@
 }
 html body #app-screen #view-students { font-family: 'Figtree', sans-serif; min-width: 0; }
 html body #app-screen #view-students #class-tabs-container {
-  display: grid !important; grid-template-columns: repeat(5,minmax(0,1fr));
+  display: grid !important; grid-template-columns: repeat(6,minmax(0,1fr));
   gap: 6px !important; padding: 6px !important; margin: 0 0 20px !important;
   height: auto !important; max-height: none !important; width: 100%;
   overflow: visible !important; align-items: stretch; border-radius: 8px;

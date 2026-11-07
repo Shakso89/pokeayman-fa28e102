@@ -133,6 +133,9 @@
 
     return all.filter(deck => {
       if (!deck) return false;
+      const isStarter = Boolean(deck.__backendId?.startsWith('starter-') || deck.id?.startsWith('starter-') || deck.grammar_deck_id?.startsWith('starter-'));
+      if (isStarter) return true;
+
       const dSchool = String(deck.school_name || deck.grammar_deck_school || '').trim().toLowerCase();
       const dClass = String(deck.class_name || deck.grammar_deck_class || '').trim().toLowerCase();
       const shared = Array.isArray(deck.shared_classes) ? deck.shared_classes.map(c => String(c).trim().toLowerCase()) : [];
@@ -264,9 +267,12 @@
 
     let filtered = allDecks.filter(deck => {
       const isMine = isCurrentTeacherOwner(deck);
-      if (schoolMode && isMine) return false;
-      if (!schoolMode && !isMine) return false;
-      return true;
+      const isStarter = Boolean(deck.__backendId?.startsWith('starter-') || deck.id?.startsWith('starter-') || deck.grammar_deck_id?.startsWith('starter-'));
+      if (schoolMode) {
+        return (!isMine && !isStarter) || (isStarter && !isMine);
+      } else {
+        return isMine || isStarter;
+      }
     });
 
     if (query) {

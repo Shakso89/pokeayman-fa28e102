@@ -22151,7 +22151,7 @@ function renderTeacherZone() {
   applyTeacherFinanceVisibility();
   const scope = currentTeacherZoneOwnerScope();
   if (!scope || !teacherWorkspaceKey || teacherZoneOwnerScope !== scope || teacherWorkspaceKey !== teacherStorageKey(scope)) {
-    ['schedule-grid-body','sub-hours-list','teacher-zone-history-list','teacher-vb-lists-grid'].forEach(id => document.getElementById(id)?.replaceChildren());
+    ['schedule-grid-body','sub-hours-list','teacher-zone-history-list','teacher-vb-lists-grid','teacher-grammar-decks-grid'].forEach(id => document.getElementById(id)?.replaceChildren());
     const status = document.getElementById('teacher-vb-lists-status');
     if (status) status.textContent = 'Teacher Zone data is unavailable for this session.';
     return;

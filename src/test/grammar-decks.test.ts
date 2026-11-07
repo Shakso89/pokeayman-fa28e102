@@ -100,4 +100,15 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(css).toContain('#teacher-grammar-mode-mine');
     expect(css).toContain('#teacher-grammar-mode-school');
   });
+
+  it('ensures teacher-shell.js sidebar includes Grammar in Classroom and Grammar Bank in Teacher Zone', () => {
+    const shellPath = path.resolve(__dirname, '../../public/pokeayman/teacher-shell.js');
+    const shellJs = fs.readFileSync(shellPath, 'utf-8');
+
+    // Classroom sidebar item
+    expect(shellJs).toContain("['grammar', '🧩', 'Grammar']");
+
+    // Teacher Zone sidebar item
+    expect(shellJs).toContain("['grammar-decks', '🧩', 'Grammar Bank']");
+  });
 });
