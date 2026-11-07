@@ -4440,26 +4440,54 @@
   };
   window._healedQueryCache = {};
   window.autoPersistHealedVocabImage = function(label, newUrl, isCover) {
-    if (!label || !newUrl || newUrl.includes('pixabay.com/get/')) return;
+    if (!label || !newUrl || String(newUrl).includes('pixabay.com/get/')) return;
     try {
       const norm = String(label).trim().toLowerCase();
-      if (Array.isArray(window.allData)) {
-        window.allData.forEach(r => {
-          if (!r || typeof r !== 'object') return;
-          const type = String(r.type || '').toLowerCase();
-          if (isCover && ['vocab_list','vocabulary_list'].includes(type) && String(r.vocab_list_name || '').trim().toLowerCase() === norm) {
-            r.vocab_cover_image_url = newUrl;
-            if (window.supabaseClient && r.__backendId) {
-              window.supabaseClient.from('vocab_lists').update({ vocab_cover_image_url: newUrl }).eq('id', r.__backendId).then(() => {}).catch(() => {});
+      const recordsToUpdate = [];
+      const inspectRecord = (r) => {
+        if (!r || typeof r !== 'object') return;
+        const type = String(r.type || '').toLowerCase();
+        let changed = false;
+        if (isCover && ['vocab_list','vocabulary_list'].includes(type) && String(r.vocab_list_name || r.name || '').trim().toLowerCase() === norm) {
+          r.vocab_cover_image_url = newUrl;
+          changed = true;
+        } else if (!isCover && ['vocab_word','word','vocab_item','vocabulary_word'].includes(type) && String(r.vocab_word || r.word || '').trim().toLowerCase() === norm) {
+          r.vocab_image = newUrl;
+          r.image_url = newUrl;
+          r.image = newUrl;
+          changed = true;
+        } else if (['vocab_list','vocabulary_list'].includes(type)) {
+          ['words', 'items', 'vocab_words', 'word_items'].forEach(prop => {
+            if (Array.isArray(r[prop])) {
+              r[prop].forEach(ew => {
+                if (ew && String(ew.vocab_word || ew.word || '').trim().toLowerCase() === norm) {
+                  ew.vocab_image = newUrl;
+                  ew.image_url = newUrl;
+                  ew.image = newUrl;
+                  changed = true;
+                }
+              });
             }
-          } else if (!isCover && ['vocab_word','word','vocab_item','vocabulary_word'].includes(type) && String(r.vocab_word || '').trim().toLowerCase() === norm) {
-            r.vocab_image = newUrl;
-            if (window.supabaseClient && r.__backendId) {
-              window.supabaseClient.from('vocab_words').update({ vocab_image: newUrl }).eq('id', r.__backendId).then(() => {}).catch(() => {});
-            }
-          }
-        });
+          });
+        }
+        if (changed) recordsToUpdate.push(r);
+      };
+
+      if (typeof allData !== 'undefined' && Array.isArray(allData)) allData.forEach(inspectRecord);
+      if (typeof window !== 'undefined' && Array.isArray(window.allData)) window.allData.forEach(inspectRecord);
+      if (window.dataSdk?.snapshot) {
+        try { const snap = window.dataSdk.snapshot(); if (Array.isArray(snap)) snap.forEach(inspectRecord); } catch (_) {}
       }
+
+      const seenIds = new Set();
+      recordsToUpdate.forEach(rec => {
+        const id = rec.__backendId || rec.id;
+        if (!id || seenIds.has(id)) return;
+        seenIds.add(id);
+        if (window.dataSdk?.update) {
+          window.dataSdk.update(rec, { notify: false }).catch(() => {});
+        }
+      });
     } catch (_) {}
   };
   window.healBrokenVocabImgElement = async function(imgEl, label, isCover) {
@@ -4524,7 +4552,8 @@
   };
   window.sanitizeRecordImages = function(r) {
     if (!r || typeof r !== 'object') return r;
-    if (r.vocab_media_policy === 'sentence-reviewed-v1') return r;
+    const hasPixabayToken = String(r.vocab_image || r.image || r.vocab_cover_image_url || '').includes('pixabay.com/get/');
+    if (r.vocab_media_policy === 'sentence-reviewed-v1' && !hasPixabayToken) return r;
     const type = String(r.type || '').toLowerCase();
     if (type === 'vocab_list' || type === 'vocabulary_list') {
       const name = String(r.vocab_list_name || r.list_name || r.name || '').trim();
@@ -4533,12 +4562,30 @@
       if (fixedCover && fixedCover !== currentCover) {
         r.vocab_cover_image_url = fixedCover;
       }
+      ['words', 'items', 'vocab_words', 'word_items'].forEach(prop => {
+        if (Array.isArray(r[prop])) {
+          r[prop].forEach(ew => {
+            if (ew && typeof ew === 'object') {
+              const text = String(ew.vocab_word || ew.word || ew.term || ew.text || '').trim();
+              const curImg = String(ew.vocab_image || ew.image || ew.image_url || '').trim();
+              const fixed = window.resolvePermanentVocabImage(curImg, text);
+              if (fixed && fixed !== curImg) {
+                ew.vocab_image = fixed;
+                ew.image = fixed;
+                ew.image_url = fixed;
+              }
+            }
+          });
+        }
+      });
     } else if (['vocab_word', 'word', 'vocab_item', 'vocabulary_word'].includes(type)) {
       const text = String(r.vocab_word || r.word || r.term || r.text || '').trim();
       const currentImg = String(r.vocab_image || r.image || r.image_url || '').trim();
       const fixedImg = window.resolvePermanentVocabImage(currentImg, text);
       if (fixedImg && fixedImg !== currentImg) {
         r.vocab_image = fixedImg;
+        r.image = fixedImg;
+        r.image_url = fixedImg;
       }
     }
     return r;
@@ -17636,6 +17683,7 @@ initSelectedLogoBorderGlow();
 
 const ADMIN_TEACHER = { name: 'Ayman', pin: '020192' };
 let allData = [];
+window.allData = allData;
 let currentRole = '';
 let currentStudent = '';
 let currentStudentRecordId = '';
@@ -32695,8 +32743,9 @@ function openVocabCoverPicker(listId, listName) {
       results.querySelectorAll('.vocab-cover-result').forEach(card => card.addEventListener('click', () => {
         const item = wordPhotos[Number(card.dataset.photoIndex)];
         if (!item) return;
+        const cardImg = card.querySelector('img');
         selectedId = item.id || '';
-        selectedUrl = item.url || '';
+        selectedUrl = (cardImg && cardImg.src && !cardImg.src.includes('pixabay.com/get/')) ? cardImg.src : (item.url || '');
         if (manualUrlInput) manualUrlInput.value = '';
         results.querySelectorAll('.vocab-cover-result').forEach(b => {
           b.classList.remove('is-selected', 'z-10', 'ring-2', 'ring-amber-400', 'ring-offset-2', 'ring-offset-slate-900', 'scale-105', 'shadow-xl');
@@ -33268,13 +33317,26 @@ function openVocabListEditor(listId, listName) {
         btn.disabled = true;
         btn.innerHTML = '<span class="inline-block animate-spin">🔄</span> Fixing…';
         let fixed = 0;
-        for (const w of expiredWords) {
+        for (let i = 0; i < expiredWords.length; i++) {
+          const w = expiredWords[i];
           const cleanLabel = String(w.vocab_word || '').trim();
           if (!cleanLabel) continue;
+          btn.innerHTML = `<span class="inline-block animate-spin">🔄</span> Fixing ${i + 1}/${expiredWords.length} (${cleanLabel})…`;
           let nextUrl = null;
-          if (typeof window.pexelsFetch === 'function') {
+
+          if (window.PERMANENT_VOCAB_WORDS && window.PERMANENT_VOCAB_WORDS[cleanLabel.toLowerCase()]) {
+            const p = window.PERMANENT_VOCAB_WORDS[cleanLabel.toLowerCase()];
+            if (p && !p.includes('pixabay.com/get/')) nextUrl = p;
+          }
+          if (!nextUrl && window._healedQueryCache && window._healedQueryCache['w:' + cleanLabel.toLowerCase()]) {
+            const c = window._healedQueryCache['w:' + cleanLabel.toLowerCase()];
+            if (c && !c.includes('pixabay.com/get/')) nextUrl = c;
+          }
+
+          if (!nextUrl) {
             try {
-              const res = await window.pexelsFetch('/api/public/pexels?query=' + encodeURIComponent(cleanLabel) + '&per_page=3');
+              const fetchFn = typeof window.pexelsFetch === 'function' ? window.pexelsFetch : fetch;
+              const res = await fetchFn('/api/public/pexels?query=' + encodeURIComponent(cleanLabel) + '&per_page=6');
               if (res && res.ok) {
                 const data = await res.json();
                 const first = data && Array.isArray(data.photos) && data.photos.find(p => {
@@ -33304,15 +33366,82 @@ function openVocabListEditor(listId, listName) {
           }
           if (nextUrl && !nextUrl.includes('pixabay.com/get/')) {
             w.vocab_image = nextUrl;
+            w.image_url = nextUrl;
+            w.image = nextUrl;
             fixed++;
-            const wordBackendId = w.__backendId || w.id;
-            if (window.supabaseClient && wordBackendId) {
-              await window.supabaseClient.from('vocab_words').update({ vocab_image: nextUrl }).eq('id', wordBackendId).catch(() => {});
+
+            if (window.PERMANENT_VOCAB_WORDS) window.PERMANENT_VOCAB_WORDS[cleanLabel.toLowerCase()] = nextUrl;
+            if (window._healedQueryCache) window._healedQueryCache['w:' + cleanLabel.toLowerCase()] = nextUrl;
+
+            // Update matching child records in allData
+            const matchingRows = (allData || []).filter(r => 
+              ['vocab_word', 'word', 'vocab_item', 'vocabulary_word'].includes(String(r.type || '').toLowerCase()) &&
+              (
+                (w.__backendId && (r.__backendId === w.__backendId || r.id === w.__backendId)) ||
+                (w.word_id && (r.word_id === w.word_id || r.vocab_word_id === w.word_id)) ||
+                (normalizeVocabId(r.vocab_list_id || r.list_id || r.vocabulary_list_id || r.parent_list_id) === canonicalListId &&
+                 String(r.vocab_word || r.word || '').trim().toLowerCase() === cleanLabel.toLowerCase())
+              )
+            );
+            for (const row of matchingRows) {
+              row.vocab_image = nextUrl;
+              row.image_url = nextUrl;
+              row.image = nextUrl;
+              if (window.dataSdk?.update) {
+                try { await window.dataSdk.update(row, { notify: false }); } catch (_) {}
+              }
+            }
+
+            // Update parent list embedded words array
+            const parentRec = (allData || []).find(r => 
+              ['vocab_list', 'vocabulary_list'].includes(String(r.type || '').toLowerCase()) &&
+              normalizeVocabId(r.vocab_list_id || r.list_id || r.vocabulary_list_id || r.__backendId) === canonicalListId
+            );
+            if (parentRec) {
+              let embeddedUpdated = false;
+              ['words', 'items', 'vocab_words', 'word_items'].forEach(prop => {
+                if (Array.isArray(parentRec[prop])) {
+                  parentRec[prop].forEach(ew => {
+                    if (ew && typeof ew === 'object') {
+                      const matchesId = (w.__backendId && (ew.__backendId === w.__backendId || ew.id === w.__backendId)) ||
+                                        (w.word_id && (ew.word_id === w.word_id || ew.vocab_word_id === w.word_id));
+                      const matchesWord = String(ew.vocab_word || ew.word || ew.term || '').trim().toLowerCase() === cleanLabel.toLowerCase();
+                      if (matchesId || matchesWord) {
+                        ew.vocab_image = nextUrl;
+                        ew.image_url = nextUrl;
+                        ew.image = nextUrl;
+                        embeddedUpdated = true;
+                      }
+                    }
+                  });
+                }
+              });
+              if (parentRec.vocab_cover_image_url && String(parentRec.vocab_cover_image_url).includes('pixabay.com/get/')) {
+                parentRec.vocab_cover_image_url = nextUrl;
+                embeddedUpdated = true;
+              }
+              if (embeddedUpdated && window.dataSdk?.update) {
+                try { await window.dataSdk.update(parentRec, { notify: false }); } catch (_) {}
+              }
             }
           }
         }
-        if (typeof toast === 'function') toast(`Fixed ${fixed} word image(s) with permanent links!`);
+        if (fixed > 0) {
+          if (window.dataSdk?.refresh) {
+            try {
+              const refreshed = await window.dataSdk.refresh();
+              if (Array.isArray(refreshed) && refreshed.length) {
+                allData = refreshed;
+                window.allData = refreshed;
+              }
+            } catch (_) {}
+          }
+          if (typeof toast === 'function') toast(`Fixed ${fixed} word image(s) with permanent links!`);
+        } else {
+          if (typeof toast === 'function') toast('No permanent replacements found automatically. Use the pencil icon to select new photos.');
+        }
         renderWordsInModal();
+        try { renderVocabLists(); renderTeacherOwnedVocabLists(); } catch (_) {}
       };
     } else if (bannerEl) {
       bannerEl.remove();
@@ -36646,6 +36775,7 @@ const handler = {
     } else if (currentRole === 'teacher' && !verifiedTeacherIdentity()) return;
     // Keep every authoritative row delivered by the selected sheet; never seed or paginate.
     allData = normalizedData;
+    window.allData = allData;
     sanitizeClassTeacherAssignments();
     announceIncomingTeacherNotifications();
     rebuildCanonicalStudentIndex();

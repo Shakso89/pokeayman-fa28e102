@@ -36,4 +36,10 @@ describe("Permanent Stock Media & Expired Link Prevention", () => {
     expect(html).toContain('vocab-cover-results');
     expect(html).toContain('window.healBrokenVocabImgElement&&window.healBrokenVocabImgElement(this,this.alt,false)');
   });
+
+  it("Fix Expired Images persists via window.dataSdk.update and updates allData and parent embedded words", () => {
+    expect(html).toContain("window.dataSdk?.update");
+    expect(html).not.toContain("window.supabaseClient.from('vocab_words')");
+    expect(html).not.toContain("window.supabaseClient.from('vocab_lists')");
+  });
 });
