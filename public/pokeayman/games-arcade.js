@@ -1647,7 +1647,7 @@
       panel.remove();
       if (fnName === 'chooseMatchWordCount') openGameMatch(listName, count, 0);
       else if (fnName === 'chooseMemoryDifficulty') openGameMemory(listName, 'easy', 0, count);
-      else if (fnName === 'chooseScrambleWordCount') { scrambleSession = null; openGameScramble(listName, count, 0); }
+      else if (fnName === 'chooseScrambleWordCount') { window.scrambleSession = null; (window.openGameScramble || openGameScramble)(listName, count, 0); }
       else if (fnName === 'chooseFindMeScore') openGameFindMe(listName, count, 0);
       else if (fnName === 'chooseHangmanWordCount') openGameHangman(listName, count, 0, 'easy', true);
       else if (fnName === 'chooseBaamboozlePowerUps') openBaamboozle(listName, typeof baamboozlePowerUps !== 'undefined' ? baamboozlePowerUps : [], count);

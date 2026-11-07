@@ -1,7 +1,18 @@
 /* Unscramble game module: setup modal and letter tile unscramble gameplay */
+let scrambleSession = null;
+Object.defineProperty(window, 'scrambleSession', {
+  get() { return scrambleSession; },
+  set(val) { scrambleSession = val; },
+  configurable: true
+});
+
 // Scramble and Hangman word-count choosers
 function chooseScrambleWordCount(listName) {
   if (currentRole === 'student') { window.gaStudentSetup(listName, 'chooseScrambleWordCount'); return; }
+  if (typeof chooseGamePlayers === 'function') {
+    chooseGamePlayers(listName, chooseScrambleWordCount);
+    return;
+  }
   const available = getGameWords(listName);
   if (!available.length) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no complete vocabulary words were loaded. Retry loading your lists.' : 'List needs at least 1 word'); return; }
   const modal = document.createElement('div');

@@ -8846,7 +8846,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       panel.remove();
       if (fnName === 'chooseMatchWordCount') openGameMatch(listName, count, 0);
       else if (fnName === 'chooseMemoryDifficulty') openGameMemory(listName, 'easy', 0, count);
-      else if (fnName === 'chooseScrambleWordCount') { scrambleSession = null; openGameScramble(listName, count, 0); }
+      else if (fnName === 'chooseScrambleWordCount') { window.scrambleSession = null; (window.openGameScramble || openGameScramble)(listName, count, 0); }
       else if (fnName === 'chooseFindMeScore') openGameFindMe(listName, count, 0);
       else if (fnName === 'chooseHangmanWordCount') openGameHangman(listName, count, 0, 'easy', true);
       else if (fnName === 'chooseBaamboozlePowerUps') openBaamboozle(listName, typeof baamboozlePowerUps !== 'undefined' ? baamboozlePowerUps : [], count);
@@ -14089,9 +14089,20 @@ window.openGameMemory = openGameMemory;
 </script>
 <script data-pokeayman-inline="unscramble">
 /* Unscramble game module: setup modal and letter tile unscramble gameplay */
+let scrambleSession = null;
+Object.defineProperty(window, 'scrambleSession', {
+  get() { return scrambleSession; },
+  set(val) { scrambleSession = val; },
+  configurable: true
+});
+
 // Scramble and Hangman word-count choosers
 function chooseScrambleWordCount(listName) {
   if (currentRole === 'student') { window.gaStudentSetup(listName, 'chooseScrambleWordCount'); return; }
+  if (typeof chooseGamePlayers === 'function') {
+    chooseGamePlayers(listName, chooseScrambleWordCount);
+    return;
+  }
   const available = getGameWords(listName);
   if (!available.length) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no complete vocabulary words were loaded. Retry loading your lists.' : 'List needs at least 1 word'); return; }
   const modal = document.createElement('div');
@@ -31051,14 +31062,14 @@ function chooseGamePlayers(listName, nextStep) {
   const gamesHub = gamesArea?.querySelector(':scope > .glass-container');
   gamesArea?.querySelectorAll(':scope > .game-inline-view').forEach(view => view.remove());
   if (gamesHub) gamesHub.hidden = true;
-  const isMatchWords = nextStep === chooseMatchWordCount;
-  const isMemory = nextStep === chooseMemoryDifficulty;
-  const isScramble = nextStep === chooseScrambleWordCount;
-  const isHangman = nextStep === chooseHangmanWordCount;
-  const isCrossword = nextStep === chooseCrossword;
+  const isMatchWords = nextStep === chooseMatchWordCount || (nextStep && nextStep.name === 'chooseMatchWordCount') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseMatchWordCount');
+  const isMemory = nextStep === chooseMemoryDifficulty || (nextStep && nextStep.name === 'chooseMemoryDifficulty') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseMemoryDifficulty');
+  const isScramble = nextStep === chooseScrambleWordCount || (nextStep && nextStep.name === 'chooseScrambleWordCount') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseScrambleWordCount');
+  const isHangman = nextStep === chooseHangmanWordCount || (nextStep && nextStep.name === 'chooseHangmanWordCount') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseHangmanWordCount');
+  const isCrossword = nextStep === chooseCrossword || (nextStep && nextStep.name === 'chooseCrossword') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseCrossword');
   const isDotsAndBoxes = nextStep === chooseDotsAndBoxes || (nextStep && nextStep.name === 'chooseDotsAndBoxes') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseDotsAndBoxes');
   const isSurpriseBoxes = nextStep === chooseBaamboozlePowerUps || (nextStep && (nextStep.name === 'chooseBaamboozlePowerUps' || nextStep.name === 'openBaamboozle')) || Boolean(window.pendingChosenGame && (window.pendingChosenGame.fn === 'chooseBaamboozlePowerUps' || (window.pendingChosenGame.name && window.pendingChosenGame.name.toLowerCase().includes('surprise')) || window.pendingChosenGame.id === 'surprise_boxes'));
-  const isFindMe = nextStep === chooseFindMeScore;
+  const isFindMe = nextStep === chooseFindMeScore || (nextStep && nextStep.name === 'chooseFindMeScore') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseFindMeScore');
   if (isSurpriseBoxes) {
     modal.dataset.gaGameFn = 'chooseBaamboozlePowerUps';
     modal.dataset.gaGameName = 'Surprise Boxes';
@@ -31227,7 +31238,7 @@ function chooseGamePlayers(listName, nextStep) {
         openGameMemory(listName, chosenDiff, chosenTimer);
       }, listName);
     } else if (isScramble) {
-      showFirstPlayerReveal(() => openGameScramble(listName, sharedScore, timerSeconds), listName);
+      showFirstPlayerReveal(() => (window.openGameScramble || openGameScramble)(listName, sharedScore, timerSeconds), listName);
     } else if (isHangman) {
       showFirstPlayerReveal(() => openGameHangman(listName, 0, timerSeconds, 'easy', true), listName);
     } else if (isFindMe) {
