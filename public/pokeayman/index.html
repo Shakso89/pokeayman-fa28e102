@@ -11785,11 +11785,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       modal.querySelectorAll('.baam-tile').forEach(tile => { tile.disabled = true; });
       const overlay = document.createElement('div');
       overlay.className = 'game-celebration-overlay baam-final-overlay';
-      overlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="baam-final-title" tabindex="-1"><img class="game-celebration-pikachu battle-winner-celebrate" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png" alt="${winnerAvatarAlt}"><div class="text-4xl mb-1 relative z-10" aria-hidden="true">🏆</div><h2 id="baam-final-title" class="heading-font text-3xl font-black text-amber-700 relative z-10">${winner}</h2><p class="mt-1 text-base font-bold text-slate-700 relative z-10">${winnerNames}</p>${baamPrizeNotice}<div class="flex gap-3 mt-5 relative z-10"><button type="button" id="baam-final-replay" class="btn-primary flex-1">Play again</button><button type="button" id="baam-final-hub" class="btn-outline flex-1">🎮 Other Games</button><button type="button" id="baam-final-close" class="btn-outline flex-1">Close</button></div></div>`;
+      overlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="baam-final-title" tabindex="-1"><img class="game-celebration-pikachu battle-winner-celebrate" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png" alt="${winnerAvatarAlt}"><div class="text-4xl mb-1 relative z-10" aria-hidden="true">🏆</div><h2 id="baam-final-title" class="heading-font text-3xl font-black text-amber-700 relative z-10">${winner}</h2><p class="mt-1 text-base font-bold text-slate-700 relative z-10">${winnerNames}</p>${baamPrizeNotice}<div class="flex gap-3 mt-5 relative z-10"><button type="button" id="baam-final-replay" class="btn-primary flex-1">Play again</button><button type="button" id="baam-final-close" class="btn-outline flex-1">Close</button></div></div>`;
       mountGameCelebrationOverlay(modal, overlay);
-      const closeResult = () => { overlay.remove(); modal.remove(); returnToGamesTab(); };
-      overlay.querySelector('#baam-final-close').addEventListener('click', closeResult);
-      overlay.querySelector('#baam-final-hub')?.addEventListener('click', () => {
+      const closeResult = () => {
         overlay.remove();
         modal.remove();
         if (typeof window.gaExitSetupToArcade === 'function') {
@@ -11797,7 +11795,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         } else {
           returnToGamesTab();
         }
-      });
+      };
+      overlay.querySelector('#baam-final-close').addEventListener('click', closeResult);
       overlay.querySelector('#baam-final-replay').addEventListener('click', () => { overlay.remove(); modal.remove(); resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount, timerSeconds); });
       overlay.addEventListener('click', event => { /* Result popup closes only through its Replay/Close buttons. */ });
       overlay.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); closeResult(); } });
@@ -12257,7 +12256,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
                   </div>
                   <div class="flex gap-3 mt-6 relative z-10">
                     <button type="button" id="hangman-game-over-again" class="btn-primary flex-1">Play again</button>
-                    <button type="button" id="hangman-game-over-hub" class="btn-outline flex-1">🎮 Other Games</button>
                     <button type="button" id="hangman-game-over-close" class="btn-outline flex-1">Close</button>
                   </div>
                 </div>`;
@@ -12269,9 +12267,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
                 }, 850);
                 gameOverOverlay.style.zIndex = '2147483647';
                 gameOverOverlay.style.pointerEvents = 'auto';
-                const closeGameOver = () => { gameOverOverlay.remove(); modal.remove(); returnToGamesTab(); };
-                gameOverOverlay.querySelector('#hangman-game-over-close').addEventListener('click', closeGameOver);
-                gameOverOverlay.querySelector('#hangman-game-over-hub')?.addEventListener('click', () => {
+                const closeGameOver = () => {
                   gameOverOverlay.remove();
                   modal.remove();
                   hangmanSession = null;
@@ -12280,7 +12276,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
                   } else {
                     returnToGamesTab();
                   }
-                });
+                };
+                gameOverOverlay.querySelector('#hangman-game-over-close').addEventListener('click', closeGameOver);
                 gameOverOverlay.querySelector('#hangman-game-over-again').addEventListener('click', () => {
                   gameOverOverlay.remove();
                   modal.remove();
@@ -31197,7 +31194,7 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
     <p class="${isFindMeResult ? 'find-me-result-message' : 'text-lg'} font-semibold text-slate-700 mt-2 relative z-10">${title}</p>
     ${solvedWord ? `<div class="relative z-10 mt-4 rounded-xl border border-amber-200 bg-white/70 px-4 py-3 text-center"><p class="text-lg font-black text-slate-700">Word: ${solvedWord}</p>${solvedImage ? `<img src="${solvedImage}" class="mx-auto mt-3 h-28 w-40 rounded-lg object-contain" alt="Picture for ${solvedWord}">` : ''}</div>` : ''}
     ${prizeMarkup}
-    ${solvedWord ? `<p class="text-sm font-semibold text-slate-600 mt-1 relative z-10">Great work with your Pokémon partner!</p>` : ''}<div class="flex gap-3 mt-6 relative z-10"><button type="button" id="celebration-again" class="${isFindMeResult ? 'find-me-result-primary' : 'btn-primary'} flex-1">Play Again</button><button type="button" id="celebration-hub" class="${isFindMeResult ? 'find-me-result-secondary' : 'btn-outline'} flex-1">🎮 Other Games</button><button type="button" id="celebration-close" class="${isFindMeResult ? 'find-me-result-secondary' : 'btn-outline'} flex-1">Close</button></div>
+    ${solvedWord ? `<p class="text-sm font-semibold text-slate-600 mt-1 relative z-10">Great work with your Pokémon partner!</p>` : ''}<div class="flex gap-3 mt-6 relative z-10"><button type="button" id="celebration-again" class="${isFindMeResult ? 'find-me-result-primary' : 'btn-primary'} flex-1">Play Again</button><button type="button" id="celebration-close" class="${isFindMeResult ? 'find-me-result-secondary' : 'btn-outline'} flex-1">Close</button></div>
   </div>`;
   mountGameCelebrationOverlay(gameModal, overlay);
   overlay.querySelector('#celebration-claim-reward')?.addEventListener('click', async event => {
@@ -31210,11 +31207,6 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
     activeGameRewardClaimed = true; button.remove(); toast(`${winnerName} claimed ${activeGameReward} coins!`);
   });
   overlay.querySelector('#celebration-close').addEventListener('click', () => {
-    overlay.remove();
-    if (gameModal && document.body.contains(gameModal)) gameModal.remove();
-    returnToGamesTab();
-  });
-  overlay.querySelector('#celebration-hub')?.addEventListener('click', () => {
     overlay.remove();
     if (gameModal && document.body.contains(gameModal)) gameModal.remove();
     if (typeof window.gaExitSetupToArcade === 'function') {
@@ -31244,11 +31236,10 @@ function showBattleWinnerCelebration(gameModal, winnerPokemon) {
     <img class="game-celebration-pikachu battle-winner-celebration-image" loading="eager" alt="${winnerName} celebrating a battle victory" src="${winnerImage}">
     <h2 id="battle-celebration-title" class="heading-font text-4xl font-bold text-amber-600 relative z-10">🏆 Victory!</h2>
     <p class="text-lg font-semibold text-slate-700 mt-2 relative z-10">${winnerName} wins the battle!</p>
-    <div class="flex gap-3 mt-6 relative z-10"><button type="button" id="battle-celebration-again" class="btn-primary flex-1">Battle Again</button><button type="button" id="battle-celebration-hub" class="btn-outline flex-1">🎮 Other Games</button><button type="button" id="battle-celebration-close" class="btn-outline flex-1">Close</button></div>
+    <div class="flex gap-3 mt-6 relative z-10"><button type="button" id="battle-celebration-again" class="btn-primary flex-1">Battle Again</button><button type="button" id="battle-celebration-close" class="btn-outline flex-1">Close</button></div>
   </div>`;
   mountGameCelebrationOverlay(gameModal, overlay);
-  overlay.querySelector('#battle-celebration-close').addEventListener('click', () => overlay.remove());
-  overlay.querySelector('#battle-celebration-hub')?.addEventListener('click', () => {
+  overlay.querySelector('#battle-celebration-close').addEventListener('click', () => {
     overlay.remove();
     if (gameModal && document.body.contains(gameModal)) gameModal.remove();
     if (typeof window.gaExitSetupToArcade === 'function') {

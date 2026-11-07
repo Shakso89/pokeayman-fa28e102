@@ -232,7 +232,6 @@
                   </div>
                   <div class="flex gap-3 mt-6 relative z-10">
                     <button type="button" id="hangman-game-over-again" class="btn-primary flex-1">Play again</button>
-                    <button type="button" id="hangman-game-over-hub" class="btn-outline flex-1">🎮 Other Games</button>
                     <button type="button" id="hangman-game-over-close" class="btn-outline flex-1">Close</button>
                   </div>
                 </div>`;
@@ -244,9 +243,7 @@
                 }, 850);
                 gameOverOverlay.style.zIndex = '2147483647';
                 gameOverOverlay.style.pointerEvents = 'auto';
-                const closeGameOver = () => { gameOverOverlay.remove(); modal.remove(); returnToGamesTab(); };
-                gameOverOverlay.querySelector('#hangman-game-over-close').addEventListener('click', closeGameOver);
-                gameOverOverlay.querySelector('#hangman-game-over-hub')?.addEventListener('click', () => {
+                const closeGameOver = () => {
                   gameOverOverlay.remove();
                   modal.remove();
                   hangmanSession = null;
@@ -255,7 +252,8 @@
                   } else {
                     returnToGamesTab();
                   }
-                });
+                };
+                gameOverOverlay.querySelector('#hangman-game-over-close').addEventListener('click', closeGameOver);
                 gameOverOverlay.querySelector('#hangman-game-over-again').addEventListener('click', () => {
                   gameOverOverlay.remove();
                   modal.remove();

@@ -361,11 +361,9 @@
       modal.querySelectorAll('.baam-tile').forEach(tile => { tile.disabled = true; });
       const overlay = document.createElement('div');
       overlay.className = 'game-celebration-overlay baam-final-overlay';
-      overlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="baam-final-title" tabindex="-1"><img class="game-celebration-pikachu battle-winner-celebrate" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png" alt="${winnerAvatarAlt}"><div class="text-4xl mb-1 relative z-10" aria-hidden="true">🏆</div><h2 id="baam-final-title" class="heading-font text-3xl font-black text-amber-700 relative z-10">${winner}</h2><p class="mt-1 text-base font-bold text-slate-700 relative z-10">${winnerNames}</p>${baamPrizeNotice}<div class="flex gap-3 mt-5 relative z-10"><button type="button" id="baam-final-replay" class="btn-primary flex-1">Play again</button><button type="button" id="baam-final-hub" class="btn-outline flex-1">🎮 Other Games</button><button type="button" id="baam-final-close" class="btn-outline flex-1">Close</button></div></div>`;
+      overlay.innerHTML = `<div class="game-celebration-card" role="dialog" aria-modal="true" aria-labelledby="baam-final-title" tabindex="-1"><img class="game-celebration-pikachu battle-winner-celebrate" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png" alt="${winnerAvatarAlt}"><div class="text-4xl mb-1 relative z-10" aria-hidden="true">🏆</div><h2 id="baam-final-title" class="heading-font text-3xl font-black text-amber-700 relative z-10">${winner}</h2><p class="mt-1 text-base font-bold text-slate-700 relative z-10">${winnerNames}</p>${baamPrizeNotice}<div class="flex gap-3 mt-5 relative z-10"><button type="button" id="baam-final-replay" class="btn-primary flex-1">Play again</button><button type="button" id="baam-final-close" class="btn-outline flex-1">Close</button></div></div>`;
       mountGameCelebrationOverlay(modal, overlay);
-      const closeResult = () => { overlay.remove(); modal.remove(); returnToGamesTab(); };
-      overlay.querySelector('#baam-final-close').addEventListener('click', closeResult);
-      overlay.querySelector('#baam-final-hub')?.addEventListener('click', () => {
+      const closeResult = () => {
         overlay.remove();
         modal.remove();
         if (typeof window.gaExitSetupToArcade === 'function') {
@@ -373,7 +371,8 @@
         } else {
           returnToGamesTab();
         }
-      });
+      };
+      overlay.querySelector('#baam-final-close').addEventListener('click', closeResult);
       overlay.querySelector('#baam-final-replay').addEventListener('click', () => { overlay.remove(); modal.remove(); resetGameTurnState(); openBaamboozle(listName, enabledPowerUps, cardCount, timerSeconds); });
       overlay.addEventListener('click', event => { /* Result popup closes only through its Replay/Close buttons. */ });
       overlay.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); closeResult(); } });

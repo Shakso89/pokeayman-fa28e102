@@ -19,22 +19,19 @@ describe('Games & Visual Polish integration', () => {
     expect(arcadeJs).toContain("openBaamboozle(listName, typeof baamboozlePowerUps !== 'undefined' ? baamboozlePowerUps : [], count)");
   });
 
-  it('includes "🎮 Other Games" button in showGameCelebration, Surprise Boxes, and Battle finish overlays', () => {
-    // showGameCelebration
-    expect(html).toContain('id="celebration-hub"');
-    expect(html).toContain('overlay.querySelector(\'#celebration-hub\')');
+  it('removes "🎮 Other Games" button from end game popups and verifies Close takes you to choose another game', () => {
+    // Other Games button is removed from all celebration and finish overlays
+    expect(html).not.toContain('id="celebration-hub"');
+    expect(html).not.toContain('id="baam-final-hub"');
+    expect(html).not.toContain('id="battle-celebration-hub"');
+    expect(html).not.toContain('id="hangman-game-over-hub"');
 
-    // openBaamboozle celebration overlay
-    expect(html).toContain('id="baam-final-hub"');
-    expect(html).toContain('overlay.querySelector(\'#baam-final-hub\')');
-
-    // showBattleWinnerCelebration
-    expect(html).toContain('id="battle-celebration-hub"');
-    expect(html).toContain('overlay.querySelector(\'#battle-celebration-hub\')');
-
-    // hangman game over
-    expect(html).toContain('id="hangman-game-over-hub"');
-    expect(html).toContain('gameOverOverlay.querySelector(\'#hangman-game-over-hub\')');
+    // Close button routes directly to choose another game (gaExitSetupToArcade)
+    expect(html).toContain('overlay.querySelector(\'#celebration-close\')');
+    expect(html).toContain('window.gaExitSetupToArcade()');
+    expect(html).toContain('overlay.querySelector(\'#baam-final-close\')');
+    expect(html).toContain('overlay.querySelector(\'#battle-celebration-close\')');
+    expect(html).toContain('gameOverOverlay.querySelector(\'#hangman-game-over-close\')');
   });
 
   it('hooks up global pokeSfx audio in game sound and action triggers', () => {
