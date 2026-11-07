@@ -111,4 +111,26 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     // Teacher Zone sidebar item
     expect(shellJs).toContain("['grammar-decks', '🧩', 'Grammar Bank']");
   });
+
+  it('ensures grammar rule editor supports editing existing rules and saving to Supabase', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+
+    // Rule editing capabilities
+    expect(js).toContain('saveOrUpdateGrammarDeck');
+    expect(js).toContain('ge-edit-rule');
+    expect(js).toContain('ge-del-rule');
+    expect(js).toContain('Save Rule Changes');
+    expect(js).toContain('Add Rule');
+    expect(js).toContain('ge-deck-name-input');
+  });
+
+  it('ensures Teacher Zone has dedicated create modal for grammar decks', () => {
+    const html = fs.readFileSync(indexPath, 'utf-8');
+
+    expect(html).toContain('id="teacher-grammar-create-modal"');
+    expect(html).toContain('id="teacher-grammar-create-form"');
+    expect(html).toContain('id="teacher-grammar-create-name"');
+    expect(html).toContain('id="teacher-grammar-create-class"');
+    expect(html).toContain('id="teacher-grammar-create-submit"');
+  });
 });

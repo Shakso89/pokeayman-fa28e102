@@ -555,6 +555,60 @@
   };
 
   // ==========================================
+  // PERSISTENCE HELPER: Supabase app_records
+  // ==========================================
+  window.saveOrUpdateGrammarDeck = async function(deck) {
+    if (!deck) return { isOk: false };
+    const deckId = String(deck.__backendId || deck.id || deck.grammar_deck_id || ('grammar-deck-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)));
+    deck.__backendId = deckId;
+    deck.id = deckId;
+    deck.grammar_deck_id = deckId;
+    deck.type = 'grammar_deck';
+    deck.updated_at = new Date().toISOString();
+    deck.rules = Array.isArray(deck.rules) ? deck.rules : [];
+
+    let res = null;
+    if (window.dataSdk?.update) {
+      try {
+        res = await window.dataSdk.update(deck);
+      } catch (e) {
+        console.warn('dataSdk.update failed, trying create:', e);
+      }
+    }
+    // If update returned false (e.g. record wasn't in Supabase app_records yet because it was a starter deck)
+    if (!res || !res.isOk) {
+      if (window.dataSdk?.create) {
+        try {
+          res = await window.dataSdk.create(deck);
+        } catch (e) {
+          console.error('dataSdk.create error:', e);
+        }
+      }
+    }
+
+    // Keep allData in sync immediately
+    if (typeof allData !== 'undefined' && Array.isArray(allData)) {
+      const idx = allData.findIndex(d => d && (d.__backendId === deckId || d.id === deckId || d.grammar_deck_id === deckId));
+      if (idx >= 0) {
+        allData[idx] = { ...allData[idx], ...deck };
+      } else {
+        allData.push(deck);
+      }
+      window.allData = allData;
+    }
+
+    // Also update in-memory starter decks so local fallback retains changes
+    const starterIdx = STARTER_GRAMMAR_DECKS.findIndex(s => s.__backendId === deckId || s.id === deckId || s.grammar_deck_id === deckId);
+    if (starterIdx >= 0) {
+      STARTER_GRAMMAR_DECKS[starterIdx] = { ...STARTER_GRAMMAR_DECKS[starterIdx], ...deck };
+    }
+
+    if (typeof window.renderClassGrammarDecks === 'function') window.renderClassGrammarDecks();
+    if (typeof window.renderTeacherOwnedGrammarDecks === 'function') window.renderTeacherOwnedGrammarDecks();
+    return res || { isOk: true, data: deck };
+  };
+
+  // ==========================================
   // CREATE & EDIT GRAMMAR DECK
   // ==========================================
   window.openGrammarDeckEditor = function(deckId, deckName) {
@@ -567,58 +621,135 @@
     }
 
     const rules = Array.isArray(deck.rules) ? [...deck.rules] : [];
+    let currentDeckName = deck.grammar_deck_name || deck.deck_name || deckName || 'Grammar Deck';
+    let editingRuleIndex = -1; // -1 = adding new rule, >= 0 = editing existing rule
 
     const modal = document.createElement('div');
     modal.id = 'grammar-editor-modal';
     modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[10000] flex items-center justify-center p-3 sm:p-5 overflow-y-auto';
     
     function renderEditor() {
+      const isEditing = editingRuleIndex >= 0 && editingRuleIndex < rules.length;
+      const activeRule = isEditing ? rules[editingRuleIndex] : null;
+
       modal.innerHTML = `
-        <div class="max-w-2xl w-full rounded-3xl bg-slate-900 border border-slate-800 p-6 shadow-2xl space-y-5 my-auto max-h-[90vh] overflow-y-auto">
-          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 class="text-lg font-bold text-white flex items-center gap-2">
-              <span>✏️</span> Edit Grammar Deck: ${escapeHtml(deckName)}
-            </h3>
-            <button type="button" id="ge-close-btn" class="text-slate-400 hover:text-white font-bold text-xl">&times;</button>
-          </div>
-
-          <!-- Add Rule Form -->
-          <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
-            <h4 class="text-xs font-bold text-amber-300 uppercase tracking-wider">+ Add Grammar Rule</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input id="ge-rule-title" type="text" placeholder="Rule Title (e.g. Affirmative Actions)" class="quiz-input text-xs w-full">
-              <input id="ge-rule-formula" type="text" placeholder="Formula (Subject + is + V-ing)" class="quiz-input text-xs w-full">
-              <input id="ge-rule-sentence" type="text" placeholder="Example sentence" class="quiz-input text-xs w-full sm:col-span-2">
-              <input id="ge-rule-bad" type="text" placeholder="❌ Mistake (e.g. He walking)" class="quiz-input text-xs w-full">
-              <input id="ge-rule-good" type="text" placeholder="✅ Correct (e.g. He is walking)" class="quiz-input text-xs w-full">
-              <input id="ge-rule-question" type="text" placeholder="Quick check question" class="quiz-input text-xs w-full">
-              <input id="ge-rule-answer" type="text" placeholder="Correct answer" class="quiz-input text-xs w-full">
+        <div class="max-w-2xl w-full rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-6 shadow-2xl space-y-5 my-auto max-h-[90vh] overflow-y-auto">
+          <!-- Header with Editable Deck Title -->
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3 gap-3">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+              <span class="text-xl shrink-0">✏️</span>
+              <div class="flex-1 min-w-0">
+                <input id="ge-deck-name-input" type="text" value="${escapeHtml(currentDeckName)}" class="quiz-input font-bold text-white text-base w-full" placeholder="Deck Name" maxlength="80">
+              </div>
+              <button type="button" id="ge-save-deck-name-btn" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-slate-700 shrink-0 transition" title="Save deck name">
+                Save Name
+              </button>
             </div>
-            <button type="button" id="ge-add-rule-btn" class="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition">
-              Add Rule
-            </button>
+            <button type="button" id="ge-close-btn" class="text-slate-400 hover:text-white font-bold text-2xl px-2 shrink-0 leading-none">&times;</button>
           </div>
 
-          <!-- Existing Rules List -->
+          <!-- Add / Edit Rule Form -->
+          <div id="ge-rule-form-box" class="p-4 rounded-2xl ${isEditing ? 'bg-amber-950/20 border-amber-500/50 ring-1 ring-amber-500/30' : 'bg-slate-950/60 border-slate-800'} border space-y-3 transition">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold ${isEditing ? 'text-amber-400' : 'text-amber-300'} uppercase tracking-wider flex items-center gap-1.5">
+                <span>${isEditing ? '✏️' : '➕'}</span>
+                <span>${isEditing ? `Editing Rule #${editingRuleIndex + 1}: ${escapeHtml(activeRule?.title || 'Rule')}` : 'Add New Grammar Rule'}</span>
+              </h4>
+              ${isEditing ? `
+                <button type="button" id="ge-cancel-edit-btn" class="text-xs text-slate-400 hover:text-white underline cursor-pointer">
+                  Cancel edit
+                </button>
+              ` : ''}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label for="ge-rule-title" class="text-[11px] text-slate-400 font-semibold block">Rule Title *</label>
+                <input id="ge-rule-title" type="text" placeholder="e.g. Actions Happening Right Now" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.title || '')}">
+              </div>
+              <div class="space-y-1">
+                <label for="ge-rule-formula" class="text-[11px] text-slate-400 font-semibold block">Formula / Pattern</label>
+                <input id="ge-rule-formula" type="text" placeholder="e.g. Subject + am/is/are + Verb-ing" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.formula || '')}">
+              </div>
+              <div class="space-y-1 sm:col-span-2">
+                <label for="ge-rule-sentence" class="text-[11px] text-slate-400 font-semibold block">Example Sentence *</label>
+                <input id="ge-rule-sentence" type="text" placeholder="e.g. The elephant is walking slowly in the grass." class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.sentence || '')}">
+              </div>
+              <div class="space-y-1">
+                <label for="ge-rule-clue" class="text-[11px] text-slate-400 font-semibold block">Context Clue / Hint</label>
+                <input id="ge-rule-clue" type="text" placeholder="e.g. Right now at this moment" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.context_clue || '')}">
+              </div>
+              <div class="space-y-1">
+                <label for="ge-rule-image" class="text-[11px] text-slate-400 font-semibold block">Rule Image URL</label>
+                <input id="ge-rule-image" type="url" placeholder="https://cdn.pixabay.com/..." class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.image || '')}">
+              </div>
+              <div class="space-y-1">
+                <label for="ge-rule-bad" class="text-[11px] text-rose-300 font-semibold block">❌ Common Mistake</label>
+                <input id="ge-rule-bad" type="text" placeholder="e.g. The elephant walking." class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.mistake_bad || '')}">
+              </div>
+              <div class="space-y-1">
+                <label for="ge-rule-good" class="text-[11px] text-emerald-300 font-semibold block">✅ Correct Form</label>
+                <input id="ge-rule-good" type="text" placeholder="e.g. The elephant is walking." class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.mistake_good || '')}">
+              </div>
+              <div class="space-y-1">
+                <label for="ge-rule-question" class="text-[11px] text-slate-400 font-semibold block">Quick Check Question</label>
+                <input id="ge-rule-question" type="text" placeholder="e.g. Look! The monkeys _____ the tall tree!" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.quiz_question || '')}">
+              </div>
+              <div class="space-y-1">
+                <label for="ge-rule-answer" class="text-[11px] text-slate-400 font-semibold block">Correct Answer</label>
+                <input id="ge-rule-answer" type="text" placeholder="e.g. are climbing" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.quiz_answer || '')}">
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-1">
+              <button type="button" id="ge-save-rule-btn" class="px-4 py-2 rounded-xl ${isEditing ? 'bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black' : 'bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold'} text-xs transition flex items-center gap-1.5 shadow active:scale-95 cursor-pointer">
+                <span>${isEditing ? '💾' : '➕'}</span>
+                <span>${isEditing ? 'Save Rule Changes' : 'Add Rule'}</span>
+              </button>
+              ${isEditing ? `
+                <button type="button" id="ge-cancel-rule-btn" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
+                  Cancel
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Existing Rules List with Edit and Delete Buttons -->
           <div class="space-y-2">
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Rules (${rules.length})</h4>
-            <div class="space-y-2 max-h-56 overflow-y-auto">
-              ${rules.map((r, i) => `
-                <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-3 text-xs">
-                  <div>
-                    <p class="font-bold text-white">${i + 1}. ${escapeHtml(r.title || 'Rule')}</p>
-                    <p class="text-slate-400 truncate">${escapeHtml(r.sentence || r.formula || '')}</p>
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Rules (${rules.length})</h4>
+              <span class="text-[11px] text-slate-500">Click ✏️ Edit to modify any rule</span>
+            </div>
+            <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+              ${rules.length === 0 ? `
+                <div class="p-4 rounded-xl bg-slate-950/40 border border-slate-800 text-center text-xs text-slate-500">
+                  No rules in this deck yet. Use the form above to add your first rule!
+                </div>
+              ` : rules.map((r, i) => `
+                <div class="p-3 rounded-xl bg-slate-950 border ${editingRuleIndex === i ? 'border-amber-400 bg-amber-950/20 ring-1 ring-amber-400/40' : 'border-slate-800'} flex items-center justify-between gap-3 text-xs transition">
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                      <p class="font-bold text-white truncate">${i + 1}. ${escapeHtml(r.title || 'Rule')}</p>
+                      ${editingRuleIndex === i ? '<span class="text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded font-black shrink-0">EDITING</span>' : ''}
+                    </div>
+                    <p class="text-slate-400 truncate mt-0.5">${escapeHtml(r.sentence || r.formula || '')}</p>
                   </div>
-                  <button type="button" class="ge-del-rule text-rose-400 hover:text-rose-300 font-bold p-1" data-rule-idx="${i}">
-                    🗑️
-                  </button>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <button type="button" class="ge-edit-rule px-2.5 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 font-bold border border-amber-400/30 transition flex items-center gap-1 cursor-pointer" data-rule-idx="${i}" title="Edit Rule">
+                      <span>✏️</span> Edit
+                    </button>
+                    <button type="button" class="ge-del-rule p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 font-bold transition cursor-pointer" data-rule-idx="${i}" title="Delete Rule">
+                      🗑️
+                    </button>
+                  </div>
                 </div>
               `).join('')}
             </div>
           </div>
 
+          <!-- Modal Footer -->
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
-            <button type="button" id="ge-cancel-btn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold">Done</button>
+            <button type="button" id="ge-cancel-btn" class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer">Done</button>
           </div>
         </div>
       `;
@@ -626,52 +757,118 @@
       modal.querySelector('#ge-close-btn').onclick = () => modal.remove();
       modal.querySelector('#ge-cancel-btn').onclick = () => modal.remove();
 
-      modal.querySelector('#ge-add-rule-btn').onclick = async () => {
+      // Rename Deck
+      modal.querySelector('#ge-save-deck-name-btn').onclick = async () => {
+        const newName = modal.querySelector('#ge-deck-name-input').value.trim();
+        if (!newName) {
+          if (typeof toast === 'function') toast('Please enter a deck name.');
+          return;
+        }
+        currentDeckName = newName;
+        deck.grammar_deck_name = newName;
+        deck.deck_name = newName;
+        await window.saveOrUpdateGrammarDeck(deck);
+        if (typeof toast === 'function') toast('Deck name updated!');
+        renderEditor();
+      };
+
+      // Cancel Rule Edit
+      modal.querySelector('#ge-cancel-edit-btn')?.addEventListener('click', () => {
+        editingRuleIndex = -1;
+        renderEditor();
+      });
+      modal.querySelector('#ge-cancel-rule-btn')?.addEventListener('click', () => {
+        editingRuleIndex = -1;
+        renderEditor();
+      });
+
+      // Add or Save Rule
+      modal.querySelector('#ge-save-rule-btn').onclick = async () => {
         const title = modal.querySelector('#ge-rule-title').value.trim();
         const formula = modal.querySelector('#ge-rule-formula').value.trim();
         const sentence = modal.querySelector('#ge-rule-sentence').value.trim();
+        const clue = modal.querySelector('#ge-rule-clue').value.trim();
+        const img = modal.querySelector('#ge-rule-image').value.trim();
+        const bad = modal.querySelector('#ge-rule-bad').value.trim();
+        const good = modal.querySelector('#ge-rule-good').value.trim();
+        const question = modal.querySelector('#ge-rule-question').value.trim();
+        const answer = modal.querySelector('#ge-rule-answer').value.trim();
+
         if (!title || !sentence) {
           if (typeof toast === 'function') toast('Please enter a rule title and example sentence.');
+          modal.querySelector('#ge-rule-title').focus();
           return;
         }
 
-        const newRule = {
-          rule_id: 'rule-' + Date.now(),
-          title,
-          formula: formula || 'Subject + Verb',
-          sentence,
-          context_clue: 'Grammar practice',
-          image: deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
-          mistake_bad: modal.querySelector('#ge-rule-bad').value.trim() || 'Mistake',
-          mistake_good: modal.querySelector('#ge-rule-good').value.trim() || sentence,
-          quiz_question: modal.querySelector('#ge-rule-question').value.trim() || 'Complete the sentence:',
-          quiz_options: [modal.querySelector('#ge-rule-answer').value.trim() || 'Option 1', 'Option 2', 'Option 3'],
-          quiz_answer: modal.querySelector('#ge-rule-answer').value.trim() || 'Option 1'
-        };
-
-        rules.push(newRule);
-        deck.rules = rules;
-
-        if (window.dataSdk?.update) {
-          await window.dataSdk.update(deck, { notify: false });
+        if (isEditing) {
+          // Update existing rule
+          rules[editingRuleIndex] = {
+            ...rules[editingRuleIndex],
+            title,
+            formula: formula || 'Subject + Verb',
+            sentence,
+            context_clue: clue || 'Grammar practice',
+            image: img || rules[editingRuleIndex].image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
+            mistake_bad: bad || 'Mistake',
+            mistake_good: good || sentence,
+            quiz_question: question || 'Complete the sentence:',
+            quiz_answer: answer || 'Option 1',
+            quiz_options: answer ? [answer, 'Option 2', 'Option 3'] : (rules[editingRuleIndex].quiz_options || ['Option 1', 'Option 2', 'Option 3'])
+          };
+          deck.rules = rules;
+          await window.saveOrUpdateGrammarDeck(deck);
+          if (typeof toast === 'function') toast(`Rule #${editingRuleIndex + 1} updated and saved!`);
+          editingRuleIndex = -1;
+        } else {
+          // Add new rule
+          const newRule = {
+            rule_id: 'rule-' + Date.now(),
+            title,
+            formula: formula || 'Subject + Verb',
+            sentence,
+            context_clue: clue || 'Grammar practice',
+            image: img || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
+            mistake_bad: bad || 'Mistake',
+            mistake_good: good || sentence,
+            quiz_question: question || 'Complete the sentence:',
+            quiz_options: [answer || 'Option 1', 'Option 2', 'Option 3'],
+            quiz_answer: answer || 'Option 1'
+          };
+          rules.push(newRule);
+          deck.rules = rules;
+          await window.saveOrUpdateGrammarDeck(deck);
+          if (typeof toast === 'function') toast('New rule added and saved!');
         }
-        if (typeof toast === 'function') toast('Rule added!');
+
         renderEditor();
-        window.renderClassGrammarDecks();
-        window.renderTeacherOwnedGrammarDecks();
       };
 
+      // Click Edit on a Rule
+      modal.querySelectorAll('.ge-edit-rule').forEach(btn => {
+        btn.onclick = () => {
+          const idx = Number(btn.dataset.ruleIdx);
+          if (idx >= 0 && idx < rules.length) {
+            editingRuleIndex = idx;
+            renderEditor();
+            modal.querySelector('#ge-rule-form-box')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            modal.querySelector('#ge-rule-title')?.focus();
+          }
+        };
+      });
+
+      // Click Delete on a Rule
       modal.querySelectorAll('.ge-del-rule').forEach(btn => {
         btn.onclick = async () => {
           const idx = Number(btn.dataset.ruleIdx);
-          rules.splice(idx, 1);
-          deck.rules = rules;
-          if (window.dataSdk?.update) {
-            await window.dataSdk.update(deck, { notify: false });
+          if (confirm('Are you sure you want to delete this rule?')) {
+            rules.splice(idx, 1);
+            if (editingRuleIndex === idx) editingRuleIndex = -1;
+            else if (editingRuleIndex > idx) editingRuleIndex--;
+            deck.rules = rules;
+            await window.saveOrUpdateGrammarDeck(deck);
+            if (typeof toast === 'function') toast('Rule deleted.');
+            renderEditor();
           }
-          renderEditor();
-          window.renderClassGrammarDecks();
-          window.renderTeacherOwnedGrammarDecks();
         };
       });
     }
@@ -739,9 +936,7 @@
     popup.querySelector('#g-share-save').onclick = async () => {
       const selected = Array.from(popup.querySelectorAll('.grammar-share-cls-checkbox:checked')).map(cb => cb.value);
       deck.shared_classes = selected;
-      if (window.dataSdk?.update) {
-        await window.dataSdk.update(deck, { notify: false });
-      }
+      await window.saveOrUpdateGrammarDeck(deck);
       popup.remove();
       if (typeof toast === 'function') toast('Classes updated!');
       window.renderClassGrammarDecks();
@@ -933,28 +1128,16 @@
         rules: []
       };
 
-      if (window.dataSdk?.create) {
-        await window.dataSdk.create(newDeck);
-      }
-      if (typeof allData !== 'undefined' && Array.isArray(allData)) {
-        allData.push(newDeck);
-        window.allData = allData;
-      }
-
+      await window.saveOrUpdateGrammarDeck(newDeck);
       input.value = '';
       if (typeof toast === 'function') toast(`Created grammar deck "${name}"!`);
-      window.renderClassGrammarDecks();
-      window.renderTeacherOwnedGrammarDecks();
       window.openGrammarDeckEditor(newDeckId, name);
     });
 
-    // Create Deck in Teacher Zone modal
-    document.getElementById('teacher-grammar-open-create')?.addEventListener('click', () => {
-      const name = prompt('Enter new grammar deck name:');
-      if (!name || !name.trim()) return;
-
-      const currentSchool = typeof navSchool !== 'undefined' && navSchool ? navSchool : 'Daya Stanford';
-      const currentClass = typeof navClass !== 'undefined' && navClass ? navClass : 'ESL2';
+    // Helper for creating and opening grammar deck
+    async function createAndOpenTeacherGrammarDeck(name, school, cls) {
+      const currentSchool = school || (typeof navSchool !== 'undefined' && navSchool ? navSchool : 'Daya Stanford');
+      const currentClass = cls || (typeof navClass !== 'undefined' && navClass ? navClass : 'ESL2');
       const currentTeacherName = typeof currentTeacher !== 'undefined' ? currentTeacher : 'Teacher Ayman';
       const newDeckId = 'grammar-deck-' + Date.now();
 
@@ -975,17 +1158,67 @@
         rules: []
       };
 
-      if (window.dataSdk?.create) {
-        window.dataSdk.create(newDeck);
+      await window.saveOrUpdateGrammarDeck(newDeck);
+      if (typeof toast === 'function') toast(`Created grammar deck "${name.trim()}"!`);
+      window.openGrammarDeckEditor(newDeckId, name.trim());
+    }
+
+    // Create Deck in Teacher Zone modal
+    const teacherGrammarModal = document.getElementById('teacher-grammar-create-modal');
+    const closeTeacherGrammarModal = () => { teacherGrammarModal?.classList.add('hidden'); };
+
+    document.getElementById('teacher-grammar-open-create')?.addEventListener('click', () => {
+      if (teacherGrammarModal) {
+        const classSelect = document.getElementById('teacher-grammar-create-class');
+        if (classSelect && typeof getAllTeacherClasses === 'function') {
+          const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+          const managedClasses = getAllTeacherClasses().filter(cls => typeof canManageClass === 'function' ? canManageClass(cls.school_name, cls.class_name) : true);
+          classSelect.innerHTML = '<option value="">Choose a class</option>' + managedClasses.map(cls => 
+            `<option value="${esc(cls.__backendId || cls.id)}">${esc(cls.class_name)} · ${esc(cls.school_name)}</option>`
+          ).join('');
+        }
+        const nameInput = document.getElementById('teacher-grammar-create-name');
+        if (nameInput) nameInput.value = '';
+        teacherGrammarModal.classList.remove('hidden');
+        nameInput?.focus();
+      } else {
+        const name = prompt('Enter new grammar deck name:');
+        if (!name || !name.trim()) return;
+        createAndOpenTeacherGrammarDeck(name.trim(), '', '');
       }
-      if (typeof allData !== 'undefined' && Array.isArray(allData)) {
-        allData.push(newDeck);
-        window.allData = allData;
+    });
+
+    document.getElementById('teacher-grammar-create-close')?.addEventListener('click', closeTeacherGrammarModal);
+    teacherGrammarModal?.addEventListener('click', event => { if (event.target === teacherGrammarModal) closeTeacherGrammarModal(); });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && teacherGrammarModal && !teacherGrammarModal.classList.contains('hidden')) {
+        closeTeacherGrammarModal();
+      }
+    });
+
+    document.getElementById('teacher-grammar-create-form')?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const input = document.getElementById('teacher-grammar-create-name');
+      const select = document.getElementById('teacher-grammar-create-class');
+      const name = input ? input.value.trim() : '';
+      if (!name) {
+        if (typeof toast === 'function') toast('Please enter a grammar deck name.');
+        input?.focus();
+        return;
       }
 
-      if (typeof toast === 'function') toast(`Created grammar deck "${name.trim()}"!`);
-      window.renderTeacherOwnedGrammarDecks();
-      window.openGrammarDeckEditor(newDeckId, name.trim());
+      let chosenSchool = typeof navSchool !== 'undefined' ? navSchool : 'Daya Stanford';
+      let chosenClass = typeof navClass !== 'undefined' ? navClass : 'ESL2';
+      if (select && select.value && typeof allData !== 'undefined' && Array.isArray(allData)) {
+        const found = allData.find(row => (row.__backendId === select.value || row.id === select.value) && row.type === 'class');
+        if (found) {
+          chosenSchool = found.school_name || chosenSchool;
+          chosenClass = found.class_name || chosenClass;
+        }
+      }
+
+      closeTeacherGrammarModal();
+      await createAndOpenTeacherGrammarDeck(name, chosenSchool, chosenClass);
     });
   };
 
