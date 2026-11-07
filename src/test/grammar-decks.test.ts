@@ -155,4 +155,25 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(apiRoute).toContain('input?.mode === "grammar"');
     expect(apiRoute).toContain('Grammar Pattern Deck for the topic');
   });
+
+  it('ensures grammar rule editor includes interactive image search & picker matching vocab lists', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+
+    // Image search UI elements
+    expect(js).toContain('id="ge-image-search"');
+    expect(js).toContain('id="ge-image-search-btn"');
+    expect(js).toContain('id="ge-image-suggest-btn"');
+    expect(js).toContain('id="ge-image-type-pills"');
+    expect(js).toContain('data-image-type="all"');
+    expect(js).toContain('data-image-type="illustration"');
+    expect(js).toContain('data-image-type="photo"');
+    expect(js).toContain('id="ge-image-results"');
+    expect(js).toContain('id="ge-image-preview-container"');
+    expect(js).toContain('id="ge-rule-image"');
+    expect(js).toContain('ge-photo-pick-card');
+
+    // Functions
+    expect(js).toContain('extractKeywordsForGrammarRule');
+    expect(js).toContain('fetchMediaForGrammarSearch');
+  });
 });

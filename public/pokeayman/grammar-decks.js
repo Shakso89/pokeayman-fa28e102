@@ -633,7 +633,7 @@
       const activeRule = isEditing ? rules[editingRuleIndex] : null;
 
       modal.innerHTML = `
-        <div class="max-w-2xl w-full rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-6 shadow-2xl space-y-5 my-auto max-h-[90vh] overflow-y-auto">
+        <div class="max-w-3xl w-full rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-6 shadow-2xl space-y-5 my-auto max-h-[90vh] overflow-y-auto">
           <!-- Header with Editable Deck Title -->
           <div class="flex items-center justify-between border-b border-slate-800 pb-3 gap-3">
             <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -679,9 +679,85 @@
                 <label for="ge-rule-clue" class="text-[11px] text-slate-400 font-semibold block">Context Clue / Hint</label>
                 <input id="ge-rule-clue" type="text" placeholder="e.g. Right now at this moment" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.context_clue || '')}">
               </div>
-              <div class="space-y-1">
-                <label for="ge-rule-image" class="text-[11px] text-slate-400 font-semibold block">Rule Image URL</label>
-                <input id="ge-rule-image" type="url" placeholder="https://cdn.pixabay.com/..." class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.image || '')}">
+              <!-- Rule Image Search & Picker (matching vocab lists) -->
+              <div class="sm:col-span-2 space-y-2 pt-2 border-t border-slate-800/80">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <span>🖼️</span> Rule Image & Clipart
+                  </label>
+                  <span id="ge-image-status" class="text-[11px] text-slate-400 font-semibold"></span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+                  <!-- Selected Image Preview & Direct URL Fallback -->
+                  <div class="md:col-span-5 rounded-xl p-3 border border-slate-800 bg-slate-950/60 flex flex-col justify-between space-y-2.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Selected Image</span>
+                      <span id="ge-image-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${activeRule?.image ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}">
+                        ${activeRule?.image ? '✓ Ready' : 'No image'}
+                      </span>
+                    </div>
+
+                    <div id="ge-image-preview-container" class="w-full h-32 rounded-lg border border-slate-800 bg-slate-900/60 flex items-center justify-center p-1.5 overflow-hidden relative group">
+                      ${activeRule?.image ? `
+                        <img id="ge-image-preview-img" src="${escapeHtml(activeRule.image)}" class="w-full h-full object-contain rounded" alt="Rule image preview" onerror="this.onerror=null;this.parentElement.innerHTML='<span class=\\'text-xs text-rose-400 font-medium\\'>Invalid image link</span>';">
+                      ` : `
+                        <div id="ge-image-placeholder" class="text-xs text-slate-500 flex flex-col items-center gap-1">
+                          <svg class="w-7 h-7 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                          <span>Choose clipart or photo</span>
+                        </div>
+                      `}
+                    </div>
+
+                    <div class="space-y-1">
+                      <div class="flex items-center justify-between">
+                        <label for="ge-rule-image" class="text-[11px] text-slate-400 font-medium">Or paste image URL directly:</label>
+                        <button type="button" id="ge-image-clear-btn" class="text-[10px] text-rose-400 hover:text-rose-300 font-semibold cursor-pointer ${activeRule?.image ? '' : 'hidden'}">Remove</button>
+                      </div>
+                      <input id="ge-rule-image" type="url" placeholder="https://cdn.pixabay.com/..." class="quiz-input text-xs w-full font-mono text-[11px]" value="${escapeHtml(activeRule?.image || '')}">
+                    </div>
+                  </div>
+
+                  <!-- Search Clipart & Photos -->
+                  <div class="md:col-span-7 space-y-2 flex flex-col">
+                    <!-- Search Input + Action Buttons -->
+                    <div class="flex gap-1.5">
+                      <div class="relative flex-1">
+                        <input id="ge-image-search" type="text" placeholder="Search clipart or photos..." class="quiz-input text-xs w-full pr-7" value="${escapeHtml(extractKeywordsForGrammarRule(activeRule, deck))}">
+                        <button type="button" id="ge-image-search-clear" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs font-bold p-1 cursor-pointer" style="${extractKeywordsForGrammarRule(activeRule, deck) ? '' : 'display:none;'}" aria-label="Clear">✕</button>
+                      </div>
+                      <button type="button" id="ge-image-search-btn" class="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition active:scale-95 shrink-0 cursor-pointer flex items-center gap-1 shadow-sm">
+                        <span>🔍</span>
+                        <span>Search</span>
+                      </button>
+                      <button type="button" id="ge-image-suggest-btn" class="px-2.5 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 font-bold text-xs transition active:scale-95 shrink-0 cursor-pointer flex items-center gap-1" title="Extract search keywords from sentence or rule">
+                        <span>↳ Use Text</span>
+                      </button>
+                    </div>
+
+                    <!-- Type Filter Pills -->
+                    <div id="ge-image-type-pills" class="flex items-center gap-1.5">
+                      <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400 bg-amber-400 text-slate-950 cursor-pointer transition shadow-sm" data-image-type="all">✨ All</button>
+                      <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition" data-image-type="illustration">🎨 Clipart</button>
+                      <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition" data-image-type="photo">📸 Photos</button>
+                    </div>
+
+                    <!-- Results Grid -->
+                    <div id="ge-image-results" class="grid grid-cols-3 sm:grid-cols-4 gap-2 min-h-[140px] max-h-[185px] overflow-y-auto p-2 rounded-xl bg-slate-950/80 border border-slate-800">
+                      <div class="col-span-full py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400 text-xs">
+                        <span class="text-2xl opacity-60">📷</span>
+                        <p class="font-medium">Click <b>Search</b> to find matching photos & clipart</p>
+                      </div>
+                    </div>
+
+                    <!-- Load More Pill -->
+                    <div class="flex justify-center pt-0.5">
+                      <button type="button" id="ge-image-load-more" class="text-[11px] font-bold px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer" style="display: none;">
+                        ⬇ Load more images
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="space-y-1">
                 <label for="ge-rule-bad" class="text-[11px] text-rose-300 font-semibold block">❌ Common Mistake</label>
@@ -727,12 +803,19 @@
                 </div>
               ` : rules.map((r, i) => `
                 <div class="p-3 rounded-xl bg-slate-950 border ${editingRuleIndex === i ? 'border-amber-400 bg-amber-950/20 ring-1 ring-amber-400/40' : 'border-slate-800'} flex items-center justify-between gap-3 text-xs transition">
-                  <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2">
-                      <p class="font-bold text-white truncate">${i + 1}. ${escapeHtml(r.title || 'Rule')}</p>
-                      ${editingRuleIndex === i ? '<span class="text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded font-black shrink-0">EDITING</span>' : ''}
+                  <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                    ${r.image ? `
+                      <img src="${escapeHtml(r.image)}" alt="Rule thumbnail" class="w-10 h-10 object-cover rounded-lg border border-slate-800 shrink-0 bg-slate-900" onerror="this.style.display='none'">
+                    ` : `
+                      <div class="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-sm shrink-0">📖</div>
+                    `}
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2">
+                        <p class="font-bold text-white truncate">${i + 1}. ${escapeHtml(r.title || 'Rule')}</p>
+                        ${editingRuleIndex === i ? '<span class="text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded font-black shrink-0">EDITING</span>' : ''}
+                      </div>
+                      <p class="text-slate-400 truncate mt-0.5">${escapeHtml(r.sentence || r.formula || '')}</p>
                     </div>
-                    <p class="text-slate-400 truncate mt-0.5">${escapeHtml(r.sentence || r.formula || '')}</p>
                   </div>
                   <div class="flex items-center gap-1.5 shrink-0">
                     <button type="button" class="ge-edit-rule px-2.5 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 font-bold border border-amber-400/30 transition flex items-center gap-1 cursor-pointer" data-rule-idx="${i}" title="Edit Rule">
@@ -753,6 +836,207 @@
           </div>
         </div>
       `;
+
+      
+      // Image Picker Logic (like Vocab Lists)
+      let currentSearchType = 'all';
+      let currentSearchPage = 1;
+      let currentPhotos = [];
+      let isSearching = false;
+      let hasMorePhotos = false;
+      let selectedImageUrl = activeRule?.image || '';
+
+      const searchInput = modal.querySelector('#ge-image-search');
+      const searchClearBtn = modal.querySelector('#ge-image-search-clear');
+      const searchBtn = modal.querySelector('#ge-image-search-btn');
+      const suggestBtn = modal.querySelector('#ge-image-suggest-btn');
+      const resultsContainer = modal.querySelector('#ge-image-results');
+      const loadMoreBtn = modal.querySelector('#ge-image-load-more');
+      const statusLabel = modal.querySelector('#ge-image-status');
+      const ruleImageInput = modal.querySelector('#ge-rule-image');
+      const previewContainer = modal.querySelector('#ge-image-preview-container');
+      const imageBadge = modal.querySelector('#ge-image-badge');
+      const imageClearBtn = modal.querySelector('#ge-image-clear-btn');
+      const typePills = modal.querySelectorAll('#ge-image-type-pills .ge-type-pill');
+
+      const updatePreview = (url) => {
+        selectedImageUrl = (url || '').trim();
+        ruleImageInput.value = selectedImageUrl;
+        if (selectedImageUrl) {
+          previewContainer.innerHTML = `<img id="ge-image-preview-img" src="${escapeHtml(selectedImageUrl)}" class="w-full h-full object-contain rounded" alt="Selected Rule Image" onerror="this.onerror=null;this.parentElement.innerHTML='<span class=\\\'text-xs text-rose-400 font-medium\\\'>Invalid image link</span>';">`;
+          imageBadge.textContent = '✓ Ready';
+          imageBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+          imageClearBtn?.classList.remove('hidden');
+        } else {
+          previewContainer.innerHTML = `
+            <div id="ge-image-placeholder" class="text-xs text-slate-500 flex flex-col items-center gap-1">
+              <svg class="w-7 h-7 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              <span>Choose clipart or photo</span>
+            </div>
+          `;
+          imageBadge.textContent = 'No image';
+          imageBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400';
+          imageClearBtn?.classList.add('hidden');
+        }
+        resultsContainer.querySelectorAll('.ge-photo-pick-card').forEach(card => {
+          const isMatch = selectedImageUrl && card.dataset.photoUrl === selectedImageUrl;
+          card.classList.toggle('ring-2', isMatch);
+          card.classList.toggle('ring-amber-400', isMatch);
+          card.classList.toggle('border-amber-400', isMatch);
+          const badgeEl = card.querySelector('.ge-check-badge');
+          if (badgeEl) badgeEl.style.display = isMatch ? 'flex' : 'none';
+        });
+      };
+
+      const renderResultsGrid = () => {
+        if (currentPhotos.length === 0) {
+          resultsContainer.innerHTML = `
+            <div class="col-span-full py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400 text-xs">
+              <span class="text-2xl opacity-60">🔍</span>
+              <p class="font-medium">No images found. Try a different keyword.</p>
+            </div>
+          `;
+          if (statusLabel) statusLabel.textContent = '0 results';
+          if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+          return;
+        }
+
+        resultsContainer.innerHTML = currentPhotos.map(photo => {
+          const isMatch = selectedImageUrl && photo.url === selectedImageUrl;
+          return `
+            <button type="button" class="ge-photo-pick-card relative aspect-video rounded-lg overflow-hidden border ${isMatch ? 'border-amber-400 ring-2 ring-amber-400 bg-amber-950/20' : 'border-slate-800 hover:border-amber-400/70 bg-slate-900'} group cursor-pointer transition text-left" data-photo-url="${escapeHtml(photo.url)}" title="By ${escapeHtml(photo.photographer)}">
+              <img src="${escapeHtml(photo.thumb)}" alt="${escapeHtml(photo.photographer)}" class="w-full h-full object-cover">
+              <span class="ge-check-badge absolute top-1 right-1 bg-emerald-500 text-slate-950 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow" style="${isMatch ? '' : 'display:none;'}">✓</span>
+              <span class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-[11px] font-bold">Select</span>
+            </button>
+          `;
+        }).join('');
+
+        resultsContainer.querySelectorAll('.ge-photo-pick-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const url = card.dataset.photoUrl;
+            updatePreview(url);
+            if (typeof toast === 'function') toast('Selected image for this rule!');
+          });
+        });
+
+        if (statusLabel) statusLabel.textContent = `${currentPhotos.length} images`;
+        if (loadMoreBtn) {
+          loadMoreBtn.style.display = hasMorePhotos && currentPhotos.length < 80 ? 'inline-block' : 'none';
+        }
+      };
+
+      const executeSearch = async (reset = false) => {
+        const query = (searchInput?.value || '').trim();
+        if (!query) {
+          if (typeof toast === 'function') toast('Enter a keyword to search.');
+          searchInput?.focus();
+          return;
+        }
+        if (isSearching) return;
+        if (reset) {
+          currentSearchPage = 1;
+          currentPhotos = [];
+          hasMorePhotos = true;
+          resultsContainer.innerHTML = `
+            <div class="col-span-full py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400 text-xs">
+              <span class="animate-spin text-2xl">⏳</span>
+              <p class="font-medium">Searching ${currentSearchType === 'illustration' ? 'clipart' : currentSearchType === 'photo' ? 'photos' : 'images'} for &ldquo;${escapeHtml(query)}&rdquo;…</p>
+            </div>
+          `;
+          if (statusLabel) statusLabel.textContent = 'Searching…';
+        }
+
+        isSearching = true;
+        searchBtn.disabled = true;
+        searchBtn.innerHTML = `<span>⏳</span><span>...</span>`;
+        if (loadMoreBtn) {
+          loadMoreBtn.disabled = true;
+          loadMoreBtn.textContent = 'Loading more…';
+        }
+
+        try {
+          const data = await fetchMediaForGrammarSearch(query, currentSearchType, currentSearchPage);
+          const seen = new Set(currentPhotos.map(p => p.url));
+          const newItems = data.photos.filter(p => !seen.has(p.url));
+          currentPhotos.push(...newItems);
+          currentSearchPage++;
+          hasMorePhotos = data.hasMore && newItems.length > 0;
+          renderResultsGrid();
+        } catch (err) {
+          console.error('Grammar image search error:', err);
+          if (currentPhotos.length === 0) {
+            resultsContainer.innerHTML = `
+              <div class="col-span-full py-8 text-center flex flex-col items-center justify-center gap-1.5 text-rose-400 text-xs">
+                <span>⚠️ Search could not complete. Try another term or paste URL.</span>
+              </div>
+            `;
+          }
+        } finally {
+          isSearching = false;
+          searchBtn.disabled = false;
+          searchBtn.innerHTML = `<span>🔍</span><span>Search</span>`;
+          if (loadMoreBtn) {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = '⬇ Load more images';
+          }
+        }
+      };
+
+      searchBtn?.addEventListener('click', () => executeSearch(true));
+      searchInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          executeSearch(true);
+        }
+      });
+      searchInput?.addEventListener('input', () => {
+        if (searchClearBtn) searchClearBtn.style.display = searchInput.value ? 'block' : 'none';
+      });
+      searchClearBtn?.addEventListener('click', () => {
+        if (searchInput) {
+          searchInput.value = '';
+          searchClearBtn.style.display = 'none';
+          searchInput.focus();
+        }
+      });
+
+      suggestBtn?.addEventListener('click', () => {
+        const sentenceVal = modal.querySelector('#ge-rule-sentence')?.value || '';
+        const titleVal = modal.querySelector('#ge-rule-title')?.value || '';
+        const kw = extractKeywordsForGrammarRule({ sentence: sentenceVal, title: titleVal }, deck);
+        if (searchInput) {
+          searchInput.value = kw;
+          if (searchClearBtn) searchClearBtn.style.display = kw ? 'block' : 'none';
+        }
+        executeSearch(true);
+      });
+
+      typePills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          typePills.forEach(p => {
+            p.className = 'ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition';
+          });
+          pill.className = 'ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400 bg-amber-400 text-slate-950 cursor-pointer transition shadow-sm';
+          currentSearchType = pill.dataset.imageType || 'all';
+          executeSearch(true);
+        });
+      });
+
+      loadMoreBtn?.addEventListener('click', () => executeSearch(false));
+
+      ruleImageInput?.addEventListener('input', () => {
+        updatePreview(ruleImageInput.value);
+      });
+
+      imageClearBtn?.addEventListener('click', () => {
+        updatePreview('');
+      });
+
+      // Auto-trigger search if keywords exist
+      if (searchInput && searchInput.value.trim()) {
+        executeSearch(true);
+      }
 
       modal.querySelector('#ge-close-btn').onclick = () => modal.remove();
       modal.querySelector('#ge-cancel-btn').onclick = () => modal.remove();
