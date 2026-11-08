@@ -39,6 +39,8 @@ describe('Robot Opponent & Difficulty Selection for All Student Games', () => {
     expect(arcadeJs).toContain("id: 'hard', label: 'Hard'");
     expect(arcadeJs).toContain('OPPONENT: ROBOT');
     expect(arcadeJs).toContain('window.selectedBotDifficulty');
+    expect(arcadeJs).toContain('ga-speedometer-needle');
+    expect(arcadeJs).toContain('ga-gauge-sector');
     expect(arcadeJs).not.toContain("icon: '🌱'");
     expect(arcadeJs).not.toContain("icon: '⚡'");
     expect(arcadeJs).not.toContain("icon: '🔥'");

@@ -359,137 +359,222 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
             </div>
 
             {/* Robot Difficulty Picker (when vsRobot is active) */}
-            {vsRobot && (
-              <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-b from-slate-900/95 via-slate-950 to-slate-950 border border-slate-800 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center shadow">
-                      <Bot className="w-4 h-4 text-cyan-400" />
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                        <span>OPPONENT: ROBOT</span>
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-                      </span>
-                      <span className="text-xs font-black tracking-wide text-white">COMBAT AI LEVEL</span>
-                    </div>
-                  </div>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full border text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                      botDifficulty === 'hard'
-                        ? 'bg-rose-500/20 text-rose-300 border-rose-400/40'
-                        : botDifficulty === 'easy'
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
-                        : 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40'
-                    }`}
-                  >
-                    {botDifficulty === 'hard' ? (
-                      <>
-                        <Flame className="w-3.5 h-3.5 text-rose-400" />
-                        <span>HARD</span>
-                      </>
-                    ) : botDifficulty === 'easy' ? (
-                      <>
-                        <Sprout className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>EASY</span>
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>NORMAL</span>
-                      </>
-                    )}
-                  </span>
-                </div>
+            {vsRobot && (() => {
+              const normalizedDiff = (botDifficulty === 'medium' ? 'normal' : botDifficulty);
+              const needleAngle = normalizedDiff === 'easy' ? -60 : (normalizedDiff === 'hard' ? 60 : 0);
 
-                <div className="grid grid-cols-3 gap-2 sm:gap-2.5" role="radiogroup" aria-label="Robot Difficulty">
-                  {(
-                    [
-                      {
-                        id: 'easy',
-                        label: 'Easy',
-                        tag: 'ROOKIE · LV.1',
-                        bars: 1,
-                        desc: 'Relaxed & casual',
-                        activeBorder: 'border-emerald-400 bg-gradient-to-b from-emerald-950/70 via-slate-900 to-slate-950 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/50 scale-[1.02]',
-                        activeTag: 'bg-emerald-400 text-slate-950 font-black',
-                        activeBar: 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]',
-                      },
-                      {
-                        id: 'normal',
-                        label: 'Normal',
-                        tag: 'VETERAN · LV.2',
-                        bars: 2,
-                        desc: 'Balanced match',
-                        activeBorder: 'border-cyan-400 bg-gradient-to-b from-cyan-950/70 via-slate-900 to-slate-950 text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400/50 scale-[1.02]',
-                        activeTag: 'bg-cyan-400 text-slate-950 font-black',
-                        activeBar: 'bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]',
-                      },
-                      {
-                        id: 'hard',
-                        label: 'Hard',
-                        tag: 'MASTER · LV.3',
-                        bars: 3,
-                        desc: 'Clever & sharp',
-                        activeBorder: 'border-rose-400 bg-gradient-to-b from-rose-950/70 via-slate-900 to-slate-950 text-rose-200 shadow-[0_0_20px_rgba(244,63,94,0.4)] ring-1 ring-rose-400/50 scale-[1.02]',
-                        activeTag: 'bg-rose-400 text-slate-950 font-black',
-                        activeBar: 'bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.8)]',
-                      },
-                    ] as const
-                  ).map((d) => {
-                    const active = (botDifficulty === 'medium' ? 'normal' : botDifficulty) === d.id;
-                    return (
-                      <button
-                        key={d.id}
-                        type="button"
-                        onClick={() => setBotDifficulty(d.id)}
-                        className={`group relative p-2.5 sm:p-3 rounded-2xl border-2 transition-all duration-200 flex flex-col items-center text-center cursor-pointer select-none overflow-hidden ${
-                          active
-                            ? d.activeBorder
-                            : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900 text-slate-300'
-                        }`}
-                        aria-checked={active}
+              const diffMeta = [
+                {
+                  id: 'easy' as const,
+                  label: 'Easy',
+                  tag: 'ROOKIE · LV.1',
+                  desc: 'Relaxed & casual',
+                  activeBorder: 'border-emerald-400 bg-gradient-to-b from-emerald-950/70 via-slate-900 to-slate-950 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/50 scale-[1.02]',
+                  activeTag: 'bg-emerald-400 text-slate-950 font-black',
+                },
+                {
+                  id: 'normal' as const,
+                  label: 'Normal',
+                  tag: 'VETERAN · LV.2',
+                  desc: 'Balanced match',
+                  activeBorder: 'border-amber-400 bg-gradient-to-b from-amber-950/70 via-slate-900 to-slate-950 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.35)] ring-1 ring-amber-400/50 scale-[1.02]',
+                  activeTag: 'bg-amber-400 text-slate-950 font-black',
+                },
+                {
+                  id: 'hard' as const,
+                  label: 'Hard',
+                  tag: 'MASTER · LV.3',
+                  desc: 'Clever & sharp',
+                  activeBorder: 'border-rose-400 bg-gradient-to-b from-rose-950/70 via-slate-900 to-slate-950 text-rose-200 shadow-[0_0_20px_rgba(244,63,94,0.4)] ring-1 ring-rose-400/50 scale-[1.02]',
+                  activeTag: 'bg-rose-400 text-slate-950 font-black',
+                },
+              ];
+
+              return (
+                <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-b from-slate-900/95 via-slate-950 to-slate-950 border border-slate-800 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
+                  {/* Header */}
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center shadow">
+                        <Bot className="w-4 h-4 text-cyan-400" />
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                          <span>OPPONENT: ROBOT</span>
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                        </span>
+                        <span className="text-xs font-black tracking-wide text-white">COMBAT AI LEVEL</span>
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full border text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                        normalizedDiff === 'hard'
+                          ? 'bg-rose-500/20 text-rose-300 border-rose-400/40'
+                          : normalizedDiff === 'easy'
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
+                          : 'bg-amber-500/20 text-amber-300 border-amber-400/40'
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${normalizedDiff === 'hard' ? 'bg-rose-400' : normalizedDiff === 'easy' ? 'bg-emerald-400' : 'bg-amber-400'} shadow-[0_0_6px_currentColor]`}></span>
+                      <span>{normalizedDiff.toUpperCase()}</span>
+                    </span>
+                  </div>
+
+                  {/* Speedometer Gauge Meter (Canva-style semi-circle dial) */}
+                  <div className="w-full max-w-[260px] mx-auto my-1 flex flex-col items-center">
+                    <svg viewBox="0 0 240 135" className="w-full max-w-[240px] drop-shadow-lg select-none" style={{ overflow: 'visible' }}>
+                      <defs>
+                        <linearGradient id="modal-easy-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#15803d" />
+                          <stop offset="100%" stopColor="#22c55e" />
+                        </linearGradient>
+                        <linearGradient id="modal-normal-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#b45309" />
+                          <stop offset="100%" stopColor="#f59e0b" />
+                        </linearGradient>
+                        <linearGradient id="modal-hard-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#ef4444" />
+                          <stop offset="100%" stopColor="#b91c1c" />
+                        </linearGradient>
+                        <filter id="modal-glow-easy" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#22c55e" floodOpacity="0.9" />
+                        </filter>
+                        <filter id="modal-glow-normal" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#f59e0b" floodOpacity="0.9" />
+                        </filter>
+                        <filter id="modal-glow-hard" x="-20%" y="-20%" width="140%" height="140%">
+                          <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#ef4444" floodOpacity="0.9" />
+                        </filter>
+                        <filter id="modal-needle-shadow" x="-50%" y="-50%" width="200%" height="200%">
+                          <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#000000" floodOpacity="0.8" />
+                        </filter>
+                      </defs>
+
+                      {/* Inner Plate */}
+                      <path d="M 62 120 A 58 58 0 0 1 178 120 Z" fill="#0f172a" stroke="#334155" strokeWidth="1.5" />
+
+                      {/* Sector: EASY */}
+                      <g
+                        className={`cursor-pointer transition-all duration-300 ${normalizedDiff === 'easy' ? 'opacity-100' : 'opacity-40 hover:opacity-85'}`}
+                        onClick={() => setBotDifficulty('easy')}
+                        role="button"
+                        aria-label="Easy difficulty"
+                        tabIndex={0}
                       >
-                        <div className="w-full flex items-center justify-between mb-1">
-                          <span
-                            className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${
-                              active ? d.activeTag : 'bg-slate-800 text-slate-400'
-                            }`}
-                          >
-                            {d.tag}
-                          </span>
-                          {active && (
-                            <span className={`w-3.5 h-3.5 rounded-full ${d.activeTag} text-[9px] font-black flex items-center justify-center`}>
-                              <Check className="w-2.5 h-2.5 stroke-[3] text-slate-950" />
+                        <path
+                          d="M 22 120 A 98 98 0 0 1 68.8 36.44 L 89.7 70.55 A 58 58 0 0 0 62 120 Z"
+                          fill="url(#modal-easy-grad)"
+                          filter={normalizedDiff === 'easy' ? 'url(#modal-glow-easy)' : undefined}
+                          stroke={normalizedDiff === 'easy' ? '#86efac' : '#1e293b'}
+                          strokeWidth={normalizedDiff === 'easy' ? 2.5 : 1}
+                        />
+                        <text x="52.45" y="81" transform="rotate(-60 52.45 81)" textAnchor="middle" dominantBaseline="central" fill="#ffffff" fontWeight="900" fontSize="10.5" letterSpacing="1">
+                          EASY
+                        </text>
+                      </g>
+
+                      {/* Sector: NORMAL */}
+                      <g
+                        className={`cursor-pointer transition-all duration-300 ${normalizedDiff === 'normal' ? 'opacity-100' : 'opacity-40 hover:opacity-85'}`}
+                        onClick={() => setBotDifficulty('normal')}
+                        role="button"
+                        aria-label="Normal difficulty"
+                        tabIndex={0}
+                      >
+                        <path
+                          d="M 73.24 33.88 A 98 98 0 0 1 166.76 33.88 L 147.68 69.03 A 58 58 0 0 0 92.32 69.03 Z"
+                          fill="url(#modal-normal-grad)"
+                          filter={normalizedDiff === 'normal' ? 'url(#modal-glow-normal)' : undefined}
+                          stroke={normalizedDiff === 'normal' ? '#fde047' : '#1e293b'}
+                          strokeWidth={normalizedDiff === 'normal' ? 2.5 : 1}
+                        />
+                        <text x="120" y="44" textAnchor="middle" dominantBaseline="central" fill="#ffffff" fontWeight="900" fontSize="10.5" letterSpacing="1">
+                          NORMAL
+                        </text>
+                      </g>
+
+                      {/* Sector: HARD */}
+                      <g
+                        className={`cursor-pointer transition-all duration-300 ${normalizedDiff === 'hard' ? 'opacity-100' : 'opacity-40 hover:opacity-85'}`}
+                        onClick={() => setBotDifficulty('hard')}
+                        role="button"
+                        aria-label="Hard difficulty"
+                        tabIndex={0}
+                      >
+                        <path
+                          d="M 171.2 36.44 A 98 98 0 0 1 218 120 L 178 120 A 58 58 0 0 0 150.3 70.55 Z"
+                          fill="url(#modal-hard-grad)"
+                          filter={normalizedDiff === 'hard' ? 'url(#modal-glow-hard)' : undefined}
+                          stroke={normalizedDiff === 'hard' ? '#fca5a5' : '#1e293b'}
+                          strokeWidth={normalizedDiff === 'hard' ? 2.5 : 1}
+                        />
+                        <text x="187.55" y="81" transform="rotate(60 187.55 81)" textAnchor="middle" dominantBaseline="central" fill="#ffffff" fontWeight="900" fontSize="10.5" letterSpacing="1">
+                          HARD
+                        </text>
+                      </g>
+
+                      {/* Needle */}
+                      <g
+                        className="pointer-events-none"
+                        style={{
+                          transformOrigin: '120px 120px',
+                          transform: `rotate(${needleAngle}deg)`,
+                          transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        }}
+                        filter="url(#modal-needle-shadow)"
+                      >
+                        <polygon points="116,120 118.5,28 121.5,28 124,120" fill="#0f172a" stroke="#cbd5e1" strokeWidth="1.2" />
+                        <line x1="120" y1="118" x2="120" y2="30" stroke="#f8fafc" strokeWidth="1.5" strokeLinecap="round" />
+                        <circle cx="120" cy="120" r="16" fill="#1e293b" stroke="#64748b" strokeWidth="2.5" />
+                        <circle cx="120" cy="120" r="9" fill="#0f172a" stroke="#38bdf8" strokeWidth="2" />
+                        <circle cx="120" cy="120" r="3.5" fill="#f8fafc" />
+                      </g>
+                    </svg>
+                  </div>
+
+                  {/* 3 Level Buttons */}
+                  <div className="grid grid-cols-3 gap-2 sm:gap-2.5 mt-2" role="radiogroup" aria-label="Robot Difficulty">
+                    {diffMeta.map((d) => {
+                      const active = normalizedDiff === d.id;
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => setBotDifficulty(d.id)}
+                          className={`group relative p-2.5 sm:p-3 rounded-2xl border-2 transition-all duration-200 flex flex-col items-center text-center cursor-pointer select-none overflow-hidden ${
+                            active
+                              ? d.activeBorder
+                              : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900 text-slate-300'
+                          }`}
+                          aria-checked={active}
+                        >
+                          <div className="w-full flex items-center justify-between mb-1">
+                            <span
+                              className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                                active ? d.activeTag : 'bg-slate-800 text-slate-400'
+                              }`}
+                            >
+                              {d.tag}
                             </span>
-                          )}
-                        </div>
-                        <div className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center my-0.5 group-hover:scale-110 transition-transform">
-                          {d.id === 'easy' ? (
-                            <Sprout className="w-6 h-6 text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
-                          ) : d.id === 'hard' ? (
-                            <Flame className="w-6 h-6 text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
-                          ) : (
-                            <Zap className="w-6 h-6 text-cyan-400 drop-shadow-[0_0_6px_rgba(6,182,212,0.6)]" />
-                          )}
-                        </div>
-                        <div className="text-xs font-black uppercase text-white mt-1">
-                          {d.label}
-                        </div>
-                        <div className="text-[9px] text-slate-400 truncate w-full mt-0.5">
-                          {d.desc}
-                        </div>
-                        <div className="flex items-center gap-1 mt-2">
-                          <span className={`w-3.5 h-1 rounded-full ${d.bars >= 1 ? (active ? d.activeBar : 'bg-slate-600') : 'bg-slate-800'}`}></span>
-                          <span className={`w-3.5 h-1 rounded-full ${d.bars >= 2 ? (active ? d.activeBar : 'bg-slate-600') : 'bg-slate-800'}`}></span>
-                          <span className={`w-3.5 h-1 rounded-full ${d.bars >= 3 ? (active ? d.activeBar : 'bg-slate-600') : 'bg-slate-800'}`}></span>
-                        </div>
-                      </button>
-                    );
-                  })}
+                            {active && (
+                              <span className={`w-3.5 h-3.5 rounded-full ${d.activeTag} text-[9px] font-black flex items-center justify-center`}>
+                                <Check className="w-2.5 h-2.5 stroke-[3] text-slate-950" />
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs font-black uppercase text-white mt-0.5">
+                            {d.label}
+                          </div>
+                          <div className="text-[9px] text-slate-400 truncate w-full mt-0.5">
+                            {d.desc}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Remaining Roster Grid */}
             <div className="grid grid-cols-4 gap-3 mt-2 overflow-y-auto max-h-[240px] pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]">
