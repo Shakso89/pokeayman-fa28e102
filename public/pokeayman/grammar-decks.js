@@ -891,6 +891,11 @@
         cleanClue = cleanClue.replace(/level:\s*/i, '');
       }
 
+      // Check if mistake sentences are long to place them under each other
+      const badText = String(r.mistake_bad || 'Mistake');
+      const goodText = String(r.mistake_good || 'Correct');
+      const isLongMistake = badText.length > 20 || goodText.length > 20 || (badText.length + goodText.length > 35);
+
       // Quiz options fallback
       const options = Array.isArray(r.quiz_options) && r.quiz_options.length 
         ? r.quiz_options 
@@ -952,17 +957,17 @@
                     ${formatSyntaxHighlightedSentence(r.sentence || '', r.formula || '', r)}
                   </div>
 
-                  <!-- Common Mistake Container -->
-                  <div class="rounded-2xl bg-slate-950/70 border border-slate-800/90 p-4 space-y-2.5 shadow-inner">
+                  <!-- Common Mistake Container: Stacked under each other if long so sentences are never cut off -->
+                  <div class="rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 space-y-2 shadow-inner">
                     <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Common Mistake</div>
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-sm">
-                      <div class="text-rose-400 font-bold flex items-center gap-2">
-                        <span class="shrink-0">❌</span>
-                        <span class="truncate">${escapeHtml(r.mistake_bad || 'Mistake')}</span>
+                    <div class="flex flex-col ${isLongMistake ? '' : 'sm:flex-row sm:items-center sm:gap-6'} gap-2 text-sm">
+                      <div class="text-rose-400 font-bold flex items-start gap-2 leading-snug">
+                        <span class="shrink-0 text-sm leading-none pt-0.5">❌</span>
+                        <span class="break-words">${escapeHtml(badText)}</span>
                       </div>
-                      <div class="text-emerald-400 font-bold flex items-center gap-2">
-                        <span class="shrink-0">✅</span>
-                        <span class="truncate">${escapeHtml(r.mistake_good || 'Correct')}</span>
+                      <div class="text-emerald-400 font-bold flex items-start gap-2 leading-snug">
+                        <span class="shrink-0 text-sm leading-none pt-0.5">✅</span>
+                        <span class="break-words">${escapeHtml(goodText)}</span>
                       </div>
                     </div>
                   </div>
@@ -973,7 +978,7 @@
               <div class="rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
                 <div class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-200 min-w-0">
                   <span class="text-amber-400 font-black shrink-0">⚡ Quick Check:</span>
-                  <span class="text-white font-bold truncate">${escapeHtml(r.quiz_question || 'Choose the correct form:')}</span>
+                  <span class="text-white font-bold break-words">${escapeHtml(r.quiz_question || 'Choose the correct form:')}</span>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 shrink-0" id="gp-options-row">
                   ${options.map(opt => `
