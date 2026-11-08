@@ -498,9 +498,8 @@
           continueBtn.type = 'button';
           continueBtn.className = 'baam-power-continue-btn';
           continueBtn.textContent = 'Continue →';
-          continueBtn.addEventListener('click', (e) => {
-            const curPlayer = baamPlayers[activeGamePlayerIndex];
-            if (curPlayer?.isBot && e.isTrusted) return;
+          continueBtn.addEventListener('click', () => {
+            clearBaamBot();
             closeBaamRevealAsWrong();
           });
           answerControls.appendChild(continueBtn);
@@ -606,6 +605,7 @@
     };
     const closeBaamRevealAsWrong = () => {
       clearAnswerTimer();
+      clearBaamBot();
       // Always dismiss the reveal overlay, including after a power-up resolves.
       const revealPanel = baamQ('#baam-reveal');
       if (!revealPanel) return;

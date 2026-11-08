@@ -137,4 +137,8 @@ describe('Robot Opponent & Difficulty Selection for All Student Games', () => {
     expect(dotsJs).toContain('state.drawnCount === 2');
     expect(dotsJs).toContain('twoSidedBoxes');
   });
+
+  it('allows clicking Continue button on Surprise Boxes power-ups without blocking', () => {
+    expect(baamJs).toMatch(/continueBtn\.addEventListener\('click',\s*\(\)\s*=>\s*\{\s*clearBaamBot\(\);\s*closeBaamRevealAsWrong\(\);/);
+  });
 });
