@@ -117,4 +117,24 @@ describe('Robot Opponent & Difficulty Selection for All Student Games', () => {
   it('triggers checkMemoryBotTurn upon match in Memory Flip so Robot continues playing its turn', () => {
     expect(memoryJs).toMatch(/syncCardFaces\(\);\s*if\s*\(matched\.size\s*<\s*pairs\.length\)\s*\{\s*checkMemoryBotTurn\(\);/);
   });
+
+  it('prevents human players from clicking cards or tiles during Robot turns', () => {
+    expect(memoryJs).toContain('if (curPlayer?.isBot && e.isTrusted) return;');
+    expect(baamJs).toContain('if (curPlayer?.isBot && e.isTrusted) return;');
+    expect(dotsJs).toContain('if (curPlayer?.isBot && e.isTrusted) return;');
+    expect(matchJs).toContain('if (curPlayer?.isBot && e.isTrusted) return;');
+  });
+
+  it('gives ample time on Surprise Boxes bot turns for students to inspect powerups and score changes', () => {
+    // 3200ms powerup dismissal timeout
+    expect(baamJs).toContain('3200');
+    // Generous feedback inspection on bot choice answers
+    expect(baamJs).toContain('isBotAnswering ? 1800 : 850');
+  });
+
+  it('equips Dots and Boxes bot with smart 2-turn combo strategy to close 2-sided / 90-degree boxes', () => {
+    expect(dotsJs).toContain('consecutiveTurnsRemaining > 1');
+    expect(dotsJs).toContain('state.drawnCount === 2');
+    expect(dotsJs).toContain('twoSidedBoxes');
+  });
 });

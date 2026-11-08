@@ -1010,6 +1010,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   grid.querySelectorAll('.memory-card').forEach(card => {
     card.addEventListener('click', (e) => {
       e.preventDefault();
+      // Block human clicks when it is the Robot's turn
+      const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (curPlayer?.isBot && e.isTrusted) return;
+
       const idx = parseInt(card.dataset.index, 10);
       if (isNaN(idx) || !pairs[idx] || matched.has(idx)) return;
 

@@ -348,10 +348,14 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
       const wordObj = bankWords[wordId];
 
       chip.addEventListener('pointerdown', e => {
+        const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+        if (curPlayer?.isBot && e.isTrusted) return;
         initDrag(e, { type: 'bank', wordId, vocab_word: wordObj.vocab_word, el: chip });
       });
 
-      chip.addEventListener('click', () => {
+      chip.addEventListener('click', (e) => {
+        const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+        if (curPlayer?.isBot && e.isTrusted) return;
         if (hasDragged) return;
         handleTapBank(wordId);
       });
@@ -360,7 +364,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
     // Picture target cards: tap anywhere on card to place selected word
     board.querySelectorAll('.match-target-card').forEach(card => {
       const targetIndex = Number(card.dataset.targetIndex);
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+        if (curPlayer?.isBot && e.isTrusted) return;
         if (hasDragged || isEvaluating) return;
         if (matchedTargets.has(targetIndex)) return;
         if (selectedWordId !== null) {
@@ -374,6 +380,8 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   function initDrag(e, source) {
     if (isEvaluating) return;
     if (activePointerId !== null) return;
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (curPlayer?.isBot && e.isTrusted) return;
 
     activePointerId = e.pointerId;
     dragSource = source;

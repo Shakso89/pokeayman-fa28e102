@@ -463,7 +463,9 @@
       const curPlayer = activeGamePlayers[activeGamePlayerIndex];
       if (!curPlayer?.isBot) return;
 
-      const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+      const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
+      const isHard = diff === 'hard';
+      const isNormal = diff === 'normal' || diff === 'medium';
 
       if (phase === 'MCQ') {
         botTurnTimer = setTimeout(() => {
@@ -476,7 +478,7 @@
           const correctBtn = buttons.find(b => String(b.dataset.option || '').trim().toLowerCase() === targetWord);
           const wrongBtns = buttons.filter(b => b !== correctBtn);
 
-          const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+          const acc = isHard ? 0.95 : (isNormal ? 0.75 : 0.50);
           const pickCorrect = Math.random() < acc && correctBtn;
           const chosen = (pickCorrect ? correctBtn : (wrongBtns[0] || correctBtn));
           chosen?.click();
@@ -501,6 +503,26 @@
           const allAvailable = [...availableH, ...availableV];
           if (!allAvailable.length) return;
 
+          const getBoxEdges = (r, c) => [
+            { type: 'H', r, c },
+            { type: 'H', r: r + 1, c },
+            { type: 'V', r, c },
+            { type: 'V', r, c: c + 1 }
+          ];
+
+          const isEdgeDrawn = (edge) => {
+            const key = `${edge.r}-${edge.c}`;
+            return edge.type === 'H' ? horizontalLines[key] !== null : verticalLines[key] !== null;
+          };
+
+          const getBoxState = (r, c) => {
+            if (boxes[`${r}-${c}`] !== null) return { completed: true, drawnCount: 4, missingEdges: [] };
+            const edges = getBoxEdges(r, c);
+            const drawn = edges.filter(isEdgeDrawn);
+            const missing = edges.filter(e => !isEdgeDrawn(e));
+            return { completed: false, drawnCount: drawn.length, missingEdges: missing };
+          };
+
           const completesBox = (line) => {
             let count = 0;
             for (let r = 0; r < numBoxes; r++) {
@@ -518,15 +540,62 @@
           };
 
           let chosenMove = null;
-          if (diff === 'hard' || (diff === 'medium' && Math.random() < 0.8)) {
-            for (const move of allAvailable) {
-              if (completesBox(move) > 0) {
-                chosenMove = move;
-                break;
-              }
+
+          // Priority 1: Complete any box with 3 sides drawn (claims point & extra turn immediately)
+          const completingMoves = allAvailable.filter(m => completesBox(m) > 0);
+          if (completingMoves.length > 0) {
+            if (isHard || (isNormal && Math.random() < 0.90) || (!isHard && !isNormal && Math.random() < 0.50)) {
+              completingMoves.sort((a, b) => completesBox(b) - completesBox(a));
+              chosenMove = completingMoves[0];
             }
           }
 
+          // Priority 2: Smart 2-turn combo when player made a wrong answer (bot has 2 consecutive turns).
+          // If a box has 2 sides connected (90-degree corner), draw 1 missing edge on Turn 1 so it reaches
+          // 3 sides, setting up the 2nd turn to immediately close the box and claim the point!
+          if (!chosenMove && consecutiveTurnsRemaining > 1 && (isHard || (isNormal && Math.random() < 0.85))) {
+            const twoSidedBoxes = [];
+            for (let r = 0; r < numBoxes; r++) {
+              for (let c = 0; c < numBoxes; c++) {
+                const state = getBoxState(r, c);
+                if (!state.completed && state.drawnCount === 2 && state.missingEdges.length === 2) {
+                  twoSidedBoxes.push({ r, c, missingEdges: state.missingEdges });
+                }
+              }
+            }
+            if (twoSidedBoxes.length > 0) {
+              const targetBox = twoSidedBoxes[0];
+              const candEdge = targetBox.missingEdges[0];
+              const match = allAvailable.find(m => m.type === candEdge.type && m.r === candEdge.r && m.c === candEdge.c);
+              if (match) chosenMove = match;
+            }
+          }
+
+          // Priority 3: Safe moves that do NOT create a 3-sided box for the opponent
+          if (!chosenMove && (isHard || (isNormal && Math.random() < 0.80))) {
+            const safeMoves = allAvailable.filter(m => {
+              const touchingBoxes = [];
+              if (m.type === 'H') {
+                if (m.r > 0) touchingBoxes.push({ r: m.r - 1, c: m.c });
+                if (m.r < numBoxes) touchingBoxes.push({ r: m.r, c: m.c });
+              } else {
+                if (m.c > 0) touchingBoxes.push({ r: m.r, c: m.c - 1 });
+                if (m.c < numBoxes) touchingBoxes.push({ r: m.r, c: m.c });
+              }
+              for (const b of touchingBoxes) {
+                const state = getBoxState(b.r, b.c);
+                if (!state.completed && state.drawnCount === 2) {
+                  return false;
+                }
+              }
+              return true;
+            });
+            if (safeMoves.length > 0) {
+              chosenMove = safeMoves[Math.floor(Math.random() * safeMoves.length)];
+            }
+          }
+
+          // Fallback: pick any available move
           if (!chosenMove) {
             chosenMove = allAvailable[Math.floor(Math.random() * allAvailable.length)];
           }
@@ -649,8 +718,10 @@
         .join('');
 
       choicesGrid.querySelectorAll('.dots-choice-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
           if (phase !== 'MCQ') return;
+          const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+          if (curPlayer?.isBot && e.isTrusted) return;
           const choice = btn.dataset.option;
           handleMCQAnswer(choice, btn);
         });
@@ -720,6 +791,8 @@
 
     const startPullFromDot = (e, startR, startC, startDotEl) => {
       if (phase !== 'DRAW_LINE') return;
+      const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (curPlayer?.isBot && e.isTrusted) return;
       e.preventDefault();
       e.stopPropagation();
 
@@ -930,7 +1003,11 @@
             btn.appendChild(bar);
 
             if (phase === 'DRAW_LINE' && !isDrawn) {
-              btn.addEventListener('click', () => handleDrawLine('H', r, c));
+              btn.addEventListener('click', (e) => {
+                const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+                if (curPlayer?.isBot && e.isTrusted) return;
+                handleDrawLine('H', r, c);
+              });
             }
             grid.appendChild(btn);
           } else if (!isEvenR && isEvenC) {
@@ -975,7 +1052,11 @@
             btn.appendChild(bar);
 
             if (phase === 'DRAW_LINE' && !isDrawn) {
-              btn.addEventListener('click', () => handleDrawLine('V', r, c));
+              btn.addEventListener('click', (e) => {
+                const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+                if (curPlayer?.isBot && e.isTrusted) return;
+                handleDrawLine('V', r, c);
+              });
             }
             grid.appendChild(btn);
           } else {
