@@ -203,12 +203,12 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     return;
   }
   if (activeGamePlayers.length === 1) {
-    activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || {
+    activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'normal') || {
       student_name: 'Robot',
       avatar_pokemon_id: 137,
       __backendId: 'bot-robot',
       isBot: true,
-      botDifficulty: window.selectedBotDifficulty || 'medium'
+      botDifficulty: window.selectedBotDifficulty || 'normal'
     });
     pendingGamePlayers = 2;
   }
@@ -239,7 +239,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     const curPlayer = activeGamePlayers[activeGamePlayerIndex];
     if (!curPlayer?.isBot) return;
 
-    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
 
     memoryBotTimer = setTimeout(() => {
       memoryBotTimer = null;
@@ -252,7 +252,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       });
       if (!availableCards.length) return;
 
-      const memoryProb = diff === 'hard' ? 0.90 : (diff === 'medium' ? 0.60 : 0.25);
+      const memoryProb = diff === 'hard' ? 0.90 : ((diff === 'normal' || diff === 'medium') ? 0.60 : 0.25);
       let knownPair = null;
 
       if (Math.random() < memoryProb) {
@@ -884,6 +884,9 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
                     rc.style.setProperty('pointer-events', 'none', 'important');
                   });
                   syncCardFaces();
+                  if (matched.size < pairs.length) {
+                    checkMemoryBotTurn();
+                  }
                 }, 450);
               }, 200);
             }
@@ -918,9 +921,15 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
                 remainingCards.forEach(c => c.classList.remove('ga-ditto-wobble'));
                 grid.style.pointerEvents = '';
                 syncCardFaces();
+                if (matched.size < pairs.length) {
+                  checkMemoryBotTurn();
+                }
               }, 450);
             } else {
               grid.style.pointerEvents = '';
+              if (matched.size < pairs.length) {
+                checkMemoryBotTurn();
+              }
             }
           }, 350);
         }
@@ -956,6 +965,9 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
           });
         });
         syncCardFaces();
+        if (matched.size < pairs.length) {
+          checkMemoryBotTurn();
+        }
       }, 420);
 
       if (matched.size === pairs.length) {

@@ -113,4 +113,8 @@ describe('Robot Opponent & Difficulty Selection for All Student Games', () => {
     expect(html).toContain("listArea.className = 'ga-vocab-scroll-area max-h-[58vh] overflow-y-auto px-1 pt-3 pb-2';");
     expect(html).toContain('<div class="space-y-6 student-games-multi-class mb-4 pt-2">');
   });
+
+  it('triggers checkMemoryBotTurn upon match in Memory Flip so Robot continues playing its turn', () => {
+    expect(memoryJs).toMatch(/syncCardFaces\(\);\s*if\s*\(matched\.size\s*<\s*pairs\.length\)\s*\{\s*checkMemoryBotTurn\(\);/);
+  });
 });
