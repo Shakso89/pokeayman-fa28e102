@@ -24754,7 +24754,7 @@ function openStudentVocabularyFlashcards(listName, trigger = null) {
   modal.querySelector('#student-vocab-size-increase').addEventListener('click', () => { popupScale = Math.min(1.2, +(popupScale + 0.1).toFixed(2)); updatePopupScale(); });
   updatePopupScale();
   const updateFontSize = () => { const word = modal.querySelector('#student-vocab-word'); if (word) word.style.fontSize = `${fontSize}px`; modal.querySelector('#student-vocab-font-size').textContent = `${fontSize}px`; };
-  const flip = () => { window.stopNaturalVocabulary?.(); flipped = !flipped; modal.querySelector('#student-vocab-card-inner').style.transform = flipped ? 'rotateY(180deg)' : 'rotateY(0deg)'; };
+  const flip = () => { flipped = !flipped; modal.querySelector('#student-vocab-card-inner').style.transform = flipped ? 'rotateY(180deg)' : 'rotateY(0deg)'; };
   modal.querySelector('#student-vocab-card').addEventListener('click', flip);
   if (!window.pickNaturalVoice) {
     window.pickNaturalVoice = language => {
@@ -35036,7 +35036,6 @@ function openVocabFlashcards(listName) {
   updatePopupScale();
   
   card.addEventListener('click', () => {
-    window.stopNaturalVocabulary?.();
     isFlipped = !isFlipped;
     inner.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
   });
