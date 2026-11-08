@@ -32,13 +32,16 @@ describe('Robot Opponent & Difficulty Selection for All Student Games', () => {
     expect(arcadeJs).toContain("['easy', 'medium', 'hard']");
   });
 
-  it('renders futuristic Robot difficulty picker with Easy, Normal, and Hard for both teacher and student dashboards', () => {
+  it('renders futuristic Robot difficulty picker with Easy, Normal, and Hard for both teacher and student dashboards without emojis', () => {
     expect(arcadeJs).toContain('ga-bot-difficulty-picker');
     expect(arcadeJs).toContain("id: 'easy', label: 'Easy'");
     expect(arcadeJs).toContain("id: 'normal', label: 'Normal'");
     expect(arcadeJs).toContain("id: 'hard', label: 'Hard'");
     expect(arcadeJs).toContain('OPPONENT: ROBOT');
     expect(arcadeJs).toContain('window.selectedBotDifficulty');
+    expect(arcadeJs).not.toContain("icon: '🌱'");
+    expect(arcadeJs).not.toContain("icon: '⚡'");
+    expect(arcadeJs).not.toContain("icon: '🔥'");
   });
 
   it('initializes activeGamePlayers with student and Robot opponent in chooseGamePlayers for students', () => {
@@ -47,9 +50,9 @@ describe('Robot Opponent & Difficulty Selection for All Student Games', () => {
     expect(html).toContain('pendingGamePlayers = 2;');
   });
 
-  it('renders a distinct robot badge for robot players in gameStudentAvatarMarkup', () => {
+  it('renders a distinct robot badge for robot players in gameStudentAvatarMarkup using SVG without emojis', () => {
     expect(html).toContain("student?.isBot || student?.student_name === 'Robot' || student?.__backendId === 'bot-robot'");
-    expect(html).toContain('🤖');
+    expect(html).toContain('aria-label="Robot opponent"');
   });
 
   it('integrates Robot bot turn logic across all 8 student games', () => {

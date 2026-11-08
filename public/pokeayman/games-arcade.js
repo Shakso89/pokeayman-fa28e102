@@ -1562,7 +1562,8 @@
       {
         id: 'easy', label: 'Easy',
         tag: 'ROOKIE · LV.1',
-        icon: '🌱',
+        iconSvg: '<svg class="w-6 h-6 sm:w-7 sm:h-7 text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.7)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"></path><path d="M10 20c5.5-2.5.8-6.4 3-10"></path><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"></path><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"></path></svg>',
+        pillIconSvg: '<svg class="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"></path><path d="M10 20c5.5-2.5.8-6.4 3-10"></path><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"></path><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"></path></svg>',
         bars: 1,
         desc: 'Relaxed & casual',
         badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40',
@@ -1574,7 +1575,8 @@
       {
         id: 'normal', label: 'Normal',
         tag: 'VETERAN · LV.2',
-        icon: '⚡',
+        iconSvg: '<svg class="w-6 h-6 sm:w-7 sm:h-7 text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.7)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
+        pillIconSvg: '<svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
         bars: 2,
         desc: 'Balanced match',
         badgeBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40',
@@ -1586,7 +1588,8 @@
       {
         id: 'hard', label: 'Hard',
         tag: 'MASTER · LV.3',
-        icon: '🔥',
+        iconSvg: '<svg class="w-6 h-6 sm:w-7 sm:h-7 text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.7)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"></path></svg>',
+        pillIconSvg: '<svg class="w-3.5 h-3.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"></path></svg>',
         bars: 3,
         desc: 'Clever & sharp',
         badgeBg: 'bg-rose-500/20 text-rose-300 border-rose-400/40',
@@ -1603,8 +1606,15 @@
       <!-- Cyber HUD Header -->
       <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-800/80">
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500/20 to-indigo-600/20 border border-cyan-400/40 flex items-center justify-center text-lg shadow-[0_0_12px_rgba(6,182,212,0.3)]">
-            🤖
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500/20 to-indigo-600/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]">
+            <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 8V4H8"></path>
+              <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+              <path d="M2 14h2"></path>
+              <path d="M20 14h2"></path>
+              <path d="M15 13v2"></path>
+              <path d="M9 13v2"></path>
+            </svg>
           </div>
           <div class="flex flex-col text-left">
             <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
@@ -1615,7 +1625,7 @@
           </div>
         </div>
         <div class="ga-bot-difficulty-header-pill flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-black uppercase tracking-wider ${currentMeta.badgeBg}">
-          <span class="ga-bot-diff-dot">${currentMeta.icon}</span>
+          <span class="ga-bot-diff-dot flex items-center">${currentMeta.pillIconSvg || ''}</span>
           <span class="ga-bot-difficulty-label">${currentMeta.label}</span>
         </div>
       </div>
@@ -1640,12 +1650,12 @@
               <span class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${tagClass}">
                 ${d.tag}
               </span>
-              ${isSelected ? `<span class="w-4 h-4 rounded-full ${d.activePill} text-slate-950 flex items-center justify-center text-[10px] font-black shadow">✓</span>` : `<span class="w-4 h-4"></span>`}
+              ${isSelected ? `<span class="w-4 h-4 rounded-full ${d.activePill} text-slate-950 flex items-center justify-center shadow"><svg class="w-2.5 h-2.5 stroke-[3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>` : `<span class="w-4 h-4"></span>`}
             </div>
 
             <!-- Big Glowing Icon -->
-            <div class="relative z-10 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl ${iconClass} border flex items-center justify-center text-2xl sm:text-3xl my-1 group-hover:scale-110 transition-transform shadow-md">
-              ${d.icon}
+            <div class="relative z-10 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl ${iconClass} border flex items-center justify-center my-1 group-hover:scale-110 transition-transform shadow-md">
+              ${d.iconSvg}
             </div>
 
             <!-- Title & Description -->
@@ -2401,7 +2411,7 @@
             ? 'border-cyan-400 bg-cyan-950/60 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400/40'
             : 'border-slate-700/50 bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
         }" aria-pressed="${Boolean(window.teacherRobotOpponent)}" title="Play vs Robot Opponent">
-          <span class="text-sm">🤖</span>
+          <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
           <span>vs Robot</span>
           <span class="ga-robot-pill text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${
             window.teacherRobotOpponent ? 'bg-cyan-400 text-slate-950' : 'bg-slate-800 text-slate-400'
@@ -2454,7 +2464,9 @@
           slot.className = 'p-3 rounded-2xl bg-cyan-950/60 border border-cyan-400 ring-1 ring-cyan-400/40 flex flex-col items-center justify-center gap-1.5 relative h-[88px] cursor-pointer hover:border-cyan-300 transition group';
           slot.innerHTML = `
             <span class="absolute top-1 left-2 text-[9px] font-black text-cyan-300 uppercase">P2</span>
-            <span class="text-2xl drop-shadow">🤖</span>
+            <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 drop-shadow">
+              <svg class="w-5 h-5 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg>
+            </div>
             <span class="text-xs font-black text-cyan-200 truncate w-full text-center">Robot</span>
             <span class="text-[9px] font-extrabold text-cyan-300/80 uppercase tracking-wider">${esc(diffLabel)}</span>
           `;
@@ -2544,7 +2556,7 @@
       renderLineup();
       if (countBadge) {
         if (isRobot && count === 1) {
-          countBadge.textContent = '1 student + 🤖 Robot';
+          countBadge.textContent = '1 student + Robot (AI)';
         } else if (isRobot && count === 0) {
           countBadge.textContent = `0 / ${maxAllowed} (vs Robot)`;
         } else {

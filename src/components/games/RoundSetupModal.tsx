@@ -11,6 +11,10 @@ import {
   Timer,
   Grid,
   Gift,
+  Bot,
+  Sprout,
+  Zap,
+  Flame,
 } from 'lucide-react';
 
 export interface StepperProps {
@@ -238,7 +242,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                 </h3>
                 <span className="text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/30">
                   {vsRobot && selectedPlayers.length === 1
-                    ? '1 student + 🤖 Robot'
+                    ? '1 student + Robot (AI)'
                     : vsRobot && selectedPlayers.length === 0
                     ? `0 / ${effectiveMaxPlayers} (vs Robot)`
                     : `${selectedPlayers.length} / ${effectiveMaxPlayers} selected`}
@@ -259,7 +263,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                   aria-pressed={vsRobot}
                   title="Play vs Robot Opponent"
                 >
-                  <span className="text-sm">🤖</span>
+                  <Bot className="w-4 h-4 text-cyan-400" />
                   <span>vs Robot</span>
                   <span
                     className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${
@@ -328,7 +332,9 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                       <span className="absolute top-1 left-2 text-[9px] font-black text-cyan-300 uppercase">
                         P{index + 1}
                       </span>
-                      <span className="text-2xl drop-shadow">🤖</span>
+                      <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 drop-shadow">
+                        <Bot className="w-5 h-5 text-cyan-300" />
+                      </div>
                       <span className="text-xs font-black text-cyan-200 truncate w-full text-center">
                         Robot
                       </span>
@@ -357,8 +363,8 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
               <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-b from-slate-900/95 via-slate-950 to-slate-950 border border-slate-800 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-sm shadow">
-                      🤖
+                    <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center shadow">
+                      <Bot className="w-4 h-4 text-cyan-400" />
                     </div>
                     <div className="flex flex-col text-left">
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
@@ -369,7 +375,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                     </div>
                   </div>
                   <span
-                    className={`px-2.5 py-0.5 rounded-full border text-[11px] font-black uppercase tracking-wider ${
+                    className={`px-2.5 py-0.5 rounded-full border text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
                       botDifficulty === 'hard'
                         ? 'bg-rose-500/20 text-rose-300 border-rose-400/40'
                         : botDifficulty === 'easy'
@@ -377,7 +383,22 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                         : 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40'
                     }`}
                   >
-                    {botDifficulty === 'hard' ? '🔥 HARD' : botDifficulty === 'easy' ? '🌱 EASY' : '⚡ NORMAL'}
+                    {botDifficulty === 'hard' ? (
+                      <>
+                        <Flame className="w-3.5 h-3.5 text-rose-400" />
+                        <span>HARD</span>
+                      </>
+                    ) : botDifficulty === 'easy' ? (
+                      <>
+                        <Sprout className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>EASY</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>NORMAL</span>
+                      </>
+                    )}
                   </span>
                 </div>
 
@@ -388,7 +409,6 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                         id: 'easy',
                         label: 'Easy',
                         tag: 'ROOKIE · LV.1',
-                        icon: '🌱',
                         bars: 1,
                         desc: 'Relaxed & casual',
                         activeBorder: 'border-emerald-400 bg-gradient-to-b from-emerald-950/70 via-slate-900 to-slate-950 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/50 scale-[1.02]',
@@ -399,7 +419,6 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                         id: 'normal',
                         label: 'Normal',
                         tag: 'VETERAN · LV.2',
-                        icon: '⚡',
                         bars: 2,
                         desc: 'Balanced match',
                         activeBorder: 'border-cyan-400 bg-gradient-to-b from-cyan-950/70 via-slate-900 to-slate-950 text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400/50 scale-[1.02]',
@@ -410,7 +429,6 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                         id: 'hard',
                         label: 'Hard',
                         tag: 'MASTER · LV.3',
-                        icon: '🔥',
                         bars: 3,
                         desc: 'Clever & sharp',
                         activeBorder: 'border-rose-400 bg-gradient-to-b from-rose-950/70 via-slate-900 to-slate-950 text-rose-200 shadow-[0_0_20px_rgba(244,63,94,0.4)] ring-1 ring-rose-400/50 scale-[1.02]',
@@ -442,12 +460,18 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                           </span>
                           {active && (
                             <span className={`w-3.5 h-3.5 rounded-full ${d.activeTag} text-[9px] font-black flex items-center justify-center`}>
-                              ✓
+                              <Check className="w-2.5 h-2.5 stroke-[3] text-slate-950" />
                             </span>
                           )}
                         </div>
-                        <div className="text-xl sm:text-2xl my-0.5 group-hover:scale-110 transition-transform">
-                          {d.icon}
+                        <div className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center my-0.5 group-hover:scale-110 transition-transform">
+                          {d.id === 'easy' ? (
+                            <Sprout className="w-6 h-6 text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
+                          ) : d.id === 'hard' ? (
+                            <Flame className="w-6 h-6 text-rose-400 drop-shadow-[0_0_6px_rgba(244,63,94,0.6)]" />
+                          ) : (
+                            <Zap className="w-6 h-6 text-cyan-400 drop-shadow-[0_0_6px_rgba(6,182,212,0.6)]" />
+                          )}
                         </div>
                         <div className="text-xs font-black uppercase text-white mt-1">
                           {d.label}
