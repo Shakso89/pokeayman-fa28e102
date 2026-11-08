@@ -141,4 +141,13 @@ describe('Robot Opponent & Difficulty Selection for All Student Games', () => {
   it('allows clicking Continue button on Surprise Boxes power-ups without blocking', () => {
     expect(baamJs).toMatch(/continueBtn\.addEventListener\('click',\s*\(\)\s*=>\s*\{\s*clearBaamBot\(\);\s*closeBaamRevealAsWrong\(\);/);
   });
+
+  it('ensures Robot never misspells in Unscramble makeover rounds and has high accuracy on Normal/Hard', () => {
+    expect(unscrambleJs).toContain('isMakeoverRound = awaitingMakeup || phase === \'retrying\';');
+    expect(unscrambleJs).toContain('if (diff === \'hard\') {');
+    expect(unscrambleJs).toContain('spellCorrect = true;');
+    expect(unscrambleJs).toContain('diff === \'normal\' || diff === \'medium\'');
+    expect(unscrambleJs).toContain('Math.random() < 0.90');
+    expect(unscrambleJs).toContain('if (curPlayer?.isBot && e.isTrusted) return;');
+  });
 });

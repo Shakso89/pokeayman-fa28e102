@@ -15365,13 +15365,27 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     const curPlayer = activeGamePlayers[activeGamePlayerIndex];
     if (!curPlayer?.isBot) return;
 
-    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
     scrambleBotTimer = setTimeout(() => {
       scrambleBotTimer = null;
       if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || submissionGuard) return;
 
-      const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
-      const spellCorrect = Math.random() < acc;
+      const isMakeoverRound = awaitingMakeup || phase === 'retrying';
+      // In makeover rounds, the robot can NEVER do wrong spelling.
+      // On Hard: 100% correct (robot cannot make spelling errors).
+      // On Normal: 90% correct (does not spell wrong constantly).
+      // On Easy: 70% correct.
+      let spellCorrect = true;
+      if (!isMakeoverRound) {
+        if (diff === 'hard') {
+          spellCorrect = true;
+        } else if (diff === 'normal' || diff === 'medium') {
+          spellCorrect = Math.random() < 0.90;
+        } else {
+          spellCorrect = Math.random() < 0.70;
+        }
+      }
+
       const targetLetters = correctWord.split('');
 
       if (!spellCorrect && targetLetters.length > 1) {
@@ -15406,7 +15420,11 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     }).join('');
     updateScrambleLetterSize();
     tilesContainer.querySelectorAll('.scramble-tile').forEach(tile => {
-      if (!usedIndices.has(parseInt(tile.dataset.index))) tile.addEventListener('click', () => queueScrambleTile(tile));
+      if (!usedIndices.has(parseInt(tile.dataset.index))) tile.addEventListener('click', (e) => {
+        const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+        if (curPlayer?.isBot && e.isTrusted) return;
+        queueScrambleTile(tile);
+      });
     });
     if (!selectedLetters.some(Boolean)) checkScrambleBotTurn();
   }
@@ -15549,8 +15567,16 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     }
   });
   
-  resetBtn.addEventListener('click', reset);
-  nextBtn.addEventListener('click', nextWord);
+  resetBtn.addEventListener('click', (e) => {
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (curPlayer?.isBot && e.isTrusted) return;
+    reset();
+  });
+  nextBtn.addEventListener('click', (e) => {
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (curPlayer?.isBot && e.isTrusted) return;
+    nextWord();
+  });
   
   const checkAnswer = () => {
     if (submissionGuard || phase === 'evaluating' || phase === 'retry-complete' || phase === 'turn-ended') return;
