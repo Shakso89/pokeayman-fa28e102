@@ -85,4 +85,27 @@ describe('Robot Opponent & Difficulty Selection for All Student Games', () => {
     expect(unscrambleJs).toContain("student_name: 'Robot'");
     expect(unscrambleJs).toContain('checkScrambleBotTurn');
   });
+
+  it('supports Robot opponent on teacher dashboard setup lobby with difficulty selection', () => {
+    // Teacher lobby has vs Robot toggle
+    expect(arcadeJs).toContain('ga-pick-robot-btn');
+    expect(arcadeJs).toContain('vs Robot');
+    expect(arcadeJs).toContain('window.teacherRobotOpponent');
+    expect(arcadeJs).toContain('ga-teacher-bot-difficulty');
+
+    // Stepper styling prevents line breaking and container overflow
+    expect(arcadeJs).toContain('ga-stepper-val min-w-[96px] whitespace-nowrap');
+    expect(arcadeJs).toContain("label: '5×5 dots · 16 boxes'");
+
+    // Teacher launch supports 1 student + Robot
+    expect(html).toContain('const isRobotOpponent = Boolean(window.teacherRobotOpponent);');
+    expect(html).toContain('if (isRobotOpponent && selected.length === 1)');
+    expect(html).toContain('Dots and Boxes requires 2 students or 1 student vs Robot to play');
+  });
+
+  it('provides generous top padding for vocabulary lists to eliminate text clipping', () => {
+    expect(html).toContain('padding: .75rem .5rem .75rem .5rem;');
+    expect(html).toContain("listArea.className = 'ga-vocab-scroll-area max-h-[58vh] overflow-y-auto px-1 pt-3 pb-2';");
+    expect(html).toContain('<div class="space-y-6 student-games-multi-class mb-4 pt-2">');
+  });
 });

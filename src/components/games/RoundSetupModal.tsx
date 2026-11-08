@@ -32,7 +32,7 @@ export const Stepper: React.FC<StepperProps> = ({
   disabledDec,
   disabledInc,
 }) => (
-  <div className="flex items-center justify-between w-[136px] min-w-[136px] max-w-[136px] h-9 bg-slate-950/80 border border-slate-800 rounded-lg p-1 px-1.5 shrink-0 box-border">
+  <div className="flex items-center justify-between min-w-[144px] max-w-fit w-auto h-9 bg-slate-950/80 border border-slate-800 rounded-lg p-1 px-1.5 shrink-0 box-border">
     <button
       type="button"
       onClick={onDecrease}
@@ -42,7 +42,7 @@ export const Stepper: React.FC<StepperProps> = ({
     >
       −
     </button>
-    <span className="min-w-[60px] text-center text-xs font-bold text-slate-200 px-2">
+    <span className="min-w-[80px] whitespace-nowrap text-center text-xs font-bold text-slate-200 px-2">
       {format ? format(value) : `${value}${suffix}`}
     </span>
     <button
@@ -158,6 +158,8 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
   const [gridDots, setGridDots] = useState<number>(defaultGridSize);
   const [currentTheme, setCurrentTheme] = useState<string>(selectedThemeId);
+  const [vsRobot, setVsRobot] = useState<boolean>(false);
+  const [botDifficulty, setBotDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
   const incTimer = () => {
     const currentIndex = TIMER_OPTIONS.indexOf(timerSeconds);
@@ -195,8 +197,9 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
   };
 
   const canStart =
-    selectedPlayers.length >= effectiveMinPlayers &&
-    selectedPlayers.length <= effectiveMaxPlayers;
+    (vsRobot && selectedPlayers.length === 1) ||
+    (selectedPlayers.length >= effectiveMinPlayers &&
+      selectedPlayers.length <= effectiveMaxPlayers);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
@@ -234,13 +237,38 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                   <span className="sr-only">Players</span>
                 </h3>
                 <span className="text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/30">
-                  {selectedPlayers.length} / {effectiveMaxPlayers} selected
+                  {vsRobot && selectedPlayers.length === 1
+                    ? '1 student + 🤖 Robot'
+                    : vsRobot && selectedPlayers.length === 0
+                    ? `0 / ${effectiveMaxPlayers} (vs Robot)`
+                    : `${selectedPlayers.length} / ${effectiveMaxPlayers} selected`}
                 </span>
                 <span className="text-[11px] text-slate-500 font-medium">
                   · {classStudents.length} in class
                 </span>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setVsRobot((prev) => !prev)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition text-xs font-bold cursor-pointer ${
+                    vsRobot
+                      ? 'border-cyan-400 bg-cyan-950/60 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400/40'
+                      : 'border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`}
+                  aria-pressed={vsRobot}
+                  title="Play vs Robot Opponent"
+                >
+                  <span className="text-sm">🤖</span>
+                  <span>vs Robot</span>
+                  <span
+                    className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${
+                      vsRobot ? 'bg-cyan-400 text-slate-950' : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {vsRobot ? 'ON' : 'OFF'}
+                  </span>
+                </button>
                 <button
                   type="button"
                   onClick={handleClearSelection}
@@ -264,27 +292,53 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
             <div className={`grid gap-3 ${effectiveMaxPlayers === 2 ? 'grid-cols-2' : 'grid-cols-4'}`}>
               {Array.from({ length: effectiveMaxPlayers }).map((_, index) => {
                 const player = selectedPlayers[index];
-                return player ? (
-                  <button
-                    key={`slot-${index}`}
-                    type="button"
-                    onClick={() => togglePlayer(player)}
-                    title="Click to remove"
-                    className="p-3 rounded-2xl bg-slate-800 border border-amber-400 ring-1 ring-amber-400/20 flex flex-col items-center justify-center gap-2 relative h-[88px] transition hover:border-amber-300 group cursor-pointer"
-                  >
-                    <span className="absolute top-1 left-2 text-[9px] font-black text-amber-400 uppercase">
-                      P{index + 1}
-                    </span>
-                    <img
-                      src={player.avatar_url || '/placeholder.svg'}
-                      alt={player.name}
-                      className="w-10 h-10 object-contain drop-shadow"
-                    />
-                    <span className="text-xs font-bold text-amber-400 truncate w-full text-center">
-                      {player.name}
-                    </span>
-                  </button>
-                ) : (
+                const isRobotSlot = !player && vsRobot && index === (selectedPlayers.length <= 1 ? 1 : -1);
+                if (player) {
+                  return (
+                    <button
+                      key={`slot-${index}`}
+                      type="button"
+                      onClick={() => togglePlayer(player)}
+                      title="Click to remove"
+                      className="p-3 rounded-2xl bg-slate-800 border border-amber-400 ring-1 ring-amber-400/20 flex flex-col items-center justify-center gap-2 relative h-[88px] transition hover:border-amber-300 group cursor-pointer"
+                    >
+                      <span className="absolute top-1 left-2 text-[9px] font-black text-amber-400 uppercase">
+                        P{index + 1}
+                      </span>
+                      <img
+                        src={player.avatar_url || '/placeholder.svg'}
+                        alt={player.name}
+                        className="w-10 h-10 object-contain drop-shadow"
+                      />
+                      <span className="text-xs font-bold text-amber-400 truncate w-full text-center">
+                        {player.name}
+                      </span>
+                    </button>
+                  );
+                }
+                if (isRobotSlot) {
+                  return (
+                    <button
+                      key={`slot-${index}`}
+                      type="button"
+                      onClick={() => setVsRobot(false)}
+                      title="Robot opponent (click to disable)"
+                      className="p-3 rounded-2xl bg-cyan-950/60 border border-cyan-400 ring-1 ring-cyan-400/40 flex flex-col items-center justify-center gap-1 relative h-[88px] transition hover:border-cyan-300 cursor-pointer"
+                    >
+                      <span className="absolute top-1 left-2 text-[9px] font-black text-cyan-300 uppercase">
+                        P{index + 1}
+                      </span>
+                      <span className="text-2xl drop-shadow">🤖</span>
+                      <span className="text-xs font-black text-cyan-200 truncate w-full text-center">
+                        Robot
+                      </span>
+                      <span className="text-[9px] font-extrabold text-cyan-300/80 uppercase tracking-wider capitalize">
+                        {botDifficulty}
+                      </span>
+                    </button>
+                  );
+                }
+                return (
                   <div
                     key={`slot-${index}`}
                     className="p-3 rounded-2xl bg-slate-900/40 border border-slate-800 flex flex-col items-center justify-center gap-2 h-[88px]"
@@ -297,6 +351,45 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                 );
               })}
             </div>
+
+            {/* Robot Difficulty Picker (when vsRobot is active) */}
+            {vsRobot && (
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🤖</span>
+                  <span className="text-xs font-bold text-cyan-200 uppercase tracking-wider">
+                    Robot Difficulty:
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5" role="radiogroup" aria-label="Robot Difficulty">
+                  {(
+                    [
+                      { id: 'easy', label: 'Easy', emoji: '🟢' },
+                      { id: 'medium', label: 'Medium', emoji: '🟡' },
+                      { id: 'hard', label: 'Hard', emoji: '🔴' },
+                    ] as const
+                  ).map((d) => {
+                    const active = botDifficulty === d.id;
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        onClick={() => setBotDifficulty(d.id)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1 ${
+                          active
+                            ? 'bg-cyan-400 text-slate-950 shadow-md ring-1 ring-cyan-300'
+                            : 'bg-slate-800/80 text-slate-300 hover:text-white border border-slate-700/60'
+                        }`}
+                        aria-checked={active}
+                      >
+                        <span>{d.emoji}</span>
+                        <span>{d.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Remaining Roster Grid */}
             <div className="grid grid-cols-4 gap-3 mt-2 overflow-y-auto max-h-[240px] pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]">
@@ -522,8 +615,22 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
 
           <button
             type="button"
-            onClick={() =>
-              onStartGame?.(selectedPlayers, {
+            onClick={() => {
+              const finalPlayers =
+                vsRobot && selectedPlayers.length === 1
+                  ? [
+                      selectedPlayers[0],
+                      {
+                        id: 'bot-robot',
+                        name: 'Robot',
+                        student_name: 'Robot',
+                        avatar_url: '',
+                        isBot: true,
+                        botDifficulty,
+                      } as any,
+                    ]
+                  : selectedPlayers;
+              onStartGame?.(finalPlayers, {
                 theme: currentTheme,
                 pointsToWin,
                 winnerCoins,
@@ -532,8 +639,10 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                 gridSize: gridDots,
                 cardCount: baamCardCount,
                 powerUpsEnabled,
-              })
-            }
+                vsRobot,
+                botDifficulty: vsRobot ? botDifficulty : undefined,
+              });
+            }}
             disabled={!canStart}
             aria-label={`Start game · ${selectedPlayers.length} player${selectedPlayers.length === 1 ? '' : 's'} →`}
             className="px-8 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-black text-sm transition flex items-center gap-2 shadow-lg shadow-amber-400/20 cursor-pointer"

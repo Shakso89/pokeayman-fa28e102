@@ -2083,11 +2083,11 @@
         <span class="ga-stepper-subtitle text-[10px] text-amber-400 font-medium truncate hidden"></span>
       </div>
     </div>
-    <div class="flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0">
+    <div class="flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0 min-w-[144px] justify-between">
       <button type="button" class="ga-stepper-dec w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer" aria-label="Decrease ${esc(title)}">
         −
       </button>
-      <span class="ga-stepper-val min-w-[70px] text-center text-xs font-black text-slate-200 px-1 select-none"></span>
+      <span class="ga-stepper-val min-w-[96px] whitespace-nowrap text-center text-xs font-black text-slate-200 px-1 select-none"></span>
       <button type="button" class="ga-stepper-inc w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer" aria-label="Increase ${esc(title)}">
         +
       </button>
@@ -2294,6 +2294,17 @@
         <span class="text-[11px] text-slate-500 font-medium whitespace-nowrap">· ${checks.length} in class</span>
       </div>
       <div class="flex items-center gap-2 shrink-0">
+        ${!isSoloGame ? `<button type="button" data-q="robot" class="ga-pick-robot-btn flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border transition text-xs font-bold cursor-pointer ${
+          window.teacherRobotOpponent
+            ? 'border-cyan-400 bg-cyan-950/60 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400/40'
+            : 'border-slate-700/50 bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+        }" aria-pressed="${Boolean(window.teacherRobotOpponent)}" title="Play vs Robot Opponent">
+          <span class="text-sm">🤖</span>
+          <span>vs Robot</span>
+          <span class="ga-robot-pill text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${
+            window.teacherRobotOpponent ? 'bg-cyan-400 text-slate-950' : 'bg-slate-800 text-slate-400'
+          }">${window.teacherRobotOpponent ? 'ON' : 'OFF'}</span>
+        </button>` : ''}
         <button type="button" data-q="clear" class="ga-pick-clear-btn flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs font-bold cursor-pointer">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           <span>Clear</span>
@@ -2312,6 +2323,9 @@
     const renderLineup = () => {
       const checkedBoxes = checks.filter(c => c.checked);
       lineupStage.innerHTML = '';
+      const isRobot = Boolean(window.teacherRobotOpponent && !isSoloGame);
+      const robotSlotIdx = (isRobot && checkedBoxes.length <= 1) ? 1 : -1;
+
       for (let i = 0; i < maxAllowed; i++) {
         const chk = checkedBoxes[i];
         const slot = document.createElement('div');
@@ -2330,6 +2344,21 @@
             e.stopPropagation();
             chk.checked = false;
             refresh?.();
+            update();
+          });
+        } else if (i === robotSlotIdx) {
+          const diff = window.selectedBotDifficulty || 'medium';
+          slot.className = 'p-3 rounded-2xl bg-cyan-950/60 border border-cyan-400 ring-1 ring-cyan-400/40 flex flex-col items-center justify-center gap-1.5 relative h-[88px] cursor-pointer hover:border-cyan-300 transition group';
+          slot.innerHTML = `
+            <span class="absolute top-1 left-2 text-[9px] font-black text-cyan-300 uppercase">P2</span>
+            <span class="text-2xl drop-shadow">🤖</span>
+            <span class="text-xs font-black text-cyan-200 truncate w-full text-center">Robot</span>
+            <span class="text-[9px] font-extrabold text-cyan-300/80 uppercase tracking-wider capitalize">${esc(diff)}</span>
+          `;
+          slot.title = 'Robot Opponent. Click to disable.';
+          slot.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.teacherRobotOpponent = false;
             update();
           });
         } else {
@@ -2372,8 +2401,53 @@
     const countBadge = bar.querySelector('.ga-player-count');
     const update = () => {
       const count = checks.filter(c => c.checked).length;
+      const isRobot = Boolean(window.teacherRobotOpponent && !isSoloGame);
+
+      const robotBtn = bar.querySelector('.ga-pick-robot-btn');
+      const robotPill = bar.querySelector('.ga-robot-pill');
+      if (robotBtn) {
+        robotBtn.setAttribute('aria-pressed', String(isRobot));
+        robotBtn.className = `ga-pick-robot-btn flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg border transition text-xs font-bold cursor-pointer ${
+          isRobot
+            ? 'border-cyan-400 bg-cyan-950/60 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400/40'
+            : 'border-slate-700/50 bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+        }`;
+      }
+      if (robotPill) {
+        robotPill.className = `ga-robot-pill text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${
+          isRobot ? 'bg-cyan-400 text-slate-950' : 'bg-slate-800 text-slate-400'
+        }`;
+        robotPill.textContent = isRobot ? 'ON' : 'OFF';
+      }
+
+      let botDiffPanel = players.querySelector('.ga-teacher-bot-difficulty');
+      if (isRobot) {
+        if (!botDiffPanel) {
+          botDiffPanel = document.createElement('div');
+          botDiffPanel.className = 'ga-teacher-bot-difficulty mt-1';
+          lineupStage.after(botDiffPanel);
+        }
+        botDiffPanel.innerHTML = renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'medium');
+        attachBotDifficultyListeners(botDiffPanel);
+        botDiffPanel.querySelectorAll('.ga-difficulty-choice').forEach(btn => {
+          btn.addEventListener('click', () => {
+            renderLineup();
+          });
+        });
+      } else {
+        if (botDiffPanel) botDiffPanel.remove();
+      }
+
       renderLineup();
-      if (countBadge) countBadge.textContent = `${count} / ${maxAllowed} selected`;
+      if (countBadge) {
+        if (isRobot && count === 1) {
+          countBadge.textContent = '1 student + 🤖 Robot';
+        } else if (isRobot && count === 0) {
+          countBadge.textContent = `0 / ${maxAllowed} (vs Robot)`;
+        } else {
+          countBadge.textContent = `${count} / ${maxAllowed} selected`;
+        }
+      }
       if (isSoloGame) {
         const sel = checks.find(c => c.checked);
         const blocked = !sel;
@@ -2388,25 +2462,25 @@
         return;
       }
       if (isDotsAndBoxes) {
-        const blocked = count !== 2;
+        const blocked = (isRobot && count === 1) ? false : (count !== 2);
         if (next) {
           next.disabled = blocked;
           next.setAttribute('aria-disabled', String(blocked));
         }
         if (error) {
-          error.textContent = blocked ? 'Dots and Boxes requires exactly 2 students to start.' : '';
+          error.textContent = blocked ? 'Dots and Boxes requires exactly 2 students (or 1 student vs Robot) to start.' : '';
           error.classList.toggle('hidden', !blocked);
         }
         return;
       }
       if (requiresTwoPlayers) {
-        const blocked = count < 2;
+        const blocked = (isRobot && count === 1) ? false : (count < 2);
         if (next) {
           next.disabled = blocked;
           next.setAttribute('aria-disabled', String(blocked));
         }
         if (error) {
-          error.textContent = blocked ? 'Surprise Boxes needs at least 2 students to start.' : '';
+          error.textContent = blocked ? 'Surprise Boxes needs at least 2 students (or 1 student vs Robot) to start.' : '';
           error.classList.toggle('hidden', !blocked);
         }
         return;
@@ -2445,6 +2519,11 @@
     }
     bar.addEventListener('click', e => {
       const q = e.target.closest('button')?.dataset.q; if (!q) return;
+      if (q === 'robot') {
+        window.teacherRobotOpponent = !window.teacherRobotOpponent;
+        update();
+        return;
+      }
       if (q === 'clear') {
         set([]);
         return;
@@ -2452,6 +2531,8 @@
       const shuffled = [...checks];
       for (let i = shuffled.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
       if (isSoloGame) {
+        set(q === 'random' && shuffled[0] ? [shuffled[0]] : []);
+      } else if (window.teacherRobotOpponent) {
         set(q === 'random' && shuffled[0] ? [shuffled[0]] : []);
       } else {
         set(q === 'random' ? shuffled.slice(0, maxAllowed) : []);
