@@ -5960,8 +5960,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       }
 
       if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
-        handleCrosswordFailure('Select at least one student to play Crosswords.');
-        return;
+        const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+        activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+      } else if (activeGamePlayers.length === 1) {
+        activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
       }
 
       setGameReplay(() => { resetGameTurnState(); window.openGameCrossword(listName, timerSeconds, wordCount); });
@@ -6106,6 +6108,51 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       activeInput = wordInputs.find(input => !input.readOnly) || wordInputs[0];
       activeInput?.focus({ preventScroll: true });
     }));
+    let cwBotTimer = null;
+    const clearCrosswordBot = () => {
+      if (cwBotTimer) {
+        clearTimeout(cwBotTimer);
+        cwBotTimer = null;
+      }
+    };
+    const checkCrosswordBotTurn = () => {
+      clearCrosswordBot();
+      if (!document.body.contains(modal) || checkLocked || completedWords.size === allWords.length) return;
+      const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (!curPlayer?.isBot) return;
+
+      const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+      cwBotTimer = setTimeout(() => {
+        cwBotTimer = null;
+        if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || checkLocked) return;
+
+        const uncompleted = allWords.filter(w => !completedWords.has(w.id));
+        if (!uncompleted.length) return;
+
+        const targetWordObj = uncompleted[Math.floor(Math.random() * uncompleted.length)];
+        selectWord(targetWordObj);
+
+        const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+        const isCorrect = Math.random() < acc;
+
+        const keys = Array.from({ length: targetWordObj.answer.length }, (_, i) => coordKey(targetWordObj.row + (targetWordObj.direction === 'down' ? i : 0), targetWordObj.col + (targetWordObj.direction === 'across' ? i : 0)));
+
+        keys.forEach((key, idx) => {
+          const char = isCorrect ? targetWordObj.answer[idx] : (Math.random() < 0.6 ? 'X' : targetWordObj.answer[idx]);
+          inputState.set(key, char);
+          const input = modal.querySelector(`input[data-cell-key="${key}"]`);
+          if (input && !input.readOnly) {
+            input.value = char;
+          }
+        });
+
+        setTimeout(() => {
+          if (!document.body.contains(modal)) return;
+          solveActiveWord();
+        }, 600);
+      }, 1100);
+    };
+
     const solveActiveWord = () => {
       if (!selectedWord || completedWords.has(selectedWord.id) || checkLocked) return;
       const word = selectedWord;
@@ -6144,6 +6191,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         activeInput = nextInputs.find(input => !input.readOnly) || nextInputs[0];
         activeInput?.focus({ preventScroll: true });
         checkLocked = false;
+        checkCrosswordBotTurn();
       } else {
         wordCells.forEach(cell => {
           if (!cell.classList.contains('is-correct')) {
@@ -6174,6 +6222,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           activeInput = modal.querySelector(`input[data-cell-key="${firstKey || keys[0]}"]`);
           activeInput?.focus({ preventScroll: true });
           checkLocked = false;
+          checkCrosswordBotTurn();
         }, 750);
         return;
       }
@@ -6336,7 +6385,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         activeInput.dispatchEvent(new Event('input', { bubbles: true }));
       });
     });
-    modal.querySelector('#crossword-close').addEventListener('click', () => { modal._stopPlayerTurnTimer?.(); boardResizeObserver.disconnect(); modal.remove(); returnToGamesTab(); });
+    modal.querySelector('#crossword-close').addEventListener('click', () => { clearCrosswordBot(); modal._stopPlayerTurnTimer?.(); boardResizeObserver.disconnect(); modal.remove(); returnToGamesTab(); });
+    checkCrosswordBotTurn();
     } catch (err) {
       console.error('Crossword game failed to launch:', err);
       handleCrosswordFailure(CROSSWORD_FALLBACK_MSG);
@@ -6420,10 +6470,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
     if (!Array.isArray(activeGamePlayers) || activeGamePlayers.length < 2) {
       if (Array.isArray(activeGamePlayers) && activeGamePlayers.length === 1) {
-        activeGamePlayers.push({
-          student_name: 'Pikachu Bot',
-          avatar_pokemon_id: 25,
-          __backendId: 'bot-pikachu',
+        activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || {
+          student_name: 'Robot',
+          avatar_pokemon_id: 137,
+          __backendId: 'bot-robot',
+          isBot: true,
+          botDifficulty: window.selectedBotDifficulty || 'medium',
         });
       } else {
         if (typeof toast === 'function') {
@@ -6794,8 +6846,98 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       } catch (_) {}
     });
 
+    let botTurnTimer = null;
+    const clearBotTurn = () => {
+      if (botTurnTimer) {
+        clearTimeout(botTurnTimer);
+        botTurnTimer = null;
+      }
+    };
+
+    const checkBotTurn = () => {
+      clearBotTurn();
+      if (phase === 'ROUND_OVER' || !document.body.contains(modal)) return;
+      const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (!curPlayer?.isBot) return;
+
+      const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+
+      if (phase === 'MCQ') {
+        botTurnTimer = setTimeout(() => {
+          botTurnTimer = null;
+          if (phase !== 'MCQ' || !document.body.contains(modal)) return;
+          const buttons = Array.from(modal.querySelectorAll('.dots-choice-btn:not([disabled])'));
+          if (!buttons.length || !currentQuestion) return;
+
+          const targetWord = String(currentQuestion.correctAnswer || '').trim().toLowerCase();
+          const correctBtn = buttons.find(b => String(b.dataset.option || '').trim().toLowerCase() === targetWord);
+          const wrongBtns = buttons.filter(b => b !== correctBtn);
+
+          const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+          const pickCorrect = Math.random() < acc && correctBtn;
+          const chosen = (pickCorrect ? correctBtn : (wrongBtns[0] || correctBtn));
+          chosen?.click();
+        }, 900);
+      } else if (phase === 'DRAW_LINE') {
+        botTurnTimer = setTimeout(() => {
+          botTurnTimer = null;
+          if (phase !== 'DRAW_LINE' || !document.body.contains(modal)) return;
+
+          const availableH = [];
+          for (let r = 0; r < N; r++) {
+            for (let c = 0; c < numBoxes; c++) {
+              if (horizontalLines[`${r}-${c}`] === null) availableH.push({ type: 'H', r, c });
+            }
+          }
+          const availableV = [];
+          for (let r = 0; r < numBoxes; r++) {
+            for (let c = 0; c < N; c++) {
+              if (verticalLines[`${r}-${c}`] === null) availableV.push({ type: 'V', r, c });
+            }
+          }
+          const allAvailable = [...availableH, ...availableV];
+          if (!allAvailable.length) return;
+
+          const completesBox = (line) => {
+            let count = 0;
+            for (let r = 0; r < numBoxes; r++) {
+              for (let c = 0; c < numBoxes; c++) {
+                if (boxes[`${r}-${c}`] !== null) continue;
+                let filled = 0;
+                if (horizontalLines[`${r}-${c}`] !== null || (line.type === 'H' && line.r === r && line.c === c)) filled++;
+                if (horizontalLines[`${r + 1}-${c}`] !== null || (line.type === 'H' && line.r === r + 1 && line.c === c)) filled++;
+                if (verticalLines[`${r}-${c}`] !== null || (line.type === 'V' && line.r === r && line.c === c)) filled++;
+                if (verticalLines[`${r}-${c + 1}`] !== null || (line.type === 'V' && line.r === r && line.c === c + 1)) filled++;
+                if (filled === 4) count++;
+              }
+            }
+            return count;
+          };
+
+          let chosenMove = null;
+          if (diff === 'hard' || (diff === 'medium' && Math.random() < 0.8)) {
+            for (const move of allAvailable) {
+              if (completesBox(move) > 0) {
+                chosenMove = move;
+                break;
+              }
+            }
+          }
+
+          if (!chosenMove) {
+            chosenMove = allAvailable[Math.floor(Math.random() * allAvailable.length)];
+          }
+
+          if (chosenMove) {
+            handleDrawLine(chosenMove.type, chosenMove.r, chosenMove.c);
+          }
+        }, 800);
+      }
+    };
+
     const cleanupAndClose = () => {
       stopMatchTimer();
+      clearBotTurn();
       if (typeof stopPlayerTurnTimer === 'function') stopPlayerTurnTimer(modal);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       modal.remove();
@@ -6870,6 +7012,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       }
 
       updateTimerDisplay();
+      checkBotTurn();
     };
 
     const renderQuestion = () => {
@@ -8887,6 +9030,83 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     </section>`;
   };
 
+  window.selectedBotDifficulty = window.selectedBotDifficulty || 'medium';
+
+  window.createRobotPlayer = function (difficulty = (window.selectedBotDifficulty || 'medium')) {
+    const diff = ['easy', 'medium', 'hard'].includes(String(difficulty).toLowerCase()) ? String(difficulty).toLowerCase() : 'medium';
+    return {
+      student_name: 'Robot',
+      name: 'Robot',
+      __backendId: 'bot-robot',
+      id: 'bot-robot',
+      student_id: 'bot-robot',
+      avatar_pokemon_id: 137,
+      isBot: true,
+      botDifficulty: diff,
+      coins: 0
+    };
+  };
+
+  const renderBotDifficultyPickerMarkup = (selectedDifficulty = (window.selectedBotDifficulty || 'medium')) => {
+    const diff = ['easy', 'medium', 'hard'].includes(selectedDifficulty) ? selectedDifficulty : 'medium';
+    const difficulties = [
+      { id: 'easy', label: 'Easy', emoji: '🟢', desc: 'Relaxed & casual' },
+      { id: 'medium', label: 'Medium', emoji: '🟡', desc: 'Balanced match' },
+      { id: 'hard', label: 'Hard', emoji: '🔴', desc: 'Clever & sharp' }
+    ];
+    return `<section class="ga-bot-difficulty-picker ga-round-setting my-3" aria-label="Robot opponent difficulty">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+          <span class="text-base" aria-hidden="true">🤖</span>
+          <span>Opponent: Robot</span>
+        </h3>
+        <span class="ga-bot-difficulty-label text-xs font-bold text-amber-200 capitalize" aria-live="polite">${esc(diff)}</span>
+      </div>
+      <div class="grid grid-cols-3 gap-2 ga-difficulty-radiogroup" role="radiogroup" aria-label="Robot Difficulty">
+        ${difficulties.map(d => {
+          const isSelected = d.id === diff;
+          const borderCls = isSelected ? 'border-amber-400 bg-amber-400/20 text-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50' : 'border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-white';
+          return `<button type="button" class="ga-difficulty-choice ${isSelected ? 'is-selected' : ''} py-2 px-2.5 rounded-xl border-2 ${borderCls} font-bold text-sm transition-all flex flex-col items-center gap-0.5 cursor-pointer" data-difficulty="${d.id}" aria-checked="${isSelected}">
+            <span class="text-base">${d.emoji}</span>
+            <span class="text-xs font-extrabold">${d.label}</span>
+            <span class="text-[10px] opacity-75 font-normal">${d.desc}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    </section>`;
+  };
+
+  const attachBotDifficultyListeners = (panel) => {
+    panel.querySelectorAll('.ga-difficulty-choice').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const diff = btn.dataset.difficulty;
+        window.selectedBotDifficulty = diff;
+        panel.querySelectorAll('.ga-difficulty-choice').forEach(b => {
+          const sel = b.dataset.difficulty === diff;
+          b.classList.toggle('is-selected', sel);
+          b.setAttribute('aria-checked', String(sel));
+          b.className = `ga-difficulty-choice ${sel ? 'is-selected border-amber-400 bg-amber-400/20 text-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50' : 'border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-white'} py-2 px-2.5 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center gap-0.5 cursor-pointer`;
+        });
+        const label = panel.querySelector('.ga-bot-difficulty-label');
+        if (label) label.textContent = diff;
+        if (Array.isArray(activeGamePlayers) && activeGamePlayers[1]?.isBot) {
+          activeGamePlayers[1].botDifficulty = diff;
+        }
+      });
+    });
+  };
+
+  const ensureStudentRobotPlayers = (difficulty) => {
+    const diff = difficulty || window.selectedBotDifficulty || 'medium';
+    const curName = (typeof currentStudent !== 'undefined' ? currentStudent : '') || 'Player';
+    const student = (Array.isArray(activeGamePlayers) && activeGamePlayers[0]) || (typeof getAllStudents === 'function' ? getAllStudents().find(s => s.student_name === curName) : null) || { student_name: curName, avatar_pokemon_id: 25 };
+    const robot = window.createRobotPlayer(diff);
+    activeGamePlayers = [student, robot];
+    pendingGamePlayers = 2;
+    activeGameScores = [0, 0];
+    activeGamePlayerIndex = 0;
+  };
+
   window.gaStudentSetup = function (listName, fnName) {
     const resolvedFnName = fnName || (window.pendingChosenGame ? window.pendingChosenGame.fn : '');
     const game = GAMES.find(item => item.fn === resolvedFnName && !item.teacherOnly);
@@ -8914,11 +9134,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </div>
           <div class="ga-theme-grid" role="radiogroup" aria-label="Choose visual style">${renderThemeCardsMarkup(selectedTheme.id)}</div>
         </section>
+        ${renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'medium')}
         ${resolvedFnName === 'chooseCrossword' ? `<section class="ga-crossword-count" aria-label="Crossword word count"><label for="ga-crossword-word-count">Words in puzzle</label><div class="ga-crossword-count-controls"><input id="ga-crossword-word-count" type="number" min="2" max="${crosswordWordMax}" value="${crosswordWordMax}" inputmode="numeric"><button type="button" id="ga-crossword-play-all">Play ${rawCrosswordCount > CROSSWORD_SAFE_MAX ? `Max (${crosswordWordMax}` : `All (${crosswordWordMax}`} words)</button></div>${rawCrosswordCount > CROSSWORD_SAFE_MAX ? `<p class="ga-crossword-hint text-xs text-amber-300 font-semibold mt-1">Crosswords support up to ${CROSSWORD_SAFE_MAX} words for best board layout.</p>` : ''}</section>` : ''}
         <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
           <button type="button" class="btn-primary ga-student-start-btn" style="padding: 0.75rem 1.75rem; font-size: 1rem; font-weight: 800;">Start ${esc(game.name)} →</button>
         </div>`;
       panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
+      attachBotDifficultyListeners(panel);
       if (resolvedFnName === 'chooseCrossword') {
         const cwInput = panel.querySelector('#ga-crossword-word-count');
         const cwSection = panel.querySelector('.ga-crossword-count');
@@ -8959,6 +9181,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         const crosswordCount = crosswordCountInput ? Number(crosswordCountInput.value) : null;
         if (crosswordCountInput && (!Number.isInteger(crosswordCount) || crosswordCount < 2 || crosswordCount > crosswordWordMax)) { crosswordCountInput.setCustomValidity(`Enter a whole number from 2 to ${crosswordWordMax}.`); crosswordCountInput.reportValidity(); return; }
         panel.remove();
+        ensureStudentRobotPlayers(window.selectedBotDifficulty || 'medium');
         if (resolvedFnName === 'startVocabBattle') window.startVocabBattle(listName);
         else if (resolvedFnName === 'startListenCatch') window.startListenCatch(listName);
         else {
@@ -8983,12 +9206,16 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const panel = document.createElement('section');
     panel.className = 'game-inline-view ga-student-setup ga-hub';
     const isBaam = fnName === 'chooseBaamboozlePowerUps';
-    const counts = isBaam ? [8, 16] : [5, 10, 15];
-    const unitLabel = isBaam ? 'cards' : 'words';
+    const isDots = fnName === 'chooseDotsAndBoxes';
+    const counts = isBaam ? [8, 16] : (isDots ? [4, 9] : [5, 10, 15]);
+    const unitLabel = isBaam ? 'cards' : (isDots ? 'boxes' : 'words');
     panel.setAttribute('aria-label', `${game.name} ${unitLabel}`);
     const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
-    panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of ${unitLabel}">${counts.map(count => `<button type="button" class="btn-primary" data-count="${count}" ${(isBaam ? words.length < 1 : words.length < count) ? 'disabled' : ''}><strong>${count}</strong><span>${unitLabel}</span></button>`).join('')}</div>`;
+    panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header>
+      ${renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'medium')}
+      <div class="ga-student-counts" role="group" aria-label="Number of ${unitLabel}">${counts.map(count => `<button type="button" class="btn-primary" data-count="${count}" ${(isBaam ? words.length < 1 : (isDots ? words.length < 2 : words.length < count)) ? 'disabled' : ''}><strong>${count}</strong><span>${unitLabel}</span></button>`).join('')}</div>`;
     panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
+    attachBotDifficultyListeners(panel);
     panel.querySelectorAll('[data-count]').forEach(button => button.addEventListener('click', () => {
       const count = Number(button.dataset.count);
       pendingGameTimerSeconds = 0;
@@ -8996,12 +9223,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       activeGameReward = 0;
       resetGameTurnState();
       panel.remove();
+      ensureStudentRobotPlayers(window.selectedBotDifficulty || 'medium');
       if (fnName === 'chooseMatchWordCount') openGameMatch(listName, count, 0);
       else if (fnName === 'chooseMemoryDifficulty') openGameMemory(listName, 'easy', 0, count);
       else if (fnName === 'chooseScrambleWordCount') { window.scrambleSession = null; (window.openGameScramble || openGameScramble)(listName, count, 0); }
       else if (fnName === 'chooseFindMeScore') openGameFindMe(listName, count, 0);
       else if (fnName === 'chooseHangmanWordCount') openGameHangman(listName, count, 0, 'easy', true);
       else if (fnName === 'chooseBaamboozlePowerUps') openBaamboozle(listName, typeof baamboozlePowerUps !== 'undefined' ? baamboozlePowerUps : [], count);
+      else if (fnName === 'chooseDotsAndBoxes') {
+        const gridDots = count === 4 ? 3 : (count === 16 ? 5 : 4);
+        (window.openGameDotsAndBoxes || openGameDotsAndBoxes)(listName, gridDots, 0);
+      }
     }));
     area.appendChild(panel);
   };
@@ -11723,6 +11955,15 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     // Surprise Boxes stays inside the normal page view; other games retain fullscreen behavior.
     // Preserve the exact 2–4 students chosen in the pre-game chooser.
     const baamPlayers = (activeGamePlayers || []).slice(0, 4);
+    if (baamPlayers.length === 1) {
+      baamPlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || {
+        student_name: 'Robot',
+        avatar_pokemon_id: 137,
+        __backendId: 'bot-robot',
+        isBot: true,
+        botDifficulty: window.selectedBotDifficulty || 'medium'
+      });
+    }
     const baamQ = sel => modal.querySelector(sel) || document.querySelector('.baam-stage-portal ' + sel);
     if (baamPlayers.length < 2) { toast('Select at least two students for Surprise Boxes'); modal.remove(); return; }
     activeGamePlayers = baamPlayers;
@@ -11961,6 +12202,61 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         answerProgressionTimer = null;
       }
     };
+    let baamBotTimer = null;
+    const clearBaamBot = () => {
+      if (baamBotTimer) {
+        clearTimeout(baamBotTimer);
+        baamBotTimer = null;
+      }
+    };
+    const checkBaamBotTurn = () => {
+      clearBaamBot();
+      if (!document.body.contains(modal)) return;
+      const curPlayer = baamPlayers[activeGamePlayerIndex];
+      if (!curPlayer?.isBot) return;
+
+      const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+      const revealPanel = baamQ('#baam-reveal');
+      const isQuestionOpen = revealPanel && !revealPanel.classList.contains('hidden');
+
+      if (isQuestionOpen) {
+        const continueBtn = revealPanel.querySelector('.baam-power-continue-btn');
+        if (continueBtn) {
+          baamBotTimer = setTimeout(() => {
+            baamBotTimer = null;
+            if (!revealPanel.classList.contains('hidden')) {
+              continueBtn.click();
+            }
+          }, 1100);
+          return;
+        }
+
+        const choiceBtns = Array.from(revealPanel.querySelectorAll('.baam-choice-btn:not([disabled])'));
+        if (!choiceBtns.length) return;
+        baamBotTimer = setTimeout(() => {
+          baamBotTimer = null;
+          if (revealPanel.classList.contains('hidden')) return;
+          const targetWord = String(selectedCard?.vocab_word || '').trim().toLowerCase();
+          const correctBtn = choiceBtns.find(b => String(b.dataset.choice || '').trim().toLowerCase() === targetWord);
+          const wrongBtns = choiceBtns.filter(b => b !== correctBtn);
+
+          const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+          const pickCorrect = Math.random() < acc && correctBtn;
+          const chosen = (pickCorrect ? correctBtn : (wrongBtns[0] || correctBtn));
+          chosen?.click();
+        }, 1200);
+      } else {
+        baamBotTimer = setTimeout(() => {
+          baamBotTimer = null;
+          if (!document.body.contains(modal)) return;
+          if (baamPlayers[activeGamePlayerIndex] !== curPlayer) return;
+          const unrevealedTiles = Array.from(modal.querySelectorAll('.baam-tile:not([disabled])'));
+          if (!unrevealedTiles.length) return;
+          const randomTile = unrevealedTiles[Math.floor(Math.random() * unrevealedTiles.length)];
+          randomTile?.click();
+        }, 1100);
+      }
+    };
     const reveal = () => {
       clearAnswerTimer();
       const w = deck[index % deck.length];
@@ -12012,6 +12308,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           continueBtn.addEventListener('click', closeBaamRevealAsWrong);
           answerControls.appendChild(continueBtn);
           answerControls.classList.remove('hidden');
+          checkBaamBotTurn();
         }
         setTimeout(() => {
           if (revealPanel.classList.contains('baam-powerup-reveal')) {
@@ -12104,6 +12401,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           answerControls.appendChild(btn);
         });
         answerControls.classList.remove('hidden');
+        checkBaamBotTurn();
       }
     };
     const closeBaamRevealAsWrong = () => {
@@ -12118,6 +12416,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       selectedCard = null;
       revealPanel.classList.add('hidden');
       if (chosenCards.size === deck.length) endBaamboozle();
+      else checkBaamBotTurn();
     };
     const markAnswer = (isCorrect) => {
       clearAnswerTimer();
@@ -12142,6 +12441,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       selectedCard = null;
       baamQ('#baam-reveal').classList.add('hidden');
       if (chosenCards.size >= deck.length) endBaamboozle();
+      else checkBaamBotTurn();
     };
     const baamPortal = document.createElement('div');
     baamPortal.className = 'baam-stage-portal';
@@ -12167,7 +12467,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       tile.disabled = true;
       tile.classList.add('is-opened');
     }));
-    modal.querySelector('#baam-close')?.addEventListener('click', () => { clearAnswerTimer(); stopGameFinishedActivity(modal); modal.remove(); returnToGamesTab(); }); modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
+    modal.querySelector('#baam-close')?.addEventListener('click', () => { clearAnswerTimer(); clearBaamBot(); stopGameFinishedActivity(modal); modal.remove(); returnToGamesTab(); }); modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
+    checkBaamBotTurn();
   }
   window.openBaamboozle = openBaamboozle;
 })();
@@ -12206,6 +12507,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   window.chooseHangmanWordCount = chooseHangmanWordCount;
 
   function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty = 'easy', freshRound = false, studentRound = null) {
+    if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
+      const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+      activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+    } else if (activeGamePlayers.length === 1) {
+      activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+    }
     const difficultyConfig = { easy: { maxWrong: 8, showClue: true }, hard: { maxWrong: 8, showClue: false } };
     difficulty = difficultyConfig[difficulty] ? difficulty : 'easy';
     const activeDifficulty = difficultyConfig[difficulty];
@@ -12338,6 +12645,43 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       button.classList.toggle('ring-4', active);
       button.classList.toggle('ring-yellow-300', active);
     });
+
+    let hangmanBotTimer = null;
+    const clearHangmanBot = () => {
+      if (hangmanBotTimer) {
+        clearTimeout(hangmanBotTimer);
+        hangmanBotTimer = null;
+      }
+    };
+    const checkHangmanBotTurn = () => {
+      clearHangmanBot();
+      if (gameEnded || !document.body.contains(modal)) return;
+      const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (!curPlayer?.isBot) return;
+
+      const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+      hangmanBotTimer = setTimeout(() => {
+        hangmanBotTimer = null;
+        if (gameEnded || !document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
+        const availableBtns = Array.from(modal.querySelectorAll('.hangman-letter:not([disabled])'));
+        if (!availableBtns.length) return;
+
+        const targetWord = word.toUpperCase();
+        const correctBtns = availableBtns.filter(b => targetWord.includes(b.dataset.letter));
+        const wrongBtns = availableBtns.filter(b => !targetWord.includes(b.dataset.letter));
+
+        const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.70 : 0.40);
+        let chosenBtn = null;
+        if (Math.random() < acc && correctBtns.length > 0) {
+          chosenBtn = correctBtns[Math.floor(Math.random() * correctBtns.length)];
+        } else if (wrongBtns.length > 0) {
+          chosenBtn = wrongBtns[Math.floor(Math.random() * wrongBtns.length)];
+        } else {
+          chosenBtn = availableBtns[0];
+        }
+        chosenBtn?.click();
+      }, 1000);
+    };
 
     function render() {
       const display = word.split('').map(l => guessed.includes(l) ? l : '_').join(' ');
@@ -12515,6 +12859,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           });
         }
       });
+      checkHangmanBotTurn();
     }
     
     const handleHangmanKeydown = event => {
@@ -12527,6 +12872,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     modal.addEventListener('keydown', handleHangmanKeydown);
     render();
     const resetAndCloseHangman = () => {
+      clearHangmanBot();
       hangmanSession = { listName, winningScore: wordCount, guessed: [], wrongGuesses: 0, word: null };
       modal.remove();
     };
@@ -12571,6 +12917,12 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   // Each player has an independent score against the same fixed target.
   const findMeTargetScore = Number.isInteger(Number(winningScore)) && Number(winningScore) > 0 ? Number(winningScore) : 1;
   const findMeWinningScore = findMeTargetScore;
+  if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
+    const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+    activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+  } else if (activeGamePlayers.length === 1) {
+    activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+  }
   if (!Array.isArray(activeGameScores) || activeGameScores.length !== activeGamePlayers.length) activeGameScores = activeGamePlayers.map(() => 0);
   const getFindMePlayerScore = () => Number(activeGameScores[activeGamePlayerIndex] || 0);
   let findMeWordSize = 16;
@@ -12656,7 +13008,38 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   };
   let findMeTarget = null;
   const updateFindMeProgress = () => { modal.querySelector('#find-me-progress').textContent = `${getFindMePlayerScore()}/${findMeTargetScore}`; };
-  function renderRound() { locked = false; const setting = findMeDifficulties[findMeDifficulty]; const roundWords = words.slice().sort(() => Math.random() - 0.5); const target = (findMeTarget = currentRole === 'student' ? words[getFindMePlayerScore()] : roundWords[0]); const choices = getFindMeRoundItems(target, setting.itemCount); modal.querySelector('#find-me-picture').src = target.vocab_image; modal.querySelector('#find-me-picture').alt = `Picture clue for ${target.vocab_word}`; updateFindMeProgress(); feedback.textContent = ''; box.innerHTML = choices.map(w=>`<button type="button" class="find-me-word absolute px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold text-orange-700 shadow-md transition hover:bg-orange-100" data-word="${w.vocab_word}">${w.vocab_word}</button>`).join(''); updateFindMeWordSize(); cancelAnimationFrame(findMeAnimationId); findMeAnimationId = requestAnimationFrame(moveFindMeWords); box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
+  let findMeBotTimer = null;
+  const clearFindMeBot = () => {
+    if (findMeBotTimer) {
+      clearTimeout(findMeBotTimer);
+      findMeBotTimer = null;
+    }
+  };
+  const checkFindMeBotTurn = () => {
+    clearFindMeBot();
+    if (locked || !document.body.contains(modal)) return;
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (!curPlayer?.isBot) return;
+
+    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+    findMeBotTimer = setTimeout(() => {
+      findMeBotTimer = null;
+      if (locked || !document.body.contains(modal)) return;
+      if (activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
+      const buttons = Array.from(box.querySelectorAll('button:not([disabled])'));
+      if (!buttons.length || !findMeTarget) return;
+
+      const targetWord = String(findMeTarget.vocab_word || '').trim().toLowerCase();
+      const correctBtn = buttons.find(b => String(b.dataset.word || '').trim().toLowerCase() === targetWord);
+      const wrongBtns = buttons.filter(b => b !== correctBtn);
+
+      const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+      const pickCorrect = Math.random() < acc && correctBtn;
+      const chosen = (pickCorrect ? correctBtn : (wrongBtns[Math.floor(Math.random() * wrongBtns.length)] || correctBtn));
+      chosen?.click();
+    }, 1100);
+  };
+  function renderRound() { locked = false; const setting = findMeDifficulties[findMeDifficulty]; const roundWords = words.slice().sort(() => Math.random() - 0.5); const target = (findMeTarget = currentRole === 'student' ? words[getFindMePlayerScore()] : roundWords[0]); const choices = getFindMeRoundItems(target, setting.itemCount); modal.querySelector('#find-me-picture').src = target.vocab_image; modal.querySelector('#find-me-picture').alt = `Picture clue for ${target.vocab_word}`; updateFindMeProgress(); feedback.textContent = ''; box.innerHTML = choices.map(w=>`<button type="button" class="find-me-word absolute px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold text-orange-700 shadow-md transition hover:bg-orange-100" data-word="${w.vocab_word}">${w.vocab_word}</button>`).join(''); updateFindMeWordSize(); cancelAnimationFrame(findMeAnimationId); findMeAnimationId = requestAnimationFrame(moveFindMeWords); checkFindMeBotTurn(); box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
       if(locked) return;
       locked = true;
       const correct = btn.dataset.word === target.vocab_word;
@@ -12721,7 +13104,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   modal.querySelector('#find-me-size-increase').addEventListener('click', () => { findMeWordSize = Math.min(32, findMeWordSize + 2); updateFindMeWordSize(); });
   modal.querySelectorAll('.find-me-difficulty-btn').forEach(button => button.addEventListener('click', () => applyFindMeDifficulty(button.dataset.difficulty)));
   applyFindMeDifficulty('easy');
-  modal.querySelector('#find-me-close').addEventListener('click',()=>{ clearTimeout(findMeAnimationId); cancelAnimationFrame(findMeAnimationId); modal.remove(); returnToGamesTab(); }); modal.addEventListener('click',()=>{});
+  modal.querySelector('#find-me-close').addEventListener('click',()=>{ clearFindMeBot(); clearTimeout(findMeAnimationId); cancelAnimationFrame(findMeAnimationId); modal.remove(); returnToGamesTab(); }); modal.addEventListener('click',()=>{});
 }
 window.chooseFindMeScore = chooseFindMeScore;
 window.openGameFindMe = openGameFindMe;
@@ -12833,6 +13216,12 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   document.querySelectorAll('.match-drag-ghost').forEach(g => g.remove());
   const escapeText = typeof escapeHtml === 'function' ? escapeHtml : s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   setGameReplay(() => { resetGameTurnState(); openGameMatch(listName, wordCount, timerSeconds); });
+  if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
+    const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+    activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+  } else if (activeGamePlayers.length === 1) {
+    activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+  }
   const words = getGameWords(listName);
   if (words.length < 2) { toast('My lists launch failed: the selected source has fewer than 2 valid words.'); return; }
   
@@ -12950,6 +13339,47 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   let hasDragged = false;
   let hoveredCardEl = null;
 
+  const normWord = s => String(s || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  let matchBotTimer = null;
+  const clearMatchBot = () => {
+    if (matchBotTimer) {
+      clearTimeout(matchBotTimer);
+      matchBotTimer = null;
+    }
+  };
+  const checkMatchBotTurn = () => {
+    clearMatchBot();
+    if (!document.body.contains(modal) || correctAnswers >= totalWords || isEvaluating) return;
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (!curPlayer?.isBot) return;
+
+    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+    matchBotTimer = setTimeout(() => {
+      matchBotTimer = null;
+      if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || isEvaluating) return;
+
+      const unmatchedIndices = targetCards.map((_, i) => i).filter(i => !matchedTargets.has(i));
+      const placedWordIds = new Set(placements.values());
+      const availableBankWords = bankWords.filter(w => !placedWordIds.has(w.wordId));
+      if (!unmatchedIndices.length || !availableBankWords.length) return;
+
+      const targetIdx = unmatchedIndices[Math.floor(Math.random() * unmatchedIndices.length)];
+      const targetObj = targetCards[targetIdx];
+      const targetWord = normWord(targetObj.vocab_word);
+
+      const matchingBankWord = availableBankWords.find(w => normWord(w.vocab_word) === targetWord);
+      const wrongBankWords = availableBankWords.filter(w => normWord(w.vocab_word) !== targetWord);
+
+      const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+      const pickCorrect = Math.random() < acc && matchingBankWord;
+      const chosen = (pickCorrect ? matchingBankWord : (wrongBankWords[0] || matchingBankWord || availableBankWords[0]));
+
+      if (chosen) {
+        handleDropOnTarget(targetIdx, { type: 'bank', wordId: chosen.wordId, vocab_word: chosen.vocab_word });
+      }
+    }, 1100);
+  };
+
   function renderBoard() {
     const placedWordIds = new Set(placements.values());
     const remainingCount = bankWords.filter(w => !placedWordIds.has(w.wordId)).length;
@@ -13051,6 +13481,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         }
       });
     });
+    checkMatchBotTurn();
   }
 
   function initDrag(e, source) {
@@ -13299,6 +13730,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   renderBoard();
 
   modal.querySelector('#game-close').addEventListener('click', () => {
+    clearMatchBot();
     document.querySelectorAll('.match-drag-ghost').forEach(g => g.remove());
     modal._cleanupMemoryFit?.();
     modal.remove();
@@ -13515,6 +13947,16 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     toast('Memory needs at least one valid vocabulary word and at least one selected player.');
     return;
   }
+  if (activeGamePlayers.length === 1) {
+    activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || {
+      student_name: 'Robot',
+      avatar_pokemon_id: 137,
+      __backendId: 'bot-robot',
+      isBot: true,
+      botDifficulty: window.selectedBotDifficulty || 'medium'
+    });
+    pendingGamePlayers = 2;
+  }
   
   // Build deck with dynamic mystery filler cards
   const isTimerActive = Number.isFinite(Number(timerSeconds)) && Number(timerSeconds) > 0;
@@ -13527,6 +13969,84 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   let mismatchLocked = false;
   let checkTimer = null;
   let mismatchTimer = null;
+  const botMemory = new Map();
+  let memoryBotTimer = null;
+  const clearMemoryBot = () => {
+    if (memoryBotTimer) {
+      clearTimeout(memoryBotTimer);
+      memoryBotTimer = null;
+    }
+  };
+
+  const checkMemoryBotTurn = () => {
+    clearMemoryBot();
+    if (!document.body.contains(modal) || matched.size >= pairs.length) return;
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (!curPlayer?.isBot) return;
+
+    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+
+    memoryBotTimer = setTimeout(() => {
+      memoryBotTimer = null;
+      if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
+      if (mismatchLocked || flipped.length >= 2) return;
+
+      const availableCards = Array.from(grid.querySelectorAll('.memory-card')).filter(c => {
+        const idx = Number(c.dataset.index);
+        return !matched.has(idx) && !flipped.includes(idx);
+      });
+      if (!availableCards.length) return;
+
+      const memoryProb = diff === 'hard' ? 0.90 : (diff === 'medium' ? 0.60 : 0.25);
+      let knownPair = null;
+
+      if (Math.random() < memoryProb) {
+        const pairMap = new Map();
+        for (const c of availableCards) {
+          const idx = Number(c.dataset.index);
+          const pId = botMemory.get(idx);
+          if (pId) {
+            if (pairMap.has(pId)) {
+              knownPair = [pairMap.get(pId), c];
+              break;
+            } else {
+              pairMap.set(pId, c);
+            }
+          }
+        }
+      }
+
+      if (knownPair) {
+        knownPair[0].click();
+        setTimeout(() => {
+          if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
+          knownPair[1].click();
+        }, 750);
+      } else {
+        const c1 = availableCards[Math.floor(Math.random() * availableCards.length)];
+        c1.click();
+        setTimeout(() => {
+          if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
+          const idx1 = Number(c1.dataset.index);
+          const p1Id = pairs[idx1]?.pairId;
+          let matchingCard = null;
+          if (Math.random() < memoryProb && p1Id) {
+            const rem = availableCards.filter(c => c !== c1);
+            matchingCard = rem.find(c => botMemory.get(Number(c.dataset.index)) === p1Id);
+          }
+          if (matchingCard) {
+            matchingCard.click();
+          } else {
+            const rem = availableCards.filter(c => c !== c1 && !flipped.includes(Number(c.dataset.index)));
+            if (rem.length) {
+              const c2 = rem[Math.floor(Math.random() * rem.length)];
+              c2.click();
+            }
+          }
+        }, 800);
+      }
+    }, 1100);
+  };
   let roundToken = `${Date.now()}-${Math.random()}`;
   const clearMemoryRoundTimers = () => {
     if (checkTimer) { clearTimeout(checkTimer); checkTimer = null; }
@@ -13565,6 +14085,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     mismatchLocked = false;
     grid._memoryLockAt = 0;
     syncCardFaces();
+    checkMemoryBotTurn();
   };
   
   const modal = document.createElement('div');
@@ -14239,6 +14760,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
 
       // Flip the card and sync DOM
       flipped.push(idx);
+      botMemory.set(idx, pairs[idx]?.pairId);
       syncCardFaces();
       unlockGameSound();
       playGameSound('select');
@@ -14255,8 +14777,9 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   modal.querySelectorAll('.memory-card').forEach(card => card.addEventListener('keydown', event => {
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.click(); }
   }));
-  modal.querySelector('#game-close').addEventListener('click', () => { clearMemoryRoundTimers(); roundToken = `${Date.now()}-${Math.random()}`; modal.remove(); });
-  modal.addEventListener('remove', () => { clearMemoryRoundTimers(); roundToken = `${Date.now()}-${Math.random()}`; });
+  checkMemoryBotTurn();
+  modal.querySelector('#game-close').addEventListener('click', () => { clearMemoryRoundTimers(); clearMemoryBot(); roundToken = `${Date.now()}-${Math.random()}`; modal.remove(); });
+  modal.addEventListener('remove', () => { clearMemoryRoundTimers(); clearMemoryBot(); roundToken = `${Date.now()}-${Math.random()}`; });
   modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
 }
 window.openGameMemory = openGameMemory;
@@ -14347,6 +14870,12 @@ function chooseScrambleWordCount(listName) {
 // Scramble Game
 function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   setGameReplay(() => { resetGameTurnState(); scrambleSession = null; openGameScramble(listName, wordCount, timerSeconds); });
+  if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
+    const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+    activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+  } else if (activeGamePlayers.length === 1) {
+    activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+  }
   const availableWords = getGameWords(listName);
   const words = currentRole === 'student' ? availableWords.slice().sort(() => Math.random() - 0.5).slice(0, wordCount) : availableWords;
   if (words.length < 1) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'List needs at least 1 word'); return; }
@@ -14475,6 +15004,53 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   modal.querySelector('#scramble-letter-decrease').addEventListener('click', () => { scrambleLetterSize = Math.max(40, scrambleLetterSize - 8); updateScrambleLetterSize(); });
   modal.querySelector('#scramble-letter-increase').addEventListener('click', () => { scrambleLetterSize = Math.min(104, scrambleLetterSize + 8); updateScrambleLetterSize(); });
 
+  let scrambleBotTimer = null;
+  const clearScrambleBot = () => {
+    if (scrambleBotTimer) {
+      clearTimeout(scrambleBotTimer);
+      scrambleBotTimer = null;
+    }
+  };
+  const checkScrambleBotTurn = () => {
+    clearScrambleBot();
+    if (!document.body.contains(modal) || submissionGuard || phase === 'evaluating') return;
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (!curPlayer?.isBot) return;
+
+    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+    scrambleBotTimer = setTimeout(() => {
+      scrambleBotTimer = null;
+      if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || submissionGuard) return;
+
+      const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+      const spellCorrect = Math.random() < acc;
+      const targetLetters = correctWord.split('');
+
+      if (!spellCorrect && targetLetters.length > 1) {
+        const temp = targetLetters[0];
+        targetLetters[0] = targetLetters[1];
+        targetLetters[1] = temp;
+      }
+
+      let step = 0;
+      const queueNextLetter = () => {
+        if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || step >= targetLetters.length) return;
+        const letter = targetLetters[step];
+        const availableButtons = Array.from(tilesContainer.querySelectorAll('.scramble-tile:not([disabled])'));
+        const matchingBtn = availableButtons.find(b => b.textContent.trim().toUpperCase() === letter);
+        const btnToClick = matchingBtn || availableButtons[0];
+        if (btnToClick) {
+          btnToClick.click();
+          step++;
+          if (step < targetLetters.length) {
+            setTimeout(queueNextLetter, 320);
+          }
+        }
+      };
+      queueNextLetter();
+    }, 1000);
+  };
+
   function renderTiles() {
     tilesContainer.innerHTML = scrambledLetters.map((letter, idx) => {
       const isUsed = usedIndices.has(idx);
@@ -14484,6 +15060,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     tilesContainer.querySelectorAll('.scramble-tile').forEach(tile => {
       if (!usedIndices.has(parseInt(tile.dataset.index))) tile.addEventListener('click', () => queueScrambleTile(tile));
     });
+    if (!selectedLetters.some(Boolean)) checkScrambleBotTurn();
   }
 
   function updateAnswerDisplay() {
@@ -14729,6 +15306,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   };
   
   modal.querySelector('#game-close').addEventListener('click', () => {
+    clearScrambleBot();
     clearInterval(scrambleSession?.timerId);
     scrambleSession = null;
     modal.remove();
@@ -26462,6 +27040,9 @@ function getAvatarFallbackSrc() {
   return document.getElementById('student-avatar-fallback')?.src || '';
 }
 function gameStudentAvatarMarkup(student, className = 'game-player-avatar') {
+  if (student?.isBot || student?.student_name === 'Robot' || student?.__backendId === 'bot-robot') {
+    return `<span class="${className} flex items-center justify-center text-2xl bg-gradient-to-br from-cyan-950 via-slate-900 to-indigo-950 border-2 border-cyan-400 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.5)] select-none" role="img" aria-label="Robot opponent">🤖</span>`;
+  }
   const id = Number(student?.avatar_pokemon_id);
   const hasPokemon = Number.isInteger(id) && id > 0 && getCanonicalPokemon(id);
   if (!hasPokemon) {
@@ -32119,16 +32700,19 @@ function chooseGamePlayers(listName, nextStep) {
   const students = getStudents(navSchool, navClass);
   if (!students.length && currentRole !== 'student') { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no student players are available.' : 'No students found in this class'); return; }
 
-  // Student-dashboard games always use the signed-in student in single-player mode.
+  // Student-dashboard games always use the signed-in student vs Robot opponent.
   // Students never configure, reserve, or claim game prizes.
   if (currentRole === 'student') {
     const signedInStudent = students.find(s => s.student_name === currentStudent) || getAllStudents().find(s => s.student_name === currentStudent);
     if (!signedInStudent) { toast('Signed-in student was not found'); return; }
-    pendingGamePlayers = 1;
+    pendingGamePlayers = 2;
     pendingGameReward = 0;
     activeGameReward = 0;
     activeGameRewardClaimed = false;
-    activeGamePlayers = [signedInStudent];
+    const robotPlayer = (window.createRobotPlayer || createRobotPlayer)(window.selectedBotDifficulty || 'medium');
+    activeGamePlayers = [signedInStudent, robotPlayer];
+    activeGameScores = [0, 0];
+    activeGamePlayerIndex = 0;
     resetGameTurnState();
     pendingGameTimerSeconds = 0;
     window.gaStudentSetup(listName, nextStep.name);

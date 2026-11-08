@@ -202,6 +202,16 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     toast('Memory needs at least one valid vocabulary word and at least one selected player.');
     return;
   }
+  if (activeGamePlayers.length === 1) {
+    activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || {
+      student_name: 'Robot',
+      avatar_pokemon_id: 137,
+      __backendId: 'bot-robot',
+      isBot: true,
+      botDifficulty: window.selectedBotDifficulty || 'medium'
+    });
+    pendingGamePlayers = 2;
+  }
   
   // Build deck with dynamic mystery filler cards
   const isTimerActive = Number.isFinite(Number(timerSeconds)) && Number(timerSeconds) > 0;
@@ -214,6 +224,84 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   let mismatchLocked = false;
   let checkTimer = null;
   let mismatchTimer = null;
+  const botMemory = new Map();
+  let memoryBotTimer = null;
+  const clearMemoryBot = () => {
+    if (memoryBotTimer) {
+      clearTimeout(memoryBotTimer);
+      memoryBotTimer = null;
+    }
+  };
+
+  const checkMemoryBotTurn = () => {
+    clearMemoryBot();
+    if (!document.body.contains(modal) || matched.size >= pairs.length) return;
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (!curPlayer?.isBot) return;
+
+    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+
+    memoryBotTimer = setTimeout(() => {
+      memoryBotTimer = null;
+      if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
+      if (mismatchLocked || flipped.length >= 2) return;
+
+      const availableCards = Array.from(grid.querySelectorAll('.memory-card')).filter(c => {
+        const idx = Number(c.dataset.index);
+        return !matched.has(idx) && !flipped.includes(idx);
+      });
+      if (!availableCards.length) return;
+
+      const memoryProb = diff === 'hard' ? 0.90 : (diff === 'medium' ? 0.60 : 0.25);
+      let knownPair = null;
+
+      if (Math.random() < memoryProb) {
+        const pairMap = new Map();
+        for (const c of availableCards) {
+          const idx = Number(c.dataset.index);
+          const pId = botMemory.get(idx);
+          if (pId) {
+            if (pairMap.has(pId)) {
+              knownPair = [pairMap.get(pId), c];
+              break;
+            } else {
+              pairMap.set(pId, c);
+            }
+          }
+        }
+      }
+
+      if (knownPair) {
+        knownPair[0].click();
+        setTimeout(() => {
+          if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
+          knownPair[1].click();
+        }, 750);
+      } else {
+        const c1 = availableCards[Math.floor(Math.random() * availableCards.length)];
+        c1.click();
+        setTimeout(() => {
+          if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
+          const idx1 = Number(c1.dataset.index);
+          const p1Id = pairs[idx1]?.pairId;
+          let matchingCard = null;
+          if (Math.random() < memoryProb && p1Id) {
+            const rem = availableCards.filter(c => c !== c1);
+            matchingCard = rem.find(c => botMemory.get(Number(c.dataset.index)) === p1Id);
+          }
+          if (matchingCard) {
+            matchingCard.click();
+          } else {
+            const rem = availableCards.filter(c => c !== c1 && !flipped.includes(Number(c.dataset.index)));
+            if (rem.length) {
+              const c2 = rem[Math.floor(Math.random() * rem.length)];
+              c2.click();
+            }
+          }
+        }, 800);
+      }
+    }, 1100);
+  };
   let roundToken = `${Date.now()}-${Math.random()}`;
   const clearMemoryRoundTimers = () => {
     if (checkTimer) { clearTimeout(checkTimer); checkTimer = null; }
@@ -252,6 +340,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     mismatchLocked = false;
     grid._memoryLockAt = 0;
     syncCardFaces();
+    checkMemoryBotTurn();
   };
   
   const modal = document.createElement('div');
@@ -926,6 +1015,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
 
       // Flip the card and sync DOM
       flipped.push(idx);
+      botMemory.set(idx, pairs[idx]?.pairId);
       syncCardFaces();
       unlockGameSound();
       playGameSound('select');
@@ -942,8 +1032,9 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   modal.querySelectorAll('.memory-card').forEach(card => card.addEventListener('keydown', event => {
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.click(); }
   }));
-  modal.querySelector('#game-close').addEventListener('click', () => { clearMemoryRoundTimers(); roundToken = `${Date.now()}-${Math.random()}`; modal.remove(); });
-  modal.addEventListener('remove', () => { clearMemoryRoundTimers(); roundToken = `${Date.now()}-${Math.random()}`; });
+  checkMemoryBotTurn();
+  modal.querySelector('#game-close').addEventListener('click', () => { clearMemoryRoundTimers(); clearMemoryBot(); roundToken = `${Date.now()}-${Math.random()}`; modal.remove(); });
+  modal.addEventListener('remove', () => { clearMemoryRoundTimers(); clearMemoryBot(); roundToken = `${Date.now()}-${Math.random()}`; });
   modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
 }
 window.openGameMemory = openGameMemory;

@@ -221,8 +221,10 @@
       }
 
       if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
-        handleCrosswordFailure('Select at least one student to play Crosswords.');
-        return;
+        const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+        activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+      } else if (activeGamePlayers.length === 1) {
+        activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
       }
 
       setGameReplay(() => { resetGameTurnState(); window.openGameCrossword(listName, timerSeconds, wordCount); });
@@ -367,6 +369,51 @@
       activeInput = wordInputs.find(input => !input.readOnly) || wordInputs[0];
       activeInput?.focus({ preventScroll: true });
     }));
+    let cwBotTimer = null;
+    const clearCrosswordBot = () => {
+      if (cwBotTimer) {
+        clearTimeout(cwBotTimer);
+        cwBotTimer = null;
+      }
+    };
+    const checkCrosswordBotTurn = () => {
+      clearCrosswordBot();
+      if (!document.body.contains(modal) || checkLocked || completedWords.size === allWords.length) return;
+      const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (!curPlayer?.isBot) return;
+
+      const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+      cwBotTimer = setTimeout(() => {
+        cwBotTimer = null;
+        if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || checkLocked) return;
+
+        const uncompleted = allWords.filter(w => !completedWords.has(w.id));
+        if (!uncompleted.length) return;
+
+        const targetWordObj = uncompleted[Math.floor(Math.random() * uncompleted.length)];
+        selectWord(targetWordObj);
+
+        const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+        const isCorrect = Math.random() < acc;
+
+        const keys = Array.from({ length: targetWordObj.answer.length }, (_, i) => coordKey(targetWordObj.row + (targetWordObj.direction === 'down' ? i : 0), targetWordObj.col + (targetWordObj.direction === 'across' ? i : 0)));
+
+        keys.forEach((key, idx) => {
+          const char = isCorrect ? targetWordObj.answer[idx] : (Math.random() < 0.6 ? 'X' : targetWordObj.answer[idx]);
+          inputState.set(key, char);
+          const input = modal.querySelector(`input[data-cell-key="${key}"]`);
+          if (input && !input.readOnly) {
+            input.value = char;
+          }
+        });
+
+        setTimeout(() => {
+          if (!document.body.contains(modal)) return;
+          solveActiveWord();
+        }, 600);
+      }, 1100);
+    };
+
     const solveActiveWord = () => {
       if (!selectedWord || completedWords.has(selectedWord.id) || checkLocked) return;
       const word = selectedWord;
@@ -405,6 +452,7 @@
         activeInput = nextInputs.find(input => !input.readOnly) || nextInputs[0];
         activeInput?.focus({ preventScroll: true });
         checkLocked = false;
+        checkCrosswordBotTurn();
       } else {
         wordCells.forEach(cell => {
           if (!cell.classList.contains('is-correct')) {
@@ -435,6 +483,7 @@
           activeInput = modal.querySelector(`input[data-cell-key="${firstKey || keys[0]}"]`);
           activeInput?.focus({ preventScroll: true });
           checkLocked = false;
+          checkCrosswordBotTurn();
         }, 750);
         return;
       }
@@ -597,7 +646,8 @@
         activeInput.dispatchEvent(new Event('input', { bubbles: true }));
       });
     });
-    modal.querySelector('#crossword-close').addEventListener('click', () => { modal._stopPlayerTurnTimer?.(); boardResizeObserver.disconnect(); modal.remove(); returnToGamesTab(); });
+    modal.querySelector('#crossword-close').addEventListener('click', () => { clearCrosswordBot(); modal._stopPlayerTurnTimer?.(); boardResizeObserver.disconnect(); modal.remove(); returnToGamesTab(); });
+    checkCrosswordBotTurn();
     } catch (err) {
       console.error('Crossword game failed to launch:', err);
       handleCrosswordFailure(CROSSWORD_FALLBACK_MSG);

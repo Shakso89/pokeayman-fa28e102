@@ -1536,6 +1536,83 @@
     </section>`;
   };
 
+  window.selectedBotDifficulty = window.selectedBotDifficulty || 'medium';
+
+  window.createRobotPlayer = function (difficulty = (window.selectedBotDifficulty || 'medium')) {
+    const diff = ['easy', 'medium', 'hard'].includes(String(difficulty).toLowerCase()) ? String(difficulty).toLowerCase() : 'medium';
+    return {
+      student_name: 'Robot',
+      name: 'Robot',
+      __backendId: 'bot-robot',
+      id: 'bot-robot',
+      student_id: 'bot-robot',
+      avatar_pokemon_id: 137,
+      isBot: true,
+      botDifficulty: diff,
+      coins: 0
+    };
+  };
+
+  const renderBotDifficultyPickerMarkup = (selectedDifficulty = (window.selectedBotDifficulty || 'medium')) => {
+    const diff = ['easy', 'medium', 'hard'].includes(selectedDifficulty) ? selectedDifficulty : 'medium';
+    const difficulties = [
+      { id: 'easy', label: 'Easy', emoji: '🟢', desc: 'Relaxed & casual' },
+      { id: 'medium', label: 'Medium', emoji: '🟡', desc: 'Balanced match' },
+      { id: 'hard', label: 'Hard', emoji: '🔴', desc: 'Clever & sharp' }
+    ];
+    return `<section class="ga-bot-difficulty-picker ga-round-setting my-3" aria-label="Robot opponent difficulty">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+          <span class="text-base" aria-hidden="true">🤖</span>
+          <span>Opponent: Robot</span>
+        </h3>
+        <span class="ga-bot-difficulty-label text-xs font-bold text-amber-200 capitalize" aria-live="polite">${esc(diff)}</span>
+      </div>
+      <div class="grid grid-cols-3 gap-2 ga-difficulty-radiogroup" role="radiogroup" aria-label="Robot Difficulty">
+        ${difficulties.map(d => {
+          const isSelected = d.id === diff;
+          const borderCls = isSelected ? 'border-amber-400 bg-amber-400/20 text-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50' : 'border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-white';
+          return `<button type="button" class="ga-difficulty-choice ${isSelected ? 'is-selected' : ''} py-2 px-2.5 rounded-xl border-2 ${borderCls} font-bold text-sm transition-all flex flex-col items-center gap-0.5 cursor-pointer" data-difficulty="${d.id}" aria-checked="${isSelected}">
+            <span class="text-base">${d.emoji}</span>
+            <span class="text-xs font-extrabold">${d.label}</span>
+            <span class="text-[10px] opacity-75 font-normal">${d.desc}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    </section>`;
+  };
+
+  const attachBotDifficultyListeners = (panel) => {
+    panel.querySelectorAll('.ga-difficulty-choice').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const diff = btn.dataset.difficulty;
+        window.selectedBotDifficulty = diff;
+        panel.querySelectorAll('.ga-difficulty-choice').forEach(b => {
+          const sel = b.dataset.difficulty === diff;
+          b.classList.toggle('is-selected', sel);
+          b.setAttribute('aria-checked', String(sel));
+          b.className = `ga-difficulty-choice ${sel ? 'is-selected border-amber-400 bg-amber-400/20 text-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50' : 'border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-white'} py-2 px-2.5 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center gap-0.5 cursor-pointer`;
+        });
+        const label = panel.querySelector('.ga-bot-difficulty-label');
+        if (label) label.textContent = diff;
+        if (Array.isArray(activeGamePlayers) && activeGamePlayers[1]?.isBot) {
+          activeGamePlayers[1].botDifficulty = diff;
+        }
+      });
+    });
+  };
+
+  const ensureStudentRobotPlayers = (difficulty) => {
+    const diff = difficulty || window.selectedBotDifficulty || 'medium';
+    const curName = (typeof currentStudent !== 'undefined' ? currentStudent : '') || 'Player';
+    const student = (Array.isArray(activeGamePlayers) && activeGamePlayers[0]) || (typeof getAllStudents === 'function' ? getAllStudents().find(s => s.student_name === curName) : null) || { student_name: curName, avatar_pokemon_id: 25 };
+    const robot = window.createRobotPlayer(diff);
+    activeGamePlayers = [student, robot];
+    pendingGamePlayers = 2;
+    activeGameScores = [0, 0];
+    activeGamePlayerIndex = 0;
+  };
+
   window.gaStudentSetup = function (listName, fnName) {
     const resolvedFnName = fnName || (window.pendingChosenGame ? window.pendingChosenGame.fn : '');
     const game = GAMES.find(item => item.fn === resolvedFnName && !item.teacherOnly);
@@ -1563,11 +1640,13 @@
           </div>
           <div class="ga-theme-grid" role="radiogroup" aria-label="Choose visual style">${renderThemeCardsMarkup(selectedTheme.id)}</div>
         </section>
+        ${renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'medium')}
         ${resolvedFnName === 'chooseCrossword' ? `<section class="ga-crossword-count" aria-label="Crossword word count"><label for="ga-crossword-word-count">Words in puzzle</label><div class="ga-crossword-count-controls"><input id="ga-crossword-word-count" type="number" min="2" max="${crosswordWordMax}" value="${crosswordWordMax}" inputmode="numeric"><button type="button" id="ga-crossword-play-all">Play ${rawCrosswordCount > CROSSWORD_SAFE_MAX ? `Max (${crosswordWordMax}` : `All (${crosswordWordMax}`} words)</button></div>${rawCrosswordCount > CROSSWORD_SAFE_MAX ? `<p class="ga-crossword-hint text-xs text-amber-300 font-semibold mt-1">Crosswords support up to ${CROSSWORD_SAFE_MAX} words for best board layout.</p>` : ''}</section>` : ''}
         <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
           <button type="button" class="btn-primary ga-student-start-btn" style="padding: 0.75rem 1.75rem; font-size: 1rem; font-weight: 800;">Start ${esc(game.name)} →</button>
         </div>`;
       panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
+      attachBotDifficultyListeners(panel);
       if (resolvedFnName === 'chooseCrossword') {
         const cwInput = panel.querySelector('#ga-crossword-word-count');
         const cwSection = panel.querySelector('.ga-crossword-count');
@@ -1608,6 +1687,7 @@
         const crosswordCount = crosswordCountInput ? Number(crosswordCountInput.value) : null;
         if (crosswordCountInput && (!Number.isInteger(crosswordCount) || crosswordCount < 2 || crosswordCount > crosswordWordMax)) { crosswordCountInput.setCustomValidity(`Enter a whole number from 2 to ${crosswordWordMax}.`); crosswordCountInput.reportValidity(); return; }
         panel.remove();
+        ensureStudentRobotPlayers(window.selectedBotDifficulty || 'medium');
         if (resolvedFnName === 'startVocabBattle') window.startVocabBattle(listName);
         else if (resolvedFnName === 'startListenCatch') window.startListenCatch(listName);
         else {
@@ -1632,12 +1712,16 @@
     const panel = document.createElement('section');
     panel.className = 'game-inline-view ga-student-setup ga-hub';
     const isBaam = fnName === 'chooseBaamboozlePowerUps';
-    const counts = isBaam ? [8, 16] : [5, 10, 15];
-    const unitLabel = isBaam ? 'cards' : 'words';
+    const isDots = fnName === 'chooseDotsAndBoxes';
+    const counts = isBaam ? [8, 16] : (isDots ? [4, 9] : [5, 10, 15]);
+    const unitLabel = isBaam ? 'cards' : (isDots ? 'boxes' : 'words');
     panel.setAttribute('aria-label', `${game.name} ${unitLabel}`);
     const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
-    panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header><div class="ga-student-counts" role="group" aria-label="Number of ${unitLabel}">${counts.map(count => `<button type="button" class="btn-primary" data-count="${count}" ${(isBaam ? words.length < 1 : words.length < count) ? 'disabled' : ''}><strong>${count}</strong><span>${unitLabel}</span></button>`).join('')}</div>`;
+    panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header>
+      ${renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'medium')}
+      <div class="ga-student-counts" role="group" aria-label="Number of ${unitLabel}">${counts.map(count => `<button type="button" class="btn-primary" data-count="${count}" ${(isBaam ? words.length < 1 : (isDots ? words.length < 2 : words.length < count)) ? 'disabled' : ''}><strong>${count}</strong><span>${unitLabel}</span></button>`).join('')}</div>`;
     panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
+    attachBotDifficultyListeners(panel);
     panel.querySelectorAll('[data-count]').forEach(button => button.addEventListener('click', () => {
       const count = Number(button.dataset.count);
       pendingGameTimerSeconds = 0;
@@ -1645,12 +1729,17 @@
       activeGameReward = 0;
       resetGameTurnState();
       panel.remove();
+      ensureStudentRobotPlayers(window.selectedBotDifficulty || 'medium');
       if (fnName === 'chooseMatchWordCount') openGameMatch(listName, count, 0);
       else if (fnName === 'chooseMemoryDifficulty') openGameMemory(listName, 'easy', 0, count);
       else if (fnName === 'chooseScrambleWordCount') { window.scrambleSession = null; (window.openGameScramble || openGameScramble)(listName, count, 0); }
       else if (fnName === 'chooseFindMeScore') openGameFindMe(listName, count, 0);
       else if (fnName === 'chooseHangmanWordCount') openGameHangman(listName, count, 0, 'easy', true);
       else if (fnName === 'chooseBaamboozlePowerUps') openBaamboozle(listName, typeof baamboozlePowerUps !== 'undefined' ? baamboozlePowerUps : [], count);
+      else if (fnName === 'chooseDotsAndBoxes') {
+        const gridDots = count === 4 ? 3 : (count === 16 ? 5 : 4);
+        (window.openGameDotsAndBoxes || openGameDotsAndBoxes)(listName, gridDots, 0);
+      }
     }));
     area.appendChild(panel);
   };

@@ -31,6 +31,12 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   // Each player has an independent score against the same fixed target.
   const findMeTargetScore = Number.isInteger(Number(winningScore)) && Number(winningScore) > 0 ? Number(winningScore) : 1;
   const findMeWinningScore = findMeTargetScore;
+  if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
+    const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+    activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+  } else if (activeGamePlayers.length === 1) {
+    activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+  }
   if (!Array.isArray(activeGameScores) || activeGameScores.length !== activeGamePlayers.length) activeGameScores = activeGamePlayers.map(() => 0);
   const getFindMePlayerScore = () => Number(activeGameScores[activeGamePlayerIndex] || 0);
   let findMeWordSize = 16;
@@ -116,7 +122,38 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   };
   let findMeTarget = null;
   const updateFindMeProgress = () => { modal.querySelector('#find-me-progress').textContent = `${getFindMePlayerScore()}/${findMeTargetScore}`; };
-  function renderRound() { locked = false; const setting = findMeDifficulties[findMeDifficulty]; const roundWords = words.slice().sort(() => Math.random() - 0.5); const target = (findMeTarget = currentRole === 'student' ? words[getFindMePlayerScore()] : roundWords[0]); const choices = getFindMeRoundItems(target, setting.itemCount); modal.querySelector('#find-me-picture').src = target.vocab_image; modal.querySelector('#find-me-picture').alt = `Picture clue for ${target.vocab_word}`; updateFindMeProgress(); feedback.textContent = ''; box.innerHTML = choices.map(w=>`<button type="button" class="find-me-word absolute px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold text-orange-700 shadow-md transition hover:bg-orange-100" data-word="${w.vocab_word}">${w.vocab_word}</button>`).join(''); updateFindMeWordSize(); cancelAnimationFrame(findMeAnimationId); findMeAnimationId = requestAnimationFrame(moveFindMeWords); box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
+  let findMeBotTimer = null;
+  const clearFindMeBot = () => {
+    if (findMeBotTimer) {
+      clearTimeout(findMeBotTimer);
+      findMeBotTimer = null;
+    }
+  };
+  const checkFindMeBotTurn = () => {
+    clearFindMeBot();
+    if (locked || !document.body.contains(modal)) return;
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (!curPlayer?.isBot) return;
+
+    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+    findMeBotTimer = setTimeout(() => {
+      findMeBotTimer = null;
+      if (locked || !document.body.contains(modal)) return;
+      if (activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
+      const buttons = Array.from(box.querySelectorAll('button:not([disabled])'));
+      if (!buttons.length || !findMeTarget) return;
+
+      const targetWord = String(findMeTarget.vocab_word || '').trim().toLowerCase();
+      const correctBtn = buttons.find(b => String(b.dataset.word || '').trim().toLowerCase() === targetWord);
+      const wrongBtns = buttons.filter(b => b !== correctBtn);
+
+      const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+      const pickCorrect = Math.random() < acc && correctBtn;
+      const chosen = (pickCorrect ? correctBtn : (wrongBtns[Math.floor(Math.random() * wrongBtns.length)] || correctBtn));
+      chosen?.click();
+    }, 1100);
+  };
+  function renderRound() { locked = false; const setting = findMeDifficulties[findMeDifficulty]; const roundWords = words.slice().sort(() => Math.random() - 0.5); const target = (findMeTarget = currentRole === 'student' ? words[getFindMePlayerScore()] : roundWords[0]); const choices = getFindMeRoundItems(target, setting.itemCount); modal.querySelector('#find-me-picture').src = target.vocab_image; modal.querySelector('#find-me-picture').alt = `Picture clue for ${target.vocab_word}`; updateFindMeProgress(); feedback.textContent = ''; box.innerHTML = choices.map(w=>`<button type="button" class="find-me-word absolute px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold text-orange-700 shadow-md transition hover:bg-orange-100" data-word="${w.vocab_word}">${w.vocab_word}</button>`).join(''); updateFindMeWordSize(); cancelAnimationFrame(findMeAnimationId); findMeAnimationId = requestAnimationFrame(moveFindMeWords); checkFindMeBotTurn(); box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
       if(locked) return;
       locked = true;
       const correct = btn.dataset.word === target.vocab_word;
@@ -181,7 +218,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   modal.querySelector('#find-me-size-increase').addEventListener('click', () => { findMeWordSize = Math.min(32, findMeWordSize + 2); updateFindMeWordSize(); });
   modal.querySelectorAll('.find-me-difficulty-btn').forEach(button => button.addEventListener('click', () => applyFindMeDifficulty(button.dataset.difficulty)));
   applyFindMeDifficulty('easy');
-  modal.querySelector('#find-me-close').addEventListener('click',()=>{ clearTimeout(findMeAnimationId); cancelAnimationFrame(findMeAnimationId); modal.remove(); returnToGamesTab(); }); modal.addEventListener('click',()=>{});
+  modal.querySelector('#find-me-close').addEventListener('click',()=>{ clearFindMeBot(); clearTimeout(findMeAnimationId); cancelAnimationFrame(findMeAnimationId); modal.remove(); returnToGamesTab(); }); modal.addEventListener('click',()=>{});
 }
 window.chooseFindMeScore = chooseFindMeScore;
 window.openGameFindMe = openGameFindMe;

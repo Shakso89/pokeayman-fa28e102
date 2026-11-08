@@ -147,6 +147,15 @@
     // Surprise Boxes stays inside the normal page view; other games retain fullscreen behavior.
     // Preserve the exact 2–4 students chosen in the pre-game chooser.
     const baamPlayers = (activeGamePlayers || []).slice(0, 4);
+    if (baamPlayers.length === 1) {
+      baamPlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || {
+        student_name: 'Robot',
+        avatar_pokemon_id: 137,
+        __backendId: 'bot-robot',
+        isBot: true,
+        botDifficulty: window.selectedBotDifficulty || 'medium'
+      });
+    }
     const baamQ = sel => modal.querySelector(sel) || document.querySelector('.baam-stage-portal ' + sel);
     if (baamPlayers.length < 2) { toast('Select at least two students for Surprise Boxes'); modal.remove(); return; }
     activeGamePlayers = baamPlayers;
@@ -385,6 +394,61 @@
         answerProgressionTimer = null;
       }
     };
+    let baamBotTimer = null;
+    const clearBaamBot = () => {
+      if (baamBotTimer) {
+        clearTimeout(baamBotTimer);
+        baamBotTimer = null;
+      }
+    };
+    const checkBaamBotTurn = () => {
+      clearBaamBot();
+      if (!document.body.contains(modal)) return;
+      const curPlayer = baamPlayers[activeGamePlayerIndex];
+      if (!curPlayer?.isBot) return;
+
+      const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+      const revealPanel = baamQ('#baam-reveal');
+      const isQuestionOpen = revealPanel && !revealPanel.classList.contains('hidden');
+
+      if (isQuestionOpen) {
+        const continueBtn = revealPanel.querySelector('.baam-power-continue-btn');
+        if (continueBtn) {
+          baamBotTimer = setTimeout(() => {
+            baamBotTimer = null;
+            if (!revealPanel.classList.contains('hidden')) {
+              continueBtn.click();
+            }
+          }, 1100);
+          return;
+        }
+
+        const choiceBtns = Array.from(revealPanel.querySelectorAll('.baam-choice-btn:not([disabled])'));
+        if (!choiceBtns.length) return;
+        baamBotTimer = setTimeout(() => {
+          baamBotTimer = null;
+          if (revealPanel.classList.contains('hidden')) return;
+          const targetWord = String(selectedCard?.vocab_word || '').trim().toLowerCase();
+          const correctBtn = choiceBtns.find(b => String(b.dataset.choice || '').trim().toLowerCase() === targetWord);
+          const wrongBtns = choiceBtns.filter(b => b !== correctBtn);
+
+          const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+          const pickCorrect = Math.random() < acc && correctBtn;
+          const chosen = (pickCorrect ? correctBtn : (wrongBtns[0] || correctBtn));
+          chosen?.click();
+        }, 1200);
+      } else {
+        baamBotTimer = setTimeout(() => {
+          baamBotTimer = null;
+          if (!document.body.contains(modal)) return;
+          if (baamPlayers[activeGamePlayerIndex] !== curPlayer) return;
+          const unrevealedTiles = Array.from(modal.querySelectorAll('.baam-tile:not([disabled])'));
+          if (!unrevealedTiles.length) return;
+          const randomTile = unrevealedTiles[Math.floor(Math.random() * unrevealedTiles.length)];
+          randomTile?.click();
+        }, 1100);
+      }
+    };
     const reveal = () => {
       clearAnswerTimer();
       const w = deck[index % deck.length];
@@ -436,6 +500,7 @@
           continueBtn.addEventListener('click', closeBaamRevealAsWrong);
           answerControls.appendChild(continueBtn);
           answerControls.classList.remove('hidden');
+          checkBaamBotTurn();
         }
         setTimeout(() => {
           if (revealPanel.classList.contains('baam-powerup-reveal')) {
@@ -528,6 +593,7 @@
           answerControls.appendChild(btn);
         });
         answerControls.classList.remove('hidden');
+        checkBaamBotTurn();
       }
     };
     const closeBaamRevealAsWrong = () => {
@@ -542,6 +608,7 @@
       selectedCard = null;
       revealPanel.classList.add('hidden');
       if (chosenCards.size === deck.length) endBaamboozle();
+      else checkBaamBotTurn();
     };
     const markAnswer = (isCorrect) => {
       clearAnswerTimer();
@@ -566,6 +633,7 @@
       selectedCard = null;
       baamQ('#baam-reveal').classList.add('hidden');
       if (chosenCards.size >= deck.length) endBaamboozle();
+      else checkBaamBotTurn();
     };
     const baamPortal = document.createElement('div');
     baamPortal.className = 'baam-stage-portal';
@@ -591,7 +659,8 @@
       tile.disabled = true;
       tile.classList.add('is-opened');
     }));
-    modal.querySelector('#baam-close')?.addEventListener('click', () => { clearAnswerTimer(); stopGameFinishedActivity(modal); modal.remove(); returnToGamesTab(); }); modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
+    modal.querySelector('#baam-close')?.addEventListener('click', () => { clearAnswerTimer(); clearBaamBot(); stopGameFinishedActivity(modal); modal.remove(); returnToGamesTab(); }); modal.addEventListener('click', e => { /* Outside clicks intentionally do not close the game. */ });
+    checkBaamBotTurn();
   }
   window.openBaamboozle = openBaamboozle;
 })();

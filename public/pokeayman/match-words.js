@@ -103,6 +103,12 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   document.querySelectorAll('.match-drag-ghost').forEach(g => g.remove());
   const escapeText = typeof escapeHtml === 'function' ? escapeHtml : s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   setGameReplay(() => { resetGameTurnState(); openGameMatch(listName, wordCount, timerSeconds); });
+  if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
+    const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+    activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+  } else if (activeGamePlayers.length === 1) {
+    activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+  }
   const words = getGameWords(listName);
   if (words.length < 2) { toast('My lists launch failed: the selected source has fewer than 2 valid words.'); return; }
   
@@ -220,6 +226,47 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   let hasDragged = false;
   let hoveredCardEl = null;
 
+  const normWord = s => String(s || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  let matchBotTimer = null;
+  const clearMatchBot = () => {
+    if (matchBotTimer) {
+      clearTimeout(matchBotTimer);
+      matchBotTimer = null;
+    }
+  };
+  const checkMatchBotTurn = () => {
+    clearMatchBot();
+    if (!document.body.contains(modal) || correctAnswers >= totalWords || isEvaluating) return;
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (!curPlayer?.isBot) return;
+
+    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+    matchBotTimer = setTimeout(() => {
+      matchBotTimer = null;
+      if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || isEvaluating) return;
+
+      const unmatchedIndices = targetCards.map((_, i) => i).filter(i => !matchedTargets.has(i));
+      const placedWordIds = new Set(placements.values());
+      const availableBankWords = bankWords.filter(w => !placedWordIds.has(w.wordId));
+      if (!unmatchedIndices.length || !availableBankWords.length) return;
+
+      const targetIdx = unmatchedIndices[Math.floor(Math.random() * unmatchedIndices.length)];
+      const targetObj = targetCards[targetIdx];
+      const targetWord = normWord(targetObj.vocab_word);
+
+      const matchingBankWord = availableBankWords.find(w => normWord(w.vocab_word) === targetWord);
+      const wrongBankWords = availableBankWords.filter(w => normWord(w.vocab_word) !== targetWord);
+
+      const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+      const pickCorrect = Math.random() < acc && matchingBankWord;
+      const chosen = (pickCorrect ? matchingBankWord : (wrongBankWords[0] || matchingBankWord || availableBankWords[0]));
+
+      if (chosen) {
+        handleDropOnTarget(targetIdx, { type: 'bank', wordId: chosen.wordId, vocab_word: chosen.vocab_word });
+      }
+    }, 1100);
+  };
+
   function renderBoard() {
     const placedWordIds = new Set(placements.values());
     const remainingCount = bankWords.filter(w => !placedWordIds.has(w.wordId)).length;
@@ -321,6 +368,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         }
       });
     });
+    checkMatchBotTurn();
   }
 
   function initDrag(e, source) {
@@ -569,6 +617,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   renderBoard();
 
   modal.querySelector('#game-close').addEventListener('click', () => {
+    clearMatchBot();
     document.querySelectorAll('.match-drag-ghost').forEach(g => g.remove());
     modal._cleanupMemoryFit?.();
     modal.remove();

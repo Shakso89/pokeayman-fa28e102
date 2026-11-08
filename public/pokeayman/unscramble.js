@@ -82,6 +82,12 @@ function chooseScrambleWordCount(listName) {
 // Scramble Game
 function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   setGameReplay(() => { resetGameTurnState(); scrambleSession = null; openGameScramble(listName, wordCount, timerSeconds); });
+  if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
+    const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+    activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+  } else if (activeGamePlayers.length === 1) {
+    activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+  }
   const availableWords = getGameWords(listName);
   const words = currentRole === 'student' ? availableWords.slice().sort(() => Math.random() - 0.5).slice(0, wordCount) : availableWords;
   if (words.length < 1) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'List needs at least 1 word'); return; }
@@ -210,6 +216,53 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   modal.querySelector('#scramble-letter-decrease').addEventListener('click', () => { scrambleLetterSize = Math.max(40, scrambleLetterSize - 8); updateScrambleLetterSize(); });
   modal.querySelector('#scramble-letter-increase').addEventListener('click', () => { scrambleLetterSize = Math.min(104, scrambleLetterSize + 8); updateScrambleLetterSize(); });
 
+  let scrambleBotTimer = null;
+  const clearScrambleBot = () => {
+    if (scrambleBotTimer) {
+      clearTimeout(scrambleBotTimer);
+      scrambleBotTimer = null;
+    }
+  };
+  const checkScrambleBotTurn = () => {
+    clearScrambleBot();
+    if (!document.body.contains(modal) || submissionGuard || phase === 'evaluating') return;
+    const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+    if (!curPlayer?.isBot) return;
+
+    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+    scrambleBotTimer = setTimeout(() => {
+      scrambleBotTimer = null;
+      if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || submissionGuard) return;
+
+      const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+      const spellCorrect = Math.random() < acc;
+      const targetLetters = correctWord.split('');
+
+      if (!spellCorrect && targetLetters.length > 1) {
+        const temp = targetLetters[0];
+        targetLetters[0] = targetLetters[1];
+        targetLetters[1] = temp;
+      }
+
+      let step = 0;
+      const queueNextLetter = () => {
+        if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || step >= targetLetters.length) return;
+        const letter = targetLetters[step];
+        const availableButtons = Array.from(tilesContainer.querySelectorAll('.scramble-tile:not([disabled])'));
+        const matchingBtn = availableButtons.find(b => b.textContent.trim().toUpperCase() === letter);
+        const btnToClick = matchingBtn || availableButtons[0];
+        if (btnToClick) {
+          btnToClick.click();
+          step++;
+          if (step < targetLetters.length) {
+            setTimeout(queueNextLetter, 320);
+          }
+        }
+      };
+      queueNextLetter();
+    }, 1000);
+  };
+
   function renderTiles() {
     tilesContainer.innerHTML = scrambledLetters.map((letter, idx) => {
       const isUsed = usedIndices.has(idx);
@@ -219,6 +272,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     tilesContainer.querySelectorAll('.scramble-tile').forEach(tile => {
       if (!usedIndices.has(parseInt(tile.dataset.index))) tile.addEventListener('click', () => queueScrambleTile(tile));
     });
+    if (!selectedLetters.some(Boolean)) checkScrambleBotTurn();
   }
 
   function updateAnswerDisplay() {
@@ -464,6 +518,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   };
   
   modal.querySelector('#game-close').addEventListener('click', () => {
+    clearScrambleBot();
     clearInterval(scrambleSession?.timerId);
     scrambleSession = null;
     modal.remove();

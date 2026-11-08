@@ -30,6 +30,12 @@
   window.chooseHangmanWordCount = chooseHangmanWordCount;
 
   function openGameHangman(listName, wordCount = 1, timerSeconds = 0, difficulty = 'easy', freshRound = false, studentRound = null) {
+    if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
+      const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+      activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+    } else if (activeGamePlayers.length === 1) {
+      activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+    }
     const difficultyConfig = { easy: { maxWrong: 8, showClue: true }, hard: { maxWrong: 8, showClue: false } };
     difficulty = difficultyConfig[difficulty] ? difficulty : 'easy';
     const activeDifficulty = difficultyConfig[difficulty];
@@ -162,6 +168,43 @@
       button.classList.toggle('ring-4', active);
       button.classList.toggle('ring-yellow-300', active);
     });
+
+    let hangmanBotTimer = null;
+    const clearHangmanBot = () => {
+      if (hangmanBotTimer) {
+        clearTimeout(hangmanBotTimer);
+        hangmanBotTimer = null;
+      }
+    };
+    const checkHangmanBotTurn = () => {
+      clearHangmanBot();
+      if (gameEnded || !document.body.contains(modal)) return;
+      const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (!curPlayer?.isBot) return;
+
+      const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+      hangmanBotTimer = setTimeout(() => {
+        hangmanBotTimer = null;
+        if (gameEnded || !document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
+        const availableBtns = Array.from(modal.querySelectorAll('.hangman-letter:not([disabled])'));
+        if (!availableBtns.length) return;
+
+        const targetWord = word.toUpperCase();
+        const correctBtns = availableBtns.filter(b => targetWord.includes(b.dataset.letter));
+        const wrongBtns = availableBtns.filter(b => !targetWord.includes(b.dataset.letter));
+
+        const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.70 : 0.40);
+        let chosenBtn = null;
+        if (Math.random() < acc && correctBtns.length > 0) {
+          chosenBtn = correctBtns[Math.floor(Math.random() * correctBtns.length)];
+        } else if (wrongBtns.length > 0) {
+          chosenBtn = wrongBtns[Math.floor(Math.random() * wrongBtns.length)];
+        } else {
+          chosenBtn = availableBtns[0];
+        }
+        chosenBtn?.click();
+      }, 1000);
+    };
 
     function render() {
       const display = word.split('').map(l => guessed.includes(l) ? l : '_').join(' ');
@@ -339,6 +382,7 @@
           });
         }
       });
+      checkHangmanBotTurn();
     }
     
     const handleHangmanKeydown = event => {
@@ -351,6 +395,7 @@
     modal.addEventListener('keydown', handleHangmanKeydown);
     render();
     const resetAndCloseHangman = () => {
+      clearHangmanBot();
       hangmanSession = { listName, winningScore: wordCount, guessed: [], wrongGuesses: 0, word: null };
       modal.remove();
     };

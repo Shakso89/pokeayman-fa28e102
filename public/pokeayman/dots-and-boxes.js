@@ -73,10 +73,12 @@
 
     if (!Array.isArray(activeGamePlayers) || activeGamePlayers.length < 2) {
       if (Array.isArray(activeGamePlayers) && activeGamePlayers.length === 1) {
-        activeGamePlayers.push({
-          student_name: 'Pikachu Bot',
-          avatar_pokemon_id: 25,
-          __backendId: 'bot-pikachu',
+        activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || {
+          student_name: 'Robot',
+          avatar_pokemon_id: 137,
+          __backendId: 'bot-robot',
+          isBot: true,
+          botDifficulty: window.selectedBotDifficulty || 'medium',
         });
       } else {
         if (typeof toast === 'function') {
@@ -447,8 +449,98 @@
       } catch (_) {}
     });
 
+    let botTurnTimer = null;
+    const clearBotTurn = () => {
+      if (botTurnTimer) {
+        clearTimeout(botTurnTimer);
+        botTurnTimer = null;
+      }
+    };
+
+    const checkBotTurn = () => {
+      clearBotTurn();
+      if (phase === 'ROUND_OVER' || !document.body.contains(modal)) return;
+      const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (!curPlayer?.isBot) return;
+
+      const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
+
+      if (phase === 'MCQ') {
+        botTurnTimer = setTimeout(() => {
+          botTurnTimer = null;
+          if (phase !== 'MCQ' || !document.body.contains(modal)) return;
+          const buttons = Array.from(modal.querySelectorAll('.dots-choice-btn:not([disabled])'));
+          if (!buttons.length || !currentQuestion) return;
+
+          const targetWord = String(currentQuestion.correctAnswer || '').trim().toLowerCase();
+          const correctBtn = buttons.find(b => String(b.dataset.option || '').trim().toLowerCase() === targetWord);
+          const wrongBtns = buttons.filter(b => b !== correctBtn);
+
+          const acc = diff === 'hard' ? 0.95 : (diff === 'medium' ? 0.75 : 0.50);
+          const pickCorrect = Math.random() < acc && correctBtn;
+          const chosen = (pickCorrect ? correctBtn : (wrongBtns[0] || correctBtn));
+          chosen?.click();
+        }, 900);
+      } else if (phase === 'DRAW_LINE') {
+        botTurnTimer = setTimeout(() => {
+          botTurnTimer = null;
+          if (phase !== 'DRAW_LINE' || !document.body.contains(modal)) return;
+
+          const availableH = [];
+          for (let r = 0; r < N; r++) {
+            for (let c = 0; c < numBoxes; c++) {
+              if (horizontalLines[`${r}-${c}`] === null) availableH.push({ type: 'H', r, c });
+            }
+          }
+          const availableV = [];
+          for (let r = 0; r < numBoxes; r++) {
+            for (let c = 0; c < N; c++) {
+              if (verticalLines[`${r}-${c}`] === null) availableV.push({ type: 'V', r, c });
+            }
+          }
+          const allAvailable = [...availableH, ...availableV];
+          if (!allAvailable.length) return;
+
+          const completesBox = (line) => {
+            let count = 0;
+            for (let r = 0; r < numBoxes; r++) {
+              for (let c = 0; c < numBoxes; c++) {
+                if (boxes[`${r}-${c}`] !== null) continue;
+                let filled = 0;
+                if (horizontalLines[`${r}-${c}`] !== null || (line.type === 'H' && line.r === r && line.c === c)) filled++;
+                if (horizontalLines[`${r + 1}-${c}`] !== null || (line.type === 'H' && line.r === r + 1 && line.c === c)) filled++;
+                if (verticalLines[`${r}-${c}`] !== null || (line.type === 'V' && line.r === r && line.c === c)) filled++;
+                if (verticalLines[`${r}-${c + 1}`] !== null || (line.type === 'V' && line.r === r && line.c === c + 1)) filled++;
+                if (filled === 4) count++;
+              }
+            }
+            return count;
+          };
+
+          let chosenMove = null;
+          if (diff === 'hard' || (diff === 'medium' && Math.random() < 0.8)) {
+            for (const move of allAvailable) {
+              if (completesBox(move) > 0) {
+                chosenMove = move;
+                break;
+              }
+            }
+          }
+
+          if (!chosenMove) {
+            chosenMove = allAvailable[Math.floor(Math.random() * allAvailable.length)];
+          }
+
+          if (chosenMove) {
+            handleDrawLine(chosenMove.type, chosenMove.r, chosenMove.c);
+          }
+        }, 800);
+      }
+    };
+
     const cleanupAndClose = () => {
       stopMatchTimer();
+      clearBotTurn();
       if (typeof stopPlayerTurnTimer === 'function') stopPlayerTurnTimer(modal);
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       modal.remove();
@@ -523,6 +615,7 @@
       }
 
       updateTimerDisplay();
+      checkBotTurn();
     };
 
     const renderQuestion = () => {
