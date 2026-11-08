@@ -914,7 +914,7 @@
             </button>
 
             <!-- PokéAyman Amber Gold Bordered Practice Card -->
-            <div class="flex-1 min-w-0 rounded-3xl bg-[#0d1527]/95 border-2 border-amber-400/80 shadow-[0_0_40px_rgba(251,191,36,0.22)] p-5 sm:p-7 space-y-5 relative backdrop-blur-xl">
+            <div id="gp-practice-card" class="gp-practice-card flex-1 min-w-0 rounded-3xl bg-[#0d1527]/95 border-2 border-amber-400/80 shadow-[0_0_40px_rgba(251,191,36,0.22)] p-5 sm:p-7 space-y-5 relative backdrop-blur-xl">
               <!-- Top Header: Deck Name · Rule X of Y: Rule Title + Actions -->
               <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
                 <h3 class="text-base sm:text-xl font-bold text-white tracking-tight truncate mr-3">
@@ -936,14 +936,14 @@
               </div>
 
               <!-- Centered Multi-Color Grammar Formula Bar -->
-              <div class="flex items-center justify-center flex-wrap gap-2 py-1">
+              <div id="gp-formula-bar" class="gp-formula-bar flex items-center justify-center flex-wrap gap-2 py-1">
                 ${formatFormulaChips(r.formula)}
               </div>
 
               <!-- Side-by-Side 2-Column Hero -->
               <div class="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
                 <!-- Left: Illustration Card with Floating Context Pill -->
-                <div class="md:col-span-5 relative rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 aspect-[4/3] shadow-xl group">
+                <div id="gp-illustration-card" class="gp-illustration-card md:col-span-5 relative rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 aspect-[4/3] shadow-xl group">
                   <img src="${escapeHtml(r.image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg')}" alt="${escapeHtml(r.title || 'Grammar Illustration')}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                   <div class="absolute top-3 left-3 max-w-[88%] px-3 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-[11px] font-semibold text-slate-300 backdrop-blur-md shadow-md flex items-center gap-1.5 truncate">
                     <span class="shrink-0 text-slate-400">Context:</span> <span class="text-amber-300 font-bold truncate">${escapeHtml(cleanClue)}</span>
@@ -953,12 +953,12 @@
                 <!-- Right: High-Contrast Target Sentence & Common Mistake Card -->
                 <div class="md:col-span-7 flex flex-col justify-center space-y-4">
                   <!-- Large Target Sentence with Highlighted Syntax -->
-                  <div class="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
+                  <div id="gp-target-sentence" class="gp-target-sentence text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
                     ${formatSyntaxHighlightedSentence(r.sentence || '', r.formula || '', r)}
                   </div>
 
                   <!-- Common Mistake Container: Stacked under each other if long so sentences are never cut off -->
-                  <div class="rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 space-y-2 shadow-inner">
+                  <div id="gp-mistake-box" class="gp-mistake-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 space-y-2 shadow-inner">
                     <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Common Mistake</div>
                     <div class="flex flex-col ${isLongMistake ? '' : 'sm:flex-row sm:items-center sm:gap-6'} gap-2 text-sm">
                       <div class="text-rose-400 font-bold flex items-start gap-2 leading-snug">
@@ -975,7 +975,7 @@
               </div>
 
               <!-- Sleek Quick Check Inline Bar -->
-              <div class="rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
+              <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
                 <div class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-200 min-w-0">
                   <span class="text-amber-400 font-black shrink-0">⚡ Quick Check:</span>
                   <span class="text-white font-bold break-words">${escapeHtml(r.quiz_question || 'Choose the correct form:')}</span>

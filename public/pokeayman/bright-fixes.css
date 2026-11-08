@@ -2631,3 +2631,396 @@ html body .ga-hub {
 .game-deck-inner-card {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
+
+/* =========================================================
+   Grammar Decks & Practice Modal - Bright Mode Fixes
+   ========================================================= */
+
+/* Grammar Practice Modal Backdrop Overlay */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal {
+  background: rgba(15, 23, 42, 0.45) !important;
+}
+
+/* Practice Card Shell */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-practice-card,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-practice-card,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .bg-\[\#0d1527\]\/95,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .rounded-3xl.bg-\[\#0d1527\]\/95 {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 10px 40px rgba(245, 158, 11, 0.18), 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Practice Card Header */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal h3 {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal h3 span {
+  color: #b45309 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-b.border-slate-800\/80 {
+  border-bottom-color: #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal :is(#gp-read-rule-btn, #gp-edit-deck-btn, #gp-close-btn) {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal :is(#gp-read-rule-btn, #gp-edit-deck-btn, #gp-close-btn):hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-read-rule-btn {
+  color: #b45309 !important;
+}
+
+/* Centered Formula Bar Chips */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-sky-400.bg-sky-500\/15 {
+  background: #f0f9ff !important;
+  border-color: #38bdf8 !important;
+  color: #0284c7 !important;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-amber-400.bg-amber-500\/15 {
+  background: #fefce8 !important;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-emerald-400.bg-emerald-500\/15 {
+  background: #f0fdf4 !important;
+  border-color: #10b981 !important;
+  color: #047857 !important;
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-purple-400.bg-purple-500\/15 {
+  background: #faf5ff !important;
+  border-color: #a855f7 !important;
+  color: #7e22ce !important;
+  box-shadow: 0 1px 3px rgba(126, 34, 206, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-rose-400.bg-rose-500\/15 {
+  background: #fff1f2 !important;
+  border-color: #f43f5e !important;
+  color: #be123c !important;
+  box-shadow: 0 1px 3px rgba(225, 29, 72, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-slate-400 {
+  color: #64748b !important;
+}
+
+/* Illustration & Context Clue */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .aspect-\[4\/3\] {
+  border-color: #e2e8f0 !important;
+  background: #f8fafc !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .aspect-\[4\/3\] .bg-slate-950\/85 {
+  background: rgba(255, 255, 255, 0.94) !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .aspect-\[4\/3\] .bg-slate-950\/85 span.text-slate-400 {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .aspect-\[4\/3\] .bg-slate-950\/85 span.text-amber-300 {
+  color: #b45309 !important;
+}
+
+/* Syntax Highlighted Target Sentence */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-target-sentence,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-white,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-slate-100,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-slate-200,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence span.text-white,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence span.text-slate-100,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence span.text-slate-200 {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-sky-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-sky-300 {
+  color: #0284c7 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-amber-400,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-amber-400 {
+  color: #d97706 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-emerald-400,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-emerald-400 {
+  color: #059669 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-rose-400,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-rose-400 {
+  color: #e11d48 !important;
+}
+
+/* Common Mistake & Quick Check Boxes */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-mistake-box,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-quick-check-box,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-mistake-box,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-quick-check-box,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .rounded-2xl.bg-slate-950\/70 {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .rounded-2xl.bg-slate-950\/70 .text-\[11px\].text-slate-400 {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .rounded-2xl.bg-slate-950\/70 .text-rose-400 {
+  color: #dc2626 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .rounded-2xl.bg-slate-950\/70 .text-emerald-400 {
+  color: #16a34a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-amber-400.font-black {
+  color: #d97706 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .rounded-2xl.bg-slate-950\/70 span.text-white.font-bold {
+  color: #0f172a !important;
+}
+
+/* Quiz Option Pills */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-quiz-opt {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #1e293b !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-quiz-opt:hover {
+  background: #ecfeff !important;
+  border-color: #06b6d4 !important;
+  color: #0891b2 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-quiz-opt.bg-cyan-950\/90 {
+  background: #ecfeff !important;
+  color: #0891b2 !important;
+  border-color: #06b6d4 !important;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.35) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-quiz-opt.bg-rose-950\/90 {
+  background: #fff1f2 !important;
+  color: #e11d48 !important;
+  border-color: #f43f5e !important;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.35) !important;
+}
+
+/* Navigation Circular Buttons */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-prev-btn {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #334155 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-prev-btn:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-next-btn {
+  background: #06b6d4 !important;
+  color: #042f2e !important;
+  box-shadow: 0 4px 18px rgba(6, 182, 212, 0.45) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-next-btn:hover {
+  background: #22d3ee !important;
+}
+
+/* Bottom Rules Selector Strip */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-switch-rule-btn {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-switch-rule-btn:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-switch-rule-btn div.text-white {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-switch-rule-btn div.text-slate-400 {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-switch-rule-btn.border-2.border-amber-400\/90 {
+  background: #fffbeb !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.22) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-switch-rule-btn.border-2.border-amber-400\/90 div.text-white {
+  color: #92400e !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-bottom-add-rule-btn {
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+  background: #ffffff !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-bottom-add-rule-btn:hover {
+  border-color: #f59e0b !important;
+  color: #d97706 !important;
+  background: #fffbeb !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #gp-deck-previews-strip::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #gp-deck-previews-strip::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+}
+
+/* =========================================================
+   Grammar Deck Editor & Modals - Bright Mode Fixes
+   ========================================================= */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal > div {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-deck-name-input {
+  background: #f8fafc !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-save-deck-name-btn {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #b45309 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-save-deck-name-btn:hover {
+  background: #e2e8f0 !important;
+  color: #78350f !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-close-btn {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-close-btn:hover {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-rule-form-box {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-rule-form-box.bg-amber-950\/20 {
+  background: #fffbeb !important;
+  border-color: #f59e0b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-rule-form-box label {
+  color: #475569 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-rule-form-box input.quiz-input {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-rule-form-box input.quiz-input:focus {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-rule-form-box .bg-slate-950\/70 {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-sentence-word-chips {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal .ge-word-chip {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal .ge-word-chip[data-state="blue"] {
+  background: #e0f2fe !important;
+  border-color: #38bdf8 !important;
+  color: #0369a1 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal .ge-word-chip[data-state="amber"] {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal .ge-word-chip[data-state="green"] {
+  background: #d1fae5 !important;
+  border-color: #10b981 !important;
+  color: #047857 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-image-preview-container {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-image-results {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal .ge-type-pill {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal .ge-type-pill.bg-amber-400 {
+  background: #f59e0b !important;
+  border-color: #f59e0b !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-cancel-edit-btn {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal #ge-cancel-edit-btn:hover {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal .rounded-xl.bg-slate-950 {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal .rounded-xl.bg-slate-950 p.font-bold.text-white {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-editor-modal .rounded-xl.bg-slate-950 p.text-slate-400 {
+  color: #64748b !important;
+}
+
+/* AI Generator Modal & Share Popup */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-ai-modal > div {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-ai-modal h3 {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-ai-modal p {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-ai-modal label {
+  color: #475569 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-ai-modal input,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-ai-modal select {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-ai-modal #g-ai-cancel {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+/* Grammar Deck Cards on Dashboard */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) [data-grammar-deck-id] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) [data-grammar-deck-id] h4 {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) [data-grammar-deck-id] p {
+  color: #64748b !important;
+}
+
