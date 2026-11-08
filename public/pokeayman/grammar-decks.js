@@ -991,28 +991,33 @@
             </button>
           </div>
 
-          <!-- Bottom Deck Preview Selector Strip -->
+          <!-- Bottom Rule Selector Strip: Shows all rules of THIS grammar deck -->
           <div class="w-full space-y-2 mt-4 px-2 sm:px-14">
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Deck Preview</div>
-            <div class="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none" id="gp-deck-previews-strip">
-              ${allDecks.slice(0, 6).map(d => {
-                const isCurrent = (d.__backendId === currentDeckId || d.id === currentDeckId || d.grammar_deck_id === currentDeckId);
-                const dName = d.grammar_deck_name || d.deck_name || 'Grammar Deck';
-                const dRulesCount = Array.isArray(d.rules) ? d.rules.length : 0;
-                const dThumb = d.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg';
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <span>Deck Rules (${rules.length})</span>
+              <span class="text-[10px] text-slate-500 font-medium">Click any rule to jump directly</span>
+            </div>
+            <div class="flex items-center gap-3 overflow-x-auto pb-2" id="gp-deck-previews-strip">
+              ${rules.map((ruleItem, rIdx) => {
+                const isCurrent = (rIdx === currentIndex);
+                const rTitle = ruleItem.title || `Rule ${rIdx + 1}`;
+                const rFormula = ruleItem.formula || ruleItem.sentence || '';
+                const rThumb = ruleItem.image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg';
                 return `
-                  <div class="gp-switch-deck-btn flex items-center gap-2.5 p-2 rounded-2xl shrink-0 cursor-pointer transition ${isCurrent ? 'border-2 border-amber-400/90 bg-slate-900 shadow-[0_0_15px_rgba(251,191,36,0.25)]' : 'border border-slate-800 bg-slate-900/70 hover:border-slate-700 hover:bg-slate-900'}" data-deck-id="${escapeHtml(d.__backendId || d.id || d.grammar_deck_id)}">
-                    <img src="${escapeHtml(dThumb)}" class="w-9 h-9 rounded-xl object-cover border border-slate-800 shrink-0" alt="${escapeHtml(dName)}">
-                    <div class="min-w-0 pr-1">
-                      <div class="text-xs font-bold text-white truncate max-w-[130px]">${escapeHtml(dName)}</div>
-                      <div class="text-[10px] text-slate-400 font-medium">${dRulesCount} rules</div>
+                  <div class="gp-switch-rule-btn flex items-center gap-2.5 p-2 rounded-2xl shrink-0 cursor-pointer transition ${isCurrent ? 'border-2 border-amber-400/90 bg-slate-900 shadow-[0_0_15px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50' : 'border border-slate-800 bg-slate-900/70 hover:border-slate-700 hover:bg-slate-900'}" data-rule-idx="${rIdx}">
+                    <img src="${escapeHtml(rThumb)}" class="w-9 h-9 rounded-xl object-cover border border-slate-800 shrink-0" alt="${escapeHtml(rTitle)}">
+                    <div class="min-w-0 pr-1.5">
+                      <div class="text-xs font-bold text-white truncate max-w-[150px]">${rIdx + 1}. ${escapeHtml(rTitle)}</div>
+                      <div class="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">${escapeHtml(rFormula)}</div>
                     </div>
                   </div>
                 `;
               }).join('')}
-              <button type="button" id="gp-open-ai-gen-btn" class="px-4 py-2.5 rounded-2xl border border-dashed border-slate-700 hover:border-amber-400 text-slate-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1.5 shrink-0 cursor-pointer transition">
-                <span>＋</span> <span>Generate with AI</span>
-              </button>
+              ${isOwner ? `
+                <button type="button" id="gp-bottom-add-rule-btn" class="px-3.5 py-2.5 rounded-2xl border border-dashed border-slate-700 hover:border-amber-400 text-slate-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1.5 shrink-0 cursor-pointer transition">
+                  <span>＋</span> <span>Edit / Add Rules</span>
+                </button>
+              ` : ''}
             </div>
           </div>
         </div>
@@ -1089,28 +1094,23 @@
         };
       });
 
-      // Wire Deck Previews
-      modal.querySelectorAll('.gp-switch-deck-btn').forEach(btn => {
+      // Wire Rule Selectors in the bottom strip
+      modal.querySelectorAll('.gp-switch-rule-btn').forEach(btn => {
         btn.onclick = () => {
-          const targetDeckId = btn.dataset.deckId;
-          const targetDeck = allDecks.find(d => (d.__backendId === targetDeckId || d.id === targetDeckId || d.grammar_deck_id === targetDeckId));
-          if (targetDeck) {
-            modal.remove();
-            window.openGrammarDeckPractice(targetDeck);
+          const targetIdx = Number(btn.dataset.ruleIdx);
+          if (targetIdx >= 0 && targetIdx < rules.length && targetIdx !== currentIndex) {
+            currentIndex = targetIdx;
+            renderCard(currentIndex);
           }
         };
       });
 
-      // Wire Generate with AI button
-      const aiBtn = modal.querySelector('#gp-open-ai-gen-btn');
-      if (aiBtn) {
-        aiBtn.onclick = () => {
+      // Wire bottom Edit / Add Rules button
+      const bottomAddBtn = modal.querySelector('#gp-bottom-add-rule-btn');
+      if (bottomAddBtn) {
+        bottomAddBtn.onclick = () => {
           modal.remove();
-          if (typeof window.openGrammarAiGenerator === 'function') {
-            window.openGrammarAiGenerator();
-          } else {
-            document.getElementById('teacher-grammar-ai-btn')?.click();
-          }
+          window.openGrammarDeckEditor(deck);
         };
       }
     }

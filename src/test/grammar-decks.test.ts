@@ -212,11 +212,10 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('gp-quiz-opt');
     expect(js).toContain('ring-2 ring-cyan-400/50 bg-cyan-950/90 text-cyan-200');
 
-    // 7. Deck Preview selector strip
-    expect(js).toContain('Deck Preview');
+    // 7. Deck Rules selector strip
+    expect(js).toContain('Deck Rules');
     expect(js).toContain('gp-deck-previews-strip');
-    expect(js).toContain('gp-switch-deck-btn');
-    expect(js).toContain('gp-open-ai-gen-btn');
+    expect(js).toContain('gp-switch-rule-btn');
   });
 
   it('correctly syntax-highlights questions, prepositions, possessives, and verbs without miscoloring function words', () => {

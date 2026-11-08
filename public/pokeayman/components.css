@@ -1447,6 +1447,26 @@ html body:is(#pk-ds, body, html) :is(
   object-fit: cover !important;
 }
 
+/* Practice modal rule preview strip styling & custom sleek scrollbar */
+#gp-deck-previews-strip::-webkit-scrollbar {
+  height: 5px;
+}
+#gp-deck-previews-strip::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 9999px;
+}
+#gp-deck-previews-strip::-webkit-scrollbar-thumb {
+  background: rgba(251, 191, 36, 0.4);
+  border-radius: 9999px;
+}
+#gp-deck-previews-strip::-webkit-scrollbar-thumb:hover {
+  background: rgba(251, 191, 36, 0.7);
+}
+#gp-deck-previews-strip {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(251, 191, 36, 0.4) transparent;
+}
+
 :is(#teacher-vb-lists-grid, #vocab-lists-container, body) :is(.teacher-zone-wordbank-header, .teacher-zone-wordbank-heading) {
   display: flex !important;
   flex-direction: column !important;
