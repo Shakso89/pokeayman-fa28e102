@@ -268,4 +268,61 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(res4).toContain('<span class="text-white font-extrabold">for</span>');
     expect(res4).not.toContain('<span class="text-emerald-400 font-black">you</span>');
   });
+
+  it('honors custom teacher word role assignment when words_blue, words_amber, or words_green are provided', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+    const mockWindow: any = {
+      document: {
+        readyState: 'complete',
+        addEventListener: () => {},
+        getElementById: () => null,
+        querySelectorAll: () => []
+      },
+      addEventListener: () => {}
+    };
+    new Function('window', 'document', js)(mockWindow, mockWindow.document);
+
+    const formatSentence = mockWindow.formatSyntaxHighlightedSentence;
+    expect(typeof formatSentence).toBe('function');
+
+    // Custom teacher assignment: Blue = "Where", Amber = "is", Green = "the sleeping cat"
+    const rule = {
+      words_blue: 'Where',
+      words_amber: 'is',
+      words_green: 'the sleeping cat'
+    };
+    const res = formatSentence('Where is the sleeping cat?', 'Where + is / are + Subject ?', rule);
+    expect(res).toContain('<span class="text-sky-300 font-black">Where</span>');
+    expect(res).toContain('<span class="text-amber-400 font-black">is</span>');
+    expect(res).toContain('<span class="text-emerald-400 font-black">the</span>');
+    expect(res).toContain('<span class="text-emerald-400 font-black">sleeping</span>');
+    expect(res).toContain('<span class="text-emerald-400 font-black">cat?</span>');
+  });
+
+  it('ensures rule editor includes word role chips & inputs and 3 distinct quick check options', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+
+    // Word role inputs and clickable word chips
+    expect(js).toContain('id="ge-sentence-word-chips"');
+    expect(js).toContain('id="ge-rule-words-blue"');
+    expect(js).toContain('id="ge-rule-words-amber"');
+    expect(js).toContain('id="ge-rule-words-green"');
+    expect(js).toContain('syncWordChips');
+
+    // 3 distinct option inputs for Quick Check
+    expect(js).toContain('id="ge-rule-answer"');
+    expect(js).toContain('id="ge-rule-opt2"');
+    expect(js).toContain('id="ge-rule-opt3"');
+    expect(js).not.toContain("quiz_options: [answer || 'Option 1', 'Option 2', 'Option 3']");
+    expect(js).not.toContain("quiz_options: answer ? [answer, 'Option 2', 'Option 3']");
+  });
+
+  it('ensures student practice awards coins for correct quick check answers', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+
+    expect(js).toContain('awardCoinsForGrammarPractice');
+    expect(js).toContain('rewardedRuleIndices');
+    expect(js).toContain('persistCanonicalStudentPatch');
+    expect(js).toContain('updateVisibleStudentCoinLabels');
+  });
 });

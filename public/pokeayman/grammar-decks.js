@@ -28,6 +28,9 @@
           title: 'Actions Happening Right Now (Affirmative)',
           formula: 'Subject + am / is / are + Verb-ing',
           sentence: 'The elephant is walking slowly in the grass.',
+          words_blue: 'The elephant',
+          words_amber: 'is',
+          words_green: 'walking',
           context_clue: 'Right now at this moment',
           image: 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
           mistake_bad: 'The elephant walking.',
@@ -41,6 +44,9 @@
           title: 'Negative Actions (Not Happening)',
           formula: 'Subject + am / is / are + NOT + Verb-ing',
           sentence: 'The dinosaur is not sleeping today.',
+          words_blue: 'The dinosaur',
+          words_amber: 'is not',
+          words_green: 'sleeping',
           context_clue: 'Saying NO to an action right now',
           image: 'https://cdn.pixabay.com/photo/2021/02/08/16/03/dinosaur-5995333_640.png',
           mistake_bad: 'The dinosaur not sleeping.',
@@ -54,6 +60,9 @@
           title: 'Asking Questions (Word Order Swap)',
           formula: 'Am / Is / Are + Subject + Verb-ing ?',
           sentence: 'Are you studying for the quiz right now?',
+          words_blue: 'Are',
+          words_amber: 'you',
+          words_green: 'studying',
           context_clue: 'Move the helping verb to the front!',
           image: 'https://cdn.pixabay.com/photo/2019/06/13/09/41/business-4271251_640.png',
           mistake_bad: 'You are studying for the quiz?',
@@ -524,12 +533,56 @@
     window.openGrammarDeckPractice(deck);
   };
 
-  // Helper: syntax-highlight target sentence according to English grammar patterns
-  function formatSyntaxHighlightedSentence(sentence, formula = '') {
+  // Helper: syntax-highlight target sentence according to English grammar patterns or teacher custom assignment
+  function formatSyntaxHighlightedSentence(sentence, formula = '', rule = null) {
     if (!sentence) return '';
     const clean = String(sentence).trim();
     const rawWords = clean.split(/\s+/);
     if (rawWords.length <= 1) return escapeHtml(clean);
+
+    // 1. Check if custom teacher word role assignment is provided in rule
+    const customBlue = (rule?.words_blue || rule?.highlight_blue || '').trim().toLowerCase();
+    const customAmber = (rule?.words_amber || rule?.highlight_amber || '').trim().toLowerCase();
+    const customGreen = (rule?.words_green || rule?.highlight_green || '').trim().toLowerCase();
+
+    if (customBlue || customAmber || customGreen) {
+      const cleanWord = (w) => String(w || '').toLowerCase().replace(/[^a-z0-9']/g, '');
+
+      const parseWordsAndPhrases = (str) => {
+        if (!str) return { phrases: [], words: new Set() };
+        const rawItems = str.split(/[,;\n+]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+        const words = new Set();
+        const phrases = [];
+        rawItems.forEach(item => {
+          phrases.push(item);
+          item.split(/\s+/).forEach(w => {
+            const cw = cleanWord(w);
+            if (cw) words.add(cw);
+          });
+        });
+        return { phrases, words };
+      };
+
+      const blueData = parseWordsAndPhrases(customBlue);
+      const amberData = parseWordsAndPhrases(customAmber);
+      const greenData = parseWordsAndPhrases(customGreen);
+
+      return rawWords.map((w) => {
+        const cw = cleanWord(w);
+        if (!cw) return `<span class="text-white font-extrabold">${escapeHtml(w)}</span>`;
+
+        if (blueData.words.has(cw)) {
+          return `<span class="text-sky-300 font-black">${escapeHtml(w)}</span>`;
+        }
+        if (amberData.words.has(cw)) {
+          return `<span class="text-amber-400 font-black">${escapeHtml(w)}</span>`;
+        }
+        if (greenData.words.has(cw)) {
+          return `<span class="text-emerald-400 font-black">${escapeHtml(w)}</span>`;
+        }
+        return `<span class="text-white font-extrabold">${escapeHtml(w)}</span>`;
+      }).join(' ');
+    }
 
     const AUX_VERBS = new Set([
       'am', 'is', 'are', 'was', 'were', 'will', 'shall', 'has', 'have', 'had',
@@ -744,6 +797,84 @@
     const currentDeckId = deck.__backendId || deck.id || deck.grammar_deck_id;
     const deckName = deck.grammar_deck_name || deck.deck_name || 'Grammar Deck';
     const isOwner = isCurrentTeacherOwner(deck);
+    const rewardedRuleIndices = new Set();
+
+    // Helper: award student coins for answering grammar quick checks correctly
+    async function awardCoinsForGrammarPractice(amount = 5) {
+      let student = null;
+      if (typeof getCurrentStudentRecord === 'function') {
+        try { student = getCurrentStudentRecord(); } catch (_) {}
+      }
+      if (!student && typeof currentStudentRecordId !== 'undefined' && currentStudentRecordId) {
+        if (typeof allData !== 'undefined' && Array.isArray(allData)) {
+          student = allData.find(r => (r.__backendId === currentStudentRecordId || r.student_id === currentStudentRecordId) && r.type === 'student') || null;
+        }
+      }
+      if (!student && typeof currentStudent !== 'undefined' && currentStudent) {
+        if (typeof allData !== 'undefined' && Array.isArray(allData)) {
+          student = allData.find(r => r.type === 'student' && r.student_name === currentStudent) || null;
+        }
+      }
+
+      const oldCoins = Number(student?.coins) || 0;
+      const newCoins = oldCoins + amount;
+
+      if (student) {
+        if (typeof persistCanonicalStudentPatch === 'function') {
+          try {
+            await persistCanonicalStudentPatch(student, { coins: newCoins }, 'Could not save grammar coins.');
+          } catch (e) {
+            console.warn('[Grammar] Error persisting coins:', e);
+          }
+        } else if (window.dataSdk?.update) {
+          try {
+            const updated = { ...student, coins: newCoins };
+            await window.dataSdk.update(updated, { notify: false });
+            if (typeof allData !== 'undefined') {
+              allData = allData.map(r => r.__backendId === student.__backendId ? updated : r);
+            }
+            if (typeof setCurrentStudentRecord === 'function') {
+              setCurrentStudentRecord(updated);
+            }
+          } catch (e) {
+            console.warn('[Grammar] Error updating dataSdk coins:', e);
+          }
+        }
+
+        // Update DOM coin counters
+        if (typeof updateVisibleStudentCoinLabels === 'function') {
+          try { updateVisibleStudentCoinLabels({ ...student, coins: newCoins }); } catch (_) {}
+        } else {
+          const myCoinsNode = document.getElementById('my-coins');
+          if (myCoinsNode) myCoinsNode.textContent = String(newCoins);
+        }
+
+        if (typeof renderStudentDashboard === 'function' && typeof currentRole !== 'undefined' && currentRole === 'student') {
+          try { renderStudentDashboard(); } catch (_) {}
+        }
+
+        if (typeof showStudentAwardCelebration === 'function') {
+          try { showStudentAwardCelebration({ ...student, coins: newCoins }, amount); } catch (_) {}
+        }
+      }
+
+      if (typeof triggerCoinSound === 'function') {
+        try { triggerCoinSound(); } catch (_) {}
+      } else if (window.pokeSfx?.play) {
+        try { window.pokeSfx.play('coin'); } catch (_) {}
+      }
+
+      if (typeof toast === 'function') {
+        if (student) {
+          toast(`✨ Correct! +${amount} coins awarded! (Total: ${newCoins} 🪙)`);
+        } else {
+          toast(`✨ Correct! (+${amount} coins awarded in student mode)`);
+        }
+      }
+
+      return { student, newCoins };
+    }
+    window.awardCoinsForGrammarPractice = awardCoinsForGrammarPractice;
 
     const modal = document.createElement('div');
     modal.id = 'grammar-practice-modal';
@@ -818,7 +949,7 @@
                 <div class="md:col-span-7 flex flex-col justify-center space-y-4">
                   <!-- Large Target Sentence with Highlighted Syntax -->
                   <div class="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
-                    ${formatSyntaxHighlightedSentence(r.sentence || '', r.formula || '')}
+                    ${formatSyntaxHighlightedSentence(r.sentence || '', r.formula || '', r)}
                   </div>
 
                   <!-- Common Mistake Container -->
@@ -932,7 +1063,7 @@
 
       // Wire Quick Check quiz options
       modal.querySelectorAll('.gp-quiz-opt').forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = async () => {
           const chosen = btn.dataset.val;
           const correct = r.quiz_answer;
 
@@ -942,10 +1073,18 @@
 
           if (chosen === correct) {
             btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-cyan-400 ring-2 ring-cyan-400/50 bg-cyan-950/90 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition cursor-pointer';
-            if (typeof triggerCoinSound === 'function') triggerCoinSound();
-            if (typeof toast === 'function') toast('✨ Correct! +5 coins awarded!');
+            if (!rewardedRuleIndices.has(idx)) {
+              rewardedRuleIndices.add(idx);
+              await awardCoinsForGrammarPractice(5);
+            } else {
+              if (typeof triggerCoinSound === 'function') triggerCoinSound();
+              if (typeof toast === 'function') toast('✨ Correct! (Already rewarded for this rule)');
+            }
           } else {
             btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-rose-500 ring-2 ring-rose-500/50 bg-rose-950/90 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.4)] transition cursor-pointer';
+            if (window.pokeSfx?.play) {
+              try { window.pokeSfx.play('wrong'); } catch (_) {}
+            }
           }
         };
       });
@@ -1064,6 +1203,13 @@
       const isEditing = editingRuleIndex >= 0 && editingRuleIndex < rules.length;
       const activeRule = isEditing ? rules[editingRuleIndex] : null;
 
+      // Extract options for active rule
+      const existingOptions = Array.isArray(activeRule?.quiz_options) ? activeRule.quiz_options : [];
+      const activeAnswer = activeRule?.quiz_answer || existingOptions[0] || '';
+      const remainingWrong = existingOptions.filter((opt, i) => opt !== activeAnswer || i > 0);
+      const activeOpt2 = remainingWrong[0] || (existingOptions[1] && existingOptions[1] !== activeAnswer ? existingOptions[1] : (existingOptions[0] && existingOptions[0] !== activeAnswer ? existingOptions[0] : ''));
+      const activeOpt3 = remainingWrong[1] || (existingOptions[2] && existingOptions[2] !== activeAnswer && existingOptions[2] !== activeOpt2 ? existingOptions[2] : '');
+
       modal.innerHTML = `
         <div class="max-w-3xl w-full rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-6 shadow-2xl space-y-5 my-auto max-h-[90vh] overflow-y-auto">
           <!-- Header with Editable Deck Title -->
@@ -1107,7 +1253,45 @@
                 <label for="ge-rule-sentence" class="text-[11px] text-slate-400 font-semibold block">Example Sentence *</label>
                 <input id="ge-rule-sentence" type="text" placeholder="e.g. The elephant is walking slowly in the grass." class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.sentence || '')}">
               </div>
-              <div class="space-y-1">
+
+              <!-- Word Color & Formula Role Assignment -->
+              <div class="sm:col-span-2 space-y-2 p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <div class="text-[11px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>🎨</span> Assign Sentence Words to Formula Parts
+                  </div>
+                  <span class="text-[10px] text-slate-400">Click words below to cycle role: <span class="text-sky-300 font-bold">Blue</span> → <span class="text-amber-400 font-bold">Amber</span> → <span class="text-emerald-400 font-bold">Green</span> → <span class="text-slate-400 font-bold">Reset</span></span>
+                </div>
+
+                <!-- Interactive word chips -->
+                <div id="ge-sentence-word-chips" class="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-slate-900/90 border border-slate-800/90 min-h-[40px]">
+                  <!-- Populated dynamically -->
+                </div>
+
+                <!-- 3 Role Inputs -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                  <div class="space-y-1">
+                    <label for="ge-rule-words-blue" class="text-[10px] text-sky-300 font-bold flex items-center gap-1">
+                      <span class="w-2 h-2 rounded-full bg-sky-400 inline-block shadow-[0_0_6px_rgba(56,189,248,0.8)]"></span> Part 1 (Blue) Words
+                    </label>
+                    <input id="ge-rule-words-blue" type="text" placeholder="e.g. Where or The elephant" class="quiz-input text-xs w-full font-medium" value="${escapeHtml(activeRule?.words_blue || activeRule?.highlight_blue || '')}">
+                  </div>
+                  <div class="space-y-1">
+                    <label for="ge-rule-words-amber" class="text-[10px] text-amber-300 font-bold flex items-center gap-1">
+                      <span class="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-[0_0_6px_rgba(251,191,36,0.8)]"></span> Part 2 (Amber) Words
+                    </label>
+                    <input id="ge-rule-words-amber" type="text" placeholder="e.g. is or is walking" class="quiz-input text-xs w-full font-medium" value="${escapeHtml(activeRule?.words_amber || activeRule?.highlight_amber || '')}">
+                  </div>
+                  <div class="space-y-1">
+                    <label for="ge-rule-words-green" class="text-[10px] text-emerald-300 font-bold flex items-center gap-1">
+                      <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-[0_0_6px_rgba(52,211,153,0.8)]"></span> Part 3 (Green) Words
+                    </label>
+                    <input id="ge-rule-words-green" type="text" placeholder="e.g. the sleeping cat or slowly" class="quiz-input text-xs w-full font-medium" value="${escapeHtml(activeRule?.words_green || activeRule?.highlight_green || '')}">
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-1 sm:col-span-2">
                 <label for="ge-rule-clue" class="text-[11px] text-slate-400 font-semibold block">Context Clue / Hint</label>
                 <input id="ge-rule-clue" type="text" placeholder="e.g. Right now at this moment" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.context_clue || '')}">
               </div>
@@ -1199,13 +1383,35 @@
                 <label for="ge-rule-good" class="text-[11px] text-emerald-300 font-semibold block">✅ Correct Form</label>
                 <input id="ge-rule-good" type="text" placeholder="e.g. The elephant is walking." class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.mistake_good || '')}">
               </div>
-              <div class="space-y-1">
+              <div class="space-y-1 sm:col-span-2 pt-2 border-t border-slate-800/80">
                 <label for="ge-rule-question" class="text-[11px] text-slate-400 font-semibold block">Quick Check Question</label>
                 <input id="ge-rule-question" type="text" placeholder="e.g. Look! The monkeys _____ the tall tree!" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.quiz_question || '')}">
               </div>
-              <div class="space-y-1">
-                <label for="ge-rule-answer" class="text-[11px] text-slate-400 font-semibold block">Correct Answer</label>
-                <input id="ge-rule-answer" type="text" placeholder="e.g. are climbing" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.quiz_answer || '')}">
+              <div class="sm:col-span-2 space-y-1">
+                <div class="flex items-center justify-between">
+                  <label class="text-[11px] text-slate-400 font-semibold block">⚡ Quick Check Practice Options (3 Choices)</label>
+                  <span class="text-[10px] text-slate-500">Correct choice awards coins in student practice</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div class="space-y-1">
+                    <label for="ge-rule-answer" class="text-[10px] text-cyan-300 font-bold block flex items-center gap-1">
+                      <span>✅</span> Correct Answer *
+                    </label>
+                    <input id="ge-rule-answer" type="text" placeholder="e.g. are climbing" class="quiz-input text-xs w-full border-cyan-500/50" value="${escapeHtml(activeAnswer)}">
+                  </div>
+                  <div class="space-y-1">
+                    <label for="ge-rule-opt2" class="text-[10px] text-rose-300 font-bold block flex items-center gap-1">
+                      <span>❌</span> Wrong Option 2
+                    </label>
+                    <input id="ge-rule-opt2" type="text" placeholder="e.g. climbs" class="quiz-input text-xs w-full" value="${escapeHtml(activeOpt2 || '')}">
+                  </div>
+                  <div class="space-y-1">
+                    <label for="ge-rule-opt3" class="text-[10px] text-rose-300 font-bold block flex items-center gap-1">
+                      <span>❌</span> Wrong Option 3
+                    </label>
+                    <input id="ge-rule-opt3" type="text" placeholder="e.g. is climbing" class="quiz-input text-xs w-full" value="${escapeHtml(activeOpt3 || '')}">
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1470,6 +1676,105 @@
         executeSearch(true);
       }
 
+      // Interactive Word Chips & Color Assignment Synchronization
+      const sentenceInput = modal.querySelector('#ge-rule-sentence');
+      const blueInput = modal.querySelector('#ge-rule-words-blue');
+      const amberInput = modal.querySelector('#ge-rule-words-amber');
+      const greenInput = modal.querySelector('#ge-rule-words-green');
+      const wordChipsContainer = modal.querySelector('#ge-sentence-word-chips');
+
+      function syncWordChips() {
+        if (!wordChipsContainer || !sentenceInput) return;
+        const text = sentenceInput.value.trim();
+        if (!text) {
+          wordChipsContainer.innerHTML = '<span class="text-xs text-slate-500 italic">Type an example sentence above to click and assign word colors</span>';
+          return;
+        }
+
+        const cleanWord = (w) => String(w || '').toLowerCase().replace(/[^a-z0-9']/g, '');
+        const parseWordsSet = (inp) => {
+          const s = new Set();
+          if (!inp) return s;
+          inp.value.split(/[,;\s+]+/).forEach(w => {
+            const cw = cleanWord(w);
+            if (cw) s.add(cw);
+          });
+          return s;
+        };
+
+        const blueSet = parseWordsSet(blueInput);
+        const amberSet = parseWordsSet(amberInput);
+        const greenSet = parseWordsSet(greenInput);
+
+        const tokens = text.split(/\s+/).filter(Boolean);
+        wordChipsContainer.innerHTML = tokens.map((tok, i) => {
+          const cw = cleanWord(tok);
+          let colorClass = 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500 hover:text-white';
+          let state = 'none';
+
+          if (blueSet.has(cw)) {
+            colorClass = 'border-sky-400 bg-sky-500/20 text-sky-200 shadow-[0_0_8px_rgba(56,189,248,0.3)] font-bold';
+            state = 'blue';
+          } else if (amberSet.has(cw)) {
+            colorClass = 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.3)] font-bold';
+            state = 'amber';
+          } else if (greenSet.has(cw)) {
+            colorClass = 'border-emerald-400 bg-emerald-500/20 text-emerald-200 shadow-[0_0_8px_rgba(52,211,153,0.3)] font-bold';
+            state = 'green';
+          }
+
+          return `
+            <button type="button" class="ge-word-chip px-2.5 py-1 rounded-lg text-xs border transition cursor-pointer active:scale-95 ${colorClass}" data-index="${i}" data-token="${escapeHtml(tok)}" data-clean="${escapeHtml(cw)}" data-state="${state}">
+              ${escapeHtml(tok)}
+            </button>
+          `;
+        }).join('');
+
+        // Wire click handler on word chips
+        wordChipsContainer.querySelectorAll('.ge-word-chip').forEach(btn => {
+          btn.onclick = () => {
+            const clean = btn.dataset.clean;
+            const current = btn.dataset.state;
+
+            // Remove clean from all inputs first
+            const removeFromInput = (inp) => {
+              if (!inp) return;
+              const currentTokens = inp.value.split(/[,;\s+]+/).filter(w => cleanWord(w) !== clean && Boolean(w));
+              inp.value = currentTokens.join(', ');
+            };
+            const addToInput = (inp) => {
+              if (!inp) return;
+              const currentTokens = inp.value.split(/[,;\s+]+/).filter(Boolean);
+              if (!currentTokens.some(w => cleanWord(w) === clean)) {
+                currentTokens.push(btn.dataset.token.replace(/[^a-zA-Z0-9']/g, ''));
+              }
+              inp.value = currentTokens.join(', ');
+            };
+
+            removeFromInput(blueInput);
+            removeFromInput(amberInput);
+            removeFromInput(greenInput);
+
+            // Cycle: none -> blue -> amber -> green -> none
+            if (current === 'none') {
+              addToInput(blueInput);
+            } else if (current === 'blue') {
+              addToInput(amberInput);
+            } else if (current === 'amber') {
+              addToInput(greenInput);
+            } // else green -> none (already removed)
+
+            syncWordChips();
+          };
+        });
+      }
+
+      sentenceInput?.addEventListener('input', syncWordChips);
+      blueInput?.addEventListener('input', syncWordChips);
+      amberInput?.addEventListener('input', syncWordChips);
+      greenInput?.addEventListener('input', syncWordChips);
+      syncWordChips();
+
       modal.querySelector('#ge-close-btn').onclick = () => modal.remove();
       modal.querySelector('#ge-cancel-btn').onclick = () => modal.remove();
 
@@ -1503,17 +1808,31 @@
         const title = modal.querySelector('#ge-rule-title').value.trim();
         const formula = modal.querySelector('#ge-rule-formula').value.trim();
         const sentence = modal.querySelector('#ge-rule-sentence').value.trim();
+        const wordsBlue = modal.querySelector('#ge-rule-words-blue')?.value.trim() || '';
+        const wordsAmber = modal.querySelector('#ge-rule-words-amber')?.value.trim() || '';
+        const wordsGreen = modal.querySelector('#ge-rule-words-green')?.value.trim() || '';
         const clue = modal.querySelector('#ge-rule-clue').value.trim();
         const img = modal.querySelector('#ge-rule-image').value.trim();
         const bad = modal.querySelector('#ge-rule-bad').value.trim();
         const good = modal.querySelector('#ge-rule-good').value.trim();
         const question = modal.querySelector('#ge-rule-question').value.trim();
         const answer = modal.querySelector('#ge-rule-answer').value.trim();
+        const opt2 = modal.querySelector('#ge-rule-opt2')?.value.trim() || '';
+        const opt3 = modal.querySelector('#ge-rule-opt3')?.value.trim() || '';
 
         if (!title || !sentence) {
           if (typeof toast === 'function') toast('Please enter a rule title and example sentence.');
           modal.querySelector('#ge-rule-title').focus();
           return;
+        }
+
+        // Build 3 distinct choices without placeholders
+        const quizOptions = [answer];
+        if (opt2) quizOptions.push(opt2);
+        if (opt3) quizOptions.push(opt3);
+        if (quizOptions.length === 1 && answer) {
+          quizOptions.push(answer.endsWith('s') ? answer.slice(0, -1) : answer + 's');
+          quizOptions.push('not ' + answer);
         }
 
         if (isEditing) {
@@ -1523,13 +1842,19 @@
             title,
             formula: formula || 'Subject + Verb',
             sentence,
+            words_blue: wordsBlue,
+            words_amber: wordsAmber,
+            words_green: wordsGreen,
+            highlight_blue: wordsBlue,
+            highlight_amber: wordsAmber,
+            highlight_green: wordsGreen,
             context_clue: clue || 'Grammar practice',
             image: img || rules[editingRuleIndex].image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
             mistake_bad: bad || 'Mistake',
             mistake_good: good || sentence,
             quiz_question: question || 'Complete the sentence:',
             quiz_answer: answer || 'Option 1',
-            quiz_options: answer ? [answer, 'Option 2', 'Option 3'] : (rules[editingRuleIndex].quiz_options || ['Option 1', 'Option 2', 'Option 3'])
+            quiz_options: quizOptions
           };
           deck.rules = rules;
           await window.saveOrUpdateGrammarDeck(deck);
@@ -1542,12 +1867,18 @@
             title,
             formula: formula || 'Subject + Verb',
             sentence,
+            words_blue: wordsBlue,
+            words_amber: wordsAmber,
+            words_green: wordsGreen,
+            highlight_blue: wordsBlue,
+            highlight_amber: wordsAmber,
+            highlight_green: wordsGreen,
             context_clue: clue || 'Grammar practice',
             image: img || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
             mistake_bad: bad || 'Mistake',
             mistake_good: good || sentence,
             quiz_question: question || 'Complete the sentence:',
-            quiz_options: [answer || 'Option 1', 'Option 2', 'Option 3'],
+            quiz_options: quizOptions,
             quiz_answer: answer || 'Option 1'
           };
           rules.push(newRule);
@@ -1814,6 +2145,9 @@
           title: 'Asking with "What" (Things & Objects)',
           formula: 'What + is / are + Subject ?',
           sentence: 'What is inside your school backpack?',
+          words_blue: 'What',
+          words_amber: 'is',
+          words_green: 'inside your school backpack',
           context_clue: 'Use "What" to ask about things, objects, or actions.',
           mistake_bad: 'Where is your favorite movie?',
           mistake_good: 'What is your favorite movie?',
@@ -1829,6 +2163,9 @@
           title: 'Asking with "Where" (Places & Locations)',
           formula: 'Where + is / are + Subject ?',
           sentence: 'Where is the sleeping cat?',
+          words_blue: 'Where',
+          words_amber: 'is',
+          words_green: 'the sleeping cat',
           context_clue: 'Use "Where" to ask about places or locations.',
           mistake_bad: 'What is the library located?',
           mistake_good: 'Where is the library located?',
@@ -1844,6 +2181,9 @@
           title: 'Asking with "What color" (Colors & Shades)',
           formula: 'What color + is / are + Subject ?',
           sentence: 'What color is your bicycle?',
+          words_blue: 'What color',
+          words_amber: 'is',
+          words_green: 'your bicycle',
           context_clue: 'Use "What color" to ask about appearance and shades.',
           mistake_bad: 'How many is your new shirt?',
           mistake_good: 'What color is your new shirt?',
@@ -1859,6 +2199,9 @@
           title: 'Asking with "How many" (Countable Quantities)',
           formula: 'How many + Plural Noun + are there ?',
           sentence: 'How many apples are in the basket?',
+          words_blue: 'How many',
+          words_amber: 'are in the basket',
+          words_green: 'apples',
           context_clue: 'Use "How many" to ask about numbers of countable items.',
           mistake_bad: 'Where pencils do you have in your bag?',
           mistake_good: 'How many pencils do you have in your bag?',
@@ -1874,6 +2217,9 @@
           title: 'Asking with "When" (Time & Occasions)',
           formula: 'When + does / do + Subject + Verb ?',
           sentence: 'When does the English lesson begin?',
+          words_blue: 'When',
+          words_amber: 'does',
+          words_green: 'the English lesson begin',
           context_clue: 'Use "When" to ask about time, days, or moments.',
           mistake_bad: 'Where time does the lesson start?',
           mistake_good: 'When does the lesson start?',
@@ -1889,6 +2235,9 @@
           title: 'Asking with "Why" (Reasons & Explanations)',
           formula: 'Why + is / are + Subject + ... ?',
           sentence: 'Why are you smiling so brightly today?',
+          words_blue: 'Why',
+          words_amber: 'are',
+          words_green: 'you smiling so brightly',
           context_clue: 'Use "Why" to ask for reasons (answered with "Because").',
           mistake_bad: 'What are you happy today?',
           mistake_good: 'Why are you happy today?',
@@ -1904,6 +2253,9 @@
           title: 'Asking with "Who" (People & Characters)',
           formula: 'Who + is / are + Subject ?',
           sentence: 'Who is the friendly new student?',
+          words_blue: 'Who',
+          words_amber: 'is',
+          words_green: 'the friendly new student',
           context_clue: 'Use "Who" to ask about a person.',
           mistake_bad: 'What is sitting next to you?',
           mistake_good: 'Who is sitting next to you?',

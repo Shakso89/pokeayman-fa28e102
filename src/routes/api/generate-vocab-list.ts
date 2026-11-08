@@ -117,6 +117,9 @@ CRITICAL INSTRUCTIONS:
    - "quiz_question": A fill-in-the-blank question testing this exact rule (e.g. "Tomorrow, the astronaut _____ (travel) to the Moon.").
    - "quiz_options": Array of 3 distinct choices (e.g. ["will travel", "traveling", "traveled"]).
    - "quiz_answer": The exact correct option (e.g. "will travel").
+   - "words_blue": The exact word(s) from sentence matching Part 1 of formula (e.g. "Tomorrow, the astronaut" or "Where" or "Will").
+   - "words_amber": The exact word(s) from sentence matching Part 2 of formula (e.g. "will travel" or "is" or "the astronaut").
+   - "words_green": The exact word(s) from sentence matching Part 3 of formula (e.g. "to the Moon" or "the sleeping cat" or "travel to Mars").
    - "image_keywords": 2 to 3 concrete nouns/verbs taken directly from the example sentence to find a photo illustrating that specific sentence (e.g. "robot build", "space astronaut", "dinosaur book").
 
 Reply with valid JSON only in this exact format:
@@ -133,6 +136,9 @@ Reply with valid JSON only in this exact format:
       "quiz_question": "...",
       "quiz_options": ["...", "...", "..."],
       "quiz_answer": "...",
+      "words_blue": "...",
+      "words_amber": "...",
+      "words_green": "...",
       "image_keywords": "..."
     }
   ]
