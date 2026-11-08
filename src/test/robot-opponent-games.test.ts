@@ -32,17 +32,17 @@ describe('Robot Opponent & Difficulty Selection for All Student Games', () => {
     expect(arcadeJs).toContain("['easy', 'medium', 'hard']");
   });
 
-  it('renders Robot difficulty picker with Easy, Medium, and Hard in gaStudentSetup', () => {
+  it('renders futuristic Robot difficulty picker with Easy, Normal, and Hard for both teacher and student dashboards', () => {
     expect(arcadeJs).toContain('ga-bot-difficulty-picker');
     expect(arcadeJs).toContain("id: 'easy', label: 'Easy'");
-    expect(arcadeJs).toContain("id: 'medium', label: 'Medium'");
+    expect(arcadeJs).toContain("id: 'normal', label: 'Normal'");
     expect(arcadeJs).toContain("id: 'hard', label: 'Hard'");
-    expect(arcadeJs).toContain('Opponent: Robot');
+    expect(arcadeJs).toContain('OPPONENT: ROBOT');
     expect(arcadeJs).toContain('window.selectedBotDifficulty');
   });
 
   it('initializes activeGamePlayers with student and Robot opponent in chooseGamePlayers for students', () => {
-    expect(html).toContain("const robotPlayer = (window.createRobotPlayer || createRobotPlayer)(window.selectedBotDifficulty || 'medium');");
+    expect(html).toContain("const robotPlayer = (window.createRobotPlayer || createRobotPlayer)(window.selectedBotDifficulty || 'normal');");
     expect(html).toContain('activeGamePlayers = [signedInStudent, robotPlayer];');
     expect(html).toContain('pendingGamePlayers = 2;');
   });

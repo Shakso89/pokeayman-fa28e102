@@ -9030,10 +9030,11 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     </section>`;
   };
 
-  window.selectedBotDifficulty = window.selectedBotDifficulty || 'medium';
+  window.selectedBotDifficulty = window.selectedBotDifficulty || 'normal';
 
-  window.createRobotPlayer = function (difficulty = (window.selectedBotDifficulty || 'medium')) {
-    const diff = ['easy', 'medium', 'hard'].includes(String(difficulty).toLowerCase()) ? String(difficulty).toLowerCase() : 'medium';
+  window.createRobotPlayer = function (difficulty = (window.selectedBotDifficulty || 'normal')) {
+    const rawDiff = String(difficulty || 'normal').toLowerCase();
+    const diff = ['easy', 'medium', 'hard'].includes(rawDiff) ? (rawDiff === 'medium' ? 'normal' : rawDiff) : (rawDiff === 'normal' ? 'normal' : 'normal');
     return {
       student_name: 'Robot',
       name: 'Robot',
@@ -9047,29 +9048,116 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     };
   };
 
-  const renderBotDifficultyPickerMarkup = (selectedDifficulty = (window.selectedBotDifficulty || 'medium')) => {
-    const diff = ['easy', 'medium', 'hard'].includes(selectedDifficulty) ? selectedDifficulty : 'medium';
+  const renderBotDifficultyPickerMarkup = (selectedDifficulty = (window.selectedBotDifficulty || 'normal')) => {
+    const raw = String(selectedDifficulty || '').toLowerCase();
+    const currentDiff = raw === 'hard' ? 'hard' : (raw === 'easy' ? 'easy' : 'normal');
+
     const difficulties = [
-      { id: 'easy', label: 'Easy', emoji: '🟢', desc: 'Relaxed & casual' },
-      { id: 'medium', label: 'Medium', emoji: '🟡', desc: 'Balanced match' },
-      { id: 'hard', label: 'Hard', emoji: '🔴', desc: 'Clever & sharp' }
+      {
+        id: 'easy', label: 'Easy',
+        tag: 'ROOKIE · LV.1',
+        icon: '🌱',
+        bars: 1,
+        desc: 'Relaxed & casual',
+        badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40',
+        activePill: 'bg-emerald-400 text-slate-950 font-black',
+        barColor: 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]',
+        cardActive: 'border-emerald-400 bg-gradient-to-b from-emerald-950/80 via-slate-900 to-slate-950 text-emerald-200 shadow-[0_0_24px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/50 scale-[1.02]',
+        iconActive: 'bg-emerald-500/25 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]'
+      },
+      {
+        id: 'normal', label: 'Normal',
+        tag: 'VETERAN · LV.2',
+        icon: '⚡',
+        bars: 2,
+        desc: 'Balanced match',
+        badgeBg: 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40',
+        activePill: 'bg-cyan-400 text-slate-950 font-black',
+        barColor: 'bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]',
+        cardActive: 'border-cyan-400 bg-gradient-to-b from-cyan-950/80 via-slate-900 to-slate-950 text-cyan-200 shadow-[0_0_24px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400/50 scale-[1.02]',
+        iconActive: 'bg-cyan-500/25 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+      },
+      {
+        id: 'hard', label: 'Hard',
+        tag: 'MASTER · LV.3',
+        icon: '🔥',
+        bars: 3,
+        desc: 'Clever & sharp',
+        badgeBg: 'bg-rose-500/20 text-rose-300 border-rose-400/40',
+        activePill: 'bg-rose-400 text-slate-950 font-black',
+        barColor: 'bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.8)]',
+        cardActive: 'border-rose-400 bg-gradient-to-b from-rose-950/80 via-slate-900 to-slate-950 text-rose-200 shadow-[0_0_24px_rgba(244,63,94,0.4)] ring-1 ring-rose-400/50 scale-[1.02]',
+        iconActive: 'bg-rose-500/25 border-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.4)]'
+      }
     ];
-    return `<section class="ga-bot-difficulty-picker ga-round-setting my-3" aria-label="Robot opponent difficulty">
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="text-xs font-black uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
-          <span class="text-base" aria-hidden="true">🤖</span>
-          <span>Opponent: Robot</span>
-        </h3>
-        <span class="ga-bot-difficulty-label text-xs font-bold text-amber-200 capitalize" aria-live="polite">${esc(diff)}</span>
+
+    const currentMeta = difficulties.find(d => d.id === currentDiff) || difficulties[1];
+
+    return `<section class="ga-bot-difficulty-picker ga-round-setting my-3.5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-b from-slate-900/95 via-slate-950 to-slate-950 border border-slate-800 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]" aria-label="Robot opponent difficulty">
+      <!-- Cyber HUD Header -->
+      <div class="flex items-center justify-between mb-3 pb-2.5 border-b border-slate-800/80">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-500/20 to-indigo-600/20 border border-cyan-400/40 flex items-center justify-center text-lg shadow-[0_0_12px_rgba(6,182,212,0.3)]">
+            🤖
+          </div>
+          <div class="flex flex-col text-left">
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+              <span>OPPONENT: ROBOT</span>
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+            </span>
+            <span class="text-xs font-black tracking-wide text-white">COMBAT AI LEVEL</span>
+          </div>
+        </div>
+        <div class="ga-bot-difficulty-header-pill flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-black uppercase tracking-wider ${currentMeta.badgeBg}">
+          <span class="ga-bot-diff-dot">${currentMeta.icon}</span>
+          <span class="ga-bot-difficulty-label">${currentMeta.label}</span>
+        </div>
       </div>
-      <div class="grid grid-cols-3 gap-2 ga-difficulty-radiogroup" role="radiogroup" aria-label="Robot Difficulty">
+
+      <!-- 3 Futuristic Difficulty Cards -->
+      <div class="grid grid-cols-3 gap-2 sm:gap-3 ga-difficulty-radiogroup" role="radiogroup" aria-label="Robot Difficulty">
         ${difficulties.map(d => {
-          const isSelected = d.id === diff;
-          const borderCls = isSelected ? 'border-amber-400 bg-amber-400/20 text-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50' : 'border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-white';
-          return `<button type="button" class="ga-difficulty-choice ${isSelected ? 'is-selected' : ''} py-2 px-2.5 rounded-xl border-2 ${borderCls} font-bold text-sm transition-all flex flex-col items-center gap-0.5 cursor-pointer" data-difficulty="${d.id}" aria-checked="${isSelected}">
-            <span class="text-base">${d.emoji}</span>
-            <span class="text-xs font-extrabold">${d.label}</span>
-            <span class="text-[10px] opacity-75 font-normal">${d.desc}</span>
+          const isSelected = d.id === currentDiff;
+          const cardClass = isSelected
+            ? d.cardActive
+            : 'border-slate-800/90 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900/90 text-slate-300';
+          const iconClass = isSelected
+            ? d.iconActive
+            : 'bg-slate-800/80 border-slate-700/60 text-slate-300';
+          const tagClass = isSelected
+            ? d.activePill
+            : 'bg-slate-800/80 text-slate-400 border border-slate-700/50';
+
+          return `<button type="button" class="ga-difficulty-choice ${isSelected ? 'is-selected' : ''} group relative p-3 sm:p-3.5 rounded-2xl border-2 transition-all duration-200 flex flex-col items-center text-center cursor-pointer select-none overflow-hidden ${cardClass}" data-difficulty="${d.id}" aria-checked="${isSelected}">
+            <!-- Top tag & checkmark -->
+            <div class="w-full flex items-center justify-between mb-1.5 relative z-10">
+              <span class="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${tagClass}">
+                ${d.tag}
+              </span>
+              ${isSelected ? `<span class="w-4 h-4 rounded-full ${d.activePill} text-slate-950 flex items-center justify-center text-[10px] font-black shadow">✓</span>` : `<span class="w-4 h-4"></span>`}
+            </div>
+
+            <!-- Big Glowing Icon -->
+            <div class="relative z-10 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl ${iconClass} border flex items-center justify-center text-2xl sm:text-3xl my-1 group-hover:scale-110 transition-transform shadow-md">
+              ${d.icon}
+            </div>
+
+            <!-- Title & Description -->
+            <div class="relative z-10 w-full mt-1.5">
+              <div class="text-xs sm:text-sm font-black tracking-wide text-white uppercase">
+                ${d.label}
+              </div>
+              <div class="text-[10px] text-slate-400 font-medium mt-0.5 truncate" title="${esc(d.desc)}">
+                ${d.desc}
+              </div>
+            </div>
+
+            <!-- 3-bar intensity meter -->
+            <div class="relative z-10 flex items-center gap-1 mt-2.5" title="Intensity ${d.bars} of 3">
+              <span class="w-4 sm:w-5 h-1.5 rounded-full ${d.bars >= 1 ? (isSelected ? d.barColor : 'bg-slate-600') : 'bg-slate-800'} transition-colors"></span>
+              <span class="w-4 sm:w-5 h-1.5 rounded-full ${d.bars >= 2 ? (isSelected ? d.barColor : 'bg-slate-600') : 'bg-slate-800'} transition-colors"></span>
+              <span class="w-4 sm:w-5 h-1.5 rounded-full ${d.bars >= 3 ? (isSelected ? d.barColor : 'bg-slate-600') : 'bg-slate-800'} transition-colors"></span>
+            </div>
           </button>`;
         }).join('')}
       </div>
@@ -9078,26 +9166,40 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
   const attachBotDifficultyListeners = (panel) => {
     panel.querySelectorAll('.ga-difficulty-choice').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
         const diff = btn.dataset.difficulty;
         window.selectedBotDifficulty = diff;
-        panel.querySelectorAll('.ga-difficulty-choice').forEach(b => {
-          const sel = b.dataset.difficulty === diff;
-          b.classList.toggle('is-selected', sel);
-          b.setAttribute('aria-checked', String(sel));
-          b.className = `ga-difficulty-choice ${sel ? 'is-selected border-amber-400 bg-amber-400/20 text-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50' : 'border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-white'} py-2 px-2.5 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center gap-0.5 cursor-pointer`;
-        });
-        const label = panel.querySelector('.ga-bot-difficulty-label');
-        if (label) label.textContent = diff;
+        window.sfx?.play?.('click');
+
+        const parentSection = btn.closest('.ga-bot-difficulty-picker');
+        if (parentSection) {
+          const wrapper = document.createElement('div');
+          wrapper.innerHTML = renderBotDifficultyPickerMarkup(diff);
+          const newSection = wrapper.firstElementChild;
+          parentSection.replaceWith(newSection);
+          attachBotDifficultyListeners(newSection);
+        }
+
         if (Array.isArray(activeGamePlayers) && activeGamePlayers[1]?.isBot) {
           activeGamePlayers[1].botDifficulty = diff;
+        }
+
+        const robotSlot = document.querySelector('.ga-lineup-stage .p-3.border-cyan-400');
+        if (robotSlot) {
+          const tag = robotSlot.querySelector('span.text-\\[9px\\]');
+          if (tag) tag.textContent = diff.toUpperCase();
+        }
+        const robotPill = document.querySelector('.ga-pick-robot-btn .ga-robot-pill');
+        if (robotPill && window.teacherRobotOpponent) {
+          robotPill.textContent = `ON · ${diff === 'hard' ? 'HARD' : (diff === 'easy' ? 'EASY' : 'NORMAL')}`;
         }
       });
     });
   };
 
   const ensureStudentRobotPlayers = (difficulty) => {
-    const diff = difficulty || window.selectedBotDifficulty || 'medium';
+    const diff = difficulty || window.selectedBotDifficulty || 'normal';
     const curName = (typeof currentStudent !== 'undefined' ? currentStudent : '') || 'Player';
     const student = (Array.isArray(activeGamePlayers) && activeGamePlayers[0]) || (typeof getAllStudents === 'function' ? getAllStudents().find(s => s.student_name === curName) : null) || { student_name: curName, avatar_pokemon_id: 25 };
     const robot = window.createRobotPlayer(diff);
@@ -9134,7 +9236,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </div>
           <div class="ga-theme-grid" role="radiogroup" aria-label="Choose visual style">${renderThemeCardsMarkup(selectedTheme.id)}</div>
         </section>
-        ${renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'medium')}
+        ${renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'normal')}
         ${resolvedFnName === 'chooseCrossword' ? `<section class="ga-crossword-count" aria-label="Crossword word count"><label for="ga-crossword-word-count">Words in puzzle</label><div class="ga-crossword-count-controls"><input id="ga-crossword-word-count" type="number" min="2" max="${crosswordWordMax}" value="${crosswordWordMax}" inputmode="numeric"><button type="button" id="ga-crossword-play-all">Play ${rawCrosswordCount > CROSSWORD_SAFE_MAX ? `Max (${crosswordWordMax}` : `All (${crosswordWordMax}`} words)</button></div>${rawCrosswordCount > CROSSWORD_SAFE_MAX ? `<p class="ga-crossword-hint text-xs text-amber-300 font-semibold mt-1">Crosswords support up to ${CROSSWORD_SAFE_MAX} words for best board layout.</p>` : ''}</section>` : ''}
         <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
           <button type="button" class="btn-primary ga-student-start-btn" style="padding: 0.75rem 1.75rem; font-size: 1rem; font-weight: 800;">Start ${esc(game.name)} →</button>
@@ -9212,7 +9314,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     panel.setAttribute('aria-label', `${game.name} ${unitLabel}`);
     const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
     panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header>
-      ${renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'medium')}
+      ${renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'normal')}
       <div class="ga-student-counts" role="group" aria-label="Number of ${unitLabel}">${counts.map(count => `<button type="button" class="btn-primary" data-count="${count}" ${(isBaam ? words.length < 1 : (isDots ? words.length < 2 : words.length < count)) ? 'disabled' : ''}><strong>${count}</strong><span>${unitLabel}</span></button>`).join('')}</div>`;
     panel.querySelector('.ga-change-lists').addEventListener('click', () => { panel.remove(); if (hub) hub.hidden = false; });
     attachBotDifficultyListeners(panel);
@@ -9841,13 +9943,14 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             update();
           });
         } else if (i === robotSlotIdx) {
-          const diff = window.selectedBotDifficulty || 'medium';
+          const diff = window.selectedBotDifficulty || 'normal';
+          const diffLabel = diff === 'hard' ? 'Hard' : (diff === 'easy' ? 'Easy' : 'Normal');
           slot.className = 'p-3 rounded-2xl bg-cyan-950/60 border border-cyan-400 ring-1 ring-cyan-400/40 flex flex-col items-center justify-center gap-1.5 relative h-[88px] cursor-pointer hover:border-cyan-300 transition group';
           slot.innerHTML = `
             <span class="absolute top-1 left-2 text-[9px] font-black text-cyan-300 uppercase">P2</span>
             <span class="text-2xl drop-shadow">🤖</span>
             <span class="text-xs font-black text-cyan-200 truncate w-full text-center">Robot</span>
-            <span class="text-[9px] font-extrabold text-cyan-300/80 uppercase tracking-wider capitalize">${esc(diff)}</span>
+            <span class="text-[9px] font-extrabold text-cyan-300/80 uppercase tracking-wider">${esc(diffLabel)}</span>
           `;
           slot.title = 'Robot Opponent. Click to disable.';
           slot.addEventListener('click', (e) => {
@@ -9921,7 +10024,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           botDiffPanel.className = 'ga-teacher-bot-difficulty mt-1';
           lineupStage.after(botDiffPanel);
         }
-        botDiffPanel.innerHTML = renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'medium');
+        botDiffPanel.innerHTML = renderBotDifficultyPickerMarkup(window.selectedBotDifficulty || 'normal');
         attachBotDifficultyListeners(botDiffPanel);
         botDiffPanel.querySelectorAll('.ga-difficulty-choice').forEach(btn => {
           btn.addEventListener('click', () => {
@@ -32790,7 +32893,7 @@ function chooseGamePlayers(listName, nextStep) {
     pendingGameReward = 0;
     activeGameReward = 0;
     activeGameRewardClaimed = false;
-    const robotPlayer = (window.createRobotPlayer || createRobotPlayer)(window.selectedBotDifficulty || 'medium');
+    const robotPlayer = (window.createRobotPlayer || createRobotPlayer)(window.selectedBotDifficulty || 'normal');
     activeGamePlayers = [signedInStudent, robotPlayer];
     activeGameScores = [0, 0];
     activeGamePlayerIndex = 0;
@@ -32979,7 +33082,7 @@ function chooseGamePlayers(listName, nextStep) {
     activeGameRewardClaimed = false;
     if (isRobotOpponent && selected.length === 1) {
       const studentPlayer = students.find(s => s.student_name === selected[0].value) || { student_name: selected[0].value, avatar_pokemon_id: 25 };
-      const diff = window.selectedBotDifficulty || 'medium';
+      const diff = window.selectedBotDifficulty || 'normal';
       const robotPlayer = (window.createRobotPlayer || createRobotPlayer)(diff);
       activeGamePlayers = [studentPlayer, robotPlayer];
       pendingGamePlayers = 2;

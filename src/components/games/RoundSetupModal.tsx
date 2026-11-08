@@ -159,7 +159,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
   const [gridDots, setGridDots] = useState<number>(defaultGridSize);
   const [currentTheme, setCurrentTheme] = useState<string>(selectedThemeId);
   const [vsRobot, setVsRobot] = useState<boolean>(false);
-  const [botDifficulty, setBotDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [botDifficulty, setBotDifficulty] = useState<'easy' | 'normal' | 'hard' | 'medium'>('normal');
 
   const incTimer = () => {
     const currentIndex = TIMER_OPTIONS.indexOf(timerSeconds);
@@ -354,36 +354,112 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
 
             {/* Robot Difficulty Picker (when vsRobot is active) */}
             {vsRobot && (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-cyan-950/40 border border-cyan-500/30">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">🤖</span>
-                  <span className="text-xs font-bold text-cyan-200 uppercase tracking-wider">
-                    Robot Difficulty:
+              <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-b from-slate-900/95 via-slate-950 to-slate-950 border border-slate-800 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-sm shadow">
+                      🤖
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <span>OPPONENT: ROBOT</span>
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                      </span>
+                      <span className="text-xs font-black tracking-wide text-white">COMBAT AI LEVEL</span>
+                    </div>
+                  </div>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full border text-[11px] font-black uppercase tracking-wider ${
+                      botDifficulty === 'hard'
+                        ? 'bg-rose-500/20 text-rose-300 border-rose-400/40'
+                        : botDifficulty === 'easy'
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'
+                        : 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40'
+                    }`}
+                  >
+                    {botDifficulty === 'hard' ? '🔥 HARD' : botDifficulty === 'easy' ? '🌱 EASY' : '⚡ NORMAL'}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5" role="radiogroup" aria-label="Robot Difficulty">
+
+                <div className="grid grid-cols-3 gap-2 sm:gap-2.5" role="radiogroup" aria-label="Robot Difficulty">
                   {(
                     [
-                      { id: 'easy', label: 'Easy', emoji: '🟢' },
-                      { id: 'medium', label: 'Medium', emoji: '🟡' },
-                      { id: 'hard', label: 'Hard', emoji: '🔴' },
+                      {
+                        id: 'easy',
+                        label: 'Easy',
+                        tag: 'ROOKIE · LV.1',
+                        icon: '🌱',
+                        bars: 1,
+                        desc: 'Relaxed & casual',
+                        activeBorder: 'border-emerald-400 bg-gradient-to-b from-emerald-950/70 via-slate-900 to-slate-950 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/50 scale-[1.02]',
+                        activeTag: 'bg-emerald-400 text-slate-950 font-black',
+                        activeBar: 'bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.8)]',
+                      },
+                      {
+                        id: 'normal',
+                        label: 'Normal',
+                        tag: 'VETERAN · LV.2',
+                        icon: '⚡',
+                        bars: 2,
+                        desc: 'Balanced match',
+                        activeBorder: 'border-cyan-400 bg-gradient-to-b from-cyan-950/70 via-slate-900 to-slate-950 text-cyan-200 shadow-[0_0_20px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400/50 scale-[1.02]',
+                        activeTag: 'bg-cyan-400 text-slate-950 font-black',
+                        activeBar: 'bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]',
+                      },
+                      {
+                        id: 'hard',
+                        label: 'Hard',
+                        tag: 'MASTER · LV.3',
+                        icon: '🔥',
+                        bars: 3,
+                        desc: 'Clever & sharp',
+                        activeBorder: 'border-rose-400 bg-gradient-to-b from-rose-950/70 via-slate-900 to-slate-950 text-rose-200 shadow-[0_0_20px_rgba(244,63,94,0.4)] ring-1 ring-rose-400/50 scale-[1.02]',
+                        activeTag: 'bg-rose-400 text-slate-950 font-black',
+                        activeBar: 'bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.8)]',
+                      },
                     ] as const
                   ).map((d) => {
-                    const active = botDifficulty === d.id;
+                    const active = (botDifficulty === 'medium' ? 'normal' : botDifficulty) === d.id;
                     return (
                       <button
                         key={d.id}
                         type="button"
                         onClick={() => setBotDifficulty(d.id)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1 ${
+                        className={`group relative p-2.5 sm:p-3 rounded-2xl border-2 transition-all duration-200 flex flex-col items-center text-center cursor-pointer select-none overflow-hidden ${
                           active
-                            ? 'bg-cyan-400 text-slate-950 shadow-md ring-1 ring-cyan-300'
-                            : 'bg-slate-800/80 text-slate-300 hover:text-white border border-slate-700/60'
+                            ? d.activeBorder
+                            : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 hover:bg-slate-900 text-slate-300'
                         }`}
                         aria-checked={active}
                       >
-                        <span>{d.emoji}</span>
-                        <span>{d.label}</span>
+                        <div className="w-full flex items-center justify-between mb-1">
+                          <span
+                            className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider ${
+                              active ? d.activeTag : 'bg-slate-800 text-slate-400'
+                            }`}
+                          >
+                            {d.tag}
+                          </span>
+                          {active && (
+                            <span className={`w-3.5 h-3.5 rounded-full ${d.activeTag} text-[9px] font-black flex items-center justify-center`}>
+                              ✓
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xl sm:text-2xl my-0.5 group-hover:scale-110 transition-transform">
+                          {d.icon}
+                        </div>
+                        <div className="text-xs font-black uppercase text-white mt-1">
+                          {d.label}
+                        </div>
+                        <div className="text-[9px] text-slate-400 truncate w-full mt-0.5">
+                          {d.desc}
+                        </div>
+                        <div className="flex items-center gap-1 mt-2">
+                          <span className={`w-3.5 h-1 rounded-full ${d.bars >= 1 ? (active ? d.activeBar : 'bg-slate-600') : 'bg-slate-800'}`}></span>
+                          <span className={`w-3.5 h-1 rounded-full ${d.bars >= 2 ? (active ? d.activeBar : 'bg-slate-600') : 'bg-slate-800'}`}></span>
+                          <span className={`w-3.5 h-1 rounded-full ${d.bars >= 3 ? (active ? d.activeBar : 'bg-slate-600') : 'bg-slate-800'}`}></span>
+                        </div>
                       </button>
                     );
                   })}
