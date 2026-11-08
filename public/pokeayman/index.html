@@ -18457,7 +18457,7 @@ window.getStudentReadingLevelLabel = function(student) {
 };
 
 async function ensureActiveClassId(schoolName, className) {
-  const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+  const sb = window.supabaseClient || window.supabase || (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (window.top && (window.top.supabaseClient || window.top.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
   const classRec = (typeof getClasses === 'function' ? getClasses(schoolName).find(c => c.class_name === className) : null) ||
     allData.find(c => c.type === 'class' && c.school_name === schoolName && c.class_name === className);
   let classId = classRec ? String(classRec.class_id || classRec.id || classRec.__backendId || '').trim() : '';
@@ -18475,6 +18475,11 @@ async function ensureActiveClassId(schoolName, className) {
     if (!sbClass && isUuid) {
       const { data: byId } = await sb.from('classes').select('id, name, school_name').eq('id', classId).maybeSingle();
       sbClass = byId;
+    }
+
+    if (!sbClass && className) {
+      const { data: byName } = await sb.from('classes').select('id, name, school_name').ilike('name', String(className).trim()).maybeSingle();
+      if (byName) sbClass = byName;
     }
 
     if (!sbClass) {
@@ -31081,6 +31086,9 @@ function renderGamesList() {
 
     visibleEnrolledClasses.forEach(cls => {
       const classLists = getVocabLists(cls.school_name, cls.class_name);
+      const matchedClassRec = (typeof getClasses === 'function' ? getClasses(cls.school_name).find(c => c.class_name === cls.class_name) : null) ||
+                              allData.find(c => c.type === 'class' && c.school_name === cls.school_name && c.class_name === cls.class_name);
+      const clsId = String(cls.id || cls.class_id || cls.__backendId || matchedClassRec?.id || matchedClassRec?.class_id || matchedClassRec?.__backendId || '');
       // Filter lists to only those enabled for games by this class's teacher:
       const activeLists = classLists.filter(list => isVocabListGameActive(list, cls.school_name, cls.class_name));
       const classTitle = cls.school_name ? `${cls.school_name} · ${cls.class_name}` : cls.class_name;
@@ -32962,16 +32970,80 @@ window.activeGameVocabCache = window.activeGameVocabCache || new Map();
 
 async function syncAllClassesGameVocabLists() {
   window.activeGameVocabCache = window.activeGameVocabCache || new Map();
-  const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+
+  // 1. Instantly populate from in-memory allData class records
+  if (Array.isArray(window.allData)) {
+    window.allData.forEach(c => {
+      if (c && c.type === 'class' && Array.isArray(c.active_game_vocab_list_ids) && c.active_game_vocab_list_ids.length) {
+        const ids = c.active_game_vocab_list_ids.map(String);
+        if (c.id) window.activeGameVocabCache.set(String(c.id), ids);
+        if (c.__backendId) window.activeGameVocabCache.set(String(c.__backendId), ids);
+        if (c.class_id) window.activeGameVocabCache.set(String(c.class_id), ids);
+        if (c.class_name && c.school_name) {
+          window.activeGameVocabCache.set(`${c.school_name}||${c.class_name}`, ids);
+          window.activeGameVocabCache.set(`${String(c.school_name).trim().toLowerCase()}||${String(c.class_name).trim().toLowerCase()}`, ids);
+        }
+        if (c.class_name) {
+          window.activeGameVocabCache.set(String(c.class_name), ids);
+          window.activeGameVocabCache.set(String(c.class_name).trim().toLowerCase(), ids);
+        }
+      }
+    });
+  }
+
+  // 2. Instantly populate from localStorage
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('pokeayman_active_game_vocab_')) {
+        const subKey = key.replace('pokeayman_active_game_vocab_', '');
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) {
+            window.activeGameVocabCache.set(subKey, parsed.map(String));
+          }
+        }
+      }
+    }
+  } catch (_) {}
+
+  // 3. Sync from Supabase across all accessible clients
+  const sb = window.supabaseClient || window.supabase || (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (window.top && (window.top.supabaseClient || window.top.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
   if (!sb) return;
   try {
     const { data, error } = await sb.from('classes').select('id, name, school_name, active_game_vocab_list_ids');
     if (!error && Array.isArray(data)) {
       data.forEach(c => {
-        const ids = Array.isArray(c.active_game_vocab_list_ids) ? c.active_game_vocab_list_ids : [];
-        if (c.id) window.activeGameVocabCache.set(c.id, ids);
+        const ids = Array.isArray(c.active_game_vocab_list_ids) ? c.active_game_vocab_list_ids.map(String) : [];
+        if (!ids.length) return;
+        if (c.id) window.activeGameVocabCache.set(String(c.id), ids);
         if (c.name && c.school_name) {
-          window.activeGameVocabCache.set(`${c.school_name}||${c.name}`, ids);
+          const sName = String(c.school_name).trim();
+          const cName = String(c.name).trim();
+          window.activeGameVocabCache.set(`${sName}||${cName}`, ids);
+          window.activeGameVocabCache.set(`${sName.toLowerCase()}||${cName.toLowerCase()}`, ids);
+          try {
+            localStorage.setItem(`pokeayman_active_game_vocab_${sName}||${cName}`, JSON.stringify(ids));
+          } catch (_) {}
+        }
+        if (c.name) {
+          const cName = String(c.name).trim();
+          window.activeGameVocabCache.set(cName, ids);
+          window.activeGameVocabCache.set(cName.toLowerCase(), ids);
+          try {
+            localStorage.setItem(`pokeayman_active_game_vocab_${cName}`, JSON.stringify(ids));
+          } catch (_) {}
+        }
+        // Mirror to local allData record
+        if (Array.isArray(window.allData)) {
+          const localClass = window.allData.find(r => r.type === 'class' && (
+            (c.id && (String(r.id) === String(c.id) || String(r.__backendId) === String(c.id) || String(r.class_id) === String(c.id))) ||
+            (c.name && c.school_name && String(r.school_name).trim().toLowerCase() === String(c.school_name).trim().toLowerCase() && String(r.class_name).trim().toLowerCase() === String(c.name).trim().toLowerCase())
+          ));
+          if (localClass) {
+            localClass.active_game_vocab_list_ids = ids;
+          }
         }
       });
     }
@@ -32984,31 +33056,108 @@ window.syncAllClassesGameVocabLists = syncAllClassesGameVocabLists;
 function isVocabListGameActive(list, schoolName, className, classId) {
   if (!list) return false;
   window.activeGameVocabCache = window.activeGameVocabCache || new Map();
-  const ids = (
-    window.activeGameVocabCache.get(classId) || 
-    window.activeGameVocabCache.get(`${schoolName}||${className}`) || 
-    []
-  ).map(String);
-  if (!Array.isArray(ids) || !ids.length) return false;
-  const cand = [
-    list.__backendId,
-    list.id,
-    list.vocab_list_id,
-    list.list_id,
-    list.vocabulary_list_id,
-    list.vocab_list_name,
-    toDeterministicUuid(list.__backendId),
-    toDeterministicUuid(list.id),
-    toDeterministicUuid(list.vocab_list_id),
-    toDeterministicUuid(list.vocab_list_name)
-  ].filter(Boolean).map(String);
-  return cand.some(id => ids.includes(id));
+
+  const activeSet = new Set();
+  const addIds = (raw) => {
+    if (!raw) return;
+    const arr = Array.isArray(raw) ? raw : [raw];
+    arr.forEach(id => {
+      if (id !== null && id !== undefined && id !== '') {
+        const s = String(id).trim();
+        activeSet.add(s);
+        activeSet.add(s.toLowerCase());
+      }
+    });
+  };
+
+  const sName = String(schoolName || '').trim();
+  const cName = String(className || '').trim();
+  const cId = String(classId || '').trim();
+
+  // 1. Check in-memory activeGameVocabCache
+  if (cId) addIds(window.activeGameVocabCache.get(cId));
+  if (sName && cName) {
+    addIds(window.activeGameVocabCache.get(`${sName}||${cName}`));
+    addIds(window.activeGameVocabCache.get(`${sName.toLowerCase()}||${cName.toLowerCase()}`));
+  }
+  if (cName) {
+    addIds(window.activeGameVocabCache.get(cName));
+    addIds(window.activeGameVocabCache.get(cName.toLowerCase()));
+  }
+
+  // 2. Check allData class records
+  if (Array.isArray(window.allData)) {
+    const classRec = (typeof getClasses === 'function' ? getClasses(sName).find(c => c.class_name === cName || (cId && (String(c.id) === cId || String(c.class_id) === cId || String(c.__backendId) === cId))) : null) ||
+                     window.allData.find(c => c.type === 'class' && (
+                       (sName && cName && String(c.school_name || '').trim().toLowerCase() === sName.toLowerCase() && String(c.class_name || '').trim().toLowerCase() === cName.toLowerCase()) ||
+                       (cName && String(c.class_name || '').trim().toLowerCase() === cName.toLowerCase()) ||
+                       (cId && (String(c.id) === cId || String(c.class_id) === cId || String(c.__backendId) === cId))
+                     ));
+    if (classRec && Array.isArray(classRec.active_game_vocab_list_ids)) {
+      addIds(classRec.active_game_vocab_list_ids);
+    }
+  }
+
+  // 3. Check localStorage
+  try {
+    const raw = localStorage.getItem(`pokeayman_active_game_vocab_${sName}||${cName}`) ||
+                localStorage.getItem(`pokeayman_active_game_vocab_${sName.toLowerCase()}||${cName.toLowerCase()}`) ||
+                localStorage.getItem(`pokeayman_active_game_vocab_${cName}`) ||
+                localStorage.getItem(`pokeayman_active_game_vocab_${cName.toLowerCase()}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      addIds(parsed);
+    }
+  } catch (_) {}
+
+  if (activeSet.size === 0) return false;
+
+  // Build candidate representations for this list
+  const candSet = new Set();
+  const addCand = (val) => {
+    if (!val) return;
+    const s = String(val).trim();
+    if (!s) return;
+    candSet.add(s);
+    candSet.add(s.toLowerCase());
+    try {
+      const u = toDeterministicUuid(s);
+      candSet.add(u);
+      candSet.add(u.toLowerCase());
+      // Also account for prior double-hashed UUIDs
+      const u2 = toDeterministicUuid(u);
+      candSet.add(u2);
+      candSet.add(u2.toLowerCase());
+    } catch (_) {}
+    try {
+      const uLow = toDeterministicUuid(s.toLowerCase());
+      candSet.add(uLow);
+      candSet.add(uLow.toLowerCase());
+      const uLow2 = toDeterministicUuid(uLow);
+      candSet.add(uLow2);
+      candSet.add(uLow2.toLowerCase());
+    } catch (_) {}
+  };
+
+  addCand(list.__backendId);
+  addCand(list.id);
+  addCand(list.vocab_list_id);
+  addCand(list.list_id);
+  addCand(list.vocabulary_list_id);
+  addCand(list.vocab_list_name);
+  addCand(list.name);
+  addCand(list.title);
+
+  for (const cand of candSet) {
+    if (activeSet.has(cand)) return true;
+  }
+  return false;
 }
 window.isVocabListGameActive = isVocabListGameActive;
 
 async function handleToggleGameAccess(classId, listId, listName) {
   window.activeGameVocabCache = window.activeGameVocabCache || new Map();
-  const sb = (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+  const sb = window.supabaseClient || window.supabase || (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (window.top && (window.top.supabaseClient || window.top.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
   const classKey = `${navSchool}||${navClass}`;
   
   let resolvedClassId = classId;
@@ -33025,7 +33174,14 @@ async function handleToggleGameAccess(classId, listId, listName) {
     ? listRec.__backendId
     : (listId || listName);
 
-  const targetUuid = toDeterministicUuid(canonicalListId || listName);
+  const safeListName = String(listName || listRec?.vocab_list_name || '').trim();
+  const targetUuid = toDeterministicUuid(safeListName || canonicalListId);
+  const targetUuidLower = toDeterministicUuid(safeListName.toLowerCase());
+
+  // Determine current active state
+  const isCurrentlyActive = listRec 
+    ? isVocabListGameActive(listRec, navSchool, navClass, resolvedClassId)
+    : false;
 
   const currentActiveIds = (
     window.activeGameVocabCache.get(classKey) || 
@@ -33033,39 +33189,77 @@ async function handleToggleGameAccess(classId, listId, listName) {
     []
   ).map(String);
 
-  const isCurrentlyActive = currentActiveIds.includes(canonicalListId) || 
-                            currentActiveIds.includes(String(listId)) || 
-                            currentActiveIds.includes(targetUuid);
-  
-  const updatedIds = isCurrentlyActive
-    ? currentActiveIds.filter(id => id !== canonicalListId && id !== String(listId) && id !== targetUuid)
-    : [...currentActiveIds, targetUuid];
+  const removeIdentifiers = new Set([
+    canonicalListId,
+    String(listId),
+    safeListName,
+    safeListName.toLowerCase(),
+    targetUuid,
+    targetUuidLower,
+    toDeterministicUuid(canonicalListId),
+    toDeterministicUuid(String(listId))
+  ]);
 
-  // Optimistic UI update
+  let updatedIds = currentActiveIds.filter(id => !removeIdentifiers.has(id) && !removeIdentifiers.has(id.toLowerCase()));
+  if (!isCurrentlyActive) {
+    updatedIds.push(targetUuid);
+    if (targetUuidLower !== targetUuid) updatedIds.push(targetUuidLower);
+    if (safeListName && !updatedIds.includes(safeListName)) updatedIds.push(safeListName);
+    if (canonicalListId && !updatedIds.includes(canonicalListId)) updatedIds.push(canonicalListId);
+  }
+  updatedIds = Array.from(new Set(updatedIds));
+
+  // 1. Optimistic UI & In-memory update under all key variants
   window.activeGameVocabCache.set(classKey, updatedIds);
+  window.activeGameVocabCache.set(`${navSchool.trim().toLowerCase()}||${navClass.trim().toLowerCase()}`, updatedIds);
+  window.activeGameVocabCache.set(navClass, updatedIds);
+  window.activeGameVocabCache.set(navClass.trim().toLowerCase(), updatedIds);
   if (resolvedClassId) window.activeGameVocabCache.set(resolvedClassId, updatedIds);
-  renderVocabLists();
 
-  if (sb && resolvedClassId) {
-    try {
-      const dbPayload = updatedIds.map(toDeterministicUuid);
-      const { error } = await sb
-        .from('classes')
-        .update({ active_game_vocab_list_ids: dbPayload })
-        .eq('id', resolvedClassId);
-
-      if (error) throw error;
-    } catch (err) {
-      console.error('Failed to update active game vocabulary lists:', err);
-      window.activeGameVocabCache.set(classKey, currentActiveIds);
-      if (resolvedClassId) window.activeGameVocabCache.set(resolvedClassId, currentActiveIds);
-      renderVocabLists();
-      toast('Failed to update game access: ' + (err.message || 'Please try again.'));
-      return;
+  // 2. Persist to allData class record
+  const classRec = (typeof getClasses === 'function' ? getClasses(navSchool).find(c => c.class_name === navClass) : null) ||
+                   allData.find(c => c.type === 'class' && (
+                     (c.school_name === navSchool && c.class_name === navClass) ||
+                     (resolvedClassId && (c.id === resolvedClassId || c.class_id === resolvedClassId || c.__backendId === resolvedClassId))
+                   ));
+  if (classRec) {
+    classRec.active_game_vocab_list_ids = updatedIds;
+    if (window.dataSdk && typeof window.dataSdk.update === 'function') {
+      try { window.dataSdk.update(classRec); } catch (_) {}
     }
   }
 
-  toast(`Game access for "${listName}" turned ${!isCurrentlyActive ? 'ON' : 'OFF'} for ${navClass}`);
+  // 3. Persist to localStorage for immediate cross-session reliability
+  try {
+    localStorage.setItem(`pokeayman_active_game_vocab_${navSchool}||${navClass}`, JSON.stringify(updatedIds));
+    localStorage.setItem(`pokeayman_active_game_vocab_${navSchool.trim().toLowerCase()}||${navClass.trim().toLowerCase()}`, JSON.stringify(updatedIds));
+    localStorage.setItem(`pokeayman_active_game_vocab_${navClass}`, JSON.stringify(updatedIds));
+    localStorage.setItem(`pokeayman_active_game_vocab_${navClass.trim().toLowerCase()}`, JSON.stringify(updatedIds));
+  } catch (_) {}
+
+  // 4. Immediately refresh teacher view
+  renderVocabLists();
+
+  // 5. Sync to Supabase in the background
+  const dbPayload = Array.from(new Set(updatedIds.map(toDeterministicUuid).filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))));
+
+  const bridgeUpdate = (window.parent && window.parent.updateClassActiveGameVocabListIds) || window.updateClassActiveGameVocabListIds;
+  if (typeof bridgeUpdate === 'function' && resolvedClassId) {
+    bridgeUpdate(resolvedClassId, dbPayload).catch(e => console.warn('Bridge updateClassActiveGameVocabListIds notice:', e));
+  }
+
+  if (sb) {
+    try {
+      if (resolvedClassId) {
+        await sb.from('classes').update({ active_game_vocab_list_ids: dbPayload }).eq('id', resolvedClassId);
+      }
+      await sb.from('classes').update({ active_game_vocab_list_ids: dbPayload }).eq('name', navClass).ilike('school_name', navSchool);
+    } catch (err) {
+      console.warn('Supabase classes update notice (local cache active):', err);
+    }
+  }
+
+  toast(`Game access for "${safeListName || listName}" turned ${!isCurrentlyActive ? 'ON' : 'OFF'} for ${navClass}`);
 }
 window.handleToggleGameAccess = handleToggleGameAccess;
 
@@ -33103,10 +33297,7 @@ function renderVocabLists() {
     const removeLabel = isShared ? 'Unshare' : 'Remove';
     const canonicalListId = String(list.__backendId || list.id || list.vocab_list_id || list.vocab_list_name || '');
     const targetUuid = toDeterministicUuid(canonicalListId);
-    const isGameActive = currentActiveIds.includes(canonicalListId) || 
-                         currentActiveIds.includes(String(list.vocab_list_id || '')) || 
-                         currentActiveIds.includes(String(list.__backendId || '')) ||
-                         currentActiveIds.includes(targetUuid);
+    const isGameActive = isVocabListGameActive(list, navSchool, navClass, classId);
     const safeListName = String(list.vocab_list_name).replace(/'/g, "\\'");
     const coverUrl = window.resolvePermanentVocabCover ? window.resolvePermanentVocabCover(list.vocab_cover_image_url, list.vocab_list_name) : list.vocab_cover_image_url;
 
