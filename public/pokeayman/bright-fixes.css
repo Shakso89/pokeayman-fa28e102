@@ -3024,3 +3024,150 @@ html body .ga-hub {
   color: #64748b !important;
 }
 
+/* =========================================================
+   Vocabulary & Deck Share Popups - Bright Mode Fixes
+   ========================================================= */
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card h3,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card h4,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card #school-share-title,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card #share-vocab-title {
+  color: #0f172a !important;
+  font-weight: 900 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card p {
+  color: #64748b !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .vocab-editor-close,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #share-vocab-close {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .vocab-editor-close:hover,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #share-vocab-close:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Checkbox item rows */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card label {
+  background: #f8fafc !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: #0f172a !important;
+  border-radius: 0.65rem !important;
+  transition: all 0.15s ease !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card label:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card label:has(input:checked) {
+  background: #eff6ff !important;
+  border-color: #3b82f6 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card label span {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .share-class-choice,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .grammar-share-cls-checkbox {
+  accent-color: #2563eb !important;
+  width: 1.15rem !important;
+  height: 1.15rem !important;
+  cursor: pointer !important;
+}
+
+/* Sleek Scrollbar */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .overflow-y-auto {
+  scrollbar-color: #cbd5e1 transparent !important;
+  scrollbar-width: thin !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .overflow-y-auto::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 9999px !important;
+}
+
+/* Action buttons */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .vocab-editor-primary,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #share-vocab-list-btn {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  color: #ffffff !important;
+  border: 1px solid #1d4ed8 !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28) !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .vocab-editor-secondary,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #share-vocab-cancel {
+  background: #f1f5f9 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) .vocab-share-popup-card .vocab-editor-secondary:hover,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #share-vocab-cancel:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-share-popup > div {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-share-popup h4 {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-share-popup p {
+  color: #64748b !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-share-popup label {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-share-popup label:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-share-popup label span {
+  color: #0f172a !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-share-popup #g-share-cancel {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-share-popup #g-share-cancel:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+

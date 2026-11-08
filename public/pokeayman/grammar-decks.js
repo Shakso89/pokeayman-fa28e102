@@ -1963,9 +1963,10 @@
     const currentShared = Array.isArray(deck.shared_classes) ? deck.shared_classes : [];
 
     const popup = document.createElement('div');
+    popup.id = 'grammar-share-popup';
     popup.className = 'fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4';
     popup.innerHTML = `
-      <div class="max-w-md w-full rounded-2xl bg-slate-900 border border-slate-800 p-5 shadow-2xl space-y-4">
+      <div class="vocab-share-popup-card grammar-share-popup-card max-w-md w-full rounded-2xl bg-slate-900 border border-slate-800 p-5 shadow-2xl space-y-4">
         <h4 class="font-bold text-white text-base">Assign "${escapeHtml(deckName)}" to Classes</h4>
         <p class="text-xs text-slate-400">Select which classes can practice this grammar deck:</p>
         <div class="space-y-2 max-h-48 overflow-y-auto">
