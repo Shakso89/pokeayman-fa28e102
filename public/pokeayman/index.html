@@ -6700,10 +6700,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             </div>
           </div>
 
-          <button type="button" class="ga-stage-sound px-2 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center gap-1 text-xs font-bold" id="dots-font-header-btn" title="Cycle word size (Small / Medium / Large / Huge)">
-            <span>Aa</span>
-            <span id="dots-font-header-badge" class="text-[10px] text-amber-300 font-extrabold bg-amber-400/20 px-1 py-0.5 rounded">M</span>
-          </button>
           <button type="button" class="ga-stage-sound w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-xs font-bold" id="dots-sound-toggle" title="Toggle sound">🔊</button>
           <button type="button" class="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-sm font-bold" id="dots-fullscreen-btn" title="Fullscreen">⛶</button>
           <button type="button" class="ga-stage-exit w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-rose-500/30 text-slate-300 hover:text-rose-300 border border-slate-700 transition flex items-center justify-center text-base font-bold" id="dots-close-btn" title="Exit game" aria-label="Close game">×</button>
@@ -6896,7 +6892,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const current = WORD_SIZES[wordSizeIdx];
       const qSection = modal.querySelector('#dots-question-section');
       const indicator = modal.querySelector('#dots-font-indicator');
-      const headerBadge = modal.querySelector('#dots-font-header-badge');
       const decBtn = modal.querySelector('#dots-font-dec');
       const incBtn = modal.querySelector('#dots-font-inc');
 
@@ -6905,9 +6900,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       }
       if (indicator) {
         indicator.textContent = current.label;
-      }
-      if (headerBadge) {
-        headerBadge.textContent = current.id;
       }
       if (decBtn) {
         decBtn.disabled = wordSizeIdx === 0;
@@ -6927,10 +6919,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     modal.querySelector('#dots-font-inc')?.addEventListener('click', (e) => {
       e.stopPropagation();
       applyWordSize(wordSizeIdx + 1);
-    });
-    modal.querySelector('#dots-font-header-btn')?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      applyWordSize((wordSizeIdx + 1) % WORD_SIZES.length);
     });
     applyWordSize(wordSizeIdx);
 

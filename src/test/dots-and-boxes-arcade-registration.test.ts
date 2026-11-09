@@ -167,7 +167,6 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
     expect(dotsJs).toContain('dots-font-dec');
     expect(dotsJs).toContain('dots-font-inc');
     expect(dotsJs).toContain('dots-font-indicator');
-    expect(dotsJs).toContain('dots-font-header-btn');
     expect(dotsJs).toContain('WORD_SIZES');
     expect(dotsJs).toContain('--dots-choice-font-size');
 

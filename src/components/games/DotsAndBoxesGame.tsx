@@ -893,7 +893,7 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             </span>
           </div>
 
-          <div className="h-[80%] max-h-[500px] max-w-[500px] aspect-square bg-slate-900/90 border border-slate-800 rounded-3xl p-2 sm:p-4 shadow-2xl relative flex items-center justify-center min-h-0">
+          <div className="w-full h-full max-h-[580px] max-w-[580px] aspect-square bg-slate-900/90 border border-slate-800 rounded-3xl p-2 sm:p-4 shadow-2xl relative flex items-center justify-center min-h-0">
             {/* Board Grid Container */}
             <div
               className={`w-full h-full max-w-full max-h-full aspect-square grid items-center justify-center gap-0 p-2 sm:p-4 rounded-2xl ${themeStyle.gridBg} border ${themeStyle.border} shadow-inner transition-colors duration-300`}
