@@ -783,8 +783,23 @@
 
         if (alts.length <= 1) return;
 
-        // Auto-cycle in place without opening any dropdown
-        const curIdx = alts.indexOf(activeText);
+        alts = normalizeAlternatives(alts);
+
+        // If activeText is a multi-word blob containing multiple alternatives, isolate the current one
+        let currentChoice = activeText;
+        if (!alts.includes(currentChoice) && alts.length > 0) {
+          const match = alts.find(a => currentChoice.toLowerCase().includes(a.toLowerCase()));
+          currentChoice = match || alts[0];
+        }
+
+        if (currentChoice && !alts.includes(currentChoice)) {
+          alts.unshift(currentChoice);
+        }
+
+        if (alts.length <= 1) return;
+
+        // Auto-cycle in place: swap one at a time
+        const curIdx = alts.indexOf(currentChoice);
         const nextIdx = (curIdx + 1) % alts.length;
         const nextVal = alts[nextIdx];
 
@@ -822,6 +837,31 @@
         document.querySelectorAll('.gp-subst-dropdown').forEach(d => d.remove());
       }
     });
+  }
+
+    // Helper: parse alternative words separated by commas, semicolons, slashes, or spaces
+  function parseAlternativesInput(val) {
+    if (!val || typeof val !== 'string') return [];
+    const raw = val.trim();
+    if (!raw) return [];
+    if (/[,;/]/.test(raw)) {
+      return raw.split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
+    }
+    return raw.split(/\s+/).map(s => s.trim()).filter(Boolean);
+  }
+
+  // Helper: normalize any alternatives array or string into clean distinct items
+  function normalizeAlternatives(alts) {
+    if (!alts) return [];
+    const list = Array.isArray(alts) ? alts : [alts];
+    const result = [];
+    list.forEach(item => {
+      if (typeof item === 'string') {
+        const parsed = parseAlternativesInput(item);
+        result.push(...parsed);
+      }
+    });
+    return [...new Set(result)];
   }
 
   function formatSyntaxHighlightedSentence(sentence, formula = '', rule = null) {
@@ -896,6 +936,22 @@
           let firstSuffixCls = '';
           let pillInnerHtml = '';
 
+          // Normalize alternatives for this part
+          const fp = rule?.formula_parts?.[pColor];
+          let partAlts = Array.isArray(fp?.alternatives) ? fp.alternatives : (Array.isArray(rule?.part_alternatives?.[pColor]) ? rule.part_alternatives[pColor] : []);
+          partAlts = normalizeAlternatives(partAlts);
+
+          // If the phrase contains multiple alternatives separated by spaces (e.g. 'smart tall slow strong weak'), display only the first one!
+          let displayWord = phrase;
+          if (partAlts.length > 0 && !partAlts.includes(phrase)) {
+            const words = phrase.split(/\s+/).filter(Boolean);
+            if (words.length > 1 && partAlts.some(a => words.includes(a))) {
+              displayWord = partAlts[0];
+            } else if (!phrase) {
+              displayWord = partAlts[0];
+            }
+          }
+
           // Check if any token in this part was split
           groupTokens.forEach((tokText, tIdx) => {
             const origItem = rule.word_assignments.find(w => (w.text === tokText || w.token === tokText || (Array.isArray(w.segments) && w.segments.map(s => s.text).join('') === tokText)));
@@ -909,9 +965,11 @@
             }
           });
 
+          const renderedText = (displayWord !== phrase) ? escapeHtml(displayWord) : (pillInnerHtml || escapeHtml(phrase));
+
           resultHtml.push(`
-            <span class="gp-subst-pill group/pill inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400 hover:bg-slate-800 transition cursor-pointer select-none ${cls} font-black relative align-baseline mx-0.5 shadow-sm active:scale-95" data-part-idx="${pColor}" data-active-val="${escapeHtml(phrase)}" data-is-split="${hasSplit ? 'true' : 'false'}" data-root-cls="${firstRootCls}" data-suffix-cls="${firstSuffixCls}" title="Click to cycle word">
-              <span class="gp-pill-text">${pillInnerHtml || escapeHtml(phrase)}</span>
+            <span class="gp-subst-pill group/pill inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400 hover:bg-slate-800 transition cursor-pointer select-none ${cls} font-black relative align-baseline mx-0.5 shadow-sm active:scale-95" data-part-idx="${pColor}" data-active-val="${escapeHtml(displayWord)}" data-is-split="${hasSplit ? 'true' : 'false'}" data-root-cls="${firstRootCls}" data-suffix-cls="${firstSuffixCls}" title="Click to cycle word">
+              <span class="gp-pill-text">${renderedText}</span>
               <svg class="w-3.5 h-3.5 text-slate-400 group-hover/pill:text-amber-400 transition shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             </span>${lastPunct ? `<span class="text-white font-extrabold">${escapeHtml(lastPunct)}</span>` : ''}
           `);
@@ -1356,9 +1414,9 @@
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                   ${isOwner ? `
-                    <button type="button" id="gp-edit-deck-btn" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+                    <button type="button" id="gp-edit-deck-btn" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition flex items-center gap-1.5 cursor-pointer" title="Edit this rule in Deck Editor">
                       <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                      Edit Deck
+                      Edit Rule
                     </button>
                   ` : ''}
                   <button type="button" id="gp-close-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-lg transition cursor-pointer" aria-label="Close practice">
@@ -1489,7 +1547,7 @@
       if (editBtn) {
         editBtn.onclick = () => {
           modal.remove();
-          window.openGrammarDeckEditor(deck);
+          window.openGrammarDeckEditor(deck, deckName, currentIndex);
         };
       }
 
@@ -1597,7 +1655,7 @@
   // ==========================================
   // CREATE & EDIT GRAMMAR DECK
   // ==========================================
-  window.openGrammarDeckEditor = function(deckId, deckName) {
+  window.openGrammarDeckEditor = function(deckId, deckName, initialRuleIndex = -1) {
     document.querySelectorAll('#grammar-editor-modal').forEach(m => m.remove());
 
     const all = typeof window.getAllGrammarDecks === 'function' ? window.getAllGrammarDecks('', '') : [];
@@ -1613,9 +1671,14 @@
     }
 
     const rules = Array.isArray(deck.rules) ? [...deck.rules] : [];
-    let currentDeckName = deck.grammar_deck_name || deck.deck_name || deckName || 'Grammar Deck';
-    let editingRuleIndex = -1;
-    let isRuleFormOpen = rules.length === 0;
+    let currentDeckName = deck.grammar_deck_name || deck.deck_name || (typeof deckName === 'string' ? deckName : '') || 'Grammar Deck';
+
+    let targetRuleIdx = (typeof initialRuleIndex === 'number' && initialRuleIndex >= 0)
+      ? initialRuleIndex
+      : (typeof deckName === 'number' && deckName >= 0 ? deckName : -1);
+
+    let editingRuleIndex = (targetRuleIdx >= 0 && targetRuleIdx < rules.length) ? targetRuleIdx : -1;
+    let isRuleFormOpen = editingRuleIndex >= 0 || rules.length === 0;
     let isImagePickerOpen = false;
 
     const modal = document.createElement('div');
@@ -2371,13 +2434,15 @@
 
         altsListContainer.innerHTML = currentFormulaParts.map((part, idx) => {
           const col = COLOR_PALETTE[part.colorIndex % COLOR_PALETTE.length];
-          const val = Array.isArray(part.alternatives) ? part.alternatives.join(', ') : '';
+          const normAlts = normalizeAlternatives(part.alternatives);
+          part.alternatives = normAlts;
+          const val = normAlts.join(', ');
           const nameLower = String(part.name || '').toLowerCase();
           let egPlaceholder = 'The elephant, The clever monkey, The boy';
           if (nameLower.includes('verb')) {
             egPlaceholder = nameLower.includes('ing') ? 'walking, climbing, running, sleeping' : 'arrives, departs, stops, passes';
           } else if (nameLower.includes('adj')) {
-            egPlaceholder = 'faster, stronger, taller, quicker';
+            egPlaceholder = 'smart, tall, slow, strong, weak';
           } else if (nameLower.includes('noun') || nameLower.includes('object')) {
             egPlaceholder = 'warm tea, hot coffee, fresh juice';
           } else if (nameLower.includes('is') || nameLower.includes('are') || nameLower.includes('am')) {
@@ -2392,7 +2457,7 @@
                 </span>
               </div>
               <div class="flex-1 min-w-0">
-                <input type="text" class="ge-part-alts-input quiz-input text-xs w-full py-1.5 px-3 rounded-lg bg-slate-950 border border-slate-700/80 focus:border-amber-400 text-white" data-part-idx="${idx}" value="${escapeHtml(val)}" placeholder="Alternative choices (comma-separated), e.g. ${egPlaceholder}">
+                <input type="text" class="ge-part-alts-input quiz-input text-xs w-full py-1.5 px-3 rounded-lg bg-slate-950 border border-slate-700/80 focus:border-amber-400 text-white" data-part-idx="${idx}" value="${escapeHtml(val)}" placeholder="Alternatives (separated by space or comma): e.g. ${egPlaceholder}">
               </div>
             </div>
           `;
@@ -2402,7 +2467,14 @@
           inp.oninput = () => {
             const pIdx = Number(inp.dataset.partIdx);
             if (currentFormulaParts[pIdx]) {
-              currentFormulaParts[pIdx].alternatives = inp.value.split(',').map(s => s.trim()).filter(Boolean);
+              currentFormulaParts[pIdx].alternatives = parseAlternativesInput(inp.value);
+            }
+          };
+          inp.onblur = () => {
+            const pIdx = Number(inp.dataset.partIdx);
+            if (currentFormulaParts[pIdx]) {
+              currentFormulaParts[pIdx].alternatives = normalizeAlternatives(currentFormulaParts[pIdx].alternatives);
+              inp.value = currentFormulaParts[pIdx].alternatives.join(', ');
             }
           };
         });
@@ -3007,6 +3079,15 @@
 
     renderEditor();
     document.body.appendChild(modal);
+
+    if (editingRuleIndex >= 0) {
+      setTimeout(() => {
+        const formBox = modal.querySelector('#ge-rule-form-box');
+        if (formBox) {
+          formBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 70);
+    }
   };
 
   // Delete Deck
