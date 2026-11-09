@@ -362,45 +362,99 @@
       const rules = Array.isArray(deck.rules) ? deck.rules : [];
       const cover = deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg';
       const isOwner = isCurrentTeacherOwner(deck);
+      const safeName = String(name).replace(/'/g, "\\'");
 
       return `
-        <div class="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-slate-700 transition shadow-lg" data-grammar-deck-id="${escapeHtml(deckId)}">
-          <div class="flex items-center gap-4 min-w-0">
-            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-slate-950 shrink-0 border border-slate-800 relative cursor-pointer" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
-              <img src="${escapeHtml(cover)}" alt="${escapeHtml(name)}" class="w-full h-full object-cover">
-              <span class="absolute bottom-1 right-1 bg-slate-950/80 text-amber-300 font-bold text-[10px] px-1.5 py-0.5 rounded">${rules.length} rules</span>
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2 mb-1">
-                <span class="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[11px] font-bold">Grammar</span>
-                <span class="text-xs text-slate-400 font-medium truncate flex items-center gap-1">
-                  <span>👤</span> By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b>
-                </span>
-              </div>
-              <h4 class="text-base sm:text-lg font-bold text-white truncate cursor-pointer hover:text-amber-300 transition" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
+        <div class="vocab-list-card canva-card p-4 sm:p-5 flex flex-col justify-between" data-grammar-deck-id="${escapeHtml(deckId)}">
+          <!-- 1. Header: Title, Count, Origin on Left; Ghost Icons on Right (Matches VB Lists) -->
+          <div class="flex items-start justify-between gap-3 mb-2">
+            <div class="flex-1 min-w-0">
+              <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex items-center gap-1.5" title="${escapeHtml(name)}">
                 ${escapeHtml(name)}
               </h4>
-              <p class="text-xs text-slate-400 mt-0.5 truncate">
-                ${rules.length > 0 ? escapeHtml(rules[0].title || rules[0].formula) : 'No rules added yet'}
-              </p>
+              <div class="flex items-center flex-wrap gap-2 mt-0.5 text-xs text-slate-400">
+                <span>${rules.length} rule${rules.length !== 1 ? 's' : ''}</span>
+                ${teacher ? `<span>•</span><span>By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b></span>` : ''}
+              </div>
+            </div>
+
+            <!-- Ghost Quick Action Buttons -->
+            <div class="flex items-center gap-1 shrink-0">
+              ${isOwner ? `
+                <button 
+                  type="button" 
+                  class="vb-ghost-action-btn p-1.5 rounded-lg text-slate-400 hover:text-white transition active:scale-95 cursor-pointer cg-edit-btn" 
+                  data-deck-id="${escapeHtml(deckId)}" 
+                  data-deck-name="${escapeHtml(name)}" 
+                  title="Edit ${escapeHtml(name)}">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                </button>
+                <button 
+                  type="button" 
+                  class="vb-ghost-action-btn p-1.5 rounded-lg text-slate-400 hover:text-white transition active:scale-95 cursor-pointer cg-share-btn" 
+                  data-deck-id="${escapeHtml(deckId)}" 
+                  data-deck-name="${escapeHtml(name)}" 
+                  title="Assign ${escapeHtml(name)}">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                </button>
+                <button 
+                  type="button" 
+                  class="vb-ghost-action-btn vb-ghost-delete-btn p-1.5 rounded-lg text-rose-400/80 hover:text-rose-300 transition active:scale-95 cursor-pointer cg-del-btn" 
+                  data-deck-id="${escapeHtml(deckId)}" 
+                  title="Delete ${escapeHtml(name)}">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
+              ` : `
+                <button 
+                  type="button" 
+                  class="vb-ghost-action-btn p-1.5 rounded-lg text-slate-400 hover:text-white transition active:scale-95 cursor-pointer cg-share-btn" 
+                  data-deck-id="${escapeHtml(deckId)}" 
+                  data-deck-name="${escapeHtml(name)}" 
+                  title="Assign ${escapeHtml(name)}">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                </button>
+              `}
             </div>
           </div>
 
-          <div class="flex items-center gap-2 self-end md:self-center shrink-0">
-            <button type="button" class="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-sm active:scale-95 flex items-center gap-1.5" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
-              <span>📖</span> Practice
-            </button>
-            <button type="button" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition" onclick="window.openGrammarSharePopupFor('${escapeHtml(deckId)}', '${escapeHtml(name)}')">
-              Assign
-            </button>
+          <!-- 2. Image Preview with Hover Change Cover Overlay (Exact Match with Image 1) -->
+          <div class="relative group/cover rounded-xl overflow-hidden aspect-[16/10] bg-slate-900/60 border border-slate-700/50 flex items-center justify-center my-2 cursor-pointer" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
+            ${cover
+              ? `<img src="${escapeHtml(cover)}" alt="Cover for ${escapeHtml(name)}" class="w-full h-full object-cover transition duration-300 group-hover/cover:scale-105" loading="lazy">`
+              : `<div class="text-slate-500 text-xs font-semibold flex items-center gap-1.5"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> No cover image</div>`
+            }
             ${isOwner ? `
-              <button type="button" class="cg-edit-btn p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition cursor-pointer" data-deck-id="${escapeHtml(deckId)}" data-deck-name="${escapeHtml(name)}" title="Edit Deck">
-                ✏️
-              </button>
-              <button type="button" class="cg-del-btn p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 transition cursor-pointer" data-deck-id="${escapeHtml(deckId)}" title="Delete Deck">
-                🗑️
-              </button>
+              <div class="vocab-cover-hover-overlay absolute inset-0 bg-slate-950/20 backdrop-blur-[2px] opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center p-2">
+                <button 
+                  type="button" 
+                  onclick="event.stopPropagation();window.openGrammarDeckEditor('${escapeHtml(deckId)}','${safeName}')" 
+                  class="vocab-change-cover-btn py-1.5 px-3 rounded-xl bg-white/95 text-slate-800 border border-amber-400/80 shadow-md text-xs font-bold flex items-center gap-1.5 hover:bg-white hover:scale-105 active:scale-95 transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                  <span>Change Cover</span>
+                </button>
+              </div>
             ` : ''}
+          </div>
+
+          <!-- 3. Bottom Controls: Single Clean Row (Practice & Assign / Matches Image 1) -->
+          <div class="vocab-card-bottom-bar flex items-center gap-2 mt-auto pt-2">
+            <button
+              type="button"
+              onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')"
+              class="vocab-flashcard-pill flex-1 py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 bg-amber-50 border-amber-300/80 text-amber-800 hover:bg-amber-100/70 shadow-sm dark:bg-amber-400/15 dark:border-amber-400/40 dark:text-amber-300 cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <span>Practice</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="event.stopPropagation();window.openGrammarSharePopupFor('${escapeHtml(deckId)}','${safeName}')"
+              class="vocab-game-pill flex-1 py-2 px-3 rounded-xl border transition active:scale-95 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer bg-slate-900/80 border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-800"
+            >
+              <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Assign</span>
+            </button>
           </div>
         </div>
       `;
@@ -410,6 +464,12 @@
       btn.onclick = (e) => {
         e.stopPropagation();
         window.openGrammarDeckEditor(btn.dataset.deckId, btn.dataset.deckName);
+      };
+    });
+    container.querySelectorAll('.cg-share-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        window.openGrammarSharePopupFor(btn.dataset.deckId, btn.dataset.deckName);
       };
     });
     container.querySelectorAll('.cg-del-btn').forEach(btn => {
@@ -496,55 +556,101 @@
       const rules = Array.isArray(deck.rules) ? deck.rules : [];
       const cover = deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg';
       const isOwner = isCurrentTeacherOwner(deck);
+      const safeName = String(name).replace(/'/g, "\\'");
 
       return `
-        <article class="vocab-list-card teacher-zone-wordbank-card grammar-deck-card rounded-2xl bg-slate-900 border border-slate-800 p-4 sm:p-5 flex flex-col justify-between hover:border-slate-700 transition shadow-xl space-y-3" data-grammar-deck-id="${escapeHtml(deckId)}">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-2">
-              <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[11px] font-bold">Grammar</span>
-              <span class="text-xs text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded-lg border border-amber-400/20">${rules.length} rules</span>
-            </div>
-            
-            <h4 class="text-base font-bold text-white truncate hover:text-amber-300 transition cursor-pointer tg-open-practice" data-deck-id="${escapeHtml(deckId)}">
-              ${escapeHtml(name)}
-            </h4>
-            
-            <!-- Marked by the teacher who created it -->
-            <div class="flex items-center gap-1.5 text-xs text-slate-400 mt-1 mb-2.5">
-              <span>👤</span> By <span class="text-amber-300 font-semibold">${escapeHtml(teacher)}</span> · <span class="text-slate-500">${escapeHtml(cls)}</span>
+        <div class="vocab-list-card canva-card p-4 sm:p-5 flex flex-col justify-between" data-grammar-deck-id="${escapeHtml(deckId)}">
+          <!-- 1. Header: Title, Count, Origin on Left; Ghost Icons on Right (Matches VB Lists) -->
+          <div class="flex items-start justify-between gap-3 mb-2">
+            <div class="flex-1 min-w-0">
+              <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex items-center gap-1.5" title="${escapeHtml(name)}">
+                ${escapeHtml(name)}
+              </h4>
+              <div class="flex items-center flex-wrap gap-2 mt-0.5 text-xs text-slate-400">
+                <span>${rules.length} rule${rules.length !== 1 ? 's' : ''}</span>
+                ${teacher ? `<span>•</span><span>By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b></span>` : ''}
+              </div>
             </div>
 
-            <!-- Compact Cover Image Preview -->
-            <div class="grammar-cover-box relative group/cover rounded-xl overflow-hidden bg-slate-950 border border-slate-800 cursor-pointer tg-open-practice" data-deck-id="${escapeHtml(deckId)}" style="height: 145px; max-height: 145px;">
-              <img src="${escapeHtml(cover)}" alt="${escapeHtml(name)}" class="w-full h-full object-cover transition duration-300 group-hover/cover:scale-105">
-              <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover/cover:opacity-100 transition flex items-center justify-center">
-                <span class="px-3 py-1.5 rounded-xl bg-amber-400 text-slate-950 font-bold text-xs shadow-md">Open Practice</span>
-              </div>
+            <!-- Ghost Quick Action Buttons -->
+            <div class="flex items-center gap-1 shrink-0">
+              ${isOwner ? `
+                <button 
+                  type="button" 
+                  class="vb-ghost-action-btn p-1.5 rounded-lg text-slate-400 hover:text-white transition active:scale-95 cursor-pointer tg-edit-btn" 
+                  data-deck-id="${escapeHtml(deckId)}" 
+                  data-deck-name="${escapeHtml(name)}" 
+                  title="Edit ${escapeHtml(name)}">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                </button>
+                <button 
+                  type="button" 
+                  class="vb-ghost-action-btn p-1.5 rounded-lg text-slate-400 hover:text-white transition active:scale-95 cursor-pointer tg-assign-btn" 
+                  data-deck-id="${escapeHtml(deckId)}" 
+                  data-deck-name="${escapeHtml(name)}" 
+                  title="Assign ${escapeHtml(name)}">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                </button>
+                <button 
+                  type="button" 
+                  class="vb-ghost-action-btn vb-ghost-delete-btn p-1.5 rounded-lg text-rose-400/80 hover:text-rose-300 transition active:scale-95 cursor-pointer tg-del-btn" 
+                  data-deck-id="${escapeHtml(deckId)}" 
+                  title="Delete ${escapeHtml(name)}">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
+              ` : `
+                <button 
+                  type="button" 
+                  class="vb-ghost-action-btn p-1.5 rounded-lg text-slate-400 hover:text-white transition active:scale-95 cursor-pointer tg-assign-btn" 
+                  data-deck-id="${escapeHtml(deckId)}" 
+                  data-deck-name="${escapeHtml(name)}" 
+                  title="Assign ${escapeHtml(name)}">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                </button>
+              `}
             </div>
           </div>
 
-          <!-- Bottom Action Buttons -->
-          <div class="flex items-center justify-between pt-2.5 border-t border-slate-800/80">
-            <div class="flex items-center gap-1.5">
-              <button type="button" class="tg-practice-btn px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-sm active:scale-95 cursor-pointer" data-deck-id="${escapeHtml(deckId)}">
-                Practice
-              </button>
-              <button type="button" class="tg-assign-btn px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs border border-slate-700 transition cursor-pointer" data-deck-id="${escapeHtml(deckId)}" data-deck-name="${escapeHtml(name)}">
-                Assign
-              </button>
-            </div>
+          <!-- 2. Image Preview with Hover Change Cover Overlay (Exact Match with Image 1) -->
+          <div class="relative group/cover rounded-xl overflow-hidden aspect-[16/10] bg-slate-900/60 border border-slate-700/50 flex items-center justify-center my-2 cursor-pointer" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
+            ${cover
+              ? `<img src="${escapeHtml(cover)}" alt="Cover for ${escapeHtml(name)}" class="w-full h-full object-cover transition duration-300 group-hover/cover:scale-105" loading="lazy">`
+              : `<div class="text-slate-500 text-xs font-semibold flex items-center gap-1.5"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> No cover image</div>`
+            }
             ${isOwner ? `
-              <div class="flex items-center gap-1">
-                <button type="button" class="tg-edit-btn p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition text-xs cursor-pointer" data-deck-id="${escapeHtml(deckId)}" data-deck-name="${escapeHtml(name)}" title="Edit Deck">
-                  ✏️
-                </button>
-                <button type="button" class="tg-del-btn p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 transition text-xs cursor-pointer" data-deck-id="${escapeHtml(deckId)}" title="Delete Deck">
-                  🗑️
+              <div class="vocab-cover-hover-overlay absolute inset-0 bg-slate-950/20 backdrop-blur-[2px] opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center p-2">
+                <button 
+                  type="button" 
+                  onclick="event.stopPropagation();window.openGrammarDeckEditor('${escapeHtml(deckId)}','${safeName}')" 
+                  class="vocab-change-cover-btn py-1.5 px-3 rounded-xl bg-white/95 text-slate-800 border border-amber-400/80 shadow-md text-xs font-bold flex items-center gap-1.5 hover:bg-white hover:scale-105 active:scale-95 transition cursor-pointer">
+                  <svg class="w-3.5 h-3.5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                  <span>Change Cover</span>
                 </button>
               </div>
             ` : ''}
           </div>
-        </article>
+
+          <!-- 3. Bottom Controls: Single Clean Row (Practice & Assign / Matches Image 1) -->
+          <div class="vocab-card-bottom-bar flex items-center gap-2 mt-auto pt-2">
+            <button
+              type="button"
+              onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')"
+              class="vocab-flashcard-pill flex-1 py-2 px-3 rounded-xl border font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-95 bg-amber-50 border-amber-300/80 text-amber-800 hover:bg-amber-100/70 shadow-sm dark:bg-amber-400/15 dark:border-amber-400/40 dark:text-amber-300 cursor-pointer"
+            >
+              <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <span>Practice</span>
+            </button>
+
+            <button
+              type="button"
+              onclick="event.stopPropagation();window.openGrammarSharePopupFor('${escapeHtml(deckId)}','${safeName}')"
+              class="vocab-game-pill flex-1 py-2 px-3 rounded-xl border transition active:scale-95 flex items-center justify-center gap-1.5 text-xs font-bold cursor-pointer bg-slate-900/80 border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-800"
+            >
+              <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Assign</span>
+            </button>
+          </div>
+        </div>
       `;
     }).join('');
 

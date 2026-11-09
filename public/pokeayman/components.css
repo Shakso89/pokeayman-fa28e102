@@ -1410,7 +1410,8 @@ html body:is(#pk-ds, body, html) :is(
    ========================================================================== */
 #teacher-vb-lists-grid,
 #teacher-grammar-decks-grid,
-#vocab-lists-container {
+#vocab-lists-container,
+#grammar-decks-container {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
   gap: 16px !important;
@@ -1420,7 +1421,8 @@ html body:is(#pk-ds, body, html) :is(
 @media (max-width: 640px) {
   #teacher-vb-lists-grid,
   #teacher-grammar-decks-grid,
-  #vocab-lists-container {
+  #vocab-lists-container,
+  #grammar-decks-container {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)) !important;
     gap: 12px !important;
   }

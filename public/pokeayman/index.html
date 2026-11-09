@@ -17004,7 +17004,7 @@ window.openGameScramble = openGameScramble;
           </div><button id="create-grammar-deck-btn" class="btn-primary rounded-full" style="border-radius:9999px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:8px 20px !important;">Create</button>
          </div>
         </div>
-        <div id="grammar-decks-container" class="space-y-4"></div>
+        <div id="grammar-decks-container"></div>
         <p id="grammar-decks-empty" class="text-center text-gray-400 py-8 text-sm hidden">No grammar decks yet.</p>
        </div><!-- Games sub-tab -->
        <div id="class-subtab-games" class="class-subtab-content hidden">
@@ -23747,6 +23747,8 @@ teacherVbCardLayoutStyles.textContent = `
 
   /* Ghost Quick Action Buttons (Edit / Delete) - Borderless Minimal Icons */
   #teacher-vb-lists-grid .vocab-list-card .vb-ghost-action-btn,
+  #teacher-grammar-decks-grid .vocab-list-card .vb-ghost-action-btn,
+  #grammar-decks-container .vocab-list-card .vb-ghost-action-btn,
   #vocab-lists-container .vocab-list-card .vb-ghost-action-btn {
     background: transparent !important;
     border: 1px solid transparent !important;
@@ -23767,6 +23769,8 @@ teacherVbCardLayoutStyles.textContent = `
     color: #ffffff !important;
   }
   #teacher-vb-lists-grid .vocab-list-card .vb-ghost-delete-btn,
+  #teacher-grammar-decks-grid .vocab-list-card .vb-ghost-delete-btn,
+  #grammar-decks-container .vocab-list-card .vb-ghost-delete-btn,
   #vocab-lists-container .vocab-list-card .vb-ghost-delete-btn {
     color: rgba(251, 113, 133, 0.85) !important;
   }
@@ -23779,6 +23783,8 @@ teacherVbCardLayoutStyles.textContent = `
 
   /* Harmonized Change Cover Button with Gold Accents */
   #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn,
+  #teacher-grammar-decks-grid .vocab-list-card .vocab-change-cover-btn,
+  #grammar-decks-container .vocab-list-card .vocab-change-cover-btn,
   #vocab-lists-container .vocab-list-card .vocab-change-cover-btn {
     background: rgba(15, 23, 42, 0.92);
     border: 1.5px solid rgba(251, 191, 36, 0.55);
@@ -23812,6 +23818,8 @@ teacherVbCardLayoutStyles.textContent = `
 
   /* Unified Gold-Bordered Action Pills (Image 1 Style) - Dark Mode Default */
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-vb-lists-grid .vocab-flashcard-pill,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-grammar-decks-grid .vocab-flashcard-pill,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #grammar-decks-container .vocab-flashcard-pill,
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-flashcard-pill {
     background: rgba(251, 191, 36, 0.14) !important;
     border: 1.5px solid rgba(251, 191, 36, 0.5) !important;
