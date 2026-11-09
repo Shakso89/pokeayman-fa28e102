@@ -340,6 +340,9 @@
   // RENDER: Class Subtab Grammar
   // ==========================================
   window.renderClassGrammarDecks = function() {
+    if (typeof updateGrammarAiAdminVisibility === 'function') {
+      updateGrammarAiAdminVisibility();
+    }
     const container = document.getElementById('grammar-decks-container');
     const emptyEl = document.getElementById('grammar-decks-empty');
     if (!container) return;
@@ -484,6 +487,9 @@
   // RENDER: Teacher Zone Grammar Bank (School vs Mine)
   // ==========================================
   window.renderTeacherOwnedGrammarDecks = function() {
+    if (typeof updateGrammarAiAdminVisibility === 'function') {
+      updateGrammarAiAdminVisibility();
+    }
     const grid = document.getElementById('teacher-grammar-decks-grid');
     const status = document.getElementById('teacher-grammar-decks-status');
     if (!grid || !status) return;
@@ -1057,8 +1063,216 @@
     return `<span class="${rootCls}">${escapeHtml(rootPart)}</span><span class="${suffixCls}">${escapeHtml(sfxPart)}</span>`;
   }
 
+  function ensureRuleStructuredFields(rule) {
+    if (!rule || typeof rule !== 'object') return;
+
+    // 1. Ensure formula_parts exists
+    if (!Array.isArray(rule.formula_parts) || rule.formula_parts.length === 0) {
+      const rawFormula = String(rule.formula || 'Subject + Verb').trim();
+      const parts = rawFormula.split('+').map(p => p.trim()).filter(Boolean);
+      rule.formula_parts = parts.map((name, idx) => ({
+        id: `part-${idx + 1}-${Date.now()}`,
+        name: name,
+        colorIndex: idx % 10,
+        alternatives: (rule.part_alternatives && Array.isArray(rule.part_alternatives[idx])) ? [...rule.part_alternatives[idx]] : []
+      }));
+    }
+
+    // 2. If word_assignments already populated with active colors, return early
+    const hasAssignmentsWithColor = Array.isArray(rule.word_assignments) && rule.word_assignments.length > 0 &&
+      rule.word_assignments.some(w => (typeof w.color === 'number' && w.color >= 0) || (Array.isArray(w.segments) && w.segments.some(s => s.color >= 0)));
+    if (hasAssignmentsWithColor) return;
+
+    // 3. Otherwise, synthesize word_assignments matching formula_parts and sentence
+    const sentence = String(rule.sentence || '').trim();
+    if (!sentence) return;
+
+    const rawTokens = sentence.split(/\s+/).filter(Boolean);
+    const cleanWord = (w) => String(w || '').toLowerCase().replace(/[^a-z0-9']/g, '');
+    const cleanWords = rawTokens.map(tok => {
+      const match = tok.match(/^([^.,!?;:]*)([.,!?;:]*)$/);
+      return cleanWord(match ? match[1] : tok);
+    });
+
+    const extractWordList = (val) => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.map(cleanWord).filter(Boolean);
+      return String(val).split(/[,;\s+]+/).map(cleanWord).filter(Boolean);
+    };
+
+    const blueWords = extractWordList(rule.words_blue || rule.highlight_blue);
+    const amberWords = extractWordList(rule.words_amber || rule.highlight_amber);
+    const greenWords = extractWordList(rule.words_green || rule.highlight_green);
+
+    const fpList = rule.formula_parts;
+    const formulaPartNames = fpList.map(p => String(p.name || '').trim().toLowerCase());
+    const tokenPartMap = new Array(rawTokens.length).fill(-1);
+
+    // Map explicit words from formula_parts
+    fpList.forEach((fp, pIdx) => {
+      const pWords = extractWordList(fp.words || fp.name);
+      cleanWords.forEach((cw, tIdx) => {
+        if (pWords.includes(cw) && tokenPartMap[tIdx] === -1) {
+          tokenPartMap[tIdx] = pIdx;
+        }
+      });
+    });
+
+    if (blueWords.length) {
+      cleanWords.forEach((cw, tIdx) => {
+        if (blueWords.includes(cw) && tokenPartMap[tIdx] === -1) tokenPartMap[tIdx] = 0;
+      });
+    }
+    if (amberWords.length) {
+      cleanWords.forEach((cw, tIdx) => {
+        if (amberWords.includes(cw) && tokenPartMap[tIdx] === -1) tokenPartMap[tIdx] = 1;
+      });
+    }
+    if (greenWords.length) {
+      cleanWords.forEach((cw, tIdx) => {
+        if (greenWords.includes(cw) && tokenPartMap[tIdx] === -1) tokenPartMap[tIdx] = 2;
+      });
+    }
+
+    const subjectPartIdx = formulaPartNames.findIndex(n => n.includes('subject'));
+    const verbPartIdx = formulaPartNames.findIndex(n => n.includes('verb'));
+    const ifPartIdx = formulaPartNames.findIndex(n => n === 'if' || n.includes('if clause'));
+
+    const AUX_VERBS = new Set([
+      'am', 'is', 'are', 'was', 'were', 'will', 'shall', 'has', 'have', 'had',
+      'do', 'does', 'did', 'can', 'could', 'would', 'should', 'might', 'must',
+      "isn't", "aren't", "wasn't", "weren't", "won't", "haven't", "hasn't", "hadn't",
+      "don't", "doesn't", "didn't", "can't", "couldn't"
+    ]);
+
+    // Inverted question pattern: starts with Aux verb
+    if (cleanWords.length > 2 && AUX_VERBS.has(cleanWords[0])) {
+      if (tokenPartMap[0] === -1) tokenPartMap[0] = 0;
+
+      let verbPos = -1;
+      for (let t = 1; t < cleanWords.length; t++) {
+        if (tokenPartMap[t] === verbPartIdx && verbPartIdx !== -1) {
+          verbPos = t;
+          break;
+        }
+        if (amberWords.includes(cleanWords[t])) {
+          verbPos = t;
+          break;
+        }
+      }
+      if (verbPos === -1 && verbPartIdx !== -1) {
+        const DETERMINERS_AND_ADJS = new Set([
+          'the', 'a', 'an', 'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'our', 'their',
+          'brave', 'young', 'clever', 'little', 'big', 'old', 'new', 'good', 'bad', 'smart', 'tall', 'slow', 'fast'
+        ]);
+        const COMMON_NOUNS = new Set([
+          'knight', 'princess', 'prince', 'king', 'queen', 'hero', 'dragon', 'monster',
+          'boy', 'girl', 'man', 'woman', 'child', 'children', 'baby', 'student', 'teacher',
+          'dog', 'cat', 'puppy', 'kitten', 'elephant', 'monkey', 'panda', 'tiger', 'lion',
+          'bird', 'fish', 'dolphin', 'whale', 'astronaut', 'robot', 'chef', 'doctor',
+          'friend', 'friends', 'person', 'people', 'animal', 'animals', 'wizard', 'warrior'
+        ]);
+        for (let t = 2; t < cleanWords.length; t++) {
+          const w = cleanWords[t];
+          if (DETERMINERS_AND_ADJS.has(w) || COMMON_NOUNS.has(w)) {
+            continue;
+          }
+          verbPos = t;
+          tokenPartMap[t] = verbPartIdx;
+          break;
+        }
+      }
+
+      // Everything between Aux and Verb is the Subject!
+      if (subjectPartIdx !== -1 && verbPos > 1) {
+        for (let t = 1; t < verbPos; t++) {
+          tokenPartMap[t] = subjectPartIdx;
+        }
+      }
+    } else {
+      // Affirmative: Subject comes first
+      if (subjectPartIdx === 0) {
+        let firstVerbOrAux = -1;
+        for (let t = 0; t < cleanWords.length; t++) {
+          if (tokenPartMap[t] > 0 || AUX_VERBS.has(cleanWords[t])) {
+            firstVerbOrAux = t;
+            break;
+          }
+        }
+        if (firstVerbOrAux > 0) {
+          for (let t = 0; t < firstVerbOrAux; t++) {
+            if (tokenPartMap[t] === -1) tokenPartMap[t] = 0;
+          }
+        }
+      }
+    }
+
+    // Check for "if" clause
+    const ifTokenIdx = cleanWords.indexOf('if');
+    if (ifTokenIdx !== -1 && ifPartIdx !== -1) {
+      tokenPartMap[ifTokenIdx] = ifPartIdx;
+      const presPartIdx = formulaPartNames.findIndex(n => n.includes('present') || n.includes('simple') || n.includes('condition'));
+      if (presPartIdx !== -1) {
+        for (let t = ifTokenIdx + 1; t < cleanWords.length; t++) {
+          if (tokenPartMap[t] === -1) {
+            tokenPartMap[t] = presPartIdx;
+          }
+        }
+      }
+    }
+
+    const formulaPartNamesRaw = fpList.map(p => p.name);
+    rule.word_assignments = rawTokens.map((tok, tIdx) => {
+      const match = tok.match(/^([^.,!?;:]*)([.,!?;:]*)$/);
+      const core = match ? match[1] : tok;
+      const punct = match ? match[2] : '';
+      const partIdx = tokenPartMap[tIdx];
+
+      const sInfo = detectSuffix(core, formulaPartNamesRaw);
+      const isVerbOrAdjPart = partIdx !== -1 && (
+        formulaPartNames[partIdx]?.includes('verb') ||
+        formulaPartNames[partIdx]?.includes('adj') ||
+        formulaPartNames[partIdx]?.includes('ing') ||
+        formulaPartNames[partIdx]?.includes('ed') ||
+        formulaPartNames[partIdx]?.includes('er') ||
+        formulaPartNames[partIdx]?.includes('es') ||
+        formulaPartNames[partIdx]?.includes('s')
+      );
+
+      if (sInfo && (isVerbOrAdjPart || partIdx === 2 || partIdx === 1)) {
+        const rootColor = partIdx !== -1 ? partIdx : (fpList.length > 2 ? 2 : 0);
+        let sfxColor = typeof rule.suffix_color === 'number' ? rule.suffix_color : 4;
+        if (sfxColor === rootColor) sfxColor = (rootColor === 4) ? 3 : 4;
+
+        return {
+          token: tok,
+          text: core,
+          punct: punct,
+          isSplit: true,
+          segments: [
+            { text: sInfo.root, color: rootColor },
+            { text: sInfo.suffix, color: sfxColor }
+          ],
+          color: rootColor
+        };
+      }
+
+      return {
+        token: tok,
+        text: core,
+        punct: punct,
+        isSplit: false,
+        color: partIdx
+      };
+    });
+  }
+  window.ensureRuleStructuredFields = ensureRuleStructuredFields;
+
   function formatSyntaxHighlightedSentence(sentence, formula = '', rule = null) {
     if (!sentence) return '';
+    if (rule) {
+      ensureRuleStructuredFields(rule);
+    }
     const clean = String(sentence).trim();
     const rawWords = clean.split(/\s+/);
     if (rawWords.length <= 1) return escapeHtml(clean);
@@ -1554,9 +1768,20 @@
         return a;
       }
 
-      const rawOptions = Array.isArray(r.quiz_options) && r.quiz_options.length 
+      let rawOptions = Array.isArray(r.quiz_options) && r.quiz_options.length 
         ? [...r.quiz_options] 
         : [r.quiz_answer || 'are climbing', 'climbs', 'is climbing'];
+
+      // Deduplicate options to prevent duplicates like [won't] [won't]
+      rawOptions = Array.from(new Set(rawOptions.map(o => String(o || '').trim()).filter(Boolean)));
+      if (r.quiz_answer && !rawOptions.includes(r.quiz_answer)) {
+        rawOptions.unshift(r.quiz_answer);
+      }
+      while (rawOptions.length < 3) {
+        const fallbacks = ["won't", "will not", "will", "would not", "is climbing", "climbs"];
+        const next = fallbacks.find(f => !rawOptions.includes(f)) || `choice_${rawOptions.length + 1}`;
+        rawOptions.push(next);
+      }
 
       if (!r._shuffledOptions || !Array.isArray(r._shuffledOptions)) {
         r._shuffledOptions = shuffleOptions(rawOptions);
@@ -1610,14 +1835,6 @@
                   <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none"></div>
                 ` : ''}
 
-                <!-- Context Clue Badge (Floating top-left) -->
-                <div class="relative z-10 flex items-center justify-between">
-                  <span class="absolute top-3 left-3 max-w-[88%] px-3 py-1 rounded-full bg-slate-950/85 inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-black tracking-wide text-amber-300 border border-amber-400/30 shadow-lg backdrop-blur-md">
-                    <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14H8a4 4 0 01-.9-7.898A5 5 0 0116.9 10a4 4 0 01-4 4z"/></svg>
-                    ${escapeHtml(cleanClue)}
-                  </span>
-                </div>
-
                 <!-- Syntax-Highlighted Sentence with Interactive Substitution Pills -->
                 <div class="relative z-10 my-auto py-5 text-center">
                   <p class="gp-hero-sentence text-2xl sm:text-3xl md:text-4xl font-black text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
@@ -1640,9 +1857,9 @@
 
               <!-- Quick Check Inline Bar -->
               <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
-                <div class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-200 min-w-0">
+                <div class="flex items-start sm:items-center gap-2 text-xs sm:text-sm font-semibold text-slate-200 min-w-0 flex-1">
                   <span class="text-amber-400 font-black shrink-0">⚡ Quick Check:</span>
-                  <span class="text-slate-300 truncate">${escapeHtml(r.quiz_question || 'Fill in the blank with the correct form:')}</span>
+                  <span class="text-slate-200 break-words leading-relaxed">${escapeHtml(r.quiz_question || 'Fill in the blank with the correct form:')}</span>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 shrink-0" id="gp-options-row">
                   ${options.map(opt => `
@@ -2499,6 +2716,9 @@
       }
 
       function initAssignmentsFromRule() {
+        if (activeRule) {
+          ensureRuleStructuredFields(activeRule);
+        }
         const formulaParts = getFormulaParts();
         if (activeRule && Array.isArray(activeRule.word_assignments) && activeRule.word_assignments.length > 0) {
           currentWordAssignments = activeRule.word_assignments.map(item => {
@@ -3388,8 +3608,39 @@
     };
   };
 
-  // AI Generator Modal for Grammar Decks
+  // Admin check for AI generation exclusively
+  function isGrammarAdmin() {
+    if (typeof window.isAymanTeacher === 'function' && window.isAymanTeacher()) return true;
+    if (typeof window.canAccessAdmin === 'function' && window.canAccessAdmin()) return true;
+    const identity = String(window.currentTeacher || '').trim().toLowerCase();
+    if (identity === 'ayman' || identity === 'teacher ayman') return true;
+    const rec = typeof window.currentTeacherRec === 'function' ? window.currentTeacherRec() : (typeof window.findMyTeacherRecord === 'function' ? window.findMyTeacherRecord() : null);
+    if (rec && (rec.teacher_role === 'admin' || rec.teacher_credits === -1)) return true;
+    const creds = typeof window.getTeacherCredits === 'function' ? window.getTeacherCredits() : null;
+    if (creds === Infinity) return true;
+    return false;
+  }
+  window.isGrammarAdmin = isGrammarAdmin;
+
+  function updateGrammarAiAdminVisibility() {
+    const isAdmin = isGrammarAdmin();
+    const classBtn = document.getElementById('generate-grammar-deck-btn');
+    if (classBtn) {
+      classBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+    }
+    const bankBtn = document.getElementById('teacher-grammar-open-ai');
+    if (bankBtn) {
+      bankBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+    }
+  }
+  window.updateGrammarAiAdminVisibility = updateGrammarAiAdminVisibility;
+
+  // AI Generator Modal for Grammar Decks (Admin Exclusive)
   window.openGrammarAiGeneratorModal = function(defaultTopic = '') {
+    if (!isGrammarAdmin()) {
+      if (typeof toast === 'function') toast('AI generation is exclusively reserved for administrators.');
+      return;
+    }
     document.querySelectorAll('#grammar-ai-modal').forEach(m => m.remove());
 
     const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : (typeof window.getTeacherCredits === 'function' ? window.getTeacherCredits() : 100);
@@ -4269,11 +4520,14 @@
       window.renderTeacherOwnedGrammarDecks();
     });
 
-    // Open AI Generator (Teacher Zone Grammar Bank)
+    // Open AI Generator (Teacher Zone Grammar Bank & Classroom Grammar Subtab - Admin Exclusive)
     document.getElementById('teacher-grammar-open-ai')?.addEventListener('click', () => {
       window.openGrammarAiGeneratorModal();
     });
-    // AI generation button listener removed from classroom subtab (code preserved in backup-grammar-ai.js)
+    document.getElementById('generate-grammar-deck-btn')?.addEventListener('click', () => {
+      window.openGrammarAiGeneratorModal();
+    });
+    updateGrammarAiAdminVisibility();
 
     // Create Deck in Class subtab
     document.getElementById('create-grammar-deck-btn')?.addEventListener('click', async () => {

@@ -118,16 +118,20 @@ CRITICAL INSTRUCTIONS:
    - Do NOT use repetitive or generic sentences. Every generation must feel fresh, exciting, and varied!
 4. For EACH rule:
    - "title": A clear educational title matching ${topic} (e.g. "Simple Future (will + Base Verb)", "Negative Future (won't)").
-   - "formula": The exact formula with "+" signs (e.g. "Subject + will + Base Verb" or "Subject + will not (won't) + Base Verb" or "Will + Subject + Base Verb ?"). NEVER use a generic "Subject + Verb + Object"!
+   - "formula": The exact formula with "+" signs (e.g. "Subject + will + Base Verb" or "Subject + will not (won't) + Base Verb" or "Will + Subject + Base Verb + if + Present Simple"). NEVER use a generic "Subject + Verb + Object"!
+   - "formula_parts": An array of objects for EVERY single part in the formula in order:
+     * "name": The formula part name (e.g. "Will", "Subject", "Base Verb", "if", "Present Simple").
+     * "words": The exact words or phrase in the sentence that corresponds to this part (e.g. for "Subject" -> "the brave knight", for "Base Verb" -> "rescue").
+     * "alternatives": Array of 2-4 natural replacement phrases for this part (e.g. for Subject: ["the brave knight", "the clever hero", "the astronaut"]).
    - "sentence": A concrete, natural, engaging sentence illustrating this exact rule for young learners with vivid nouns/actions.
    - "context_clue": A concise 3-7 word tip (e.g. "Use 'will' for predictions and promises").
    - "mistake_bad": A realistic student mistake for this exact rule.
    - "mistake_good": The corrected sentence.
    - "quiz_question": A fill-in-the-blank question testing this exact rule with parenthesized base verb.
-   - "quiz_options": Array of 3 distinct choices.
+   - "quiz_options": Array of 3 distinct, UNIQUE choices (no duplicates).
    - "quiz_answer": The exact correct option.
    - "words_blue": The exact word(s) from sentence matching Part 1 of formula.
-   - "words_amber": The exact word(s) from sentence matching Part 2 of formula.
+   - "words_amber": The exact word(s) from sentence matching Part 2 of formula (e.g. the Subject or the Verb).
    - "words_green": The exact word(s) from sentence matching Part 3 of formula.
    - "image_keywords": A SINGLE concrete noun (1-2 words only, e.g. "astronaut", "robot", "spaceship", "chef", "beach", "guitar", "castle", "dolphin") drawn from the sentence that will guarantee a great stock photo result.
 
@@ -138,6 +142,9 @@ Reply with valid JSON only in this exact format:
     {
       "title": "...",
       "formula": "...",
+      "formula_parts": [
+        { "name": "...", "words": "...", "alternatives": ["...", "..."] }
+      ],
       "sentence": "...",
       "context_clue": "...",
       "mistake_bad": "...",
@@ -200,10 +207,40 @@ Reply with valid JSON only in this exact format:
               if (!r.formula) r.formula = 'Pattern';
               if (!r.sentence) r.sentence = 'Example sentence.';
               r.tier = i < 3 ? 'recommended' : 'extension';
-              if (!Array.isArray(r.quiz_options) || r.quiz_options.length === 0) {
-                r.quiz_options = [r.quiz_answer || 'Option A', 'Option B', 'Option C'];
+
+              // Deduplicate quiz options & ensure valid 3 distinct choices
+              let opts = Array.isArray(r.quiz_options) ? r.quiz_options.map((o: any) => String(o || '').trim()).filter(Boolean) : [];
+              opts = Array.from(new Set(opts));
+              if (r.quiz_answer && !opts.includes(r.quiz_answer)) {
+                opts.unshift(r.quiz_answer);
               }
-              if (!r.quiz_answer) r.quiz_answer = r.quiz_options[0];
+              while (opts.length < 3) {
+                const fallbacks = ["won't", "will not", "will", "would not", "is climbing", "climbs"];
+                const next = fallbacks.find(f => !opts.includes(f)) || `Choice ${opts.length + 1}`;
+                opts.push(next);
+              }
+              r.quiz_options = opts.slice(0, 3);
+              if (!r.quiz_answer || !r.quiz_options.includes(r.quiz_answer)) {
+                r.quiz_answer = r.quiz_options[0];
+              }
+
+              // Build formula_parts with full Subject and Verb mapping
+              const rawFormulaParts = Array.isArray(r.formula_parts) && r.formula_parts.length > 0
+                ? r.formula_parts
+                : String(r.formula || '').split('+').map(p => p.trim()).filter(Boolean).map(name => ({ name, words: '', alternatives: [] }));
+
+              r.formula_parts = rawFormulaParts.map((p: any, idx: number) => ({
+                id: `part-${idx + 1}-${Date.now()}`,
+                name: String(p.name || `Part ${idx + 1}`).trim(),
+                colorIndex: idx % 10,
+                words: String(p.words || '').trim(),
+                alternatives: Array.isArray(p.alternatives) ? p.alternatives.map((a: any) => String(a || '').trim()).filter(Boolean) : []
+              }));
+
+              // If legacy words_blue/amber/green are missing or need sync from formula_parts
+              if (!r.words_blue && r.formula_parts[0]?.words) r.words_blue = r.formula_parts[0].words;
+              if (!r.words_amber && r.formula_parts[1]?.words) r.words_amber = r.formula_parts[1].words;
+              if (!r.words_green && r.formula_parts[2]?.words) r.words_green = r.formula_parts[2].words;
 
               // Pick photo strictly related to the example sentence
               let photoFound = false;

@@ -18,7 +18,7 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(html).toContain('id="class-subtab-grammar"');
     expect(html).toContain('id="new-grammar-deck-name"');
     expect(html).toContain('id="create-grammar-deck-btn"');
-    expect(html).not.toContain('id="generate-grammar-deck-btn"');
+    expect(html).toContain('id="generate-grammar-deck-btn"');
     expect(html).toContain('id="grammar-decks-container"');
     expect(html).toContain('id="grammar-decks-empty"');
   });
@@ -235,8 +235,8 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('border-amber-400 bg-amber-500/15 text-amber-300');
     expect(js).toContain('border-emerald-400 bg-emerald-500/15 text-emerald-300');
 
-    // 3. Floating context clue badge without obscuring bottom banner
-    expect(js).toContain('absolute top-3 left-3 max-w-[88%] px-3 py-1 rounded-full bg-slate-950/85');
+    // 3. Floating context clue badge removed from media arena to eliminate clutter
+    expect(js).not.toContain('absolute top-3 left-3 max-w-[88%] px-3 py-1 rounded-full bg-slate-950/85');
     expect(js).not.toContain('absolute bottom-2 inset-x-2');
 
     // 4. Large target sentence with intelligent grammar syntax highlighting
@@ -712,5 +712,58 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).not.toContain('item.core.length >= 3');
     expect(js).toContain('aria-label="Split suffix"');
     expect(js).toContain('aria-label="Merge word"');
+  });
+
+  it('ensures AI generation is exclusively restricted to admins in class and grammar bank, and auto-colors Subject and Verb', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+    const mockWindow: any = {
+      document: {
+        readyState: 'complete',
+        addEventListener: () => {},
+        getElementById: () => null,
+        querySelectorAll: () => []
+      },
+      addEventListener: () => {}
+    };
+    new Function('window', 'document', js)(mockWindow, mockWindow.document);
+
+    // 1. Admin exclusivity helper
+    expect(typeof mockWindow.isGrammarAdmin).toBe('function');
+    expect(typeof mockWindow.updateGrammarAiAdminVisibility).toBe('function');
+    expect(js).toContain("AI generation is exclusively reserved for administrators.");
+
+    // 2. Quick Check full text visibility and deduplication
+    expect(js).toContain('break-words leading-relaxed');
+    expect(js).not.toContain('text-slate-300 truncate');
+    expect(js).toContain('Array.from(new Set(rawOptions.map(o => String(o || \'\').trim()).filter(Boolean)))');
+
+    // 3. Auto-assignment ensures Subject and Verb are mapped and colored
+    const ruleSample = {
+      formula: 'Will + Subject + Base Verb + if + Present Simple',
+      sentence: 'Will the brave knight rescue the princess if the dragon falls asleep?'
+    };
+    mockWindow.ensureRuleStructuredFields(ruleSample);
+
+    expect(Array.isArray(ruleSample.word_assignments)).toBe(true);
+    expect(ruleSample.word_assignments.length).toBeGreaterThan(5);
+
+    // "Will" (part 0: sky blue)
+    expect(ruleSample.word_assignments[0].color).toBe(0);
+
+    // "the brave knight" (part 1: Subject)
+    expect(ruleSample.word_assignments[1].color).toBe(1);
+    expect(ruleSample.word_assignments[2].color).toBe(1);
+    expect(ruleSample.word_assignments[3].color).toBe(1);
+
+    // "rescue" (part 2: Base Verb)
+    expect(ruleSample.word_assignments[4].color).toBe(2);
+
+    // "if" (part 3)
+    expect(ruleSample.word_assignments[7].color).toBe(3);
+
+    // "falls" has split suffix
+    const fallsAssignment = ruleSample.word_assignments.find((w: any) => w.token.includes('falls'));
+    expect(fallsAssignment).toBeDefined();
+    expect(fallsAssignment?.isSplit).toBe(true);
   });
 });
