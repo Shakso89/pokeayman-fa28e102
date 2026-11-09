@@ -357,13 +357,13 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).not.toContain("quiz_options: answer ? [answer, 'Option 2', 'Option 3']");
   });
 
-  it('ensures student practice awards coins for correct quick check answers', () => {
+  it('ensures student practice quick checks randomly shuffle options and do not award coins', () => {
     const js = fs.readFileSync(grammarJsPath, 'utf-8');
 
+    expect(js).toContain('shuffleOptions');
+    expect(js).toContain('_shuffledOptions');
     expect(js).toContain('awardCoinsForGrammarPractice');
-    expect(js).toContain('rewardedRuleIndices');
-    expect(js).toContain('persistCanonicalStudentPatch');
-    expect(js).toContain('updateVisibleStudentCoinLabels');
+    expect(js).toContain('Correct! Great job!');
   });
 
   it('ensures grammar rule editor supports collapsible form, collapsible image drawer, multi-color formulas, and sub-word suffix coloring', () => {

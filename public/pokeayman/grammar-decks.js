@@ -1409,80 +1409,16 @@
     const isOwner = isCurrentTeacherOwner(deck);
     const rewardedRuleIndices = new Set();
 
+    // Reset shuffled options on practice open so options are freshly randomized
+    rules.forEach(r => { if (r) delete r._shuffledOptions; });
+
     // Helper: award student coins for answering grammar quick checks correctly
-    async function awardCoinsForGrammarPractice(amount = 5) {
-      let student = null;
-      if (typeof getCurrentStudentRecord === 'function') {
-        try { student = getCurrentStudentRecord(); } catch (_) {}
-      }
-      if (!student && typeof currentStudentRecordId !== 'undefined' && currentStudentRecordId) {
-        if (typeof allData !== 'undefined' && Array.isArray(allData)) {
-          student = allData.find(r => (r.__backendId === currentStudentRecordId || r.student_id === currentStudentRecordId) && r.type === 'student') || null;
-        }
-      }
-      if (!student && typeof currentStudent !== 'undefined' && currentStudent) {
-        if (typeof allData !== 'undefined' && Array.isArray(allData)) {
-          student = allData.find(r => r.type === 'student' && r.student_name === currentStudent) || null;
-        }
-      }
-
-      const oldCoins = Number(student?.coins) || 0;
-      const newCoins = oldCoins + amount;
-
-      if (student) {
-        if (typeof persistCanonicalStudentPatch === 'function') {
-          try {
-            await persistCanonicalStudentPatch(student, { coins: newCoins }, 'Could not save grammar coins.');
-          } catch (e) {
-            console.warn('[Grammar] Error persisting coins:', e);
-          }
-        } else if (window.dataSdk?.update) {
-          try {
-            const updated = { ...student, coins: newCoins };
-            await window.dataSdk.update(updated, { notify: false });
-            if (typeof allData !== 'undefined') {
-              allData = allData.map(r => r.__backendId === student.__backendId ? updated : r);
-            }
-            if (typeof setCurrentStudentRecord === 'function') {
-              setCurrentStudentRecord(updated);
-            }
-          } catch (e) {
-            console.warn('[Grammar] Error updating dataSdk coins:', e);
-          }
-        }
-
-        // Update DOM coin counters
-        if (typeof updateVisibleStudentCoinLabels === 'function') {
-          try { updateVisibleStudentCoinLabels({ ...student, coins: newCoins }); } catch (_) {}
-        } else {
-          const myCoinsNode = document.getElementById('my-coins');
-          if (myCoinsNode) myCoinsNode.textContent = String(newCoins);
-        }
-
-        if (typeof renderStudentDashboard === 'function' && typeof currentRole !== 'undefined' && currentRole === 'student') {
-          try { renderStudentDashboard(); } catch (_) {}
-        }
-
-        if (typeof showStudentAwardCelebration === 'function') {
-          try { showStudentAwardCelebration({ ...student, coins: newCoins }, amount); } catch (_) {}
-        }
-      }
-
-      if (typeof triggerCoinSound === 'function') {
-        try { triggerCoinSound(); } catch (_) {}
-      } else if (window.pokeSfx?.play) {
-        try { window.pokeSfx.play('coin'); } catch (_) {}
-      }
-
+    // Grammar practice is purely educational practice: NO coins awarded
+    async function awardCoinsForGrammarPractice(amount = 0) {
       if (typeof toast === 'function') {
-        if (student) {
-          toast(`Correct! +${amount} coins awarded! (Total: ${newCoins})`);
-        } else {
-          toast(`Correct! (+${amount} coins awarded in student mode)`);
-        }
+        toast('Correct! Great job!');
       }
-
-      return { student, newCoins };
+      return { student: null, newCoins: 0 };
     }
     window.awardCoinsForGrammarPractice = awardCoinsForGrammarPractice;
 
@@ -1503,9 +1439,24 @@
       const badText = String(r.mistake_bad || 'Mistake');
       const goodText = String(r.mistake_good || 'Correct');
 
-      const options = Array.isArray(r.quiz_options) && r.quiz_options.length 
-        ? r.quiz_options 
+      // Helper: Fisher-Yates shuffle array so options are randomly placed
+      function shuffleOptions(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      const rawOptions = Array.isArray(r.quiz_options) && r.quiz_options.length 
+        ? [...r.quiz_options] 
         : [r.quiz_answer || 'are climbing', 'climbs', 'is climbing'];
+
+      if (!r._shuffledOptions || !Array.isArray(r._shuffledOptions)) {
+        r._shuffledOptions = shuffleOptions(rawOptions);
+      }
+      const options = r._shuffledOptions;
 
       modal.innerHTML = `
         <div class="w-full max-w-5xl flex flex-col items-center my-auto py-4">
@@ -1664,7 +1615,7 @@
         };
       }
 
-      // Wire Quick Check quiz options
+      // Wire Quick Check quiz options (Practice only: no coins awarded)
       modal.querySelectorAll('.gp-quiz-opt').forEach(btn => {
         btn.onclick = async () => {
           const chosen = btn.dataset.val;
@@ -1676,12 +1627,11 @@
 
           if (chosen === correct) {
             btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-cyan-400 ring-2 ring-cyan-400/50 bg-cyan-950/90 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition cursor-pointer';
-            if (!rewardedRuleIndices.has(idx)) {
-              rewardedRuleIndices.add(idx);
-              await awardCoinsForGrammarPractice(5);
-            } else {
-              if (typeof triggerCoinSound === 'function') triggerCoinSound();
-              if (typeof toast === 'function') toast('Correct! (Already rewarded for this rule)');
+            if (window.pokeSfx?.play) {
+              try { window.pokeSfx.play('correct'); } catch (_) {}
+            }
+            if (typeof toast === 'function') {
+              toast('Correct! Great job!');
             }
           } else {
             btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-rose-500 ring-2 ring-rose-500/50 bg-rose-950/90 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.4)] transition cursor-pointer';
@@ -2035,7 +1985,7 @@
               <div class="sm:col-span-2 space-y-1">
                 <div class="flex items-center justify-between">
                   <label class="text-[11px] text-slate-400 font-semibold block"> Quick Check Practice Options (3 Choices)</label>
-                  <span class="text-[10px] text-slate-500">Correct choice awards coins in student practice</span>
+                  <span class="text-[10px] text-slate-500">Option 1 is correct answer; options are placed randomly during student practice (no coins awarded)</span>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div class="space-y-1">
