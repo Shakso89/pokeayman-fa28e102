@@ -28,9 +28,9 @@
           title: 'Actions Happening Right Now (Affirmative)',
           formula: 'Subject + am / is / are + Verb-ing',
           formula_parts: [
-            { name: 'Subject', colorIndex: 0 },
-            { name: 'am / is / are', colorIndex: 1 },
-            { name: 'Verb-ing', colorIndex: 2 }
+            { name: 'Subject', colorIndex: 0, alternatives: ['The elephant', 'The clever monkey', 'The playful puppy', 'The astronaut'] },
+            { name: 'am / is / are', colorIndex: 1, alternatives: ['is', 'was'] },
+            { name: 'Verb-ing', colorIndex: 2, alternatives: ['walking', 'climbing', 'running', 'sleeping'] }
           ],
           suffix_color: 3,
           sentence: 'The elephant is walking slowly in the grass.',
@@ -747,6 +747,76 @@
   }
 
   // Helper: syntax-highlight target sentence according to English grammar patterns or teacher custom assignment
+
+  // ==========================================
+  // DYNAMIC WORD SUBSTITUTION HELPER
+  // ==========================================
+  function initSubstitutionPills(container, rule) {
+    if (!container || !rule) return;
+
+    container.querySelectorAll('.gp-subst-pill').forEach(pill => {
+      pill.onclick = (e) => {
+        e.stopPropagation();
+        const pIdx = Number(pill.dataset.partIdx);
+        const part = (rule.formula_parts && rule.formula_parts[pIdx]) ? rule.formula_parts[pIdx] : null;
+        let alts = Array.isArray(part?.alternatives) ? [...part.alternatives] : [];
+        if (!alts.length && rule.part_alternatives && Array.isArray(rule.part_alternatives[pIdx])) {
+          alts = [...rule.part_alternatives[pIdx]];
+        }
+
+        const activeText = pill.querySelector('.gp-pill-text')?.textContent?.trim() || '';
+        if (activeText && !alts.includes(activeText)) {
+          alts.unshift(activeText);
+        }
+
+        // Close any existing open dropdowns
+        document.querySelectorAll('.gp-subst-dropdown').forEach(d => d.remove());
+
+        if (alts.length <= 1) return;
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'gp-subst-dropdown absolute top-full left-0 mt-2 z-[9999] min-w-[170px] max-w-[320px] rounded-2xl bg-slate-900/98 border border-slate-700 shadow-[0_15px_35px_rgba(0,0,0,0.85)] p-2 space-y-1 backdrop-blur-md animate-in fade-in zoom-in-95 duration-150';
+        dropdown.innerHTML = `
+          <div class="text-[10px] uppercase font-bold text-slate-400 px-2.5 py-1 tracking-wider border-b border-slate-800 flex items-center justify-between">
+            <span>Choose ${escapeHtml(part?.name || 'Word')}:</span>
+            <span class="text-[9px] text-slate-500 font-normal">Click to swap</span>
+          </div>
+          <div class="max-h-52 overflow-y-auto space-y-0.5 pt-1">
+            ${alts.map(choice => `
+              <button type="button" class="gp-subst-opt w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${choice === activeText ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30' : 'text-slate-200 hover:text-white hover:bg-slate-800'}" data-choice="${escapeHtml(choice)}">
+                <span class="truncate">${escapeHtml(choice)}</span>
+                ${choice === activeText ? '<svg class="w-3.5 h-3.5 text-amber-400 shrink-0 ml-1" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
+              </button>
+            `).join('')}
+          </div>
+        `;
+
+        dropdown.querySelectorAll('.gp-subst-opt').forEach(optBtn => {
+          optBtn.onclick = (ev) => {
+            ev.stopPropagation();
+            const chosen = optBtn.dataset.choice;
+            const labelEl = pill.querySelector('.gp-pill-text');
+            if (labelEl) labelEl.textContent = chosen;
+            pill.dataset.activeVal = chosen;
+            dropdown.remove();
+            if (typeof toast === 'function') toast(`Swapped to "${chosen}"!`);
+          };
+        });
+
+        pill.appendChild(dropdown);
+      };
+    });
+  }
+
+  // Document listener to close substitution dropdown on outside click
+  if (typeof document !== 'undefined') {
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.gp-subst-pill') && !e.target.closest('.gp-subst-dropdown')) {
+        document.querySelectorAll('.gp-subst-dropdown').forEach(d => d.remove());
+      }
+    });
+  }
+
   function formatSyntaxHighlightedSentence(sentence, formula = '', rule = null) {
     if (!sentence) return '';
     const clean = String(sentence).trim();
@@ -781,23 +851,64 @@
       return (c >= 0 && c < COLOR_CLASSES.length) ? COLOR_CLASSES[c] : COLOR_CLASSES[c % COLOR_CLASSES.length];
     };
 
+    const hasAlternatives = (pIdx) => {
+      if (typeof pIdx !== 'number' || pIdx < 0) return false;
+      const fp = rule?.formula_parts?.[pIdx];
+      if (Array.isArray(fp?.alternatives) && fp.alternatives.length > 0) return true;
+      if (Array.isArray(rule?.part_alternatives?.[pIdx]) && rule.part_alternatives[pIdx].length > 0) return true;
+      return false;
+    };
+
     // 1. Check if structured word_assignments with multi-color and suffix splitting are present
     if (rule && Array.isArray(rule.word_assignments) && rule.word_assignments.length > 0) {
-      return rule.word_assignments.map(item => {
-        if (Array.isArray(item.segments) && item.segments.length > 0) {
-          const segsHtml = item.segments.map((seg, sIdx) => {
-            const isSuffix = sIdx > 0;
-            const cls = getColorCls(seg.color, isSuffix);
-            return `<span class="${cls}">${escapeHtml(seg.text || '')}</span>`;
-          }).join('');
-          const punctHtml = item.punct ? `<span class="text-white font-extrabold">${escapeHtml(item.punct)}</span>` : '';
-          return segsHtml + punctHtml;
+      const resultHtml = [];
+      let i = 0;
+      while (i < rule.word_assignments.length) {
+        const item = rule.word_assignments[i];
+        const pColor = (Array.isArray(item.segments) && item.segments.length > 0) ? item.segments[0].color : item.color;
+
+        if (typeof pColor === 'number' && pColor >= 0 && hasAlternatives(pColor)) {
+          // Group consecutive tokens belonging to this part into an interactive pill
+          const groupTokens = [];
+          let lastPunct = '';
+          while (i < rule.word_assignments.length) {
+            const cur = rule.word_assignments[i];
+            const curColor = (Array.isArray(cur.segments) && cur.segments.length > 0) ? cur.segments[0].color : cur.color;
+            if (curColor !== pColor) break;
+            const tokenText = (Array.isArray(cur.segments) && cur.segments.length > 0)
+              ? cur.segments.map(s => s.text).join('')
+              : (cur.text || cur.token || '');
+            groupTokens.push(tokenText);
+            if (cur.punct) lastPunct = cur.punct;
+            i++;
+          }
+          const phrase = groupTokens.join(' ').trim();
+          const cls = getColorCls(pColor, false);
+          resultHtml.push(`
+            <span class="gp-subst-pill group/pill inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400 hover:bg-slate-800 transition cursor-pointer select-none ${cls} font-black relative align-baseline mx-0.5 shadow-sm" data-part-idx="${pColor}" data-active-val="${escapeHtml(phrase)}" title="Click to swap word">
+              <span class="gp-pill-text">${escapeHtml(phrase)}</span>
+              <svg class="w-3.5 h-3.5 text-slate-400 group-hover/pill:text-amber-400 transition shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </span>${lastPunct ? `<span class="text-white font-extrabold">${escapeHtml(lastPunct)}</span>` : ''}
+          `);
         } else {
-          const cls = getColorCls(item.color, false);
-          const punctHtml = item.punct ? `<span class="text-white font-extrabold">${escapeHtml(item.punct)}</span>` : '';
-          return `<span class="${cls}">${escapeHtml(item.text || item.token || '')}</span>` + punctHtml;
+          // Standard token rendering
+          if (Array.isArray(item.segments) && item.segments.length > 0) {
+            const segsHtml = item.segments.map((seg, sIdx) => {
+              const isSuffix = sIdx > 0;
+              const cls = getColorCls(seg.color, isSuffix);
+              return `<span class="${cls}">${escapeHtml(seg.text || '')}</span>`;
+            }).join('');
+            const punctHtml = item.punct ? `<span class="text-white font-extrabold">${escapeHtml(item.punct)}</span>` : '';
+            resultHtml.push(segsHtml + punctHtml);
+          } else {
+            const cls = getColorCls(item.color, false);
+            const punctHtml = item.punct ? `<span class="text-white font-extrabold">${escapeHtml(item.punct)}</span>` : '';
+            resultHtml.push(`<span class="${cls}">${escapeHtml(item.text || item.token || '')}</span>` + punctHtml);
+          }
+          i++;
         }
-      }).join(' ');
+      }
+      return resultHtml.join(' ');
     }
 
     // 2. Check if legacy custom teacher word role assignment is provided in rule (words_blue, words_amber, words_green)
@@ -1080,7 +1191,12 @@
       {
         title: 'Present Continuous',
         formula: 'Subject + am / is / are + Verb + -ing',
-        sentence: 'The elephant is walking slowly.',
+        sentence: 'The elephant is walking slowly in the grass.',
+        formula_parts: [
+          { name: 'Subject', colorIndex: 0, alternatives: ['The elephant', 'The clever monkey', 'The playful puppy', 'The astronaut'] },
+          { name: 'am / is / are', colorIndex: 1, alternatives: ['is', 'was'] },
+          { name: 'Verb-ing', colorIndex: 2, alternatives: ['walking', 'climbing', 'running', 'sleeping'] }
+        ],
         context_clue: 'Right Now',
         image: deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
         mistake_bad: 'The elephant walking.',
@@ -1096,6 +1212,34 @@
     const deckName = deck.grammar_deck_name || deck.deck_name || 'Grammar Deck';
     const isOwner = isCurrentTeacherOwner(deck);
     const rewardedRuleIndices = new Set();
+
+    // Identify target inline containers
+    const classInlineView = document.getElementById('grammar-deck-inline-view');
+    const classEditorView = document.getElementById('grammar-deck-editor-inline-view');
+    const classListView = document.getElementById('grammar-decks-list-view');
+
+    const teacherInlineView = document.getElementById('teacher-grammar-inline-view');
+    const teacherEditorView = document.getElementById('teacher-grammar-editor-inline-view');
+    const teacherGrid = document.getElementById('teacher-grammar-decks-grid');
+
+    const isTeacherView = Boolean(teacherInlineView && document.getElementById('view-teacher')?.offsetParent !== null);
+    const targetInline = isTeacherView ? teacherInlineView : (classInlineView || null);
+    const targetList = isTeacherView ? teacherGrid : (classListView || null);
+
+    // Close and restore list view helper
+    function closePracticeView() {
+      if (targetInline) {
+        targetInline.classList.add('hidden');
+        targetInline.style.display = 'none';
+        targetInline.innerHTML = '';
+      }
+      if (targetList) {
+        targetList.classList.remove('hidden');
+        targetList.style.display = '';
+      }
+      if (typeof window.renderClassGrammarDecks === 'function') window.renderClassGrammarDecks();
+      if (typeof window.renderTeacherOwnedGrammarDecks === 'function') window.renderTeacherOwnedGrammarDecks();
+    }
 
     // Helper: award student coins for answering grammar quick checks correctly
     async function awardCoinsForGrammarPractice(amount = 5) {
@@ -1124,49 +1268,26 @@
           } catch (e) {
             console.warn('[Grammar] Error persisting coins:', e);
           }
-        } else if (window.dataSdk?.update) {
-          try {
-            const updated = { ...student, coins: newCoins };
-            await window.dataSdk.update(updated, { notify: false });
-            if (typeof allData !== 'undefined') {
-              allData = allData.map(r => r.__backendId === student.__backendId ? updated : r);
-            }
-            if (typeof setCurrentStudentRecord === 'function') {
-              setCurrentStudentRecord(updated);
-            }
-          } catch (e) {
-            console.warn('[Grammar] Error updating dataSdk coins:', e);
-          }
         }
-
-        // Update DOM coin counters
         if (typeof updateVisibleStudentCoinLabels === 'function') {
           try { updateVisibleStudentCoinLabels({ ...student, coins: newCoins }); } catch (_) {}
         } else {
           const myCoinsNode = document.getElementById('my-coins');
           if (myCoinsNode) myCoinsNode.textContent = String(newCoins);
         }
-
-        if (typeof renderStudentDashboard === 'function' && typeof currentRole !== 'undefined' && currentRole === 'student') {
-          try { renderStudentDashboard(); } catch (_) {}
-        }
-
-        if (typeof showStudentAwardCelebration === 'function') {
-          try { showStudentAwardCelebration({ ...student, coins: newCoins }, amount); } catch (_) {}
-        }
       }
 
       if (typeof triggerCoinSound === 'function') {
-        try { triggerCoinSound(); } catch (_) {}
+        triggerCoinSound();
       } else if (window.pokeSfx?.play) {
         try { window.pokeSfx.play('coin'); } catch (_) {}
       }
 
       if (typeof toast === 'function') {
         if (student) {
-          toast(`✨ Correct! +${amount} coins awarded! (Total: ${newCoins} 🪙)`);
+          toast(`Correct! +${amount} coins awarded! (Total: ${newCoins})`);
         } else {
-          toast(`✨ Correct! (+${amount} coins awarded in student mode)`);
+          toast(`Correct! (+${amount} coins awarded in student mode)`);
         }
       }
 
@@ -1174,10 +1295,21 @@
     }
     window.awardCoinsForGrammarPractice = awardCoinsForGrammarPractice;
 
-    const modal = document.createElement('div');
-    modal.id = 'grammar-practice-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[10000] flex flex-col items-center justify-start sm:justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200';
-    
+    // Use inline view if available; fallback to lightweight non-blocking container
+    const practiceContainer = targetInline || document.createElement('div');
+    if (!targetInline) {
+      practiceContainer.id = 'grammar-practice-modal';
+      practiceContainer.className = 'w-full max-w-5xl mx-auto p-4';
+    } else {
+      if (targetList) {
+        targetList.style.display = 'none';
+      }
+      if (classEditorView) classEditorView.classList.add('hidden');
+      if (teacherEditorView) teacherEditorView.classList.add('hidden');
+      targetInline.classList.remove('hidden');
+      targetInline.style.display = 'block';
+    }
+
     function renderCard(idx) {
       const r = rules[idx];
       const isFirst = idx === 0;
@@ -1202,31 +1334,50 @@
       // All decks for Deck Preview strip
       const allDecks = typeof window.getAllGrammarDecks === 'function' ? window.getAllGrammarDecks('', '') : [deck];
 
-      modal.innerHTML = `
-        <div class="w-full max-w-5xl flex flex-col items-center my-auto py-4">
-          <!-- Main Carousel Container: Left Arrow + Amber Glow Card + Right Arrow -->
+      practiceContainer.innerHTML = `
+        <div class="w-full max-w-5xl mx-auto py-2 space-y-4">
+          <!-- Inline Top Navigation Bar -->
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800 gap-3">
+            <button type="button" id="gp-back-to-decks-btn" class="px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs flex items-center gap-2 transition cursor-pointer border border-slate-700 shadow-sm active:scale-95">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              <span>Back to Decks</span>
+            </button>
+
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-400 font-semibold hidden sm:inline">
+                Rule ${idx + 1} of ${rules.length}
+              </span>
+              ${isOwner ? `
+                <button type="button" id="gp-inline-edit-btn" class="px-3.5 py-2 rounded-xl bg-purple-600/25 hover:bg-purple-600/40 border border-purple-500/40 text-purple-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  <span>Edit Deck</span>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+
+          <!-- Main Practice Area: Left Arrow + Amber Glow Card + Right Arrow -->
           <div class="flex items-center justify-center gap-2 sm:gap-5 w-full">
             <!-- Left Circular Arrow -->
             <button type="button" id="gp-prev-btn" class="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-slate-900/90 border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white flex items-center justify-center font-bold text-xl sm:text-2xl transition shadow-xl shrink-0 cursor-pointer ${isFirst ? 'opacity-25 pointer-events-none' : 'active:scale-95'}" aria-label="Previous rule">
-              ‹
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
             </button>
 
-            <!-- PokéAyman Amber Gold Bordered Practice Card -->
+            <!-- Amber Gold Bordered Practice Card -->
             <div id="gp-practice-card" class="gp-practice-card flex-1 min-w-0 rounded-3xl bg-[#0d1527]/95 border-2 border-amber-400/80 shadow-[0_0_40px_rgba(251,191,36,0.22)] p-5 sm:p-7 space-y-5 relative backdrop-blur-xl">
-              <!-- Top Header: Deck Name · Rule X of Y: Rule Title + Actions -->
+              <!-- Top Header: Deck Name & Rule Title -->
               <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
                 <h3 class="text-base sm:text-xl font-bold text-white tracking-tight truncate mr-3">
-                  ${escapeHtml(deckName)} · Rule ${idx + 1} of ${rules.length}: <span class="text-slate-100 font-extrabold">${escapeHtml(r.title || 'Rule')}</span>
+                  ${escapeHtml(deckName)} • Rule ${idx + 1} of ${rules.length}: <span class="text-slate-100 font-extrabold">${escapeHtml(r.title || 'Rule')}</span>
                 </h3>
                 <div class="flex items-center gap-2 shrink-0">
-                  
                   ${isOwner ? `
                     <button type="button" id="gp-edit-deck-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center transition border border-slate-700 cursor-pointer text-xs" title="Edit this deck">
-                      ✏️
+                      <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                     </button>
                   ` : ''}
-                  <button type="button" id="gp-close-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold flex items-center justify-center transition border border-slate-700 cursor-pointer text-sm" aria-label="Close">
-                    ✕
+                  <button type="button" id="gp-close-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold flex items-center justify-center transition border border-slate-700 cursor-pointer text-sm" aria-label="Back to decks">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 </div>
               </div>
@@ -1236,8 +1387,8 @@
                 ${formatFormulaChips(r.formula, r)}
               </div>
 
-              <!-- Side-by-Side 2-Column Hero -->
-              <div class="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6 items-center">
+              <!-- Middle Content: High-contrast Picture & Interactive Target Sentence -->
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
                 <!-- Left: Illustration Card with Floating Context Pill -->
                 <div id="gp-illustration-card" class="gp-illustration-card md:col-span-5 relative rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 aspect-[4/3] shadow-xl group">
                   <img src="${escapeHtml(r.image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg')}" alt="${escapeHtml(r.title || 'Grammar Illustration')}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
@@ -1248,21 +1399,25 @@
 
                 <!-- Right: High-Contrast Target Sentence & Common Mistake Card -->
                 <div class="md:col-span-7 flex flex-col justify-center space-y-4">
-                  <!-- Large Target Sentence with Highlighted Syntax -->
+                  <!-- Large Target Sentence with Highlighted Syntax and Interactive Word Substitution Pills -->
                   <div id="gp-target-sentence" class="gp-target-sentence text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
                     ${formatSyntaxHighlightedSentence(r.sentence || '', r.formula || '', r)}
                   </div>
 
-                  <!-- Common Mistake Container: Stacked under each other if long so sentences are never cut off -->
+                  <!-- Common Mistake Container -->
                   <div id="gp-mistake-box" class="gp-mistake-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 space-y-2 shadow-inner">
                     <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Common Mistake</div>
                     <div class="flex flex-col ${isLongMistake ? '' : 'sm:flex-row sm:items-center sm:gap-6'} gap-2 text-sm">
                       <div class="text-rose-400 font-bold flex items-start gap-2 leading-snug">
-                        <span class="shrink-0 text-sm leading-none pt-0.5">❌</span>
+                        <span class="shrink-0 text-rose-400 pt-0.5">
+                          <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </span>
                         <span class="break-words">${escapeHtml(badText)}</span>
                       </div>
                       <div class="text-emerald-400 font-bold flex items-start gap-2 leading-snug">
-                        <span class="shrink-0 text-sm leading-none pt-0.5">✅</span>
+                        <span class="shrink-0 text-emerald-400 pt-0.5">
+                          <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        </span>
                         <span class="break-words">${escapeHtml(goodText)}</span>
                       </div>
                     </div>
@@ -1270,7 +1425,7 @@
                 </div>
               </div>
 
-              <!-- Sleek Quick Check Inline Bar -->
+              <!-- Quick Check Inline Bar -->
               <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
                 <div class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-200 min-w-0">
                   <span class="text-amber-400 font-black shrink-0">⚡ Quick Check:</span>
@@ -1288,7 +1443,7 @@
 
             <!-- Right Circular Arrow with Glowing Cyan Button -->
             <button type="button" id="gp-next-btn" class="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-xl sm:text-2xl flex items-center justify-center transition shadow-[0_0_25px_rgba(6,182,212,0.6)] shrink-0 cursor-pointer active:scale-95" aria-label="Next rule">
-              ›
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
           </div>
 
@@ -1298,25 +1453,23 @@
               <span>Deck Rules (${rules.length})</span>
               <span class="text-[10px] text-slate-500 font-medium">Click any rule to jump directly</span>
             </div>
-            <div class="flex items-center gap-3 overflow-x-auto pb-2" id="gp-deck-previews-strip">
+            <div class="gp-deck-previews-strip grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
               ${rules.map((ruleItem, rIdx) => {
-                const isCurrent = (rIdx === currentIndex);
-                const rTitle = ruleItem.title || `Rule ${rIdx + 1}`;
-                const rFormula = ruleItem.formula || ruleItem.sentence || '';
-                const rThumb = ruleItem.image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg';
+                const isActive = rIdx === currentIndex;
                 return `
-                  <div class="gp-switch-rule-btn flex items-center gap-2.5 p-2 rounded-2xl shrink-0 cursor-pointer transition ${isCurrent ? 'border-2 border-amber-400/90 bg-slate-900 shadow-[0_0_15px_rgba(251,191,36,0.3)] ring-1 ring-amber-400/50' : 'border border-slate-800 bg-slate-900/70 hover:border-slate-700 hover:bg-slate-900'}" data-rule-idx="${rIdx}">
-                    <img src="${escapeHtml(rThumb)}" class="w-9 h-9 rounded-xl object-cover border border-slate-800 shrink-0" alt="${escapeHtml(rTitle)}">
-                    <div class="min-w-0 pr-1.5">
-                      <div class="text-xs font-bold text-white truncate max-w-[150px]">${rIdx + 1}. ${escapeHtml(rTitle)}</div>
-                      <div class="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">${escapeHtml(rFormula)}</div>
+                  <button type="button" class="gp-switch-rule-btn p-2 rounded-2xl border text-left transition flex items-center gap-2 cursor-pointer ${isActive ? 'border-amber-400 bg-amber-400/15 shadow-[0_0_15px_rgba(251,191,36,0.25)] ring-1 ring-amber-400' : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 text-slate-300'}" data-rule-idx="${rIdx}">
+                    <img src="${escapeHtml(ruleItem.image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg')}" alt="" class="w-8 h-8 rounded-lg object-cover shrink-0 border border-slate-700">
+                    <div class="min-w-0 flex-1">
+                      <div class="text-[11px] font-bold text-white truncate">#${rIdx + 1} ${escapeHtml(ruleItem.title || 'Rule')}</div>
+                      <div class="text-[9px] text-slate-400 truncate">${escapeHtml(ruleItem.formula || '')}</div>
                     </div>
-                  </div>
+                  </button>
                 `;
               }).join('')}
               ${isOwner ? `
-                <button type="button" id="gp-bottom-add-rule-btn" class="px-3.5 py-2.5 rounded-2xl border border-dashed border-slate-700 hover:border-amber-400 text-slate-400 hover:text-amber-300 font-bold text-xs flex items-center gap-1.5 shrink-0 cursor-pointer transition">
-                  <span>＋</span> <span>Edit / Add Rules</span>
+                <button type="button" id="gp-bottom-add-rule-btn" class="p-2 rounded-2xl border border-dashed border-slate-700 hover:border-purple-400/80 hover:bg-purple-950/20 text-slate-400 hover:text-purple-300 transition flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold" title="Edit deck or add more rules">
+                  <span class="text-base font-black">+</span>
+                  <span>Add / Edit</span>
                 </button>
               ` : ''}
             </div>
@@ -1324,45 +1477,61 @@
         </div>
       `;
 
-      // Wire close
-      modal.querySelector('#gp-close-btn').onclick = () => modal.remove();
-      modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+      // Initialize interactive clickable substitution pills
+      initSubstitutionPills(practiceContainer, r);
+
+      // Wire back to decks button
+      const backBtn = practiceContainer.querySelector('#gp-back-to-decks-btn');
+      if (backBtn) backBtn.onclick = closePracticeView;
+      const closeBtn = practiceContainer.querySelector('#gp-close-btn');
+      if (closeBtn) closeBtn.onclick = closePracticeView;
 
       // Wire navigation
-      modal.querySelector('#gp-prev-btn').onclick = () => {
+      practiceContainer.querySelector('#gp-prev-btn').onclick = () => {
         if (currentIndex > 0) {
           currentIndex--;
           renderCard(currentIndex);
         }
       };
-      modal.querySelector('#gp-next-btn').onclick = () => {
+      practiceContainer.querySelector('#gp-next-btn').onclick = () => {
         if (currentIndex < rules.length - 1) {
           currentIndex++;
           renderCard(currentIndex);
         } else {
-          if (typeof toast === 'function') toast('🎉 You completed all rules in this deck!');
-          modal.remove();
+          if (typeof toast === 'function') toast('You completed all rules in this deck!');
+          closePracticeView();
         }
       };
 
-      // Wire edit deck button
-      const editBtn = modal.querySelector('#gp-edit-deck-btn');
+      // Wire inline edit deck button
+      const editBtn = practiceContainer.querySelector('#gp-edit-deck-btn');
       if (editBtn) {
         editBtn.onclick = () => {
-          modal.remove();
+          if (targetInline) {
+            targetInline.classList.add('hidden');
+            targetInline.style.display = 'none';
+          }
+          window.openGrammarDeckEditor(deck);
+        };
+      }
+      const inlineEditBtn = practiceContainer.querySelector('#gp-inline-edit-btn');
+      if (inlineEditBtn) {
+        inlineEditBtn.onclick = () => {
+          if (targetInline) {
+            targetInline.classList.add('hidden');
+            targetInline.style.display = 'none';
+          }
           window.openGrammarDeckEditor(deck);
         };
       }
 
-      
-
       // Wire Quick Check quiz options
-      modal.querySelectorAll('.gp-quiz-opt').forEach(btn => {
+      practiceContainer.querySelectorAll('.gp-quiz-opt').forEach(btn => {
         btn.onclick = async () => {
           const chosen = btn.dataset.val;
           const correct = r.quiz_answer;
 
-          modal.querySelectorAll('.gp-quiz-opt').forEach(b => {
+          practiceContainer.querySelectorAll('.gp-quiz-opt').forEach(b => {
             b.classList.remove('border-cyan-400', 'bg-cyan-950/90', 'text-cyan-200', 'shadow-[0_0_15px_rgba(6,182,212,0.5)]', 'border-rose-500', 'bg-rose-950/90', 'text-rose-200');
           });
 
@@ -1373,7 +1542,7 @@
               await awardCoinsForGrammarPractice(5);
             } else {
               if (typeof triggerCoinSound === 'function') triggerCoinSound();
-              if (typeof toast === 'function') toast('✨ Correct! (Already rewarded for this rule)');
+              if (typeof toast === 'function') toast('Correct! (Already rewarded for this rule)');
             }
           } else {
             btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-rose-500 ring-2 ring-rose-500/50 bg-rose-950/90 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.4)] transition cursor-pointer';
@@ -1385,7 +1554,7 @@
       });
 
       // Wire Rule Selectors in the bottom strip
-      modal.querySelectorAll('.gp-switch-rule-btn').forEach(btn => {
+      practiceContainer.querySelectorAll('.gp-switch-rule-btn').forEach(btn => {
         btn.onclick = () => {
           const targetIdx = Number(btn.dataset.ruleIdx);
           if (targetIdx >= 0 && targetIdx < rules.length && targetIdx !== currentIndex) {
@@ -1396,17 +1565,22 @@
       });
 
       // Wire bottom Edit / Add Rules button
-      const bottomAddBtn = modal.querySelector('#gp-bottom-add-rule-btn');
+      const bottomAddBtn = practiceContainer.querySelector('#gp-bottom-add-rule-btn');
       if (bottomAddBtn) {
         bottomAddBtn.onclick = () => {
-          modal.remove();
+          if (targetInline) {
+            targetInline.classList.add('hidden');
+            targetInline.style.display = 'none';
+          }
           window.openGrammarDeckEditor(deck);
         };
       }
     }
 
     renderCard(currentIndex);
-    document.body.appendChild(modal);
+    if (!targetInline) {
+      document.body.appendChild(practiceContainer);
+    }
   };
 
   // ==========================================
@@ -1483,13 +1657,53 @@
 
     const rules = Array.isArray(deck.rules) ? [...deck.rules] : [];
     let currentDeckName = deck.grammar_deck_name || deck.deck_name || deckName || 'Grammar Deck';
-    let editingRuleIndex = -1; // -1 = adding new rule, >= 0 = editing existing rule
-    let isRuleFormOpen = rules.length === 0; // Collapsed by default if rules exist
-    let isImagePickerOpen = false; // Collapsed by default inside the rule form
+    let editingRuleIndex = -1;
+    let isRuleFormOpen = rules.length === 0;
+    let isImagePickerOpen = false;
 
-    const modal = document.createElement('div');
-    modal.id = 'grammar-editor-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[10000] flex items-center justify-center p-3 sm:p-5 overflow-y-auto';
+    // Detect inline containers (Classroom vs Teacher Zone)
+    const classListView = document.getElementById('grammar-decks-list-view');
+    const classPracticeView = document.getElementById('grammar-deck-inline-view');
+    const classEditorView = document.getElementById('grammar-deck-editor-inline-view');
+
+    const teacherGrid = document.getElementById('teacher-grammar-decks-grid');
+    const teacherPracticeView = document.getElementById('teacher-grammar-inline-view');
+    const teacherEditorView = document.getElementById('teacher-grammar-editor-inline-view');
+
+    const isTeacherZone = !classListView || (teacherEditorView && (teacherGrid && teacherGrid.offsetParent !== null));
+    const targetEditor = isTeacherZone ? teacherEditorView : classEditorView;
+    const targetPractice = isTeacherZone ? teacherPracticeView : classPracticeView;
+    const targetList = isTeacherZone ? teacherGrid : classListView;
+
+    function closeEditorView() {
+      if (targetEditor) {
+        targetEditor.classList.add('hidden');
+        targetEditor.style.display = 'none';
+        targetEditor.innerHTML = '';
+      }
+      if (targetList) {
+        targetList.classList.remove('hidden');
+        targetList.style.display = '';
+      }
+      if (typeof window.renderClassroomGrammarDecks === 'function') window.renderClassroomGrammarDecks();
+      if (typeof window.renderTeacherOwnedGrammarDecks === 'function') window.renderTeacherOwnedGrammarDecks();
+    }
+
+    if (targetList) targetList.classList.add('hidden');
+    if (targetPractice) {
+      targetPractice.classList.add('hidden');
+      targetPractice.style.display = 'none';
+    }
+    if (targetEditor) {
+      targetEditor.classList.remove('hidden');
+      targetEditor.style.display = 'block';
+    }
+
+    const modal = targetEditor || document.createElement('div');
+    if (!targetEditor) {
+      modal.id = 'grammar-editor-modal';
+      modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[10000] flex items-center justify-center p-3 sm:p-5 overflow-y-auto';
+    }
     
     function renderEditor() {
       const isEditing = editingRuleIndex >= 0 && editingRuleIndex < rules.length;
@@ -1503,11 +1717,26 @@
       const activeOpt3 = remainingWrong[1] || (existingOptions[2] && existingOptions[2] !== activeAnswer && existingOptions[2] !== activeOpt2 ? existingOptions[2] : '');
 
       modal.innerHTML = `
-        <div class="max-w-3xl w-full rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-6 shadow-2xl space-y-5 my-auto max-h-[90vh] overflow-y-auto">
+        ${targetEditor ? `
+        <!-- Inline Top Navigation Bar -->
+        <div class="max-w-4xl mx-auto flex items-center justify-between gap-3 mb-4 p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
+          <button type="button" id="ge-top-back-btn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Back to Decks
+          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" id="ge-top-practice-btn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/20">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+              Practice This Deck
+            </button>
+          </div>
+        </div>
+        ` : ''}
+        <div class="${targetEditor ? 'max-w-4xl mx-auto' : 'max-w-3xl my-auto max-h-[90vh] overflow-y-auto'} w-full rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-7 shadow-2xl space-y-6">
           <!-- Header with Editable Deck Title -->
           <div class="flex items-center justify-between border-b border-slate-800 pb-3 gap-3">
             <div class="flex items-center gap-2 flex-1 min-w-0">
-              <span class="text-xl shrink-0">✏️</span>
+              <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
               <div class="flex-1 min-w-0">
                 <input id="ge-deck-name-input" type="text" value="${escapeHtml(currentDeckName)}" class="quiz-input font-bold text-white text-base w-full" placeholder="Deck Name" maxlength="80">
               </div>
@@ -1521,7 +1750,7 @@
           <!-- Add Rule Trigger Bar (Shown when form is collapsed) -->
           <div id="ge-add-rule-trigger-bar" class="${isRuleFormOpen ? 'hidden' : 'flex'} items-center justify-between p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 shadow-sm transition">
             <div class="flex items-center gap-2.5">
-              <span class="text-xl">🧩</span>
+              <span class="text-xl"></span>
               <div>
                 <div class="text-xs font-bold text-white">Deck Grammar Rules (${rules.length})</div>
                 <p class="text-[11px] text-slate-400">Click ➕ Add New Rule or edit any rule below</p>
@@ -1537,7 +1766,7 @@
           <div id="ge-rule-form-box" class="${isRuleFormOpen ? 'block' : 'hidden'} p-4 rounded-2xl ${isEditing ? 'bg-amber-950/20 border-amber-500/50 ring-1 ring-amber-500/30' : 'bg-slate-950/60 border-slate-800'} border space-y-3 transition">
             <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
               <h4 class="text-xs font-bold ${isEditing ? 'text-amber-400' : 'text-amber-300'} uppercase tracking-wider flex items-center gap-1.5">
-                <span>${isEditing ? '✏️' : '➕'}</span>
+                <span>${isEditing ? '' : '➕'}</span>
                 <span>${isEditing ? `Editing Rule #${editingRuleIndex + 1}: ${escapeHtml(activeRule?.title || 'Rule')}` : 'Add New Grammar Rule'}</span>
               </h4>
               <button type="button" id="ge-collapse-form-btn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer flex items-center gap-1" title="Collapse form">
@@ -1564,7 +1793,7 @@
               <div class="sm:col-span-2 space-y-2.5 p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <div class="text-[11px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <span>🎨</span> Assign Words & Suffixes to Formula Parts
+                    <span></span> Assign Words & Suffixes to Formula Parts
                   </div>
                   <span class="text-[10px] text-slate-400">Click a part dot to change color &bull; Click &ldquo;+ Add Part&rdquo; to add more &bull; Click words to cycle</span>
                 </div>
@@ -1599,7 +1828,7 @@
                       ${activeRule?.image ? `
                         <img src="${escapeHtml(activeRule.image)}" class="w-full h-full object-cover" alt="Rule image">
                       ` : `
-                        <span class="text-xl opacity-60">🖼️</span>
+                        <span class="text-xl opacity-60"></span>
                       `}
                     </div>
                     <div class="min-w-0">
@@ -1614,7 +1843,7 @@
                   </div>
                   <div class="flex items-center gap-2 shrink-0">
                     <button type="button" id="ge-toggle-image-picker-btn" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-slate-700 transition flex items-center gap-1.5 cursor-pointer">
-                      <span>🖼️</span>
+                      <span></span>
                       <span>${isImagePickerOpen ? 'Hide Search' : (activeRule?.image ? 'Change Image' : 'Add Image')}</span>
                     </button>
                     <button type="button" id="ge-image-clear-btn" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-rose-400 font-bold text-xs border border-slate-700 hover:border-rose-500/30 transition cursor-pointer ${activeRule?.image ? '' : 'hidden'}" title="Remove image">
@@ -1664,7 +1893,7 @@
                           <button type="button" id="ge-image-search-clear" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs font-bold p-1 cursor-pointer" style="${extractKeywordsForGrammarRule(activeRule, deck) ? '' : 'display:none;'}" aria-label="Clear">✕</button>
                         </div>
                         <button type="button" id="ge-image-search-btn" class="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition active:scale-95 shrink-0 cursor-pointer flex items-center gap-1 shadow-sm">
-                          <span>🔍</span>
+                          <span></span>
                           <span>Search</span>
                         </button>
                         <button type="button" id="ge-image-suggest-btn" class="px-2.5 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 font-bold text-xs transition active:scale-95 shrink-0 cursor-pointer flex items-center gap-1" title="Extract search keywords from sentence or rule">
@@ -1674,15 +1903,15 @@
 
                       <!-- Type Filter Pills -->
                       <div id="ge-image-type-pills" class="flex items-center gap-1.5">
-                        <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400 bg-amber-400 text-slate-950 cursor-pointer transition shadow-sm" data-image-type="all">✨ All</button>
-                        <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition" data-image-type="illustration">🎨 Clipart</button>
-                        <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition" data-image-type="photo">📸 Photos</button>
+                        <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400 bg-amber-400 text-slate-950 cursor-pointer transition shadow-sm" data-image-type="all"> All</button>
+                        <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition" data-image-type="illustration"> Clipart</button>
+                        <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition" data-image-type="photo"> Photos</button>
                       </div>
 
                       <!-- Results Grid -->
                       <div id="ge-image-results" class="grid grid-cols-3 sm:grid-cols-4 gap-2 min-h-[140px] max-h-[185px] overflow-y-auto p-2 rounded-xl bg-slate-950/80 border border-slate-800">
                         <div class="col-span-full py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400 text-xs">
-                          <span class="text-2xl opacity-60">📷</span>
+                          <span class="text-2xl opacity-60"></span>
                           <p class="font-medium">Click <b>Search</b> to find matching photos & clipart</p>
                         </div>
                       </div>
@@ -1712,7 +1941,7 @@
               </div>
               <div class="sm:col-span-2 space-y-1">
                 <div class="flex items-center justify-between">
-                  <label class="text-[11px] text-slate-400 font-semibold block">⚡ Quick Check Practice Options (3 Choices)</label>
+                  <label class="text-[11px] text-slate-400 font-semibold block"> Quick Check Practice Options (3 Choices)</label>
                   <span class="text-[10px] text-slate-500">Correct choice awards coins in student practice</span>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -1740,7 +1969,7 @@
 
             <div class="flex items-center gap-2 pt-1">
               <button type="button" id="ge-save-rule-btn" class="px-4 py-2 rounded-xl ${isEditing ? 'bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black' : 'bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold'} text-xs transition flex items-center gap-1.5 shadow active:scale-95 cursor-pointer">
-                <span>${isEditing ? '💾' : '➕'}</span>
+                <span>${isEditing ? '' : '➕'}</span>
                 <span>${isEditing ? 'Save Rule Changes' : 'Add Rule'}</span>
               </button>
               <button type="button" id="ge-cancel-rule-btn" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
@@ -1753,7 +1982,7 @@
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Rules (${rules.length})</h4>
-              <span class="text-[11px] text-slate-500">Click ✏️ Edit to modify any rule</span>
+              <span class="text-[11px] text-slate-500">Click  Edit to modify any rule</span>
             </div>
             <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
               ${rules.length === 0 ? `
@@ -1766,7 +1995,7 @@
                     ${r.image ? `
                       <img src="${escapeHtml(r.image)}" alt="Rule thumbnail" class="w-10 h-10 object-cover rounded-lg border border-slate-800 shrink-0 bg-slate-900" onerror="this.style.display='none'">
                     ` : `
-                      <div class="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-sm shrink-0">📖</div>
+                      <div class="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-sm shrink-0"></div>
                     `}
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
@@ -1778,10 +2007,10 @@
                   </div>
                   <div class="flex items-center gap-1.5 shrink-0">
                     <button type="button" class="ge-edit-rule px-2.5 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 font-bold border border-amber-400/30 transition flex items-center gap-1 cursor-pointer" data-rule-idx="${i}" title="Edit Rule">
-                      <span>✏️</span> Edit
+                      <span></span> Edit
                     </button>
                     <button type="button" class="ge-del-rule p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 font-bold transition cursor-pointer" data-rule-idx="${i}" title="Delete Rule">
-                      🗑️
+                      
                     </button>
                   </div>
                 </div>
@@ -1828,7 +2057,7 @@
           if (selectedImageUrl) {
             thumbBox.innerHTML = `<img src="${escapeHtml(selectedImageUrl)}" class="w-full h-full object-cover" alt="Rule image">`;
           } else {
-            thumbBox.innerHTML = `<span class="text-xl opacity-60">🖼️</span>`;
+            thumbBox.innerHTML = `<span class="text-xl opacity-60"></span>`;
           }
         }
         const summaryBadge = modal.querySelector('#ge-image-badge');
@@ -1841,7 +2070,7 @@
         }
         const toggleBtn = modal.querySelector('#ge-toggle-image-picker-btn');
         if (toggleBtn) {
-          toggleBtn.innerHTML = `<span>🖼️</span><span>${isImagePickerOpen ? 'Hide Search' : (selectedImageUrl ? 'Change Image' : 'Add Image')}</span>`;
+          toggleBtn.innerHTML = `<span></span><span>${isImagePickerOpen ? 'Hide Search' : (selectedImageUrl ? 'Change Image' : 'Add Image')}</span>`;
         }
 
         // Inside drawer preview container
@@ -1878,7 +2107,7 @@
           imageDrawer.classList.toggle('block', isImagePickerOpen);
         }
         if (toggleImagePickerBtn) {
-          toggleImagePickerBtn.innerHTML = `<span>🖼️</span><span>${isImagePickerOpen ? 'Hide Search' : (selectedImageUrl ? 'Change Image' : 'Add Image')}</span>`;
+          toggleImagePickerBtn.innerHTML = `<span></span><span>${isImagePickerOpen ? 'Hide Search' : (selectedImageUrl ? 'Change Image' : 'Add Image')}</span>`;
         }
         if (isImagePickerOpen && currentPhotos.length === 0 && searchInput?.value.trim()) {
           executeSearch(true);
@@ -1889,7 +2118,7 @@
         if (currentPhotos.length === 0) {
           resultsContainer.innerHTML = `
             <div class="col-span-full py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400 text-xs">
-              <span class="text-2xl opacity-60">🔍</span>
+              <span class="text-2xl opacity-60"></span>
               <p class="font-medium">No images found. Try a different keyword.</p>
             </div>
           `;
@@ -1920,7 +2149,7 @@
               imageDrawer.classList.remove('block');
             }
             if (toggleImagePickerBtn) {
-              toggleImagePickerBtn.innerHTML = `<span>🖼️</span><span>Change Image</span>`;
+              toggleImagePickerBtn.innerHTML = `<span></span><span>Change Image</span>`;
             }
             if (typeof toast === 'function') toast('Selected image for this rule!');
           });
@@ -1974,14 +2203,14 @@
           if (currentPhotos.length === 0) {
             resultsContainer.innerHTML = `
               <div class="col-span-full py-8 text-center flex flex-col items-center justify-center gap-1.5 text-rose-400 text-xs">
-                <span>⚠️ Search could not complete. Try another term or paste URL.</span>
+                <span> Search could not complete. Try another term or paste URL.</span>
               </div>
             `;
           }
         } finally {
           isSearching = false;
           searchBtn.disabled = false;
-          searchBtn.innerHTML = `<span>🔍</span><span>Search</span>`;
+          searchBtn.innerHTML = `<span></span><span>Search</span>`;
           if (loadMoreBtn) {
             loadMoreBtn.disabled = false;
             loadMoreBtn.textContent = '⬇ Load more images';
@@ -2074,20 +2303,34 @@
           if (rawList.length > 3 && rawList.some(p => /^part\s*\d+$/i.test(String(p.name || '').trim()))) {
             rawList = rawList.filter(p => !/^part\s*\d+$/i.test(String(p.name || '').trim()));
           }
-          currentFormulaParts = rawList.map((p, idx) => ({
-            id: p.id || ('part-' + idx + '-' + Math.random().toString(36).slice(2, 6)),
-            name: String(p.name || `Part ${idx + 1}`).trim(),
-            colorIndex: (typeof p.colorIndex === 'number' && p.colorIndex >= 0) ? (p.colorIndex % COLOR_PALETTE.length) : (idx % COLOR_PALETTE.length)
-          }));
+          currentFormulaParts = rawList.map((p, idx) => {
+            let alts = Array.isArray(p.alternatives) && p.alternatives.length > 0 ? [...p.alternatives] : [];
+            if (!alts.length && activeRule.part_alternatives && Array.isArray(activeRule.part_alternatives[idx])) {
+              alts = [...activeRule.part_alternatives[idx]];
+            }
+            return {
+              id: p.id || ('part-' + idx + '-' + Math.random().toString(36).slice(2, 6)),
+              name: String(p.name || `Part ${idx + 1}`).trim(),
+              colorIndex: (typeof p.colorIndex === 'number' && p.colorIndex >= 0) ? (p.colorIndex % COLOR_PALETTE.length) : (idx % COLOR_PALETTE.length),
+              alternatives: alts
+            };
+          });
         } else {
           let rawFormula = (formulaInput?.value || activeRule?.formula || 'Subject + am / is / are + Verb-ing').trim();
           rawFormula = rawFormula.replace(/\s*\+\s*part\s*\d+/gi, '').trim();
           const parts = rawFormula ? rawFormula.split('+').map(p => p.trim()).filter(Boolean) : ['Subject', 'Verb'];
-          currentFormulaParts = parts.map((name, idx) => ({
-            id: 'part-' + idx + '-' + Math.random().toString(36).slice(2, 6),
-            name,
-            colorIndex: idx % COLOR_PALETTE.length
-          }));
+          currentFormulaParts = parts.map((name, idx) => {
+            let alts = [];
+            if (activeRule && activeRule.part_alternatives && Array.isArray(activeRule.part_alternatives[idx])) {
+              alts = [...activeRule.part_alternatives[idx]];
+            }
+            return {
+              id: 'part-' + idx + '-' + Math.random().toString(36).slice(2, 6),
+              name,
+              colorIndex: idx % COLOR_PALETTE.length,
+              alternatives: alts
+            };
+          });
         }
       }
       initFormulaParts();
@@ -2555,10 +2798,58 @@
         }
       });
 
+      // Render Dynamic Word Choices & Substitutions List
+        const altsListContainer = modal.querySelector('#ge-formula-part-alternatives-list');
+        if (altsListContainer) {
+          altsListContainer.innerHTML = currentFormulaParts.map((part, idx) => {
+            const col = COLOR_PALETTE[part.colorIndex % COLOR_PALETTE.length];
+            const val = Array.isArray(part.alternatives) ? part.alternatives.join(', ') : '';
+            return `
+              <div class="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/90">
+                <div class="flex items-center gap-2 shrink-0 sm:w-48">
+                  <span class="w-3 h-3 rounded-full ${col.dotBg} shrink-0 ring-1 ring-white/30"></span>
+                  <span class="text-xs font-bold text-slate-200 truncate" title="${escapeHtml(part.name)}">
+                    Part ${idx + 1}: ${escapeHtml(part.name)}
+                  </span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <input type="text" class="ge-part-alts-input quiz-input text-xs w-full py-1 px-3 rounded-lg bg-slate-950 border border-slate-700/80 focus:border-amber-400 text-white" data-part-idx="${idx}" value="${escapeHtml(val)}" placeholder="Alternatives (comma-separated), e.g. ${idx === 0 ? 'The elephant, The clever monkey, The boy' : (idx === 1 ? 'is, was, will be' : 'walking, dancing, jumping')}">
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          altsListContainer.querySelectorAll('.ge-part-alts-input').forEach(inp => {
+            inp.oninput = () => {
+              const pIdx = Number(inp.dataset.partIdx);
+              if (currentFormulaParts[pIdx]) {
+                currentFormulaParts[pIdx].alternatives = inp.value.split(',').map(s => s.trim()).filter(Boolean);
+              }
+            };
+          });
+        }
+
       syncWordChips();
 
-      modal.querySelector('#ge-close-btn').onclick = () => modal.remove();
-      modal.querySelector('#ge-cancel-btn').onclick = () => modal.remove();
+      // Top bar actions
+      const topBackBtn = modal.querySelector('#ge-top-back-btn');
+      if (topBackBtn) topBackBtn.onclick = () => closeEditorView();
+      const topPracticeBtn = modal.querySelector('#ge-top-practice-btn');
+      if (topPracticeBtn) {
+        topPracticeBtn.onclick = () => {
+          closeEditorView();
+          window.openGrammarDeckPractice(deck);
+        };
+      }
+
+      modal.querySelector('#ge-close-btn').onclick = () => {
+        if (targetEditor) closeEditorView();
+        else modal.remove();
+      };
+      modal.querySelector('#ge-cancel-btn').onclick = () => {
+        if (targetEditor) closeEditorView();
+        else modal.remove();
+      };
 
       // Open Add New Rule Form Button
       modal.querySelector('#ge-open-add-rule-btn')?.addEventListener('click', () => {
@@ -2773,9 +3064,12 @@
     }
 
     renderEditor();
-    document.body.appendChild(modal);
+    if (!targetEditor) {
+      document.body.appendChild(modal);
+    }
   };
 
+  // Delete Deck
   // Delete Deck
   window.deleteGrammarDeck = async function(deckId) {
     if (!confirm('Are you sure you want to delete this grammar deck?')) return;

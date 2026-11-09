@@ -16998,14 +16998,18 @@ window.openGameScramble = openGameScramble;
         <p id="vocab-lists-empty" class="text-center text-gray-400 py-8 text-sm hidden">No vocabulary lists yet.</p>
        </div><!-- Grammar sub-tab -->
        <div id="class-subtab-grammar" class="class-subtab-content hidden">
-        <div class="glass-container rounded-xl p-6 mb-6">
-         <div class="mb-6 flex gap-3 items-end">
-          <div class="flex-1"><label class="text-xs text-slate-300 font-semibold block mb-1.5 uppercase tracking-wider">Create New Grammar Deck</label> <input id="new-grammar-deck-name" type="text" placeholder="Deck name (e.g., 'Present Continuous')" class="quiz-input w-full px-3.5 py-2.5 text-sm" required="">
-          </div><button id="create-grammar-deck-btn" class="btn-primary rounded-full" style="border-radius:9999px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:8px 20px !important;">Create</button>
+        <div id="grammar-decks-list-view">
+         <div class="glass-container rounded-xl p-6 mb-6">
+          <div class="mb-6 flex gap-3 items-end">
+           <div class="flex-1"><label class="text-xs text-slate-300 font-semibold block mb-1.5 uppercase tracking-wider">Create New Grammar Deck</label> <input id="new-grammar-deck-name" type="text" placeholder="Deck name (e.g., 'Present Continuous')" class="quiz-input w-full px-3.5 py-2.5 text-sm" required="">
+           </div><button id="create-grammar-deck-btn" class="btn-primary rounded-full" style="border-radius:9999px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:8px 20px !important;">Create</button>
+          </div>
          </div>
+         <div id="grammar-decks-container" class="space-y-4"></div>
+         <p id="grammar-decks-empty" class="text-center text-gray-400 py-8 text-sm hidden">No grammar decks yet.</p>
         </div>
-        <div id="grammar-decks-container" class="space-y-4"></div>
-        <p id="grammar-decks-empty" class="text-center text-gray-400 py-8 text-sm hidden">No grammar decks yet.</p>
+        <div id="grammar-deck-inline-view" class="hidden space-y-4"></div>
+        <div id="grammar-deck-editor-inline-view" class="hidden space-y-4"></div>
        </div><!-- Games sub-tab -->
        <div id="class-subtab-games" class="class-subtab-content hidden">
         <div class="glass-container rounded-xl p-6 mb-6">
@@ -17517,6 +17521,8 @@ window.openGameScramble = openGameScramble;
        <div class="teacher-vb-search"><label for="teacher-grammar-search-field">Search decks</label><select id="teacher-grammar-search-field" aria-label="Search filter"><option value="all">All fields</option><option value="deck">Deck name</option><option value="teacher">Teacher name</option><option value="pattern">Pattern / Rule</option><option value="class">Class or school</option></select><input id="teacher-grammar-search-query" type="text" autocomplete="off" spellcheck="false" placeholder="Search by deck, teacher, rule, class…" autocomplete="off"></div>
        <p id="teacher-grammar-decks-status" class="teacher-zone-status" aria-live="polite">Loading grammar decks…</p>
        <div id="teacher-grammar-decks-grid" class="teacher-vb-lists-grid"></div>
+       <div id="teacher-grammar-inline-view" class="hidden space-y-4 mt-4"></div>
+       <div id="teacher-grammar-editor-inline-view" class="hidden space-y-4 mt-4"></div>
       </div>
      </section>
 
