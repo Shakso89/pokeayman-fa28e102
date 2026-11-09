@@ -774,46 +774,43 @@
           alts = [...rule.part_alternatives[pIdx]];
         }
 
-        const activeText = pill.querySelector('.gp-pill-text')?.textContent?.trim() || '';
+        const labelEl = pill.querySelector('.gp-pill-text');
+        const activeText = pill.dataset.activeVal || labelEl?.textContent?.trim() || '';
+
         if (activeText && !alts.includes(activeText)) {
           alts.unshift(activeText);
         }
 
-        // Close any existing open dropdowns
-        document.querySelectorAll('.gp-subst-dropdown').forEach(d => d.remove());
-
         if (alts.length <= 1) return;
 
-        const dropdown = document.createElement('div');
-        dropdown.className = 'gp-subst-dropdown absolute top-full left-0 mt-2 z-[9999] min-w-[170px] max-w-[320px] rounded-2xl bg-slate-900/98 border border-slate-700 shadow-[0_15px_35px_rgba(0,0,0,0.85)] p-2 space-y-1 backdrop-blur-md animate-in fade-in zoom-in-95 duration-150';
-        dropdown.innerHTML = `
-          <div class="text-[10px] uppercase font-bold text-slate-400 px-2.5 py-1 tracking-wider border-b border-slate-800 flex items-center justify-between">
-            <span>Choose ${escapeHtml(part?.name || 'Word')}:</span>
-            <span class="text-[9px] text-slate-500 font-normal">Click to swap</span>
-          </div>
-          <div class="max-h-52 overflow-y-auto space-y-0.5 pt-1">
-            ${alts.map(choice => `
-              <button type="button" class="gp-subst-opt w-full text-left px-2.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-between cursor-pointer ${choice === activeText ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30' : 'text-slate-200 hover:text-white hover:bg-slate-800'}" data-choice="${escapeHtml(choice)}">
-                <span class="truncate">${escapeHtml(choice)}</span>
-                ${choice === activeText ? '<svg class="w-3.5 h-3.5 text-amber-400 shrink-0 ml-1" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
-              </button>
-            `).join('')}
-          </div>
-        `;
+        // Auto-cycle in place without opening any dropdown
+        const curIdx = alts.indexOf(activeText);
+        const nextIdx = (curIdx + 1) % alts.length;
+        const nextVal = alts[nextIdx];
 
-        dropdown.querySelectorAll('.gp-subst-opt').forEach(optBtn => {
-          optBtn.onclick = (ev) => {
-            ev.stopPropagation();
-            const chosen = optBtn.dataset.choice;
-            const labelEl = pill.querySelector('.gp-pill-text');
-            if (labelEl) labelEl.textContent = chosen;
-            pill.dataset.activeVal = chosen;
-            dropdown.remove();
-            if (typeof toast === 'function') toast(`Swapped to "${chosen}"!`);
-          };
-        });
+        pill.dataset.activeVal = nextVal;
 
-        pill.appendChild(dropdown);
+        // If the pill was split with a distinct suffix color, preserve segmentation
+        const isSplit = pill.dataset.isSplit === 'true';
+        const sInfo = (isSplit && typeof detectSuffix === 'function') ? detectSuffix(nextVal) : null;
+
+        if (isSplit && sInfo && labelEl) {
+          const rootCls = pill.dataset.rootCls || '';
+          const suffixCls = pill.dataset.suffixCls || '';
+          labelEl.innerHTML = `<span class="${rootCls}">${escapeHtml(sInfo.root)}</span><span class="${suffixCls}">${escapeHtml(sInfo.suffix)}</span>`;
+        } else if (labelEl) {
+          labelEl.textContent = nextVal;
+        }
+
+        // Tactile micro-animation
+        pill.classList.remove('scale-105');
+        void pill.offsetWidth;
+        pill.classList.add('scale-105');
+        setTimeout(() => pill.classList.remove('scale-105'), 180);
+
+        if (typeof toast === 'function') {
+          toast(`Swapped to: ${nextVal}`);
+        }
       };
     });
   }
@@ -894,10 +891,28 @@
           }
           const phrase = groupTokens.join(' ').trim();
           const cls = getColorCls(pColor, false);
+          let hasSplit = false;
+          let firstRootCls = '';
+          let firstSuffixCls = '';
+          let pillInnerHtml = '';
+
+          // Check if any token in this part was split
+          groupTokens.forEach((tokText, tIdx) => {
+            const origItem = rule.word_assignments.find(w => (w.text === tokText || w.token === tokText || (Array.isArray(w.segments) && w.segments.map(s => s.text).join('') === tokText)));
+            if (origItem && Array.isArray(origItem.segments) && origItem.segments.length > 1) {
+              hasSplit = true;
+              firstRootCls = getColorCls(origItem.segments[0].color, false);
+              firstSuffixCls = getColorCls(origItem.segments[1].color, true);
+              pillInnerHtml += (tIdx > 0 ? ' ' : '') + `<span class="${firstRootCls}">${escapeHtml(origItem.segments[0].text || '')}</span><span class="${firstSuffixCls}">${escapeHtml(origItem.segments[1].text || '')}</span>`;
+            } else {
+              pillInnerHtml += (tIdx > 0 ? ' ' : '') + escapeHtml(tokText);
+            }
+          });
+
           resultHtml.push(`
-            <span class="gp-subst-pill group/pill inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400 hover:bg-slate-800 transition cursor-pointer select-none ${cls} font-black relative align-baseline mx-0.5 shadow-sm" data-part-idx="${pColor}" data-active-val="${escapeHtml(phrase)}" title="Click to swap word">
-              <span class="gp-pill-text">${escapeHtml(phrase)}</span>
-              <svg class="w-3.5 h-3.5 text-slate-400 group-hover/pill:text-amber-400 transition shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            <span class="gp-subst-pill group/pill inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400 hover:bg-slate-800 transition cursor-pointer select-none ${cls} font-black relative align-baseline mx-0.5 shadow-sm active:scale-95" data-part-idx="${pColor}" data-active-val="${escapeHtml(phrase)}" data-is-split="${hasSplit ? 'true' : 'false'}" data-root-cls="${firstRootCls}" data-suffix-cls="${firstSuffixCls}" title="Click to cycle word">
+              <span class="gp-pill-text">${pillInnerHtml || escapeHtml(phrase)}</span>
+              <svg class="w-3.5 h-3.5 text-slate-400 group-hover/pill:text-amber-400 transition shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             </span>${lastPunct ? `<span class="text-white font-extrabold">${escapeHtml(lastPunct)}</span>` : ''}
           `);
         } else {
@@ -2316,6 +2331,10 @@
 
           if (sInfo && (formulaMentionsSuffix || (initialColor !== -1 && initialColor === 2))) {
             const rootColor = initialColor !== -1 ? initialColor : (currentFormulaParts.length > 2 ? 2 : 0);
+            let defSuffixColor = (typeof suffixColorIndex === 'number' && suffixColorIndex >= 0) ? suffixColorIndex : 4;
+            if (defSuffixColor === rootColor) {
+              defSuffixColor = (rootColor === 4) ? 3 : 4;
+            }
             return {
               token: tok,
               core: core,
@@ -2324,7 +2343,7 @@
               root: sInfo.root,
               suffix: sInfo.suffix,
               rootColor: rootColor,
-              suffixColor: rootColor,
+              suffixColor: defSuffixColor,
               color: rootColor
             };
           }
@@ -2636,10 +2655,15 @@
               item.isSplit = true;
               item.root = sInfo.root;
               item.suffix = sInfo.suffix;
-              // Option 1: Suffix belongs directly to the formula part of the word
               const partIdx = (typeof item.color === 'number' && item.color !== -1) ? item.color : 0;
               item.rootColor = partIdx;
-              item.suffixColor = partIdx;
+              
+              // Suffix / extra part (-ing, -ed, -s, -er, etc.) MUST by default be in a DIFFERENT color!
+              let defSuffixColor = (typeof suffixColorIndex === 'number' && suffixColorIndex >= 0) ? suffixColorIndex : 4;
+              if (defSuffixColor === partIdx) {
+                defSuffixColor = (partIdx === 4) ? 3 : 4;
+              }
+              item.suffixColor = defSuffixColor;
             }
             syncWordChips();
           };
@@ -2692,6 +2716,11 @@
             else if (partIdx === -1 && currentFormulaParts.length > 1) partIdx = 1;
             else if (partIdx === -1) partIdx = 0;
 
+            let defSuffixColor = (typeof suffixColorIndex === 'number' && suffixColorIndex >= 0) ? suffixColorIndex : 4;
+            if (defSuffixColor === partIdx) {
+              defSuffixColor = (partIdx === 4) ? 3 : 4;
+            }
+
             return {
               token: tok,
               core: core,
@@ -2700,7 +2729,7 @@
               root: sInfo.root,
               suffix: sInfo.suffix,
               rootColor: partIdx,
-              suffixColor: partIdx,
+              suffixColor: defSuffixColor,
               color: partIdx
             };
           }
