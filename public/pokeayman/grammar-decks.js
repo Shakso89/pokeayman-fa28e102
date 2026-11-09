@@ -1213,34 +1213,6 @@
     const isOwner = isCurrentTeacherOwner(deck);
     const rewardedRuleIndices = new Set();
 
-    // Identify target inline containers
-    const classInlineView = document.getElementById('grammar-deck-inline-view');
-    const classEditorView = document.getElementById('grammar-deck-editor-inline-view');
-    const classListView = document.getElementById('grammar-decks-list-view');
-
-    const teacherInlineView = document.getElementById('teacher-grammar-inline-view');
-    const teacherEditorView = document.getElementById('teacher-grammar-editor-inline-view');
-    const teacherGrid = document.getElementById('teacher-grammar-decks-grid');
-
-    const isTeacherView = Boolean(teacherInlineView && document.getElementById('view-teacher')?.offsetParent !== null);
-    const targetInline = isTeacherView ? teacherInlineView : (classInlineView || null);
-    const targetList = isTeacherView ? teacherGrid : (classListView || null);
-
-    // Close and restore list view helper
-    function closePracticeView() {
-      if (targetInline) {
-        targetInline.classList.add('hidden');
-        targetInline.style.display = 'none';
-        targetInline.innerHTML = '';
-      }
-      if (targetList) {
-        targetList.classList.remove('hidden');
-        targetList.style.display = '';
-      }
-      if (typeof window.renderClassGrammarDecks === 'function') window.renderClassGrammarDecks();
-      if (typeof window.renderTeacherOwnedGrammarDecks === 'function') window.renderTeacherOwnedGrammarDecks();
-    }
-
     // Helper: award student coins for answering grammar quick checks correctly
     async function awardCoinsForGrammarPractice(amount = 5) {
       let student = null;
@@ -1268,17 +1240,40 @@
           } catch (e) {
             console.warn('[Grammar] Error persisting coins:', e);
           }
+        } else if (window.dataSdk?.update) {
+          try {
+            const updated = { ...student, coins: newCoins };
+            await window.dataSdk.update(updated, { notify: false });
+            if (typeof allData !== 'undefined') {
+              allData = allData.map(r => r.__backendId === student.__backendId ? updated : r);
+            }
+            if (typeof setCurrentStudentRecord === 'function') {
+              setCurrentStudentRecord(updated);
+            }
+          } catch (e) {
+            console.warn('[Grammar] Error updating dataSdk coins:', e);
+          }
         }
+
+        // Update DOM coin counters
         if (typeof updateVisibleStudentCoinLabels === 'function') {
           try { updateVisibleStudentCoinLabels({ ...student, coins: newCoins }); } catch (_) {}
         } else {
           const myCoinsNode = document.getElementById('my-coins');
           if (myCoinsNode) myCoinsNode.textContent = String(newCoins);
         }
+
+        if (typeof renderStudentDashboard === 'function' && typeof currentRole !== 'undefined' && currentRole === 'student') {
+          try { renderStudentDashboard(); } catch (_) {}
+        }
+
+        if (typeof showStudentAwardCelebration === 'function') {
+          try { showStudentAwardCelebration({ ...student, coins: newCoins }, amount); } catch (_) {}
+        }
       }
 
       if (typeof triggerCoinSound === 'function') {
-        triggerCoinSound();
+        try { triggerCoinSound(); } catch (_) {}
       } else if (window.pokeSfx?.play) {
         try { window.pokeSfx.play('coin'); } catch (_) {}
       }
@@ -1295,132 +1290,98 @@
     }
     window.awardCoinsForGrammarPractice = awardCoinsForGrammarPractice;
 
-    // Use inline view if available; fallback to lightweight non-blocking container
-    const practiceContainer = targetInline || document.createElement('div');
-    if (!targetInline) {
-      practiceContainer.id = 'grammar-practice-modal';
-      practiceContainer.className = 'w-full max-w-5xl mx-auto p-4';
-    } else {
-      if (targetList) {
-        targetList.style.display = 'none';
-      }
-      if (classEditorView) classEditorView.classList.add('hidden');
-      if (teacherEditorView) teacherEditorView.classList.add('hidden');
-      targetInline.classList.remove('hidden');
-      targetInline.style.display = 'block';
-    }
+    const modal = document.createElement('div');
+    modal.id = 'grammar-practice-modal';
+    modal.className = 'fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[10000] flex flex-col items-center justify-start sm:justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200';
 
     function renderCard(idx) {
       const r = rules[idx];
       const isFirst = idx === 0;
       const isLast = idx === rules.length - 1;
 
-      // Clean context clue for top-left glass pill
       let cleanClue = (r.context_clue || 'Right Now').trim();
       if (cleanClue.toLowerCase().startsWith('level:')) {
         cleanClue = cleanClue.replace(/level:\s*/i, '');
       }
 
-      // Check if mistake sentences are long to place them under each other
       const badText = String(r.mistake_bad || 'Mistake');
       const goodText = String(r.mistake_good || 'Correct');
-      const isLongMistake = badText.length > 20 || goodText.length > 20 || (badText.length + goodText.length > 35);
 
-      // Quiz options fallback
       const options = Array.isArray(r.quiz_options) && r.quiz_options.length 
         ? r.quiz_options 
         : [r.quiz_answer || 'are climbing', 'climbs', 'is climbing'];
 
-      // All decks for Deck Preview strip
-      const allDecks = typeof window.getAllGrammarDecks === 'function' ? window.getAllGrammarDecks('', '') : [deck];
-
-      practiceContainer.innerHTML = `
-        <div class="w-full max-w-5xl mx-auto py-2 space-y-4">
-          <!-- Inline Top Navigation Bar -->
-          <div class="flex items-center justify-between pb-3 border-b border-slate-800 gap-3">
-            <button type="button" id="gp-back-to-decks-btn" class="px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white font-bold text-xs flex items-center gap-2 transition cursor-pointer border border-slate-700 shadow-sm active:scale-95">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-              <span>Back to Decks</span>
-            </button>
-
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-slate-400 font-semibold hidden sm:inline">
-                Rule ${idx + 1} of ${rules.length}
-              </span>
-              ${isOwner ? `
-                <button type="button" id="gp-inline-edit-btn" class="px-3.5 py-2 rounded-xl bg-purple-600/25 hover:bg-purple-600/40 border border-purple-500/40 text-purple-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                  <span>Edit Deck</span>
-                </button>
-              ` : ''}
-            </div>
-          </div>
-
-          <!-- Main Practice Area: Left Arrow + Amber Glow Card + Right Arrow -->
+      modal.innerHTML = `
+        <div class="w-full max-w-5xl flex flex-col items-center my-auto py-4">
+          <!-- Main Carousel Container: Left Arrow + Amber Glow Card + Right Arrow -->
           <div class="flex items-center justify-center gap-2 sm:gap-5 w-full">
             <!-- Left Circular Arrow -->
             <button type="button" id="gp-prev-btn" class="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-slate-900/90 border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white flex items-center justify-center font-bold text-xl sm:text-2xl transition shadow-xl shrink-0 cursor-pointer ${isFirst ? 'opacity-25 pointer-events-none' : 'active:scale-95'}" aria-label="Previous rule">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              ‹
             </button>
 
-            <!-- Amber Gold Bordered Practice Card -->
-            <div id="gp-practice-card" class="gp-practice-card flex-1 min-w-0 rounded-3xl bg-[#0d1527]/95 border-2 border-amber-400/80 shadow-[0_0_40px_rgba(251,191,36,0.22)] p-5 sm:p-7 space-y-5 relative backdrop-blur-xl">
-              <!-- Top Header: Deck Name & Rule Title -->
-              <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                <h3 class="text-base sm:text-xl font-bold text-white tracking-tight truncate mr-3">
-                  ${escapeHtml(deckName)} • Rule ${idx + 1} of ${rules.length}: <span class="text-slate-100 font-extrabold">${escapeHtml(r.title || 'Rule')}</span>
-                </h3>
+            <!-- PokéAyman Amber Gold Bordered Practice Card -->
+            <div class="relative w-full max-w-3xl rounded-3xl bg-slate-900/98 border-2 border-amber-400/80 shadow-[0_0_40px_rgba(251,191,36,0.22)] p-4 sm:p-7 flex flex-col gap-4 text-white">
+              
+              <!-- Top Bar: Deck Name & Counter & Close -->
+              <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 gap-3">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="text-xs uppercase font-extrabold tracking-widest text-amber-400/90 truncate">${escapeHtml(deckName)}</span>
+                  <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">${idx + 1} / ${rules.length}</span>
+                </div>
                 <div class="flex items-center gap-2 shrink-0">
                   ${isOwner ? `
-                    <button type="button" id="gp-edit-deck-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center transition border border-slate-700 cursor-pointer text-xs" title="Edit this deck">
-                      <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <button type="button" id="gp-edit-deck-btn" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+                      <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                      Edit Deck
                     </button>
                   ` : ''}
-                  <button type="button" id="gp-close-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white font-bold flex items-center justify-center transition border border-slate-700 cursor-pointer text-sm" aria-label="Back to decks">
-                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  <button type="button" id="gp-close-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-lg transition cursor-pointer" aria-label="Close practice">
+                    ✕
                   </button>
                 </div>
               </div>
 
-              <!-- Centered Multi-Color Grammar Formula Bar -->
-              <div id="gp-formula-bar" class="gp-formula-bar flex items-center justify-center flex-wrap gap-2 py-1">
-                ${formatFormulaChips(r.formula, r)}
+              <!-- Rule Title & Formula Banner -->
+              <div class="space-y-2 text-center">
+                <h3 class="text-base sm:text-xl font-black text-amber-300 tracking-wide">${escapeHtml(r.title)}</h3>
+                <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                  ${formatFormulaChips(r.formula, r)}
+                </div>
               </div>
 
-              <!-- Middle Content: High-contrast Picture & Interactive Target Sentence -->
-              <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
-                <!-- Left: Illustration Card with Floating Context Pill -->
-                <div id="gp-illustration-card" class="gp-illustration-card md:col-span-5 relative rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 aspect-[4/3] shadow-xl group">
-                  <img src="${escapeHtml(r.image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg')}" alt="${escapeHtml(r.title || 'Grammar Illustration')}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                  <div class="absolute top-3 left-3 max-w-[88%] px-3 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 text-[11px] font-semibold text-slate-300 backdrop-blur-md shadow-md flex items-center gap-1.5 truncate">
-                    <span class="shrink-0 text-slate-400">Context:</span> <span class="text-amber-300 font-bold truncate">${escapeHtml(cleanClue)}</span>
-                  </div>
+              <!-- Main Media / Sentence Arena -->
+              <div class="relative w-full rounded-2xl overflow-hidden bg-slate-950/80 border border-slate-800 min-h-[220px] sm:min-h-[260px] flex flex-col justify-between p-4 sm:p-5">
+                <!-- Cover Image (Subtle Background) -->
+                ${r.image ? `
+                  <img src="${escapeHtml(r.image)}" alt="${escapeHtml(r.title)}" class="absolute inset-0 w-full h-full object-cover opacity-25 filter blur-[1px] pointer-events-none" />
+                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none"></div>
+                ` : ''}
+
+                <!-- Context Clue Badge (Floating top-left) -->
+                <div class="relative z-10 flex items-center justify-between">
+                  <span class="absolute top-3 left-3 max-w-[88%] px-3 py-1 rounded-full bg-slate-950/85 inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-black tracking-wide text-amber-300 border border-amber-400/30 shadow-lg backdrop-blur-md">
+                    <svg class="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14H8a4 4 0 01-.9-7.898A5 5 0 0116.9 10a4 4 0 01-4 4z"/></svg>
+                    ${escapeHtml(cleanClue)}
+                  </span>
                 </div>
 
-                <!-- Right: High-Contrast Target Sentence & Common Mistake Card -->
-                <div class="md:col-span-7 flex flex-col justify-center space-y-4">
-                  <!-- Large Target Sentence with Highlighted Syntax and Interactive Word Substitution Pills -->
-                  <div id="gp-target-sentence" class="gp-target-sentence text-2xl sm:text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
-                    ${formatSyntaxHighlightedSentence(r.sentence || '', r.formula || '', r)}
-                  </div>
+                <!-- Syntax-Highlighted Sentence with Interactive Substitution Pills -->
+                <div class="relative z-10 my-auto py-5 text-center">
+                  <p class="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+                    ${formatSyntaxHighlightedSentence(r.sentence, r.formula, r)}
+                  </p>
+                </div>
 
-                  <!-- Common Mistake Container -->
-                  <div id="gp-mistake-box" class="gp-mistake-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 space-y-2 shadow-inner">
-                    <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Common Mistake</div>
-                    <div class="flex flex-col ${isLongMistake ? '' : 'sm:flex-row sm:items-center sm:gap-6'} gap-2 text-sm">
-                      <div class="text-rose-400 font-bold flex items-start gap-2 leading-snug">
-                        <span class="shrink-0 text-rose-400 pt-0.5">
-                          <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </span>
-                        <span class="break-words">${escapeHtml(badText)}</span>
-                      </div>
-                      <div class="text-emerald-400 font-bold flex items-start gap-2 leading-snug">
-                        <span class="shrink-0 text-emerald-400 pt-0.5">
-                          <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        </span>
-                        <span class="break-words">${escapeHtml(goodText)}</span>
-                      </div>
-                    </div>
+                <!-- Common Mistake Banner (Red vs Green) -->
+                <div class="relative z-10 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+                  <div class="flex items-center gap-1.5 text-rose-300">
+                    <span class="font-black text-rose-400 uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 border border-rose-500/30">Mistake:</span>
+                    <span class="line-through opacity-85">${escapeHtml(badText)}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-emerald-300">
+                    <span class="font-black text-emerald-400 uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30">Correct:</span>
+                    <span class="font-bold">${escapeHtml(goodText)}</span>
                   </div>
                 </div>
               </div>
@@ -1429,7 +1390,7 @@
               <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
                 <div class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-200 min-w-0">
                   <span class="text-amber-400 font-black shrink-0">⚡ Quick Check:</span>
-                  <span class="text-white font-bold break-words">${escapeHtml(r.quiz_question || 'Choose the correct form:')}</span>
+                  <span class="text-slate-300 truncate">${escapeHtml(r.quiz_question || 'Fill in the blank with the correct form:')}</span>
                 </div>
                 <div class="flex flex-wrap items-center gap-2 shrink-0" id="gp-options-row">
                   ${options.map(opt => `
@@ -1439,6 +1400,25 @@
                   `).join('')}
                 </div>
               </div>
+
+              <!-- Deck Rules Strip -->
+              <div class="border-t border-slate-800/80 pt-3 space-y-1.5">
+                <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <span>Deck Rules (${rules.length})</span>
+                  <span>Click to Jump</span>
+                </div>
+                <div class="gp-deck-previews-strip grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  ${rules.map((ruleItem, rIdx) => {
+                    const isActive = rIdx === currentIndex;
+                    return `
+                      <button type="button" class="gp-switch-rule-btn p-2 rounded-2xl border text-left transition flex items-center gap-2 cursor-pointer ${isActive ? 'bg-amber-400/15 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)]' : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'}" data-rule-idx="${rIdx}">
+                        <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${isActive ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-400'}">${rIdx + 1}</span>
+                        <span class="text-xs font-bold truncate">${escapeHtml(ruleItem.title)}</span>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
             </div>
 
             <!-- Right Circular Arrow with Glowing Cyan Button -->
@@ -1446,92 +1426,55 @@
               <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
             </button>
           </div>
-
-          <!-- Bottom Rule Selector Strip: Shows all rules of THIS grammar deck -->
-          <div class="w-full space-y-2 mt-4 px-2 sm:px-14">
-            <div class="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              <span>Deck Rules (${rules.length})</span>
-              <span class="text-[10px] text-slate-500 font-medium">Click any rule to jump directly</span>
-            </div>
-            <div class="gp-deck-previews-strip grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              ${rules.map((ruleItem, rIdx) => {
-                const isActive = rIdx === currentIndex;
-                return `
-                  <button type="button" class="gp-switch-rule-btn p-2 rounded-2xl border text-left transition flex items-center gap-2 cursor-pointer ${isActive ? 'border-amber-400 bg-amber-400/15 shadow-[0_0_15px_rgba(251,191,36,0.25)] ring-1 ring-amber-400' : 'border-slate-800 bg-slate-900/60 hover:border-slate-700 text-slate-300'}" data-rule-idx="${rIdx}">
-                    <img src="${escapeHtml(ruleItem.image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg')}" alt="" class="w-8 h-8 rounded-lg object-cover shrink-0 border border-slate-700">
-                    <div class="min-w-0 flex-1">
-                      <div class="text-[11px] font-bold text-white truncate">#${rIdx + 1} ${escapeHtml(ruleItem.title || 'Rule')}</div>
-                      <div class="text-[9px] text-slate-400 truncate">${escapeHtml(ruleItem.formula || '')}</div>
-                    </div>
-                  </button>
-                `;
-              }).join('')}
-              ${isOwner ? `
-                <button type="button" id="gp-bottom-add-rule-btn" class="p-2 rounded-2xl border border-dashed border-slate-700 hover:border-purple-400/80 hover:bg-purple-950/20 text-slate-400 hover:text-purple-300 transition flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold" title="Edit deck or add more rules">
-                  <span class="text-base font-black">+</span>
-                  <span>Add / Edit</span>
-                </button>
-              ` : ''}
-            </div>
-          </div>
         </div>
       `;
 
-      // Initialize interactive clickable substitution pills
-      initSubstitutionPills(practiceContainer, r);
-
-      // Wire back to decks button
-      const backBtn = practiceContainer.querySelector('#gp-back-to-decks-btn');
-      if (backBtn) backBtn.onclick = closePracticeView;
-      const closeBtn = practiceContainer.querySelector('#gp-close-btn');
-      if (closeBtn) closeBtn.onclick = closePracticeView;
+      // Wire close button & backdrop click
+      modal.querySelector('#gp-close-btn').onclick = () => modal.remove();
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+      });
+      const onEsc = (e) => {
+        if (e.key === 'Escape') {
+          modal.remove();
+          document.removeEventListener('keydown', onEsc);
+        }
+      };
+      document.addEventListener('keydown', onEsc);
 
       // Wire navigation
-      practiceContainer.querySelector('#gp-prev-btn').onclick = () => {
+      modal.querySelector('#gp-prev-btn').onclick = () => {
         if (currentIndex > 0) {
           currentIndex--;
           renderCard(currentIndex);
         }
       };
-      practiceContainer.querySelector('#gp-next-btn').onclick = () => {
+      modal.querySelector('#gp-next-btn').onclick = () => {
         if (currentIndex < rules.length - 1) {
           currentIndex++;
           renderCard(currentIndex);
         } else {
           if (typeof toast === 'function') toast('You completed all rules in this deck!');
-          closePracticeView();
+          modal.remove();
         }
       };
 
-      // Wire inline edit deck button
-      const editBtn = practiceContainer.querySelector('#gp-edit-deck-btn');
+      // Wire edit deck button
+      const editBtn = modal.querySelector('#gp-edit-deck-btn');
       if (editBtn) {
         editBtn.onclick = () => {
-          if (targetInline) {
-            targetInline.classList.add('hidden');
-            targetInline.style.display = 'none';
-          }
-          window.openGrammarDeckEditor(deck);
-        };
-      }
-      const inlineEditBtn = practiceContainer.querySelector('#gp-inline-edit-btn');
-      if (inlineEditBtn) {
-        inlineEditBtn.onclick = () => {
-          if (targetInline) {
-            targetInline.classList.add('hidden');
-            targetInline.style.display = 'none';
-          }
+          modal.remove();
           window.openGrammarDeckEditor(deck);
         };
       }
 
       // Wire Quick Check quiz options
-      practiceContainer.querySelectorAll('.gp-quiz-opt').forEach(btn => {
+      modal.querySelectorAll('.gp-quiz-opt').forEach(btn => {
         btn.onclick = async () => {
           const chosen = btn.dataset.val;
           const correct = r.quiz_answer;
 
-          practiceContainer.querySelectorAll('.gp-quiz-opt').forEach(b => {
+          modal.querySelectorAll('.gp-quiz-opt').forEach(b => {
             b.classList.remove('border-cyan-400', 'bg-cyan-950/90', 'text-cyan-200', 'shadow-[0_0_15px_rgba(6,182,212,0.5)]', 'border-rose-500', 'bg-rose-950/90', 'text-rose-200');
           });
 
@@ -1554,7 +1497,7 @@
       });
 
       // Wire Rule Selectors in the bottom strip
-      practiceContainer.querySelectorAll('.gp-switch-rule-btn').forEach(btn => {
+      modal.querySelectorAll('.gp-switch-rule-btn').forEach(btn => {
         btn.onclick = () => {
           const targetIdx = Number(btn.dataset.ruleIdx);
           if (targetIdx >= 0 && targetIdx < rules.length && targetIdx !== currentIndex) {
@@ -1564,23 +1507,12 @@
         };
       });
 
-      // Wire bottom Edit / Add Rules button
-      const bottomAddBtn = practiceContainer.querySelector('#gp-bottom-add-rule-btn');
-      if (bottomAddBtn) {
-        bottomAddBtn.onclick = () => {
-          if (targetInline) {
-            targetInline.classList.add('hidden');
-            targetInline.style.display = 'none';
-          }
-          window.openGrammarDeckEditor(deck);
-        };
-      }
+      // Initialize interactive substitution pills
+      initSubstitutionPills(modal, r);
     }
 
     renderCard(currentIndex);
-    if (!targetInline) {
-      document.body.appendChild(practiceContainer);
-    }
+    document.body.appendChild(modal);
   };
 
   // ==========================================
@@ -1661,49 +1593,9 @@
     let isRuleFormOpen = rules.length === 0;
     let isImagePickerOpen = false;
 
-    // Detect inline containers (Classroom vs Teacher Zone)
-    const classListView = document.getElementById('grammar-decks-list-view');
-    const classPracticeView = document.getElementById('grammar-deck-inline-view');
-    const classEditorView = document.getElementById('grammar-deck-editor-inline-view');
-
-    const teacherGrid = document.getElementById('teacher-grammar-decks-grid');
-    const teacherPracticeView = document.getElementById('teacher-grammar-inline-view');
-    const teacherEditorView = document.getElementById('teacher-grammar-editor-inline-view');
-
-    const isTeacherZone = !classListView || (teacherEditorView && (teacherGrid && teacherGrid.offsetParent !== null));
-    const targetEditor = isTeacherZone ? teacherEditorView : classEditorView;
-    const targetPractice = isTeacherZone ? teacherPracticeView : classPracticeView;
-    const targetList = isTeacherZone ? teacherGrid : classListView;
-
-    function closeEditorView() {
-      if (targetEditor) {
-        targetEditor.classList.add('hidden');
-        targetEditor.style.display = 'none';
-        targetEditor.innerHTML = '';
-      }
-      if (targetList) {
-        targetList.classList.remove('hidden');
-        targetList.style.display = '';
-      }
-      if (typeof window.renderClassroomGrammarDecks === 'function') window.renderClassroomGrammarDecks();
-      if (typeof window.renderTeacherOwnedGrammarDecks === 'function') window.renderTeacherOwnedGrammarDecks();
-    }
-
-    if (targetList) targetList.classList.add('hidden');
-    if (targetPractice) {
-      targetPractice.classList.add('hidden');
-      targetPractice.style.display = 'none';
-    }
-    if (targetEditor) {
-      targetEditor.classList.remove('hidden');
-      targetEditor.style.display = 'block';
-    }
-
-    const modal = targetEditor || document.createElement('div');
-    if (!targetEditor) {
-      modal.id = 'grammar-editor-modal';
-      modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[10000] flex items-center justify-center p-3 sm:p-5 overflow-y-auto';
-    }
+    const modal = document.createElement('div');
+    modal.id = 'grammar-editor-modal';
+    modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[10000] flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-in fade-in duration-200';
     
     function renderEditor() {
       const isEditing = editingRuleIndex >= 0 && editingRuleIndex < rules.length;
@@ -1717,22 +1609,7 @@
       const activeOpt3 = remainingWrong[1] || (existingOptions[2] && existingOptions[2] !== activeAnswer && existingOptions[2] !== activeOpt2 ? existingOptions[2] : '');
 
       modal.innerHTML = `
-        ${targetEditor ? `
-        <!-- Inline Top Navigation Bar -->
-        <div class="max-w-4xl mx-auto flex items-center justify-between gap-3 mb-4 p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg">
-          <button type="button" id="ge-top-back-btn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-            Back to Decks
-          </button>
-          <div class="flex items-center gap-2">
-            <button type="button" id="ge-top-practice-btn" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/20">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
-              Practice This Deck
-            </button>
-          </div>
-        </div>
-        ` : ''}
-        <div class="${targetEditor ? 'max-w-4xl mx-auto' : 'max-w-3xl my-auto max-h-[90vh] overflow-y-auto'} w-full rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-7 shadow-2xl space-y-6">
+        <div class="max-w-3xl w-full rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-6 shadow-2xl space-y-5 my-auto max-h-[90vh] overflow-y-auto">
           <!-- Header with Editable Deck Title -->
           <div class="flex items-center justify-between border-b border-slate-800 pb-3 gap-3">
             <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -2831,25 +2708,10 @@
 
       syncWordChips();
 
-      // Top bar actions
-      const topBackBtn = modal.querySelector('#ge-top-back-btn');
-      if (topBackBtn) topBackBtn.onclick = () => closeEditorView();
-      const topPracticeBtn = modal.querySelector('#ge-top-practice-btn');
-      if (topPracticeBtn) {
-        topPracticeBtn.onclick = () => {
-          closeEditorView();
-          window.openGrammarDeckPractice(deck);
-        };
-      }
+      
 
-      modal.querySelector('#ge-close-btn').onclick = () => {
-        if (targetEditor) closeEditorView();
-        else modal.remove();
-      };
-      modal.querySelector('#ge-cancel-btn').onclick = () => {
-        if (targetEditor) closeEditorView();
-        else modal.remove();
-      };
+      modal.querySelector('#ge-close-btn').onclick = () => modal.remove();
+      modal.querySelector('#ge-cancel-btn').onclick = () => modal.remove();
 
       // Open Add New Rule Form Button
       modal.querySelector('#ge-open-add-rule-btn')?.addEventListener('click', () => {
@@ -3063,14 +2925,24 @@
       });
     }
 
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.remove();
+    });
+    const onEditorEsc = (e) => {
+      if (e.key === 'Escape') {
+        modal.remove();
+        document.removeEventListener('keydown', onEditorEsc);
+      }
+    };
+    document.addEventListener('keydown', onEditorEsc);
+
     renderEditor();
-    if (!targetEditor) {
-      document.body.appendChild(modal);
-    }
+    document.body.appendChild(modal);
   };
 
   // Delete Deck
   // Delete Deck
+
   window.deleteGrammarDeck = async function(deckId) {
     if (!confirm('Are you sure you want to delete this grammar deck?')) return;
     
