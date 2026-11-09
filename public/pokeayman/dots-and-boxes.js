@@ -303,6 +303,10 @@
             </div>
           </div>
 
+          <button type="button" class="ga-stage-sound px-2 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center gap-1 text-xs font-bold" id="dots-font-header-btn" title="Cycle word size (Small / Medium / Large / Huge)">
+            <span>Aa</span>
+            <span id="dots-font-header-badge" class="text-[10px] text-amber-300 font-extrabold bg-amber-400/20 px-1 py-0.5 rounded">M</span>
+          </button>
           <button type="button" class="ga-stage-sound w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-xs font-bold" id="dots-sound-toggle" title="Toggle sound">🔊</button>
           <button type="button" class="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-sm font-bold" id="dots-fullscreen-btn" title="Fullscreen">⛶</button>
           <button type="button" class="ga-stage-exit w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-rose-500/30 text-slate-300 hover:text-rose-300 border border-slate-700 transition flex items-center justify-center text-base font-bold" id="dots-close-btn" title="Exit game" aria-label="Close game">×</button>
@@ -357,6 +361,19 @@
 
           <div class="dots-clue-img-box" id="dots-clue-box"></div>
 
+          <!-- Word Size Controller Toolbar -->
+          <div class="dots-options-toolbar" id="dots-options-toolbar">
+            <div class="dots-toolbar-left">
+              <span class="dots-toolbar-icon">🔤</span>
+              <span class="dots-toolbar-title">Word Size</span>
+            </div>
+            <div class="dots-font-controls" role="group" aria-label="Word size">
+              <button type="button" class="dots-font-btn" id="dots-font-dec" title="Smaller font (A−)" aria-label="Smaller font">A−</button>
+              <span class="dots-font-indicator" id="dots-font-indicator">Medium</span>
+              <button type="button" class="dots-font-btn" id="dots-font-inc" title="Larger font (A+)" aria-label="Larger font">A+</button>
+            </div>
+          </div>
+
           <div class="dots-choices-grid" id="dots-choices-grid"></div>
 
           <div class="dots-penalty-hint text-center text-xs font-semibold text-amber-300/80 mt-1" id="dots-penalty-hint">
@@ -369,6 +386,18 @@
           <div class="dots-board-grid" id="dots-board-grid"></div>
         </section>
       </main>
+
+      <!-- Zoom Image Lightbox Modal -->
+      <div class="dots-lightbox" id="dots-img-lightbox" hidden role="dialog" aria-modal="true" aria-label="Zoomed vocabulary picture">
+        <div class="dots-lightbox-backdrop" id="dots-lightbox-backdrop"></div>
+        <div class="dots-lightbox-content">
+          <button type="button" class="dots-lightbox-close" id="dots-lightbox-close" aria-label="Close" title="Close (Esc)">✕</button>
+          <img class="dots-lightbox-img" id="dots-lightbox-img" src="" alt="Zoomed vocabulary clue">
+          <div class="dots-lightbox-footer">
+            <span class="dots-lightbox-hint">Tap anywhere or press Esc to close</span>
+          </div>
+        </div>
+      </div>
     `;
 
     document.body.appendChild(modal);
@@ -448,6 +477,108 @@
         else await modal.requestFullscreen();
       } catch (_) {}
     });
+
+    // Word size controller setup
+    const WORD_SIZES = [
+      { id: 'S', label: 'Small', rem: '0.88rem' },
+      { id: 'M', label: 'Medium', rem: '1.08rem' },
+      { id: 'L', label: 'Large', rem: '1.35rem' },
+      { id: 'XL', label: 'Huge', rem: '1.68rem' }
+    ];
+
+    let wordSizeIdx = 1;
+    try {
+      const savedIdx = parseInt(localStorage.getItem('pokeayman_dots_word_size_idx') || '1', 10);
+      if (!isNaN(savedIdx) && savedIdx >= 0 && savedIdx < WORD_SIZES.length) {
+        wordSizeIdx = savedIdx;
+      }
+    } catch (_) {}
+
+    const applyWordSize = (idx) => {
+      wordSizeIdx = Math.max(0, Math.min(WORD_SIZES.length - 1, idx));
+      const current = WORD_SIZES[wordSizeIdx];
+      const qSection = modal.querySelector('#dots-question-section');
+      const indicator = modal.querySelector('#dots-font-indicator');
+      const headerBadge = modal.querySelector('#dots-font-header-badge');
+      const decBtn = modal.querySelector('#dots-font-dec');
+      const incBtn = modal.querySelector('#dots-font-inc');
+
+      if (qSection) {
+        qSection.style.setProperty('--dots-choice-font-size', current.rem);
+      }
+      if (indicator) {
+        indicator.textContent = current.label;
+      }
+      if (headerBadge) {
+        headerBadge.textContent = current.id;
+      }
+      if (decBtn) {
+        decBtn.disabled = wordSizeIdx === 0;
+      }
+      if (incBtn) {
+        incBtn.disabled = wordSizeIdx === WORD_SIZES.length - 1;
+      }
+      try {
+        localStorage.setItem('pokeayman_dots_word_size_idx', String(wordSizeIdx));
+      } catch (_) {}
+    };
+
+    modal.querySelector('#dots-font-dec')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      applyWordSize(wordSizeIdx - 1);
+    });
+    modal.querySelector('#dots-font-inc')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      applyWordSize(wordSizeIdx + 1);
+    });
+    modal.querySelector('#dots-font-header-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      applyWordSize((wordSizeIdx + 1) % WORD_SIZES.length);
+    });
+    applyWordSize(wordSizeIdx);
+
+    // Zoom Image Lightbox setup
+    const lightbox = modal.querySelector('#dots-img-lightbox');
+    const lightboxImg = modal.querySelector('#dots-lightbox-img');
+    const lightboxClose = modal.querySelector('#dots-lightbox-close');
+    const lightboxBackdrop = modal.querySelector('#dots-lightbox-backdrop');
+
+    const openLightbox = (imgSrc) => {
+      if (!lightbox || !lightboxImg || !imgSrc) return;
+      lightboxImg.src = imgSrc;
+      lightbox.hidden = false;
+      lightbox.classList.add('is-open');
+    };
+
+    const closeLightbox = () => {
+      if (!lightbox) return;
+      lightbox.hidden = true;
+      lightbox.classList.remove('is-open');
+      if (lightboxImg) lightboxImg.src = '';
+    };
+
+    lightboxClose?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeLightbox();
+    });
+    lightboxBackdrop?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeLightbox();
+    });
+    lightbox?.addEventListener('click', (e) => {
+      if (e.target === lightbox || e.target === lightboxBackdrop || e.target === lightboxImg) {
+        closeLightbox();
+      }
+    });
+
+    const onGlobalKeyDown = (e) => {
+      if (e.key === 'Escape' && lightbox && !lightbox.hidden) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeLightbox();
+      }
+    };
+    window.addEventListener('keydown', onGlobalKeyDown);
 
     let botTurnTimer = null;
     const clearBotTurn = () => {
@@ -608,6 +739,8 @@
     };
 
     const cleanupAndClose = () => {
+      window.removeEventListener('keydown', onGlobalKeyDown);
+      closeLightbox();
       stopMatchTimer();
       clearBotTurn();
       if (typeof stopPlayerTurnTimer === 'function') stopPlayerTurnTimer(modal);
@@ -697,11 +830,20 @@
       if (!currentQuestion || !clueBox || !choicesGrid) return;
 
       const item = currentQuestion.wordItem;
-      const imageUrl = item.vocab_image || item.image_url || '';
+      const imageUrl = item.vocab_image || item.image_url || item.image || '';
 
       if (imageUrl) {
-        clueBox.innerHTML = `<img src="${esc(imageUrl)}" alt="Vocabulary clue picture" class="object-contain" loading="eager">`;
+        clueBox.classList.add('has-image');
+        clueBox.setAttribute('title', 'Click to view larger picture');
+        clueBox.innerHTML = `
+          <img src="${esc(imageUrl)}" alt="Vocabulary clue picture" class="object-contain" loading="eager">
+          <div class="dots-clue-zoom-hint" aria-hidden="true"><span>🔍</span><span>Zoom</span></div>
+        `;
+        clueBox.onclick = () => openLightbox(imageUrl);
       } else {
+        clueBox.classList.remove('has-image');
+        clueBox.removeAttribute('title');
+        clueBox.onclick = null;
         clueBox.innerHTML = `<div class="p-4 text-center"><span class="text-4xl block mb-2">📖</span><p class="text-sm font-bold text-amber-200">${esc(item.vocab_translation || item.vocab_definition || item.vocab_word)}</p></div>`;
       }
 
@@ -711,7 +853,7 @@
           (opt, i) => `
         <button type="button" class="dots-choice-btn" data-option="${esc(opt)}" ${phase !== 'MCQ' ? 'disabled' : ''}>
           <span class="dots-choice-letter">${letters[i]}</span>
-          <span class="truncate">${esc(opt)}</span>
+          <span class="dots-choice-text truncate">${esc(opt)}</span>
         </button>
       `
         )

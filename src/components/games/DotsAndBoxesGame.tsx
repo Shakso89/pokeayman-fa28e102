@@ -190,6 +190,43 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [activeTheme, setActiveTheme] = useState<string>(theme || 'classroom');
 
+  const WORD_SIZES = useMemo(() => [
+    { id: 'S', label: 'Small', rem: '0.88rem' },
+    { id: 'M', label: 'Medium', rem: '1.08rem' },
+    { id: 'L', label: 'Large', rem: '1.35rem' },
+    { id: 'XL', label: 'Huge', rem: '1.68rem' },
+  ], []);
+
+  const [wordSizeIdx, setWordSizeIdx] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = parseInt(localStorage.getItem('pokeayman_dots_word_size_idx') || '1', 10);
+        if (!isNaN(saved) && saved >= 0 && saved < 4) return saved;
+      } catch (_) {}
+    }
+    return 1;
+  });
+
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('pokeayman_dots_word_size_idx', String(wordSizeIdx));
+      } catch (_) {}
+    }
+  }, [wordSizeIdx]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && zoomedImage) {
+        setZoomedImage(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [zoomedImage]);
+
   // Synchronize player timer banks when initialTimerValue prop changes
   useEffect(() => {
     setPlayerTimes([initialTimerValue, initialTimerValue]);
@@ -708,25 +745,76 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
             {/* Dynamic Content Area: Image + 2x2 Options */}
             <div className="flex-1 flex flex-col min-h-0 justify-between">
               {/* Clue Area: Image Container with flex-1 and min-h-0 lets image dynamically shrink */}
-              <div className="flex-1 min-h-0 h-0 rounded-2xl overflow-hidden bg-slate-950 mb-2 border border-slate-800 flex items-center justify-center p-2">
-                {currentQuestion?.wordItem?.image_url ||
-                currentQuestion?.wordItem?.vocab_image ||
-                currentQuestion?.wordItem?.image ? (
-                  <img
-                    src={
-                      currentQuestion.wordItem.image_url ||
-                      currentQuestion.wordItem.vocab_image ||
-                      currentQuestion.wordItem.image
-                    }
-                    alt="Question clue"
-                    className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
-                  />
-                ) : (
-                  <div className="w-full h-full rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col items-center justify-center text-slate-500 gap-2">
-                    <span className="text-3xl">🖼️</span>
-                    <span className="text-xs font-semibold">Vocabulary Clue</span>
+              {(() => {
+                const clueImgUrl =
+                  currentQuestion?.wordItem?.image_url ||
+                  currentQuestion?.wordItem?.vocab_image ||
+                  currentQuestion?.wordItem?.image;
+                return (
+                  <div
+                    onClick={() => {
+                      if (clueImgUrl) setZoomedImage(clueImgUrl);
+                    }}
+                    title={clueImgUrl ? 'Click to zoom picture' : undefined}
+                    className={`flex-1 min-h-0 h-0 rounded-2xl overflow-hidden bg-slate-950 mb-1.5 border border-slate-800 flex items-center justify-center p-2 relative group transition ${
+                      clueImgUrl
+                        ? 'cursor-zoom-in hover:border-cyan-400 hover:shadow-[0_0_15px_rgba(56,189,248,0.4)]'
+                        : ''
+                    }`}
+                  >
+                    {clueImgUrl ? (
+                      <>
+                        <img
+                          src={clueImgUrl}
+                          alt="Question clue"
+                          className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg transition duration-200 group-hover:scale-105"
+                        />
+                        <div className="absolute bottom-2 right-2 bg-slate-950/85 border border-cyan-400/60 text-cyan-200 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-md pointer-events-none group-hover:bg-cyan-500 group-hover:text-white transition">
+                          <span>🔍</span>
+                          <span>Zoom</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full rounded-xl bg-slate-950/60 border border-slate-800 flex flex-col items-center justify-center text-slate-500 gap-2">
+                        <span className="text-3xl">📖</span>
+                        <span className="text-xs font-semibold">Vocabulary Clue</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                );
+              })()}
+
+              {/* Word Size Controller Toolbar */}
+              <div className="flex-none flex items-center justify-between px-2.5 py-1 bg-slate-950/70 border border-slate-800/80 rounded-xl mb-1.5 text-xs">
+                <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[11px] uppercase tracking-wider">
+                  <span>🔤</span>
+                  <span>Word Size</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    data-testid="dots-font-dec"
+                    onClick={() => setWordSizeIdx((prev) => Math.max(0, prev - 1))}
+                    disabled={wordSizeIdx === 0}
+                    className="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-35 disabled:cursor-not-allowed text-white font-black text-xs transition border border-slate-700"
+                    title="Decrease word size (A−)"
+                  >
+                    A−
+                  </button>
+                  <span className="font-extrabold text-amber-300 text-[11px] min-w-[50px] text-center bg-slate-900 px-1.5 py-0.5 rounded border border-amber-400/30">
+                    {WORD_SIZES[wordSizeIdx].label}
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="dots-font-inc"
+                    onClick={() => setWordSizeIdx((prev) => Math.min(WORD_SIZES.length - 1, prev + 1))}
+                    disabled={wordSizeIdx === WORD_SIZES.length - 1}
+                    className="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-35 disabled:cursor-not-allowed text-white font-black text-xs transition border border-slate-700"
+                    title="Increase word size (A+)"
+                  >
+                    A+
+                  </button>
+                </div>
               </div>
 
               <p className="flex-none text-xs font-semibold text-slate-400 text-center mb-1.5">
@@ -763,12 +851,20 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                       data-correct={isCorrectAnswer}
                       disabled={isLocked}
                       onClick={() => handleAnswerMCQ(option)}
-                      className={`group relative p-2.5 sm:p-3 rounded-xl border text-left flex items-center gap-2 transition-all duration-150 ${btnClasses}`}
+                      style={{ fontSize: WORD_SIZES[wordSizeIdx].rem }}
+                      className={`group relative p-2 sm:p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all duration-150 ${btnClasses}`}
                     >
-                      <span className={`w-6 h-6 rounded-lg ${isMarkedCorrect ? 'bg-emerald-800 text-emerald-100' : isMarkedWrong ? 'bg-rose-800 text-rose-100' : themeStyle.choiceLetter} text-[11px] font-black flex items-center justify-center flex-shrink-0`}>
+                      <span
+                        style={{
+                          width: `calc(${WORD_SIZES[wordSizeIdx].rem} * 1.45)`,
+                          height: `calc(${WORD_SIZES[wordSizeIdx].rem} * 1.45)`,
+                          fontSize: `calc(${WORD_SIZES[wordSizeIdx].rem} * 0.72)`,
+                        }}
+                        className={`rounded-lg ${isMarkedCorrect ? 'bg-emerald-800 text-emerald-100' : isMarkedWrong ? 'bg-rose-800 text-rose-100' : themeStyle.choiceLetter} font-black flex items-center justify-center flex-shrink-0`}
+                      >
                         {letter}
                       </span>
-                      <span className="text-xs sm:text-sm font-bold truncate">
+                      <span className="truncate font-bold" style={{ fontSize: WORD_SIZES[wordSizeIdx].rem }}>
                         {option}
                       </span>
                     </button>
@@ -1001,6 +1097,40 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enlarged Vocabulary Clue Lightbox Modal */}
+      {zoomedImage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md"
+          onClick={() => setZoomedImage(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Enlarged Vocabulary Clue"
+        >
+          <div
+            className="relative max-w-[90vw] max-h-[88vh] bg-slate-900/95 border-2 border-cyan-400/60 rounded-2xl p-4 shadow-2xl flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setZoomedImage(null)}
+              className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-black text-base flex items-center justify-center shadow-lg border-2 border-white transition transform hover:scale-110"
+              title="Close (Esc)"
+              aria-label="Close enlarged clue"
+            >
+              ✕
+            </button>
+            <img
+              src={zoomedImage}
+              alt="Enlarged Vocabulary Clue"
+              className="max-w-[85vw] max-h-[75vh] object-contain rounded-xl bg-slate-950 border border-slate-800"
+            />
+            <p className="mt-3 text-xs font-semibold text-slate-400 bg-slate-950/80 px-3 py-1 rounded-full border border-slate-800">
+              Tap anywhere or press Esc to close
+            </p>
           </div>
         </div>
       )}

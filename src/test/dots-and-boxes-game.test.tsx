@@ -444,4 +444,72 @@ describe('Dots and Boxes Turn-Based Vocabulary Mini-Game', () => {
       expect(handleGameOver).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('6. Word Size Controller and Image Zoom Lightbox', () => {
+    it('adjusts options text size using A- and A+ buttons', () => {
+      render(
+        <DotsAndBoxesGame
+          players={mockStudents.slice(0, 2)}
+          vocabItems={mockVocabItems}
+          gridDots={3}
+        />
+      );
+
+      // Default word size is Medium
+      expect(screen.getByText('Medium')).toBeInTheDocument();
+      const optionBtn = screen.getByTestId('mcq-option-0');
+      expect(optionBtn).toHaveStyle({ fontSize: '1.08rem' });
+
+      // Click A+ to increase to Large
+      const incBtn = screen.getByTestId('dots-font-inc');
+      fireEvent.click(incBtn);
+      expect(screen.getByText('Large')).toBeInTheDocument();
+      expect(optionBtn).toHaveStyle({ fontSize: '1.35rem' });
+
+      // Click A+ again to increase to Huge
+      fireEvent.click(incBtn);
+      expect(screen.getByText('Huge')).toBeInTheDocument();
+      expect(optionBtn).toHaveStyle({ fontSize: '1.68rem' });
+      expect(incBtn).toBeDisabled();
+
+      // Click A- to decrease back to Large
+      const decBtn = screen.getByTestId('dots-font-dec');
+      fireEvent.click(decBtn);
+      expect(screen.getByText('Large')).toBeInTheDocument();
+      expect(optionBtn).toHaveStyle({ fontSize: '1.35rem' });
+    });
+
+    it('opens and closes enlarged clue lightbox modal on image click and Escape key', () => {
+      render(
+        <DotsAndBoxesGame
+          players={mockStudents.slice(0, 2)}
+          vocabItems={mockVocabItems}
+          gridDots={3}
+        />
+      );
+
+      // Clue image should have zoom hint
+      expect(screen.getByText('Zoom')).toBeInTheDocument();
+
+      // Click the clue image
+      const clueImg = screen.getByAltText('Question clue');
+      fireEvent.click(clueImg);
+
+      // Lightbox should appear with enlarged clue
+      const enlargedImg = screen.getByAltText('Enlarged Vocabulary Clue');
+      expect(enlargedImg).toBeInTheDocument();
+      expect(screen.getByText(/Tap anywhere or press Esc to close/i)).toBeInTheDocument();
+
+      // Press Escape key to close lightbox
+      fireEvent.keyDown(window, { key: 'Escape' });
+      expect(screen.queryByAltText('Enlarged Vocabulary Clue')).not.toBeInTheDocument();
+
+      // Click image again and close with ✕ button
+      fireEvent.click(clueImg);
+      expect(screen.getByAltText('Enlarged Vocabulary Clue')).toBeInTheDocument();
+      const closeBtn = screen.getByRole('button', { name: /Close enlarged clue/i });
+      fireEvent.click(closeBtn);
+      expect(screen.queryByAltText('Enlarged Vocabulary Clue')).not.toBeInTheDocument();
+    });
+  });
 });

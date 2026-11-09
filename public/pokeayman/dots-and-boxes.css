@@ -208,19 +208,19 @@
 }
 
 .dots-question-card {
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.88);
   border: 1px solid rgba(51, 65, 85, 0.8);
   border-radius: 1.35rem;
-  padding: clamp(0.3rem, 0.8vh, 0.65rem);
+  padding: clamp(0.32rem, 0.8vh, 0.65rem);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: clamp(0.15rem, 0.5vh, 0.35rem);
-  flex: 0 1 clamp(240px, 26vw, 360px);
-  max-width: 360px;
+  gap: clamp(0.18rem, 0.5vh, 0.38rem);
+  flex: 0 1 clamp(260px, 28vw, 400px);
+  max-width: 400px;
   width: 100%;
-  height: 80%;
-  max-height: min(80%, 75dvh, 480px);
+  height: 86%;
+  max-height: min(92%, 86dvh, 580px);
   min-height: 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
@@ -274,6 +274,47 @@
   justify-content: center;
   overflow: hidden;
   box-sizing: border-box;
+  position: relative;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dots-clue-img-box.has-image {
+  cursor: zoom-in;
+}
+
+.dots-clue-img-box.has-image:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.45);
+}
+
+.dots-clue-zoom-hint {
+  position: absolute;
+  bottom: 0.4rem;
+  right: 0.4rem;
+  background: rgba(2, 6, 23, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.65);
+  color: #bae6fd;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0.82;
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+}
+
+.dots-clue-img-box.has-image:hover .dots-clue-zoom-hint {
+  opacity: 1;
+  transform: scale(1.05);
+  background: rgba(14, 165, 233, 0.92);
+  border-color: #ffffff;
+  color: #ffffff;
 }
 
 .dots-clue-img-box img {
@@ -285,6 +326,87 @@
   border-radius: 0.5rem;
   display: block;
   margin: auto;
+  transition: transform 0.25s ease;
+}
+
+.dots-clue-img-box.has-image:hover img {
+  transform: scale(1.02);
+}
+
+/* Word Size Toolbar */
+.dots-options-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.2rem 0.5rem;
+  background: rgba(2, 6, 23, 0.65);
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  border-radius: 0.65rem;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+}
+
+.dots-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dots-toolbar-icon {
+  font-size: 0.85rem;
+}
+
+.dots-toolbar-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dots-font-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dots-font-btn {
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(71, 85, 105, 0.8);
+  color: #f1f5f9;
+  border-radius: 0.45rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 900;
+  cursor: pointer;
+  line-height: 1.15;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.dots-font-btn:hover:not(:disabled) {
+  background: rgba(51, 65, 85, 1);
+  border-color: #fbbf24;
+  color: #fbbf24;
+  transform: translateY(-1px);
+}
+
+.dots-font-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dots-font-indicator {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #fef08a;
+  min-width: 4.2rem;
+  text-align: center;
+  padding: 0.12rem 0.35rem;
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 0.35rem;
+  border: 1px solid rgba(251, 191, 36, 0.35);
 }
 
 .dots-choices-grid {
@@ -300,15 +422,15 @@
   background: rgba(30, 41, 59, 0.8);
   border: 2px solid rgba(71, 85, 105, 0.6);
   border-radius: 0.65rem;
-  padding: clamp(0.18rem, 0.45vh, 0.35rem) clamp(0.35rem, 0.7vw, 0.6rem);
+  padding: calc(var(--dots-choice-font-size, 1.08rem) * 0.22) calc(var(--dots-choice-font-size, 1.08rem) * 0.42);
   color: #f1f5f9;
-  font-size: clamp(0.7rem, 1.3vh, 0.88rem);
+  font-size: var(--dots-choice-font-size, 1.08rem) !important;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  min-height: clamp(1.75rem, 3.2vh, 2.35rem);
+  gap: 0.45rem;
+  min-height: calc(var(--dots-choice-font-size, 1.08rem) * 2.2);
   transition: all 0.15s ease;
   text-align: left;
   user-select: none;
@@ -354,20 +476,142 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: calc(var(--dots-choice-font-size, 1.08rem) * 1.45) !important;
+  height: calc(var(--dots-choice-font-size, 1.08rem) * 1.45) !important;
   border-radius: 0.4rem;
   background: #090d16;
-  font-size: 0.82rem;
+  font-size: calc(var(--dots-choice-font-size, 1.08rem) * 0.72) !important;
   font-weight: 900;
   color: #94a3b8;
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.dots-choice-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.18;
+  word-break: break-word;
+}
+
 .dots-penalty-hint {
   flex: 0 0 auto;
   font-size: clamp(0.62rem, 1vh, 0.72rem);
+  margin: 0;
+  padding: 0.1rem 0;
+  text-align: center;
+}
+
+/* Enlarged Clue Image Lightbox */
+.dots-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  box-sizing: border-box;
+  animation: dotsLightboxFadeIn 0.2s ease-out;
+}
+
+.dots-lightbox[hidden] {
+  display: none !important;
+}
+
+@keyframes dotsLightboxFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dots-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+
+.dots-lightbox-content {
+  position: relative;
+  z-index: 10;
+  max-width: 90vw;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.96);
+  border: 2px solid rgba(56, 189, 248, 0.6);
+  border-radius: 1.5rem;
+  padding: 1rem;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 45px rgba(56, 189, 248, 0.3);
+  animation: dotsLightboxScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes dotsLightboxScaleIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.dots-lightbox-close {
+  position: absolute;
+  top: -0.75rem;
+  right: -0.75rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: #ef4444;
+  border: 2.5px solid #ffffff;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.65);
+  transition: all 0.2s ease;
+  z-index: 20;
+}
+
+.dots-lightbox-close:hover {
+  background: #dc2626;
+  transform: scale(1.1) rotate(90deg);
+}
+
+.dots-lightbox-img {
+  max-width: 82vw;
+  max-height: 72vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.85rem;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  background: #020617;
+  display: block;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+.dots-lightbox-footer {
+  margin-top: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dots-lightbox-hint {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: rgba(2, 6, 23, 0.75);
+  padding: 0.25rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  user-select: none;
+}
   margin: 0;
   padding: 0.1rem 0;
   text-align: center;

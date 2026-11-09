@@ -157,4 +157,38 @@ describe('Dots and Boxes Arcade & Classes Integration', () => {
     // Timer does not pause after answering MCQ: no stopTurnTimer in correct answer branch
     expect(dotsJs).toContain('// Do NOT pause or stop the timer: clock keeps running continuously during DRAW_LINE!');
   });
+
+  it('includes MCQ word size controller and clue image zoom lightbox modal', () => {
+    const dotsJsPath = path.join(root, 'public', 'pokeayman', 'dots-and-boxes.js');
+    const dotsJs = fs.readFileSync(dotsJsPath, 'utf8');
+
+    // Word size controller assertions
+    expect(dotsJs).toContain('dots-options-toolbar');
+    expect(dotsJs).toContain('dots-font-dec');
+    expect(dotsJs).toContain('dots-font-inc');
+    expect(dotsJs).toContain('dots-font-indicator');
+    expect(dotsJs).toContain('dots-font-header-btn');
+    expect(dotsJs).toContain('WORD_SIZES');
+    expect(dotsJs).toContain('--dots-choice-font-size');
+
+    // Lightbox modal assertions
+    expect(dotsJs).toContain('dots-img-lightbox');
+    expect(dotsJs).toContain('dots-lightbox-img');
+    expect(dotsJs).toContain('dots-lightbox-close');
+    expect(dotsJs).toContain('openLightbox');
+    expect(dotsJs).toContain('closeLightbox');
+    expect(dotsJs).toContain('dots-clue-zoom-hint');
+
+    const dotsCssPath = path.join(root, 'public', 'pokeayman', 'dots-and-boxes.css');
+    const dotsCss = fs.readFileSync(dotsCssPath, 'utf8');
+
+    expect(dotsCss).toContain('.dots-options-toolbar');
+    expect(dotsCss).toContain('.dots-font-btn');
+    expect(dotsCss).toContain('.dots-font-indicator');
+    expect(dotsCss).toContain('.dots-clue-img-box.has-image');
+    expect(dotsCss).toContain('.dots-clue-zoom-hint');
+    expect(dotsCss).toContain('.dots-lightbox');
+    expect(dotsCss).toContain('.dots-lightbox-img');
+    expect(dotsCss).toContain('.dots-lightbox-close');
+  });
 });
