@@ -616,6 +616,15 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(detect('goes')).toEqual({ root: 'go', suffix: 'es' });
     expect(detect('does')).toEqual({ root: 'do', suffix: 'es' });
 
+    // Words ending in silent e: adding -s preserves root ending in 'e' (bake -> bakes, like -> likes)
+    expect(detect('bakes')).toEqual({ root: 'bake', suffix: 's' });
+    expect(detect('likes')).toEqual({ root: 'like', suffix: 's' });
+    expect(detect('rides')).toEqual({ root: 'ride', suffix: 's' });
+    expect(detect('makes')).toEqual({ root: 'make', suffix: 's' });
+    expect(detect('houses')).toEqual({ root: 'house', suffix: 's' });
+    expect(detect('apples')).toEqual({ root: 'apple', suffix: 's' });
+    expect(detect('tables')).toEqual({ root: 'table', suffix: 's' });
+
     // 2. Past Simple & Participles: -ed, -ied, and CVC doubled consonants
     expect(detect('walked')).toEqual({ root: 'walk', suffix: 'ed' });
     expect(detect('played')).toEqual({ root: 'play', suffix: 'ed' });

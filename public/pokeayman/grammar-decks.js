@@ -779,12 +779,11 @@
     }
 
     // 9. -es suffix (sibilants ch, sh, ss, x, zz, or o: watches -> watch + es, washes -> wash + es, fixes -> fix + es, goes -> go + es, does -> do + es)
-    const NOT_ES = new Set(['shoes', 'eyes', 'sometimes', 'yes', 'clothes', 'these', 'whose', 'glasses']);
-    if (lower.endsWith('es') && lower.length >= 4 && !NOT_ES.has(lower)) {
-      if (/(?:ch|sh|ss|x|z|zz|o)es$/i.test(lower) || lower.length >= 5) {
-        const splitIdx = clean.length - 2;
-        return { root: clean.slice(0, splitIdx), suffix: clean.slice(splitIdx) };
-      }
+    const NOT_ES = new Set(['shoes', 'eyes', 'sometimes', 'yes', 'clothes', 'these', 'whose', 'glasses', 'james']);
+    const SIBILANT_OR_O_ES = /(?:ch|sh|ss|x|z|zz|[bcdfghjklmnpqrstvwxyz]o)es$/i;
+    if (lower.endsWith('es') && lower.length >= 4 && !NOT_ES.has(lower) && SIBILANT_OR_O_ES.test(lower)) {
+      const splitIdx = clean.length - 2;
+      return { root: clean.slice(0, splitIdx), suffix: clean.slice(splitIdx) };
     }
 
     // 10. Participle -en (eaten -> eat + en, written -> writ + ten, bitten -> bit + ten, broken -> brok + en)
@@ -2141,28 +2140,28 @@
                   No rules in this deck yet. Use the form above to add your first rule!
                 </div>
               ` : rules.map((r, i) => `
-                <div class="ge-rule-card p-3 rounded-xl bg-slate-950 dark:bg-slate-950 border ${editingRuleIndex === i ? 'border-amber-400 bg-amber-950/20 ring-1 ring-amber-400/40' : 'border-slate-800'} flex items-center justify-between gap-3 text-xs transition">
+                <div class="ge-rule-card p-3 rounded-xl bg-white dark:bg-slate-950 border ${editingRuleIndex === i ? 'border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 ring-1 ring-amber-400/40' : 'border-slate-200 dark:border-slate-800'} flex items-center justify-between gap-3 text-xs transition">
                   <div class="flex items-center gap-2.5 min-w-0 flex-1">
                     ${r.image ? `
-                      <img src="${escapeHtml(r.image)}" alt="Rule thumbnail" class="w-10 h-10 object-cover rounded-lg border border-slate-800 shrink-0 bg-slate-900" onerror="this.style.display='none'">
+                      <img src="${escapeHtml(r.image)}" alt="Rule thumbnail" class="w-10 h-10 object-cover rounded-lg border border-slate-200 dark:border-slate-800 shrink-0 bg-slate-100 dark:bg-slate-900" onerror="this.style.display='none'">
                     ` : `
-                      <div class="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-sm shrink-0"></div>
+                      <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-sm shrink-0"></div>
                     `}
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
-                        <p class="ge-rule-title font-bold text-white dark:text-white truncate">${i + 1}. ${escapeHtml(r.title || 'Rule')}</p>
+                        <p class="ge-rule-title font-bold text-slate-900 dark:text-white truncate">${i + 1}. ${escapeHtml(r.title || 'Rule')}</p>
                         ${editingRuleIndex === i ? '<span class="text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded font-black shrink-0">EDITING</span>' : ''}
                       </div>
-                      <p class="ge-rule-subtitle text-slate-400 truncate mt-0.5">${escapeHtml(r.sentence || r.formula || '')}</p>
+                      <p class="ge-rule-subtitle text-slate-600 dark:text-slate-400 truncate mt-0.5">${escapeHtml(r.sentence || r.formula || '')}</p>
                     </div>
                   </div>
                   <div class="flex items-center gap-1.5 shrink-0">
-                    <button type="button" class="ge-edit-rule px-2.5 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 font-bold border border-amber-400/30 transition flex items-center gap-1.5 cursor-pointer" data-rule-idx="${i}" title="Edit Rule">
+                    <button type="button" class="ge-edit-rule px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-400/20 dark:hover:bg-amber-400/30 dark:text-amber-300 dark:border-amber-400/30 font-bold transition flex items-center gap-1.5 cursor-pointer" data-rule-idx="${i}" title="Edit Rule">
                       <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                       <span>Edit</span>
                     </button>
-                    <button type="button" class="ge-del-rule p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 font-bold transition cursor-pointer" data-rule-idx="${i}" title="Delete Rule">
-                      <svg class="w-4 h-4 text-rose-500 dark:text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    <button type="button" class="ge-del-rule p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 dark:bg-slate-800 dark:hover:bg-rose-500/20 dark:text-slate-400 dark:hover:text-rose-400 dark:border-slate-700 dark:hover:border-rose-500/30 font-bold transition cursor-pointer" data-rule-idx="${i}" title="Delete Rule">
+                      <svg class="w-4 h-4 text-rose-600 dark:text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                     </button>
                   </div>
                 </div>
@@ -4270,11 +4269,11 @@
       window.renderTeacherOwnedGrammarDecks();
     });
 
-    // Open AI Generator
+    // Open AI Generator (Teacher Zone Grammar Bank)
     document.getElementById('teacher-grammar-open-ai')?.addEventListener('click', () => {
       window.openGrammarAiGeneratorModal();
     });
-    // AI generation button listener removed (code preserved in backup-grammar-ai.js)
+    // AI generation button listener removed from classroom subtab (code preserved in backup-grammar-ai.js)
 
     // Create Deck in Class subtab
     document.getElementById('create-grammar-deck-btn')?.addEventListener('click', async () => {

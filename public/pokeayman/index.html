@@ -17004,7 +17004,7 @@ window.openGameScramble = openGameScramble;
           </div><button id="create-grammar-deck-btn" class="btn-primary rounded-full" style="border-radius:9999px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:8px 20px !important;">Create</button>
          </div>
         </div>
-        <div id="grammar-decks-container"></div>
+        <div id="grammar-decks-container" class="teacher-vb-lists-grid"></div>
         <p id="grammar-decks-empty" class="text-center text-gray-400 py-8 text-sm hidden">No grammar decks yet.</p>
        </div><!-- Games sub-tab -->
        <div id="class-subtab-games" class="class-subtab-content hidden">
@@ -23719,8 +23719,8 @@ teacherVbCardLayoutStyles.textContent = `
   .teacher-vb-create-modal.hidden{display:none}.teacher-vb-create-dialog{width:min(100%,42rem);padding:1.25rem;border:1px solid rgba(148,163,184,.35);border-radius:1.1rem;background:#111c30;color:#f8fafc;box-shadow:0 24px 80px rgba(0,0,0,.5);overflow:visible}
   .teacher-vb-create-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem}.teacher-vb-create-heading h4{font-size:1.2rem;font-weight:900}.teacher-vb-create-heading button{width:2.4rem;height:2.4rem;border:1px solid rgba(148,163,184,.4);border-radius:.7rem;background:#0b1220;color:#fff;font-size:1.5rem}
   @media(max-width:640px){.teacher-vb-search{grid-template-columns:1fr}.teacher-vb-create-form{grid-template-columns:1fr!important}}
-  #teacher-vb-lists-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,18rem),1fr)); align-items:stretch; gap:1.25rem; }
-  #teacher-vb-lists-grid .vocab-list-card {
+  :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,18rem),1fr)); align-items:stretch; gap:1.25rem; }
+  :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-list-card {
     position: relative;
     width: 100%;
     height: auto;
@@ -23737,13 +23737,13 @@ teacherVbCardLayoutStyles.textContent = `
     box-shadow: 0 10px 25px rgba(2, 6, 23, 0.3) !important;
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
   }
-  #teacher-vb-lists-grid .vocab-list-card::before { display: none !important; }
-  #teacher-vb-lists-grid .vocab-list-card:hover {
+  :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-list-card::before { display: none !important; }
+  :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-list-card:hover {
     transform: translateY(-2px) !important;
     border-color: rgba(251, 191, 36, 0.45) !important;
     box-shadow: 0 14px 30px rgba(2, 6, 23, 0.4), 0 0 12px rgba(251, 191, 36, 0.08) !important;
   }
-  @media(max-width:640px){ #teacher-vb-lists-grid { grid-template-columns:1fr; gap:.85rem; } }
+  @media(max-width:640px){ :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) { grid-template-columns:1fr; gap:.85rem; } }
 
   /* Ghost Quick Action Buttons (Edit / Delete) - Borderless Minimal Icons */
   #teacher-vb-lists-grid .vocab-list-card .vb-ghost-action-btn,
@@ -23762,30 +23762,22 @@ teacherVbCardLayoutStyles.textContent = `
     justify-content: center !important;
     transition: all 0.15s ease !important;
   }
-  #teacher-vb-lists-grid .vocab-list-card .vb-ghost-action-btn:hover,
-  #vocab-lists-container .vocab-list-card .vb-ghost-action-btn:hover {
+  :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-list-card .vb-ghost-action-btn:hover {
     background: rgba(30, 41, 59, 0.8) !important;
     border-color: rgba(148, 163, 184, 0.25) !important;
     color: #ffffff !important;
   }
-  #teacher-vb-lists-grid .vocab-list-card .vb-ghost-delete-btn,
-  #teacher-grammar-decks-grid .vocab-list-card .vb-ghost-delete-btn,
-  #grammar-decks-container .vocab-list-card .vb-ghost-delete-btn,
-  #vocab-lists-container .vocab-list-card .vb-ghost-delete-btn {
+  :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-list-card .vb-ghost-delete-btn {
     color: rgba(251, 113, 133, 0.85) !important;
   }
-  #teacher-vb-lists-grid .vocab-list-card .vb-ghost-delete-btn:hover,
-  #vocab-lists-container .vocab-list-card .vb-ghost-delete-btn:hover {
+  :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-list-card .vb-ghost-delete-btn:hover {
     background: rgba(244, 63, 94, 0.15) !important;
     border-color: rgba(244, 63, 94, 0.35) !important;
     color: #fda4af !important;
   }
 
   /* Harmonized Change Cover Button with Gold Accents */
-  #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn,
-  #teacher-grammar-decks-grid .vocab-list-card .vocab-change-cover-btn,
-  #grammar-decks-container .vocab-list-card .vocab-change-cover-btn,
-  #vocab-lists-container .vocab-list-card .vocab-change-cover-btn {
+  :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-list-card .vocab-change-cover-btn {
     background: rgba(15, 23, 42, 0.92);
     border: 1.5px solid rgba(251, 191, 36, 0.55);
     color: #f8fafc;
@@ -23796,27 +23788,33 @@ teacherVbCardLayoutStyles.textContent = `
     font-weight: 600;
     transition: all 0.15s ease;
   }
-  #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn:hover,
-  #vocab-lists-container .vocab-list-card .vocab-change-cover-btn:hover {
+  :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-list-card .vocab-change-cover-btn:hover {
     background: rgba(30, 41, 59, 0.95);
     border-color: rgba(251, 191, 36, 0.85);
     color: #ffffff;
   }
-  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn,
-  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #vocab-lists-container .vocab-list-card .vocab-change-cover-btn {
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-list-card .vocab-change-cover-btn {
     background: #ffffff !important;
     border: 1.5px solid #f59e0b !important;
     color: #0f172a !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
   }
-  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #teacher-vb-lists-grid .vocab-list-card .vocab-change-cover-btn:hover,
-  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #vocab-lists-container .vocab-list-card .vocab-change-cover-btn:hover {
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-list-card .vocab-change-cover-btn:hover {
     background: #f8fafc !important;
     border-color: #d97706 !important;
     color: #020617 !important;
   }
 
   /* Unified Gold-Bordered Action Pills (Image 1 Style) - Dark Mode Default */
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) :is(#teacher-vb-lists-grid, #teacher-grammar-decks-grid, #grammar-decks-container, #vocab-lists-container) .vocab-flashcard-pill {
+    background: rgba(251, 191, 36, 0.14) !important;
+    border: 1.5px solid rgba(251, 191, 36, 0.5) !important;
+    color: #fde68a !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 0.75rem !important;
+    font-weight: 700 !important;
+    transition: all 0.18s ease !important;
+  }
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-vb-lists-grid .vocab-flashcard-pill,
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-grammar-decks-grid .vocab-flashcard-pill,
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #grammar-decks-container .vocab-flashcard-pill,
@@ -23830,6 +23828,8 @@ teacherVbCardLayoutStyles.textContent = `
     transition: all 0.18s ease !important;
   }
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-vb-lists-grid .vocab-flashcard-pill:hover,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-grammar-decks-grid .vocab-flashcard-pill:hover,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #grammar-decks-container .vocab-flashcard-pill:hover,
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-flashcard-pill:hover {
     background: rgba(251, 191, 36, 0.24) !important;
     border-color: rgba(251, 191, 36, 0.85) !important;
@@ -23837,6 +23837,8 @@ teacherVbCardLayoutStyles.textContent = `
     box-shadow: 0 4px 14px rgba(251, 191, 36, 0.25) !important;
   }
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-vb-lists-grid .vocab-assign-pill,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-grammar-decks-grid .vocab-assign-pill,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #grammar-decks-container .vocab-assign-pill,
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-assign-pill,
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-game-pill:not(.is-active) {
     background: rgba(15, 23, 42, 0.75) !important;
@@ -23848,6 +23850,8 @@ teacherVbCardLayoutStyles.textContent = `
     transition: all 0.18s ease !important;
   }
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-vb-lists-grid .vocab-assign-pill:hover,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #teacher-grammar-decks-grid .vocab-assign-pill:hover,
+  body:not(.ts-bright):not(.light):not([data-theme="light"]) #grammar-decks-container .vocab-assign-pill:hover,
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-assign-pill:hover,
   body:not(.ts-bright):not(.light):not([data-theme="light"]) #vocab-lists-container .vocab-game-pill:not(.is-active):hover {
     background: rgba(30, 41, 59, 0.9) !important;
@@ -23858,6 +23862,8 @@ teacherVbCardLayoutStyles.textContent = `
 
   /* Bright Mode Action Pills (Bright & High Contrast) */
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-flashcard-pill,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-grammar-decks-grid .vocab-flashcard-pill,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #grammar-decks-container .vocab-flashcard-pill,
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-flashcard-pill {
     background: #fef3c7 !important;
     border: 1.5px solid rgba(245, 158, 11, 0.7) !important;
@@ -23867,6 +23873,8 @@ teacherVbCardLayoutStyles.textContent = `
     font-weight: 700 !important;
   }
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-flashcard-pill:hover,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-grammar-decks-grid .vocab-flashcard-pill:hover,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #grammar-decks-container .vocab-flashcard-pill:hover,
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-flashcard-pill:hover {
     background: #fde68a !important;
     border-color: #f59e0b !important;
@@ -23874,10 +23882,14 @@ teacherVbCardLayoutStyles.textContent = `
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2) !important;
   }
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-flashcard-pill svg,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-grammar-decks-grid .vocab-flashcard-pill svg,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #grammar-decks-container .vocab-flashcard-pill svg,
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-flashcard-pill svg {
     color: #d97706 !important;
   }
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-assign-pill,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-grammar-decks-grid .vocab-assign-pill,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #grammar-decks-container .vocab-assign-pill,
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-assign-pill,
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-game-pill:not(.is-active) {
     background: #ffffff !important;
@@ -23888,6 +23900,8 @@ teacherVbCardLayoutStyles.textContent = `
     font-weight: 700 !important;
   }
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-assign-pill:hover,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-grammar-decks-grid .vocab-assign-pill:hover,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #grammar-decks-container .vocab-assign-pill:hover,
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-assign-pill:hover,
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-game-pill:not(.is-active):hover {
     background: #f1f5f9 !important;
@@ -23896,6 +23910,8 @@ teacherVbCardLayoutStyles.textContent = `
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
   }
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-vb-lists-grid .vocab-assign-pill svg,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #teacher-grammar-decks-grid .vocab-assign-pill svg,
+  :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #grammar-decks-container .vocab-assign-pill svg,
   :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright) #vocab-lists-container .vocab-assign-pill svg {
     color: #64748b !important;
   }
