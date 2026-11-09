@@ -149,10 +149,13 @@
 
   // Helper to extract clean search keywords for grammar rules
   function extractKeywordsForGrammarRule(rule, deck) {
+    if (rule?.image_keywords && typeof rule.image_keywords === 'string' && rule.image_keywords.trim()) {
+      return rule.image_keywords.trim();
+    }
     const sentence = (rule?.sentence || '').trim();
     const title = (rule?.title || '').trim();
     const text = sentence || title || (deck?.grammar_deck_name || deck?.deck_name || '');
-    if (!text) return 'grammar';
+    if (!text) return 'classroom';
     const clean = text.replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
     const stopWords = new Set([
       'the', 'a', 'an', 'and', 'or', 'but', 'is', 'are', 'was', 'were', 'am', 'be', 'been', 'being',
@@ -161,12 +164,16 @@
       'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'what', 'which',
       'who', 'whom', 'whose', 'where', 'when', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',
       'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very',
-      'can', 'will', 'just', 'should', 'now', 'today', 'right', 'rule', 'formula', 'practice'
+      'can', 'will', 'just', 'should', 'now', 'today', 'tomorrow', 'yesterday', 'right', 'rule', 'formula',
+      'practice', 'students', 'student', 'people', 'person', 'they', 'them', 'someone', 'something', 'anything',
+      'does', 'doing', 'have', 'having', 'make', 'making', 'take', 'taking', 'look', 'see', 'want', 'like'
     ]);
     const words = clean.split(' ').filter(w => w.length > 2 && !stopWords.has(w.toLowerCase()));
-    if (words.length >= 2) return `${words[0]} ${words[1]}`;
-    if (words.length === 1) return words[0];
-    return clean.split(' ').slice(0, 2).join(' ') || 'classroom';
+    if (words.length > 0) {
+      // Pick a distinctive concrete noun (often appearing toward object or subject)
+      return words[words.length - 1] || words[0];
+    }
+    return clean.split(' ').slice(0, 1)[0] || 'classroom';
   }
 
   // Robust photo and clipart search for grammar deck rules
@@ -2854,41 +2861,113 @@
   window.openGrammarAiGeneratorModal = function(defaultTopic = '') {
     document.querySelectorAll('#grammar-ai-modal').forEach(m => m.remove());
 
+    const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : (typeof window.getTeacherCredits === 'function' ? window.getTeacherCredits() : 100);
+
     const modal = document.createElement('div');
     modal.id = 'grammar-ai-modal';
     modal.className = 'fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[10000] flex items-center justify-center p-3 sm:p-5 overflow-y-auto';
     modal.innerHTML = `
-      <div class="max-w-lg w-full rounded-3xl bg-slate-900 border border-slate-800 p-6 shadow-2xl space-y-4 my-auto">
+      <div class="max-w-lg w-full rounded-3xl bg-slate-900 border border-slate-800 p-6 shadow-2xl space-y-4 my-auto relative">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div class="flex items-center gap-2">
-            <span class="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold text-sm">✨</span>
+            <span class="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold text-sm">
+              <svg class="w-4 h-4 text-purple-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </span>
             <h3 class="text-base font-bold text-white">Generate Grammar Deck with AI</h3>
           </div>
-          <button type="button" id="g-ai-close" class="text-slate-400 hover:text-white font-bold text-xl">&times;</button>
-        </div>
-
-        <p class="text-xs text-slate-400">Describe what grammar topic you want to teach. AI will generate rules, color-coded formulas, examples, and challenge questions.</p>
-
-        <div class="space-y-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Grammar Topic or Skill</label>
-            <input id="g-ai-topic" type="text" placeholder="e.g. Comparative Adjectives (-er / more)" class="quiz-input text-xs w-full" value="${escapeHtml(defaultTopic)}">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Target Grade / Level</label>
-            <select id="g-ai-level" class="quiz-input text-xs w-full">
-              <option value="Beginner">Beginner (ESL / Grade 2-3)</option>
-              <option value="Intermediate" selected>Intermediate (ESL / Grade 4-5)</option>
-              <option value="Confident">Confident (Grade 6+)</option>
-            </select>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-xl bg-amber-400/10 border border-amber-400/25 text-amber-300 font-bold text-xs flex items-center gap-1.5 shadow-sm">
+              <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/></svg>
+              <span id="g-ai-balance-val">${availableCredits}</span> Credits
+            </span>
+            <button type="button" id="g-ai-close" class="text-slate-400 hover:text-white font-bold text-xl cursor-pointer transition px-1">&times;</button>
           </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
-          <button type="button" id="g-ai-cancel" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">Cancel</button>
-          <button type="button" id="g-ai-submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-bold text-xs shadow-md flex items-center gap-1.5">
-            <span>✨</span> Generate Deck
-          </button>
+        <!-- Form Wrap -->
+        <div id="g-ai-form-wrap" class="space-y-4">
+          <p class="text-xs text-slate-400">Describe what grammar topic you want to teach. AI will formulate curriculum rules, color-coded sentence formulas, examples, and challenge questions.</p>
+
+          <div id="g-ai-error-banner" class="hidden p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold"></div>
+
+          <div class="space-y-3">
+            <div>
+              <label for="g-ai-topic" class="block text-xs font-semibold text-slate-300 mb-1">Grammar Topic or Skill *</label>
+              <input id="g-ai-topic" type="text" placeholder="e.g. Simple Future (will / going to), Past Irregular, Comparative Adjectives" class="quiz-input text-xs w-full" value="${escapeHtml(defaultTopic)}">
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="g-ai-level" class="block text-xs font-semibold text-slate-300 mb-1">Target Grade / Level</label>
+                <select id="g-ai-level" class="quiz-input text-xs w-full cursor-pointer">
+                  <option value="Beginner">Beginner (ESL / Grade 2-3)</option>
+                  <option value="Intermediate" selected>Intermediate (ESL / Grade 4-5)</option>
+                  <option value="Confident">Confident (Grade 6+)</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="g-ai-rule-count" class="block text-xs font-semibold text-slate-300 mb-1">Number of Rules</label>
+                <select id="g-ai-rule-count" class="quiz-input text-xs w-full cursor-pointer">
+                  <option value="0" selected>AI Recommended (Typically 3 rules)</option>
+                  <option value="2">2 Rules (10 credits)</option>
+                  <option value="3">3 Rules (15 credits)</option>
+                  <option value="4">4 Rules (20 credits)</option>
+                  <option value="5">5 Rules (25 credits)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Dynamic Cost Breakdown Banner (5 credits per 1 rule) -->
+            <div id="g-ai-cost-banner" class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between text-xs">
+              <span class="flex items-center gap-2 text-slate-300">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span>Rate: <strong class="text-white">5 credits per rule</strong></span>
+              </span>
+              <span id="g-ai-cost-estimate" class="text-amber-300 font-bold bg-amber-400/10 px-2.5 py-1 rounded-lg border border-amber-400/20">
+                Estimated: ~15 credits
+              </span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+            <button type="button" id="g-ai-cancel" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer">Cancel</button>
+            <button type="button" id="g-ai-submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white font-bold text-xs shadow-md flex items-center gap-1.5 transition active:scale-95 cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <span>Generate Deck</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Generating Screen with Dexter-st Bright-Lizard-8 AI Orb Animation -->
+        <div id="g-ai-progress-wrap" class="vocab-gen-generating-screen" style="display:none;">
+          <div class="loader-wrapper bl8-loader-wrapper">
+            <span class="loader-letter bl8-loader-letter">G</span>
+            <span class="loader-letter bl8-loader-letter">e</span>
+            <span class="loader-letter bl8-loader-letter">n</span>
+            <span class="loader-letter bl8-loader-letter">e</span>
+            <span class="loader-letter bl8-loader-letter">r</span>
+            <span class="loader-letter bl8-loader-letter">a</span>
+            <span class="loader-letter bl8-loader-letter">t</span>
+            <span class="loader-letter bl8-loader-letter">i</span>
+            <span class="loader-letter bl8-loader-letter">n</span>
+            <span class="loader-letter bl8-loader-letter">g</span>
+          </div>
+
+          <div id="g-ai-status-badge" class="vocab-gen-status-badge">
+            <span class="ai-sparkle-pulse">
+              <svg class="w-3.5 h-3.5 inline-block text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </span>
+            <span id="g-ai-status-text">Step 1/3: Formulating grammar rules with AI...</span>
+          </div>
+
+          <div class="vocab-gen-progress-track">
+            <div id="g-ai-progress-fill" class="vocab-gen-progress-bar" style="width: 25%;"></div>
+          </div>
+
+          <div id="g-ai-subhint" class="vocab-gen-generating-subhint">
+            Crafting color-coded formulas, examples & challenge questions...
+          </div>
         </div>
       </div>
     `;
@@ -2897,17 +2976,62 @@
     modal.querySelector('#g-ai-close').onclick = () => modal.remove();
     modal.querySelector('#g-ai-cancel').onclick = () => modal.remove();
 
+    const ruleCountSelect = modal.querySelector('#g-ai-rule-count');
+    const costEstimateEl = modal.querySelector('#g-ai-cost-estimate');
+    ruleCountSelect?.addEventListener('change', () => {
+      const val = Number(ruleCountSelect.value) || 0;
+      if (val === 0) {
+        costEstimateEl.textContent = 'Estimated: ~15 credits';
+      } else {
+        costEstimateEl.textContent = `Cost: ${val * 5} credits`;
+      }
+    });
+
     modal.querySelector('#g-ai-submit').onclick = async () => {
       const topic = modal.querySelector('#g-ai-topic').value.trim();
       const level = modal.querySelector('#g-ai-level').value;
+      const countVal = Number(modal.querySelector('#g-ai-rule-count').value) || 0;
+      const errorBanner = modal.querySelector('#g-ai-error-banner');
+
       if (!topic) {
-        if (typeof toast === 'function') toast('Please enter a grammar topic.');
+        if (errorBanner) {
+          errorBanner.textContent = 'Please enter a grammar topic.';
+          errorBanner.classList.remove('hidden');
+        } else if (typeof toast === 'function') {
+          toast('Please enter a grammar topic.');
+        }
         return;
       }
 
-      const btn = modal.querySelector('#g-ai-submit');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="inline-block animate-spin">✨</span> Generating with AI…';
+      const currentCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : (typeof window.getTeacherCredits === 'function' ? window.getTeacherCredits() : 100);
+      const minRequired = countVal > 0 ? (countVal * 5) : 10;
+      if (currentCredits < minRequired) {
+        if (errorBanner) {
+          errorBanner.textContent = `You need at least ${minRequired} credits to generate this grammar deck (5 credits per rule). You currently have ${currentCredits} credits.`;
+          errorBanner.classList.remove('hidden');
+        } else if (typeof toast === 'function') {
+          toast(`Not enough credits. You need at least ${minRequired} credits.`);
+        }
+        return;
+      }
+
+      if (errorBanner) errorBanner.classList.add('hidden');
+
+      const formWrap = modal.querySelector('#g-ai-form-wrap');
+      const progressWrap = modal.querySelector('#g-ai-progress-wrap');
+      const statusText = modal.querySelector('#g-ai-status-text');
+      const progressFill = modal.querySelector('#g-ai-progress-fill');
+      const subhint = modal.querySelector('#g-ai-subhint');
+
+      const updateProgress = (pct, step, hint) => {
+        if (progressFill) progressFill.style.width = `${pct}%`;
+        if (statusText) statusText.textContent = step;
+        if (hint && subhint) subhint.textContent = hint;
+      };
+
+      formWrap.style.display = 'none';
+      progressWrap.style.display = 'flex';
+      updateProgress(25, 'Step 1/3: Formulating grammar rules with AI...', 'Crafting color-coded formulas, examples & challenge questions...');
 
       const currentTeacherName = typeof currentTeacher !== 'undefined' ? currentTeacher : 'Teacher Ayman';
       const currentSchool = typeof navSchool !== 'undefined' && navSchool ? navSchool : 'Daya Stanford';
@@ -2917,12 +3041,12 @@
       let generatedRules = [];
       let finalDeckName = topic;
 
-      // 1. Try real server AI generation via /api/generate-vocab-list (mode: "grammar")
       try {
+        // 1. Server AI generation via /api/generate-vocab-list (mode: "grammar")
         const res = await fetch('/api/generate-vocab-list', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode: 'grammar', topic, level })
+          body: JSON.stringify({ mode: 'grammar', topic, level, ruleCount: countVal })
         });
         if (res.ok) {
           const data = await res.json();
@@ -2935,23 +3059,61 @@
         console.warn('API grammar generation failed, using intelligent pedagogical synthesizer:', err);
       }
 
-      // 2. High-quality pedagogical fallback if AI endpoint did not return rules
+      // 2. High-quality pedagogical fallback if server did not return rules
       if (!generatedRules.length) {
-        generatedRules = synthesizeGrammarRules(topic, level);
+        generatedRules = synthesizeGrammarRules(topic, level, countVal);
       }
 
-      // 3. Ensure each rule has a photo directly matching its example sentence
+      updateProgress(60, 'Step 2/3: Finding illustrations for sentences...', 'Matching concrete visuals to each sentence context...');
+
+      // 3. Ensure each rule has a distinct photo directly matching its example sentence
+      const usedUrls = new Set();
       for (let i = 0; i < generatedRules.length; i++) {
         const r = generatedRules[i];
-        if (!r.image || r.image.includes('elephant-10098979') || r.image.includes('dinosaur-5995333')) {
+        const pct = 60 + Math.round(((i + 1) / generatedRules.length) * 25);
+        updateProgress(pct, `Step 2/3: Finding illustration for Rule #${i + 1} (${i + 1}/${generatedRules.length})...`, `Visual search for: "${(r.sentence || r.title || '').slice(0, 36)}..."`);
+
+        const isCuratedDefault = !r.image ||
+          r.image.includes('elephant-10098979') ||
+          r.image.includes('dinosaur-5995333') ||
+          r.image.includes('laboratory-2815641') ||
+          r.image.includes('night-view-7523474') ||
+          r.image.includes('grapes-3550729') ||
+          r.image.includes('business-4271251');
+
+        if (isCuratedDefault || usedUrls.has(r.image)) {
           try {
             const kw = extractKeywordsForGrammarRule(r, { grammar_deck_name: finalDeckName });
             const media = await fetchMediaForGrammarSearch(kw, 'all', 1);
             if (media.photos && media.photos.length > 0) {
-              r.image = media.photos[0].url;
+              const unique = media.photos.find(p => !usedUrls.has(p.url));
+              r.image = unique ? unique.url : media.photos[0].url;
             }
           } catch (_) {}
         }
+        if (r.image) usedUrls.add(r.image);
+      }
+
+      updateProgress(90, 'Step 3/3: Saving grammar deck to classroom...', 'Finalizing deck and updating teacher credits...');
+
+      // 4. Charge 5 credits per 1 generated rule
+      const totalCost = generatedRules.length * 5;
+      if (typeof window.deductTeacherCredits === 'function') {
+        const paid = await window.deductTeacherCredits(totalCost);
+        if (!paid) {
+          progressWrap.style.display = 'none';
+          formWrap.style.display = 'block';
+          if (errorBanner) {
+            errorBanner.textContent = `Could not deduct ${totalCost} credits. Please check your credit balance and retry.`;
+            errorBanner.classList.remove('hidden');
+          }
+          return;
+        }
+      }
+      if (typeof window.logCredit === 'function') {
+        try {
+          await window.logCredit(totalCost, 'spent', `AI Grammar Deck: ${finalDeckName} (${generatedRules.length} rules)`);
+        } catch (_) {}
       }
 
       const generatedDeck = {
@@ -2972,19 +3134,22 @@
       };
 
       await window.saveOrUpdateGrammarDeck(generatedDeck);
+      updateProgress(100, 'Ready!', 'Opening grammar deck editor...');
 
-      modal.remove();
-      if (typeof toast === 'function') toast(`Generated grammar deck "${finalDeckName}"!`);
-      window.renderClassGrammarDecks();
-      window.renderTeacherOwnedGrammarDecks();
-      window.openGrammarDeckEditor(newDeckId, finalDeckName);
+      setTimeout(() => {
+        modal.remove();
+        if (typeof toast === 'function') toast(`Generated grammar deck "${finalDeckName}" (${generatedRules.length} rules · ${totalCost} credits deducted)!`);
+        window.renderClassGrammarDecks();
+        window.renderTeacherOwnedGrammarDecks();
+        window.openGrammarDeckEditor(newDeckId, finalDeckName);
+      }, 400);
     };
   };
 
   // ==========================================
   // PEDAGOGICAL GRAMMAR SYNTHESIZER
   // ==========================================
-  function synthesizeGrammarRules(topic, level) {
+  function synthesizeGrammarRules(topic, level, requestedCount = 0) {
     const t = topic.toLowerCase();
     const rules = [];
 
@@ -3354,6 +3519,9 @@
       }
     }
 
+    if (requestedCount > 0 && rules.length > requestedCount) {
+      return rules.slice(0, requestedCount);
+    }
     return rules;
   }
 

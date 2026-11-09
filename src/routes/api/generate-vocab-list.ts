@@ -88,39 +88,46 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
         if (input?.mode === "grammar") {
           const topic = String(input.topic || "").trim().slice(0, 150);
           const level = String(input.level || "Beginner").trim();
+          const requestedCount = Number(input.ruleCount) || 0;
           if (!topic) {
             return Response.json({ message: "Please provide a grammar topic." }, { status: 400, headers: CORS });
           }
+
+          const countInstruction = (requestedCount >= 2 && requestedCount <= 6)
+            ? `Generate exactly ${requestedCount} distinct, pedagogically clear rules for "${topic}".`
+            : `Generate between 2 and 4 distinct, pedagogically clear rules that naturally cover "${topic}" (e.g. Affirmative, Negative, Question form, or essential variations).`;
 
           const prompt = `You are an expert ESL/EFL English language curriculum developer and teacher for young elementary students.
 The teacher wants a Grammar Pattern Deck strictly for the topic: "${topic}" (Target Level: ${level}).
 
 CRITICAL INSTRUCTIONS:
 1. ALL generated rules, formulas, sentences, mistakes, and quizzes MUST strictly match and teach "${topic}".
-   - For example:
-     - If the topic is about Future (e.g. "Simple future", "will", "going to"), EVERY rule MUST teach future forms (e.g. "will + base verb", "will not / won't + base verb", "am/is/are going to + base verb", "Will + Subject + base verb?"). NEVER generate present simple or present continuous sentences for a future topic!
-     - If the topic is about Past (e.g. "Past simple", "irregular past"), EVERY rule MUST teach past tense (regular -ed, irregular past, didn't + base verb).
-     - If the topic is about Present Simple, teach habitual facts with base verb / -s / -es and do/does.
-     - If the topic is about Present Continuous, teach actions happening right now with am/is/are + verb-ing.
-     - If the topic specifies questions (e.g. "What, Where, How many"), generate one rule per specified question word.
-2. Generate 2 to 4 distinct, pedagogically clear rules for "${topic}":
+   - If the topic is about Future (e.g. "Simple future", "will", "going to"), EVERY rule MUST teach future forms (e.g. "will + base verb", "will not / won't + base verb", "am/is/are going to + base verb", "Will + Subject + base verb?"). NEVER generate present or past sentences for future topics!
+   - If the topic is about Past, teach past forms (regular -ed, irregular past, didn't + base verb).
+   - If the topic is about Present Simple, teach habitual actions / facts with base verb / -s / -es and do/does.
+   - If the topic is about Present Continuous, teach ongoing actions with am/is/are + verb-ing.
+   - If the topic specifies questions (e.g. "What, Where, How many"), generate one rule per specified question word.
+2. ${countInstruction}
    - Rule 1: Affirmative / Core Pattern
    - Rule 2: Negative Form (e.g. won't / didn't / is not)
    - Rule 3: Question Form / Word Order Inversion (e.g. Will you...? / Did you...?)
-3. For EACH rule:
+3. DIVERSITY AND CREATIVITY REQUIREMENT:
+   - Every rule MUST have a completely UNIQUE, vivid, concrete example sentence featuring distinct characters (e.g. astronaut, chef, detective, scientist, gardener, musician, explorer), animals (e.g. dolphin, panda, tiger, eagle), or colorful locations (e.g. aquarium, spaceship, castle, planetarium, forest).
+   - Do NOT use repetitive or generic sentences. Every generation must feel fresh, exciting, and varied!
+4. For EACH rule:
    - "title": A clear educational title matching ${topic} (e.g. "Simple Future (will + Base Verb)", "Negative Future (won't)").
-   - "formula": The exact formula with "+" signs (e.g. "Subject + will + Base Verb" or "Subject + will not (won't) + Base Verb" or "Will + Subject + Base Verb ?"). NEVER use a generic "Subject + Verb + Object" unless teaching basic SVO!
-   - "sentence": A clear, natural, concrete sentence illustrating this exact rule for young learners with vivid nouns/actions (e.g. "Tomorrow, the students will build a robot in science class." or "She will read a book about dinosaurs tonight.").
-   - "context_clue": A concise 3-7 word tip (e.g. "Use 'will' for future predictions or promises").
-   - "mistake_bad": A realistic student mistake for this exact rule (e.g. "She will visits the zoo tomorrow.").
-   - "mistake_good": The corrected sentence (e.g. "She will visit the zoo tomorrow.").
-   - "quiz_question": A fill-in-the-blank question testing this exact rule (e.g. "Tomorrow, the astronaut _____ (travel) to the Moon.").
-   - "quiz_options": Array of 3 distinct choices (e.g. ["will travel", "traveling", "traveled"]).
-   - "quiz_answer": The exact correct option (e.g. "will travel").
-   - "words_blue": The exact word(s) from sentence matching Part 1 of formula (e.g. "Tomorrow, the astronaut" or "Where" or "Will").
-   - "words_amber": The exact word(s) from sentence matching Part 2 of formula (e.g. "will travel" or "is" or "the astronaut").
-   - "words_green": The exact word(s) from sentence matching Part 3 of formula (e.g. "to the Moon" or "the sleeping cat" or "travel to Mars").
-   - "image_keywords": 2 to 3 concrete nouns/verbs taken directly from the example sentence to find a photo illustrating that specific sentence (e.g. "robot build", "space astronaut", "dinosaur book").
+   - "formula": The exact formula with "+" signs (e.g. "Subject + will + Base Verb" or "Subject + will not (won't) + Base Verb" or "Will + Subject + Base Verb ?"). NEVER use a generic "Subject + Verb + Object"!
+   - "sentence": A concrete, natural, engaging sentence illustrating this exact rule for young learners with vivid nouns/actions.
+   - "context_clue": A concise 3-7 word tip (e.g. "Use 'will' for predictions and promises").
+   - "mistake_bad": A realistic student mistake for this exact rule.
+   - "mistake_good": The corrected sentence.
+   - "quiz_question": A fill-in-the-blank question testing this exact rule with parenthesized base verb.
+   - "quiz_options": Array of 3 distinct choices.
+   - "quiz_answer": The exact correct option.
+   - "words_blue": The exact word(s) from sentence matching Part 1 of formula.
+   - "words_amber": The exact word(s) from sentence matching Part 2 of formula.
+   - "words_green": The exact word(s) from sentence matching Part 3 of formula.
+   - "image_keywords": A SINGLE concrete noun (1-2 words only, e.g. "astronaut", "robot", "spaceship", "chef", "beach", "guitar", "castle", "dolphin") drawn from the sentence that will guarantee a great stock photo result.
 
 Reply with valid JSON only in this exact format:
 {
@@ -147,7 +154,7 @@ Reply with valid JSON only in this exact format:
           try {
             const rawText = await callGemini({
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.2, responseMimeType: "application/json", maxOutputTokens: 2500 },
+              generationConfig: { temperature: 0.7, responseMimeType: "application/json", maxOutputTokens: 2500 },
             });
             const parsed = parseJson(rawText) as any;
             let rules = Array.isArray(parsed?.rules) ? parsed.rules : (Array.isArray(parsed) ? parsed : []);
@@ -155,6 +162,34 @@ Reply with valid JSON only in this exact format:
             if (rules.length === 0) {
               throw new Error("No rules returned by AI model.");
             }
+
+            // Expanded diverse fallback photo library (24 distinct high-resolution educational images)
+            const diverseCuratedImages = [
+              'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg',
+              'https://cdn.pixabay.com/photo/2022/10/15/16/44/night-view-7523474_640.jpg',
+              'https://cdn.pixabay.com/photo/2018/07/20/14/01/grapes-3550729_640.jpg',
+              'https://cdn.pixabay.com/photo/2019/06/13/09/41/business-4271251_640.png',
+              'https://cdn.pixabay.com/photo/2016/11/29/09/32/concept-1868728_640.jpg',
+              'https://cdn.pixabay.com/photo/2020/04/19/08/17/watercolor-5062356_640.jpg',
+              'https://cdn.pixabay.com/photo/2017/08/30/01/05/milky-way-2695569_640.jpg',
+              'https://cdn.pixabay.com/photo/2016/11/19/14/00/code-1839406_640.jpg',
+              'https://cdn.pixabay.com/photo/2015/07/17/22/43/student-849825_640.jpg',
+              'https://cdn.pixabay.com/photo/2017/09/08/00/38/friend-2727307_640.jpg',
+              'https://cdn.pixabay.com/photo/2016/11/14/05/15/boy-1822614_640.jpg',
+              'https://cdn.pixabay.com/photo/2016/01/19/17/48/woman-1149911_640.jpg',
+              'https://cdn.pixabay.com/photo/2016/03/27/19/31/fashion-1283863_640.jpg',
+              'https://cdn.pixabay.com/photo/2017/08/01/20/06/city-2567670_640.jpg',
+              'https://cdn.pixabay.com/photo/2016/11/29/05/45/astronomy-1867616_640.jpg',
+              'https://cdn.pixabay.com/photo/2017/05/13/15/18/dear-2309801_640.jpg',
+              'https://cdn.pixabay.com/photo/2017/06/20/22/14/man-2425121_640.jpg',
+              'https://cdn.pixabay.com/photo/2018/03/30/15/11/deer-3275594_640.jpg',
+              'https://cdn.pixabay.com/photo/2019/05/24/10/59/books-4226038_640.jpg',
+              'https://cdn.pixabay.com/photo/2020/05/17/20/34/concept-5183469_640.jpg',
+              'https://cdn.pixabay.com/photo/2017/07/31/11/31/laptop-2557468_640.jpg',
+              'https://cdn.pixabay.com/photo/2016/11/29/12/30/phone-1869510_640.jpg',
+              'https://cdn.pixabay.com/photo/2017/01/20/00/30/maldives-1993704_640.jpg',
+              'https://cdn.pixabay.com/photo/2016/11/29/06/18/home-office-1867761_640.jpg'
+            ];
 
             for (let i = 0; i < rules.length; i++) {
               const r = rules[i];
@@ -169,11 +204,23 @@ Reply with valid JSON only in this exact format:
 
               // Pick photo strictly related to the example sentence
               let photoFound = false;
-              const searchCandidates = [
-                String(r.image_keywords || '').trim(),
-                extractKeywordsFromSentence(r.sentence),
-                topic
-              ].filter(Boolean);
+              const searchCandidates: string[] = [];
+
+              if (r.image_keywords) {
+                const cleanKw = String(r.image_keywords).trim();
+                searchCandidates.push(cleanKw);
+                cleanKw.split(/\s+/).forEach((w: string) => {
+                  if (w.length > 2 && w !== cleanKw) searchCandidates.push(w);
+                });
+              }
+
+              const kwFromSentence = extractKeywordsFromSentence(r.sentence);
+              if (kwFromSentence) {
+                kwFromSentence.split(/\s+/).forEach((w: string) => {
+                  if (w.length > 2 && !searchCandidates.includes(w)) searchCandidates.push(w);
+                });
+              }
+              if (!searchCandidates.includes(topic)) searchCandidates.push(topic);
 
               for (const queryStr of searchCandidates) {
                 try {
@@ -193,13 +240,7 @@ Reply with valid JSON only in this exact format:
               }
 
               if (!photoFound || !r.image) {
-                const curated = [
-                  'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
-                  'https://cdn.pixabay.com/photo/2021/02/08/16/03/dinosaur-5995333_640.png',
-                  'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg',
-                  'https://cdn.pixabay.com/photo/2018/07/20/14/01/grapes-3550729_640.jpg'
-                ];
-                r.image = curated[i % curated.length];
+                r.image = diverseCuratedImages[(i * 3 + Math.floor(Math.random() * 3)) % diverseCuratedImages.length];
               }
             }
 

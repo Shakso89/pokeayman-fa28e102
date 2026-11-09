@@ -142,7 +142,7 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(html).toContain('id="teacher-grammar-create-submit"');
   });
 
-  it('ensures AI grammar deck generator produces real pedagogical rules and does not use mock placeholders', () => {
+  it('ensures AI grammar deck generator charges 5 credits per rule, has Bright-Lizard-8 loader animation, and enforces diversity', () => {
     const js = fs.readFileSync(grammarJsPath, 'utf-8');
     const apiRoutePath = path.resolve(__dirname, '../../src/routes/api/generate-vocab-list.ts');
     const apiRoute = fs.readFileSync(apiRoutePath, 'utf-8');
@@ -159,13 +159,33 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('What color + is / are + Subject ?');
     expect(js).toContain('How many + Plural Noun + are there ?');
 
-    // API route handles grammar mode with Gemini and stock media sentence search
+    // Credit charging: 5 credits per rule
+    expect(js).toContain('generatedRules.length * 5');
+    expect(js).toContain('deductTeacherCredits');
+    expect(js).toContain('logCredit');
+    expect(js).toContain('Rate: <strong class="text-white">5 credits per rule</strong>');
+    expect(js).toContain('id="g-ai-rule-count"');
+
+    // Bright-Lizard-8 AI animation identical to vocabulary list generator
+    expect(js).toContain('bl8-loader-letter');
+    expect(js).toContain('g-ai-progress-wrap');
+    expect(js).toContain('vocab-gen-generating-screen');
+    expect(js).toContain('vocab-gen-progress-track');
+    expect(js).toContain('vocab-gen-progress-bar');
+    expect(js).toContain('vocab-gen-status-badge');
+    expect(js).toContain('Step 1/3: Formulating grammar rules with AI...');
+    expect(js).toContain('Step 2/3: Finding illustrations for sentences');
+    expect(js).toContain('Step 3/3: Saving grammar deck to classroom...');
+
+    // API route handles grammar mode with diverse prompts, single-noun image search, and temperature 0.7
     expect(apiRoute).toContain('input?.mode === "grammar"');
     expect(apiRoute).toContain('Grammar Pattern Deck');
+    expect(apiRoute).toContain('temperature: 0.7');
+    expect(apiRoute).toContain('DIVERSITY AND CREATIVITY REQUIREMENT');
     expect(apiRoute).toContain('callGemini');
     expect(apiRoute).toContain('searchStockMedia');
     expect(apiRoute).toContain('extractKeywordsFromSentence');
-    expect(js).toContain('Simple Future (will + Base Verb)');
+    expect(apiRoute).toContain('diverseCuratedImages');
     expect(js).toContain('extractKeywordsForGrammarRule');
   });
 
