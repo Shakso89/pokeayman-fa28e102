@@ -554,4 +554,95 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     const sentenceHtml = formatSentence(continuousRule.sentence, continuousRule.formula, continuousRule);
     expect(sentenceHtml).toContain('<span class="text-emerald-400 font-black">walk</span><span class="text-purple-300 font-black">ing</span>');
   });
+
+  it('comprehensively detects all English verb additions, spelling changes, and CVC doubled consonants', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+    const mockWindow: any = {
+      document: {
+        readyState: 'complete',
+        addEventListener: () => {},
+        getElementById: () => null,
+        querySelectorAll: () => []
+      },
+      addEventListener: () => {}
+    };
+    new Function('window', 'document', js)(mockWindow, mockWindow.document);
+    const detect = mockWindow.detectSuffix;
+    expect(typeof detect).toBe('function');
+
+    // 1. Third Person Singular Present: -s, -es, -ies
+    expect(detect('walks')).toEqual({ root: 'walk', suffix: 's' });
+    expect(detect('plays')).toEqual({ root: 'play', suffix: 's' });
+    expect(detect('eats')).toEqual({ root: 'eat', suffix: 's' });
+    expect(detect('studies')).toEqual({ root: 'stud', suffix: 'ies' });
+    expect(detect('cries')).toEqual({ root: 'cr', suffix: 'ies' });
+    expect(detect('flies')).toEqual({ root: 'fl', suffix: 'ies' });
+    expect(detect('watches')).toEqual({ root: 'watch', suffix: 'es' });
+    expect(detect('washes')).toEqual({ root: 'wash', suffix: 'es' });
+    expect(detect('fixes')).toEqual({ root: 'fix', suffix: 'es' });
+    expect(detect('goes')).toEqual({ root: 'go', suffix: 'es' });
+    expect(detect('does')).toEqual({ root: 'do', suffix: 'es' });
+
+    // 2. Past Simple & Participles: -ed, -ied, and CVC doubled consonants
+    expect(detect('walked')).toEqual({ root: 'walk', suffix: 'ed' });
+    expect(detect('played')).toEqual({ root: 'play', suffix: 'ed' });
+    expect(detect('danced')).toEqual({ root: 'danc', suffix: 'ed' });
+    expect(detect('studied')).toEqual({ root: 'stud', suffix: 'ied' });
+    expect(detect('cried')).toEqual({ root: 'cr', suffix: 'ied' });
+    // Doubled consonants before -ed:
+    expect(detect('stopped')).toEqual({ root: 'stop', suffix: 'ped' });
+    expect(detect('planned')).toEqual({ root: 'plan', suffix: 'ned' });
+    expect(detect('jogged')).toEqual({ root: 'jog', suffix: 'ged' });
+    expect(detect('clapped')).toEqual({ root: 'clap', suffix: 'ped' });
+    expect(detect('dropped')).toEqual({ root: 'drop', suffix: 'ped' });
+    expect(detect('fitted')).toEqual({ root: 'fit', suffix: 'ted' });
+    expect(detect('robbed')).toEqual({ root: 'rob', suffix: 'bed' });
+
+    // 3. Present Participle / Continuous: -ing and CVC doubled consonants
+    expect(detect('walking')).toEqual({ root: 'walk', suffix: 'ing' });
+    expect(detect('writing')).toEqual({ root: 'writ', suffix: 'ing' });
+    expect(detect('making')).toEqual({ root: 'mak', suffix: 'ing' });
+    // Doubled consonants before -ing:
+    expect(detect('stopping')).toEqual({ root: 'stop', suffix: 'ping' });
+    expect(detect('running')).toEqual({ root: 'run', suffix: 'ning' });
+    expect(detect('swimming')).toEqual({ root: 'swim', suffix: 'ming' });
+    expect(detect('sitting')).toEqual({ root: 'sit', suffix: 'ting' });
+    expect(detect('planning')).toEqual({ root: 'plan', suffix: 'ning' });
+    expect(detect('getting')).toEqual({ root: 'get', suffix: 'ting' });
+    expect(detect('cutting')).toEqual({ root: 'cut', suffix: 'ting' });
+    expect(detect('jogging')).toEqual({ root: 'jog', suffix: 'ging' });
+    expect(detect('beginning')).toEqual({ root: 'begin', suffix: 'ning' });
+
+    // 4. Base words inherently ending in -ll, -ss, -zz maintain root without bogus doubling
+    expect(detect('calling')).toEqual({ root: 'call', suffix: 'ing' });
+    expect(detect('called')).toEqual({ root: 'call', suffix: 'ed' });
+    expect(detect('falling')).toEqual({ root: 'fall', suffix: 'ing' });
+    expect(detect('passing')).toEqual({ root: 'pass', suffix: 'ing' });
+    expect(detect('passed')).toEqual({ root: 'pass', suffix: 'ed' });
+
+    // 5. Contractions with n't
+    expect(detect("isn't")).toEqual({ root: 'is', suffix: "n't" });
+    expect(detect("doesn't")).toEqual({ root: 'does', suffix: "n't" });
+    expect(detect("didn't")).toEqual({ root: 'did', suffix: "n't" });
+
+    // 6. Non-verb words are preserved and not broken
+    expect(detect('grass')).toBeNull();
+    expect(detect('class')).toBeNull();
+    expect(detect('this')).toBeNull();
+
+    // 7. Formula chips support all inflection additions
+    const formatFormula = mockWindow.formatFormulaChips;
+    const ruleSample = { suffix_color: 3 }; // Violet Purple
+    expect(formatFormula('Subject + Verb-ies', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-ies</span>');
+    expect(formatFormula('Subject + Verb-es', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-es</span>');
+    expect(formatFormula('Subject + Verb-s', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-s</span>');
+    expect(formatFormula('Subject + Verb-ed', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-ed</span>');
+    expect(formatFormula('Subject + Verb-ied', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-ied</span>');
+    expect(formatFormula('Subject + Verb-ping', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-ping</span>');
+    expect(formatFormula('Subject + Verb-ing', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-ing</span>');
+
+    // 8. Editor legend displays additions pill and tooltip
+    expect(js).toContain('Additions (-s, -es, -ies, -ed, -ied, -ing, +doubled):');
+    expect(js).toContain('Verb Additions & Spelling Changes: -s, -es, -ies, -ed, -ied, -ing, +doubled consonants');
+  });
 });
