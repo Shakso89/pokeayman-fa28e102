@@ -159,12 +159,18 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('What color + is / are + Subject ?');
     expect(js).toContain('How many + Plural Noun + are there ?');
 
-    // Credit charging: 5 credits per rule
-    expect(js).toContain('generatedRules.length * 5');
+    // Credit charging: 5 credits per rule for chosen rules
+    expect(js).toContain('selectedRules.length * 5');
     expect(js).toContain('deductTeacherCredits');
     expect(js).toContain('logCredit');
     expect(js).toContain('Rate: <strong class="text-white">5 credits per rule</strong>');
-    expect(js).toContain('id="g-ai-rule-count"');
+
+    // Rule recommendation and selection workflow (AI researches first, teacher chooses recommended/less/more)
+    expect(js).toContain('id="g-ai-preset-tabs"');
+    expect(js).toContain('id="g-ai-rules-list"');
+    expect(js).toContain('Recommended');
+    expect(js).toContain('Less');
+    expect(js).toContain('More');
 
     // Bright-Lizard-8 AI animation identical to vocabulary list generator
     expect(js).toContain('bl8-loader-letter');
@@ -173,9 +179,7 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('vocab-gen-progress-track');
     expect(js).toContain('vocab-gen-progress-bar');
     expect(js).toContain('vocab-gen-status-badge');
-    expect(js).toContain('Step 1/3: Formulating grammar rules with AI...');
-    expect(js).toContain('Step 2/3: Finding illustrations for sentences');
-    expect(js).toContain('Step 3/3: Saving grammar deck to classroom...');
+    expect(js).toContain('Researching curriculum rules');
 
     // API route handles grammar mode with diverse prompts, single-noun image search, and temperature 0.7
     expect(apiRoute).toContain('input?.mode === "grammar"');

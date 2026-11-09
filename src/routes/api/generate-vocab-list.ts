@@ -94,8 +94,10 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
           }
 
           const countInstruction = (requestedCount >= 2 && requestedCount <= 6)
-            ? `Generate exactly ${requestedCount} distinct, pedagogically clear rules for "${topic}".`
-            : `Generate between 2 and 4 distinct, pedagogically clear rules that naturally cover "${topic}" (e.g. Affirmative, Negative, Question form, or essential variations).`;
+            ? `Generate exactly ${requestedCount} distinct, pedagogically clear rules for "${topic}" arranged in educational progression (core rules first, followed by extension variations).`
+            : `Generate 4 or 5 distinct, pedagogically clear rules for "${topic}" arranged in educational progression:
+   - Rules 1 to 3: Core recommended rules (Affirmative/Base, Negative form, Question/Inversion form).
+   - Rules 4 and 5: Extension or nuance rules (e.g. spelling changes, time expressions/context clues, irregulars, or exceptions).`;
 
           const prompt = `You are an expert ESL/EFL English language curriculum developer and teacher for young elementary students.
 The teacher wants a Grammar Pattern Deck strictly for the topic: "${topic}" (Target Level: ${level}).
@@ -197,6 +199,7 @@ Reply with valid JSON only in this exact format:
               if (!r.title) r.title = `Rule ${i + 1}`;
               if (!r.formula) r.formula = 'Pattern';
               if (!r.sentence) r.sentence = 'Example sentence.';
+              r.tier = i < 3 ? 'recommended' : 'extension';
               if (!Array.isArray(r.quiz_options) || r.quiz_options.length === 0) {
                 r.quiz_options = [r.quiz_answer || 'Option A', 'Option B', 'Option C'];
               }
