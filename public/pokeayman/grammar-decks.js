@@ -540,7 +540,36 @@
     const rawWords = clean.split(/\s+/);
     if (rawWords.length <= 1) return escapeHtml(clean);
 
-    // 1. Check if custom teacher word role assignment is provided in rule
+    const COLOR_CLASSES = [
+      'text-sky-300 font-black',     // 0: Sky Blue
+      'text-amber-400 font-black',   // 1: Amber
+      'text-emerald-400 font-black', // 2: Emerald Green
+      'text-purple-300 font-black',  // 3: Purple
+      'text-rose-400 font-black',    // 4: Rose Pink
+      'text-orange-400 font-black',  // 5: Orange
+      'text-cyan-300 font-black'     // 6: Cyan
+    ];
+    const getColorCls = (c) => (typeof c === 'number' && c >= 0 && c < COLOR_CLASSES.length) ? COLOR_CLASSES[c] : 'text-white font-extrabold';
+
+    // 1. Check if structured word_assignments with multi-color and suffix splitting are present
+    if (rule && Array.isArray(rule.word_assignments) && rule.word_assignments.length > 0) {
+      return rule.word_assignments.map(item => {
+        if (Array.isArray(item.segments) && item.segments.length > 0) {
+          const segsHtml = item.segments.map(seg => {
+            const cls = getColorCls(seg.color);
+            return `<span class="${cls}">${escapeHtml(seg.text || '')}</span>`;
+          }).join('');
+          const punctHtml = item.punct ? `<span class="text-white font-extrabold">${escapeHtml(item.punct)}</span>` : '';
+          return segsHtml + punctHtml;
+        } else {
+          const cls = getColorCls(item.color);
+          const punctHtml = item.punct ? `<span class="text-white font-extrabold">${escapeHtml(item.punct)}</span>` : '';
+          return `<span class="${cls}">${escapeHtml(item.text || item.token || '')}</span>` + punctHtml;
+        }
+      }).join(' ');
+    }
+
+    // 2. Check if legacy custom teacher word role assignment is provided in rule (words_blue, words_amber, words_green)
     const customBlue = (rule?.words_blue || rule?.highlight_blue || '').trim().toLowerCase();
     const customAmber = (rule?.words_amber || rule?.highlight_amber || '').trim().toLowerCase();
     const customGreen = (rule?.words_green || rule?.highlight_green || '').trim().toLowerCase();
@@ -762,7 +791,9 @@
       'border-amber-400 bg-amber-500/15 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.25)]',
       'border-emerald-400 bg-emerald-500/15 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]',
       'border-purple-400 bg-purple-500/15 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.25)]',
-      'border-rose-400 bg-rose-500/15 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.25)]'
+      'border-rose-400 bg-rose-500/15 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.25)]',
+      'border-orange-400 bg-orange-500/15 text-orange-300 shadow-[0_0_12px_rgba(251,146,60,0.25)]',
+      'border-cyan-400 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]'
     ];
 
     return parts.map((part, idx) => {
@@ -1199,6 +1230,8 @@
     const rules = Array.isArray(deck.rules) ? [...deck.rules] : [];
     let currentDeckName = deck.grammar_deck_name || deck.deck_name || deckName || 'Grammar Deck';
     let editingRuleIndex = -1; // -1 = adding new rule, >= 0 = editing existing rule
+    let isRuleFormOpen = rules.length === 0; // Collapsed by default if rules exist
+    let isImagePickerOpen = false; // Collapsed by default inside the rule form
 
     const modal = document.createElement('div');
     modal.id = 'grammar-editor-modal';
@@ -1231,18 +1264,32 @@
             <button type="button" id="ge-close-btn" class="text-slate-400 hover:text-white font-bold text-2xl px-2 shrink-0 leading-none">&times;</button>
           </div>
 
-          <!-- Add / Edit Rule Form -->
-          <div id="ge-rule-form-box" class="p-4 rounded-2xl ${isEditing ? 'bg-amber-950/20 border-amber-500/50 ring-1 ring-amber-500/30' : 'bg-slate-950/60 border-slate-800'} border space-y-3 transition">
-            <div class="flex items-center justify-between">
+          <!-- Add Rule Trigger Bar (Shown when form is collapsed) -->
+          <div id="ge-add-rule-trigger-bar" class="${isRuleFormOpen ? 'hidden' : 'flex'} items-center justify-between p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 shadow-sm transition">
+            <div class="flex items-center gap-2.5">
+              <span class="text-xl">🧩</span>
+              <div>
+                <div class="text-xs font-bold text-white">Deck Grammar Rules (${rules.length})</div>
+                <p class="text-[11px] text-slate-400">Click ➕ Add New Rule or edit any rule below</p>
+              </div>
+            </div>
+            <button type="button" id="ge-open-add-rule-btn" class="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95">
+              <span>➕</span>
+              <span>Add New Rule</span>
+            </button>
+          </div>
+
+          <!-- Add / Edit Rule Form (Collapsible) -->
+          <div id="ge-rule-form-box" class="${isRuleFormOpen ? 'block' : 'hidden'} p-4 rounded-2xl ${isEditing ? 'bg-amber-950/20 border-amber-500/50 ring-1 ring-amber-500/30' : 'bg-slate-950/60 border-slate-800'} border space-y-3 transition">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
               <h4 class="text-xs font-bold ${isEditing ? 'text-amber-400' : 'text-amber-300'} uppercase tracking-wider flex items-center gap-1.5">
                 <span>${isEditing ? '✏️' : '➕'}</span>
                 <span>${isEditing ? `Editing Rule #${editingRuleIndex + 1}: ${escapeHtml(activeRule?.title || 'Rule')}` : 'Add New Grammar Rule'}</span>
               </h4>
-              ${isEditing ? `
-                <button type="button" id="ge-cancel-edit-btn" class="text-xs text-slate-400 hover:text-white underline cursor-pointer">
-                  Cancel edit
-                </button>
-              ` : ''}
+              <button type="button" id="ge-collapse-form-btn" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer flex items-center gap-1" title="Collapse form">
+                <span>✕</span>
+                <span>${isEditing ? 'Cancel Edit' : 'Collapse Form'}</span>
+              </button>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1252,7 +1299,7 @@
               </div>
               <div class="space-y-1">
                 <label for="ge-rule-formula" class="text-[11px] text-slate-400 font-semibold block">Formula / Pattern</label>
-                <input id="ge-rule-formula" type="text" placeholder="e.g. Subject + am/is/are + Verb-ing" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.formula || '')}">
+                <input id="ge-rule-formula" type="text" placeholder="e.g. Subject + am/is/are + Verb + -ing" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.formula || '')}">
               </div>
               <div class="space-y-1 sm:col-span-2">
                 <label for="ge-rule-sentence" class="text-[11px] text-slate-400 font-semibold block">Example Sentence *</label>
@@ -1260,126 +1307,143 @@
               </div>
 
               <!-- Word Color & Formula Role Assignment -->
-              <div class="sm:col-span-2 space-y-2 p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
+              <div class="sm:col-span-2 space-y-2.5 p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <div class="text-[11px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                    <span>🎨</span> Assign Sentence Words to Formula Parts
+                    <span>🎨</span> Assign Words & Suffixes to Formula Parts
                   </div>
-                  <span class="text-[10px] text-slate-400">Click words below to cycle role: <span class="text-sky-300 font-bold">Blue</span> → <span class="text-amber-400 font-bold">Amber</span> → <span class="text-emerald-400 font-bold">Green</span> → <span class="text-slate-400 font-bold">Reset</span></span>
+                  <span class="text-[10px] text-slate-400">Click a word or suffix below to cycle its formula color</span>
                 </div>
 
-                <!-- Interactive word chips -->
-                <div id="ge-sentence-word-chips" class="flex flex-wrap items-center gap-1.5 p-2 rounded-xl bg-slate-900/90 border border-slate-800/90 min-h-[40px]">
-                  <!-- Populated dynamically -->
+                <!-- Dynamic Formula Parts Legend Bar -->
+                <div id="ge-formula-parts-legend" class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <!-- Dynamically populated from formula parts -->
                 </div>
 
-                <!-- 3 Role Inputs -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                  <div class="space-y-1">
-                    <label for="ge-rule-words-blue" class="text-[10px] text-sky-300 font-bold flex items-center gap-1">
-                      <span class="w-2 h-2 rounded-full bg-sky-400 inline-block shadow-[0_0_6px_rgba(56,189,248,0.8)]"></span> Part 1 (Blue) Words
-                    </label>
-                    <input id="ge-rule-words-blue" type="text" placeholder="e.g. Where or The elephant" class="quiz-input text-xs w-full font-medium" value="${escapeHtml(activeRule?.words_blue || activeRule?.highlight_blue || '')}">
-                  </div>
-                  <div class="space-y-1">
-                    <label for="ge-rule-words-amber" class="text-[10px] text-amber-300 font-bold flex items-center gap-1">
-                      <span class="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-[0_0_6px_rgba(251,191,36,0.8)]"></span> Part 2 (Amber) Words
-                    </label>
-                    <input id="ge-rule-words-amber" type="text" placeholder="e.g. is or is walking" class="quiz-input text-xs w-full font-medium" value="${escapeHtml(activeRule?.words_amber || activeRule?.highlight_amber || '')}">
-                  </div>
-                  <div class="space-y-1">
-                    <label for="ge-rule-words-green" class="text-[10px] text-emerald-300 font-bold flex items-center gap-1">
-                      <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-[0_0_6px_rgba(52,211,153,0.8)]"></span> Part 3 (Green) Words
-                    </label>
-                    <input id="ge-rule-words-green" type="text" placeholder="e.g. the sleeping cat or slowly" class="quiz-input text-xs w-full font-medium" value="${escapeHtml(activeRule?.words_green || activeRule?.highlight_green || '')}">
-                  </div>
+                <!-- Interactive word and suffix chips -->
+                <div id="ge-sentence-word-chips" class="flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/90 min-h-[46px]">
+                  <!-- Populated dynamically with segmented suffix pills -->
                 </div>
+
+                <!-- Hidden inputs for legacy compatibility -->
+                <input type="hidden" id="ge-rule-words-blue" value="${escapeHtml(activeRule?.words_blue || activeRule?.highlight_blue || '')}">
+                <input type="hidden" id="ge-rule-words-amber" value="${escapeHtml(activeRule?.words_amber || activeRule?.highlight_amber || '')}">
+                <input type="hidden" id="ge-rule-words-green" value="${escapeHtml(activeRule?.words_green || activeRule?.highlight_green || '')}">
               </div>
 
               <div class="space-y-1 sm:col-span-2">
                 <label for="ge-rule-clue" class="text-[11px] text-slate-400 font-semibold block">Context Clue / Hint</label>
                 <input id="ge-rule-clue" type="text" placeholder="e.g. Right now at this moment" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.context_clue || '')}">
               </div>
-              <!-- Rule Image Search & Picker (matching vocab lists) -->
+
+              <!-- Rule Image & Clipart (Collapsible Section) -->
               <div class="sm:col-span-2 space-y-2 pt-2 border-t border-slate-800/80">
-                <div class="flex items-center justify-between">
-                  <label class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <span>🖼️</span> Rule Image & Clipart
-                  </label>
-                  <span id="ge-image-status" class="text-[11px] text-slate-400 font-semibold"></span>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
-                  <!-- Selected Image Preview & Direct URL Fallback -->
-                  <div class="md:col-span-5 rounded-xl p-3 border border-slate-800 bg-slate-950/60 flex flex-col justify-between space-y-2.5">
-                    <div class="flex items-center justify-between">
-                      <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Selected Image</span>
-                      <span id="ge-image-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${activeRule?.image ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}">
-                        ${activeRule?.image ? '✓ Ready' : 'No image'}
-                      </span>
-                    </div>
-
-                    <div id="ge-image-preview-container" class="w-full h-32 rounded-lg border border-slate-800 bg-slate-900/60 flex items-center justify-center p-1.5 overflow-hidden relative group">
+                <!-- Compact Summary Bar -->
+                <div class="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div id="ge-image-thumb-box" class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0 overflow-hidden">
                       ${activeRule?.image ? `
-                        <img id="ge-image-preview-img" src="${escapeHtml(activeRule.image)}" class="w-full h-full object-contain rounded" alt="Rule image preview" onerror="this.onerror=null;this.parentElement.innerHTML='<span class=\\'text-xs text-rose-400 font-medium\\'>Invalid image link</span>';">
+                        <img src="${escapeHtml(activeRule.image)}" class="w-full h-full object-cover" alt="Rule image">
                       ` : `
-                        <div id="ge-image-placeholder" class="text-xs text-slate-500 flex flex-col items-center gap-1">
-                          <svg class="w-7 h-7 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                          <span>Choose clipart or photo</span>
-                        </div>
+                        <span class="text-xl opacity-60">🖼️</span>
                       `}
                     </div>
-
-                    <div class="space-y-1">
-                      <div class="flex items-center justify-between">
-                        <label for="ge-rule-image" class="text-[11px] text-slate-400 font-medium">Or paste image URL directly:</label>
-                        <button type="button" id="ge-image-clear-btn" class="text-[10px] text-rose-400 hover:text-rose-300 font-semibold cursor-pointer ${activeRule?.image ? '' : 'hidden'}">Remove</button>
+                    <div class="min-w-0">
+                      <div class="text-xs font-bold text-slate-300 flex items-center gap-2">
+                        <span>Rule Image & Clipart</span>
+                        <span id="ge-image-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${activeRule?.image ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}">
+                          ${activeRule?.image ? '✓ Ready' : 'No image'}
+                        </span>
                       </div>
-                      <input id="ge-rule-image" type="url" placeholder="https://cdn.pixabay.com/..." class="quiz-input text-xs w-full font-mono text-[11px]" value="${escapeHtml(activeRule?.image || '')}">
+                      <p class="text-[11px] text-slate-500 truncate mt-0.5">${activeRule?.image ? escapeHtml(activeRule.image) : 'Click Add Image to search clipart & photos'}</p>
                     </div>
                   </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" id="ge-toggle-image-picker-btn" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs border border-slate-700 transition flex items-center gap-1.5 cursor-pointer">
+                      <span>🖼️</span>
+                      <span>${isImagePickerOpen ? 'Hide Search' : (activeRule?.image ? 'Change Image' : 'Add Image')}</span>
+                    </button>
+                    <button type="button" id="ge-image-clear-btn" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-rose-400 font-bold text-xs border border-slate-700 hover:border-rose-500/30 transition cursor-pointer ${activeRule?.image ? '' : 'hidden'}" title="Remove image">
+                      Remove
+                    </button>
+                  </div>
+                </div>
 
-                  <!-- Search Clipart & Photos -->
-                  <div class="md:col-span-7 space-y-2 flex flex-col">
-                    <!-- Search Input + Action Buttons -->
-                    <div class="flex gap-1.5">
-                      <div class="relative flex-1">
-                        <input id="ge-image-search" type="text" placeholder="Search clipart or photos..." class="quiz-input text-xs w-full pr-7" value="${escapeHtml(extractKeywordsForGrammarRule(activeRule, deck))}">
-                        <button type="button" id="ge-image-search-clear" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs font-bold p-1 cursor-pointer" style="${extractKeywordsForGrammarRule(activeRule, deck) ? '' : 'display:none;'}" aria-label="Clear">✕</button>
+                <!-- Expanded Image Picker Drawer -->
+                <div id="ge-image-drawer" class="${isImagePickerOpen ? 'block' : 'hidden'} space-y-2 p-3 rounded-2xl bg-slate-950/80 border border-slate-800/80 transition">
+                  <div class="flex items-center justify-between pb-1">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Search Clipart & Photos</span>
+                    <span id="ge-image-status" class="text-[11px] text-slate-400 font-semibold"></span>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
+                    <!-- Selected Image Preview & Direct URL Fallback -->
+                    <div class="md:col-span-5 rounded-xl p-3 border border-slate-800 bg-slate-950/60 flex flex-col justify-between space-y-2.5">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Preview</span>
+                        <span class="text-[10px] text-slate-500">Auto-saves to rule</span>
                       </div>
-                      <button type="button" id="ge-image-search-btn" class="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition active:scale-95 shrink-0 cursor-pointer flex items-center gap-1 shadow-sm">
-                        <span>🔍</span>
-                        <span>Search</span>
-                      </button>
-                      <button type="button" id="ge-image-suggest-btn" class="px-2.5 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 font-bold text-xs transition active:scale-95 shrink-0 cursor-pointer flex items-center gap-1" title="Extract search keywords from sentence or rule">
-                        <span>↳ Use Text</span>
-                      </button>
-                    </div>
 
-                    <!-- Type Filter Pills -->
-                    <div id="ge-image-type-pills" class="flex items-center gap-1.5">
-                      <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400 bg-amber-400 text-slate-950 cursor-pointer transition shadow-sm" data-image-type="all">✨ All</button>
-                      <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition" data-image-type="illustration">🎨 Clipart</button>
-                      <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition" data-image-type="photo">📸 Photos</button>
-                    </div>
+                      <div id="ge-image-preview-container" class="w-full h-32 rounded-lg border border-slate-800 bg-slate-900/60 flex items-center justify-center p-1.5 overflow-hidden relative group">
+                        ${activeRule?.image ? `
+                          <img id="ge-image-preview-img" src="${escapeHtml(activeRule.image)}" class="w-full h-full object-contain rounded" alt="Rule image preview" onerror="this.onerror=null;this.parentElement.innerHTML='<span class=\\'text-xs text-rose-400 font-medium\\'>Invalid image link</span>';">
+                        ` : `
+                          <div id="ge-image-placeholder" class="text-xs text-slate-500 flex flex-col items-center gap-1">
+                            <svg class="w-7 h-7 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <span>Choose clipart or photo</span>
+                          </div>
+                        `}
+                      </div>
 
-                    <!-- Results Grid -->
-                    <div id="ge-image-results" class="grid grid-cols-3 sm:grid-cols-4 gap-2 min-h-[140px] max-h-[185px] overflow-y-auto p-2 rounded-xl bg-slate-950/80 border border-slate-800">
-                      <div class="col-span-full py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400 text-xs">
-                        <span class="text-2xl opacity-60">📷</span>
-                        <p class="font-medium">Click <b>Search</b> to find matching photos & clipart</p>
+                      <div class="space-y-1">
+                        <label for="ge-rule-image" class="text-[11px] text-slate-400 font-medium">Or paste image URL directly:</label>
+                        <input id="ge-rule-image" type="url" placeholder="https://cdn.pixabay.com/..." class="quiz-input text-xs w-full font-mono text-[11px]" value="${escapeHtml(activeRule?.image || '')}">
                       </div>
                     </div>
 
-                    <!-- Load More Pill -->
-                    <div class="flex justify-center pt-0.5">
-                      <button type="button" id="ge-image-load-more" class="text-[11px] font-bold px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer" style="display: none;">
-                        ⬇ Load more images
-                      </button>
+                    <!-- Search Clipart & Photos -->
+                    <div class="md:col-span-7 space-y-2 flex flex-col">
+                      <!-- Search Input + Action Buttons -->
+                      <div class="flex gap-1.5">
+                        <div class="relative flex-1">
+                          <input id="ge-image-search" type="text" placeholder="Search clipart or photos..." class="quiz-input text-xs w-full pr-7" value="${escapeHtml(extractKeywordsForGrammarRule(activeRule, deck))}">
+                          <button type="button" id="ge-image-search-clear" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs font-bold p-1 cursor-pointer" style="${extractKeywordsForGrammarRule(activeRule, deck) ? '' : 'display:none;'}" aria-label="Clear">✕</button>
+                        </div>
+                        <button type="button" id="ge-image-search-btn" class="px-3.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition active:scale-95 shrink-0 cursor-pointer flex items-center gap-1 shadow-sm">
+                          <span>🔍</span>
+                          <span>Search</span>
+                        </button>
+                        <button type="button" id="ge-image-suggest-btn" class="px-2.5 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 font-bold text-xs transition active:scale-95 shrink-0 cursor-pointer flex items-center gap-1" title="Extract search keywords from sentence or rule">
+                          <span>↳ Use Text</span>
+                        </button>
+                      </div>
+
+                      <!-- Type Filter Pills -->
+                      <div id="ge-image-type-pills" class="flex items-center gap-1.5">
+                        <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400 bg-amber-400 text-slate-950 cursor-pointer transition shadow-sm" data-image-type="all">✨ All</button>
+                        <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition" data-image-type="illustration">🎨 Clipart</button>
+                        <button type="button" class="ge-type-pill text-[11px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white cursor-pointer transition" data-image-type="photo">📸 Photos</button>
+                      </div>
+
+                      <!-- Results Grid -->
+                      <div id="ge-image-results" class="grid grid-cols-3 sm:grid-cols-4 gap-2 min-h-[140px] max-h-[185px] overflow-y-auto p-2 rounded-xl bg-slate-950/80 border border-slate-800">
+                        <div class="col-span-full py-8 text-center flex flex-col items-center justify-center gap-1.5 text-slate-400 text-xs">
+                          <span class="text-2xl opacity-60">📷</span>
+                          <p class="font-medium">Click <b>Search</b> to find matching photos & clipart</p>
+                        </div>
+                      </div>
+
+                      <!-- Load More Pill -->
+                      <div class="flex justify-center pt-0.5">
+                        <button type="button" id="ge-image-load-more" class="text-[11px] font-bold px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer" style="display: none;">
+                          ⬇ Load more images
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+
               <div class="space-y-1">
                 <label for="ge-rule-bad" class="text-[11px] text-rose-300 font-semibold block">❌ Common Mistake</label>
                 <input id="ge-rule-bad" type="text" placeholder="e.g. The elephant walking." class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.mistake_bad || '')}">
@@ -1425,11 +1489,9 @@
                 <span>${isEditing ? '💾' : '➕'}</span>
                 <span>${isEditing ? 'Save Rule Changes' : 'Add Rule'}</span>
               </button>
-              ${isEditing ? `
-                <button type="button" id="ge-cancel-rule-btn" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
-                  Cancel
-                </button>
-              ` : ''}
+              <button type="button" id="ge-cancel-rule-btn" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
+                Cancel
+              </button>
             </div>
           </div>
 
@@ -1504,24 +1566,45 @@
 
       const updatePreview = (url) => {
         selectedImageUrl = (url || '').trim();
-        ruleImageInput.value = selectedImageUrl;
-        if (selectedImageUrl) {
-          previewContainer.innerHTML = `<img id="ge-image-preview-img" src="${escapeHtml(selectedImageUrl)}" class="w-full h-full object-contain rounded" alt="Selected Rule Image" onerror="this.onerror=null;this.parentElement.innerHTML='<span class=\\\'text-xs text-rose-400 font-medium\\\'>Invalid image link</span>';">`;
-          imageBadge.textContent = '✓ Ready';
-          imageBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
-          imageClearBtn?.classList.remove('hidden');
-        } else {
-          previewContainer.innerHTML = `
-            <div id="ge-image-placeholder" class="text-xs text-slate-500 flex flex-col items-center gap-1">
-              <svg class="w-7 h-7 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              <span>Choose clipart or photo</span>
-            </div>
-          `;
-          imageBadge.textContent = 'No image';
-          imageBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400';
-          imageClearBtn?.classList.add('hidden');
+        if (ruleImageInput) ruleImageInput.value = selectedImageUrl;
+
+        // Update compact summary bar thumbnail and badge
+        const thumbBox = modal.querySelector('#ge-image-thumb-box');
+        if (thumbBox) {
+          if (selectedImageUrl) {
+            thumbBox.innerHTML = `<img src="${escapeHtml(selectedImageUrl)}" class="w-full h-full object-cover" alt="Rule image">`;
+          } else {
+            thumbBox.innerHTML = `<span class="text-xl opacity-60">🖼️</span>`;
+          }
         }
-        resultsContainer.querySelectorAll('.ge-photo-pick-card').forEach(card => {
+        const summaryBadge = modal.querySelector('#ge-image-badge');
+        if (summaryBadge) {
+          summaryBadge.textContent = selectedImageUrl ? '✓ Ready' : 'No image';
+          summaryBadge.className = `text-[10px] font-semibold px-2 py-0.5 rounded-full ${selectedImageUrl ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}`;
+        }
+        if (imageClearBtn) {
+          imageClearBtn.classList.toggle('hidden', !selectedImageUrl);
+        }
+        const toggleBtn = modal.querySelector('#ge-toggle-image-picker-btn');
+        if (toggleBtn) {
+          toggleBtn.innerHTML = `<span>🖼️</span><span>${isImagePickerOpen ? 'Hide Search' : (selectedImageUrl ? 'Change Image' : 'Add Image')}</span>`;
+        }
+
+        // Inside drawer preview container
+        if (previewContainer) {
+          if (selectedImageUrl) {
+            previewContainer.innerHTML = `<img id="ge-image-preview-img" src="${escapeHtml(selectedImageUrl)}" class="w-full h-full object-contain rounded" alt="Selected Rule Image" onerror="this.onerror=null;this.parentElement.innerHTML='<span class=\\\'text-xs text-rose-400 font-medium\\\'>Invalid image link</span>';">`;
+          } else {
+            previewContainer.innerHTML = `
+              <div id="ge-image-placeholder" class="text-xs text-slate-500 flex flex-col items-center gap-1">
+                <svg class="w-7 h-7 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>Choose clipart or photo</span>
+              </div>
+            `;
+          }
+        }
+
+        resultsContainer?.querySelectorAll('.ge-photo-pick-card').forEach(card => {
           const isMatch = selectedImageUrl && card.dataset.photoUrl === selectedImageUrl;
           card.classList.toggle('ring-2', isMatch);
           card.classList.toggle('ring-amber-400', isMatch);
@@ -1530,6 +1613,23 @@
           if (badgeEl) badgeEl.style.display = isMatch ? 'flex' : 'none';
         });
       };
+
+      // Toggle Image Picker Drawer (Collapsible)
+      const toggleImagePickerBtn = modal.querySelector('#ge-toggle-image-picker-btn');
+      const imageDrawer = modal.querySelector('#ge-image-drawer');
+      toggleImagePickerBtn?.addEventListener('click', () => {
+        isImagePickerOpen = !isImagePickerOpen;
+        if (imageDrawer) {
+          imageDrawer.classList.toggle('hidden', !isImagePickerOpen);
+          imageDrawer.classList.toggle('block', isImagePickerOpen);
+        }
+        if (toggleImagePickerBtn) {
+          toggleImagePickerBtn.innerHTML = `<span>🖼️</span><span>${isImagePickerOpen ? 'Hide Search' : (selectedImageUrl ? 'Change Image' : 'Add Image')}</span>`;
+        }
+        if (isImagePickerOpen && currentPhotos.length === 0 && searchInput?.value.trim()) {
+          executeSearch(true);
+        }
+      });
 
       const renderResultsGrid = () => {
         if (currentPhotos.length === 0) {
@@ -1559,6 +1659,15 @@
           card.addEventListener('click', () => {
             const url = card.dataset.photoUrl;
             updatePreview(url);
+            // Auto-collapse picker drawer upon selection to keep UI compact
+            isImagePickerOpen = false;
+            if (imageDrawer) {
+              imageDrawer.classList.add('hidden');
+              imageDrawer.classList.remove('block');
+            }
+            if (toggleImagePickerBtn) {
+              toggleImagePickerBtn.innerHTML = `<span>🖼️</span><span>Change Image</span>`;
+            }
             if (typeof toast === 'function') toast('Selected image for this rule!');
           });
         });
@@ -1674,114 +1783,365 @@
 
       imageClearBtn?.addEventListener('click', () => {
         updatePreview('');
+        if (typeof toast === 'function') toast('Image removed');
       });
 
       // Auto-trigger search if keywords exist
-      if (searchInput && searchInput.value.trim()) {
+      if (searchInput && searchInput.value.trim() && isImagePickerOpen) {
         executeSearch(true);
       }
 
-      // Interactive Word Chips & Color Assignment Synchronization
+      // ==========================================
+      // DYNAMIC FORMULA PARTS & SUFFIX COLORING (Option A)
+      // ==========================================
+      const COLOR_PALETTE = [
+        { name: 'Sky Blue', hex: '#38bdf8', chipClass: 'border-sky-400 bg-sky-500/20 text-sky-200 shadow-[0_0_8px_rgba(56,189,248,0.3)] font-bold', badgeClass: 'bg-sky-400 text-slate-950' },
+        { name: 'Amber', hex: '#fbbf24', chipClass: 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.3)] font-bold', badgeClass: 'bg-amber-400 text-slate-950' },
+        { name: 'Emerald', hex: '#34d399', chipClass: 'border-emerald-400 bg-emerald-500/20 text-emerald-200 shadow-[0_0_8px_rgba(52,211,153,0.3)] font-bold', badgeClass: 'bg-emerald-400 text-slate-950' },
+        { name: 'Purple', hex: '#c084fc', chipClass: 'border-purple-400 bg-purple-500/20 text-purple-200 shadow-[0_0_8px_rgba(192,132,252,0.3)] font-bold', badgeClass: 'bg-purple-400 text-slate-950' },
+        { name: 'Rose', hex: '#fb7185', chipClass: 'border-rose-400 bg-rose-500/20 text-rose-200 shadow-[0_0_8px_rgba(251,113,133,0.3)] font-bold', badgeClass: 'bg-rose-400 text-slate-950' },
+        { name: 'Orange', hex: '#fb923c', chipClass: 'border-orange-400 bg-orange-500/20 text-orange-200 shadow-[0_0_8px_rgba(251,146,60,0.3)] font-bold', badgeClass: 'bg-orange-400 text-slate-950' },
+        { name: 'Cyan', hex: '#22d3ee', chipClass: 'border-cyan-400 bg-cyan-500/20 text-cyan-200 shadow-[0_0_8px_rgba(34,211,238,0.3)] font-bold', badgeClass: 'bg-cyan-400 text-slate-950' }
+      ];
+
+      function detectSuffix(core, formulaParts = []) {
+        if (!core || core.length < 4) return null;
+        const lower = core.toLowerCase();
+
+        // Explicit hyphen split (e.g. walk-ing, play-ed)
+        if (core.includes('-')) {
+          const parts = core.split('-');
+          if (parts.length === 2 && parts[0] && parts[1]) {
+            return { root: parts[0], suffix: parts[1] };
+          }
+        }
+
+        // -ing
+        const NOT_ING = new Set(['bring', 'spring', 'string', 'thing', 'during', 'ring', 'sing', 'king', 'wing']);
+        if (lower.endsWith('ing') && lower.length >= 5 && !NOT_ING.has(lower)) {
+          return { root: core.slice(0, -3), suffix: core.slice(-3) };
+        }
+
+        // -ed
+        const NOT_ED = new Set(['speed', 'bleed', 'breed', 'agreed', 'freed', 'bed', 'red', 'fed', 'shed']);
+        if (lower.endsWith('ed') && lower.length >= 5 && !NOT_ED.has(lower)) {
+          return { root: core.slice(0, -2), suffix: core.slice(-2) };
+        }
+
+        // -es
+        const NOT_ES = new Set(['shoes', 'eyes', 'sometimes', 'yes']);
+        if (lower.endsWith('es') && lower.length >= 5 && !NOT_ES.has(lower)) {
+          return { root: core.slice(0, -2), suffix: core.slice(-2) };
+        }
+
+        // -s (not words ending in ss like grass, class, miss)
+        const NOT_S = new Set(['this', 'always', 'plus', 'yes', 'does', 'goes', 'has', 'is', 'as', 'us']);
+        if (lower.endsWith('s') && !lower.endsWith('ss') && lower.length >= 4 && !NOT_S.has(lower)) {
+          return { root: core.slice(0, -1), suffix: core.slice(-1) };
+        }
+
+        // -er (comparatives or formula matching)
+        const NOT_ER = new Set(['water', 'paper', 'river', 'never', 'after', 'under', 'over', 'other', 'mother', 'father']);
+        const formulaMentionsEr = formulaParts.some(p => p.toLowerCase().includes('er'));
+        if (lower.endsWith('er') && lower.length >= 5 && (formulaMentionsEr || lower.length >= 6) && !NOT_ER.has(lower)) {
+          return { root: core.slice(0, -2), suffix: core.slice(-2) };
+        }
+
+        return null;
+      }
+
+      let currentWordAssignments = [];
+      const formulaInput = modal.querySelector('#ge-rule-formula');
       const sentenceInput = modal.querySelector('#ge-rule-sentence');
-      const blueInput = modal.querySelector('#ge-rule-words-blue');
-      const amberInput = modal.querySelector('#ge-rule-words-amber');
-      const greenInput = modal.querySelector('#ge-rule-words-green');
+      const legendContainer = modal.querySelector('#ge-formula-parts-legend');
       const wordChipsContainer = modal.querySelector('#ge-sentence-word-chips');
 
-      function syncWordChips() {
-        if (!wordChipsContainer || !sentenceInput) return;
-        const text = sentenceInput.value.trim();
+      function getFormulaParts() {
+        const text = (formulaInput?.value || '').trim();
+        return text ? text.split('+').map(p => p.trim()).filter(Boolean) : ['Subject', 'Verb'];
+      }
+
+      function initAssignmentsFromRule() {
+        const formulaParts = getFormulaParts();
+        if (activeRule && Array.isArray(activeRule.word_assignments) && activeRule.word_assignments.length > 0) {
+          currentWordAssignments = activeRule.word_assignments.map(item => {
+            const isSplit = Array.isArray(item.segments) && item.segments.length >= 2;
+            return {
+              token: item.token || '',
+              core: item.text || (item.token ? item.token.replace(/[.,!?;:]*$/, '') : ''),
+              punct: item.punct || '',
+              isSplit: isSplit,
+              root: isSplit ? item.segments[0].text : '',
+              suffix: isSplit ? item.segments[1].text : '',
+              rootColor: isSplit ? item.segments[0].color : -1,
+              suffixColor: isSplit ? item.segments[1].color : -1,
+              color: !isSplit ? (typeof item.color === 'number' ? item.color : -1) : -1
+            };
+          });
+          return;
+        }
+
+        // Fallback: parse from sentence & legacy colors
+        const text = (sentenceInput?.value || activeRule?.sentence || '').trim();
         if (!text) {
-          wordChipsContainer.innerHTML = '<span class="text-xs text-slate-500 italic">Type an example sentence above to click and assign word colors</span>';
+          currentWordAssignments = [];
           return;
         }
 
         const cleanWord = (w) => String(w || '').toLowerCase().replace(/[^a-z0-9']/g, '');
-        const parseWordsSet = (inp) => {
+        const parseLegacySet = (str) => {
           const s = new Set();
-          if (!inp) return s;
-          inp.value.split(/[,;\s+]+/).forEach(w => {
+          if (!str) return s;
+          str.split(/[,;\s+]+/).forEach(w => {
             const cw = cleanWord(w);
             if (cw) s.add(cw);
           });
           return s;
         };
+        const blueSet = parseLegacySet(activeRule?.words_blue || activeRule?.highlight_blue);
+        const amberSet = parseLegacySet(activeRule?.words_amber || activeRule?.highlight_amber);
+        const greenSet = parseLegacySet(activeRule?.words_green || activeRule?.highlight_green);
 
-        const blueSet = parseWordsSet(blueInput);
-        const amberSet = parseWordsSet(amberInput);
-        const greenSet = parseWordsSet(greenInput);
+        const rawTokens = text.split(/\s+/).filter(Boolean);
+        currentWordAssignments = rawTokens.map(tok => {
+          const match = tok.match(/^([^.,!?;:]*)([.,!?;:]*)$/);
+          const core = match ? match[1] : tok;
+          const punct = match ? match[2] : '';
+          const cw = cleanWord(core);
 
-        const tokens = text.split(/\s+/).filter(Boolean);
-        wordChipsContainer.innerHTML = tokens.map((tok, i) => {
-          const cw = cleanWord(tok);
-          let colorClass = 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500 hover:text-white';
-          let state = 'none';
+          let initialColor = -1;
+          if (blueSet.has(cw)) initialColor = 0;
+          else if (amberSet.has(cw)) initialColor = 1;
+          else if (greenSet.has(cw)) initialColor = 2;
 
-          if (blueSet.has(cw)) {
-            colorClass = 'border-sky-400 bg-sky-500/20 text-sky-200 shadow-[0_0_8px_rgba(56,189,248,0.3)] font-bold';
-            state = 'blue';
-          } else if (amberSet.has(cw)) {
-            colorClass = 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.3)] font-bold';
-            state = 'amber';
-          } else if (greenSet.has(cw)) {
-            colorClass = 'border-emerald-400 bg-emerald-500/20 text-emerald-200 shadow-[0_0_8px_rgba(52,211,153,0.3)] font-bold';
-            state = 'green';
+          const sInfo = detectSuffix(core, formulaParts);
+          if (sInfo) {
+            // Check if formula has a matching suffix part
+            const sIdx = formulaParts.findIndex(p => p.toLowerCase().includes(sInfo.suffix.toLowerCase()));
+            const suffixColor = sIdx !== -1 ? sIdx : initialColor;
+            return {
+              token: tok,
+              core: core,
+              punct: punct,
+              isSplit: true,
+              root: sInfo.root,
+              suffix: sInfo.suffix,
+              rootColor: initialColor,
+              suffixColor: suffixColor,
+              color: initialColor
+            };
           }
 
+          return {
+            token: tok,
+            core: core,
+            punct: punct,
+            isSplit: false,
+            root: '',
+            suffix: '',
+            rootColor: -1,
+            suffixColor: -1,
+            color: initialColor
+          };
+        });
+      }
+
+      initAssignmentsFromRule();
+
+      function syncWordChips() {
+        if (!wordChipsContainer || !legendContainer) return;
+
+        const formulaParts = getFormulaParts();
+        const totalColors = Math.max(formulaParts.length, 3);
+
+        // Update Legend Bar
+        legendContainer.innerHTML = formulaParts.map((part, idx) => {
+          const col = COLOR_PALETTE[idx % COLOR_PALETTE.length];
           return `
-            <button type="button" class="ge-word-chip px-2.5 py-1 rounded-lg text-xs border transition cursor-pointer active:scale-95 ${colorClass}" data-index="${i}" data-token="${escapeHtml(tok)}" data-clean="${escapeHtml(cw)}" data-state="${state}">
-              ${escapeHtml(tok)}
-            </button>
+            <span class="px-2.5 py-1 rounded-xl text-[11px] font-bold border ${col.chipClass} flex items-center gap-1.5 shadow-sm">
+              <span class="w-2 h-2 rounded-full ${col.badgeClass}"></span>
+              <span>Part ${idx + 1}: ${escapeHtml(part)}</span>
+            </span>
           `;
         }).join('');
 
-        // Wire click handler on word chips
-        wordChipsContainer.querySelectorAll('.ge-word-chip').forEach(btn => {
+        if (currentWordAssignments.length === 0) {
+          wordChipsContainer.innerHTML = '<span class="text-xs text-slate-500 italic">Type an example sentence above to assign colors and split suffixes</span>';
+          return;
+        }
+
+        const getStyle = (colorIdx) => {
+          if (typeof colorIdx === 'number' && colorIdx >= 0) {
+            return COLOR_PALETTE[colorIdx % COLOR_PALETTE.length].chipClass;
+          }
+          return 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500 hover:text-white';
+        };
+
+        wordChipsContainer.innerHTML = currentWordAssignments.map((item, i) => {
+          if (item.isSplit) {
+            return `
+              <div class="inline-flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-0.5 shadow-sm">
+                <button type="button" class="ge-token-btn px-2.5 py-1 rounded-l-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.rootColor)}" data-token-idx="${i}" data-segment="root" title="Click to cycle color for '${escapeHtml(item.root)}'">
+                  ${escapeHtml(item.root)}
+                </button>
+                <button type="button" class="ge-token-btn px-2 py-1 rounded-r-lg text-xs font-bold transition cursor-pointer active:scale-95 border-l border-slate-700/80 ${getStyle(item.suffixColor)}" data-token-idx="${i}" data-segment="suffix" title="Click to cycle color for '-${escapeHtml(item.suffix)}'">
+                  -${escapeHtml(item.suffix)}
+                </button>
+                <button type="button" class="ge-split-toggle px-1 text-[11px] text-slate-500 hover:text-white transition cursor-pointer" title="Merge into whole word" data-token-idx="${i}">
+                  ⇄
+                </button>
+                ${item.punct ? `<span class="text-slate-400 font-bold text-xs pr-1">${escapeHtml(item.punct)}</span>` : ''}
+              </div>
+            `;
+          } else {
+            const canSplit = Boolean(detectSuffix(item.core, formulaParts));
+            return `
+              <div class="inline-flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-0.5 shadow-sm">
+                <button type="button" class="ge-token-btn px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.color)}" data-token-idx="${i}" data-segment="whole" title="Click to cycle formula color">
+                  ${escapeHtml(item.core || item.token)}
+                </button>
+                ${canSplit ? `
+                  <button type="button" class="ge-split-toggle px-1 text-[11px] text-slate-500 hover:text-white transition cursor-pointer" title="Split into root + suffix" data-token-idx="${i}">
+                    ✂️
+                  </button>
+                ` : ''}
+                ${item.punct ? `<span class="text-slate-400 font-bold text-xs pr-1">${escapeHtml(item.punct)}</span>` : ''}
+              </div>
+            `;
+          }
+        }).join('');
+
+        // Wire click handlers for coloring segments
+        wordChipsContainer.querySelectorAll('.ge-token-btn').forEach(btn => {
           btn.onclick = () => {
-            const clean = btn.dataset.clean;
-            const current = btn.dataset.state;
+            const idx = Number(btn.dataset.tokenIdx);
+            const seg = btn.dataset.segment;
+            const item = currentWordAssignments[idx];
+            if (!item) return;
 
-            // Remove clean from all inputs first
-            const removeFromInput = (inp) => {
-              if (!inp) return;
-              const currentTokens = inp.value.split(/[,;\s+]+/).filter(w => cleanWord(w) !== clean && Boolean(w));
-              inp.value = currentTokens.join(', ');
-            };
-            const addToInput = (inp) => {
-              if (!inp) return;
-              const currentTokens = inp.value.split(/[,;\s+]+/).filter(Boolean);
-              if (!currentTokens.some(w => cleanWord(w) === clean)) {
-                currentTokens.push(btn.dataset.token.replace(/[^a-zA-Z0-9']/g, ''));
-              }
-              inp.value = currentTokens.join(', ');
+            const nextColor = (curr) => {
+              const c = typeof curr === 'number' ? curr : -1;
+              return (c + 2) % (totalColors + 1) - 1;
             };
 
-            removeFromInput(blueInput);
-            removeFromInput(amberInput);
-            removeFromInput(greenInput);
+            if (seg === 'root') {
+              item.rootColor = nextColor(item.rootColor);
+            } else if (seg === 'suffix') {
+              item.suffixColor = nextColor(item.suffixColor);
+            } else {
+              item.color = nextColor(item.color);
+            }
+            syncWordChips();
+          };
+        });
 
-            // Cycle: none -> blue -> amber -> green -> none
-            if (current === 'none') {
-              addToInput(blueInput);
-            } else if (current === 'blue') {
-              addToInput(amberInput);
-            } else if (current === 'amber') {
-              addToInput(greenInput);
-            } // else green -> none (already removed)
+        // Wire toggle button for splitting / merging suffix
+        wordChipsContainer.querySelectorAll('.ge-split-toggle').forEach(btn => {
+          btn.onclick = () => {
+            const idx = Number(btn.dataset.tokenIdx);
+            const item = currentWordAssignments[idx];
+            if (!item) return;
 
+            if (item.isSplit) {
+              item.isSplit = false;
+              item.color = typeof item.rootColor === 'number' && item.rootColor !== -1 ? item.rootColor : item.suffixColor;
+            } else {
+              const sInfo = detectSuffix(item.core, formulaParts) || { root: item.core.slice(0, -3), suffix: item.core.slice(-3) };
+              item.isSplit = true;
+              item.root = sInfo.root;
+              item.suffix = sInfo.suffix;
+              item.rootColor = item.color;
+              item.suffixColor = item.color;
+            }
             syncWordChips();
           };
         });
       }
 
-      sentenceInput?.addEventListener('input', syncWordChips);
-      blueInput?.addEventListener('input', syncWordChips);
-      amberInput?.addEventListener('input', syncWordChips);
-      greenInput?.addEventListener('input', syncWordChips);
+      sentenceInput?.addEventListener('input', () => {
+        const text = sentenceInput.value.trim();
+        const rawTokens = text.split(/\s+/).filter(Boolean);
+        const formulaParts = getFormulaParts();
+
+        const existingMap = new Map();
+        currentWordAssignments.forEach(item => {
+          existingMap.set(item.core, item);
+        });
+
+        currentWordAssignments = rawTokens.map(tok => {
+          const match = tok.match(/^([^.,!?;:]*)([.,!?;:]*)$/);
+          const core = match ? match[1] : tok;
+          const punct = match ? match[2] : '';
+          const existing = existingMap.get(core);
+
+          if (existing) {
+            return {
+              ...existing,
+              token: tok,
+              punct: punct
+            };
+          }
+
+          const sInfo = detectSuffix(core, formulaParts);
+          if (sInfo) {
+            return {
+              token: tok,
+              core: core,
+              punct: punct,
+              isSplit: true,
+              root: sInfo.root,
+              suffix: sInfo.suffix,
+              rootColor: -1,
+              suffixColor: -1,
+              color: -1
+            };
+          }
+
+          return {
+            token: tok,
+            core: core,
+            punct: punct,
+            isSplit: false,
+            root: '',
+            suffix: '',
+            rootColor: -1,
+            suffixColor: -1,
+            color: -1
+          };
+        });
+
+        syncWordChips();
+      });
+
+      formulaInput?.addEventListener('input', syncWordChips);
       syncWordChips();
 
       modal.querySelector('#ge-close-btn').onclick = () => modal.remove();
       modal.querySelector('#ge-cancel-btn').onclick = () => modal.remove();
+
+      // Open Add New Rule Form Button
+      modal.querySelector('#ge-open-add-rule-btn')?.addEventListener('click', () => {
+        editingRuleIndex = -1;
+        isRuleFormOpen = true;
+        isImagePickerOpen = false;
+        renderEditor();
+        modal.querySelector('#ge-rule-form-box')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        modal.querySelector('#ge-rule-title')?.focus();
+      });
+
+      // Collapse / Cancel Form Buttons
+      modal.querySelector('#ge-collapse-form-btn')?.addEventListener('click', () => {
+        editingRuleIndex = -1;
+        isRuleFormOpen = false;
+        isImagePickerOpen = false;
+        renderEditor();
+      });
+      modal.querySelector('#ge-cancel-rule-btn')?.addEventListener('click', () => {
+        editingRuleIndex = -1;
+        isRuleFormOpen = false;
+        isImagePickerOpen = false;
+        renderEditor();
+      });
 
       // Rename Deck
       modal.querySelector('#ge-save-deck-name-btn').onclick = async () => {
@@ -1798,24 +2158,11 @@
         renderEditor();
       };
 
-      // Cancel Rule Edit
-      modal.querySelector('#ge-cancel-edit-btn')?.addEventListener('click', () => {
-        editingRuleIndex = -1;
-        renderEditor();
-      });
-      modal.querySelector('#ge-cancel-rule-btn')?.addEventListener('click', () => {
-        editingRuleIndex = -1;
-        renderEditor();
-      });
-
       // Add or Save Rule
       modal.querySelector('#ge-save-rule-btn').onclick = async () => {
         const title = modal.querySelector('#ge-rule-title').value.trim();
         const formula = modal.querySelector('#ge-rule-formula').value.trim();
         const sentence = modal.querySelector('#ge-rule-sentence').value.trim();
-        const wordsBlue = modal.querySelector('#ge-rule-words-blue')?.value.trim() || '';
-        const wordsAmber = modal.querySelector('#ge-rule-words-amber')?.value.trim() || '';
-        const wordsGreen = modal.querySelector('#ge-rule-words-green')?.value.trim() || '';
         const clue = modal.querySelector('#ge-rule-clue').value.trim();
         const img = modal.querySelector('#ge-rule-image').value.trim();
         const bad = modal.querySelector('#ge-rule-bad').value.trim();
@@ -1840,6 +2187,48 @@
           quizOptions.push('not ' + answer);
         }
 
+        // Prepare saved word assignments with sub-word suffix support
+        const savedWordAssignments = currentWordAssignments.map(item => {
+          if (item.isSplit) {
+            return {
+              token: item.token,
+              punct: item.punct,
+              segments: [
+                { text: item.root, color: item.rootColor },
+                { text: item.suffix, color: item.suffixColor }
+              ]
+            };
+          } else {
+            return {
+              token: item.token,
+              text: item.core,
+              punct: item.punct,
+              color: item.color
+            };
+          }
+        });
+
+        // Compute legacy strings for backwards compatibility
+        const wordsBlue = [];
+        const wordsAmber = [];
+        const wordsGreen = [];
+        savedWordAssignments.forEach(item => {
+          if (item.segments) {
+            item.segments.forEach(seg => {
+              if (seg.color === 0) wordsBlue.push(seg.text);
+              if (seg.color === 1) wordsAmber.push(seg.text);
+              if (seg.color === 2) wordsGreen.push(seg.text);
+            });
+          } else {
+            if (item.color === 0) wordsBlue.push(item.text);
+            if (item.color === 1) wordsAmber.push(item.text);
+            if (item.color === 2) wordsGreen.push(item.text);
+          }
+        });
+        const wordsBlueStr = wordsBlue.join(', ');
+        const wordsAmberStr = wordsAmber.join(', ');
+        const wordsGreenStr = wordsGreen.join(', ');
+
         if (isEditing) {
           // Update existing rule
           rules[editingRuleIndex] = {
@@ -1847,12 +2236,13 @@
             title,
             formula: formula || 'Subject + Verb',
             sentence,
-            words_blue: wordsBlue,
-            words_amber: wordsAmber,
-            words_green: wordsGreen,
-            highlight_blue: wordsBlue,
-            highlight_amber: wordsAmber,
-            highlight_green: wordsGreen,
+            word_assignments: savedWordAssignments,
+            words_blue: wordsBlueStr,
+            words_amber: wordsAmberStr,
+            words_green: wordsGreenStr,
+            highlight_blue: wordsBlueStr,
+            highlight_amber: wordsAmberStr,
+            highlight_green: wordsGreenStr,
             context_clue: clue || 'Grammar practice',
             image: img || rules[editingRuleIndex].image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
             mistake_bad: bad || 'Mistake',
@@ -1865,6 +2255,8 @@
           await window.saveOrUpdateGrammarDeck(deck);
           if (typeof toast === 'function') toast(`Rule #${editingRuleIndex + 1} updated and saved!`);
           editingRuleIndex = -1;
+          isRuleFormOpen = false;
+          isImagePickerOpen = false;
         } else {
           // Add new rule
           const newRule = {
@@ -1872,12 +2264,13 @@
             title,
             formula: formula || 'Subject + Verb',
             sentence,
-            words_blue: wordsBlue,
-            words_amber: wordsAmber,
-            words_green: wordsGreen,
-            highlight_blue: wordsBlue,
-            highlight_amber: wordsAmber,
-            highlight_green: wordsGreen,
+            word_assignments: savedWordAssignments,
+            words_blue: wordsBlueStr,
+            words_amber: wordsAmberStr,
+            words_green: wordsGreenStr,
+            highlight_blue: wordsBlueStr,
+            highlight_amber: wordsAmberStr,
+            highlight_green: wordsGreenStr,
             context_clue: clue || 'Grammar practice',
             image: img || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
             mistake_bad: bad || 'Mistake',
@@ -1890,6 +2283,9 @@
           deck.rules = rules;
           await window.saveOrUpdateGrammarDeck(deck);
           if (typeof toast === 'function') toast('New rule added and saved!');
+          editingRuleIndex = -1;
+          isRuleFormOpen = false;
+          isImagePickerOpen = false;
         }
 
         renderEditor();
@@ -1901,6 +2297,8 @@
           const idx = Number(btn.dataset.ruleIdx);
           if (idx >= 0 && idx < rules.length) {
             editingRuleIndex = idx;
+            isRuleFormOpen = true;
+            isImagePickerOpen = false;
             renderEditor();
             modal.querySelector('#ge-rule-form-box')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             modal.querySelector('#ge-rule-title')?.focus();

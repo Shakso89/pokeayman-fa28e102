@@ -324,4 +324,77 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('persistCanonicalStudentPatch');
     expect(js).toContain('updateVisibleStudentCoinLabels');
   });
+
+  it('ensures grammar rule editor supports collapsible form, collapsible image drawer, multi-color formulas, and sub-word suffix coloring', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+
+    // 1. Collapsible form elements
+    expect(js).toContain('id="ge-add-rule-trigger-bar"');
+    expect(js).toContain('id="ge-open-add-rule-btn"');
+    expect(js).toContain('id="ge-collapse-form-btn"');
+    expect(js).toContain('isRuleFormOpen');
+
+    // 2. Collapsible image picker elements
+    expect(js).toContain('id="ge-toggle-image-picker-btn"');
+    expect(js).toContain('id="ge-image-thumb-box"');
+    expect(js).toContain('id="ge-image-drawer"');
+    expect(js).toContain('isImagePickerOpen');
+
+    // 3. Dynamic formula parts legend and suffix coloring (Option A)
+    expect(js).toContain('id="ge-formula-parts-legend"');
+    expect(js).toContain('detectSuffix');
+    expect(js).toContain('word_assignments');
+    expect(js).toContain('ge-split-toggle');
+    expect(js).toContain('ge-token-btn');
+
+    // 4. Test formatSyntaxHighlightedSentence with segmented suffix coloring
+    const mockWindow: any = {
+      document: {
+        readyState: 'complete',
+        addEventListener: () => {},
+        getElementById: () => null,
+        querySelectorAll: () => []
+      },
+      addEventListener: () => {}
+    };
+    new Function('window', 'document', js)(mockWindow, mockWindow.document);
+
+    const formatSentence = mockWindow.formatSyntaxHighlightedSentence;
+    expect(typeof formatSentence).toBe('function');
+
+    const testRule = {
+      title: 'Present Continuous',
+      formula: 'Subject + am / is / are + Verb + -ing',
+      sentence: 'The elephant is walking slowly in the grass.',
+      word_assignments: [
+        { token: 'The', text: 'The', color: 0 },
+        { token: 'elephant', text: 'elephant', color: 0 },
+        { token: 'is', text: 'is', color: 1 },
+        {
+          token: 'walking',
+          isSplit: true,
+          segments: [
+            { text: 'walk', color: 1 },
+            { text: 'ing', color: 3 }
+          ]
+        },
+        { token: 'slowly', text: 'slowly', color: 2 },
+        { token: 'in', text: 'in', color: -1 },
+        { token: 'the', text: 'the', color: -1 },
+        { token: 'grass.', text: 'grass', color: -1, punct: '.' }
+      ]
+    };
+
+    const rendered = formatSentence(testRule.sentence, testRule.formula, testRule);
+
+    // Verify root is Amber (color 1) and suffix -ing is Purple (color 3) without space
+    expect(rendered).toContain('<span class="text-amber-400 font-black">walk</span><span class="text-purple-300 font-black">ing</span>');
+    // Verify Part 1 (Blue)
+    expect(rendered).toContain('<span class="text-sky-300 font-black">The</span>');
+    expect(rendered).toContain('<span class="text-sky-300 font-black">elephant</span>');
+    // Verify Part 2 (Amber)
+    expect(rendered).toContain('<span class="text-amber-400 font-black">is</span>');
+    // Verify Part 3 (Emerald)
+    expect(rendered).toContain('<span class="text-emerald-400 font-black">slowly</span>');
+  });
 });
