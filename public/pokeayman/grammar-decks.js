@@ -1584,12 +1584,12 @@
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                   ${isOwner ? `
-                    <button type="button" id="gp-edit-deck-btn" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition flex items-center gap-1.5 cursor-pointer" title="Edit this rule in Deck Editor">
+                    <button type="button" id="gp-edit-deck-btn" class="gp-edit-deck-btn px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition flex items-center gap-1.5 cursor-pointer" title="Edit this rule in Deck Editor">
                       <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                       Edit Rule
                     </button>
                   ` : ''}
-                  <button type="button" id="gp-close-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-lg transition cursor-pointer" aria-label="Close practice">
+                  <button type="button" id="gp-close-btn" class="gp-close-btn w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-lg transition cursor-pointer" aria-label="Close practice">
                     ✕
                   </button>
                 </div>
@@ -1621,20 +1621,20 @@
 
                 <!-- Syntax-Highlighted Sentence with Interactive Substitution Pills -->
                 <div class="relative z-10 my-auto py-5 text-center">
-                  <p class="text-2xl sm:text-3xl md:text-4xl font-black text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+                  <p class="gp-hero-sentence text-2xl sm:text-3xl md:text-4xl font-black text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
                     ${formatSyntaxHighlightedSentence(r.sentence, r.formula, r)}
                   </p>
                 </div>
 
                 <!-- Common Mistake Banner (Red vs Green) -->
-                <div class="relative z-10 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
-                  <div class="flex items-center gap-1.5 text-rose-300">
-                    <span class="font-black text-rose-400 uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 border border-rose-500/30">Mistake:</span>
-                    <span class="line-through opacity-85">${escapeHtml(badText)}</span>
+                <div class="gp-mistake-banner relative z-10 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+                  <div class="gp-mistake-wrap flex items-center gap-1.5 text-rose-300">
+                    <span class="gp-mistake-pill font-black text-rose-400 uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 border border-rose-500/30">Mistake:</span>
+                    <span class="gp-mistake-text line-through opacity-85">${escapeHtml(badText)}</span>
                   </div>
-                  <div class="flex items-center gap-1.5 text-emerald-300">
-                    <span class="font-black text-emerald-400 uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30">Correct:</span>
-                    <span class="font-bold">${escapeHtml(goodText)}</span>
+                  <div class="gp-correct-wrap flex items-center gap-1.5 text-emerald-300">
+                    <span class="gp-correct-pill font-black text-emerald-400 uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30">Correct:</span>
+                    <span class="gp-correct-text font-bold">${escapeHtml(goodText)}</span>
                   </div>
                 </div>
               </div>
@@ -2118,7 +2118,9 @@
 
             <div class="flex items-center gap-2 pt-1">
               <button type="button" id="ge-save-rule-btn" class="px-4 py-2 rounded-xl ${isEditing ? 'bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black' : 'bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold'} text-xs transition flex items-center gap-1.5 shadow active:scale-95 cursor-pointer">
-                <span>${isEditing ? '' : '➕'}</span>
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  ${isEditing ? '<polyline points="20 6 9 17 4 12"/>' : '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'}
+                </svg>
                 <span>${isEditing ? 'Save Rule Changes' : 'Add Rule'}</span>
               </button>
               <button type="button" id="ge-cancel-rule-btn" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition cursor-pointer">
@@ -2131,7 +2133,7 @@
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Rules (${rules.length})</h4>
-              <span class="text-[11px] text-slate-500">Click  Edit to modify any rule</span>
+              <span class="text-[11px] text-slate-500">Click Edit to modify any rule</span>
             </div>
             <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
               ${rules.length === 0 ? `
@@ -2139,7 +2141,7 @@
                   No rules in this deck yet. Use the form above to add your first rule!
                 </div>
               ` : rules.map((r, i) => `
-                <div class="p-3 rounded-xl bg-slate-950 border ${editingRuleIndex === i ? 'border-amber-400 bg-amber-950/20 ring-1 ring-amber-400/40' : 'border-slate-800'} flex items-center justify-between gap-3 text-xs transition">
+                <div class="ge-rule-card p-3 rounded-xl bg-slate-950 dark:bg-slate-950 border ${editingRuleIndex === i ? 'border-amber-400 bg-amber-950/20 ring-1 ring-amber-400/40' : 'border-slate-800'} flex items-center justify-between gap-3 text-xs transition">
                   <div class="flex items-center gap-2.5 min-w-0 flex-1">
                     ${r.image ? `
                       <img src="${escapeHtml(r.image)}" alt="Rule thumbnail" class="w-10 h-10 object-cover rounded-lg border border-slate-800 shrink-0 bg-slate-900" onerror="this.style.display='none'">
@@ -2148,18 +2150,19 @@
                     `}
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-2">
-                        <p class="font-bold text-white truncate">${i + 1}. ${escapeHtml(r.title || 'Rule')}</p>
+                        <p class="ge-rule-title font-bold text-white dark:text-white truncate">${i + 1}. ${escapeHtml(r.title || 'Rule')}</p>
                         ${editingRuleIndex === i ? '<span class="text-[10px] bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded font-black shrink-0">EDITING</span>' : ''}
                       </div>
-                      <p class="text-slate-400 truncate mt-0.5">${escapeHtml(r.sentence || r.formula || '')}</p>
+                      <p class="ge-rule-subtitle text-slate-400 truncate mt-0.5">${escapeHtml(r.sentence || r.formula || '')}</p>
                     </div>
                   </div>
                   <div class="flex items-center gap-1.5 shrink-0">
-                    <button type="button" class="ge-edit-rule px-2.5 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 font-bold border border-amber-400/30 transition flex items-center gap-1 cursor-pointer" data-rule-idx="${i}" title="Edit Rule">
-                      <span></span> Edit
+                    <button type="button" class="ge-edit-rule px-2.5 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 font-bold border border-amber-400/30 transition flex items-center gap-1.5 cursor-pointer" data-rule-idx="${i}" title="Edit Rule">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                      <span>Edit</span>
                     </button>
                     <button type="button" class="ge-del-rule p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-500/30 font-bold transition cursor-pointer" data-rule-idx="${i}" title="Delete Rule">
-                      
+                      <svg class="w-4 h-4 text-rose-500 dark:text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
                     </button>
                   </div>
                 </div>
@@ -2427,16 +2430,16 @@
       // DYNAMIC FORMULA PARTS & SUFFIX COLORING (Option A)
       // ==========================================
       const COLOR_PALETTE = [
-        { id: 0, name: 'Sky Blue', hex: '#38bdf8', chipClass: 'border-sky-400 bg-sky-500/20 text-sky-200 shadow-[0_0_8px_rgba(56,189,248,0.3)] font-bold', dotBg: 'bg-sky-400', badgeClass: 'bg-sky-400 text-slate-950' },
-        { id: 1, name: 'Amber Gold', hex: '#fbbf24', chipClass: 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.3)] font-bold', dotBg: 'bg-amber-400', badgeClass: 'bg-amber-400 text-slate-950' },
-        { id: 2, name: 'Emerald Green', hex: '#34d399', chipClass: 'border-emerald-400 bg-emerald-500/20 text-emerald-200 shadow-[0_0_8px_rgba(52,211,153,0.3)] font-bold', dotBg: 'bg-emerald-400', badgeClass: 'bg-emerald-400 text-slate-950' },
-        { id: 3, name: 'Violet Purple', hex: '#c084fc', chipClass: 'border-purple-400 bg-purple-500/20 text-purple-200 shadow-[0_0_8px_rgba(192,132,252,0.3)] font-bold', dotBg: 'bg-purple-400', badgeClass: 'bg-purple-400 text-slate-950' },
-        { id: 4, name: 'Rose Pink', hex: '#fb7185', chipClass: 'border-rose-400 bg-rose-500/20 text-rose-200 shadow-[0_0_8px_rgba(251,113,133,0.3)] font-bold', dotBg: 'bg-rose-400', badgeClass: 'bg-rose-400 text-slate-950' },
-        { id: 5, name: 'Bright Orange', hex: '#fb923c', chipClass: 'border-orange-400 bg-orange-500/20 text-orange-200 shadow-[0_0_8px_rgba(251,146,60,0.3)] font-bold', dotBg: 'bg-orange-400', badgeClass: 'bg-orange-400 text-slate-950' },
-        { id: 6, name: 'Cyan Blue', hex: '#22d3ee', chipClass: 'border-cyan-400 bg-cyan-500/20 text-cyan-200 shadow-[0_0_8px_rgba(34,211,238,0.3)] font-bold', dotBg: 'bg-cyan-400', badgeClass: 'bg-cyan-400 text-slate-950' },
-        { id: 7, name: 'Fuchsia Magenta', hex: '#e879f9', chipClass: 'border-fuchsia-400 bg-fuchsia-500/20 text-fuchsia-200 shadow-[0_0_8px_rgba(232,121,249,0.3)] font-bold', dotBg: 'bg-fuchsia-400', badgeClass: 'bg-fuchsia-400 text-slate-950' },
-        { id: 8, name: 'Lime Green', hex: '#a3e635', chipClass: 'border-lime-400 bg-lime-500/20 text-lime-200 shadow-[0_0_8px_rgba(163,230,53,0.3)] font-bold', dotBg: 'bg-lime-400', badgeClass: 'bg-lime-400 text-slate-950' },
-        { id: 9, name: 'Bright Yellow', hex: '#facc15', chipClass: 'border-yellow-400 bg-yellow-500/20 text-yellow-200 shadow-[0_0_8px_rgba(250,204,21,0.3)] font-bold', dotBg: 'bg-yellow-400', badgeClass: 'bg-yellow-400 text-slate-950' }
+        { id: 0, name: 'Sky Blue', hex: '#38bdf8', chipClass: 'ge-palette-0 border-sky-400 bg-sky-500/20 text-sky-800 dark:text-sky-200 shadow-[0_0_8px_rgba(56,189,248,0.3)] font-black', dotBg: 'bg-sky-400', badgeClass: 'bg-sky-400 text-slate-950' },
+        { id: 1, name: 'Amber Gold', hex: '#fbbf24', chipClass: 'ge-palette-1 border-amber-400 bg-amber-500/20 text-amber-900 dark:text-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.3)] font-black', dotBg: 'bg-amber-400', badgeClass: 'bg-amber-400 text-slate-950' },
+        { id: 2, name: 'Emerald Green', hex: '#34d399', chipClass: 'ge-palette-2 border-emerald-400 bg-emerald-500/20 text-emerald-900 dark:text-emerald-200 shadow-[0_0_8px_rgba(52,211,153,0.3)] font-black', dotBg: 'bg-emerald-400', badgeClass: 'bg-emerald-400 text-slate-950' },
+        { id: 3, name: 'Violet Purple', hex: '#c084fc', chipClass: 'ge-palette-3 border-purple-400 bg-purple-500/20 text-purple-900 dark:text-purple-200 shadow-[0_0_8px_rgba(192,132,252,0.3)] font-black', dotBg: 'bg-purple-400', badgeClass: 'bg-purple-400 text-slate-950' },
+        { id: 4, name: 'Rose Pink', hex: '#fb7185', chipClass: 'ge-palette-4 border-rose-400 bg-rose-500/20 text-rose-900 dark:text-rose-200 shadow-[0_0_8px_rgba(251,113,133,0.3)] font-black', dotBg: 'bg-rose-400', badgeClass: 'bg-rose-400 text-slate-950' },
+        { id: 5, name: 'Bright Orange', hex: '#fb923c', chipClass: 'ge-palette-5 border-orange-400 bg-orange-500/20 text-orange-900 dark:text-orange-200 shadow-[0_0_8px_rgba(251,146,60,0.3)] font-black', dotBg: 'bg-orange-400', badgeClass: 'bg-orange-400 text-slate-950' },
+        { id: 6, name: 'Cyan Blue', hex: '#22d3ee', chipClass: 'ge-palette-6 border-cyan-400 bg-cyan-500/20 text-cyan-900 dark:text-cyan-200 shadow-[0_0_8px_rgba(34,211,238,0.3)] font-black', dotBg: 'bg-cyan-400', badgeClass: 'bg-cyan-400 text-slate-950' },
+        { id: 7, name: 'Fuchsia Magenta', hex: '#e879f9', chipClass: 'ge-palette-7 border-fuchsia-400 bg-fuchsia-500/20 text-fuchsia-900 dark:text-fuchsia-200 shadow-[0_0_8px_rgba(232,121,249,0.3)] font-black', dotBg: 'bg-fuchsia-400', badgeClass: 'bg-fuchsia-400 text-slate-950' },
+        { id: 8, name: 'Lime Green', hex: '#a3e635', chipClass: 'ge-palette-8 border-lime-400 bg-lime-500/20 text-lime-900 dark:text-lime-200 shadow-[0_0_8px_rgba(163,230,53,0.3)] font-black', dotBg: 'bg-lime-400', badgeClass: 'bg-lime-400 text-slate-950' },
+        { id: 9, name: 'Bright Yellow', hex: '#facc15', chipClass: 'ge-palette-9 border-yellow-400 bg-yellow-500/20 text-yellow-900 dark:text-yellow-200 shadow-[0_0_8px_rgba(250,204,21,0.3)] font-black', dotBg: 'bg-yellow-400', badgeClass: 'bg-yellow-400 text-slate-950' }
       ];
 
       let currentWordAssignments = [];
@@ -2816,9 +2819,14 @@
 
         const hasAnySplit = currentWordAssignments.some(item => item.isSplit);
         const chipsHtml = currentWordAssignments.map((item, i) => {
+          const rawCore = String(item.core || item.token || '').trim();
+          const punctMatch = rawCore.match(/[.,!?;:]+$/);
+          const coreClean = punctMatch ? rawCore.slice(0, -punctMatch[0].length) : rawCore;
+          const effectivePunct = item.punct || (punctMatch ? punctMatch[0] : '');
+
           if (item.isSplit) {
             return `
-              <div class="inline-flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-0.5 shadow-sm">
+              <div class="ge-token-wrapper inline-flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-0.5 shadow-sm">
                 <button type="button" class="ge-token-btn px-2.5 py-1 rounded-l-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.rootColor, false)}" data-token-idx="${i}" data-segment="root" title="${getPartTooltip(item.rootColor, false)}">
                   ${escapeHtml(item.root)}
                 </button>
@@ -2828,22 +2836,26 @@
                 <button type="button" class="ge-split-toggle px-1 text-slate-400 hover:text-white transition cursor-pointer" title="Merge root and suffix into whole word" data-token-idx="${i}" aria-label="Merge word">
                   <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                 </button>
-                ${item.punct ? `<span class="text-slate-400 font-bold text-xs pr-1">${escapeHtml(item.punct)}</span>` : ''}
+                ${effectivePunct ? `<span class="ge-token-punct text-slate-400 font-bold text-xs pr-1 select-none">${escapeHtml(effectivePunct)}</span>` : ''}
               </div>
             `;
           } else {
+            // If the token is purely punctuation (e.g. "?"), render as standalone clean punctuation rather than an empty button + double punct!
+            if (!coreClean && effectivePunct) {
+              return `<span class="ge-standalone-punct text-slate-400 font-black text-sm px-1.5 self-center select-none">${escapeHtml(effectivePunct)}</span>`;
+            }
             const canSplit = Boolean(detectSuffix(item.core, getFormulaParts()));
             return `
-              <div class="inline-flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-0.5 shadow-sm">
+              <div class="ge-token-wrapper inline-flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-0.5 shadow-sm">
                 <button type="button" class="ge-token-btn px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.color)}" data-token-idx="${i}" data-segment="whole" title="${getPartTooltip(item.color, false)}">
-                  ${escapeHtml(item.core || item.token)}
+                  ${escapeHtml(coreClean)}
                 </button>
                 ${canSplit ? `
                   <button type="button" class="ge-split-toggle px-1 text-slate-400 hover:text-amber-300 transition cursor-pointer" title="Split grammatical suffix (-ing, -ed, -s, -er, -est, -ly)" data-token-idx="${i}" aria-label="Split suffix">
                     <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879a3 3 0 11-4.242-4.242 3 3 0 014.242 0L12 12zm0 0L9.121 9.121a3 3 0 10-4.242 4.242 3 3 0 004.242 0L12 12z"/></svg>
                   </button>
                 ` : ''}
-                ${item.punct ? `<span class="text-slate-400 font-bold text-xs pr-1">${escapeHtml(item.punct)}</span>` : ''}
+                ${effectivePunct ? `<span class="ge-token-punct text-slate-400 font-bold text-xs pr-1 select-none">${escapeHtml(effectivePunct)}</span>` : ''}
               </div>
             `;
           }
