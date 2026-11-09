@@ -721,6 +721,21 @@
       return { root: clean.slice(0, splitIdx), suffix: clean.slice(splitIdx) };
     }
 
+    // 13. Adverbial -ly suffix (e.g. slowly -> slow + ly, quickly -> quick + ly, happily -> happi + ly)
+    const NOT_LY = new Set([
+      'family', 'fly', 'rely', 'apply', 'reply', 'supply', 'multiply', 'imply',
+      'jelly', 'belly', 'early', 'silly', 'ugly', 'holy', 'only', 'daily', 'italy',
+      'bully', 'ally', 'rally'
+    ]);
+    if (lower.endsWith('ly') && lower.length >= 5 && !NOT_LY.has(lower)) {
+      if (lower.endsWith('ily') && lower.length >= 6) {
+        const splitIdx = clean.length - 3;
+        return { root: clean.slice(0, splitIdx), suffix: clean.slice(splitIdx) };
+      }
+      const splitIdx = clean.length - 2;
+      return { root: clean.slice(0, splitIdx), suffix: clean.slice(splitIdx) };
+    }
+
     return null;
   }
 
@@ -1028,13 +1043,13 @@
       const style = colorStyles[styleIdx];
       const cleanPart = part.replace(/^\[+|\]+$/g, '').trim();
 
-      // Check if part contains a suffix addition like "Verb-ing", "Verb-ed", "Verb-s", "Verb-ies", "Verb+ing", etc.
-      const sfxMatch = cleanPart.match(/^([a-z]+)[-\s+](ing|ed|ied|es|ies|s|d|en|er|est|ier|iest|ping|ning|ting|ming|ging|bing|ped|ned|ged|ted|ded|s\/es|s\/es\/ies)$/i);
+      // Check if part contains a suffix addition like "Verb-ing", "Verb-ed", "Verb-s", "Verb-ies", "Adjective-er", "Adjective-est", "Adverb-ly", etc.
+      const sfxMatch = cleanPart.match(/^([a-z]+)[-\s+](ing|ed|ied|es|ies|s|d|en|er|est|ier|iest|ly|ily|ping|ning|ting|ming|ging|bing|ped|ned|ged|ted|ded|s\/es|s\/es\/ies)$/i);
       let innerHtml = escapeHtml(`[${cleanPart}]`);
       if (sfxMatch) {
         const rootWord = sfxMatch[1];
         const sfxWord = '-' + sfxMatch[2];
-        const sfxColorIdx = (typeof rule?.suffix_color === 'number') ? rule.suffix_color : 3;
+        const sfxColorIdx = (typeof rule?.suffix_color === 'number') ? rule.suffix_color : styleIdx;
         const sfxColorCls = [
           'text-sky-300', 'text-amber-300', 'text-emerald-300', 'text-purple-300',
           'text-rose-300', 'text-orange-300', 'text-cyan-300', 'text-fuchsia-300',
@@ -2149,7 +2164,18 @@
           else if (greenSet.has(cw)) initialColor = 2;
 
           const sInfo = detectSuffix(core, formulaParts);
-          if (sInfo) {
+          const formulaMentionsSuffix = sInfo && formulaParts.some(p => {
+            const pNorm = String(p || '').toLowerCase();
+            const sNorm = sInfo.suffix.toLowerCase();
+            return pNorm.includes(sNorm) ||
+                   (sNorm.endsWith('ing') && pNorm.includes('ing')) ||
+                   (sNorm.endsWith('ed') && pNorm.includes('ed')) ||
+                   (sNorm.endsWith('er') && pNorm.includes('er')) ||
+                   (sNorm.endsWith('est') && pNorm.includes('est')) ||
+                   (sNorm.endsWith('ly') && pNorm.includes('ly'));
+          });
+
+          if (sInfo && (formulaMentionsSuffix || (initialColor !== -1 && initialColor === 2))) {
             const rootColor = initialColor !== -1 ? initialColor : (currentFormulaParts.length > 2 ? 2 : 0);
             return {
               token: tok,
@@ -2159,7 +2185,7 @@
               root: sInfo.root,
               suffix: sInfo.suffix,
               rootColor: rootColor,
-              suffixColor: suffixColorIndex,
+              suffixColor: rootColor,
               color: rootColor
             };
           }
@@ -2221,33 +2247,14 @@
           `;
         }).join('');
 
-        const suffixCol = COLOR_PALETTE[suffixColorIndex % COLOR_PALETTE.length];
-        const suffixPillHtml = `
-          <div class="ge-suffix-pill relative group/suffix inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition ${suffixCol.chipClass} shadow-sm" title="Verb Additions & Spelling Changes: -s, -es, -ies, -ed, -ied, -ing, +doubled consonants (-ping, -ning, -ting, etc.). Click dot to change color.">
-            <!-- Clickable Suffix Color Dot -->
-            <button type="button" class="ge-suffix-color-btn w-3.5 h-3.5 rounded-full ${suffixCol.dotBg} ring-2 ring-white/60 hover:scale-125 transition cursor-pointer shrink-0 shadow-sm" title="Click to change color for Verb Additions (${suffixCol.name})">
-            </button>
-            <span class="text-[10px] uppercase opacity-75 whitespace-nowrap">Additions (-s, -es, -ies, -ed, -ied, -ing, +doubled):</span>
-            <span class="text-xs font-extrabold">${escapeHtml(suffixCol.name)}</span>
-
-            <!-- Suffix Color Popover -->
-            <div class="ge-suffix-popover hidden absolute top-full left-0 mt-2 z-40 p-2.5 rounded-2xl bg-slate-900 border border-slate-700 shadow-[0_10px_25px_rgba(0,0,0,0.8)] grid grid-cols-5 gap-2 w-[165px]">
-              ${COLOR_PALETTE.map((cp, cIdx) => `
-                <button type="button" class="ge-suffix-swatch-btn w-5 h-5 rounded-full ${cp.dotBg} hover:scale-125 transition ring-1 ring-white/30 cursor-pointer ${cIdx === (suffixColorIndex % COLOR_PALETTE.length) ? 'ring-2 ring-white scale-110 shadow-[0_0_8px_rgba(255,255,255,0.9)]' : ''}" data-color-idx="${cIdx}" title="${cp.name}">
-                </button>
-              `).join('')}
-            </div>
-          </div>
-        `;
-
         const addPartBtnHtml = `
           <button type="button" id="ge-add-part-btn" class="px-2.5 py-1 rounded-xl text-xs font-bold border border-dashed border-amber-400/70 bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 hover:border-amber-400 hover:text-white transition cursor-pointer flex items-center gap-1 shadow-sm active:scale-95" title="Add a new formula part">
-            <span>➕</span>
+            <span class="text-sm font-black leading-none">+</span>
             <span>Add Part</span>
           </button>
         `;
 
-        legendContainer.innerHTML = partsHtml + suffixPillHtml + addPartBtnHtml;
+        legendContainer.innerHTML = partsHtml + addPartBtnHtml;
 
         // Wire Legend Buttons
         legendContainer.querySelectorAll('.ge-part-color-btn').forEach(btn => {
@@ -2257,29 +2264,10 @@
             const popover = legendContainer.querySelector(`.ge-color-popover[data-part-idx="${pIdx}"]`);
             if (!popover) return;
             const isHidden = popover.classList.contains('hidden');
-            legendContainer.querySelectorAll('.ge-color-popover, .ge-suffix-popover').forEach(p => p.classList.add('hidden'));
+            legendContainer.querySelectorAll('.ge-color-popover').forEach(p => p.classList.add('hidden'));
             if (isHidden) {
               popover.classList.remove('hidden');
             }
-          };
-        });
-
-        const sfxBtn = legendContainer.querySelector('.ge-suffix-color-btn');
-        const sfxPopover = legendContainer.querySelector('.ge-suffix-popover');
-        if (sfxBtn && sfxPopover) {
-          sfxBtn.onclick = (e) => {
-            e.stopPropagation();
-            const isHidden = sfxPopover.classList.contains('hidden');
-            legendContainer.querySelectorAll('.ge-color-popover, .ge-suffix-popover').forEach(p => p.classList.add('hidden'));
-            if (isHidden) sfxPopover.classList.remove('hidden');
-          };
-        }
-        legendContainer.querySelectorAll('.ge-suffix-swatch-btn').forEach(swatch => {
-          swatch.onclick = (e) => {
-            e.stopPropagation();
-            const cIdx = Number(swatch.dataset.colorIdx);
-            suffixColorIndex = cIdx;
-            syncWordChips();
           };
         });
 
@@ -2365,19 +2353,16 @@
 
         const getPartTooltip = (colorVal, isSuffix = false) => {
           if (typeof colorVal === 'number' && colorVal >= 0) {
-            if (isSuffix) {
-              const col = COLOR_PALETTE[colorVal % COLOR_PALETTE.length];
-              return `Assigned to Verb Addition Accent (${col.name}). Click to cycle.`;
-            }
             if (currentFormulaParts[colorVal]) {
               const p = currentFormulaParts[colorVal];
               const col = COLOR_PALETTE[p.colorIndex % COLOR_PALETTE.length];
-              return `Assigned to Part ${colorVal + 1}: ${p.name} (${col.name}). Click to cycle.`;
+              const role = isSuffix ? 'Suffix Addition' : 'Formula Part';
+              return `Assigned to Part ${colorVal + 1}: ${p.name} (${col.name}) [${role}]. Click to cycle.`;
             }
             const col = COLOR_PALETTE[colorVal % COLOR_PALETTE.length];
             return `Assigned to Color ${colorVal + 1} (${col.name}). Click to cycle.`;
           }
-          return 'Unassigned. Click to cycle color.';
+          return 'Unassigned. Click to cycle formula part.';
         };
 
         wordChipsContainer.innerHTML = currentWordAssignments.map((item, i) => {
@@ -2390,22 +2375,22 @@
                 <button type="button" class="ge-token-btn px-2 py-1 rounded-r-lg text-xs font-bold transition cursor-pointer active:scale-95 border-l border-slate-700/80 ${getStyle(item.suffixColor)}" data-token-idx="${i}" data-segment="suffix" title="${getPartTooltip(item.suffixColor, true)}">
                   ${item.suffix && item.suffix.startsWith("'") ? '' : '-'}${escapeHtml(item.suffix)}
                 </button>
-                <button type="button" class="ge-split-toggle px-1 text-[11px] text-slate-500 hover:text-white transition cursor-pointer" title="Merge into whole word" data-token-idx="${i}">
-                  ⇄
+                <button type="button" class="ge-split-toggle px-1 text-slate-400 hover:text-white transition cursor-pointer" title="Merge root and suffix into whole word" data-token-idx="${i}" aria-label="Merge word">
+                  <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                 </button>
                 ${item.punct ? `<span class="text-slate-400 font-bold text-xs pr-1">${escapeHtml(item.punct)}</span>` : ''}
               </div>
             `;
           } else {
-            const canSplit = Boolean(detectSuffix(item.core, getFormulaParts())) || (item.core && item.core.length >= 3);
+            const canSplit = Boolean(detectSuffix(item.core, getFormulaParts()));
             return `
               <div class="inline-flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-0.5 shadow-sm">
                 <button type="button" class="ge-token-btn px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.color)}" data-token-idx="${i}" data-segment="whole" title="${getPartTooltip(item.color, false)}">
                   ${escapeHtml(item.core || item.token)}
                 </button>
                 ${canSplit ? `
-                  <button type="button" class="ge-split-toggle px-1 text-[11px] text-slate-500 hover:text-white transition cursor-pointer" title="Split into root + suffix addition" data-token-idx="${i}">
-                    ✂️
+                  <button type="button" class="ge-split-toggle px-1 text-slate-400 hover:text-amber-300 transition cursor-pointer" title="Split grammatical suffix (-ing, -ed, -s, -er, -est, -ly)" data-token-idx="${i}" aria-label="Split suffix">
+                    <svg class="w-3.5 h-3.5 inline-block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879a3 3 0 11-4.242-4.242 3 3 0 014.242 0L12 12zm0 0L9.121 9.121a3 3 0 10-4.242 4.242 3 3 0 004.242 0L12 12z"/></svg>
                   </button>
                 ` : ''}
                 ${item.punct ? `<span class="text-slate-400 font-bold text-xs pr-1">${escapeHtml(item.punct)}</span>` : ''}
@@ -2414,24 +2399,21 @@
           }
         }).join('');
 
-        const getCycleOptions = (isSuffix = false) => {
+        const getCycleOptions = () => {
           const opts = [];
           for (let i = 0; i < currentFormulaParts.length; i++) {
             opts.push(i);
-          }
-          if (!opts.includes(suffixColorIndex)) {
-            opts.push(suffixColorIndex);
           }
           opts.push(-1);
           return opts;
         };
 
-        const nextColorVal = (curr, isSuffix = false) => {
-          const opts = getCycleOptions(isSuffix);
+        const nextColorVal = (curr) => {
+          const opts = getCycleOptions();
           const c = (typeof curr === 'number') ? curr : -1;
           const idx = opts.indexOf(c);
           if (idx === -1 || idx >= opts.length - 1) {
-            return isSuffix ? suffixColorIndex : opts[0];
+            return opts[0];
           }
           return opts[idx + 1];
         };
@@ -2445,11 +2427,11 @@
             if (!item) return;
 
             if (seg === 'root') {
-              item.rootColor = nextColorVal(item.rootColor, false);
+              item.rootColor = nextColorVal(item.rootColor);
             } else if (seg === 'suffix') {
-              item.suffixColor = nextColorVal(item.suffixColor, true);
+              item.suffixColor = nextColorVal(item.suffixColor);
             } else {
-              item.color = nextColorVal(item.color, false);
+              item.color = nextColorVal(item.color);
             }
             syncWordChips();
           };
@@ -2466,26 +2448,15 @@
               item.isSplit = false;
               item.color = typeof item.rootColor === 'number' && item.rootColor !== -1 ? item.rootColor : item.suffixColor;
             } else {
-              let sInfo = detectSuffix(item.core, getFormulaParts());
-              if (!sInfo) {
-                const len = item.core.length;
-                if (len >= 5) {
-                  sInfo = { root: item.core.slice(0, -2), suffix: item.core.slice(-2) };
-                } else if (len >= 3) {
-                  sInfo = { root: item.core.slice(0, -1), suffix: item.core.slice(-1) };
-                } else {
-                  sInfo = { root: item.core, suffix: '' };
-                }
-              }
+              const sInfo = detectSuffix(item.core, getFormulaParts());
+              if (!sInfo) return; // Strict: do not split words that lack a recognized suffix
               item.isSplit = true;
               item.root = sInfo.root;
               item.suffix = sInfo.suffix;
-              let verbPartIdx = currentFormulaParts.findIndex(p => /verb/i.test(p.name));
-              if (verbPartIdx === -1 && currentFormulaParts.length > 2) verbPartIdx = 2;
-              else if (verbPartIdx === -1 && currentFormulaParts.length > 1) verbPartIdx = 1;
-              else if (verbPartIdx === -1) verbPartIdx = 0;
-              item.rootColor = item.color !== -1 ? item.color : verbPartIdx;
-              item.suffixColor = suffixColorIndex;
+              // Option 1: Suffix belongs directly to the formula part of the word
+              const partIdx = (typeof item.color === 'number' && item.color !== -1) ? item.color : 0;
+              item.rootColor = partIdx;
+              item.suffixColor = partIdx;
             }
             syncWordChips();
           };
@@ -2517,11 +2488,26 @@
           }
 
           const sInfo = detectSuffix(core, formulaParts);
-          if (sInfo) {
-            let verbPartIdx = currentFormulaParts.findIndex(p => /verb/i.test(p.name));
-            if (verbPartIdx === -1 && currentFormulaParts.length > 2) verbPartIdx = 2;
-            else if (verbPartIdx === -1 && currentFormulaParts.length > 1) verbPartIdx = 1;
-            else if (verbPartIdx === -1) verbPartIdx = 0;
+          const formulaMentionsSuffix = sInfo && formulaParts.some(p => {
+            const pNorm = String(p || '').toLowerCase();
+            const sNorm = sInfo.suffix.toLowerCase();
+            return pNorm.includes(sNorm) ||
+                   (sNorm.endsWith('ing') && pNorm.includes('ing')) ||
+                   (sNorm.endsWith('ed') && pNorm.includes('ed')) ||
+                   (sNorm.endsWith('er') && pNorm.includes('er')) ||
+                   (sNorm.endsWith('est') && pNorm.includes('est')) ||
+                   (sNorm.endsWith('ly') && pNorm.includes('ly'));
+          });
+
+          if (sInfo && formulaMentionsSuffix) {
+            let partIdx = currentFormulaParts.findIndex(p => {
+              const pNorm = p.name.toLowerCase();
+              const sNorm = sInfo.suffix.toLowerCase();
+              return pNorm.includes(sNorm) || (/verb/i.test(pNorm) && /(?:ing|ed|es|s)$/i.test(sNorm)) || (/adj/i.test(pNorm) && /(?:er|est)$/i.test(sNorm));
+            });
+            if (partIdx === -1 && currentFormulaParts.length > 2) partIdx = 2;
+            else if (partIdx === -1 && currentFormulaParts.length > 1) partIdx = 1;
+            else if (partIdx === -1) partIdx = 0;
 
             return {
               token: tok,
@@ -2530,9 +2516,9 @@
               isSplit: true,
               root: sInfo.root,
               suffix: sInfo.suffix,
-              rootColor: verbPartIdx,
-              suffixColor: suffixColorIndex,
-              color: verbPartIdx
+              rootColor: partIdx,
+              suffixColor: partIdx,
+              color: partIdx
             };
           }
 

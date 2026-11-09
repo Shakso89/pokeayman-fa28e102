@@ -490,14 +490,14 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(sentenceHtml).toContain('<span class="text-fuchsia-300 font-black">ing</span>');
   });
 
-  it('ensures suffix (-ing) is given a distinct accent color without creating an unwanted fake Part 4 in the formula banner', () => {
+  it('ensures suffix additions belong directly to formula parts without a detached additions pill or fake Part 4 in the formula banner', () => {
     const js = fs.readFileSync(grammarJsPath, 'utf-8');
 
-    // Suffix pill controls in rule editor
-    expect(js).toContain('ge-suffix-pill');
-    expect(js).toContain('ge-suffix-color-btn');
-    expect(js).toContain('ge-suffix-popover');
-    expect(js).toContain('suffixColorIndex');
+    // Option 1: Detached suffix pill removed from formula legend; suffix splitting integrated into word chips
+    expect(js).not.toContain('ge-suffix-pill');
+    expect(js).toContain('canSplit = Boolean(detectSuffix(item.core, getFormulaParts()))');
+    expect(js).toContain('aria-label="Split suffix"');
+    expect(js).toContain('aria-label="Merge word"');
 
     const mockWindow: any = {
       document: {
@@ -625,12 +625,33 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(detect("doesn't")).toEqual({ root: 'does', suffix: "n't" });
     expect(detect("didn't")).toEqual({ root: 'did', suffix: "n't" });
 
-    // 6. Non-verb words are preserved and not broken
+    // 6. Non-verb and non-suffix words are strictly preserved and never split
+    expect(detect('elephant')).toBeNull();
+    expect(detect('restaurant')).toBeNull();
+    expect(detect('plant')).toBeNull();
+    expect(detect('parent')).toBeNull();
+    expect(detect('the')).toBeNull();
+    expect(detect('The')).toBeNull();
     expect(detect('grass')).toBeNull();
     expect(detect('class')).toBeNull();
     expect(detect('this')).toBeNull();
 
-    // 7. Formula chips support all inflection additions
+    // 7. Adjective comparatives and superlatives (-er, -est, -ier, -iest)
+    expect(detect('faster')).toEqual({ root: 'fast', suffix: 'er' });
+    expect(detect('taller')).toEqual({ root: 'tall', suffix: 'er' });
+    expect(detect('fastest')).toEqual({ root: 'fast', suffix: 'est' });
+    expect(detect('tallest')).toEqual({ root: 'tall', suffix: 'est' });
+    expect(detect('happier')).toEqual({ root: 'happ', suffix: 'ier' });
+    expect(detect('happiest')).toEqual({ root: 'happ', suffix: 'iest' });
+
+    // 8. Adverbial -ly suffix
+    expect(detect('slowly')).toEqual({ root: 'slow', suffix: 'ly' });
+    expect(detect('quickly')).toEqual({ root: 'quick', suffix: 'ly' });
+    expect(detect('loudly')).toEqual({ root: 'loud', suffix: 'ly' });
+    expect(detect('family')).toBeNull();
+    expect(detect('early')).toBeNull();
+
+    // 9. Formula chips support all inflection additions
     const formatFormula = mockWindow.formatFormulaChips;
     const ruleSample = { suffix_color: 3 }; // Violet Purple
     expect(formatFormula('Subject + Verb-ies', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-ies</span>');
@@ -640,9 +661,14 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(formatFormula('Subject + Verb-ied', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-ied</span>');
     expect(formatFormula('Subject + Verb-ping', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-ping</span>');
     expect(formatFormula('Subject + Verb-ing', ruleSample)).toContain('Verb<span class="text-purple-300 font-black">-ing</span>');
+    expect(formatFormula('Subject + Adjective-er', ruleSample)).toContain('Adjective<span class="text-purple-300 font-black">-er</span>');
+    expect(formatFormula('Subject + Adverb-ly', ruleSample)).toContain('Adverb<span class="text-purple-300 font-black">-ly</span>');
 
-    // 8. Editor legend displays additions pill and tooltip
-    expect(js).toContain('Additions (-s, -es, -ies, -ed, -ied, -ing, +doubled):');
-    expect(js).toContain('Verb Additions & Spelling Changes: -s, -es, -ies, -ed, -ied, -ing, +doubled consonants');
+    // 10. Option 1: Suffixes belong directly to their Formula Part; detached additions pill removed from legend
+    expect(js).not.toContain('Additions (-s, -es, -ies, -ed, -ied, -ing, +doubled):');
+    expect(js).toContain('canSplit = Boolean(detectSuffix(item.core, getFormulaParts()))');
+    expect(js).not.toContain('item.core.length >= 3');
+    expect(js).toContain('aria-label="Split suffix"');
+    expect(js).toContain('aria-label="Merge word"');
   });
 });
