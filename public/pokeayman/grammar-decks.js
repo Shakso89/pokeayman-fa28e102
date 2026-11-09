@@ -1219,9 +1219,7 @@
                   ${escapeHtml(deckName)} · Rule ${idx + 1} of ${rules.length}: <span class="text-slate-100 font-extrabold">${escapeHtml(r.title || 'Rule')}</span>
                 </h3>
                 <div class="flex items-center gap-2 shrink-0">
-                  <button type="button" id="gp-read-rule-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold flex items-center justify-center transition border border-slate-700 cursor-pointer" title="Listen to sentence">
-                    🔊
-                  </button>
+                  
                   ${isOwner ? `
                     <button type="button" id="gp-edit-deck-btn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-bold flex items-center justify-center transition border border-slate-700 cursor-pointer text-xs" title="Edit this deck">
                       ✏️
@@ -1356,18 +1354,7 @@
         };
       }
 
-      // Wire audio pronunciation
-      modal.querySelector('#gp-read-rule-btn').onclick = () => {
-        const textToSpeak = `${r.title}. Formula: ${r.formula}. Example: ${r.sentence}`;
-        if (typeof playVocabPronunciation === 'function') {
-          playVocabPronunciation(r.sentence || r.title);
-        } else if ('speechSynthesis' in window) {
-          const u = new SpeechSynthesisUtterance(textToSpeak);
-          u.lang = 'en-US';
-          window.speechSynthesis.speak(u);
-        }
-        if (typeof toast === 'function') toast('🔊 Playing sentence pronunciation…');
-      };
+      
 
       // Wire Quick Check quiz options
       modal.querySelectorAll('.gp-quiz-opt').forEach(btn => {
@@ -3742,10 +3729,7 @@
     document.getElementById('teacher-grammar-open-ai')?.addEventListener('click', () => {
       window.openGrammarAiGeneratorModal();
     });
-    document.getElementById('generate-grammar-deck-btn')?.addEventListener('click', () => {
-      const classInput = document.getElementById('new-grammar-deck-name')?.value || '';
-      window.openGrammarAiGeneratorModal(classInput);
-    });
+    // AI generation button listener removed (code preserved in backup-grammar-ai.js)
 
     // Create Deck in Class subtab
     document.getElementById('create-grammar-deck-btn')?.addEventListener('click', async () => {

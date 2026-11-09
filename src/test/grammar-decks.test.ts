@@ -18,7 +18,7 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(html).toContain('id="class-subtab-grammar"');
     expect(html).toContain('id="new-grammar-deck-name"');
     expect(html).toContain('id="create-grammar-deck-btn"');
-    expect(html).toContain('id="generate-grammar-deck-btn"');
+    expect(html).not.toContain('id="generate-grammar-deck-btn"');
     expect(html).toContain('id="grammar-decks-container"');
     expect(html).toContain('id="grammar-decks-empty"');
   });
@@ -140,6 +140,15 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(html).toContain('id="teacher-grammar-create-name"');
     expect(html).toContain('id="teacher-grammar-create-class"');
     expect(html).toContain('id="teacher-grammar-create-submit"');
+  });
+
+  it('ensures reading/audio button is removed from grammar and AI generator code is backed up locally', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+    const backupPath = path.resolve(__dirname, '../../public/pokeayman/backup-grammar-ai.js');
+    expect(fs.existsSync(backupPath)).toBe(true);
+
+    // Reading / speaker button removed
+    expect(js).not.toContain('id="gp-read-rule-btn"');
   });
 
   it('ensures AI grammar deck generator charges 5 credits per rule, has Bright-Lizard-8 loader animation, and enforces diversity', () => {
