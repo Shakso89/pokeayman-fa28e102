@@ -176,6 +176,15 @@ html body:is(#pk-ds, body) .btn-ai-generate {
               border-color 0.2s ease !important;
 }
 
+/* Admin-only AI generation buttons for Grammar */
+#generate-grammar-deck-btn.hidden,
+#teacher-grammar-open-ai.hidden,
+#generate-grammar-deck-btn.is-admin-only,
+#teacher-grammar-open-ai.is-admin-only,
+.is-admin-only.hidden {
+  display: none !important;
+}
+
 /* Default / Dark Mode: Deep Electric Indigo to Cosmic Violet */
 html body:not(.ts-bright) :is(.btn-ai-generate, #generate-vocab-list-btn, #teacher-vb-open-ai, #vocab-gen-submit-button, .sg-btn) {
   background: linear-gradient(135deg, #4f46e5 0%, #6366f1 45%, #7c3aed 100%) !important;

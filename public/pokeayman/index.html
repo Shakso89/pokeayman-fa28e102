@@ -17001,7 +17001,7 @@ window.openGameScramble = openGameScramble;
         <div class="glass-container rounded-xl p-6 mb-6">
          <div class="mb-6 flex gap-3 items-end">
           <div class="flex-1"><label class="text-xs text-slate-300 font-semibold block mb-1.5 uppercase tracking-wider">Create New Grammar Deck</label> <input id="new-grammar-deck-name" type="text" placeholder="Deck name (e.g., 'Present Continuous')" class="quiz-input w-full px-3.5 py-2.5 text-sm" required="">
-          </div><button id="create-grammar-deck-btn" class="btn-primary rounded-full" style="border-radius:9999px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:8px 20px !important;">Create</button> <button id="generate-grammar-deck-btn" type="button" class="btn-ai-generate" title="Generate grammar deck with AI"><svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate with AI</span></button>
+          </div><button id="create-grammar-deck-btn" class="btn-primary rounded-full" style="border-radius:9999px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:8px 20px !important;">Create</button> <button id="generate-grammar-deck-btn" type="button" class="btn-ai-generate is-admin-only hidden" style="display:none !important;" title="Generate grammar deck with AI"><svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate with AI</span></button>
          </div>
         </div>
         <div id="grammar-decks-container" class="teacher-vb-lists-grid"></div>
@@ -17512,7 +17512,7 @@ window.openGameScramble = openGameScramble;
       <div class="teacher-zone-content-card">
        <header class="teacher-zone-page-heading"><span class="teacher-zone-page-icon" aria-hidden="true">🧩</span><div><p class="teacher-zone-page-kicker">GRAMMAR BANK</p><h3 id="teacher-grammar-decks-title">All Decks</h3><p id="teacher-grammar-decks-description">Review, edit, practice, or assign your grammar pattern decks.</p></div></header>
        <div class="teacher-vb-list-modes" role="group" aria-label="Grammar deck view"><button id="teacher-grammar-mode-mine" type="button" class="btn-primary rounded-full is-active" aria-pressed="true">All Decks</button><button id="teacher-grammar-mode-school" type="button" class="btn-secondary rounded-full" aria-pressed="false">School Decks</button></div>
-       <div class="teacher-vb-create-actions"><button id="teacher-grammar-open-create" type="button" class="btn-primary teacher-vb-open-create rounded-full" style="border-radius:9999px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:8px 20px !important;">+ Create Deck</button><button id="teacher-grammar-open-ai" type="button" class="btn-ai-generate teacher-vb-open-create teacher-vb-open-ai" title="Generate grammar deck with AI"><svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate with AI</span></button></div>
+       <div class="teacher-vb-create-actions"><button id="teacher-grammar-open-create" type="button" class="btn-primary teacher-vb-open-create rounded-full" style="border-radius:9999px !important; height:42px !important; min-height:42px !important; max-height:42px !important; padding:8px 20px !important;">+ Create Deck</button><button id="teacher-grammar-open-ai" type="button" class="btn-ai-generate teacher-vb-open-create teacher-vb-open-ai is-admin-only hidden" style="display:none !important;" title="Generate grammar deck with AI"><svg class="ai-sparkle-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z"></path></svg><span class="ai-btn-text">Generate with AI</span></button></div>
        <div id="teacher-grammar-create-modal" class="teacher-vb-create-modal hidden" role="dialog" aria-modal="true" aria-labelledby="teacher-grammar-create-title"><div class="teacher-vb-create-dialog"><div class="teacher-vb-create-heading"><h4 id="teacher-grammar-create-title">Create grammar deck</h4><button id="teacher-grammar-create-close" type="button" aria-label="Close">×</button></div><form id="teacher-grammar-create-form" class="teacher-vb-create-form"><label class="teacher-vb-create-field"><span>Deck name</span><input id="teacher-grammar-create-name" type="text" maxlength="80" placeholder="e.g. Present Continuous (Actions Now)" required></label><label class="teacher-vb-create-field"><span>Class</span><select id="teacher-grammar-create-class" required><option value="">Choose a class</option></select></label><button id="teacher-grammar-create-submit" type="submit" class="btn-primary">Create deck</button></form></div></div>
        <div class="teacher-vb-search"><label for="teacher-grammar-search-field">Search decks</label><select id="teacher-grammar-search-field" aria-label="Search filter"><option value="all">All fields</option><option value="deck">Deck name</option><option value="teacher">Teacher name</option><option value="pattern">Pattern / Rule</option><option value="class">Class or school</option></select><input id="teacher-grammar-search-query" type="text" autocomplete="off" spellcheck="false" placeholder="Search by deck, teacher, rule, class…" autocomplete="off"></div>
        <p id="teacher-grammar-decks-status" class="teacher-zone-status" aria-live="polite">Loading grammar decks…</p>
@@ -24609,42 +24609,38 @@ function canOpenClass(schoolName, className, teacherName = currentTeacher, teach
   // 2. School Managers have access to all classes in their assigned school
   if (typeof canManageSchool === 'function' && canManageSchool(schoolName, teacherName)) return true;
   
-  const norm = v => String(v || '').replace(/^TR\.\s*/i, '').trim().toLowerCase();
+  const norm = v => String(v || '').replace(/^(teacher|tr\.?)\s+/i, '').trim().toLowerCase();
   const target = norm(teacherName);
   const myId = String(teacherId || currentTeacherRecordId || '').trim();
 
+  // Find class record if available
+  const cls = typeof getClasses === 'function' ? getClasses(schoolName).find(c => norm(c.class_name) === norm(className)) : null;
+
   // 3. Explicitly assigned via class record assigned_teacher_ids (UUID match)
-  if (typeof getClasses === 'function') {
-    const cls = getClasses(schoolName).find(c => norm(c.class_name) === norm(className));
-    if (cls) {
-      if (myId && Array.isArray(cls.assigned_teacher_ids) && cls.assigned_teacher_ids.length > 0) {
-        return cls.assigned_teacher_ids.map(id => String(id).trim()).includes(myId);
-      }
-    }
+  if (cls && myId && Array.isArray(cls.assigned_teacher_ids) && cls.assigned_teacher_ids.length > 0) {
+    if (cls.assigned_teacher_ids.some(id => String(id).trim() === myId)) return true;
   }
 
-  // 4. Explicitly assigned via teacher_class_assignment records
+  // 4. Explicitly assigned via class record assigned_teachers (display name or ID match)
+  if (cls && Array.isArray(cls.assigned_teachers) && cls.assigned_teachers.length > 0) {
+    if (cls.assigned_teachers.some(t => norm(t) === target || (myId && String(t).trim() === myId))) return true;
+  }
+
+  // 5. Explicitly assigned via teacher_class_assignment records
   if (typeof getAssignedClasses === 'function') {
     const assigned = getAssignedClasses(teacherName, myId);
     if (assigned.some(a => norm(a.assigned_school) === norm(schoolName) && norm(a.assigned_class) === norm(className))) return true;
   }
 
-  // 5. Explicitly assigned via class record assigned_teachers (display name fallback)
+  // 6. Explicitly assigned via getClassTeacherNames (display name fallback)
   if (typeof getClassTeacherNames === 'function') {
     const names = getClassTeacherNames(schoolName, className);
     if (names.some(n => norm(n) === target)) return true;
   }
   
-  // 6. Legacy fallback only when no assigned_teachers or assigned_teacher_ids configured on class
-  if (typeof getClasses === 'function') {
-    const cls = getClasses(schoolName).find(c => norm(c.class_name) === norm(className));
-    if (cls) {
-      if ((Array.isArray(cls.assigned_teacher_ids) && cls.assigned_teacher_ids.length > 0) ||
-          (Array.isArray(cls.assigned_teachers) && cls.assigned_teachers.length > 0)) {
-        return false;
-      }
-      if (norm(cls.assigned_teacher) === target || norm(cls.teacher_name) === target) return true;
-    }
+  // 7. Direct class record fields (assigned_teacher, teacher_name, created_by, main_manager_name)
+  if (cls) {
+    if (norm(cls.assigned_teacher) === target || norm(cls.teacher_name) === target || norm(cls.created_by) === target || norm(cls.main_manager_name) === target) return true;
   }
   return false;
 }
@@ -25001,8 +24997,9 @@ function renderTeacherDashboard() {
   // Check if teacher is assigned to the school OR class
   const schoolAssigns = getAssignedSchools(currentTeacher);
   const classAssigns = getAssignedClasses(currentTeacher);
-  const isSchoolAssigned = currentTeacher === 'Ayman' || schoolAssigns.some(a => a.assigned_school === navSchool);
-  const isClassAssigned = currentTeacher === 'Ayman' || classAssigns.some(a => a.assigned_class === navClass && a.assigned_school === navSchool);
+  const isTeacherAdmin = currentTeacher === 'Ayman' || (typeof canAccessAdmin === 'function' && canAccessAdmin()) || (typeof isAymanTeacher === 'function' && isAymanTeacher()) || (typeof getEffectiveTeacherRole === 'function' && getEffectiveTeacherRole(currentTeacher) === 'admin');
+  const isSchoolAssigned = isTeacherAdmin || (typeof canManageSchool === 'function' && canManageSchool(navSchool)) || schoolAssigns.some(a => a.assigned_school === navSchool);
+  const isClassAssigned = isTeacherAdmin || isSchoolAssigned || (typeof canOpenClass === 'function' && canOpenClass(navSchool, navClass)) || (typeof canManageClass === 'function' && canManageClass(navSchool, navClass)) || classAssigns.some(a => a.assigned_class === navClass && a.assigned_school === navSchool);
   // School-assigned teachers have full access to ALL classes in the school
   const isAssigned = isSchoolAssigned || isClassAssigned;
   const isViewOnly = !isSchoolAssigned && !isClassAssigned && navClass && navSchool;
@@ -29813,11 +29810,20 @@ function assignmentTeacherName(r) {
   return String((rec && rec.teacher_name) || r.assigned_teacher || '').trim();
 }
 function assignmentMatchesTeacher(r, teacherName) {
-  const recs = getTeachers().filter(t => t.teacher_name === teacherName);
-  if (currentRole === 'teacher' && teacherName === currentTeacher && currentTeacherRecordId) { const me = getTeachers().find(t => t.__backendId === currentTeacherRecordId); if (me && !recs.includes(me)) recs.push(me); }
+  const norm = v => String(v || '').replace(/^(teacher|tr\.?)\s+/i, '').trim().toLowerCase();
+  const target = norm(teacherName);
+  const recs = getTeachers().filter(t => norm(t.teacher_name) === target);
+  if (currentRole === 'teacher' && norm(currentTeacher) === target && currentTeacherRecordId) {
+    const me = getTeachers().find(t => t.__backendId === currentTeacherRecordId);
+    if (me && !recs.includes(me)) recs.push(me);
+  }
   const id = String(r.assigned_teacher_id || '').trim();
-  if (id) return recs.some(t => t.__backendId === id);
-  return r.assigned_teacher === teacherName;
+  if (id) {
+    if (recs.some(t => String(t.__backendId || '').trim() === id)) return true;
+    if (currentTeacherRecordId && id === currentTeacherRecordId) return true;
+  }
+  if (r.assigned_teacher && norm(r.assigned_teacher) === target) return true;
+  return false;
 }
 function canManageSchool(schoolName, teacherName = currentTeacher) {
   if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return false;
@@ -30301,13 +30307,16 @@ function getClassTeacherNames(schoolName, className) {
   });
 
   const resolve = (raw) => {
-    const clean = String(raw || '').replace(/^TR\.\s*/i, '').trim();
+    const clean = String(raw || '').replace(/^(teacher|tr\.?)\s+/i, '').trim();
     if (!clean) return '';
     if (clean.toLowerCase() === 'ayman') return 'Ayman';
     if (validIds.has(clean)) return validIds.get(clean);
     if (validTeachers.has(clean.toLowerCase())) return validTeachers.get(clean.toLowerCase());
     if (aliasMap.has(clean.toLowerCase())) return aliasMap.get(clean.toLowerCase());
-    return '';
+    for (const [k, v] of validTeachers.entries()) {
+      if (k.replace(/^(teacher|tr\.?)\s+/i, '').trim() === clean.toLowerCase()) return v;
+    }
+    return clean;
   };
 
   const resolved = [];
@@ -30330,9 +30339,16 @@ function getClassTeacherNames(schoolName, className) {
   const cls = getClasses(schoolName).find(c => c.class_name === className);
   if (cls) {
     if (cls.show_admin_teacher === true) add('Ayman');
+    if (Array.isArray(cls.assigned_teacher_ids)) {
+      cls.assigned_teacher_ids.forEach(id => {
+        if (validIds.has(String(id).trim())) add(validIds.get(String(id).trim()));
+      });
+    }
     if (Array.isArray(cls.assigned_teachers)) {
       cls.assigned_teachers.forEach(t => add(t));
     }
+    if (cls.assigned_teacher) add(cls.assigned_teacher);
+    if (cls.teacher_name) add(cls.teacher_name);
     if (cls.main_manager_name) {
       add(cls.main_manager_name);
     }
@@ -30396,13 +30412,16 @@ function classTeacherPill(schoolName, className) {
 }
 
 function getAssignedClasses(teacherName, teacherId = currentTeacherRecordId) {
-  const norm = v => String(v || '').trim().toLocaleLowerCase();
+  const norm = v => String(v || '').replace(/^(teacher|tr\.?)\s+/i, '').trim().toLowerCase();
   const targetTeacher = norm(teacherName);
   const targetId = String(teacherId || '').trim();
   const assignments = allData.filter(r => {
     if (r.type !== 'teacher_class_assignment') return false;
     if (targetId && r.assigned_teacher_id) {
-      return String(r.assigned_teacher_id).trim() === targetId;
+      if (String(r.assigned_teacher_id).trim() === targetId) return true;
+    }
+    if (targetTeacher && r.assigned_teacher && norm(r.assigned_teacher) === targetTeacher) {
+      return true;
     }
     return assignmentMatchesTeacher(r, teacherName);
   });
@@ -30423,7 +30442,19 @@ function getAssignedClasses(teacherName, teacherId = currentTeacherRecordId) {
       assignedKeys.add(key);
       return;
     }
-    if (Array.isArray(c.assigned_teachers) && c.assigned_teachers.some(t => norm(t) === targetTeacher)) {
+    if (Array.isArray(c.assigned_teachers) && c.assigned_teachers.some(t => norm(t) === targetTeacher || (targetId && String(t).trim() === targetId))) {
+      assignments.push({
+        type: 'teacher_class_assignment',
+        assigned_teacher: teacherName,
+        assigned_teacher_id: targetId,
+        assigned_school: c.school_name,
+        assigned_class: c.class_name,
+        __virtual: true
+      });
+      assignedKeys.add(key);
+      return;
+    }
+    if (targetTeacher && (norm(c.assigned_teacher) === targetTeacher || norm(c.teacher_name) === targetTeacher || norm(c.main_manager_name) === targetTeacher)) {
       assignments.push({
         type: 'teacher_class_assignment',
         assigned_teacher: teacherName,
@@ -30843,8 +30874,8 @@ function openStudentProfile(studentName, canonicalId = '', canonicalAccount = nu
   window.__pokeymanNavigationDiagnostics = window.__pokeymanNavigationDiagnostics || [];
   window.__pokeymanNavigationDiagnostics.push({ destination: 'student-profile', canonicalStudentId: Boolean(profileTarget.canonicalId), loading: false, redirectReason: 'explicit-profile-open' });
   // Check if teacher is authorized: Admin OR school-assigned OR class-assigned to this class
-  const isSchoolAssigned = currentTeacher === 'Ayman' || getAssignedSchools(currentTeacher).some(a => a.assigned_school === navSchool);
-  const isClassAssigned = currentTeacher === 'Ayman' || getAssignedClasses(currentTeacher).some(a => a.assigned_class === navClass && a.assigned_school === navSchool);
+  const isSchoolAssigned = currentTeacher === 'Ayman' || (typeof canManageSchool === 'function' && canManageSchool(navSchool)) || getAssignedSchools(currentTeacher).some(a => a.assigned_school === navSchool);
+  const isClassAssigned = currentTeacher === 'Ayman' || isSchoolAssigned || (typeof canOpenClass === 'function' && canOpenClass(navSchool, navClass)) || (typeof canManageClass === 'function' && canManageClass(navSchool, navClass)) || getAssignedClasses(currentTeacher).some(a => a.assigned_class === navClass && a.assigned_school === navSchool);
   const isAuthorized = isSchoolAssigned || isClassAssigned;
   const isViewOnly = !isAuthorized && navClass && navSchool;
   
@@ -31820,8 +31851,10 @@ function getGameSource(listRef) {
 }
 function canManageClass(schoolName, className) {
   if (currentRole !== 'teacher' || !verifiedTeacherIdentity()) return false;
-  if (isAymanTeacher()) return true;
-  const norm = v => String(v || '').trim().toLocaleLowerCase();
+  if (isAymanTeacher() || (typeof canAccessAdmin === 'function' && canAccessAdmin())) return true;
+  if (typeof canManageSchool === 'function' && canManageSchool(schoolName)) return true;
+  if (typeof canOpenClass === 'function' && canOpenClass(schoolName, className)) return true;
+  const norm = v => String(v || '').replace(/^(teacher|tr\.?)\s+/i, '').trim().toLowerCase();
   const school = norm(schoolName);
   const cls = norm(className);
   return getAssignedSchools(currentTeacher).some(item => norm(item.assigned_school) === school)
@@ -36806,8 +36839,8 @@ function openProfileAvatarSelector() {
   if (!profileStudent) return;
   
   // Check authorization: Admin, School-Assigned, or Class-Assigned teacher
-  const isSchoolAssigned = currentTeacher === 'Ayman' || getAssignedSchools(currentTeacher).some(a => a.assigned_school === navSchool);
-  const isClassAssigned = currentTeacher === 'Ayman' || getAssignedClasses(currentTeacher).some(a => a.assigned_class === navClass && a.assigned_school === navSchool);
+  const isSchoolAssigned = currentTeacher === 'Ayman' || (typeof canManageSchool === 'function' && canManageSchool(navSchool)) || getAssignedSchools(currentTeacher).some(a => a.assigned_school === navSchool);
+  const isClassAssigned = currentTeacher === 'Ayman' || isSchoolAssigned || (typeof canOpenClass === 'function' && canOpenClass(navSchool, navClass)) || (typeof canManageClass === 'function' && canManageClass(navSchool, navClass)) || getAssignedClasses(currentTeacher).some(a => a.assigned_class === navClass && a.assigned_school === navSchool);
   const isAuthorized = isSchoolAssigned || isClassAssigned;
   
   if (!isAuthorized) { toast('Not authorized to change avatar'); return; }

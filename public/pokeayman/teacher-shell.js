@@ -407,7 +407,7 @@
     if (g(() => canAccessAdmin(), false)) return all;
     const me = g(() => currentTeacher, '');
     const ac = g(() => getAssignedClasses(me), []), as = g(() => getAssignedSchools(me), []).map((a) => a.assigned_school || a.school_name);
-    return all.filter((c) => as.includes(c.school_name) || ac.some((a) => (a.assigned_school || a.school_name) === c.school_name && (a.assigned_class || a.class_name) === c.class_name) || [c.created_by, c.teacher_name, c.assigned_teacher].includes(me));
+    return all.filter((c) => as.includes(c.school_name) || ac.some((a) => (a.assigned_school || a.school_name) === c.school_name && (a.assigned_class || a.class_name) === c.class_name) || [c.created_by, c.teacher_name, c.assigned_teacher].includes(me) || (typeof window.canOpenClass === 'function' && window.canOpenClass(c.school_name, c.class_name)) || (typeof window.canManageClass === 'function' && window.canManageClass(c.school_name, c.class_name)));
   }
   let activeChooserSchool = '';
 

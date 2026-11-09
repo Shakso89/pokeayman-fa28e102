@@ -318,7 +318,7 @@
     if (!deck) return false;
     if (typeof isAymanTeacher === 'function' && isAymanTeacher()) return true;
 
-    const norm = n => String(n || '').trim().toLowerCase().replace(/^teacher\s+/i, '');
+    const norm = n => String(n || '').trim().toLowerCase().replace(/^(teacher|tr\.?)\s+/i, '');
     const currentName = norm(typeof currentTeacher !== 'undefined' ? currentTeacher : '');
     const currentId = String(typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : (typeof verifiedTeacherIdentity === 'function' ? verifiedTeacherIdentity() : '')).trim();
 
@@ -333,6 +333,14 @@
     if (currentName && deckTeacher && currentName === deckTeacher) return true;
     if (currentId && deckOwnerId && currentId === deckOwnerId) return true;
     if (deck.created_by === currentTeacher || deck.owner === currentTeacher) return true;
+
+    // Assigned class check: if this teacher manages the class of this deck, they are an owner/manager
+    const sName = deck.school_name || (typeof navSchool !== 'undefined' ? navSchool : '');
+    const cName = deck.class_name || (typeof navClass !== 'undefined' ? navClass : '');
+    if (sName && cName) {
+      if (typeof window.canOpenClass === 'function' && window.canOpenClass(sName, cName)) return true;
+      if (typeof window.canManageClass === 'function' && window.canManageClass(sName, cName)) return true;
+    }
     return false;
   }
 
@@ -3614,6 +3622,8 @@
     if (typeof window.canAccessAdmin === 'function' && window.canAccessAdmin()) return true;
     const identity = String(window.currentTeacher || '').trim().toLowerCase();
     if (identity === 'ayman' || identity === 'teacher ayman') return true;
+    if (typeof window.getEffectiveTeacherRole === 'function' && window.getEffectiveTeacherRole(window.currentTeacher) === 'admin') return true;
+    if (typeof window.isTeacherAdminRecord === 'function' && window.isTeacherAdminRecord(window.currentTeacher)) return true;
     const rec = typeof window.currentTeacherRec === 'function' ? window.currentTeacherRec() : (typeof window.findMyTeacherRecord === 'function' ? window.findMyTeacherRecord() : null);
     if (rec && (rec.teacher_role === 'admin' || rec.teacher_credits === -1)) return true;
     const creds = typeof window.getTeacherCredits === 'function' ? window.getTeacherCredits() : null;
@@ -3626,14 +3636,37 @@
     const isAdmin = isGrammarAdmin();
     const classBtn = document.getElementById('generate-grammar-deck-btn');
     if (classBtn) {
-      classBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+      if (isAdmin) {
+        classBtn.classList.remove('hidden', 'is-admin-only');
+        classBtn.style.setProperty('display', 'inline-flex', 'important');
+      } else {
+        classBtn.classList.add('hidden', 'is-admin-only');
+        classBtn.style.setProperty('display', 'none', 'important');
+      }
     }
     const bankBtn = document.getElementById('teacher-grammar-open-ai');
     if (bankBtn) {
-      bankBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+      if (isAdmin) {
+        bankBtn.classList.remove('hidden', 'is-admin-only');
+        bankBtn.style.setProperty('display', 'inline-flex', 'important');
+      } else {
+        bankBtn.classList.add('hidden', 'is-admin-only');
+        bankBtn.style.setProperty('display', 'none', 'important');
+      }
     }
   }
   window.updateGrammarAiAdminVisibility = updateGrammarAiAdminVisibility;
+
+  // Immediate and event-driven admin button visibility sync
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', updateGrammarAiAdminVisibility);
+    } else {
+      updateGrammarAiAdminVisibility();
+    }
+    window.addEventListener('load', updateGrammarAiAdminVisibility);
+    window.addEventListener('teacher-credits-updated', updateGrammarAiAdminVisibility);
+  }
 
   // AI Generator Modal for Grammar Decks (Admin Exclusive)
   window.openGrammarAiGeneratorModal = function(defaultTopic = '') {
