@@ -26,28 +26,36 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
   it('ensures class-subtab-grammar is a sibling of class-subtab-vocab and class-subtab-games inside #view-students', () => {
     const html = fs.readFileSync(indexPath, 'utf-8');
 
-    // Parse simple DOM check
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    // Parse simple DOM check if DOMParser is available (Vitest jsdom env) or string checks (bun test)
+    if (typeof DOMParser !== 'undefined') {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
 
-    const viewStudents = doc.getElementById('view-students');
-    expect(viewStudents).not.toBeNull();
+      const viewStudents = doc.getElementById('view-students');
+      expect(viewStudents).not.toBeNull();
 
-    const vocabTab = doc.getElementById('class-subtab-vocab');
-    const grammarTab = doc.getElementById('class-subtab-grammar');
-    const gamesTab = doc.getElementById('class-subtab-games');
-    const battleTab = doc.getElementById('class-subtab-battle');
+      const vocabTab = doc.getElementById('class-subtab-vocab');
+      const grammarTab = doc.getElementById('class-subtab-grammar');
+      const gamesTab = doc.getElementById('class-subtab-games');
+      const battleTab = doc.getElementById('class-subtab-battle');
 
-    expect(vocabTab).not.toBeNull();
-    expect(grammarTab).not.toBeNull();
-    expect(gamesTab).not.toBeNull();
-    expect(battleTab).not.toBeNull();
+      expect(vocabTab).not.toBeNull();
+      expect(grammarTab).not.toBeNull();
+      expect(gamesTab).not.toBeNull();
+      expect(battleTab).not.toBeNull();
 
-    // Verify all are siblings under viewStudents
-    expect(vocabTab?.parentElement).toBe(viewStudents);
-    expect(grammarTab?.parentElement).toBe(viewStudents);
-    expect(gamesTab?.parentElement).toBe(viewStudents);
-    expect(battleTab?.parentElement).toBe(viewStudents);
+      // Verify all are siblings under viewStudents
+      expect(vocabTab?.parentElement).toBe(viewStudents);
+      expect(grammarTab?.parentElement).toBe(viewStudents);
+      expect(gamesTab?.parentElement).toBe(viewStudents);
+      expect(battleTab?.parentElement).toBe(viewStudents);
+    } else {
+      expect(html).toContain('id="view-students"');
+      expect(html).toContain('id="class-subtab-vocab"');
+      expect(html).toContain('id="class-subtab-grammar"');
+      expect(html).toContain('id="class-subtab-games"');
+      expect(html).toContain('id="class-subtab-battle"');
+    }
   });
 
   it('ensures Teacher Zone contains Grammar Bank tab and panel with Mine vs School modes', () => {
@@ -396,5 +404,89 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(rendered).toContain('<span class="text-amber-400 font-black">is</span>');
     // Verify Part 3 (Emerald)
     expect(rendered).toContain('<span class="text-emerald-400 font-black">slowly</span>');
+  });
+
+  it('ensures rule editor supports adding unlimited formula parts, adjusting part colors, and rendering multi-part formulas', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+
+    // Formula parts controls
+    expect(js).toContain('id="ge-add-part-btn"');
+    expect(js).toContain('ge-part-color-btn');
+    expect(js).toContain('ge-color-popover');
+    expect(js).toContain('ge-color-swatch-btn');
+    expect(js).toContain('ge-part-name-input');
+    expect(js).toContain('ge-part-remove-btn');
+    expect(js).toContain('currentFormulaParts');
+
+    const mockWindow: any = {
+      document: {
+        readyState: 'complete',
+        addEventListener: () => {},
+        getElementById: () => null,
+        querySelectorAll: () => []
+      },
+      addEventListener: () => {}
+    };
+    new Function('window', 'document', js)(mockWindow, mockWindow.document);
+
+    const formatFormula = mockWindow.formatFormulaChips;
+    const formatSentence = mockWindow.formatSyntaxHighlightedSentence;
+    expect(typeof formatFormula).toBe('function');
+    expect(typeof formatSentence).toBe('function');
+
+    // Rule with 4 custom parts with adjusted colors:
+    // Part 0: Subject (colorIndex 4: Rose Pink)
+    // Part 1: am / is / are (colorIndex 6: Cyan Blue)
+    // Part 2: Verb (colorIndex 1: Amber Gold)
+    // Part 3: -ing (colorIndex 7: Fuchsia Magenta)
+    const customRule = {
+      title: 'Custom Continuous',
+      formula: 'Subject + am / is / are + Verb + -ing',
+      formula_parts: [
+        { name: 'Subject', colorIndex: 4 },
+        { name: 'am / is / are', colorIndex: 6 },
+        { name: 'Verb', colorIndex: 1 },
+        { name: '-ing', colorIndex: 7 }
+      ],
+      sentence: 'She is singing.',
+      word_assignments: [
+        { token: 'She', text: 'She', color: 0 },
+        { token: 'is', text: 'is', color: 1 },
+        {
+          token: 'singing',
+          isSplit: true,
+          segments: [
+            { text: 'sing', color: 2 },
+            { text: 'ing', color: 3 }
+          ]
+        }
+      ]
+    };
+
+    // 1. Check formula chips rendering with 4 parts and custom colors
+    const chipsHtml = formatFormula(customRule.formula, customRule);
+    expect(chipsHtml).toContain('[Subject]');
+    expect(chipsHtml).toContain('[am / is / are]');
+    expect(chipsHtml).toContain('[Verb]');
+    expect(chipsHtml).toContain('[-ing]');
+    // Subject has colorIndex 4 (Rose)
+    expect(chipsHtml).toContain('border-rose-400 bg-rose-500/15 text-rose-300');
+    // am/is/are has colorIndex 6 (Cyan)
+    expect(chipsHtml).toContain('border-cyan-400 bg-cyan-500/15 text-cyan-300');
+    // Verb has colorIndex 1 (Amber)
+    expect(chipsHtml).toContain('border-amber-400 bg-amber-500/15 text-amber-300');
+    // -ing has colorIndex 7 (Fuchsia)
+    expect(chipsHtml).toContain('border-fuchsia-400 bg-fuchsia-500/15 text-fuchsia-300');
+
+    // 2. Check sentence rendering mapping part indices to custom colors
+    const sentenceHtml = formatSentence(customRule.sentence, customRule.formula, customRule);
+    // Part 0 -> colorIndex 4 (Rose)
+    expect(sentenceHtml).toContain('<span class="text-rose-400 font-black">She</span>');
+    // Part 1 -> colorIndex 6 (Cyan)
+    expect(sentenceHtml).toContain('<span class="text-cyan-300 font-black">is</span>');
+    // Part 2 -> colorIndex 1 (Amber)
+    expect(sentenceHtml).toContain('<span class="text-amber-400 font-black">sing</span>');
+    // Part 3 -> colorIndex 7 (Fuchsia)
+    expect(sentenceHtml).toContain('<span class="text-fuchsia-300 font-black">ing</span>');
   });
 });

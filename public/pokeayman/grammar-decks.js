@@ -547,9 +547,22 @@
       'text-purple-300 font-black',  // 3: Purple
       'text-rose-400 font-black',    // 4: Rose Pink
       'text-orange-400 font-black',  // 5: Orange
-      'text-cyan-300 font-black'     // 6: Cyan
+      'text-cyan-300 font-black',    // 6: Cyan
+      'text-fuchsia-300 font-black', // 7: Fuchsia
+      'text-lime-300 font-black',    // 8: Lime
+      'text-yellow-300 font-black'   // 9: Yellow
     ];
-    const getColorCls = (c) => (typeof c === 'number' && c >= 0 && c < COLOR_CLASSES.length) ? COLOR_CLASSES[c] : 'text-white font-extrabold';
+    const getColorCls = (partIdx) => {
+      if (typeof partIdx !== 'number' || partIdx < 0) return 'text-white font-extrabold';
+      let c = partIdx;
+      if (rule && Array.isArray(rule.formula_parts) && rule.formula_parts[partIdx]) {
+        const fp = rule.formula_parts[partIdx];
+        if (typeof fp.colorIndex === 'number') {
+          c = fp.colorIndex;
+        }
+      }
+      return (c >= 0 && c < COLOR_CLASSES.length) ? COLOR_CLASSES[c] : COLOR_CLASSES[c % COLOR_CLASSES.length];
+    };
 
     // 1. Check if structured word_assignments with multi-color and suffix splitting are present
     if (rule && Array.isArray(rule.word_assignments) && rule.word_assignments.length > 0) {
@@ -784,8 +797,11 @@
   }
 
   // Helper: format formula into distinct color pill chips centered
-  function formatFormulaChips(formulaStr) {
-    const parts = String(formulaStr || 'Subject + Verb').split('+').map(p => p.trim()).filter(Boolean);
+  function formatFormulaChips(formulaStr, rule = null) {
+    const parts = (rule && Array.isArray(rule.formula_parts) && rule.formula_parts.length > 0)
+      ? rule.formula_parts.map(p => p.name)
+      : String(formulaStr || 'Subject + Verb').split('+').map(p => p.trim()).filter(Boolean);
+
     const colorStyles = [
       'border-sky-400 bg-sky-500/15 text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.25)]',
       'border-amber-400 bg-amber-500/15 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.25)]',
@@ -793,11 +809,21 @@
       'border-purple-400 bg-purple-500/15 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.25)]',
       'border-rose-400 bg-rose-500/15 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.25)]',
       'border-orange-400 bg-orange-500/15 text-orange-300 shadow-[0_0_12px_rgba(251,146,60,0.25)]',
-      'border-cyan-400 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]'
+      'border-cyan-400 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]',
+      'border-fuchsia-400 bg-fuchsia-500/15 text-fuchsia-300 shadow-[0_0_12px_rgba(232,121,249,0.25)]',
+      'border-lime-400 bg-lime-500/15 text-lime-300 shadow-[0_0_12px_rgba(163,230,53,0.25)]',
+      'border-yellow-400 bg-yellow-500/15 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.25)]'
     ];
 
     return parts.map((part, idx) => {
-      const style = colorStyles[idx % colorStyles.length];
+      let styleIdx = idx % colorStyles.length;
+      if (rule && Array.isArray(rule.formula_parts) && rule.formula_parts[idx]) {
+        const fp = rule.formula_parts[idx];
+        if (typeof fp.colorIndex === 'number') {
+          styleIdx = fp.colorIndex % colorStyles.length;
+        }
+      }
+      const style = colorStyles[styleIdx];
       const displayPart = part.startsWith('[') && part.endsWith(']') ? part : `[${part}]`;
       return `<span class="px-3.5 sm:px-4 py-1.5 rounded-full border ${style} font-bold text-xs sm:text-sm tracking-wide inline-block">${escapeHtml(displayPart)}</span>`;
     }).join('<span class="text-slate-400 font-bold text-base sm:text-lg mx-1.5">+</span>');
@@ -968,7 +994,7 @@
 
               <!-- Centered Multi-Color Grammar Formula Bar -->
               <div id="gp-formula-bar" class="gp-formula-bar flex items-center justify-center flex-wrap gap-2 py-1">
-                ${formatFormulaChips(r.formula)}
+                ${formatFormulaChips(r.formula, r)}
               </div>
 
               <!-- Side-by-Side 2-Column Hero -->
@@ -1312,7 +1338,7 @@
                   <div class="text-[11px] font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                     <span>🎨</span> Assign Words & Suffixes to Formula Parts
                   </div>
-                  <span class="text-[10px] text-slate-400">Click a word or suffix below to cycle its formula color</span>
+                  <span class="text-[10px] text-slate-400">Click a part dot to change color &bull; Click &ldquo;+ Add Part&rdquo; to add more &bull; Click words to cycle</span>
                 </div>
 
                 <!-- Dynamic Formula Parts Legend Bar -->
@@ -1795,13 +1821,16 @@
       // DYNAMIC FORMULA PARTS & SUFFIX COLORING (Option A)
       // ==========================================
       const COLOR_PALETTE = [
-        { name: 'Sky Blue', hex: '#38bdf8', chipClass: 'border-sky-400 bg-sky-500/20 text-sky-200 shadow-[0_0_8px_rgba(56,189,248,0.3)] font-bold', badgeClass: 'bg-sky-400 text-slate-950' },
-        { name: 'Amber', hex: '#fbbf24', chipClass: 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.3)] font-bold', badgeClass: 'bg-amber-400 text-slate-950' },
-        { name: 'Emerald', hex: '#34d399', chipClass: 'border-emerald-400 bg-emerald-500/20 text-emerald-200 shadow-[0_0_8px_rgba(52,211,153,0.3)] font-bold', badgeClass: 'bg-emerald-400 text-slate-950' },
-        { name: 'Purple', hex: '#c084fc', chipClass: 'border-purple-400 bg-purple-500/20 text-purple-200 shadow-[0_0_8px_rgba(192,132,252,0.3)] font-bold', badgeClass: 'bg-purple-400 text-slate-950' },
-        { name: 'Rose', hex: '#fb7185', chipClass: 'border-rose-400 bg-rose-500/20 text-rose-200 shadow-[0_0_8px_rgba(251,113,133,0.3)] font-bold', badgeClass: 'bg-rose-400 text-slate-950' },
-        { name: 'Orange', hex: '#fb923c', chipClass: 'border-orange-400 bg-orange-500/20 text-orange-200 shadow-[0_0_8px_rgba(251,146,60,0.3)] font-bold', badgeClass: 'bg-orange-400 text-slate-950' },
-        { name: 'Cyan', hex: '#22d3ee', chipClass: 'border-cyan-400 bg-cyan-500/20 text-cyan-200 shadow-[0_0_8px_rgba(34,211,238,0.3)] font-bold', badgeClass: 'bg-cyan-400 text-slate-950' }
+        { id: 0, name: 'Sky Blue', hex: '#38bdf8', chipClass: 'border-sky-400 bg-sky-500/20 text-sky-200 shadow-[0_0_8px_rgba(56,189,248,0.3)] font-bold', dotBg: 'bg-sky-400', badgeClass: 'bg-sky-400 text-slate-950' },
+        { id: 1, name: 'Amber Gold', hex: '#fbbf24', chipClass: 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-[0_0_8px_rgba(251,191,36,0.3)] font-bold', dotBg: 'bg-amber-400', badgeClass: 'bg-amber-400 text-slate-950' },
+        { id: 2, name: 'Emerald Green', hex: '#34d399', chipClass: 'border-emerald-400 bg-emerald-500/20 text-emerald-200 shadow-[0_0_8px_rgba(52,211,153,0.3)] font-bold', dotBg: 'bg-emerald-400', badgeClass: 'bg-emerald-400 text-slate-950' },
+        { id: 3, name: 'Violet Purple', hex: '#c084fc', chipClass: 'border-purple-400 bg-purple-500/20 text-purple-200 shadow-[0_0_8px_rgba(192,132,252,0.3)] font-bold', dotBg: 'bg-purple-400', badgeClass: 'bg-purple-400 text-slate-950' },
+        { id: 4, name: 'Rose Pink', hex: '#fb7185', chipClass: 'border-rose-400 bg-rose-500/20 text-rose-200 shadow-[0_0_8px_rgba(251,113,133,0.3)] font-bold', dotBg: 'bg-rose-400', badgeClass: 'bg-rose-400 text-slate-950' },
+        { id: 5, name: 'Bright Orange', hex: '#fb923c', chipClass: 'border-orange-400 bg-orange-500/20 text-orange-200 shadow-[0_0_8px_rgba(251,146,60,0.3)] font-bold', dotBg: 'bg-orange-400', badgeClass: 'bg-orange-400 text-slate-950' },
+        { id: 6, name: 'Cyan Blue', hex: '#22d3ee', chipClass: 'border-cyan-400 bg-cyan-500/20 text-cyan-200 shadow-[0_0_8px_rgba(34,211,238,0.3)] font-bold', dotBg: 'bg-cyan-400', badgeClass: 'bg-cyan-400 text-slate-950' },
+        { id: 7, name: 'Fuchsia Magenta', hex: '#e879f9', chipClass: 'border-fuchsia-400 bg-fuchsia-500/20 text-fuchsia-200 shadow-[0_0_8px_rgba(232,121,249,0.3)] font-bold', dotBg: 'bg-fuchsia-400', badgeClass: 'bg-fuchsia-400 text-slate-950' },
+        { id: 8, name: 'Lime Green', hex: '#a3e635', chipClass: 'border-lime-400 bg-lime-500/20 text-lime-200 shadow-[0_0_8px_rgba(163,230,53,0.3)] font-bold', dotBg: 'bg-lime-400', badgeClass: 'bg-lime-400 text-slate-950' },
+        { id: 9, name: 'Bright Yellow', hex: '#facc15', chipClass: 'border-yellow-400 bg-yellow-500/20 text-yellow-200 shadow-[0_0_8px_rgba(250,204,21,0.3)] font-bold', dotBg: 'bg-yellow-400', badgeClass: 'bg-yellow-400 text-slate-950' }
       ];
 
       function detectSuffix(core, formulaParts = []) {
@@ -1842,7 +1871,7 @@
 
         // -er (comparatives or formula matching)
         const NOT_ER = new Set(['water', 'paper', 'river', 'never', 'after', 'under', 'over', 'other', 'mother', 'father']);
-        const formulaMentionsEr = formulaParts.some(p => p.toLowerCase().includes('er'));
+        const formulaMentionsEr = formulaParts.some(p => String(p || '').toLowerCase().includes('er'));
         if (lower.endsWith('er') && lower.length >= 5 && (formulaMentionsEr || lower.length >= 6) && !NOT_ER.has(lower)) {
           return { root: core.slice(0, -2), suffix: core.slice(-2) };
         }
@@ -1851,14 +1880,39 @@
       }
 
       let currentWordAssignments = [];
+      let currentFormulaParts = [];
       const formulaInput = modal.querySelector('#ge-rule-formula');
       const sentenceInput = modal.querySelector('#ge-rule-sentence');
       const legendContainer = modal.querySelector('#ge-formula-parts-legend');
       const wordChipsContainer = modal.querySelector('#ge-sentence-word-chips');
 
+      function initFormulaParts() {
+        if (activeRule && Array.isArray(activeRule.formula_parts) && activeRule.formula_parts.length > 0) {
+          currentFormulaParts = activeRule.formula_parts.map((p, idx) => ({
+            id: p.id || ('part-' + idx + '-' + Math.random().toString(36).slice(2, 6)),
+            name: String(p.name || `Part ${idx + 1}`).trim(),
+            colorIndex: (typeof p.colorIndex === 'number' && p.colorIndex >= 0) ? (p.colorIndex % COLOR_PALETTE.length) : (idx % COLOR_PALETTE.length)
+          }));
+        } else {
+          const rawFormula = (formulaInput?.value || activeRule?.formula || 'Subject + am / is / are + Verb-ing').trim();
+          const parts = rawFormula ? rawFormula.split('+').map(p => p.trim()).filter(Boolean) : ['Subject', 'Verb'];
+          currentFormulaParts = parts.map((name, idx) => ({
+            id: 'part-' + idx + '-' + Math.random().toString(36).slice(2, 6),
+            name,
+            colorIndex: idx % COLOR_PALETTE.length
+          }));
+        }
+      }
+      initFormulaParts();
+
+      function syncFormulaInput() {
+        if (formulaInput) {
+          formulaInput.value = currentFormulaParts.map(p => p.name).join(' + ');
+        }
+      }
+
       function getFormulaParts() {
-        const text = (formulaInput?.value || '').trim();
-        return text ? text.split('+').map(p => p.trim()).filter(Boolean) : ['Subject', 'Verb'];
+        return currentFormulaParts.map(p => p.name);
       }
 
       function initAssignmentsFromRule() {
@@ -1917,7 +1971,7 @@
           const sInfo = detectSuffix(core, formulaParts);
           if (sInfo) {
             // Check if formula has a matching suffix part
-            const sIdx = formulaParts.findIndex(p => p.toLowerCase().includes(sInfo.suffix.toLowerCase()));
+            const sIdx = currentFormulaParts.findIndex(p => p.name.toLowerCase().includes(sInfo.suffix.toLowerCase()));
             const suffixColor = sIdx !== -1 ? sIdx : initialColor;
             return {
               token: tok,
@@ -1951,40 +2005,161 @@
       function syncWordChips() {
         if (!wordChipsContainer || !legendContainer) return;
 
-        const formulaParts = getFormulaParts();
-        const totalColors = Math.max(formulaParts.length, 3);
-
-        // Update Legend Bar
-        legendContainer.innerHTML = formulaParts.map((part, idx) => {
-          const col = COLOR_PALETTE[idx % COLOR_PALETTE.length];
+        // Render Formula Parts Legend with:
+        // 1. Clickable color dot that toggles color popover
+        // 2. Editable part name input
+        // 3. Remove button (if > 1 part)
+        // 4. Color popover with 10 swatch buttons
+        // 5. "+ Add Part" button
+        const partsHtml = currentFormulaParts.map((part, idx) => {
+          const col = COLOR_PALETTE[part.colorIndex % COLOR_PALETTE.length];
           return `
-            <span class="px-2.5 py-1 rounded-xl text-[11px] font-bold border ${col.chipClass} flex items-center gap-1.5 shadow-sm">
-              <span class="w-2 h-2 rounded-full ${col.badgeClass}"></span>
-              <span>Part ${idx + 1}: ${escapeHtml(part)}</span>
-            </span>
+            <div class="ge-part-pill relative group/part inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition ${col.chipClass} shadow-sm" data-part-idx="${idx}">
+              <!-- Clickable Color Dot -->
+              <button type="button" class="ge-part-color-btn w-3.5 h-3.5 rounded-full ${col.dotBg} ring-2 ring-white/60 hover:scale-125 transition cursor-pointer shrink-0 shadow-sm" data-part-idx="${idx}" title="Click to change color for Part ${idx + 1} (${col.name})">
+              </button>
+
+              <span class="text-[10px] uppercase opacity-75 whitespace-nowrap">Part ${idx + 1}:</span>
+
+              <!-- Editable Part Name -->
+              <input type="text" class="ge-part-name-input bg-transparent border-b border-white/20 hover:border-white/70 focus:border-white focus:outline-none text-xs font-bold px-0.5 py-0 min-w-[50px] max-w-[130px]" value="${escapeHtml(part.name)}" data-part-idx="${idx}" title="Click to edit part name" placeholder="Part name">
+
+              <!-- Remove Part Button (when > 1 part) -->
+              ${currentFormulaParts.length > 1 ? `
+                <button type="button" class="ge-part-remove-btn opacity-60 hover:opacity-100 hover:text-rose-300 text-xs px-0.5 transition cursor-pointer ml-0.5" data-part-idx="${idx}" title="Remove Part ${idx + 1}">
+                  ✕
+                </button>
+              ` : ''}
+
+              <!-- Color Picker Popover (Floating Palette) -->
+              <div class="ge-color-popover hidden absolute top-full left-0 mt-2 z-40 p-2.5 rounded-2xl bg-slate-900 border border-slate-700 shadow-[0_10px_25px_rgba(0,0,0,0.8)] grid grid-cols-5 gap-2 w-[165px]" data-part-idx="${idx}">
+                ${COLOR_PALETTE.map((cp, cIdx) => `
+                  <button type="button" class="ge-color-swatch-btn w-5 h-5 rounded-full ${cp.dotBg} hover:scale-125 transition ring-1 ring-white/30 cursor-pointer ${cIdx === (part.colorIndex % COLOR_PALETTE.length) ? 'ring-2 ring-white scale-110 shadow-[0_0_8px_rgba(255,255,255,0.9)]' : ''}" data-part-idx="${idx}" data-color-idx="${cIdx}" title="${cp.name}">
+                  </button>
+                `).join('')}
+              </div>
+            </div>
           `;
         }).join('');
+
+        const addPartBtnHtml = `
+          <button type="button" id="ge-add-part-btn" class="px-2.5 py-1 rounded-xl text-xs font-bold border border-dashed border-amber-400/70 bg-amber-500/15 text-amber-300 hover:bg-amber-500/30 hover:border-amber-400 hover:text-white transition cursor-pointer flex items-center gap-1 shadow-sm active:scale-95" title="Add a new formula part">
+            <span>➕</span>
+            <span>Add Part</span>
+          </button>
+        `;
+
+        legendContainer.innerHTML = partsHtml + addPartBtnHtml;
+
+        // Wire Legend Buttons
+        legendContainer.querySelectorAll('.ge-part-color-btn').forEach(btn => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const pIdx = Number(btn.dataset.partIdx);
+            const popover = legendContainer.querySelector(`.ge-color-popover[data-part-idx="${pIdx}"]`);
+            if (!popover) return;
+            const isHidden = popover.classList.contains('hidden');
+            legendContainer.querySelectorAll('.ge-color-popover').forEach(p => p.classList.add('hidden'));
+            if (isHidden) {
+              popover.classList.remove('hidden');
+            }
+          };
+        });
+
+        legendContainer.querySelectorAll('.ge-color-swatch-btn').forEach(swatch => {
+          swatch.onclick = (e) => {
+            e.stopPropagation();
+            const pIdx = Number(swatch.dataset.partIdx);
+            const cIdx = Number(swatch.dataset.colorIdx);
+            if (currentFormulaParts[pIdx]) {
+              currentFormulaParts[pIdx].colorIndex = cIdx;
+              syncWordChips();
+            }
+          };
+        });
+
+        legendContainer.querySelectorAll('.ge-part-name-input').forEach(input => {
+          input.oninput = () => {
+            const pIdx = Number(input.dataset.partIdx);
+            if (currentFormulaParts[pIdx]) {
+              currentFormulaParts[pIdx].name = input.value;
+              syncFormulaInput();
+            }
+          };
+          input.onclick = (e) => e.stopPropagation();
+        });
+
+        legendContainer.querySelectorAll('.ge-part-remove-btn').forEach(btn => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const pIdx = Number(btn.dataset.partIdx);
+            if (currentFormulaParts.length > 1) {
+              currentFormulaParts.splice(pIdx, 1);
+              currentWordAssignments.forEach(item => {
+                const adjust = (c) => {
+                  if (typeof c !== 'number' || c === -1) return c;
+                  if (c === pIdx) return -1;
+                  if (c > pIdx) return c - 1;
+                  return c;
+                };
+                if (item.isSplit) {
+                  item.rootColor = adjust(item.rootColor);
+                  item.suffixColor = adjust(item.suffixColor);
+                } else {
+                  item.color = adjust(item.color);
+                }
+              });
+              syncFormulaInput();
+              syncWordChips();
+            }
+          };
+        });
+
+        const addPartBtn = legendContainer.querySelector('#ge-add-part-btn');
+        if (addPartBtn) {
+          addPartBtn.onclick = (e) => {
+            e.stopPropagation();
+            const nextIdx = currentFormulaParts.length;
+            currentFormulaParts.push({
+              id: 'part-' + nextIdx + '-' + Math.random().toString(36).slice(2, 6),
+              name: `Part ${nextIdx + 1}`,
+              colorIndex: nextIdx % COLOR_PALETTE.length
+            });
+            syncFormulaInput();
+            syncWordChips();
+          };
+        }
 
         if (currentWordAssignments.length === 0) {
           wordChipsContainer.innerHTML = '<span class="text-xs text-slate-500 italic">Type an example sentence above to assign colors and split suffixes</span>';
           return;
         }
 
-        const getStyle = (colorIdx) => {
-          if (typeof colorIdx === 'number' && colorIdx >= 0) {
-            return COLOR_PALETTE[colorIdx % COLOR_PALETTE.length].chipClass;
+        const getStyle = (partIdx) => {
+          if (typeof partIdx === 'number' && partIdx >= 0 && currentFormulaParts[partIdx]) {
+            const colIdx = currentFormulaParts[partIdx].colorIndex;
+            return COLOR_PALETTE[colIdx % COLOR_PALETTE.length].chipClass;
           }
           return 'border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500 hover:text-white';
+        };
+
+        const getPartTooltip = (partIdx) => {
+          if (typeof partIdx === 'number' && partIdx >= 0 && currentFormulaParts[partIdx]) {
+            const p = currentFormulaParts[partIdx];
+            const col = COLOR_PALETTE[p.colorIndex % COLOR_PALETTE.length];
+            return `Assigned to Part ${partIdx + 1}: ${p.name} (${col.name}). Click to cycle to next part.`;
+          }
+          return 'Not assigned to any formula part. Click to assign to Part 1.';
         };
 
         wordChipsContainer.innerHTML = currentWordAssignments.map((item, i) => {
           if (item.isSplit) {
             return `
               <div class="inline-flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-0.5 shadow-sm">
-                <button type="button" class="ge-token-btn px-2.5 py-1 rounded-l-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.rootColor)}" data-token-idx="${i}" data-segment="root" title="Click to cycle color for '${escapeHtml(item.root)}'">
+                <button type="button" class="ge-token-btn px-2.5 py-1 rounded-l-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.rootColor)}" data-token-idx="${i}" data-segment="root" title="${getPartTooltip(item.rootColor)}">
                   ${escapeHtml(item.root)}
                 </button>
-                <button type="button" class="ge-token-btn px-2 py-1 rounded-r-lg text-xs font-bold transition cursor-pointer active:scale-95 border-l border-slate-700/80 ${getStyle(item.suffixColor)}" data-token-idx="${i}" data-segment="suffix" title="Click to cycle color for '-${escapeHtml(item.suffix)}'">
+                <button type="button" class="ge-token-btn px-2 py-1 rounded-r-lg text-xs font-bold transition cursor-pointer active:scale-95 border-l border-slate-700/80 ${getStyle(item.suffixColor)}" data-token-idx="${i}" data-segment="suffix" title="${getPartTooltip(item.suffixColor)}">
                   -${escapeHtml(item.suffix)}
                 </button>
                 <button type="button" class="ge-split-toggle px-1 text-[11px] text-slate-500 hover:text-white transition cursor-pointer" title="Merge into whole word" data-token-idx="${i}">
@@ -1994,10 +2169,10 @@
               </div>
             `;
           } else {
-            const canSplit = Boolean(detectSuffix(item.core, formulaParts));
+            const canSplit = Boolean(detectSuffix(item.core, getFormulaParts()));
             return `
               <div class="inline-flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-0.5 shadow-sm">
-                <button type="button" class="ge-token-btn px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.color)}" data-token-idx="${i}" data-segment="whole" title="Click to cycle formula color">
+                <button type="button" class="ge-token-btn px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.color)}" data-token-idx="${i}" data-segment="whole" title="${getPartTooltip(item.color)}">
                   ${escapeHtml(item.core || item.token)}
                 </button>
                 ${canSplit ? `
@@ -2011,7 +2186,15 @@
           }
         }).join('');
 
-        // Wire click handlers for coloring segments
+        const nextPartIdx = (curr) => {
+          const numParts = currentFormulaParts.length;
+          if (numParts === 0) return -1;
+          const c = (typeof curr === 'number' && curr >= -1) ? curr : -1;
+          if (c >= numParts - 1) return -1;
+          return c + 1;
+        };
+
+        // Wire click handlers for cycling formula parts
         wordChipsContainer.querySelectorAll('.ge-token-btn').forEach(btn => {
           btn.onclick = () => {
             const idx = Number(btn.dataset.tokenIdx);
@@ -2019,17 +2202,12 @@
             const item = currentWordAssignments[idx];
             if (!item) return;
 
-            const nextColor = (curr) => {
-              const c = typeof curr === 'number' ? curr : -1;
-              return (c + 2) % (totalColors + 1) - 1;
-            };
-
             if (seg === 'root') {
-              item.rootColor = nextColor(item.rootColor);
+              item.rootColor = nextPartIdx(item.rootColor);
             } else if (seg === 'suffix') {
-              item.suffixColor = nextColor(item.suffixColor);
+              item.suffixColor = nextPartIdx(item.suffixColor);
             } else {
-              item.color = nextColor(item.color);
+              item.color = nextPartIdx(item.color);
             }
             syncWordChips();
           };
@@ -2046,12 +2224,13 @@
               item.isSplit = false;
               item.color = typeof item.rootColor === 'number' && item.rootColor !== -1 ? item.rootColor : item.suffixColor;
             } else {
-              const sInfo = detectSuffix(item.core, formulaParts) || { root: item.core.slice(0, -3), suffix: item.core.slice(-3) };
+              const sInfo = detectSuffix(item.core, getFormulaParts()) || { root: item.core.slice(0, -3), suffix: item.core.slice(-3) };
               item.isSplit = true;
               item.root = sInfo.root;
               item.suffix = sInfo.suffix;
               item.rootColor = item.color;
-              item.suffixColor = item.color;
+              const sIdx = currentFormulaParts.findIndex(p => p.name.toLowerCase().includes(sInfo.suffix.toLowerCase()));
+              item.suffixColor = sIdx !== -1 ? sIdx : item.color;
             }
             syncWordChips();
           };
@@ -2084,6 +2263,7 @@
 
           const sInfo = detectSuffix(core, formulaParts);
           if (sInfo) {
+            const sIdx = currentFormulaParts.findIndex(p => p.name.toLowerCase().includes(sInfo.suffix.toLowerCase()));
             return {
               token: tok,
               core: core,
@@ -2092,7 +2272,7 @@
               root: sInfo.root,
               suffix: sInfo.suffix,
               rootColor: -1,
-              suffixColor: -1,
+              suffixColor: sIdx !== -1 ? sIdx : -1,
               color: -1
             };
           }
@@ -2113,7 +2293,29 @@
         syncWordChips();
       });
 
-      formulaInput?.addEventListener('input', syncWordChips);
+      formulaInput?.addEventListener('input', () => {
+        const text = (formulaInput.value || '').trim();
+        const rawParts = text ? text.split('+').map(p => p.trim()).filter(Boolean) : [];
+        if (rawParts.length > 0) {
+          currentFormulaParts = rawParts.map((p, idx) => {
+            const existing = currentFormulaParts[idx];
+            return {
+              id: existing?.id || ('part-' + idx + '-' + Math.random().toString(36).slice(2, 6)),
+              name: p,
+              colorIndex: (existing && typeof existing.colorIndex === 'number') ? existing.colorIndex : (idx % COLOR_PALETTE.length)
+            };
+          });
+          syncWordChips();
+        }
+      });
+
+      // Global click on modal to dismiss open color popovers
+      modal.addEventListener('click', (e) => {
+        if (!e.target.closest('.ge-color-popover') && !e.target.closest('.ge-part-color-btn')) {
+          legendContainer?.querySelectorAll('.ge-color-popover').forEach(p => p.classList.add('hidden'));
+        }
+      });
+
       syncWordChips();
 
       modal.querySelector('#ge-close-btn').onclick = () => modal.remove();
@@ -2213,28 +2415,33 @@
         const wordsAmber = [];
         const wordsGreen = [];
         savedWordAssignments.forEach(item => {
+          const checkColor = (text, pIdx) => {
+            if (typeof pIdx !== 'number' || pIdx < 0) return;
+            const actualColor = (currentFormulaParts[pIdx] && typeof currentFormulaParts[pIdx].colorIndex === 'number')
+              ? currentFormulaParts[pIdx].colorIndex
+              : pIdx;
+            if (actualColor === 0) wordsBlue.push(text);
+            else if (actualColor === 1) wordsAmber.push(text);
+            else if (actualColor === 2) wordsGreen.push(text);
+          };
           if (item.segments) {
-            item.segments.forEach(seg => {
-              if (seg.color === 0) wordsBlue.push(seg.text);
-              if (seg.color === 1) wordsAmber.push(seg.text);
-              if (seg.color === 2) wordsGreen.push(seg.text);
-            });
+            item.segments.forEach(seg => checkColor(seg.text, seg.color));
           } else {
-            if (item.color === 0) wordsBlue.push(item.text);
-            if (item.color === 1) wordsAmber.push(item.text);
-            if (item.color === 2) wordsGreen.push(item.text);
+            checkColor(item.text, item.color);
           }
         });
         const wordsBlueStr = wordsBlue.join(', ');
         const wordsAmberStr = wordsAmber.join(', ');
         const wordsGreenStr = wordsGreen.join(', ');
+        const finalFormula = currentFormulaParts.map(p => p.name).join(' + ') || formula || 'Subject + Verb';
 
         if (isEditing) {
           // Update existing rule
           rules[editingRuleIndex] = {
             ...rules[editingRuleIndex],
             title,
-            formula: formula || 'Subject + Verb',
+            formula: finalFormula,
+            formula_parts: currentFormulaParts,
             sentence,
             word_assignments: savedWordAssignments,
             words_blue: wordsBlueStr,
@@ -2262,7 +2469,8 @@
           const newRule = {
             rule_id: 'rule-' + Date.now(),
             title,
-            formula: formula || 'Subject + Verb',
+            formula: finalFormula,
+            formula_parts: currentFormulaParts,
             sentence,
             word_assignments: savedWordAssignments,
             words_blue: wordsBlueStr,

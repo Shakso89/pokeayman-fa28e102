@@ -12,7 +12,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo.
 echo Deploying .output to Cloudflare (pokeayman)...
-call npx wrangler deploy --cwd .output/
+call npx.cmd wrangler deploy --cwd .output/
 
 echo.
 echo Deployment finished!
