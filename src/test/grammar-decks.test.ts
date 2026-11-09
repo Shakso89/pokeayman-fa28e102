@@ -489,4 +489,69 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     // Part 3 -> colorIndex 7 (Fuchsia)
     expect(sentenceHtml).toContain('<span class="text-fuchsia-300 font-black">ing</span>');
   });
+
+  it('ensures suffix (-ing) is given a distinct accent color without creating an unwanted fake Part 4 in the formula banner', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+
+    // Suffix pill controls in rule editor
+    expect(js).toContain('ge-suffix-pill');
+    expect(js).toContain('ge-suffix-color-btn');
+    expect(js).toContain('ge-suffix-popover');
+    expect(js).toContain('suffixColorIndex');
+
+    const mockWindow: any = {
+      document: {
+        readyState: 'complete',
+        addEventListener: () => {},
+        getElementById: () => null,
+        querySelectorAll: () => []
+      },
+      addEventListener: () => {}
+    };
+    new Function('window', 'document', js)(mockWindow, mockWindow.document);
+
+    const formatFormula = mockWindow.formatFormulaChips;
+    const formatSentence = mockWindow.formatSyntaxHighlightedSentence;
+
+    // Rule where the formula is genuinely 3 parts: Subject + am / is / are + Verb-ing
+    // Even if an accidental "Part 4" was appended, formatFormulaChips cleans it away
+    const continuousRule = {
+      title: 'Actions Happening Right Now',
+      formula: 'Subject + am / is / are + Verb-ing + Part 4',
+      formula_parts: [
+        { name: 'Subject', colorIndex: 0 },
+        { name: 'am / is / are', colorIndex: 1 },
+        { name: 'Verb-ing', colorIndex: 2 },
+        { name: 'Part 4', colorIndex: 3 }
+      ],
+      suffix_color: 3, // Violet Purple
+      sentence: 'The elephant is walking slowly in the grass.',
+      word_assignments: [
+        { token: 'The', text: 'The', color: 0 },
+        { token: 'elephant', text: 'elephant', color: 0 },
+        { token: 'is', text: 'is', color: 1 },
+        {
+          token: 'walking',
+          isSplit: true,
+          segments: [
+            { text: 'walk', color: 2 },
+            { text: 'ing', color: 3 }
+          ]
+        },
+        { token: 'slowly', text: 'slowly', color: -1 }
+      ]
+    };
+
+    // 1. Formula chips must NOT render the bogus [Part 4]
+    const chipsHtml = formatFormula(continuousRule.formula, continuousRule);
+    expect(chipsHtml).toContain('[Subject]');
+    expect(chipsHtml).toContain('[am / is / are]');
+    expect(chipsHtml).not.toContain('[Part 4]');
+    // Sub-word suffix inside [Verb-ing] has purple accent
+    expect(chipsHtml).toContain('Verb<span class="text-purple-300 font-black">-ing</span>');
+
+    // 2. Sentence must show walk in emerald (color 2) and ing in purple (color 3)
+    const sentenceHtml = formatSentence(continuousRule.sentence, continuousRule.formula, continuousRule);
+    expect(sentenceHtml).toContain('<span class="text-emerald-400 font-black">walk</span><span class="text-purple-300 font-black">ing</span>');
+  });
 });
