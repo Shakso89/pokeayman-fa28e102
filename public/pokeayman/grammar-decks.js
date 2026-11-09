@@ -66,6 +66,11 @@
           rule_id: 'pc-rule-2',
           title: 'Negative Actions (Not Happening)',
           formula: 'Subject + am / is / are + NOT + Verb-ing',
+          formula_parts: [
+            { name: 'Subject', colorIndex: 0, alternatives: ['The dinosaur', 'The little panda', 'The friendly robot', 'The astronaut'] },
+            { name: 'am / is / are + NOT', colorIndex: 1, alternatives: ['is not', 'was not', 'is definitely not'] },
+            { name: 'Verb-ing', colorIndex: 2, alternatives: ['sleeping', 'eating', 'crying', 'playing'] }
+          ],
           sentence: 'The dinosaur is not sleeping today.',
           words_blue: 'The dinosaur',
           words_amber: 'is not',
@@ -82,6 +87,11 @@
           rule_id: 'pc-rule-3',
           title: 'Asking Questions (Word Order Swap)',
           formula: 'Am / Is / Are + Subject + Verb-ing ?',
+          formula_parts: [
+            { name: 'Am / Is / Are', colorIndex: 1, alternatives: ['Are', 'Were'] },
+            { name: 'Subject', colorIndex: 0, alternatives: ['you', 'they', 'the students'] },
+            { name: 'Verb-ing', colorIndex: 2, alternatives: ['studying', 'practicing', 'preparing', 'reading'] }
+          ],
           sentence: 'Are you studying for the quiz right now?',
           words_blue: 'Are',
           words_amber: 'you',
@@ -1691,6 +1701,21 @@
                 <input type="hidden" id="ge-rule-words-green" value="${escapeHtml(activeRule?.words_green || activeRule?.highlight_green || '')}">
               </div>
 
+              <!-- Word Choices & Substitutions Section (Interactive in Practice) -->
+              <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3 sm:col-span-2">
+                <div class="flex items-center justify-between">
+                  <div class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                    Word Choices & Substitutions (Subjects, Verbs, Nouns, Adjectives)
+                  </div>
+                  <span class="text-[11px] text-slate-400">Students click these in practice to swap words</span>
+                </div>
+                <p class="text-[11px] text-slate-400">Add alternative words for each formula part (comma-separated). When students click the part during practice, a dropdown lets them swap it:</p>
+                <div id="ge-formula-part-alternatives-list" class="space-y-2">
+                  <!-- Populated dynamically per formula part -->
+                </div>
+              </div>
+
               <div class="space-y-1 sm:col-span-2">
                 <label for="ge-rule-clue" class="text-[11px] text-slate-400 font-semibold block">Context Clue / Hint</label>
                 <input id="ge-rule-clue" type="text" placeholder="e.g. Right now at this moment" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.context_clue || '')}">
@@ -2320,6 +2345,50 @@
 
       initAssignmentsFromRule();
 
+      
+      function syncAlternativesList() {
+        const altsListContainer = modal.querySelector('#ge-formula-part-alternatives-list');
+        if (!altsListContainer) return;
+
+        altsListContainer.innerHTML = currentFormulaParts.map((part, idx) => {
+          const col = COLOR_PALETTE[part.colorIndex % COLOR_PALETTE.length];
+          const val = Array.isArray(part.alternatives) ? part.alternatives.join(', ') : '';
+          const nameLower = String(part.name || '').toLowerCase();
+          let egPlaceholder = 'The elephant, The clever monkey, The boy';
+          if (nameLower.includes('verb')) {
+            egPlaceholder = nameLower.includes('ing') ? 'walking, climbing, running, sleeping' : 'arrives, departs, stops, passes';
+          } else if (nameLower.includes('adj')) {
+            egPlaceholder = 'faster, stronger, taller, quicker';
+          } else if (nameLower.includes('noun') || nameLower.includes('object')) {
+            egPlaceholder = 'warm tea, hot coffee, fresh juice';
+          } else if (nameLower.includes('is') || nameLower.includes('are') || nameLower.includes('am')) {
+            egPlaceholder = 'is, was, will be';
+          }
+          return `
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/90">
+              <div class="flex items-center gap-2 shrink-0 sm:w-52">
+                <span class="w-3 h-3 rounded-full ${col.dotBg} shrink-0 ring-1 ring-white/30"></span>
+                <span class="text-xs font-bold text-slate-200 truncate" title="${escapeHtml(part.name)}">
+                  Part ${idx + 1}: ${escapeHtml(part.name)}
+                </span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <input type="text" class="ge-part-alts-input quiz-input text-xs w-full py-1.5 px-3 rounded-lg bg-slate-950 border border-slate-700/80 focus:border-amber-400 text-white" data-part-idx="${idx}" value="${escapeHtml(val)}" placeholder="Alternative choices (comma-separated), e.g. ${egPlaceholder}">
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        altsListContainer.querySelectorAll('.ge-part-alts-input').forEach(inp => {
+          inp.oninput = () => {
+            const pIdx = Number(inp.dataset.partIdx);
+            if (currentFormulaParts[pIdx]) {
+              currentFormulaParts[pIdx].alternatives = inp.value.split(',').map(s => s.trim()).filter(Boolean);
+            }
+          };
+        });
+      }
+
       function syncWordChips() {
         if (!wordChipsContainer || !legendContainer) return;
 
@@ -2675,36 +2744,7 @@
         }
       });
 
-      // Render Dynamic Word Choices & Substitutions List
-        const altsListContainer = modal.querySelector('#ge-formula-part-alternatives-list');
-        if (altsListContainer) {
-          altsListContainer.innerHTML = currentFormulaParts.map((part, idx) => {
-            const col = COLOR_PALETTE[part.colorIndex % COLOR_PALETTE.length];
-            const val = Array.isArray(part.alternatives) ? part.alternatives.join(', ') : '';
-            return `
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/90">
-                <div class="flex items-center gap-2 shrink-0 sm:w-48">
-                  <span class="w-3 h-3 rounded-full ${col.dotBg} shrink-0 ring-1 ring-white/30"></span>
-                  <span class="text-xs font-bold text-slate-200 truncate" title="${escapeHtml(part.name)}">
-                    Part ${idx + 1}: ${escapeHtml(part.name)}
-                  </span>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <input type="text" class="ge-part-alts-input quiz-input text-xs w-full py-1 px-3 rounded-lg bg-slate-950 border border-slate-700/80 focus:border-amber-400 text-white" data-part-idx="${idx}" value="${escapeHtml(val)}" placeholder="Alternatives (comma-separated), e.g. ${idx === 0 ? 'The elephant, The clever monkey, The boy' : (idx === 1 ? 'is, was, will be' : 'walking, dancing, jumping')}">
-                </div>
-              </div>
-            `;
-          }).join('');
-
-          altsListContainer.querySelectorAll('.ge-part-alts-input').forEach(inp => {
-            inp.oninput = () => {
-              const pIdx = Number(inp.dataset.partIdx);
-              if (currentFormulaParts[pIdx]) {
-                currentFormulaParts[pIdx].alternatives = inp.value.split(',').map(s => s.trim()).filter(Boolean);
-              }
-            };
-          });
-        }
+      syncAlternativesList();
 
       syncWordChips();
 
