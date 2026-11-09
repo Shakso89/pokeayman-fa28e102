@@ -807,12 +807,12 @@
 
         // If the pill was split with a distinct suffix color, preserve segmentation
         const isSplit = pill.dataset.isSplit === 'true';
-        const sInfo = (isSplit && typeof detectSuffix === 'function') ? detectSuffix(nextVal) : null;
+        const suffixText = pill.dataset.suffixText || '';
+        const rootCls = pill.dataset.rootCls || '';
+        const suffixCls = pill.dataset.suffixCls || '';
 
-        if (isSplit && sInfo && labelEl) {
-          const rootCls = pill.dataset.rootCls || '';
-          const suffixCls = pill.dataset.suffixCls || '';
-          labelEl.innerHTML = `<span class="${rootCls}">${escapeHtml(sInfo.root)}</span><span class="${suffixCls}">${escapeHtml(sInfo.suffix)}</span>`;
+        if (isSplit && labelEl) {
+          labelEl.innerHTML = renderSplitWordHtml(nextVal, suffixText, rootCls, suffixCls);
         } else if (labelEl) {
           labelEl.textContent = nextVal;
         }
@@ -824,7 +824,8 @@
         setTimeout(() => pill.classList.remove('scale-105'), 180);
 
         if (typeof toast === 'function') {
-          toast(`Swapped to: ${nextVal}`);
+          const displayStr = isSplit ? renderSplitWordHtml(nextVal, suffixText, '', '').replace(/<[^>]*>/g, '') : nextVal;
+          toast(`Swapped to: ${displayStr}`);
         }
       };
     });
@@ -864,6 +865,93 @@
     return [...new Set(result)];
   }
 
+    // Helper: render a word split into root and suffix with proper English inflection and colors
+  function renderSplitWordHtml(word, suffixPattern, rootCls, suffixCls) {
+    if (!word) return '';
+    const cleanWord = String(word).trim();
+    if (!cleanWord) return '';
+
+    if (!suffixPattern) {
+      return `<span class="${rootCls}">${escapeHtml(cleanWord)}</span>`;
+    }
+
+    const cleanSfx = String(suffixPattern).replace(/^[-+]/, '').trim();
+    const sfxLower = cleanSfx.toLowerCase();
+    const wordLower = cleanWord.toLowerCase();
+
+    let rootPart = cleanWord;
+    let sfxPart = cleanSfx;
+
+    // 1. Explicit hyphen or plus in word (e.g. strong-er or strong+er)
+    if (cleanWord.includes('-') || cleanWord.includes('+')) {
+      const parts = cleanWord.split(/[-+]/);
+      if (parts.length >= 2 && parts[0] && parts[1]) {
+        rootPart = parts[0];
+        sfxPart = parts.slice(1).join('');
+        return `<span class="${rootCls}">${escapeHtml(rootPart)}</span><span class="${suffixCls}">${escapeHtml(sfxPart)}</span>`;
+      }
+    }
+
+    // 2. Word already ends with the suffix (e.g. "stronger" when suffix is "er")
+    if (sfxLower && wordLower.endsWith(sfxLower) && wordLower.length > sfxLower.length) {
+      rootPart = cleanWord.slice(0, cleanWord.length - cleanSfx.length);
+      sfxPart = cleanWord.slice(cleanWord.length - cleanSfx.length);
+      return `<span class="${rootCls}">${escapeHtml(rootPart)}</span><span class="${suffixCls}">${escapeHtml(sfxPart)}</span>`;
+    }
+
+    // 3. Word is base form, attach suffix with proper English inflection rules
+    if (sfxLower === 'er' || sfxLower === 'est') {
+      if (wordLower.endsWith('e') && wordLower.length > 2) {
+        rootPart = cleanWord.slice(0, -1);
+      } else if (wordLower.endsWith('y') && wordLower.length > 2 && !/[aeiou]y$/.test(wordLower)) {
+        rootPart = cleanWord.slice(0, -1) + 'i';
+      } else if (/^([a-z]*[bcdfghjklmnpqrstvwxyz][aeiou][bdfgmnprt])$/i.test(wordLower) && wordLower.length <= 4) {
+        rootPart = cleanWord + cleanWord.slice(-1);
+      } else {
+        rootPart = cleanWord;
+      }
+      sfxPart = cleanSfx;
+    } else if (sfxLower === 'ing') {
+      if (wordLower.endsWith('ie') && wordLower.length > 2) {
+        rootPart = cleanWord.slice(0, -2) + 'y';
+      } else if (wordLower.endsWith('e') && wordLower.length > 2 && !wordLower.endsWith('ee')) {
+        rootPart = cleanWord.slice(0, -1);
+      } else if (/^([a-z]*[bcdfghjklmnpqrstvwxyz][aeiou][bdfgmnprt])$/i.test(wordLower) && wordLower.length <= 4) {
+        rootPart = cleanWord + cleanWord.slice(-1);
+      } else {
+        rootPart = cleanWord;
+      }
+      sfxPart = cleanSfx;
+    } else if (sfxLower === 'ed') {
+      if (wordLower.endsWith('e') && wordLower.length > 2) {
+        rootPart = cleanWord.slice(0, -1);
+      } else if (wordLower.endsWith('y') && wordLower.length > 2 && !/[aeiou]y$/.test(wordLower)) {
+        rootPart = cleanWord.slice(0, -1) + 'i';
+      } else if (/^([a-z]*[bcdfghjklmnpqrstvwxyz][aeiou][bdfgmnprt])$/i.test(wordLower) && wordLower.length <= 4) {
+        rootPart = cleanWord + cleanWord.slice(-1);
+      } else {
+        rootPart = cleanWord;
+      }
+      sfxPart = cleanSfx;
+    } else if (sfxLower === 's' || sfxLower === 'es') {
+      if (/(s|sh|ch|x|z)$/i.test(wordLower)) {
+        rootPart = cleanWord;
+        sfxPart = 'es';
+      } else if (wordLower.endsWith('y') && wordLower.length > 2 && !/[aeiou]y$/.test(wordLower)) {
+        rootPart = cleanWord.slice(0, -1);
+        sfxPart = 'ies';
+      } else {
+        rootPart = cleanWord;
+        sfxPart = 's';
+      }
+    } else {
+      rootPart = cleanWord;
+      sfxPart = cleanSfx;
+    }
+
+    return `<span class="${rootCls}">${escapeHtml(rootPart)}</span><span class="${suffixCls}">${escapeHtml(sfxPart)}</span>`;
+  }
+
   function formatSyntaxHighlightedSentence(sentence, formula = '', rule = null) {
     if (!sentence) return '';
     const clean = String(sentence).trim();
@@ -882,17 +970,15 @@
       'text-lime-300 font-black',    // 8: Lime
       'text-yellow-300 font-black'   // 9: Yellow
     ];
-    const getColorCls = (partIdx, isSuffix = false) => {
-      if (typeof partIdx !== 'number' || partIdx < 0) return 'text-white font-extrabold';
-      let c = partIdx;
-      if (rule && Array.isArray(rule.formula_parts) && rule.formula_parts[partIdx]) {
-        const fp = rule.formula_parts[partIdx];
+    const getColorCls = (partOrColorIdx, isSuffix = false) => {
+      if (typeof partOrColorIdx !== 'number' || partOrColorIdx < 0) return 'text-white font-extrabold';
+      let c = partOrColorIdx;
+      if (rule && Array.isArray(rule.formula_parts) && rule.formula_parts[partOrColorIdx]) {
+        const fp = rule.formula_parts[partOrColorIdx];
         if (typeof fp.colorIndex === 'number') {
           c = fp.colorIndex;
         }
       } else if (isSuffix && rule && typeof rule.suffix_color === 'number') {
-        c = rule.suffix_color;
-      } else if (rule && typeof rule.suffix_color === 'number' && partIdx === rule.suffix_color) {
         c = rule.suffix_color;
       }
       return (c >= 0 && c < COLOR_CLASSES.length) ? COLOR_CLASSES[c] : COLOR_CLASSES[c % COLOR_CLASSES.length];
@@ -953,22 +1039,49 @@
           }
 
           // Check if any token in this part was split
+          let splitSuffix = '';
           groupTokens.forEach((tokText, tIdx) => {
             const origItem = rule.word_assignments.find(w => (w.text === tokText || w.token === tokText || (Array.isArray(w.segments) && w.segments.map(s => s.text).join('') === tokText)));
             if (origItem && Array.isArray(origItem.segments) && origItem.segments.length > 1) {
               hasSplit = true;
               firstRootCls = getColorCls(origItem.segments[0].color, false);
               firstSuffixCls = getColorCls(origItem.segments[1].color, true);
+              splitSuffix = origItem.segments[1].text || '';
               pillInnerHtml += (tIdx > 0 ? ' ' : '') + `<span class="${firstRootCls}">${escapeHtml(origItem.segments[0].text || '')}</span><span class="${firstSuffixCls}">${escapeHtml(origItem.segments[1].text || '')}</span>`;
             } else {
               pillInnerHtml += (tIdx > 0 ? ' ' : '') + escapeHtml(tokText);
             }
           });
 
-          const renderedText = (displayWord !== phrase) ? escapeHtml(displayWord) : (pillInnerHtml || escapeHtml(phrase));
+          // Fallback detection for split suffix from rule word_assignments by part color or formula part name
+          if (!splitSuffix && Array.isArray(rule.word_assignments)) {
+            const splitAssigned = rule.word_assignments.find(w => Array.isArray(w.segments) && w.segments.length > 1 && (w.segments[0].color === pColor || w.color === pColor));
+            if (splitAssigned) {
+              hasSplit = true;
+              firstRootCls = getColorCls(splitAssigned.segments[0].color, false);
+              firstSuffixCls = getColorCls(splitAssigned.segments[1].color, true);
+              splitSuffix = splitAssigned.segments[1].text || '';
+            }
+          }
+          if (!splitSuffix && fp && typeof fp.name === 'string') {
+            const m = fp.name.match(/[+\-]([a-zA-Z']+)/);
+            if (m) {
+              hasSplit = true;
+              splitSuffix = m[1];
+              if (!firstRootCls) firstRootCls = getColorCls(pColor, false);
+              if (!firstSuffixCls) firstSuffixCls = getColorCls(typeof rule.suffix_color === 'number' ? rule.suffix_color : 4, true);
+            }
+          }
+
+          let renderedText = '';
+          if (hasSplit && splitSuffix) {
+            renderedText = renderSplitWordHtml(displayWord, splitSuffix, firstRootCls, firstSuffixCls);
+          } else {
+            renderedText = (displayWord !== phrase) ? escapeHtml(displayWord) : (pillInnerHtml || escapeHtml(phrase));
+          }
 
           resultHtml.push(`
-            <span class="gp-subst-pill group/pill inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400 hover:bg-slate-800 transition cursor-pointer select-none ${cls} font-black relative align-baseline mx-0.5 shadow-sm active:scale-95" data-part-idx="${pColor}" data-active-val="${escapeHtml(displayWord)}" data-is-split="${hasSplit ? 'true' : 'false'}" data-root-cls="${firstRootCls}" data-suffix-cls="${firstSuffixCls}" title="Click to cycle word">
+            <span class="gp-subst-pill group/pill inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400 hover:bg-slate-800 transition cursor-pointer select-none ${cls} font-black relative align-baseline mx-0.5 shadow-sm active:scale-95" data-part-idx="${pColor}" data-active-val="${escapeHtml(displayWord)}" data-is-split="${hasSplit ? 'true' : 'false'}" data-suffix-text="${escapeHtml(splitSuffix)}" data-root-cls="${firstRootCls}" data-suffix-cls="${firstSuffixCls}" title="Click to cycle word">
               <span class="gp-pill-text">${renderedText}</span>
               <svg class="w-3.5 h-3.5 text-slate-400 group-hover/pill:text-amber-400 transition shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             </span>${lastPunct ? `<span class="text-white font-extrabold">${escapeHtml(lastPunct)}</span>` : ''}
@@ -2332,6 +2445,11 @@
         if (activeRule && Array.isArray(activeRule.word_assignments) && activeRule.word_assignments.length > 0) {
           currentWordAssignments = activeRule.word_assignments.map(item => {
             const isSplit = Array.isArray(item.segments) && item.segments.length >= 2;
+            const rColor = isSplit ? item.segments[0].color : -1;
+            const sColor = isSplit ? item.segments[1].color : -1;
+            if (isSplit && typeof sColor === 'number' && sColor >= 0) {
+              suffixColorIndex = sColor;
+            }
             return {
               token: item.token || '',
               core: item.text || (item.token ? item.token.replace(/[.,!?;:]*$/, '') : ''),
@@ -2339,8 +2457,8 @@
               isSplit: isSplit,
               root: isSplit ? item.segments[0].text : '',
               suffix: isSplit ? item.segments[1].text : '',
-              rootColor: isSplit ? item.segments[0].color : -1,
-              suffixColor: isSplit ? item.segments[1].color : -1,
+              rootColor: rColor,
+              suffixColor: sColor,
               color: !isSplit ? (typeof item.color === 'number' ? item.color : -1) : -1
             };
           });
@@ -2614,9 +2732,9 @@
           return;
         }
 
-        const getStyle = (colorVal) => {
+        const getStyle = (colorVal, isSuffix = false) => {
           if (typeof colorVal === 'number' && colorVal >= 0) {
-            if (currentFormulaParts[colorVal]) {
+            if (!isSuffix && currentFormulaParts[colorVal]) {
               const colIdx = currentFormulaParts[colorVal].colorIndex;
               return COLOR_PALETTE[colIdx % COLOR_PALETTE.length].chipClass;
             }
@@ -2627,26 +2745,28 @@
 
         const getPartTooltip = (colorVal, isSuffix = false) => {
           if (typeof colorVal === 'number' && colorVal >= 0) {
+            const col = COLOR_PALETTE[colorVal % COLOR_PALETTE.length];
+            if (isSuffix) {
+              return `Suffix Color: ${col.name} (Independent from formula parts). Click or choose below to change.`;
+            }
             if (currentFormulaParts[colorVal]) {
               const p = currentFormulaParts[colorVal];
-              const col = COLOR_PALETTE[p.colorIndex % COLOR_PALETTE.length];
-              const role = isSuffix ? 'Suffix Addition' : 'Formula Part';
-              return `Assigned to Part ${colorVal + 1}: ${p.name} (${col.name}) [${role}]. Click to cycle.`;
+              return `Assigned to Part ${colorVal + 1}: ${p.name} (${col.name}). Click to cycle part.`;
             }
-            const col = COLOR_PALETTE[colorVal % COLOR_PALETTE.length];
-            return `Assigned to Color ${colorVal + 1} (${col.name}). Click to cycle.`;
+            return `Color: ${col.name}. Click to cycle.`;
           }
-          return 'Unassigned. Click to cycle formula part.';
+          return 'Unassigned. Click to assign.';
         };
 
-        wordChipsContainer.innerHTML = currentWordAssignments.map((item, i) => {
+        const hasAnySplit = currentWordAssignments.some(item => item.isSplit);
+        const chipsHtml = currentWordAssignments.map((item, i) => {
           if (item.isSplit) {
             return `
               <div class="inline-flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-0.5 shadow-sm">
-                <button type="button" class="ge-token-btn px-2.5 py-1 rounded-l-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.rootColor)}" data-token-idx="${i}" data-segment="root" title="${getPartTooltip(item.rootColor, false)}">
+                <button type="button" class="ge-token-btn px-2.5 py-1 rounded-l-lg text-xs font-bold transition cursor-pointer active:scale-95 ${getStyle(item.rootColor, false)}" data-token-idx="${i}" data-segment="root" title="${getPartTooltip(item.rootColor, false)}">
                   ${escapeHtml(item.root)}
                 </button>
-                <button type="button" class="ge-token-btn px-2 py-1 rounded-r-lg text-xs font-bold transition cursor-pointer active:scale-95 border-l border-slate-700/80 ${getStyle(item.suffixColor)}" data-token-idx="${i}" data-segment="suffix" title="${getPartTooltip(item.suffixColor, true)}">
+                <button type="button" class="ge-token-btn ge-suffix-token-btn px-2 py-1 rounded-r-lg text-xs font-bold transition cursor-pointer active:scale-95 border-l border-slate-700/80 ${getStyle(item.suffixColor, true)}" data-token-idx="${i}" data-segment="suffix" title="${getPartTooltip(item.suffixColor, true)}">
                   ${item.suffix && item.suffix.startsWith("'") ? '' : '-'}${escapeHtml(item.suffix)}
                 </button>
                 <button type="button" class="ge-split-toggle px-1 text-slate-400 hover:text-white transition cursor-pointer" title="Merge root and suffix into whole word" data-token-idx="${i}" aria-label="Merge word">
@@ -2672,6 +2792,28 @@
             `;
           }
         }).join('');
+
+        const suffixPaletteHtml = hasAnySplit ? `
+          <div class="flex items-center gap-2.5 mt-3 pt-2.5 border-t border-slate-800/90 flex-wrap">
+            <div class="flex items-center gap-1.5 text-xs font-bold text-slate-300">
+              <span class="w-2.5 h-2.5 rounded-full ${COLOR_PALETTE[suffixColorIndex % COLOR_PALETTE.length].dotBg} ring-1 ring-white/30"></span>
+              <span>Suffix Color:</span>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              ${COLOR_PALETTE.map(cp => `
+                <button type="button" class="ge-suffix-color-swatch w-5 h-5 rounded-full ${cp.dotBg} transition cursor-pointer hover:scale-125 active:scale-95 ${suffixColorIndex === cp.id ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 scale-110 shadow-lg' : 'opacity-70 hover:opacity-100'}" data-color-id="${cp.id}" title="${cp.name}"></button>
+              `).join('')}
+            </div>
+            <span class="text-xs font-bold text-amber-300">
+              ${COLOR_PALETTE[suffixColorIndex % COLOR_PALETTE.length].name}
+            </span>
+            <span class="text-[11px] text-slate-400 italic ml-auto">
+              (Independent from formula parts)
+            </span>
+          </div>
+        ` : '';
+
+        wordChipsContainer.innerHTML = '<div class="flex flex-wrap items-center gap-1.5">' + chipsHtml + '</div>' + suffixPaletteHtml;
 
         const getCycleOptions = () => {
           const opts = [];
@@ -2703,10 +2845,29 @@
             if (seg === 'root') {
               item.rootColor = nextColorVal(item.rootColor);
             } else if (seg === 'suffix') {
-              item.suffixColor = nextColorVal(item.suffixColor);
+              // Suffix color can be ANY color in COLOR_PALETTE (0..9), completely independent of formula parts!
+              const cur = (typeof item.suffixColor === 'number' && item.suffixColor >= 0) ? item.suffixColor : suffixColorIndex;
+              const nextColor = (cur + 1) % COLOR_PALETTE.length;
+              item.suffixColor = nextColor;
+              suffixColorIndex = nextColor;
             } else {
               item.color = nextColorVal(item.color);
             }
+            syncWordChips();
+          };
+        });
+
+        // Wire click handler for Suffix Color palette swatches
+        wordChipsContainer.querySelectorAll('.ge-suffix-color-swatch').forEach(swatch => {
+          swatch.onclick = (e) => {
+            e.stopPropagation();
+            const cId = Number(swatch.dataset.colorId);
+            suffixColorIndex = cId;
+            currentWordAssignments.forEach(w => {
+              if (w.isSplit) {
+                w.suffixColor = cId;
+              }
+            });
             syncWordChips();
           };
         });
