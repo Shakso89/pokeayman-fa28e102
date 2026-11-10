@@ -1827,39 +1827,70 @@
                 </div>
               </div>
 
-              <!-- Rule Title & Formula Banner -->
-              <div class="space-y-2 text-center">
-                <h3 class="text-base sm:text-xl font-black text-amber-300 tracking-wide">${escapeHtml(r.title)}</h3>
-                <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-                  ${formatFormulaChips(r.formula, r)}
+              <!-- Rule Title & Formula Banner (PROMINENT & CLEAR) -->
+              <div class="space-y-2.5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h3 class="text-base sm:text-xl font-black text-amber-300 tracking-wide">${escapeHtml(r.title)}</h3>
+                  ${cleanClue ? `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 self-start sm:self-auto">${escapeHtml(cleanClue)}</span>` : ''}
+                </div>
+                <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 border border-indigo-500/30 flex items-center justify-center shadow-inner">
+                  <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                    ${formatFormulaChips(r.formula, r)}
+                  </div>
                 </div>
               </div>
 
-              <!-- Main Media / Sentence Arena -->
-              <div class="relative w-full rounded-2xl overflow-hidden bg-slate-950/80 border border-slate-800 min-h-[220px] sm:min-h-[260px] flex flex-col justify-between p-4 sm:p-5">
-                <!-- Cover Image (Subtle Background) -->
-                ${r.image ? `
-                  <img src="${escapeHtml(r.image)}" alt="${escapeHtml(r.title)}" class="absolute inset-0 w-full h-full object-cover opacity-25 filter blur-[1px] pointer-events-none" />
-                  <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent pointer-events-none"></div>
-                ` : ''}
-
-                <!-- Syntax-Highlighted Sentence with Interactive Substitution Pills -->
-                <div class="relative z-10 my-auto py-5 text-center">
+              <!-- Main Arena: Grammar Sentence is the Hero + Compact Visual Cue -->
+              <div class="p-5 sm:p-6 rounded-2xl bg-slate-950/85 border border-slate-800 shadow-xl flex flex-col md:flex-row items-center justify-between gap-5 relative overflow-hidden">
+                <!-- Left / Center: Big commanding syntax-highlighted sentence -->
+                <div class="flex-1 text-center md:text-left min-w-0">
+                  <div class="flex items-center justify-center md:justify-start gap-2 text-[11px] font-bold uppercase tracking-widest text-indigo-400 mb-2">
+                    <span>Master Example</span>
+                    <span class="text-slate-600">•</span>
+                    <span class="text-slate-400 font-normal">Click word to cycle alternatives</span>
+                  </div>
                   <p class="gp-hero-sentence text-2xl sm:text-3xl md:text-4xl font-black text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
                     ${formatSyntaxHighlightedSentence(r.sentence, r.formula, r)}
                   </p>
                 </div>
 
-                <!-- Common Mistake Banner (Red vs Green) -->
-                <div class="gp-mistake-banner relative z-10 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
-                  <div class="gp-mistake-wrap flex items-center gap-1.5 text-rose-300">
-                    <span class="gp-mistake-pill font-black text-rose-400 uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 border border-rose-500/30">Mistake:</span>
-                    <span class="gp-mistake-text line-through opacity-85">${escapeHtml(badText)}</span>
+                <!-- Right: Compact Visual Cue Thumbnail (Supporting cue, not the hero) -->
+                ${r.image ? `
+                  <div class="relative w-28 h-24 sm:w-36 sm:h-28 rounded-2xl overflow-hidden border border-slate-700/80 shadow-md shrink-0 group bg-slate-900">
+                    <img src="${escapeHtml(r.image)}" alt="${escapeHtml(r.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none"></div>
                   </div>
-                  <div class="gp-correct-wrap flex items-center gap-1.5 text-emerald-300">
-                    <span class="gp-correct-pill font-black text-emerald-400 uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30">Correct:</span>
-                    <span class="gp-correct-text font-bold">${escapeHtml(goodText)}</span>
+                ` : ''}
+              </div>
+
+              <!-- Side-by-Side Mistake vs. Correct Cards -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <!-- Common Mistake Card -->
+                <div class="p-3.5 rounded-xl bg-rose-950/25 border border-rose-500/30 flex flex-col justify-between gap-1 shadow-sm">
+                  <div class="flex items-center justify-between">
+                    <span class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-rose-400 text-[11px]">
+                      <span class="w-4 h-4 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-[10px] font-black">✕</span>
+                      Avoid This Mistake
+                    </span>
+                    <span class="text-[10px] font-bold text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded-full border border-rose-500/30">INCORRECT</span>
                   </div>
+                  <p class="text-sm font-semibold text-rose-200 line-through opacity-90 my-0.5">
+                    ${escapeHtml(badText)}
+                  </p>
+                </div>
+
+                <!-- Correct Form Card -->
+                <div class="p-3.5 rounded-xl bg-emerald-950/25 border border-emerald-500/30 flex flex-col justify-between gap-1 shadow-sm">
+                  <div class="flex items-center justify-between">
+                    <span class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-emerald-400 text-[11px]">
+                      <span class="w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-[10px] font-black">✓</span>
+                      Correct Usage
+                    </span>
+                    <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">CORRECT</span>
+                  </div>
+                  <p class="text-sm font-bold text-emerald-200 my-0.5">
+                    ${escapeHtml(goodText)}
+                  </p>
                 </div>
               </div>
 
