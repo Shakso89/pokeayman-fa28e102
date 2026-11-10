@@ -1821,6 +1821,14 @@
                       Edit Rule
                     </button>
                   ` : ''}
+                  <button type="button" id="gp-fullscreen-btn" class="gp-fullscreen-btn w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer" title="Fullscreen" aria-label="Fullscreen">
+                    <svg class="w-4 h-4 gp-fs-expand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
+                    </svg>
+                    <svg class="w-4 h-4 gp-fs-compress hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 10V4m0 6h6m-6 0l7-7M10 10V4m0 6H4m6 0L3 3" />
+                    </svg>
+                  </button>
                   <button type="button" id="gp-close-btn" class="gp-close-btn w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-lg transition cursor-pointer" aria-label="Close practice">
                     ✕
                   </button>
@@ -1874,7 +1882,7 @@
                     </span>
                     <span class="text-[10px] font-bold text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded-full border border-rose-500/30">INCORRECT</span>
                   </div>
-                  <p class="text-sm font-semibold text-rose-200 line-through opacity-90 my-0.5">
+                  <p class="text-sm font-semibold text-rose-200 opacity-95 my-0.5">
                     ${escapeHtml(badText)}
                   </p>
                 </div>
@@ -1894,18 +1902,24 @@
                 </div>
               </div>
 
-              <!-- Quick Check Inline Bar -->
-              <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
-                <div class="flex items-start sm:items-center gap-2 text-xs sm:text-sm font-semibold text-slate-200 min-w-0 flex-1">
-                  <span class="text-amber-400 font-black shrink-0">⚡ Quick Check:</span>
-                  <span class="text-slate-200 break-words leading-relaxed">${escapeHtml(r.quiz_question || 'Fill in the blank with the correct form:')}</span>
+              <!-- Let's Practice Centered Header & Question Container -->
+              <div class="space-y-2">
+                <div class="flex items-center justify-center">
+                  <span class="inline-flex items-center gap-1.5 px-3.5 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-black uppercase tracking-wider shadow-sm">
+                    Let's Practice
+                  </span>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 shrink-0" id="gp-options-row">
-                  ${options.map(opt => `
-                    <button type="button" class="gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-95 cursor-pointer" data-val="${escapeHtml(opt)}">
-                      [${escapeHtml(opt)}]
-                    </button>
-                  `).join('')}
+                <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
+                  <div class="text-xs sm:text-sm font-semibold text-slate-200 min-w-0 flex-1 text-center lg:text-left">
+                    <span class="text-slate-200 break-words leading-relaxed">${escapeHtml(r.quiz_question || 'Fill in the blank with the correct form:')}</span>
+                  </div>
+                  <div class="flex flex-wrap items-center justify-center gap-2 shrink-0" id="gp-options-row">
+                    ${options.map(opt => `
+                      <button type="button" class="gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-95 cursor-pointer" data-val="${escapeHtml(opt)}">
+                        [${escapeHtml(opt)}]
+                      </button>
+                    `).join('')}
+                  </div>
                 </div>
               </div>
 
@@ -1937,18 +1951,71 @@
         </div>
       `;
 
-      // Wire close button & backdrop click
-      modal.querySelector('#gp-close-btn').onclick = () => modal.remove();
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) modal.remove();
-      });
-      const onEsc = (e) => {
-        if (e.key === 'Escape') {
-          modal.remove();
-          document.removeEventListener('keydown', onEsc);
+      // Wire close button, backdrop click & fullscreen cleanup
+      const closeModal = () => {
+        if (document.fullscreenElement) {
+          try { document.exitFullscreen().catch(() => {}); } catch (_) {}
+        }
+        modal.remove();
+        if (modal._onEsc) document.removeEventListener('keydown', modal._onEsc);
+        if (modal._onFsChange) {
+          document.removeEventListener('fullscreenchange', modal._onFsChange);
+          document.removeEventListener('webkitfullscreenchange', modal._onFsChange);
         }
       };
+      modal.querySelector('#gp-close-btn').onclick = closeModal;
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+      const onEsc = (e) => {
+        if (e.key === 'Escape') closeModal();
+      };
+      if (modal._onEsc) document.removeEventListener('keydown', modal._onEsc);
+      modal._onEsc = onEsc;
       document.addEventListener('keydown', onEsc);
+
+      // Wire Fullscreen Button
+      const fsBtn = modal.querySelector('#gp-fullscreen-btn');
+      const updateFsState = () => {
+        const isFs = Boolean(document.fullscreenElement === modal || document.fullscreenElement);
+        if (fsBtn) {
+          fsBtn.title = isFs ? 'Exit fullscreen' : 'Fullscreen';
+          fsBtn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Fullscreen');
+          fsBtn.querySelector('.gp-fs-expand')?.classList.toggle('hidden', isFs);
+          fsBtn.querySelector('.gp-fs-compress')?.classList.toggle('hidden', !isFs);
+        }
+      };
+      updateFsState();
+
+      if (fsBtn) {
+        fsBtn.onclick = async (e) => {
+          e.stopPropagation();
+          try {
+            if (document.fullscreenElement) {
+              await document.exitFullscreen();
+            } else {
+              if (modal.requestFullscreen) {
+                await modal.requestFullscreen();
+              } else if (modal.webkitRequestFullscreen) {
+                await modal.webkitRequestFullscreen();
+              } else if (modal.msRequestFullscreen) {
+                await modal.msRequestFullscreen();
+              }
+            }
+          } catch (_) {
+            modal.classList.toggle('gp-fullscreen-active');
+            updateFsState();
+          }
+        };
+      }
+      const onFsChange = () => updateFsState();
+      if (modal._onFsChange) {
+        document.removeEventListener('fullscreenchange', modal._onFsChange);
+        document.removeEventListener('webkitfullscreenchange', modal._onFsChange);
+      }
+      modal._onFsChange = onFsChange;
+      document.addEventListener('fullscreenchange', onFsChange);
+      document.addEventListener('webkitfullscreenchange', onFsChange);
 
       // Wire navigation
       modal.querySelector('#gp-prev-btn').onclick = () => {
@@ -1963,7 +2030,7 @@
           renderCard(currentIndex);
         } else {
           if (typeof toast === 'function') toast('You completed all rules in this deck!');
-          modal.remove();
+          closeModal();
         }
       };
 
@@ -1971,7 +2038,7 @@
       const editBtn = modal.querySelector('#gp-edit-deck-btn');
       if (editBtn) {
         editBtn.onclick = () => {
-          modal.remove();
+          closeModal();
           window.openGrammarDeckEditor(deck, deckName, currentIndex);
         };
       }
