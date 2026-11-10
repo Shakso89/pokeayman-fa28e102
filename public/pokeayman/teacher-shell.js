@@ -179,10 +179,15 @@
   function isStreakDismissed() {
     try {
       const teacher = g(() => currentTeacher, '') || '';
-      if (teacher && sessionStorage.getItem(`${STREAK_DISMISSED_KEY}:${encodeURIComponent(teacher)}`) === '1') {
-        return true;
+      if (teacher) {
+        if (sessionStorage.getItem(`${STREAK_DISMISSED_KEY}:${encodeURIComponent(teacher)}`) === '1' ||
+            localStorage.getItem(`${STREAK_DISMISSED_KEY}:${encodeURIComponent(teacher)}`) === '1') {
+          return true;
+        }
       }
-      return sessionStorage.getItem(STREAK_DISMISSED_KEY) === '1' || sessionStorage.getItem('pokeayman-streak-dismissed-session') === '1';
+      return sessionStorage.getItem(STREAK_DISMISSED_KEY) === '1' ||
+             sessionStorage.getItem('pokeayman-streak-dismissed-session') === '1' ||
+             localStorage.getItem(STREAK_DISMISSED_KEY) === '1';
     } catch (_) {
       return false;
     }
@@ -194,14 +199,18 @@
       if (dismissed) {
         sessionStorage.setItem(STREAK_DISMISSED_KEY, '1');
         sessionStorage.setItem('pokeayman-streak-dismissed-session', '1');
+        try { localStorage.setItem(STREAK_DISMISSED_KEY, '1'); } catch (_) {}
         if (teacher) {
           sessionStorage.setItem(`${STREAK_DISMISSED_KEY}:${encodeURIComponent(teacher)}`, '1');
+          try { localStorage.setItem(`${STREAK_DISMISSED_KEY}:${encodeURIComponent(teacher)}`, '1'); } catch (_) {}
         }
       } else {
         sessionStorage.removeItem(STREAK_DISMISSED_KEY);
         sessionStorage.removeItem('pokeayman-streak-dismissed-session');
+        try { localStorage.removeItem(STREAK_DISMISSED_KEY); } catch (_) {}
         if (teacher) {
           sessionStorage.removeItem(`${STREAK_DISMISSED_KEY}:${encodeURIComponent(teacher)}`);
+          try { localStorage.removeItem(`${STREAK_DISMISSED_KEY}:${encodeURIComponent(teacher)}`); } catch (_) {}
         }
       }
     } catch (_) {}
@@ -271,13 +280,31 @@
         e.preventDefault();
         e.stopPropagation();
         setStreakDismissed(true);
-        const streakCard = rail.querySelector('.ts-streak');
-        if (streakCard) {
+        const streakCards = document.querySelectorAll('.ts-streak, #ts-rail .ts-streak');
+        streakCards.forEach(streakCard => {
           streakCard.hidden = true;
           streakCard.setAttribute('hidden', '');
-        }
+          streakCard.classList.add('hidden');
+          streakCard.style.setProperty('display', 'none', 'important');
+        });
       }
     });
+    // Global fallback listener in case click event bubbles outside rail
+    document.addEventListener('click', (e) => {
+      const closeBtn = e.target.closest?.('[data-ts-streak-close]');
+      if (closeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        setStreakDismissed(true);
+        const streakCards = document.querySelectorAll('.ts-streak, #ts-rail .ts-streak');
+        streakCards.forEach(streakCard => {
+          streakCard.hidden = true;
+          streakCard.setAttribute('hidden', '');
+          streakCard.classList.add('hidden');
+          streakCard.style.setProperty('display', 'none', 'important');
+        });
+      }
+    }, true);
     const sidebarToggle = document.createElement('button');
     sidebarToggle.id = 'ts-sidebar-toggle'; sidebarToggle.type = 'button'; sidebarToggle.setAttribute('aria-controls', 'ts-sidebar');
     sidebarToggle.addEventListener('click', () => toggleSidebar());
@@ -756,7 +783,19 @@
     const isAdmin = role === 'admin';
     const isSchoolManager = role === 'school_manager';
     const streakCard = document.querySelector('#ts-rail .ts-streak');
-    if (streakCard) streakCard.hidden = isAdmin || isStreakDismissed();
+    if (streakCard) {
+      const shouldHide = isAdmin || isStreakDismissed();
+      streakCard.hidden = shouldHide;
+      if (shouldHide) {
+        streakCard.setAttribute('hidden', '');
+        streakCard.classList.add('hidden');
+        streakCard.style.setProperty('display', 'none', 'important');
+      } else {
+        streakCard.removeAttribute('hidden');
+        streakCard.classList.remove('hidden');
+        streakCard.style.removeProperty('display');
+      }
+    }
     const isPro = g(() => findMyTeacherRecord()?.teacher_pro === true, false);
     accountBadge.textContent = isAdmin ? 'ADMIN' : (isSchoolManager ? 'MANAGER' : (isPro ? 'PRO' : 'TEACHER'));
     accountBadge.hidden = !isAdmin && !isSchoolManager && !isPro;

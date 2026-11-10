@@ -87,3 +87,6 @@
   .et-card .teacher-zone-access-label { gap: 10px; }
   .et-card .teacher-zone-access-copy small { max-width: 34ch; }
 }
+
+.ts-streak[hidden], .ts-streak.hidden, #ts-rail .ts-streak[hidden], #ts-rail .ts-streak.hidden { display: none !important; }
+
