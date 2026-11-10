@@ -20190,9 +20190,37 @@ function teacherNotificationsFor(record = currentTeacherRec()) {
   if (!record) return [];
   const id = String(record.__backendId || currentTeacherRecordId || '');
   const localRead = teacherLocalReadIds();
-  return (allData || []).filter(item => item.type === 'teacher_notification' && String(item.notification_recipient_id || '') === id)
-    .map(item => (item.notification_read || localRead.has(String(item.__backendId || ''))) ? { ...item, notification_read: true } : item)
-    .sort((a,b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+  const dbItems = (allData || []).filter(item => item.type === 'teacher_notification' && String(item.notification_recipient_id || '') === id)
+    .map(item => (item.notification_read || localRead.has(String(item.__backendId || ''))) ? { ...item, notification_read: true } : item);
+
+  const streakNotices = [];
+  const st = teacherStreakState();
+  if (st && record) {
+    const today = streakDay();
+    const streakId = `streak-notice-${id}-${record.streak_last_day || today}-c${st.count}-b${st.boxes}`;
+    const hasBoxes = st.boxes > 0;
+    const isRead = localRead.has(streakId);
+    streakNotices.push({
+      __backendId: streakId,
+      type: 'teacher_notification',
+      notification_id: streakId,
+      notification_recipient_id: id,
+      notification_recipient_name: record.teacher_name || '',
+      notification_title: hasBoxes ? `🎁 Streak Box Ready to Open! (${st.boxes})` : `🔥 Login Streak: Day ${st.count} of ${STREAK_DAYS}`,
+      notification_message: hasBoxes
+        ? `You completed your 7-day login streak and have ${st.boxes} Streak Box${st.boxes > 1 ? 'es' : ''} ready to open! Tap here to open your box in Profile and claim free credits.`
+        : `You have logged in ${st.count} day${st.count === 1 ? '' : 's'} in a row. ${STREAK_DAYS - st.count} more consecutive day${(STREAK_DAYS - st.count) === 1 ? '' : 's'} to unlock your next Streak Box! Tap to view your streak in Profile.`,
+      notification_category: 'streak reward',
+      notification_read: isRead,
+      notification_read_at: isRead ? new Date().toISOString() : '',
+      notification_sender: 'PokéAyman System',
+      notification_target: 'streak',
+      created_at: new Date().toISOString(),
+      is_streak_notice: true
+    });
+  }
+
+  return [...streakNotices, ...dbItems].sort((a,b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
 }
 window.teacherUnreadNotificationCount = () => teacherNotificationsFor().filter(item => !item.notification_read).length;
 function refreshTeacherNotificationCount() {
@@ -20207,14 +20235,17 @@ async function markTeacherNotificationRead(item) {
   const id = String(item.__backendId || '');
   if (!id) return false;
   const readAt = new Date().toISOString();
-  // Apply it locally first so the click always lands, then try to persist it.
-  allData = (allData || []).map(row => row.__backendId === id ? { ...row, notification_read: true, notification_read_at: readAt } : row);
+  item.notification_read = true;
+  item.notification_read_at = readAt;
   rememberTeacherLocalRead(id);
-  try { await window.dataSdk.update({ ...item, notification_read: true, notification_read_at: readAt }); } catch (_) {}
+  allData = (allData || []).map(row => row.__backendId === id ? { ...row, notification_read: true, notification_read_at: readAt } : row);
+  if (!item.is_streak_notice && !String(id).startsWith('streak-notice-')) {
+    try { await window.dataSdk.update({ ...item, notification_read: true, notification_read_at: readAt }); } catch (_) {}
+  }
   return true;
 }
 async function pruneTeacherReadNotifications() {
-  const olderRead = teacherNotificationsFor().filter(item => item.notification_read).slice(5);
+  const olderRead = teacherNotificationsFor().filter(item => item.notification_read && !item.is_streak_notice && !String(item.__backendId || '').startsWith('streak-notice-')).slice(5);
   for (const item of olderRead) {
     const result = await window.dataSdk.delete(item);
     if (result?.isOk) allData = (allData || []).filter(row => row.__backendId !== item.__backendId);
@@ -20293,12 +20324,33 @@ window.notifyQuizAnswered = function (quiz, studentName) {
 };
 // Each notification knows which screen it belongs to; older rows fall back to a
 // sensible destination for their category.
+window.openTeacherStreakProfile = function () {
+  try { if (typeof showMainTab === 'function') showMainTab('trainer'); } catch (_) {}
+  setTimeout(() => {
+    try {
+      const profileTab = document.querySelector('.th-tab[data-th="profile"]');
+      if (profileTab) profileTab.click();
+      const toggle = document.querySelector('[data-th-editor="teacher-streak-panel"]');
+      const panel = document.getElementById('teacher-streak-panel');
+      if (toggle && panel) {
+        if (panel.classList.contains('hidden') || toggle.getAttribute('aria-expanded') !== 'true') {
+          toggle.click();
+        }
+      }
+      setTimeout(() => {
+        const target = document.getElementById('teacher-streak-panel') || toggle;
+        target?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }, 120);
+    } catch (_) {}
+  }, 100);
+};
+
 function teacherNotificationTargetFor(item) {
   const stored = String(item && item.notification_target || '').trim();
   if (stored) return stored;
   const category = String(item && item.notification_category || '').toLowerCase();
   const title = String(item && item.notification_title || '').toLowerCase();
-  if (title.includes('streak box')) return 'streak';
+  if (title.includes('streak') || category.includes('streak')) return 'streak';
   if (title.includes('credit')) return 'profile';
   if (category === 'reward') return 'profile';
   if (category === 'battle') return 'battle-claims';
@@ -20326,13 +20378,10 @@ window.followTeacherNotification = function (item) {
   const student = teacherNotificationStudentFor(item);
   try {
     if (target === 'profile' || target === 'streak') {
-      showMainTab('trainer');
       if (target === 'streak') {
-        document.querySelector('.th-tab[data-th="profile"]')?.click();
-        const toggle = document.querySelector('[data-th-editor="teacher-streak-panel"]');
-        if (toggle && toggle.getAttribute('aria-expanded') !== 'true') toggle.click();
-        setTimeout(() => document.getElementById('teacher-streak-panel')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 150);
+        window.openTeacherStreakProfile();
       } else {
+        showMainTab('trainer');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
       return;

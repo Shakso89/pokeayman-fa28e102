@@ -270,9 +270,7 @@
         <div class="ts-amounts">${[10, 50, 100].map((n) => `<button type="button" data-amt="${n}"${n === 10 ? ' class="on"' : ''}>+${n}</button>`).join('')}</div>
         <button type="button" class="ts-award-go" id="ts-award-go">Award coins</button></section>
       <section class="ts-card"><h3>🏆 Top 3 Students</h3><ol id="ts-top3" class="ts-top3"></ol></section>
-      <section class="ts-card ts-gift ts-streak"${isStreakDismissed() ? ' hidden' : ''}><button type="button" class="ts-streak-close" data-ts-streak-close aria-label="Close login streak card" title="Close">×</button><h3>🔥 Login Streak</h3><p id="ts-streak-text">Log in 7 days in a row to unlock a Streak Box</p>
-        <div class="ts-streak-dots" id="ts-streak-dots"></div>
-        <button type="button" class="ts-award-go" id="ts-box-open">🎁 Open Streak Box</button></section>`;
+`;
     document.body.append(side, rail);
     rail.addEventListener('click', (e) => {
       const closeBtn = e.target.closest('[data-ts-streak-close]');
@@ -782,7 +780,9 @@
     const roleTitle = g(() => window.getEffectiveTeacherRoleTitle?.(), 'Teacher');
     const isAdmin = role === 'admin';
     const isSchoolManager = role === 'school_manager';
-    const streakCard = document.querySelector('#ts-rail .ts-streak');
+    const streakCards = document.querySelectorAll('.ts-streak, #ts-rail .ts-streak');
+    streakCards.forEach(streakCard => { streakCard.hidden = true; streakCard.setAttribute('hidden', ''); streakCard.classList.add('hidden'); streakCard.style.setProperty('display', 'none', 'important'); });
+    const streakCard = null;
     if (streakCard) {
       const shouldHide = isAdmin || isStreakDismissed();
       streakCard.hidden = shouldHide;
@@ -812,14 +812,16 @@
     $('ts-notification-count').hidden = unread === 0;
     document.querySelector('[data-ts="notifications"]')?.setAttribute('aria-label', unread ? `Open notifications, ${unread} unread` : 'Open notifications');
       const st = g(() => window.teacherStreakState(), null);
-      if (st) {
+      if (st && $('ts-streak-dots')) {
         const dots = Array.from({ length: 7 }, (_, i) => `<span class="${i < st.count ? 'on' : ''}">${i + 1}</span>`).join('');
         if ($('ts-streak-dots').innerHTML !== dots) $('ts-streak-dots').innerHTML = dots;
         const txt = st.boxes > 0 ? `You have ${st.boxes} Streak Box${st.boxes > 1 ? 'es' : ''} to open!` : `${7 - st.count} more day${7 - st.count === 1 ? '' : 's'} to unlock a Streak Box`;
-        if ($('ts-streak-text').textContent !== txt) $('ts-streak-text').textContent = txt;
-        $('ts-box-open').textContent = st.boxes > 0 ? `🎁 Open Streak Box${st.boxes > 1 ? ` (${st.boxes})` : ''}` : 'No Streak Boxes Ready';
-        $('ts-box-open').disabled = st.boxes < 1;
-        $('ts-box-open').classList.toggle('ready', st.boxes > 0);
+        if ($('ts-streak-text') && $('ts-streak-text').textContent !== txt) $('ts-streak-text').textContent = txt;
+        if ($('ts-box-open')) {
+          $('ts-box-open').textContent = st.boxes > 0 ? `🎁 Open Streak Box${st.boxes > 1 ? ` (${st.boxes})` : ''}` : 'No Streak Boxes Ready';
+          $('ts-box-open').disabled = st.boxes < 1;
+          $('ts-box-open').classList.toggle('ready', st.boxes > 0);
+        }
       }
     if (inClass) {
       document.querySelectorAll('#students-list .ts-quick').forEach((q) => q.remove());
