@@ -226,8 +226,8 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
   it('ensures grammar practice modal matches prototype design specifications', () => {
     const js = fs.readFileSync(grammarJsPath, 'utf-8');
 
-    // 1. Amber gold glowing card border
-    expect(js).toContain('border-amber-400/80 shadow-[0_0_40px_rgba(251,191,36,0.22)]');
+    // 1. Sleek grammar practice card with game-style fullscreen support
+    expect(js).toContain('gp-practice-card');
 
     // 2. Multi-color centered formula chips
     expect(js).toContain('formatFormulaChips');

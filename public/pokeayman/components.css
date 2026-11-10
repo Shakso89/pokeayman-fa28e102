@@ -2480,7 +2480,71 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   color: #1e293b !important;
 }
 
-:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-switch-rule-btn:not([class*="bg-amber"]) span:first-child {
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-switch-rule-btn:not([class*="bg-amber"]):not([class*="bg-slate-800"]) span:first-child {
   background: #f1f5f9 !important;
   color: #64748b !important;
+}
+
+/* 9. Practice Modal - Game Style Edge-to-Edge Fullscreen */
+#grammar-practice-modal.game-fullscreen-active,
+#grammar-practice-modal:fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #020812 !important;
+  z-index: 2147483646 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+#grammar-practice-modal.game-fullscreen-active .gp-modal-inner,
+#grammar-practice-modal:fullscreen .gp-modal-inner {
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  max-height: none !important;
+  padding: 16px 24px !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+#grammar-practice-modal.game-fullscreen-active .gp-carousel-row,
+#grammar-practice-modal:fullscreen .gp-carousel-row {
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  flex: 1 1 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 16px !important;
+}
+
+#grammar-practice-modal.game-fullscreen-active .gp-practice-card,
+#grammar-practice-modal:fullscreen .gp-practice-card {
+  width: 100% !important;
+  max-width: min(1500px, 95vw) !important;
+  height: min(94vh, 960px) !important;
+  max-height: 96vh !important;
+  border-radius: 24px !important;
+  padding: 24px 32px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow-y: auto !important;
+  box-shadow: 0 0 60px rgba(0,0,0,0.85) !important;
+}
+
+#grammar-practice-modal.game-fullscreen-active .gp-hero-sentence,
+#grammar-practice-modal:fullscreen .gp-hero-sentence {
+  font-size: clamp(2.2rem, 3.8vw, 3.85rem) !important;
+  line-height: 1.35 !important;
 }

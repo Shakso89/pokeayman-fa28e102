@@ -1797,21 +1797,21 @@
       const options = r._shuffledOptions;
 
       modal.innerHTML = `
-        <div class="w-full max-w-5xl flex flex-col items-center my-auto py-4">
-          <!-- Main Carousel Container: Left Arrow + Amber Glow Card + Right Arrow -->
-          <div class="flex items-center justify-center gap-2 sm:gap-5 w-full">
+        <div class="gp-modal-inner w-full max-w-5xl flex flex-col items-center my-auto py-4">
+          <!-- Main Carousel Container: Left Arrow + Practice Card + Right Arrow -->
+          <div class="gp-carousel-row flex items-center justify-center gap-2 sm:gap-5 w-full">
             <!-- Left Circular Arrow -->
             <button type="button" id="gp-prev-btn" class="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-slate-900/90 border border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white flex items-center justify-center font-bold text-xl sm:text-2xl transition shadow-xl shrink-0 cursor-pointer ${isFirst ? 'opacity-25 pointer-events-none' : 'active:scale-95'}" aria-label="Previous rule">
               ‹
             </button>
 
-            <!-- PokéAyman Amber Gold Bordered Practice Card -->
-            <div class="relative w-full max-w-3xl rounded-3xl bg-slate-900/98 border-2 border-amber-400/80 shadow-[0_0_40px_rgba(251,191,36,0.22)] p-4 sm:p-7 flex flex-col gap-4 text-white">
+            <!-- PokéAyman Grammar Practice Card -->
+            <div class="gp-practice-card relative w-full max-w-3xl rounded-3xl bg-slate-900 border border-slate-700/80 shadow-2xl p-4 sm:p-7 flex flex-col gap-4 text-white">
               
               <!-- Top Bar: Deck Name & Counter & Close -->
               <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 gap-3">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-xs uppercase font-extrabold tracking-widest text-amber-400/90 truncate">${escapeHtml(deckName)}</span>
+                  <span class="text-xs uppercase font-bold tracking-widest text-slate-200 truncate">${escapeHtml(deckName)}</span>
                   <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">${idx + 1} / ${rules.length}</span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
@@ -1821,14 +1821,7 @@
                       Edit Rule
                     </button>
                   ` : ''}
-                  <button type="button" id="gp-fullscreen-btn" class="gp-fullscreen-btn w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer" title="Fullscreen" aria-label="Fullscreen">
-                    <svg class="w-4 h-4 gp-fs-expand" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
-                    </svg>
-                    <svg class="w-4 h-4 gp-fs-compress hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 14h6m0 0v6m0-6L3 21m17-7h-6m0 0v6m0-6l7 7M14 10V4m0 6h6m-6 0l7-7M10 10V4m0 6H4m6 0L3 3" />
-                    </svg>
-                  </button>
+                  <button type="button" id="gp-fullscreen-btn" class="game-fullscreen-btn w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 transition flex items-center justify-center text-base font-bold shrink-0 cursor-pointer" title="Fullscreen" aria-label="Fullscreen">⛶</button>
                   <button type="button" id="gp-close-btn" class="gp-close-btn w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-lg transition cursor-pointer" aria-label="Close practice">
                     ✕
                   </button>
@@ -1838,8 +1831,8 @@
               <!-- Rule Title & Formula Banner (PROMINENT & CLEAR) -->
               <div class="space-y-2.5">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <h3 class="text-base sm:text-xl font-black text-amber-300 tracking-wide">${escapeHtml(r.title)}</h3>
-                  ${cleanClue ? `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 self-start sm:self-auto">${escapeHtml(cleanClue)}</span>` : ''}
+                  <h3 class="text-base sm:text-xl font-black text-white tracking-wide">${escapeHtml(r.title)}</h3>
+                  ${cleanClue ? `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 self-start sm:self-auto">${escapeHtml(cleanClue)}</span>` : ''}
                 </div>
                 <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 border border-indigo-500/30 flex items-center justify-center shadow-inner">
                   <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
@@ -1905,7 +1898,7 @@
               <!-- Let's Practice Centered Header & Question Container -->
               <div class="space-y-2">
                 <div class="flex items-center justify-center">
-                  <span class="inline-flex items-center gap-1.5 px-3.5 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-black uppercase tracking-wider shadow-sm">
+                  <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold uppercase tracking-wider shadow-sm">
                     Let's Practice
                   </span>
                 </div>
@@ -1933,8 +1926,8 @@
                   ${rules.map((ruleItem, rIdx) => {
                     const isActive = rIdx === currentIndex;
                     return `
-                      <button type="button" class="gp-switch-rule-btn p-2 rounded-2xl border text-left transition flex items-center gap-2 cursor-pointer ${isActive ? 'bg-amber-400/15 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.3)]' : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'}" data-rule-idx="${rIdx}">
-                        <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${isActive ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-400'}">${rIdx + 1}</span>
+                      <button type="button" class="gp-switch-rule-btn p-2 rounded-2xl border text-left transition flex items-center gap-2 cursor-pointer ${isActive ? 'bg-slate-800 border-cyan-400 text-white shadow-[0_0_12px_rgba(6,182,212,0.3)]' : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white'}" data-rule-idx="${rIdx}">
+                        <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${isActive ? 'bg-cyan-400 text-slate-950' : 'bg-slate-800 text-slate-400'}">${rIdx + 1}</span>
                         <span class="text-xs font-bold truncate">${escapeHtml(ruleItem.title)}</span>
                       </button>
                     `;
@@ -1953,6 +1946,7 @@
 
       // Wire close button, backdrop click & fullscreen cleanup
       const closeModal = () => {
+        modal.classList.remove('game-fullscreen-active');
         if (document.fullscreenElement) {
           try { document.exitFullscreen().catch(() => {}); } catch (_) {}
         }
@@ -1974,15 +1968,14 @@
       modal._onEsc = onEsc;
       document.addEventListener('keydown', onEsc);
 
-      // Wire Fullscreen Button
+      // Wire Fullscreen Button (Game Style Edge-to-Edge)
       const fsBtn = modal.querySelector('#gp-fullscreen-btn');
       const updateFsState = () => {
-        const isFs = Boolean(document.fullscreenElement === modal || document.fullscreenElement);
+        const isFs = Boolean(modal.classList.contains('game-fullscreen-active') || document.fullscreenElement === modal || document.fullscreenElement);
         if (fsBtn) {
+          fsBtn.textContent = isFs ? '↙' : '⛶';
           fsBtn.title = isFs ? 'Exit fullscreen' : 'Fullscreen';
           fsBtn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Fullscreen');
-          fsBtn.querySelector('.gp-fs-expand')?.classList.toggle('hidden', isFs);
-          fsBtn.querySelector('.gp-fs-compress')?.classList.toggle('hidden', !isFs);
         }
       };
       updateFsState();
@@ -1990,10 +1983,15 @@
       if (fsBtn) {
         fsBtn.onclick = async (e) => {
           e.stopPropagation();
-          try {
+          const isFs = modal.classList.contains('game-fullscreen-active') || Boolean(document.fullscreenElement);
+          if (isFs) {
+            modal.classList.remove('game-fullscreen-active');
             if (document.fullscreenElement) {
-              await document.exitFullscreen();
-            } else {
+              try { await document.exitFullscreen(); } catch (_) {}
+            }
+          } else {
+            modal.classList.add('game-fullscreen-active');
+            try {
               if (modal.requestFullscreen) {
                 await modal.requestFullscreen();
               } else if (modal.webkitRequestFullscreen) {
@@ -2001,11 +1999,9 @@
               } else if (modal.msRequestFullscreen) {
                 await modal.msRequestFullscreen();
               }
-            }
-          } catch (_) {
-            modal.classList.toggle('gp-fullscreen-active');
-            updateFsState();
+            } catch (_) {}
           }
+          updateFsState();
         };
       }
       const onFsChange = () => updateFsState();
