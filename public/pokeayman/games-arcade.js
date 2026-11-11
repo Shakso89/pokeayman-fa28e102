@@ -112,13 +112,16 @@
   };
 
   window.readGameWordAloud = function (word, delayMs = 0) {
-    const clean = String(word || '')
+    const raw = (word && typeof word === 'object')
+      ? (word.vocab_word || word.word || word.answer || '')
+      : word;
+    const clean = String(raw || '')
       .trim()
       .replace(/^["'`]+|["'`]+$/g, '')
       .replace(/\*\*|__|[*_`#]/g, '')
       .replace(/\s+/g, ' ')
       .trim();
-    if (!clean) return;
+    if (!clean || clean === '[object Object]') return;
     if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
 
     const wordCount = clean.split(/\s+/).filter(Boolean).length;

@@ -943,8 +943,15 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       } else {
         // Standard vocab match
         playGameSound('success');
-        const matchedWord = firstCard?.word || firstCard?.wordObj?.vocab_word || secondCard?.word;
-        if (typeof window.readGameWordAloud === 'function') {
+        const matchedWord = String(
+          firstCard?.word?.vocab_word ||
+          (typeof firstCard?.word === 'string' ? firstCard.word : '') ||
+          secondCard?.word?.vocab_word ||
+          (typeof secondCard?.word === 'string' ? secondCard.word : '') ||
+          firstCard?.wordObj?.vocab_word ||
+          ''
+        ).trim();
+        if (matchedWord && typeof window.readGameWordAloud === 'function') {
           window.readGameWordAloud(matchedWord);
         }
         if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;

@@ -7868,13 +7868,16 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   };
 
   window.readGameWordAloud = function (word, delayMs = 0) {
-    const clean = String(word || '')
+    const raw = (word && typeof word === 'object')
+      ? (word.vocab_word || word.word || word.answer || '')
+      : word;
+    const clean = String(raw || '')
       .trim()
       .replace(/^["'`]+|["'`]+$/g, '')
       .replace(/\*\*|__|[*_`#]/g, '')
       .replace(/\s+/g, ' ')
       .trim();
-    if (!clean) return;
+    if (!clean || clean === '[object Object]') return;
     if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
 
     const wordCount = clean.split(/\s+/).filter(Boolean).length;
@@ -15607,8 +15610,15 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       } else {
         // Standard vocab match
         playGameSound('success');
-        const matchedWord = firstCard?.word || firstCard?.wordObj?.vocab_word || secondCard?.word;
-        if (typeof window.readGameWordAloud === 'function') {
+        const matchedWord = String(
+          firstCard?.word?.vocab_word ||
+          (typeof firstCard?.word === 'string' ? firstCard.word : '') ||
+          secondCard?.word?.vocab_word ||
+          (typeof secondCard?.word === 'string' ? secondCard.word : '') ||
+          firstCard?.wordObj?.vocab_word ||
+          ''
+        ).trim();
+        if (matchedWord && typeof window.readGameWordAloud === 'function') {
           window.readGameWordAloud(matchedWord);
         }
         if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
