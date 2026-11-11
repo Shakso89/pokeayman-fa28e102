@@ -443,7 +443,10 @@
         window.pokeSfx?.play?.('correct');
         if (completedWords.size === allWords.length) {
           window.pokeSfx?.play?.('victory');
-          showGameCelebration(modal, 'Crossword solved!', '', activeGamePlayers[activeGamePlayerIndex]);
+          const scoreSummary = (activeGamePlayers && activeGamePlayers.length > 1)
+            ? ` (${activeGamePlayers.map((p, i) => `${p.student_name || 'Player'}: ${activeGameScores[i] || 0}`).join(' · ')})`
+            : '';
+          showGameCelebration(modal, `Crossword solved!${scoreSummary}`);
           return;
         }
         const nextWord = allWords.find(item => !completedWords.has(item.id));
