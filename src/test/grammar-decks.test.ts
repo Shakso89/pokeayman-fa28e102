@@ -877,4 +877,35 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(css).toContain('color: #e11d48 !important');
     expect(css).toContain('color: #fb7185 !important');
   });
+
+  it('ensures text size controller allows scaling all slide texts while keeping master example hero sentence unchanged', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+    const cssComponents = fs.readFileSync(path.join(__dirname, '../../public/pokeayman/components.css'), 'utf-8');
+    const cssBright = fs.readFileSync(path.join(__dirname, '../../public/pokeayman/bright-fixes.css'), 'utf-8');
+
+    // 1. Controller elements present in practice slide markup
+    expect(js).toContain('gp-text-size-ctrl');
+    expect(js).toContain('id="gp-text-size-dec"');
+    expect(js).toContain('id="gp-text-size-inc"');
+    expect(js).toContain('id="gp-text-size-reset"');
+    expect(js).toContain('id="gp-text-size-label"');
+    expect(js).toContain('gp_slide_text_zoom');
+    expect(js).toContain('--gp-text-zoom');
+
+    // 2. CSS variables scale formula chips, options, prompts, titles, and mistakes
+    expect(cssComponents).toContain('--gp-text-zoom');
+    expect(cssComponents).toContain('.gp-practice-card .gp-formula-chip');
+    expect(cssComponents).toContain('calc(0.925rem * var(--gp-text-zoom, 1))');
+    expect(cssComponents).toContain('.gp-practice-card .gp-rule-title');
+    expect(cssComponents).toContain('.gp-practice-card .gp-quick-check-prompt');
+    expect(cssComponents).toContain('.gp-practice-card .gp-quiz-opt');
+
+    // 3. Bright mode support for the text size controller
+    expect(cssBright).toContain('.gp-text-size-ctrl');
+
+    // 4. Master example hero sentence retains its commanding clamp size and is not scaled by --gp-text-zoom
+    expect(cssComponents).toContain('#grammar-practice-modal .gp-hero-sentence');
+    expect(cssComponents).toContain('clamp(2.2rem, 3.8vw, 3.85rem)');
+    expect(cssComponents).not.toContain('.gp-practice-card .gp-hero-sentence {\n  font-size: calc(');
+  });
 });

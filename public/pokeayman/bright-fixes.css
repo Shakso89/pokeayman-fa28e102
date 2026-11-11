@@ -2864,6 +2864,21 @@ html body .ga-hub {
   border-color: #94a3b8 !important;
 }
 
+/* Practice Slide Text Size Controller (Bright Mode) */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-text-size-ctrl {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-text-size-ctrl span,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-text-size-ctrl button {
+  color: #334155 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-text-size-ctrl button:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
 /* Common Mistake & Quick Check Boxes */
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-mistake-box,
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-quick-check-box,

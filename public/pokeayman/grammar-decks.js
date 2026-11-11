@@ -1737,8 +1737,8 @@
         innerHtml = escapeHtml(`[${cleanPart}]`);
       }
 
-      return `<span class="px-3.5 sm:px-4 py-1.5 rounded-2xl border ${style} font-bold text-xs sm:text-sm tracking-wide inline-flex items-center justify-center shadow-md transition-transform hover:scale-102">${innerHtml}</span>`;
-    }).join('<span class="text-slate-400 font-bold text-base sm:text-lg mx-1.5">+</span>');
+      return `<span class="gp-formula-chip px-3.5 sm:px-4 py-1.5 rounded-2xl border ${style} font-bold text-xs sm:text-sm tracking-wide inline-flex items-center justify-center shadow-md transition-transform hover:scale-102">${innerHtml}</span>`;
+    }).join('<span class="gp-formula-plus text-slate-400 font-bold text-base sm:text-lg mx-1.5">+</span>');
   }
 
   window.formatSyntaxHighlightedSentence = formatSyntaxHighlightedSentence;
@@ -1934,6 +1934,15 @@
                   <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">${idx + 1} / ${rules.length}</span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
+                  <!-- Text Size Controller (Controls slide text sizes, leaving master example untouched) -->
+                  <div class="gp-text-size-ctrl inline-flex items-center bg-slate-800/90 border border-slate-700/80 rounded-xl px-1.5 py-0.5 gap-1 shadow-sm select-none" title="Adjust text size (except master sentence)">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-0.5 hidden sm:inline">Text Size</span>
+                    <button type="button" id="gp-text-size-dec" class="w-6 h-6 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-200 hover:text-white flex items-center justify-center font-black text-xs transition cursor-pointer active:scale-95" aria-label="Decrease text size" title="Smaller text">A−</button>
+                    <button type="button" id="gp-text-size-reset" class="px-1.5 h-6 rounded-lg text-[11px] font-extrabold text-slate-300 hover:text-white hover:bg-slate-700/60 transition cursor-pointer flex items-center justify-center" aria-label="Reset text size to 100%" title="Reset to default (100%)">
+                      <span id="gp-text-size-label">100%</span>
+                    </button>
+                    <button type="button" id="gp-text-size-inc" class="w-6 h-6 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-200 hover:text-white flex items-center justify-center font-black text-xs transition cursor-pointer active:scale-95" aria-label="Increase text size" title="Larger text">A+</button>
+                  </div>
                   ${isOwner ? `
                     <button type="button" id="gp-edit-deck-btn" class="gp-edit-deck-btn px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition flex items-center gap-1.5 cursor-pointer" title="Edit this rule in Deck Editor">
                       <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
@@ -1949,8 +1958,8 @@
               <!-- Rule Title & Formula Banner (PROMINENT & CLEAR) -->
               <div class="space-y-2.5">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <h3 class="text-base sm:text-xl font-black text-white tracking-wide">${escapeHtml(r.title)}</h3>
-                  ${cleanClue ? `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 self-start sm:self-auto">${escapeHtml(cleanClue)}</span>` : ''}
+                  <h3 class="gp-rule-title text-base sm:text-xl font-black text-white tracking-wide">${escapeHtml(r.title)}</h3>
+                  ${cleanClue ? `<span class="gp-rule-clue px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 self-start sm:self-auto">${escapeHtml(cleanClue)}</span>` : ''}
                 </div>
                 <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 border border-indigo-500/30 flex items-center justify-center shadow-inner">
                   <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
@@ -1963,7 +1972,7 @@
               <div class="p-5 sm:p-6 rounded-2xl bg-slate-950/85 border border-slate-800 shadow-xl flex flex-col md:flex-row items-center justify-between gap-5 relative overflow-hidden">
                 <!-- Left / Center: Big commanding syntax-highlighted sentence -->
                 <div class="flex-1 text-center md:text-left min-w-0">
-                  <div class="flex items-center justify-center md:justify-start gap-2 text-[11px] font-bold uppercase tracking-widest text-indigo-400 mb-2">
+                  <div class="gp-master-example-label flex items-center justify-center md:justify-start gap-2 text-[11px] font-bold uppercase tracking-widest text-indigo-400 mb-2">
                     <span>Master Example</span>
                     <span class="text-slate-600">•</span>
                     <span class="text-slate-400 font-normal">Click word to cycle alternatives</span>
@@ -1987,17 +1996,17 @@
                 <!-- Common Mistake Card -->
                 <div class="p-3.5 rounded-xl bg-rose-950/25 border border-rose-500/30 flex flex-col justify-between gap-1 shadow-sm">
                   <div class="flex items-center justify-between mb-1">
-                    <span class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-rose-400 text-[11px]">
+                    <span class="gp-mistake-heading flex items-center gap-1.5 font-bold uppercase tracking-wider text-rose-400 text-[11px]">
                       <span class="w-4 h-4 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-[10px] font-black">✕</span>
                       Avoid This Mistake
                     </span>
-                    <span class="text-[10px] font-bold text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded-full border border-rose-500/30">
+                    <span class="gp-mistake-badge text-[10px] font-bold text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded-full border border-rose-500/30">
                       ${allMistakes.length > 1 ? `INCORRECT (${allMistakes.length})` : 'INCORRECT'}
                     </span>
                   </div>
                   <div class="space-y-1.5 my-0.5">
                     ${allMistakes.map((m, mIdx) => `
-                      <div class="text-sm font-semibold text-rose-200 opacity-95 flex items-start gap-1.5">
+                      <div class="gp-mistake-text text-sm font-semibold text-rose-200 opacity-95 flex items-start gap-1.5">
                         ${allMistakes.length > 1 ? `<span class="w-4 h-4 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">${mIdx + 1}</span>` : ''}
                         <span class="break-words">${escapeHtml(m.bad)}</span>
                       </div>
@@ -2008,17 +2017,17 @@
                 <!-- Correct Form Card -->
                 <div class="p-3.5 rounded-xl bg-emerald-950/25 border border-emerald-500/30 flex flex-col justify-between gap-1 shadow-sm">
                   <div class="flex items-center justify-between mb-1">
-                    <span class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-emerald-400 text-[11px]">
+                    <span class="gp-correct-heading flex items-center gap-1.5 font-bold uppercase tracking-wider text-emerald-400 text-[11px]">
                       <span class="w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-[10px] font-black">✓</span>
                       Correct Usage
                     </span>
-                    <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                    <span class="gp-correct-badge text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
                       ${allMistakes.length > 1 ? `CORRECT (${allMistakes.length})` : 'CORRECT'}
                     </span>
                   </div>
                   <div class="space-y-1.5 my-0.5">
                     ${allMistakes.map((m, mIdx) => `
-                      <div class="text-sm font-bold text-emerald-200 flex items-start gap-1.5">
+                      <div class="gp-correct-text text-sm font-bold text-emerald-200 flex items-start gap-1.5">
                         ${allMistakes.length > 1 ? `<span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">${mIdx + 1}</span>` : ''}
                         <span class="break-words">${escapeHtml(m.good)}</span>
                       </div>
@@ -2030,7 +2039,7 @@
               <!-- Let's Practice Centered Header & Question Container with Question Swapper -->
               <div class="space-y-2">
                 <div class="flex items-center justify-center gap-2 flex-wrap">
-                  <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold uppercase tracking-wider shadow-sm">
+                  <span class="gp-practice-heading inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold uppercase tracking-wider shadow-sm">
                     Let's Practice
                   </span>
                   ${ruleQuestions.length > 1 ? `
@@ -2057,7 +2066,7 @@
                     ${ruleQuestions.length > 1 ? `
                       <span id="gp-question-badge" class="shrink-0 px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-cyan-300 text-[10px] font-black uppercase tracking-wider">Q${activeQIdx + 1}</span>
                     ` : ''}
-                    <span id="gp-question-text" class="text-slate-200 break-words leading-relaxed">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</span>
+                    <span id="gp-question-text" class="gp-quick-check-prompt text-slate-200 break-words leading-relaxed">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</span>
                   </div>
                   <div class="flex flex-wrap items-center justify-center gap-2 shrink-0" id="gp-options-row">
                     ${options.map(opt => `
@@ -2145,6 +2154,49 @@
         editBtn.onclick = () => {
           closeModal();
           window.openGrammarDeckEditor(deck, deckName, currentIndex);
+        };
+      }
+
+      // Wire text size controller (scales slide texts, leaving master example intact)
+      const practiceCard = modal.querySelector('.gp-practice-card');
+      const sizeLabel = modal.querySelector('#gp-text-size-label');
+      const decBtn = modal.querySelector('#gp-text-size-dec');
+      const incBtn = modal.querySelector('#gp-text-size-inc');
+      const resetBtn = modal.querySelector('#gp-text-size-reset');
+
+      const ZOOM_STEPS = [75, 85, 100, 115, 130, 145, 160, 180, 200];
+      let currentZoom = Number(localStorage.getItem('gp_slide_text_zoom') || 100);
+      if (!Number.isFinite(currentZoom) || currentZoom < 75 || currentZoom > 250) currentZoom = 100;
+
+      const applyZoom = (zoom) => {
+        currentZoom = zoom;
+        try { localStorage.setItem('gp_slide_text_zoom', String(currentZoom)); } catch (_) {}
+        if (practiceCard) {
+          practiceCard.style.setProperty('--gp-text-zoom', String((currentZoom / 100).toFixed(2)));
+        }
+        if (sizeLabel) {
+          sizeLabel.textContent = `${currentZoom}%`;
+        }
+      };
+      applyZoom(currentZoom);
+
+      if (decBtn) {
+        decBtn.onclick = () => {
+          const lower = ZOOM_STEPS.filter(s => s < currentZoom);
+          const next = lower.length ? lower[lower.length - 1] : 75;
+          applyZoom(next);
+        };
+      }
+      if (incBtn) {
+        incBtn.onclick = () => {
+          const higher = ZOOM_STEPS.filter(s => s > currentZoom);
+          const next = higher.length ? higher[0] : 200;
+          applyZoom(next);
+        };
+      }
+      if (resetBtn) {
+        resetBtn.onclick = () => {
+          applyZoom(100);
         };
       }
 
