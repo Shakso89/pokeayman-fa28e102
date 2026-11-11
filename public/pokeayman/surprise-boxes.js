@@ -252,7 +252,17 @@
     const updateTeamScores = () => {
       modal.querySelectorAll('.game-player-card').forEach((card, index) => {
         const score = card.querySelector('.baam-player-score-value');
-        if (score) score.textContent = activeGameScores[index] || 0;
+        if (score) {
+          const previousValue = score.dataset.scoreValue;
+          const nextValue = String(activeGameScores[index] || 0);
+          score.dataset.scoreValue = nextValue;
+          score.textContent = nextValue;
+          if (previousValue !== undefined && previousValue !== nextValue) {
+            score.classList.remove('game-player-score-number-change');
+            void score.offsetWidth;
+            score.classList.add('game-player-score-number-change');
+          }
+        }
       });
     };
     const applyPowerUp = (power) => {
@@ -283,22 +293,6 @@
         try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
       }
       const impacts = activeGameScores.map((score, index) => score - before[index]);
-      const updateTeamScores = () => {
-        modal.querySelectorAll('.game-player-card').forEach((card, index) => {
-          const score = card.querySelector('.baam-player-score-value');
-          if (score) {
-            const previousValue = score.dataset.scoreValue;
-            const nextValue = String(activeGameScores[index] || 0);
-            score.dataset.scoreValue = nextValue;
-            score.textContent = nextValue;
-            if (previousValue !== undefined && previousValue !== nextValue) {
-              score.classList.remove('game-player-score-number-change');
-              void score.offsetWidth;
-              score.classList.add('game-player-score-number-change');
-            }
-          }
-        });
-      };
       updateTeamScores();
       // Show every student the power-up changed, not just the current player:
       // one staggered chip per score change, laid out in the panel's own flow
@@ -468,6 +462,10 @@
       clearAnswerTimer();
       const w = deck[index % deck.length];
       selectedCard = w;
+      if (selectedCard) {
+        selectedCard._scoreAwarded = false;
+        selectedCard._isCorrect = false;
+      }
       const revealPanel = baamQ('#baam-reveal');
       const picture = baamQ('#baam-picture');
       const word = baamQ('#baam-word');
@@ -483,9 +481,15 @@
         playerName.textContent = questionPlayer.student_name;
         playerChip.appendChild(playerName);
       }
-      revealPanel.classList.remove('hidden'); word.classList.add('hidden'); status.textContent = '';
+      revealPanel.classList.remove('hidden');
+      word.classList.add('hidden');
+      word.style.cursor = '';
+      word.title = '';
+      word.onclick = null;
+      status.textContent = '';
       status.className = '';
       revealPanel.querySelector('.baam-impact-stack')?.remove();
+      revealPanel.querySelector('.baam-post-answer-actions')?.remove();
       const questionCard = baamQ('#baam-reveal .baam-question-card') || baamQ('#baam-reveal .baam-reveal-panel');
       const allPowerClasses = ['baam-powerup-reveal', 'baam-powerup-star', 'baam-powerup-rocket', 'baam-powerup-steal', 'baam-powerup-bomb', 'baam-powerup-swap', 'baam-powerup-gift', 'baam-powerup-trap'];
       revealPanel.classList.remove(...allPowerClasses);
@@ -594,9 +598,88 @@
               status.innerHTML = '✓ Correct! <span class="baam-num-plus">+10</span> points';
               status.className = 'baam-answer-feedback is-correct';
               try { window.pokeSfx?.play('correct'); } catch (e) {}
+
+              // Award score immediately to the answering player & update HUD right away
+              const currentPlayer = activeGamePlayerIndex;
+              if (selectedCard && !selectedCard._scoreAwarded) {
+                selectedCard._scoreAwarded = true;
+                selectedCard._isCorrect = true;
+                activeGameScores[currentPlayer] = (activeGameScores[currentPlayer] || 0) + 10;
+                updateTeamScores();
+                updateGamePlayerHud(modal, 0, currentPlayer);
+                showCorrectAnswerCelebration(modal, currentPlayer);
+              }
+
               if (typeof window.readGameWordAloud === 'function') {
                 window.readGameWordAloud(targetWord);
               }
+
+              word.textContent = targetWord;
+              word.classList.remove('hidden');
+              word.style.cursor = 'pointer';
+              word.title = 'Click to hear word again';
+              word.onclick = () => {
+                if (typeof window.readGameWordAloud === 'function') {
+                  window.readGameWordAloud(targetWord);
+                }
+              };
+
+              // Option only playable after correct answer: Hear Again
+              revealPanel.querySelector('.baam-post-answer-actions')?.remove();
+              const actionRow = document.createElement('div');
+              actionRow.className = 'baam-post-answer-actions';
+
+              const hearAgainBtn = document.createElement('button');
+              hearAgainBtn.type = 'button';
+              hearAgainBtn.className = 'baam-hear-again-btn';
+              hearAgainBtn.id = 'baam-hear-again';
+              hearAgainBtn.setAttribute('aria-label', `Hear "${targetWord}" again`);
+              hearAgainBtn.title = 'Hear word again';
+              hearAgainBtn.innerHTML = `
+                <svg class="baam-hear-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+                <span>Hear Again</span>
+              `;
+
+              const continueBtn = document.createElement('button');
+              continueBtn.type = 'button';
+              continueBtn.className = 'baam-hear-continue-btn';
+              continueBtn.id = 'baam-hear-continue';
+              continueBtn.innerHTML = `<span>Continue →</span>`;
+
+              hearAgainBtn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                if (typeof window.readGameWordAloud === 'function') {
+                  window.readGameWordAloud(targetWord);
+                }
+                hearAgainBtn.classList.remove('is-speaking');
+                void hearAgainBtn.offsetWidth;
+                hearAgainBtn.classList.add('is-speaking');
+                setTimeout(() => hearAgainBtn.classList.remove('is-speaking'), 1200);
+
+                // Reset progression timer so playback is not cut off
+                if (!curPlayer?.isBot) {
+                  clearAnswerTimer();
+                  answerProgressionTimer = setTimeout(() => {
+                    answerProgressionTimer = null;
+                    markAnswer(true);
+                  }, 4500);
+                }
+              });
+
+              continueBtn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                clearAnswerTimer();
+                markAnswer(true);
+              });
+
+              actionRow.appendChild(hearAgainBtn);
+              actionRow.appendChild(continueBtn);
+              status.insertAdjacentElement('afterend', actionRow);
+
             } else {
               btn.classList.add('is-wrong');
               status.textContent = `✕ Not quite! Answer: ${targetWord}`;
@@ -605,16 +688,15 @@
               if (typeof window.readGameWordAloud === 'function') {
                 window.readGameWordAloud(targetWord, 350);
               }
+              word.textContent = targetWord;
+              word.classList.remove('hidden');
             }
-
-            word.textContent = targetWord;
-            word.classList.remove('hidden');
 
             const isBotAnswering = !!curPlayer?.isBot;
             answerProgressionTimer = setTimeout(() => {
               answerProgressionTimer = null;
               markAnswer(isCorrect);
-            }, isBotAnswering ? 1800 : 1500);
+            }, isBotAnswering ? 1800 : (isCorrect ? 4000 : 1800));
           });
 
           answerControls.appendChild(btn);
@@ -629,28 +711,33 @@
       // Always dismiss the reveal overlay, including after a power-up resolves.
       const revealPanel = baamQ('#baam-reveal');
       if (!revealPanel) return;
+      revealPanel.querySelector('.baam-post-answer-actions')?.remove();
       if (selectedCard && !selectedCard.powerUp) {
         advanceGameTurn();
         updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
       }
       selectedCard = null;
       revealPanel.classList.add('hidden');
-      if (chosenCards.size === deck.length) endBaamboozle();
+      if (chosenCards.size >= deck.length) endBaamboozle();
       else checkBaamBotTurn();
     };
     const markAnswer = (isCorrect) => {
       clearAnswerTimer();
       if (!selectedCard || selectedCard.powerUp) return;
+      const revealPanel = baamQ('#baam-reveal');
+      revealPanel?.querySelector('.baam-post-answer-actions')?.remove();
       const word = baamQ('#baam-word');
       const currentPlayer = activeGamePlayerIndex;
       if (isCorrect) {
         try { window.pokeSfx?.play?.('correct'); } catch (e) {}
-        if (!choiceLocked && typeof window.readGameWordAloud === 'function') {
-          window.readGameWordAloud(selectedCard.vocab_word);
+        if (!selectedCard._scoreAwarded) {
+          selectedCard._scoreAwarded = true;
+          selectedCard._isCorrect = true;
+          activeGameScores[currentPlayer] = (activeGameScores[currentPlayer] || 0) + 10;
+          updateTeamScores();
+          updateGamePlayerHud(modal, 0, currentPlayer);
+          showCorrectAnswerCelebration(modal, currentPlayer);
         }
-        showCorrectAnswerCelebration(modal, currentPlayer);
-        activeGameScores[currentPlayer] = (activeGameScores[currentPlayer] || 0) + 10;
-        updateTeamScores();
         word.textContent = selectedCard.vocab_word;
         word.classList.remove('hidden');
         advanceGameTurn();

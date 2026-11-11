@@ -664,3 +664,103 @@ html body .baam-stage-portal :is(.baam-reveal-overlay.baam-powerup-reveal, .baam
     font-size: 0.95rem !important;
   }
 }
+
+/* Post-answer action controls (Hear Again & Continue) */
+.baam-post-answer-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  margin: 6px auto 0 !important;
+  width: min(100%, 26rem) !important;
+  z-index: 5 !important;
+}
+
+.baam-hear-again-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  padding: 8px 18px !important;
+  border-radius: 999px !important;
+  background: rgba(245, 158, 11, 0.22) !important;
+  border: 1.5px solid #f59e0b !important;
+  color: #fef08a !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.02em !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+
+.baam-hear-again-btn:hover {
+  background: rgba(245, 158, 11, 0.36) !important;
+  border-color: #fbbf24 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35) !important;
+}
+
+.baam-hear-again-btn:active {
+  transform: translateY(1px) scale(0.98) !important;
+}
+
+.baam-hear-again-btn .baam-hear-icon {
+  width: 17px !important;
+  height: 17px !important;
+  flex-shrink: 0 !important;
+  color: #fde047 !important;
+  transition: transform 0.2s ease !important;
+}
+
+.baam-hear-again-btn.is-speaking .baam-hear-icon {
+  animation: baamSpeakerPulse 0.4s ease-in-out infinite alternate !important;
+}
+
+@keyframes baamSpeakerPulse {
+  0% { transform: scale(1); color: #fde047; }
+  100% { transform: scale(1.28); color: #ffffff; }
+}
+
+.baam-hear-continue-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 8px 18px !important;
+  border-radius: 999px !important;
+  background: rgba(16, 185, 129, 0.22) !important;
+  border: 1.5px solid #10b981 !important;
+  color: #6ee7b7 !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+
+.baam-hear-continue-btn:hover {
+  background: rgba(16, 185, 129, 0.38) !important;
+  border-color: #34d399 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+}
+
+.baam-hear-continue-btn:active {
+  transform: translateY(1px) scale(0.98) !important;
+}
+
+@media (max-width: 480px) {
+  .baam-post-answer-actions {
+    gap: 8px !important;
+    margin: 4px auto 4px !important;
+  }
+  .baam-hear-again-btn,
+  .baam-hear-continue-btn {
+    padding: 6px 14px !important;
+    font-size: 12px !important;
+  }
+}
