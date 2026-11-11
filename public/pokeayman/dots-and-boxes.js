@@ -205,12 +205,12 @@
       const winnerName = winner ? (winner.student_name || winner.name || 'Winner') : null;
 
       if (typeof toast === 'function') {
-        toast(tied ? `⏱ Time's up! Match ended in a tie!` : `⏱ Time's up! ${winnerName} won the match!`);
+        toast(tied ? `⏱ Time's up! Match ended in Even even seven eleven!` : `⏱ Time's up! ${winnerName} won the match!`);
       }
 
       setTimeout(() => {
         if (typeof showGameCelebration === 'function') {
-          showGameCelebration(modal, tied ? "It's a Tie!" : `${winnerName} Wins!`, `Final Score: ${p1Score} - ${p2Score}`, winner);
+          showGameCelebration(modal, tied ? "Even even seven eleven" : `${winnerName} Wins!`, `Final Score: ${p1Score} - ${p2Score}`, winner);
         }
       }, 700);
     };
@@ -234,6 +234,24 @@
         updateTimerDisplay();
 
         if (playerTimeRemaining[activeIdx] <= 0) {
+          const otherIdx = 1 - activeIdx;
+          if (playerTimeRemaining[otherIdx] > 0) {
+            const timedOutPlayer = activeGamePlayers[activeIdx];
+            const timedOutName = timedOutPlayer?.student_name || timedOutPlayer?.name || 'Player';
+            if (typeof toast === 'function') {
+              toast(`⏱ ${timedOutName} ran out of time and will be skipped!`);
+            }
+            activeGamePlayerIndex = otherIdx;
+            lastTick = Date.now();
+            phase = 'MCQ';
+            currentQuestion = generateMCQ(allWords);
+            updateTimerDisplay();
+            updateStatus();
+            renderQuestion();
+            renderBoard();
+            scheduleBotTurnIfNeeded();
+            return;
+          }
           handleMatchTimeout();
         }
       }, 250);
@@ -906,7 +924,10 @@
 
         setTimeout(() => {
           if (phase === 'ROUND_OVER') return;
-          activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+          const nextIdx = 1 - activeGamePlayerIndex;
+          if (playerTimeRemaining[nextIdx] > 0 || playerTimeRemaining[activeGamePlayerIndex] <= 0) {
+            activeGamePlayerIndex = nextIdx;
+          }
           lastTick = Date.now();
           currentQuestion = generateMCQ(allWords, currentQuestion.wordItem);
           phase = 'MCQ';
@@ -1283,7 +1304,10 @@
           }
         } else {
           consecutiveTurnsRemaining = 0;
-          activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+          const nextIdx = 1 - activeGamePlayerIndex;
+          if (playerTimeRemaining[nextIdx] > 0 || playerTimeRemaining[activeGamePlayerIndex] <= 0) {
+            activeGamePlayerIndex = nextIdx;
+          }
           lastTick = Date.now();
         }
       }

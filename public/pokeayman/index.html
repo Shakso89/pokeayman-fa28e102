@@ -6605,12 +6605,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const winnerName = winner ? (winner.student_name || winner.name || 'Winner') : null;
 
       if (typeof toast === 'function') {
-        toast(tied ? `⏱ Time's up! Match ended in a tie!` : `⏱ Time's up! ${winnerName} won the match!`);
+        toast(tied ? `⏱ Time's up! Match ended in Even even seven eleven!` : `⏱ Time's up! ${winnerName} won the match!`);
       }
 
       setTimeout(() => {
         if (typeof showGameCelebration === 'function') {
-          showGameCelebration(modal, tied ? "It's a Tie!" : `${winnerName} Wins!`, `Final Score: ${p1Score} - ${p2Score}`, winner);
+          showGameCelebration(modal, tied ? "Even even seven eleven" : `${winnerName} Wins!`, `Final Score: ${p1Score} - ${p2Score}`, winner);
         }
       }, 700);
     };
@@ -6634,6 +6634,24 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         updateTimerDisplay();
 
         if (playerTimeRemaining[activeIdx] <= 0) {
+          const otherIdx = 1 - activeIdx;
+          if (playerTimeRemaining[otherIdx] > 0) {
+            const timedOutPlayer = activeGamePlayers[activeIdx];
+            const timedOutName = timedOutPlayer?.student_name || timedOutPlayer?.name || 'Player';
+            if (typeof toast === 'function') {
+              toast(`⏱ ${timedOutName} ran out of time and will be skipped!`);
+            }
+            activeGamePlayerIndex = otherIdx;
+            lastTick = Date.now();
+            phase = 'MCQ';
+            currentQuestion = generateMCQ(allWords);
+            updateTimerDisplay();
+            updateStatus();
+            renderQuestion();
+            renderBoard();
+            scheduleBotTurnIfNeeded();
+            return;
+          }
           handleMatchTimeout();
         }
       }, 250);
@@ -7306,7 +7324,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
         setTimeout(() => {
           if (phase === 'ROUND_OVER') return;
-          activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+          const nextIdx = 1 - activeGamePlayerIndex;
+          if (playerTimeRemaining[nextIdx] > 0 || playerTimeRemaining[activeGamePlayerIndex] <= 0) {
+            activeGamePlayerIndex = nextIdx;
+          }
           lastTick = Date.now();
           currentQuestion = generateMCQ(allWords, currentQuestion.wordItem);
           phase = 'MCQ';
@@ -7683,7 +7704,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           }
         } else {
           consecutiveTurnsRemaining = 0;
-          activeGamePlayerIndex = 1 - activeGamePlayerIndex;
+          const nextIdx = 1 - activeGamePlayerIndex;
+          if (playerTimeRemaining[nextIdx] > 0 || playerTimeRemaining[activeGamePlayerIndex] <= 0) {
+            activeGamePlayerIndex = nextIdx;
+          }
           lastTick = Date.now();
         }
       }
@@ -13185,7 +13209,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
               modal.querySelector('#hangman-wrong').textContent = wrongGuesses;
               drawHangman();
               if (activeGamePlayers.length) {
-                activeGameScores[activeGamePlayerIndex] -= 1;
                 hangmanSession.playerWrongGuesses = hangmanSession.playerWrongGuesses || {};
                 const playerKey = activeGamePlayers[activeGamePlayerIndex]?.student_name || '__solo__';
                 hangmanSession.playerWrongGuesses[playerKey] = (hangmanSession.playerWrongGuesses[playerKey] || 0) + 1;
@@ -32653,7 +32676,7 @@ function mountGameCelebrationOverlay(gameModal, overlay) {
   try { window.pokeSfx?.play?.('victory'); } catch (e) {}
 }
 
-function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '', winnerOverride = null, solvedImage = '') {
+function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '', winnerOverride = null, solvedImage = '', forceTie = false) {
   if (!gameModal || gameModal.querySelector(':scope > .game-celebration-overlay')) return;
   stopGameFinishedActivity(gameModal);
   const scores = Array.isArray(activeGameScores) ? activeGameScores.map(score => Number(score) || 0) : [];
@@ -32662,9 +32685,9 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
   const eligibleScores = candidateIndices.map(i => scores[i] ?? 0);
   const highestScore = eligibleScores.length ? Math.max(...eligibleScores) : 0;
   const winnersWithHighest = candidateIndices.filter(i => scores[i] === highestScore);
-  const tied = winnerOverride ? false : (winnersWithHighest.length > 1);
+  const tied = forceTie || (winnerOverride === 'tie') || (winnerOverride ? false : (winnersWithHighest.length > 1));
   const winnerIndex = tied ? -1 : (winnersWithHighest[0] !== undefined ? winnersWithHighest[0] : (candidateIndices[0] ?? 0));
-  const winner = winnerOverride || (tied ? null : (activeGamePlayers[winnerIndex] || activeGamePlayers[0]));
+  const winner = (forceTie || winnerOverride === 'tie') ? null : (winnerOverride || (tied ? null : (activeGamePlayers[winnerIndex] || activeGamePlayers[0])));
   const winnerName = winner?.student_name || 'Champion';
   const isBotWinner = Boolean(winner?.isBot || winner?.student_name === 'Robot');
   const winnerAvatar = winner?.avatar_pokemon_id || 25;
@@ -33233,54 +33256,17 @@ function startPlayerTurnTimer(modal, seconds) {
         return;
       }
 
-      // 2. Exactly 2 players:
-      // "in any game if there are only 2 players and timer set and one player runs out of time he should lose regardless his score"
-      if (activeGamePlayers.length === 2) {
-        stopPlayerTurnTimer();
-        modal._playerTimerExpired = true;
-        if (activeGamePlayerEliminated) activeGamePlayerEliminated[activeIndex] = true;
-        updateGamePlayerHud(modal, 0, activeIndex);
-        modal.querySelectorAll('button:not(#game-players-cancel):not(.game-fullscreen-btn), .match-target-card, .match-word-chip, .memory-card, .baam-card').forEach(el => {
-          if (el.tagName === 'BUTTON') el.disabled = true;
-          el.style.pointerEvents = 'none';
-        });
-
-        const winnerIndex = 1 - activeIndex;
-        const winner = activeGamePlayers[winnerIndex];
-        const loser = activeGamePlayers[activeIndex];
-        const winnerName = winner?.student_name || 'Player';
-        const loserName = loser?.student_name || 'Opponent';
-
-        try { window.pokeSfx?.play?.('fanfare'); } catch (e) {}
-        if (typeof toast === 'function') {
-          toast(`⏱ Time's up! ${loserName} ran out of time! ${winnerName} wins!`);
-        }
-
-        setTimeout(() => {
-          if (document.body.contains(modal)) {
-            showGameCelebration(modal, `${winnerName} wins!`, `${loserName} ran out of time!`, winner);
-          }
-        }, 500);
-        return;
-      }
-
-      // 3. More than 2 players:
-      // "if there ar emore than 2 he should be eliminated from the rest of the game"
+      // Multiplayer: student ran out of time -> skip him for the rest of the game
       if (activeGamePlayerEliminated) activeGamePlayerEliminated[activeIndex] = true;
       const eliminatedPlayer = activeGamePlayers[activeIndex];
       const eliminatedName = eliminatedPlayer?.student_name || 'Player';
-
-      try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
-      if (typeof toast === 'function') {
-        toast(`⏱ ${eliminatedName} ran out of time and is eliminated!`);
-      }
 
       updateGamePlayerHud(modal, 0, activeIndex);
 
       const remainingIndices = activeGamePlayers.map((_, i) => i).filter(i => !activeGamePlayerEliminated || !activeGamePlayerEliminated[i]);
 
-      // If only 1 player is left standing:
-      if (remainingIndices.length === 1) {
+      // If all players have now run out of time:
+      if (remainingIndices.length === 0) {
         stopPlayerTurnTimer();
         modal._playerTimerExpired = true;
         modal.querySelectorAll('button:not(#game-players-cancel):not(.game-fullscreen-btn), .match-target-card, .match-word-chip, .memory-card, .baam-card').forEach(el => {
@@ -33288,32 +33274,47 @@ function startPlayerTurnTimer(modal, seconds) {
           el.style.pointerEvents = 'none';
         });
 
-        const lastPlayerIndex = remainingIndices[0];
-        const lastPlayer = activeGamePlayers[lastPlayerIndex];
-        const lastPlayerName = lastPlayer?.student_name || 'Player';
-
-        try { window.pokeSfx?.play?.('fanfare'); } catch (e) {}
-        if (typeof toast === 'function') {
-          toast(`🏆 ${lastPlayerName} is the last player standing and wins!`);
+        // Check if Hangman and the word was not figured out:
+        const isHangman = Boolean(modal.classList?.contains('hangman-game-shell') || modal.querySelector?.('.hangman-game-shell, #hangman-content, #hangman-word'));
+        if (isHangman) {
+          const session = window.hangmanSession;
+          const hangmanWordEl = modal.querySelector('#hangman-word');
+          const currentWord = session?.word || hangmanWordEl?.textContent?.replace(/\s+/g, '') || '';
+          const isSolved = currentWord && session?.guessed && currentWord.split('').every(l => session.guessed.includes(l));
+          if (!isSolved) {
+            // "except hang man if bot student ran out of time and they didn't figure out the word it should be even even seven eleven"
+            try { window.pokeSfx?.play?.('draw'); } catch (e) {}
+            if (typeof toast === 'function') {
+              toast('⏱ Time is up! Word was not solved — Even even seven eleven!');
+            }
+            setTimeout(() => {
+              if (document.body.contains(modal)) {
+                showGameCelebration(modal, 'Time is up! The word was not solved.', currentWord, null, '', true);
+              }
+            }, 300);
+            return;
+          }
         }
 
+        // For all other games (and solved Hangman): final score decides the winner
+        try { window.pokeSfx?.play?.('fanfare'); } catch (e) {}
+        if (typeof toast === 'function') {
+          toast('⏱ All players ran out of time! Final score decides the winner!');
+        }
         setTimeout(() => {
           if (document.body.contains(modal)) {
-            showGameCelebration(modal, `${lastPlayerName} wins!`, 'Last player standing!', lastPlayer);
+            showGameCelebration(modal, 'Time is up!', 'Final score decided by points');
           }
-        }, 500);
+        }, 300);
         return;
       }
 
-      // If all players eliminated:
-      if (remainingIndices.length === 0) {
-        stopPlayerTurnTimer();
-        modal._playerTimerExpired = true;
-        showGameCelebration(modal, 'Time is up!', 'All players ran out of time!');
-        return;
+      // One or more players still have time: skip the timed-out player and pass turn to the next active player!
+      try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+      if (typeof toast === 'function') {
+        toast(`⏱ ${eliminatedName} ran out of time and is skipped for the rest of the game!`);
       }
 
-      // 2 or more players still remaining: pass turn to the next non-eliminated player!
       advanceGameTurn();
       updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
 
@@ -33326,7 +33327,7 @@ function startPlayerTurnTimer(modal, seconds) {
       const nextActiveName = activeGamePlayers[activeGamePlayerIndex]?.student_name || 'Next player';
       const status = modal.querySelector('#match-status, #memory-status, #hangman-feedback, #find-me-feedback');
       if (status) {
-        status.textContent = `⏱ ${eliminatedName} was eliminated! ${nextActiveName}'s turn!`;
+        status.textContent = `⏱ ${eliminatedName} ran out of time! ${nextActiveName}'s turn!`;
       }
     }
   };

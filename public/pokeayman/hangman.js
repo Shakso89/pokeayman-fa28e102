@@ -243,7 +243,6 @@
               modal.querySelector('#hangman-wrong').textContent = wrongGuesses;
               drawHangman();
               if (activeGamePlayers.length) {
-                activeGameScores[activeGamePlayerIndex] -= 1;
                 hangmanSession.playerWrongGuesses = hangmanSession.playerWrongGuesses || {};
                 const playerKey = activeGamePlayers[activeGamePlayerIndex]?.student_name || '__solo__';
                 hangmanSession.playerWrongGuesses[playerKey] = (hangmanSession.playerWrongGuesses[playerKey] || 0) + 1;
