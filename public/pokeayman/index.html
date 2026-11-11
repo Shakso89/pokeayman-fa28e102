@@ -13052,7 +13052,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       <div id="hangman-game-body" class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(260px,0.85fr)] gap-5 md:gap-8 items-center">
         <!-- Compact centered hangman board -->
         <div id="hangman-drawing-panel" class="flex flex-col items-center justify-center min-w-0">
-          <div id="hangman-clue" class="mb-3 flex h-24 w-36 items-center justify-center overflow-hidden rounded-xl border-2 border-red-200 bg-red-50" aria-label="Picture clue"></div>
+          <div id="hangman-clue" class="relative mb-3 flex h-24 w-36 items-center justify-center overflow-hidden rounded-xl border-2 border-red-200 bg-red-50" aria-label="Picture clue"></div>
           <p id="hangman-word" class="font-mono text-center break-words"></p>
           <div id="hangman-solved-image" class="hidden mb-3 flex justify-center"></div>
           <svg id="hangman-drawing" width="220" height="260" viewBox="0 0 220 260" role="img" aria-label="Hangman: no wrong guesses">
@@ -13076,11 +13076,69 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           <div id="hangman-feedback" class="text-base sm:text-lg font-semibold min-h-8 mb-3"></div>
         </div>
       </div>
+      <!-- Zoom Image Lightbox Modal -->
+      <div class="dots-lightbox" id="hangman-img-lightbox" hidden role="dialog" aria-modal="true" aria-label="Zoomed vocabulary picture">
+        <div class="dots-lightbox-backdrop" id="hangman-lightbox-backdrop"></div>
+        <div class="dots-lightbox-content">
+          <button type="button" class="dots-lightbox-close" id="hangman-lightbox-close" aria-label="Close enlarged clue" title="Close (Esc)">✕</button>
+          <img class="dots-lightbox-img" id="hangman-lightbox-img" src="" alt="Zoomed vocabulary clue">
+          <div class="dots-lightbox-footer">
+            <span class="dots-lightbox-hint">Tap anywhere or press Esc to close</span>
+          </div>
+        </div>
+      </div>
     </div>`;
     document.body.appendChild(modal);
     attachGameFullscreen(modal);
     renderGamePlayerHud(modal, Math.min(wordCount, words.length), 0);
     startPlayerTurnTimer(modal, timerSeconds);
+
+    // Zoom Image Lightbox setup
+    const lightbox = modal.querySelector('#hangman-img-lightbox');
+    const lightboxImg = modal.querySelector('#hangman-lightbox-img');
+    const lightboxClose = modal.querySelector('#hangman-lightbox-close');
+    const lightboxBackdrop = modal.querySelector('#hangman-lightbox-backdrop');
+
+    const openLightbox = (imgSrc) => {
+      if (!lightbox || !lightboxImg || !imgSrc) return;
+      lightboxImg.src = imgSrc;
+      lightbox.hidden = false;
+      lightbox.classList.add('is-open');
+    };
+
+    const closeLightbox = () => {
+      if (!lightbox) return;
+      lightbox.hidden = true;
+      lightbox.classList.remove('is-open');
+      if (lightboxImg) lightboxImg.src = '';
+    };
+
+    lightboxClose?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeLightbox();
+    });
+    lightboxBackdrop?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeLightbox();
+    });
+    lightbox?.addEventListener('click', (e) => {
+      if (e.target === lightbox || e.target === lightboxBackdrop || e.target === lightboxImg) {
+        closeLightbox();
+      }
+    });
+
+    const onGlobalKeyDown = (e) => {
+      if (!document.body.contains(modal)) {
+        window.removeEventListener('keydown', onGlobalKeyDown);
+        return;
+      }
+      if (e.key === 'Escape' && lightbox && !lightbox.hidden) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeLightbox();
+      }
+    };
+    window.addEventListener('keydown', onGlobalKeyDown);
     let hangmanLetterSize = 48;
     const updateHangmanLetterSize = () => {
       modal.querySelectorAll('.hangman-letter').forEach(button => {
@@ -13124,8 +13182,20 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     modal.querySelector('#hangman-easy-btn').addEventListener('click', () => updateHangmanDifficulty('easy'));
     modal.querySelector('#hangman-hard-btn').addEventListener('click', () => updateHangmanDifficulty('hard'));
     const clue = modal.querySelector('#hangman-clue');
-    if (difficulty === 'easy' && currentWordRecord?.vocab_image) clue.innerHTML = `<img src="${currentWordRecord.vocab_image}" class="h-full w-full object-contain" alt="Picture clue for ${word}">`;
-    else clue.innerHTML = `<img src="${document.getElementById('hangman-hard-mode-image-loader')?.src || ''}" class="h-full w-full object-contain" alt="Ash and Pikachu">`;
+    if (difficulty === 'easy' && currentWordRecord?.vocab_image) {
+      clue.innerHTML = `
+        <img src="${currentWordRecord.vocab_image}" class="h-full w-full object-contain" alt="Picture clue for ${word}">
+        <div class="dots-clue-zoom-hint" aria-hidden="true"><span>🔍</span><span>Zoom</span></div>
+      `;
+      clue.style.cursor = 'zoom-in';
+      clue.setAttribute('title', 'Click to view larger picture');
+      clue.onclick = () => openLightbox(currentWordRecord.vocab_image);
+    } else {
+      clue.style.cursor = 'default';
+      clue.removeAttribute('title');
+      clue.onclick = null;
+      clue.innerHTML = `<img src="${document.getElementById('hangman-hard-mode-image-loader')?.src || ''}" class="h-full w-full object-contain" alt="Ash and Pikachu">`;
+    }
     ['easy', 'hard'].forEach(mode => {
       const button = modal.querySelector(`#hangman-${mode}-btn`);
       if (!button) return;
@@ -13224,9 +13294,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
                 modal.querySelector('#hangman-feedback').className = 'text-base sm:text-lg font-semibold min-h-0 mb-0 text-red-600';
                 const solvedImage = modal.querySelector('#hangman-solved-image');
                 if (difficulty === 'easy' && currentWordRecord?.vocab_image) {
-                  solvedImage.innerHTML = `<div class="flex flex-col items-center justify-center gap-2"><p class="text-lg font-black text-red-600 text-center leading-tight">${word}</p><img src="${currentWordRecord.vocab_image}" class="w-36 max-w-full max-h-28 rounded-xl object-contain shadow-md mx-auto" alt="Picture for ${word}"></div>`;
+                  solvedImage.innerHTML = `<div class="flex flex-col items-center justify-center gap-2"><p class="text-lg font-black text-red-600 text-center leading-tight">${word}</p><img src="${currentWordRecord.vocab_image}" class="w-36 max-w-full max-h-28 rounded-xl object-contain shadow-md mx-auto cursor-pointer hover:opacity-80 transition" alt="Picture for ${word}" title="Click to view larger picture"></div>`;
                   solvedImage.className = 'w-full mb-2 flex flex-col items-center justify-center text-center gap-2';
                   modal.querySelector('#hangman-content').prepend(solvedImage);
+                  solvedImage.querySelector('img')?.addEventListener('click', () => openLightbox(currentWordRecord.vocab_image));
                 }
                 modal.querySelector('#hangman-drawing-panel').classList.remove('hidden');
                 modal.querySelectorAll('.hangman-letter').forEach(b => { b.disabled = true; b.classList.add('opacity-50'); });
@@ -13236,13 +13307,16 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
                   <h2 id="hangman-game-over-title" class="heading-font text-4xl font-bold text-red-600 relative z-10">Game Over</h2>
                   <div class="relative z-10 mt-4 rounded-xl border border-red-200 bg-white/70 px-4 py-3 text-center">
                     <p class="text-lg font-black text-slate-700">Word: ${word}</p>
-                    ${currentWordRecord?.vocab_image ? `<img src="${currentWordRecord.vocab_image}" class="mx-auto mt-3 h-28 w-40 rounded-lg object-contain" alt="Picture for ${word}">` : ''}
+                    ${currentWordRecord?.vocab_image ? `<img src="${currentWordRecord.vocab_image}" class="mx-auto mt-3 h-28 w-40 rounded-lg object-contain cursor-pointer hover:opacity-80 transition" alt="Picture for ${word}" title="Click to view larger picture">` : ''}
                   </div>
                   <div class="flex gap-3 mt-6 relative z-10">
                     <button type="button" id="hangman-game-over-again" class="btn-primary flex-1">Play again</button>
                     <button type="button" id="hangman-game-over-close" class="btn-outline flex-1">Close</button>
                   </div>
                 </div>`;
+                if (currentWordRecord?.vocab_image) {
+                  gameOverOverlay.querySelector('img')?.addEventListener('click', () => openLightbox(currentWordRecord.vocab_image));
+                }
                 // Mount the result dialog inside the active game/fullscreen root so it stays above the game.
                 setTimeout(() => {
                   if (!modal.isConnected) return;
@@ -13352,6 +13426,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     
     const handleHangmanKeydown = event => {
       if (gameEnded || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (lightbox && !lightbox.hidden) return;
       const letter = String(event.key || '').toUpperCase();
       if (!/^[A-Z]$/.test(letter) || guessed.includes(letter)) return;
       const button = modal.querySelector(`[data-letter="${letter}"]`);
@@ -13360,6 +13435,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     modal.addEventListener('keydown', handleHangmanKeydown);
     render();
     const resetAndCloseHangman = () => {
+      window.removeEventListener('keydown', onGlobalKeyDown);
       clearHangmanBot();
       hangmanSession = { listName, winningScore: wordCount, guessed: [], wrongGuesses: 0, word: null };
       modal.remove();
@@ -15455,7 +15531,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
         <button type="button" id="scramble-hard-btn" class="scramble-difficulty-btn scramble-difficulty-hard bg-rose-200 text-rose-900 border-2 border-rose-600 rounded-lg px-3 py-1 text-xs font-black hover:bg-rose-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="false">Hard</button>
       </div>
       <div id="scramble-clue-wrapper" class="mb-2 flex flex-col items-center justify-center">
-        <div id="scramble-clue" class="flex h-20 w-32 items-center justify-center overflow-hidden rounded-xl border-2 border-cyan-400/40 bg-black/40 shadow-lg p-1 transition-all" aria-label="Picture clue"></div>
+        <div id="scramble-clue" class="relative flex h-20 w-32 items-center justify-center overflow-hidden rounded-xl border-2 border-cyan-400/40 bg-black/40 shadow-lg p-1 transition-all" aria-label="Picture clue"></div>
       </div>
       <p id="scramble-answer" class="cipher-lab-answer text-4xl sm:text-6xl font-black mb-3 tracking-wider flex items-center justify-center" aria-label="Unscramble word">_____</p>
       <div id="scramble-tiles" class="flex flex-wrap gap-2.5 mb-3 justify-center" aria-label="Available letters"></div>
@@ -15466,11 +15542,69 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
         <button id="scramble-next" class="cipher-lab-next flex-1 font-bold py-2.5 rounded-lg transition text-base" disabled aria-disabled="true">Next Word</button>
       </div>
     </div>
+    <!-- Zoom Image Lightbox Modal -->
+    <div class="dots-lightbox" id="scramble-img-lightbox" hidden role="dialog" aria-modal="true" aria-label="Zoomed vocabulary picture">
+      <div class="dots-lightbox-backdrop" id="scramble-lightbox-backdrop"></div>
+      <div class="dots-lightbox-content">
+        <button type="button" class="dots-lightbox-close" id="scramble-lightbox-close" aria-label="Close enlarged clue" title="Close (Esc)">✕</button>
+        <img class="dots-lightbox-img" id="scramble-lightbox-img" src="" alt="Zoomed vocabulary clue">
+        <div class="dots-lightbox-footer">
+          <span class="dots-lightbox-hint">Tap anywhere or press Esc to close</span>
+        </div>
+      </div>
+    </div>
   </div>`;
   document.body.appendChild(modal);
   attachGameFullscreen(modal);
   renderGamePlayerHud(modal, Math.min(wordCount, words.length), 0, Math.min(wordCount, words.length));
   startPlayerTurnTimer(modal, timerSeconds);
+
+  // Zoom Image Lightbox setup
+  const lightbox = modal.querySelector('#scramble-img-lightbox');
+  const lightboxImg = modal.querySelector('#scramble-lightbox-img');
+  const lightboxClose = modal.querySelector('#scramble-lightbox-close');
+  const lightboxBackdrop = modal.querySelector('#scramble-lightbox-backdrop');
+
+  const openLightbox = (imgSrc) => {
+    if (!lightbox || !lightboxImg || !imgSrc) return;
+    lightboxImg.src = imgSrc;
+    lightbox.hidden = false;
+    lightbox.classList.add('is-open');
+  };
+
+  const closeLightbox = () => {
+    if (!lightbox) return;
+    lightbox.hidden = true;
+    lightbox.classList.remove('is-open');
+    if (lightboxImg) lightboxImg.src = '';
+  };
+
+  lightboxClose?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeLightbox();
+  });
+  lightboxBackdrop?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeLightbox();
+  });
+  lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox || e.target === lightboxBackdrop || e.target === lightboxImg) {
+      closeLightbox();
+    }
+  });
+
+  const onGlobalKeyDown = (e) => {
+    if (!document.body.contains(modal)) {
+      window.removeEventListener('keydown', onGlobalKeyDown);
+      return;
+    }
+    if (e.key === 'Escape' && lightbox && !lightbox.hidden) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeLightbox();
+    }
+  };
+  window.addEventListener('keydown', onGlobalKeyDown);
   const scrambleSoundState = { muted: false, volume: 0.32, lastPlayed: 0 };
   const scrambleMute = modal.querySelector('#scramble-sound-mute');
   const scrambleVolume = modal.querySelector('#scramble-sound-volume');
@@ -15731,12 +15865,24 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
     const isEasy = difficulty === 'easy';
     if (isEasy) {
       if (word?.vocab_image) {
-        clue.innerHTML = `<img src="${word.vocab_image}" class="h-full w-full object-contain rounded-lg drop-shadow" alt="Picture clue for ${word.vocab_word}">`;
+        clue.innerHTML = `
+          <img src="${word.vocab_image}" class="h-full w-full object-contain rounded-lg drop-shadow" alt="Picture clue for ${word.vocab_word}">
+          <div class="dots-clue-zoom-hint" aria-hidden="true"><span>🔍</span><span>Zoom</span></div>
+        `;
+        clue.style.cursor = 'zoom-in';
+        clue.setAttribute('title', 'Click to view larger picture');
+        clue.onclick = () => openLightbox(word.vocab_image);
       } else {
+        clue.style.cursor = 'default';
+        clue.removeAttribute('title');
+        clue.onclick = null;
         clue.innerHTML = `<div class="flex flex-col items-center justify-center text-slate-400 select-none"><span class="text-3xl">🖼️</span><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">No Image</span></div>`;
       }
     } else {
       // Hard mode: hides the picture
+      clue.style.cursor = 'default';
+      clue.removeAttribute('title');
+      clue.onclick = null;
       const fallbackSrc = document.getElementById('hangman-hard-mode-image-loader')?.src || '';
       if (fallbackSrc) {
         clue.innerHTML = `<img src="${fallbackSrc}" class="h-full w-full object-contain opacity-60" alt="Picture hidden">`;
@@ -15878,9 +16024,12 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
       const isMakeoverAttempt = awaitingMakeup || phase === 'retrying';
       const practiceHint = modal.querySelector('#scramble-practice-hint');
       if (practiceHint) {
-        const image = word?.vocab_image ? `<img src="${word.vocab_image}" class="w-16 h-12 rounded-lg object-contain bg-white/10" alt="Picture for ${word.vocab_word}">` : '';
+        const image = word?.vocab_image ? `<img src="${word.vocab_image}" class="w-16 h-12 rounded-lg object-contain bg-white/10 cursor-pointer hover:opacity-80 transition" alt="Picture for ${word.vocab_word}" title="Click to view larger picture">` : '';
         practiceHint.innerHTML = `${image}<p class="scramble-practice-lead">Correct answer: <span class="scramble-practice-word">${formattedWord}</span></p>`;
         practiceHint.classList.remove('hidden');
+        if (word?.vocab_image) {
+          practiceHint.querySelector('img')?.addEventListener('click', () => openLightbox(word.vocab_image));
+        }
       }
       animateScrambleResult('wrong', isMakeoverAttempt ? 'Incorrect. Keep trying this same word. No points are awarded for this retry.' : 'Incorrect. Try the same word again.');
       tilesContainer.querySelectorAll('.scramble-tile').forEach(t => t.classList.add('is-wrong'));
@@ -15900,6 +16049,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
   };
   
   modal.querySelector('#game-close').addEventListener('click', () => {
+    window.removeEventListener('keydown', onGlobalKeyDown);
     clearScrambleBot();
     clearInterval(scrambleSession?.timerId);
     scrambleSession = null;
