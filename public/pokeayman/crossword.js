@@ -441,6 +441,9 @@
         updateGamePlayerHud(modal, allWords.length, activeGamePlayerIndex);
         feedback.textContent = `Correct! ${completedWords.size} of ${allWords.length} words solved · ${activeGameScores[activeGamePlayerIndex]} point${activeGameScores[activeGamePlayerIndex] === 1 ? '' : 's'}.`;
         window.pokeSfx?.play?.('correct');
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(word.vocab_word || word.answer);
+        }
         if (completedWords.size === allWords.length) {
           window.pokeSfx?.play?.('victory');
           const scoreSummary = (activeGamePlayers && activeGamePlayers.length > 1)

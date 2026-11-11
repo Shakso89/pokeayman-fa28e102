@@ -881,6 +881,9 @@
 
       if (selected === currentQuestion.correctAnswer) {
         try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(currentQuestion.correctAnswer);
+        }
         // Do NOT pause or stop the timer: clock keeps running continuously during DRAW_LINE!
         btn.classList.add('is-correct');
         btn.style.borderColor = '#10b981';
@@ -899,6 +902,9 @@
         renderBoard();
       } else {
         try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(currentQuestion.correctAnswer, 350);
+        }
         btn.classList.add('is-wrong', 'dots-choice-shake');
         btn.style.borderColor = '#ef4444';
         btn.style.backgroundColor = 'rgba(239, 68, 68, 0.35)';
@@ -936,7 +942,7 @@
           renderQuestion();
           renderBoard();
           startMatchTimer();
-        }, 850);
+        }, 1450);
       }
     };
 

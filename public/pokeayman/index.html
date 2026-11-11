@@ -6180,6 +6180,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         updateGamePlayerHud(modal, allWords.length, activeGamePlayerIndex);
         feedback.textContent = `Correct! ${completedWords.size} of ${allWords.length} words solved · ${activeGameScores[activeGamePlayerIndex]} point${activeGameScores[activeGamePlayerIndex] === 1 ? '' : 's'}.`;
         window.pokeSfx?.play?.('correct');
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(word.vocab_word || word.answer);
+        }
         if (completedWords.size === allWords.length) {
           window.pokeSfx?.play?.('victory');
           const scoreSummary = (activeGamePlayers && activeGamePlayers.length > 1)
@@ -7281,6 +7284,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
       if (selected === currentQuestion.correctAnswer) {
         try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(currentQuestion.correctAnswer);
+        }
         // Do NOT pause or stop the timer: clock keeps running continuously during DRAW_LINE!
         btn.classList.add('is-correct');
         btn.style.borderColor = '#10b981';
@@ -7299,6 +7305,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         renderBoard();
       } else {
         try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(currentQuestion.correctAnswer, 350);
+        }
         btn.classList.add('is-wrong', 'dots-choice-shake');
         btn.style.borderColor = '#ef4444';
         btn.style.backgroundColor = 'rgba(239, 68, 68, 0.35)';
@@ -7336,7 +7345,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           renderQuestion();
           renderBoard();
           startMatchTimer();
-        }, 850);
+        }, 1450);
       }
     };
 
@@ -7746,6 +7755,43 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   ];
   window.GAMES = GAMES;
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  window.readGameWordAloud = function (word, delayMs = 0) {
+    const clean = String(word || '')
+      .trim()
+      .replace(/^["'`]+|["'`]+$/g, '')
+      .replace(/\*\*|__|[*_`#]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!clean) return;
+    if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+
+    const speak = () => {
+      if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+      if (typeof window.readNaturalVocabulary === 'function') {
+        try {
+          window.readNaturalVocabulary(clean);
+          return;
+        } catch (e) {
+          console.warn('readNaturalVocabulary error:', e);
+        }
+      }
+      if (window.speechSynthesis) {
+        try {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(clean);
+          u.rate = 0.92;
+          window.speechSynthesis.speak(u);
+        } catch (e) {}
+      }
+    };
+
+    if (delayMs > 0) {
+      setTimeout(speak, delayMs);
+    } else {
+      speak();
+    }
+  };
 
   
   function ensureMasterCardBackDefs() {
@@ -11986,6 +12032,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const selected = buttons[index]; const ok = String(option.vocab_word).trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase();
     if (ok) {
       selected.classList.add('is-correct'); session.correct += 1;
+      try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+      if (typeof window.readGameWordAloud === 'function') {
+        window.readGameWordAloud(correct.vocab_word);
+      }
       if (session.earned < session.dailyAllowance) {
         session.earned += 1;
         const tier = rollBallTier();
@@ -12004,7 +12054,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         session.root.querySelector('.lc-prompt').textContent = 'Correct! You have reached today’s 10-ball limit.';
       }
     }
-    else { selected.classList.add('is-wrong'); buttons.find(button => button.textContent.trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase())?.classList.add('is-correct'); session.root.querySelector('.lc-prompt').textContent = `The answer was “${correct.vocab_word}”.`; }
+    else { selected.classList.add('is-wrong'); try { window.pokeSfx?.play?.('wrong'); } catch (e) {} buttons.find(button => button.textContent.trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase())?.classList.add('is-correct'); session.root.querySelector('.lc-prompt').textContent = `The answer was “${correct.vocab_word}”.`; }
     setTimeout(() => { session.index += 1; session.index < session.words.length ? startRound() : finishGame(); }, 1400);
   }
   async function finishGame() {
@@ -12888,11 +12938,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
               status.innerHTML = '✓ Correct! <span class="baam-num-plus">+10</span> points';
               status.className = 'baam-answer-feedback is-correct';
               try { window.pokeSfx?.play('correct'); } catch (e) {}
+              if (typeof window.readGameWordAloud === 'function') {
+                window.readGameWordAloud(targetWord);
+              }
             } else {
               btn.classList.add('is-wrong');
               status.textContent = `✕ Not quite! Answer: ${targetWord}`;
               status.className = 'baam-answer-feedback is-wrong';
               try { window.pokeSfx?.play('wrong'); } catch (e) {}
+              if (typeof window.readGameWordAloud === 'function') {
+                window.readGameWordAloud(targetWord, 350);
+              }
             }
 
             word.textContent = targetWord;
@@ -12902,7 +12958,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             answerProgressionTimer = setTimeout(() => {
               answerProgressionTimer = null;
               markAnswer(isCorrect);
-            }, isBotAnswering ? 1800 : 850);
+            }, isBotAnswering ? 1800 : 1500);
           });
 
           answerControls.appendChild(btn);
@@ -12933,6 +12989,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const currentPlayer = activeGamePlayerIndex;
       if (isCorrect) {
         try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+        if (!choiceLocked && typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(selectedCard.vocab_word);
+        }
         showCorrectAnswerCelebration(modal, currentPlayer);
         activeGameScores[currentPlayer] = (activeGameScores[currentPlayer] || 0) + 10;
         updateTeamScores();
@@ -12942,6 +13001,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
       } else {
         try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        if (!choiceLocked && typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(selectedCard.vocab_word, 350);
+        }
         showWrongAnswerCelebration(modal, currentPlayer);
         advanceGameTurn();
         updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
@@ -13395,6 +13457,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
               }, 600);
             }
             if (word.split('').every(l => guessed.includes(l))) {
+              if (typeof window.readGameWordAloud === 'function') {
+                window.readGameWordAloud(currentWordRecord?.vocab_word || word);
+              }
               updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
               // Victory animation
               const wordDisplay = modal.querySelector('#hangman-word');
@@ -13633,6 +13698,10 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
         updateFindMeProgress();
         feedback.textContent = '✅ Correct!';
         feedback.className = 'sr-only';
+        try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(target.vocab_word);
+        }
         btn.dataset.status = 'correct';
         btn.classList.add(
           'find-me-word--correct',
@@ -13653,6 +13722,10 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
       } else {
         feedback.textContent = `❌ Not quite — the answer is ${target.vocab_word}`;
         feedback.className = 'sr-only';
+        try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(target.vocab_word, 350);
+        }
         btn.dataset.status = 'wrong';
         btn.classList.add(
           'find-me-word--wrong',
@@ -13678,7 +13751,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
         locked = true;
         setTimeout(() => showGameCelebration(modal, 'Find Me champion!', target.vocab_word, null, target.vocab_image), 500);
       } else {
-        setTimeout(() => { round++; renderRound(); }, 900);
+        setTimeout(() => { round++; renderRound(); }, correct ? 1000 : 1500);
       }
     })); }
   wordCountDecrease?.addEventListener('click', () => { findMeWordCount = Math.max(2, findMeWordCount - 1); updateFindMeWordCountControls(); renderRound(); });
@@ -14273,6 +14346,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         playGameSound('success');
         showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
         statusEl.textContent = `✅ Correct! "${target.vocab_word}" matched!`;
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(target.vocab_word);
+        }
       }
 
       updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
@@ -14288,6 +14364,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
       // 2. Incorrect Match: Gentle bounce, shake, return pill to bank
       unlockGameSound();
       playGameSound('wrong');
+      if (typeof window.readGameWordAloud === 'function') {
+        window.readGameWordAloud(target.vocab_word, 350);
+      }
 
       const prevPlayer = activeGamePlayerIndex;
       if (activeGamePlayers.length > 1) {
@@ -15232,6 +15311,9 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
           if (status) {
             status.innerHTML = `<span class="text-cyan-400 font-extrabold text-xl">🧲 Magnet matched: ${magnetWord || 'Pair'}! +1 Point!</span>`;
           }
+          if (magnetWord && typeof window.readGameWordAloud === 'function') {
+            window.readGameWordAloud(magnetWord);
+          }
         } else if (kind === 'shuffle' || kind === 'ditto') {
           // 🔄 Shuffle: Randomizes grid positions of remaining unflipped cards.
           try { window.pokeSfx?.play?.('whoosh'); } catch (e) {}
@@ -15273,6 +15355,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       } else {
         // Standard vocab match
         playGameSound('success');
+        const matchedWord = firstCard?.word || firstCard?.wordObj?.vocab_word || secondCard?.word;
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(matchedWord);
+        }
         if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
         updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
         showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
@@ -15975,6 +16061,9 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
     if (normalizeEntry(answer) === normalizeEntry(correctWord)) {
       unlockGameSound();
       playScrambleSound('correct');
+      if (typeof window.readGameWordAloud === 'function') {
+        window.readGameWordAloud(word?.vocab_word || formattedWord);
+      }
       if (isMakeupAttempt) {
         phase = 'retry-complete';
         awaitingMakeup = false;
@@ -16040,6 +16129,9 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
       // answer and its picture are shown immediately; only a correct retry
       // may advance a makeover round, and no makeover retry awards points.
       playGameSound('wrong');
+      if (typeof window.readGameWordAloud === 'function') {
+        window.readGameWordAloud(word?.vocab_word || formattedWord, 350);
+      }
       showWrongAnswerCelebration(modal, answeringPlayerIndex);
       const isMakeoverAttempt = awaitingMakeup || phase === 'retrying';
       const practiceHint = modal.querySelector('#scramble-practice-hint');
@@ -25225,6 +25317,43 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
     }
     window._currentReadingButton = null;
     if (typeof options?.onEnd === 'function') { try { options.onEnd(); } catch {} }
+  }
+};
+
+window.readGameWordAloud = function (word, delayMs = 0) {
+  const clean = String(word || '')
+    .trim()
+    .replace(/^["'`]+|["'`]+$/g, '')
+    .replace(/\*\*|__|[*_`#]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!clean) return;
+  if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+
+  const speak = () => {
+    if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+    if (typeof window.readNaturalVocabulary === 'function') {
+      try {
+        window.readNaturalVocabulary(clean);
+        return;
+      } catch (e) {
+        console.warn('readNaturalVocabulary error:', e);
+      }
+    }
+    if (window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(clean);
+        u.rate = 0.92;
+        window.speechSynthesis.speak(u);
+      } catch (e) {}
+    }
+  };
+
+  if (delayMs > 0) {
+    setTimeout(speak, delayMs);
+  } else {
+    speak();
   }
 };
 

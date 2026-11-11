@@ -588,11 +588,17 @@
               status.innerHTML = '✓ Correct! <span class="baam-num-plus">+10</span> points';
               status.className = 'baam-answer-feedback is-correct';
               try { window.pokeSfx?.play('correct'); } catch (e) {}
+              if (typeof window.readGameWordAloud === 'function') {
+                window.readGameWordAloud(targetWord);
+              }
             } else {
               btn.classList.add('is-wrong');
               status.textContent = `✕ Not quite! Answer: ${targetWord}`;
               status.className = 'baam-answer-feedback is-wrong';
               try { window.pokeSfx?.play('wrong'); } catch (e) {}
+              if (typeof window.readGameWordAloud === 'function') {
+                window.readGameWordAloud(targetWord, 350);
+              }
             }
 
             word.textContent = targetWord;
@@ -602,7 +608,7 @@
             answerProgressionTimer = setTimeout(() => {
               answerProgressionTimer = null;
               markAnswer(isCorrect);
-            }, isBotAnswering ? 1800 : 850);
+            }, isBotAnswering ? 1800 : 1500);
           });
 
           answerControls.appendChild(btn);
@@ -633,6 +639,9 @@
       const currentPlayer = activeGamePlayerIndex;
       if (isCorrect) {
         try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+        if (!choiceLocked && typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(selectedCard.vocab_word);
+        }
         showCorrectAnswerCelebration(modal, currentPlayer);
         activeGameScores[currentPlayer] = (activeGameScores[currentPlayer] || 0) + 10;
         updateTeamScores();
@@ -642,6 +651,9 @@
         updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
       } else {
         try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        if (!choiceLocked && typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(selectedCard.vocab_word, 350);
+        }
         showWrongAnswerCelebration(modal, currentPlayer);
         advanceGameTurn();
         updateGamePlayerHud(modal, 0, activeGamePlayerIndex);

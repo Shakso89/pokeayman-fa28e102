@@ -894,6 +894,9 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
           if (status) {
             status.innerHTML = `<span class="text-cyan-400 font-extrabold text-xl">🧲 Magnet matched: ${magnetWord || 'Pair'}! +1 Point!</span>`;
           }
+          if (magnetWord && typeof window.readGameWordAloud === 'function') {
+            window.readGameWordAloud(magnetWord);
+          }
         } else if (kind === 'shuffle' || kind === 'ditto') {
           // 🔄 Shuffle: Randomizes grid positions of remaining unflipped cards.
           try { window.pokeSfx?.play?.('whoosh'); } catch (e) {}
@@ -935,6 +938,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       } else {
         // Standard vocab match
         playGameSound('success');
+        const matchedWord = firstCard?.word || firstCard?.wordObj?.vocab_word || secondCard?.word;
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(matchedWord);
+        }
         if (activeGamePlayers.length) activeGameScores[activeGamePlayerIndex] += 1;
         updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
         showCorrectAnswerCelebration(modal, activeGamePlayerIndex);

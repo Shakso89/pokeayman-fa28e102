@@ -289,6 +289,9 @@
     stopTimer();
     battle.resolving = true;
     battle.failStreak = 0;
+    if (typeof window.readGameWordAloud === 'function') {
+      window.readGameWordAloud(battle.currentWord);
+    }
     const foeArt = battle.root.querySelector('.vb-foe-art');
     if (Math.random() < DODGE_CHANCE) {
       setMessage('Attack incoming!');

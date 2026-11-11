@@ -579,6 +579,9 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
     if (normalizeEntry(answer) === normalizeEntry(correctWord)) {
       unlockGameSound();
       playScrambleSound('correct');
+      if (typeof window.readGameWordAloud === 'function') {
+        window.readGameWordAloud(word?.vocab_word || formattedWord);
+      }
       if (isMakeupAttempt) {
         phase = 'retry-complete';
         awaitingMakeup = false;
@@ -644,6 +647,9 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
       // answer and its picture are shown immediately; only a correct retry
       // may advance a makeover round, and no makeover retry awards points.
       playGameSound('wrong');
+      if (typeof window.readGameWordAloud === 'function') {
+        window.readGameWordAloud(word?.vocab_word || formattedWord, 350);
+      }
       showWrongAnswerCelebration(modal, answeringPlayerIndex);
       const isMakeoverAttempt = awaitingMakeup || phase === 'retrying';
       const practiceHint = modal.querySelector('#scramble-practice-hint');

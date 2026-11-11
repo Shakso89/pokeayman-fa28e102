@@ -15,6 +15,43 @@
   window.GAMES = GAMES;
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+  window.readGameWordAloud = function (word, delayMs = 0) {
+    const clean = String(word || '')
+      .trim()
+      .replace(/^["'`]+|["'`]+$/g, '')
+      .replace(/\*\*|__|[*_`#]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!clean) return;
+    if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+
+    const speak = () => {
+      if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+      if (typeof window.readNaturalVocabulary === 'function') {
+        try {
+          window.readNaturalVocabulary(clean);
+          return;
+        } catch (e) {
+          console.warn('readNaturalVocabulary error:', e);
+        }
+      }
+      if (window.speechSynthesis) {
+        try {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(clean);
+          u.rate = 0.92;
+          window.speechSynthesis.speak(u);
+        } catch (e) {}
+      }
+    };
+
+    if (delayMs > 0) {
+      setTimeout(speak, delayMs);
+    } else {
+      speak();
+    }
+  };
+
   
   function ensureMasterCardBackDefs() {
     if (typeof document === 'undefined' || document.getElementById('ga-card-back-master-defs')) return;

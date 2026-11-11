@@ -575,6 +575,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
         playGameSound('success');
         showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
         statusEl.textContent = `✅ Correct! "${target.vocab_word}" matched!`;
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(target.vocab_word);
+        }
       }
 
       updateGamePlayerHud(modal, totalWords, activeGamePlayerIndex);
@@ -590,6 +593,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
       // 2. Incorrect Match: Gentle bounce, shake, return pill to bank
       unlockGameSound();
       playGameSound('wrong');
+      if (typeof window.readGameWordAloud === 'function') {
+        window.readGameWordAloud(target.vocab_word, 350);
+      }
 
       const prevPlayer = activeGamePlayerIndex;
       if (activeGamePlayers.length > 1) {

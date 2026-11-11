@@ -162,6 +162,10 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
         updateFindMeProgress();
         feedback.textContent = '✅ Correct!';
         feedback.className = 'sr-only';
+        try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(target.vocab_word);
+        }
         btn.dataset.status = 'correct';
         btn.classList.add(
           'find-me-word--correct',
@@ -182,6 +186,10 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
       } else {
         feedback.textContent = `❌ Not quite — the answer is ${target.vocab_word}`;
         feedback.className = 'sr-only';
+        try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        if (typeof window.readGameWordAloud === 'function') {
+          window.readGameWordAloud(target.vocab_word, 350);
+        }
         btn.dataset.status = 'wrong';
         btn.classList.add(
           'find-me-word--wrong',
@@ -207,7 +215,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
         locked = true;
         setTimeout(() => showGameCelebration(modal, 'Find Me champion!', target.vocab_word, null, target.vocab_image), 500);
       } else {
-        setTimeout(() => { round++; renderRound(); }, 900);
+        setTimeout(() => { round++; renderRound(); }, correct ? 1000 : 1500);
       }
     })); }
   wordCountDecrease?.addEventListener('click', () => { findMeWordCount = Math.max(2, findMeWordCount - 1); updateFindMeWordCountControls(); renderRound(); });

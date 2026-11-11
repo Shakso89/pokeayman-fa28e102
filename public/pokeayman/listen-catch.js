@@ -743,6 +743,10 @@
     const selected = buttons[index]; const ok = String(option.vocab_word).trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase();
     if (ok) {
       selected.classList.add('is-correct'); session.correct += 1;
+      try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+      if (typeof window.readGameWordAloud === 'function') {
+        window.readGameWordAloud(correct.vocab_word);
+      }
       if (session.earned < session.dailyAllowance) {
         session.earned += 1;
         const tier = rollBallTier();
@@ -761,7 +765,7 @@
         session.root.querySelector('.lc-prompt').textContent = 'Correct! You have reached today’s 10-ball limit.';
       }
     }
-    else { selected.classList.add('is-wrong'); buttons.find(button => button.textContent.trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase())?.classList.add('is-correct'); session.root.querySelector('.lc-prompt').textContent = `The answer was “${correct.vocab_word}”.`; }
+    else { selected.classList.add('is-wrong'); try { window.pokeSfx?.play?.('wrong'); } catch (e) {} buttons.find(button => button.textContent.trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase())?.classList.add('is-correct'); session.root.querySelector('.lc-prompt').textContent = `The answer was “${correct.vocab_word}”.`; }
     setTimeout(() => { session.index += 1; session.index < session.words.length ? startRound() : finishGame(); }, 1400);
   }
   async function finishGame() {

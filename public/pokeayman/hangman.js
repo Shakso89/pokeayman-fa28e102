@@ -408,6 +408,9 @@
               }, 600);
             }
             if (word.split('').every(l => guessed.includes(l))) {
+              if (typeof window.readGameWordAloud === 'function') {
+                window.readGameWordAloud(currentWordRecord?.vocab_word || word);
+              }
               updateGamePlayerHud(modal, Math.min(wordCount, words.length), activeGamePlayerIndex);
               // Victory animation
               const wordDisplay = modal.querySelector('#hangman-word');
