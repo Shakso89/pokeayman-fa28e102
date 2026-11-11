@@ -15117,7 +15117,7 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       if (firstCard.type === 'powerup' || firstCard.type === 'mystery') {
         const kind = firstCard.powerup || firstCard.mystery?.kind || 'bomb';
         if (kind === 'bomb') {
-          // 💣 Bomb: Deducts 1 point from active player and ends the turn. (Updated: in multiplayer, deducts 1 point from other player(s))
+          // 💣 Bomb: Deducts 1 point from active player and ends the turn. (Updated: in multiplayer, deducts 1 point from other player(s); active player keeps turn to play again)
           try { window.pokeSfx?.play?.('boom'); } catch (e) {}
           playTransactionSound('deduction');
           const shell = modal.querySelector('.memory-game-shell') || grid;
@@ -15143,15 +15143,14 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
             if (activeGamePlayers.length === 2) {
               const otherIdx = activeGamePlayerIndex === 0 ? 1 : 0;
               const otherName = activeGamePlayers[otherIdx]?.student_name || 'Opponent';
-              status.innerHTML = `<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point to ${escapeHtml(otherName)}!</span>`;
+              status.innerHTML = `<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point to ${escapeHtml(otherName)}! Play again!</span>`;
             } else if (activeGamePlayers.length > 2) {
-              status.innerHTML = '<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point to each other player!</span>';
+              status.innerHTML = '<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point to each other player! Play again!</span>';
             } else {
-              status.innerHTML = '<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point! Turn ended!</span>';
+              status.innerHTML = '<span class="text-rose-500 font-extrabold text-xl animate-bounce">💣 BOOM! -1 Point! Play again!</span>';
             }
           }
-          // Ends turn
-          advanceGameTurn();
+          // Active player matched a pair, so they keep their turn and play again
           updateGamePlayerHud(modal, selectedWords.length, activeGamePlayerIndex);
         } else if (kind === 'magnet' || kind === 'radar') {
           // 🧲 Magnet: Auto-reveals and matches one hidden vocabulary pair on board, awarding points to the active player.
