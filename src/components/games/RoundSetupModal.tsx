@@ -313,6 +313,10 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                         src={player.avatar_url || '/placeholder.svg'}
                         alt={player.name}
                         className="w-10 h-10 object-contain drop-shadow"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/placeholder.svg';
+                        }}
                       />
                       <span className="text-xs font-bold text-amber-400 truncate w-full text-center">
                         {player.name}
@@ -595,6 +599,10 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                       src={student.avatar_url || '/placeholder.svg'}
                       alt={student.name}
                       className="w-8 h-8 object-contain drop-shadow"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/placeholder.svg';
+                      }}
                     />
                     <span className="text-xs font-bold text-slate-300 truncate w-full text-center">
                       {student.name}

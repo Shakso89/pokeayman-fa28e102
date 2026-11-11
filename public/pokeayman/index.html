@@ -10213,13 +10213,34 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         const pNum = i + 1;
         if (chk) {
           const card = chk.closest('.game-player-card-option');
-          const imgEl = card?.querySelector('img, svg');
-          const imgSrc = imgEl?.tagName?.toLowerCase() === 'img' ? imgEl.src : '';
+          const studentName = chk.value;
+          const studentRecord = typeof getAllStudents === 'function'
+            ? getAllStudents().find(s => s && (s.student_name === studentName || s.name === studentName))
+            : null;
+
+          let avatarHtml = '';
+          if (studentRecord && typeof gameStudentAvatarMarkup === 'function') {
+            avatarHtml = gameStudentAvatarMarkup(studentRecord, 'w-10 h-10 object-contain drop-shadow');
+          } else {
+            const imgEl = card?.querySelector('img');
+            const pokeballEl = card?.querySelector('.game-pokeball-placeholder');
+            const svgEl = card?.querySelector('svg');
+            if (imgEl && imgEl.src && !imgEl.src.includes('placeholder.svg')) {
+              avatarHtml = `<img src="${imgEl.src}" class="w-10 h-10 object-contain drop-shadow" alt="${esc(studentName)}" onerror="this.onerror=null;this.outerHTML='<span class=\\'w-10 h-10 object-contain drop-shadow game-pokeball-placeholder\\' role=\\'img\\' aria-label=\\'Poké Ball avatar\\'><span class=\\'game-pokeball-center\\' aria-hidden=\\'true\\'></span></span>';" />`;
+            } else if (pokeballEl) {
+              avatarHtml = pokeballEl.outerHTML;
+            } else if (svgEl) {
+              avatarHtml = svgEl.outerHTML;
+            } else {
+              avatarHtml = `<span class="w-10 h-10 object-contain drop-shadow game-pokeball-placeholder" role="img" aria-label="Poké Ball avatar"><span class="game-pokeball-center" aria-hidden="true"></span></span>`;
+            }
+          }
+
           slot.className = 'p-3 rounded-2xl bg-slate-800 border border-amber-400 ring-1 ring-amber-400/20 flex flex-col items-center justify-center gap-2 relative h-[88px] cursor-pointer hover:border-amber-300 transition group';
           slot.innerHTML = `
             <span class="absolute top-1 left-2 text-[9px] font-black text-amber-400 uppercase">P${pNum}</span>
-            <img src="${imgSrc || '/placeholder.svg'}" class="w-10 h-10 object-contain drop-shadow" alt="${esc(chk.value)}" />
-            <span class="text-xs font-bold text-amber-400 truncate w-full text-center">${esc(chk.value)}</span>
+            ${avatarHtml}
+            <span class="text-xs font-bold text-amber-400 truncate w-full text-center">${esc(studentName)}</span>
           `;
           slot.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -27945,11 +27966,12 @@ function gameStudentAvatarMarkup(student, className = 'game-player-avatar') {
     return `<span class="${className} flex items-center justify-center p-2 bg-gradient-to-br from-cyan-950 via-slate-900 to-indigo-950 border-2 border-cyan-400 rounded-full shadow-[0_0_12px_rgba(34,211,238,0.5)] select-none" role="img" aria-label="Robot opponent"><svg class="w-full h-full text-cyan-300 drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg></span>`;
   }
   const id = Number(student?.avatar_pokemon_id);
-  const hasPokemon = Number.isInteger(id) && id > 0 && getCanonicalPokemon(id);
+  const hasPokemon = Number.isInteger(id) && id > 0 && (typeof getCanonicalPokemon === 'function' ? getCanonicalPokemon(id) : true);
   if (!hasPokemon) {
     return `<span class="${className} game-pokeball-placeholder" role="img" aria-label="Poké Ball avatar"><span class="game-pokeball-center" aria-hidden="true"></span></span>`;
   }
-  return `<img class="${className}" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${id}.png" alt="${student.student_name}'s avatar Pokémon" loading="lazy">`;
+  const studentName = student?.student_name || 'Student';
+  return `<img class="${className}" src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${id}.png" alt="${studentName}'s avatar Pokémon" loading="lazy" onerror="this.onerror=null;this.outerHTML='<span class=\\'${className} game-pokeball-placeholder\\' role=\\'img\\' aria-label=\\'Poké Ball avatar\\'><span class=\\'game-pokeball-center\\' aria-hidden=\\'true\\'></span></span>';">`;
 }
 function getOwnedPokemonForStudent(studentOrName, excludedPokemonId = null) {
   const allSt = typeof getAllStudents === 'function' ? getAllStudents() : [];

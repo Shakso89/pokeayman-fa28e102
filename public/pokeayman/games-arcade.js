@@ -2481,13 +2481,34 @@
         const pNum = i + 1;
         if (chk) {
           const card = chk.closest('.game-player-card-option');
-          const imgEl = card?.querySelector('img, svg');
-          const imgSrc = imgEl?.tagName?.toLowerCase() === 'img' ? imgEl.src : '';
+          const studentName = chk.value;
+          const studentRecord = typeof getAllStudents === 'function'
+            ? getAllStudents().find(s => s && (s.student_name === studentName || s.name === studentName))
+            : null;
+
+          let avatarHtml = '';
+          if (studentRecord && typeof gameStudentAvatarMarkup === 'function') {
+            avatarHtml = gameStudentAvatarMarkup(studentRecord, 'w-10 h-10 object-contain drop-shadow');
+          } else {
+            const imgEl = card?.querySelector('img');
+            const pokeballEl = card?.querySelector('.game-pokeball-placeholder');
+            const svgEl = card?.querySelector('svg');
+            if (imgEl && imgEl.src && !imgEl.src.includes('placeholder.svg')) {
+              avatarHtml = `<img src="${imgEl.src}" class="w-10 h-10 object-contain drop-shadow" alt="${esc(studentName)}" onerror="this.onerror=null;this.outerHTML='<span class=\\'w-10 h-10 object-contain drop-shadow game-pokeball-placeholder\\' role=\\'img\\' aria-label=\\'Poké Ball avatar\\'><span class=\\'game-pokeball-center\\' aria-hidden=\\'true\\'></span></span>';" />`;
+            } else if (pokeballEl) {
+              avatarHtml = pokeballEl.outerHTML;
+            } else if (svgEl) {
+              avatarHtml = svgEl.outerHTML;
+            } else {
+              avatarHtml = `<span class="w-10 h-10 object-contain drop-shadow game-pokeball-placeholder" role="img" aria-label="Poké Ball avatar"><span class="game-pokeball-center" aria-hidden="true"></span></span>`;
+            }
+          }
+
           slot.className = 'p-3 rounded-2xl bg-slate-800 border border-amber-400 ring-1 ring-amber-400/20 flex flex-col items-center justify-center gap-2 relative h-[88px] cursor-pointer hover:border-amber-300 transition group';
           slot.innerHTML = `
             <span class="absolute top-1 left-2 text-[9px] font-black text-amber-400 uppercase">P${pNum}</span>
-            <img src="${imgSrc || '/placeholder.svg'}" class="w-10 h-10 object-contain drop-shadow" alt="${esc(chk.value)}" />
-            <span class="text-xs font-bold text-amber-400 truncate w-full text-center">${esc(chk.value)}</span>
+            ${avatarHtml}
+            <span class="text-xs font-bold text-amber-400 truncate w-full text-center">${esc(studentName)}</span>
           `;
           slot.addEventListener('click', (e) => {
             e.stopPropagation();
