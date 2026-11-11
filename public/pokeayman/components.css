@@ -177,11 +177,15 @@ html body:is(#pk-ds, body) .btn-ai-generate {
 }
 
 /* Admin-only AI generation buttons for Grammar */
-#generate-grammar-deck-btn.hidden,
-#teacher-grammar-open-ai.hidden,
-#generate-grammar-deck-btn.is-admin-only,
-#teacher-grammar-open-ai.is-admin-only,
-.is-admin-only.hidden {
+html body:is(#pk-ds, body, html) :is(
+  #generate-grammar-deck-btn.hidden,
+  #teacher-grammar-open-ai.hidden,
+  #generate-grammar-deck-btn.is-admin-only,
+  #teacher-grammar-open-ai.is-admin-only,
+  .is-admin-only.hidden,
+  .btn-ai-generate.is-admin-only,
+  .btn-ai-generate.hidden
+) {
   display: none !important;
 }
 
@@ -1343,7 +1347,7 @@ html body:is(#pk-ds, body, html) :is(
   #teacher-vb-open-create,
   #teacher-vb-open-ai,
   .teacher-vb-open-create,
-  .btn-ai-generate
+  .btn-ai-generate:not(.is-admin-only):not(.hidden)
 ) {
   position: relative !important;
   display: inline-flex !important;
@@ -2485,7 +2489,8 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   color: #64748b !important;
 }
 
-/* 9. Practice Modal - Game Style Edge-to-Edge Fullscreen */
+/* 9. Practice Modal - Always Fullscreen (Game Style Edge-to-Edge) */
+#grammar-practice-modal,
 #grammar-practice-modal.game-fullscreen-active,
 #grammar-practice-modal:fullscreen {
   position: fixed !important;
@@ -2503,6 +2508,7 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   flex-direction: column !important;
 }
 
+#grammar-practice-modal .gp-modal-inner,
 #grammar-practice-modal.game-fullscreen-active .gp-modal-inner,
 #grammar-practice-modal:fullscreen .gp-modal-inner {
   width: 100% !important;
@@ -2516,6 +2522,7 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   justify-content: center !important;
 }
 
+#grammar-practice-modal .gp-carousel-row,
 #grammar-practice-modal.game-fullscreen-active .gp-carousel-row,
 #grammar-practice-modal:fullscreen .gp-carousel-row {
   width: 100% !important;
@@ -2528,6 +2535,7 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   gap: 16px !important;
 }
 
+#grammar-practice-modal .gp-practice-card,
 #grammar-practice-modal.game-fullscreen-active .gp-practice-card,
 #grammar-practice-modal:fullscreen .gp-practice-card {
   width: 100% !important;
@@ -2543,6 +2551,7 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   box-shadow: 0 0 60px rgba(0,0,0,0.85) !important;
 }
 
+#grammar-practice-modal .gp-hero-sentence,
 #grammar-practice-modal.game-fullscreen-active .gp-hero-sentence,
 #grammar-practice-modal:fullscreen .gp-hero-sentence {
   font-size: clamp(2.2rem, 3.8vw, 3.85rem) !important;

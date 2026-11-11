@@ -248,10 +248,11 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('id="gp-next-btn"');
     expect(js).toContain('bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-black text-xl sm:text-2xl flex items-center justify-center transition shadow-[0_0_25px_rgba(6,182,212,0.6)]');
 
-    // 6. Sleek centered practice bar and fullscreen mode
+    // 6. Sleek centered practice bar and fullscreen mode by default
     expect(js).toContain("Let's Practice");
     expect(js).not.toContain('⚡ Quick Check:');
-    expect(js).toContain('id="gp-fullscreen-btn"');
+    expect(js).not.toContain('id="gp-fullscreen-btn"');
+    expect(js).toContain('game-fullscreen-active');
     expect(js).toContain('gp-quiz-opt');
     expect(js).toContain('ring-2 ring-cyan-400/50 bg-cyan-950/90 text-cyan-200');
     expect(js).not.toContain('text-sm font-semibold text-rose-200 line-through');

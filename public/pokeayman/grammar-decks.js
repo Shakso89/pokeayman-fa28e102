@@ -1751,7 +1751,7 @@
 
     const modal = document.createElement('div');
     modal.id = 'grammar-practice-modal';
-    modal.className = 'fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[10000] flex flex-col items-center justify-start sm:justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200';
+    modal.className = 'game-fullscreen-active fixed inset-0 bg-slate-950 z-[10000] flex flex-col items-center justify-between p-2 sm:p-4 overflow-hidden animate-in fade-in duration-200';
 
     function renderCard(idx) {
       const r = rules[idx];
@@ -1821,7 +1821,6 @@
                       Edit Rule
                     </button>
                   ` : ''}
-                  <button type="button" id="gp-fullscreen-btn" class="game-fullscreen-btn w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 transition flex items-center justify-center text-base font-bold shrink-0 cursor-pointer" title="Fullscreen" aria-label="Fullscreen">⛶</button>
                   <button type="button" id="gp-close-btn" class="gp-close-btn w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-lg transition cursor-pointer" aria-label="Close practice">
                     ✕
                   </button>
@@ -1968,50 +1967,6 @@
       modal._onEsc = onEsc;
       document.addEventListener('keydown', onEsc);
 
-      // Wire Fullscreen Button (Game Style Edge-to-Edge)
-      const fsBtn = modal.querySelector('#gp-fullscreen-btn');
-      const updateFsState = () => {
-        const isFs = Boolean(modal.classList.contains('game-fullscreen-active') || document.fullscreenElement === modal || document.fullscreenElement);
-        if (fsBtn) {
-          fsBtn.textContent = isFs ? '↙' : '⛶';
-          fsBtn.title = isFs ? 'Exit fullscreen' : 'Fullscreen';
-          fsBtn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Fullscreen');
-        }
-      };
-      updateFsState();
-
-      if (fsBtn) {
-        fsBtn.onclick = async (e) => {
-          e.stopPropagation();
-          const isFs = modal.classList.contains('game-fullscreen-active') || Boolean(document.fullscreenElement);
-          if (isFs) {
-            modal.classList.remove('game-fullscreen-active');
-            if (document.fullscreenElement) {
-              try { await document.exitFullscreen(); } catch (_) {}
-            }
-          } else {
-            modal.classList.add('game-fullscreen-active');
-            try {
-              if (modal.requestFullscreen) {
-                await modal.requestFullscreen();
-              } else if (modal.webkitRequestFullscreen) {
-                await modal.webkitRequestFullscreen();
-              } else if (modal.msRequestFullscreen) {
-                await modal.msRequestFullscreen();
-              }
-            } catch (_) {}
-          }
-          updateFsState();
-        };
-      }
-      const onFsChange = () => updateFsState();
-      if (modal._onFsChange) {
-        document.removeEventListener('fullscreenchange', modal._onFsChange);
-        document.removeEventListener('webkitfullscreenchange', modal._onFsChange);
-      }
-      modal._onFsChange = onFsChange;
-      document.addEventListener('fullscreenchange', onFsChange);
-      document.addEventListener('webkitfullscreenchange', onFsChange);
 
       // Wire navigation
       modal.querySelector('#gp-prev-btn').onclick = () => {
@@ -2083,6 +2038,13 @@
 
     renderCard(currentIndex);
     document.body.appendChild(modal);
+    try {
+      if (modal.requestFullscreen) {
+        modal.requestFullscreen().catch(() => {});
+      } else if (modal.webkitRequestFullscreen) {
+        modal.webkitRequestFullscreen();
+      }
+    } catch (_) {}
   };
 
   // ==========================================
