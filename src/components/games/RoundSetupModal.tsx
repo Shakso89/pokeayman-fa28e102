@@ -36,17 +36,17 @@ export const Stepper: React.FC<StepperProps> = ({
   disabledDec,
   disabledInc,
 }) => (
-  <div className="flex items-center justify-between min-w-[144px] max-w-fit w-auto h-9 bg-slate-950/80 border border-slate-800 rounded-lg p-1 px-1.5 shrink-0 box-border">
+  <div className="ga-stepper-pill flex items-center justify-between min-w-[144px] max-w-fit w-auto h-9 bg-slate-950/80 border border-slate-800 rounded-lg p-1 px-1.5 shrink-0 box-border">
     <button
       type="button"
       onClick={onDecrease}
       disabled={disabledDec}
       aria-label="−"
-      className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition font-bold text-sm disabled:opacity-30 disabled:hover:text-slate-400 cursor-pointer"
+      className="ga-stepper-dec w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition font-bold text-sm disabled:opacity-30 disabled:hover:text-slate-400 cursor-pointer"
     >
       −
     </button>
-    <span className="min-w-[80px] whitespace-nowrap text-center text-xs font-bold text-slate-200 px-2">
+    <span className="ga-stepper-val min-w-[80px] whitespace-nowrap text-center text-xs font-bold text-slate-200 px-2">
       {format ? format(value) : `${value}${suffix}`}
     </span>
     <button
@@ -54,7 +54,7 @@ export const Stepper: React.FC<StepperProps> = ({
       onClick={onIncrease}
       disabled={disabledInc}
       aria-label="+"
-      className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition font-bold text-sm disabled:opacity-30 disabled:hover:text-slate-400 cursor-pointer"
+      className="ga-stepper-inc w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition font-bold text-sm disabled:opacity-30 disabled:hover:text-slate-400 cursor-pointer"
     >
       +
     </button>
@@ -255,7 +255,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setVsRobot((prev) => !prev)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition text-xs font-bold cursor-pointer ${
+                  className={`ga-pick-robot-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition text-xs font-bold cursor-pointer ${
                     vsRobot
                       ? 'border-cyan-400 bg-cyan-950/60 text-cyan-200 shadow-[0_0_12px_rgba(6,182,212,0.35)] ring-1 ring-cyan-400/40'
                       : 'border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
@@ -266,7 +266,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                   <Bot className="w-4 h-4 text-cyan-400" />
                   <span>vs Robot</span>
                   <span
-                    className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${
+                    className={`ga-robot-pill text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider ${
                       vsRobot ? 'bg-cyan-400 text-slate-950' : 'bg-slate-800 text-slate-400'
                     }`}
                   >
@@ -276,7 +276,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                 <button
                   type="button"
                   onClick={handleClearSelection}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs font-bold cursor-pointer"
+                  className="ga-pick-clear-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs font-bold cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>Clear</span>
@@ -284,7 +284,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleQuickPick(effectiveMaxPlayers)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs font-bold cursor-pointer"
+                  className="ga-pick-random-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition text-xs font-bold cursor-pointer"
                 >
                   <Shuffle className="w-3.5 h-3.5" />
                   <span>Random</span>
@@ -663,7 +663,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
                       </div>
                       <div
                         onClick={() => setPowerUpsEnabled((v) => !v)}
-                        className="flex items-center justify-between w-[136px] min-w-[136px] max-w-[136px] h-9 bg-slate-950/80 border border-slate-800 rounded-lg p-1 px-2.5 shrink-0 select-none cursor-pointer box-border"
+                        className="ga-powerups-ctrl flex items-center justify-between w-[136px] min-w-[136px] max-w-[136px] h-9 bg-slate-950/80 border border-slate-800 rounded-lg p-1 px-2.5 shrink-0 select-none cursor-pointer box-border"
                       >
                         <span className={`text-xs font-black tracking-wide ${powerUpsEnabled ? 'text-emerald-400' : 'text-rose-400'} select-none`}>
                           {powerUpsEnabled ? 'Enabled' : 'Disabled'}

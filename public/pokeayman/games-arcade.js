@@ -2308,7 +2308,7 @@
         <span class="truncate">Word count</span>
       </div>
     </div>
-    <div class="flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0">
+    <div class="ga-stepper-pill flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0">
       <button
         type="button"
         class="ga-stepper-dec ga-word-count-dec w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer"
@@ -2396,7 +2396,7 @@
         <span class="ga-stepper-subtitle text-[10px] text-amber-400 font-medium truncate hidden"></span>
       </div>
     </div>
-    <div class="flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0 min-w-[144px] justify-between">
+    <div class="ga-stepper-pill flex items-center bg-slate-950/70 border border-slate-800 rounded-lg p-0.5 shrink-0 min-w-[144px] justify-between">
       <button type="button" class="ga-stepper-dec w-7 h-7 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:hover:text-slate-400 text-sm font-bold transition rounded cursor-pointer" aria-label="Decrease ${esc(title)}">
         −
       </button>

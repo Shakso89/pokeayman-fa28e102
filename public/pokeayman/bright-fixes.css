@@ -3292,4 +3292,110 @@ html body .ga-hub {
   color: #0f172a !important;
 }
 
+/* ==========================================================================
+   Teacher Shell Bright Mode UI Fixes:
+   1. Vocab Battle Arena Matchup names on dark stages
+   2. Carousel Pro Gold Cards titles & badges
+   3. Stepper & Counter control pills in setup modal
+   4. Player Picker Action buttons (Clear, Random, vs Robot)
+   ========================================================================== */
+
+/* 1. Vocab Battle Arena Matchup on Dark Battle Stages */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) .ga-stage.vb-stage:not([data-ga-theme="classroom"]):not([data-ga-theme="toybox"]) .vb-matchup :is(.vb-partner-name, .vb-foe-name),
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) .ga-stage.vb-stage:not([data-ga-theme="classroom"]):not([data-ga-theme="toybox"]) .vb-hud-name {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85) !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) .ga-stage.vb-stage:not([data-ga-theme="classroom"]):not([data-ga-theme="toybox"]) .vb-matchup :is(.vb-me-name, .vb-foe-rarity) {
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* 2. Carousel Pro Gold Cards: Keep glowing gold title and subtitle */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) .ga-pro-gold-card {
+  background: radial-gradient(circle at 50% 18%, rgba(251, 191, 36, 0.12) 0%, transparent 65%),
+              linear-gradient(175deg, #181d2a 0%, #0d111c 50%, #080b13 100%) !important;
+  border-color: #f59e0b !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) .ga-pro-gold-card h3 {
+  background: linear-gradient(90deg, #fef08a 0%, #fde047 50%, #f59e0b 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: #fde047 !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9)) !important;
+  text-shadow: none !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) .ga-pro-gold-card :is(p, span, [class*="text-amber-400"]) {
+  color: #fbbf24 !important;
+  -webkit-text-fill-color: #fbbf24 !important;
+}
+
+/* 3. Stepper & Counter Control Pills (e.g. Card Count, Grid Size, Coins, Timer) */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) :is(.ga-stepper-pill, .ga-qcounter, .ga-powerups-ctrl, [class*="min-w-[144px]"], [class*="min-w-[136px]"]) {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) :is(.ga-stepper-pill, .ga-qcounter, .ga-powerups-ctrl, [class*="min-w-[144px]"], [class*="min-w-[136px]"]) :is(span, .ga-stepper-val, .ga-word-count-val, .ga-qval, [class*="text-slate-200"], [class*="text-slate-300"], [class*="text-white"]):not([class*="text-emerald"]):not([class*="text-rose"]) {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) :is(.ga-stepper-pill, .ga-qcounter, .ga-powerups-ctrl, [class*="min-w-[144px]"], [class*="min-w-[136px]"]) :is(button, .ga-stepper-dec, .ga-stepper-inc, .ga-qbtn-dec, .ga-qbtn-inc, [class*="text-slate-400"]) {
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) :is(.ga-stepper-pill, .ga-qcounter, .ga-powerups-ctrl, [class*="min-w-[144px]"], [class*="min-w-[136px]"]) :is(button:hover, .ga-stepper-dec:hover, .ga-stepper-inc:hover, .ga-qbtn-dec:hover, .ga-qbtn-inc:hover) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) :is(.ga-stepper-pill, .ga-qcounter, .ga-powerups-ctrl) :is(button:disabled, .ga-stepper-dec:disabled, .ga-stepper-inc:disabled, .ga-qbtn-dec:disabled, .ga-qbtn-inc:disabled) {
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+  opacity: 0.35 !important;
+}
+
+/* 4. Player Selector Toolbar Action Buttons (Clear, Random, vs Robot) */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) :is(.ga-pick-clear-btn, .ga-pick-random-btn) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) :is(.ga-pick-clear-btn, .ga-pick-random-btn):hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) :is(.ga-pick-clear-btn, .ga-pick-random-btn) svg {
+  stroke: currentColor !important;
+  color: inherit !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) .ga-pick-robot-btn:not([aria-pressed="true"]) {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+}
+
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body, body.ts-bright, body.light, [data-theme="light"]) .ga-pick-robot-btn:not([aria-pressed="true"]) .ga-robot-pill {
+  background: #334155 !important;
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+}
+
+
 
