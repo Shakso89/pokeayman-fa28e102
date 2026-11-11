@@ -2642,15 +2642,29 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 #grammar-practice-modal:fullscreen .gp-practice-card {
   width: 100% !important;
   max-width: min(1500px, 95vw) !important;
-  height: min(94vh, 960px) !important;
+  min-height: min(94vh, 960px) !important;
   max-height: 96vh !important;
+  height: auto !important;
   border-radius: 24px !important;
   padding: 24px 32px !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
+  gap: 16px !important;
   overflow-y: auto !important;
   box-shadow: 0 0 60px rgba(0,0,0,0.85) !important;
+}
+
+#grammar-practice-modal .gp-practice-card > * {
+  flex-shrink: 0 !important;
+}
+
+#grammar-practice-modal .gp-hero-arena,
+.gp-practice-card .gp-hero-arena {
+  flex-shrink: 0 !important;
+  min-height: min-content !important;
+  overflow: visible !important;
+  padding: 20px 24px !important;
 }
 
 #grammar-practice-modal .gp-hero-sentence,
@@ -2658,6 +2672,8 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 #grammar-practice-modal:fullscreen .gp-hero-sentence {
   font-size: clamp(2.2rem, 3.8vw, 3.85rem) !important;
   line-height: 1.35 !important;
+  overflow: visible !important;
+  word-break: break-word !important;
 }
 
 /* 10. Practice Modal - Slide Text Size Zoom Controller & Component Scaling */
@@ -2698,7 +2714,11 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 
 /* Master example meta label */
 .gp-practice-card .gp-master-example-label {
-  font-size: calc(0.75rem * var(--gp-text-zoom, 1)) !important;
+  font-size: clamp(0.7rem, calc(0.75rem * var(--gp-text-zoom, 1)), 1.1rem) !important;
+  line-height: 1.4 !important;
+  margin-bottom: 0.5rem !important;
+  flex-shrink: 0 !important;
+  overflow: visible !important;
 }
 
 /* Avoid This Mistake vs Correct Usage cards */

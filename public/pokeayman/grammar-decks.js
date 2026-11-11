@@ -1969,7 +1969,7 @@
               </div>
 
               <!-- Main Arena: Grammar Sentence is the Hero + Compact Visual Cue -->
-              <div class="p-5 sm:p-6 rounded-2xl bg-slate-950/85 border border-slate-800 shadow-xl flex flex-col md:flex-row items-center justify-between gap-5 relative overflow-hidden">
+              <div class="gp-hero-arena p-5 sm:p-6 rounded-2xl bg-slate-950/85 border border-slate-800 shadow-xl flex flex-col md:flex-row items-center justify-between gap-5 relative shrink-0">
                 <!-- Left / Center: Big commanding syntax-highlighted sentence -->
                 <div class="flex-1 text-center md:text-left min-w-0">
                   <div class="gp-master-example-label flex items-center justify-center md:justify-start gap-2 text-[11px] font-bold uppercase tracking-widest text-indigo-400 mb-2">
