@@ -95,9 +95,12 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('openGrammarSharePopupFor');
     expect(js).toContain('deleteGrammarDeck');
 
-    // Checks that cards show creator name
+    // Checks that cards show creator name and rules badges on cover
+    expect(js).toContain('grammar-badge-rules');
+    expect(js).toContain('grammar-badge-author');
     expect(js).toContain('By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b>');
     expect(js).toContain('Teacher Ayman');
+    expect(js).not.toContain('vocab-change-cover-btn');
   });
 
   it('ensures components.css styles grammar deck buttons and containers with uniform card sizing and title truncation', () => {

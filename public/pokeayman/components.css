@@ -1456,15 +1456,25 @@ html body:is(#pk-ds, body, html) :is(
 }
 
 :is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id]) .grammar-card-header {
-  height: 44px !important;
-  min-height: 44px !important;
-  max-height: 44px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
   overflow: hidden !important;
   display: flex !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   justify-content: space-between !important;
   gap: 10px !important;
   margin-bottom: 8px !important;
+}
+
+:is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id], .grammar-deck-card) :is(.grammar-badge-rules, .grammar-badge-author) {
+  pointer-events: none !important;
+  user-select: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+:is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id], .grammar-deck-card) :is(.vocab-cover-hover-overlay, .vocab-change-cover-btn) {
+  display: none !important;
 }
 
 :is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id], .grammar-deck-card) :is(.vocab-list-name, h4) {

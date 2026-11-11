@@ -377,17 +377,11 @@
 
       return `
         <div class="vocab-list-card canva-card grammar-deck-card p-4 sm:p-5 flex flex-col justify-between" data-grammar-deck-id="${escapeHtml(deckId)}">
-          <!-- 1. Header: Title, Count, Origin on Left; Ghost Icons on Right (Matches VB Lists) -->
-          <div class="grammar-card-header flex items-start justify-between gap-3 mb-2">
-            <div class="flex-1 min-w-0 overflow-hidden">
-              <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate block max-w-full" title="${escapeHtml(name)}">
-                ${escapeHtml(name)}
-              </h4>
-              <div class="grammar-card-meta flex items-center gap-1.5 mt-0.5 text-xs text-slate-400 truncate whitespace-nowrap overflow-hidden">
-                <span class="shrink-0">${rules.length} rule${rules.length !== 1 ? 's' : ''}</span>
-                ${teacher ? `<span class="shrink-0">•</span><span class="truncate">By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b></span>` : ''}
-              </div>
-            </div>
+          <!-- 1. Header: Title on Left; Ghost Icons on Right -->
+          <div class="grammar-card-header flex items-center justify-between gap-3 mb-2">
+            <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex-1 min-w-0" title="${escapeHtml(name)}">
+              ${escapeHtml(name)}
+            </h4>
 
             <!-- Ghost Quick Action Buttons -->
             <div class="flex items-center gap-1 shrink-0">
@@ -428,23 +422,31 @@
             </div>
           </div>
 
-          <!-- 2. Image Preview with Hover Change Cover Overlay (Exact Match with Image 1) -->
+          <!-- 2. Image Preview with Top Left (Rules Count) & Top Right (Teacher Byline) -->
           <div class="grammar-cover-box relative group/cover rounded-xl overflow-hidden aspect-[16/10] bg-slate-900/60 border border-slate-700/50 flex items-center justify-center my-2 cursor-pointer shrink-0" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
             ${cover
               ? `<img src="${escapeHtml(cover)}" alt="Cover for ${escapeHtml(name)}" class="w-full h-full object-cover transition duration-300 group-hover/cover:scale-105" loading="lazy">`
               : `<div class="text-slate-500 text-xs font-semibold flex items-center gap-1.5"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> No cover image</div>`
             }
-            ${isOwner ? `
-              <div class="vocab-cover-hover-overlay absolute inset-0 bg-slate-950/20 backdrop-blur-[2px] opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center p-2">
-                <button 
-                  type="button" 
-                  onclick="event.stopPropagation();window.openGrammarDeckEditor('${escapeHtml(deckId)}','${safeName}')" 
-                  class="vocab-change-cover-btn py-1.5 px-3 rounded-xl bg-white/95 text-slate-800 border border-amber-400/80 shadow-md text-xs font-bold flex items-center gap-1.5 hover:bg-white hover:scale-105 active:scale-95 transition cursor-pointer">
-                  <svg class="w-3.5 h-3.5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-                  <span>Change Cover</span>
-                </button>
+
+            <!-- Top Left: Rules Count Badge -->
+            <div class="absolute top-2 left-2 pointer-events-none z-10">
+              <span class="grammar-badge-rules inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-bold bg-slate-950/80 backdrop-blur-md text-white border border-slate-700/60 shadow-md">
+                ${rules.length} rule${rules.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <!-- Top Right: Teacher Byline Badge -->
+            ${teacher ? `
+              <div class="absolute top-2 right-2 pointer-events-none z-10 max-w-[65%] truncate">
+                <span class="grammar-badge-author inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-bold bg-slate-950/80 backdrop-blur-md text-slate-200 border border-slate-700/60 shadow-md truncate">
+                  By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b>
+                </span>
               </div>
             ` : ''}
+
+            <!-- Subtle top vignette for contrast -->
+            <div class="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-slate-950/70 via-slate-950/25 to-transparent pointer-events-none"></div>
           </div>
 
           <!-- 3. Bottom Controls: Single Clean Row (Practice & Assign / Matches Image 1) -->
@@ -574,17 +576,11 @@
 
       return `
         <div class="vocab-list-card canva-card grammar-deck-card p-4 sm:p-5 flex flex-col justify-between" data-grammar-deck-id="${escapeHtml(deckId)}">
-          <!-- 1. Header: Title, Count, Origin on Left; Ghost Icons on Right (Matches VB Lists) -->
-          <div class="grammar-card-header flex items-start justify-between gap-3 mb-2">
-            <div class="flex-1 min-w-0 overflow-hidden">
-              <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate block max-w-full" title="${escapeHtml(name)}">
-                ${escapeHtml(name)}
-              </h4>
-              <div class="grammar-card-meta flex items-center gap-1.5 mt-0.5 text-xs text-slate-400 truncate whitespace-nowrap overflow-hidden">
-                <span class="shrink-0">${rules.length} rule${rules.length !== 1 ? 's' : ''}</span>
-                ${teacher ? `<span class="shrink-0">•</span><span class="truncate">By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b></span>` : ''}
-              </div>
-            </div>
+          <!-- 1. Header: Title on Left; Ghost Icons on Right -->
+          <div class="grammar-card-header flex items-center justify-between gap-3 mb-2">
+            <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex-1 min-w-0" title="${escapeHtml(name)}">
+              ${escapeHtml(name)}
+            </h4>
 
             <!-- Ghost Quick Action Buttons -->
             <div class="flex items-center gap-1 shrink-0">
@@ -625,23 +621,31 @@
             </div>
           </div>
 
-          <!-- 2. Image Preview with Hover Change Cover Overlay (Exact Match with Image 1) -->
+          <!-- 2. Image Preview with Top Left (Rules Count) & Top Right (Teacher Byline) -->
           <div class="grammar-cover-box relative group/cover rounded-xl overflow-hidden aspect-[16/10] bg-slate-900/60 border border-slate-700/50 flex items-center justify-center my-2 cursor-pointer shrink-0" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
             ${cover
               ? `<img src="${escapeHtml(cover)}" alt="Cover for ${escapeHtml(name)}" class="w-full h-full object-cover transition duration-300 group-hover/cover:scale-105" loading="lazy">`
               : `<div class="text-slate-500 text-xs font-semibold flex items-center gap-1.5"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> No cover image</div>`
             }
-            ${isOwner ? `
-              <div class="vocab-cover-hover-overlay absolute inset-0 bg-slate-950/20 backdrop-blur-[2px] opacity-0 group-hover/cover:opacity-100 transition-opacity flex items-center justify-center p-2">
-                <button 
-                  type="button" 
-                  onclick="event.stopPropagation();window.openGrammarDeckEditor('${escapeHtml(deckId)}','${safeName}')" 
-                  class="vocab-change-cover-btn py-1.5 px-3 rounded-xl bg-white/95 text-slate-800 border border-amber-400/80 shadow-md text-xs font-bold flex items-center gap-1.5 hover:bg-white hover:scale-105 active:scale-95 transition cursor-pointer">
-                  <svg class="w-3.5 h-3.5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-                  <span>Change Cover</span>
-                </button>
+
+            <!-- Top Left: Rules Count Badge -->
+            <div class="absolute top-2 left-2 pointer-events-none z-10">
+              <span class="grammar-badge-rules inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-bold bg-slate-950/80 backdrop-blur-md text-white border border-slate-700/60 shadow-md">
+                ${rules.length} rule${rules.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <!-- Top Right: Teacher Byline Badge -->
+            ${teacher ? `
+              <div class="absolute top-2 right-2 pointer-events-none z-10 max-w-[65%] truncate">
+                <span class="grammar-badge-author inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-bold bg-slate-950/80 backdrop-blur-md text-slate-200 border border-slate-700/60 shadow-md truncate">
+                  By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b>
+                </span>
               </div>
             ` : ''}
+
+            <!-- Subtle top vignette for contrast -->
+            <div class="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-slate-950/70 via-slate-950/25 to-transparent pointer-events-none"></div>
           </div>
 
           <!-- 3. Bottom Controls: Single Clean Row (Practice & Assign / Matches Image 1) -->
