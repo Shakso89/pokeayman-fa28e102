@@ -242,6 +242,23 @@ Reply with valid JSON only in this exact format:
               if (!r.words_amber && r.formula_parts[1]?.words) r.words_amber = r.formula_parts[1].words;
               if (!r.words_green && r.formula_parts[2]?.words) r.words_green = r.formula_parts[2].words;
 
+              // Clean mistake pairs & support optional extra mistakes
+              if (Array.isArray(r.extra_mistakes)) {
+                r.extra_mistakes = r.extra_mistakes
+                  .filter((m: any) => m && (m.bad || m.good))
+                  .map((m: any) => ({ bad: String(m.bad || '').trim(), good: String(m.good || '').trim() }));
+              } else {
+                r.extra_mistakes = [];
+              }
+              const allPairs = [];
+              if (r.mistake_bad || r.mistake_good) {
+                allPairs.push({ bad: String(r.mistake_bad || '').trim(), good: String(r.mistake_good || '').trim() });
+              }
+              if (r.extra_mistakes.length) {
+                allPairs.push(...r.extra_mistakes);
+              }
+              r.mistakes = allPairs;
+
               // Pick photo strictly related to the example sentence
               let photoFound = false;
               const searchCandidates: string[] = [];

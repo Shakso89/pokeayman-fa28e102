@@ -1763,8 +1763,28 @@
         cleanClue = cleanClue.replace(/level:\s*/i, '');
       }
 
-      const badText = String(r.mistake_bad || 'Mistake');
-      const goodText = String(r.mistake_good || 'Correct');
+      // Collect all mistake examples for this rule (with fallback)
+      const allMistakes = [];
+      if (Array.isArray(r.mistakes) && r.mistakes.length) {
+        r.mistakes.forEach(m => {
+          if (m && (m.bad || m.good)) allMistakes.push({ bad: String(m.bad || ''), good: String(m.good || '') });
+        });
+      }
+      if (!allMistakes.length) {
+        if (r.mistake_bad || r.mistake_good) {
+          allMistakes.push({ bad: String(r.mistake_bad || ''), good: String(r.mistake_good || '') });
+        }
+        if (Array.isArray(r.extra_mistakes)) {
+          r.extra_mistakes.forEach(m => {
+            if (m && (m.bad || m.good)) allMistakes.push({ bad: String(m.bad || ''), good: String(m.good || '') });
+          });
+        }
+      }
+      if (!allMistakes.length) {
+        allMistakes.push({ bad: 'Mistake', good: 'Correct' });
+      }
+      const badText = allMistakes[0].bad;
+      const goodText = allMistakes[0].good;
 
       // Helper: Fisher-Yates shuffle array so options are randomly placed
       function shuffleOptions(arr) {
@@ -1867,30 +1887,44 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <!-- Common Mistake Card -->
                 <div class="p-3.5 rounded-xl bg-rose-950/25 border border-rose-500/30 flex flex-col justify-between gap-1 shadow-sm">
-                  <div class="flex items-center justify-between">
+                  <div class="flex items-center justify-between mb-1">
                     <span class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-rose-400 text-[11px]">
                       <span class="w-4 h-4 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-[10px] font-black">✕</span>
                       Avoid This Mistake
                     </span>
-                    <span class="text-[10px] font-bold text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded-full border border-rose-500/30">INCORRECT</span>
+                    <span class="text-[10px] font-bold text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded-full border border-rose-500/30">
+                      ${allMistakes.length > 1 ? `INCORRECT (${allMistakes.length})` : 'INCORRECT'}
+                    </span>
                   </div>
-                  <p class="text-sm font-semibold text-rose-200 opacity-95 my-0.5">
-                    ${escapeHtml(badText)}
-                  </p>
+                  <div class="space-y-1.5 my-0.5">
+                    ${allMistakes.map((m, mIdx) => `
+                      <div class="text-sm font-semibold text-rose-200 opacity-95 flex items-start gap-1.5">
+                        ${allMistakes.length > 1 ? `<span class="w-4 h-4 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">${mIdx + 1}</span>` : ''}
+                        <span class="break-words">${escapeHtml(m.bad)}</span>
+                      </div>
+                    `).join('')}
+                  </div>
                 </div>
 
                 <!-- Correct Form Card -->
                 <div class="p-3.5 rounded-xl bg-emerald-950/25 border border-emerald-500/30 flex flex-col justify-between gap-1 shadow-sm">
-                  <div class="flex items-center justify-between">
+                  <div class="flex items-center justify-between mb-1">
                     <span class="flex items-center gap-1.5 font-bold uppercase tracking-wider text-emerald-400 text-[11px]">
                       <span class="w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-[10px] font-black">✓</span>
                       Correct Usage
                     </span>
-                    <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">CORRECT</span>
+                    <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                      ${allMistakes.length > 1 ? `CORRECT (${allMistakes.length})` : 'CORRECT'}
+                    </span>
                   </div>
-                  <p class="text-sm font-bold text-emerald-200 my-0.5">
-                    ${escapeHtml(goodText)}
-                  </p>
+                  <div class="space-y-1.5 my-0.5">
+                    ${allMistakes.map((m, mIdx) => `
+                      <div class="text-sm font-bold text-emerald-200 flex items-start gap-1.5">
+                        ${allMistakes.length > 1 ? `<span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">${mIdx + 1}</span>` : ''}
+                        <span class="break-words">${escapeHtml(m.good)}</span>
+                      </div>
+                    `).join('')}
+                  </div>
                 </div>
               </div>
 
@@ -2138,6 +2172,22 @@
       const isEditing = editingRuleIndex >= 0 && editingRuleIndex < rules.length;
       const activeRule = isEditing ? rules[editingRuleIndex] : null;
 
+      // Extract mistake examples for active rule
+      let existingMistakes = [];
+      if (Array.isArray(activeRule?.mistakes) && activeRule.mistakes.length) {
+        existingMistakes = activeRule.mistakes.map(m => ({ bad: String(m.bad || ''), good: String(m.good || '') }));
+      } else if (activeRule?.mistake_bad || activeRule?.mistake_good) {
+        existingMistakes.push({ bad: String(activeRule.mistake_bad || ''), good: String(activeRule.mistake_good || '') });
+        if (Array.isArray(activeRule?.extra_mistakes)) {
+          activeRule.extra_mistakes.forEach(m => {
+            if (m && (m.bad || m.good)) existingMistakes.push({ bad: String(m.bad || ''), good: String(m.good || '') });
+          });
+        }
+      }
+      if (!existingMistakes.length) {
+        existingMistakes = [{ bad: '', good: '' }];
+      }
+
       // Extract options for active rule
       const existingOptions = Array.isArray(activeRule?.quiz_options) ? activeRule.quiz_options : [];
       const activeAnswer = activeRule?.quiz_answer || existingOptions[0] || '';
@@ -2356,13 +2406,47 @@
                 </div>
               </div>
 
-              <div class="space-y-1">
-                <label for="ge-rule-bad" class="text-[11px] text-rose-300 font-semibold block">❌ Common Mistake</label>
-                <input id="ge-rule-bad" type="text" placeholder="e.g. The elephant walking." class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.mistake_bad || '')}">
-              </div>
-              <div class="space-y-1">
-                <label for="ge-rule-good" class="text-[11px] text-emerald-300 font-semibold block">✅ Correct Form</label>
-                <input id="ge-rule-good" type="text" placeholder="e.g. The elephant is walking." class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.mistake_good || '')}">
+              <!-- Common Mistakes & Correct Forms Section with Extra Examples -->
+              <div class="sm:col-span-2 space-y-2.5 p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Common Mistakes & Correct Forms</span>
+                    <span class="text-[10px] text-slate-500 font-normal">(1 required, extra examples optional)</span>
+                  </div>
+                  <button type="button" id="ge-add-mistake-row-btn" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Add another common mistake example">
+                    <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>+ Add Example</span>
+                  </button>
+                </div>
+
+                <div id="ge-mistakes-list" class="space-y-2.5">
+                  ${existingMistakes.map((m, idx) => `
+                    <div class="ge-mistake-pair-row p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 space-y-2" data-pair-idx="${idx}">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 ge-mistake-row-label">Example #${idx + 1}</span>
+                        ${idx > 0 ? `
+                          <button type="button" class="ge-delete-mistake-row-btn text-rose-400 hover:text-rose-300 text-xs font-bold px-1.5 py-0.5 rounded transition cursor-pointer flex items-center gap-1" title="Remove this mistake example">
+                            <span>✕</span> Remove
+                          </button>
+                        ` : ''}
+                      </div>
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div class="space-y-1">
+                          <label class="text-[10px] text-rose-300 font-semibold block flex items-center gap-1">
+                            <span>❌</span> Common Mistake
+                          </label>
+                          <input type="text" ${idx === 0 ? 'id="ge-rule-bad"' : ''} class="ge-rule-bad-input quiz-input text-xs w-full" placeholder="e.g. What is the library located?" value="${escapeHtml(m.bad || '')}">
+                        </div>
+                        <div class="space-y-1">
+                          <label class="text-[10px] text-emerald-300 font-semibold block flex items-center gap-1">
+                            <span>✅</span> Correct Form
+                          </label>
+                          <input type="text" ${idx === 0 ? 'id="ge-rule-good"' : ''} class="ge-rule-good-input quiz-input text-xs w-full" placeholder="e.g. Where is the library located?" value="${escapeHtml(m.good || '')}">
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
               </div>
               <div class="space-y-1 sm:col-span-2 pt-2 border-t border-slate-800/80">
                 <label for="ge-rule-question" class="text-[11px] text-slate-400 font-semibold block">Quick Check Question</label>
@@ -3390,6 +3474,58 @@
         renderEditor();
       });
 
+      // Add extra mistake example row
+      modal.querySelector('#ge-add-mistake-row-btn')?.addEventListener('click', () => {
+        const list = modal.querySelector('#ge-mistakes-list');
+        if (!list) return;
+        const currentCount = list.querySelectorAll('.ge-mistake-pair-row').length;
+        const newIdx = currentCount;
+        const row = document.createElement('div');
+        row.className = 'ge-mistake-pair-row p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 space-y-2';
+        row.dataset.pairIdx = String(newIdx);
+        row.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 ge-mistake-row-label">Example #${newIdx + 1}</span>
+            <button type="button" class="ge-delete-mistake-row-btn text-rose-400 hover:text-rose-300 text-xs font-bold px-1.5 py-0.5 rounded transition cursor-pointer flex items-center gap-1" title="Remove this mistake example">
+              <span>✕</span> Remove
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="space-y-1">
+              <label class="text-[10px] text-rose-300 font-semibold block flex items-center gap-1">
+                <span>❌</span> Common Mistake
+              </label>
+              <input type="text" class="ge-rule-bad-input quiz-input text-xs w-full" placeholder="e.g. What is the library located?">
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] text-emerald-300 font-semibold block flex items-center gap-1">
+                <span>✅</span> Correct Form
+              </label>
+              <input type="text" class="ge-rule-good-input quiz-input text-xs w-full" placeholder="e.g. Where is the library located?">
+            </div>
+          </div>
+        `;
+        list.appendChild(row);
+        row.querySelector('.ge-rule-bad-input')?.focus();
+      });
+
+      // Delegate remove mistake example row
+      modal.querySelector('#ge-mistakes-list')?.addEventListener('click', (e) => {
+        const removeBtn = e.target.closest('.ge-delete-mistake-row-btn');
+        if (!removeBtn) return;
+        const row = removeBtn.closest('.ge-mistake-pair-row');
+        if (row) {
+          row.remove();
+          // Renumber remaining rows
+          const list = modal.querySelector('#ge-mistakes-list');
+          list?.querySelectorAll('.ge-mistake-pair-row').forEach((r, i) => {
+            r.dataset.pairIdx = String(i);
+            const lbl = r.querySelector('.ge-mistake-row-label');
+            if (lbl) lbl.textContent = `Example #${i + 1}`;
+          });
+        }
+      });
+
       // Rename Deck
       modal.querySelector('#ge-save-deck-name-btn').onclick = async () => {
         const newName = modal.querySelector('#ge-deck-name-input').value.trim();
@@ -3412,12 +3548,30 @@
         const sentence = modal.querySelector('#ge-rule-sentence').value.trim();
         const clue = modal.querySelector('#ge-rule-clue').value.trim();
         const img = modal.querySelector('#ge-rule-image').value.trim();
-        const bad = modal.querySelector('#ge-rule-bad').value.trim();
-        const good = modal.querySelector('#ge-rule-good').value.trim();
         const question = modal.querySelector('#ge-rule-question').value.trim();
         const answer = modal.querySelector('#ge-rule-answer').value.trim();
         const opt2 = modal.querySelector('#ge-rule-opt2')?.value.trim() || '';
         const opt3 = modal.querySelector('#ge-rule-opt3')?.value.trim() || '';
+
+        // Collect all mistake examples
+        const mistakePairs = [];
+        const mistakeRows = modal.querySelectorAll('.ge-mistake-pair-row');
+        mistakeRows.forEach(row => {
+          const badVal = row.querySelector('.ge-rule-bad-input')?.value.trim() || '';
+          const goodVal = row.querySelector('.ge-rule-good-input')?.value.trim() || '';
+          if (badVal || goodVal) {
+            mistakePairs.push({ bad: badVal, good: goodVal || sentence });
+          }
+        });
+        if (!mistakePairs.length) {
+          const badSingle = modal.querySelector('#ge-rule-bad')?.value.trim() || '';
+          const goodSingle = modal.querySelector('#ge-rule-good')?.value.trim() || '';
+          mistakePairs.push({ bad: badSingle || 'Mistake', good: goodSingle || sentence || 'Correct' });
+        }
+        const primaryMistake = mistakePairs[0];
+        const extraMistakes = mistakePairs.slice(1);
+        const bad = primaryMistake.bad;
+        const good = primaryMistake.good;
 
         if (!title || !sentence) {
           if (typeof toast === 'function') toast('Please enter a rule title and example sentence.');
@@ -3500,6 +3654,8 @@
             image: img || rules[editingRuleIndex].image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
             mistake_bad: bad || 'Mistake',
             mistake_good: good || sentence,
+            mistakes: mistakePairs,
+            extra_mistakes: extraMistakes,
             quiz_question: question || 'Complete the sentence:',
             quiz_answer: answer || 'Option 1',
             quiz_options: quizOptions
@@ -3530,6 +3686,8 @@
             image: img || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
             mistake_bad: bad || 'Mistake',
             mistake_good: good || sentence,
+            mistakes: mistakePairs,
+            extra_mistakes: extraMistakes,
             quiz_question: question || 'Complete the sentence:',
             quiz_options: quizOptions,
             quiz_answer: answer || 'Option 1'

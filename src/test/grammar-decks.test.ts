@@ -771,5 +771,12 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     const fallsAssignment = ruleSample.word_assignments.find((w: any) => w.token.includes('falls'));
     expect(fallsAssignment).toBeDefined();
     expect(fallsAssignment?.isSplit).toBe(true);
+    // 4. Optional extra examples for common mistakes
+    expect(js).toContain('id="ge-add-mistake-row-btn"');
+    expect(js).toContain('id="ge-mistakes-list"');
+    expect(js).toContain('ge-mistake-pair-row');
+    expect(js).toContain('ge-delete-mistake-row-btn');
+    expect(js).toContain('extra_mistakes');
+    expect(js).toContain('INCORRECT (${allMistakes.length})');
   });
 });
