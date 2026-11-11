@@ -1186,11 +1186,22 @@ body > .ga-stage #hangman-drawing-panel {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
   min-width: 0 !important;
 }
-body > .ga-stage #hangman-clue,
-body > .ga-stage #scramble-clue {
+body > .ga-stage #hangman-clue {
   width: 130px !important;
   height: 85px !important;
   margin-bottom: 0.5rem !important;
+  border-radius: 12px !important;
+  border: 2px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+body > .ga-stage #scramble-clue {
+  width: 114px !important;
+  height: 72px !important;
+  margin-bottom: 0.35rem !important;
   border-radius: 12px !important;
   border: 2px solid rgba(255, 255, 255, 0.15) !important;
   background: rgba(0, 0, 0, 0.25) !important;
@@ -1246,13 +1257,19 @@ body > .ga-stage #hangman-content {
   max-width: none !important;
   min-width: 0 !important;
 }
-body > .ga-stage .hangman-difficulty-selector,
-body > .ga-stage .scramble-difficulty-selector {
+body > .ga-stage .hangman-difficulty-selector {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   gap: 0.5rem !important;
   margin-bottom: 0.75rem !important;
+}
+body > .ga-stage .scramble-difficulty-selector {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.4rem !important;
+  margin-bottom: 0.35rem !important;
 }
 body > .ga-stage #hangman-letters {
   display: grid !important;
@@ -1898,13 +1915,13 @@ html body > .ga-stage .cipher-lab-answer {
   justify-content: center !important;
   flex-wrap: wrap !important;
   gap: clamp(0.35rem, 1vw, 0.65rem) !important;
-  min-height: clamp(3.8rem, 8vw, 5.2rem) !important;
-  margin: 0.25rem auto 1.5rem !important;
-  padding: 0.6rem clamp(0.75rem, 2vw, 1.5rem) !important;
-  font-size: clamp(1.6rem, 3.8vw, 2.4rem) !important;
+  min-height: clamp(3.2rem, 6.8vw, 4.2rem) !important;
+  margin: 0.15rem auto 0.65rem !important;
+  padding: 0.45rem clamp(0.6rem, 1.6vw, 1.2rem) !important;
+  font-size: clamp(1.4rem, 3.4vw, 2.1rem) !important;
   font-weight: 900 !important;
   letter-spacing: normal !important;
-  border-radius: 20px !important;
+  border-radius: 18px !important;
   box-sizing: border-box !important;
   width: auto !important;
   max-width: 100% !important;
@@ -1915,10 +1932,10 @@ html body .scramble-answer-slot {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: clamp(2.85rem, 6.2vw, 3.85rem) !important;
-  height: clamp(3.3rem, 7.2vw, 4.4rem) !important;
-  min-width: clamp(2.85rem, 6.2vw, 3.85rem) !important;
-  min-height: clamp(3.3rem, 7.2vw, 4.4rem) !important;
+  width: clamp(2.6rem, 5.4vw, 3.5rem) !important;
+  height: clamp(3rem, 6.4vw, 3.9rem) !important;
+  min-width: clamp(2.6rem, 5.4vw, 3.5rem) !important;
+  min-height: clamp(3rem, 6.4vw, 3.9rem) !important;
   padding: 0 !important;
   margin: 0 clamp(0.12rem, 0.3vw, 0.25rem) !important;
   border-radius: 12px !important;
@@ -1942,16 +1959,17 @@ html body .scramble-answer-slot.is-filled::after {
 }
 html body > .ga-stage #scramble-practice-hint:not(.hidden) {
   display: flex !important;
-  flex-direction: column !important;
+  flex-direction: row !important;
   align-items: center !important;
-  gap: 0.55rem !important;
-  margin: 0.25rem auto !important;
-  padding: 0.85rem 1.4rem !important;
-  border-radius: 20px !important;
+  justify-content: center !important;
+  gap: 0.75rem !important;
+  margin: 0.25rem auto 0.4rem !important;
+  padding: 0.4rem 1.1rem !important;
+  border-radius: 16px !important;
   background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
-  border: 3.5px solid #f59e0b !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 0 #78350f, 0 16px 32px rgba(0, 0, 0, 0.45) !important;
-  width: min(92%, 560px) !important;
+  border: 3px solid #f59e0b !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 0 #78350f, 0 10px 20px rgba(0, 0, 0, 0.45) !important;
+  width: min(92%, 520px) !important;
   box-sizing: border-box !important;
 }
 html body > .ga-stage #scramble-practice-hint p,
@@ -1964,7 +1982,7 @@ html body > .ga-stage #scramble-practice-hint .scramble-practice-lead {
   color: #f8fafc !important;
   -webkit-text-fill-color: #f8fafc !important;
   font-family: 'Outfit', sans-serif !important;
-  font-size: 1rem !important;
+  font-size: 0.95rem !important;
   font-weight: 900 !important;
   letter-spacing: 0.05em !important;
   text-transform: uppercase !important;
@@ -1975,27 +1993,27 @@ html body > .ga-stage #scramble-practice-hint p span,
 html body > .ga-stage #scramble-practice-hint .scramble-practice-word {
   display: inline-block !important;
   margin-left: 0.35rem !important;
-  padding: 0.24rem 1rem !important;
+  padding: 0.2rem 0.85rem !important;
   border-radius: 999px !important;
   background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%) !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
-  border: 2.5px solid #14532d !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 3px 0 #14532d, 0 0 16px rgba(34, 197, 94, 0.6) !important;
-  font-size: 1.15rem !important;
+  border: 2px solid #14532d !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 0 #14532d, 0 0 12px rgba(34, 197, 94, 0.5) !important;
+  font-size: 1.05rem !important;
   font-weight: 900 !important;
-  letter-spacing: 0.12em !important;
+  letter-spacing: 0.1em !important;
   text-shadow: 0 1px 2px rgba(5, 46, 22, 0.8) !important;
 }
 html body > .ga-stage #scramble-practice-hint img {
   background: #ffffff !important;
-  border: 3.5px solid #f59e0b !important;
-  border-radius: 16px !important;
-  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.4) !important;
-  max-width: 130px !important;
-  max-height: 90px !important;
+  border: 2px solid #f59e0b !important;
+  border-radius: 10px !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35) !important;
+  max-width: 68px !important;
+  max-height: 46px !important;
   object-fit: contain !important;
-  padding: 4px !important;
+  padding: 2px !important;
 }
 
 /* Tactile 3D Arcade Buttons for Unscramble (Reset vs Next Word vs Disabled) */

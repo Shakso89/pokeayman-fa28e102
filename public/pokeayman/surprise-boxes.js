@@ -347,9 +347,10 @@
       const winnerPlayer = winnerIndex >= 0 ? baamPlayers[winnerIndex] : null;
       const winnerAvatar = winnerPlayer?.avatar_pokemon_id || 25;
       const winnerAvatarAlt = winnerPlayer ? `${winnerPlayer.student_name}'s avatar Pokémon` : 'Pokémon game tie';
+      const isBotWinner = Boolean(winnerPlayer?.isBot || winnerPlayer?.student_name === 'Robot');
       const baamConfiguredPrize = Math.max(0, Math.floor(Number(activeGameReward) || 0));
       let baamAwardedPrize = 0;
-      if (winnerPlayer && baamConfiguredPrize > 0 && !activeGameRewardClaimed) {
+      if (winnerPlayer && !isBotWinner && baamConfiguredPrize > 0 && !activeGameRewardClaimed) {
         activeGameRewardClaimed = true;
         const winnerRecord = getAllStudents().find(student => student.__backendId === winnerPlayer.__backendId) || getAllStudents().find(student => student.student_name === winnerName);
         if (winnerRecord) {
@@ -364,8 +365,15 @@
         } else {
           activeGameRewardClaimed = false;
         }
+      } else if ((!winnerPlayer || isBotWinner) && baamConfiguredPrize > 0 && !activeGameRewardClaimed) {
+        activeGameRewardClaimed = true;
+        const teacher = typeof currentTeacher !== 'undefined' ? currentTeacher : '';
+        if (typeof refundTeacherCredits === 'function' && teacher) {
+          refundTeacherCredits(baamConfiguredPrize, teacher);
+          if (isBotWinner) toast(`Game reward (${baamConfiguredPrize} coins) returned to teacher because Robot won.`);
+        }
       }
-      const baamPrizeNotice = baamAwardedPrize > 0 ? `<p class="relative z-10 mt-3 rounded-xl border-2 border-yellow-300 bg-slate-950 px-4 py-2 text-lg font-black text-yellow-200 shadow-lg" aria-live="polite">Prize: ${baamAwardedPrize} coins</p>` : '';
+      const baamPrizeNotice = (!isBotWinner && baamAwardedPrize > 0) ? `<p class="relative z-10 mt-3 rounded-xl border-2 border-yellow-300 bg-slate-950 px-4 py-2 text-lg font-black text-yellow-200 shadow-lg" aria-live="polite">Prize: ${baamAwardedPrize} coins</p>` : '';
       baamQ('#baam-reveal')?.classList.add('hidden');
       modal.querySelectorAll('.baam-tile').forEach(tile => { tile.disabled = true; });
       const overlay = document.createElement('div');

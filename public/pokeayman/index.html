@@ -12602,9 +12602,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const winnerPlayer = winnerIndex >= 0 ? baamPlayers[winnerIndex] : null;
       const winnerAvatar = winnerPlayer?.avatar_pokemon_id || 25;
       const winnerAvatarAlt = winnerPlayer ? `${winnerPlayer.student_name}'s avatar Pokémon` : 'Pokémon game tie';
+      const isBotWinner = Boolean(winnerPlayer?.isBot || winnerPlayer?.student_name === 'Robot');
       const baamConfiguredPrize = Math.max(0, Math.floor(Number(activeGameReward) || 0));
       let baamAwardedPrize = 0;
-      if (winnerPlayer && baamConfiguredPrize > 0 && !activeGameRewardClaimed) {
+      if (winnerPlayer && !isBotWinner && baamConfiguredPrize > 0 && !activeGameRewardClaimed) {
         activeGameRewardClaimed = true;
         const winnerRecord = getAllStudents().find(student => student.__backendId === winnerPlayer.__backendId) || getAllStudents().find(student => student.student_name === winnerName);
         if (winnerRecord) {
@@ -12619,8 +12620,15 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         } else {
           activeGameRewardClaimed = false;
         }
+      } else if ((!winnerPlayer || isBotWinner) && baamConfiguredPrize > 0 && !activeGameRewardClaimed) {
+        activeGameRewardClaimed = true;
+        const teacher = typeof currentTeacher !== 'undefined' ? currentTeacher : '';
+        if (typeof refundTeacherCredits === 'function' && teacher) {
+          refundTeacherCredits(baamConfiguredPrize, teacher);
+          if (isBotWinner) toast(`Game reward (${baamConfiguredPrize} coins) returned to teacher because Robot won.`);
+        }
       }
-      const baamPrizeNotice = baamAwardedPrize > 0 ? `<p class="relative z-10 mt-3 rounded-xl border-2 border-yellow-300 bg-slate-950 px-4 py-2 text-lg font-black text-yellow-200 shadow-lg" aria-live="polite">Prize: ${baamAwardedPrize} coins</p>` : '';
+      const baamPrizeNotice = (!isBotWinner && baamAwardedPrize > 0) ? `<p class="relative z-10 mt-3 rounded-xl border-2 border-yellow-300 bg-slate-950 px-4 py-2 text-lg font-black text-yellow-200 shadow-lg" aria-live="polite">Prize: ${baamAwardedPrize} coins</p>` : '';
       baamQ('#baam-reveal')?.classList.add('hidden');
       modal.querySelectorAll('.baam-tile').forEach(tile => { tile.disabled = true; });
       const overlay = document.createElement('div');
@@ -15415,24 +15423,24 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
         <button id="game-close" class="text-white hover:text-gray-200 text-2xl font-bold" aria-label="Close game">×</button>
       </div>
     </div>
-    <div class="cipher-lab-contestants grid grid-cols-2 gap-3 px-4 pt-4">
+    <div class="cipher-lab-contestants grid grid-cols-2 gap-3 px-4 pt-2">
       <div class="game-player-hud-slot col-span-full flex justify-center w-full"></div>
     </div>
-    <div class="cipher-lab-panel m-4 p-5 sm:p-8 text-center">
-      <div class="scramble-difficulty-selector mb-3 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Unscramble difficulty">
-        <button type="button" id="scramble-easy-btn" class="scramble-difficulty-btn scramble-difficulty-easy bg-green-200 text-green-900 border-2 border-green-500 rounded-lg px-3 py-1.5 text-xs font-black hover:bg-green-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="true">Easy</button>
-        <button type="button" id="scramble-hard-btn" class="scramble-difficulty-btn scramble-difficulty-hard bg-rose-200 text-rose-900 border-2 border-rose-600 rounded-lg px-3 py-1.5 text-xs font-black hover:bg-rose-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="false">Hard</button>
+    <div class="cipher-lab-panel mx-auto my-1 p-3 sm:p-5 text-center max-w-2xl w-full">
+      <div class="scramble-difficulty-selector mb-2 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Unscramble difficulty">
+        <button type="button" id="scramble-easy-btn" class="scramble-difficulty-btn scramble-difficulty-easy bg-green-200 text-green-900 border-2 border-green-500 rounded-lg px-3 py-1 text-xs font-black hover:bg-green-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="true">Easy</button>
+        <button type="button" id="scramble-hard-btn" class="scramble-difficulty-btn scramble-difficulty-hard bg-rose-200 text-rose-900 border-2 border-rose-600 rounded-lg px-3 py-1 text-xs font-black hover:bg-rose-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="false">Hard</button>
       </div>
-      <div id="scramble-clue-wrapper" class="mb-3 flex flex-col items-center justify-center">
-        <div id="scramble-clue" class="flex h-24 w-36 sm:h-28 sm:w-44 items-center justify-center overflow-hidden rounded-xl border-2 border-cyan-400/40 bg-black/40 shadow-lg p-1.5 transition-all" aria-label="Picture clue"></div>
+      <div id="scramble-clue-wrapper" class="mb-2 flex flex-col items-center justify-center">
+        <div id="scramble-clue" class="flex h-20 w-32 items-center justify-center overflow-hidden rounded-xl border-2 border-cyan-400/40 bg-black/40 shadow-lg p-1 transition-all" aria-label="Picture clue"></div>
       </div>
-      <p id="scramble-answer" class="cipher-lab-answer text-5xl sm:text-7xl font-black mb-6 tracking-wider flex items-center justify-center" aria-label="Unscramble word">_____</p>
-      <div id="scramble-tiles" class="flex flex-wrap gap-3 mb-7 justify-center" aria-label="Available letters"></div>
+      <p id="scramble-answer" class="cipher-lab-answer text-4xl sm:text-6xl font-black mb-3 tracking-wider flex items-center justify-center" aria-label="Unscramble word">_____</p>
+      <div id="scramble-tiles" class="flex flex-wrap gap-2.5 mb-3 justify-center" aria-label="Available letters"></div>
       <div id="scramble-feedback" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-      <div id="scramble-practice-hint" class="hidden mt-2 flex flex-col items-center gap-2" aria-live="polite"></div>
-      <div class="flex gap-3 mt-6">
-        <button id="scramble-reset" class="cipher-lab-reset flex-1 font-bold py-3 rounded-lg transition text-lg">Reset</button>
-        <button id="scramble-next" class="cipher-lab-next flex-1 font-bold py-3 rounded-lg transition text-lg" disabled aria-disabled="true">Next Word</button>
+      <div id="scramble-practice-hint" class="hidden my-2 flex items-center justify-center gap-3" aria-live="polite"></div>
+      <div class="cipher-lab-actions flex gap-3 mt-3">
+        <button id="scramble-reset" class="cipher-lab-reset flex-1 font-bold py-2.5 rounded-lg transition text-base">Reset</button>
+        <button id="scramble-next" class="cipher-lab-next flex-1 font-bold py-2.5 rounded-lg transition text-base" disabled aria-disabled="true">Next Word</button>
       </div>
     </div>
   </div>`;
@@ -15508,7 +15516,8 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
     const curPlayer = activeGamePlayers[activeGamePlayerIndex];
     if (!curPlayer?.isBot) return;
 
-    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
+    const activeDifficulty = difficulty || scrambleSession?.difficulty || 'easy';
+    const diff = curPlayer.botDifficulty || (activeDifficulty === 'hard' ? 'hard' : (activeDifficulty === 'easy' ? 'easy' : (window.selectedBotDifficulty || 'normal')));
     scrambleBotTimer = setTimeout(() => {
       scrambleBotTimer = null;
       if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || submissionGuard) return;
@@ -15846,8 +15855,8 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
       const isMakeoverAttempt = awaitingMakeup || phase === 'retrying';
       const practiceHint = modal.querySelector('#scramble-practice-hint');
       if (practiceHint) {
-        const image = word?.vocab_image ? `<img src="${word.vocab_image}" class="w-28 h-20 rounded-lg object-contain bg-white/10" alt="Picture for ${word.vocab_word}">` : '';
-        practiceHint.innerHTML = `<p class="scramble-practice-lead">Correct answer: <span class="scramble-practice-word">${formattedWord}</span></p>${image}`;
+        const image = word?.vocab_image ? `<img src="${word.vocab_image}" class="w-16 h-12 rounded-lg object-contain bg-white/10" alt="Picture for ${word.vocab_word}">` : '';
+        practiceHint.innerHTML = `${image}<p class="scramble-practice-lead">Correct answer: <span class="scramble-practice-word">${formattedWord}</span></p>`;
         practiceHint.classList.remove('hidden');
       }
       animateScrambleResult('wrong', isMakeoverAttempt ? 'Incorrect. Keep trying this same word. No points are awarded for this retry.' : 'Incorrect. Try the same word again.');
@@ -20212,9 +20221,17 @@ async function deductTeacherCredits(amount, options = {}) {
 }
 
 async function refundTeacherCredits(amount, teacherName) {
+  const identity = String(teacherName || currentTeacher || '').trim().toLocaleLowerCase();
+  if (identity === 'ayman' || identity === 'teacher ayman') return;
   if (teacherName === ADMIN_TEACHER.name) return;
   const rec = (teacherName === currentTeacher && currentTeacherRec()) || getTeachers().find(t => t.teacher_name === teacherName);
-  if (rec && rec.teacher_credits !== -1) await window.dataSdk.update({ ...rec, teacher_credits: (rec.teacher_credits || 0) + amount });
+  if (rec && rec.teacher_credits !== -1) {
+    const next = { ...rec, teacher_credits: (rec.teacher_credits || 0) + amount, teacher_spent_total: Math.max(0, Number(rec.teacher_spent_total || 0) - amount) };
+    const result = await window.dataSdk.update(next);
+    const saved = result?.data || next;
+    allData = allData.map(r => r.__backendId === rec.__backendId ? saved : r);
+    updateTeacherCreditBalance();
+  }
 }
 window.getTeacherCredits = getTeacherCredits;
 window.deductTeacherCredits = deductTeacherCredits;
@@ -32649,6 +32666,7 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
   const winnerIndex = tied ? -1 : (winnersWithHighest[0] !== undefined ? winnersWithHighest[0] : (candidateIndices[0] ?? 0));
   const winner = winnerOverride || (tied ? null : (activeGamePlayers[winnerIndex] || activeGamePlayers[0]));
   const winnerName = winner?.student_name || 'Champion';
+  const isBotWinner = Boolean(winner?.isBot || winner?.student_name === 'Robot');
   const winnerAvatar = winner?.avatar_pokemon_id || 25;
   const winnerAvatarUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png`;
   const configuredReward = Math.max(0, Math.floor(Number(activeGameReward) || 0));
@@ -32657,8 +32675,8 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
   const overlay = document.createElement('div');
   overlay.className = 'game-celebration-overlay';
   const isFindMeResult = title === 'Find Me champion!';
-  if (!tied && winner?.student_name) window.pkRecordWin?.(winner.student_name, 'game_wins');
-  if (!tied && winner && configuredReward > 0 && !activeGameRewardClaimed) {
+  if (!tied && winner?.student_name && !isBotWinner) window.pkRecordWin?.(winner.student_name, 'game_wins');
+  if (!tied && winner && !isBotWinner && configuredReward > 0 && !activeGameRewardClaimed) {
     activeGameRewardClaimed = true;
     const winnerRecord = getAllStudents().find(student => student.__backendId === winner.__backendId) || getAllStudents().find(student => student.student_name === winnerName);
     if (winnerRecord) {
@@ -32667,8 +32685,15 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
         else toast(`${winnerName} was awarded ${configuredReward} coins!`);
       });
     }
+  } else if ((tied || isBotWinner) && configuredReward > 0 && !activeGameRewardClaimed) {
+    activeGameRewardClaimed = true;
+    const teacher = typeof currentTeacher !== 'undefined' ? currentTeacher : '';
+    if (typeof refundTeacherCredits === 'function' && teacher) {
+      refundTeacherCredits(configuredReward, teacher);
+      if (isBotWinner) toast(`Game reward (${configuredReward} coins) returned to teacher because Robot won.`);
+    }
   }
-  const prizeText = configuredReward > 0 && !tied ? `Good job 🪙 ${configuredReward} coins won` : '';
+  const prizeText = (configuredReward > 0 && !tied && !isBotWinner) ? `Good job 🪙 ${configuredReward} coins won` : '';
   const prizeMarkup = prizeText ? `<div class="relative z-10 mt-3 inline-flex items-center justify-center rounded-full border border-yellow-300/70 bg-slate-950/90 px-4 py-2 text-center text-base font-bold text-yellow-200 shadow-lg" aria-live="polite">${prizeText}</div>` : '';
   overlay.innerHTML = `<div class="game-celebration-card ${isFindMeResult ? 'find-me-result-card' : ''}" role="dialog" aria-modal="true" aria-labelledby="celebration-title">
     ${isFindMeResult ? '<div class="find-me-result-sparkles" aria-hidden="true">✦ · ✧ · ✦</div><div class="find-me-result-accent" aria-hidden="true">🎉</div>' : ''}

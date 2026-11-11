@@ -146,24 +146,24 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
         <button id="game-close" class="text-white hover:text-gray-200 text-2xl font-bold" aria-label="Close game">×</button>
       </div>
     </div>
-    <div class="cipher-lab-contestants grid grid-cols-2 gap-3 px-4 pt-4">
+    <div class="cipher-lab-contestants grid grid-cols-2 gap-3 px-4 pt-2">
       <div class="game-player-hud-slot col-span-full flex justify-center w-full"></div>
     </div>
-    <div class="cipher-lab-panel m-4 p-5 sm:p-8 text-center">
-      <div class="scramble-difficulty-selector mb-3 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Unscramble difficulty">
-        <button type="button" id="scramble-easy-btn" class="scramble-difficulty-btn scramble-difficulty-easy bg-green-200 text-green-900 border-2 border-green-500 rounded-lg px-3 py-1.5 text-xs font-black hover:bg-green-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="true">Easy</button>
-        <button type="button" id="scramble-hard-btn" class="scramble-difficulty-btn scramble-difficulty-hard bg-rose-200 text-rose-900 border-2 border-rose-600 rounded-lg px-3 py-1.5 text-xs font-black hover:bg-rose-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="false">Hard</button>
+    <div class="cipher-lab-panel mx-auto my-1 p-3 sm:p-5 text-center max-w-2xl w-full">
+      <div class="scramble-difficulty-selector mb-2 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Unscramble difficulty">
+        <button type="button" id="scramble-easy-btn" class="scramble-difficulty-btn scramble-difficulty-easy bg-green-200 text-green-900 border-2 border-green-500 rounded-lg px-3 py-1 text-xs font-black hover:bg-green-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="true">Easy</button>
+        <button type="button" id="scramble-hard-btn" class="scramble-difficulty-btn scramble-difficulty-hard bg-rose-200 text-rose-900 border-2 border-rose-600 rounded-lg px-3 py-1 text-xs font-black hover:bg-rose-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="false">Hard</button>
       </div>
-      <div id="scramble-clue-wrapper" class="mb-3 flex flex-col items-center justify-center">
-        <div id="scramble-clue" class="flex h-24 w-36 sm:h-28 sm:w-44 items-center justify-center overflow-hidden rounded-xl border-2 border-cyan-400/40 bg-black/40 shadow-lg p-1.5 transition-all" aria-label="Picture clue"></div>
+      <div id="scramble-clue-wrapper" class="mb-2 flex flex-col items-center justify-center">
+        <div id="scramble-clue" class="flex h-20 w-32 items-center justify-center overflow-hidden rounded-xl border-2 border-cyan-400/40 bg-black/40 shadow-lg p-1 transition-all" aria-label="Picture clue"></div>
       </div>
-      <p id="scramble-answer" class="cipher-lab-answer text-5xl sm:text-7xl font-black mb-6 tracking-wider flex items-center justify-center" aria-label="Unscramble word">_____</p>
-      <div id="scramble-tiles" class="flex flex-wrap gap-3 mb-7 justify-center" aria-label="Available letters"></div>
+      <p id="scramble-answer" class="cipher-lab-answer text-4xl sm:text-6xl font-black mb-3 tracking-wider flex items-center justify-center" aria-label="Unscramble word">_____</p>
+      <div id="scramble-tiles" class="flex flex-wrap gap-2.5 mb-3 justify-center" aria-label="Available letters"></div>
       <div id="scramble-feedback" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-      <div id="scramble-practice-hint" class="hidden mt-2 flex flex-col items-center gap-2" aria-live="polite"></div>
-      <div class="flex gap-3 mt-6">
-        <button id="scramble-reset" class="cipher-lab-reset flex-1 font-bold py-3 rounded-lg transition text-lg">Reset</button>
-        <button id="scramble-next" class="cipher-lab-next flex-1 font-bold py-3 rounded-lg transition text-lg" disabled aria-disabled="true">Next Word</button>
+      <div id="scramble-practice-hint" class="hidden my-2 flex items-center justify-center gap-3" aria-live="polite"></div>
+      <div class="cipher-lab-actions flex gap-3 mt-3">
+        <button id="scramble-reset" class="cipher-lab-reset flex-1 font-bold py-2.5 rounded-lg transition text-base">Reset</button>
+        <button id="scramble-next" class="cipher-lab-next flex-1 font-bold py-2.5 rounded-lg transition text-base" disabled aria-disabled="true">Next Word</button>
       </div>
     </div>
   </div>`;
@@ -239,7 +239,8 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
     const curPlayer = activeGamePlayers[activeGamePlayerIndex];
     if (!curPlayer?.isBot) return;
 
-    const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
+    const activeDifficulty = difficulty || scrambleSession?.difficulty || 'easy';
+    const diff = curPlayer.botDifficulty || (activeDifficulty === 'hard' ? 'hard' : (activeDifficulty === 'easy' ? 'easy' : (window.selectedBotDifficulty || 'normal')));
     scrambleBotTimer = setTimeout(() => {
       scrambleBotTimer = null;
       if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || submissionGuard) return;
@@ -577,8 +578,8 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
       const isMakeoverAttempt = awaitingMakeup || phase === 'retrying';
       const practiceHint = modal.querySelector('#scramble-practice-hint');
       if (practiceHint) {
-        const image = word?.vocab_image ? `<img src="${word.vocab_image}" class="w-28 h-20 rounded-lg object-contain bg-white/10" alt="Picture for ${word.vocab_word}">` : '';
-        practiceHint.innerHTML = `<p class="scramble-practice-lead">Correct answer: <span class="scramble-practice-word">${formattedWord}</span></p>${image}`;
+        const image = word?.vocab_image ? `<img src="${word.vocab_image}" class="w-16 h-12 rounded-lg object-contain bg-white/10" alt="Picture for ${word.vocab_word}">` : '';
+        practiceHint.innerHTML = `${image}<p class="scramble-practice-lead">Correct answer: <span class="scramble-practice-word">${formattedWord}</span></p>`;
         practiceHint.classList.remove('hidden');
       }
       animateScrambleResult('wrong', isMakeoverAttempt ? 'Incorrect. Keep trying this same word. No points are awarded for this retry.' : 'Incorrect. Try the same word again.');
