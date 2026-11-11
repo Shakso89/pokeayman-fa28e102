@@ -100,13 +100,15 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('Teacher Ayman');
   });
 
-  it('ensures components.css styles grammar deck buttons and containers', () => {
+  it('ensures components.css styles grammar deck buttons and containers with uniform card sizing and title truncation', () => {
     const css = fs.readFileSync(componentsCssPath, 'utf-8');
     expect(css).toContain('#class-subtab-grammar');
     expect(css).toContain('#create-grammar-deck-btn');
     expect(css).toContain('#teacher-grammar-open-create');
     expect(css).toContain('#teacher-grammar-mode-mine');
     expect(css).toContain('#teacher-grammar-mode-school');
+    expect(css).toContain('.grammar-card-header');
+    expect(css).toContain('.grammar-deck-card');
   });
 
   it('ensures teacher-shell.js sidebar includes Grammar in Classroom and Grammar Bank in Teacher Zone', () => {

@@ -1441,22 +1441,68 @@ html body:is(#pk-ds, body, html) :is(
   }
 }
 
-#teacher-grammar-decks-grid .grammar-deck-card {
+/* ==========================================================================
+   Grammar Deck Card Uniform Sizing & Title Truncation
+   ========================================================================== */
+:is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id], .grammar-deck-card) {
+  height: 100% !important;
+}
+
+:is(#teacher-grammar-decks-grid, #grammar-decks-container) :is(.grammar-deck-card, .vocab-list-card) {
   height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: space-between !important;
 }
 
-#teacher-grammar-decks-grid .grammar-deck-card .grammar-cover-box {
-  width: 100% !important;
-  height: 150px !important;
-  max-height: 150px !important;
+:is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id]) .grammar-card-header {
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
   overflow: hidden !important;
-  border-radius: 0.75rem !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin-bottom: 8px !important;
 }
 
-#teacher-grammar-decks-grid .grammar-deck-card .grammar-cover-box img {
+:is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id], .grammar-deck-card) :is(.vocab-list-name, h4) {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  line-height: 1.25 !important;
+  margin: 0 !important;
+}
+
+:is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id], .grammar-deck-card) .grammar-card-meta {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  max-width: 100% !important;
+  line-height: 1.2 !important;
+  margin-top: 2px !important;
+}
+
+:is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id], .grammar-deck-card) .grammar-cover-box {
+  width: 100% !important;
+  aspect-ratio: 16 / 10 !important;
+  height: 150px !important;
+  min-height: 150px !important;
+  max-height: 150px !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+  border-radius: 0.75rem !important;
+  margin: 8px 0 !important;
+}
+
+:is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id], .grammar-deck-card) .grammar-cover-box img {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;

@@ -376,16 +376,16 @@
       const safeName = String(name).replace(/'/g, "\\'");
 
       return `
-        <div class="vocab-list-card canva-card p-4 sm:p-5 flex flex-col justify-between" data-grammar-deck-id="${escapeHtml(deckId)}">
+        <div class="vocab-list-card canva-card grammar-deck-card p-4 sm:p-5 flex flex-col justify-between" data-grammar-deck-id="${escapeHtml(deckId)}">
           <!-- 1. Header: Title, Count, Origin on Left; Ghost Icons on Right (Matches VB Lists) -->
-          <div class="flex items-start justify-between gap-3 mb-2">
-            <div class="flex-1 min-w-0">
-              <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex items-center gap-1.5" title="${escapeHtml(name)}">
+          <div class="grammar-card-header flex items-start justify-between gap-3 mb-2">
+            <div class="flex-1 min-w-0 overflow-hidden">
+              <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate block max-w-full" title="${escapeHtml(name)}">
                 ${escapeHtml(name)}
               </h4>
-              <div class="flex items-center flex-wrap gap-2 mt-0.5 text-xs text-slate-400">
-                <span>${rules.length} rule${rules.length !== 1 ? 's' : ''}</span>
-                ${teacher ? `<span>•</span><span>By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b></span>` : ''}
+              <div class="grammar-card-meta flex items-center gap-1.5 mt-0.5 text-xs text-slate-400 truncate whitespace-nowrap overflow-hidden">
+                <span class="shrink-0">${rules.length} rule${rules.length !== 1 ? 's' : ''}</span>
+                ${teacher ? `<span class="shrink-0">•</span><span class="truncate">By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b></span>` : ''}
               </div>
             </div>
 
@@ -429,7 +429,7 @@
           </div>
 
           <!-- 2. Image Preview with Hover Change Cover Overlay (Exact Match with Image 1) -->
-          <div class="relative group/cover rounded-xl overflow-hidden aspect-[16/10] bg-slate-900/60 border border-slate-700/50 flex items-center justify-center my-2 cursor-pointer" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
+          <div class="grammar-cover-box relative group/cover rounded-xl overflow-hidden aspect-[16/10] bg-slate-900/60 border border-slate-700/50 flex items-center justify-center my-2 cursor-pointer shrink-0" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
             ${cover
               ? `<img src="${escapeHtml(cover)}" alt="Cover for ${escapeHtml(name)}" class="w-full h-full object-cover transition duration-300 group-hover/cover:scale-105" loading="lazy">`
               : `<div class="text-slate-500 text-xs font-semibold flex items-center gap-1.5"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> No cover image</div>`
@@ -573,16 +573,16 @@
       const safeName = String(name).replace(/'/g, "\\'");
 
       return `
-        <div class="vocab-list-card canva-card p-4 sm:p-5 flex flex-col justify-between" data-grammar-deck-id="${escapeHtml(deckId)}">
+        <div class="vocab-list-card canva-card grammar-deck-card p-4 sm:p-5 flex flex-col justify-between" data-grammar-deck-id="${escapeHtml(deckId)}">
           <!-- 1. Header: Title, Count, Origin on Left; Ghost Icons on Right (Matches VB Lists) -->
-          <div class="flex items-start justify-between gap-3 mb-2">
-            <div class="flex-1 min-w-0">
-              <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex items-center gap-1.5" title="${escapeHtml(name)}">
+          <div class="grammar-card-header flex items-start justify-between gap-3 mb-2">
+            <div class="flex-1 min-w-0 overflow-hidden">
+              <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate block max-w-full" title="${escapeHtml(name)}">
                 ${escapeHtml(name)}
               </h4>
-              <div class="flex items-center flex-wrap gap-2 mt-0.5 text-xs text-slate-400">
-                <span>${rules.length} rule${rules.length !== 1 ? 's' : ''}</span>
-                ${teacher ? `<span>•</span><span>By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b></span>` : ''}
+              <div class="grammar-card-meta flex items-center gap-1.5 mt-0.5 text-xs text-slate-400 truncate whitespace-nowrap overflow-hidden">
+                <span class="shrink-0">${rules.length} rule${rules.length !== 1 ? 's' : ''}</span>
+                ${teacher ? `<span class="shrink-0">•</span><span class="truncate">By <b class="text-amber-300 font-semibold">${escapeHtml(teacher)}</b></span>` : ''}
               </div>
             </div>
 
@@ -626,7 +626,7 @@
           </div>
 
           <!-- 2. Image Preview with Hover Change Cover Overlay (Exact Match with Image 1) -->
-          <div class="relative group/cover rounded-xl overflow-hidden aspect-[16/10] bg-slate-900/60 border border-slate-700/50 flex items-center justify-center my-2 cursor-pointer" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
+          <div class="grammar-cover-box relative group/cover rounded-xl overflow-hidden aspect-[16/10] bg-slate-900/60 border border-slate-700/50 flex items-center justify-center my-2 cursor-pointer shrink-0" onclick="window.openGrammarDeckPracticeById('${escapeHtml(deckId)}')">
             ${cover
               ? `<img src="${escapeHtml(cover)}" alt="Cover for ${escapeHtml(name)}" class="w-full h-full object-cover transition duration-300 group-hover/cover:scale-105" loading="lazy">`
               : `<div class="text-slate-500 text-xs font-semibold flex items-center gap-1.5"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg> No cover image</div>`
