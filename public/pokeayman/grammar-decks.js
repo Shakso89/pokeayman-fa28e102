@@ -379,7 +379,7 @@
         <div class="vocab-list-card canva-card grammar-deck-card p-4 sm:p-5 flex flex-col justify-between" data-grammar-deck-id="${escapeHtml(deckId)}">
           <!-- 1. Header: Title on Left; Ghost Icons on Right -->
           <div class="grammar-card-header flex items-center justify-between gap-3 mb-2">
-            <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex-1 min-w-0" title="${escapeHtml(name)}">
+            <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex-1 min-w-0" title="${escapeHtml(name)}" style="white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important;display:block !important;">
               ${escapeHtml(name)}
             </h4>
 
@@ -578,7 +578,7 @@
         <div class="vocab-list-card canva-card grammar-deck-card p-4 sm:p-5 flex flex-col justify-between" data-grammar-deck-id="${escapeHtml(deckId)}">
           <!-- 1. Header: Title on Left; Ghost Icons on Right -->
           <div class="grammar-card-header flex items-center justify-between gap-3 mb-2">
-            <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex-1 min-w-0" title="${escapeHtml(name)}">
+            <h4 class="vocab-list-name text-sm sm:text-base font-bold text-white truncate flex-1 min-w-0" title="${escapeHtml(name)}" style="white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important;display:block !important;">
               ${escapeHtml(name)}
             </h4>
 

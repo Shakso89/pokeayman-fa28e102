@@ -1477,6 +1477,7 @@ html body:is(#pk-ds, body, html) :is(
   display: none !important;
 }
 
+html body:is(body, #pk-refresh):is(body, #pk-refresh):is(body, #pk-refresh) :is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id], .grammar-deck-card) :is(.vocab-list-name, h4),
 :is(#teacher-grammar-decks-grid, #grammar-decks-container, [data-grammar-deck-id], .grammar-deck-card) :is(.vocab-list-name, h4) {
   white-space: nowrap !important;
   overflow: hidden !important;

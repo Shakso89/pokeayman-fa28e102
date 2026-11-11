@@ -112,6 +112,9 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(css).toContain('#teacher-grammar-mode-school');
     expect(css).toContain('.grammar-card-header');
     expect(css).toContain('.grammar-deck-card');
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+    expect(js).toContain('white-space:nowrap !important');
+    expect(js).toContain('text-overflow:ellipsis !important');
   });
 
   it('ensures teacher-shell.js sidebar includes Grammar in Classroom and Grammar Bank in Teacher Zone', () => {
