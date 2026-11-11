@@ -1030,11 +1030,11 @@ export const DotsAndBoxesGame: React.FC<DotsAndBoxesGameProps> = ({
                     }`}
                   >
                     {isClaimed && (
-                      <div className="flex flex-col items-center justify-center gap-0.5">
+                      <div className="flex flex-col items-center justify-center gap-0.5 w-full h-full p-1">
                         <img
                           src={roster[boxOwner].avatar_url || '/default-pokemon.png'}
                           alt={roster[boxOwner].name}
-                          className="w-7 h-7 sm:w-9 sm:h-9 object-contain drop-shadow"
+                          className="w-4/5 h-4/5 max-w-[130px] max-h-[130px] min-w-[2.5rem] min-h-[2.5rem] object-contain drop-shadow"
                         />
                         <span
                           className={`text-[9px] font-black uppercase tracking-wider ${
