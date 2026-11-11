@@ -6111,6 +6111,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     let cwBotTimer = null;
     const clearCrosswordBot = () => {
       if (cwBotTimer) {
+        if (typeof window.clearWaitForGameWordAloud === 'function') {
+          window.clearWaitForGameWordAloud(cwBotTimer);
+        }
         clearTimeout(cwBotTimer);
         cwBotTimer = null;
       }
@@ -6122,7 +6125,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       if (!curPlayer?.isBot) return;
 
       const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
-      cwBotTimer = setTimeout(() => {
+      const thinkDelay = diff === 'hard' ? 800 : (diff === 'medium' ? 1100 : 1400);
+      const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
+      cwBotTimer = scheduleFn(() => {
         cwBotTimer = null;
         if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || checkLocked) return;
 
@@ -6150,7 +6155,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           if (!document.body.contains(modal)) return;
           solveActiveWord();
         }, 600);
-      }, 1100);
+      }, thinkDelay);
     };
 
     const solveActiveWord = () => {
@@ -6992,6 +6997,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     let botTurnTimer = null;
     const clearBotTurn = () => {
       if (botTurnTimer) {
+        if (typeof window.clearWaitForGameWordAloud === 'function') {
+          window.clearWaitForGameWordAloud(botTurnTimer);
+        }
         clearTimeout(botTurnTimer);
         botTurnTimer = null;
       }
@@ -7006,11 +7014,15 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
       const isHard = diff === 'hard';
       const isNormal = diff === 'normal' || diff === 'medium';
+      const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
 
       if (phase === 'MCQ') {
-        botTurnTimer = setTimeout(() => {
+        const thinkDelay = isHard ? 650 : (isNormal ? 900 : 1200);
+        botTurnTimer = scheduleFn(() => {
           botTurnTimer = null;
           if (phase !== 'MCQ' || !document.body.contains(modal)) return;
+          const curNow = activeGamePlayers[activeGamePlayerIndex];
+          if (!curNow?.isBot) return;
           const buttons = Array.from(modal.querySelectorAll('.dots-choice-btn:not([disabled])'));
           if (!buttons.length || !currentQuestion) return;
 
@@ -7022,11 +7034,14 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           const pickCorrect = Math.random() < acc && correctBtn;
           const chosen = (pickCorrect ? correctBtn : (wrongBtns[0] || correctBtn));
           chosen?.click();
-        }, 900);
+        }, thinkDelay);
       } else if (phase === 'DRAW_LINE') {
-        botTurnTimer = setTimeout(() => {
+        const thinkDelay = isHard ? 500 : (isNormal ? 750 : 1000);
+        botTurnTimer = scheduleFn(() => {
           botTurnTimer = null;
           if (phase !== 'DRAW_LINE' || !document.body.contains(modal)) return;
+          const curNow = activeGamePlayers[activeGamePlayerIndex];
+          if (!curNow?.isBot) return;
 
           const availableH = [];
           for (let r = 0; r < N; r++) {
@@ -7756,6 +7771,102 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   window.GAMES = GAMES;
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+  let _gameWordReading = false;
+  let _gameWordReadingUntil = 0;
+  let _gameWordQueue = [];
+  const _gameWordActiveHandles = new Map();
+
+  function notifyGameWordDone() {
+    _gameWordReading = false;
+    _gameWordReadingUntil = 0;
+    if (_gameWordQueue.length > 0) {
+      const queue = _gameWordQueue.slice();
+      _gameWordQueue = [];
+      queue.forEach(item => {
+        try {
+          if (item && typeof item.trigger === 'function') {
+            item.trigger();
+          } else if (typeof item === 'function') {
+            item();
+          }
+        } catch (e) {
+          console.warn('waitForGameWordAloud trigger error:', e);
+        }
+      });
+    }
+  }
+
+  window.isGameWordReadingAloud = function () {
+    if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) {
+      return false;
+    }
+    const isSynthSpeaking = typeof window.speechSynthesis !== 'undefined' && Boolean(window.speechSynthesis?.speaking);
+    const isReadingFlag = Boolean(_gameWordReading || window._vocabularyReading);
+    const isWithinEstimate = Boolean(_gameWordReadingUntil && Date.now() < _gameWordReadingUntil);
+    return isSynthSpeaking || isReadingFlag || isWithinEstimate;
+  };
+
+  window.waitForGameWordAloud = function (callback, extraDelayMs = 600) {
+    if (typeof callback !== 'function') return null;
+
+    if (!window.isGameWordReadingAloud()) {
+      return setTimeout(callback, extraDelayMs);
+    }
+
+    let cancelled = false;
+    let safetyTimer = null;
+    let delayTimer = null;
+
+    const handle = {
+      cancel: () => {
+        cancelled = true;
+        if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+        if (delayTimer) { clearTimeout(delayTimer); delayTimer = null; }
+        _gameWordQueue = _gameWordQueue.filter(item => item !== queueItem);
+      }
+    };
+
+    const queueItem = {
+      handle,
+      trigger: () => {
+        if (cancelled) return;
+        if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+        delayTimer = setTimeout(() => {
+          if (cancelled) return;
+          try { callback(); } catch (e) { console.warn('waitForGameWordAloud callback error:', e); }
+        }, Math.max(50, extraDelayMs));
+      }
+    };
+
+    const waitRemaining = Math.max(0, _gameWordReadingUntil - Date.now());
+    const safetyTimeout = Math.min(Math.max(waitRemaining + extraDelayMs + 900, 2000), 6500);
+
+    safetyTimer = setTimeout(() => {
+      if (cancelled) return;
+      _gameWordQueue = _gameWordQueue.filter(item => item !== queueItem);
+      queueItem.trigger();
+    }, safetyTimeout);
+
+    _gameWordQueue.push(queueItem);
+    _gameWordActiveHandles.set(safetyTimer, handle);
+
+    return safetyTimer;
+  };
+
+  window.clearWaitForGameWordAloud = function (timerOrHandle) {
+    if (!timerOrHandle) return;
+    if (typeof timerOrHandle === 'object' && typeof timerOrHandle.cancel === 'function') {
+      timerOrHandle.cancel();
+      return;
+    }
+    const handle = _gameWordActiveHandles.get(timerOrHandle);
+    if (handle) {
+      handle.cancel();
+      _gameWordActiveHandles.delete(timerOrHandle);
+    }
+    clearTimeout(timerOrHandle);
+  };
+
   window.readGameWordAloud = function (word, delayMs = 0) {
     const clean = String(word || '')
       .trim()
@@ -7766,11 +7877,35 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (!clean) return;
     if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
 
+    const wordCount = clean.split(/\s+/).filter(Boolean).length;
+    const estDuration = Math.max(1400, wordCount * 550, clean.length * 85);
+    _gameWordReading = true;
+    _gameWordReadingUntil = Math.max(_gameWordReadingUntil, Date.now() + (delayMs || 0) + estDuration);
+
+    let safetyTimer = setTimeout(() => {
+      if (Date.now() >= _gameWordReadingUntil) {
+        notifyGameWordDone();
+      }
+    }, (delayMs || 0) + estDuration + 500);
+
+    const onDone = () => {
+      clearTimeout(safetyTimer);
+      const remaining = _gameWordReadingUntil - Date.now();
+      if (remaining > 50) {
+        setTimeout(notifyGameWordDone, remaining);
+      } else {
+        notifyGameWordDone();
+      }
+    };
+
     const speak = () => {
-      if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+      if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) {
+        notifyGameWordDone();
+        return;
+      }
       if (typeof window.readNaturalVocabulary === 'function') {
         try {
-          window.readNaturalVocabulary(clean);
+          window.readNaturalVocabulary(clean, null, { onEnd: onDone });
           return;
         } catch (e) {
           console.warn('readNaturalVocabulary error:', e);
@@ -7781,9 +7916,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           window.speechSynthesis.cancel();
           const u = new SpeechSynthesisUtterance(clean);
           u.rate = 0.92;
+          u.onend = onDone;
+          u.onerror = onDone;
           window.speechSynthesis.speak(u);
+          return;
         } catch (e) {}
       }
+      onDone();
     };
 
     if (delayMs > 0) {
@@ -12755,6 +12894,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     let baamBotTimer = null;
     const clearBaamBot = () => {
       if (baamBotTimer) {
+        if (typeof window.clearWaitForGameWordAloud === 'function') {
+          window.clearWaitForGameWordAloud(baamBotTimer);
+        }
         clearTimeout(baamBotTimer);
         baamBotTimer = null;
       }
@@ -12768,6 +12910,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
       const revealPanel = baamQ('#baam-reveal');
       const isQuestionOpen = revealPanel && !revealPanel.classList.contains('hidden');
+      const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
 
       if (isQuestionOpen) {
         const continueBtn = revealPanel.querySelector('.baam-power-continue-btn');
@@ -12784,7 +12927,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
         const choiceBtns = Array.from(revealPanel.querySelectorAll('.baam-choice-btn:not([disabled])'));
         if (!choiceBtns.length) return;
-        baamBotTimer = setTimeout(() => {
+        const thinkDelay = diff === 'hard' ? 700 : ((diff === 'normal' || diff === 'medium') ? 1000 : 1300);
+        baamBotTimer = scheduleFn(() => {
           baamBotTimer = null;
           if (revealPanel.classList.contains('hidden')) return;
           const targetWord = String(selectedCard?.vocab_word || '').trim().toLowerCase();
@@ -12795,9 +12939,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           const pickCorrect = Math.random() < acc && correctBtn;
           const chosen = (pickCorrect ? correctBtn : (wrongBtns[0] || correctBtn));
           chosen?.click();
-        }, 1300);
+        }, thinkDelay);
       } else {
-        baamBotTimer = setTimeout(() => {
+        const thinkDelay = diff === 'hard' ? 700 : ((diff === 'normal' || diff === 'medium') ? 1000 : 1300);
+        baamBotTimer = scheduleFn(() => {
           baamBotTimer = null;
           if (!document.body.contains(modal)) return;
           if (baamPlayers[activeGamePlayerIndex] !== curPlayer) return;
@@ -12805,7 +12950,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           if (!unrevealedTiles.length) return;
           const randomTile = unrevealedTiles[Math.floor(Math.random() * unrevealedTiles.length)];
           randomTile?.click();
-        }, 1200);
+        }, thinkDelay);
       }
     };
     const reveal = () => {
@@ -13291,6 +13436,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     let hangmanBotTimer = null;
     const clearHangmanBot = () => {
       if (hangmanBotTimer) {
+        if (typeof window.clearWaitForGameWordAloud === 'function') {
+          window.clearWaitForGameWordAloud(hangmanBotTimer);
+        }
         clearTimeout(hangmanBotTimer);
         hangmanBotTimer = null;
       }
@@ -13302,7 +13450,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       if (!curPlayer?.isBot) return;
 
       const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
-      hangmanBotTimer = setTimeout(() => {
+      const thinkDelay = diff === 'hard' ? 700 : (diff === 'medium' ? 1000 : 1300);
+      const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
+      hangmanBotTimer = scheduleFn(() => {
         hangmanBotTimer = null;
         if (gameEnded || !document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
         const availableBtns = Array.from(modal.querySelectorAll('.hangman-letter:not([disabled])'));
@@ -13322,7 +13472,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           chosenBtn = availableBtns[0];
         }
         chosenBtn?.click();
-      }, 1000);
+      }, thinkDelay);
     };
 
     function render() {
@@ -13661,6 +13811,9 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   let findMeBotTimer = null;
   const clearFindMeBot = () => {
     if (findMeBotTimer) {
+      if (typeof window.clearWaitForGameWordAloud === 'function') {
+        window.clearWaitForGameWordAloud(findMeBotTimer);
+      }
       clearTimeout(findMeBotTimer);
       findMeBotTimer = null;
     }
@@ -13672,7 +13825,9 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
     if (!curPlayer?.isBot) return;
 
     const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
-    findMeBotTimer = setTimeout(() => {
+    const thinkDelay = diff === 'hard' ? 700 : (diff === 'medium' ? 1000 : 1300);
+    const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
+    findMeBotTimer = scheduleFn(() => {
       findMeBotTimer = null;
       if (locked || !document.body.contains(modal)) return;
       if (activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
@@ -13687,7 +13842,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
       const pickCorrect = Math.random() < acc && correctBtn;
       const chosen = (pickCorrect ? correctBtn : (wrongBtns[Math.floor(Math.random() * wrongBtns.length)] || correctBtn));
       chosen?.click();
-    }, 1100);
+    }, thinkDelay);
   };
   function renderRound() { locked = false; const setting = findMeDifficulties[findMeDifficulty]; const roundWords = words.slice().sort(() => Math.random() - 0.5); const target = (findMeTarget = currentRole === 'student' ? words[getFindMePlayerScore()] : roundWords[0]); const choices = getFindMeRoundItems(target, setting.itemCount); modal.querySelector('#find-me-picture').src = target.vocab_image; modal.querySelector('#find-me-picture').alt = `Picture clue for ${target.vocab_word}`; updateFindMeProgress(); feedback.textContent = ''; box.innerHTML = choices.map(w=>`<button type="button" class="find-me-word absolute px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold text-orange-700 shadow-md transition hover:bg-orange-100" data-word="${w.vocab_word}">${w.vocab_word}</button>`).join(''); updateFindMeWordSize(); cancelAnimationFrame(findMeAnimationId); findMeAnimationId = requestAnimationFrame(moveFindMeWords); checkFindMeBotTurn(); box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
       if(locked) return;
@@ -14001,6 +14156,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   let matchBotTimer = null;
   const clearMatchBot = () => {
     if (matchBotTimer) {
+      if (typeof window.clearWaitForGameWordAloud === 'function') {
+        window.clearWaitForGameWordAloud(matchBotTimer);
+      }
       clearTimeout(matchBotTimer);
       matchBotTimer = null;
     }
@@ -14012,7 +14170,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
     if (!curPlayer?.isBot) return;
 
     const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
-    matchBotTimer = setTimeout(() => {
+    const thinkDelay = diff === 'hard' ? 700 : (diff === 'medium' ? 1000 : 1300);
+    const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
+    matchBotTimer = scheduleFn(() => {
       matchBotTimer = null;
       if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || isEvaluating) return;
 
@@ -14035,7 +14195,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
       if (chosen) {
         handleDropOnTarget(targetIdx, { type: 'bank', wordId: chosen.wordId, vocab_word: chosen.vocab_word });
       }
-    }, 1100);
+    }, thinkDelay);
   };
 
   function renderBoard() {
@@ -14645,6 +14805,9 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   let memoryBotTimer = null;
   const clearMemoryBot = () => {
     if (memoryBotTimer) {
+      if (typeof window.clearWaitForGameWordAloud === 'function') {
+        window.clearWaitForGameWordAloud(memoryBotTimer);
+      }
       clearTimeout(memoryBotTimer);
       memoryBotTimer = null;
     }
@@ -14657,8 +14820,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     if (!curPlayer?.isBot) return;
 
     const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
+    const thinkDelay = diff === 'hard' ? 650 : ((diff === 'normal' || diff === 'medium') ? 900 : 1200);
+    const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
 
-    memoryBotTimer = setTimeout(() => {
+    memoryBotTimer = scheduleFn(() => {
       memoryBotTimer = null;
       if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
       if (mismatchLocked || flipped.length >= 2) return;
@@ -15769,6 +15934,9 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
   let scrambleBotTimer = null;
   const clearScrambleBot = () => {
     if (scrambleBotTimer) {
+      if (typeof window.clearWaitForGameWordAloud === 'function') {
+        window.clearWaitForGameWordAloud(scrambleBotTimer);
+      }
       clearTimeout(scrambleBotTimer);
       scrambleBotTimer = null;
     }
@@ -15781,7 +15949,9 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
 
     const activeDifficulty = difficulty || scrambleSession?.difficulty || 'easy';
     const diff = curPlayer.botDifficulty || (activeDifficulty === 'hard' ? 'hard' : (activeDifficulty === 'easy' ? 'easy' : (window.selectedBotDifficulty || 'normal')));
-    scrambleBotTimer = setTimeout(() => {
+    const thinkDelay = diff === 'hard' ? 700 : (diff === 'normal' || diff === 'medium' ? 1000 : 1300);
+    const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
+    scrambleBotTimer = scheduleFn(() => {
       scrambleBotTimer = null;
       if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || submissionGuard) return;
 
@@ -25263,6 +25433,7 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
     || (window.getClassReadingLevel?.(currentRole === 'student' ? currentStudentSchool : navSchool, currentRole === 'student' ? currentStudentClass : navClass) || 'P4');
   const level = typeof toReadingLevelCode === 'function' ? toReadingLevelCode(rawLevel) : (/^P[1-6]$/.test(rawLevel) ? rawLevel : 'P4');
 
+  let handledAsyncSpeech = false;
   try {
     const speaker = window.pokeaymanSpeak || window.parent?.pokeaymanSpeak;
     if (typeof speaker === 'function') {
@@ -25275,11 +25446,12 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
       return;
     }
     if (window.speechSynthesis) {
+      handledAsyncSpeech = true;
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(clean);
       const rates = { Beginner: 0.92, Good: 1.0, Confident: 1.08, P1: 0.82, P2: 0.85, P3: 0.9, P4: 0.88, P5: 1.0, P6: 1.08 };
       utterance.rate = rates[rawLevel] || rates[level] || 0.92;
-      utterance.onend = () => {
+      const finishSpeech = () => {
         window._vocabularyReading = false;
         if (button) {
           if (originalHtml) button.innerHTML = originalHtml;
@@ -25288,36 +25460,126 @@ window.readNaturalVocabulary = async (text, button, options = {}) => {
           button.removeAttribute('aria-busy');
           button.classList.remove('is-speaking');
         }
+        window._currentReadingButton = null;
         if (typeof options?.onEnd === 'function') { try { options.onEnd(); } catch {} }
       };
-      utterance.onerror = () => {
-        window._vocabularyReading = false;
-        if (button) {
-          if (originalHtml) button.innerHTML = originalHtml;
-          else button.textContent = original;
-          button.disabled = false;
-          button.removeAttribute('aria-busy');
-          button.classList.remove('is-speaking');
-        }
-        if (typeof options?.onEnd === 'function') { try { options.onEnd(); } catch {} }
-      };
+      utterance.onend = finishSpeech;
+      utterance.onerror = finishSpeech;
       window.speechSynthesis.speak(utterance);
       return;
     } else {
       if (typeof toast === 'function') toast(error?.message || 'The reading voice is unavailable right now.');
     }
   } finally {
-    window._vocabularyReading = false;
-    if (button) {
-      if (originalHtml) button.innerHTML = originalHtml;
-      else button.textContent = original;
-      button.disabled = false;
-      button.removeAttribute('aria-busy');
-      button.classList.remove('is-speaking');
+    if (!handledAsyncSpeech) {
+      window._vocabularyReading = false;
+      if (button) {
+        if (originalHtml) button.innerHTML = originalHtml;
+        else button.textContent = original;
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        button.classList.remove('is-speaking');
+      }
+      window._currentReadingButton = null;
+      if (typeof options?.onEnd === 'function') { try { options.onEnd(); } catch {} }
     }
-    window._currentReadingButton = null;
-    if (typeof options?.onEnd === 'function') { try { options.onEnd(); } catch {} }
   }
+};
+
+let _globalGameWordReading = false;
+let _globalGameWordReadingUntil = 0;
+let _globalGameWordQueue = [];
+const _globalGameWordActiveHandles = new Map();
+
+function notifyGlobalGameWordDone() {
+  _globalGameWordReading = false;
+  _globalGameWordReadingUntil = 0;
+  if (_globalGameWordQueue.length > 0) {
+    const queue = _globalGameWordQueue.slice();
+    _globalGameWordQueue = [];
+    queue.forEach(item => {
+      try {
+        if (item && typeof item.trigger === 'function') {
+          item.trigger();
+        } else if (typeof item === 'function') {
+          item();
+        }
+      } catch (e) {
+        console.warn('waitForGameWordAloud trigger error:', e);
+      }
+    });
+  }
+}
+
+window.isGameWordReadingAloud = function () {
+  if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) {
+    return false;
+  }
+  const isSynthSpeaking = typeof window.speechSynthesis !== 'undefined' && Boolean(window.speechSynthesis?.speaking);
+  const isReadingFlag = Boolean(_globalGameWordReading || window._vocabularyReading);
+  const isWithinEstimate = Boolean(_globalGameWordReadingUntil && Date.now() < _globalGameWordReadingUntil);
+  return isSynthSpeaking || isReadingFlag || isWithinEstimate;
+};
+
+window.waitForGameWordAloud = function (callback, extraDelayMs = 600) {
+  if (typeof callback !== 'function') return null;
+
+  if (!window.isGameWordReadingAloud()) {
+    return setTimeout(callback, extraDelayMs);
+  }
+
+  let cancelled = false;
+  let safetyTimer = null;
+  let delayTimer = null;
+
+  const handle = {
+    cancel: () => {
+      cancelled = true;
+      if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+      if (delayTimer) { clearTimeout(delayTimer); delayTimer = null; }
+      _globalGameWordQueue = _globalGameWordQueue.filter(item => item !== queueItem);
+    }
+  };
+
+  const queueItem = {
+    handle,
+    trigger: () => {
+      if (cancelled) return;
+      if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+      delayTimer = setTimeout(() => {
+        if (cancelled) return;
+        try { callback(); } catch (e) { console.warn('waitForGameWordAloud callback error:', e); }
+      }, Math.max(50, extraDelayMs));
+    }
+  };
+
+  const waitRemaining = Math.max(0, _globalGameWordReadingUntil - Date.now());
+  const safetyTimeout = Math.min(Math.max(waitRemaining + extraDelayMs + 900, 2000), 6500);
+
+  safetyTimer = setTimeout(() => {
+    if (cancelled) return;
+    _globalGameWordQueue = _globalGameWordQueue.filter(item => item !== queueItem);
+    queueItem.trigger();
+  }, safetyTimeout);
+
+  _globalGameWordQueue.push(queueItem);
+  _globalGameWordActiveHandles.set(safetyTimer, handle);
+
+  return safetyTimer;
+};
+
+window.clearWaitForGameWordAloud = function (timerOrHandle) {
+  if (!timerOrHandle) return;
+  if (typeof timerOrHandle === 'object' && typeof timerOrHandle.cancel === 'function') {
+    timerOrHandle.cancel();
+    return;
+  }
+  const handle = _globalGameWordActiveHandles.get(timerOrHandle);
+  if (handle) {
+    handle.cancel();
+    _globalGameWordActiveHandles.delete(timerOrHandle);
+  }
+  clearTimeout(timerOrHandle);
 };
 
 window.readGameWordAloud = function (word, delayMs = 0) {
@@ -25330,11 +25592,35 @@ window.readGameWordAloud = function (word, delayMs = 0) {
   if (!clean) return;
   if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
 
+  const wordCount = clean.split(/\s+/).filter(Boolean).length;
+  const estDuration = Math.max(1400, wordCount * 550, clean.length * 85);
+  _globalGameWordReading = true;
+  _globalGameWordReadingUntil = Math.max(_globalGameWordReadingUntil, Date.now() + (delayMs || 0) + estDuration);
+
+  let safetyTimer = setTimeout(() => {
+    if (Date.now() >= _globalGameWordReadingUntil) {
+      notifyGlobalGameWordDone();
+    }
+  }, (delayMs || 0) + estDuration + 500);
+
+  const onDone = () => {
+    clearTimeout(safetyTimer);
+    const remaining = _globalGameWordReadingUntil - Date.now();
+    if (remaining > 50) {
+      setTimeout(notifyGlobalGameWordDone, remaining);
+    } else {
+      notifyGlobalGameWordDone();
+    }
+  };
+
   const speak = () => {
-    if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+    if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) {
+      notifyGlobalGameWordDone();
+      return;
+    }
     if (typeof window.readNaturalVocabulary === 'function') {
       try {
-        window.readNaturalVocabulary(clean);
+        window.readNaturalVocabulary(clean, null, { onEnd: onDone });
         return;
       } catch (e) {
         console.warn('readNaturalVocabulary error:', e);
@@ -25345,9 +25631,13 @@ window.readGameWordAloud = function (word, delayMs = 0) {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(clean);
         u.rate = 0.92;
+        u.onend = onDone;
+        u.onerror = onDone;
         window.speechSynthesis.speak(u);
+        return;
       } catch (e) {}
     }
+    onDone();
   };
 
   if (delayMs > 0) {

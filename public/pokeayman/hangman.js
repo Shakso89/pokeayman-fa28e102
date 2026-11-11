@@ -242,6 +242,9 @@
     let hangmanBotTimer = null;
     const clearHangmanBot = () => {
       if (hangmanBotTimer) {
+        if (typeof window.clearWaitForGameWordAloud === 'function') {
+          window.clearWaitForGameWordAloud(hangmanBotTimer);
+        }
         clearTimeout(hangmanBotTimer);
         hangmanBotTimer = null;
       }
@@ -253,7 +256,9 @@
       if (!curPlayer?.isBot) return;
 
       const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
-      hangmanBotTimer = setTimeout(() => {
+      const thinkDelay = diff === 'hard' ? 700 : (diff === 'medium' ? 1000 : 1300);
+      const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
+      hangmanBotTimer = scheduleFn(() => {
         hangmanBotTimer = null;
         if (gameEnded || !document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
         const availableBtns = Array.from(modal.querySelectorAll('.hangman-letter:not([disabled])'));
@@ -273,7 +278,7 @@
           chosenBtn = availableBtns[0];
         }
         chosenBtn?.click();
-      }, 1000);
+      }, thinkDelay);
     };
 
     function render() {

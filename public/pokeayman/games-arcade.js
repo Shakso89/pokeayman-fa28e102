@@ -15,6 +15,102 @@
   window.GAMES = GAMES;
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
+  let _gameWordReading = false;
+  let _gameWordReadingUntil = 0;
+  let _gameWordQueue = [];
+  const _gameWordActiveHandles = new Map();
+
+  function notifyGameWordDone() {
+    _gameWordReading = false;
+    _gameWordReadingUntil = 0;
+    if (_gameWordQueue.length > 0) {
+      const queue = _gameWordQueue.slice();
+      _gameWordQueue = [];
+      queue.forEach(item => {
+        try {
+          if (item && typeof item.trigger === 'function') {
+            item.trigger();
+          } else if (typeof item === 'function') {
+            item();
+          }
+        } catch (e) {
+          console.warn('waitForGameWordAloud trigger error:', e);
+        }
+      });
+    }
+  }
+
+  window.isGameWordReadingAloud = function () {
+    if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) {
+      return false;
+    }
+    const isSynthSpeaking = typeof window.speechSynthesis !== 'undefined' && Boolean(window.speechSynthesis?.speaking);
+    const isReadingFlag = Boolean(_gameWordReading || window._vocabularyReading);
+    const isWithinEstimate = Boolean(_gameWordReadingUntil && Date.now() < _gameWordReadingUntil);
+    return isSynthSpeaking || isReadingFlag || isWithinEstimate;
+  };
+
+  window.waitForGameWordAloud = function (callback, extraDelayMs = 600) {
+    if (typeof callback !== 'function') return null;
+
+    if (!window.isGameWordReadingAloud()) {
+      return setTimeout(callback, extraDelayMs);
+    }
+
+    let cancelled = false;
+    let safetyTimer = null;
+    let delayTimer = null;
+
+    const handle = {
+      cancel: () => {
+        cancelled = true;
+        if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+        if (delayTimer) { clearTimeout(delayTimer); delayTimer = null; }
+        _gameWordQueue = _gameWordQueue.filter(item => item !== queueItem);
+      }
+    };
+
+    const queueItem = {
+      handle,
+      trigger: () => {
+        if (cancelled) return;
+        if (safetyTimer) { clearTimeout(safetyTimer); safetyTimer = null; }
+        delayTimer = setTimeout(() => {
+          if (cancelled) return;
+          try { callback(); } catch (e) { console.warn('waitForGameWordAloud callback error:', e); }
+        }, Math.max(50, extraDelayMs));
+      }
+    };
+
+    const waitRemaining = Math.max(0, _gameWordReadingUntil - Date.now());
+    const safetyTimeout = Math.min(Math.max(waitRemaining + extraDelayMs + 900, 2000), 6500);
+
+    safetyTimer = setTimeout(() => {
+      if (cancelled) return;
+      _gameWordQueue = _gameWordQueue.filter(item => item !== queueItem);
+      queueItem.trigger();
+    }, safetyTimeout);
+
+    _gameWordQueue.push(queueItem);
+    _gameWordActiveHandles.set(safetyTimer, handle);
+
+    return safetyTimer;
+  };
+
+  window.clearWaitForGameWordAloud = function (timerOrHandle) {
+    if (!timerOrHandle) return;
+    if (typeof timerOrHandle === 'object' && typeof timerOrHandle.cancel === 'function') {
+      timerOrHandle.cancel();
+      return;
+    }
+    const handle = _gameWordActiveHandles.get(timerOrHandle);
+    if (handle) {
+      handle.cancel();
+      _gameWordActiveHandles.delete(timerOrHandle);
+    }
+    clearTimeout(timerOrHandle);
+  };
+
   window.readGameWordAloud = function (word, delayMs = 0) {
     const clean = String(word || '')
       .trim()
@@ -25,11 +121,35 @@
     if (!clean) return;
     if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
 
+    const wordCount = clean.split(/\s+/).filter(Boolean).length;
+    const estDuration = Math.max(1400, wordCount * 550, clean.length * 85);
+    _gameWordReading = true;
+    _gameWordReadingUntil = Math.max(_gameWordReadingUntil, Date.now() + (delayMs || 0) + estDuration);
+
+    let safetyTimer = setTimeout(() => {
+      if (Date.now() >= _gameWordReadingUntil) {
+        notifyGameWordDone();
+      }
+    }, (delayMs || 0) + estDuration + 500);
+
+    const onDone = () => {
+      clearTimeout(safetyTimer);
+      const remaining = _gameWordReadingUntil - Date.now();
+      if (remaining > 50) {
+        setTimeout(notifyGameWordDone, remaining);
+      } else {
+        notifyGameWordDone();
+      }
+    };
+
     const speak = () => {
-      if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+      if (typeof window.pokeSfx?.isMuted === 'function' && window.pokeSfx.isMuted()) {
+        notifyGameWordDone();
+        return;
+      }
       if (typeof window.readNaturalVocabulary === 'function') {
         try {
-          window.readNaturalVocabulary(clean);
+          window.readNaturalVocabulary(clean, null, { onEnd: onDone });
           return;
         } catch (e) {
           console.warn('readNaturalVocabulary error:', e);
@@ -40,9 +160,13 @@
           window.speechSynthesis.cancel();
           const u = new SpeechSynthesisUtterance(clean);
           u.rate = 0.92;
+          u.onend = onDone;
+          u.onerror = onDone;
           window.speechSynthesis.speak(u);
+          return;
         } catch (e) {}
       }
+      onDone();
     };
 
     if (delayMs > 0) {

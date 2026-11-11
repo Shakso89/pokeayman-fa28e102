@@ -287,6 +287,9 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
   let scrambleBotTimer = null;
   const clearScrambleBot = () => {
     if (scrambleBotTimer) {
+      if (typeof window.clearWaitForGameWordAloud === 'function') {
+        window.clearWaitForGameWordAloud(scrambleBotTimer);
+      }
       clearTimeout(scrambleBotTimer);
       scrambleBotTimer = null;
     }
@@ -299,7 +302,9 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
 
     const activeDifficulty = difficulty || scrambleSession?.difficulty || 'easy';
     const diff = curPlayer.botDifficulty || (activeDifficulty === 'hard' ? 'hard' : (activeDifficulty === 'easy' ? 'easy' : (window.selectedBotDifficulty || 'normal')));
-    scrambleBotTimer = setTimeout(() => {
+    const thinkDelay = diff === 'hard' ? 700 : (diff === 'normal' || diff === 'medium' ? 1000 : 1300);
+    const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
+    scrambleBotTimer = scheduleFn(() => {
       scrambleBotTimer = null;
       if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || submissionGuard) return;
 

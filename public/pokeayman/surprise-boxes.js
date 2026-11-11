@@ -405,6 +405,9 @@
     let baamBotTimer = null;
     const clearBaamBot = () => {
       if (baamBotTimer) {
+        if (typeof window.clearWaitForGameWordAloud === 'function') {
+          window.clearWaitForGameWordAloud(baamBotTimer);
+        }
         clearTimeout(baamBotTimer);
         baamBotTimer = null;
       }
@@ -418,6 +421,7 @@
       const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
       const revealPanel = baamQ('#baam-reveal');
       const isQuestionOpen = revealPanel && !revealPanel.classList.contains('hidden');
+      const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
 
       if (isQuestionOpen) {
         const continueBtn = revealPanel.querySelector('.baam-power-continue-btn');
@@ -434,7 +438,8 @@
 
         const choiceBtns = Array.from(revealPanel.querySelectorAll('.baam-choice-btn:not([disabled])'));
         if (!choiceBtns.length) return;
-        baamBotTimer = setTimeout(() => {
+        const thinkDelay = diff === 'hard' ? 700 : ((diff === 'normal' || diff === 'medium') ? 1000 : 1300);
+        baamBotTimer = scheduleFn(() => {
           baamBotTimer = null;
           if (revealPanel.classList.contains('hidden')) return;
           const targetWord = String(selectedCard?.vocab_word || '').trim().toLowerCase();
@@ -445,9 +450,10 @@
           const pickCorrect = Math.random() < acc && correctBtn;
           const chosen = (pickCorrect ? correctBtn : (wrongBtns[0] || correctBtn));
           chosen?.click();
-        }, 1300);
+        }, thinkDelay);
       } else {
-        baamBotTimer = setTimeout(() => {
+        const thinkDelay = diff === 'hard' ? 700 : ((diff === 'normal' || diff === 'medium') ? 1000 : 1300);
+        baamBotTimer = scheduleFn(() => {
           baamBotTimer = null;
           if (!document.body.contains(modal)) return;
           if (baamPlayers[activeGamePlayerIndex] !== curPlayer) return;
@@ -455,7 +461,7 @@
           if (!unrevealedTiles.length) return;
           const randomTile = unrevealedTiles[Math.floor(Math.random() * unrevealedTiles.length)];
           randomTile?.click();
-        }, 1200);
+        }, thinkDelay);
       }
     };
     const reveal = () => {

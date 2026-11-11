@@ -589,6 +589,9 @@
     let botTurnTimer = null;
     const clearBotTurn = () => {
       if (botTurnTimer) {
+        if (typeof window.clearWaitForGameWordAloud === 'function') {
+          window.clearWaitForGameWordAloud(botTurnTimer);
+        }
         clearTimeout(botTurnTimer);
         botTurnTimer = null;
       }
@@ -603,11 +606,15 @@
       const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
       const isHard = diff === 'hard';
       const isNormal = diff === 'normal' || diff === 'medium';
+      const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
 
       if (phase === 'MCQ') {
-        botTurnTimer = setTimeout(() => {
+        const thinkDelay = isHard ? 650 : (isNormal ? 900 : 1200);
+        botTurnTimer = scheduleFn(() => {
           botTurnTimer = null;
           if (phase !== 'MCQ' || !document.body.contains(modal)) return;
+          const curNow = activeGamePlayers[activeGamePlayerIndex];
+          if (!curNow?.isBot) return;
           const buttons = Array.from(modal.querySelectorAll('.dots-choice-btn:not([disabled])'));
           if (!buttons.length || !currentQuestion) return;
 
@@ -619,11 +626,14 @@
           const pickCorrect = Math.random() < acc && correctBtn;
           const chosen = (pickCorrect ? correctBtn : (wrongBtns[0] || correctBtn));
           chosen?.click();
-        }, 900);
+        }, thinkDelay);
       } else if (phase === 'DRAW_LINE') {
-        botTurnTimer = setTimeout(() => {
+        const thinkDelay = isHard ? 500 : (isNormal ? 750 : 1000);
+        botTurnTimer = scheduleFn(() => {
           botTurnTimer = null;
           if (phase !== 'DRAW_LINE' || !document.body.contains(modal)) return;
+          const curNow = activeGamePlayers[activeGamePlayerIndex];
+          if (!curNow?.isBot) return;
 
           const availableH = [];
           for (let r = 0; r < N; r++) {

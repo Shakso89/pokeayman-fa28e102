@@ -372,6 +372,9 @@
     let cwBotTimer = null;
     const clearCrosswordBot = () => {
       if (cwBotTimer) {
+        if (typeof window.clearWaitForGameWordAloud === 'function') {
+          window.clearWaitForGameWordAloud(cwBotTimer);
+        }
         clearTimeout(cwBotTimer);
         cwBotTimer = null;
       }
@@ -383,7 +386,9 @@
       if (!curPlayer?.isBot) return;
 
       const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
-      cwBotTimer = setTimeout(() => {
+      const thinkDelay = diff === 'hard' ? 800 : (diff === 'medium' ? 1100 : 1400);
+      const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
+      cwBotTimer = scheduleFn(() => {
         cwBotTimer = null;
         if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || checkLocked) return;
 
@@ -411,7 +416,7 @@
           if (!document.body.contains(modal)) return;
           solveActiveWord();
         }, 600);
-      }, 1100);
+      }, thinkDelay);
     };
 
     const solveActiveWord = () => {

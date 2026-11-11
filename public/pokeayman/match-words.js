@@ -230,6 +230,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   let matchBotTimer = null;
   const clearMatchBot = () => {
     if (matchBotTimer) {
+      if (typeof window.clearWaitForGameWordAloud === 'function') {
+        window.clearWaitForGameWordAloud(matchBotTimer);
+      }
       clearTimeout(matchBotTimer);
       matchBotTimer = null;
     }
@@ -241,7 +244,9 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
     if (!curPlayer?.isBot) return;
 
     const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
-    matchBotTimer = setTimeout(() => {
+    const thinkDelay = diff === 'hard' ? 700 : (diff === 'medium' ? 1000 : 1300);
+    const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
+    matchBotTimer = scheduleFn(() => {
       matchBotTimer = null;
       if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer || isEvaluating) return;
 
@@ -264,7 +269,7 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
       if (chosen) {
         handleDropOnTarget(targetIdx, { type: 'bank', wordId: chosen.wordId, vocab_word: chosen.vocab_word });
       }
-    }, 1100);
+    }, thinkDelay);
   };
 
   function renderBoard() {

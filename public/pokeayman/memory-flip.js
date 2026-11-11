@@ -228,6 +228,9 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
   let memoryBotTimer = null;
   const clearMemoryBot = () => {
     if (memoryBotTimer) {
+      if (typeof window.clearWaitForGameWordAloud === 'function') {
+        window.clearWaitForGameWordAloud(memoryBotTimer);
+      }
       clearTimeout(memoryBotTimer);
       memoryBotTimer = null;
     }
@@ -240,8 +243,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     if (!curPlayer?.isBot) return;
 
     const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
+    const thinkDelay = diff === 'hard' ? 650 : ((diff === 'normal' || diff === 'medium') ? 900 : 1200);
+    const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
 
-    memoryBotTimer = setTimeout(() => {
+    memoryBotTimer = scheduleFn(() => {
       memoryBotTimer = null;
       if (!document.body.contains(modal) || activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
       if (mismatchLocked || flipped.length >= 2) return;

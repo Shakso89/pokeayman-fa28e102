@@ -125,6 +125,9 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   let findMeBotTimer = null;
   const clearFindMeBot = () => {
     if (findMeBotTimer) {
+      if (typeof window.clearWaitForGameWordAloud === 'function') {
+        window.clearWaitForGameWordAloud(findMeBotTimer);
+      }
       clearTimeout(findMeBotTimer);
       findMeBotTimer = null;
     }
@@ -136,7 +139,9 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
     if (!curPlayer?.isBot) return;
 
     const diff = curPlayer.botDifficulty || window.selectedBotDifficulty || 'medium';
-    findMeBotTimer = setTimeout(() => {
+    const thinkDelay = diff === 'hard' ? 700 : (diff === 'medium' ? 1000 : 1300);
+    const scheduleFn = typeof window.waitForGameWordAloud === 'function' ? window.waitForGameWordAloud : setTimeout;
+    findMeBotTimer = scheduleFn(() => {
       findMeBotTimer = null;
       if (locked || !document.body.contains(modal)) return;
       if (activeGamePlayers[activeGamePlayerIndex] !== curPlayer) return;
@@ -151,7 +156,7 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
       const pickCorrect = Math.random() < acc && correctBtn;
       const chosen = (pickCorrect ? correctBtn : (wrongBtns[Math.floor(Math.random() * wrongBtns.length)] || correctBtn));
       chosen?.click();
-    }, 1100);
+    }, thinkDelay);
   };
   function renderRound() { locked = false; const setting = findMeDifficulties[findMeDifficulty]; const roundWords = words.slice().sort(() => Math.random() - 0.5); const target = (findMeTarget = currentRole === 'student' ? words[getFindMePlayerScore()] : roundWords[0]); const choices = getFindMeRoundItems(target, setting.itemCount); modal.querySelector('#find-me-picture').src = target.vocab_image; modal.querySelector('#find-me-picture').alt = `Picture clue for ${target.vocab_word}`; updateFindMeProgress(); feedback.textContent = ''; box.innerHTML = choices.map(w=>`<button type="button" class="find-me-word absolute px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold text-orange-700 shadow-md transition hover:bg-orange-100" data-word="${w.vocab_word}">${w.vocab_word}</button>`).join(''); updateFindMeWordSize(); cancelAnimationFrame(findMeAnimationId); findMeAnimationId = requestAnimationFrame(moveFindMeWords); checkFindMeBotTurn(); box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
       if(locked) return;

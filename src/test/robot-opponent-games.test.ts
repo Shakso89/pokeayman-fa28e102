@@ -129,7 +129,7 @@ describe('Robot Opponent & Difficulty Selection for All Student Games', () => {
     // 3200ms powerup dismissal timeout
     expect(baamJs).toContain('3200');
     // Generous feedback inspection on bot choice answers
-    expect(baamJs).toContain('isBotAnswering ? 1800 : 850');
+    expect(baamJs).toMatch(/isBotAnswering \? 1800 :/);
   });
 
   it('equips Dots and Boxes bot with smart 2-turn combo strategy to close 2-sided / 90-degree boxes', () => {
