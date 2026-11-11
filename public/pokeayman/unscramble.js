@@ -63,7 +63,7 @@ function chooseScrambleWordCount(listName) {
     resetGameTurnState();
     activeGameRewardClaimed = false;
     try {
-      openGameScramble(listName, winningScore, timerSeconds);
+      openGameScramble(listName, winningScore, timerSeconds, 'easy');
     } catch (error) {
       scrambleSession = null;
       toast('Unable to start Unscramble. Please try again.');
@@ -80,8 +80,10 @@ function chooseScrambleWordCount(listName) {
 // Hangman setup moved to /pokeayman/hangman.js
 
 // Scramble Game
-function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
-  setGameReplay(() => { resetGameTurnState(); scrambleSession = null; openGameScramble(listName, wordCount, timerSeconds); });
+function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty = 'easy') {
+  const difficultyConfig = { easy: { showClue: true }, hard: { showClue: false } };
+  difficulty = difficultyConfig[difficulty] ? difficulty : (scrambleSession?.difficulty || 'easy');
+  setGameReplay(() => { resetGameTurnState(); scrambleSession = null; openGameScramble(listName, wordCount, timerSeconds, difficulty); });
   if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
     const student = (typeof currentStudent !== 'undefined' ? getAllStudents().find(s => s.student_name === currentStudent) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
     activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
@@ -94,10 +96,11 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
   // Always initialize the complete round state before loading the first word.
   // The previous two-step initialization left playerWords undefined on a fresh round.
   if (!scrambleSession || scrambleSession.listName !== listName || scrambleSession.winningScore !== wordCount) {
-    scrambleSession = { listName, winningScore: wordCount, playerWords: {}, playerScores: {}, remainingSeconds: 300, timerStarted: false, timerId: null };
+    scrambleSession = { listName, winningScore: wordCount, difficulty, playerWords: {}, playerScores: {}, remainingSeconds: 300, timerStarted: false, timerId: null };
   } else {
     scrambleSession.playerWords = scrambleSession.playerWords || {};
     scrambleSession.playerScores = scrambleSession.playerScores || {};
+    if (difficulty) scrambleSession.difficulty = difficulty;
   }
   const getPlayerKey = () => activeGamePlayers[activeGamePlayerIndex]?.student_name || '__solo__';
   const getNextWord = () => {
@@ -147,6 +150,13 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
       <div class="game-player-hud-slot col-span-full flex justify-center w-full"></div>
     </div>
     <div class="cipher-lab-panel m-4 p-5 sm:p-8 text-center">
+      <div class="scramble-difficulty-selector mb-3 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Unscramble difficulty">
+        <button type="button" id="scramble-easy-btn" class="scramble-difficulty-btn scramble-difficulty-easy bg-green-200 text-green-900 border-2 border-green-500 rounded-lg px-3 py-1.5 text-xs font-black hover:bg-green-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="true">Easy</button>
+        <button type="button" id="scramble-hard-btn" class="scramble-difficulty-btn scramble-difficulty-hard bg-rose-200 text-rose-900 border-2 border-rose-600 rounded-lg px-3 py-1.5 text-xs font-black hover:bg-rose-300 focus-visible:outline focus-visible:outline-4 focus-visible:outline-yellow-300 transition cursor-pointer" aria-pressed="false">Hard</button>
+      </div>
+      <div id="scramble-clue-wrapper" class="mb-3 flex flex-col items-center justify-center">
+        <div id="scramble-clue" class="flex h-24 w-36 sm:h-28 sm:w-44 items-center justify-center overflow-hidden rounded-xl border-2 border-cyan-400/40 bg-black/40 shadow-lg p-1.5 transition-all" aria-label="Picture clue"></div>
+      </div>
       <p id="scramble-answer" class="cipher-lab-answer text-5xl sm:text-7xl font-black mb-6 tracking-wider flex items-center justify-center" aria-label="Unscramble word">_____</p>
       <div id="scramble-tiles" class="flex flex-wrap gap-3 mb-7 justify-center" aria-label="Available letters"></div>
       <div id="scramble-feedback" class="sr-only" aria-live="polite" aria-atomic="true"></div>
@@ -408,12 +418,56 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
     correctWord = formattedWord.toUpperCase().replace(/[^A-Z0-9]/g, '');
     scrambledLetters = correctWord.split('').sort(() => Math.random() - 0.5);
     reset();
+    updateScrambleClueAndDifficultyUi();
     nextBtn.dataset.busy = 'false';
     updateNextWordAvailability();
   }
   
+  const clueWrapper = modal.querySelector('#scramble-clue-wrapper');
+  const clue = modal.querySelector('#scramble-clue');
+  const updateScrambleClueAndDifficultyUi = () => {
+    if (!clue) return;
+    const isEasy = difficulty === 'easy';
+    if (isEasy) {
+      if (word?.vocab_image) {
+        clue.innerHTML = `<img src="${word.vocab_image}" class="h-full w-full object-contain rounded-lg drop-shadow" alt="Picture clue for ${word.vocab_word}">`;
+      } else {
+        clue.innerHTML = `<div class="flex flex-col items-center justify-center text-slate-400 select-none"><span class="text-3xl">🖼️</span><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">No Image</span></div>`;
+      }
+    } else {
+      // Hard mode: hides the picture
+      const fallbackSrc = document.getElementById('hangman-hard-mode-image-loader')?.src || '';
+      if (fallbackSrc) {
+        clue.innerHTML = `<img src="${fallbackSrc}" class="h-full w-full object-contain opacity-60" alt="Picture hidden">`;
+      } else {
+        clue.innerHTML = `<div class="flex flex-col items-center justify-center text-slate-400 select-none"><span class="text-3xl">❓</span><span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">Picture Hidden</span></div>`;
+      }
+    }
+
+    ['easy', 'hard'].forEach(mode => {
+      const button = modal.querySelector(`#scramble-${mode}-btn`);
+      if (!button) return;
+      const active = difficulty === mode;
+      button.setAttribute('aria-pressed', String(active));
+      button.classList.toggle('ring-4', active);
+      button.classList.toggle('ring-yellow-300', active);
+    });
+  };
+
+  const updateScrambleDifficulty = nextDifficulty => {
+    const normalized = nextDifficulty === 'hard' ? 'hard' : 'easy';
+    if (normalized === difficulty) return;
+    difficulty = normalized;
+    if (scrambleSession) scrambleSession.difficulty = normalized;
+    updateScrambleClueAndDifficultyUi();
+  };
+
+  modal.querySelector('#scramble-easy-btn')?.addEventListener('click', () => updateScrambleDifficulty('easy'));
+  modal.querySelector('#scramble-hard-btn')?.addEventListener('click', () => updateScrambleDifficulty('hard'));
+
   renderTiles();
   updateAnswerDisplay();
+  updateScrambleClueAndDifficultyUi();
   updateNextWordAvailability();
   
   // Undo last letter (click on answer area to remove last selected letter)
@@ -494,6 +548,7 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0) {
           tilesContainer.classList.remove('scramble-tiles-wrong');
           feedback.textContent = '';
           modal.querySelector('#scramble-practice-hint')?.classList.add('hidden');
+          updateScrambleClueAndDifficultyUi();
           updateAnswerDisplay();
           renderTiles();
           updateNextWordAvailability();
