@@ -2548,6 +2548,37 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   color: #15803d !important;
 }
 
+/* Formula Bracket Group & Options Stack (Alternative choices diagram) */
+.formula-bracket-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.formula-options-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5px;
+}
+
+.formula-option-item {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.formula-bracket-svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) .formula-option-item {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  color: inherit !important;
+}
+
 /* 8. Practice Modal - Deck Rules Strip Buttons */
 :is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-switch-rule-btn {
   background: #ffffff !important;

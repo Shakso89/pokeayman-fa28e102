@@ -522,6 +522,13 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(chipsHtml).toContain('border-amber-400 bg-amber-500/15 text-amber-300');
     // -ing has colorIndex 7 (Fuchsia)
     expect(chipsHtml).toContain('border-fuchsia-400 bg-fuchsia-500/15 text-fuchsia-300');
+    // Slashes are replaced with vertical textbook-diagram brackets
+    expect(chipsHtml).toContain('formula-bracket-group');
+    expect(chipsHtml).toContain('formula-options-stack');
+    expect(chipsHtml).toContain('formula-bracket-svg');
+    expect(chipsHtml).toContain('am');
+    expect(chipsHtml).toContain('is');
+    expect(chipsHtml).toContain('are');
 
     // 2. Check sentence rendering mapping part indices to custom colors
     const sentenceHtml = formatSentence(customRule.sentence, customRule.formula, customRule);

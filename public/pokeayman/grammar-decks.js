@@ -1688,10 +1688,32 @@
       const style = colorStyles[styleIdx];
       const cleanPart = part.replace(/^\[+|\]+$/g, '').trim();
 
+      // Check if part contains slash-separated alternatives: e.g. "is / are", "am / is / are", "he / she / it", "was / were", "do / does", "s / es / ies"
+      const slashOptions = cleanPart.includes('/')
+        ? cleanPart.split(/\s*\/\s*/).map(s => s.trim()).filter(Boolean)
+        : [];
+
       // Check if part contains a suffix addition like "Verb-ing", "Verb-ed", "Verb-s", "Verb-ies", "Adjective-er", "Adjective-est", "Adverb-ly", etc.
       const sfxMatch = cleanPart.match(/^([a-z]+)[-\s+](ing|ed|ied|es|ies|s|d|en|er|est|ier|iest|ly|ily|ping|ning|ting|ming|ging|bing|ped|ned|ged|ted|ded|s\/es|s\/es\/ies)$/i);
-      let innerHtml = escapeHtml(`[${cleanPart}]`);
-      if (sfxMatch) {
+      
+      let innerHtml = '';
+      if (slashOptions.length > 1) {
+        // Vertical stacked alternatives with curly bracket } matching textbook diagram style (Image 1)
+        innerHtml = `
+          <span class="formula-bracket-group inline-flex items-center gap-1.5 py-0.5" data-part-text="[${escapeHtml(cleanPart)}]" title="[${escapeHtml(cleanPart)}]">
+            <span class="formula-options-stack inline-flex flex-col items-center justify-center gap-0.5">
+              ${slashOptions.map(opt => `
+                <span class="formula-option-item px-2 py-0.5 rounded-md bg-white/10 dark:bg-slate-950/40 border border-white/15 text-center text-[11px] sm:text-xs font-black tracking-tight leading-none shadow-xs">
+                  ${escapeHtml(opt)}
+                </span>
+              `).join('')}
+            </span>
+            <svg class="formula-bracket-svg w-2.5 sm:w-3 h-7 sm:h-8 shrink-0 text-current opacity-80" viewBox="0 0 10 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 3 C6 3, 6 13, 9 16 C6 19, 6 29, 2 29"/>
+            </svg>
+          </span>
+        `;
+      } else if (sfxMatch) {
         const rootWord = sfxMatch[1];
         const sfxWord = '-' + sfxMatch[2];
         const sfxColorIdx = (typeof rule?.suffix_color === 'number') ? rule.suffix_color : styleIdx;
@@ -1701,9 +1723,11 @@
           'text-lime-300', 'text-yellow-300'
         ][sfxColorIdx % 10];
         innerHtml = `[${escapeHtml(rootWord)}<span class="${sfxColorCls} font-black">${escapeHtml(sfxWord)}</span>]`;
+      } else {
+        innerHtml = escapeHtml(`[${cleanPart}]`);
       }
 
-      return `<span class="px-3.5 sm:px-4 py-1.5 rounded-full border ${style} font-bold text-xs sm:text-sm tracking-wide inline-block">${innerHtml}</span>`;
+      return `<span class="px-3.5 sm:px-4 py-1.5 rounded-2xl border ${style} font-bold text-xs sm:text-sm tracking-wide inline-flex items-center justify-center shadow-md transition-transform hover:scale-102">${innerHtml}</span>`;
     }).join('<span class="text-slate-400 font-bold text-base sm:text-lg mx-1.5">+</span>');
   }
 
