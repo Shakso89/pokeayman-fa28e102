@@ -20419,7 +20419,7 @@ const STREAK_DAYS = 7;
 function streakDay(d = new Date()) { return d.toLocaleDateString('en-CA'); }
 function teacherStreakState() {
   const rec = currentTeacherRec();
-  if (!rec) return null;
+  if (!rec || isTeacherAdminRecord(rec) || isAymanTeacher() || rec.teacher_credits === -1) return null;
   return { count: Number(rec.streak_count || 0), boxes: Number(rec.surprise_boxes || 0), last: rec.streak_last_day || '' };
 }
 function teacherNotificationEscape(value) { return String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character])); }
@@ -20437,13 +20437,29 @@ function rememberTeacherLocalRead(id) {
 function teacherNotificationsFor(record = currentTeacherRec()) {
   if (!record) return [];
   const id = String(record.__backendId || currentTeacherRecordId || '');
+  const isAdmin = isTeacherAdminRecord(record) || isAymanTeacher() || record.teacher_credits === -1;
   const localRead = teacherLocalReadIds();
-  const dbItems = (allData || []).filter(item => item.type === 'teacher_notification' && String(item.notification_recipient_id || '') === id)
-    .map(item => (item.notification_read || localRead.has(String(item.__backendId || ''))) ? { ...item, notification_read: true } : item);
+  const dbItems = (allData || []).filter(item => {
+    if (item.type !== 'teacher_notification') return false;
+    // Streak notices are never received by admin accounts
+    if (isAdmin && (item.notification_target === 'streak' || item.is_streak_notice || item.notification_category === 'streak reward' || String(item.notification_id || '').startsWith('streak-notice-'))) {
+      return false;
+    }
+    const itemRecId = String(item.notification_recipient_id || '');
+    if (id && itemRecId === id) return true;
+    if (isAdmin) {
+      if (itemRecId === 'admin' || itemRecId === 'ayman') return true;
+      const recName = String(record.teacher_name || '').trim();
+      const itemRecName = String(item.notification_recipient_name || '').trim();
+      if (recName && itemRecName && recName.toLowerCase() === itemRecName.toLowerCase()) return true;
+      if (isTeacherAdminRecord(itemRecName)) return true;
+    }
+    return false;
+  }).map(item => (item.notification_read || localRead.has(String(item.__backendId || item.notification_id || ''))) ? { ...item, notification_read: true } : item);
 
   const streakNotices = [];
   const st = teacherStreakState();
-  if (st && record) {
+  if (st && record && !isAdmin) {
     const today = streakDay();
     const streakId = `streak-notice-${id}-${record.streak_last_day || today}-c${st.count}-b${st.boxes}`;
     const hasBoxes = st.boxes > 0;
@@ -20500,13 +20516,14 @@ async function pruneTeacherReadNotifications() {
   }
 }
 window.sendTeacherNotifications = async function (recipients, title, message, category = 'announcement', options = {}) {
-  const unique = [...new Map((recipients || []).filter(Boolean).map(record => [String(record.__backendId || ''), record])).values()];
+  const unique = [...new Map((recipients || []).filter(Boolean).map(record => [String(record.__backendId || record.id || (isTeacherAdminRecord(record) ? 'admin' : '')), record])).values()];
   let sent = 0;
   for (const recipient of unique) {
-    if (!recipient.__backendId) continue;
-    const result = await window.dataSdk.create({
-      type: 'teacher_notification', notification_id: `tn-${recipient.__backendId}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
-      notification_recipient_id: String(recipient.__backendId), notification_recipient_name: recipient.teacher_name || '',
+    const recId = String(recipient.__backendId || recipient.id || (isTeacherAdminRecord(recipient) ? 'admin' : ''));
+    if (!recId) continue;
+    const notifPayload = {
+      type: 'teacher_notification', notification_id: `tn-${recId}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+      notification_recipient_id: recId, notification_recipient_name: recipient.teacher_name || (recId === 'admin' ? 'Ayman' : ''),
       notification_title: String(title || '').trim(), notification_message: String(message || '').trim(),
       notification_category: category, notification_read: false, notification_read_at: '',
       notification_sender: currentTeacher || 'PokéAyman Admin',
@@ -20516,11 +20533,39 @@ window.sendTeacherNotifications = async function (recipients, title, message, ca
       notification_quiz_id: String(options.quizId || options.quiz_id || ''),
       notification_quiz_question: String(options.quizQuestion || options.quiz_question || ''),
       created_at: new Date().toISOString()
-    });
-    if (result?.isOk) sent++;
+    };
+    const result = await window.dataSdk.create(notifPayload);
+    if (result?.isOk) {
+      sent++;
+      if (result.data) {
+        if (!allData.some(d => d.__backendId === result.data.__backendId)) {
+          allData.push(result.data);
+        }
+      } else {
+        allData.push(notifPayload);
+      }
+    }
   }
   return sent;
 };
+
+async function notifyAdminTeachers(title, message, category = 'admin', options = {}) {
+  const allTeachers = typeof getTeachers === 'function' ? getTeachers() : [];
+  let admins = allTeachers.filter(t => isTeacherAdminRecord(t));
+  if (!admins.length) {
+    const adminRec = typeof getAdminTeacherRecord === 'function' ? getAdminTeacherRecord() : null;
+    if (adminRec) admins = [adminRec];
+  }
+  if (!admins.length) {
+    admins = [{ teacher_name: 'Ayman', teacher_role: 'admin', __backendId: 'admin' }];
+  }
+  admins = admins.map(a => a.__backendId ? a : { ...a, __backendId: 'admin' });
+  if (window.sendTeacherNotifications) {
+    return await window.sendTeacherNotifications(admins, title, message, category, options);
+  }
+  return 0;
+}
+window.notifyAdminTeachers = notifyAdminTeachers;
 
 // Who should hear about something that happened in a class or school: the main
 // class manager plus every teacher assigned to that class or to the whole school.
@@ -20964,7 +21009,8 @@ async function saveTeacherPatch(rec, patch) {
   return next;
 }
 async function recordTeacherDailyLogin() {
-  const rec = currentTeacherRec(); if (!rec) return;
+  const rec = currentTeacherRec();
+  if (!rec || isTeacherAdminRecord(rec) || isAymanTeacher() || rec.teacher_credits === -1) return;
   const today = streakDay(); if (rec.streak_last_day === today) return;
   const y = new Date(); y.setDate(y.getDate() - 1);
   let count = rec.streak_last_day === streakDay(y) ? Number(rec.streak_count || 0) + 1 : 1;
@@ -22253,16 +22299,23 @@ function renderTrainerTab() {
   const myTeacherRec = () => findMyTeacherRecord();
   const streak = teacherStreakState() || { count: 0, boxes: 0 };
   const streakPanel = modal.querySelector('#teacher-streak-panel');
-  const renderStreakPanel = () => {
-    const state = teacherStreakState() || streak;
-    streakPanel.innerHTML = `<p class="th-hint" style="text-align:left;margin:0 0 .5rem">${state.count} of ${STREAK_DAYS} consecutive login days</p><div class="ts-streak-dots" role="img" aria-label="${state.count} of ${STREAK_DAYS} streak days completed">${Array.from({ length: STREAK_DAYS }, (_, index) => `<span class="${index < state.count ? 'on' : ''}">${index + 1}</span>`).join('')}</div><p class="th-hint" style="text-align:left;margin:0 0 .75rem">Log in daily to build your streak. Completing ${STREAK_DAYS} days earns a Streak Box. Streak Boxes ready: <strong>${state.boxes}</strong>.</p><button type="button" id="teacher-streak-open-box" class="th-primary" ${state.boxes > 0 ? '' : 'disabled'}>${state.boxes > 0 ? `Open Streak Box (${state.boxes})` : 'No Streak Boxes Ready'}</button>`;
-    streakPanel.querySelector('#teacher-streak-open-box')?.addEventListener('click', async buttonEvent => {
-      const button = buttonEvent.currentTarget; button.disabled = true;
-      await window.openTeacherSurpriseBox?.();
-      renderStreakPanel();
-    });
-  };
-  renderStreakPanel();
+  const streakToggle = modal.querySelector('[data-th-editor="teacher-streak-panel"]');
+  const isAdmin = isTeacherAdminRecord(teacherRecord) || isAymanTeacher() || teacherRecord?.teacher_credits === -1;
+  if (isAdmin) {
+    if (streakToggle) streakToggle.style.display = 'none';
+    if (streakPanel) streakPanel.style.display = 'none';
+  } else {
+    const renderStreakPanel = () => {
+      const state = teacherStreakState() || streak;
+      streakPanel.innerHTML = `<p class="th-hint" style="text-align:left;margin:0 0 .5rem">${state.count} of ${STREAK_DAYS} consecutive login days</p><div class="ts-streak-dots" role="img" aria-label="${state.count} of ${STREAK_DAYS} streak days completed">${Array.from({ length: STREAK_DAYS }, (_, index) => `<span class="${index < state.count ? 'on' : ''}">${index + 1}</span>`).join('')}</div><p class="th-hint" style="text-align:left;margin:0 0 .75rem">Log in daily to build your streak. Completing ${STREAK_DAYS} days earns a Streak Box. Streak Boxes ready: <strong>${state.boxes}</strong>.</p><button type="button" id="teacher-streak-open-box" class="th-primary" ${state.boxes > 0 ? '' : 'disabled'}>${state.boxes > 0 ? `Open Streak Box (${state.boxes})` : 'No Streak Boxes Ready'}</button>`;
+      streakPanel.querySelector('#teacher-streak-open-box')?.addEventListener('click', async buttonEvent => {
+        const button = buttonEvent.currentTarget; button.disabled = true;
+        await window.openTeacherSurpriseBox?.();
+        renderStreakPanel();
+      });
+    };
+    renderStreakPanel();
+  }
   let selectedTeacherAvatar = String(teacherRecord?.teacher_avatar || '');
   const applyHeaderAvatar = value => { const el = document.getElementById('teacher-account-avatar'); const src = teacherAvatarSrc(value); if (el) el.innerHTML = src ? `<img src="${src}" class="w-10 h-10 object-contain rounded-full" alt="Teacher avatar">` : '<span class="teacher-account-avatar-fallback" aria-hidden="true">🎓</span>'; };
   const renderTeacherAvatarOptions = () => {
@@ -22800,6 +22853,33 @@ async function executeCreditTransfer(senderId, recipientId, amount, recipientNam
   const thCredits = document.querySelector('#th-credits');
   if (thCredits) {
     thCredits.textContent = isAdmin ? 'Unlimited' : (senderRec?.teacher_credits === -1 ? '∞' : (senderRec?.teacher_credits || 0));
+  }
+
+  // Notify recipient teacher
+  if (recipientRec && window.sendTeacherNotifications) {
+    try {
+      await window.sendTeacherNotifications(
+        [recipientRec],
+        'Credits received',
+        `Manager ${senderRec?.teacher_name || currentTeacher} transferred ${Number(amount).toLocaleString()} credits to your account.`,
+        'reward',
+        { target: 'profile' }
+      );
+    } catch (_) {}
+  }
+
+  // Notify admin when manager transfers credit to other teachers
+  if (window.notifyAdminTeachers) {
+    try {
+      const senderDisplayName = senderRec?.teacher_name || currentTeacher || 'School Manager';
+      const recipientDisplayName = recipientName || recipientRec?.teacher_name || 'a teacher';
+      await window.notifyAdminTeachers(
+        'Manager credit transfer',
+        `Manager ${senderDisplayName} transferred ${Number(amount).toLocaleString()} credits to TR. ${recipientDisplayName}.`,
+        'reward',
+        { target: 'profile' }
+      );
+    } catch (_) {}
   }
 }
 window.executeCreditTransfer = executeCreditTransfer;
@@ -30082,6 +30162,14 @@ function openEditTeacherModal(teacherId) {
       if (newlyAssignedClasses.length) {
         const classList = newlyAssignedClasses.map(item => `${item.className} (${item.schoolName})`).join(', ');
         await window.sendTeacherNotifications?.([getTeachers().find(item => item.__backendId === teacher.__backendId) || { ...teacher, teacher_name:newName }], 'New class access', `You have been assigned to: ${classList}. Sign in to view your classes.`, 'class', { target: 'class' });
+        if (window.notifyAdminTeachers) {
+          await window.notifyAdminTeachers(
+            'Teacher assigned to class',
+            `Teacher TR. ${newName} was assigned to: ${classList}.`,
+            'class',
+            { target: 'class' }
+          );
+        }
       }
       if (newlyAssignedSchools.length) {
         const schoolList = newlyAssignedSchools.join(', ');
@@ -30292,8 +30380,8 @@ async function saveClassTeacherAssignments(schoolName, className, teacherNamesOr
   const newlyAssignedRecords = [];
   for (const teacherId of selectedTeacherIds) {
     if (existingAssignedIds.has(teacherId)) continue;
-    const teacherRec = teacherIdMap.get(teacherId) || getTeachers().find(t => String(t.__backendId).trim() === teacherId);
-    const teacherName = teacherRec?.teacher_name || 'Teacher';
+    const teacherRec = teacherIdMap.get(teacherId) || getTeachers().find(t => String(t.__backendId).trim() === teacherId) || { teacher_name: teacherId, __backendId: teacherId };
+    const teacherName = teacherRec?.teacher_name || teacherId || 'Teacher';
     const payload = {
       type: 'teacher_class_assignment',
       school_name: '',
@@ -30341,8 +30429,9 @@ async function saveClassTeacherAssignments(schoolName, className, teacherNamesOr
       assigned_class: className
     };
     const res = await window.dataSdk.create(payload);
-    if (res?.isOk && res.data) {
-      allData.push(res.data);
+    if (res?.isOk) {
+      if (res.data) allData.push(res.data);
+      else allData.push(payload);
       if (teacherRec) newlyAssignedRecords.push(teacherRec);
     }
   }
@@ -30376,6 +30465,17 @@ async function saveClassTeacherAssignments(schoolName, className, teacherNamesOr
       newlyAssignedRecords,
       'Class assigned to you',
       `You were assigned to co-manage ${className} at ${schoolName}. Open your dashboard to view the class.`,
+      'class',
+      { target: 'class', school: schoolName, class: className }
+    );
+  }
+
+  if (newlyAssignedRecords.length && window.notifyAdminTeachers) {
+    const names = newlyAssignedRecords.map(r => r.teacher_name || 'Teacher').filter(Boolean);
+    const teacherPhrase = names.length === 1 ? `Teacher TR. ${names[0]}` : `Teachers ${names.map(n => `TR. ${n}`).join(', ')}`;
+    await window.notifyAdminTeachers(
+      'Teacher assigned to class',
+      `${teacherPhrase} was assigned to ${className} at ${schoolName}.`,
       'class',
       { target: 'class', school: schoolName, class: className }
     );
