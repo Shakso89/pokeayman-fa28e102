@@ -1304,13 +1304,13 @@
     const getColorCls = (partOrColorIdx, isSuffix = false) => {
       if (typeof partOrColorIdx !== 'number' || partOrColorIdx < 0) return 'text-white font-extrabold';
       let c = partOrColorIdx;
-      if (rule && Array.isArray(rule.formula_parts) && rule.formula_parts[partOrColorIdx]) {
+      if (isSuffix && rule && typeof rule.suffix_color === 'number' && rule.suffix_color >= 0) {
+        c = rule.suffix_color;
+      } else if (rule && Array.isArray(rule.formula_parts) && rule.formula_parts[partOrColorIdx]) {
         const fp = rule.formula_parts[partOrColorIdx];
         if (typeof fp.colorIndex === 'number') {
           c = fp.colorIndex;
         }
-      } else if (isSuffix && rule && typeof rule.suffix_color === 'number') {
-        c = rule.suffix_color;
       }
       return (c >= 0 && c < COLOR_CLASSES.length) ? COLOR_CLASSES[c] : COLOR_CLASSES[c % COLOR_CLASSES.length];
     };
@@ -1685,7 +1685,6 @@
           styleIdx = fp.colorIndex % colorStyles.length;
         }
       }
-      const style = colorStyles[styleIdx];
       const cleanPart = part.replace(/^\[+|\]+$/g, '').trim();
 
       // Check if part contains slash-separated alternatives: e.g. "is / are", "am / is / are", "he / she / it", "was / were", "do / does", "s / es / ies"
@@ -1693,9 +1692,17 @@
         ? cleanPart.split(/\s*\/\s*/).map(s => s.trim()).filter(Boolean)
         : [];
 
-      // Check if part contains a suffix addition like "Verb-ing", "Verb-ed", "Verb-s", "Verb-ies", "Adjective-er", "Adjective-est", "Adverb-ly", etc.
-      const sfxMatch = cleanPart.match(/^([a-z]+)[-\s+](ing|ed|ied|es|ies|s|d|en|er|est|ier|iest|ly|ily|ping|ning|ting|ming|ging|bing|ped|ned|ged|ted|ded|s\/es|s\/es\/ies)$/i);
-      
+      // Check if part contains a suffix addition like "Verb-ing", "Verb -ing", "Verb + -ing", "Verb + ing", etc.
+      const sfxMatch = cleanPart.match(/^([a-z]+)\s*(?:[-+]|\s)\s*[-+]?\s*(ing|ed|ied|es|ies|s|d|en|er|est|ier|iest|ly|ily|ping|ning|ting|ming|ging|bing|ped|ned|ged|ted|ded|s\/es|s\/es\/ies)$/i);
+
+      // Also check if part is a standalone suffix chip like "-ing", "+ -ing", "[-ing]", "ing", etc.
+      const standaloneSfxMatch = !sfxMatch && cleanPart.match(/^(?:[-+]|\s)*\s*(ing|ed|ied|es|ies|s|d|en|er|est|ier|iest|ly|ily|ping|ning|ting|ming|ging|bing|ped|ned|ged|ted|ded|s\/es|s\/es\/ies)$/i);
+
+      if (standaloneSfxMatch && typeof rule?.suffix_color === 'number' && rule.suffix_color >= 0) {
+        styleIdx = rule.suffix_color % colorStyles.length;
+      }
+      const style = colorStyles[styleIdx];
+
       let innerHtml = '';
       if (slashOptions.length > 1) {
         // Vertical stacked alternatives with curly bracket } matching textbook diagram style (Image 1)
@@ -1716,13 +1723,16 @@
       } else if (sfxMatch) {
         const rootWord = sfxMatch[1];
         const sfxWord = '-' + sfxMatch[2];
-        const sfxColorIdx = (typeof rule?.suffix_color === 'number') ? rule.suffix_color : styleIdx;
+        const sfxColorIdx = (typeof rule?.suffix_color === 'number' && rule.suffix_color >= 0) ? rule.suffix_color : styleIdx;
         const sfxColorCls = [
           'text-sky-300', 'text-amber-300', 'text-emerald-300', 'text-purple-300',
           'text-rose-300', 'text-orange-300', 'text-cyan-300', 'text-fuchsia-300',
           'text-lime-300', 'text-yellow-300'
         ][sfxColorIdx % 10];
         innerHtml = `[${escapeHtml(rootWord)}<span class="${sfxColorCls} font-black">${escapeHtml(sfxWord)}</span>]`;
+      } else if (standaloneSfxMatch) {
+        const sfxPart = cleanPart.startsWith('-') ? cleanPart : ('-' + standaloneSfxMatch[1]);
+        innerHtml = escapeHtml(`[${sfxPart}]`);
       } else {
         innerHtml = escapeHtml(`[${cleanPart}]`);
       }

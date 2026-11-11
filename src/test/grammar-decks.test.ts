@@ -802,4 +802,79 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('gp-swap-question-btn');
     expect(js).toContain('switchToQuestion');
   });
+
+  it('ensures grammatical suffixes are colored on the slide in both the formula banner and the sentence', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+    const css = fs.readFileSync(path.join(__dirname, '../../public/pokeayman/bright-fixes.css'), 'utf-8');
+
+    const mockWindow: any = {
+      document: {
+        readyState: 'complete',
+        addEventListener: () => {},
+        getElementById: () => null,
+        querySelectorAll: () => []
+      },
+      addEventListener: () => {}
+    };
+    new Function('window', 'document', js)(mockWindow, mockWindow.document);
+
+    const formatFormula = mockWindow.formatFormulaChips;
+    const formatSentence = mockWindow.formatSyntaxHighlightedSentence;
+
+    // Rule with teacher-configured suffix color 4 (Rose Pink)
+    const ruleWithRoseSuffix = {
+      title: 'Present Continuous',
+      formula: 'Subject + am / is / are + Verb-ing',
+      formula_parts: [
+        { name: 'Subject', colorIndex: 0 },
+        { name: 'am / is / are', colorIndex: 1 },
+        { name: 'Verb-ing', colorIndex: 2 }
+      ],
+      suffix_color: 4, // Rose Pink
+      sentence: 'The dog is barking loudly.',
+      word_assignments: [
+        { token: 'The', text: 'The', color: 0 },
+        { token: 'dog', text: 'dog', color: 0 },
+        { token: 'is', text: 'is', color: 1 },
+        {
+          token: 'barking',
+          isSplit: true,
+          segments: [
+            { text: 'bark', color: 2 },
+            { text: 'ing', color: 4 }
+          ]
+        },
+        { token: 'loudly.', text: 'loudly', color: -1, punct: '.' }
+      ]
+    };
+
+    // 1. Formula chip for Verb-ing renders -ing in Rose Pink (text-rose-300 font-black)
+    const formulaChipsHtml = formatFormula(ruleWithRoseSuffix.formula, ruleWithRoseSuffix);
+    expect(formulaChipsHtml).toContain('Verb<span class="text-rose-300 font-black">-ing</span>');
+
+    // 2. Sentence renders barking split with root in Emerald (color 2) and suffix in Rose Pink (color 4)
+    const sentenceHtml = formatSentence(ruleWithRoseSuffix.sentence, ruleWithRoseSuffix.formula, ruleWithRoseSuffix);
+    expect(sentenceHtml).toContain('<span class="text-emerald-400 font-black">bark</span><span class="text-rose-400 font-black">ing</span>');
+
+    // 3. Formula chip also supports standalone suffix chip [-ing] with suffix color
+    const standaloneRule = {
+      title: 'Action additions',
+      formula: 'Subject + Verb + -ing',
+      formula_parts: [
+        { name: 'Subject', colorIndex: 0 },
+        { name: 'Verb', colorIndex: 2 },
+        { name: '-ing', colorIndex: 3 }
+      ],
+      suffix_color: 4 // Rose Pink
+    };
+    const standaloneChipsHtml = formatFormula(standaloneRule.formula, standaloneRule);
+    expect(standaloneChipsHtml).toContain('[-ing]');
+    // The chip adopts colorStyles[4] (Rose Pink: border-rose-400 bg-rose-500/15 text-rose-300)
+    expect(standaloneChipsHtml).toContain('border-rose-400 bg-rose-500/15 text-rose-300');
+
+    // 4. Bright mode CSS protects formula chip suffix spans from parent chip color overrides
+    expect(css).toContain('#grammar-practice-modal [class*="border-"] span.text-rose-300');
+    expect(css).toContain('color: #e11d48 !important');
+    expect(css).toContain('color: #fb7185 !important');
+  });
 });

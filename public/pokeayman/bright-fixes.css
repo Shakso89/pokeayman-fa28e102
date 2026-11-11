@@ -2706,9 +2706,71 @@ html body .ga-hub {
   color: #be123c !important;
   box-shadow: 0 1px 3px rgba(225, 29, 72, 0.15) !important;
 }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-orange-400.bg-orange-500\/15 {
+  background: #fff7ed !important;
+  border-color: #fb923c !important;
+  color: #ea580c !important;
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-cyan-400.bg-cyan-500\/15 {
+  background: #ecfeff !important;
+  border-color: #22d3ee !important;
+  color: #0891b2 !important;
+  box-shadow: 0 1px 3px rgba(8, 145, 178, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-fuchsia-400.bg-fuchsia-500\/15 {
+  background: #fdf4ff !important;
+  border-color: #e879f9 !important;
+  color: #c026d3 !important;
+  box-shadow: 0 1px 3px rgba(192, 38, 211, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-lime-400.bg-lime-500\/15 {
+  background: #f7fee7 !important;
+  border-color: #a3e635 !important;
+  color: #65a30d !important;
+  box-shadow: 0 1px 3px rgba(101, 163, 13, 0.15) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .border-yellow-400.bg-yellow-500\/15 {
+  background: #fefce8 !important;
+  border-color: #facc15 !important;
+  color: #ca8a04 !important;
+  box-shadow: 0 1px 3px rgba(202, 138, 4, 0.15) !important;
+}
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-slate-400 {
   color: #64748b !important;
 }
+
+/* Suffix Span Text Protection inside Formula Chips (Bright Mode) */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-sky-300 { color: #0284c7 !important; }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-amber-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-amber-400 { color: #d97706 !important; }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-emerald-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-emerald-400 { color: #059669 !important; }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-purple-300 { color: #7e22ce !important; }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-rose-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-rose-400 { color: #e11d48 !important; }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-orange-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-orange-400 { color: #ea580c !important; }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-cyan-300 { color: #0891b2 !important; }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-fuchsia-300 { color: #c026d3 !important; }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-lime-300 { color: #65a30d !important; }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal [class*="border-"] span.text-yellow-300 { color: #ca8a04 !important; }
+
+/* Suffix Span Text Protection inside Formula Chips (Dark Mode) */
+#grammar-practice-modal [class*="border-"] span.text-sky-300 { color: #38bdf8 !important; }
+#grammar-practice-modal [class*="border-"] span.text-amber-300,
+#grammar-practice-modal [class*="border-"] span.text-amber-400 { color: #fbbf24 !important; }
+#grammar-practice-modal [class*="border-"] span.text-emerald-300,
+#grammar-practice-modal [class*="border-"] span.text-emerald-400 { color: #34d399 !important; }
+#grammar-practice-modal [class*="border-"] span.text-purple-300 { color: #c084fc !important; }
+#grammar-practice-modal [class*="border-"] span.text-rose-300,
+#grammar-practice-modal [class*="border-"] span.text-rose-400 { color: #fb7185 !important; }
+#grammar-practice-modal [class*="border-"] span.text-orange-300,
+#grammar-practice-modal [class*="border-"] span.text-orange-400 { color: #fb923c !important; }
+#grammar-practice-modal [class*="border-"] span.text-cyan-300 { color: #22d3ee !important; }
+#grammar-practice-modal [class*="border-"] span.text-fuchsia-300 { color: #e879f9 !important; }
+#grammar-practice-modal [class*="border-"] span.text-lime-300 { color: #a3e635 !important; }
+#grammar-practice-modal [class*="border-"] span.text-yellow-300 { color: #facc15 !important; }
 
 /* Illustration & Context Clue */
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .aspect-\[4\/3\] {
@@ -2741,20 +2803,65 @@ html body .ga-hub {
   color: #0f172a !important;
 }
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-sky-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-hero-sentence span.text-sky-300,
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-sky-300 {
   color: #0284c7 !important;
 }
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-amber-400,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-hero-sentence span.text-amber-400,
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-amber-400 {
   color: #d97706 !important;
 }
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-emerald-400,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-hero-sentence span.text-emerald-400,
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-emerald-400 {
   color: #059669 !important;
 }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-purple-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-hero-sentence span.text-purple-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-purple-300 {
+  color: #7e22ce !important;
+}
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-rose-400,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-hero-sentence span.text-rose-400,
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-rose-400 {
   color: #e11d48 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-orange-400,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-hero-sentence span.text-orange-400,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-orange-400 {
+  color: #ea580c !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-cyan-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-hero-sentence span.text-cyan-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-cyan-300 {
+  color: #0891b2 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-fuchsia-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-hero-sentence span.text-fuchsia-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-fuchsia-300 {
+  color: #c026d3 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-lime-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-hero-sentence span.text-lime-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-lime-300 {
+  color: #65a30d !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal #gp-target-sentence .text-yellow-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-hero-sentence span.text-yellow-300,
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .text-2xl.font-black span.text-yellow-300 {
+  color: #ca8a04 !important;
+}
+
+/* Interactive Substitution Pills */
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-subst-pill {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-subst-pill:hover {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
 }
 
 /* Common Mistake & Quick Check Boxes */
