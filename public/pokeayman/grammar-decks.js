@@ -1800,25 +1800,86 @@
         return a;
       }
 
-      let rawOptions = Array.isArray(r.quiz_options) && r.quiz_options.length 
-        ? [...r.quiz_options] 
-        : [r.quiz_answer || 'are climbing', 'climbs', 'is climbing'];
+      // Helper: Extract all quiz questions for this rule (with multi-question support)
+      function getRuleQuizQuestions(rule) {
+        if (Array.isArray(rule.quiz_questions) && rule.quiz_questions.length > 0) {
+          return rule.quiz_questions.map((q, qIdx) => {
+            const questionText = String(q.question || q.quiz_question || '').trim() || (qIdx === 0 ? (rule.quiz_question || 'Fill in the blank with the correct form:') : 'Practice question:');
+            const answer = String(q.answer || q.quiz_answer || '').trim() || (qIdx === 0 ? (rule.quiz_answer || 'Option 1') : 'Option 1');
+            let rawOpts = Array.isArray(q.options) && q.options.length 
+              ? [...q.options] 
+              : (Array.isArray(q.quiz_options) && q.quiz_options.length ? [...q.quiz_options] : []);
+            if (!rawOpts.length) {
+              const o2 = String(q.opt2 || '').trim();
+              const o3 = String(q.opt3 || '').trim();
+              rawOpts = [answer];
+              if (o2) rawOpts.push(o2);
+              if (o3) rawOpts.push(o3);
+            }
+            if (qIdx === 0 && !rawOpts.length && Array.isArray(rule.quiz_options)) {
+              rawOpts = [...rule.quiz_options];
+            }
+            rawOpts = Array.from(new Set(rawOpts.map(o => String(o || '').trim()).filter(Boolean)));
+            if (answer && !rawOpts.includes(answer)) {
+              rawOpts.unshift(answer);
+            }
+            while (rawOpts.length < 3) {
+              const fallbacks = ["won't", "will not", "will", "would not", "is climbing", "climbs"];
+              const next = fallbacks.find(f => !rawOpts.includes(f)) || `choice_${rawOpts.length + 1}`;
+              rawOpts.push(next);
+            }
+            const finalOptions = rawOpts.slice(0, 3);
+            if (!q._shuffledOptions || !Array.isArray(q._shuffledOptions)) {
+              q._shuffledOptions = shuffleOptions(finalOptions);
+            }
+            return {
+              question: questionText,
+              answer: answer,
+              options: finalOptions,
+              opt2: q.opt2 || finalOptions[1] || '',
+              opt3: q.opt3 || finalOptions[2] || '',
+              _shuffledOptions: q._shuffledOptions
+            };
+          });
+        }
 
-      // Deduplicate options to prevent duplicates like [won't] [won't]
-      rawOptions = Array.from(new Set(rawOptions.map(o => String(o || '').trim()).filter(Boolean)));
-      if (r.quiz_answer && !rawOptions.includes(r.quiz_answer)) {
-        rawOptions.unshift(r.quiz_answer);
-      }
-      while (rawOptions.length < 3) {
-        const fallbacks = ["won't", "will not", "will", "would not", "is climbing", "climbs"];
-        const next = fallbacks.find(f => !rawOptions.includes(f)) || `choice_${rawOptions.length + 1}`;
-        rawOptions.push(next);
+        let rawOptions = Array.isArray(rule.quiz_options) && rule.quiz_options.length 
+          ? [...rule.quiz_options] 
+          : [rule.quiz_answer || 'are climbing', 'climbs', 'is climbing'];
+
+        // Deduplicate options to prevent duplicates like [won't] [won't]
+        rawOptions = Array.from(new Set(rawOptions.map(o => String(o || '').trim()).filter(Boolean)));
+        if (rule.quiz_answer && !rawOptions.includes(rule.quiz_answer)) {
+          rawOptions.unshift(rule.quiz_answer);
+        }
+        while (rawOptions.length < 3) {
+          const fallbacks = ["won't", "will not", "will", "would not", "is climbing", "climbs"];
+          const next = fallbacks.find(f => !rawOptions.includes(f)) || `choice_${rawOptions.length + 1}`;
+          rawOptions.push(next);
+        }
+
+        if (!rule._shuffledOptions || !Array.isArray(rule._shuffledOptions)) {
+          rule._shuffledOptions = shuffleOptions(rawOptions);
+        }
+
+        const finalOpts = rawOptions.slice(0, 3);
+        return [{
+          question: rule.quiz_question || 'Fill in the blank with the correct form:',
+          answer: rule.quiz_answer || finalOpts[0] || 'Option 1',
+          options: finalOpts,
+          opt2: finalOpts[1] || '',
+          opt3: finalOpts[2] || '',
+          _shuffledOptions: rule._shuffledOptions
+        }];
       }
 
-      if (!r._shuffledOptions || !Array.isArray(r._shuffledOptions)) {
-        r._shuffledOptions = shuffleOptions(rawOptions);
+      const ruleQuestions = getRuleQuizQuestions(r);
+      if (typeof r._activeQuestionIndex !== 'number' || r._activeQuestionIndex < 0 || r._activeQuestionIndex >= ruleQuestions.length) {
+        r._activeQuestionIndex = 0;
       }
-      const options = r._shuffledOptions;
+      const activeQIdx = r._activeQuestionIndex;
+      const currentQuestion = ruleQuestions[activeQIdx];
+      const options = currentQuestion._shuffledOptions || currentQuestion.options;
 
       modal.innerHTML = `
         <div class="gp-modal-inner w-full max-w-5xl flex flex-col items-center my-auto py-4">
@@ -1932,16 +1993,37 @@
                 </div>
               </div>
 
-              <!-- Let's Practice Centered Header & Question Container -->
+              <!-- Let's Practice Centered Header & Question Container with Question Swapper -->
               <div class="space-y-2">
-                <div class="flex items-center justify-center">
+                <div class="flex items-center justify-center gap-2 flex-wrap">
                   <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold uppercase tracking-wider shadow-sm">
                     Let's Practice
                   </span>
+                  ${ruleQuestions.length > 1 ? `
+                    <div class="gp-question-tabs inline-flex items-center gap-1 bg-slate-900/90 p-0.5 rounded-full border border-slate-700/80 shadow-sm" role="tablist" aria-label="Quick Check Questions">
+                      <button type="button" class="gp-prev-question-btn w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-black transition cursor-pointer" title="Previous Question">
+                        ‹
+                      </button>
+                      ${ruleQuestions.map((_, qIdx) => {
+                        const isQActive = qIdx === activeQIdx;
+                        return `
+                          <button type="button" class="gp-swap-question-btn px-2.5 py-0.5 rounded-full text-[11px] font-bold transition cursor-pointer flex items-center gap-1 ${isQActive ? 'bg-cyan-400 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}" data-q-idx="${qIdx}" title="Question ${qIdx + 1}">
+                            <span>Q${qIdx + 1}</span>
+                          </button>
+                        `;
+                      }).join('')}
+                      <button type="button" class="gp-next-question-btn w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-black transition cursor-pointer" title="Next Question">
+                        ›
+                      </button>
+                    </div>
+                  ` : ''}
                 </div>
                 <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
-                  <div class="text-xs sm:text-sm font-semibold text-slate-200 min-w-0 flex-1 text-center lg:text-left">
-                    <span class="text-slate-200 break-words leading-relaxed">${escapeHtml(r.quiz_question || 'Fill in the blank with the correct form:')}</span>
+                  <div class="text-xs sm:text-sm font-semibold text-slate-200 min-w-0 flex-1 text-center lg:text-left flex items-center justify-center lg:justify-start gap-2">
+                    ${ruleQuestions.length > 1 ? `
+                      <span id="gp-question-badge" class="shrink-0 px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-cyan-300 text-[10px] font-black uppercase tracking-wider">Q${activeQIdx + 1}</span>
+                    ` : ''}
+                    <span id="gp-question-text" class="text-slate-200 break-words leading-relaxed">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</span>
                   </div>
                   <div class="flex flex-wrap items-center justify-center gap-2 shrink-0" id="gp-options-row">
                     ${options.map(opt => `
@@ -2033,30 +2115,86 @@
       }
 
       // Wire Quick Check quiz options (Practice only: no coins awarded)
-      modal.querySelectorAll('.gp-quiz-opt').forEach(btn => {
-        btn.onclick = async () => {
-          const chosen = btn.dataset.val;
-          const correct = r.quiz_answer;
+      function wireQuizOptions() {
+        const curQ = ruleQuestions[r._activeQuestionIndex || 0] || currentQuestion;
+        modal.querySelectorAll('.gp-quiz-opt').forEach(btn => {
+          btn.onclick = async () => {
+            const chosen = btn.dataset.val;
+            const correct = curQ.answer;
 
-          modal.querySelectorAll('.gp-quiz-opt').forEach(b => {
-            b.classList.remove('border-cyan-400', 'bg-cyan-950/90', 'text-cyan-200', 'shadow-[0_0_15px_rgba(6,182,212,0.5)]', 'border-rose-500', 'bg-rose-950/90', 'text-rose-200');
-          });
+            modal.querySelectorAll('.gp-quiz-opt').forEach(b => {
+              b.classList.remove('border-cyan-400', 'bg-cyan-950/90', 'text-cyan-200', 'shadow-[0_0_15px_rgba(6,182,212,0.5)]', 'border-rose-500', 'bg-rose-950/90', 'text-rose-200');
+            });
 
-          if (chosen === correct) {
-            btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-cyan-400 ring-2 ring-cyan-400/50 bg-cyan-950/90 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition cursor-pointer';
-            if (window.pokeSfx?.play) {
-              try { window.pokeSfx.play('correct'); } catch (_) {}
+            if (chosen === correct) {
+              btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-cyan-400 ring-2 ring-cyan-400/50 bg-cyan-950/90 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition cursor-pointer';
+              if (window.pokeSfx?.play) {
+                try { window.pokeSfx.play('correct'); } catch (_) {}
+              }
+              if (typeof toast === 'function') {
+                toast('Correct! Great job!');
+              }
+            } else {
+              btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-rose-500 ring-2 ring-rose-500/50 bg-rose-950/90 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.4)] transition cursor-pointer';
+              if (window.pokeSfx?.play) {
+                try { window.pokeSfx.play('wrong'); } catch (_) {}
+              }
             }
-            if (typeof toast === 'function') {
-              toast('Correct! Great job!');
-            }
-          } else {
-            btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-rose-500 ring-2 ring-rose-500/50 bg-rose-950/90 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.4)] transition cursor-pointer';
-            if (window.pokeSfx?.play) {
-              try { window.pokeSfx.play('wrong'); } catch (_) {}
-            }
-          }
+          };
+        });
+      }
+      wireQuizOptions();
+
+      // In-place instant question swapping on the same rule card
+      function switchToQuestion(newQIdx) {
+        if (newQIdx < 0 || newQIdx >= ruleQuestions.length) return;
+        r._activeQuestionIndex = newQIdx;
+        const qData = ruleQuestions[newQIdx];
+        const qOpts = qData._shuffledOptions || qData.options;
+
+        const qTextEl = modal.querySelector('#gp-question-text');
+        if (qTextEl) qTextEl.textContent = qData.question || 'Fill in the blank with the correct form:';
+
+        const qBadgeEl = modal.querySelector('#gp-question-badge');
+        if (qBadgeEl) qBadgeEl.textContent = `Q${newQIdx + 1}`;
+
+        // Update active tab button style
+        modal.querySelectorAll('.gp-swap-question-btn').forEach(b => {
+          const bIdx = Number(b.dataset.qIdx);
+          const isAct = bIdx === newQIdx;
+          b.className = `gp-swap-question-btn px-2.5 py-0.5 rounded-full text-[11px] font-bold transition cursor-pointer flex items-center gap-1 ${isAct ? 'bg-cyan-400 text-slate-950 font-black shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`;
+        });
+
+        // Re-render options row for the selected question
+        const optsRow = modal.querySelector('#gp-options-row');
+        if (optsRow) {
+          optsRow.innerHTML = qOpts.map(opt => `
+            <button type="button" class="gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-95 cursor-pointer" data-val="${escapeHtml(opt)}">
+              [${escapeHtml(opt)}]
+            </button>
+          `).join('');
+          wireQuizOptions();
+        }
+      }
+
+      // Wire question tabs & switcher buttons
+      modal.querySelectorAll('.gp-swap-question-btn').forEach(btn => {
+        btn.onclick = () => {
+          const targetQIdx = Number(btn.dataset.qIdx);
+          switchToQuestion(targetQIdx);
         };
+      });
+
+      modal.querySelector('.gp-prev-question-btn')?.addEventListener('click', () => {
+        const cur = r._activeQuestionIndex || 0;
+        const prev = cur > 0 ? cur - 1 : ruleQuestions.length - 1;
+        switchToQuestion(prev);
+      });
+
+      modal.querySelector('.gp-next-question-btn')?.addEventListener('click', () => {
+        const cur = r._activeQuestionIndex || 0;
+        const next = cur < ruleQuestions.length - 1 ? cur + 1 : 0;
+        switchToQuestion(next);
       });
 
       // Wire Rule Selectors in the bottom strip
@@ -2192,12 +2330,41 @@
         existingMistakes = [{ bad: '', good: '' }];
       }
 
-      // Extract options for active rule
-      const existingOptions = Array.isArray(activeRule?.quiz_options) ? activeRule.quiz_options : [];
-      const activeAnswer = activeRule?.quiz_answer || existingOptions[0] || '';
-      const remainingWrong = existingOptions.filter((opt, i) => opt !== activeAnswer || i > 0);
-      const activeOpt2 = remainingWrong[0] || (existingOptions[1] && existingOptions[1] !== activeAnswer ? existingOptions[1] : (existingOptions[0] && existingOptions[0] !== activeAnswer ? existingOptions[0] : ''));
-      const activeOpt3 = remainingWrong[1] || (existingOptions[2] && existingOptions[2] !== activeAnswer && existingOptions[2] !== activeOpt2 ? existingOptions[2] : '');
+      // Extract existing quick check questions for active rule (supports multiple questions)
+      let existingQuestions = [];
+      if (Array.isArray(activeRule?.quiz_questions) && activeRule.quiz_questions.length) {
+        existingQuestions = activeRule.quiz_questions.map(q => {
+          const ans = String(q.answer || q.quiz_answer || '').trim();
+          const qOpts = Array.isArray(q.options) ? q.options : (Array.isArray(q.quiz_options) ? q.quiz_options : []);
+          const wrongOpts = qOpts.filter(o => o !== ans);
+          const o2 = String(q.opt2 || wrongOpts[0] || '').trim();
+          const o3 = String(q.opt3 || wrongOpts[1] || '').trim();
+          return {
+            question: String(q.question || q.quiz_question || '').trim(),
+            answer: ans,
+            opt2: o2,
+            opt3: o3
+          };
+        });
+      } else if (activeRule?.quiz_question || activeRule?.quiz_answer) {
+        const existingOptions = Array.isArray(activeRule?.quiz_options) ? activeRule.quiz_options : [];
+        const activeAnswer = activeRule?.quiz_answer || existingOptions[0] || '';
+        const remainingWrong = existingOptions.filter((opt, i) => opt !== activeAnswer || i > 0);
+        const activeOpt2 = remainingWrong[0] || (existingOptions[1] && existingOptions[1] !== activeAnswer ? existingOptions[1] : (existingOptions[0] && existingOptions[0] !== activeAnswer ? existingOptions[0] : ''));
+        const activeOpt3 = remainingWrong[1] || (existingOptions[2] && existingOptions[2] !== activeAnswer && existingOptions[2] !== activeOpt2 ? existingOptions[2] : '');
+        existingQuestions.push({
+          question: activeRule?.quiz_question || '',
+          answer: activeAnswer,
+          opt2: activeOpt2,
+          opt3: activeOpt3
+        });
+      }
+      if (!existingQuestions.length) {
+        existingQuestions = [{ question: '', answer: '', opt2: '', opt3: '' }];
+      }
+      const activeAnswer = existingQuestions[0]?.answer || '';
+      const activeOpt2 = existingQuestions[0]?.opt2 || '';
+      const activeOpt3 = existingQuestions[0]?.opt3 || '';
 
       modal.innerHTML = `
         <div class="max-w-3xl w-full rounded-3xl bg-slate-900 border border-slate-800 p-5 sm:p-6 shadow-2xl space-y-5 my-auto max-h-[90vh] overflow-y-auto">
@@ -2452,34 +2619,62 @@
                   `).join('')}
                 </div>
               </div>
-              <div class="space-y-1 sm:col-span-2 pt-2 border-t border-slate-800/80">
-                <label for="ge-rule-question" class="text-[11px] text-slate-400 font-semibold block">Quick Check Question</label>
-                <input id="ge-rule-question" type="text" placeholder="e.g. Look! The monkeys _____ the tall tree!" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.quiz_question || '')}">
-              </div>
-              <div class="sm:col-span-2 space-y-1">
+              <!-- Quick Check Practice Questions Section with Extra Questions -->
+              <div class="sm:col-span-2 space-y-2.5 p-3 rounded-2xl bg-slate-950/60 border border-slate-800">
                 <div class="flex items-center justify-between">
-                  <label class="text-[11px] text-slate-400 font-semibold block"> Quick Check Practice Options (3 Choices)</label>
-                  <span class="text-[10px] text-slate-500">Option 1 is correct answer; options are placed randomly during student practice (no coins awarded)</span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Quick Check Practice Questions</span>
+                    <span class="text-[10px] text-slate-500 font-normal">(1 required, extra questions optional)</span>
+                  </div>
+                  <button type="button" id="ge-add-question-row-btn" class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95" title="Add another quick check question">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span>Add Question</span>
+                  </button>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div class="space-y-1">
-                    <label for="ge-rule-answer" class="text-[10px] text-cyan-300 font-bold block flex items-center gap-1">
-                      <span>✅</span> Correct Answer *
-                    </label>
-                    <input id="ge-rule-answer" type="text" placeholder="e.g. are climbing" class="quiz-input text-xs w-full border-cyan-500/50" value="${escapeHtml(activeAnswer)}">
-                  </div>
-                  <div class="space-y-1">
-                    <label for="ge-rule-opt2" class="text-[10px] text-rose-300 font-bold block flex items-center gap-1">
-                      <span>❌</span> Wrong Option 2
-                    </label>
-                    <input id="ge-rule-opt2" type="text" placeholder="e.g. climbs" class="quiz-input text-xs w-full" value="${escapeHtml(activeOpt2 || '')}">
-                  </div>
-                  <div class="space-y-1">
-                    <label for="ge-rule-opt3" class="text-[10px] text-rose-300 font-bold block flex items-center gap-1">
-                      <span>❌</span> Wrong Option 3
-                    </label>
-                    <input id="ge-rule-opt3" type="text" placeholder="e.g. is climbing" class="quiz-input text-xs w-full" value="${escapeHtml(activeOpt3 || '')}">
-                  </div>
+
+                <div id="ge-questions-list" class="space-y-3">
+                  ${existingQuestions.map((q, qIdx) => `
+                    <div class="ge-question-block-row p-3 rounded-xl bg-slate-900/80 border border-slate-800/80 space-y-2.5" data-question-idx="${qIdx}">
+                      <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 ge-question-row-label">Question #${qIdx + 1}</span>
+                        ${qIdx > 0 ? `
+                          <button type="button" class="ge-delete-question-row-btn text-rose-400 hover:text-rose-300 text-xs font-bold px-1.5 py-0.5 rounded transition cursor-pointer flex items-center gap-1" title="Remove this question">
+                            <span>✕</span> Remove
+                          </button>
+                        ` : '<span class="text-[10px] text-slate-500">Primary Question</span>'}
+                      </div>
+                      <div class="space-y-1">
+                        <label for="${qIdx === 0 ? 'ge-rule-question' : `ge-rule-question-${qIdx}`}" class="text-[11px] text-slate-400 font-semibold block">Quick Check Question</label>
+                        <input type="text" ${qIdx === 0 ? 'id="ge-rule-question"' : `id="ge-rule-question-${qIdx}"`} class="ge-rule-question-input quiz-input text-xs w-full" placeholder="e.g. Look! The monkeys _____ the tall tree!" value="${escapeHtml(q.question || '')}">
+                      </div>
+                      <div class="space-y-1">
+                        <div class="flex items-center justify-between">
+                          <label class="text-[10px] text-slate-400 font-semibold block">Practice Options (3 Choices)</label>
+                          <span class="text-[9px] text-slate-500">Option 1 is correct answer; options are placed randomly during student practice (no coins awarded)</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <div class="space-y-1">
+                            <label for="${qIdx === 0 ? 'ge-rule-answer' : `ge-rule-answer-${qIdx}`}" class="text-[10px] text-cyan-300 font-bold block flex items-center gap-1">
+                              <span>✅</span> Correct Answer *
+                            </label>
+                            <input type="text" ${qIdx === 0 ? 'id="ge-rule-answer"' : `id="ge-rule-answer-${qIdx}"`} class="ge-rule-answer-input quiz-input text-xs w-full border-cyan-500/50" placeholder="e.g. are climbing" value="${escapeHtml(q.answer || '')}">
+                          </div>
+                          <div class="space-y-1">
+                            <label for="${qIdx === 0 ? 'ge-rule-opt2' : `ge-rule-opt2-${qIdx}`}" class="text-[10px] text-rose-300 font-bold block flex items-center gap-1">
+                              <span>❌</span> Wrong Option 2
+                            </label>
+                            <input type="text" ${qIdx === 0 ? 'id="ge-rule-opt2"' : `id="ge-rule-opt2-${qIdx}"`} class="ge-rule-opt2-input quiz-input text-xs w-full" placeholder="e.g. climbs" value="${escapeHtml(q.opt2 || '')}">
+                          </div>
+                          <div class="space-y-1">
+                            <label for="${qIdx === 0 ? 'ge-rule-opt3' : `ge-rule-opt3-${qIdx}`}" class="text-[10px] text-rose-300 font-bold block flex items-center gap-1">
+                              <span>❌</span> Wrong Option 3
+                            </label>
+                            <input type="text" ${qIdx === 0 ? 'id="ge-rule-opt3"' : `id="ge-rule-opt3-${qIdx}"`} class="ge-rule-opt3-input quiz-input text-xs w-full" placeholder="e.g. is climbing" value="${escapeHtml(q.opt3 || '')}">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')}
                 </div>
               </div>
             </div>
@@ -3530,6 +3725,74 @@
         }
       });
 
+      // Add extra quick check question row
+      modal.querySelector('#ge-add-question-row-btn')?.addEventListener('click', () => {
+        const list = modal.querySelector('#ge-questions-list');
+        if (!list) return;
+        const currentCount = list.querySelectorAll('.ge-question-block-row').length;
+        const newIdx = currentCount;
+        const row = document.createElement('div');
+        row.className = 'ge-question-block-row p-3 rounded-xl bg-slate-900/80 border border-slate-800/80 space-y-2.5';
+        row.dataset.questionIdx = String(newIdx);
+        row.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 ge-question-row-label">Question #${newIdx + 1}</span>
+            <button type="button" class="ge-delete-question-row-btn text-rose-400 hover:text-rose-300 text-xs font-bold px-1.5 py-0.5 rounded transition cursor-pointer flex items-center gap-1" title="Remove this question">
+              <span>✕</span> Remove
+            </button>
+          </div>
+          <div class="space-y-1">
+            <label for="ge-rule-question-${newIdx}" class="text-[11px] text-slate-400 font-semibold block">Quick Check Question</label>
+            <input type="text" id="ge-rule-question-${newIdx}" class="ge-rule-question-input quiz-input text-xs w-full" placeholder="e.g. Look! The monkeys _____ the tall tree!">
+          </div>
+          <div class="space-y-1">
+            <div class="flex items-center justify-between">
+              <label class="text-[10px] text-slate-400 font-semibold block">Practice Options (3 Choices)</label>
+              <span class="text-[9px] text-slate-500">Option 1 is correct answer; options are placed randomly during student practice (no coins awarded)</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div class="space-y-1">
+                <label for="ge-rule-answer-${newIdx}" class="text-[10px] text-cyan-300 font-bold block flex items-center gap-1">
+                  <span>✅</span> Correct Answer *
+                </label>
+                <input type="text" id="ge-rule-answer-${newIdx}" class="ge-rule-answer-input quiz-input text-xs w-full border-cyan-500/50" placeholder="e.g. are climbing">
+              </div>
+              <div class="space-y-1">
+                <label for="ge-rule-opt2-${newIdx}" class="text-[10px] text-rose-300 font-bold block flex items-center gap-1">
+                  <span>❌</span> Wrong Option 2
+                </label>
+                <input type="text" id="ge-rule-opt2-${newIdx}" class="ge-rule-opt2-input quiz-input text-xs w-full" placeholder="e.g. climbs">
+              </div>
+              <div class="space-y-1">
+                <label for="ge-rule-opt3-${newIdx}" class="text-[10px] text-rose-300 font-bold block flex items-center gap-1">
+                  <span>❌</span> Wrong Option 3
+                </label>
+                <input type="text" id="ge-rule-opt3-${newIdx}" class="ge-rule-opt3-input quiz-input text-xs w-full" placeholder="e.g. is climbing">
+              </div>
+            </div>
+          </div>
+        `;
+        list.appendChild(row);
+        row.querySelector('.ge-rule-question-input')?.focus();
+      });
+
+      // Delegate remove question block row
+      modal.querySelector('#ge-questions-list')?.addEventListener('click', (e) => {
+        const removeBtn = e.target.closest('.ge-delete-question-row-btn');
+        if (!removeBtn) return;
+        const row = removeBtn.closest('.ge-question-block-row');
+        if (row) {
+          row.remove();
+          // Renumber remaining rows
+          const list = modal.querySelector('#ge-questions-list');
+          list?.querySelectorAll('.ge-question-block-row').forEach((r, i) => {
+            r.dataset.questionIdx = String(i);
+            const lbl = r.querySelector('.ge-question-row-label');
+            if (lbl) lbl.textContent = `Question #${i + 1}`;
+          });
+        }
+      });
+
       // Rename Deck
       modal.querySelector('#ge-save-deck-name-btn').onclick = async () => {
         const newName = modal.querySelector('#ge-deck-name-input').value.trim();
@@ -3552,10 +3815,6 @@
         const sentence = modal.querySelector('#ge-rule-sentence').value.trim();
         const clue = modal.querySelector('#ge-rule-clue').value.trim();
         const img = modal.querySelector('#ge-rule-image').value.trim();
-        const question = modal.querySelector('#ge-rule-question').value.trim();
-        const answer = modal.querySelector('#ge-rule-answer').value.trim();
-        const opt2 = modal.querySelector('#ge-rule-opt2')?.value.trim() || '';
-        const opt3 = modal.querySelector('#ge-rule-opt3')?.value.trim() || '';
 
         // Collect all mistake examples
         const mistakePairs = [];
@@ -3583,14 +3842,59 @@
           return;
         }
 
-        // Build 3 distinct choices without placeholders
-        const quizOptions = [answer];
-        if (opt2) quizOptions.push(opt2);
-        if (opt3) quizOptions.push(opt3);
-        if (quizOptions.length === 1 && answer) {
-          quizOptions.push(answer.endsWith('s') ? answer.slice(0, -1) : answer + 's');
-          quizOptions.push('not ' + answer);
+        // Collect all question blocks
+        const questionBlocks = [];
+        const qRows = modal.querySelectorAll('.ge-question-block-row');
+        qRows.forEach(row => {
+          const qText = row.querySelector('.ge-rule-question-input')?.value.trim() || '';
+          const qAns = row.querySelector('.ge-rule-answer-input')?.value.trim() || '';
+          const qO2 = row.querySelector('.ge-rule-opt2-input')?.value.trim() || '';
+          const qO3 = row.querySelector('.ge-rule-opt3-input')?.value.trim() || '';
+          if (qText || qAns || qO2 || qO3) {
+            const qOpts = [qAns];
+            if (qO2) qOpts.push(qO2);
+            if (qO3) qOpts.push(qO3);
+            if (qOpts.length === 1 && qAns) {
+              qOpts.push(qAns.endsWith('s') ? qAns.slice(0, -1) : qAns + 's');
+              qOpts.push('not ' + qAns);
+            }
+            questionBlocks.push({
+              question: qText || 'Complete the sentence:',
+              answer: qAns || 'Option 1',
+              options: qOpts,
+              opt2: qO2,
+              opt3: qO3
+            });
+          }
+        });
+
+        if (!questionBlocks.length) {
+          const singleQ = modal.querySelector('#ge-rule-question')?.value.trim() || '';
+          const singleAns = modal.querySelector('#ge-rule-answer')?.value.trim() || '';
+          const singleO2 = modal.querySelector('#ge-rule-opt2')?.value.trim() || '';
+          const singleO3 = modal.querySelector('#ge-rule-opt3')?.value.trim() || '';
+          const qOpts = [singleAns || 'Option 1'];
+          if (singleO2) qOpts.push(singleO2);
+          if (singleO3) qOpts.push(singleO3);
+          if (qOpts.length === 1 && singleAns) {
+            qOpts.push(singleAns.endsWith('s') ? singleAns.slice(0, -1) : singleAns + 's');
+            qOpts.push('not ' + singleAns);
+          }
+          questionBlocks.push({
+            question: singleQ || 'Complete the sentence:',
+            answer: singleAns || 'Option 1',
+            options: qOpts,
+            opt2: singleO2,
+            opt3: singleO3
+          });
         }
+
+        const primaryQuestion = questionBlocks[0];
+        const question = primaryQuestion.question;
+        const answer = primaryQuestion.answer;
+        const opt2 = primaryQuestion.opt2;
+        const opt3 = primaryQuestion.opt3;
+        const quizOptions = primaryQuestion.options;
 
         // Prepare saved word assignments with sub-word suffix support
         const savedWordAssignments = currentWordAssignments.map(item => {
@@ -3662,7 +3966,8 @@
             extra_mistakes: extraMistakes,
             quiz_question: question || 'Complete the sentence:',
             quiz_answer: answer || 'Option 1',
-            quiz_options: quizOptions
+            quiz_options: quizOptions,
+            quiz_questions: questionBlocks
           };
           deck.rules = rules;
           await window.saveOrUpdateGrammarDeck(deck);
@@ -3694,7 +3999,8 @@
             extra_mistakes: extraMistakes,
             quiz_question: question || 'Complete the sentence:',
             quiz_options: quizOptions,
-            quiz_answer: answer || 'Option 1'
+            quiz_answer: answer || 'Option 1',
+            quiz_questions: questionBlocks
           };
           rules.push(newRule);
           deck.rules = rules;

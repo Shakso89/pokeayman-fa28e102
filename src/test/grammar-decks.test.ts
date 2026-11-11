@@ -781,5 +781,15 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('ge-delete-mistake-row-btn');
     expect(js).toContain('extra_mistakes');
     expect(js).toContain('INCORRECT (${allMistakes.length})');
+
+    // 5. Multiple quick check questions and swapping in practice
+    expect(js).toContain('id="ge-add-question-row-btn"');
+    expect(js).toContain('id="ge-questions-list"');
+    expect(js).toContain('ge-question-block-row');
+    expect(js).toContain('ge-delete-question-row-btn');
+    expect(js).toContain('quiz_questions');
+    expect(js).toContain('gp-question-tabs');
+    expect(js).toContain('gp-swap-question-btn');
+    expect(js).toContain('switchToQuestion');
   });
 });

@@ -2510,7 +2510,21 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   color: #15803d !important;
 }
 
-/* 7. Practice Modal - Quick Check Bar */
+/* 7. Practice Modal - Quick Check Bar & Question Tabs */
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-question-tabs {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-swap-question-btn:not(.bg-cyan-400) {
+  color: #475569 !important;
+}
+
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-prev-question-btn,
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-next-question-btn {
+  color: #475569 !important;
+}
+
 :is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-quick-check-box {
   background: #ffffff !important;
   border-color: #cbd5e1 !important;
