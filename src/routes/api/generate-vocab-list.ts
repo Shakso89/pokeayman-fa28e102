@@ -56,7 +56,7 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
         }
 
         
-        // askGemini defined above
+        const askGemini = askSentenceModel;
 
         
         const extractKeywordsFromSentence = (sentence: string): string => {
@@ -352,8 +352,15 @@ Reply with valid JSON only in this exact format:
           const sentences = new Map<number, string>();
 
           const collectSentences = (parsed: unknown) => {
-            if (!Array.isArray(parsed)) return;
-            parsed.forEach((entry: any, position: number) => {
+            const list = Array.isArray(parsed)
+              ? parsed
+              : (parsed && typeof parsed === "object" && Array.isArray((parsed as any).items)
+                ? (parsed as any).items
+                : (parsed && typeof parsed === "object" && Array.isArray((parsed as any).sentences)
+                  ? (parsed as any).sentences
+                  : null));
+            if (!Array.isArray(list)) return;
+            list.forEach((entry: any, position: number) => {
               if (!entry || typeof entry !== "object") return;
               const numbered = Number(entry.i ?? entry.index ?? entry.n);
               let index =
@@ -473,14 +480,19 @@ For each item:
           });
 
           const parsed = text ? parseJson(text) : null;
-          const items = Array.isArray(parsed)
+          const photoList = Array.isArray(parsed)
             ? parsed
+            : (parsed && typeof parsed === "object" && Array.isArray((parsed as any).items)
+              ? (parsed as any).items
+              : (parsed && typeof parsed === "object" && Array.isArray((parsed as any).sentences)
+                ? (parsed as any).sentences
+                : []));
+          const items = photoList
                 .map((item: any) => ({
                   word: String(item.word || "").trim(),
                   sentence: String(item.sentence || "").trim().replace(/^["']|["']$/g, ""),
                 }))
-                .filter((item: any) => item.word && item.sentence && sentenceHasWord(item.sentence, item.word))
-            : [];
+                .filter((item: any) => item.word && item.sentence && sentenceHasWord(item.sentence, item.word));
 
           if (items.length === 0) {
             return Response.json(
@@ -494,8 +506,8 @@ For each item:
 
         return Response.json({ message: "Unsupported mode." }, { status: 400, headers: CORS });
         })();
-        } catch (err) {
-          const message = err instanceof SentenceAiError ? err.message : "Sentence generation failed. Please try again.";
+        } catch (err: any) {
+          const message = err instanceof SentenceAiError ? err.message : (typeof err?.message === "string" && !err.message.includes("ReferenceError") ? err.message : "Sentence generation failed. Please try again.");
           console.warn("[vocab] generation error:", err);
           return Response.json({ message }, { status: 502, headers: CORS });
         }
