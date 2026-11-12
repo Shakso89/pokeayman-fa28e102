@@ -939,42 +939,50 @@
           alts = [...rule.part_alternatives[pIdx]];
         }
 
-        const labelEl = pill.querySelector('.gp-pill-text');
-        const activeText = pill.dataset.activeVal || labelEl?.textContent?.trim() || '';
+        // Parse pre-calculated options list, or construct from initialVal + alternatives
+        let options = [];
+        try {
+          options = JSON.parse(pill.dataset.options || '[]');
+        } catch (_) {
+          options = [];
+        }
+        if (!Array.isArray(options) || options.length === 0) {
+          const initVal = pill.dataset.initialVal || pill.dataset.activeVal || '';
+          options = normalizeAlternatives([initVal, ...alts]);
+        }
+        // Always ensure initial and active values are in options
+        const activeText = pill.dataset.activeVal || pill.querySelector('.gp-pill-text')?.textContent?.trim() || '';
+        const initVal = pill.dataset.initialVal || '';
+        if (initVal && !options.some(o => o.toLowerCase() === initVal.toLowerCase())) {
+          options.unshift(initVal);
+        }
+        if (activeText && !options.some(o => o.toLowerCase() === activeText.toLowerCase())) {
+          options.push(activeText);
+        }
+        options = normalizeAlternatives(options);
 
-        if (activeText && !alts.includes(activeText)) {
-          alts.unshift(activeText);
+        if (options.length <= 1) return;
+
+        // Current active value index
+        let curIdx = options.findIndex(opt => opt.toLowerCase() === activeText.toLowerCase());
+        if (curIdx < 0) {
+          curIdx = options.findIndex(opt => activeText.toLowerCase().includes(opt.toLowerCase()) || opt.toLowerCase().includes(activeText.toLowerCase()));
+          if (curIdx < 0) curIdx = 0;
         }
 
-        if (alts.length <= 1) return;
-
-        alts = normalizeAlternatives(alts);
-
-        // If activeText is a multi-word blob containing multiple alternatives, isolate the current one
-        let currentChoice = activeText;
-        if (!alts.includes(currentChoice) && alts.length > 0) {
-          const match = alts.find(a => currentChoice.toLowerCase().includes(a.toLowerCase()));
-          currentChoice = match || alts[0];
-        }
-
-        if (currentChoice && !alts.includes(currentChoice)) {
-          alts.unshift(currentChoice);
-        }
-
-        if (alts.length <= 1) return;
-
-        // Auto-cycle in place: swap one at a time
-        const curIdx = alts.indexOf(currentChoice);
-        const nextIdx = (curIdx + 1) % alts.length;
-        const nextVal = alts[nextIdx];
+        // Auto-cycle in place: unlimited continuous loop
+        const nextIdx = (curIdx + 1) % options.length;
+        const nextVal = options[nextIdx];
 
         pill.dataset.activeVal = nextVal;
+        pill.dataset.options = JSON.stringify(options);
 
         // If the pill was split with a distinct suffix color, preserve segmentation
         const isSplit = pill.dataset.isSplit === 'true';
         const suffixText = pill.dataset.suffixText || '';
         const rootCls = pill.dataset.rootCls || '';
         const suffixCls = pill.dataset.suffixCls || '';
+        const labelEl = pill.querySelector('.gp-pill-text');
 
         if (isSplit && labelEl) {
           labelEl.innerHTML = renderSplitWordHtml(nextVal, suffixText, rootCls, suffixCls);
@@ -1453,8 +1461,10 @@
             renderedText = (displayWord !== phrase) ? escapeHtml(displayWord) : (pillInnerHtml || escapeHtml(phrase));
           }
 
+          const allPillOptions = normalizeAlternatives([displayWord, ...partAlts]);
+
           resultHtml.push(`
-            <span class="gp-subst-pill group/pill inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400 hover:bg-slate-800 transition cursor-pointer select-none ${cls} font-black relative align-baseline mx-0.5 shadow-sm active:scale-95" data-part-idx="${pColor}" data-active-val="${escapeHtml(displayWord)}" data-is-split="${hasSplit ? 'true' : 'false'}" data-suffix-text="${escapeHtml(splitSuffix)}" data-root-cls="${firstRootCls}" data-suffix-cls="${firstSuffixCls}" title="Click to cycle word">
+            <span class="gp-subst-pill group/pill inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400 hover:bg-slate-800 transition cursor-pointer select-none ${cls} font-black relative align-baseline mx-0.5 shadow-sm active:scale-95" data-part-idx="${pColor}" data-active-val="${escapeHtml(displayWord)}" data-initial-val="${escapeHtml(displayWord)}" data-options="${escapeHtml(JSON.stringify(allPillOptions))}" data-is-split="${hasSplit ? 'true' : 'false'}" data-suffix-text="${escapeHtml(splitSuffix)}" data-root-cls="${firstRootCls}" data-suffix-cls="${firstSuffixCls}" title="Click to cycle word">
               <span class="gp-pill-text">${renderedText}</span>
               <svg class="w-3.5 h-3.5 text-slate-400 group-hover/pill:text-amber-400 transition shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
             </span>${lastPunct ? `<span class="text-white font-extrabold">${escapeHtml(lastPunct)}</span>` : ''}

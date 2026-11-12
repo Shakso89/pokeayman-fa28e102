@@ -35600,7 +35600,8 @@ function openVocabListEditor(listId, listName) {
     </div>
     <div class="vocab-editor-content space-y-5">
       <div class="vocab-editor-form"><h3 class="mb-3">Add word</h3>
-        <div class="ve-fields grid grid-cols-1 sm:grid-cols-2 gap-3"><label>Word<input id="new-vocab-word" type="text" placeholder="Apple" class="vocab-editor-input w-full" required></label><label>Example sentence<input id="new-vocab-sentence" type="text" placeholder="I eat an apple every day." class="vocab-editor-input w-full"></label></div>
+        <div class="ve-fields grid grid-cols-1 sm:grid-cols-2 gap-3"><label>Word<input id="new-vocab-word" type="text" placeholder="Apple" class="vocab-editor-input w-full" required autocomplete="off"></label><label>Example sentence<input id="new-vocab-sentence" type="text" placeholder="I eat an apple every day." class="vocab-editor-input w-full"></label></div>
+        <div id="ve-matches-container" class="mt-2.5 hidden"></div>
         <details class="ve-photo-options"><summary>Word image</summary><div><label class="text-xs block mb-2">Search Images & Clipart</label><div class="flex flex-col sm:flex-row gap-2 mb-3"><input id="add-vocab-image-search" type="text" placeholder="Search photos or clipart" aria-label="Photo search" class="vocab-editor-input flex-1"><div class="flex gap-2"><button id="add-vocab-copy-word-btn" type="button" class="vocab-editor-secondary" title="Search photos using the word" aria-label="Search photos using the word">↳</button><button id="add-vocab-image-search-btn" type="button" class="vocab-editor-secondary">Search images</button></div></div><div id="add-vocab-image-results" class="hidden"></div><input id="new-vocab-image" type="url" placeholder="Paste image URL" aria-label="Image URL" class="vocab-editor-input w-full"></div></details>
         <button id="add-vocab-word-btn" type="button" class="vocab-editor-primary" aria-label="Add word to this list">Add to list</button>
       </div>
@@ -35889,6 +35890,150 @@ function openVocabListEditor(listId, listName) {
   const addWordResultsContainer = modal.querySelector('#add-vocab-image-results');
   const addWordInput = modal.querySelector('#new-vocab-word');
   const addWordCopyBtn = modal.querySelector('#add-vocab-copy-word-btn');
+  const matchesContainer = modal.querySelector('#ve-matches-container');
+  let currentMatches = [];
+  let currentMatchIdx = 0;
+
+  function renderMatchCard() {
+    if (!matchesContainer) return;
+    if (!currentMatches.length) {
+      matchesContainer.classList.add('hidden');
+      matchesContainer.innerHTML = '';
+      return;
+    }
+    matchesContainer.classList.remove('hidden');
+    const match = currentMatches[currentMatchIdx];
+
+    matchesContainer.innerHTML = `
+      <div class="p-3 rounded-xl bg-slate-900/90 border border-amber-400/50 shadow-md text-xs text-slate-200">
+        <div class="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-slate-800">
+          <div class="flex items-center gap-1.5 font-bold text-amber-300">
+            <span class="text-sm">✦</span>
+            <span>Found in other lists (${currentMatches.length})</span>
+          </div>
+          ${currentMatches.length > 1 ? `
+            <div class="flex items-center gap-1.5">
+              <button type="button" class="ve-match-prev-btn px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition cursor-pointer" title="Previous list">‹</button>
+              <span class="text-[11px] font-bold text-amber-400 px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/20 select-none">
+                ${currentMatchIdx + 1} / ${currentMatches.length}
+              </span>
+              <button type="button" class="ve-match-next-btn px-2 py-0.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition cursor-pointer" title="Next list">›</button>
+              <button type="button" class="ve-match-cycle-btn flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-[11px] border border-amber-400/30 transition cursor-pointer" title="Cycle to next list option">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Cycle
+              </button>
+            </div>
+          ` : ''}
+        </div>
+        <div class="flex items-center gap-3">
+          ${match.image ? `
+            <img src="${escape(match.image)}" alt="${escape(match.word)}" class="ve-match-thumb w-12 h-12 rounded-lg object-cover bg-slate-950 border border-slate-700/80 shrink-0 cursor-pointer hover:ring-2 hover:ring-amber-400 transition" title="Click to cycle option" />
+          ` : `
+            <div class="w-12 h-12 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500 text-[11px] shrink-0 font-bold select-none">No pic</div>
+          `}
+          <div class="flex-1 min-w-0 space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-semibold text-slate-400">List:</span>
+              <span class="font-bold text-amber-200 truncate bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60 max-w-[220px]" title="${escape(match.listName)}">${escape(match.listName)}</span>
+            </div>
+            ${match.sentence ? `
+              <p class="text-xs text-slate-300 italic truncate" title="${escape(match.sentence)}">"${escape(match.sentence)}"</p>
+            ` : '<p class="text-xs text-slate-500 italic">No sentence provided</p>'}
+          </div>
+          <div class="shrink-0 flex items-center gap-1.5">
+            <button type="button" class="ve-copy-match-btn px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5" title="Copy this picture and sentence into form">
+              <span>⚡ Copy to form</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const nextBtn = matchesContainer.querySelector('.ve-match-next-btn');
+    const prevBtn = matchesContainer.querySelector('.ve-match-prev-btn');
+    const cycleBtn = matchesContainer.querySelector('.ve-match-cycle-btn');
+    const thumbImg = matchesContainer.querySelector('.ve-match-thumb');
+    const copyBtn = matchesContainer.querySelector('.ve-copy-match-btn');
+
+    const cycleNext = () => {
+      currentMatchIdx = (currentMatchIdx + 1) % currentMatches.length;
+      renderMatchCard();
+    };
+    const cyclePrev = () => {
+      currentMatchIdx = (currentMatchIdx - 1 + currentMatches.length) % currentMatches.length;
+      renderMatchCard();
+    };
+
+    nextBtn?.addEventListener('click', cycleNext);
+    cycleBtn?.addEventListener('click', cycleNext);
+    thumbImg?.addEventListener('click', cycleNext);
+    prevBtn?.addEventListener('click', cyclePrev);
+
+    copyBtn?.addEventListener('click', () => {
+      if (match.sentence) {
+        modal.querySelector('#new-vocab-sentence').value = match.sentence;
+      }
+      if (match.image) {
+        modal.querySelector('#new-vocab-image').value = match.image;
+        const photoDetails = modal.querySelector('.ve-photo-options');
+        if (photoDetails) photoDetails.open = true;
+      }
+      toast(`Copied from "${match.listName}"!`);
+    });
+  }
+
+  function searchMatches(word) {
+    if (!word || !word.trim()) {
+      currentMatches = [];
+      currentMatchIdx = 0;
+      renderMatchCard();
+      return;
+    }
+    const clean = word.trim().toLowerCase();
+    const currId = normalizeVocabId(canonicalListId);
+    const matches = [];
+
+    allData.forEach(item => {
+      if (item.type !== 'vocab_word') return;
+      const w = String(item.vocab_word || item.word || '').trim();
+      if (w.toLowerCase() !== clean) return;
+      const itemParentId = normalizeVocabId(item.vocab_list_id || item.list_id || item.vocabulary_list_id);
+      if (itemParentId && itemParentId === currId) return;
+
+      let parentListName = item.vocab_list_name || '';
+      if (!parentListName) {
+        const parentList = allData.find(r => (r.type === 'vocab_list' || r.type === 'vocabulary_list') && normalizeVocabId(r.vocab_list_id || r.list_id || r.id) === itemParentId);
+        if (parentList) parentListName = parentList.vocab_list_name || parentList.name || '';
+      }
+
+      const img = String(item.vocab_image || item.image || '').trim();
+      const snt = String(item.vocab_sentence || item.sentence || '').trim();
+      if (img || snt) {
+        const dup = matches.some(m => m.image === img && m.sentence === snt && m.listName === parentListName);
+        if (!dup) {
+          matches.push({
+            word: w,
+            image: img,
+            sentence: snt,
+            listName: parentListName || 'Other List',
+            listId: itemParentId
+          });
+        }
+      }
+    });
+
+    currentMatches = matches;
+    currentMatchIdx = 0;
+    renderMatchCard();
+  }
+
+  let matchDebounceTimer = null;
+  addWordInput?.addEventListener('input', () => {
+    clearTimeout(matchDebounceTimer);
+    matchDebounceTimer = setTimeout(() => {
+      searchMatches(addWordInput.value);
+    }, 120);
+  });
   
   addWordCopyBtn.addEventListener('click', e => {
     e.preventDefault();
@@ -36264,6 +36409,12 @@ function openVocabListEditor(listId, listName) {
     modal.querySelector('#new-vocab-image').value = '';
     addWordSearchInput.value = '';
     addWordResultsContainer.classList.add('hidden');
+    if (matchesContainer) {
+      matchesContainer.classList.add('hidden');
+      matchesContainer.innerHTML = '';
+    }
+    currentMatches = [];
+    currentMatchIdx = 0;
     toast(`Added "${word}"!`);
     renderWordsInModal();
     try { renderVocabLists(); renderTeacherOwnedVocabLists(); } catch (error) { console.warn('Could not refresh vocabulary list cards', error); }
