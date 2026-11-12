@@ -803,7 +803,7 @@
     accountBadge.classList.toggle('is-school-manager', isSchoolManager);
     const credits = $('credit-balance-nav')?.textContent?.trim();
     $('ts-role').textContent = isAdmin
-      ? 'Admin · Unlimited credits'
+      ? 'Admin'
       : (isSchoolManager
           ? `School Manager · ${credits ? `${credits} credits` : '0 credits'}`
           : (credits ? `Teacher · ${credits} credits` : 'Teacher'));
