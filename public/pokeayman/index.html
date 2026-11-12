@@ -35941,8 +35941,9 @@ function openVocabListEditor(listId, listName) {
             ` : '<p class="text-xs text-slate-500 italic">No sentence provided</p>'}
           </div>
           <div class="shrink-0 flex items-center gap-1.5">
-            <button type="button" class="ve-copy-match-btn px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5" title="Copy this picture and sentence into form">
+            <button type="button" class="ve-copy-match-btn px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition cursor-pointer shadow-sm flex items-center gap-1.5" title="Copy this picture and sentence into form (costs 1 credit)">
               <span>⚡ Copy to form</span>
+              <span class="text-[10px] font-bold opacity-70 bg-slate-900/20 px-1.5 py-0.5 rounded-md">1 💰</span>
             </button>
           </div>
         </div>
@@ -35969,7 +35970,12 @@ function openVocabListEditor(listId, listName) {
     thumbImg?.addEventListener('click', cycleNext);
     prevBtn?.addEventListener('click', cyclePrev);
 
-    copyBtn?.addEventListener('click', () => {
+    copyBtn?.addEventListener('click', async () => {
+      const COPY_CREDIT_COST = 1;
+      const paid = typeof deductTeacherCredits === 'function'
+        ? await deductTeacherCredits(COPY_CREDIT_COST)
+        : false;
+      if (!paid) return;
       if (match.sentence) {
         modal.querySelector('#new-vocab-sentence').value = match.sentence;
       }
@@ -35978,7 +35984,7 @@ function openVocabListEditor(listId, listName) {
         const photoDetails = modal.querySelector('.ve-photo-options');
         if (photoDetails) photoDetails.open = true;
       }
-      toast(`Copied from "${match.listName}"!`);
+      toast(`Copied from "${match.listName}"! (−1 credit)`);
     });
   }
 

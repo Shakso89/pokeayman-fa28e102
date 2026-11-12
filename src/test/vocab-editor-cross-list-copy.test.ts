@@ -39,4 +39,14 @@ describe('Vocabulary Editor Cross-List Word Copy with Unlimited Cycling', () => 
     // 0 -> 1 -> 0 -> 1 -> 0 -> 1 -> 0
     expect(history).toEqual([1, 0, 1, 0, 1, 0]);
   });
+
+  it('deducts 1 credit when copying a word from another list', () => {
+    // The copy button handler must call deductTeacherCredits before copying
+    expect(html).toContain('const COPY_CREDIT_COST = 1;');
+    expect(html).toContain('await deductTeacherCredits(COPY_CREDIT_COST)');
+    // The button must show the credit cost badge
+    expect(html).toContain('1 💰');
+    // The toast must confirm the deduction
+    expect(html).toContain('(−1 credit)');
+  });
 });
