@@ -4454,7 +4454,7 @@
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
                 <span>AI Recommendations for <span id="g-ai-review-topic-name" class="text-purple-300">Topic</span></span>
               </h4>
-              <p class="text-xs text-slate-400 mt-0.5">Select how many rules you want in this deck (5 credits per rule):</p>
+              <p class="text-xs text-slate-400 mt-0.5">Grammar focus: <span id="g-ai-review-focus" class="text-emerald-300 font-semibold">detecting...</span> &middot; select 2-5 rules (5 credits each)</p>
             </div>
           </div>
 
@@ -4516,6 +4516,7 @@
     const errorBanner = modal.querySelector('#g-ai-error-banner');
     const reviewError = modal.querySelector('#g-ai-review-error');
     const reviewTopicName = modal.querySelector('#g-ai-review-topic-name');
+    const reviewFocusEl = modal.querySelector('#g-ai-review-focus');
     const rulesListEl = modal.querySelector('#g-ai-rules-list');
     const costPill = modal.querySelector('#g-ai-review-cost-pill');
     const confirmBtn = modal.querySelector('#g-ai-review-confirm');
@@ -4525,6 +4526,8 @@
     let candidateRules = [];
     let selectedIndices = new Set([0, 1, 2]); // default to AI Recommended 3 rules
     let finalDeckName = '';
+    let serverRecommendedCount = 0;
+    let detectedFocus = '';
 
     const updateProgress = (pct, step, hint) => {
       if (progressFill) progressFill.style.width = `${pct}%`;
@@ -4696,6 +4699,7 @@
             candidateRules = data.rules;
             if (data.deck_name) finalDeckName = data.deck_name;
             if (data.recommended_count) serverRecommendedCount = Number(data.recommended_count);
+            if (data.grammar_focus) detectedFocus = String(data.grammar_focus);
           }
         }
       } catch (err) {
@@ -4704,7 +4708,7 @@
 
       // 2. High-quality pedagogical fallback if server did not return rules
       if (!candidateRules.length) {
-        candidateRules = synthesizeGrammarRules(topic, level, 5);
+        candidateRules = synthesizeGrammarRules(topic, level, 0);
       }
 
       updateProgress(65, 'Step 2/2: Finding matching stock photos...', 'Curating visual prompts for each rule...');
@@ -4744,6 +4748,7 @@
         reviewWrap.style.display = 'block';
 
         if (reviewTopicName) reviewTopicName.textContent = finalDeckName || topic;
+        if (reviewFocusEl) reviewFocusEl.textContent = detectedFocus || finalDeckName || topic;
 
         // Auto-select rules based on topic (from server recommended_count or candidate rules count)
         const defaultCount = Math.min(serverRecommendedCount || 3, candidateRules.length);
@@ -4834,8 +4839,21 @@
 
   // PEDAGOGICAL GRAMMAR SYNTHESIZER
   // ==========================================
+  function normalizeGrammarTopic(topic) {
+    const aliases = {
+      continues: 'continuous', continous: 'continuous', contineous: 'continuous', continuos: 'continuous',
+      progresive: 'progressive', progessive: 'progressive', presnt: 'present', preent: 'present',
+      simle: 'simple', smple: 'simple', futor: 'future', futre: 'future', pas: 'past',
+      comperative: 'comparative', comparitive: 'comparative', superlativ: 'superlative',
+      modle: 'modal', artical: 'article', prepositon: 'preposition', questins: 'questions',
+    };
+    return String(topic || '')
+      .toLowerCase()
+      .replace(/[a-z]+/g, (word) => aliases[word] || word);
+  }
+
   function synthesizeGrammarRules(topic, level, requestedCount = 0) {
-    const t = topic.toLowerCase();
+    const t = normalizeGrammarTopic(topic);
     const rules = [];
 
     // Check for specific Wh- question components
@@ -4979,12 +4997,97 @@
     if (!rules.length) {
       const isFuture = t.includes('future') || t.includes('will') || t.includes('going to') || t.includes('tomorrow');
       const isPast = t.includes('past') || t.includes('yesterday') || t.includes('did');
-      const isContinuous = t.includes('continuous') || t.includes('progressive') || (t.includes('ing') && !isFuture);
+      const isContinuous = t.includes('continuous') || t.includes('progressive') || t.includes('continue') || (t.includes('ing') && !isFuture);
       const isPresentSimple = t.includes('simple present') || t.includes('present simple') || t.includes('habit') || t.includes('routine');
       const isComparative = t.includes('comparative') || t.includes('than') || t.includes('superlative');
       const isModal = t.includes('can') || t.includes('modal') || t.includes('should') || t.includes('must');
 
-      if (isFuture) {
+      let continuousAdded = false;
+      if (isPast && isContinuous) {
+        rules.push({
+          rule_id: 'rule-gen-pc-1-' + Date.now(),
+          title: 'Past Continuous · Affirmative (was / were + Verb-ing)',
+          formula: 'Subject + was / were + Verb-ing',
+          sentence: 'At eight o\'clock last night, the twins were building a cardboard castle.',
+          context_clue: 'was/were + verb-ing for a past action in progress.',
+          mistake_bad: 'Last night, the twins was building a castle.',
+          mistake_good: 'Last night, the twins were building a castle.',
+          quiz_question: 'While I was cooking, my sister _____ (paint) a picture.',
+          quiz_options: ['was painting', 'were painting', 'painted'],
+          quiz_answer: 'was painting',
+          image: 'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-pc-2-' + Date.now(),
+          title: 'Past Continuous · Negative (was not / were not)',
+          formula: 'Subject + was not / were not + Verb-ing',
+          sentence: 'The children were not listening while the guide explained the fossils.',
+          context_clue: 'Put not after was/were, never did not.',
+          mistake_bad: 'The children did not listening to the guide.',
+          mistake_good: 'The children were not listening to the guide.',
+          quiz_question: 'At noon, the chef _____ (not bake) any bread.',
+          quiz_options: ['was not baking', 'did not baking', 'were not baking'],
+          quiz_answer: 'was not baking',
+          image: 'https://cdn.pixabay.com/photo/2017/08/30/01/05/milky-way-2695569_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-pc-3-' + Date.now(),
+          title: 'Past Continuous · Question (Was / Were ... ?)',
+          formula: 'Was / Were + Subject + Verb-ing ?',
+          sentence: 'Were the dolphins jumping beside the boat when you saw them?',
+          context_clue: 'Swap was/were and the subject to ask.',
+          mistake_bad: 'Did the dolphins were jumping beside the boat?',
+          mistake_good: 'Were the dolphins jumping beside the boat?',
+          quiz_question: '_____ you sleeping when the storm started?',
+          quiz_options: ['Were', 'Did', 'Was'],
+          quiz_answer: 'Were',
+          image: 'https://cdn.pixabay.com/photo/2016/11/29/05/45/astronomy-1867616_640.jpg'
+        });
+        continuousAdded = true;
+      } else if (isContinuous) {
+        rules.push({
+          rule_id: 'rule-gen-prc-1-' + Date.now(),
+          title: 'Present Continuous · Affirmative (am / is / are + Verb-ing)',
+          formula: 'Subject + am / is / are + Verb-ing',
+          sentence: 'Right now, the little chef is decorating a giant carrot cake.',
+          context_clue: 'am/is/are + verb-ing for actions happening now.',
+          mistake_bad: 'Right now, the little chef decorating a cake.',
+          mistake_good: 'Right now, the little chef is decorating a cake.',
+          quiz_question: 'Look! The kittens _____ (chase) a red balloon.',
+          quiz_options: ['are chasing', 'is chasing', 'chase'],
+          quiz_answer: 'are chasing',
+          image: 'https://cdn.pixabay.com/photo/2016/11/14/05/15/boy-1822614_640.jpg'
+        });
+        rules.push({
+          rule_id: 'rule-gen-prc-2-' + Date.now(),
+          title: 'Present Continuous · Negative (am not / is not / are not)',
+          formula: 'Subject + am / is / are + not + Verb-ing',
+          sentence: 'The parrot is not singing because it is eating a juicy mango.',
+          context_clue: 'Put not after the be-verb.',
+          mistake_bad: 'The parrot not is singing today.',
+          mistake_good: 'The parrot is not singing today.',
+          quiz_question: 'The baby _____ (not sleep) at the moment.',
+          quiz_options: ['is not sleeping', 'not is sleeping', 'does not sleeping'],
+          quiz_answer: 'is not sleeping',
+          image: 'https://cdn.pixabay.com/photo/2019/06/13/09/41/business-4271251_640.png'
+        });
+        rules.push({
+          rule_id: 'rule-gen-prc-3-' + Date.now(),
+          title: 'Present Continuous · Question (Am / Is / Are ... ?)',
+          formula: 'Am / Is / Are + Subject + Verb-ing ?',
+          sentence: 'Is the gardener watering the sunflowers near the fence?',
+          context_clue: 'Invert the be-verb to ask a question.',
+          mistake_bad: 'Does the gardener watering the sunflowers?',
+          mistake_good: 'Is the gardener watering the sunflowers?',
+          quiz_question: '_____ the students drawing dinosaurs in their notebooks?',
+          quiz_options: ['Are', 'Do', 'Is'],
+          quiz_answer: 'Are',
+          image: 'https://cdn.pixabay.com/photo/2015/07/17/22/43/student-849825_640.jpg'
+        });
+        continuousAdded = true;
+      }
+
+      if (!continuousAdded && isFuture) {
         rules.push({
           rule_id: 'rule-gen-1-' + Date.now(),
           title: 'Simple Future (will + Base Verb)',
@@ -5066,7 +5169,9 @@
         });
       } else
 
-      if (isPast) {
+      if (continuousAdded) {
+        // continuous deck already built
+      } else if (isPast) {
         rules.push({
           rule_id: 'rule-gen-1-' + Date.now(),
           title: 'Past Regular Verbs (-ed)',

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { SentenceAiError, askSentenceModel, normalizeWord, sentenceHasWord, callGemini } from "@/lib/vocab-sentences";
 import { matchVocabularyMedia } from "@/lib/vocab-media";
 import { isMediaType, searchStockMedia } from "@/lib/stock-media";
+import { buildGrammarPlan, formulaSegments, quizDistractors, slotProblems } from "@/lib/grammar-blueprint";
 
 const requests = new Map<string, { count: number; reset: number }>();
 
@@ -88,79 +89,57 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
         if (input?.mode === "grammar") {
           const topic = String(input.topic || "").trim().slice(0, 150);
           const level = String(input.level || "Beginner").trim();
-          const requestedCount = Number(input.ruleCount) || 0;
           if (!topic) {
             return Response.json({ message: "Please provide a grammar topic." }, { status: 400, headers: CORS });
           }
 
-        // ── Auto-select the rule count from the topic itself + the search that was made ──
-        const tLow = topic.toLowerCase();
-        const searchWords = (input.search && typeof input.search === 'string' ? input.search : '')
-          .toLowerCase()
-          .split(/[^a-z0-9]+/)
-          .filter(Boolean);
-        const whWords = ['what colour', 'what color', 'what', 'where', 'when', 'why', 'who', 'which', 'how', 'how many', 'how much'];
-        const isTense = /\b(future|past|present|continuous|progressive|simple|perfect)\b/i.test(tLow);
-        const isComparative = /\b(comparative|superlative|more|most|-er\b|-est\b|than)\b/i.test(tLow);
-        const isModal = /\b(can|could|should|must|may|might|modal|would|shall)\b/i.test(tLow);
-        const isArticle = /\b(a |an |the |article|determiner)\b/i.test(tLow);
-        const isPreposition = /\b(preposition|in |on |at |under|between|beside|behind|with)\b/i.test(tLow);
-        const isWhQuestion = whWords.some((w) => tLow.includes(w)) || searchWords.some((w) => whWords.includes(w));
-        let autoCount = requestedCount;
-        if (requestedCount >= 2 && requestedCount <= 8) {
-          // Respect the teacher's explicit count when it falls in the safe band.
-        } else if (isWhQuestion) {
-          autoCount = Math.max(2, Math.min(whWords.length + searchWords.length, 6));
-        } else if (isTense) {
-          autoCount = 4; // affirmative, negative, question, extension
-        } else if (isComparative) {
-          autoCount = 3; // short adj, long adj, irregular
-        } else if (isModal) {
-          autoCount = 3; // affirmative, negative, question
-        } else if (isArticle || isPreposition) {
-          autoCount = 3;
-        } else {
-          autoCount = 4;
-        }
+          // ── The grammar topic owns the rules (blueprint), the model only fills examples ──
+          const plan = buildGrammarPlan(topic, typeof input.search === "string" ? input.search : "");
+          const autoCount = plan.count;
 
-        const structureGuide =
-          isWhQuestion
-            ? 'Generate exactly ' + autoCount + ' rules — one rule per question word. Each rule teaches how to form a question with that specific question word.'
-            : 'Generate exactly ' + autoCount + ' distinct, pedagogically ordered rules for "' + topic + '". Start with the most fundamental pattern, then progress to negative, question, and extension forms.';
+          const slotList = plan.slots
+            .map((s, i) => `${i + 1}. ${s.title}\n   formula: ${s.formula}\n   focus: ${s.hint}`)
+            .join("\n");
 
-        const prompt = String.raw`You are an expert ESL/EFL curriculum designer creating a deterministic Grammar Pattern Deck for young elementary students (Target Level: ${level}).
+          const prompt = `You are an expert ESL/EFL grammar author writing one deck for young learners (ages 7-12, level: ${level}).
 
-TOPIC: "${topic}"
-SEARCH WORDS: ${input.search ? input.search : 'none'}
+GRAMMAR FOCUS: ${plan.displayName}
+TEACHER'S TOPIC: "${topic}"
 
-RULES (deterministic):
-- DIVERSITY AND CREATIVITY REQUIREMENT: Every rule must have a completely unique, vivid, age-appropriate example sentence featuring distinct characters, animals, or locations.
-- Generate exactly ${autoCount} rules. One per question word when the topic is a Wh- question; otherwise teach the topic in this fixed order:
-  Rule 1: Affirmative / Core Pattern   Rule 2: Negative Form   Rule 3: Question / Inversion   Rule 4: Extension (spelling, irregulars, time expressions)
-- If the topic is a Wh- question (what/where/when/why/who/how), each rule must teach ONE question word only — never reuse the same word.
-- NEVER add rules for a different topic. Do not "improve" the topic.
-- If the topic is Future, Past, Present, Continuous, Comparative, Modal, Article or Preposition, every formula/sentence/quiz must teach ONLY that topic.
+HARD RULES
+1. Every rule practises ${plan.displayName} ONLY. Never mix in another tense, aspect, or structure.
+2. Write exactly ${autoCount} rules, in the same order as the SLOTS below.
+3. Copy each slot's formula character-for-character into "formula". Do not invent a different formula.
+4. The example sentence must visibly contain that slot's target structure.
+5. Each sentence is 6-12 words, one concrete scene, and every rule uses a different character, animal, or place.
+6. The quiz blank tests exactly that slot's structure, with the base verb in parentheses.
 
-FORMAT (repeat exactly per rule):
-- title: a short title matching the topic
-- formula: a single line with + separators, e.g. "Subject + will + Base Verb"
-- formula_parts: [{ name, words, alternatives: [2-4] }]
-- sentence: one vivid, concrete, age-appropriate sentence (ages 7-12)
-- context_clue: 3-7 word tip
-- mistake_bad: realistic student error for THIS rule
-- mistake_good: the corrected version
-- quiz_question: fill-in-the-blank with the base verb in parentheses
-- quiz_options: exactly 3 distinct choices
-- quiz_answer: must be one of quiz_options
-- words_blue / words_amber / words_green: exact words from the sentence matching formula parts 1/2/3
-- image_keywords: ONE concrete noun (1-2 words)
+SLOTS
+${slotList}
 
-Reply with valid JSON only, no markdown, no explanation.
+Reply with JSON only - no markdown, no commentary:
 {
-  "deck_name": "${topic}",
-  "recommended_count": ${autoCount},
-  "rules": [...]
+  "deck_name": "${plan.displayName}",
+  "rules": [
+    {
+      "title": "short title for this slot",
+      "formula": "copy the slot formula here",
+      "formula_parts": [{ "name": "one formula part", "words": "the exact words from the sentence", "alternatives": ["2-3 swaps"] }],
+      "sentence": "example sentence using this grammar",
+      "context_clue": "3-7 word tip",
+      "mistake_bad": "a realistic wrong sentence for this slot",
+      "mistake_good": "the corrected sentence",
+      "quiz_question": "fill-in-the-blank with (base verb)",
+      "quiz_options": ["3", "distinct", "choices"],
+      "quiz_answer": "must be one of quiz_options",
+      "words_blue": "words from the sentence for part 1",
+      "words_amber": "words from the sentence for part 2",
+      "words_green": "words from the sentence for part 3",
+      "image_keywords": "one concrete noun"
+    }
+  ]
 }`;
+
           try {
             const rawText = await callGemini({
               contents: [{ parts: [{ text: prompt }] }],
@@ -171,6 +150,78 @@ Reply with valid JSON only, no markdown, no explanation.
 
             if (rules.length === 0) {
               throw new Error("No rules returned by AI model.");
+            }
+
+            // ── Blueprint gate: an off-topic rule may never reach a deck ──
+            const collectOffTopic = () =>
+              plan.slots
+                .map((blueprint, index) => {
+                  const rule = rules[index];
+                  if (!rule) return { index, blueprint, problems: ["no rule written for this slot"] };
+                  return { index, blueprint, problems: slotProblems(rule?.sentence, blueprint) };
+                })
+                .filter((entry) => entry.problems.length > 0);
+
+            const repairOffTopic = async (failing: Array<{ index: number; blueprint: any; problems: string[] }>) => {
+              const details = failing
+                .map((f) => {
+                  const current = String(rules[f.index]?.sentence || "").trim();
+                  return `${f.index + 1}. slot: ${f.blueprint?.title || "unknown"}\n   required formula: ${f.blueprint?.formula || ""}\n   problem: ${f.problems.join("; ")}\n   current wrong sentence: "${current}"`;
+                })
+                .join("\n");
+              const repairPrompt = `You are fixing grammar examples for a ${plan.displayName} deck (ages 7-12, level ${level}).
+
+Only rewrite the numbered slots below. Each new sentence MUST satisfy the required formula and MUST fix its problem. Keep sentences 6-12 words, concrete, and different from each other.
+
+${details}
+
+Reply with JSON only: a bare array like
+[ { "i": 1, "sentence": "...", "context_clue": "...", "mistake_bad": "...", "mistake_good": "...", "quiz_question": "...", "quiz_options": ["...","...","..."], "quiz_answer": "...", "words_blue": "...", "words_amber": "...", "words_green": "..." } ]`;
+              const text = await callGemini({
+                contents: [{ parts: [{ text: repairPrompt }] }],
+                generationConfig: { temperature: 0.35, responseMimeType: "application/json", maxOutputTokens: 1800 },
+              });
+              const parsedRepair = parseJson(text) as any;
+              const list = Array.isArray(parsedRepair)
+                ? parsedRepair
+                : Array.isArray(parsedRepair?.rules)
+                  ? parsedRepair.rules
+                  : Array.isArray(parsedRepair?.items)
+                    ? parsedRepair.items
+                    : [];
+              list.forEach((fixed: any) => {
+                if (!fixed || typeof fixed !== "object") return;
+                const target = Number(fixed.i ?? fixed.index ?? fixed.n) - 1;
+                const entry = failing.find((f) => f.index === target);
+                if (!entry) return;
+                const sentence = String(fixed.sentence || "").trim();
+                if (slotProblems(sentence, entry.blueprint).length > 0) return;
+                if (!rules[entry.index]) rules[entry.index] = {};
+                const rule = rules[entry.index];
+                rule.sentence = sentence;
+                for (const key of ["context_clue", "mistake_bad", "mistake_good", "quiz_question", "quiz_answer", "words_blue", "words_amber", "words_green"]) {
+                  if (typeof fixed[key] === "string" && fixed[key].trim()) rule[key] = fixed[key].trim();
+                }
+                if (Array.isArray(fixed.quiz_options)) {
+                  rule.quiz_options = fixed.quiz_options.map((o: any) => String(o || "").trim()).filter(Boolean);
+                }
+              });
+            };
+
+            for (let attempt = 0; attempt < 2; attempt++) {
+              const failing = collectOffTopic();
+              if (failing.length === 0) break;
+              await repairOffTopic(failing);
+            }
+
+            const aligned = rules
+              .map((rule: any, index: number) => ({ rule, blueprint: plan.slots[index] }))
+              .filter((entry: any) => entry.blueprint && slotProblems(entry.rule?.sentence, entry.blueprint).length === 0);
+            rules = aligned.map((entry: any) => entry.rule);
+            const slotFor = aligned.map((entry: any) => entry.blueprint);
+
+            if (rules.length === 0) {
+              throw new Error(`The AI could not write ${plan.displayName} examples that stay on topic. Please try again.`);
             }
 
             // Expanded diverse fallback photo library (24 distinct high-resolution educational images)
@@ -203,7 +254,28 @@ Reply with valid JSON only, no markdown, no explanation.
 
             for (let i = 0; i < rules.length; i++) {
               const r = rules[i];
+              const blueprint = slotFor[i];
+              const segments = blueprint ? formulaSegments(blueprint.formula) : [];
+              const modelParts = Array.isArray(r.formula_parts) ? r.formula_parts : [];
+              const sameShape = segments.length > 0 && modelParts.length === segments.length;
               r.rule_id = `rule-gen-${i + 1}-${Date.now()}`;
+              if (blueprint) {
+                const modelTitle = String(r.title || "").trim();
+                r.title = plan.family === "custom"
+                  ? (modelTitle || blueprint.title)
+                  : `${plan.displayName} · ${blueprint.title}`;
+                r.formula = blueprint.formula;
+                r.formula_parts = segments.map((name, idx) => {
+                  const prev = sameShape ? (modelParts[idx] ?? null) : null;
+                  return {
+                    name,
+                    words: prev && typeof prev.words === "string" ? prev.words : "",
+                    alternatives: prev && Array.isArray(prev.alternatives)
+                      ? prev.alternatives.map((a: any) => String(a || "").trim()).filter(Boolean)
+                      : [],
+                  };
+                });
+              }
               if (!r.title) r.title = `Rule ${i + 1}`;
               if (!r.formula) r.formula = 'Pattern';
               if (!r.sentence) r.sentence = 'Example sentence.';
@@ -216,8 +288,8 @@ Reply with valid JSON only, no markdown, no explanation.
                 opts.unshift(r.quiz_answer);
               }
               while (opts.length < 3) {
-                const fallbacks = ["won't", "will not", "will", "would not", "is climbing", "climbs"];
-                const next = fallbacks.find(f => !opts.includes(f)) || `Choice ${opts.length + 1}`;
+                const fallbacks = quizDistractors(r.formula || "");
+                const next = fallbacks.find((f) => !opts.includes(f)) || `Choice ${opts.length + 1}`;
                 opts.push(next);
               }
               r.quiz_options = opts.slice(0, 3);
@@ -303,7 +375,12 @@ Reply with valid JSON only, no markdown, no explanation.
             }
 
             return Response.json({
-              deck_name: String(parsed?.deck_name || topic).trim(),
+              deck_name: plan.family === "custom"
+                ? String(parsed?.deck_name || topic).trim()
+                : plan.displayName,
+              grammar_focus: plan.displayName,
+              requested_topic: topic,
+              recommended_count: rules.length,
               rules
             }, { headers: { ...CORS, "Cache-Control": "no-store" } });
           } catch (err: any) {

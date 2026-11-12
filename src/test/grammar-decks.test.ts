@@ -200,9 +200,11 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
 
     // API route handles grammar mode with diverse prompts, single-noun image search, and temperature 0.7
     expect(apiRoute).toContain('input?.mode === "grammar"');
-    expect(apiRoute).toContain('Grammar Pattern Deck');
-    expect(apiRoute).toContain('temperature: 0.7');
-    expect(apiRoute).toContain('DIVERSITY AND CREATIVITY REQUIREMENT');
+    expect(apiRoute).toContain('GRAMMAR FOCUS');
+    expect(apiRoute).toContain('HARD RULES');
+    expect(apiRoute).toContain('buildGrammarPlan');
+    expect(apiRoute).toContain('slotProblems');
+    expect(apiRoute).toContain('grammar_focus');
     expect(apiRoute).toContain('callGemini');
     expect(apiRoute).toContain('searchStockMedia');
     expect(apiRoute).toContain('extractKeywordsFromSentence');
