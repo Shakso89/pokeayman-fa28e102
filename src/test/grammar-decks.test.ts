@@ -878,7 +878,7 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(css).toContain('color: #fb7185 !important');
   });
 
-  it('ensures text size controller allows scaling all slide texts while keeping master example hero sentence unchanged', () => {
+  it('ensures text size controller scales sentence texts while keeping titles fixed', () => {
     const js = fs.readFileSync(grammarJsPath, 'utf-8');
     const cssComponents = fs.readFileSync(path.join(__dirname, '../../public/pokeayman/components.css'), 'utf-8');
     const cssBright = fs.readFileSync(path.join(__dirname, '../../public/pokeayman/bright-fixes.css'), 'utf-8');
@@ -892,20 +892,23 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain('gp_slide_text_zoom');
     expect(js).toContain('--gp-text-zoom');
 
-    // 2. CSS variables scale formula chips, options, prompts, titles, and mistakes
+    // 2. CSS variables scale sentences: hero sentence, mistakes/corrections, and quiz prompts
     expect(cssComponents).toContain('--gp-text-zoom');
-    expect(cssComponents).toContain('.gp-practice-card .gp-formula-chip');
-    expect(cssComponents).toContain('calc(0.925rem * var(--gp-text-zoom, 1))');
-    expect(cssComponents).toContain('.gp-practice-card .gp-rule-title');
+    expect(cssComponents).toContain('#grammar-practice-modal .gp-hero-sentence');
+    expect(cssComponents).toContain('calc(clamp(2rem, 3.8vw, 3.85rem) * var(--gp-text-zoom, 1))');
+    expect(cssComponents).toContain('.gp-practice-card .gp-mistake-text');
+    expect(cssComponents).toContain('calc(1rem * var(--gp-text-zoom, 1))');
     expect(cssComponents).toContain('.gp-practice-card .gp-quick-check-prompt');
     expect(cssComponents).toContain('.gp-practice-card .gp-quiz-opt');
 
     // 3. Bright mode support for the text size controller
     expect(cssBright).toContain('.gp-text-size-ctrl');
 
-    // 4. Master example hero sentence retains its commanding clamp size and is not scaled by --gp-text-zoom
-    expect(cssComponents).toContain('#grammar-practice-modal .gp-hero-sentence');
-    expect(cssComponents).toContain('clamp(2.2rem, 3.8vw, 3.85rem)');
-    expect(cssComponents).not.toContain('.gp-practice-card .gp-hero-sentence {\n  font-size: calc(');
+    // 4. Titles and meta labels remain fixed and do not blow up when zoom is increased
+    expect(cssComponents).toContain('.gp-practice-card .gp-master-example-label');
+    expect(cssComponents).toContain('clamp(0.6875rem, 0.72rem, 0.75rem) !important;');
+    expect(cssComponents).not.toContain('.gp-practice-card .gp-master-example-label {\n  font-size: calc(');
+    expect(cssComponents).toContain('.gp-practice-card .gp-rule-title {\n  font-size: 1.25rem !important;\n}');
+    expect(cssComponents).toContain('.gp-practice-card .gp-mistake-heading');
   });
 });

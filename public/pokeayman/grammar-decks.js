@@ -1934,8 +1934,8 @@
                   <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">${idx + 1} / ${rules.length}</span>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                  <!-- Text Size Controller (Controls slide text sizes, leaving master example untouched) -->
-                  <div class="gp-text-size-ctrl inline-flex items-center bg-slate-800/90 border border-slate-700/80 rounded-xl px-1.5 py-0.5 gap-1 shadow-sm select-none" title="Adjust text size (except master sentence)">
+                  <!-- Text Size Controller (Scales sentence texts while keeping titles fixed) -->
+                  <div class="gp-text-size-ctrl inline-flex items-center bg-slate-800/90 border border-slate-700/80 rounded-xl px-1.5 py-0.5 gap-1 shadow-sm select-none" title="Adjust sentence text size">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-0.5 hidden sm:inline">Text Size</span>
                     <button type="button" id="gp-text-size-dec" class="w-6 h-6 rounded-lg bg-slate-700/60 hover:bg-slate-700 text-slate-200 hover:text-white flex items-center justify-center font-black text-xs transition cursor-pointer active:scale-95" aria-label="Decrease text size" title="Smaller text">A−</button>
                     <button type="button" id="gp-text-size-reset" class="px-1.5 h-6 rounded-lg text-[11px] font-extrabold text-slate-300 hover:text-white hover:bg-slate-700/60 transition cursor-pointer flex items-center justify-center" aria-label="Reset text size to 100%" title="Reset to default (100%)">
@@ -2157,7 +2157,7 @@
         };
       }
 
-      // Wire text size controller (scales slide texts, leaving master example intact)
+      // Wire text size controller (scales sentence texts while keeping titles fixed)
       const practiceCard = modal.querySelector('.gp-practice-card');
       const sizeLabel = modal.querySelector('#gp-text-size-label');
       const decBtn = modal.querySelector('#gp-text-size-dec');

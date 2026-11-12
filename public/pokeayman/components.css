@@ -2670,7 +2670,7 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 #grammar-practice-modal .gp-hero-sentence,
 #grammar-practice-modal.game-fullscreen-active .gp-hero-sentence,
 #grammar-practice-modal:fullscreen .gp-hero-sentence {
-  font-size: clamp(2.2rem, 3.8vw, 3.85rem) !important;
+  font-size: calc(clamp(2rem, 3.8vw, 3.85rem) * var(--gp-text-zoom, 1)) !important;
   line-height: 1.35 !important;
   overflow: visible !important;
   word-break: break-word !important;
@@ -2704,17 +2704,17 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   font-size: calc(1.15rem * var(--gp-text-zoom, 1)) !important;
 }
 
-/* Rule title & clue */
+/* Rule title & clue: Fixed titles (do not zoom with sentence text) */
 .gp-practice-card .gp-rule-title {
-  font-size: calc(1.25rem * var(--gp-text-zoom, 1)) !important;
+  font-size: 1.25rem !important;
 }
 .gp-practice-card .gp-rule-clue {
-  font-size: calc(0.75rem * var(--gp-text-zoom, 1)) !important;
+  font-size: 0.75rem !important;
 }
 
-/* Master example meta label */
+/* Master example meta label: Fixed title (does NOT zoom with sentences) */
 .gp-practice-card .gp-master-example-label {
-  font-size: clamp(0.7rem, calc(0.75rem * var(--gp-text-zoom, 1)), 1.1rem) !important;
+  font-size: clamp(0.6875rem, 0.72rem, 0.75rem) !important;
   line-height: 1.4 !important;
   margin-bottom: 0.5rem !important;
   flex-shrink: 0 !important;
@@ -2722,26 +2722,30 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 }
 
 /* Avoid This Mistake vs Correct Usage cards */
+/* Headings & badges stay fixed compact titles */
 .gp-practice-card .gp-mistake-heading,
 .gp-practice-card .gp-correct-heading {
-  font-size: calc(0.75rem * var(--gp-text-zoom, 1)) !important;
+  font-size: 0.75rem !important;
 }
 .gp-practice-card .gp-mistake-badge,
 .gp-practice-card .gp-correct-badge {
-  font-size: calc(0.65rem * var(--gp-text-zoom, 1)) !important;
+  font-size: 0.65rem !important;
 }
+/* Sentences zoom with the text size controller */
 .gp-practice-card .gp-mistake-text,
 .gp-practice-card .gp-correct-text {
-  font-size: calc(0.925rem * var(--gp-text-zoom, 1)) !important;
+  font-size: calc(1rem * var(--gp-text-zoom, 1)) !important;
 }
 
 /* Let's Practice & Quick check */
+/* Title heading stays fixed */
 .gp-practice-card .gp-practice-heading {
-  font-size: calc(0.8rem * var(--gp-text-zoom, 1)) !important;
+  font-size: 0.8rem !important;
 }
 .gp-practice-card .gp-question-tabs button {
-  font-size: calc(0.725rem * var(--gp-text-zoom, 1)) !important;
+  font-size: 0.725rem !important;
 }
+/* Quiz sentences and options zoom with the controller */
 .gp-practice-card .gp-quick-check-prompt {
   font-size: calc(1.15rem * var(--gp-text-zoom, 1)) !important;
 }
@@ -2756,7 +2760,7 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   font-size: calc(0.9rem * var(--gp-text-zoom, 1)) !important;
 }
 .gp-practice-card .gp-switch-rule-btn span {
-  font-size: calc(0.75rem * var(--gp-text-zoom, 1));
+  font-size: 0.75rem !important;
 }
 
 /* 11. Dots and Boxes - Responsive Claimed Box Pokemon Avatar Sizing */
