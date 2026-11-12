@@ -331,14 +331,25 @@
     return all.filter(deck => {
       if (!deck) return false;
       const isStarter = Boolean(deck.__backendId?.startsWith('starter-') || deck.id?.startsWith('starter-') || deck.grammar_deck_id?.startsWith('starter-'));
-      if (isStarter) return true;
 
       const dSchool = String(deck.school_name || deck.grammar_deck_school || '').trim().toLowerCase();
       const dClass = String(deck.class_name || deck.grammar_deck_class || '').trim().toLowerCase();
-      const shared = Array.isArray(deck.shared_classes) ? deck.shared_classes.map(c => String(c).trim().toLowerCase()) : [];
+      
+      const v = deck.shared_classes;
+      const arr = Array.isArray(v) ? v : (typeof v === 'string' && v ? (v.trim().startsWith('[') ? (() => { try { return JSON.parse(v); } catch (e) { return []; } })() : v.split('||')) : []);
+      const shared = arr.map(c => String(c || '').trim().toLowerCase()).filter(Boolean);
 
-      if (sNorm && dSchool && dSchool !== sNorm) return false;
-      if (cNorm && dClass && dClass !== cNorm && !shared.includes(cNorm)) return false;
+      // School filter: if school is specified, deck must belong to this school (starter decks without conflict also match)
+      if (sNorm && dSchool && dSchool !== sNorm) {
+        if (!isStarter) return false;
+      }
+
+      // Class filter: if class is specified, deck MUST be designated for this class or shared to this class
+      if (cNorm) {
+        const inClass = dClass === cNorm || shared.includes(cNorm);
+        if (!inClass) return false;
+      }
+
       return true;
     });
   };
@@ -555,7 +566,9 @@
     if (titleEl) titleEl.textContent = schoolMode ? 'School Grammar Decks' : 'All Grammar Decks';
     if (descEl) descEl.textContent = schoolMode ? 'Browse and use grammar decks other teachers in your school have made available.' : 'Review, practice, edit, or delete your own and AI-generated grammar decks.';
 
-    const allDecks = window.getAllGrammarDecks('', '');
+    // Scope Grammar Bank to the current school so only that school's decks appear
+    const currentSchoolForBank = typeof navSchool !== 'undefined' && navSchool ? navSchool : '';
+    const allDecks = window.getAllGrammarDecks(currentSchoolForBank, '');
     const query = String(document.getElementById('teacher-grammar-search-query')?.value || '').trim().toLowerCase();
     const searchField = document.getElementById('teacher-grammar-search-field')?.value || 'all';
 
