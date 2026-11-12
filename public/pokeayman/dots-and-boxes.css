@@ -216,11 +216,11 @@
   flex-direction: column;
   justify-content: space-between;
   gap: clamp(0.18rem, 0.5vh, 0.38rem);
-  flex: 0 0 clamp(260px, 26vw, 360px);
-  max-width: 360px;
+  flex: 0 0 clamp(234px, 23.4vw, 324px);
+  max-width: 324px;
   width: 100%;
-  height: 86%;
-  max-height: min(90%, 84dvh, 560px);
+  height: 77.4%;
+  max-height: min(81%, 75.6dvh, 504px);
   min-height: 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
@@ -636,10 +636,10 @@
 
 .dots-board-grid {
   display: grid;
-  width: min(94%, calc(100dvh - 150px), 620px);
-  height: min(94%, calc(100dvh - 150px), 620px);
-  max-width: min(100%, calc(100dvh - 150px), 620px);
-  max-height: min(100%, calc(100dvh - 150px), 620px);
+  width: min(85%, calc((100dvh - 150px) * 0.9), 558px);
+  height: min(85%, calc((100dvh - 150px) * 0.9), 558px);
+  max-width: min(90%, calc((100dvh - 150px) * 0.9), 558px);
+  max-height: min(90%, calc((100dvh - 150px) * 0.9), 558px);
   aspect-ratio: 1 / 1;
   padding: clamp(0.5rem, 1.5vh, 1.15rem);
   background: #020617;

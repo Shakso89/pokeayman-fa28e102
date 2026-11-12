@@ -802,11 +802,11 @@
     accountBadge.classList.toggle('is-admin', isAdmin);
     accountBadge.classList.toggle('is-school-manager', isSchoolManager);
     const credits = $('credit-balance-nav')?.textContent?.trim();
-    $('ts-role').textContent = isAdmin
-      ? 'Admin'
-      : (isSchoolManager
-          ? `School Manager · ${credits ? `${credits} credits` : '0 credits'}`
-          : (credits ? `Teacher · ${credits} credits` : 'Teacher'));
+    // The avatar badge already shows the account role, so the line under the
+    // name only carries the credit balance instead of repeating "Admin"/"Teacher".
+    const tsRoleEl = $('ts-role');
+    tsRoleEl.textContent = credits ? `${credits} credits` : '';
+    tsRoleEl.hidden = !tsRoleEl.textContent;
     const unread = g(() => window.teacherUnreadNotificationCount?.(), 0) || 0;
     $('ts-notification-count').textContent = unread > 99 ? '99+' : String(unread);
     $('ts-notification-count').hidden = unread === 0;

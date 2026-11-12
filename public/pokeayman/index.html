@@ -20294,6 +20294,45 @@ async function removeStudentFromClass(studentId, classId) {
 }
 window.removeStudentFromClass = removeStudentFromClass;
 
+// Verifies the class_students junction row is really gone and removes it with the
+// UUIDs stored in Supabase, so an unenroll cannot silently leave the student
+// enrolled when the record carries a legacy (non-UUID) id.
+async function ensureStudentUnenrolledFromSupabase(classId, studentRef, studentName) {
+  const sb = window.supabaseClient || (window.parent && (window.parent.supabaseClient || window.parent.supabase)) || (typeof supabase !== 'undefined' ? supabase : null);
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const classUuid = String(classId || '').trim();
+  if (!sb || !uuidRe.test(classUuid)) return false;
+  const targetName = String(studentName || '').trim().toLowerCase();
+  const candidates = new Set();
+  const addUuid = value => { const v = String(value ?? '').trim(); if (uuidRe.test(v)) candidates.add(v.toLowerCase()); };
+  addUuid(studentRef);
+  let record = null;
+  try { record = typeof getStudentRecordByStableId === 'function' && studentRef ? getStudentRecordByStableId(studentRef) : null; } catch (e) {}
+  if (record) [record.student_id, record.id, record.__backendId].forEach(addUuid);
+
+  const { data: rosterRows, error: rosterErr } = await sb
+    .from('class_students')
+    .select('student_id, student:students(name)')
+    .eq('class_id', classUuid);
+  if (rosterErr) {
+    console.warn('Could not read the class roster before unenrolling:', rosterErr);
+    return false;
+  }
+
+  const matches = (rosterRows || []).filter(row => {
+    const rowId = String(row?.student_id ?? '').trim().toLowerCase();
+    if (rowId && candidates.has(rowId)) return true;
+    const rowName = String(row?.student?.name || '').trim().toLowerCase();
+    return !!(targetName && rowName && rowName === targetName);
+  });
+
+  for (const row of matches) {
+    const { error } = await sb.from('class_students').delete().eq('class_id', classUuid).eq('student_id', row.student_id);
+    if (error) console.error('Failed to delete the class_students row:', error);
+  }
+  return matches.length > 0;
+}
+
 async function handleUnenrollStudentFromCurrentClass(studentKeyOrId, studentDisplayName) {
   if (!studentKeyOrId) return;
   const currentSchool = navSchool;
@@ -20363,25 +20402,40 @@ async function handleUnenrollStudentFromCurrentClass(studentKeyOrId, studentDisp
 
   if (!confirmed) return;
 
-  const activeClassId = await ensureActiveClassId(currentSchool, currentClass);
+  let activeClassId = null;
+  try {
+    activeClassId = await ensureActiveClassId(currentSchool, currentClass);
+  } catch (classIdErr) {
+    console.warn('Could not resolve the class id for unenrollment:', classIdErr);
+  }
 
   try {
     // 1. Remove junction record from Supabase class_students
     if (activeClassId && canonicalStudentId) {
-      await removeStudentFromClass(canonicalStudentId, activeClassId);
+      try {
+        await removeStudentFromClass(canonicalStudentId, activeClassId);
+      } catch (unenrollErr) {
+        console.error('Supabase unenroll failed, retrying with the stored UUIDs:', unenrollErr);
+      }
+      try {
+        await ensureStudentUnenrolledFromSupabase(activeClassId, canonicalStudentId, displayName);
+      } catch (verifyErr) {
+        console.error('Could not verify the unenrollment:', verifyErr);
+      }
     }
 
     // 2. Remove junction rows in allData
     const norm = v => String(v || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
     const rowTypes = ['class_students','class_student','student_membership','class_membership','membership'];
     const idMatch = r => [r.student_id, r.studentId, r.canonicalStudentId, r.profile_id, r.user_id, r.account_id].some(v => String(v ?? '').trim() === String(canonicalStudentId));
+    const nameMatch = r => [r.student_name, r.name].some(v => v && typeof normalizeStudentIdentity === 'function' && normalizeStudentIdentity(v) === normalizeStudentIdentity(displayName));
     const classMatch = r => {
       const meta = allData.find(c => c.type === 'class' && (String(c.__backendId) === String(r.class_id ?? r.classId ?? '') || String(c.id) === String(r.class_id ?? r.classId ?? '')));
       const school = meta ? meta.school_name : r.school_name;
       const cls = meta ? meta.class_name : r.class_name;
       return norm(cls) === norm(currentClass) && (!school || norm(school) === norm(currentSchool));
     };
-    const rows = allData.filter(r => rowTypes.includes(String(r.type || '').toLowerCase()) && idMatch(r) && classMatch(r));
+    const rows = allData.filter(r => rowTypes.includes(String(r.type || '').toLowerCase()) && (idMatch(r) || nameMatch(r)) && classMatch(r));
     for (const r of rows) {
       try {
         const d = await window.dataSdk.delete(r);
