@@ -118,7 +118,7 @@
       owner: 'Teacher Ayman',
       created_by: 'Teacher Ayman',
       created_at: '2026-11-02T10:00:00.000Z',
-      cover_image_url: 'https://cdn.pixabay.com/photo/2022/10/15/16/44/night-view-7523474_640.jpg',
+      cover_image_url: 'https://cdn.pixabay.com/photo/2017/10/04/09/56/laboratory-2815641_640.jpg',
       type: 'grammar_deck',
       rules: [
         {
@@ -268,6 +268,27 @@
     return { photos: [], hasMore: false };
   }
 
+  // Resolve cover image: by default the cover of the grammar list should be the first rule pic
+  window.resolveGrammarDeckCover = function(deck) {
+    if (!deck) return '';
+    const rules = Array.isArray(deck.rules) ? deck.rules : [];
+    // 1. By default, the cover of the grammar list should be the first rule's picture
+    const rule1Pic = typeof rules[0]?.image === 'string' ? rules[0].image.trim() : '';
+    if (rule1Pic) return rule1Pic;
+
+    // 2. If the first rule has no picture, look for the first rule that does have a picture
+    const ruleWithPic = rules.find(r => r && typeof r.image === 'string' && r.image.trim());
+    if (ruleWithPic && ruleWithPic.image.trim()) {
+      return ruleWithPic.image.trim();
+    }
+
+    // 3. Fall back to custom deck cover image URL if present and valid
+    if (deck.cover_image_url && typeof deck.cover_image_url === 'string' && deck.cover_image_url.trim()) {
+      return deck.cover_image_url.trim();
+    }
+
+    return '';
+  };
 
   // Retrieve all grammar decks from allData (with starter fallback)
   window.getAllGrammarDecks = function(schoolName = '', className = '') {
@@ -279,6 +300,14 @@
     STARTER_GRAMMAR_DECKS.forEach(starter => {
       if (!all.some(d => d.__backendId === starter.__backendId || d.grammar_deck_id === starter.grammar_deck_id)) {
         all.push(starter);
+      }
+    });
+
+    // Ensure cover of each grammar deck defaults to its first rule pic
+    all.forEach(deck => {
+      const cover = window.resolveGrammarDeckCover(deck);
+      if (cover) {
+        deck.cover_image_url = cover;
       }
     });
 
@@ -371,7 +400,7 @@
       const name = deck.grammar_deck_name || deck.deck_name || 'Grammar Deck';
       const teacher = deck.teacher_name || deck.created_by || 'Teacher Ayman';
       const rules = Array.isArray(deck.rules) ? deck.rules : [];
-      const cover = deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg';
+      const cover = (typeof window.resolveGrammarDeckCover === 'function') ? window.resolveGrammarDeckCover(deck) : (rules[0]?.image || deck.cover_image_url || '');
       const isOwner = isCurrentTeacherOwner(deck);
       const safeName = String(name).replace(/'/g, "\\'");
 
@@ -570,7 +599,7 @@
       const school = deck.school_name || 'Daya Stanford';
       const cls = deck.class_name || 'All Classes';
       const rules = Array.isArray(deck.rules) ? deck.rules : [];
-      const cover = deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg';
+      const cover = (typeof window.resolveGrammarDeckCover === 'function') ? window.resolveGrammarDeckCover(deck) : (rules[0]?.image || deck.cover_image_url || '');
       const isOwner = isCurrentTeacherOwner(deck);
       const safeName = String(name).replace(/'/g, "\\'");
 
@@ -2322,6 +2351,12 @@
     deck.updated_at = new Date().toISOString();
     deck.rules = Array.isArray(deck.rules) ? deck.rules : [];
 
+    // Ensure cover of the grammar list by default is the first rule pic
+    const defaultCover = (typeof window.resolveGrammarDeckCover === 'function') ? window.resolveGrammarDeckCover(deck) : (deck.rules[0]?.image || '');
+    if (defaultCover) {
+      deck.cover_image_url = defaultCover;
+    }
+
     let res = null;
     if (window.dataSdk?.update) {
       try {
@@ -4046,7 +4081,7 @@
             highlight_amber: wordsAmberStr,
             highlight_green: wordsGreenStr,
             context_clue: clue || 'Grammar practice',
-            image: img || rules[editingRuleIndex].image || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
+            image: img || rules[editingRuleIndex].image || '',
             mistake_bad: bad || 'Mistake',
             mistake_good: good || sentence,
             mistakes: mistakePairs,
@@ -4057,6 +4092,8 @@
             quiz_questions: questionBlocks
           };
           deck.rules = rules;
+          const updatedCover = (typeof window.resolveGrammarDeckCover === 'function') ? window.resolveGrammarDeckCover(deck) : (rules[0]?.image || '');
+          if (updatedCover) deck.cover_image_url = updatedCover;
           await window.saveOrUpdateGrammarDeck(deck);
           if (typeof toast === 'function') toast(`Rule #${editingRuleIndex + 1} updated and saved!`);
           editingRuleIndex = -1;
@@ -4080,7 +4117,7 @@
             highlight_amber: wordsAmberStr,
             highlight_green: wordsGreenStr,
             context_clue: clue || 'Grammar practice',
-            image: img || deck.cover_image_url || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
+            image: img || '',
             mistake_bad: bad || 'Mistake',
             mistake_good: good || sentence,
             mistakes: mistakePairs,
@@ -4092,6 +4129,8 @@
           };
           rules.push(newRule);
           deck.rules = rules;
+          const updatedCover = (typeof window.resolveGrammarDeckCover === 'function') ? window.resolveGrammarDeckCover(deck) : (rules[0]?.image || '');
+          if (updatedCover) deck.cover_image_url = updatedCover;
           await window.saveOrUpdateGrammarDeck(deck);
           if (typeof toast === 'function') toast('New rule added and saved!');
           editingRuleIndex = -1;
@@ -4126,6 +4165,8 @@
             if (editingRuleIndex === idx) editingRuleIndex = -1;
             else if (editingRuleIndex > idx) editingRuleIndex--;
             deck.rules = rules;
+            const updatedCover = (typeof window.resolveGrammarDeckCover === 'function') ? window.resolveGrammarDeckCover(deck) : (rules[0]?.image || '');
+            deck.cover_image_url = updatedCover;
             await window.saveOrUpdateGrammarDeck(deck);
             if (typeof toast === 'function') toast('Rule deleted.');
             renderEditor();
@@ -4752,7 +4793,7 @@
         owner: currentTeacherName,
         created_by: currentTeacherName,
         created_at: new Date().toISOString(),
-        cover_image_url: selectedRules[0]?.image || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
+        cover_image_url: selectedRules[0]?.image || '',
         type: 'grammar_deck',
         rules: selectedRules
       };
@@ -5200,7 +5241,7 @@
         owner: currentTeacherName,
         created_by: currentTeacherName,
         created_at: new Date().toISOString(),
-        cover_image_url: 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
+        cover_image_url: '',
         type: 'grammar_deck',
         rules: []
       };
@@ -5230,7 +5271,7 @@
         owner: currentTeacherName,
         created_by: currentTeacherName,
         created_at: new Date().toISOString(),
-        cover_image_url: 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
+        cover_image_url: '',
         type: 'grammar_deck',
         rules: []
       };

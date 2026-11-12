@@ -466,7 +466,7 @@
         owner: currentTeacherName,
         created_by: currentTeacherName,
         created_at: new Date().toISOString(),
-        cover_image_url: selectedRules[0]?.image || 'https://cdn.pixabay.com/photo/2026/02/01/09/12/elephant-10098979_640.jpg',
+        cover_image_url: selectedRules[0]?.image || '',
         type: 'grammar_deck',
         rules: selectedRules
       };
