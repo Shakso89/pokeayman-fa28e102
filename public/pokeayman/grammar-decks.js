@@ -4688,13 +4688,14 @@
         const res = await fetch('/api/generate-vocab-list', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode: 'grammar', topic, level, ruleCount: 5 })
+          body: JSON.stringify({ mode: 'grammar', topic, level, search: topic, ruleCount: 0 })
         });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.rules) && data.rules.length > 0) {
             candidateRules = data.rules;
             if (data.deck_name) finalDeckName = data.deck_name;
+            if (data.recommended_count) serverRecommendedCount = Number(data.recommended_count);
           }
         }
       } catch (err) {
@@ -4744,8 +4745,8 @@
 
         if (reviewTopicName) reviewTopicName.textContent = finalDeckName || topic;
 
-        // Default selection: 3 rules (AI Recommended) or up to candidateRules.length
-        const defaultCount = Math.min(3, candidateRules.length);
+        // Auto-select rules based on topic (from server recommended_count or candidate rules count)
+        const defaultCount = Math.min(serverRecommendedCount || 3, candidateRules.length);
         selectedIndices = new Set();
         for (let i = 0; i < defaultCount; i++) {
           selectedIndices.add(i);

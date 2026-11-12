@@ -93,73 +93,74 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
             return Response.json({ message: "Please provide a grammar topic." }, { status: 400, headers: CORS });
           }
 
-          const countInstruction = (requestedCount >= 2 && requestedCount <= 6)
-            ? `Generate exactly ${requestedCount} distinct, pedagogically clear rules for "${topic}" arranged in educational progression (core rules first, followed by extension variations).`
-            : `Generate 4 or 5 distinct, pedagogically clear rules for "${topic}" arranged in educational progression:
-   - Rules 1 to 3: Core recommended rules (Affirmative/Base, Negative form, Question/Inversion form).
-   - Rules 4 and 5: Extension or nuance rules (e.g. spelling changes, time expressions/context clues, irregulars, or exceptions).`;
+        // ── Auto-select the rule count from the topic itself + the search that was made ──
+        const tLow = topic.toLowerCase();
+        const searchWords = (input.search && typeof input.search === 'string' ? input.search : '')
+          .toLowerCase()
+          .split(/[^a-z0-9]+/)
+          .filter(Boolean);
+        const whWords = ['what colour', 'what color', 'what', 'where', 'when', 'why', 'who', 'which', 'how', 'how many', 'how much'];
+        const isTense = /\b(future|past|present|continuous|progressive|simple|perfect)\b/i.test(tLow);
+        const isComparative = /\b(comparative|superlative|more|most|-er\b|-est\b|than)\b/i.test(tLow);
+        const isModal = /\b(can|could|should|must|may|might|modal|would|shall)\b/i.test(tLow);
+        const isArticle = /\b(a |an |the |article|determiner)\b/i.test(tLow);
+        const isPreposition = /\b(preposition|in |on |at |under|between|beside|behind|with)\b/i.test(tLow);
+        const isWhQuestion = whWords.some((w) => tLow.includes(w)) || searchWords.some((w) => whWords.includes(w));
+        let autoCount = requestedCount;
+        if (requestedCount >= 2 && requestedCount <= 8) {
+          // Respect the teacher's explicit count when it falls in the safe band.
+        } else if (isWhQuestion) {
+          autoCount = Math.max(2, Math.min(whWords.length + searchWords.length, 6));
+        } else if (isTense) {
+          autoCount = 4; // affirmative, negative, question, extension
+        } else if (isComparative) {
+          autoCount = 3; // short adj, long adj, irregular
+        } else if (isModal) {
+          autoCount = 3; // affirmative, negative, question
+        } else if (isArticle || isPreposition) {
+          autoCount = 3;
+        } else {
+          autoCount = 4;
+        }
 
-          const prompt = `You are an expert ESL/EFL English language curriculum developer and teacher for young elementary students.
-The teacher wants a Grammar Pattern Deck strictly for the topic: "${topic}" (Target Level: ${level}).
+        const structureGuide =
+          isWhQuestion
+            ? 'Generate exactly ' + autoCount + ' rules — one rule per question word. Each rule teaches how to form a question with that specific question word.'
+            : 'Generate exactly ' + autoCount + ' distinct, pedagogically ordered rules for "' + topic + '". Start with the most fundamental pattern, then progress to negative, question, and extension forms.';
 
-CRITICAL INSTRUCTIONS:
-1. ALL generated rules, formulas, sentences, mistakes, and quizzes MUST strictly match and teach "${topic}".
-   - If the topic is about Future (e.g. "Simple future", "will", "going to"), EVERY rule MUST teach future forms (e.g. "will + base verb", "will not / won't + base verb", "am/is/are going to + base verb", "Will + Subject + base verb?"). NEVER generate present or past sentences for future topics!
-   - If the topic is about Past, teach past forms (regular -ed, irregular past, didn't + base verb).
-   - If the topic is about Present Simple, teach habitual actions / facts with base verb / -s / -es and do/does.
-   - If the topic is about Present Continuous, teach ongoing actions with am/is/are + verb-ing.
-   - If the topic specifies questions (e.g. "What, Where, How many"), generate one rule per specified question word.
-2. ${countInstruction}
-   - Rule 1: Affirmative / Core Pattern
-   - Rule 2: Negative Form (e.g. won't / didn't / is not)
-   - Rule 3: Question Form / Word Order Inversion (e.g. Will you...? / Did you...?)
-3. DIVERSITY AND CREATIVITY REQUIREMENT:
-   - Every rule MUST have a completely UNIQUE, vivid, concrete example sentence featuring distinct characters (e.g. astronaut, chef, detective, scientist, gardener, musician, explorer), animals (e.g. dolphin, panda, tiger, eagle), or colorful locations (e.g. aquarium, spaceship, castle, planetarium, forest).
-   - Do NOT use repetitive or generic sentences. Every generation must feel fresh, exciting, and varied!
-4. For EACH rule:
-   - "title": A clear educational title matching ${topic} (e.g. "Simple Future (will + Base Verb)", "Negative Future (won't)").
-   - "formula": The exact formula with "+" signs (e.g. "Subject + will + Base Verb" or "Subject + will not (won't) + Base Verb" or "Will + Subject + Base Verb + if + Present Simple"). NEVER use a generic "Subject + Verb + Object"!
-   - "formula_parts": An array of objects for EVERY single part in the formula in order:
-     * "name": The formula part name (e.g. "Will", "Subject", "Base Verb", "if", "Present Simple").
-     * "words": The exact words or phrase in the sentence that corresponds to this part (e.g. for "Subject" -> "the brave knight", for "Base Verb" -> "rescue").
-     * "alternatives": Array of 2-4 natural replacement phrases for this part (e.g. for Subject: ["the brave knight", "the clever hero", "the astronaut"]).
-   - "sentence": A concrete, natural, engaging sentence illustrating this exact rule for young learners with vivid nouns/actions.
-   - "context_clue": A concise 3-7 word tip (e.g. "Use 'will' for predictions and promises").
-   - "mistake_bad": A realistic student mistake for this exact rule.
-   - "mistake_good": The corrected sentence.
-   - "quiz_question": A fill-in-the-blank question testing this exact rule with parenthesized base verb.
-   - "quiz_options": Array of 3 distinct, UNIQUE choices (no duplicates).
-   - "quiz_answer": The exact correct option.
-   - "words_blue": The exact word(s) from sentence matching Part 1 of formula.
-   - "words_amber": The exact word(s) from sentence matching Part 2 of formula (e.g. the Subject or the Verb).
-   - "words_green": The exact word(s) from sentence matching Part 3 of formula.
-   - "image_keywords": A SINGLE concrete noun (1-2 words only, e.g. "astronaut", "robot", "spaceship", "chef", "beach", "guitar", "castle", "dolphin") drawn from the sentence that will guarantee a great stock photo result.
+        const prompt = String.raw`You are an expert ESL/EFL curriculum designer creating a deterministic Grammar Pattern Deck for young elementary students (Target Level: ${level}).
 
-Reply with valid JSON only in this exact format:
+TOPIC: "${topic}"
+SEARCH WORDS: ${input.search ? input.search : 'none'}
+
+RULES (deterministic):
+- DIVERSITY AND CREATIVITY REQUIREMENT: Every rule must have a completely unique, vivid, age-appropriate example sentence featuring distinct characters, animals, or locations.
+- Generate exactly ${autoCount} rules. One per question word when the topic is a Wh- question; otherwise teach the topic in this fixed order:
+  Rule 1: Affirmative / Core Pattern   Rule 2: Negative Form   Rule 3: Question / Inversion   Rule 4: Extension (spelling, irregulars, time expressions)
+- If the topic is a Wh- question (what/where/when/why/who/how), each rule must teach ONE question word only — never reuse the same word.
+- NEVER add rules for a different topic. Do not "improve" the topic.
+- If the topic is Future, Past, Present, Continuous, Comparative, Modal, Article or Preposition, every formula/sentence/quiz must teach ONLY that topic.
+
+FORMAT (repeat exactly per rule):
+- title: a short title matching the topic
+- formula: a single line with + separators, e.g. "Subject + will + Base Verb"
+- formula_parts: [{ name, words, alternatives: [2-4] }]
+- sentence: one vivid, concrete, age-appropriate sentence (ages 7-12)
+- context_clue: 3-7 word tip
+- mistake_bad: realistic student error for THIS rule
+- mistake_good: the corrected version
+- quiz_question: fill-in-the-blank with the base verb in parentheses
+- quiz_options: exactly 3 distinct choices
+- quiz_answer: must be one of quiz_options
+- words_blue / words_amber / words_green: exact words from the sentence matching formula parts 1/2/3
+- image_keywords: ONE concrete noun (1-2 words)
+
+Reply with valid JSON only, no markdown, no explanation.
 {
   "deck_name": "${topic}",
-  "rules": [
-    {
-      "title": "...",
-      "formula": "...",
-      "formula_parts": [
-        { "name": "...", "words": "...", "alternatives": ["...", "..."] }
-      ],
-      "sentence": "...",
-      "context_clue": "...",
-      "mistake_bad": "...",
-      "mistake_good": "...",
-      "quiz_question": "...",
-      "quiz_options": ["...", "...", "..."],
-      "quiz_answer": "...",
-      "words_blue": "...",
-      "words_amber": "...",
-      "words_green": "...",
-      "image_keywords": "..."
-    }
-  ]
+  "recommended_count": ${autoCount},
+  "rules": [...]
 }`;
-
           try {
             const rawText = await callGemini({
               contents: [{ parts: [{ text: prompt }] }],
