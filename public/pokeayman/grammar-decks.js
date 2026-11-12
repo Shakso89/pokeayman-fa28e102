@@ -2503,7 +2503,7 @@
               </div>
               <div class="space-y-1">
                 <label for="ge-rule-formula" class="text-[11px] text-slate-400 font-semibold block">Formula / Pattern</label>
-                <input id="ge-rule-formula" type="text" placeholder="e.g. Subject + am/is/are + Verb + -ing" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.formula || '')}">
+                <input id="ge-rule-formula" type="text" placeholder="e.g. Part 1 + Part 2 + Part 3" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.formula || '')}">
               </div>
               <div class="space-y-1 sm:col-span-2">
                 <label for="ge-rule-sentence" class="text-[11px] text-slate-400 font-semibold block">Example Sentence *</label>
@@ -3117,9 +3117,9 @@
             };
           });
         } else {
-          let rawFormula = (formulaInput?.value || activeRule?.formula || 'Subject + am / is / are + Verb-ing').trim();
+          let rawFormula = (formulaInput?.value || activeRule?.formula || '').trim();
           rawFormula = rawFormula.replace(/\s*\+\s*part\s*\d+/gi, '').trim();
-          const parts = rawFormula ? rawFormula.split('+').map(p => p.trim()).filter(Boolean) : ['Subject', 'Verb'];
+          const parts = rawFormula ? rawFormula.split('+').map(p => p.trim()).filter(Boolean) : ['Part 1', 'Part 2', 'Part 3'];
           currentFormulaParts = parts.map((name, idx) => {
             let alts = [];
             if (activeRule && activeRule.part_alternatives && Array.isArray(activeRule.part_alternatives[idx])) {
@@ -3266,27 +3266,16 @@
           const normAlts = normalizeAlternatives(part.alternatives);
           part.alternatives = normAlts;
           const val = normAlts.join(', ');
-          const nameLower = String(part.name || '').toLowerCase();
-          let egPlaceholder = 'The elephant, The clever monkey, The boy';
-          if (nameLower.includes('verb')) {
-            egPlaceholder = nameLower.includes('ing') ? 'walking, climbing, running, sleeping' : 'arrives, departs, stops, passes';
-          } else if (nameLower.includes('adj')) {
-            egPlaceholder = 'smart, tall, slow, strong, weak';
-          } else if (nameLower.includes('noun') || nameLower.includes('object')) {
-            egPlaceholder = 'warm tea, hot coffee, fresh juice';
-          } else if (nameLower.includes('is') || nameLower.includes('are') || nameLower.includes('am')) {
-            egPlaceholder = 'is, was, will be';
-          }
           return `
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/90">
-              <div class="flex items-center gap-2 shrink-0 sm:w-52">
+              <div class="flex items-center gap-2 shrink-0 sm:w-36">
                 <span class="w-3 h-3 rounded-full ${col.dotBg} shrink-0 ring-1 ring-white/30"></span>
-                <span class="text-xs font-bold text-slate-200 truncate" title="${escapeHtml(part.name)}">
-                  Part ${idx + 1}: ${escapeHtml(part.name)}
+                <span class="text-xs font-bold text-slate-200 truncate" title="Part ${idx + 1}">
+                  Part ${idx + 1}
                 </span>
               </div>
               <div class="flex-1 min-w-0">
-                <input type="text" class="ge-part-alts-input quiz-input text-xs w-full py-1.5 px-3 rounded-lg bg-slate-950 border border-slate-700/80 focus:border-amber-400 text-white" data-part-idx="${idx}" value="${escapeHtml(val)}" placeholder="Alternatives (separated by space or comma): e.g. ${egPlaceholder}">
+                <input type="text" class="ge-part-alts-input quiz-input text-xs w-full py-1.5 px-3 rounded-lg bg-slate-950 border border-slate-700/80 focus:border-amber-400 text-white" data-part-idx="${idx}" value="${escapeHtml(val)}" placeholder="Alternative words (comma-separated): e.g. word 1, word 2, word 3">
               </div>
             </div>
           `;
@@ -3419,6 +3408,7 @@
               });
               syncFormulaInput();
               syncWordChips();
+              syncAlternativesList();
             }
           };
         });
@@ -3431,10 +3421,12 @@
             currentFormulaParts.push({
               id: 'part-' + nextIdx + '-' + Math.random().toString(36).slice(2, 6),
               name: `Part ${nextIdx + 1}`,
-              colorIndex: nextIdx % COLOR_PALETTE.length
+              colorIndex: nextIdx % COLOR_PALETTE.length,
+              alternatives: []
             });
             syncFormulaInput();
             syncWordChips();
+            syncAlternativesList();
           };
         }
 
@@ -3712,11 +3704,19 @@
             return {
               id: existing?.id || ('part-' + idx + '-' + Math.random().toString(36).slice(2, 6)),
               name: p,
-              colorIndex: (existing && typeof existing.colorIndex === 'number') ? existing.colorIndex : (idx % COLOR_PALETTE.length)
+              colorIndex: (existing && typeof existing.colorIndex === 'number') ? existing.colorIndex : (idx % COLOR_PALETTE.length),
+              alternatives: existing?.alternatives || []
             };
           });
-          syncWordChips();
+        } else {
+          currentFormulaParts = [
+            { id: 'part-0-' + Math.random().toString(36).slice(2, 6), name: 'Part 1', colorIndex: 0, alternatives: [] },
+            { id: 'part-1-' + Math.random().toString(36).slice(2, 6), name: 'Part 2', colorIndex: 1, alternatives: [] },
+            { id: 'part-2-' + Math.random().toString(36).slice(2, 6), name: 'Part 3', colorIndex: 2, alternatives: [] }
+          ];
         }
+        syncWordChips();
+        syncAlternativesList();
       });
 
       // Global click on modal to dismiss open color popovers
@@ -4035,6 +4035,7 @@
             title,
             formula: finalFormula,
             formula_parts: currentFormulaParts,
+            part_alternatives: currentFormulaParts.map(p => p.alternatives || []),
             suffix_color: suffixColorIndex,
             sentence,
             word_assignments: savedWordAssignments,
@@ -4068,6 +4069,7 @@
             title,
             formula: finalFormula,
             formula_parts: currentFormulaParts,
+            part_alternatives: currentFormulaParts.map(p => p.alternatives || []),
             suffix_color: suffixColorIndex,
             sentence,
             word_assignments: savedWordAssignments,
