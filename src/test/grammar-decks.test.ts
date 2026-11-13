@@ -168,13 +168,9 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).not.toContain('Mistake without rule');
     expect(js).not.toContain('The students practiced ${topic}');
 
-    // Calls AI endpoint and provides smart pedagogical synthesizer
+    // Calls AI endpoint with mode: grammar
     expect(js).toContain("mode: 'grammar'");
-    expect(js).toContain('synthesizeGrammarRules');
-    expect(js).toContain('What + is / are + Subject ?');
-    expect(js).toContain('Where + is / are + Subject ?');
-    expect(js).toContain('What color + is / are + Subject ?');
-    expect(js).toContain('How many + Plural Noun + are there ?');
+    expect(js).toContain("Gemini could not generate grammar rules");
 
     // Credit charging: 5 credits per rule for chosen rules
     expect(js).toContain('selectedRules.length * 5');
@@ -201,7 +197,6 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     // API route handles grammar mode with diverse prompts, single-noun image search, and temperature 0.7
     expect(apiRoute).toContain('input?.mode === "grammar"');
     expect(apiRoute).toContain('GRAMMAR FOCUS');
-    expect(apiRoute).toContain('HARD RULES');
     expect(apiRoute).toContain('buildGrammarPlan');
     expect(apiRoute).toContain('slotProblems');
     expect(apiRoute).toContain('grammar_focus');

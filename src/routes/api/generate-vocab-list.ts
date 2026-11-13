@@ -93,49 +93,66 @@ export const Route = createFileRoute("/api/generate-vocab-list")({
             return Response.json({ message: "Please provide a grammar topic." }, { status: 400, headers: CORS });
           }
 
-          // ── The grammar topic owns the rules (blueprint), the model only fills examples ──
+          // ── Gemini-Powered Flexible Grammar Architect ──
+          // The blueprint provides contextual signals/topic recognition,
+          // while Gemini dynamically crafts authentic, accurate pedagogical rules, formulas, and explanations.
           const plan = buildGrammarPlan(topic, typeof input.search === "string" ? input.search : "");
-          const autoCount = plan.count;
+          const targetCount = plan.count;
 
-          const slotList = plan.slots
-            .map((s, i) => `${i + 1}. ${s.title}\n   formula: ${s.formula}\n   focus: ${s.hint}`)
+          const slotHints = plan.slots
+            .map((s, i) => `${i + 1}. Focus: ${s.title} (Target concept: ${s.hint}, baseline pattern: ${s.formula})`)
             .join("\n");
 
-          const prompt = `You are an expert ESL/EFL grammar author writing one deck for young learners (ages 7-12, level: ${level}).
+          const prompt = `You are a world-class ESL/EFL linguist, master grammar teacher, and curriculum architect for elementary and middle school English learners (ages 7-14, Target Level: ${level}).
 
-GRAMMAR FOCUS: ${plan.displayName}
 TEACHER'S TOPIC: "${topic}"
+GRAMMAR FOCUS: ${plan.displayName}
 
-HARD RULES
-1. Every rule practises ${plan.displayName} ONLY. Never mix in another tense, aspect, or structure.
-2. Write exactly ${autoCount} rules, in the same order as the SLOTS below.
-3. Copy each slot's formula character-for-character into "formula". Do not invent a different formula.
-4. The example sentence must visibly contain that slot's target structure.
-5. Each sentence is 6-12 words, one concrete scene, and every rule uses a different character, animal, or place.
-6. The quiz blank tests exactly that slot's structure, with the base verb in parentheses.
+PEDAGOGICAL MISSION:
+Generate exactly ${targetCount} clear, structured, and linguistically accurate grammar rules for "${topic}".
+Design the deck with authentic progression:
+- Rule 1: Affirmative / Core Construction
+- Rule 2: Negative Form or Inversion
+- Rule 3: Question Form / Inversion or Nuance
+- Additional rules (if applicable): Key exceptions, irregulars, time expressions, or spelling shifts.
 
-SLOTS
-${slotList}
+GUIDANCE SLOTS (use these pedagogical aspects to organize the ${targetCount} rules):
+${slotHints}
 
-Reply with JSON only - no markdown, no commentary:
+CRITICAL LINGUISTIC & ACCURACY REQUIREMENTS:
+1. FORMULA: Write a precise, readable grammatical formula using "+" signs (e.g. "Subject + was / were + Verb-ing" or "Will + Subject + Base Verb ?"). Break down auxiliary verbs, pronouns, suffixes, and complements accurately.
+2. FORMULA PARTS: Provide "formula_parts" as an array matching each "+" chunk of the formula in exact sequence. For each part:
+   - "name": Concise grammatical label (e.g. "Subject", "was / were", "Verb-ing", "Complement")
+   - "words": The EXACT phrase in your example sentence corresponding to this part
+   - "alternatives": Array of 2 to 4 natural, colorful replacements for that part so students can interactively swap words on the slide
+3. SENTENCE: Create a natural, vivid, memorable example sentence (6-12 words) perfectly demonstrating this rule. Use diverse professions, animals, and locations (e.g. astronauts, marine biologists, architects, dolphins, planetariums). Never repeat the same subject across rules!
+4. CONTEXT CLUE: Write a sharp 4-8 word pedagogical tip explaining WHEN or WHY native speakers use this structure (e.g. "Use 'will' for sudden decisions and promises").
+5. COMMON MISTAKE: Provide a realistic student error ("mistake_bad") and its correct form ("mistake_good") highlighting the subtle mistake students frequently make with this pattern.
+6. QUIZ: Include a high-quality fill-in-the-blank question ("quiz_question") with the base verb in parentheses, exactly 3 distinct multiple-choice options ("quiz_options"), and the exact answer ("quiz_answer").
+7. VISUAL KEYWORD: "image_keywords" must be ONE concrete noun (1-2 words) from your example sentence for stock photo matching.
+
+Reply with valid JSON only (no markdown code fences, no explanatory text):
 {
-  "deck_name": "${plan.displayName}",
+  "deck_name": "${plan.displayName || topic}",
+  "recommended_count": ${targetCount},
   "rules": [
     {
-      "title": "short title for this slot",
-      "formula": "copy the slot formula here",
-      "formula_parts": [{ "name": "one formula part", "words": "the exact words from the sentence", "alternatives": ["2-3 swaps"] }],
-      "sentence": "example sentence using this grammar",
-      "context_clue": "3-7 word tip",
-      "mistake_bad": "a realistic wrong sentence for this slot",
-      "mistake_good": "the corrected sentence",
-      "quiz_question": "fill-in-the-blank with (base verb)",
-      "quiz_options": ["3", "distinct", "choices"],
-      "quiz_answer": "must be one of quiz_options",
-      "words_blue": "words from the sentence for part 1",
-      "words_amber": "words from the sentence for part 2",
-      "words_green": "words from the sentence for part 3",
-      "image_keywords": "one concrete noun"
+      "title": "Clear Educational Title",
+      "formula": "Part 1 + Part 2 + Part 3",
+      "formula_parts": [
+        { "name": "Part 1", "words": "exact word(s)", "alternatives": ["alt 1", "alt 2"] }
+      ],
+      "sentence": "Example sentence featuring the target grammar.",
+      "context_clue": "Brief pedagogical usage clue",
+      "mistake_bad": "Typical learner mistake",
+      "mistake_good": "Correct sentence",
+      "quiz_question": "Fill in the blank _____ (verb)",
+      "quiz_options": ["Option A", "Option B", "Option C"],
+      "quiz_answer": "Option A",
+      "words_blue": "words for part 1",
+      "words_amber": "words for part 2",
+      "words_green": "words for part 3",
+      "image_keywords": "noun"
     }
   ]
 }`;
@@ -255,29 +272,33 @@ Reply with JSON only: a bare array like
             for (let i = 0; i < rules.length; i++) {
               const r = rules[i];
               const blueprint = slotFor[i];
-              const segments = blueprint ? formulaSegments(blueprint.formula) : [];
+              const rawFormula = String(r.formula || (blueprint ? blueprint.formula : 'Pattern')).trim();
+              const segments = formulaSegments(rawFormula);
               const modelParts = Array.isArray(r.formula_parts) ? r.formula_parts : [];
               const sameShape = segments.length > 0 && modelParts.length === segments.length;
               r.rule_id = `rule-gen-${i + 1}-${Date.now()}`;
-              if (blueprint) {
-                const modelTitle = String(r.title || "").trim();
-                r.title = plan.family === "custom"
-                  ? (modelTitle || blueprint.title)
-                  : `${plan.displayName} · ${blueprint.title}`;
-                r.formula = blueprint.formula;
-                r.formula_parts = segments.map((name, idx) => {
-                  const prev = sameShape ? (modelParts[idx] ?? null) : null;
-                  return {
-                    name,
-                    words: prev && typeof prev.words === "string" ? prev.words : "",
-                    alternatives: prev && Array.isArray(prev.alternatives)
-                      ? prev.alternatives.map((a: any) => String(a || "").trim()).filter(Boolean)
-                      : [],
-                  };
-                });
+              
+              const modelTitle = String(r.title || "").trim();
+              if (modelTitle) {
+                r.title = modelTitle;
+              } else if (blueprint) {
+                r.title = `${plan.displayName} · ${blueprint.title}`;
+              } else {
+                r.title = `Rule ${i + 1}`;
               }
-              if (!r.title) r.title = `Rule ${i + 1}`;
-              if (!r.formula) r.formula = 'Pattern';
+
+              r.formula = rawFormula;
+              r.formula_parts = segments.map((name, idx) => {
+                const prev = sameShape ? (modelParts[idx] ?? null) : (modelParts.find((p: any) => p && p.name === name) ?? null);
+                return {
+                  name,
+                  words: prev && typeof prev.words === "string" ? prev.words : "",
+                  alternatives: prev && Array.isArray(prev.alternatives)
+                    ? prev.alternatives.map((a: any) => String(a || "").trim()).filter(Boolean)
+                    : [],
+                };
+              });
+
               if (!r.sentence) r.sentence = 'Example sentence.';
               r.tier = i < 3 ? 'recommended' : 'extension';
 
