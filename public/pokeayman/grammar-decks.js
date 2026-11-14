@@ -2177,8 +2177,8 @@
                   <div class="flex flex-col items-stretch gap-2 w-full pt-2 border-t border-slate-800/60" id="gp-options-row" style="display:flex!important;flex-direction:column!important;width:100%!important;gap:8px!important;">
                     ${options.map((opt, optIdx) => `
                       <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
-                        <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0">${String.fromCharCode(65 + optIdx)}</span>
-                        <span class="flex-1 min-w-0 break-words">[${escapeHtml(opt)}]</span>
+                        <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0 shadow-inner">${String.fromCharCode(65 + optIdx)}</span>
+                        <span class="flex-1 min-w-0 break-words font-medium text-slate-100">${escapeHtml(opt)}</span>
                       </button>
                     `).join('')}
                   </div>
@@ -2363,8 +2363,8 @@
         if (optsRow) {
           optsRow.innerHTML = qOpts.map((opt, optIdx) => `
             <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
-              <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0">${String.fromCharCode(65 + optIdx)}</span>
-              <span class="flex-1 min-w-0 break-words">[${escapeHtml(opt)}]</span>
+              <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0 shadow-inner">${String.fromCharCode(65 + optIdx)}</span>
+              <span class="flex-1 min-w-0 break-words font-medium text-slate-100">${escapeHtml(opt)}</span>
             </button>
           `).join('');
           wireQuizOptions();

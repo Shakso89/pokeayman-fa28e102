@@ -79,7 +79,7 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
 
   it('ensures grammar-decks.js is loaded in index.html', () => {
     const html = fs.readFileSync(indexPath, 'utf-8');
-    expect(html).toContain('<script src="/pokeayman/grammar-decks.js"></script>');
+    expect(html).toMatch(/<script\s+src="\/pokeayman\/grammar-decks\.js(\?v=[^"]+)?"/);
   });
 
   it('ensures grammar-decks.js contains required functions, starter decks, and creator attribution', () => {
