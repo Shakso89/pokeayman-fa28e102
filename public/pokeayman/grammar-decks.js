@@ -2184,14 +2184,12 @@
               <!-- Side-by-Side Mistake vs. Correct Cards -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <!-- Common Mistake Card -->
-                <div class="p-3.5 rounded-xl bg-rose-950/25 border border-rose-500/30 flex flex-col justify-between gap-1 shadow-sm">
-                  <div class="flex items-center justify-between mb-1">
-                    <span class="gp-mistake-heading flex items-center gap-1.5 font-bold uppercase tracking-wider text-rose-400 text-[11px]">
-                      <span class="w-4 h-4 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-[10px] font-black">✕</span>
-                      Avoid This Mistake
-                    </span>
-                    <span class="gp-mistake-badge text-[10px] font-bold text-rose-400 bg-rose-500/15 px-2 py-0.5 rounded-full border border-rose-500/30">
-                      ${allMistakes.length > 1 ? `INCORRECT (${allMistakes.length})` : 'INCORRECT'}
+                <div class="gp-mistake-card p-3.5 rounded-xl bg-rose-950/25 border border-rose-500/30 flex flex-col justify-between gap-1 shadow-sm">
+                  <div class="flex items-center justify-center mb-1.5">
+                    <span class="gp-mistake-mark w-7 h-7 rounded-full bg-rose-500/20 border border-rose-500/40 text-rose-400 flex items-center justify-center shadow-xs" title="Incorrect" data-badge="${allMistakes.length > 1 ? `INCORRECT (${allMistakes.length})` : 'INCORRECT'}">
+                      <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
                     </span>
                   </div>
                   <div class="space-y-1.5 my-0.5">
@@ -2205,14 +2203,12 @@
                 </div>
 
                 <!-- Correct Form Card -->
-                <div class="p-3.5 rounded-xl bg-emerald-950/25 border border-emerald-500/30 flex flex-col justify-between gap-1 shadow-sm">
-                  <div class="flex items-center justify-between mb-1">
-                    <span class="gp-correct-heading flex items-center gap-1.5 font-bold uppercase tracking-wider text-emerald-400 text-[11px]">
-                      <span class="w-4 h-4 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-[10px] font-black">✓</span>
-                      Correct Usage
-                    </span>
-                    <span class="gp-correct-badge text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                      ${allMistakes.length > 1 ? `CORRECT (${allMistakes.length})` : 'CORRECT'}
+                <div class="gp-correct-card p-3.5 rounded-xl bg-emerald-950/25 border border-emerald-500/30 flex flex-col justify-between gap-1 shadow-sm">
+                  <div class="flex items-center justify-center mb-1.5">
+                    <span class="gp-correct-mark w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shadow-xs" title="Correct" data-badge="${allMistakes.length > 1 ? `CORRECT (${allMistakes.length})` : 'CORRECT'}">
+                      <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
                     </span>
                   </div>
                   <div class="space-y-1.5 my-0.5">

@@ -2525,6 +2525,30 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 }
 
 /* 6. Practice Modal - Mistake Banner High Contrast in Bright Mode */
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-mistake-card {
+  background: #fff1f2 !important;
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+}
+
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-correct-card {
+  background: #f0fdf4 !important;
+  background-color: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-mistake-mark {
+  background-color: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-correct-mark {
+  background-color: #dcfce7 !important;
+  border-color: #86efac !important;
+  color: #16a34a !important;
+}
+
 :is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-mistake-banner {
   background: #ffffff !important;
   border-color: #e2e8f0 !important;
@@ -2949,6 +2973,10 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 /* Headings & badges stay fixed compact titles */
 .gp-practice-card .gp-mistake-heading,
 .gp-practice-card .gp-correct-heading {
+  font-size: 0.75rem !important;
+}
+.gp-practice-card .gp-mistake-mark,
+.gp-practice-card .gp-correct-mark {
   font-size: 0.75rem !important;
 }
 .gp-practice-card .gp-mistake-badge,
