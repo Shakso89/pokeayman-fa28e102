@@ -14,12 +14,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 echo.
 echo Deploying .output to Cloudflare (pokeayman)...
-where bun >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    call bun x wrangler deploy --cwd .output/
-) else (
-    call npx.cmd wrangler deploy --cwd .output/
-)
+call bun run wrangler deploy --cwd .output/
 
 echo.
 echo Deployment finished!
