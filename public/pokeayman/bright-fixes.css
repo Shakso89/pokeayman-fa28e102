@@ -2917,6 +2917,14 @@ html body .ga-hub {
   border-color: #06b6d4 !important;
   color: #0891b2 !important;
 }
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-quiz-opt span:first-child {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0891b2 !important;
+}
+:is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-quiz-opt span:last-child {
+  color: #0f172a !important;
+}
 :is(html body.ts-bright, html body.light, html body[data-theme="light"], html.light body) #grammar-practice-modal .gp-quiz-opt.bg-cyan-950\/90 {
   background: #ecfeff !important;
   color: #0891b2 !important;

@@ -2533,7 +2533,10 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 }
 
 /* Quick Check Vertical Stack Layout: Question on top, options stacked above each other below */
-#grammar-practice-modal #gp-quick-check-box {
+#grammar-practice-modal #gp-quick-check-box,
+#grammar-practice-modal .gp-quick-check-box,
+.gp-practice-card #gp-quick-check-box,
+.gp-practice-card .gp-quick-check-box {
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
@@ -2541,7 +2544,10 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   gap: 12px !important;
 }
 
-#grammar-practice-modal #gp-options-row {
+#grammar-practice-modal #gp-options-row,
+#grammar-practice-modal .gp-options-row,
+.gp-practice-card #gp-options-row,
+.gp-practice-card .gp-options-row {
   display: flex !important;
   flex-direction: column !important;
   width: 100% !important;
@@ -2550,7 +2556,8 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   clear: both !important;
 }
 
-#grammar-practice-modal .gp-quiz-opt {
+#grammar-practice-modal .gp-quiz-opt,
+#grammar-practice-modal #gp-options-row button {
   width: 100% !important;
   display: flex !important;
   align-items: center !important;

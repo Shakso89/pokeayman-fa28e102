@@ -3387,7 +3387,7 @@
           const col = COLOR_PALETTE[part.colorIndex % COLOR_PALETTE.length];
           const normAlts = normalizeAlternatives(part.alternatives);
           part.alternatives = normAlts;
-          const val = normAlts.join(', ');
+          const val = (typeof part.rawInput === 'string') ? part.rawInput : normAlts.join(', ');
           return `
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/90">
               <div class="flex items-center gap-2 shrink-0 sm:w-36">
@@ -3409,6 +3409,7 @@
             if (!currentFormulaParts[pIdx]) return;
             const alts = parseAlternativesInput(inp.value);
             currentFormulaParts[pIdx].alternatives = alts;
+            currentFormulaParts[pIdx].rawInput = inp.value;
             if (activeRule) {
               if (Array.isArray(activeRule.part_alternatives)) {
                 activeRule.part_alternatives[pIdx] = [...alts];
@@ -3421,23 +3422,7 @@
 
           inp.oninput = syncPartState;
           inp.onchange = syncPartState;
-          inp.onblur = () => {
-            syncPartState();
-            const pIdx = Number(inp.dataset.partIdx);
-            if (currentFormulaParts[pIdx]) {
-              const norm = normalizeAlternatives(currentFormulaParts[pIdx].alternatives);
-              currentFormulaParts[pIdx].alternatives = norm;
-              inp.value = norm.join(', ');
-              if (activeRule) {
-                if (Array.isArray(activeRule.part_alternatives)) {
-                  activeRule.part_alternatives[pIdx] = [...norm];
-                }
-                if (Array.isArray(activeRule.formula_parts) && activeRule.formula_parts[pIdx]) {
-                  activeRule.formula_parts[pIdx].alternatives = [...norm];
-                }
-              }
-            }
-          };
+          inp.onblur = syncPartState;
         });
       }
 
