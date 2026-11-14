@@ -2162,11 +2162,6 @@
               <div class="gp-hero-arena p-4 sm:p-5 md:p-6 rounded-2xl bg-slate-950/85 border border-slate-800 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 relative shrink-0">
                 <!-- Left / Center: Big commanding syntax-highlighted sentence -->
                 <div class="flex-1 text-center md:text-left min-w-0 w-full">
-                  <div class="gp-master-example-label flex items-center justify-center md:justify-start gap-2 text-[11px] font-bold uppercase tracking-widest text-indigo-400 mb-2">
-                    <span>Master Example</span>
-                    <span class="text-slate-600">•</span>
-                    <span class="text-slate-400 font-normal">Click word to cycle alternatives</span>
-                  </div>
                   <p class="gp-hero-sentence text-2xl sm:text-3xl md:text-4xl font-black text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
                     ${formatSyntaxHighlightedSentence(r.sentence, r.formula, r)}
                   </p>
