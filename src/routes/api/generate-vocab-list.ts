@@ -13,6 +13,55 @@ const CORS = {
 };
 
 
+function repairDetachedArticleAlternatives(alts: any, phraseContext = ""): string[] {
+  if (!alts) return [];
+  let list: string[] = [];
+  if (Array.isArray(alts)) {
+    list = alts.map(s => String(s || "").trim()).filter(Boolean);
+  } else if (typeof alts === "string") {
+    list = alts.split(/[,;/|\n]+/).map(s => s.trim()).filter(Boolean);
+  }
+  if (!list.length) return [];
+
+  const firstLower = list[0].toLowerCase();
+  const isDetachedArticle = (firstLower === "the" || firstLower === "a" || firstLower === "an") && list.length > 1;
+
+  let articleToUse = "";
+  if (isDetachedArticle) {
+    articleToUse = list[0];
+    list = list.slice(1);
+  } else if (phraseContext && typeof phraseContext === "string" && /^(the|a|an)\s+/i.test(phraseContext.trim())) {
+    const match = phraseContext.trim().match(/^(the|a|an)\s+/i);
+    if (match && list.every(item => !/^(the|a|an)\s+/i.test(item.trim()))) {
+      articleToUse = match[1];
+    }
+  }
+
+  if (articleToUse) {
+    const isCap = /^[A-Z]/.test(articleToUse);
+    const artBase = articleToUse.toLowerCase();
+
+    list = list.map(item => {
+      const str = String(item || "").trim();
+      if (!str) return "";
+      if (/^(the|a|an)\s+/i.test(str)) {
+        return str;
+      }
+      let chosenArt = articleToUse;
+      if (artBase === "a" || artBase === "an") {
+        const startsWithVowel = /^[aeiou]/i.test(str);
+        chosenArt = startsWithVowel ? (isCap ? "An" : "an") : (isCap ? "A" : "a");
+      }
+      return `${chosenArt} ${str}`;
+    });
+  }
+
+  return list.filter(item => {
+    const trimmed = String(item || "").trim().toLowerCase();
+    return trimmed && trimmed !== "the" && trimmed !== "a" && trimmed !== "an";
+  });
+}
+
 export const Route = createFileRoute("/api/generate-vocab-list")({
   server: {
     handlers: {
@@ -124,7 +173,7 @@ CRITICAL LINGUISTIC & ACCURACY REQUIREMENTS:
 2. FORMULA PARTS: Provide "formula_parts" as an array matching each "+" chunk of the formula in exact sequence. For each part:
    - "name": Concise grammatical label (e.g. "Subject", "was / were", "Verb-ing", "Complement")
    - "words": The EXACT phrase in your example sentence corresponding to this part
-   - "alternatives": Array of 2 to 4 natural, colorful replacements for that part so students can interactively swap words on the slide
+   - "alternatives": Array of 2 to 4 natural, colorful replacements for that part so students can interactively swap words on the slide. CRITICAL RULE FOR NOUN PHRASES: Each alternative MUST be a complete, self-contained phrase that fits naturally into the sentence. For example, for a Subject like "the marine biologist", alternatives MUST include the article: ["the zookeeper", "the scientist", "the teacher"]. NEVER separate or detach articles with commas (NEVER output ["the", "zookeeper", "scientist"] or ["a", "map", "question"])! Every noun phrase alternative must carry its own article or determiner ("the architect", "a map", "an astronaut").
 3. SENTENCE: Create a natural, vivid, memorable example sentence (6-12 words) perfectly demonstrating this rule. Use diverse professions, animals, and locations (e.g. astronauts, marine biologists, architects, dolphins, planetariums). Never repeat the same subject across rules!
 4. CONTEXT CLUE: Write a sharp 4-8 word pedagogical tip explaining WHEN or WHY native speakers use this structure (e.g. "Use 'will' for sudden decisions and promises").
 5. COMMON MISTAKE: Provide a realistic student error ("mistake_bad") and its correct form ("mistake_good") highlighting the subtle mistake students frequently make with this pattern.
@@ -331,13 +380,18 @@ Reply with JSON only: a bare array like
                 ? r.formula_parts
                 : String(r.formula || '').split('+').map(p => p.trim()).filter(Boolean).map(name => ({ name, words: '', alternatives: [] }));
 
-              r.formula_parts = rawFormulaParts.map((p: any, idx: number) => ({
-                id: `part-${idx + 1}-${Date.now()}`,
-                name: String(p.name || `Part ${idx + 1}`).trim(),
-                colorIndex: idx % 10,
-                words: String(p.words || '').trim(),
-                alternatives: Array.isArray(p.alternatives) ? p.alternatives.map((a: any) => String(a || '').trim()).filter(Boolean) : []
-              }));
+              r.formula_parts = rawFormulaParts.map((p: any, idx: number) => {
+                const wordsStr = String(p.words || '').trim();
+                const rawAlts = Array.isArray(p.alternatives) ? p.alternatives.map((a: any) => String(a || '').trim()).filter(Boolean) : [];
+                const repaired = repairDetachedArticleAlternatives(rawAlts, wordsStr);
+                return {
+                  id: `part-${idx + 1}-${Date.now()}`,
+                  name: String(p.name || `Part ${idx + 1}`).trim(),
+                  colorIndex: idx % 10,
+                  words: wordsStr,
+                  alternatives: repaired.length ? repaired : rawAlts
+                };
+              });
 
               // If legacy words_blue/amber/green are missing or need sync from formula_parts
               if (!r.words_blue && r.formula_parts[0]?.words) r.words_blue = r.formula_parts[0].words;

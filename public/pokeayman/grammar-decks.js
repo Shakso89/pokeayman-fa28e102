@@ -1048,6 +1048,57 @@
     return result;
   }
 
+  // Helper: auto-heal detached articles (e.g. ["the", "zookeeper", "scientist"] -> ["the zookeeper", "the scientist"])
+  function repairDetachedArticleAlternatives(alts, phraseContext = '') {
+    if (!alts) return [];
+    let list = [];
+    if (Array.isArray(alts)) {
+      list = alts.map(s => String(s || '').trim()).filter(Boolean);
+    } else if (typeof alts === 'string') {
+      list = alts.split(/[,;/|\n]+/).map(s => s.trim()).filter(Boolean);
+    }
+    if (!list.length) return [];
+
+    const firstLower = list[0].toLowerCase();
+    const isDetachedArticle = (firstLower === 'the' || firstLower === 'a' || firstLower === 'an') && list.length > 1;
+
+    let articleToUse = '';
+    if (isDetachedArticle) {
+      articleToUse = list[0];
+      list = list.slice(1);
+    } else if (phraseContext && typeof phraseContext === 'string' && /^(the|a|an)\s+/i.test(phraseContext.trim())) {
+      const match = phraseContext.trim().match(/^(the|a|an)\s+/i);
+      if (match && list.every(item => !/^(the|a|an)\s+/i.test(item.trim()))) {
+        articleToUse = match[1];
+      }
+    }
+
+    if (articleToUse) {
+      const isCap = /^[A-Z]/.test(articleToUse);
+      const artBase = articleToUse.toLowerCase();
+
+      list = list.map(item => {
+        const str = String(item || '').trim();
+        if (!str) return '';
+        if (/^(the|a|an)\s+/i.test(str)) {
+          return str;
+        }
+        let chosenArt = articleToUse;
+        if (artBase === 'a' || artBase === 'an') {
+          const startsWithVowel = /^[aeiou]/i.test(str);
+          chosenArt = startsWithVowel ? (isCap ? 'An' : 'an') : (isCap ? 'A' : 'a');
+        }
+        return `${chosenArt} ${str}`;
+      });
+    }
+
+    return list.filter(item => {
+      const trimmed = String(item || '').trim().toLowerCase();
+      return trimmed && trimmed !== 'the' && trimmed !== 'a' && trimmed !== 'an';
+    });
+  }
+  window.repairDetachedArticleAlternatives = repairDetachedArticleAlternatives;
+
     // Helper: render a word split into root and suffix with proper English inflection and colors
   function renderSplitWordHtml(word, suffixPattern, rootCls, suffixCls) {
     if (!word) return '';
@@ -1413,20 +1464,15 @@
           let firstSuffixCls = '';
           let pillInnerHtml = '';
 
-          // Normalize alternatives for this part
+          // Normalize alternatives for this part and repair detached articles
           const fp = rule?.formula_parts?.[pColor];
           let partAlts = Array.isArray(fp?.alternatives) ? fp.alternatives : (Array.isArray(rule?.part_alternatives?.[pColor]) ? rule.part_alternatives[pColor] : []);
-          partAlts = normalizeAlternatives(partAlts);
+          partAlts = normalizeAlternatives(repairDetachedArticleAlternatives(partAlts, phrase));
 
-          // If the phrase contains multiple alternatives separated by spaces (e.g. 'smart tall slow strong weak'), display only the first one!
+          // Master example MUST preserve the sentence phrase intact!
           let displayWord = phrase;
-          if (partAlts.length > 0 && !partAlts.includes(phrase)) {
-            const words = phrase.split(/\s+/).filter(Boolean);
-            if (words.length > 1 && partAlts.some(a => words.includes(a))) {
-              displayWord = partAlts[0];
-            } else if (!phrase) {
-              displayWord = partAlts[0];
-            }
+          if (!displayWord && partAlts.length > 0) {
+            displayWord = partAlts[0];
           }
 
           // Check if any token in this part was split
@@ -1867,6 +1913,23 @@
     let currentIndex = 0;
     const currentDeckId = deck.__backendId || deck.id || deck.grammar_deck_id;
     const deckName = deck.grammar_deck_name || deck.deck_name || 'Grammar Deck';
+
+    // Auto-heal detached articles across all deck rules
+    rules.forEach(r => {
+      if (Array.isArray(r.formula_parts)) {
+        r.formula_parts.forEach((p) => {
+          if (Array.isArray(p.alternatives) && p.alternatives.length > 0) {
+            p.alternatives = repairDetachedArticleAlternatives(p.alternatives, p.words || '');
+          }
+        });
+      }
+      if (Array.isArray(r.part_alternatives)) {
+        r.part_alternatives = r.part_alternatives.map((alts, pIdx) => {
+          const fpWords = r.formula_parts?.[pIdx]?.words || '';
+          return repairDetachedArticleAlternatives(alts, fpWords);
+        });
+      }
+    });
     const isOwner = isCurrentTeacherOwner(deck);
     const rewardedRuleIndices = new Set();
 
@@ -2167,20 +2230,20 @@
                     </div>
                   ` : ''}
                 </div>
-                <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-5 flex flex-col items-stretch gap-3 shadow-inner w-full" style="display:flex!important;flex-direction:column!important;width:100%!important;">
-                  <div class="text-xs sm:text-sm font-semibold text-slate-200 w-full flex items-start gap-2.5">
+                <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-4 sm:p-5 flex flex-col items-stretch gap-3 shadow-inner w-full" style="display:flex!important;flex-direction:column!important;width:100%!important;box-sizing:border-box!important;">
+                  <div class="text-xs sm:text-sm font-semibold text-slate-200 w-full flex items-start gap-2.5" style="display:flex!important;flex-direction:row!important;width:100%!important;align-items:flex-start!important;box-sizing:border-box!important;">
                     ${ruleQuestions.length > 1 ? `
                       <span id="gp-question-badge" class="shrink-0 px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-cyan-300 text-[10px] font-black uppercase tracking-wider mt-0.5">Q${activeQIdx + 1}</span>
                     ` : ''}
-                    <span id="gp-question-text" class="gp-quick-check-prompt text-sm sm:text-base font-bold text-slate-100 break-words leading-relaxed w-full">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</span>
+                    <div id="gp-question-text" class="gp-quick-check-prompt text-sm sm:text-base font-bold text-slate-100 break-words leading-relaxed w-full flex-1" style="display:block!important;width:100%!important;white-space:normal!important;word-break:break-word!important;">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</div>
                   </div>
-                  <div class="flex flex-col items-stretch gap-2.5 w-full pt-2.5 border-t border-slate-800/70" id="gp-options-row" style="display:flex!important;flex-direction:column!important;width:100%!important;gap:8px!important;clear:both!important;">
+                  <div class="flex flex-col items-stretch gap-2.5 w-full pt-2.5 border-t border-slate-800/70" id="gp-options-row" style="display:flex!important;flex-direction:column!important;width:100%!important;gap:8px!important;clear:both!important;box-sizing:border-box!important;">
                     ${options.map((opt, optIdx) => {
                       const cleanOpt = String(opt || '').replace(/^\[+|\]+$/g, '').trim();
                       return `
-                        <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
+                        <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;box-sizing:border-box!important;">
                           <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0 shadow-inner">${String.fromCharCode(65 + optIdx)}</span>
-                          <span class="flex-1 min-w-0 break-words font-medium text-slate-100">${escapeHtml(cleanOpt)}</span>
+                          <span class="flex-1 min-w-0 break-words font-medium text-slate-100" style="white-space:normal!important;word-break:break-word!important;">${escapeHtml(cleanOpt)}</span>
                         </button>
                       `;
                     }).join('')}
@@ -3234,6 +3297,7 @@
             if (!alts.length && activeRule.part_alternatives && Array.isArray(activeRule.part_alternatives[idx])) {
               alts = [...activeRule.part_alternatives[idx]];
             }
+            alts = repairDetachedArticleAlternatives(alts, p.words || '');
             return {
               id: p.id || ('part-' + idx + '-' + Math.random().toString(36).slice(2, 6)),
               name: String(p.name || `Part ${idx + 1}`).trim(),
@@ -3389,9 +3453,14 @@
 
         altsListContainer.innerHTML = currentFormulaParts.map((part, idx) => {
           const col = COLOR_PALETTE[part.colorIndex % COLOR_PALETTE.length];
-          const normAlts = normalizeAlternatives(part.alternatives);
+          const repaired = repairDetachedArticleAlternatives(part.alternatives, part.words || '');
+          const normAlts = normalizeAlternatives(repaired.length ? repaired : part.alternatives);
           part.alternatives = normAlts;
-          const val = (typeof part.rawInput === 'string') ? part.rawInput : normAlts.join(', ');
+          let val = (typeof part.rawInput === 'string') ? part.rawInput : normAlts.join(', ');
+          if (/^(?:the|a|an)\s*,\s*/i.test(val)) {
+            val = normAlts.join(', ');
+            part.rawInput = val;
+          }
           return `
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/90">
               <div class="flex items-center gap-2 shrink-0 sm:w-36">
@@ -4055,7 +4124,9 @@
           const pIdx = Number(inp.dataset.partIdx);
           if (currentFormulaParts[pIdx]) {
             currentFormulaParts[pIdx].rawInput = inp.value;
-            currentFormulaParts[pIdx].alternatives = normalizeAlternatives(parseAlternativesInput(inp.value));
+            const parsed = parseAlternativesInput(inp.value);
+            const repaired = repairDetachedArticleAlternatives(parsed, currentFormulaParts[pIdx].words || '');
+            currentFormulaParts[pIdx].alternatives = normalizeAlternatives(repaired.length ? repaired : parsed);
           }
         });
 
@@ -4918,6 +4989,23 @@
       const currentClass = typeof navClass !== 'undefined' && navClass ? navClass : 'ESL2';
       const newDeckId = 'grammar-deck-' + Date.now();
 
+      // Auto-heal any detached articles before saving generated deck
+      selectedRules.forEach(rule => {
+        if (Array.isArray(rule.formula_parts)) {
+          rule.formula_parts.forEach((p) => {
+            if (Array.isArray(p.alternatives) && p.alternatives.length > 0) {
+              p.alternatives = repairDetachedArticleAlternatives(p.alternatives, p.words || '');
+            }
+          });
+        }
+        if (Array.isArray(rule.part_alternatives)) {
+          rule.part_alternatives = rule.part_alternatives.map((alts, pIdx) => {
+            const fpWords = rule.formula_parts?.[pIdx]?.words || '';
+            return repairDetachedArticleAlternatives(alts, fpWords);
+          });
+        }
+      });
+
       const generatedDeck = {
         __backendId: newDeckId,
         id: newDeckId,
@@ -4996,6 +5084,23 @@
       const currentSchool = typeof navSchool !== 'undefined' && navSchool ? navSchool : 'Daya Stanford';
       const currentClass = typeof navClass !== 'undefined' && navClass ? navClass : 'ESL2';
       const newDeckId = 'grammar-deck-' + Date.now();
+
+      // Auto-heal any detached articles before saving generated deck
+      selectedRules.forEach(rule => {
+        if (Array.isArray(rule.formula_parts)) {
+          rule.formula_parts.forEach((p) => {
+            if (Array.isArray(p.alternatives) && p.alternatives.length > 0) {
+              p.alternatives = repairDetachedArticleAlternatives(p.alternatives, p.words || '');
+            }
+          });
+        }
+        if (Array.isArray(rule.part_alternatives)) {
+          rule.part_alternatives = rule.part_alternatives.map((alts, pIdx) => {
+            const fpWords = rule.formula_parts?.[pIdx]?.words || '';
+            return repairDetachedArticleAlternatives(alts, fpWords);
+          });
+        }
+      });
 
       const generatedDeck = {
         __backendId: newDeckId,

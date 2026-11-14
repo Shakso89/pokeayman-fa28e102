@@ -48,7 +48,7 @@ function ClassesPage() {
       key={frameKey}
       className="imported-app"
       title="PokéAyman Classes"
-      src="/pokeayman/index.html?v=20261106-surprise-boxes-no-repeat-v2&grammar_build=20261114_rebuild_v1&enter=classes"
+      src="/pokeayman/index.html?v=20261106-surprise-boxes-no-repeat-v2&grammar_build=20261114_fix_articles_v3&enter=classes"
       allowFullScreen
     />
   );
