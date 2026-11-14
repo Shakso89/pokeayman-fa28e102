@@ -1777,7 +1777,7 @@
               <span>OPPONENT: ROBOT</span>
               <span class="inline-block w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
             </span>
-            <span class="text-xs font-black tracking-wide text-white">COMBAT AI LEVEL</span>
+            <span class="ga-combat-ai-label text-xs font-black tracking-wide text-white">COMBAT AI LEVEL</span>
           </div>
         </div>
         <div class="ga-bot-difficulty-header-pill flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-black uppercase tracking-wider ${currentMeta.badgeBg}">
@@ -1868,10 +1868,10 @@
             </div>
 
             <div class="relative z-10 w-full mt-0.5">
-              <div class="text-xs sm:text-sm font-black tracking-wide text-white uppercase">
+              <div class="ga-diff-title text-xs sm:text-sm font-black tracking-wide text-white uppercase">
                 ${d.label}
               </div>
-              <div class="text-[9px] text-slate-400 font-medium mt-0.5 truncate" title="${esc(d.desc)}">
+              <div class="ga-diff-desc text-[9px] text-slate-400 font-medium mt-0.5 truncate" title="${esc(d.desc)}">
                 ${d.desc}
               </div>
             </div>
