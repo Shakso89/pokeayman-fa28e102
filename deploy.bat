@@ -1,4 +1,6 @@
 @echo off
+cd /d "%~dp0"
+set PATH=C:\Users\ayman\AppData\Local\Programs\@codebufffreebuff-desktop\resources\bun;%PATH%
 echo ============================================
 echo   Building and Deploying to Cloudflare Workers
 echo ============================================
