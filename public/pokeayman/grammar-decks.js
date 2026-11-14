@@ -1410,7 +1410,8 @@
       'text-cyan-300 font-black',    // 6: Cyan
       'text-fuchsia-300 font-black', // 7: Fuchsia
       'text-lime-300 font-black',    // 8: Lime
-      'text-yellow-300 font-black'   // 9: Yellow
+      'text-yellow-300 font-black',  // 9: Yellow
+      'ge-palette-10 text-slate-900 dark:text-white font-extrabold' // 10: Default (White in Dark, Black in Light)
     ];
     const getColorCls = (partOrColorIdx, isSuffix = false) => {
       if (typeof partOrColorIdx !== 'number' || partOrColorIdx < 0) return 'text-white font-extrabold';
@@ -1801,7 +1802,8 @@
       'border-cyan-400 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]',
       'border-fuchsia-400 bg-fuchsia-500/15 text-fuchsia-300 shadow-[0_0_12px_rgba(232,121,249,0.25)]',
       'border-lime-400 bg-lime-500/15 text-lime-300 shadow-[0_0_12px_rgba(163,230,53,0.25)]',
-      'border-yellow-400 bg-yellow-500/15 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.25)]'
+      'border-yellow-400 bg-yellow-500/15 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.25)]',
+      'ge-palette-10 border-slate-500/80 bg-slate-800/40 text-slate-100 shadow-sm'
     ];
 
     return parts.map((part, idx) => {
@@ -3305,7 +3307,8 @@
         { id: 6, name: 'Cyan Blue', hex: '#22d3ee', chipClass: 'ge-palette-6 border-cyan-400 bg-cyan-500/20 text-cyan-900 dark:text-cyan-200 shadow-[0_0_8px_rgba(34,211,238,0.3)] font-black', dotBg: 'bg-cyan-400', badgeClass: 'bg-cyan-400 text-slate-950' },
         { id: 7, name: 'Fuchsia Magenta', hex: '#e879f9', chipClass: 'ge-palette-7 border-fuchsia-400 bg-fuchsia-500/20 text-fuchsia-900 dark:text-fuchsia-200 shadow-[0_0_8px_rgba(232,121,249,0.3)] font-black', dotBg: 'bg-fuchsia-400', badgeClass: 'bg-fuchsia-400 text-slate-950' },
         { id: 8, name: 'Lime Green', hex: '#a3e635', chipClass: 'ge-palette-8 border-lime-400 bg-lime-500/20 text-lime-900 dark:text-lime-200 shadow-[0_0_8px_rgba(163,230,53,0.3)] font-black', dotBg: 'bg-lime-400', badgeClass: 'bg-lime-400 text-slate-950' },
-        { id: 9, name: 'Bright Yellow', hex: '#facc15', chipClass: 'ge-palette-9 border-yellow-400 bg-yellow-500/20 text-yellow-900 dark:text-yellow-200 shadow-[0_0_8px_rgba(250,204,21,0.3)] font-black', dotBg: 'bg-yellow-400', badgeClass: 'bg-yellow-400 text-slate-950' }
+        { id: 9, name: 'Bright Yellow', hex: '#facc15', chipClass: 'ge-palette-9 border-yellow-400 bg-yellow-500/20 text-yellow-900 dark:text-yellow-200 shadow-[0_0_8px_rgba(250,204,21,0.3)] font-black', dotBg: 'bg-yellow-400', badgeClass: 'bg-yellow-400 text-slate-950' },
+        { id: 10, name: 'No Color (Default)', hex: '#f8fafc', chipClass: 'ge-palette-10 border-slate-500/80 bg-slate-800/40 text-slate-900 dark:text-white font-black', dotBg: 'bg-gradient-to-r from-white to-slate-900 border border-slate-400', badgeClass: 'bg-slate-200 text-slate-900' }
       ];
 
       let currentWordAssignments = [];
@@ -3580,11 +3583,17 @@
               ` : ''}
 
               <!-- Color Picker Popover (Floating Palette) -->
-              <div class="ge-color-popover hidden absolute top-full left-0 mt-2 z-40 p-2.5 rounded-2xl bg-slate-900 border border-slate-700 shadow-[0_10px_25px_rgba(0,0,0,0.8)] grid grid-cols-5 gap-2 w-[165px]" data-part-idx="${idx}">
-                ${COLOR_PALETTE.map((cp, cIdx) => `
-                  <button type="button" class="ge-color-swatch-btn w-5 h-5 rounded-full ${cp.dotBg} hover:scale-125 transition ring-1 ring-white/30 cursor-pointer ${cIdx === (part.colorIndex % COLOR_PALETTE.length) ? 'ring-2 ring-white scale-110 shadow-[0_0_8px_rgba(255,255,255,0.9)]' : ''}" data-part-idx="${idx}" data-color-idx="${cIdx}" title="${cp.name}">
-                  </button>
-                `).join('')}
+              <div class="ge-color-popover hidden absolute top-full left-0 mt-2 z-40 p-2.5 rounded-2xl bg-slate-900 border border-slate-700 shadow-[0_10px_25px_rgba(0,0,0,0.8)] flex flex-col gap-2 w-[170px]" data-part-idx="${idx}">
+                <div class="grid grid-cols-5 gap-2">
+                  ${COLOR_PALETTE.slice(0, 10).map((cp, cIdx) => `
+                    <button type="button" class="ge-color-swatch-btn w-5 h-5 rounded-full ${cp.dotBg} hover:scale-125 transition ring-1 ring-white/30 cursor-pointer ${cIdx === (part.colorIndex % COLOR_PALETTE.length) ? 'ring-2 ring-white scale-110 shadow-[0_0_8px_rgba(255,255,255,0.9)]' : ''}" data-part-idx="${idx}" data-color-idx="${cIdx}" title="${cp.name}">
+                    </button>
+                  `).join('')}
+                </div>
+                <button type="button" class="ge-color-swatch-btn w-full py-1 px-2 rounded-xl border border-slate-700 bg-slate-800/90 hover:bg-slate-700 hover:border-slate-500 text-slate-200 hover:text-white transition cursor-pointer flex items-center justify-center gap-1.5 text-[11px] font-bold ${part.colorIndex === 10 ? 'ring-2 ring-cyan-400 border-cyan-400 bg-slate-800 text-white' : ''}" data-part-idx="${idx}" data-color-idx="10" title="No color (Default white in dark mode, black in bright mode)">
+                  <span class="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-white to-slate-900 border border-slate-400 shrink-0"></span>
+                  <span class="truncate">No Color (Default)</span>
+                </button>
               </div>
             </div>
           `;
