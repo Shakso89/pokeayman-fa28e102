@@ -1411,7 +1411,7 @@
       'text-fuchsia-300 font-black', // 7: Fuchsia
       'text-lime-300 font-black',    // 8: Lime
       'text-yellow-300 font-black',  // 9: Yellow
-      'ge-palette-10 text-slate-900 dark:text-white font-extrabold' // 10: Default (White in Dark, Black in Light)
+      'gp-color-default font-black' // 10: Default text (White in Dark, Black in Light - No background)
     ];
     const getColorCls = (partOrColorIdx, isSuffix = false) => {
       if (typeof partOrColorIdx !== 'number' || partOrColorIdx < 0) return 'text-white font-extrabold';

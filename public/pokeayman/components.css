@@ -2459,21 +2459,44 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   color: #854d0e !important;
 }
 
-/* Palette 10: No Color / Default (White in Dark Mode, Black in Light Mode) */
-.ge-palette-10,
-#grammar-editor-modal .ge-palette-10,
-#grammar-practice-modal .ge-palette-10 {
+/* Palette 10: In Deck Editor legend & word assignment buttons */
+#grammar-editor-modal .ge-palette-10 {
   background-color: rgba(30, 41, 59, 0.5) !important;
   border-color: #64748b !important;
   color: #ffffff !important;
 }
 
-:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) .ge-palette-10,
-:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-editor-modal .ge-palette-10,
-:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .ge-palette-10 {
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-editor-modal .ge-palette-10 {
   background-color: #f1f5f9 !important;
   border-color: #94a3b8 !important;
   color: #0f172a !important;
+}
+
+/* Master Example sentence: pure text with NO background boxes */
+#grammar-practice-modal .gp-hero-sentence span:not(.gp-subst-pill):not(.gp-subst-pill *) {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Default uncolored text in practice modal: crisp white in dark mode, black in bright mode */
+.gp-color-default,
+#grammar-practice-modal .gp-hero-sentence .gp-color-default {
+  color: #ffffff !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) .gp-color-default,
+:is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-hero-sentence .gp-color-default {
+  color: #0f172a !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* 4. Deck Editor - Alternatives List Rows */
