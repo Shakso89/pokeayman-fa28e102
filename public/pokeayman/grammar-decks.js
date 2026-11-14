@@ -3839,7 +3839,8 @@
               id: existing?.id || ('part-' + idx + '-' + Math.random().toString(36).slice(2, 6)),
               name: p,
               colorIndex: (existing && typeof existing.colorIndex === 'number') ? existing.colorIndex : (idx % COLOR_PALETTE.length),
-              alternatives: existing?.alternatives || []
+              alternatives: existing?.alternatives || [],
+              rawInput: existing?.rawInput
             };
           });
         } else {
