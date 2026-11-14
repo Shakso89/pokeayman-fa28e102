@@ -5732,6 +5732,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/crossword.css?v=20261028-crosswords-v11">
 <link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261111-pokemon-scale-v1">
+<link rel="stylesheet" href="/pokeayman/whac-a-diglett.css?v=20261115_whac_v1">
 <link rel="stylesheet" href="/pokeayman/vocab-battle.css">
 <link rel="stylesheet" href="/pokeayman/study-theme.css">
 <link rel="stylesheet" href="/pokeayman/components.css?v=20261115_student_ui_v12">
@@ -7753,10 +7754,362 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 })();
 
 </script>
+<script data-pokeayman-inline="whac-a-diglett">
+/* Whac-A-Diglett Arcade Mini-Game */
+(() => {
+  'use strict';
+
+  const esc = (v) =>
+    String(v ?? '').replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;',
+        }[c])
+    );
+
+  const ACCESSORIES = ['🕶️', '🤠', '🎩', '🎀', '⭐', '🧢', '👑', '🎉', '🥽'];
+
+  window.chooseWhacADiglett = function (listName) {
+    if (typeof currentRole !== 'undefined' && currentRole === 'student') {
+      if (typeof window.gaStudentSetup === 'function') {
+        window.gaStudentSetup(listName, 'chooseWhacADiglett');
+        return;
+      }
+    }
+    if (typeof chooseGamePlayers === 'function') {
+      chooseGamePlayers(listName, window.chooseWhacADiglett);
+    }
+  };
+
+  window.openGameWhacADiglett = function (listName, targetScore = 10, timerSeconds = 0) {
+    const allWords = typeof getGameWords === 'function' ? getGameWords(listName, false) : [];
+    if (!allWords || allWords.length < 2) {
+      if (typeof toast === 'function') {
+        toast('Whac-A-Diglett needs a vocabulary list with at least 2 words.');
+      }
+      return;
+    }
+
+    // Set up players
+    if (!Array.isArray(activeGamePlayers) || !activeGamePlayers.length) {
+      const student = (typeof currentStudent !== 'undefined' ? (typeof getAllStudents === 'function' ? getAllStudents().find(s => s.student_name === currentStudent) : null) : null) || { student_name: 'Player', avatar_pokemon_id: 25 };
+      activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'normal') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
+    } else if (activeGamePlayers.length === 1) {
+      activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'normal') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+    }
+
+    if (!Array.isArray(activeGameScores) || activeGameScores.length !== activeGamePlayers.length) {
+      activeGameScores = activeGamePlayers.map(() => 0);
+    }
+    activeGamePlayerIndex = 0;
+
+    if (typeof setGameReplay === 'function') {
+      setGameReplay(() => {
+        if (typeof resetGameTurnState === 'function') resetGameTurnState();
+        window.openGameWhacADiglett(listName, targetScore, timerSeconds);
+      });
+    }
+
+    const winningScore = Math.max(3, Number(targetScore) || 10);
+    const numHoles = 6;
+    let currentTargetWord = null;
+    let roundActive = true;
+    let comboStreak = 0;
+    let waveTimer = null;
+    let botTimer = null;
+    let currentActiveHoles = [];
+
+    // Create Modal
+    const modal = document.createElement('div');
+    modal.className = 'whac-game-modal game-popup-modal';
+    modal.dataset.game = 'whac-a-diglett';
+    modal.innerHTML = `
+      <header class="whac-header ga-stage-header">
+        <div class="whac-heading">
+          <h2>🔨 Whac-A-Diglett</h2>
+        </div>
+        <div class="whac-header-tools">
+          <button type="button" class="whac-btn-tool game-fullscreen-btn" aria-label="Toggle Fullscreen">⛶</button>
+          <button type="button" class="whac-btn-tool" id="whac-close" aria-label="Close game">✕</button>
+        </div>
+      </header>
+      <div class="whac-game-shell ga-stage-shell">
+        <div class="game-player-hud-slot w-full max-w-xl mb-2 flex justify-center"></div>
+
+        <section class="whac-signboard" aria-label="Target word to whack">
+          <div class="whac-combo-badge" id="whac-combo">🔥 Combo x2!</div>
+          <div class="text-center">
+            <div class="whac-clue-label">WHACK THIS WORD</div>
+            <div class="whac-clue-content">
+              <img id="whac-clue-image" class="whac-clue-img hidden" alt="Word clue">
+              <span id="whac-clue-text" class="whac-clue-text">...</span>
+              <button type="button" id="whac-speak-btn" class="whac-clue-audio-btn" aria-label="Hear pronunciation" title="Listen to word">🔊</button>
+            </div>
+          </div>
+        </section>
+
+        <main class="whac-field" id="whac-field" role="region" aria-label="Diglett field">
+          ${Array.from({ length: numHoles }).map((_, i) => `
+            <div class="whac-mound-wrap" data-hole-index="${i}">
+              <div class="whac-hole-container" data-hole="${i}">
+                <div class="whac-diglett" data-hole-diglett="${i}">
+                  <span class="whac-diglett-accessory">${ACCESSORIES[i % ACCESSORIES.length]}</span>
+                  <div class="whac-diglett-body">
+                    <div class="whac-diglett-eyes">
+                      <div class="whac-diglett-eye"></div>
+                      <div class="whac-diglett-eye"></div>
+                    </div>
+                    <div class="whac-diglett-nose"></div>
+                    <div class="whac-word-badge" data-hole-badge="${i}"></div>
+                  </div>
+                </div>
+                <div class="whac-mound-lip"></div>
+              </div>
+            </div>
+          `).join('')}
+        </main>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    if (typeof attachGameFullscreen === 'function') attachGameFullscreen(modal);
+    if (typeof renderGamePlayerHud === 'function') renderGamePlayerHud(modal, winningScore, 0, winningScore);
+    if (typeof startPlayerTurnTimer === 'function') startPlayerTurnTimer(modal, timerSeconds);
+
+    const clueText = modal.querySelector('#whac-clue-text');
+    const clueImage = modal.querySelector('#whac-clue-image');
+    const speakBtn = modal.querySelector('#whac-speak-btn');
+    const comboEl = modal.querySelector('#whac-combo');
+    const field = modal.querySelector('#whac-field');
+
+    function speakTarget(word) {
+      if (!word) return;
+      if (typeof window.readGameWordAloud === 'function') {
+        window.readGameWordAloud(word);
+      } else if ('speechSynthesis' in window) {
+        try {
+          const u = new SpeechSynthesisUtterance(word);
+          u.lang = 'en-US';
+          window.speechSynthesis.speak(u);
+        } catch (e) {}
+      }
+    }
+
+    speakBtn.addEventListener('click', () => {
+      if (currentTargetWord) speakTarget(currentTargetWord.vocab_word);
+    });
+
+    function cleanUpWave() {
+      clearTimeout(waveTimer);
+      clearTimeout(botTimer);
+      modal.querySelectorAll('.whac-diglett').forEach((el) => {
+        el.classList.remove('is-up', 'is-whacked');
+      });
+      currentActiveHoles = [];
+    }
+
+    function spawnWave() {
+      if (!roundActive) return;
+      cleanUpWave();
+
+      // Pick next target word
+      const nextWord = allWords[Math.floor(Math.random() * allWords.length)];
+      currentTargetWord = nextWord;
+
+      // Update signboard clue
+      clueText.textContent = nextWord.vocab_word;
+      if (nextWord.vocab_image && String(nextWord.vocab_image).trim().length > 0) {
+        clueImage.src = nextWord.vocab_image;
+        clueImage.classList.remove('hidden');
+      } else {
+        clueImage.classList.add('hidden');
+      }
+
+      // Automatically speak word once wave appears
+      speakTarget(nextWord.vocab_word);
+
+      // Select 2 or 3 random distinct holes
+      const holeIndices = [0, 1, 2, 3, 4, 5].sort(() => Math.random() - 0.5);
+      const activeCount = Math.min(3, Math.max(2, Math.floor(Math.random() * 2) + 2));
+      const chosenHoles = holeIndices.slice(0, activeCount);
+      currentActiveHoles = chosenHoles;
+
+      // Distractors
+      const distractorPool = allWords.filter((w) => w.vocab_word !== nextWord.vocab_word);
+      const shuffledDistractors = distractorPool.sort(() => Math.random() - 0.5);
+
+      // Hole 0 in chosenHoles gets the correct word
+      const targetHole = chosenHoles[Math.floor(Math.random() * chosenHoles.length)];
+
+      chosenHoles.forEach((holeIdx) => {
+        const diglett = modal.querySelector(`[data-hole-diglett="${holeIdx}"]`);
+        const badge = modal.querySelector(`[data-hole-badge="${holeIdx}"]`);
+        if (!diglett || !badge) return;
+
+        const isTarget = holeIdx === targetHole;
+        const wordObj = isTarget ? nextWord : (shuffledDistractors.pop() || nextWord);
+
+        badge.textContent = wordObj.vocab_word;
+        diglett.dataset.word = wordObj.vocab_word;
+        diglett.dataset.isTarget = isTarget ? 'true' : 'false';
+
+        // Pop up with slight random delay for natural arcade feel
+        setTimeout(() => {
+          if (roundActive) diglett.classList.add('is-up');
+        }, Math.random() * 120);
+      });
+
+      // Handle Robot Opponent logic
+      const currentPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (currentPlayer && currentPlayer.isBot) {
+        const botDiff = currentPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
+        const reactionTimes = { easy: 1800, normal: 1200, hard: 750 };
+        const delay = reactionTimes[botDiff] || 1200;
+
+        botTimer = setTimeout(() => {
+          if (!roundActive) return;
+          const targetDiglett = modal.querySelector(`[data-hole-diglett="${targetHole}"]`);
+          if (targetDiglett && targetDiglett.classList.contains('is-up') && !targetDiglett.classList.contains('is-whacked')) {
+            handleHit(targetHole, true, true);
+          }
+        }, delay);
+      }
+
+      // Wave retreat timeout (if not whacked)
+      waveTimer = setTimeout(() => {
+        if (!roundActive) return;
+        // Digletts retreat
+        modal.querySelectorAll('.whac-diglett.is-up').forEach((el) => {
+          el.classList.remove('is-up');
+        });
+        // Next wave after brief delay
+        setTimeout(spawnWave, 400);
+      }, 2200);
+    }
+
+    function createHitFx(holeIdx, isCorrect) {
+      const container = modal.querySelector(`[data-hole="${holeIdx}"]`);
+      if (!container) return;
+
+      const fx = document.createElement('div');
+      fx.className = 'whac-hit-fx';
+      fx.style.top = '20px';
+      fx.style.left = '50%';
+      fx.style.marginLeft = '-30px';
+      fx.innerHTML = `
+        <div class="whac-hit-stars">${isCorrect ? '⚡⭐' : '❌'}</div>
+        <div class="whac-hit-score">${isCorrect ? '+1' : 'MISS'}</div>
+      `;
+      container.appendChild(fx);
+      setTimeout(() => fx.remove(), 550);
+    }
+
+    function handleHit(holeIdx, isTarget, fromBot = false) {
+      const diglett = modal.querySelector(`[data-hole-diglett="${holeIdx}"]`);
+      if (!diglett || !diglett.classList.contains('is-up') || diglett.classList.contains('is-whacked')) return;
+
+      clearTimeout(waveTimer);
+      clearTimeout(botTimer);
+
+      diglett.classList.add('is-whacked');
+      createHitFx(holeIdx, isTarget);
+
+      if (isTarget) {
+        // Correct hit!
+        try { window.pokeSfx?.play?.('correct'); } catch (e) {}
+        comboStreak++;
+        if (comboStreak > 1) {
+          comboEl.textContent = `🔥 Combo x${comboStreak}!`;
+          comboEl.classList.add('is-visible');
+        }
+
+        activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
+        if (typeof updateGamePlayerHud === 'function') {
+          updateGamePlayerHud(modal, 1, activeGamePlayerIndex);
+        }
+        if (typeof showCorrectAnswerCelebration === 'function') {
+          showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
+        }
+
+        // Check victory condition
+        if (activeGameScores[activeGamePlayerIndex] >= winningScore) {
+          roundActive = false;
+          cleanUpWave();
+          setTimeout(() => {
+            if (typeof showGameCelebration === 'function') {
+              showGameCelebration(modal, 'Whac-A-Diglett Champion!', currentTargetWord.vocab_word, null, currentTargetWord.vocab_image);
+            }
+          }, 450);
+          return;
+        }
+
+        // Next round wave
+        setTimeout(() => {
+          diglett.classList.remove('is-up', 'is-whacked');
+          setTimeout(spawnWave, 250);
+        }, 350);
+
+      } else {
+        // Wrong hit!
+        try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        comboStreak = 0;
+        comboEl.classList.remove('is-visible');
+
+        const prevPlayerIndex = activeGamePlayerIndex;
+        if (typeof advanceGameTurn === 'function') {
+          advanceGameTurn();
+        }
+        if (typeof showWrongAnswerCelebration === 'function') {
+          showWrongAnswerCelebration(modal, prevPlayerIndex);
+        }
+        if (typeof updateGamePlayerHud === 'function') {
+          updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
+        }
+
+        setTimeout(() => {
+          diglett.classList.remove('is-up', 'is-whacked');
+          setTimeout(spawnWave, 350);
+        }, 350);
+      }
+    }
+
+    // Attach click / tap listener to holes
+    field.addEventListener('click', (e) => {
+      if (!roundActive) return;
+      const holeContainer = e.target.closest('[data-hole]');
+      if (!holeContainer) return;
+      const holeIdx = Number(holeContainer.dataset.hole);
+      const diglett = holeContainer.querySelector('.whac-diglett');
+      if (!diglett || !diglett.classList.contains('is-up')) return;
+
+      const isTarget = diglett.dataset.isTarget === 'true';
+      handleHit(holeIdx, isTarget, false);
+    });
+
+    // Close Handler
+    modal.querySelector('#whac-close').addEventListener('click', () => {
+      roundActive = false;
+      cleanUpWave();
+      modal.remove();
+      if (typeof returnToGamesTab === 'function') returnToGamesTab();
+    });
+
+    // Start first wave
+    setTimeout(spawnWave, 500);
+  };
+})();
+
+</script>
 <script data-pokeayman-inline="games-arcade">
 // Arcade games hub, lobby helpers and 3-2-1 countdown. Only presentation; game logic stays in index.html.
 (function () {
   const GAMES = [
+    { fn: 'chooseWhacADiglett', icon: '🔨', image: '/pokeayman/assets/games/whac-a-diglett.jpg', name: 'Whac-A-Diglett', desc: 'Listen to the word or check the clue, then whack the popping Diglett before it burrows back!', tags: ['1–2 players', 'Reflexes & Audio'], accent: 'amber' },
     { fn: 'chooseDotsAndBoxes', icon: '⚄', image: '/pokeayman/assets/games/dots-and-boxes.jpg', name: 'Dots and Boxes', desc: 'Answer vocabulary questions to draw lines, claim boxes, and outsmart your opponent.', tags: ['2-Player', 'Strategy', 'Vocab MCQ'], accent: 'amber' },
     { fn: 'chooseBaamboozlePowerUps', icon: '🎁', image: '/pokeayman/assets/games/surprise-boxes.jpg', name: 'Surprise Boxes', desc: 'Open mystery boxes full of power-ups, traps and score swaps.', tags: ['1–4 players', 'Class favourite'], accent: 'pink' },
     { fn: 'chooseMatchWordCount', icon: '🎯', image: '/pokeayman/assets/games/match-words.jpg', name: 'Match Words', desc: 'Race to match each word with its picture.', tags: ['1–4 players', 'Fast reflexes'], accent: 'red' },
@@ -9782,8 +10135,9 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     panel.className = 'game-inline-view ga-student-setup ga-hub';
     const isBaam = fnName === 'chooseBaamboozlePowerUps';
     const isDots = fnName === 'chooseDotsAndBoxes';
-    const counts = isBaam ? [8, 16] : (isDots ? [4, 9] : [5, 10, 15]);
-    const unitLabel = isBaam ? 'cards' : (isDots ? 'boxes' : 'words');
+    const isWhac = fnName === 'chooseWhacADiglett';
+    const counts = isBaam ? [8, 16] : (isDots ? [4, 9] : (isWhac ? [5, 10, 15] : [5, 10, 15]));
+    const unitLabel = isBaam ? 'cards' : (isDots ? 'boxes' : (isWhac ? 'points' : 'words'));
     panel.setAttribute('aria-label', `${game.name} ${unitLabel}`);
     const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
     panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header>
@@ -9808,6 +10162,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       else if (fnName === 'chooseDotsAndBoxes') {
         const gridDots = count === 4 ? 3 : (count === 16 ? 5 : 4);
         (window.openGameDotsAndBoxes || openGameDotsAndBoxes)(listName, gridDots, 0);
+      } else if (fnName === 'chooseWhacADiglett') {
+        (window.openGameWhacADiglett || openGameWhacADiglett)(listName, count, 0);
       }
     }));
     area.appendChild(panel);
@@ -9928,12 +10284,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (!board || view.querySelector('#game-player-list') || (view.classList.contains('ga-stage') && view.querySelector('.ga-stage-controls'))) return;
     view.classList.add('ga-stage');
     view.classList.remove('fixed', 'inset-0', 'bg-black/50', 'bg-black/60', 'z-50', 'p-4');
-    const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .match-game-shell, .find-me-game-shell, .crossword-game-shell, .surprise-boxes-game, .dots-game-shell, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
+    const shell = view.querySelector('.whac-game-shell, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .match-game-shell, .find-me-game-shell, .crossword-game-shell, .surprise-boxes-game, .dots-game-shell, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
     if (!shell) return;
     shell.classList.add('ga-stage-shell');
     let parent = shell.parentElement;
     while (parent && parent !== view) { parent.classList.add('ga-stage-wrapper'); parent = parent.parentElement; }
-    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .crossword-header, .dots-header, .hangman-game-shell > div:first-child, .lc-head, .vb-head, .cdx-head, .sticky.top-0') || shell.firstElementChild;
+    const header = view.querySelector('.whac-header, .surprise-boxes-header, .memory-game-header, .cipher-lab-header, .crossword-header, .dots-header, .hangman-game-shell > div:first-child, .lc-head, .vb-head, .cdx-head, .sticky.top-0') || shell.firstElementChild;
     if (header) {
       header.classList.add('ga-stage-header');
       header.querySelector('[data-games-back]')?.remove();
@@ -10344,6 +10700,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const error = modal.querySelector('#game-player-error');
     const requiresTwoPlayers = isSurpriseBoxesGame;
     const isDotsAndBoxes = resolvedFnName === 'chooseDotsAndBoxes';
+    const isWhacADiglett = resolvedFnName === 'chooseWhacADiglett';
     const isSoloGame = resolvedFnName === 'startListenCatch' || resolvedFnName === 'startVocabBattle';
     const footer = next?.parentElement;
     if (!root || !footer) return;
@@ -10353,7 +10710,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const bar = document.createElement('div');
     bar.className = 'ga-players-bar flex flex-wrap items-center justify-between gap-2.5 w-full';
 
-    const maxAllowed = isSoloGame ? 1 : (isDotsAndBoxes ? 2 : 4);
+    const maxAllowed = isSoloGame ? 1 : ((isDotsAndBoxes || isWhacADiglett) ? 2 : 4);
     bar.innerHTML = `
       <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
         <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
@@ -10939,6 +11296,64 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             btn.classList.toggle('is-selected', active);
             btn.setAttribute('aria-pressed', String(active));
           });
+        }
+      });
+      modal.dataset.gaTimerSeconds = '0';
+      window.pendingGameTimerSeconds = 0;
+      paramsSection.appendChild(timerStepper.element);
+    } else if (resolvedFnName === 'chooseWhacADiglett') {
+      const pointsIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`;
+      const pointsStepper = createCustomStepper({
+        iconSvg: pointsIcon,
+        title: 'Points to win',
+        options: [
+          { points: 10, label: '10 points' },
+          { points: 5, label: '5 points' },
+          { points: 15, label: '15 points' },
+          { points: 20, label: '20 points' }
+        ],
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaWinningScore = String(opt.points);
+          window.selectedWhacTargetScore = opt.points;
+        }
+      });
+      modal.dataset.gaWinningScore = '10';
+      window.selectedWhacTargetScore = 10;
+      paramsSection.appendChild(pointsStepper.element);
+
+      const coinIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h6a1.5 1.5 0 0 1 0 3H9a1.5 1.5 0 0 0 0 3h6"/></svg>`;
+      const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : 20;
+      const rewardMax = (availableCredits === Infinity || !Number.isFinite(availableCredits)) ? 100 : Math.max(0, Math.floor(availableCredits / 5) * 5);
+      const coinOptions = [{ value: 0, label: 'No coins' }];
+      for (let c = 5; c <= Math.max(20, rewardMax); c += 5) {
+        coinOptions.push({ value: c, label: `${c} coins` });
+      }
+
+      const rewardStepper = createCustomStepper({
+        iconSvg: coinIcon,
+        title: 'Winner reward coins',
+        options: coinOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaRewardCoins = String(opt.value);
+          window.pendingGameReward = opt.value;
+        }
+      });
+      modal.dataset.gaRewardCoins = '0';
+      window.pendingGameReward = 0;
+      paramsSection.appendChild(rewardStepper.element);
+
+      const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+      const timerOptions = getStandardTimerOptions();
+      const timerStepper = createCustomStepper({
+        iconSvg: timerIcon,
+        title: 'Timer',
+        options: timerOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaTimerSeconds = String(opt.seconds);
+          window.pendingGameTimerSeconds = opt.seconds;
         }
       });
       modal.dataset.gaTimerSeconds = '0';
@@ -34266,6 +34681,7 @@ function chooseGamePlayers(listName, nextStep) {
   const isHangman = nextStep === chooseHangmanWordCount || (nextStep && nextStep.name === 'chooseHangmanWordCount') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseHangmanWordCount');
   const isCrossword = nextStep === chooseCrossword || (nextStep && nextStep.name === 'chooseCrossword') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseCrossword');
   const isDotsAndBoxes = nextStep === chooseDotsAndBoxes || (nextStep && nextStep.name === 'chooseDotsAndBoxes') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseDotsAndBoxes');
+  const isWhacADiglett = nextStep === chooseWhacADiglett || (nextStep && nextStep.name === 'chooseWhacADiglett') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseWhacADiglett');
   const isSurpriseBoxes = nextStep === chooseBaamboozlePowerUps || (nextStep && (nextStep.name === 'chooseBaamboozlePowerUps' || nextStep.name === 'openBaamboozle')) || Boolean(window.pendingChosenGame && (window.pendingChosenGame.fn === 'chooseBaamboozlePowerUps' || (window.pendingChosenGame.name && window.pendingChosenGame.name.toLowerCase().includes('surprise')) || window.pendingChosenGame.id === 'surprise_boxes'));
   const isFindMe = nextStep === chooseFindMeScore || (nextStep && nextStep.name === 'chooseFindMeScore') || (window.pendingChosenGame && window.pendingChosenGame.fn === 'chooseFindMeScore');
   if (isSurpriseBoxes) {
@@ -34307,7 +34723,7 @@ function chooseGamePlayers(listName, nextStep) {
   const playerChoices = [...modal.querySelectorAll('.game-player-check')];
   const refreshPlayerChoiceState = () => {
     const selectedCount = playerChoices.filter(input => input.checked).length;
-    const atLimit = isDotsAndBoxes ? selectedCount >= 2 : selectedCount >= 4;
+    const atLimit = (isDotsAndBoxes || isWhacADiglett) ? selectedCount >= 2 : selectedCount >= 4;
     playerChoices.forEach(input => {
       const tile = input.closest('.game-player-card-option');
       const unselectedAtLimit = atLimit && !input.checked;
@@ -34320,7 +34736,7 @@ function chooseGamePlayers(listName, nextStep) {
   };
   playerChoices.forEach(input => input.addEventListener('change', refreshPlayerChoiceState));
   refreshPlayerChoiceState();
-  const lobbyFnName = isSurpriseBoxes ? 'chooseBaamboozlePowerUps' : (isDotsAndBoxes ? 'chooseDotsAndBoxes' : (nextStep && nextStep.name));
+  const lobbyFnName = isSurpriseBoxes ? 'chooseBaamboozlePowerUps' : (isDotsAndBoxes ? 'chooseDotsAndBoxes' : (isWhacADiglett ? 'chooseWhacADiglett' : (nextStep && nextStep.name)));
   window.gaEnhanceLobby?.(modal, lobbyFnName, refreshPlayerChoiceState);
   modal.addEventListener('click', event => { const theme = event.target.closest('[data-ga-theme-choice]'); if (theme && isCrossword) window.gaSetTheme?.(theme.dataset.gaThemeChoice); });
   modal.querySelectorAll('.game-timer-option').forEach(option => option.addEventListener('click', () => {
@@ -34418,6 +34834,14 @@ function chooseGamePlayers(listName, nextStep) {
         return;
       }
     }
+    if (isWhacADiglett) {
+      const valid = (isRobotOpponent && selected.length === 1) || selected.length >= 1;
+      if (!valid) {
+        modal.querySelector('#game-player-error').textContent = 'Whac-A-Diglett requires at least 1 student to play.';
+        modal.querySelector('#game-player-error').classList.remove('hidden');
+        return;
+      }
+    }
     if (isSurpriseBoxes) {
       const valid = (isRobotOpponent && selected.length === 1) || selected.length >= 2;
       if (!valid) {
@@ -34487,6 +34911,13 @@ function chooseGamePlayers(listName, nextStep) {
           }
         }
       }, listName);
+    } else if (isWhacADiglett) {
+      const targetScore = Number(modal.dataset.gaWinningScore || window.selectedWhacTargetScore || 10);
+      showFirstPlayerReveal(() => {
+        if (typeof window.openGameWhacADiglett === 'function') {
+          window.openGameWhacADiglett(listName, targetScore, timerSeconds);
+        }
+      }, listName);
     } else if (isDotsAndBoxes) {
       const gridDots = Number(modal.dataset.gaGridDots || 4);
       showFirstPlayerReveal(() => {
@@ -34499,6 +34930,11 @@ function chooseGamePlayers(listName, nextStep) {
   modal.querySelector('#game-players-cancel').addEventListener('click', () => { window.gaExitSetupToArcade?.(); });
   modal.addEventListener('click', e => { if (e.target === modal && !e.target.querySelector('#shared-baam-powerups')) window.gaExitSetupToArcade?.(); });
 }
+
+function chooseWhacADiglett(listName) {
+  chooseGamePlayers(listName, chooseWhacADiglett);
+}
+window.chooseWhacADiglett = chooseWhacADiglett;
 
 function chooseDotsAndBoxes(listName) {
   chooseGamePlayers(listName, chooseDotsAndBoxes);

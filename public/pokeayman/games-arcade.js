@@ -1,6 +1,7 @@
 // Arcade games hub, lobby helpers and 3-2-1 countdown. Only presentation; game logic stays in index.html.
 (function () {
   const GAMES = [
+    { fn: 'chooseWhacADiglett', icon: '🔨', image: '/pokeayman/assets/games/whac-a-diglett.jpg', name: 'Whac-A-Diglett', desc: 'Listen to the word or check the clue, then whack the popping Diglett before it burrows back!', tags: ['1–2 players', 'Reflexes & Audio'], accent: 'amber' },
     { fn: 'chooseDotsAndBoxes', icon: '⚄', image: '/pokeayman/assets/games/dots-and-boxes.jpg', name: 'Dots and Boxes', desc: 'Answer vocabulary questions to draw lines, claim boxes, and outsmart your opponent.', tags: ['2-Player', 'Strategy', 'Vocab MCQ'], accent: 'amber' },
     { fn: 'chooseBaamboozlePowerUps', icon: '🎁', image: '/pokeayman/assets/games/surprise-boxes.jpg', name: 'Surprise Boxes', desc: 'Open mystery boxes full of power-ups, traps and score swaps.', tags: ['1–4 players', 'Class favourite'], accent: 'pink' },
     { fn: 'chooseMatchWordCount', icon: '🎯', image: '/pokeayman/assets/games/match-words.jpg', name: 'Match Words', desc: 'Race to match each word with its picture.', tags: ['1–4 players', 'Fast reflexes'], accent: 'red' },
@@ -2026,8 +2027,9 @@
     panel.className = 'game-inline-view ga-student-setup ga-hub';
     const isBaam = fnName === 'chooseBaamboozlePowerUps';
     const isDots = fnName === 'chooseDotsAndBoxes';
-    const counts = isBaam ? [8, 16] : (isDots ? [4, 9] : [5, 10, 15]);
-    const unitLabel = isBaam ? 'cards' : (isDots ? 'boxes' : 'words');
+    const isWhac = fnName === 'chooseWhacADiglett';
+    const counts = isBaam ? [8, 16] : (isDots ? [4, 9] : (isWhac ? [5, 10, 15] : [5, 10, 15]));
+    const unitLabel = isBaam ? 'cards' : (isDots ? 'boxes' : (isWhac ? 'points' : 'words'));
     panel.setAttribute('aria-label', `${game.name} ${unitLabel}`);
     const headerIconHtml = game.image ? `<img src="${game.image}" alt="" class="inline-block w-8 h-8 rounded-lg object-cover align-middle mr-2 ring-1 ring-amber-400/40">` : `${game.icon} `;
     panel.innerHTML = `<header class="ga-hub-head"><h2>${headerIconHtml}${esc(game.name)}</h2><button type="button" class="ga-change-lists" aria-label="Back to game arcade">←</button></header>
@@ -2052,6 +2054,8 @@
       else if (fnName === 'chooseDotsAndBoxes') {
         const gridDots = count === 4 ? 3 : (count === 16 ? 5 : 4);
         (window.openGameDotsAndBoxes || openGameDotsAndBoxes)(listName, gridDots, 0);
+      } else if (fnName === 'chooseWhacADiglett') {
+        (window.openGameWhacADiglett || openGameWhacADiglett)(listName, count, 0);
       }
     }));
     area.appendChild(panel);
@@ -2172,12 +2176,12 @@
     if (!board || view.querySelector('#game-player-list') || (view.classList.contains('ga-stage') && view.querySelector('.ga-stage-controls'))) return;
     view.classList.add('ga-stage');
     view.classList.remove('fixed', 'inset-0', 'bg-black/50', 'bg-black/60', 'z-50', 'p-4');
-    const shell = view.querySelector('.memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .match-game-shell, .find-me-game-shell, .crossword-game-shell, .surprise-boxes-game, .dots-game-shell, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
+    const shell = view.querySelector('.whac-game-shell, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .match-game-shell, .find-me-game-shell, .crossword-game-shell, .surprise-boxes-game, .dots-game-shell, .lc-play, .vb-shell, .vb-arena, .cdx-shell') || (view.matches('.game-popup-modal') ? view.firstElementChild : view.firstElementChild);
     if (!shell) return;
     shell.classList.add('ga-stage-shell');
     let parent = shell.parentElement;
     while (parent && parent !== view) { parent.classList.add('ga-stage-wrapper'); parent = parent.parentElement; }
-    const header = view.querySelector('.surprise-boxes-header, .memory-game-header, .cipher-lab-header, .crossword-header, .dots-header, .hangman-game-shell > div:first-child, .lc-head, .vb-head, .cdx-head, .sticky.top-0') || shell.firstElementChild;
+    const header = view.querySelector('.whac-header, .surprise-boxes-header, .memory-game-header, .cipher-lab-header, .crossword-header, .dots-header, .hangman-game-shell > div:first-child, .lc-head, .vb-head, .cdx-head, .sticky.top-0') || shell.firstElementChild;
     if (header) {
       header.classList.add('ga-stage-header');
       header.querySelector('[data-games-back]')?.remove();
@@ -2588,6 +2592,7 @@
     const error = modal.querySelector('#game-player-error');
     const requiresTwoPlayers = isSurpriseBoxesGame;
     const isDotsAndBoxes = resolvedFnName === 'chooseDotsAndBoxes';
+    const isWhacADiglett = resolvedFnName === 'chooseWhacADiglett';
     const isSoloGame = resolvedFnName === 'startListenCatch' || resolvedFnName === 'startVocabBattle';
     const footer = next?.parentElement;
     if (!root || !footer) return;
@@ -2597,7 +2602,7 @@
     const bar = document.createElement('div');
     bar.className = 'ga-players-bar flex flex-wrap items-center justify-between gap-2.5 w-full';
 
-    const maxAllowed = isSoloGame ? 1 : (isDotsAndBoxes ? 2 : 4);
+    const maxAllowed = isSoloGame ? 1 : ((isDotsAndBoxes || isWhacADiglett) ? 2 : 4);
     bar.innerHTML = `
       <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
         <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
@@ -3183,6 +3188,64 @@
             btn.classList.toggle('is-selected', active);
             btn.setAttribute('aria-pressed', String(active));
           });
+        }
+      });
+      modal.dataset.gaTimerSeconds = '0';
+      window.pendingGameTimerSeconds = 0;
+      paramsSection.appendChild(timerStepper.element);
+    } else if (resolvedFnName === 'chooseWhacADiglett') {
+      const pointsIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`;
+      const pointsStepper = createCustomStepper({
+        iconSvg: pointsIcon,
+        title: 'Points to win',
+        options: [
+          { points: 10, label: '10 points' },
+          { points: 5, label: '5 points' },
+          { points: 15, label: '15 points' },
+          { points: 20, label: '20 points' }
+        ],
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaWinningScore = String(opt.points);
+          window.selectedWhacTargetScore = opt.points;
+        }
+      });
+      modal.dataset.gaWinningScore = '10';
+      window.selectedWhacTargetScore = 10;
+      paramsSection.appendChild(pointsStepper.element);
+
+      const coinIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5h6a1.5 1.5 0 0 1 0 3H9a1.5 1.5 0 0 0 0 3h6"/></svg>`;
+      const availableCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : 20;
+      const rewardMax = (availableCredits === Infinity || !Number.isFinite(availableCredits)) ? 100 : Math.max(0, Math.floor(availableCredits / 5) * 5);
+      const coinOptions = [{ value: 0, label: 'No coins' }];
+      for (let c = 5; c <= Math.max(20, rewardMax); c += 5) {
+        coinOptions.push({ value: c, label: `${c} coins` });
+      }
+
+      const rewardStepper = createCustomStepper({
+        iconSvg: coinIcon,
+        title: 'Winner reward coins',
+        options: coinOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaRewardCoins = String(opt.value);
+          window.pendingGameReward = opt.value;
+        }
+      });
+      modal.dataset.gaRewardCoins = '0';
+      window.pendingGameReward = 0;
+      paramsSection.appendChild(rewardStepper.element);
+
+      const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+      const timerOptions = getStandardTimerOptions();
+      const timerStepper = createCustomStepper({
+        iconSvg: timerIcon,
+        title: 'Timer',
+        options: timerOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaTimerSeconds = String(opt.seconds);
+          window.pendingGameTimerSeconds = opt.seconds;
         }
       });
       modal.dataset.gaTimerSeconds = '0';
