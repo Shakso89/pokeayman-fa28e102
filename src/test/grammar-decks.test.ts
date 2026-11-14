@@ -172,18 +172,17 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(js).toContain("mode: 'grammar'");
     expect(js).toContain("Gemini could not generate grammar rules");
 
-    // Credit charging: 5 credits per rule for chosen rules
+    // Credit charging: 5 credits per rule for chosen rules (1-click: all rules automatically used)
     expect(js).toContain('selectedRules.length * 5');
     expect(js).toContain('deductTeacherCredits');
     expect(js).toContain('logCredit');
     expect(js).toContain('Rate: <strong class="text-white">5 credits per rule</strong>');
 
-    // Rule recommendation and selection workflow (AI researches first, teacher chooses recommended/less/more)
-    expect(js).toContain('id="g-ai-preset-tabs"');
-    expect(js).toContain('id="g-ai-rules-list"');
-    expect(js).toContain('Recommended');
-    expect(js).toContain('Less');
-    expect(js).toContain('More');
+    // 1-Click generation: no review screen step, deck opens directly
+    expect(js).toContain('Generate Deck with AI');
+    expect(js).toContain('AI generates all rules instantly');
+    expect(js).toContain('Creating your deck...');
+    expect(js).toContain('Opening your new deck...');
 
     // Bright-Lizard-8 AI animation identical to vocabulary list generator
     expect(js).toContain('bl8-loader-letter');
@@ -907,5 +906,42 @@ describe('Grammar Tab & Grammar Bank Integration', () => {
     expect(cssComponents).not.toContain('.gp-practice-card .gp-master-example-label {\n  font-size: calc(');
     expect(cssComponents).toContain('.gp-practice-card .gp-rule-title {\n  font-size: 1.25rem !important;\n}');
     expect(cssComponents).toContain('.gp-practice-card .gp-mistake-heading');
+  });
+
+  it('ensures answer formula is supported in slides, editor, AI generation, and blueprint', () => {
+    const js = fs.readFileSync(grammarJsPath, 'utf-8');
+    const apiRoutePath = path.resolve(__dirname, '../../src/routes/api/generate-vocab-list.ts');
+    const apiRoute = fs.readFileSync(apiRoutePath, 'utf-8');
+    const blueprintPath = path.resolve(__dirname, '../../src/lib/grammar-blueprint.ts');
+    const blueprint = fs.readFileSync(blueprintPath, 'utf-8');
+
+    // 1. Blueprint has answerFormula field in the GrammarSlot type
+    expect(blueprint).toContain('answerFormula?: string');
+    // Blueprint provides answer formulas for question slots
+    expect(blueprint).toContain("Yes, + Subject + will . / No, + Subject + won't .");
+    expect(blueprint).toContain("Yes, + Subject + did . / No, + Subject + didn't .");
+
+    // 2. API prompt asks Gemini for answer_formula
+    expect(apiRoute).toContain('ANSWER FORMULA (for question rules only)');
+    expect(apiRoute).toContain('"answer_formula"');
+    expect(apiRoute).toContain('"answer_sentence"');
+    // Post-processing propagates blueprint answerFormula
+    expect(apiRoute).toContain('blueprint?.answerFormula');
+
+    // 3. Slide rendering shows answer formula chips with emerald color
+    expect(js).toContain('formatAnswerFormulaChips');
+    expect(js).toContain('answer_formula');
+    expect(js).toContain('emerald-500/30');
+    expect(js).toContain('r.answer_formula');
+
+    // 4. Editor includes answer formula input fields
+    expect(js).toContain('ge-rule-answer-formula');
+    expect(js).toContain('ge-rule-answer-sentence');
+    expect(js).toContain('ge-answer-formula-wrap');
+    expect(js).toContain('Answer Formula (for question rules)');
+
+    // 5. Save logic stores answer_formula and answer_sentence
+    expect(js).toContain("answer_formula: answerFormula || undefined");
+    expect(js).toContain("answer_sentence: answerSentence || undefined");
   });
 });

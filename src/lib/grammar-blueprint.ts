@@ -17,6 +17,7 @@ export type GrammarSlot = {
   hint: string;
   must?: RegExp[];
   forbid?: RegExp[];
+  answerFormula?: string;
 };
 
 export type GrammarPlan = {
@@ -161,8 +162,8 @@ const TIME_PAST = /\b(yesterday|last night|last week|last year|last month|two da
 const TIME_FUTURE = /\b(tomorrow|next week|next year|soon|tonight|later|in two days)\b/i;
 const WH_WORD = /\b(what|where|when|why|who|which|how)\b/i;
 
-function slot(key: string, title: string, formula: string, hint: string, must: RegExp[] = [], forbid: RegExp[] = []): GrammarSlot {
-  return { key, title, formula, hint, must, forbid };
+function slot(key: string, title: string, formula: string, hint: string, must: RegExp[] = [], forbid: RegExp[] = [], answerFormula?: string): GrammarSlot {
+  return { key, title, formula, hint, must, forbid, ...(answerFormula ? { answerFormula } : {}) };
 }
 
 function tenseAspectBlueprint(family: string, displayName: string): GrammarSlot[] {
@@ -171,16 +172,16 @@ function tenseAspectBlueprint(family: string, displayName: string): GrammarSlot[
       return [
         slot('affirmative', 'Affirmative Statement', 'Subject + was / were + Verb-ing', 'A finished action that was in progress at a past moment.', [/\b(was|were)\b/i, ING]),
         slot('negative', 'Negative Statement', "Subject + was not / were not (wasn't / weren't) + Verb-ing", 'Say what was NOT happening.', [/\b(was not|were not|wasn't|weren't)\b/i, ING], [/\bdid not\b/i, /\bdon't\b/i]),
-        slot('question', 'Yes / No Question', 'Was / Were + Subject + Verb-ing ?', 'Invert was/were and the subject to ask.', [/\?\s*$/, /\b(was|were)\b/i, ING], [/\bdid\b/i]),
-        slot('wh_question', 'Wh- Question', 'Wh-word + was / were + Subject + Verb-ing ?', 'Ask for details about a past ongoing action.', [/\?\s*$/, WH_WORD, /\b(was|were)\b/i, ING]),
+        slot('question', 'Yes / No Question', 'Was / Were + Subject + Verb-ing ?', 'Invert was/were and the subject to ask.', [/\?\s*$/, /\b(was|were)\b/i, ING], [/\bdid\b/i], "Yes, + Subject + was / were . / No, + Subject + wasn't / weren't ."),
+        slot('wh_question', 'Wh- Question', 'Wh-word + was / were + Subject + Verb-ing ?', 'Ask for details about a past ongoing action.', [/\?\s*$/, WH_WORD, /\b(was|were)\b/i, ING], [], "Subject + was / were + Verb-ing + Place / Time"),
         slot('contrast', 'While / When Contrast', 'While + Subject + was / were + Verb-ing, + Subject + Verb-ed', 'A long action interrupted by a short one.', [/\b(while|when)\b/i, /\b(was|were)\b/i, ING, PAST_ED]),
       ];
     case 'present_continuous':
       return [
         slot('affirmative', 'Affirmative Statement', 'Subject + am / is / are + Verb-ing', 'An action happening right now.', [/\b(am|is|are)\b/i, ING]),
         slot('negative', 'Negative Statement', 'Subject + am / is / are + not + Verb-ing', 'Say what is NOT happening now.', [/\b(am|is|are)\b/i, /\bnot\b/i, ING], [/\bdon't\b/i, /\bdoesn't\b/i]),
-        slot('question', 'Yes / No Question', 'Am / Is / Are + Subject + Verb-ing ?', 'Invert the be-verb and the subject.', [/\?\s*$/, /\b(am|is|are)\b/i, ING], [/\bdo\b/i, /\bdoes\b/i]),
-        slot('wh_question', 'Wh- Question', 'Wh-word + am / is / are + Subject + Verb-ing ?', 'Ask for details about a current action.', [/\?\s*$/, WH_WORD, /\b(am|is|are)\b/i, ING]),
+        slot('question', 'Yes / No Question', 'Am / Is / Are + Subject + Verb-ing ?', 'Invert the be-verb and the subject.', [/\?\s*$/, /\b(am|is|are)\b/i, ING], [/\bdo\b/i, /\bdoes\b/i], "Yes, + Subject + am / is / are . / No, + Subject + isn't / aren't ."),
+        slot('wh_question', 'Wh- Question', 'Wh-word + am / is / are + Subject + Verb-ing ?', 'Ask for details about a current action.', [/\?\s*$/, WH_WORD, /\b(am|is|are)\b/i, ING], [], "Subject + am / is / are + Verb-ing + Object / Place"),
         slot('now_marker', 'Now Markers', 'Subject + am / is / are + Verb-ing + right now / at the moment', 'Signal words that prove the action is happening now.', [/\b(now|right now|at the moment|today|currently)\b/i, ING]),
       ];
     case 'past_simple':
@@ -188,7 +189,7 @@ function tenseAspectBlueprint(family: string, displayName: string): GrammarSlot[
         slot('regular', 'Regular Past Verbs (-ed)', 'Subject + Verb-ed', 'Add -ed to regular verbs for finished actions.', [PAST_ED], [/\b(is|are|am)\b/i]),
         slot('irregular', 'Irregular Past Verbs', 'Subject + irregular past verb', 'Irregular verbs change completely.', [IRREGULAR_PAST], [/\b(is|are|am)\b/i, /\bwill\b/i]),
         slot('negative', 'Negative Past (did not)', "Subject + did not (didn't) + Base Verb", 'Use did not + base verb, never the past form.', [/\b(did not|didn't)\b/i], [PAST_ED]),
-        slot('question', 'Past Questions (Did ... ?)', 'Did + Subject + Base Verb ?', 'Start with Did and keep the verb in base form.', [/^did\b/i, /\?\s*$/], [PAST_ED]),
+        slot('question', 'Past Questions (Did ... ?)', 'Did + Subject + Base Verb ?', 'Start with Did and keep the verb in base form.', [/^did\b/i, /\?\s*$/], [PAST_ED], "Yes, + Subject + did . / No, + Subject + didn't ."),
         slot('time_marker', 'Past Time Expressions', 'Subject + Verb-ed + past time phrase', 'Time words that anchor the action in the past.', [TIME_PAST, PAST_ED]),
       ];
     case 'present_simple':
@@ -196,28 +197,28 @@ function tenseAspectBlueprint(family: string, displayName: string): GrammarSlot[
         slot('base', 'Facts & Habits (Base Verb)', 'Subject + Base Verb', 'Habits, routines and true facts.', [], [/\b(am|is|are)\b/i, ING, /\b(do|does|did)\b/i]),
         slot('third_person', 'Third Person -s / -es', 'He / She / It + Verb-s / -es', 'Add -s or -es for he, she and it.', [/\b[a-z]{3,}(s|es)\b/i], [/\b(am|is|are)\b/i, ING, /\b(do|does|did)\b/i]),
         slot('negative', 'Negative (do not / does not)', "Subject + do not (don't) / does not (doesn't) + Base Verb", 'Use do/does + not before the base verb.', [/\b(do not|does not|don't|doesn't)\b/i], [ING]),
-        slot('question', 'Questions (Do / Does ... ?)', 'Do / Does + Subject + Base Verb ?', 'Start with Do or Does and keep the base verb.', [/^do(es)?\b/i, /\?\s*$/], [ING]),
+        slot('question', 'Questions (Do / Does ... ?)', 'Do / Does + Subject + Base Verb ?', 'Start with Do or Does and keep the base verb.', [/^do(es)?\b/i, /\?\s*$/], [ING], "Yes, + Subject + do / does . / No, + Subject + don't / doesn't ."),
         slot('adverb', 'Frequency Adverbs', 'Subject + always / usually / often + Verb(-s)', 'Adverbs of frequency sit before the main verb.', [FREQUENCY], [ING]),
       ];
     case 'present_perfect':
       return [
         slot('affirmative', 'Affirmative (have / has + Past Participle)', 'Subject + have / has + Past Participle', 'A past action with a present result.', [/\b(have|has)\b/i, /\b[a-z]+(ed|en|wn|ne|rn)\b/i], [/\bwill\b/i]),
         slot('negative', 'Negative (have not / has not)', "Subject + have not / has not (haven't / hasn't) + Past Participle", 'Say what has not happened yet.', [/\b(have not|has not|haven't|hasn't)\b/i]),
-        slot('question', 'Question (Have / Has ... ?)', 'Have / Has + Subject + Past Participle ?', 'Invert have/has and the subject.', [/^(have|has)\b/i, /\?\s*$/]),
+        slot('question', 'Question (Have / Has ... ?)', 'Have / Has + Subject + Past Participle ?', 'Invert have/has and the subject.', [/^(have|has)\b/i, /\?\s*$/], [], "Yes, + Subject + have / has . / No, + Subject + haven't / hasn't ."),
         slot('markers', 'Ever / Never / Just / Already / Yet', 'Subject + have / has + ever / never / just / already / yet + Past Participle', 'Signal words that belong with the present perfect.', [/\b(ever|never|just|already|yet)\b/i, /\b(have|has)\b/i]),
       ];
     case 'future_will':
       return [
         slot('affirmative', 'Affirmative (will + Base Verb)', 'Subject + will + Base Verb', 'Predictions, promises and quick decisions.', [/\bwill\b/i], [/\bwon't\b/i]),
         slot('negative', 'Negative (will not / won\'t)', "Subject + will not (won't) + Base Verb", 'Say what will not happen.', [/\b(will not|won't)\b/i]),
-        slot('question', 'Question (Will ... ?)', 'Will + Subject + Base Verb ?', 'Invert will and the subject.', [/^will\b/i, /\?\s*$/]),
+        slot('question', 'Question (Will ... ?)', 'Will + Subject + Base Verb ?', 'Invert will and the subject.', [/^will\b/i, /\?\s*$/], [], "Yes, + Subject + will . / No, + Subject + won't ."),
         slot('time_marker', 'Future Time Expressions', 'Subject + will + Base Verb + future time phrase', 'Time words that point to the future.', [TIME_FUTURE, /\bwill\b/i]),
       ];
     case 'future_going_to':
       return [
         slot('affirmative', 'Affirmative (going to + Base Verb)', 'Subject + am / is / are + going to + Base Verb', 'Plans and intentions already decided.', [/\bgoing to\b/i]),
         slot('negative', 'Negative (not going to)', 'Subject + am / is / are + not + going to + Base Verb', 'Say what is not planned.', [/\bnot\b/i, /\bgoing to\b/i]),
-        slot('question', 'Question (Are you going to ... ?)', 'Am / Is / Are + Subject + going to + Base Verb ?', 'Invert the be-verb and the subject.', [/^\s*(am|is|are)\b/i, /\?\s*$/, /\bgoing to\b/i]),
+        slot('question', 'Question (Are you going to ... ?)', 'Am / Is / Are + Subject + going to + Base Verb ?', 'Invert the be-verb and the subject.', [/^\s*(am|is|are)\b/i, /\?\s*$/, /\bgoing to\b/i], [], "Yes, + Subject + am / is / are . / No, + Subject + isn't / aren't ."),
         slot('time_marker', 'Future Plans with Time Words', 'Subject + am / is / are + going to + Base Verb + future time phrase', 'Anchor the plan in future time.', [TIME_FUTURE, /\bgoing to\b/i]),
       ];
     case 'future_mixed':
@@ -225,13 +226,13 @@ function tenseAspectBlueprint(family: string, displayName: string): GrammarSlot[
         slot('will', 'Will + Base Verb (Predictions)', 'Subject + will + Base Verb', 'Predictions and promises.', [/\bwill\b/i]),
         slot('going_to', 'Going to + Base Verb (Plans)', 'Subject + am / is / are + going to + Base Verb', 'Plans decided before speaking.', [/\bgoing to\b/i]),
         slot('negative', 'Negative Future', "Subject + will not (won't) / is not going to + Base Verb", 'Both negative forms.', [/\b(won't|will not|not going to)\b/i]),
-        slot('question', 'Future Questions', 'Will / Are + Subject + Base Verb ?', 'Ask about the future.', [/\?\s*$/], []),
+        slot('question', 'Future Questions', 'Will / Are + Subject + Base Verb ?', 'Ask about the future.', [/\?\s*$/], [], "Yes, + Subject + will / is / are . / No, + Subject + won't / isn't / aren't ."),
       ];
     case 'past_perfect':
       return [
         slot('affirmative', 'Affirmative (had + Past Participle)', 'Subject + had + Past Participle', 'An action finished before another past action.', [/\bhad\b/i]),
         slot('negative', 'Negative (had not)', "Subject + had not (hadn't) + Past Participle", 'Say what had not happened yet.', [/\b(had not|hadn't)\b/i]),
-        slot('question', 'Question (Had ... ?)', 'Had + Subject + Past Participle ?', 'Invert had and the subject.', [/^had\b/i, /\?\s*$/]),
+        slot('question', 'Question (Had ... ?)', 'Had + Subject + Past Participle ?', 'Invert had and the subject.', [/^had\b/i, /\?\s*$/], [], "Yes, + Subject + had . / No, + Subject + hadn't ."),
       ];
     default:
       return [
@@ -252,12 +253,24 @@ function whBlueprint(words: string[]): GrammarSlot[] {
         : word === 'how many'
           ? 'How many + plural noun + are there ?'
           : `${titleCase(word)} + is / are / do / does + Subject + ... ?`;
+    const answerFormula =
+      word === 'who'
+        ? 'Subject + is / are + Person / Name'
+        : word === 'how many'
+          ? 'There are + Number + Plural Noun'
+          : word === 'where'
+            ? 'Subject + is / are + in / at / on + Place'
+            : word === 'when'
+              ? 'Subject + Verb + at / on / in + Time'
+              : 'Subject + Verb + Answer Details';
     return slot(
       `wh_${word.replace(/\s+/g, '_')}`,
       `Asking with "${titleCase(word)}"`,
       formula,
       `One question about ${word} only.`,
       [new RegExp(`\\b${word.split(' ')[0]}\\b`, 'i'), /\?\s*$/],
+      [],
+      answerFormula,
     );
   });
 }
@@ -360,7 +373,7 @@ export function buildGrammarPlan(topic: string, search = ''): GrammarPlan {
     return finalize('modals', `Modal Verb: ${titleCase(modal)}`, [
       slot('affirmative', `Affirmative (${modal} + Base Verb)`, `Subject + ${modal} + Base Verb`, `Ability, permission or obligation with "${modal}".`, [new RegExp(`\\b${modal}\\b`, 'i')]),
       slot('negative', `Negative (${modal === 'can' ? "cannot" : `${modal} not`})`, `Subject + ${modal === 'can' ? "cannot (can't)" : `${modal} not`} + Base Verb`, 'Say what is not allowed or not possible.', [/\bnot\b|cannot|can't|mustn't|shouldn't/i]),
-      slot('question', `Question (${titleCase(modal)} ... ?)`, `${titleCase(modal)} + Subject + Base Verb ?`, 'Ask a question with the modal.', [new RegExp(`^\\s*${modal}`, 'i'), /\?\s*$/]),
+      slot('question', `Question (${titleCase(modal)} ... ?)`, `${titleCase(modal)} + Subject + Base Verb ?`, 'Ask a question with the modal.', [new RegExp(`^\\s*${modal}`, 'i'), /\?\s*$/], [], `Yes, + Subject + ${modal} . / No, + Subject + ${modal === 'can' ? "can't" : modal + ' not'} .`),
     ]);
   }
 
@@ -378,7 +391,7 @@ export function buildGrammarPlan(topic: string, search = ''): GrammarPlan {
       slot('in', 'in (inside something)', 'Subject + is + in + noun', 'Inside a space.', [/\bin\b/i]),
       slot('on', 'on (on a surface)', 'Subject + is + on + noun', 'On top of a surface.', [/\bon\b/i]),
       slot('under', 'under / behind / next to', 'Subject + is + under / behind / next to + noun', 'Position relative to another thing.', [/\b(under|behind|next to|beside|between)\b/i]),
-      slot('question', 'Where questions', 'Where + is + Subject ?', 'Ask about location.', [/^\s*where\b/i, /\?\s*$/]),
+      slot('question', 'Where questions', 'Where + is + Subject ?', 'Ask about location.', [/^\s*where\b/i, /\?\s*$/], [], 'Subject + is + in / on / under + Place'),
     ]);
   }
 
@@ -413,7 +426,7 @@ export function buildGrammarPlan(topic: string, search = ''): GrammarPlan {
       slot('is', 'There is (singular)', 'There is + singular noun', 'One thing exists.', [/\bthere is\b/i]),
       slot('are', 'There are (plural)', 'There are + plural noun', 'Several things exist.', [/\bthere are\b/i]),
       slot('negative', 'Negative form', 'There is not / There are not + noun', 'Say something does not exist.', [/\bthere (is not|isn't|are not|aren't)\b/i]),
-      slot('question', 'Question form', 'Is / Are there + noun ?', 'Ask if something exists.', [/\bthere\b/i, /\?\s*$/]),
+      slot('question', 'Question form', 'Is / Are there + noun ?', 'Ask if something exists.', [/\bthere\b/i, /\?\s*$/], [], "Yes, + there is / are . / No, + there isn't / aren't ."),
     ]);
   }
 
@@ -427,9 +440,9 @@ export function buildGrammarPlan(topic: string, search = ''): GrammarPlan {
 
   if (wantsQuestion) {
     return finalize('yes_no_questions', 'Yes / No Questions', [
-      slot('do', 'Do / Does (present)', 'Do / Does + Subject + Base Verb ?', 'Present simple questions.', [/^\s*(do|does)\b/i, /\?\s*$/]),
-      slot('did', 'Did (past)', 'Did + Subject + Base Verb ?', 'Past simple questions.', [/^\s*did\b/i, /\?\s*$/]),
-      slot('be', 'Be questions (is / are)', 'Is / Are + Subject + ... ?', 'Questions with the be-verb.', [/^\s*(is|are)\b/i, /\?\s*$/]),
+      slot('do', 'Do / Does (present)', 'Do / Does + Subject + Base Verb ?', 'Present simple questions.', [/^\s*(do|does)\b/i, /\?\s*$/], [], "Yes, + Subject + do / does . / No, + Subject + don't / doesn't ."),
+      slot('did', 'Did (past)', 'Did + Subject + Base Verb ?', 'Past simple questions.', [/^\s*did\b/i, /\?\s*$/], [], "Yes, + Subject + did . / No, + Subject + didn't ."),
+      slot('be', 'Be questions (is / are)', 'Is / Are + Subject + ... ?', 'Questions with the be-verb.', [/^\s*(is|are)\b/i, /\?\s*$/], [], "Yes, + Subject + is / are . / No, + Subject + isn't / aren't ."),
     ]);
   }
 
@@ -438,7 +451,7 @@ export function buildGrammarPlan(topic: string, search = ''): GrammarPlan {
   return finalize('custom', pretty, [
     slot('affirmative', 'Affirmative Pattern', `Subject + ${pretty}`, 'The positive statement pattern.', []),
     slot('negative', 'Negative Pattern', `Subject + not + ${pretty}`, 'The negative statement pattern.', []),
-    slot('question', 'Question Pattern', `${pretty} + Subject ?`, 'The question pattern.', []),
+    slot('question', 'Question Pattern', `${pretty} + Subject ?`, 'The question pattern.', [], [], "Yes, + Subject + ... / No, + Subject + ..."),
   ]);
 }
 

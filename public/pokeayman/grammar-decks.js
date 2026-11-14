@@ -1797,6 +1797,40 @@
   window.formatFormulaChips = formatFormulaChips;
   window.detectSuffix = detectSuffix;
 
+  // Helper: format answer formula into emerald-colored pill chips
+  function formatAnswerFormulaChips(answerFormula) {
+    if (!answerFormula) return '';
+    const answerColorStyles = [
+      'border-emerald-400 bg-emerald-500/15 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]',
+      'border-teal-400 bg-teal-500/15 text-teal-300 shadow-[0_0_12px_rgba(20,184,166,0.25)]',
+      'border-green-400 bg-green-500/15 text-green-300 shadow-[0_0_12px_rgba(34,197,94,0.25)]',
+      'border-lime-400 bg-lime-500/15 text-lime-300 shadow-[0_0_12px_rgba(163,230,53,0.25)]',
+      'border-cyan-400 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]',
+    ];
+
+    // Split on " / " for short/long answer alternatives (e.g. "Yes, ... / No, ...")
+    const alternatives = answerFormula.split(/\s*\/\s*/).filter(Boolean);
+    if (alternatives.length > 1 && alternatives.every(a => a.includes('+'))) {
+      // Multiple answer forms (like "Yes, + Subject + will . / No, + Subject + won't .")
+      return alternatives.map((alt, altIdx) => {
+        const parts = alt.split('+').map(p => p.trim()).filter(Boolean);
+        const chips = parts.map((part, idx) => {
+          const style = answerColorStyles[idx % answerColorStyles.length];
+          return `<span class="gp-formula-chip px-3 sm:px-3.5 py-1 rounded-2xl border ${style} font-bold text-xs tracking-wide inline-flex items-center justify-center shadow-md">${escapeHtml(part)}</span>`;
+        }).join('<span class="gp-formula-plus text-emerald-600 font-bold text-sm mx-1">+</span>');
+        return (altIdx > 0 ? '<span class="text-emerald-400/60 font-bold text-xs mx-2">/</span>' : '') + chips;
+      }).join('');
+    }
+
+    // Single formula: split on "+"
+    const parts = answerFormula.split('+').map(p => p.trim()).filter(Boolean);
+    return parts.map((part, idx) => {
+      const style = answerColorStyles[idx % answerColorStyles.length];
+      return `<span class="gp-formula-chip px-3 sm:px-3.5 py-1 rounded-2xl border ${style} font-bold text-xs tracking-wide inline-flex items-center justify-center shadow-md">${escapeHtml(part)}</span>`;
+    }).join('<span class="gp-formula-plus text-emerald-600 font-bold text-sm mx-1">+</span>');
+  }
+  window.formatAnswerFormulaChips = formatAnswerFormulaChips;
+
   window.openGrammarDeckPractice = function(deck) {
     document.querySelectorAll('#grammar-practice-modal').forEach(m => m.remove());
 
@@ -2015,9 +2049,19 @@
                 </div>
                 <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 border border-indigo-500/30 flex items-center justify-center shadow-inner">
                   <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                    ${/\?\s*$/.test(r.formula || '') ? '<span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mr-1.5">Q</span>' : ''}
                     ${formatFormulaChips(r.formula, r)}
                   </div>
                 </div>
+                ${r.answer_formula ? `
+                <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-emerald-950/30 to-slate-950 border border-emerald-500/30 flex items-center justify-center shadow-inner">
+                  <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+                    <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mr-1.5">A</span>
+                    ${formatAnswerFormulaChips(r.answer_formula)}
+                  </div>
+                </div>
+                ${r.answer_sentence ? `<p class="text-center text-xs text-emerald-300/70 italic mt-0.5">${escapeHtml(r.answer_sentence)}</p>` : ''}
+                ` : ''}
               </div>
 
               <!-- Main Arena: Grammar Sentence is the Hero + Compact Visual Cue -->
@@ -2562,6 +2606,14 @@
               <div class="space-y-1">
                 <label for="ge-rule-formula" class="text-[11px] text-slate-400 font-semibold block">Formula / Pattern</label>
                 <input id="ge-rule-formula" type="text" placeholder="e.g. Part 1 + Part 2 + Part 3" class="quiz-input text-xs w-full" value="${escapeHtml(activeRule?.formula || '')}">
+              </div>
+              <div class="space-y-1 sm:col-span-2${/\?\s*$/.test(activeRule?.formula || '') || activeRule?.answer_formula ? '' : ' hidden'}" id="ge-answer-formula-wrap">
+                <label for="ge-rule-answer-formula" class="text-[11px] text-emerald-400 font-semibold block flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  Answer Formula (for question rules)
+                </label>
+                <input id="ge-rule-answer-formula" type="text" placeholder="e.g. Yes, + Subject + will . / No, + Subject + won't ." class="quiz-input text-xs w-full border-emerald-500/30 focus:border-emerald-400" value="${escapeHtml(activeRule?.answer_formula || '')}">
+                <input id="ge-rule-answer-sentence" type="text" placeholder="Example answer sentence (optional)" class="quiz-input text-xs w-full border-emerald-500/20 focus:border-emerald-400 mt-1" value="${escapeHtml(activeRule?.answer_sentence || '')}">
               </div>
               <div class="space-y-1 sm:col-span-2">
                 <label for="ge-rule-sentence" class="text-[11px] text-slate-400 font-semibold block">Example Sentence *</label>
@@ -3775,6 +3827,13 @@
         }
         syncWordChips();
         syncAlternativesList();
+
+        // Show/hide answer formula field based on whether formula ends with "?"
+        const answerWrap = modal.querySelector('#ge-answer-formula-wrap');
+        if (answerWrap) {
+          const isQ = /\?\s*$/.test(text) || modal.querySelector('#ge-rule-answer-formula')?.value?.trim();
+          answerWrap.classList.toggle('hidden', !isQ);
+        }
       });
 
       // Global click on modal to dismiss open color popovers
@@ -4086,6 +4145,10 @@
         const wordsGreenStr = wordsGreen.join(', ');
         const finalFormula = currentFormulaParts.map(p => p.name).join(' + ') || formula || 'Subject + Verb';
 
+        // Collect answer formula (for question rules)
+        const answerFormula = modal.querySelector('#ge-rule-answer-formula')?.value.trim() || '';
+        const answerSentence = modal.querySelector('#ge-rule-answer-sentence')?.value.trim() || '';
+
         if (isEditing) {
           // Update existing rule
           rules[editingRuleIndex] = {
@@ -4112,7 +4175,9 @@
             quiz_question: question || 'Complete the sentence:',
             quiz_answer: answer || 'Option 1',
             quiz_options: quizOptions,
-            quiz_questions: questionBlocks
+            quiz_questions: questionBlocks,
+            answer_formula: answerFormula || undefined,
+            answer_sentence: answerSentence || undefined
           };
           deck.rules = rules;
           const updatedCover = (typeof window.resolveGrammarDeckCover === 'function') ? window.resolveGrammarDeckCover(deck) : (rules[0]?.image || '');
@@ -4148,7 +4213,9 @@
             quiz_question: question || 'Complete the sentence:',
             quiz_options: quizOptions,
             quiz_answer: answer || 'Option 1',
-            quiz_questions: questionBlocks
+            quiz_questions: questionBlocks,
+            answer_formula: answerFormula || undefined,
+            answer_sentence: answerSentence || undefined
           };
           rules.push(newRule);
           deck.rules = rules;
@@ -4377,7 +4444,7 @@
 
         <!-- Step 1: Initial Topic Formulation Screen -->
         <div id="g-ai-form-wrap" class="space-y-4">
-          <p class="text-xs text-slate-400">Describe what grammar topic you want to teach. AI will search curriculum standards and recommend the best rules, formulas, examples, and visuals for your review.</p>
+          <p class="text-xs text-slate-400">Describe what grammar topic you want to teach. AI will instantly generate all rules, formulas, examples, quizzes, and visuals — the deck will open automatically when ready.</p>
 
           <div id="g-ai-error-banner" class="hidden p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold"></div>
 
@@ -4402,15 +4469,15 @@
                 <span class="w-2 h-2 rounded-full bg-amber-400"></span>
                 <span>Rate: <strong class="text-white">5 credits per rule</strong></span>
               </span>
-              <span class="text-slate-400 text-[11px]">AI researches rules first • choose how many on next step</span>
+              <span class="text-slate-400 text-[11px]">AI generates all rules instantly • deck opens when ready</span>
             </div>
           </div>
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
             <button type="button" id="g-ai-cancel" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer">Cancel</button>
             <button type="button" id="g-ai-submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white font-bold text-xs shadow-md flex items-center gap-1.5 transition active:scale-95 cursor-pointer">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <span>Search Recommended Rules</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <span>⚡ Generate Deck with AI</span>
             </button>
           </div>
         </div>
@@ -4749,23 +4816,77 @@
         if (r.image) usedUrls.add(r.image);
       }
 
-      updateProgress(100, 'Ready!', 'Presenting AI recommendations...');
+      updateProgress(95, 'Almost done!', 'Creating your deck...');
+
+      // ── 1-Click Generation: directly deduct credits, save deck, and open editor ──
+      const selectedRules = candidateRules;
+      const totalCost = selectedRules.length * 5;
+      const currentCredits = typeof getTeacherCredits === 'function' ? getTeacherCredits() : (typeof window.getTeacherCredits === 'function' ? window.getTeacherCredits() : 100);
+
+      if (currentCredits < totalCost) {
+        progressWrap.style.display = 'none';
+        formWrap.style.display = 'block';
+        if (errorBanner) {
+          errorBanner.textContent = `You need ${totalCost} credits for ${selectedRules.length} rules (5 credits per rule). You currently have ${currentCredits} credits.`;
+          errorBanner.classList.remove('hidden');
+        } else if (typeof toast === 'function') {
+          toast(`Not enough credits. You need ${totalCost} credits.`);
+        }
+        return;
+      }
+
+      // Deduct credits
+      if (typeof window.deductTeacherCredits === 'function') {
+        const paid = await window.deductTeacherCredits(totalCost);
+        if (!paid) {
+          progressWrap.style.display = 'none';
+          formWrap.style.display = 'block';
+          if (errorBanner) {
+            errorBanner.textContent = `Could not deduct ${totalCost} credits. Please check your credit balance and retry.`;
+            errorBanner.classList.remove('hidden');
+          }
+          return;
+        }
+      }
+
+      if (typeof window.logCredit === 'function') {
+        try {
+          await window.logCredit(totalCost, 'spent', `AI Grammar Deck: ${finalDeckName} (${selectedRules.length} rules)`);
+        } catch (_) {}
+      }
+
+      const currentTeacherName = typeof currentTeacher !== 'undefined' ? currentTeacher : 'Teacher Ayman';
+      const currentSchool = typeof navSchool !== 'undefined' && navSchool ? navSchool : 'Daya Stanford';
+      const currentClass = typeof navClass !== 'undefined' && navClass ? navClass : 'ESL2';
+      const newDeckId = 'grammar-deck-' + Date.now();
+
+      const generatedDeck = {
+        __backendId: newDeckId,
+        id: newDeckId,
+        grammar_deck_id: newDeckId,
+        grammar_deck_name: finalDeckName,
+        deck_name: finalDeckName,
+        school_name: currentSchool,
+        class_name: currentClass,
+        teacher_name: currentTeacherName,
+        owner: currentTeacherName,
+        created_by: currentTeacherName,
+        created_at: new Date().toISOString(),
+        cover_image_url: selectedRules[0]?.image || '',
+        type: 'grammar_deck',
+        rules: selectedRules
+      };
+
+      await window.saveOrUpdateGrammarDeck(generatedDeck);
+
+      updateProgress(100, 'Done!', 'Opening your new deck...');
 
       setTimeout(() => {
-        progressWrap.style.display = 'none';
-        reviewWrap.style.display = 'block';
-
-        if (reviewTopicName) reviewTopicName.textContent = finalDeckName || topic;
-        if (reviewFocusEl) reviewFocusEl.textContent = detectedFocus || finalDeckName || topic;
-
-        // Auto-select rules based on topic (from server recommended_count or candidate rules count)
-        const defaultCount = Math.min(serverRecommendedCount || 3, candidateRules.length);
-        selectedIndices = new Set();
-        for (let i = 0; i < defaultCount; i++) {
-          selectedIndices.add(i);
-        }
-
-        renderRulesList();
+        modal.remove();
+        if (typeof toast === 'function') toast(`⚡ Generated grammar deck "${finalDeckName}" (${selectedRules.length} rules • ${totalCost} credits deducted)!`);
+        window.renderClassGrammarDecks();
+        window.renderTeacherOwnedGrammarDecks();
+        window.openGrammarDeckEditor(newDeckId, finalDeckName);
       }, 350);
     };
 

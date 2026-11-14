@@ -129,7 +129,13 @@ CRITICAL LINGUISTIC & ACCURACY REQUIREMENTS:
 4. CONTEXT CLUE: Write a sharp 4-8 word pedagogical tip explaining WHEN or WHY native speakers use this structure (e.g. "Use 'will' for sudden decisions and promises").
 5. COMMON MISTAKE: Provide a realistic student error ("mistake_bad") and its correct form ("mistake_good") highlighting the subtle mistake students frequently make with this pattern.
 6. QUIZ: Include a high-quality fill-in-the-blank question ("quiz_question") with the base verb in parentheses, exactly 3 distinct multiple-choice options ("quiz_options"), and the exact answer ("quiz_answer").
-7. VISUAL KEYWORD: "image_keywords" must be ONE concrete noun (1-2 words) from your example sentence for stock photo matching.
+7. ANSWER FORMULA (for question rules only): If this rule is a question (formula ends with "?", or title contains "Question"), provide "answer_formula" — the grammatical formula for answering the question. Examples:
+   - Question "Will + Subject + Base Verb ?" → answer_formula: "Yes, + Subject + will . / No, + Subject + won't ."
+   - Question "Did + Subject + Base Verb ?" → answer_formula: "Yes, + Subject + did . / No, + Subject + didn't ."
+   - Wh-question "Where + is + Subject ?" → answer_formula: "Subject + is + in / at / on + Place"
+   Also provide "answer_sentence" — a natural example answer sentence matching the question in your "sentence" field.
+   If the rule is NOT a question, omit both fields.
+8. VISUAL KEYWORD: "image_keywords" must be ONE concrete noun (1-2 words) from your example sentence for stock photo matching.
 
 Reply with valid JSON only (no markdown code fences, no explanatory text):
 {
@@ -152,7 +158,9 @@ Reply with valid JSON only (no markdown code fences, no explanatory text):
       "words_blue": "words for part 1",
       "words_amber": "words for part 2",
       "words_green": "words for part 3",
-      "image_keywords": "noun"
+      "image_keywords": "noun",
+      "answer_formula": "(question rules only) Answer formula e.g. Yes, + Subject + will . / No, + Subject + won't .",
+      "answer_sentence": "(question rules only) Example answer sentence"
     }
   ]
 }`;
@@ -160,7 +168,7 @@ Reply with valid JSON only (no markdown code fences, no explanatory text):
           try {
             const rawText = await callGemini({
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.7, responseMimeType: "application/json", maxOutputTokens: 2500 },
+              generationConfig: { temperature: 0.7, responseMimeType: "application/json", maxOutputTokens: 3200 },
             });
             const parsed = parseJson(rawText) as any;
             let rules = Array.isArray(parsed?.rules) ? parsed.rules : (Array.isArray(parsed) ? parsed : []);
@@ -335,6 +343,16 @@ Reply with JSON only: a bare array like
               if (!r.words_blue && r.formula_parts[0]?.words) r.words_blue = r.formula_parts[0].words;
               if (!r.words_amber && r.formula_parts[1]?.words) r.words_amber = r.formula_parts[1].words;
               if (!r.words_green && r.formula_parts[2]?.words) r.words_green = r.formula_parts[2].words;
+
+              // Answer formula for question rules: prefer AI-generated, fall back to blueprint
+              const isQuestionRule = /\?\s*$/.test(r.formula || '') || /question/i.test(r.title || '') || (blueprint && /question/i.test(blueprint.key || ''));
+              if (isQuestionRule) {
+                if (!r.answer_formula && blueprint?.answerFormula) {
+                  r.answer_formula = blueprint.answerFormula;
+                }
+                if (typeof r.answer_formula === 'string') r.answer_formula = r.answer_formula.trim();
+                if (typeof r.answer_sentence === 'string') r.answer_sentence = r.answer_sentence.trim();
+              }
 
               // Clean mistake pairs & support optional extra mistakes
               if (Array.isArray(r.extra_mistakes)) {
