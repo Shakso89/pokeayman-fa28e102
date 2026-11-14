@@ -1523,7 +1523,7 @@
             <span class="gp-subst-pill group/pill inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-900/90 border border-slate-700/80 hover:border-amber-400 hover:bg-slate-800 transition cursor-pointer select-none ${cls} font-black relative align-baseline mx-0.5 shadow-sm active:scale-95" data-part-idx="${pColor}" data-active-val="${escapeHtml(displayWord)}" data-initial-val="${escapeHtml(displayWord)}" data-options="${escapeHtml(JSON.stringify(allPillOptions))}" data-is-split="${hasSplit ? 'true' : 'false'}" data-suffix-text="${escapeHtml(splitSuffix)}" data-root-cls="${firstRootCls}" data-suffix-cls="${firstSuffixCls}" title="Click to cycle word">
               <span class="gp-pill-text">${renderedText}</span>
               <svg class="w-3.5 h-3.5 text-slate-400 group-hover/pill:text-amber-400 transition shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            </span>${lastPunct ? `<span class="text-white font-extrabold">${escapeHtml(lastPunct)}</span>` : ''}
+            </span>${lastPunct ? `<span class="gp-punct font-black text-slate-100 ml-1 select-none">${escapeHtml(lastPunct)}</span>` : ''}
           `);
         } else {
           // Standard token rendering
@@ -2084,7 +2084,7 @@
             </button>
 
             <!-- PokéAyman Grammar Practice Card -->
-            <div class="gp-practice-card relative w-full max-w-3xl rounded-3xl bg-slate-900 border border-slate-700/80 shadow-2xl p-4 sm:p-7 flex flex-col gap-4 text-white">
+            <div class="gp-practice-card relative w-full max-w-4xl rounded-3xl bg-slate-900 border border-slate-700/80 shadow-2xl p-4 sm:p-7 flex flex-col gap-4 text-white">
               
               <!-- Top Bar: Deck Name & Counter & Close -->
               <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 gap-3">
@@ -2122,14 +2122,14 @@
                 </div>
                 <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 border border-indigo-500/30 flex items-center justify-center shadow-inner">
                   <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-                    ${/\?\s*$/.test(r.formula || '') ? '<span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mr-1.5">Q</span>' : ''}
+                    ${/\?\s*$/.test(r.formula || '') ? '<span class="px-2 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-400/30 text-[10px] font-black text-indigo-300 uppercase tracking-wider mr-1 select-none">Question</span>' : ''}
                     ${formatFormulaChips(r.formula, r)}
                   </div>
                 </div>
                 ${r.answer_formula ? `
                 <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-emerald-950/30 to-slate-950 border border-emerald-500/30 flex items-center justify-center shadow-inner">
                   <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-                    <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mr-1.5">A</span>
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 text-[10px] font-black text-emerald-300 uppercase tracking-wider mr-1 select-none">Answer</span>
                     ${formatAnswerFormulaChips(r.answer_formula)}
                   </div>
                 </div>
@@ -2138,22 +2138,22 @@
               </div>
 
               <!-- Main Arena: Grammar Sentence is the Hero + Compact Visual Cue -->
-              <div class="gp-hero-arena p-5 sm:p-6 rounded-2xl bg-slate-950/85 border border-slate-800 shadow-xl flex flex-col md:flex-row items-center justify-between gap-5 relative shrink-0">
+              <div class="gp-hero-arena p-4 sm:p-5 md:p-6 rounded-2xl bg-slate-950/85 border border-slate-800 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 relative shrink-0">
                 <!-- Left / Center: Big commanding syntax-highlighted sentence -->
-                <div class="flex-1 text-center md:text-left min-w-0">
+                <div class="flex-1 text-center md:text-left min-w-0 w-full">
                   <div class="gp-master-example-label flex items-center justify-center md:justify-start gap-2 text-[11px] font-bold uppercase tracking-widest text-indigo-400 mb-2">
                     <span>Master Example</span>
                     <span class="text-slate-600">•</span>
                     <span class="text-slate-400 font-normal">Click word to cycle alternatives</span>
                   </div>
-                  <p class="gp-hero-sentence text-2xl sm:text-3xl md:text-4xl font-black text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+                  <div class="gp-hero-sentence flex flex-wrap items-center justify-center md:justify-start text-2xl sm:text-3xl md:text-4xl font-black text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
                     ${formatSyntaxHighlightedSentence(r.sentence, r.formula, r)}
-                  </p>
+                  </div>
                 </div>
 
                 <!-- Right: Compact Visual Cue Thumbnail (Supporting cue, not the hero) -->
                 ${r.image ? `
-                  <div class="relative w-28 h-24 sm:w-36 sm:h-28 rounded-2xl overflow-hidden border border-slate-700/80 shadow-md shrink-0 group bg-slate-900">
+                  <div class="relative w-24 h-20 sm:w-32 sm:h-24 md:w-36 md:h-28 rounded-2xl overflow-hidden border border-slate-700/80 shadow-md shrink-0 group bg-slate-900 self-center">
                     <img src="${escapeHtml(r.image)}" alt="${escapeHtml(r.title)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90" />
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none"></div>
                   </div>
@@ -2238,6 +2238,7 @@
                     <div id="gp-question-text" class="gp-quick-check-prompt text-sm sm:text-base font-bold text-slate-100 break-words leading-relaxed w-full flex-1" style="display:block!important;width:100%!important;white-space:normal!important;word-break:break-word!important;">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</div>
                   </div>
                   <div class="flex flex-col items-stretch gap-2.5 w-full pt-2.5 border-t border-slate-800/70" id="gp-options-row" style="display:flex!important;flex-direction:column!important;width:100%!important;gap:8px!important;clear:both!important;box-sizing:border-box!important;">
+                    <div class="${options.every(opt => String(opt || '').trim().length <= 25) ? 'grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full' : 'flex flex-col items-stretch gap-2.5 w-full'}">
                     ${options.map((opt, optIdx) => {
                       const cleanOpt = String(opt || '').replace(/^\[+|\]+$/g, '').trim();
                       return `
@@ -2247,6 +2248,7 @@
                         </button>
                       `;
                     }).join('')}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2427,15 +2429,20 @@
         // Re-render options row for the selected question
         const optsRow = modal.querySelector('#gp-options-row');
         if (optsRow) {
-          optsRow.innerHTML = qOpts.map((opt, optIdx) => {
-            const cleanOpt = String(opt || '').replace(/^\[+|\]+$/g, '').trim();
-            return `
-              <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
-                <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0 shadow-inner">${String.fromCharCode(65 + optIdx)}</span>
-                <span class="flex-1 min-w-0 break-words font-medium text-slate-100">${escapeHtml(cleanOpt)}</span>
-              </button>
-            `;
-          }).join('');
+          const areShort = qOpts.every(opt => String(opt || '').trim().length <= 25);
+          optsRow.innerHTML = `
+            <div class="${areShort ? 'grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full' : 'flex flex-col items-stretch gap-2.5 w-full'}">
+              ${qOpts.map((opt, optIdx) => {
+                const cleanOpt = String(opt || '').replace(/^\[+|\]+$/g, '').trim();
+                return `
+                  <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
+                    <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0 shadow-inner">${String.fromCharCode(65 + optIdx)}</span>
+                    <span class="flex-1 min-w-0 break-words font-medium text-slate-100">${escapeHtml(cleanOpt)}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          `;
           wireQuizOptions();
         }
       }

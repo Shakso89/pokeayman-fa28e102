@@ -2735,6 +2735,35 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   word-break: break-word !important;
 }
 
+/* Responsive, balanced sentence elements inside Master Example to flow naturally across 1-2 lines */
+#grammar-practice-modal .gp-hero-sentence .gp-subst-pill {
+  font-size: calc(clamp(1.2rem, 2.05vw, 1.8rem) * var(--gp-text-zoom, 1)) !important;
+  padding: calc(0.2rem * var(--gp-text-zoom, 1)) calc(0.6rem * var(--gp-text-zoom, 1)) !important;
+  line-height: 1.25 !important;
+  vertical-align: middle !important;
+  margin: 0.15rem 0.2rem !important;
+  border-radius: 0.85rem !important;
+}
+
+#grammar-practice-modal .gp-hero-sentence .gp-subst-pill svg {
+  width: calc(0.875rem * var(--gp-text-zoom, 1)) !important;
+  height: calc(0.875rem * var(--gp-text-zoom, 1)) !important;
+}
+
+#grammar-practice-modal .gp-hero-sentence .gp-punct {
+  font-size: calc(clamp(1.2rem, 2.05vw, 1.8rem) * var(--gp-text-zoom, 1)) !important;
+  vertical-align: middle !important;
+  display: inline-block !important;
+  margin-left: 0.15rem !important;
+  color: #cbd5e1 !important;
+  opacity: 0.95;
+}
+
+#grammar-practice-modal .gp-hero-sentence span:not(.gp-subst-pill):not(.gp-subst-pill *):not(.gp-punct) {
+  font-size: calc(clamp(1.2rem, 2.05vw, 1.8rem) * var(--gp-text-zoom, 1)) !important;
+  vertical-align: middle !important;
+}
+
 /* 10. Practice Modal - Slide Text Size Zoom Controller & Component Scaling */
 .gp-practice-card {
   --gp-text-zoom: 1;
