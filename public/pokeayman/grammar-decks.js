@@ -1793,17 +1793,17 @@
     }
 
     const colorStyles = [
-      'border-sky-400 bg-sky-500/15 text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.25)]',
-      'border-amber-400 bg-amber-500/15 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.25)]',
-      'border-emerald-400 bg-emerald-500/15 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]',
-      'border-purple-400 bg-purple-500/15 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.25)]',
-      'border-rose-400 bg-rose-500/15 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.25)]',
-      'border-orange-400 bg-orange-500/15 text-orange-300 shadow-[0_0_12px_rgba(251,146,60,0.25)]',
-      'border-cyan-400 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]',
-      'border-fuchsia-400 bg-fuchsia-500/15 text-fuchsia-300 shadow-[0_0_12px_rgba(232,121,249,0.25)]',
-      'border-lime-400 bg-lime-500/15 text-lime-300 shadow-[0_0_12px_rgba(163,230,53,0.25)]',
-      'border-yellow-400 bg-yellow-500/15 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.25)]',
-      'ge-palette-10 border-slate-500/80 bg-slate-800/40 text-slate-100 shadow-sm'
+      'gp-chip-palette-0 border-sky-400 bg-sky-500/15 text-sky-300 shadow-[0_0_12px_rgba(56,189,248,0.25)]',
+      'gp-chip-palette-1 border-amber-400 bg-amber-500/15 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.25)]',
+      'gp-chip-palette-2 border-emerald-400 bg-emerald-500/15 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.25)]',
+      'gp-chip-palette-3 border-purple-400 bg-purple-500/15 text-purple-300 shadow-[0_0_12px_rgba(168,85,247,0.25)]',
+      'gp-chip-palette-4 border-rose-400 bg-rose-500/15 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.25)]',
+      'gp-chip-palette-5 border-orange-400 bg-orange-500/15 text-orange-300 shadow-[0_0_12px_rgba(251,146,60,0.25)]',
+      'gp-chip-palette-6 border-cyan-400 bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]',
+      'gp-chip-palette-7 border-fuchsia-400 bg-fuchsia-500/15 text-fuchsia-300 shadow-[0_0_12px_rgba(232,121,249,0.25)]',
+      'gp-chip-palette-8 border-lime-400 bg-lime-500/15 text-lime-300 shadow-[0_0_12px_rgba(163,230,53,0.25)]',
+      'gp-chip-palette-9 border-yellow-400 bg-yellow-500/15 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.25)]',
+      'gp-chip-palette-10 ge-palette-10 border-slate-500/80 bg-slate-800/40 text-slate-100 shadow-sm'
     ];
 
     return parts.map((part, idx) => {
@@ -2141,20 +2141,20 @@
                   <h3 class="gp-rule-title text-base sm:text-xl font-black text-white tracking-wide">${escapeHtml(r.title)}</h3>
                   ${cleanClue ? `<span class="gp-rule-clue px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700 self-start sm:self-auto">${escapeHtml(cleanClue)}</span>` : ''}
                 </div>
-                <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 border border-indigo-500/30 flex items-center justify-center shadow-inner">
+                <div class="gp-formula-banner p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 border border-indigo-500/30 flex items-center justify-center shadow-inner">
                   <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-                    ${/\?\s*$/.test(r.formula || '') ? '<span class="px-2 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-400/30 text-[10px] font-black text-indigo-300 uppercase tracking-wider mr-1 select-none">Question</span>' : ''}
+                    ${/\?\s*$/.test(r.formula || '') ? '<span class="gp-badge-question px-2 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-400/30 text-[10px] font-black text-indigo-300 uppercase tracking-wider mr-1 select-none">Question</span>' : ''}
                     ${formatFormulaChips(r.formula, r)}
                   </div>
                 </div>
                 ${r.answer_formula ? `
-                <div class="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-emerald-950/30 to-slate-950 border border-emerald-500/30 flex items-center justify-center shadow-inner">
+                <div class="gp-answer-formula-banner p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-950 via-emerald-950/30 to-slate-950 border border-emerald-500/30 flex items-center justify-center shadow-inner">
                   <div class="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-                    <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 text-[10px] font-black text-emerald-300 uppercase tracking-wider mr-1 select-none">Answer</span>
+                    <span class="gp-badge-answer px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 text-[10px] font-black text-emerald-300 uppercase tracking-wider mr-1 select-none">Answer</span>
                     ${formatAnswerFormulaChips(r.answer_formula)}
                   </div>
                 </div>
-                ${r.answer_sentence ? `<p class="text-center text-xs text-emerald-300/70 italic mt-0.5">${escapeHtml(r.answer_sentence)}</p>` : ''}
+                ${r.answer_sentence ? `<p class="gp-answer-sentence text-center text-xs text-emerald-300/70 italic mt-0.5">${escapeHtml(r.answer_sentence)}</p>` : ''}
                 ` : ''}
               </div>
 
