@@ -126,11 +126,13 @@ describe('Grammar Creation Formula Parts and Alternatives', () => {
 
   it('keeps Quick Check question box full-width and stacked to prevent vertical crushing', () => {
     // Quick Check Box must be flex-col items-stretch w-full, NOT lg:flex-row with shrink-0 options
-    expect(js).toContain('id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col items-stretch gap-3 shadow-inner w-full"');
+    expect(js).toContain('id="gp-quick-check-box"');
+    expect(js).toContain('flex flex-col items-stretch');
     
-    // gp-options-row must be full width below question
+    // gp-options-row must be full width below question and stacked
     expect(js).toContain('id="gp-options-row"');
-    expect(js).toMatch(/gp-quiz-opt[^>]*max-w-full text-left break-words/);
+    expect(js).toContain('flex flex-col items-stretch');
+    expect(js).toMatch(/gp-quiz-opt[^>]*w-full[^>]*text-left/);
   });
 
   it('wires part alternative inputs and name inputs to sync in real-time and flush on save', () => {

@@ -2532,6 +2532,34 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
 }
 
+/* Quick Check Vertical Stack Layout: Question on top, options stacked above each other below */
+#grammar-practice-modal #gp-quick-check-box {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  gap: 12px !important;
+}
+
+#grammar-practice-modal #gp-options-row {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  gap: 8px !important;
+  align-items: stretch !important;
+  clear: both !important;
+}
+
+#grammar-practice-modal .gp-quiz-opt {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+}
+
 :is(body.ts-bright, body.light, body[data-theme="light"], html.light body, .ts-bright, .light) #grammar-practice-modal .gp-quick-check-box * {
   color: #1e293b;
 }

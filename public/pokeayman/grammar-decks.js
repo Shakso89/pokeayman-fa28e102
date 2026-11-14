@@ -2167,17 +2167,18 @@
                     </div>
                   ` : ''}
                 </div>
-                <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col items-stretch gap-3 shadow-inner w-full">
+                <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col items-stretch gap-3 shadow-inner w-full" style="display:flex!important;flex-direction:column!important;width:100%!important;">
                   <div class="text-xs sm:text-sm font-semibold text-slate-200 w-full flex items-start gap-2.5">
                     ${ruleQuestions.length > 1 ? `
                       <span id="gp-question-badge" class="shrink-0 px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-cyan-300 text-[10px] font-black uppercase tracking-wider mt-0.5">Q${activeQIdx + 1}</span>
                     ` : ''}
                     <span id="gp-question-text" class="gp-quick-check-prompt text-slate-200 break-words leading-relaxed flex-1">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</span>
                   </div>
-                  <div class="flex flex-wrap items-center justify-start gap-2 sm:gap-2.5 w-full pt-1.5 border-t border-slate-800/60" id="gp-options-row">
-                    ${options.map(opt => `
-                      <button type="button" class="gp-quiz-opt px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-95 cursor-pointer max-w-full text-left break-words shadow-sm" data-val="${escapeHtml(opt)}">
-                        [${escapeHtml(opt)}]
+                  <div class="flex flex-col items-stretch gap-2 w-full pt-2 border-t border-slate-800/60" id="gp-options-row" style="display:flex!important;flex-direction:column!important;width:100%!important;gap:8px!important;">
+                    ${options.map((opt, optIdx) => `
+                      <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
+                        <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0">${String.fromCharCode(65 + optIdx)}</span>
+                        <span class="flex-1 min-w-0 break-words">[${escapeHtml(opt)}]</span>
                       </button>
                     `).join('')}
                   </div>
@@ -2315,11 +2316,11 @@
             const correct = curQ.answer;
 
             modal.querySelectorAll('.gp-quiz-opt').forEach(b => {
-              b.classList.remove('border-cyan-400', 'bg-cyan-950/90', 'text-cyan-200', 'shadow-[0_0_15px_rgba(6,182,212,0.5)]', 'border-rose-500', 'bg-rose-950/90', 'text-rose-200');
+              b.classList.remove('border-cyan-400', 'bg-cyan-950/90', 'text-cyan-200', 'shadow-[0_0_15px_rgba(6,182,212,0.5)]', 'border-rose-500', 'bg-rose-950/90', 'text-rose-200', 'ring-2', 'ring-cyan-400/50', 'ring-rose-500/50');
             });
 
             if (chosen === correct) {
-              btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-cyan-400 ring-2 ring-cyan-400/50 bg-cyan-950/90 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition cursor-pointer';
+              btn.className = 'gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-cyan-400 ring-2 ring-cyan-400/50 bg-cyan-950/90 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.5)] transition cursor-pointer text-left break-words flex items-center justify-start gap-3';
               if (window.pokeSfx?.play) {
                 try { window.pokeSfx.play('correct'); } catch (_) {}
               }
@@ -2327,7 +2328,7 @@
                 toast('Correct! Great job!');
               }
             } else {
-              btn.className = 'gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-rose-500 ring-2 ring-rose-500/50 bg-rose-950/90 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.4)] transition cursor-pointer';
+              btn.className = 'gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border-2 border-rose-500 ring-2 ring-rose-500/50 bg-rose-950/90 text-rose-200 shadow-[0_0_15px_rgba(244,63,94,0.4)] transition cursor-pointer text-left break-words flex items-center justify-start gap-3';
               if (window.pokeSfx?.play) {
                 try { window.pokeSfx.play('wrong'); } catch (_) {}
               }
@@ -2360,9 +2361,10 @@
         // Re-render options row for the selected question
         const optsRow = modal.querySelector('#gp-options-row');
         if (optsRow) {
-          optsRow.innerHTML = qOpts.map(opt => `
-            <button type="button" class="gp-quiz-opt px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-95 cursor-pointer max-w-full text-left break-words shadow-sm" data-val="${escapeHtml(opt)}">
-              [${escapeHtml(opt)}]
+          optsRow.innerHTML = qOpts.map((opt, optIdx) => `
+            <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
+              <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0">${String.fromCharCode(65 + optIdx)}</span>
+              <span class="flex-1 min-w-0 break-words">[${escapeHtml(opt)}]</span>
             </button>
           `).join('');
           wireQuizOptions();
