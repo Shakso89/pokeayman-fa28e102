@@ -1527,18 +1527,37 @@
           `);
         } else {
           // Standard token rendering
+          const rawText = item.text || item.token || '';
+          let punct = item.punct || '';
+          let cleanCoreText = rawText;
+          if (punct && cleanCoreText.endsWith(punct)) {
+            cleanCoreText = cleanCoreText.slice(0, -punct.length);
+          } else if (!punct) {
+            const pMatch = cleanCoreText.match(/([.,!?;:]+)$/);
+            if (pMatch) {
+              punct = pMatch[1];
+              cleanCoreText = cleanCoreText.slice(0, -punct.length);
+            }
+          }
+          cleanCoreText = cleanCoreText.replace(/[.,!?;:]+$/, '');
+
           if (Array.isArray(item.segments) && item.segments.length > 0) {
             const segsHtml = item.segments.map((seg, sIdx) => {
               const isSuffix = sIdx > 0;
               const cls = getColorCls(seg.color, isSuffix);
-              return `<span class="${cls}">${escapeHtml(seg.text || '')}</span>`;
+              let sText = seg.text || '';
+              if (sIdx === item.segments.length - 1) {
+                if (punct && sText.endsWith(punct)) sText = sText.slice(0, -punct.length);
+                sText = sText.replace(/[.,!?;:]+$/, '');
+              }
+              return `<span class="${cls}">${escapeHtml(sText)}</span>`;
             }).join('');
-            const punctHtml = item.punct ? `<span class="text-white font-extrabold">${escapeHtml(item.punct)}</span>` : '';
+            const punctHtml = punct ? `<span class="gp-punct font-black text-slate-100 select-none">${escapeHtml(punct)}</span>` : '';
             resultHtml.push(segsHtml + punctHtml);
           } else {
             const cls = getColorCls(item.color, false);
-            const punctHtml = item.punct ? `<span class="text-white font-extrabold">${escapeHtml(item.punct)}</span>` : '';
-            resultHtml.push(`<span class="${cls}">${escapeHtml(item.text || item.token || '')}</span>` + punctHtml);
+            const punctHtml = punct ? `<span class="gp-punct font-black text-slate-100 select-none">${escapeHtml(punct)}</span>` : '';
+            resultHtml.push(`<span class="${cls}">${escapeHtml(cleanCoreText)}</span>` + punctHtml);
           }
           i++;
         }
@@ -2146,9 +2165,9 @@
                     <span class="text-slate-600">•</span>
                     <span class="text-slate-400 font-normal">Click word to cycle alternatives</span>
                   </div>
-                  <div class="gp-hero-sentence flex flex-wrap items-center justify-center md:justify-start text-2xl sm:text-3xl md:text-4xl font-black text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+                  <p class="gp-hero-sentence text-2xl sm:text-3xl md:text-4xl font-black text-white leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
                     ${formatSyntaxHighlightedSentence(r.sentence, r.formula, r)}
-                  </div>
+                  </p>
                 </div>
 
                 <!-- Right: Compact Visual Cue Thumbnail (Supporting cue, not the hero) -->

@@ -2729,19 +2729,21 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 #grammar-practice-modal .gp-hero-sentence,
 #grammar-practice-modal.game-fullscreen-active .gp-hero-sentence,
 #grammar-practice-modal:fullscreen .gp-hero-sentence {
+  display: block !important;
   font-size: calc(clamp(2rem, 3.8vw, 3.85rem) * var(--gp-text-zoom, 1)) !important;
-  line-height: 1.35 !important;
+  line-height: 1.45 !important;
   overflow: visible !important;
-  word-break: break-word !important;
+  word-break: normal !important;
+  white-space: normal !important;
 }
 
-/* Responsive, balanced sentence elements inside Master Example to flow naturally across 1-2 lines */
+/* Responsive, balanced sentence elements inside Master Example to flow naturally across 1-2 lines with clear spaces */
 #grammar-practice-modal .gp-hero-sentence .gp-subst-pill {
   font-size: calc(clamp(1.2rem, 2.05vw, 1.8rem) * var(--gp-text-zoom, 1)) !important;
   padding: calc(0.2rem * var(--gp-text-zoom, 1)) calc(0.6rem * var(--gp-text-zoom, 1)) !important;
   line-height: 1.25 !important;
   vertical-align: middle !important;
-  margin: 0.15rem 0.2rem !important;
+  margin: 0.15rem 0.25rem !important;
   border-radius: 0.85rem !important;
 }
 
@@ -2753,9 +2755,9 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 #grammar-practice-modal .gp-hero-sentence .gp-punct {
   font-size: calc(clamp(1.2rem, 2.05vw, 1.8rem) * var(--gp-text-zoom, 1)) !important;
   vertical-align: middle !important;
-  display: inline-block !important;
-  margin-left: 0.15rem !important;
-  color: #cbd5e1 !important;
+  display: inline !important;
+  margin-left: 0.05em !important;
+  color: #f8fafc !important;
   opacity: 0.95;
 }
 
