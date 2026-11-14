@@ -1013,29 +1013,39 @@
     });
   }
 
-    // Helper: parse alternative words separated by commas, semicolons, slashes, or spaces
+    // Helper: parse alternative words or phrases separated by commas, semicolons, slashes, pipes, or newlines.
+  // NEVER split on whitespace so multi-word phrases (e.g. "The speaker", "is going to", "more fast") remain intact!
   function parseAlternativesInput(val) {
     if (!val || typeof val !== 'string') return [];
     const raw = val.trim();
     if (!raw) return [];
-    if (/[,;/]/.test(raw)) {
-      return raw.split(/[,;/]+/).map(s => s.trim()).filter(Boolean);
+    if (/[,;/|\n]/.test(raw)) {
+      return raw.split(/[,;/|\n]+/).map(s => s.trim()).filter(Boolean);
     }
-    return raw.split(/\s+/).map(s => s.trim()).filter(Boolean);
+    return [raw];
   }
 
-  // Helper: normalize any alternatives array or string into clean distinct items
+  // Helper: normalize any alternatives array or string into clean distinct items without destroying multi-word phrases
   function normalizeAlternatives(alts) {
     if (!alts) return [];
     const list = Array.isArray(alts) ? alts : [alts];
     const result = [];
+    const seen = new Set();
     list.forEach(item => {
       if (typeof item === 'string') {
         const parsed = parseAlternativesInput(item);
-        result.push(...parsed);
+        parsed.forEach(p => {
+          const trimmed = p.trim();
+          if (!trimmed) return;
+          const lower = trimmed.toLowerCase();
+          if (!seen.has(lower)) {
+            seen.add(lower);
+            result.push(trimmed);
+          }
+        });
       }
     });
-    return [...new Set(result)];
+    return result;
   }
 
     // Helper: render a word split into root and suffix with proper English inflection and colors
@@ -2157,16 +2167,16 @@
                     </div>
                   ` : ''}
                 </div>
-                <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-inner">
-                  <div class="text-xs sm:text-sm font-semibold text-slate-200 min-w-0 flex-1 text-center lg:text-left flex items-center justify-center lg:justify-start gap-2">
+                <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col items-stretch gap-3 shadow-inner w-full">
+                  <div class="text-xs sm:text-sm font-semibold text-slate-200 w-full flex items-start gap-2.5">
                     ${ruleQuestions.length > 1 ? `
-                      <span id="gp-question-badge" class="shrink-0 px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-cyan-300 text-[10px] font-black uppercase tracking-wider">Q${activeQIdx + 1}</span>
+                      <span id="gp-question-badge" class="shrink-0 px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-cyan-300 text-[10px] font-black uppercase tracking-wider mt-0.5">Q${activeQIdx + 1}</span>
                     ` : ''}
-                    <span id="gp-question-text" class="gp-quick-check-prompt text-slate-200 break-words leading-relaxed">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</span>
+                    <span id="gp-question-text" class="gp-quick-check-prompt text-slate-200 break-words leading-relaxed flex-1">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</span>
                   </div>
-                  <div class="flex flex-wrap items-center justify-center gap-2 shrink-0" id="gp-options-row">
+                  <div class="flex flex-wrap items-center justify-start gap-2 sm:gap-2.5 w-full pt-1.5 border-t border-slate-800/60" id="gp-options-row">
                     ${options.map(opt => `
-                      <button type="button" class="gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-95 cursor-pointer" data-val="${escapeHtml(opt)}">
+                      <button type="button" class="gp-quiz-opt px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-95 cursor-pointer max-w-full text-left break-words shadow-sm" data-val="${escapeHtml(opt)}">
                         [${escapeHtml(opt)}]
                       </button>
                     `).join('')}
@@ -2351,7 +2361,7 @@
         const optsRow = modal.querySelector('#gp-options-row');
         if (optsRow) {
           optsRow.innerHTML = qOpts.map(opt => `
-            <button type="button" class="gp-quiz-opt px-3.5 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-95 cursor-pointer" data-val="${escapeHtml(opt)}">
+            <button type="button" class="gp-quiz-opt px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-95 cursor-pointer max-w-full text-left break-words shadow-sm" data-val="${escapeHtml(opt)}">
               [${escapeHtml(opt)}]
             </button>
           `).join('');
@@ -3392,17 +3402,38 @@
         }).join('');
 
         altsListContainer.querySelectorAll('.ge-part-alts-input').forEach(inp => {
-          inp.oninput = () => {
+          const syncPartState = () => {
             const pIdx = Number(inp.dataset.partIdx);
-            if (currentFormulaParts[pIdx]) {
-              currentFormulaParts[pIdx].alternatives = parseAlternativesInput(inp.value);
+            if (!currentFormulaParts[pIdx]) return;
+            const alts = parseAlternativesInput(inp.value);
+            currentFormulaParts[pIdx].alternatives = alts;
+            if (activeRule) {
+              if (Array.isArray(activeRule.part_alternatives)) {
+                activeRule.part_alternatives[pIdx] = [...alts];
+              }
+              if (Array.isArray(activeRule.formula_parts) && activeRule.formula_parts[pIdx]) {
+                activeRule.formula_parts[pIdx].alternatives = [...alts];
+              }
             }
           };
+
+          inp.oninput = syncPartState;
+          inp.onchange = syncPartState;
           inp.onblur = () => {
+            syncPartState();
             const pIdx = Number(inp.dataset.partIdx);
             if (currentFormulaParts[pIdx]) {
-              currentFormulaParts[pIdx].alternatives = normalizeAlternatives(currentFormulaParts[pIdx].alternatives);
-              inp.value = currentFormulaParts[pIdx].alternatives.join(', ');
+              const norm = normalizeAlternatives(currentFormulaParts[pIdx].alternatives);
+              currentFormulaParts[pIdx].alternatives = norm;
+              inp.value = norm.join(', ');
+              if (activeRule) {
+                if (Array.isArray(activeRule.part_alternatives)) {
+                  activeRule.part_alternatives[pIdx] = [...norm];
+                }
+                if (Array.isArray(activeRule.formula_parts) && activeRule.formula_parts[pIdx]) {
+                  activeRule.formula_parts[pIdx].alternatives = [...norm];
+                }
+              }
             }
           };
         });
@@ -3486,13 +3517,19 @@
         });
 
         legendContainer.querySelectorAll('.ge-part-name-input').forEach(input => {
-          input.oninput = () => {
+          const syncName = () => {
             const pIdx = Number(input.dataset.partIdx);
             if (currentFormulaParts[pIdx]) {
               currentFormulaParts[pIdx].name = input.value;
               syncFormulaInput();
+              if (activeRule && Array.isArray(activeRule.formula_parts) && activeRule.formula_parts[pIdx]) {
+                activeRule.formula_parts[pIdx].name = input.value;
+              }
             }
           };
+          input.oninput = syncName;
+          input.onchange = syncName;
+          input.onblur = syncName;
           input.onclick = (e) => e.stopPropagation();
         });
 
@@ -4013,6 +4050,20 @@
 
       // Add or Save Rule
       modal.querySelector('#ge-save-rule-btn').onclick = async () => {
+        // Flush any un-blurred part inputs to ensure zero edits are lost
+        modal.querySelectorAll('.ge-part-name-input').forEach(inp => {
+          const pIdx = Number(inp.dataset.partIdx);
+          if (currentFormulaParts[pIdx] && inp.value.trim()) {
+            currentFormulaParts[pIdx].name = inp.value.trim();
+          }
+        });
+        modal.querySelectorAll('.ge-part-alts-input').forEach(inp => {
+          const pIdx = Number(inp.dataset.partIdx);
+          if (currentFormulaParts[pIdx]) {
+            currentFormulaParts[pIdx].alternatives = normalizeAlternatives(parseAlternativesInput(inp.value));
+          }
+        });
+
         const title = modal.querySelector('#ge-rule-title').value.trim();
         const formula = modal.querySelector('#ge-rule-formula').value.trim();
         const sentence = modal.querySelector('#ge-rule-sentence').value.trim();

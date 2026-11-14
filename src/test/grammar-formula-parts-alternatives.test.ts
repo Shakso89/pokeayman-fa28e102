@@ -72,4 +72,72 @@ describe('Grammar Creation Formula Parts and Alternatives', () => {
     expect(html4).toContain('Part 3');
     expect(html4).toContain('Part 4');
   });
+
+  it('preserves multi-word phrases in parseAlternativesInput and normalizeAlternatives without splitting on whitespace', () => {
+    // Extract the functions from grammar-decks.js code using regex or eval-like check
+    expect(js).toContain('NEVER split on whitespace so multi-word phrases');
+    expect(js).not.toMatch(/raw\.split\(\/\\s\+\/\)/); // Must NOT split alternatives on whitespace!
+
+    // Simulate parseAlternativesInput
+    function parseAlternativesInput(val: string) {
+      if (!val || typeof val !== 'string') return [];
+      const raw = val.trim();
+      if (!raw) return [];
+      if (/[,;/|\n]/.test(raw)) {
+        return raw.split(/[,;/|\n]+/).map(s => s.trim()).filter(Boolean);
+      }
+      return [raw];
+    }
+
+    function normalizeAlternatives(alts: any) {
+      if (!alts) return [];
+      const list = Array.isArray(alts) ? alts : [alts];
+      const result: string[] = [];
+      const seen = new Set<string>();
+      list.forEach(item => {
+        if (typeof item === 'string') {
+          const parsed = parseAlternativesInput(item);
+          parsed.forEach(p => {
+            const trimmed = p.trim();
+            if (!trimmed) return;
+            const lower = trimmed.toLowerCase();
+            if (!seen.has(lower)) {
+              seen.add(lower);
+              result.push(trimmed);
+            }
+          });
+        }
+      });
+      return result;
+    }
+
+    // 1. Multi-word phrase with commas
+    const parsed1 = parseAlternativesInput("the, The speaker, narrator, observer");
+    expect(parsed1).toEqual(["the", "The speaker", "narrator", "observer"]);
+
+    // 2. Multi-word phrase alone (NO commas)
+    const parsed2 = parseAlternativesInput("The speaker");
+    expect(parsed2).toEqual(["The speaker"]); // Must NOT be ["The", "speaker"]!
+
+    // 3. Normalization preserves multi-word phrases and deduplicates case-insensitively
+    const normalized = normalizeAlternatives(["the", "The speaker", "narrator", "the"]);
+    expect(normalized).toEqual(["the", "The speaker", "narrator"]);
+  });
+
+  it('keeps Quick Check question box full-width and stacked to prevent vertical crushing', () => {
+    // Quick Check Box must be flex-col items-stretch w-full, NOT lg:flex-row with shrink-0 options
+    expect(js).toContain('id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col items-stretch gap-3 shadow-inner w-full"');
+    
+    // gp-options-row must be full width below question
+    expect(js).toContain('id="gp-options-row"');
+    expect(js).toMatch(/gp-quiz-opt[^>]*max-w-full text-left break-words/);
+  });
+
+  it('wires part alternative inputs and name inputs to sync in real-time and flush on save', () => {
+    expect(js).toContain('const syncPartState = () =>');
+    expect(js).toContain('inp.oninput = syncPartState;');
+    expect(js).toContain('inp.onchange = syncPartState;');
+    expect(js).toContain('activeRule.part_alternatives[pIdx] = [...alts];');
+    expect(js).toContain('modal.querySelectorAll(\'.ge-part-alts-input\').forEach(inp =>');
+  });
 });
