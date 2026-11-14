@@ -11,7 +11,7 @@
     "postbuild": "node scripts/postbuild.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
-    "deploy": "bun run build && npx wrangler deploy --cwd .output/",
+    "deploy": "bun run build && bun x wrangler deploy --cwd .output/",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",

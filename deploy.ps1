@@ -9,4 +9,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "`nDeploying to Cloudflare Workers (pokeayman)..." -ForegroundColor Green
-npx wrangler deploy --cwd .output/
+if (Get-Command bun -ErrorAction SilentlyContinue) {
+    bun x wrangler deploy --cwd .output/
+} else {
+    npx wrangler deploy --cwd .output/
+}
