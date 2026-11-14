@@ -2676,7 +2676,7 @@ html body:not(.ts-bright) .vocab-cover-dialog .vocab-cover-result.is-selected {
 #grammar-practice-modal.game-fullscreen-active .gp-practice-card,
 #grammar-practice-modal:fullscreen .gp-practice-card {
   width: 100% !important;
-  max-width: min(1500px, 95vw) !important;
+  max-width: min(1050px, 92vw) !important;
   min-height: min(94vh, 960px) !important;
   max-height: 96vh !important;
   height: auto !important;

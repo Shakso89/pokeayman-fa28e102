@@ -2167,20 +2167,23 @@
                     </div>
                   ` : ''}
                 </div>
-                <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-4 flex flex-col items-stretch gap-3 shadow-inner w-full" style="display:flex!important;flex-direction:column!important;width:100%!important;">
+                <div id="gp-quick-check-box" class="gp-quick-check-box rounded-2xl bg-slate-950/70 border border-slate-800/90 p-3.5 sm:p-5 flex flex-col items-stretch gap-3 shadow-inner w-full" style="display:flex!important;flex-direction:column!important;width:100%!important;">
                   <div class="text-xs sm:text-sm font-semibold text-slate-200 w-full flex items-start gap-2.5">
                     ${ruleQuestions.length > 1 ? `
                       <span id="gp-question-badge" class="shrink-0 px-2 py-0.5 rounded-md bg-cyan-950/80 border border-cyan-800/60 text-cyan-300 text-[10px] font-black uppercase tracking-wider mt-0.5">Q${activeQIdx + 1}</span>
                     ` : ''}
-                    <span id="gp-question-text" class="gp-quick-check-prompt text-slate-200 break-words leading-relaxed flex-1">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</span>
+                    <span id="gp-question-text" class="gp-quick-check-prompt text-sm sm:text-base font-bold text-slate-100 break-words leading-relaxed w-full">${escapeHtml(currentQuestion.question || 'Fill in the blank with the correct form:')}</span>
                   </div>
-                  <div class="flex flex-col items-stretch gap-2 w-full pt-2 border-t border-slate-800/60" id="gp-options-row" style="display:flex!important;flex-direction:column!important;width:100%!important;gap:8px!important;">
-                    ${options.map((opt, optIdx) => `
-                      <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
-                        <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0 shadow-inner">${String.fromCharCode(65 + optIdx)}</span>
-                        <span class="flex-1 min-w-0 break-words font-medium text-slate-100">${escapeHtml(opt)}</span>
-                      </button>
-                    `).join('')}
+                  <div class="flex flex-col items-stretch gap-2.5 w-full pt-2.5 border-t border-slate-800/70" id="gp-options-row" style="display:flex!important;flex-direction:column!important;width:100%!important;gap:8px!important;clear:both!important;">
+                    ${options.map((opt, optIdx) => {
+                      const cleanOpt = String(opt || '').replace(/^\[+|\]+$/g, '').trim();
+                      return `
+                        <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
+                          <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0 shadow-inner">${String.fromCharCode(65 + optIdx)}</span>
+                          <span class="flex-1 min-w-0 break-words font-medium text-slate-100">${escapeHtml(cleanOpt)}</span>
+                        </button>
+                      `;
+                    }).join('')}
                   </div>
                 </div>
               </div>
@@ -2361,12 +2364,15 @@
         // Re-render options row for the selected question
         const optsRow = modal.querySelector('#gp-options-row');
         if (optsRow) {
-          optsRow.innerHTML = qOpts.map((opt, optIdx) => `
-            <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
-              <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0 shadow-inner">${String.fromCharCode(65 + optIdx)}</span>
-              <span class="flex-1 min-w-0 break-words font-medium text-slate-100">${escapeHtml(opt)}</span>
-            </button>
-          `).join('');
+          optsRow.innerHTML = qOpts.map((opt, optIdx) => {
+            const cleanOpt = String(opt || '').replace(/^\[+|\]+$/g, '').trim();
+            return `
+              <button type="button" class="gp-quiz-opt w-full px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-slate-700 bg-slate-800/80 hover:bg-slate-700/80 text-slate-200 hover:border-cyan-400 hover:text-white transition active:scale-[0.99] cursor-pointer text-left break-words shadow-sm flex items-center justify-start gap-3" data-val="${escapeHtml(opt)}" style="width:100%!important;display:flex!important;align-items:center!important;text-align:left!important;">
+                <span class="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700/80 text-cyan-300 text-xs font-black flex items-center justify-center shrink-0 shadow-inner">${String.fromCharCode(65 + optIdx)}</span>
+                <span class="flex-1 min-w-0 break-words font-medium text-slate-100">${escapeHtml(cleanOpt)}</span>
+              </button>
+            `;
+          }).join('');
           wireQuizOptions();
         }
       }
@@ -3223,9 +3229,6 @@
       function initFormulaParts() {
         if (activeRule && Array.isArray(activeRule.formula_parts) && activeRule.formula_parts.length > 0) {
           let rawList = activeRule.formula_parts;
-          if (rawList.length > 3 && rawList.some(p => /^part\s*\d+$/i.test(String(p.name || '').trim()))) {
-            rawList = rawList.filter(p => !/^part\s*\d+$/i.test(String(p.name || '').trim()));
-          }
           currentFormulaParts = rawList.map((p, idx) => {
             let alts = Array.isArray(p.alternatives) && p.alternatives.length > 0 ? [...p.alternatives] : [];
             if (!alts.length && activeRule.part_alternatives && Array.isArray(activeRule.part_alternatives[idx])) {
@@ -3235,12 +3238,12 @@
               id: p.id || ('part-' + idx + '-' + Math.random().toString(36).slice(2, 6)),
               name: String(p.name || `Part ${idx + 1}`).trim(),
               colorIndex: (typeof p.colorIndex === 'number' && p.colorIndex >= 0) ? (p.colorIndex % COLOR_PALETTE.length) : (idx % COLOR_PALETTE.length),
-              alternatives: alts
+              alternatives: alts,
+              rawInput: (typeof p.rawInput === 'string') ? p.rawInput : (alts.length ? alts.join(', ') : '')
             };
           });
         } else {
           let rawFormula = (formulaInput?.value || activeRule?.formula || '').trim();
-          rawFormula = rawFormula.replace(/\s*\+\s*part\s*\d+/gi, '').trim();
           const parts = rawFormula ? rawFormula.split('+').map(p => p.trim()).filter(Boolean) : ['Part 1', 'Part 2', 'Part 3'];
           currentFormulaParts = parts.map((name, idx) => {
             let alts = [];
@@ -3251,7 +3254,8 @@
               id: 'part-' + idx + '-' + Math.random().toString(36).slice(2, 6),
               name,
               colorIndex: idx % COLOR_PALETTE.length,
-              alternatives: alts
+              alternatives: alts,
+              rawInput: alts.length ? alts.join(', ') : ''
             };
           });
         }
@@ -3411,11 +3415,13 @@
             currentFormulaParts[pIdx].alternatives = alts;
             currentFormulaParts[pIdx].rawInput = inp.value;
             if (activeRule) {
-              if (Array.isArray(activeRule.part_alternatives)) {
-                activeRule.part_alternatives[pIdx] = [...alts];
+              if (!Array.isArray(activeRule.part_alternatives)) {
+                activeRule.part_alternatives = [];
               }
+              activeRule.part_alternatives[pIdx] = [...alts];
               if (Array.isArray(activeRule.formula_parts) && activeRule.formula_parts[pIdx]) {
                 activeRule.formula_parts[pIdx].alternatives = [...alts];
+                activeRule.formula_parts[pIdx].rawInput = inp.value;
               }
             }
           };
@@ -4048,6 +4054,7 @@
         modal.querySelectorAll('.ge-part-alts-input').forEach(inp => {
           const pIdx = Number(inp.dataset.partIdx);
           if (currentFormulaParts[pIdx]) {
+            currentFormulaParts[pIdx].rawInput = inp.value;
             currentFormulaParts[pIdx].alternatives = normalizeAlternatives(parseAlternativesInput(inp.value));
           }
         });
@@ -4194,7 +4201,13 @@
             ...rules[editingRuleIndex],
             title,
             formula: finalFormula,
-            formula_parts: currentFormulaParts,
+            formula_parts: currentFormulaParts.map(p => ({
+              id: p.id,
+              name: p.name,
+              colorIndex: p.colorIndex,
+              alternatives: p.alternatives || [],
+              rawInput: (typeof p.rawInput === 'string') ? p.rawInput : (p.alternatives || []).join(', ')
+            })),
             part_alternatives: currentFormulaParts.map(p => p.alternatives || []),
             suffix_color: suffixColorIndex,
             sentence,
@@ -4232,7 +4245,13 @@
             rule_id: 'rule-' + Date.now(),
             title,
             formula: finalFormula,
-            formula_parts: currentFormulaParts,
+            formula_parts: currentFormulaParts.map(p => ({
+              id: p.id,
+              name: p.name,
+              colorIndex: p.colorIndex,
+              alternatives: p.alternatives || [],
+              rawInput: (typeof p.rawInput === 'string') ? p.rawInput : (p.alternatives || []).join(', ')
+            })),
             part_alternatives: currentFormulaParts.map(p => p.alternatives || []),
             suffix_color: suffixColorIndex,
             sentence,
