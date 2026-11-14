@@ -3451,16 +3451,36 @@
         const altsListContainer = modal.querySelector('#ge-formula-part-alternatives-list');
         if (!altsListContainer) return;
 
+        // In-place DOM update when row count matches so user typing, focus, and cursor are NEVER destroyed!
+        const existingInputs = altsListContainer.querySelectorAll('.ge-part-alts-input');
+        if (existingInputs.length === currentFormulaParts.length) {
+          existingInputs.forEach((inp, idx) => {
+            const part = currentFormulaParts[idx];
+            if (!part) return;
+            const dot = inp.closest('.flex-col, .flex')?.querySelector('.w-3.h-3.rounded-full');
+            const col = COLOR_PALETTE[part.colorIndex % COLOR_PALETTE.length];
+            if (dot && col) {
+              COLOR_PALETTE.forEach(c => dot.classList.remove(c.dotBg));
+              dot.classList.add(col.dotBg);
+            }
+            // NEVER overwrite text while user is actively focused or typing in this input
+            if (document.activeElement !== inp) {
+              const currentVal = (typeof part.rawInput === 'string')
+                ? part.rawInput
+                : (part.alternatives && part.alternatives.length ? part.alternatives.join(', ') : '');
+              if (inp.value !== currentVal) {
+                inp.value = currentVal;
+              }
+            }
+          });
+          return;
+        }
+
         altsListContainer.innerHTML = currentFormulaParts.map((part, idx) => {
           const col = COLOR_PALETTE[part.colorIndex % COLOR_PALETTE.length];
-          const repaired = repairDetachedArticleAlternatives(part.alternatives, part.words || '');
-          const normAlts = normalizeAlternatives(repaired.length ? repaired : part.alternatives);
-          part.alternatives = normAlts;
-          let val = (typeof part.rawInput === 'string') ? part.rawInput : normAlts.join(', ');
-          if (/^(?:the|a|an)\s*,\s*/i.test(val)) {
-            val = normAlts.join(', ');
-            part.rawInput = val;
-          }
+          const val = (typeof part.rawInput === 'string')
+            ? part.rawInput
+            : (part.alternatives && part.alternatives.length ? part.alternatives.join(', ') : '');
           return `
             <div class="flex flex-col sm:flex-row sm:items-center gap-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/90">
               <div class="flex items-center gap-2 shrink-0 sm:w-36">
@@ -3488,7 +3508,9 @@
                 activeRule.part_alternatives = [];
               }
               activeRule.part_alternatives[pIdx] = [...alts];
-              if (Array.isArray(activeRule.formula_parts) && activeRule.formula_parts[pIdx]) {
+              if (!Array.isArray(activeRule.formula_parts)) {
+                activeRule.formula_parts = currentFormulaParts.map(p => ({ ...p }));
+              } else if (activeRule.formula_parts[pIdx]) {
                 activeRule.formula_parts[pIdx].alternatives = [...alts];
                 activeRule.formula_parts[pIdx].rawInput = inp.value;
               }
@@ -3946,6 +3968,48 @@
       syncAlternativesList();
 
       syncWordChips();
+
+      // Real-time synchronization for all top-level rule form fields so field edits are never lost when switching fields
+      const ruleTitleInput = modal.querySelector('#ge-rule-title');
+      if (ruleTitleInput) {
+        const syncTitle = () => { if (activeRule) activeRule.title = ruleTitleInput.value; };
+        ruleTitleInput.oninput = syncTitle;
+        ruleTitleInput.onchange = syncTitle;
+        ruleTitleInput.onblur = syncTitle;
+      }
+      const ruleClueInput = modal.querySelector('#ge-rule-clue');
+      if (ruleClueInput) {
+        const syncClue = () => { if (activeRule) activeRule.context_clue = ruleClueInput.value; };
+        ruleClueInput.oninput = syncClue;
+        ruleClueInput.onchange = syncClue;
+        ruleClueInput.onblur = syncClue;
+      }
+      if (formulaInput) {
+        const syncFormula = () => { if (activeRule) activeRule.formula = formulaInput.value; };
+        formulaInput.addEventListener('input', syncFormula);
+        formulaInput.addEventListener('change', syncFormula);
+        formulaInput.addEventListener('blur', syncFormula);
+      }
+      if (sentenceInput) {
+        const syncSentence = () => { if (activeRule) activeRule.sentence = sentenceInput.value; };
+        sentenceInput.addEventListener('input', syncSentence);
+        sentenceInput.addEventListener('change', syncSentence);
+        sentenceInput.addEventListener('blur', syncSentence);
+      }
+      const ruleAnsFormulaInput = modal.querySelector('#ge-rule-answer-formula');
+      if (ruleAnsFormulaInput) {
+        const syncAnsForm = () => { if (activeRule) activeRule.answer_formula = ruleAnsFormulaInput.value; };
+        ruleAnsFormulaInput.oninput = syncAnsForm;
+        ruleAnsFormulaInput.onchange = syncAnsForm;
+        ruleAnsFormulaInput.onblur = syncAnsForm;
+      }
+      const ruleAnsSentenceInput = modal.querySelector('#ge-rule-answer-sentence');
+      if (ruleAnsSentenceInput) {
+        const syncAnsSent = () => { if (activeRule) activeRule.answer_sentence = ruleAnsSentenceInput.value; };
+        ruleAnsSentenceInput.oninput = syncAnsSent;
+        ruleAnsSentenceInput.onchange = syncAnsSent;
+        ruleAnsSentenceInput.onblur = syncAnsSent;
+      }
 
       
 

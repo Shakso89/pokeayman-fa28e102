@@ -65,7 +65,7 @@ function Index() {
       key={frameKey}
       className="imported-app"
       title="PokéAyman"
-      src="/pokeayman/index.html?v=20261106-surprise-boxes-no-repeat-v2&grammar_build=20261114_fix_articles_v3"
+      src="/pokeayman/index.html?v=20261106-surprise-boxes-no-repeat-v2&grammar_build=20261114_editable_inputs_v4"
       allowFullScreen
     />
   );

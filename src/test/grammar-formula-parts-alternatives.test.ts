@@ -142,4 +142,11 @@ describe('Grammar Creation Formula Parts and Alternatives', () => {
     expect(js).toContain('activeRule.part_alternatives[pIdx] = [...alts];');
     expect(js).toContain('modal.querySelectorAll(\'.ge-part-alts-input\').forEach(inp =>');
   });
+
+  it('updates alternative inputs in-place without destroying DOM or overwriting focused fields', () => {
+    expect(js).toContain('existingInputs.length === currentFormulaParts.length');
+    expect(js).toContain('document.activeElement !== inp');
+    expect(js).toContain('ruleTitleInput.oninput = syncTitle;');
+    expect(js).toContain('ruleClueInput.oninput = syncClue;');
+  });
 });
