@@ -55,4 +55,29 @@ describe('Whac-A-Diglett Arcade Integration', () => {
     expect(whacJs).toContain('whac-combo');
     expect(whacJs).toContain('readGameWordAloud');
   });
+
+  it('removes emojis, hides word spelling next to picture clue, and renders hammer strike animation', () => {
+    const whacJsPath = path.join(root, 'public', 'pokeayman', 'whac-a-diglett.js');
+    const whacJs = fs.readFileSync(whacJsPath, 'utf8');
+
+    // No emojis on Digletts
+    expect(whacJs).not.toContain('ACCESSORIES');
+    expect(whacJs).not.toContain('whac-diglett-accessory');
+
+    // Hammer animation & turn banner
+    expect(whacJs).toContain('renderHammerStrike');
+    expect(whacJs).toContain('whac-hammer-anim');
+    expect(whacJs).toContain('whac-turn-banner');
+
+    // When picture exists, spelling is hidden
+    expect(whacJs).toContain("clueText.classList.add('hidden')");
+    expect(whacJs).toContain("clueText.textContent = ''");
+
+    const whacCssPath = path.join(root, 'public', 'pokeayman', 'whac-a-diglett.css');
+    const whacCss = fs.readFileSync(whacCssPath, 'utf8');
+    expect(whacCss).toContain('.whac-hammer-anim');
+    expect(whacCss).toContain('whac-hammer-strike');
+    expect(whacCss).toContain('.whac-turn-banner');
+    expect(whacCss).toContain('transform: translateY(-28px)');
+  });
 });

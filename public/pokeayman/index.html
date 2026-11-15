@@ -5732,7 +5732,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/crossword.css?v=20261028-crosswords-v11">
 <link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261111-pokemon-scale-v1">
-<link rel="stylesheet" href="/pokeayman/whac-a-diglett.css?v=20261115_whac_v1">
+<link rel="stylesheet" href="/pokeayman/whac-a-diglett.css?v=20261115_whac_v2">
 <link rel="stylesheet" href="/pokeayman/vocab-battle.css">
 <link rel="stylesheet" href="/pokeayman/study-theme.css">
 <link rel="stylesheet" href="/pokeayman/components.css?v=20261115_student_ui_v12">
@@ -7772,8 +7772,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         }[c])
     );
 
-  const ACCESSORIES = ['🕶️', '🤠', '🎩', '🎀', '⭐', '🧢', '👑', '🎉', '🥽'];
-
   window.chooseWhacADiglett = function (listName) {
     if (typeof currentRole !== 'undefined' && currentRole === 'student') {
       if (typeof window.gaStudentSetup === 'function') {
@@ -7831,24 +7829,35 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     modal.innerHTML = `
       <header class="whac-header ga-stage-header">
         <div class="whac-heading">
-          <h2>🔨 Whac-A-Diglett</h2>
+          <h2>Whac-A-Diglett</h2>
         </div>
         <div class="whac-header-tools">
-          <button type="button" class="whac-btn-tool game-fullscreen-btn" aria-label="Toggle Fullscreen">⛶</button>
-          <button type="button" class="whac-btn-tool" id="whac-close" aria-label="Close game">✕</button>
+          <button type="button" class="whac-btn-tool game-fullscreen-btn" aria-label="Toggle Fullscreen">Fullscreen</button>
+          <button type="button" class="whac-btn-tool" id="whac-close" aria-label="Close game">Close</button>
         </div>
       </header>
       <div class="whac-game-shell ga-stage-shell">
-        <div class="game-player-hud-slot w-full max-w-xl mb-2 flex justify-center"></div>
+        <div class="game-player-hud-slot w-full max-w-xl mb-1 flex justify-center"></div>
 
-        <section class="whac-signboard" aria-label="Target word to whack">
-          <div class="whac-combo-badge" id="whac-combo">🔥 Combo x2!</div>
+        <div class="whac-turn-banner" id="whac-turn-banner" role="status" aria-live="polite">
+          <span class="whac-turn-dot"></span>
+          <span class="whac-turn-player" id="whac-turn-player-name">Player 1's Turn</span>
+        </div>
+
+        <section class="whac-signboard" aria-label="Target clue to whack">
+          <div class="whac-combo-badge" id="whac-combo">Combo x2</div>
           <div class="text-center">
-            <div class="whac-clue-label">WHACK THIS WORD</div>
+            <div class="whac-clue-label" id="whac-clue-label">WHACK THE MATCHING WORD</div>
             <div class="whac-clue-content">
-              <img id="whac-clue-image" class="whac-clue-img hidden" alt="Word clue">
-              <span id="whac-clue-text" class="whac-clue-text">...</span>
-              <button type="button" id="whac-speak-btn" class="whac-clue-audio-btn" aria-label="Hear pronunciation" title="Listen to word">🔊</button>
+              <img id="whac-clue-image" class="whac-clue-img hidden" alt="Picture clue">
+              <span id="whac-clue-text" class="whac-clue-text hidden"></span>
+              <button type="button" id="whac-speak-btn" class="whac-clue-audio-btn" aria-label="Hear pronunciation" title="Listen to word">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+              </button>
             </div>
           </div>
         </section>
@@ -7858,7 +7867,6 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             <div class="whac-mound-wrap" data-hole-index="${i}">
               <div class="whac-hole-container" data-hole="${i}">
                 <div class="whac-diglett" data-hole-diglett="${i}">
-                  <span class="whac-diglett-accessory">${ACCESSORIES[i % ACCESSORIES.length]}</span>
                   <div class="whac-diglett-body">
                     <div class="whac-diglett-eyes">
                       <div class="whac-diglett-eye"></div>
@@ -7881,11 +7889,22 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (typeof renderGamePlayerHud === 'function') renderGamePlayerHud(modal, winningScore, 0, winningScore);
     if (typeof startPlayerTurnTimer === 'function') startPlayerTurnTimer(modal, timerSeconds);
 
+    const clueLabel = modal.querySelector('#whac-clue-label');
     const clueText = modal.querySelector('#whac-clue-text');
     const clueImage = modal.querySelector('#whac-clue-image');
     const speakBtn = modal.querySelector('#whac-speak-btn');
     const comboEl = modal.querySelector('#whac-combo');
     const field = modal.querySelector('#whac-field');
+    const turnPlayerEl = modal.querySelector('#whac-turn-player-name');
+
+    function updateTurnBanner() {
+      if (!activeGamePlayers.length) return;
+      const current = activeGamePlayers[activeGamePlayerIndex];
+      const name = current ? (current.student_name || 'Player') : 'Player';
+      if (turnPlayerEl) {
+        turnPlayerEl.textContent = `${name}'s Turn`;
+      }
+    }
 
     function speakTarget(word) {
       if (!word) return;
@@ -7916,18 +7935,29 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     function spawnWave() {
       if (!roundActive) return;
       cleanUpWave();
+      updateTurnBanner();
 
       // Pick next target word
       const nextWord = allWords[Math.floor(Math.random() * allWords.length)];
       currentTargetWord = nextWord;
 
-      // Update signboard clue
-      clueText.textContent = nextWord.vocab_word;
+      // Update signboard clue: NEVER show spelling next to picture!
       if (nextWord.vocab_image && String(nextWord.vocab_image).trim().length > 0) {
         clueImage.src = nextWord.vocab_image;
         clueImage.classList.remove('hidden');
+        clueText.classList.add('hidden');
+        clueText.textContent = '';
+        if (clueLabel) clueLabel.textContent = 'WHACK THE MATCHING WORD';
+      } else if (nextWord.vocab_meaning || nextWord.translation) {
+        clueImage.classList.add('hidden');
+        clueText.textContent = nextWord.vocab_meaning || nextWord.translation;
+        clueText.classList.remove('hidden');
+        if (clueLabel) clueLabel.textContent = 'WHACK THE ENGLISH WORD';
       } else {
         clueImage.classList.add('hidden');
+        clueText.textContent = 'Listen carefully';
+        clueText.classList.remove('hidden');
+        if (clueLabel) clueLabel.textContent = 'LISTEN TO PRONUNCIATION';
       }
 
       // Automatically speak word once wave appears
@@ -7943,7 +7973,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const distractorPool = allWords.filter((w) => w.vocab_word !== nextWord.vocab_word);
       const shuffledDistractors = distractorPool.sort(() => Math.random() - 0.5);
 
-      // Hole 0 in chosenHoles gets the correct word
+      // Random hole in chosenHoles gets the correct word
       const targetHole = chosenHoles[Math.floor(Math.random() * chosenHoles.length)];
 
       chosenHoles.forEach((holeIdx) => {
@@ -7961,7 +7991,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         // Pop up with slight random delay for natural arcade feel
         setTimeout(() => {
           if (roundActive) diglett.classList.add('is-up');
-        }, Math.random() * 120);
+        }, Math.random() * 100);
       });
 
       // Handle Robot Opponent logic
@@ -7980,16 +8010,38 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         }, delay);
       }
 
-      // Wave retreat timeout (if not whacked)
+      // Wave retreat timeout (if not whacked within 2.3s)
       waveTimer = setTimeout(() => {
         if (!roundActive) return;
-        // Digletts retreat
         modal.querySelectorAll('.whac-diglett.is-up').forEach((el) => {
           el.classList.remove('is-up');
         });
-        // Next wave after brief delay
+        // On timeout, switch turn to keep the duel moving
+        if (activeGamePlayers.length > 1) {
+          if (typeof advanceGameTurn === 'function') advanceGameTurn();
+          if (typeof updateGamePlayerHud === 'function') updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
+          updateTurnBanner();
+        }
         setTimeout(spawnWave, 400);
-      }, 2200);
+      }, 2300);
+    }
+
+    function renderHammerStrike(holeIdx) {
+      const container = modal.querySelector(`[data-hole="${holeIdx}"]`);
+      if (!container) return;
+
+      const hammer = document.createElement('div');
+      hammer.className = 'whac-hammer-anim';
+      hammer.innerHTML = `
+        <svg viewBox="0 0 80 80" width="70" height="70">
+          <rect x="36" y="28" width="8" height="46" rx="4" fill="#d97706" stroke="#78350f" stroke-width="2"/>
+          <rect x="14" y="8" width="52" height="26" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
+          <rect x="20" y="8" width="10" height="26" fill="#f59e0b"/>
+          <circle cx="40" cy="21" r="5" fill="#ffffff" stroke="#991b1b" stroke-width="1.5"/>
+        </svg>
+      `;
+      container.appendChild(hammer);
+      setTimeout(() => hammer.remove(), 400);
     }
 
     function createHitFx(holeIdx, isCorrect) {
@@ -7998,12 +8050,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
       const fx = document.createElement('div');
       fx.className = 'whac-hit-fx';
-      fx.style.top = '20px';
+      fx.style.top = '15px';
       fx.style.left = '50%';
       fx.style.marginLeft = '-30px';
       fx.innerHTML = `
-        <div class="whac-hit-stars">${isCorrect ? '⚡⭐' : '❌'}</div>
-        <div class="whac-hit-score">${isCorrect ? '+1' : 'MISS'}</div>
+        <div class="whac-hit-icon">
+          ${isCorrect
+            ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+            : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+          }
+        </div>
+        <div class="whac-hit-score" style="color: ${isCorrect ? '#10b981' : '#ef4444'};">${isCorrect ? '+1' : 'MISS'}</div>
       `;
       container.appendChild(fx);
       setTimeout(() => fx.remove(), 550);
@@ -8017,6 +8074,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       clearTimeout(botTimer);
 
       diglett.classList.add('is-whacked');
+      renderHammerStrike(holeIdx);
       createHitFx(holeIdx, isTarget);
 
       if (isTarget) {
@@ -8024,7 +8082,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         try { window.pokeSfx?.play?.('correct'); } catch (e) {}
         comboStreak++;
         if (comboStreak > 1) {
-          comboEl.textContent = `🔥 Combo x${comboStreak}!`;
+          comboEl.textContent = `Combo x${comboStreak}`;
           comboEl.classList.add('is-visible');
         }
 
@@ -8046,6 +8104,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             }
           }, 450);
           return;
+        }
+
+        // Turn advance in 2-player / vs robot
+        if (activeGamePlayers.length > 1) {
+          if (typeof advanceGameTurn === 'function') advanceGameTurn();
+          updateTurnBanner();
         }
 
         // Next round wave
@@ -8070,6 +8134,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         if (typeof updateGamePlayerHud === 'function') {
           updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
         }
+        updateTurnBanner();
 
         setTimeout(() => {
           diglett.classList.remove('is-up', 'is-whacked');
