@@ -10728,7 +10728,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   };
 
   window.gaMountStage = function (view) {
-    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, .lc-main, .vb-arena, .cdx-main');
+    const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, #whac-field, .whac-game-shell, .lc-main, .vb-arena, .cdx-main');
     if (!board || view.querySelector('#game-player-list') || (view.classList.contains('ga-stage') && view.querySelector('.ga-stage-controls'))) return;
     view.classList.add('ga-stage');
     view.classList.remove('fixed', 'inset-0', 'bg-black/50', 'bg-black/60', 'z-50', 'p-4');
@@ -10832,7 +10832,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
   });
   const observeStages = () => new MutationObserver(() => {
     document.querySelectorAll('#class-subtab-games > .game-inline-view, #student-tab-games > .game-inline-view').forEach(view => window.gaMountStage(view));
-    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, .lc-main, .vb-arena, .cdx-main')) view.remove(); });
+    document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, #whac-field, .whac-game-shell, .lc-main, .vb-arena, .cdx-main')) view.remove(); });
     if (!document.querySelector('.ga-stage') && document.body.classList.contains('ga-playing')) {
       document.body.classList.remove('ga-playing');
       delete document.body.dataset.gaActiveTheme;
@@ -34518,7 +34518,7 @@ function endActiveGames({ returnToList = true } = {}) {
       });
     });
     document.querySelectorAll('.single-player-timeout-overlay, .baam-final-overlay, .game-celebration-overlay, .student-class-chooser, .game-setup-panel').forEach(overlay => overlay.remove());
-    document.querySelectorAll('.game-popup-modal, #memory-grid, #hangman-game-body, #scramble-tiles, #find-me-box, #baam-board, #dots-board-grid').forEach(node => { node._stopPlayerTurnTimer?.(); node._cleanupGameFullscreen?.(); node._cleanupMemoryFit?.(); });
+    document.querySelectorAll('.game-popup-modal, #memory-grid, #hangman-game-body, #scramble-tiles, #find-me-box, #baam-board, #dots-board-grid, #whac-field').forEach(node => { node._stopPlayerTurnTimer?.(); node._cleanupGameFullscreen?.(); node._cleanupMemoryFit?.(); });
     document.querySelectorAll('.hidden[id$="-setup"], .game-setup-panel').forEach(node => node.remove());
     document.querySelectorAll('[data-game-exit], [data-games-back]').forEach(node => { node.onclick = null; });
     activeGamePlayers = [];
@@ -34599,7 +34599,7 @@ document.head.appendChild(inlineGamePinnedLayoutStyle);
 const gamesAreaObserver = new MutationObserver(records => {
   for (const record of records) for (const node of record.addedNodes) {
     if (!(node instanceof HTMLElement) || node.dataset.inGamesHub === 'true' || node.matches('.ga-stage, .lc-stage, .vb-stage, .cdx-stage') || node.querySelector?.('.lc-stage, .vb-stage, .cdx-stage, .lc-main, .vb-arena, .cdx-main')) continue;
-    const isGame = node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .dots-game-shell, .dots-game-modal, .fixed.inset-0') && (node.matches('.game-setup-panel, .game-popup-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .dots-game-shell, .dots-game-modal') || node.querySelector('#words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #find-me-box, #baam-board, #dots-board-grid'));
+    const isGame = node.matches('.game-setup-panel, .game-popup-modal, .whac-game-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .dots-game-shell, .dots-game-modal, .whac-game-shell, .fixed.inset-0') && (node.matches('.game-setup-panel, .game-popup-modal, .whac-game-modal, .memory-game-shell, .cipher-lab-shell, .hangman-game-shell, .dots-game-shell, .dots-game-modal, .whac-game-shell') || node.querySelector('#words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #find-me-box, #baam-board, #dots-board-grid, #whac-field'));
     if (!isGame) continue;
     const area = document.getElementById(currentRole === 'student' ? 'student-tab-games' : 'class-subtab-games');
     const hub = area?.querySelector(':scope > .glass-container');
@@ -34744,7 +34744,7 @@ let activeGamePlayerEliminated = [];
 let lastGameReplay = null;
 function setGameReplay(replay) { lastGameReplay = replay; }
 function returnToGamesTab() {
-  document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, .lc-main, .vb-arena, .cdx-main')) view.remove(); });
+  document.querySelectorAll('body > .ga-stage').forEach(view => { if (!view.querySelector('#baam-board, #find-me-box, #words-grid, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, #whac-field, .whac-game-shell, .lc-main, .vb-arena, .cdx-main')) view.remove(); });
   if (!document.querySelector('body > .ga-stage')) {
     document.body.classList.remove('ga-playing');
     document.body.style.removeProperty('overflow');
@@ -35380,6 +35380,12 @@ function chooseGamePlayers(listName, nextStep) {
 }
 
 function chooseWhacADiglett(listName) {
+  if (typeof currentRole !== 'undefined' && currentRole === 'student') {
+    if (typeof window.gaStudentSetup === 'function') {
+      window.gaStudentSetup(listName, 'chooseWhacADiglett');
+      return;
+    }
+  }
   chooseGamePlayers(listName, chooseWhacADiglett);
 }
 window.chooseWhacADiglett = chooseWhacADiglett;
