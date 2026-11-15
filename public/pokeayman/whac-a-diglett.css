@@ -602,35 +602,45 @@
   border-bottom: 2px solid #2e1002;
 }
 
-/* 4. Mallet / Hammer Strike (Layer 4 - Appended to whac-mound-wrap outside overflow:hidden, ZERO cropping!) */
+/* 4. Pikachu Pokéball Hammer Strike (Appended to whac-mound-wrap outside overflow:hidden, ZERO cropping!) */
 .whac-hammer-anim {
   position: absolute;
-  top: -10px;
+  top: 10px;
   left: 50%;
   transform: translate(-50%, -100%);
   pointer-events: none;
   z-index: 50;
-  animation: whac-hammer-strike 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  width: 150px;
+  height: 130px;
+  animation: whac-hammer-strike 0.46s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
 }
 
 @keyframes whac-hammer-strike {
   0% {
-    transform: translate(-50%, -100%) rotate(-60deg) scale(0.8);
+    transform: translate(-30%, -110%) rotate(-45deg) scale(0.7);
     opacity: 0;
   }
   20% {
+    transform: translate(-42%, -75%) rotate(-22deg) scale(1.05);
     opacity: 1;
   }
-  45% {
-    transform: translate(-50%, -15%) rotate(16deg) scale(1.15);
+  48% {
+    /* Direct heavy Pokéball hammer impact onto Diglett */
+    transform: translate(-50%, -12%) rotate(8deg) scale(1.18);
     opacity: 1;
   }
-  70% {
-    transform: translate(-50%, -40%) rotate(-5deg) scale(1);
-    opacity: 0.9;
+  68% {
+    /* Slight recoil bounce */
+    transform: translate(-50%, -24%) rotate(2deg) scale(1.1);
+    opacity: 1;
+  }
+  84% {
+    transform: translate(-50%, -45%) rotate(-8deg) scale(0.95);
+    opacity: 0.85;
   }
   100% {
-    transform: translate(-50%, -70%) rotate(-25deg) scale(0.7);
+    transform: translate(-50%, -75%) rotate(-20deg) scale(0.65);
     opacity: 0;
   }
 }

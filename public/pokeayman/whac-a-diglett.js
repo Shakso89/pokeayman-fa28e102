@@ -432,7 +432,7 @@
       }, 2300);
     }
 
-    // Render hammer in mound wrap (outside overflow:hidden so it is NEVER cropped!)
+    // Render Pikachu holding the giant Pokéball hammer striking down!
     function renderHammerStrike(holeIdx) {
       const moundWrap = modal.querySelector(`[data-hole-index="${holeIdx}"]`);
       if (!moundWrap) return;
@@ -440,15 +440,63 @@
       const hammer = document.createElement('div');
       hammer.className = 'whac-hammer-anim';
       hammer.innerHTML = `
-        <svg viewBox="0 0 80 80" width="75" height="75">
-          <rect x="36" y="28" width="8" height="46" rx="4" fill="#d97706" stroke="#78350f" stroke-width="2"/>
-          <rect x="14" y="8" width="52" height="26" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
-          <rect x="20" y="8" width="10" height="26" fill="#f59e0b"/>
-          <circle cx="40" cy="21" r="5" fill="#ffffff" stroke="#991b1b" stroke-width="1.5"/>
+        <svg viewBox="0 0 160 140" width="150" height="130" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 1. Pikachu Lightning Tail -->
+          <path d="M 115 88 L 132 78 L 126 64 L 144 50 L 138 36 L 152 20" stroke="#facc15" stroke-width="8" stroke-linecap="round" stroke-linejoin="miter"/>
+          <path d="M 115 88 L 122 84" stroke="#78350f" stroke-width="8" stroke-linecap="round"/>
+
+          <!-- 2. Pikachu Chubby Body -->
+          <path d="M 94 60 C 86 70, 86 96, 96 108 C 104 116, 122 114, 130 102 C 138 90, 136 68, 126 58 C 118 50, 102 50, 94 60 Z" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/>
+          <ellipse cx="100" cy="112" rx="9" ry="5.5" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+          <ellipse cx="124" cy="107" rx="8" ry="5" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+
+          <!-- Pikachu Ears -->
+          <path d="M 95 44 C 88 26, 74 12, 68 8 C 75 19, 88 34, 93 48 Z" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+          <path d="M 68 8 C 70 12, 75 18, 77 16 C 76 13, 73 10, 68 8 Z" fill="#1e293b"/>
+          <path d="M 116 38 C 124 22, 138 8, 144 4 C 140 18, 128 32, 120 42 Z" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+          <path d="M 144 4 C 141 9, 135 14, 133 13 C 137 9, 141 6, 144 4 Z" fill="#1e293b"/>
+
+          <!-- Pikachu Head -->
+          <ellipse cx="108" cy="56" rx="21" ry="19" fill="#facc15" stroke="#ca8a04" stroke-width="2"/>
+          <ellipse cx="94" cy="62" rx="6" ry="5.5" fill="#ef4444"/>
+          <ellipse cx="122" cy="58" rx="6" ry="5.5" fill="#ef4444"/>
+
+          <!-- Eyes & Happy Action Smile -->
+          <circle cx="101" cy="53" r="3.8" fill="#111827"/>
+          <circle cx="100" cy="51.8" r="1.3" fill="#ffffff"/>
+          <circle cx="115" cy="50" r="3.8" fill="#111827"/>
+          <circle cx="114" cy="48.8" r="1.3" fill="#ffffff"/>
+          <polygon points="108,55 106.8,57.5 109.2,57.5" fill="#1e293b"/>
+          <path d="M 104 60 Q 108 66 112 60 Z" fill="#be123c" stroke="#991b1b" stroke-width="1"/>
+
+          <!-- 3. Sturdy Wooden Handle -->
+          <rect x="36" y="68" width="68" height="9" rx="4.5" fill="#d97706" stroke="#78350f" stroke-width="2.5" transform="rotate(-34, 70, 72)"/>
+          <ellipse cx="86" cy="68" rx="6.5" ry="5.5" fill="#facc15" stroke="#b45309" stroke-width="2"/>
+          <ellipse cx="98" cy="60" rx="6.5" ry="5.5" fill="#facc15" stroke="#b45309" stroke-width="2"/>
+
+          <!-- 4. Giant Pokéball Mallet Head -->
+          <g transform="translate(18, 62) rotate(-22)">
+            <path d="M 6 0 L 52 0 C 58 0 62 6 62 14 L 62 21 L 0 21 L 0 14 C 0 6 4 0 6 0 Z" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
+            <path d="M 10 5 Q 30 2 50 6" stroke="rgba(255,255,255,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M 0 21 L 62 21 L 62 28 C 62 36 58 42 52 42 L 6 42 C 4 42 0 36 0 28 Z" fill="#ffffff" stroke="#94a3b8" stroke-width="2.5"/>
+            <rect x="0" y="18" width="62" height="6.5" fill="#1e293b"/>
+            <ellipse cx="5" cy="21" rx="5" ry="20" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+            <ellipse cx="5" cy="13" rx="3" ry="10" fill="#ef4444"/>
+            <ellipse cx="5" cy="29" rx="3" ry="10" fill="#e2e8f0"/>
+            <rect x="2.5" y="18" width="5" height="6.5" fill="#1e293b"/>
+            <circle cx="31" cy="21.2" r="9" fill="#ffffff" stroke="#1e293b" stroke-width="3"/>
+            <circle cx="31" cy="21.2" r="4.2" fill="#f8fafc" stroke="#64748b" stroke-width="1.8"/>
+          </g>
+
+          <!-- 5. Comic Action Strike Lightning Sparks -->
+          <polygon points="12,106 18,94 17,103 26,98 20,109 28,113 18,115 24,124 15,118 10,126 9,116 2,114" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+          <polygon points="52,114 60,103 58,111 67,106 61,117 70,121 59,123 63,132 54,125 48,133 48,122 41,120" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+          <circle cx="28" cy="120" r="3" fill="#ffffff"/>
+          <circle cx="48" cy="110" r="2.5" fill="#ffffff"/>
         </svg>
       `;
       moundWrap.appendChild(hammer);
-      setTimeout(() => hammer.remove(), 400);
+      setTimeout(() => hammer.remove(), 480);
     }
 
     function createHitFx(holeIdx, isCorrect) {
