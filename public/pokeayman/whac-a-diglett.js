@@ -100,6 +100,7 @@
     modal.className = 'whac-game-modal game-popup-modal';
     modal.dataset.game = 'whac-a-diglett';
     modal.dataset.gaTheme = initialThemeObj.id;
+    modal.setAttribute('data-ga-theme', initialThemeObj.id);
 
     modal.innerHTML = `
       <!-- 1. Header Bar: Title, Theme Selector & Stage Controls -->
@@ -238,6 +239,7 @@
       if (choice) {
         const themeId = choice.dataset.gaThemeChoice;
         modal.dataset.gaTheme = themeId;
+        modal.setAttribute('data-ga-theme', themeId);
         const found = themes.find((t) => t.id === themeId);
         if (found && themeCurrent) themeCurrent.textContent = found.name;
         if (typeof window.gaSetTheme === 'function') window.gaSetTheme(themeId);

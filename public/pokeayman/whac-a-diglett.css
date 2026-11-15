@@ -608,63 +608,531 @@
   100% { transform: scale(1) translateY(-35px); opacity: 0; }
 }
 
-/* Theme Integration (Game Styles) */
+/* ==========================================================================
+   THEME INTEGRATION & GAME VISUAL STYLES
+   ========================================================================== */
+
+/* 1. CLASSROOM CHALKBOARD & OAK ACADEMY (data-ga-theme="classroom") */
 .whac-game-modal[data-ga-theme="classroom"] {
-  background: radial-gradient(circle at 50% 25%, #2a563d 0%, #163624 70%, #0d2116 100%) !important;
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(254, 240, 138, 0.09) 0%, transparent 60%),
+    radial-gradient(circle at 50% 30%, #1f4833 0%, #133323 60%, #0a1c13 100%) !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-header {
-  background: #1d3f2c !important;
-  border-bottom: 2px solid #b5804c !important;
+  background: linear-gradient(180deg, #8a572c 0%, #6e4522 60%, #543317 100%) !important;
+  border-bottom: 3.5px solid #3d230d !important;
+  box-shadow: inset 0 1px 0 rgba(255, 237, 213, 0.35), 0 6px 18px rgba(0, 0, 0, 0.4) !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-duel-hud {
-  background: linear-gradient(180deg, #2a563d 0%, #1d3f2c 100%) !important;
-  border: 2px solid #b5804c !important;
+  background: linear-gradient(180deg, #244b36 0%, #163624 100%) !important;
+  border: 3px solid #b5804c !important;
+  box-shadow: inset 0 0 0 2px #0f271a, 0 5px 0 #6e4522, 0 10px 24px rgba(0, 0, 0, 0.45) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-player-badge {
+  background: rgba(15, 39, 26, 0.8) !important;
+  border-color: rgba(181, 128, 76, 0.4) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-player-badge.is-active {
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.22), rgba(217, 119, 6, 0.22)) !important;
+  border-color: #facc15 !important;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.5), 0 3px 0 #854d0e !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-player-name {
+  color: #fffbeb !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-player-score {
+  color: #fde68a !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-player-badge.is-active .whac-player-score {
+  color: #fef08a !important;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-player-turn-pill {
+  color: #fde047 !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-target-pill {
+  background: #0f271a !important;
+  border: 2.5px solid #facc15 !important;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.35) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-target-val {
+  color: #fef08a !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-signboard {
+  background:
+    radial-gradient(ellipse at 30% 25%, rgba(255, 255, 255, 0.08) 0%, transparent 60%),
+    linear-gradient(180deg, #1b3d2b 0%, #132d20 100%) !important;
+  border-top: 8px solid #c28d58 !important;
+  border-left: 8px solid #b07a45 !important;
+  border-right: 8px solid #9c6836 !important;
+  border-bottom: 12px solid #7d4e24 !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 0 2px #4a2c12, inset 0 8px 24px rgba(0, 0, 0, 0.55), 0 6px 0 #4a2c12, 0 16px 36px rgba(0, 0, 0, 0.5) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-clue-label {
+  color: #fef08a !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-clue-text {
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-clue-audio-btn {
+  background: linear-gradient(180deg, #fef08a 0%, #eab308 100%) !important;
+  border: 2px solid #ca8a04 !important;
+  color: #422006 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-clue-img {
+  border-color: #fef08a !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-combo-badge {
+  background: linear-gradient(180deg, #ca8a04 0%, #854d0e 100%) !important;
+  border: 2px solid #fef08a !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.45) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-hole-back {
+  background: #2e1708 !important;
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.7) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-hole-pit {
+  background: radial-gradient(ellipse at 50% 50%, #000000 0%, #120701 70%, #291204 100%) !important;
+  box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.95) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-mound-front {
+  background: linear-gradient(180deg, #9a602a 0%, #784519 50%, #4a2609 100%) !important;
+  border-top: 3.5px solid #d49a5b !important;
+  box-shadow: inset 0 2px 4px rgba(255, 237, 213, 0.35), 0 8px 18px rgba(0, 0, 0, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-word-badge {
+  background: #fffdfa !important;
+  color: #1c1917 !important;
+  border: 2.5px solid #b5804c !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 0 #ffffff !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-score-pop {
+  color: #fef08a !important;
+  text-shadow: 0 0 12px rgba(250, 204, 21, 0.8), 0 2px 4px rgba(0, 0, 0, 0.9) !important;
 }
 
+/* 2. JUNGLE RAINFOREST EXPEDITION (data-ga-theme="jungle") */
 .whac-game-modal[data-ga-theme="jungle"] {
-  background: radial-gradient(circle at 50% 25%, #14532d 0%, #052e16 70%, #021a0c 100%) !important;
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(74, 222, 128, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 50% 30%, #0c3e21 0%, #062614 60%, #021208 100%) !important;
 }
 .whac-game-modal[data-ga-theme="jungle"] .whac-header {
-  background: #064e3b !important;
-  border-bottom: 2px solid #10b981 !important;
+  background: linear-gradient(180deg, #064e3b 0%, #022c22 100%) !important;
+  border-bottom: 3.5px solid #10b981 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5) !important;
 }
 .whac-game-modal[data-ga-theme="jungle"] .whac-duel-hud {
-  background: linear-gradient(180deg, #14532d 0%, #064e3b 100%) !important;
-  border: 2px solid #10b981 !important;
+  background: linear-gradient(180deg, #09331e 0%, #041f12 100%) !important;
+  border: 3px solid #10b981 !important;
+  box-shadow: inset 0 0 0 2px #02170d, 0 5px 0 #022c22, 0 10px 24px rgba(0, 0, 0, 0.55), 0 0 14px rgba(16, 185, 129, 0.35) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-player-badge {
+  background: rgba(4, 31, 18, 0.8) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-player-badge.is-active {
+  background: rgba(16, 185, 129, 0.25) !important;
+  border-color: #34d399 !important;
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.6), 0 3px 0 #064e3b !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-player-name {
+  color: #f0fdf4 !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-player-score {
+  color: #a7f3d0 !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-player-badge.is-active .whac-player-score {
+  color: #6ee7b7 !important;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.7) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-player-turn-pill {
+  color: #6ee7b7 !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-target-pill {
+  background: #02170d !important;
+  border: 2.5px solid #34d399 !important;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.35) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-target-val {
+  color: #a7f3d0 !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-signboard {
+  background:
+    radial-gradient(ellipse at 40% 25%, rgba(74, 222, 128, 0.08) 0%, transparent 60%),
+    linear-gradient(180deg, #133a22 0%, #082213 100%) !important;
+  border-top: 8px solid #15803d !important;
+  border-left: 8px solid #166534 !important;
+  border-right: 8px solid #14532d !important;
+  border-bottom: 12px solid #052e16 !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 0 2px #02170d, inset 0 8px 24px rgba(0, 0, 0, 0.6), 0 6px 0 #021a0c, 0 16px 36px rgba(0, 0, 0, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-clue-label {
+  color: #86efac !important;
+  text-shadow: 0 0 8px rgba(74, 222, 128, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-clue-text {
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-clue-audio-btn {
+  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%) !important;
+  border: 2px solid #86efac !important;
+  color: #022c22 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-clue-img {
+  border-color: #4ade80 !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-combo-badge {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  border: 2px solid #86efac !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-hole-back {
+  background: #021a0c !important;
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-hole-pit {
+  background: radial-gradient(ellipse at 50% 50%, #000000 0%, #010f06 70%, #03210e 100%) !important;
+  box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.95) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-mound-front {
+  background: linear-gradient(180deg, #22c55e 0%, #15803d 30%, #271406 80%, #170b03 100%) !important;
+  border-top: 4px solid #86efac !important;
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.4), 0 8px 20px rgba(0, 0, 0, 0.7) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-word-badge {
+  background: #f0fdf4 !important;
+  color: #064e3b !important;
+  border: 2.5px solid #22c55e !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 #ffffff !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-score-pop {
+  color: #86efac !important;
+  text-shadow: 0 0 12px rgba(74, 222, 128, 0.8), 0 2px 4px rgba(0, 0, 0, 0.9) !important;
 }
 
+/* 3. TOYBOX STUDIO & PLAYFUL BLOCKS (data-ga-theme="toybox") */
 .whac-game-modal[data-ga-theme="toybox"] {
-  background: radial-gradient(circle at 50% 25%, #312e81 0%, #1e1b4b 70%, #0f0a2a 100%) !important;
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(168, 85, 247, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 50% 30%, #312e81 0%, #1e1b4b 60%, #0f0a2a 100%) !important;
 }
 .whac-game-modal[data-ga-theme="toybox"] .whac-header {
-  background: #4338ca !important;
-  border-bottom: 2px solid #a855f7 !important;
+  background: linear-gradient(180deg, #4f46e5 0%, #3730a3 100%) !important;
+  border-bottom: 3.5px solid #818cf8 !important;
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.3) !important;
 }
 .whac-game-modal[data-ga-theme="toybox"] .whac-duel-hud {
-  background: linear-gradient(180deg, #3730a3 0%, #312e81 100%) !important;
-  border: 2px solid #a855f7 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%) !important;
+  border: 3.5px solid #6366f1 !important;
+  box-shadow: 0 5px 0 #4338ca, 0 10px 24px rgba(99, 102, 241, 0.35) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-player-badge {
+  background: #f5f3ff !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-player-badge.is-active {
+  background: #eef2ff !important;
+  border-color: #ec4899 !important;
+  box-shadow: 0 0 18px rgba(236, 72, 153, 0.5), 0 3px 0 #be185d !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-player-name {
+  color: #1e1b4b !important;
+  font-weight: 800 !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-player-score {
+  color: #4f46e5 !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-player-badge.is-active .whac-player-score {
+  color: #db2777 !important;
+  text-shadow: 0 0 8px rgba(236, 72, 153, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-player-turn-pill {
+  color: #ec4899 !important;
+  font-weight: 900 !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-target-pill {
+  background: #4f46e5 !important;
+  border: 2.5px solid #818cf8 !important;
+  box-shadow: 0 0 12px rgba(79, 70, 229, 0.4) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-target-title {
+  color: #c7d2fe !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-target-val {
+  color: #ffffff !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-signboard {
+  background:
+    radial-gradient(ellipse at 40% 25%, rgba(255, 255, 255, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, #4338ca 0%, #312e81 100%) !important;
+  border-top: 8px solid #fbbf24 !important;
+  border-left: 8px solid #f59e0b !important;
+  border-right: 8px solid #d97706 !important;
+  border-bottom: 12px solid #b45309 !important;
+  border-radius: 22px !important;
+  box-shadow: inset 0 0 0 2px #312e81, inset 0 8px 24px rgba(0, 0, 0, 0.4), 0 6px 0 #78350f, 0 16px 36px rgba(0, 0, 0, 0.5) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-clue-label {
+  color: #fde047 !important;
+  text-shadow: 0 2px 0 #78350f !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-clue-text {
+  color: #ffffff !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-clue-audio-btn {
+  background: linear-gradient(180deg, #f472b6 0%, #ec4899 100%) !important;
+  border: 2px solid #fdf2f8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 8px rgba(236, 72, 153, 0.4) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-clue-img {
+  border-color: #fbbf24 !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-combo-badge {
+  background: linear-gradient(135deg, #f43f5e, #ec4899) !important;
+  border: 2px solid #fde047 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(244, 63, 94, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-hole-back {
+  background: #120a26 !important;
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-hole-pit {
+  background: radial-gradient(ellipse at 50% 50%, #050212 0%, #10062b 70%, #1e0d4a 100%) !important;
+  box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.95) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-mound-front {
+  background: linear-gradient(180deg, #0284c7 0%, #0369a1 40%, #1e1b4b 100%) !important;
+  border-top: 4px solid #facc15 !important;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.45), 0 8px 20px rgba(0, 0, 0, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-word-badge {
+  background: #ffffff !important;
+  color: #1e1b4b !important;
+  border: 3px solid #ec4899 !important;
+  border-radius: 0.85rem !important;
+  box-shadow: 0 5px 0 #be185d, 0 8px 16px rgba(0, 0, 0, 0.25) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-score-pop {
+  color: #f472b6 !important;
+  text-shadow: 0 0 12px rgba(236, 72, 153, 0.8), 0 2px 4px rgba(0, 0, 0, 0.9) !important;
 }
 
+/* 4. HALLOWEEN HAUNTED DUSK & GRAVEYARD (data-ga-theme="halloween") */
 .whac-game-modal[data-ga-theme="halloween"] {
-  background: radial-gradient(circle at 50% 25%, #451a03 0%, #2e1065 70%, #090214 100%) !important;
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(249, 115, 22, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 50% 30%, #3b0764 0%, #1c0529 60%, #090214 100%) !important;
 }
 .whac-game-modal[data-ga-theme="halloween"] .whac-header {
-  background: #1e092b !important;
-  border-bottom: 2px solid #ea580c !important;
+  background: linear-gradient(180deg, #2e1065 0%, #17072b 100%) !important;
+  border-bottom: 3.5px solid #ea580c !important;
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.35) !important;
 }
 .whac-game-modal[data-ga-theme="halloween"] .whac-duel-hud {
-  background: linear-gradient(180deg, #3b0764 0%, #1e092b 100%) !important;
-  border: 2px solid #ea580c !important;
+  background: linear-gradient(180deg, #261230 0%, #15091c 100%) !important;
+  border: 3px solid #ea580c !important;
+  box-shadow: inset 0 0 0 2px #090214, 0 5px 0 #7c2d12, 0 10px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(234, 88, 12, 0.4) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-player-badge {
+  background: rgba(30, 11, 40, 0.8) !important;
+  border-color: rgba(234, 88, 12, 0.35) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-player-badge.is-active {
+  background: rgba(234, 88, 12, 0.25) !important;
+  border-color: #f97316 !important;
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.7), 0 3px 0 #9a3412 !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-player-name {
+  color: #fff7ed !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-player-score {
+  color: #fdba74 !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-player-badge.is-active .whac-player-score {
+  color: #fed7aa !important;
+  text-shadow: 0 0 10px rgba(249, 115, 22, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-player-turn-pill {
+  color: #fb923c !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-target-pill {
+  background: #090214 !important;
+  border: 2.5px solid #ea580c !important;
+  box-shadow: 0 0 14px rgba(234, 88, 12, 0.45) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-target-val {
+  color: #fdba74 !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-signboard {
+  background:
+    radial-gradient(ellipse at 40% 25%, rgba(234, 88, 12, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, #2a0845 0%, #120320 100%) !important;
+  border-top: 8px solid #9333ea !important;
+  border-left: 8px solid #7e22ce !important;
+  border-right: 8px solid #6b21a8 !important;
+  border-bottom: 12px solid #ea580c !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 0 2px #090214, inset 0 8px 24px rgba(0, 0, 0, 0.7), 0 6px 0 #7c2d12, 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(147, 51, 234, 0.35) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-clue-label {
+  color: #fb923c !important;
+  text-shadow: 0 0 10px rgba(234, 88, 12, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-clue-text {
+  color: #ffffff !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-clue-audio-btn {
+  background: linear-gradient(180deg, #f97316 0%, #c2410c 100%) !important;
+  border: 2px solid #fed7aa !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-clue-img {
+  border-color: #ea580c !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-combo-badge {
+  background: linear-gradient(135deg, #ea580c, #7e22ce) !important;
+  border: 2px solid #fed7aa !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(234, 88, 12, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-hole-back {
+  background: #0d0218 !important;
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.9) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-hole-pit {
+  background: radial-gradient(ellipse at 50% 50%, #000000 0%, #08010f 70%, #1b032d 100%) !important;
+  box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.95) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-mound-front {
+  background: linear-gradient(180deg, #4c1d95 0%, #2e1065 35%, #140523 100%) !important;
+  border-top: 3.5px solid #ea580c !important;
+  box-shadow: 0 0 18px rgba(234, 88, 12, 0.5), 0 8px 22px rgba(0, 0, 0, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-word-badge {
+  background: #fff7ed !important;
+  color: #2e1065 !important;
+  border: 2.5px solid #ea580c !important;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.35), inset 0 1px 0 #ffffff !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-score-pop {
+  color: #fb923c !important;
+  text-shadow: 0 0 14px rgba(234, 88, 12, 0.9), 0 2px 4px rgba(0, 0, 0, 0.9) !important;
 }
 
+/* 5. CLASSIC ARCADE NEON & CYBER WARP (data-ga-theme="classic") */
 .whac-game-modal[data-ga-theme="classic"] {
-  background: radial-gradient(circle at 50% 25%, #0f172a 0%, #020617 70%, #000000 100%) !important;
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(0, 240, 255, 0.14) 0%, transparent 60%),
+    radial-gradient(circle at 50% 30%, #0f172a 0%, #020617 60%, #000000 100%) !important;
 }
 .whac-game-modal[data-ga-theme="classic"] .whac-header {
-  background: #0b1120 !important;
-  border-bottom: 2px solid #38bdf8 !important;
+  background: rgba(11, 17, 32, 0.95) !important;
+  border-bottom: 3px solid #00f0ff !important;
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.3) !important;
 }
 .whac-game-modal[data-ga-theme="classic"] .whac-duel-hud {
-  background: rgba(10, 15, 30, 0.95) !important;
-  border: 2px solid #38bdf8 !important;
+  background: rgba(8, 14, 26, 0.95) !important;
+  border: 2.5px solid #00f0ff !important;
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.4), inset 0 2px 8px rgba(0, 240, 255, 0.15) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-player-badge {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-player-badge.is-active {
+  background: rgba(0, 240, 255, 0.2) !important;
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-player-name {
+  color: #f8fafc !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-player-score {
+  color: #38bdf8 !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-player-badge.is-active .whac-player-score {
+  color: #00f0ff !important;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-player-turn-pill {
+  color: #00f0ff !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-target-pill {
+  background: #020617 !important;
+  border: 2.5px solid #00f0ff !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.45) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-target-val {
+  color: #fde047 !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-signboard {
+  background:
+    radial-gradient(ellipse at 40% 25%, rgba(0, 240, 255, 0.1) 0%, transparent 60%),
+    linear-gradient(180deg, #0f172a 0%, #020617 100%) !important;
+  border: 4px solid #00f0ff !important;
+  border-radius: 18px !important;
+  box-shadow: inset 0 0 16px rgba(0, 240, 255, 0.25), 0 0 26px rgba(0, 240, 255, 0.45), 0 12px 32px rgba(0, 0, 0, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-clue-label {
+  color: #00f0ff !important;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-clue-text {
+  color: #ffffff !important;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.8) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-clue-audio-btn {
+  background: rgba(0, 240, 255, 0.18) !important;
+  border: 2px solid #00f0ff !important;
+  color: #00f0ff !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-clue-img {
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-combo-badge {
+  background: linear-gradient(135deg, #00f0ff, #3b82f6) !important;
+  border: 2px solid #ffffff !important;
+  color: #020617 !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.7) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-hole-back {
+  background: #020617 !important;
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.9) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-hole-pit {
+  background: radial-gradient(ellipse at 50% 50%, #000000 0%, #010814 70%, #05162e 100%) !important;
+  box-shadow: inset 0 0 14px rgba(0, 240, 255, 0.35), inset 0 8px 18px rgba(0, 0, 0, 0.95) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-mound-front {
+  background: linear-gradient(180deg, #0284c7 0%, #0f172a 40%, #020617 100%) !important;
+  border-top: 3.5px solid #00f0ff !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.55), 0 8px 24px rgba(0, 0, 0, 0.9) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-word-badge {
+  background: #0b1329 !important;
+  color: #38bdf8 !important;
+  border: 2.5px solid #00f0ff !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.4), inset 0 0 8px rgba(0, 240, 255, 0.2) !important;
+  text-shadow: 0 0 6px rgba(56, 189, 248, 0.6) !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-score-pop {
+  color: #00f0ff !important;
+  text-shadow: 0 0 14px rgba(0, 240, 255, 0.9), 0 2px 4px rgba(0, 0, 0, 0.9) !important;
 }

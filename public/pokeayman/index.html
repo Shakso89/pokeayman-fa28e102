@@ -5732,7 +5732,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/crossword.css?v=20261028-crosswords-v11">
 <link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261111-pokemon-scale-v1">
-<link rel="stylesheet" href="/pokeayman/whac-a-diglett.css?v=20261115_whac_v3">
+<link rel="stylesheet" href="/pokeayman/whac-a-diglett.css?v=20261115_whac_v4">
 <link rel="stylesheet" href="/pokeayman/vocab-battle.css">
 <link rel="stylesheet" href="/pokeayman/study-theme.css">
 <link rel="stylesheet" href="/pokeayman/components.css?v=20261115_student_ui_v12">
@@ -7857,6 +7857,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     modal.className = 'whac-game-modal game-popup-modal';
     modal.dataset.game = 'whac-a-diglett';
     modal.dataset.gaTheme = initialThemeObj.id;
+    modal.setAttribute('data-ga-theme', initialThemeObj.id);
 
     modal.innerHTML = `
       <!-- 1. Header Bar: Title, Theme Selector & Stage Controls -->
@@ -7995,6 +7996,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       if (choice) {
         const themeId = choice.dataset.gaThemeChoice;
         modal.dataset.gaTheme = themeId;
+        modal.setAttribute('data-ga-theme', themeId);
         const found = themes.find((t) => t.id === themeId);
         if (found && themeCurrent) themeCurrent.textContent = found.name;
         if (typeof window.gaSetTheme === 'function') window.gaSetTheme(themeId);

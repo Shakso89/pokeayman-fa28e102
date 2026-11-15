@@ -114,4 +114,28 @@ describe('Whac-A-Diglett Arcade Integration', () => {
     expect(whacCss).toContain('.whac-hammer-anim');
     expect(whacCss).toContain('whac-hammer-strike');
   });
+
+  it('implements complete immersive themes across signboard, mounds, badges, HUD and playing field', () => {
+    const whacCssPath = path.join(root, 'public', 'pokeayman', 'whac-a-diglett.css');
+    const whacCss = fs.readFileSync(whacCssPath, 'utf8');
+    const themes = ['classroom', 'jungle', 'toybox', 'halloween', 'classic'];
+
+    for (const theme of themes) {
+      // Must style stage/modal background
+      expect(whacCss).toContain(`.whac-game-modal[data-ga-theme="${theme}"]`);
+      // Must style signboard
+      expect(whacCss).toContain(`.whac-game-modal[data-ga-theme="${theme}"] .whac-signboard`);
+      // Must style mound front
+      expect(whacCss).toContain(`.whac-game-modal[data-ga-theme="${theme}"] .whac-mound-front`);
+      // Must style word badge
+      expect(whacCss).toContain(`.whac-game-modal[data-ga-theme="${theme}"] .whac-word-badge`);
+      // Must style duel HUD
+      expect(whacCss).toContain(`.whac-game-modal[data-ga-theme="${theme}"] .whac-duel-hud`);
+    }
+
+    const whacJsPath = path.join(root, 'public', 'pokeayman', 'whac-a-diglett.js');
+    const whacJs = fs.readFileSync(whacJsPath, 'utf8');
+    expect(whacJs).toContain("modal.setAttribute('data-ga-theme', initialThemeObj.id)");
+    expect(whacJs).toContain("modal.setAttribute('data-ga-theme', themeId)");
+  });
 });
