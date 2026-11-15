@@ -6730,7 +6730,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             </div>
           </div>
 
-          <button type="button" class="ga-stage-sound w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-xs font-bold" id="dots-sound-toggle" title="Toggle sound">🔊</button>
+          <button type="button" class="ga-stage-sound" id="dots-sound-toggle" title="Toggle sound" aria-label="Toggle sound"></button>
           <button type="button" class="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-sm font-bold" id="dots-fullscreen-btn" title="Fullscreen">⛶</button>
           <button type="button" class="ga-stage-exit w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-rose-500/30 text-slate-300 hover:text-rose-300 border border-slate-700 transition flex items-center justify-center text-base font-bold" id="dots-close-btn" title="Exit game" aria-label="Close game">×</button>
         </div>
@@ -6883,14 +6883,25 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const soundBtn = modal.querySelector('#dots-sound-toggle');
     const updateSoundBtn = () => {
       const muted = window.pokeSfx?.isMuted?.() || false;
-      if (soundBtn) soundBtn.textContent = muted ? '🔇' : '🔊';
+      if (soundBtn) {
+        if (typeof window.renderArcadeSoundIcon === 'function') {
+          soundBtn.innerHTML = window.renderArcadeSoundIcon(muted);
+        } else {
+          soundBtn.textContent = muted ? '🔇' : '🔊';
+        }
+        soundBtn.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off');
+        soundBtn.title = soundBtn.getAttribute('aria-label');
+      }
     };
     updateSoundBtn();
     soundBtn?.addEventListener('click', () => {
-      if (window.pokeSfx?.setMuted) {
+      if (window.pokeSfx && typeof window.pokeSfx.toggleMute === 'function') {
+        window.pokeSfx.toggleMute();
+      } else if (window.pokeSfx?.setMuted) {
         window.pokeSfx.setMuted(!window.pokeSfx.isMuted());
-        updateSoundBtn();
       }
+      if (typeof gameSoundState !== 'undefined') gameSoundState.muted = window.pokeSfx?.isMuted?.() || false;
+      updateSoundBtn();
     });
 
     // Fullscreen toggle
@@ -7885,7 +7896,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
             </div>
           </div>
 
-          <button type="button" class="ga-stage-sound w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-xs font-bold cursor-pointer" id="whac-sound-toggle" title="Toggle sound">🔊</button>
+          <button type="button" class="ga-stage-sound" id="whac-sound-toggle" title="Toggle sound" aria-label="Toggle sound"></button>
           <button type="button" class="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-sm font-bold cursor-pointer" id="whac-fullscreen-btn" title="Toggle fullscreen">⛶</button>
           <button type="button" class="ga-stage-exit w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-rose-500/30 text-slate-300 hover:text-rose-300 border border-slate-700 transition flex items-center justify-center text-base font-bold cursor-pointer" id="whac-close-btn" title="Exit game" aria-label="Close game">×</button>
         </div>
@@ -8197,11 +8208,25 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
     // Sound toggle
     const soundBtn = modal.querySelector('#whac-sound-toggle');
+    const syncWhacSound = () => {
+      const muted = window.pokeSfx?.isMuted?.() || false;
+      if (typeof window.renderArcadeSoundIcon === 'function') {
+        soundBtn.innerHTML = window.renderArcadeSoundIcon(muted);
+      } else {
+        soundBtn.textContent = muted ? '🔇' : '🔊';
+      }
+      soundBtn.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off');
+      soundBtn.title = soundBtn.getAttribute('aria-label');
+    };
+    syncWhacSound();
     soundBtn?.addEventListener('click', () => {
       if (window.pokeSfx && typeof window.pokeSfx.toggleMute === 'function') {
-        const isMuted = window.pokeSfx.toggleMute();
-        soundBtn.textContent = isMuted ? '🔇' : '🔊';
+        window.pokeSfx.toggleMute();
+      } else if (window.pokeSfx && typeof window.pokeSfx.setMuted === 'function') {
+        window.pokeSfx.setMuted(!window.pokeSfx.isMuted());
       }
+      if (typeof gameSoundState !== 'undefined') gameSoundState.muted = window.pokeSfx?.isMuted?.() || false;
+      syncWhacSound();
     });
 
     // Fullscreen toggle (Bulletproof direct API)
@@ -8251,6 +8276,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
     function speakTarget(word) {
       if (!word) return;
+      if (window.pokeSfx && typeof window.pokeSfx.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+      if (typeof gameSoundState !== 'undefined' && gameSoundState.muted) return;
       if (typeof window.readGameWordAloud === 'function') {
         window.readGameWordAloud(word);
       } else if ('speechSynthesis' in window) {
@@ -8333,7 +8360,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
         // Pop up from inside the hole
         setTimeout(() => {
-          if (roundActive) diglett.classList.add('is-up');
+          if (roundActive) {
+            diglett.classList.add('is-up');
+            try { window.pokeSfx?.play?.('click'); } catch (e) {}
+          }
         }, Math.random() * 80);
       });
 
@@ -8484,6 +8514,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         if (activeGameScores[activeGamePlayerIndex] >= winningScore) {
           roundActive = false;
           cleanUpWave();
+          try { window.pokeSfx?.play?.('cheer'); } catch (e) {}
           setTimeout(() => {
             if (typeof showGameCelebration === 'function') {
               showGameCelebration(modal, 'Whac-A-Diglett Champion!', currentTargetWord.vocab_word, null, currentTargetWord.vocab_image);
@@ -10727,6 +10758,13 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     document.body.appendChild(bar);
   };
 
+  window.renderArcadeSoundIcon = function (muted) {
+    if (muted) {
+      return `<svg class="ga-sound-svg is-muted" viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11 5L6 9H2V15H6L11 19V5Z" fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" stroke-linejoin="round"/><line x1="16" y1="9" x2="22" y2="15" stroke="#f87171" stroke-width="2.2" stroke-linecap="round"/><line x1="22" y1="9" x2="16" y2="15" stroke="#f87171" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+    }
+    return `<svg class="ga-sound-svg is-active" viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="ga-speaker-glow" x1="2" y1="5" x2="11" y2="19" gradientUnits="userSpaceOnUse"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient></defs><path d="M11 5L6 9H2V15H6L11 19V5Z" fill="url(#ga-speaker-glow)" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round"/><path class="ga-sound-wave-1" d="M15 9.5C15.8 10.3 16.3 11.3 16.3 12.5C16.3 13.7 15.8 14.7 15 15.5" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/><path class="ga-sound-wave-2" d="M18 7C19.4 8.4 20.2 10.4 20.2 12.5C20.2 14.6 19.4 16.6 18 18" stroke="#60a5fa" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+  };
+
   window.gaMountStage = function (view) {
     const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, #whac-field, .whac-game-shell, .lc-main, .vb-arena, .cdx-main');
     if (!board || view.querySelector('#game-player-list') || (view.classList.contains('ga-stage') && view.querySelector('.ga-stage-controls'))) return;
@@ -10782,9 +10820,18 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         controls.appendChild(matchDensity);
       }
       const sound = document.createElement('button'); sound.type = 'button'; sound.className = 'ga-stage-sound';
-      const syncSound = () => { const muted = window.pokeSfx?.isMuted() || false; sound.textContent = muted ? '🔇' : '🔊'; sound.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off'); sound.title = sound.getAttribute('aria-label'); };
+      const syncSound = () => {
+        const muted = window.pokeSfx?.isMuted() || false;
+        sound.innerHTML = window.renderArcadeSoundIcon(muted);
+        sound.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off');
+        sound.title = sound.getAttribute('aria-label');
+      };
       syncSound(); sound.addEventListener('click', () => {
-        window.pokeSfx?.setMuted(!window.pokeSfx.isMuted());
+        if (window.pokeSfx && typeof window.pokeSfx.toggleMute === 'function') {
+          window.pokeSfx.toggleMute();
+        } else if (window.pokeSfx && typeof window.pokeSfx.setMuted === 'function') {
+          window.pokeSfx.setMuted(!window.pokeSfx.isMuted());
+        }
         if (typeof gameSoundState !== 'undefined') gameSoundState.muted = window.pokeSfx?.isMuted() || false;
         const scramble = view.querySelector('#scramble-sound-mute');
         if (scramble && (scramble.textContent.includes('🔇') !== Boolean(window.pokeSfx?.isMuted()))) scramble.click();

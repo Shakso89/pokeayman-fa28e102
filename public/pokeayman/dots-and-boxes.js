@@ -321,7 +321,7 @@
             </div>
           </div>
 
-          <button type="button" class="ga-stage-sound w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-xs font-bold" id="dots-sound-toggle" title="Toggle sound">🔊</button>
+          <button type="button" class="ga-stage-sound" id="dots-sound-toggle" title="Toggle sound" aria-label="Toggle sound"></button>
           <button type="button" class="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-sm font-bold" id="dots-fullscreen-btn" title="Fullscreen">⛶</button>
           <button type="button" class="ga-stage-exit w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-rose-500/30 text-slate-300 hover:text-rose-300 border border-slate-700 transition flex items-center justify-center text-base font-bold" id="dots-close-btn" title="Exit game" aria-label="Close game">×</button>
         </div>
@@ -474,14 +474,25 @@
     const soundBtn = modal.querySelector('#dots-sound-toggle');
     const updateSoundBtn = () => {
       const muted = window.pokeSfx?.isMuted?.() || false;
-      if (soundBtn) soundBtn.textContent = muted ? '🔇' : '🔊';
+      if (soundBtn) {
+        if (typeof window.renderArcadeSoundIcon === 'function') {
+          soundBtn.innerHTML = window.renderArcadeSoundIcon(muted);
+        } else {
+          soundBtn.textContent = muted ? '🔇' : '🔊';
+        }
+        soundBtn.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off');
+        soundBtn.title = soundBtn.getAttribute('aria-label');
+      }
     };
     updateSoundBtn();
     soundBtn?.addEventListener('click', () => {
-      if (window.pokeSfx?.setMuted) {
+      if (window.pokeSfx && typeof window.pokeSfx.toggleMute === 'function') {
+        window.pokeSfx.toggleMute();
+      } else if (window.pokeSfx?.setMuted) {
         window.pokeSfx.setMuted(!window.pokeSfx.isMuted());
-        updateSoundBtn();
       }
+      if (typeof gameSoundState !== 'undefined') gameSoundState.muted = window.pokeSfx?.isMuted?.() || false;
+      updateSoundBtn();
     });
 
     // Fullscreen toggle

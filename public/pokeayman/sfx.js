@@ -225,6 +225,11 @@
     try { S[name](arg); } catch (e) {}
   }
 
+  function toggleMute() {
+    setMuted(!muted);
+    return muted;
+  }
+
   function setMuted(v) {
     muted = !!v;
     try { localStorage.setItem(KEY, muted ? '1' : '0'); } catch (e) {}
@@ -234,9 +239,18 @@
       b.setAttribute('aria-label', muted ? 'Turn sounds on' : 'Turn sounds off');
       b.setAttribute('aria-pressed', String(!muted));
     });
+    document.querySelectorAll('.ga-stage-sound').forEach(b => {
+      if (typeof window.renderArcadeSoundIcon === 'function') {
+        b.innerHTML = window.renderArcadeSoundIcon(muted);
+      } else {
+        b.textContent = muted ? '🔇' : '🔊';
+      }
+      b.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off');
+      b.title = b.getAttribute('aria-label');
+    });
   }
 
-  window.pokeSfx = { play, setMuted, isMuted: () => muted };
+  window.pokeSfx = { play, setMuted, toggleMute, isMuted: () => muted };
 
   // Floating mute button (if present)
   function mountToggle() {

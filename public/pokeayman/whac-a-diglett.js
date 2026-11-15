@@ -128,7 +128,7 @@
             </div>
           </div>
 
-          <button type="button" class="ga-stage-sound w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-xs font-bold cursor-pointer" id="whac-sound-toggle" title="Toggle sound">🔊</button>
+          <button type="button" class="ga-stage-sound" id="whac-sound-toggle" title="Toggle sound" aria-label="Toggle sound"></button>
           <button type="button" class="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-sm font-bold cursor-pointer" id="whac-fullscreen-btn" title="Toggle fullscreen">⛶</button>
           <button type="button" class="ga-stage-exit w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-rose-500/30 text-slate-300 hover:text-rose-300 border border-slate-700 transition flex items-center justify-center text-base font-bold cursor-pointer" id="whac-close-btn" title="Exit game" aria-label="Close game">×</button>
         </div>
@@ -440,11 +440,25 @@
 
     // Sound toggle
     const soundBtn = modal.querySelector('#whac-sound-toggle');
+    const syncWhacSound = () => {
+      const muted = window.pokeSfx?.isMuted?.() || false;
+      if (typeof window.renderArcadeSoundIcon === 'function') {
+        soundBtn.innerHTML = window.renderArcadeSoundIcon(muted);
+      } else {
+        soundBtn.textContent = muted ? '🔇' : '🔊';
+      }
+      soundBtn.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off');
+      soundBtn.title = soundBtn.getAttribute('aria-label');
+    };
+    syncWhacSound();
     soundBtn?.addEventListener('click', () => {
       if (window.pokeSfx && typeof window.pokeSfx.toggleMute === 'function') {
-        const isMuted = window.pokeSfx.toggleMute();
-        soundBtn.textContent = isMuted ? '🔇' : '🔊';
+        window.pokeSfx.toggleMute();
+      } else if (window.pokeSfx && typeof window.pokeSfx.setMuted === 'function') {
+        window.pokeSfx.setMuted(!window.pokeSfx.isMuted());
       }
+      if (typeof gameSoundState !== 'undefined') gameSoundState.muted = window.pokeSfx?.isMuted?.() || false;
+      syncWhacSound();
     });
 
     // Fullscreen toggle (Bulletproof direct API)
@@ -494,6 +508,8 @@
 
     function speakTarget(word) {
       if (!word) return;
+      if (window.pokeSfx && typeof window.pokeSfx.isMuted === 'function' && window.pokeSfx.isMuted()) return;
+      if (typeof gameSoundState !== 'undefined' && gameSoundState.muted) return;
       if (typeof window.readGameWordAloud === 'function') {
         window.readGameWordAloud(word);
       } else if ('speechSynthesis' in window) {
@@ -576,7 +592,10 @@
 
         // Pop up from inside the hole
         setTimeout(() => {
-          if (roundActive) diglett.classList.add('is-up');
+          if (roundActive) {
+            diglett.classList.add('is-up');
+            try { window.pokeSfx?.play?.('click'); } catch (e) {}
+          }
         }, Math.random() * 80);
       });
 
@@ -727,6 +746,7 @@
         if (activeGameScores[activeGamePlayerIndex] >= winningScore) {
           roundActive = false;
           cleanUpWave();
+          try { window.pokeSfx?.play?.('cheer'); } catch (e) {}
           setTimeout(() => {
             if (typeof showGameCelebration === 'function') {
               showGameCelebration(modal, 'Whac-A-Diglett Champion!', currentTargetWord.vocab_word, null, currentTargetWord.vocab_image);

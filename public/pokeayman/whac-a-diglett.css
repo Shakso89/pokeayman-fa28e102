@@ -391,7 +391,7 @@
   position: relative;
   width: 100%;
   max-width: 230px;
-  height: 180px;
+  height: 210px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -426,11 +426,11 @@
 /* 2. The Burrow Chamber (Layer 2 - clips underground bottom) */
 .whac-burrow-chamber {
   position: absolute;
-  bottom: 20px;
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   width: 172px;
-  height: 160px;
+  height: 200px;
   overflow: hidden;
   z-index: 5;
   cursor: pointer;
@@ -442,9 +442,9 @@
   position: absolute;
   bottom: 0;
   left: 50%;
-  transform: translateX(-50%) translateY(105%);
-  width: 132px;
-  height: 155px;
+  transform: translateX(-50%) translateY(115%);
+  width: 136px;
+  height: 165px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -453,13 +453,13 @@
   will-change: transform;
 }
 
-/* Rises straight out of the hole */
+/* Rises straight out of the hole, well above the front mound lip */
 .whac-diglett.is-up {
-  transform: translateX(-50%) translateY(0%);
+  transform: translateX(-50%) translateY(-35px);
 }
 
 .whac-diglett.is-whacked {
-  transform: translateX(-50%) translateY(24px) scale(1.18, 0.74) !important;
+  transform: translateX(-50%) translateY(-6px) scale(1.15, 0.76) !important;
   transition: transform 0.12s ease-out;
 }
 
@@ -602,20 +602,22 @@
   color: #0f172a !important;
   border: 2.5px solid #f59e0b;
   border-radius: 0.75rem;
-  padding: 0.35rem 0.65rem;
-  font-size: 1.18rem;
+  padding: 0.38rem 0.65rem;
+  font-size: 1.15rem;
   font-weight: 900;
+  line-height: 1.25;
   text-align: center;
-  max-width: 126px;
-  width: calc(100% - 6px);
+  max-width: 134px;
+  width: calc(100% - 4px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
   position: absolute;
-  bottom: 8px;
+  bottom: 12px;
   z-index: 10;
   letter-spacing: 0.02em;
+  box-sizing: border-box;
 }
 
 /* 3. Front Dirt Mound Lip (Layer 3 - sits in front of Diglett base) */
@@ -625,7 +627,7 @@
   left: 50%;
   transform: translateX(-50%);
   width: 215px;
-  height: 46px;
+  height: 42px;
   background: linear-gradient(180deg, #92400e 0%, #78350f 50%, #451a03 100%);
   border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
   z-index: 10;

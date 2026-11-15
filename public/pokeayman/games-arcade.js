@@ -2171,6 +2171,13 @@
     document.body.appendChild(bar);
   };
 
+  window.renderArcadeSoundIcon = function (muted) {
+    if (muted) {
+      return `<svg class="ga-sound-svg is-muted" viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11 5L6 9H2V15H6L11 19V5Z" fill="#94a3b8" stroke="#94a3b8" stroke-width="1.5" stroke-linejoin="round"/><line x1="16" y1="9" x2="22" y2="15" stroke="#f87171" stroke-width="2.2" stroke-linecap="round"/><line x1="22" y1="9" x2="16" y2="15" stroke="#f87171" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+    }
+    return `<svg class="ga-sound-svg is-active" viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="ga-speaker-glow" x1="2" y1="5" x2="11" y2="19" gradientUnits="userSpaceOnUse"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient></defs><path d="M11 5L6 9H2V15H6L11 19V5Z" fill="url(#ga-speaker-glow)" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round"/><path class="ga-sound-wave-1" d="M15 9.5C15.8 10.3 16.3 11.3 16.3 12.5C16.3 13.7 15.8 14.7 15 15.5" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/><path class="ga-sound-wave-2" d="M18 7C19.4 8.4 20.2 10.4 20.2 12.5C20.2 14.6 19.4 16.6 18 18" stroke="#60a5fa" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+  };
+
   window.gaMountStage = function (view) {
     const board = view.querySelector('#baam-board, #find-me-box, #words-grid, #match-board, #memory-grid, #scramble-tiles, #hangman-letters, #crossword-grid, #dots-board-grid, .dots-arena-layout, .dots-game-shell, #whac-field, .whac-game-shell, .lc-main, .vb-arena, .cdx-main');
     if (!board || view.querySelector('#game-player-list') || (view.classList.contains('ga-stage') && view.querySelector('.ga-stage-controls'))) return;
@@ -2226,9 +2233,18 @@
         controls.appendChild(matchDensity);
       }
       const sound = document.createElement('button'); sound.type = 'button'; sound.className = 'ga-stage-sound';
-      const syncSound = () => { const muted = window.pokeSfx?.isMuted() || false; sound.textContent = muted ? '🔇' : '🔊'; sound.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off'); sound.title = sound.getAttribute('aria-label'); };
+      const syncSound = () => {
+        const muted = window.pokeSfx?.isMuted() || false;
+        sound.innerHTML = window.renderArcadeSoundIcon(muted);
+        sound.setAttribute('aria-label', muted ? 'Turn game sounds on' : 'Turn game sounds off');
+        sound.title = sound.getAttribute('aria-label');
+      };
       syncSound(); sound.addEventListener('click', () => {
-        window.pokeSfx?.setMuted(!window.pokeSfx.isMuted());
+        if (window.pokeSfx && typeof window.pokeSfx.toggleMute === 'function') {
+          window.pokeSfx.toggleMute();
+        } else if (window.pokeSfx && typeof window.pokeSfx.setMuted === 'function') {
+          window.pokeSfx.setMuted(!window.pokeSfx.isMuted());
+        }
         if (typeof gameSoundState !== 'undefined') gameSoundState.muted = window.pokeSfx?.isMuted() || false;
         const scramble = view.querySelector('#scramble-sound-mute');
         if (scramble && (scramble.textContent.includes('🔇') !== Boolean(window.pokeSfx?.isMuted()))) scramble.click();
