@@ -56,18 +56,50 @@ describe('Whac-A-Diglett Arcade Integration', () => {
     expect(whacJs).toContain('readGameWordAloud');
   });
 
-  it('removes emojis, hides word spelling next to picture clue, and renders hammer strike animation', () => {
+  it('features live visual theme switcher, standard arcade stage header, and direct fullscreen toggle', () => {
     const whacJsPath = path.join(root, 'public', 'pokeayman', 'whac-a-diglett.js');
     const whacJs = fs.readFileSync(whacJsPath, 'utf8');
 
-    // No emojis on Digletts
-    expect(whacJs).not.toContain('ACCESSORIES');
-    expect(whacJs).not.toContain('whac-diglett-accessory');
+    // Theme selector
+    expect(whacJs).toContain('whac-theme-wrap');
+    expect(whacJs).toContain('whac-theme-btn');
+    expect(whacJs).toContain('whac-theme-popover');
+    expect(whacJs).toContain('data-ga-theme-choice');
 
-    // Hammer animation & turn banner
+    // Header controls & direct fullscreen
+    expect(whacJs).toContain('whac-header ga-stage-header');
+    expect(whacJs).toContain('whac-fullscreen-btn');
+    expect(whacJs).toContain('modal.requestFullscreen()');
+    expect(whacJs).toContain('whac-sound-toggle');
+    expect(whacJs).toContain('whac-close-btn');
+
+    // Duel HUD and high-contrast score box
+    expect(whacJs).toContain('whac-duel-hud');
+    expect(whacJs).toContain('whac-player-badge');
+    expect(whacJs).toContain('whac-target-pill');
+
+    const whacCssPath = path.join(root, 'public', 'pokeayman', 'whac-a-diglett.css');
+    const whacCss = fs.readFileSync(whacCssPath, 'utf8');
+    expect(whacCss).toContain('[data-ga-theme="classroom"]');
+    expect(whacCss).toContain('[data-ga-theme="jungle"]');
+    expect(whacCss).toContain('[data-ga-theme="toybox"]');
+    expect(whacCss).toContain('[data-ga-theme="halloween"]');
+    expect(whacCss).toContain('.whac-duel-hud');
+  });
+
+  it('implements authentic 3D hole layers, unclipped hammer animation, and hides spelling on picture clues', () => {
+    const whacJsPath = path.join(root, 'public', 'pokeayman', 'whac-a-diglett.js');
+    const whacJs = fs.readFileSync(whacJsPath, 'utf8');
+
+    // 3D hole layers
+    expect(whacJs).toContain('whac-hole-back');
+    expect(whacJs).toContain('whac-hole-pit');
+    expect(whacJs).toContain('whac-burrow-chamber');
+    expect(whacJs).toContain('whac-mound-front');
+
+    // Hammer animation & uncropped strike
     expect(whacJs).toContain('renderHammerStrike');
     expect(whacJs).toContain('whac-hammer-anim');
-    expect(whacJs).toContain('whac-turn-banner');
 
     // When picture exists, spelling is hidden
     expect(whacJs).toContain("clueText.classList.add('hidden')");
@@ -75,9 +107,11 @@ describe('Whac-A-Diglett Arcade Integration', () => {
 
     const whacCssPath = path.join(root, 'public', 'pokeayman', 'whac-a-diglett.css');
     const whacCss = fs.readFileSync(whacCssPath, 'utf8');
+    expect(whacCss).toContain('.whac-hole-back');
+    expect(whacCss).toContain('.whac-hole-pit');
+    expect(whacCss).toContain('.whac-burrow-chamber');
+    expect(whacCss).toContain('.whac-mound-front');
     expect(whacCss).toContain('.whac-hammer-anim');
     expect(whacCss).toContain('whac-hammer-strike');
-    expect(whacCss).toContain('.whac-turn-banner');
-    expect(whacCss).toContain('transform: translateY(-28px)');
   });
 });

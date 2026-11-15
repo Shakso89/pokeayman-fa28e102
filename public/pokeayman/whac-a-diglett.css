@@ -19,64 +19,104 @@
   -webkit-user-select: none;
 }
 
-/* Header */
+/* Header: Standard Arcade Stage Navigation Header */
 .whac-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 1rem;
+  padding: 0.25rem 1rem;
   background: rgba(15, 23, 42, 0.9);
   border-bottom: 1px solid rgba(51, 65, 85, 0.6);
   backdrop-filter: blur(12px);
   gap: 0.75rem;
   flex: 0 0 46px;
   height: 46px;
+  max-height: 46px;
   position: relative;
   z-index: 30;
   box-sizing: border-box;
 }
 
-.whac-heading {
+.whac-header-title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.65rem;
 }
 
-.whac-heading h2 {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #f8fafc;
+.whac-header-title h2 {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #ffffff !important;
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
+  line-height: 1.1;
 }
 
-.whac-header-tools {
+.whac-header-title p {
+  margin: 0;
+  line-height: 1;
+}
+
+.whac-header-controls {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.whac-btn-tool {
+/* In-game Theme Popover Container */
+.whac-header .ga-stage-theme-wrap {
+  position: relative;
+}
+
+.whac-header .ga-stage-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.5rem;
   background: rgba(30, 41, 59, 0.8);
   border: 1px solid rgba(71, 85, 105, 0.6);
-  color: #cbd5e1;
-  border-radius: 0.5rem;
-  padding: 0.3rem 0.65rem;
-  font-size: 0.85rem;
+  color: #f8fafc !important;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.whac-btn-tool:hover {
+.whac-header .ga-stage-theme-btn:hover {
   background: rgba(51, 65, 85, 0.9);
-  color: #ffffff;
   border-color: #f59e0b;
+}
+
+.whac-header .ga-stage-theme-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 100;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+  padding: 0.75rem;
+  min-width: 240px;
+}
+
+.whac-header .ga-stage-theme-popover[hidden] {
+  display: none !important;
+}
+
+.whac-header .ga-stage-theme-popover-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.whac-header .ga-stage-theme-popover-head strong {
+  color: #f8fafc;
 }
 
 /* Arena Shell */
@@ -88,44 +128,127 @@
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
-  padding: 0.4rem 1rem 1rem;
+  padding: 0.35rem 1rem 1rem;
   box-sizing: border-box;
   align-items: center;
 }
 
-/* Turn Banner */
-.whac-turn-banner {
+/* Dedicated Duelists Score HUD */
+.whac-duel-hud {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(51, 65, 85, 0.8);
+  border-radius: 9999px;
+  padding: 0.3rem 1rem;
+  margin: 0.2rem auto 0.5rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+  max-width: 600px;
+  width: 100%;
+  backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 25;
+}
+
+.whac-player-badge {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  background: rgba(15, 23, 42, 0.75);
-  border: 1.5px solid rgba(245, 158, 11, 0.5);
-  padding: 0.3rem 0.9rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1.5px solid transparent;
+  transition: all 0.25s ease;
+  min-width: 140px;
+}
+
+.whac-player-badge.is-active {
+  background: rgba(245, 158, 11, 0.2) !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.45) !important;
+}
+
+.whac-player-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: #ffffff;
+  padding: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.whac-player-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.whac-player-name {
   font-size: 0.85rem;
   font-weight: 800;
-  color: #f8fafc;
-  margin-bottom: 0.4rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  color: #f8fafc !important;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.whac-turn-dot {
-  width: 9px;
-  height: 9px;
+.whac-player-badge.is-active .whac-player-name {
+  color: #fef08a !important;
+}
+
+.whac-player-turn-pill {
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #10b981;
+  text-transform: uppercase;
+}
+
+.whac-player-score {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #ffffff !important;
+  margin-left: auto;
+  min-width: 24px;
+  text-align: right;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.whac-player-badge.is-active .whac-player-score {
+  color: #f59e0b !important;
+}
+
+.whac-target-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #0f172a;
+  border: 2px solid #f59e0b;
   border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
-  animation: whac-pulse-dot 1.2s infinite ease-in-out;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
 }
 
-@keyframes whac-pulse-dot {
-  0%, 100% { transform: scale(0.9); opacity: 0.8; }
-  50% { transform: scale(1.3); opacity: 1; }
+.whac-target-title {
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
 }
 
-.whac-turn-player {
-  color: #fbbf24;
-  letter-spacing: 0.02em;
+.whac-target-val {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #fef08a;
+  line-height: 1;
 }
 
 /* Rustic Signboard Clue Banner */
@@ -134,12 +257,12 @@
   border: 3px solid #b45309;
   border-radius: 1rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 2px 4px rgba(251, 191, 36, 0.3);
-  padding: 0.5rem 1.25rem;
+  padding: 0.45rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  max-width: 600px;
+  max-width: 580px;
   width: 100%;
   margin: 0.1rem auto 0.6rem;
   position: relative;
@@ -147,12 +270,12 @@
 }
 
 .whac-clue-label {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: #fef08a;
   font-weight: 800;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
 
 .whac-clue-content {
@@ -163,12 +286,12 @@
 }
 
 .whac-clue-img {
-  width: 64px;
-  height: 64px;
+  width: 68px;
+  height: 68px;
   object-fit: cover;
   border-radius: 0.6rem;
-  border: 2px solid #fef08a;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  border: 2.5px solid #fef08a;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
   background: #ffffff;
 }
 
@@ -242,7 +365,7 @@
   }
 }
 
-/* Mound & Hole */
+/* 3D Mound Stage with Layered Pit and Mask */
 .whac-mound-wrap {
   display: flex;
   flex-direction: column;
@@ -250,75 +373,86 @@
   position: relative;
 }
 
-.whac-hole-container {
+.whac-mound-stage {
+  position: relative;
   width: 100%;
   max-width: 220px;
-  height: 175px;
-  position: relative;
+  height: 165px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* 1. Back of the hole & dark pit (Layer 1) */
+.whac-hole-back {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 195px;
+  height: 52px;
+  background: #3d1b06;
+  border-radius: 50%;
+  z-index: 1;
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.6);
+}
+
+.whac-hole-pit {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 175px;
+  height: 40px;
+  background: radial-gradient(ellipse at 50% 50%, #000000 0%, #150802 75%, #2a0f04 100%);
+  border-radius: 50%;
+  box-shadow: inset 0 8px 16px rgba(0, 0, 0, 0.95);
+}
+
+/* 2. The Burrow Chamber (Layer 2 - clips underground bottom) */
+.whac-burrow-chamber {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 140px;
   overflow: hidden;
-  border-radius: 0 0 50% 50% / 0 0 35% 35%;
+  z-index: 5;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-}
-
-/* Dirt Mound Lip */
-.whac-mound-lip {
-  position: absolute;
-  bottom: 0;
-  left: 4%;
-  width: 92%;
-  height: 48px;
-  background: radial-gradient(ellipse at 50% 70%, #78350f 0%, #451a03 70%, #291002 100%);
-  border-radius: 50%;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6), inset 0 3px 6px rgba(180, 83, 9, 0.4);
-  z-index: 10;
-  pointer-events: none;
-}
-
-.whac-mound-lip::after {
-  content: '';
-  position: absolute;
-  top: 6px;
-  left: 10%;
-  width: 80%;
-  height: 24px;
-  background: #1c0b02;
-  border-radius: 50%;
-  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.85);
 }
 
 /* Animated Diglett */
 .whac-diglett {
   position: absolute;
-  bottom: 18px;
+  bottom: 0;
   left: 50%;
-  width: 140px;
-  height: 145px;
-  margin-left: -70px;
+  transform: translateX(-50%) translateY(105%);
+  width: 125px;
+  height: 135px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  transform: translateY(115%);
   transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: 5;
   will-change: transform;
 }
 
-/* Pops up high enough so the word badge is 100% visible above the dirt lip */
+/* Rises straight out of the hole */
 .whac-diglett.is-up {
-  transform: translateY(-28px);
+  transform: translateX(-50%) translateY(0%);
 }
 
 .whac-diglett.is-whacked {
-  transform: translateY(-6px) scale(1.15, 0.72) !important;
+  transform: translateX(-50%) translateY(22px) scale(1.15, 0.72) !important;
   transition: transform 0.12s ease-out;
 }
 
 /* Diglett Body */
 .whac-diglett-body {
   width: 110px;
-  height: 130px;
+  height: 125px;
   background: linear-gradient(180deg, #92400e 0%, #78350f 75%, #451a03 100%);
   border-radius: 55px 55px 0 0;
   position: relative;
@@ -330,11 +464,11 @@
   border-bottom: none;
 }
 
-/* Diglett Face (Clean - No emojis!) */
+/* Diglett Face (Clean - No emojis) */
 .whac-diglett-eyes {
   display: flex;
   gap: 24px;
-  margin-top: 18px;
+  margin-top: 16px;
 }
 
 .whac-diglett-eye {
@@ -367,18 +501,18 @@
   height: 20px;
   background: radial-gradient(circle at 35% 35%, #fda4af 0%, #f43f5e 60%, #be123c 100%);
   border-radius: 16px / 10px;
-  margin-top: 5px;
+  margin-top: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.6);
 }
 
-/* Word Card Badge (Raised high on belly, large bold legible typography) */
+/* Word Card Badge (Held on belly, high above front dirt lip) */
 .whac-word-badge {
   background: #ffffff;
-  color: #0f172a;
+  color: #0f172a !important;
   border: 2.5px solid #f59e0b;
   border-radius: 0.65rem;
   padding: 0.35rem 0.65rem;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 900;
   text-align: center;
   max-width: 125px;
@@ -388,19 +522,35 @@
   text-overflow: ellipsis;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
   position: absolute;
-  bottom: 24px;
+  bottom: 22px;
   z-index: 15;
   letter-spacing: 0.02em;
 }
 
-/* Animated Mallet / Hammer Strike */
+/* 3. Front Dirt Mound Lip (Layer 3 - sits in front of Diglett base) */
+.whac-mound-front {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 215px;
+  height: 46px;
+  background: linear-gradient(180deg, #92400e 0%, #78350f 50%, #451a03 100%);
+  border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.55), inset 0 2px 4px rgba(251, 191, 36, 0.35);
+  border-bottom: 2px solid #2e1002;
+}
+
+/* 4. Mallet / Hammer Strike (Layer 4 - Appended to whac-mound-wrap outside overflow:hidden, ZERO cropping!) */
 .whac-hammer-anim {
   position: absolute;
-  top: 18px;
+  top: -10px;
   left: 50%;
   transform: translate(-50%, -100%);
   pointer-events: none;
-  z-index: 35;
+  z-index: 50;
   animation: whac-hammer-strike 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -413,15 +563,15 @@
     opacity: 1;
   }
   45% {
-    transform: translate(-50%, -20%) rotate(16deg) scale(1.15);
+    transform: translate(-50%, -15%) rotate(16deg) scale(1.15);
     opacity: 1;
   }
   70% {
-    transform: translate(-50%, -45%) rotate(-5deg) scale(1);
+    transform: translate(-50%, -40%) rotate(-5deg) scale(1);
     opacity: 0.9;
   }
   100% {
-    transform: translate(-50%, -75%) rotate(-25deg) scale(0.7);
+    transform: translate(-50%, -70%) rotate(-25deg) scale(0.7);
     opacity: 0;
   }
 }
@@ -429,8 +579,11 @@
 /* Hit FX Score Pop */
 .whac-hit-fx {
   position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   pointer-events: none;
-  z-index: 40;
+  z-index: 55;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -444,9 +597,8 @@
 }
 
 .whac-hit-score {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 900;
-  color: #fef08a;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 10px #f59e0b;
 }
 
@@ -456,39 +608,63 @@
   100% { transform: scale(1) translateY(-35px); opacity: 0; }
 }
 
-/* Bright Mode Overrides */
-[data-theme="bright"] .whac-game-modal,
-body.theme-bright .whac-game-modal {
-  background: radial-gradient(circle at 50% 25%, #f1f5f9 0%, #e2e8f0 70%, #cbd5e1 100%);
-  color: #0f172a;
+/* Theme Integration (Game Styles) */
+.whac-game-modal[data-ga-theme="classroom"] {
+  background: radial-gradient(circle at 50% 25%, #2a563d 0%, #163624 70%, #0d2116 100%) !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-header {
+  background: #1d3f2c !important;
+  border-bottom: 2px solid #b5804c !important;
+}
+.whac-game-modal[data-ga-theme="classroom"] .whac-duel-hud {
+  background: linear-gradient(180deg, #2a563d 0%, #1d3f2c 100%) !important;
+  border: 2px solid #b5804c !important;
 }
 
-[data-theme="bright"] .whac-header,
-body.theme-bright .whac-header {
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid #cbd5e1;
+.whac-game-modal[data-ga-theme="jungle"] {
+  background: radial-gradient(circle at 50% 25%, #14532d 0%, #052e16 70%, #021a0c 100%) !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-header {
+  background: #064e3b !important;
+  border-bottom: 2px solid #10b981 !important;
+}
+.whac-game-modal[data-ga-theme="jungle"] .whac-duel-hud {
+  background: linear-gradient(180deg, #14532d 0%, #064e3b 100%) !important;
+  border: 2px solid #10b981 !important;
 }
 
-[data-theme="bright"] .whac-heading h2,
-body.theme-bright .whac-heading h2 {
-  color: #0f172a;
+.whac-game-modal[data-ga-theme="toybox"] {
+  background: radial-gradient(circle at 50% 25%, #312e81 0%, #1e1b4b 70%, #0f0a2a 100%) !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-header {
+  background: #4338ca !important;
+  border-bottom: 2px solid #a855f7 !important;
+}
+.whac-game-modal[data-ga-theme="toybox"] .whac-duel-hud {
+  background: linear-gradient(180deg, #3730a3 0%, #312e81 100%) !important;
+  border: 2px solid #a855f7 !important;
 }
 
-[data-theme="bright"] .whac-btn-tool,
-body.theme-bright .whac-btn-tool {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #334155;
+.whac-game-modal[data-ga-theme="halloween"] {
+  background: radial-gradient(circle at 50% 25%, #451a03 0%, #2e1065 70%, #090214 100%) !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-header {
+  background: #1e092b !important;
+  border-bottom: 2px solid #ea580c !important;
+}
+.whac-game-modal[data-ga-theme="halloween"] .whac-duel-hud {
+  background: linear-gradient(180deg, #3b0764 0%, #1e092b 100%) !important;
+  border: 2px solid #ea580c !important;
 }
 
-[data-theme="bright"] .whac-turn-banner,
-body.theme-bright .whac-turn-banner {
-  background: #ffffff;
-  border-color: #f59e0b;
-  color: #0f172a;
+.whac-game-modal[data-ga-theme="classic"] {
+  background: radial-gradient(circle at 50% 25%, #0f172a 0%, #020617 70%, #000000 100%) !important;
 }
-
-[data-theme="bright"] .whac-turn-player,
-body.theme-bright .whac-turn-player {
-  color: #b45309;
+.whac-game-modal[data-ga-theme="classic"] .whac-header {
+  background: #0b1120 !important;
+  border-bottom: 2px solid #38bdf8 !important;
+}
+.whac-game-modal[data-ga-theme="classic"] .whac-duel-hud {
+  background: rgba(10, 15, 30, 0.95) !important;
+  border: 2px solid #38bdf8 !important;
 }

@@ -5732,7 +5732,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 <link rel="stylesheet" href="/pokeayman/listen-catch.css">
 <link rel="stylesheet" href="/pokeayman/crossword.css?v=20261028-crosswords-v11">
 <link rel="stylesheet" href="/pokeayman/dots-and-boxes.css?v=20261111-pokemon-scale-v1">
-<link rel="stylesheet" href="/pokeayman/whac-a-diglett.css?v=20261115_whac_v2">
+<link rel="stylesheet" href="/pokeayman/whac-a-diglett.css?v=20261115_whac_v3">
 <link rel="stylesheet" href="/pokeayman/vocab-battle.css">
 <link rel="stylesheet" href="/pokeayman/study-theme.css">
 <link rel="stylesheet" href="/pokeayman/components.css?v=20261115_student_ui_v12">
@@ -7822,28 +7822,102 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     let botTimer = null;
     let currentActiveHoles = [];
 
+    // Themes setup
+    const themes = [
+      { id: 'classroom', name: 'Classroom', subtitle: 'Poké Academy & chalkboard' },
+      { id: 'jungle', name: 'Jungle', subtitle: 'Emerald moss & vines' },
+      { id: 'toybox', name: 'Toybox', subtitle: 'Vibrant blocks & play' },
+      { id: 'halloween', name: 'Halloween', subtitle: 'Spooky dusk & shadows' },
+      { id: 'classic', name: 'Classic', subtitle: 'Arcade neon' }
+    ];
+    const initialThemeId = (typeof window.gaGetTheme === 'function' ? window.gaGetTheme() : 'classroom') || 'classroom';
+    const initialThemeObj = themes.find((t) => t.id === initialThemeId) || themes[0];
+
+    const themeGridHtml = typeof window.renderThemeCardsMarkup === 'function'
+      ? window.renderThemeCardsMarkup(initialThemeObj.id)
+      : themes.map(t => `
+          <button type="button" class="ga-theme-card ${t.id === initialThemeObj.id ? 'is-selected' : ''}" data-ga-theme-choice="${t.id}" role="radio" aria-checked="${t.id === initialThemeObj.id}">
+            <div class="ga-theme-card-thumb"><span class="text-lg">🎨</span></div>
+            <div class="ga-theme-card-info">
+              <strong class="ga-theme-card-name">${esc(t.name)}</strong>
+              <small class="ga-theme-card-sub">${esc(t.subtitle)}</small>
+            </div>
+          </button>
+        `).join('');
+
+    const p1 = activeGamePlayers[0] || { student_name: 'Player 1', avatar_pokemon_id: 25 };
+    const p2 = activeGamePlayers[1] || { student_name: 'Robot', avatar_pokemon_id: 137, isBot: true };
+    const p1Name = p1.student_name || 'Player 1';
+    const p2Name = p2.student_name || (p2.isBot ? 'Robot' : 'Player 2');
+    const p1Avatar = p1.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p1.avatar_pokemon_id || 25}.png`;
+    const p2Avatar = p2.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p2.avatar_pokemon_id || (p2.isBot ? 137 : 133)}.png`;
+
     // Create Modal
     const modal = document.createElement('div');
     modal.className = 'whac-game-modal game-popup-modal';
     modal.dataset.game = 'whac-a-diglett';
+    modal.dataset.gaTheme = initialThemeObj.id;
+
     modal.innerHTML = `
+      <!-- 1. Header Bar: Title, Theme Selector & Stage Controls -->
       <header class="whac-header ga-stage-header">
-        <div class="whac-heading">
-          <h2>Whac-A-Diglett</h2>
+        <div class="whac-header-title">
+          <img src="/pokeayman/assets/games/whac-a-diglett.jpg" alt="" class="w-8 h-8 rounded-full object-cover ring-2 ring-amber-400/50 shadow-md">
+          <div>
+            <h2>Whac-A-Diglett</h2>
+            <p class="text-[11px] text-amber-300 font-semibold">Target: First to ${winningScore} points</p>
+          </div>
         </div>
-        <div class="whac-header-tools">
-          <button type="button" class="whac-btn-tool game-fullscreen-btn" aria-label="Toggle Fullscreen">Fullscreen</button>
-          <button type="button" class="whac-btn-tool" id="whac-close" aria-label="Close game">Close</button>
+
+        <div class="whac-header-controls">
+          <!-- In-Game Visual Style / Theme Selector -->
+          <div class="ga-stage-theme-wrap" id="whac-theme-wrap">
+            <button type="button" class="ga-stage-theme-btn" id="whac-theme-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Change visual style" title="Change visual style">
+              <span aria-hidden="true">🎨</span>
+              <span class="ga-stage-theme-current">${esc(initialThemeObj.name)}</span>
+            </button>
+            <div class="ga-stage-theme-popover" id="whac-theme-popover" role="dialog" aria-label="Visual style" hidden>
+              <div class="ga-stage-theme-popover-head"><strong>Visual style</strong><span>Switch live</span></div>
+              <div class="ga-theme-grid ga-theme-grid-compact" role="radiogroup" aria-label="Choose visual style">
+                ${themeGridHtml}
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="ga-stage-sound w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-xs font-bold cursor-pointer" id="whac-sound-toggle" title="Toggle sound">🔊</button>
+          <button type="button" class="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center text-sm font-bold cursor-pointer" id="whac-fullscreen-btn" title="Toggle fullscreen">⛶</button>
+          <button type="button" class="ga-stage-exit w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-rose-500/30 text-slate-300 hover:text-rose-300 border border-slate-700 transition flex items-center justify-center text-base font-bold cursor-pointer" id="whac-close-btn" title="Exit game" aria-label="Close game">×</button>
         </div>
       </header>
-      <div class="whac-game-shell ga-stage-shell">
-        <div class="game-player-hud-slot w-full max-w-xl mb-1 flex justify-center"></div>
 
-        <div class="whac-turn-banner" id="whac-turn-banner" role="status" aria-live="polite">
-          <span class="whac-turn-dot"></span>
-          <span class="whac-turn-player" id="whac-turn-player-name">Player 1's Turn</span>
+      <div class="whac-game-shell ga-stage-shell">
+        <!-- 2. Dedicated Duelists Score HUD (Never white-on-white) -->
+        <div class="whac-duel-hud">
+          <div class="whac-player-badge p1 ${activeGamePlayerIndex === 0 ? 'is-active' : ''}" id="whac-p1-badge">
+            <img src="${p1Avatar}" class="whac-player-avatar" alt="${esc(p1Name)}">
+            <div class="whac-player-info">
+              <span class="whac-player-name">${esc(p1Name)}</span>
+              <span class="whac-player-turn-pill" id="whac-p1-turn">${activeGamePlayerIndex === 0 ? 'TURN' : ''}</span>
+            </div>
+            <span class="whac-player-score" id="whac-p1-score">${activeGameScores[0] || 0}</span>
+          </div>
+
+          <div class="whac-target-pill">
+            <span class="whac-target-title">TARGET</span>
+            <span class="whac-target-val">${winningScore}</span>
+          </div>
+
+          <div class="whac-player-badge p2 ${activeGamePlayerIndex === 1 ? 'is-active' : ''}" id="whac-p2-badge">
+            <img src="${p2Avatar}" class="whac-player-avatar" alt="${esc(p2Name)}">
+            <div class="whac-player-info">
+              <span class="whac-player-name">${esc(p2Name)}</span>
+              <span class="whac-player-turn-pill" id="whac-p2-turn">${activeGamePlayerIndex === 1 ? 'TURN' : ''}</span>
+            </div>
+            <span class="whac-player-score" id="whac-p2-score">${activeGameScores[1] || 0}</span>
+          </div>
         </div>
 
+        <!-- 3. Target Clue Signboard (Spelling is hidden when picture is displayed!) -->
         <section class="whac-signboard" aria-label="Target clue to whack">
           <div class="whac-combo-badge" id="whac-combo">Combo x2</div>
           <div class="text-center">
@@ -7862,21 +7936,32 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </div>
         </section>
 
+        <!-- 4. 3D Layered Playing Field: Digletts emerge straight out of the dark hole pit -->
         <main class="whac-field" id="whac-field" role="region" aria-label="Diglett field">
           ${Array.from({ length: numHoles }).map((_, i) => `
             <div class="whac-mound-wrap" data-hole-index="${i}">
-              <div class="whac-hole-container" data-hole="${i}">
-                <div class="whac-diglett" data-hole-diglett="${i}">
-                  <div class="whac-diglett-body">
-                    <div class="whac-diglett-eyes">
-                      <div class="whac-diglett-eye"></div>
-                      <div class="whac-diglett-eye"></div>
+              <div class="whac-mound-stage">
+                <!-- Hole background & dark pit -->
+                <div class="whac-hole-back">
+                  <div class="whac-hole-pit"></div>
+                </div>
+
+                <!-- Burrow Chamber (clips Diglett bottom underground) -->
+                <div class="whac-burrow-chamber" data-hole="${i}">
+                  <div class="whac-diglett" data-hole-diglett="${i}">
+                    <div class="whac-diglett-body">
+                      <div class="whac-diglett-eyes">
+                        <div class="whac-diglett-eye"></div>
+                        <div class="whac-diglett-eye"></div>
+                      </div>
+                      <div class="whac-diglett-nose"></div>
+                      <div class="whac-word-badge" data-hole-badge="${i}"></div>
                     </div>
-                    <div class="whac-diglett-nose"></div>
-                    <div class="whac-word-badge" data-hole-badge="${i}"></div>
                   </div>
                 </div>
-                <div class="whac-mound-lip"></div>
+
+                <!-- Front Dirt Mound Lip (masks lower body in front) -->
+                <div class="whac-mound-front"></div>
               </div>
             </div>
           `).join('')}
@@ -7885,9 +7970,66 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     `;
 
     document.body.appendChild(modal);
-    if (typeof attachGameFullscreen === 'function') attachGameFullscreen(modal);
-    if (typeof renderGamePlayerHud === 'function') renderGamePlayerHud(modal, winningScore, 0, winningScore);
     if (typeof startPlayerTurnTimer === 'function') startPlayerTurnTimer(modal, timerSeconds);
+
+    // Live theme switcher behavior
+    const themeWrap = modal.querySelector('#whac-theme-wrap');
+    const themeBtn = modal.querySelector('#whac-theme-btn');
+    const themePopover = modal.querySelector('#whac-theme-popover');
+    const themeCurrent = modal.querySelector('.ga-stage-theme-current');
+
+    const setThemePopoverOpen = (open) => {
+      if (!themePopover || !themeBtn) return;
+      themePopover.hidden = !open;
+      themeBtn.setAttribute('aria-expanded', String(open));
+      themeWrap?.classList.toggle('is-open', open);
+    };
+
+    themeBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setThemePopoverOpen(themePopover.hidden);
+    });
+
+    modal.addEventListener('click', (e) => {
+      const choice = e.target.closest('[data-ga-theme-choice]');
+      if (choice) {
+        const themeId = choice.dataset.gaThemeChoice;
+        modal.dataset.gaTheme = themeId;
+        const found = themes.find((t) => t.id === themeId);
+        if (found && themeCurrent) themeCurrent.textContent = found.name;
+        if (typeof window.gaSetTheme === 'function') window.gaSetTheme(themeId);
+        themePopover?.querySelectorAll('.ga-theme-card').forEach((card) => {
+          const active = card === choice;
+          card.classList.toggle('is-selected', active);
+          card.setAttribute('aria-checked', String(active));
+        });
+        setThemePopoverOpen(false);
+        return;
+      }
+      if (themePopover && !themePopover.hidden && !e.target.closest('#whac-theme-wrap')) {
+        setThemePopoverOpen(false);
+      }
+    });
+
+    // Sound toggle
+    const soundBtn = modal.querySelector('#whac-sound-toggle');
+    soundBtn?.addEventListener('click', () => {
+      if (window.pokeSfx && typeof window.pokeSfx.toggleMute === 'function') {
+        const isMuted = window.pokeSfx.toggleMute();
+        soundBtn.textContent = isMuted ? '🔇' : '🔊';
+      }
+    });
+
+    // Fullscreen toggle (Bulletproof direct API)
+    modal.querySelector('#whac-fullscreen-btn')?.addEventListener('click', async () => {
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen();
+        } else {
+          await modal.requestFullscreen();
+        }
+      } catch (_) {}
+    });
 
     const clueLabel = modal.querySelector('#whac-clue-label');
     const clueText = modal.querySelector('#whac-clue-text');
@@ -7895,15 +8037,24 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const speakBtn = modal.querySelector('#whac-speak-btn');
     const comboEl = modal.querySelector('#whac-combo');
     const field = modal.querySelector('#whac-field');
-    const turnPlayerEl = modal.querySelector('#whac-turn-player-name');
 
-    function updateTurnBanner() {
-      if (!activeGamePlayers.length) return;
-      const current = activeGamePlayers[activeGamePlayerIndex];
-      const name = current ? (current.student_name || 'Player') : 'Player';
-      if (turnPlayerEl) {
-        turnPlayerEl.textContent = `${name}'s Turn`;
-      }
+    const p1Badge = modal.querySelector('#whac-p1-badge');
+    const p2Badge = modal.querySelector('#whac-p2-badge');
+    const p1ScoreEl = modal.querySelector('#whac-p1-score');
+    const p2ScoreEl = modal.querySelector('#whac-p2-score');
+    const p1TurnEl = modal.querySelector('#whac-p1-turn');
+    const p2TurnEl = modal.querySelector('#whac-p2-turn');
+
+    function updateScoreHud() {
+      if (p1ScoreEl) p1ScoreEl.textContent = String(activeGameScores[0] || 0);
+      if (p2ScoreEl) p2ScoreEl.textContent = String(activeGameScores[1] || 0);
+
+      const isP1 = activeGamePlayerIndex === 0;
+      if (p1Badge) p1Badge.classList.toggle('is-active', isP1);
+      if (p2Badge) p2Badge.classList.toggle('is-active', !isP1);
+
+      if (p1TurnEl) p1TurnEl.textContent = isP1 ? 'TURN' : '';
+      if (p2TurnEl) p2TurnEl.textContent = !isP1 ? 'TURN' : '';
     }
 
     function speakTarget(word) {
@@ -7935,7 +8086,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     function spawnWave() {
       if (!roundActive) return;
       cleanUpWave();
-      updateTurnBanner();
+      updateScoreHud();
 
       // Pick next target word
       const nextWord = allWords[Math.floor(Math.random() * allWords.length)];
@@ -7988,10 +8139,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         diglett.dataset.word = wordObj.vocab_word;
         diglett.dataset.isTarget = isTarget ? 'true' : 'false';
 
-        // Pop up with slight random delay for natural arcade feel
+        // Pop up from inside the hole
         setTimeout(() => {
           if (roundActive) diglett.classList.add('is-up');
-        }, Math.random() * 100);
+        }, Math.random() * 80);
       });
 
       // Handle Robot Opponent logic
@@ -8016,53 +8167,49 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         modal.querySelectorAll('.whac-diglett.is-up').forEach((el) => {
           el.classList.remove('is-up');
         });
-        // On timeout, switch turn to keep the duel moving
         if (activeGamePlayers.length > 1) {
           if (typeof advanceGameTurn === 'function') advanceGameTurn();
-          if (typeof updateGamePlayerHud === 'function') updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
-          updateTurnBanner();
+          updateScoreHud();
         }
         setTimeout(spawnWave, 400);
       }, 2300);
     }
 
+    // Render hammer in mound wrap (outside overflow:hidden so it is NEVER cropped!)
     function renderHammerStrike(holeIdx) {
-      const container = modal.querySelector(`[data-hole="${holeIdx}"]`);
-      if (!container) return;
+      const moundWrap = modal.querySelector(`[data-hole-index="${holeIdx}"]`);
+      if (!moundWrap) return;
 
       const hammer = document.createElement('div');
       hammer.className = 'whac-hammer-anim';
       hammer.innerHTML = `
-        <svg viewBox="0 0 80 80" width="70" height="70">
+        <svg viewBox="0 0 80 80" width="75" height="75">
           <rect x="36" y="28" width="8" height="46" rx="4" fill="#d97706" stroke="#78350f" stroke-width="2"/>
           <rect x="14" y="8" width="52" height="26" rx="8" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
           <rect x="20" y="8" width="10" height="26" fill="#f59e0b"/>
           <circle cx="40" cy="21" r="5" fill="#ffffff" stroke="#991b1b" stroke-width="1.5"/>
         </svg>
       `;
-      container.appendChild(hammer);
+      moundWrap.appendChild(hammer);
       setTimeout(() => hammer.remove(), 400);
     }
 
     function createHitFx(holeIdx, isCorrect) {
-      const container = modal.querySelector(`[data-hole="${holeIdx}"]`);
-      if (!container) return;
+      const moundWrap = modal.querySelector(`[data-hole-index="${holeIdx}"]`);
+      if (!moundWrap) return;
 
       const fx = document.createElement('div');
       fx.className = 'whac-hit-fx';
-      fx.style.top = '15px';
-      fx.style.left = '50%';
-      fx.style.marginLeft = '-30px';
       fx.innerHTML = `
         <div class="whac-hit-icon">
           ${isCorrect
-            ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
-            : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+            ? `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+            : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
           }
         </div>
         <div class="whac-hit-score" style="color: ${isCorrect ? '#10b981' : '#ef4444'};">${isCorrect ? '+1' : 'MISS'}</div>
       `;
-      container.appendChild(fx);
+      moundWrap.appendChild(fx);
       setTimeout(() => fx.remove(), 550);
     }
 
@@ -8087,9 +8234,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         }
 
         activeGameScores[activeGamePlayerIndex] = (activeGameScores[activeGamePlayerIndex] || 0) + 1;
-        if (typeof updateGamePlayerHud === 'function') {
-          updateGamePlayerHud(modal, 1, activeGamePlayerIndex);
-        }
+        updateScoreHud();
+
         if (typeof showCorrectAnswerCelebration === 'function') {
           showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
         }
@@ -8109,7 +8255,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         // Turn advance in 2-player / vs robot
         if (activeGamePlayers.length > 1) {
           if (typeof advanceGameTurn === 'function') advanceGameTurn();
-          updateTurnBanner();
+          updateScoreHud();
         }
 
         // Next round wave
@@ -8131,10 +8277,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         if (typeof showWrongAnswerCelebration === 'function') {
           showWrongAnswerCelebration(modal, prevPlayerIndex);
         }
-        if (typeof updateGamePlayerHud === 'function') {
-          updateGamePlayerHud(modal, 0, activeGamePlayerIndex);
-        }
-        updateTurnBanner();
+        updateScoreHud();
 
         setTimeout(() => {
           diglett.classList.remove('is-up', 'is-whacked');
@@ -8146,10 +8289,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     // Attach click / tap listener to holes
     field.addEventListener('click', (e) => {
       if (!roundActive) return;
-      const holeContainer = e.target.closest('[data-hole]');
-      if (!holeContainer) return;
-      const holeIdx = Number(holeContainer.dataset.hole);
-      const diglett = holeContainer.querySelector('.whac-diglett');
+      const chamber = e.target.closest('[data-hole]');
+      if (!chamber) return;
+      const holeIdx = Number(chamber.dataset.hole);
+      const diglett = chamber.querySelector('.whac-diglett');
       if (!diglett || !diglett.classList.contains('is-up')) return;
 
       const isTarget = diglett.dataset.isTarget === 'true';
@@ -8157,7 +8300,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     });
 
     // Close Handler
-    modal.querySelector('#whac-close').addEventListener('click', () => {
+    modal.querySelector('#whac-close-btn').addEventListener('click', () => {
       roundActive = false;
       cleanUpWave();
       modal.remove();
@@ -8165,7 +8308,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     });
 
     // Start first wave
-    setTimeout(spawnWave, 500);
+    setTimeout(spawnWave, 400);
   };
 })();
 
