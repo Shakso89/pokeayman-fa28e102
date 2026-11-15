@@ -3,7 +3,7 @@
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: radial-gradient(circle at 50% 25%, #1e293b 0%, #0f172a 65%, #020617 100%);
+  background: radial-gradient(circle at 50% 25%, #f7ebd7 0%, #dec49a 50%, #c4a472 100%);
   display: flex;
   flex-direction: column;
   color: #f8fafc;
@@ -251,71 +251,53 @@
   line-height: 1;
 }
 
-/* Rustic Signboard Clue Banner */
+/* Clean Signboard Clue Banner */
 .whac-signboard {
   background: linear-gradient(180deg, #78350f 0%, #451a03 100%);
-  border: 3px solid #b45309;
-  border-radius: 1rem;
+  border: 3.5px solid #b45309;
+  border-radius: 1.25rem;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 2px 4px rgba(251, 191, 36, 0.3);
-  padding: 0.45rem 1.25rem;
+  padding: 0.5rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  max-width: 580px;
+  max-width: 520px;
   width: 100%;
-  margin: 0.1rem auto 0.6rem;
+  margin: 0.15rem auto 0.55rem;
   position: relative;
   z-index: 20;
-}
-
-.whac-clue-label {
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #fef08a;
-  font-weight: 800;
-  margin-bottom: 0.2rem;
 }
 
 .whac-clue-content {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.85rem;
 }
 
 .whac-clue-img {
-  width: 68px;
-  height: 68px;
+  width: 76px;
+  height: 76px;
   object-fit: cover;
-  border-radius: 0.6rem;
-  border: 2.5px solid #fef08a;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  border-radius: 0.75rem;
+  border: 3px solid #fef08a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
   background: #ffffff;
+  cursor: pointer;
+  transition: transform 0.16s ease;
+}
+
+.whac-clue-img:hover {
+  transform: scale(1.06);
 }
 
 .whac-clue-text {
-  font-size: 1.35rem;
-  font-weight: 800;
+  font-size: 1.45rem;
+  font-weight: 900;
   color: #ffffff;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
   letter-spacing: 0.02em;
-}
-
-.whac-clue-audio-btn {
-  background: #f59e0b;
-  border: 2px solid #fef08a;
-  color: #451a03;
-  border-radius: 9999px;
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0.25rem 0.75rem;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
-  transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .whac-clue-audio-btn:hover {
@@ -376,8 +358,8 @@
 .whac-mound-stage {
   position: relative;
   width: 100%;
-  max-width: 220px;
-  height: 165px;
+  max-width: 230px;
+  height: 180px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -389,24 +371,24 @@
   bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
-  width: 195px;
-  height: 52px;
+  width: 200px;
+  height: 54px;
   background: #3d1b06;
   border-radius: 50%;
   z-index: 1;
-  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.7);
 }
 
 .whac-hole-pit {
   position: absolute;
-  top: 5px;
+  top: 6px;
   left: 50%;
   transform: translateX(-50%);
-  width: 175px;
-  height: 40px;
+  width: 180px;
+  height: 42px;
   background: radial-gradient(ellipse at 50% 50%, #000000 0%, #150802 75%, #2a0f04 100%);
   border-radius: 50%;
-  box-shadow: inset 0 8px 16px rgba(0, 0, 0, 0.95);
+  box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.95);
 }
 
 /* 2. The Burrow Chamber (Layer 2 - clips underground bottom) */
@@ -415,8 +397,8 @@
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  width: 160px;
-  height: 140px;
+  width: 172px;
+  height: 160px;
   overflow: hidden;
   z-index: 5;
   cursor: pointer;
@@ -429,8 +411,8 @@
   bottom: 0;
   left: 50%;
   transform: translateX(-50%) translateY(105%);
-  width: 125px;
-  height: 135px;
+  width: 132px;
+  height: 155px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -445,85 +427,162 @@
 }
 
 .whac-diglett.is-whacked {
-  transform: translateX(-50%) translateY(22px) scale(1.15, 0.72) !important;
+  transform: translateX(-50%) translateY(24px) scale(1.18, 0.74) !important;
   transition: transform 0.12s ease-out;
 }
 
-/* Diglett Body */
+/* Authentic Pokémon Diglett Body (Warm caramel-chocolate 3D dome) */
 .whac-diglett-body {
-  width: 110px;
-  height: 125px;
-  background: linear-gradient(180deg, #92400e 0%, #78350f 75%, #451a03 100%);
-  border-radius: 55px 55px 0 0;
+  width: 122px;
+  height: 146px;
+  background: linear-gradient(145deg, #c4763c 0%, #aa5a24 45%, #7a3911 100%);
+  border-radius: 61px 61px 18px 18px;
   position: relative;
-  box-shadow: inset -6px 0 10px rgba(0, 0, 0, 0.35), inset 6px 0 10px rgba(251, 191, 36, 0.2), 0 4px 10px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    inset 8px 8px 18px rgba(255, 237, 213, 0.35),
+    inset -8px -6px 16px rgba(0, 0, 0, 0.45),
+    0 8px 20px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 2px solid #582408;
+  border: 2.5px solid #582408;
   border-bottom: none;
 }
 
-/* Diglett Face (Clean - No emojis) */
+/* 3D Top Dome Specular Sheen */
+.whac-diglett-sheen {
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  width: 42px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.38) 0%, transparent 80%);
+  transform: rotate(-24deg);
+  pointer-events: none;
+}
+
+/* Authentic Diglett Eyes: large glossy black ovals with white gleam */
 .whac-diglett-eyes {
   display: flex;
-  gap: 24px;
-  margin-top: 16px;
+  gap: 28px;
+  margin-top: 18px;
+  position: relative;
+  z-index: 5;
 }
 
 .whac-diglett-eye {
-  width: 8px;
-  height: 20px;
-  background: #000000;
-  border-radius: 4px;
+  width: 11px;
+  height: 25px;
+  background: #0d0d0d;
+  border-radius: 6px;
   position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  transition: all 0.15s ease;
 }
 
-.whac-diglett-eye::after {
-  content: '';
+.whac-diglett-eye .whac-eye-sparkle {
   position: absolute;
   top: 2px;
-  left: 1px;
-  width: 3px;
-  height: 6px;
+  left: 2px;
+  width: 4px;
+  height: 8px;
   background: #ffffff;
   border-radius: 2px;
 }
 
-.whac-diglett.is-whacked .whac-diglett-eye {
-  height: 4px;
-  margin-top: 10px;
-  border-radius: 2px;
+/* Cute Cheeks & Glossy Pink Snout */
+.whac-diglett-cheeks {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: -6px;
+  position: relative;
+  z-index: 6;
+}
+
+.whac-diglett-blush {
+  width: 14px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(244, 63, 94, 0.35);
+  filter: blur(0.5px);
 }
 
 .whac-diglett-nose {
-  width: 32px;
-  height: 20px;
-  background: radial-gradient(circle at 35% 35%, #fda4af 0%, #f43f5e 60%, #be123c 100%);
-  border-radius: 16px / 10px;
-  margin-top: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.6);
+  width: 46px;
+  height: 26px;
+  border-radius: 23px / 13px;
+  background: radial-gradient(circle at 35% 30%, #ff85a1 0%, #f43f5e 60%, #be123c 100%);
+  border: 1.5px solid #9f1239;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.7);
+  position: relative;
+  flex-shrink: 0;
 }
 
-/* Word Card Badge (Held on belly, high above front dirt lip) */
+.whac-nose-highlight {
+  position: absolute;
+  top: 3px;
+  left: 9px;
+  width: 20px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+/* Cute Paws holding the card */
+.whac-diglett-paws {
+  display: flex;
+  justify-content: space-between;
+  width: 92px;
+  position: absolute;
+  bottom: 46px;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.whac-diglett-paw {
+  width: 20px;
+  height: 13px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #d98246 0%, #9e4c1b 100%);
+  border: 1.5px solid #582408;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+/* Expressive Whacked Diglett */
+.whac-diglett.is-whacked .whac-diglett-eye {
+  height: 5px;
+  margin-top: 10px;
+  border-radius: 3px;
+  background: #3b1402;
+  transform: scaleX(1.3);
+}
+
+.whac-diglett.is-whacked .whac-diglett-eye .whac-eye-sparkle {
+  display: none;
+}
+
+/* High-contrast Word Badge held by Diglett */
 .whac-word-badge {
   background: #ffffff;
   color: #0f172a !important;
   border: 2.5px solid #f59e0b;
-  border-radius: 0.65rem;
+  border-radius: 0.75rem;
   padding: 0.35rem 0.65rem;
-  font-size: 1.15rem;
+  font-size: 1.18rem;
   font-weight: 900;
   text-align: center;
-  max-width: 125px;
-  width: calc(100% - 8px);
+  max-width: 126px;
+  width: calc(100% - 6px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
   position: absolute;
-  bottom: 22px;
-  z-index: 15;
+  bottom: 8px;
+  z-index: 10;
   letter-spacing: 0.02em;
 }
 
@@ -615,27 +674,27 @@
 /* 1. CLASSROOM CHALKBOARD & OAK ACADEMY (data-ga-theme="classroom") */
 .whac-game-modal[data-ga-theme="classroom"] {
   background:
-    radial-gradient(ellipse at 50% 12%, rgba(254, 240, 138, 0.09) 0%, transparent 60%),
-    radial-gradient(circle at 50% 30%, #1f4833 0%, #133323 60%, #0a1c13 100%) !important;
+    radial-gradient(ellipse at 50% 12%, rgba(255, 255, 255, 0.45) 0%, transparent 60%),
+    radial-gradient(circle at 50% 25%, #f7ebd7 0%, #dec49a 50%, #c4a472 100%) !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-header {
-  background: linear-gradient(180deg, #8a572c 0%, #6e4522 60%, #543317 100%) !important;
-  border-bottom: 3.5px solid #3d230d !important;
-  box-shadow: inset 0 1px 0 rgba(255, 237, 213, 0.35), 0 6px 18px rgba(0, 0, 0, 0.4) !important;
+  background: linear-gradient(180deg, #a47142 0%, #8a572c 60%, #6e4522 100%) !important;
+  border-bottom: 3.5px solid #4a2c12 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 237, 213, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35) !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-duel-hud {
-  background: linear-gradient(180deg, #244b36 0%, #163624 100%) !important;
-  border: 3px solid #b5804c !important;
-  box-shadow: inset 0 0 0 2px #0f271a, 0 5px 0 #6e4522, 0 10px 24px rgba(0, 0, 0, 0.45) !important;
+  background: linear-gradient(180deg, #2a563d 0%, #1d3f2c 100%) !important;
+  border: 3.5px solid #b5804c !important;
+  box-shadow: inset 0 0 0 2px #142e20, 0 5px 0 #6e4522, 0 12px 28px rgba(45, 28, 12, 0.35) !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-player-badge {
-  background: rgba(15, 39, 26, 0.8) !important;
-  border-color: rgba(181, 128, 76, 0.4) !important;
+  background: rgba(20, 48, 33, 0.85) !important;
+  border-color: rgba(181, 128, 76, 0.5) !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-player-badge.is-active {
-  background: linear-gradient(135deg, rgba(250, 204, 21, 0.22), rgba(217, 119, 6, 0.22)) !important;
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.3), rgba(217, 119, 6, 0.3)) !important;
   border-color: #facc15 !important;
-  box-shadow: 0 0 16px rgba(250, 204, 21, 0.5), 0 3px 0 #854d0e !important;
+  box-shadow: 0 0 16px rgba(250, 204, 21, 0.55), 0 3px 0 #854d0e !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-player-name {
   color: #fffbeb !important;
@@ -645,43 +704,33 @@
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-player-badge.is-active .whac-player-score {
   color: #fef08a !important;
-  text-shadow: 0 0 8px rgba(250, 204, 21, 0.6) !important;
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.7) !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-player-turn-pill {
   color: #fde047 !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-target-pill {
-  background: #0f271a !important;
+  background: #142e20 !important;
   border: 2.5px solid #facc15 !important;
-  box-shadow: 0 0 12px rgba(250, 204, 21, 0.35) !important;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.4) !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-target-val {
   color: #fef08a !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-signboard {
   background:
-    radial-gradient(ellipse at 30% 25%, rgba(255, 255, 255, 0.08) 0%, transparent 60%),
-    linear-gradient(180deg, #1b3d2b 0%, #132d20 100%) !important;
+    radial-gradient(ellipse at 30% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 60%),
+    linear-gradient(180deg, #1f4833 0%, #153826 100%) !important;
   border-top: 8px solid #c28d58 !important;
   border-left: 8px solid #b07a45 !important;
   border-right: 8px solid #9c6836 !important;
   border-bottom: 12px solid #7d4e24 !important;
   border-radius: 18px !important;
-  box-shadow: inset 0 0 0 2px #4a2c12, inset 0 8px 24px rgba(0, 0, 0, 0.55), 0 6px 0 #4a2c12, 0 16px 36px rgba(0, 0, 0, 0.5) !important;
-}
-.whac-game-modal[data-ga-theme="classroom"] .whac-clue-label {
-  color: #fef08a !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+  box-shadow: inset 0 0 0 2px #4a2c12, inset 0 8px 24px rgba(0, 0, 0, 0.55), 0 6px 0 #4a2c12, 0 16px 36px rgba(45, 28, 12, 0.4) !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-clue-text {
   color: #ffffff !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
-}
-.whac-game-modal[data-ga-theme="classroom"] .whac-clue-audio-btn {
-  background: linear-gradient(180deg, #fef08a 0%, #eab308 100%) !important;
-  border: 2px solid #ca8a04 !important;
-  color: #422006 !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
 }
 .whac-game-modal[data-ga-theme="classroom"] .whac-clue-img {
   border-color: #fef08a !important;
@@ -719,8 +768,8 @@
 /* 2. JUNGLE RAINFOREST EXPEDITION (data-ga-theme="jungle") */
 .whac-game-modal[data-ga-theme="jungle"] {
   background:
-    radial-gradient(ellipse at 50% 12%, rgba(74, 222, 128, 0.12) 0%, transparent 60%),
-    radial-gradient(circle at 50% 30%, #0c3e21 0%, #062614 60%, #021208 100%) !important;
+    radial-gradient(ellipse at 50% 12%, rgba(255, 255, 255, 0.3) 0%, transparent 60%),
+    radial-gradient(circle at 50% 20%, #4ade80 0%, #22c55e 35%, #15803d 75%, #166534 100%) !important;
 }
 .whac-game-modal[data-ga-theme="jungle"] .whac-header {
   background: linear-gradient(180deg, #064e3b 0%, #022c22 100%) !important;
@@ -764,7 +813,7 @@
 }
 .whac-game-modal[data-ga-theme="jungle"] .whac-signboard {
   background:
-    radial-gradient(ellipse at 40% 25%, rgba(74, 222, 128, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 40% 25%, rgba(74, 222, 128, 0.12) 0%, transparent 60%),
     linear-gradient(180deg, #133a22 0%, #082213 100%) !important;
   border-top: 8px solid #15803d !important;
   border-left: 8px solid #166534 !important;
@@ -773,19 +822,9 @@
   border-radius: 18px !important;
   box-shadow: inset 0 0 0 2px #02170d, inset 0 8px 24px rgba(0, 0, 0, 0.6), 0 6px 0 #021a0c, 0 16px 36px rgba(0, 0, 0, 0.6) !important;
 }
-.whac-game-modal[data-ga-theme="jungle"] .whac-clue-label {
-  color: #86efac !important;
-  text-shadow: 0 0 8px rgba(74, 222, 128, 0.6) !important;
-}
 .whac-game-modal[data-ga-theme="jungle"] .whac-clue-text {
   color: #ffffff !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
-}
-.whac-game-modal[data-ga-theme="jungle"] .whac-clue-audio-btn {
-  background: linear-gradient(180deg, #4ade80 0%, #16a34a 100%) !important;
-  border: 2px solid #86efac !important;
-  color: #022c22 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
 }
 .whac-game-modal[data-ga-theme="jungle"] .whac-clue-img {
   border-color: #4ade80 !important;
@@ -823,8 +862,8 @@
 /* 3. TOYBOX STUDIO & PLAYFUL BLOCKS (data-ga-theme="toybox") */
 .whac-game-modal[data-ga-theme="toybox"] {
   background:
-    radial-gradient(ellipse at 50% 12%, rgba(168, 85, 247, 0.15) 0%, transparent 60%),
-    radial-gradient(circle at 50% 30%, #312e81 0%, #1e1b4b 60%, #0f0a2a 100%) !important;
+    radial-gradient(ellipse at 50% 12%, rgba(255, 255, 255, 0.35) 0%, transparent 60%),
+    radial-gradient(circle at 50% 20%, #818cf8 0%, #6366f1 35%, #4f46e5 75%, #3730a3 100%) !important;
 }
 .whac-game-modal[data-ga-theme="toybox"] .whac-header {
   background: linear-gradient(180deg, #4f46e5 0%, #3730a3 100%) !important;
@@ -873,7 +912,7 @@
 }
 .whac-game-modal[data-ga-theme="toybox"] .whac-signboard {
   background:
-    radial-gradient(ellipse at 40% 25%, rgba(255, 255, 255, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 40% 25%, rgba(255, 255, 255, 0.15) 0%, transparent 60%),
     linear-gradient(180deg, #4338ca 0%, #312e81 100%) !important;
   border-top: 8px solid #fbbf24 !important;
   border-left: 8px solid #f59e0b !important;
@@ -882,19 +921,9 @@
   border-radius: 22px !important;
   box-shadow: inset 0 0 0 2px #312e81, inset 0 8px 24px rgba(0, 0, 0, 0.4), 0 6px 0 #78350f, 0 16px 36px rgba(0, 0, 0, 0.5) !important;
 }
-.whac-game-modal[data-ga-theme="toybox"] .whac-clue-label {
-  color: #fde047 !important;
-  text-shadow: 0 2px 0 #78350f !important;
-}
 .whac-game-modal[data-ga-theme="toybox"] .whac-clue-text {
   color: #ffffff !important;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8) !important;
-}
-.whac-game-modal[data-ga-theme="toybox"] .whac-clue-audio-btn {
-  background: linear-gradient(180deg, #f472b6 0%, #ec4899 100%) !important;
-  border: 2px solid #fdf2f8 !important;
-  color: #ffffff !important;
-  box-shadow: 0 3px 8px rgba(236, 72, 153, 0.4) !important;
 }
 .whac-game-modal[data-ga-theme="toybox"] .whac-clue-img {
   border-color: #fbbf24 !important;
@@ -933,8 +962,8 @@
 /* 4. HALLOWEEN HAUNTED DUSK & GRAVEYARD (data-ga-theme="halloween") */
 .whac-game-modal[data-ga-theme="halloween"] {
   background:
-    radial-gradient(ellipse at 50% 12%, rgba(249, 115, 22, 0.15) 0%, transparent 60%),
-    radial-gradient(circle at 50% 30%, #3b0764 0%, #1c0529 60%, #090214 100%) !important;
+    radial-gradient(ellipse at 50% 12%, rgba(251, 146, 60, 0.35) 0%, transparent 60%),
+    radial-gradient(circle at 50% 20%, #c084fc 0%, #9333ea 35%, #7e22ce 70%, #581c87 100%) !important;
 }
 .whac-game-modal[data-ga-theme="halloween"] .whac-header {
   background: linear-gradient(180deg, #2e1065 0%, #17072b 100%) !important;
@@ -978,7 +1007,7 @@
 }
 .whac-game-modal[data-ga-theme="halloween"] .whac-signboard {
   background:
-    radial-gradient(ellipse at 40% 25%, rgba(234, 88, 12, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 40% 25%, rgba(234, 88, 12, 0.15) 0%, transparent 60%),
     linear-gradient(180deg, #2a0845 0%, #120320 100%) !important;
   border-top: 8px solid #9333ea !important;
   border-left: 8px solid #7e22ce !important;
@@ -987,19 +1016,9 @@
   border-radius: 18px !important;
   box-shadow: inset 0 0 0 2px #090214, inset 0 8px 24px rgba(0, 0, 0, 0.7), 0 6px 0 #7c2d12, 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(147, 51, 234, 0.35) !important;
 }
-.whac-game-modal[data-ga-theme="halloween"] .whac-clue-label {
-  color: #fb923c !important;
-  text-shadow: 0 0 10px rgba(234, 88, 12, 0.8) !important;
-}
 .whac-game-modal[data-ga-theme="halloween"] .whac-clue-text {
   color: #ffffff !important;
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9) !important;
-}
-.whac-game-modal[data-ga-theme="halloween"] .whac-clue-audio-btn {
-  background: linear-gradient(180deg, #f97316 0%, #c2410c 100%) !important;
-  border: 2px solid #fed7aa !important;
-  color: #ffffff !important;
-  box-shadow: 0 0 10px rgba(249, 115, 22, 0.6) !important;
 }
 .whac-game-modal[data-ga-theme="halloween"] .whac-clue-img {
   border-color: #ea580c !important;
@@ -1037,8 +1056,8 @@
 /* 5. CLASSIC ARCADE NEON & CYBER WARP (data-ga-theme="classic") */
 .whac-game-modal[data-ga-theme="classic"] {
   background:
-    radial-gradient(ellipse at 50% 12%, rgba(0, 240, 255, 0.14) 0%, transparent 60%),
-    radial-gradient(circle at 50% 30%, #0f172a 0%, #020617 60%, #000000 100%) !important;
+    radial-gradient(ellipse at 50% 12%, rgba(255, 255, 255, 0.4) 0%, transparent 60%),
+    radial-gradient(circle at 50% 20%, #38bdf8 0%, #0284c7 35%, #0369a1 75%, #0c4a6e 100%) !important;
 }
 .whac-game-modal[data-ga-theme="classic"] .whac-header {
   background: rgba(11, 17, 32, 0.95) !important;
@@ -1088,19 +1107,9 @@
   border-radius: 18px !important;
   box-shadow: inset 0 0 16px rgba(0, 240, 255, 0.25), 0 0 26px rgba(0, 240, 255, 0.45), 0 12px 32px rgba(0, 0, 0, 0.8) !important;
 }
-.whac-game-modal[data-ga-theme="classic"] .whac-clue-label {
-  color: #00f0ff !important;
-  text-shadow: 0 0 10px rgba(0, 240, 255, 0.8) !important;
-}
 .whac-game-modal[data-ga-theme="classic"] .whac-clue-text {
   color: #ffffff !important;
   text-shadow: 0 0 10px rgba(0, 240, 255, 0.8) !important;
-}
-.whac-game-modal[data-ga-theme="classic"] .whac-clue-audio-btn {
-  background: rgba(0, 240, 255, 0.18) !important;
-  border: 2px solid #00f0ff !important;
-  color: #00f0ff !important;
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.5) !important;
 }
 .whac-game-modal[data-ga-theme="classic"] .whac-clue-img {
   border-color: #00f0ff !important;

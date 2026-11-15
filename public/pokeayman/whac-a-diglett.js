@@ -161,22 +161,12 @@
           </div>
         </div>
 
-        <!-- 3. Target Clue Signboard (Spelling is hidden when picture is displayed!) -->
+        <!-- 3. Target Clue Signboard (Clean: Centered Picture, no label above, no empty audio box) -->
         <section class="whac-signboard" aria-label="Target clue to whack">
           <div class="whac-combo-badge" id="whac-combo">Combo x2</div>
-          <div class="text-center">
-            <div class="whac-clue-label" id="whac-clue-label">WHACK THE MATCHING WORD</div>
-            <div class="whac-clue-content">
-              <img id="whac-clue-image" class="whac-clue-img hidden" alt="Picture clue">
-              <span id="whac-clue-text" class="whac-clue-text hidden"></span>
-              <button type="button" id="whac-speak-btn" class="whac-clue-audio-btn" aria-label="Hear pronunciation" title="Listen to word">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                </svg>
-              </button>
-            </div>
+          <div class="whac-clue-content">
+            <img id="whac-clue-image" class="whac-clue-img hidden" alt="Picture clue" title="Click to hear word">
+            <span id="whac-clue-text" class="whac-clue-text hidden"></span>
           </div>
         </section>
 
@@ -194,11 +184,25 @@
                 <div class="whac-burrow-chamber" data-hole="${i}">
                   <div class="whac-diglett" data-hole-diglett="${i}">
                     <div class="whac-diglett-body">
+                      <!-- 3D Dome Top Light -->
+                      <div class="whac-diglett-sheen"></div>
+                      <!-- Authentic Diglett Eyes with circular gleam -->
                       <div class="whac-diglett-eyes">
-                        <div class="whac-diglett-eye"></div>
-                        <div class="whac-diglett-eye"></div>
+                        <div class="whac-diglett-eye left"><span class="whac-eye-sparkle"></span></div>
+                        <div class="whac-diglett-eye right"><span class="whac-eye-sparkle"></span></div>
                       </div>
-                      <div class="whac-diglett-nose"></div>
+                      <!-- Authentic Diglett Nose & Cheeks -->
+                      <div class="whac-diglett-cheeks">
+                        <div class="whac-diglett-blush left"></div>
+                        <div class="whac-diglett-nose"><span class="whac-nose-highlight"></span></div>
+                        <div class="whac-diglett-blush right"></div>
+                      </div>
+                      <!-- Cute Diglett Paws holding the card -->
+                      <div class="whac-diglett-paws">
+                        <div class="whac-diglett-paw left"></div>
+                        <div class="whac-diglett-paw right"></div>
+                      </div>
+                      <!-- High-contrast Word Badge -->
                       <div class="whac-word-badge" data-hole-badge="${i}"></div>
                     </div>
                   </div>
@@ -283,6 +287,14 @@
     const comboEl = modal.querySelector('#whac-combo');
     const field = modal.querySelector('#whac-field');
 
+    // Clicking clue image or text speaks the word
+    clueImage?.addEventListener('click', () => {
+      if (currentTargetWord) speakTarget(currentTargetWord.vocab_word);
+    });
+    clueText?.addEventListener('click', () => {
+      if (currentTargetWord) speakTarget(currentTargetWord.vocab_word);
+    });
+
     const p1Badge = modal.querySelector('#whac-p1-badge');
     const p2Badge = modal.querySelector('#whac-p2-badge');
     const p1ScoreEl = modal.querySelector('#whac-p1-score');
@@ -315,7 +327,7 @@
       }
     }
 
-    speakBtn.addEventListener('click', () => {
+    speakBtn?.addEventListener('click', () => {
       if (currentTargetWord) speakTarget(currentTargetWord.vocab_word);
     });
 
