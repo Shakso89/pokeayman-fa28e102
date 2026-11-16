@@ -7784,6 +7784,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     );
 
   window.chooseWhacADiglett = function (listName) {
+    // Early background pre-cache triggered immediately while picking players/options
+    const allWords = typeof getGameWords === 'function' ? getGameWords(listName, false) : [];
+    if (allWords && allWords.length) {
+      const prefetchFn = window.pokeaymanPrefetchVoices || window.pokeaymanAudioCache?.prefetchVocabularySpeechList;
+      if (typeof prefetchFn === 'function') {
+        const resolvedLvl = (typeof window.getClassReadingLevel === 'function'
+          ? window.getClassReadingLevel(typeof currentRole !== 'undefined' && currentRole === 'student' ? currentStudentSchool : navSchool, typeof currentRole !== 'undefined' && currentRole === 'student' ? currentStudentClass : navClass)
+          : 'P4') || 'P4';
+        prefetchFn(allWords, resolvedLvl).catch(() => {});
+      }
+    }
     if (typeof currentRole !== 'undefined' && currentRole === 'student') {
       if (typeof window.gaStudentSetup === 'function') {
         window.gaStudentSetup(listName, 'chooseWhacADiglett');
@@ -7903,7 +7914,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       </header>
 
       <div class="whac-game-shell ga-stage-shell">
-        <!-- 2. Dedicated Duelists Score HUD (Never white-on-white) -->
+        <!-- 2. Dedicated Duelists Score HUD (Guaranteed High Contrast, Never White-on-White) -->
         <div class="whac-duel-hud">
           <div class="whac-player-badge p1 ${activeGamePlayerIndex === 0 ? 'is-active' : ''}" id="whac-p1-badge">
             <img src="${p1Avatar}" class="whac-player-avatar" alt="${esc(p1Name)}">
@@ -7929,12 +7940,29 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </div>
         </div>
 
-        <!-- 3. Target Clue Signboard (Clean: Centered Picture, no label above, no empty audio box) -->
-        <section class="whac-signboard" aria-label="Target clue to whack">
+        <!-- 3. Target Clue Signboard (Clean: Centered Picture OR 3D Audio Card, no weird extra empty box, no label above) -->
+        <section class="whac-signboard" id="whac-signboard" aria-label="Target clue to whack">
           <div class="whac-combo-badge" id="whac-combo">Combo x2</div>
-          <div class="whac-clue-content">
+          <div class="whac-clue-content" id="whac-clue-content">
             <img id="whac-clue-image" class="whac-clue-img hidden" alt="Picture clue" title="Click to hear word">
             <span id="whac-clue-text" class="whac-clue-text hidden"></span>
+            <div id="whac-clue-audio" class="whac-audio-clue hidden" title="Click to hear word again" role="button" tabindex="0">
+              <div class="whac-audio-clue-box">
+                <svg viewBox="0 0 32 32" width="34" height="34" fill="none" class="whac-audio-clue-svg" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="whac-spk-grad" x1="4" y1="8" x2="16" y2="24" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ffffff"/>
+                      <stop offset="0.6" stop-color="#e2e8f0"/>
+                      <stop offset="1" stop-color="#94a3b8"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M15 6 L8 11 H3 C2.4 11 2 11.4 2 12 V20 C2 20.6 2.4 21 3 21 H8 L15 26 C15.7 26.5 16.5 26 16.5 25.2 V6.8 C16.5 6 15.7 5.5 15 6 Z" fill="url(#whac-spk-grad)"/>
+                  <path class="whac-wave-1" d="M20.5 11 C22 12.5 22.8 14.2 22.8 16 C22.8 17.8 22 19.5 20.5 21" stroke="#38bdf8" stroke-width="2.8" stroke-linecap="round"/>
+                  <path class="whac-wave-2" d="M24.5 7.5 C27 10 28.5 12.8 28.5 16 C28.5 19.2 27 22 24.5 24.5" stroke="#60a5fa" stroke-width="2.8" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <span class="whac-audio-clue-label">Listen &amp; Whack</span>
+            </div>
           </div>
         </section>
 
@@ -7956,6 +7984,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
                       <div class="whac-diglett-body">
                         <!-- 3D Dome Top Light -->
                         <div class="whac-diglett-sheen"></div>
+                        <!-- Cool Shades (shown on occasional stylish Digletts!) -->
+                        <div class="whac-diglett-shades">
+                          <div class="whac-shade-lens left"></div>
+                          <div class="whac-shade-bridge"></div>
+                          <div class="whac-shade-lens right"></div>
+                        </div>
                         <!-- Authentic Diglett Eyes with circular gleam -->
                         <div class="whac-diglett-eyes">
                           <div class="whac-diglett-eye left"><span class="whac-eye-sparkle"></span></div>
@@ -8129,27 +8163,49 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </svg>
         `;
       } else {
-        // Classic cyber neon grid
+        // Classic Pokémon Meadow & Grassy Stadium (Lush grass lawn, daisies, clovers & dirt pebbles like official card!)
         decor.innerHTML = `
           <svg class="whac-decor-svg" viewBox="0 0 900 480" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-            <g stroke="#06b6d4" stroke-width="1.2" opacity="0.4">
-              <line x1="450" y1="0" x2="0" y2="480"/>
-              <line x1="450" y1="0" x2="180" y2="480"/>
-              <line x1="450" y1="0" x2="360" y2="480"/>
-              <line x1="450" y1="0" x2="540" y2="480"/>
-              <line x1="450" y1="0" x2="720" y2="480"/>
-              <line x1="450" y1="0" x2="900" y2="480"/>
-              <line x1="300" y1="120" x2="600" y2="120"/>
-              <line x1="200" y1="220" x2="700" y2="220"/>
-              <line x1="100" y1="330" x2="800" y2="330"/>
-              <line x1="0" y1="450" x2="900" y2="450"/>
+            <defs>
+              <linearGradient id="whac-lawn-grad" x1="0" y1="0" x2="0" y2="480" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#22c55e" stop-opacity="0.3"/>
+                <stop offset="0.5" stop-color="#16a34a" stop-opacity="0.5"/>
+                <stop offset="1" stop-color="#14532d" stop-opacity="0.65"/>
+              </linearGradient>
+            </defs>
+            <rect width="900" height="480" fill="url(#whac-lawn-grad)"/>
+            <!-- Rolling gentle lawn contours -->
+            <path d="M 0 420 Q 220 380 450 410 T 900 400 L 900 480 L 0 480 Z" fill="#15803d" opacity="0.35"/>
+            <path d="M 0 450 Q 250 425 520 440 T 900 435 L 900 480 L 0 480 Z" fill="#166534" opacity="0.5"/>
+            <!-- Grass blades & clovers around mounds -->
+            <g fill="#4ade80" opacity="0.85">
+              <path d="M 45 440 C 48 415, 58 400, 62 385 C 60 405, 56 420, 52 440 Z"/>
+              <path d="M 55 440 C 62 420, 76 410, 84 400 C 78 415, 68 427, 60 440 Z"/>
+              <path d="M 845 440 C 842 415, 832 400, 828 385 C 830 405, 834 420, 838 440 Z"/>
+              <path d="M 835 440 C 828 420, 814 410, 806 400 C 812 415, 822 427, 830 440 Z"/>
+              <path d="M 220 450 C 224 430, 235 418, 240 408 C 236 425, 230 438, 226 450 Z"/>
+              <path d="M 680 450 C 676 430, 665 418, 660 408 C 664 425, 670 438, 674 450 Z"/>
+              <path d="M 445 455 C 450 432, 462 420, 468 410 C 463 427, 456 440, 451 455 Z"/>
             </g>
-            <g fill="#0284c7" stroke="#38bdf8" stroke-width="2" filter="drop-shadow(0 0 8px #06b6d4)">
-              <circle cx="28" cy="28" r="9"/><circle cx="28" cy="28" r="3.5" fill="#f0fdf4"/>
-              <circle cx="872" cy="28" r="9"/><circle cx="872" cy="28" r="3.5" fill="#f0fdf4"/>
-              <circle cx="28" cy="452" r="9"/><circle cx="28" cy="452" r="3.5" fill="#f0fdf4"/>
-              <circle cx="872" cy="452" r="9"/><circle cx="872" cy="452" r="3.5" fill="#f0fdf4"/>
+            <!-- White Daisies & Golden Buttercups -->
+            <g>
+              <circle cx="78" cy="395" r="7" fill="#ffffff"/><circle cx="78" cy="395" r="3" fill="#facc15"/>
+              <circle cx="818" cy="392" r="7" fill="#ffffff"/><circle cx="818" cy="392" r="3" fill="#facc15"/>
+              <circle cx="236" cy="414" r="6" fill="#fef08a"/><circle cx="236" cy="414" r="2.5" fill="#f59e0b"/>
+              <circle cx="664" cy="414" r="6" fill="#fef08a"/><circle cx="664" cy="414" r="2.5" fill="#f59e0b"/>
+              <circle cx="462" cy="416" r="6.5" fill="#ffffff"/><circle cx="462" cy="416" r="2.8" fill="#facc15"/>
+              <circle cx="160" cy="445" r="5" fill="#f472b6"/><circle cx="160" cy="445" r="2" fill="#db2777"/>
+              <circle cx="740" cy="445" r="5" fill="#38bdf8"/><circle cx="740" cy="445" r="2" fill="#0284c7"/>
             </g>
+            <!-- Loose earthen soil specks and tiny pebbles -->
+            <g fill="#78350f" opacity="0.6">
+              <circle cx="95" cy="438" r="3.5"/><circle cx="110" cy="442" r="2"/><circle cx="125" cy="435" r="2.5"/>
+              <circle cx="800" cy="438" r="3.5"/><circle cx="785" cy="442" r="2"/><circle cx="770" cy="435" r="2.5"/>
+              <circle cx="250" cy="446" r="3"/><circle cx="645" cy="446" r="3"/><circle cx="480" cy="448" r="3"/>
+            </g>
+            <!-- Subtle stadium arc lines -->
+            <path d="M 50 40 Q 450 15 850 40" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.25"/>
+            <path d="M 90 60 Q 450 35 810 60" stroke="#facc15" stroke-width="1.5" fill="none" opacity="0.2"/>
           </svg>
         `;
       }
@@ -8229,30 +8285,63 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       syncWhacSound();
     });
 
-    // Fullscreen toggle (Bulletproof direct API)
-    modal.querySelector('#whac-fullscreen-btn')?.addEventListener('click', async () => {
+    // Fullscreen toggle (Bulletproof direct API with in-app edge-to-edge fallback)
+    const fsBtn = modal.querySelector('#whac-fullscreen-btn');
+    const syncFsIcon = () => {
+      const isFs = Boolean(document.fullscreenElement) || modal.classList.contains('game-fullscreen-active');
+      if (fsBtn) {
+        fsBtn.textContent = isFs ? '↙' : '⛶';
+        fsBtn.setAttribute('title', isFs ? 'Exit fullscreen' : 'Toggle fullscreen');
+        fsBtn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Toggle fullscreen');
+      }
+    };
+    fsBtn?.addEventListener('click', async () => {
       try {
         if (document.fullscreenElement) {
           await document.exitFullscreen();
+          modal.classList.remove('game-fullscreen-active');
         } else {
-          await modal.requestFullscreen();
+          try {
+            await modal.requestFullscreen();
+          } catch (_) {
+            modal.classList.toggle('game-fullscreen-active');
+          }
         }
-      } catch (_) {}
+      } catch (_) {
+        modal.classList.toggle('game-fullscreen-active');
+      }
+      syncFsIcon();
     });
+    const onFsChange = () => {
+      if (!document.fullscreenElement && modal.classList.contains('game-fullscreen-active')) {
+        modal.classList.remove('game-fullscreen-active');
+      }
+      syncFsIcon();
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    modal.addEventListener('remove', () => document.removeEventListener('fullscreenchange', onFsChange), { once: true });
 
+    const signboard = modal.querySelector('#whac-signboard');
     const clueLabel = modal.querySelector('#whac-clue-label');
     const clueText = modal.querySelector('#whac-clue-text');
     const clueImage = modal.querySelector('#whac-clue-image');
+    const clueAudio = modal.querySelector('#whac-clue-audio');
     const speakBtn = modal.querySelector('#whac-speak-btn');
     const comboEl = modal.querySelector('#whac-combo');
     const field = modal.querySelector('#whac-field');
 
-    // Clicking clue image or text speaks the word
+    // Clicking clue image, text, or audio speaks/replays the word
     clueImage?.addEventListener('click', () => {
-      if (currentTargetWord) speakTarget(currentTargetWord.vocab_word);
+      if (currentTargetWord) playWaveAudio(currentTargetWord.vocab_word);
     });
     clueText?.addEventListener('click', () => {
-      if (currentTargetWord) speakTarget(currentTargetWord.vocab_word);
+      if (currentTargetWord) playWaveAudio(currentTargetWord.vocab_word);
+    });
+    clueAudio?.addEventListener('click', () => {
+      if (currentTargetWord) playWaveAudio(currentTargetWord.vocab_word);
+    });
+    speakBtn?.addEventListener('click', () => {
+      if (currentTargetWord) playWaveAudio(currentTargetWord.vocab_word);
     });
 
     const p1Badge = modal.querySelector('#whac-p1-badge');
@@ -8274,31 +8363,180 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       if (p2TurnEl) p2TurnEl.textContent = !isP1 ? 'TURN' : '';
     }
 
-    function speakTarget(word) {
-      if (!word) return;
-      if (window.pokeSfx && typeof window.pokeSfx.isMuted === 'function' && window.pokeSfx.isMuted()) return;
-      if (typeof gameSoundState !== 'undefined' && gameSoundState.muted) return;
-      if (typeof window.readGameWordAloud === 'function') {
-        window.readGameWordAloud(word);
-      } else if ('speechSynthesis' in window) {
+    const resolvedLevel = (typeof window.getClassReadingLevel === 'function'
+      ? window.getClassReadingLevel(typeof currentRole !== 'undefined' && currentRole === 'student' ? currentStudentSchool : navSchool, typeof currentRole !== 'undefined' && currentRole === 'student' ? currentStudentClass : navClass)
+      : 'P4') || 'P4';
+
+    const inMemoryAudioUrls = new Map();
+    let activeAudio = null;
+    let currentSpeechAbort = null;
+    let waveAudioStarted = false;
+
+    function playWaveAudio(word, onStart, onEnd) {
+      waveAudioStarted = false;
+      let hasEnded = false;
+
+      const triggerStart = () => {
+        if (waveAudioStarted) return;
+        waveAudioStarted = true;
+        signboard?.classList.add('is-speaking');
+        onStart?.();
+      };
+
+      const triggerEnd = () => {
+        if (hasEnded) return;
+        hasEnded = true;
+        signboard?.classList.remove('is-speaking');
+        onEnd?.();
+      };
+
+      if (!word) {
+        triggerStart();
+        triggerEnd();
+        return;
+      }
+
+      const isMuted = (window.pokeSfx && typeof window.pokeSfx.isMuted === 'function' && window.pokeSfx.isMuted()) || (typeof gameSoundState !== 'undefined' && gameSoundState.muted);
+      if (isMuted) {
+        triggerStart();
+        setTimeout(triggerEnd, 1200);
+        return;
+      }
+
+      // Cancel prior audio
+      if (currentSpeechAbort) {
+        try { currentSpeechAbort.abort(); } catch (_) {}
+        currentSpeechAbort = null;
+      }
+      if (activeAudio) {
         try {
-          const u = new SpeechSynthesisUtterance(word);
-          u.lang = 'en-US';
-          window.speechSynthesis.speak(u);
-        } catch (e) {}
+          activeAudio.pause();
+          activeAudio.currentTime = 0;
+        } catch (_) {}
+        activeAudio = null;
+      }
+      if (window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch (_) {}
+      }
+      if (typeof window.stopNaturalVocabulary === 'function') {
+        try { window.stopNaturalVocabulary(); } catch (_) {}
+      }
+
+      const abortCtrl = new AbortController();
+      currentSpeechAbort = abortCtrl;
+      const key = String(word).trim().toLowerCase();
+
+      // 1. Instant 0ms playback from in-memory pre-cached Object URL
+      const cachedUrl = inMemoryAudioUrls.get(key);
+      if (cachedUrl) {
+        try {
+          const audio = new Audio(cachedUrl);
+          activeAudio = audio;
+          audio.onplay = () => triggerStart();
+          audio.onended = () => {
+            if (activeAudio === audio) activeAudio = null;
+            triggerEnd();
+          };
+          audio.onerror = () => triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd);
+          audio.play().catch(() => triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd));
+          return;
+        } catch (_) {
+          triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd);
+          return;
+        }
+      }
+
+      // 2. Fast check: permanent IndexedDB audio cache with 60ms race against instant native speech
+      const audioCache = window.pokeaymanAudioCache;
+      let handled = false;
+
+      const fallbackTimer = setTimeout(() => {
+        if (abortCtrl.signal.aborted || waveAudioStarted || handled) return;
+        handled = true;
+        triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd);
+        // Also prefetch in background so subsequent rounds have high-quality voice ready
+        const prefetchFn = window.pokeaymanPrefetchVoices || audioCache?.prefetchVocabularySpeechList;
+        if (typeof prefetchFn === 'function') {
+          prefetchFn([word], resolvedLevel).catch(() => {});
+        }
+      }, 60);
+
+      if (audioCache && typeof audioCache.getCachedAudio === 'function') {
+        audioCache.getCachedAudio(word, resolvedLevel, 'kore').then(blob => {
+          if (abortCtrl.signal.aborted || waveAudioStarted || handled) return;
+          if (blob) {
+            handled = true;
+            clearTimeout(fallbackTimer);
+            try {
+              const audioUrl = URL.createObjectURL(blob);
+              inMemoryAudioUrls.set(key, audioUrl);
+              const audio = new Audio(audioUrl);
+              activeAudio = audio;
+              audio.onplay = () => triggerStart();
+              audio.onended = () => {
+                if (activeAudio === audio) activeAudio = null;
+                triggerEnd();
+              };
+              audio.onerror = () => triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd);
+              audio.play().catch(() => triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd));
+            } catch (_) {
+              triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd);
+            }
+          }
+        }).catch(() => {});
       }
     }
 
-    speakBtn?.addEventListener('click', () => {
-      if (currentTargetWord) speakTarget(currentTargetWord.vocab_word);
-    });
+    function triggerNativeSpeech(word, signal, onStart, onEnd) {
+      if (signal?.aborted) return;
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(word);
+          u.lang = 'en-US';
+          u.rate = 1.0;
+          u.onstart = () => onStart();
+          u.onend = () => onEnd();
+          u.onerror = () => {
+            onStart();
+            onEnd();
+          };
+          window.speechSynthesis.speak(u);
+          setTimeout(onStart, 30);
+          return;
+        } catch (_) {}
+      }
+      if (typeof window.readGameWordAloud === 'function') {
+        window.readGameWordAloud(word);
+      }
+      onStart();
+      onEnd();
+    }
 
     function cleanUpWave() {
       clearTimeout(waveTimer);
       clearTimeout(botTimer);
+      if (currentSpeechAbort) {
+        try { currentSpeechAbort.abort(); } catch (_) {}
+        currentSpeechAbort = null;
+      }
+      if (activeAudio) {
+        try {
+          activeAudio.pause();
+          activeAudio.currentTime = 0;
+        } catch (_) {}
+        activeAudio = null;
+      }
+      if (window.speechSynthesis) {
+        try { window.speechSynthesis.cancel(); } catch (_) {}
+      }
+      if (typeof window.stopNaturalVocabulary === 'function') {
+        try { window.stopNaturalVocabulary(); } catch (_) {}
+      }
       modal.querySelectorAll('.whac-diglett').forEach((el) => {
         el.classList.remove('is-up', 'is-whacked');
       });
+      signboard?.classList.remove('is-speaking');
       currentActiveHoles = [];
     }
 
@@ -8311,27 +8549,33 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       const nextWord = allWords[Math.floor(Math.random() * allWords.length)];
       currentTargetWord = nextWord;
 
-      // Update signboard clue: NEVER show spelling next to picture!
-      if (nextWord.vocab_image && String(nextWord.vocab_image).trim().length > 0) {
+      // Update signboard clue
+      const hasImage = nextWord.vocab_image && String(nextWord.vocab_image).trim().length > 0;
+      const hasTranslation = Boolean(nextWord.vocab_meaning || nextWord.translation);
+
+      if (hasImage) {
+        clueImage.onerror = () => {
+          clueImage.classList.add('hidden');
+          if (clueAudio) clueAudio.classList.remove('hidden');
+        };
         clueImage.src = nextWord.vocab_image;
         clueImage.classList.remove('hidden');
         clueText.classList.add('hidden');
         clueText.textContent = '';
-        if (clueLabel) clueLabel.textContent = 'WHACK THE MATCHING WORD';
-      } else if (nextWord.vocab_meaning || nextWord.translation) {
+        if (clueAudio) clueAudio.classList.add('hidden');
+        if (clueLabel) clueLabel.textContent = '';
+      } else if (hasTranslation) {
         clueImage.classList.add('hidden');
         clueText.textContent = nextWord.vocab_meaning || nextWord.translation;
         clueText.classList.remove('hidden');
-        if (clueLabel) clueLabel.textContent = 'WHACK THE ENGLISH WORD';
+        if (clueAudio) clueAudio.classList.add('hidden');
+        if (clueLabel) clueLabel.textContent = '';
       } else {
         clueImage.classList.add('hidden');
-        clueText.textContent = 'Listen carefully';
-        clueText.classList.remove('hidden');
-        if (clueLabel) clueLabel.textContent = 'LISTEN TO PRONUNCIATION';
+        clueText.classList.add('hidden');
+        if (clueAudio) clueAudio.classList.remove('hidden');
+        if (clueLabel) clueLabel.textContent = '';
       }
-
-      // Automatically speak word once wave appears
-      speakTarget(nextWord.vocab_word);
 
       // Select 2 or 3 random distinct holes
       const holeIndices = [0, 1, 2, 3, 4, 5].sort(() => Math.random() - 0.5);
@@ -8358,43 +8602,53 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         diglett.dataset.word = wordObj.vocab_word;
         diglett.dataset.isTarget = isTarget ? 'true' : 'false';
 
-        // Pop up from inside the hole
-        setTimeout(() => {
-          if (roundActive) {
-            diglett.classList.add('is-up');
-            try { window.pokeSfx?.play?.('click'); } catch (e) {}
-          }
-        }, Math.random() * 80);
+        // 1 in 3 Digletts wear cool shades like in the official Pokémon card!
+        const hasShades = Math.random() < 0.33;
+        diglett.classList.toggle('has-shades', hasShades);
       });
 
-      // Handle Robot Opponent logic
-      const currentPlayer = activeGamePlayers[activeGamePlayerIndex];
-      if (currentPlayer && currentPlayer.isBot) {
-        const botDiff = currentPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
-        const reactionTimes = { easy: 1800, normal: 1200, hard: 750 };
-        const delay = reactionTimes[botDiff] || 1200;
-
-        botTimer = setTimeout(() => {
-          if (!roundActive) return;
-          const targetDiglett = modal.querySelector(`[data-hole-diglett="${targetHole}"]`);
-          if (targetDiglett && targetDiglett.classList.contains('is-up') && !targetDiglett.classList.contains('is-whacked')) {
-            handleHit(targetHole, true, true);
-          }
-        }, delay);
-      }
-
-      // Wave retreat timeout (if not whacked within 2.3s)
-      waveTimer = setTimeout(() => {
+      // Sound-Synced Wave: Start audio first, pop Digletts up when audio begins!
+      playWaveAudio(nextWord.vocab_word, () => {
         if (!roundActive) return;
-        modal.querySelectorAll('.whac-diglett.is-up').forEach((el) => {
-          el.classList.remove('is-up');
+
+        // Audio has begun playing! Digletts pop up now!
+        chosenHoles.forEach((holeIdx) => {
+          const diglett = modal.querySelector(`[data-hole-diglett="${holeIdx}"]`);
+          if (diglett) {
+            diglett.classList.add('is-up');
+            try { window.pokeSfx?.play?.('click'); } catch (_) {}
+          }
         });
-        if (activeGamePlayers.length > 1) {
-          if (typeof advanceGameTurn === 'function') advanceGameTurn();
-          updateScoreHud();
+
+        // Robot opponent logic scheduled from when audio starts
+        const currentPlayer = activeGamePlayers[activeGamePlayerIndex];
+        if (currentPlayer && currentPlayer.isBot) {
+          const botDiff = currentPlayer.botDifficulty || window.selectedBotDifficulty || 'normal';
+          const reactionTimes = { easy: 2400, normal: 1700, hard: 1100 };
+          const delay = reactionTimes[botDiff] || 1700;
+
+          botTimer = setTimeout(() => {
+            if (!roundActive) return;
+            const targetDiglett = modal.querySelector(`[data-hole-diglett="${targetHole}"]`);
+            if (targetDiglett && targetDiglett.classList.contains('is-up') && !targetDiglett.classList.contains('is-whacked')) {
+              handleHit(targetHole, true, true);
+            }
+          }, delay);
         }
-        setTimeout(spawnWave, 400);
-      }, 2300);
+
+        // Wave retreat timeout (Full fair 3.0s reaction window from sound start!)
+        waveTimer = setTimeout(() => {
+          if (!roundActive) return;
+          modal.querySelectorAll('.whac-diglett.is-up').forEach((el) => {
+            el.classList.remove('is-up');
+          });
+          if (activeGamePlayers.length > 1) {
+            if (typeof advanceGameTurn === 'function') advanceGameTurn();
+            updateScoreHud();
+          }
+          setTimeout(spawnWave, 400);
+        }, 3000);
+      });
     }
 
     // Render Pikachu holding the giant Pokéball hammer striking down!
@@ -8574,13 +8828,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     modal.querySelector('#whac-close-btn').addEventListener('click', () => {
       roundActive = false;
       cleanUpWave();
+      inMemoryAudioUrls.forEach((url) => {
+        try { URL.revokeObjectURL(url); } catch (_) {}
+      });
+      inMemoryAudioUrls.clear();
       modal.remove();
       if (typeof returnToGamesTab === 'function') returnToGamesTab();
     });
 
     // Helper: pre-cache all vocabulary word voices before wave 1 starts.
-    // If voices are already cached in IndexedDB, they are NOT regenerated.
-    // If not cached, they are fetched, converted, and saved to the permanent cache.
+    // If voices are already cached in IndexedDB, they are loaded into memory URLs.
+    // If not cached, they are fetched concurrently (concurrency: 3) and saved to cache.
     async function prepareVoicesAndStart() {
       const uniqueWords = [...new Set(
         allWords
@@ -8593,17 +8851,28 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         return;
       }
 
-      // Check how many words need caching
       const audioCache = window.pokeaymanAudioCache;
+
+      // 1. Check which words are already cached and load into in-memory URLs for 0ms latency
       let uncachedCount = 0;
       if (audioCache && typeof audioCache.getCachedAudio === 'function') {
-        const checkResults = await Promise.all(
-          uniqueWords.map(w => audioCache.getCachedAudio(w, 'P4').catch(() => null))
+        await Promise.all(
+          uniqueWords.map(async (w) => {
+            try {
+              const blob = await audioCache.getCachedAudio(w, resolvedLevel, 'kore');
+              if (blob) {
+                inMemoryAudioUrls.set(w.toLowerCase(), URL.createObjectURL(blob));
+              } else {
+                uncachedCount++;
+              }
+            } catch (_) {
+              uncachedCount++;
+            }
+          })
         );
-        uncachedCount = checkResults.filter(r => !r).length;
       }
 
-      // If all words are already cached, start immediately!
+      // If all words are already in-memory/cached, start wave 1 immediately!
       if (uncachedCount === 0) {
         setTimeout(spawnWave, 400);
         return;
@@ -8622,12 +8891,29 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       if (typeof prefetchFn === 'function') {
         try {
           const textEl = prepToast.querySelector('.whac-prep-text');
-          await prefetchFn(uniqueWords, 'P4', (count, total) => {
+          const prefetchPromise = prefetchFn(uniqueWords, resolvedLevel, (count, total) => {
             if (textEl) textEl.textContent = `Readying voices (${count}/${total})...`;
           });
+          // Cap prefetch wait at 3.0s so game never hangs on slow connection
+          await Promise.race([prefetchPromise, new Promise(r => setTimeout(r, 3000))]);
         } catch (e) {
           console.warn('[Whac-A-Diglett] Pre-cache voice warning:', e);
         }
+      }
+
+      // Populate inMemoryAudioUrls for any newly fetched words
+      if (audioCache && typeof audioCache.getCachedAudio === 'function') {
+        await Promise.all(
+          uniqueWords.map(async (w) => {
+            const key = w.toLowerCase();
+            if (!inMemoryAudioUrls.has(key)) {
+              try {
+                const blob = await audioCache.getCachedAudio(w, resolvedLevel, 'kore');
+                if (blob) inMemoryAudioUrls.set(key, URL.createObjectURL(blob));
+              } catch (_) {}
+            }
+          })
+        );
       }
 
       if (prepToast) {

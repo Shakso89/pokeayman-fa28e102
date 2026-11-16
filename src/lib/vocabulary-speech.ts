@@ -226,8 +226,8 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
 /**
  * Pre-caches audio for an array of vocabulary words in background without playing sound.
  * Checks IndexedDB first; if already cached, skips immediately to avoid regenerating.
- * If uncached, requests speech from /api/vocabulary-speech, collects PCM audio chunks,
- * converts to WAV blob, and saves directly to IndexedDB permanent audio cache.
+ * If uncached, requests speech from /api/vocabulary-speech in parallel batches (concurrency: 3),
+ * collects PCM audio chunks, converts to WAV blob, and saves directly to IndexedDB permanent audio cache.
  */
 export async function prefetchVocabularySpeechList(
   words: (string | { vocab_word?: string; word?: string })[],
@@ -259,17 +259,29 @@ export async function prefetchVocabularySpeechList(
   let cachedCount = 0;
   let fetchedCount = 0;
 
-  for (const word of uniqueWords) {
-    try {
-      // 1. Check if already permanently cached
+  // 1. Instant check: which words are already cached?
+  const uncachedWords: string[] = [];
+  await Promise.all(
+    uniqueWords.map(async (word) => {
       const existing = await getCachedAudio(word, normalizedLevel, "kore").catch(() => null);
       if (existing) {
         cachedCount++;
-        onProgress?.(cachedCount + fetchedCount, total);
-        continue;
+      } else {
+        uncachedWords.push(word);
       }
+    })
+  );
 
-      // 2. Fetch and parse without playing audio
+  onProgress?.(cachedCount, total);
+
+  if (!uncachedWords.length) {
+    return { cached: cachedCount, fetched: 0, total };
+  }
+
+  // 2. Fetch uncached words concurrently (concurrency: 3)
+  const queue = [...uncachedWords];
+  const fetchSingleWord = async (word: string) => {
+    try {
       const response = await fetch("/api/vocabulary-speech", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -277,7 +289,7 @@ export async function prefetchVocabularySpeechList(
       });
 
       if (!response.ok || !response.body) {
-        continue;
+        return;
       }
 
       const pcmChunks: Uint8Array[] = [];
@@ -325,9 +337,21 @@ export async function prefetchVocabularySpeechList(
       }
     } catch (err) {
       console.warn(`[vocabulary-speech] Failed to pre-cache voice for "${word}":`, err);
+    } finally {
+      onProgress?.(cachedCount + fetchedCount, total);
     }
-    onProgress?.(cachedCount + fetchedCount, total);
-  }
+  };
+
+  const concurrency = Math.min(3, queue.length);
+  const workers = Array.from({ length: concurrency }, async () => {
+    while (queue.length > 0) {
+      const nextWord = queue.shift();
+      if (!nextWord) break;
+      await fetchSingleWord(nextWord);
+    }
+  });
+
+  await Promise.all(workers);
 
   return { cached: cachedCount, fetched: fetchedCount, total };
 }
