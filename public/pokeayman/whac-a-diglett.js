@@ -810,7 +810,68 @@
       if (typeof returnToGamesTab === 'function') returnToGamesTab();
     });
 
-    // Start first wave
-    setTimeout(spawnWave, 400);
+    // Helper: pre-cache all vocabulary word voices before wave 1 starts.
+    // If voices are already cached in IndexedDB, they are NOT regenerated.
+    // If not cached, they are fetched, converted, and saved to the permanent cache.
+    async function prepareVoicesAndStart() {
+      const uniqueWords = [...new Set(
+        allWords
+          .map(w => (typeof w === 'string' ? w : (w?.vocab_word || w?.word || '')).trim())
+          .filter(Boolean)
+      )];
+
+      if (!uniqueWords.length) {
+        setTimeout(spawnWave, 400);
+        return;
+      }
+
+      // Check how many words need caching
+      const audioCache = window.pokeaymanAudioCache;
+      let uncachedCount = 0;
+      if (audioCache && typeof audioCache.getCachedAudio === 'function') {
+        const checkResults = await Promise.all(
+          uniqueWords.map(w => audioCache.getCachedAudio(w, 'P4').catch(() => null))
+        );
+        uncachedCount = checkResults.filter(r => !r).length;
+      }
+
+      // If all words are already cached, start immediately!
+      if (uncachedCount === 0) {
+        setTimeout(spawnWave, 400);
+        return;
+      }
+
+      // Show brief smooth non-blocking preparing voice indicator
+      let prepToast = modal.querySelector('.whac-prep-voices');
+      if (!prepToast) {
+        prepToast = document.createElement('div');
+        prepToast.className = 'whac-prep-voices absolute top-3 left-1/2 -translate-x-1/2 z-50 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-amber-400/50 text-amber-300 text-xs font-black shadow-lg flex items-center gap-2 pointer-events-none transition-opacity duration-300';
+        prepToast.innerHTML = '<span class="inline-block animate-spin">⚡</span> <span class="whac-prep-text">Readying voices for rapid round...</span>';
+        modal.appendChild(prepToast);
+      }
+
+      const prefetchFn = window.pokeaymanPrefetchVoices || audioCache?.prefetchVocabularySpeechList;
+      if (typeof prefetchFn === 'function') {
+        try {
+          const textEl = prepToast.querySelector('.whac-prep-text');
+          await prefetchFn(uniqueWords, 'P4', (count, total) => {
+            if (textEl) textEl.textContent = `Readying voices (${count}/${total})...`;
+          });
+        } catch (e) {
+          console.warn('[Whac-A-Diglett] Pre-cache voice warning:', e);
+        }
+      }
+
+      if (prepToast) {
+        prepToast.style.opacity = '0';
+        setTimeout(() => prepToast?.remove(), 350);
+      }
+
+      if (roundActive) {
+        setTimeout(spawnWave, 300);
+      }
+    }
+
+    prepareVoicesAndStart();
   };
 })();

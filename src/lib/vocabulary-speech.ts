@@ -222,3 +222,112 @@ export async function streamSpeech(endpoint: string, text: string, level = "P3",
     await context.close().catch(() => {});
   }
 }
+
+/**
+ * Pre-caches audio for an array of vocabulary words in background without playing sound.
+ * Checks IndexedDB first; if already cached, skips immediately to avoid regenerating.
+ * If uncached, requests speech from /api/vocabulary-speech, collects PCM audio chunks,
+ * converts to WAV blob, and saves directly to IndexedDB permanent audio cache.
+ */
+export async function prefetchVocabularySpeechList(
+  words: (string | { vocab_word?: string; word?: string })[],
+  level = "P3",
+  onProgress?: (cachedCount: number, total: number) => void
+): Promise<{ cached: number; fetched: number; total: number }> {
+  const normalizedLevel = /^P[1-6]$/i.test(level) ? level.toUpperCase() : "P3";
+  const uniqueWords: string[] = [];
+  const seen = new Set<string>();
+
+  for (const item of words) {
+    const raw = typeof item === "string" ? item : (item?.vocab_word || item?.word || "");
+    const clean = String(raw || "")
+      .trim()
+      .replace(/^["'`]+|["'`]+$/g, "")
+      .replace(/\*\*|__|[*_`#]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    const key = clean.toLowerCase();
+    if (clean && !seen.has(key)) {
+      seen.add(key);
+      uniqueWords.push(clean);
+    }
+  }
+
+  const total = uniqueWords.length;
+  if (!total) return { cached: 0, fetched: 0, total: 0 };
+
+  let cachedCount = 0;
+  let fetchedCount = 0;
+
+  for (const word of uniqueWords) {
+    try {
+      // 1. Check if already permanently cached
+      const existing = await getCachedAudio(word, normalizedLevel, "kore").catch(() => null);
+      if (existing) {
+        cachedCount++;
+        onProgress?.(cachedCount + fetchedCount, total);
+        continue;
+      }
+
+      // 2. Fetch and parse without playing audio
+      const response = await fetch("/api/vocabulary-speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: word, level: normalizedLevel }),
+      });
+
+      if (!response.ok || !response.body) {
+        continue;
+      }
+
+      const pcmChunks: Uint8Array[] = [];
+      let completed = false;
+
+      const parser = createParser({
+        onEvent(event) {
+          const payload = JSON.parse(event.data) as {
+            type: string;
+            audio?: string;
+          };
+          if (payload.type === "speech.audio.done") {
+            completed = true;
+            return;
+          }
+          if (payload.type !== "speech.audio.delta" || completed || !payload.audio) return;
+          const rawChunk = Uint8Array.from(atob(payload.audio), (c) => c.charCodeAt(0));
+          pcmChunks.push(rawChunk);
+        },
+      });
+
+      const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+      try {
+        while (true) {
+          const next = await reader.read();
+          if (next.done) break;
+          parser.feed(next.value);
+        }
+        parser.reset({ consume: true });
+      } finally {
+        reader.releaseLock();
+      }
+
+      if (pcmChunks.length > 0) {
+        const totalBytes = pcmChunks.reduce((sum, c) => sum + c.byteLength, 0);
+        const combinedPcm = new Uint8Array(totalBytes);
+        let offset = 0;
+        for (const chunk of pcmChunks) {
+          combinedPcm.set(chunk, offset);
+          offset += chunk.byteLength;
+        }
+        const wavBlob = pcmToWavBlob(combinedPcm, 24000);
+        await saveCachedAudio(word, normalizedLevel, wavBlob, "kore").catch(() => {});
+        fetchedCount++;
+      }
+    } catch (err) {
+      console.warn(`[vocabulary-speech] Failed to pre-cache voice for "${word}":`, err);
+    }
+    onProgress?.(cachedCount + fetchedCount, total);
+  }
+
+  return { cached: cachedCount, fetched: fetchedCount, total };
+}

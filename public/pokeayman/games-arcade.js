@@ -2735,17 +2735,16 @@
         if (!card) return;
         const playerIdx = checkedBoxes.indexOf(c);
         const isSelected = playerIdx >= 0;
-        card.className = `game-player-card-option p-3 rounded-2xl border transition flex flex-col items-center gap-2 active:scale-95 cursor-pointer ${
-          isSelected
-            ? 'bg-slate-800/80 border-indigo-500/50 opacity-50 is-selected'
-            : 'bg-slate-900/60 border-slate-800 hover:border-slate-600'
-        }`;
+        const pNum = isSelected ? playerIdx + 1 : 0;
+        card.classList.remove('opacity-50', 'is-selected', 'is-p1', 'is-p2', 'is-p3', 'is-p4');
+        if (isSelected) {
+          card.classList.add('is-selected', `is-p${pNum}`);
+        }
         let badge = card.querySelector('.ga-player-badge');
         if (isSelected) {
-          const pNum = playerIdx + 1;
           if (!badge) {
             badge = document.createElement('span');
-            badge.className = 'ga-player-badge absolute top-1 left-2 text-[9px] font-black text-indigo-300 uppercase';
+            badge.className = 'ga-player-badge';
             card.prepend(badge);
           }
           badge.textContent = `P${pNum}`;

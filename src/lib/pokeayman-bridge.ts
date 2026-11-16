@@ -7,6 +7,7 @@ import {
   saveCachedAudio,
   getAudioCacheStats,
   clearAudioCache,
+  prefetchVocabularySpeechList,
 } from "@/lib/vocabulary-speech";
 import {
   fetchClassStudents,
@@ -70,7 +71,9 @@ export function setupPokeaymanBridge({
     getAudioCacheStats,
     clearAudioCache,
     requestPersistentStorage,
+    prefetchVocabularySpeechList,
   };
+  (window as any).pokeaymanPrefetchVoices = prefetchVocabularySpeechList;
 
   window.supabaseClient = supabase;
   window.queryClient = queryClient;
