@@ -219,9 +219,7 @@
   border-color: #334155 !important;
 }
 .ga-lobby .game-player-card-option:has(input:checked) {
-  background: rgba(251, 191, 36, 0.15) !important;
-  border-color: rgba(251, 191, 36, 0.8) !important;
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.2) !important;
+  /* Inherit halo color from is-p1..4 without forcing gold */
 }
 .ga-lobby .game-player-checkmark {
   display: none !important;
@@ -8017,9 +8015,10 @@ html body .find-me-word:is(.find-me-word--hint, [data-status="hint"]) {
   display: grid !important;
   grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)) !important;
   gap: 0.65rem !important;
-  max-height: 180px !important;
+  max-height: 200px !important;
   overflow-y: auto !important;
-  padding-right: 0.35rem !important;
+  overflow-x: hidden !important;
+  padding: 0.35rem 0.45rem 0.5rem 0.35rem !important;
   margin-bottom: 0.75rem !important;
   scrollbar-width: thin !important;
   scrollbar-color: #334155 transparent !important;
@@ -8039,15 +8038,16 @@ html body .find-me-word:is(.find-me-word--hint, [data-status="hint"]) {
   cursor: pointer !important;
   user-select: none !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+  transform: none !important;
 }
 .ga-lobby .game-player-card-option:hover:not(:has(input:checked)) {
   border-color: rgba(255, 255, 255, 0.3) !important;
-  transform: translateY(-2px) scale(1.02) !important;
+  transform: none !important;
   background: linear-gradient(145deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.9) 100%) !important;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35) !important;
 }
 .ga-lobby .game-player-card-option:has(input:checked) {
-  transform: translateY(-2px) scale(1.02) !important;
+  transform: none !important;
 }
 
 /* Player 1 .. 4 Colored Champion Halos */

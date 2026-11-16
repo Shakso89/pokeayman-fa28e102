@@ -2689,11 +2689,18 @@
             }
           }
 
-          slot.className = 'p-3 rounded-2xl bg-slate-800 border border-amber-400 ring-1 ring-amber-400/20 flex flex-col items-center justify-center gap-2 relative h-[88px] cursor-pointer hover:border-amber-300 transition group';
+          const pColors = {
+            1: { border: 'border-sky-400', ring: 'ring-sky-400/40', text: 'text-sky-300', bg: 'bg-sky-950/40' },
+            2: { border: 'border-rose-400', ring: 'ring-rose-400/40', text: 'text-rose-300', bg: 'bg-rose-950/40' },
+            3: { border: 'border-emerald-400', ring: 'ring-emerald-400/40', text: 'text-emerald-300', bg: 'bg-emerald-950/40' },
+            4: { border: 'border-amber-400', ring: 'ring-amber-400/40', text: 'text-amber-300', bg: 'bg-amber-950/40' }
+          };
+          const pc = pColors[pNum] || pColors[1];
+          slot.className = `p-3 rounded-2xl ${pc.bg} border ${pc.border} ring-1 ${pc.ring} flex flex-col items-center justify-center gap-2 relative h-[88px] cursor-pointer hover:brightness-110 transition group`;
           slot.innerHTML = `
-            <span class="absolute top-1 left-2 text-[9px] font-black text-amber-400 uppercase">P${pNum}</span>
+            <span class="absolute top-1 left-2 text-[9px] font-black ${pc.text} uppercase">P${pNum}</span>
             ${avatarHtml}
-            <span class="text-xs font-bold text-amber-400 truncate w-full text-center">${esc(studentName)}</span>
+            <span class="text-xs font-bold ${pc.text} truncate w-full text-center">${esc(studentName)}</span>
           `;
           slot.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -2895,7 +2902,7 @@
         set(q === 'random' ? shuffled.slice(0, maxAllowed) : []);
       }
     });
-    list.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 mt-2 overflow-y-auto max-h-[240px] pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]';
+    list.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 mt-2 overflow-y-auto max-h-[240px] p-1 pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]';
     list.before(players);
     players.append(bar, lineupStage, list);
     checks.forEach(c => c.addEventListener('change', () => {
