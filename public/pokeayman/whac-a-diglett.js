@@ -16,14 +16,15 @@
     );
 
   window.chooseWhacADiglett = function (listName) {
-    // Early background pre-cache triggered immediately while picking players/options
+    // Early background pre-cache of authentic Gemini voices while picking players/options
     const allWords = typeof getGameWords === 'function' ? getGameWords(listName, false) : [];
     if (allWords && allWords.length) {
-      const prefetchFn = window.pokeaymanPrefetchVoices || window.pokeaymanAudioCache?.prefetchVocabularySpeechList;
+      const prefetchFn = window.pokeaymanPrefetchVoices || window.parent?.pokeaymanPrefetchVoices || window.pokeaymanAudioCache?.prefetchVocabularySpeechList || window.parent?.pokeaymanAudioCache?.prefetchVocabularySpeechList;
       if (typeof prefetchFn === 'function') {
-        const resolvedLvl = (typeof window.getClassReadingLevel === 'function'
+        const rawLvl = (typeof window.getClassReadingLevel === 'function'
           ? window.getClassReadingLevel(typeof currentRole !== 'undefined' && currentRole === 'student' ? currentStudentSchool : navSchool, typeof currentRole !== 'undefined' && currentRole === 'student' ? currentStudentClass : navClass)
           : 'P4') || 'P4';
+        const resolvedLvl = typeof toReadingLevelCode === 'function' ? toReadingLevelCode(rawLvl) : (/^P[1-6]$/.test(rawLvl) ? rawLvl : 'P4');
         prefetchFn(allWords, resolvedLvl).catch(() => {});
       }
     }
@@ -595,9 +596,10 @@
       if (p2TurnEl) p2TurnEl.textContent = !isP1 ? 'TURN' : '';
     }
 
-    const resolvedLevel = (typeof window.getClassReadingLevel === 'function'
+    const rawLevel = (typeof window.getClassReadingLevel === 'function'
       ? window.getClassReadingLevel(typeof currentRole !== 'undefined' && currentRole === 'student' ? currentStudentSchool : navSchool, typeof currentRole !== 'undefined' && currentRole === 'student' ? currentStudentClass : navClass)
       : 'P4') || 'P4';
+    const resolvedLevel = typeof toReadingLevelCode === 'function' ? toReadingLevelCode(rawLevel) : (/^P[1-6]$/.test(rawLevel) ? rawLevel : 'P4');
 
     const inMemoryAudioUrls = new Map();
     let activeAudio = null;
@@ -647,18 +649,16 @@
         } catch (_) {}
         activeAudio = null;
       }
-      if (window.speechSynthesis) {
-        try { window.speechSynthesis.cancel(); } catch (_) {}
-      }
-      if (typeof window.stopNaturalVocabulary === 'function') {
-        try { window.stopNaturalVocabulary(); } catch (_) {}
+      const stopFn = window.stopNaturalVocabulary || window.parent?.stopNaturalVocabulary;
+      if (typeof stopFn === 'function') {
+        try { stopFn(); } catch (_) {}
       }
 
       const abortCtrl = new AbortController();
       currentSpeechAbort = abortCtrl;
       const key = String(word).trim().toLowerCase();
 
-      // 1. Instant 0ms playback from in-memory pre-cached Object URL
+      // 1. Instant 0ms playback: In-memory pre-cached Gemini voice Object URL
       const cachedUrl = inMemoryAudioUrls.get(key);
       if (cachedUrl) {
         try {
@@ -669,36 +669,25 @@
             if (activeAudio === audio) activeAudio = null;
             triggerEnd();
           };
-          audio.onerror = () => triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd);
-          audio.play().catch(() => triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd));
+          audio.onerror = () => {
+            speakViaGeminiNatural(word, abortCtrl.signal, triggerStart, triggerEnd);
+          };
+          audio.play().catch(() => {
+            speakViaGeminiNatural(word, abortCtrl.signal, triggerStart, triggerEnd);
+          });
           return;
         } catch (_) {
-          triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd);
+          speakViaGeminiNatural(word, abortCtrl.signal, triggerStart, triggerEnd);
           return;
         }
       }
 
-      // 2. Fast check: permanent IndexedDB audio cache with 60ms race against instant native speech
-      const audioCache = window.pokeaymanAudioCache;
-      let handled = false;
-
-      const fallbackTimer = setTimeout(() => {
-        if (abortCtrl.signal.aborted || waveAudioStarted || handled) return;
-        handled = true;
-        triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd);
-        // Also prefetch in background so subsequent rounds have high-quality voice ready
-        const prefetchFn = window.pokeaymanPrefetchVoices || audioCache?.prefetchVocabularySpeechList;
-        if (typeof prefetchFn === 'function') {
-          prefetchFn([word], resolvedLevel).catch(() => {});
-        }
-      }, 60);
-
+      // 2. Fast check: permanent IndexedDB audio cache (Gemini voice)
+      const audioCache = window.pokeaymanAudioCache || window.parent?.pokeaymanAudioCache;
       if (audioCache && typeof audioCache.getCachedAudio === 'function') {
         audioCache.getCachedAudio(word, resolvedLevel, 'kore').then(blob => {
-          if (abortCtrl.signal.aborted || waveAudioStarted || handled) return;
+          if (abortCtrl.signal.aborted || waveAudioStarted) return;
           if (blob) {
-            handled = true;
-            clearTimeout(fallbackTimer);
             try {
               const audioUrl = URL.createObjectURL(blob);
               inMemoryAudioUrls.set(key, audioUrl);
@@ -709,38 +698,60 @@
                 if (activeAudio === audio) activeAudio = null;
                 triggerEnd();
               };
-              audio.onerror = () => triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd);
-              audio.play().catch(() => triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd));
-            } catch (_) {
-              triggerNativeSpeech(word, abortCtrl.signal, triggerStart, triggerEnd);
-            }
+              audio.onerror = () => {
+                speakViaGeminiNatural(word, abortCtrl.signal, triggerStart, triggerEnd);
+              };
+              audio.play().catch(() => {
+                speakViaGeminiNatural(word, abortCtrl.signal, triggerStart, triggerEnd);
+              });
+              return;
+            } catch (_) {}
           }
-        }).catch(() => {});
+          speakViaGeminiNatural(word, abortCtrl.signal, triggerStart, triggerEnd);
+        }).catch(() => {
+          speakViaGeminiNatural(word, abortCtrl.signal, triggerStart, triggerEnd);
+        });
+        return;
       }
+
+      // 3. Fallback: Speak using the exact same Gemini natural reader as vocabulary lists
+      speakViaGeminiNatural(word, abortCtrl.signal, triggerStart, triggerEnd);
     }
 
-    function triggerNativeSpeech(word, signal, onStart, onEnd) {
+    // Authentic Gemini studio voice (same as vocabulary lists / vb lists) - NEVER robotic
+    function speakViaGeminiNatural(word, signal, onStart, onEnd) {
       if (signal?.aborted) return;
-      if ('speechSynthesis' in window) {
-        try {
-          window.speechSynthesis.cancel();
-          const u = new SpeechSynthesisUtterance(word);
-          u.lang = 'en-US';
-          u.rate = 1.0;
-          u.onstart = () => onStart();
-          u.onend = () => onEnd();
-          u.onerror = () => {
-            onStart();
+      const readNaturalFn = window.readNaturalVocabulary || window.parent?.readNaturalVocabulary;
+      if (typeof readNaturalFn === 'function') {
+        readNaturalFn(word, null, {
+          level: resolvedLevel,
+          preventRoboticFallback: true,
+          onStart: () => {
+            if (!signal?.aborted) onStart();
+          },
+          onEnd: () => {
             onEnd();
-          };
-          window.speechSynthesis.speak(u);
-          setTimeout(onStart, 30);
-          return;
-        } catch (_) {}
+          }
+        }).catch(() => {
+          onEnd();
+        });
+        return;
       }
+
+      const speaker = window.pokeaymanSpeak || window.parent?.pokeaymanSpeak;
+      if (typeof speaker === 'function') {
+        onStart();
+        speaker(word, resolvedLevel).then(() => onEnd()).catch(() => onEnd());
+        return;
+      }
+
       if (typeof window.readGameWordAloud === 'function') {
+        onStart();
         window.readGameWordAloud(word);
+        setTimeout(onEnd, 1200);
+        return;
       }
+
       onStart();
       onEnd();
     }
@@ -759,11 +770,9 @@
         } catch (_) {}
         activeAudio = null;
       }
-      if (window.speechSynthesis) {
-        try { window.speechSynthesis.cancel(); } catch (_) {}
-      }
-      if (typeof window.stopNaturalVocabulary === 'function') {
-        try { window.stopNaturalVocabulary(); } catch (_) {}
+      const stopFn = window.stopNaturalVocabulary || window.parent?.stopNaturalVocabulary;
+      if (typeof stopFn === 'function') {
+        try { stopFn(); } catch (_) {}
       }
       modal.querySelectorAll('.whac-diglett').forEach((el) => {
         el.classList.remove('is-up', 'is-whacked');
@@ -1068,7 +1077,7 @@
       if (typeof returnToGamesTab === 'function') returnToGamesTab();
     });
 
-    // Helper: pre-cache all vocabulary word voices before wave 1 starts.
+    // Helper: pre-cache all vocabulary word Gemini voices before wave 1 starts.
     // If voices are already cached in IndexedDB, they are loaded into memory URLs.
     // If not cached, they are fetched concurrently (concurrency: 3) and saved to cache.
     async function prepareVoicesAndStart() {
@@ -1083,7 +1092,7 @@
         return;
       }
 
-      const audioCache = window.pokeaymanAudioCache;
+      const audioCache = window.pokeaymanAudioCache || window.parent?.pokeaymanAudioCache;
 
       // 1. Check which words are already cached and load into in-memory URLs for 0ms latency
       let uncachedCount = 0;
@@ -1115,19 +1124,19 @@
       if (!prepToast) {
         prepToast = document.createElement('div');
         prepToast.className = 'whac-prep-voices absolute top-3 left-1/2 -translate-x-1/2 z-50 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-amber-400/50 text-amber-300 text-xs font-black shadow-lg flex items-center gap-2 pointer-events-none transition-opacity duration-300';
-        prepToast.innerHTML = '<span class="inline-block animate-spin">⚡</span> <span class="whac-prep-text">Readying voices for rapid round...</span>';
+        prepToast.innerHTML = '<span class="inline-block animate-spin">⚡</span> <span class="whac-prep-text">Readying Gemini voices for rapid round...</span>';
         modal.appendChild(prepToast);
       }
 
-      const prefetchFn = window.pokeaymanPrefetchVoices || audioCache?.prefetchVocabularySpeechList;
+      const prefetchFn = window.pokeaymanPrefetchVoices || window.parent?.pokeaymanPrefetchVoices || audioCache?.prefetchVocabularySpeechList;
       if (typeof prefetchFn === 'function') {
         try {
           const textEl = prepToast.querySelector('.whac-prep-text');
           const prefetchPromise = prefetchFn(uniqueWords, resolvedLevel, (count, total) => {
-            if (textEl) textEl.textContent = `Readying voices (${count}/${total})...`;
+            if (textEl) textEl.textContent = `Readying Gemini voices (${count}/${total})...`;
           });
-          // Cap prefetch wait at 3.0s so game never hangs on slow connection
-          await Promise.race([prefetchPromise, new Promise(r => setTimeout(r, 3000))]);
+          // Allow prefetching to complete so all Gemini studio voices are ready
+          await Promise.race([prefetchPromise, new Promise(r => setTimeout(r, 4500))]);
         } catch (e) {
           console.warn('[Whac-A-Diglett] Pre-cache voice warning:', e);
         }
