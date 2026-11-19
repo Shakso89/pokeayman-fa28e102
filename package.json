@@ -18,6 +18,8 @@
     "deploy": "bun run build && bun x wrangler deploy --cwd .output/",
     "desktop:start": "electron .",
     "desktop:build": "electron-builder --win",
+    "android:sync": "cap sync android",
+    "android:open": "cap open android",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
@@ -53,6 +55,9 @@
     "rolldown": "1.2.1"
   },
   "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
     "@hookform/resolvers": "^5.2.2",
     "@lovable.dev/cloud-auth-js": "^1.1.2",
     "@radix-ui/react-accordion": "^1.2.12",
