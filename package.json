@@ -6,7 +6,7 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
-  "main": "desktop/main.js",
+  "main": "desktop/main.cjs",
   "scripts": {
     "predev": "node scripts/sync-pokeayman-game-modules.mjs",
     "dev": "vite dev",
