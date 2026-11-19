@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, Menu, globalShortcut } = require('electron');
+const { app, BrowserWindow, shell, Menu, ipcMain } = require('electron');
 const path = require('path');
 
 // Target web app URL
@@ -14,9 +14,10 @@ function createWindow() {
     icon: path.join(__dirname, 'icon.png'),
     backgroundColor: '#0a0f1d',
     webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true,
+      sandbox: false, // Required for preload script IPC bridge
       spellcheck: false,
     },
     autoHideMenuBar: true,
@@ -35,6 +36,14 @@ function createWindow() {
     mainWindow.show();
   });
 
+  // Notify renderer on fullscreen change
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow?.webContents.send('desktop:fullscreen-changed', true);
+  });
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow?.webContents.send('desktop:fullscreen-changed', false);
+  });
+
   // Keyboard shortcut: F11 toggles fullscreen
   mainWindow.webContents.on('before-input-event', (event, input) => {
     if (input.key === 'F11' && input.type === 'keyDown') {
@@ -43,7 +52,7 @@ function createWindow() {
     }
   });
 
-  // Open external links (like external documentation or links) in user's default browser
+  // Open external links in user's default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https://pokeayman.pokeayman.workers.dev')) {
       return { action: 'allow' };
@@ -114,6 +123,24 @@ function createWindow() {
     mainWindow = null;
   });
 }
+
+// IPC Handlers for desktop controls
+ipcMain.handle('desktop:toggle-fullscreen', () => {
+  if (mainWindow) {
+    const nextState = !mainWindow.isFullScreen();
+    mainWindow.setFullScreen(nextState);
+    return nextState;
+  }
+  return false;
+});
+
+ipcMain.handle('desktop:is-fullscreen', () => {
+  return mainWindow ? mainWindow.isFullScreen() : false;
+});
+
+ipcMain.handle('desktop:quit-app', () => {
+  app.quit();
+});
 
 // Ensure single instance lock so double-clicking doesn't spawn duplicates
 const gotTheLock = app.requestSingleInstanceLock();

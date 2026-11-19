@@ -1264,3 +1264,27 @@ body.ts-on .ts-card select#ts-award-student option { background: var(--ts-surfac
   outline-offset: 2px;
   border-radius: 9999px;
 }
+
+/* Desktop EXE Only Controls: Positioned below Admin Hub in sidebar */
+.ts-desktop-controls {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ts-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ts-desktop-controls .ts-item {
+  color: var(--ts-muted);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+.ts-desktop-controls .ts-item:hover {
+  color: var(--ts-ink);
+  background: color-mix(in srgb, var(--ts-ink) 8%, transparent);
+}
+.ts-desktop-controls .ts-desktop-quit-btn:hover {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+}
