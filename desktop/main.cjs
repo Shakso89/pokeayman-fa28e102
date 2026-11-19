@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, Menu } = require('electron');
+const { app, BrowserWindow, shell, Menu, globalShortcut } = require('electron');
 const path = require('path');
 
 // Target web app URL
@@ -8,12 +8,10 @@ let mainWindow = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    minWidth: 960,
-    minHeight: 640,
+    fullscreen: true, // Native kiosk-like fullscreen (hides Windows taskbar and window frame)
+    frame: false, // No OS title bar / header
     title: 'PokéAyman',
-    icon: path.join(__dirname, '../public/favicon.png'),
+    icon: path.join(__dirname, 'icon.png'),
     backgroundColor: '#0a0f1d',
     webPreferences: {
       nodeIntegration: false,
@@ -25,7 +23,7 @@ function createWindow() {
     show: false, // Show once ready to avoid white flash
   });
 
-  // Remove default menu bar for clean app feel (can toggle with Alt if needed)
+  // Completely remove application menu bar
   Menu.setApplicationMenu(null);
 
   // Load the web application
@@ -33,7 +31,16 @@ function createWindow() {
 
   // Graceful show when DOM is ready
   mainWindow.once('ready-to-show', () => {
+    mainWindow.setFullScreen(true);
     mainWindow.show();
+  });
+
+  // Keyboard shortcut: F11 toggles fullscreen
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'F11' && input.type === 'keyDown') {
+      mainWindow.setFullScreen(!mainWindow.isFullScreen());
+      event.preventDefault();
+    }
   });
 
   // Open external links (like external documentation or links) in user's default browser
