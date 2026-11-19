@@ -1,15 +1,25 @@
-const { app, BrowserWindow, shell, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, shell, Menu, ipcMain, session } = require('electron');
 const path = require('path');
 
-// Target web app URL
+// Target web app URL with platform flag
 const APP_URL = 'https://pokeayman.pokeayman.workers.dev?platform=desktop';
+
+// Configure high-capacity persistent disk cache for static resources (Pokémon sprites, covers, audio, etc.)
+// 1 GB disk cache, 512 MB media cache
+app.commandLine.appendSwitch('disk-cache-size', '1073741824');
+app.commandLine.appendSwitch('media-cache-size', '536870912');
 
 let mainWindow = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    fullscreen: true, // Native kiosk-like fullscreen (hides Windows taskbar and window frame)
-    frame: false, // No OS title bar / header
+    fullscreen: true, // Native fullscreen by default (borderless game experience)
+    frame: false, // Borderless window
+    width: 1280, // Comfortable desktop resolution when exiting fullscreen
+    height: 800,
+    minWidth: 1024, // Prevents responsive layout from breaking into phone/tablet mode
+    minHeight: 700,
+    center: true,
     title: 'PokéAyman',
     icon: path.join(__dirname, 'icon.png'),
     backgroundColor: '#0a0f1d',
@@ -27,9 +37,26 @@ function createWindow() {
   // Completely remove application menu bar
   Menu.setApplicationMenu(null);
 
-  // Set custom user agent to reliably identify desktop app across all frames
+  // Set custom user agent to reliably identify desktop app across all frames & iframes
   const defaultUA = mainWindow.webContents.getUserAgent();
   mainWindow.webContents.setUserAgent(`${defaultUA} PokeAymanApp/1.0`);
+
+  // Strip native scrollbars globally across the main window and all subframes
+  const stripScrollbarCSS = `
+    html, body {
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    ::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  `;
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.insertCSS(stripScrollbarCSS).catch(() => {});
+  });
 
   // Load the web application
   mainWindow.loadURL(APP_URL);
@@ -51,7 +78,12 @@ function createWindow() {
   // Keyboard shortcut: F11 toggles fullscreen
   mainWindow.webContents.on('before-input-event', (event, input) => {
     if (input.key === 'F11' && input.type === 'keyDown') {
-      mainWindow.setFullScreen(!mainWindow.isFullScreen());
+      const nextState = !mainWindow.isFullScreen();
+      mainWindow.setFullScreen(nextState);
+      if (!nextState) {
+        mainWindow.setSize(1280, 800);
+        mainWindow.center();
+      }
       event.preventDefault();
     }
   });
@@ -87,6 +119,7 @@ function createWindow() {
               color: #f8fafc;
               text-align: center;
               user-select: none;
+              overflow: hidden;
             }
             .card {
               background: rgba(30, 41, 59, 0.7);
@@ -133,6 +166,10 @@ ipcMain.handle('desktop:toggle-fullscreen', () => {
   if (mainWindow) {
     const nextState = !mainWindow.isFullScreen();
     mainWindow.setFullScreen(nextState);
+    if (!nextState) {
+      mainWindow.setSize(1280, 800);
+      mainWindow.center();
+    }
     return nextState;
   }
   return false;
@@ -145,6 +182,32 @@ ipcMain.handle('desktop:is-fullscreen', () => {
 ipcMain.handle('desktop:quit-app', () => {
   app.quit();
 });
+
+// Setup persistent local asset caching
+function setupResourceCaching() {
+  const ses = session.defaultSession;
+  ses.webRequest.onHeadersReceived((details, callback) => {
+    const url = details.url.toLowerCase();
+    // Cache static Pokémon sprites, game cards, assets, web fonts, audio
+    const isCacheable = (
+      url.includes('/pokeayman/assets/') ||
+      url.includes('sprites/pokemon') ||
+      url.includes('cdn.jsdelivr.net') ||
+      url.includes('raw.githubusercontent.com') ||
+      url.includes('pokeapi.co') ||
+      /\.(png|jpe?g|webp|svg|gif|ico|woff2?|ttf|mp3|wav|ogg)$/.test(url.split('?')[0])
+    );
+
+    if (isCacheable && details.responseHeaders) {
+      const responseHeaders = { ...details.responseHeaders };
+      // 1 year cache duration for static assets
+      responseHeaders['cache-control'] = ['public, max-age=31536000, immutable'];
+      callback({ responseHeaders });
+      return;
+    }
+    callback({ responseHeaders: details.responseHeaders });
+  });
+}
 
 // Ensure single instance lock so double-clicking doesn't spawn duplicates
 const gotTheLock = app.requestSingleInstanceLock();
@@ -160,6 +223,7 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(() => {
+    setupResourceCaching();
     createWindow();
 
     app.on('activate', () => {

@@ -388,6 +388,57 @@
 
   function ensureDesktopControls() {
     if (!isDesktopApp()) return;
+
+    // 1. Mount always-visible top-right floating quick controls bar
+    if (!document.getElementById('ts-desktop-floating-bar')) {
+      const floatingBar = document.createElement('div');
+      floatingBar.id = 'ts-desktop-floating-bar';
+      floatingBar.className = 'ts-desktop-floating-bar';
+      floatingBar.setAttribute('role', 'toolbar');
+      floatingBar.setAttribute('aria-label', 'Window controls');
+      floatingBar.innerHTML = `
+        <button type="button" class="ts-df-btn ts-df-fs" id="ts-df-fs" title="Toggle Fullscreen (F11)" aria-label="Toggle Fullscreen">
+          <span class="ts-df-fs-icon">🗗</span>
+        </button>
+        <button type="button" class="ts-df-btn ts-df-quit" id="ts-df-quit" title="Exit PokéAyman" aria-label="Exit PokéAyman">
+          ✕
+        </button>
+      `;
+      document.body.appendChild(floatingBar);
+
+      const floatFsBtn = floatingBar.querySelector('#ts-df-fs');
+      const floatFsIcon = floatingBar.querySelector('.ts-df-fs-icon');
+      const floatQuitBtn = floatingBar.querySelector('#ts-df-quit');
+
+      floatFsBtn?.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        const activeBridge = getDesktopBridge();
+        if (activeBridge && typeof activeBridge.toggleFullscreen === 'function') {
+          try {
+            const nextFs = await activeBridge.toggleFullscreen();
+            syncAllFsState(nextFs);
+            return;
+          } catch (_) {}
+        }
+        try {
+          window.parent?.postMessage({ type: 'pokeayman:toggle-fullscreen' }, '*');
+        } catch (_) {}
+      });
+
+      floatQuitBtn?.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const activeBridge = getDesktopBridge();
+        if (activeBridge && typeof activeBridge.quitApp === 'function') {
+          activeBridge.quitApp();
+          return;
+        }
+        try {
+          window.parent?.postMessage({ type: 'pokeayman:quit-app' }, '*');
+        } catch (_) {}
+      });
+    }
+
+    // 2. Mount sidebar controls if sidebar is present
     const side = $('ts-sidebar');
     if (!side) return;
     const nav = side.querySelector('.ts-nav');
@@ -399,7 +450,7 @@
     desktopControls.className = 'ts-desktop-controls';
     desktopControls.innerHTML = `
       <button type="button" class="ts-item ts-desktop-fs-btn" id="ts-desktop-fs-btn" title="Toggle Fullscreen (F11)">
-        <span aria-hidden="true" class="ts-desktop-fs-icon">🗖</span>
+        <span aria-hidden="true" class="ts-desktop-fs-icon">🗗</span>
         <span class="ts-desktop-fs-text">Exit Fullscreen</span>
       </button>
       <button type="button" class="ts-item ts-desktop-quit-btn" id="ts-desktop-quit-btn" title="Exit PokéAyman Program">
@@ -416,26 +467,32 @@
     }
 
     const fsBtn = desktopControls.querySelector('#ts-desktop-fs-btn');
-    const fsIcon = desktopControls.querySelector('.ts-desktop-fs-icon');
-    const fsText = desktopControls.querySelector('.ts-desktop-fs-text');
     const quitBtn = desktopControls.querySelector('#ts-desktop-quit-btn');
 
-    const updateFsState = (isFs) => {
+    function syncAllFsState(isFs) {
+      const fsText = document.querySelector('.ts-desktop-fs-text');
+      const fsIcons = document.querySelectorAll('.ts-desktop-fs-icon, .ts-df-fs-icon');
       if (fsText) fsText.textContent = isFs ? 'Exit Fullscreen' : 'Fullscreen Mode';
-      if (fsIcon) fsIcon.textContent = isFs ? '🗗' : '🗖';
-    };
+      fsIcons.forEach(ic => {
+        ic.textContent = isFs ? '🗗' : '🗖';
+      });
+      const floatFs = document.getElementById('ts-df-fs');
+      if (floatFs) {
+        floatFs.title = isFs ? 'Exit Fullscreen' : 'Enter Fullscreen (F11)';
+      }
+    }
 
     const bridge = getDesktopBridge();
     if (bridge && typeof bridge.isFullscreen === 'function') {
-      bridge.isFullscreen().then(updateFsState).catch(() => {});
+      bridge.isFullscreen().then(syncAllFsState).catch(() => {});
     }
     if (bridge && typeof bridge.onFullscreenChange === 'function') {
-      bridge.onFullscreenChange(updateFsState);
+      bridge.onFullscreenChange(syncAllFsState);
     }
 
     window.addEventListener('message', (ev) => {
       if (ev.data?.type === 'pokeayman:fullscreen-status') {
-        updateFsState(Boolean(ev.data.isFullscreen));
+        syncAllFsState(Boolean(ev.data.isFullscreen));
       }
     });
 
@@ -449,20 +506,13 @@
       if (activeBridge && typeof activeBridge.toggleFullscreen === 'function') {
         try {
           const nextFs = await activeBridge.toggleFullscreen();
-          updateFsState(nextFs);
+          syncAllFsState(nextFs);
           return;
         } catch (_) {}
       }
       try {
         window.parent?.postMessage({ type: 'pokeayman:toggle-fullscreen' }, '*');
       } catch (_) {}
-      if (document.fullscreenElement) {
-        document.exitFullscreen?.().catch(() => {});
-        updateFsState(false);
-      } else {
-        document.documentElement.requestFullscreen?.().catch(() => {});
-        updateFsState(true);
-      }
     });
 
     quitBtn?.addEventListener('click', (ev) => {

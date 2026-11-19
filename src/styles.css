@@ -152,6 +152,20 @@
   touch-action: manipulation;
   border: 0;
   background: var(--background);
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+/* Eliminate native scrollbars */
+html, body {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 
