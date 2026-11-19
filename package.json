@@ -1,8 +1,12 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "pokeayman",
+  "version": "1.0.0",
+  "description": "PokéAyman Desktop Application",
+  "author": "PokéAyman",
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "main": "desktop/main.js",
   "scripts": {
     "predev": "node scripts/sync-pokeayman-game-modules.mjs",
     "dev": "vite dev",
@@ -12,10 +16,38 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "deploy": "bun run build && bun x wrangler deploy --cwd .output/",
+    "desktop:start": "electron .",
+    "desktop:build": "electron-builder --win",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest"
+  },
+  "build": {
+    "appId": "com.pokeayman.app",
+    "productName": "PokéAyman",
+    "copyright": "Copyright © 2026 PokéAyman",
+    "directories": {
+      "output": "dist-desktop"
+    },
+    "files": [
+      "desktop/**/*",
+      "public/favicon.png"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "desktop/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PokéAyman"
+    }
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -88,6 +120,8 @@
     "@vitejs/plugin-react": "^5.2.0",
     "drizzle-kit": "0.x",
     "drizzle-orm": "0.x",
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
