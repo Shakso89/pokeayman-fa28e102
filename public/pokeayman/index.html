@@ -4,6 +4,15 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <script>(function(){try{if(window.location.search.includes('enter=classes')||sessionStorage.getItem('pokeayman-enter-teacher')==='1'){document.documentElement.classList.add('pokeayman-auto-classes');document.write('<style>html.pokeayman-auto-classes #home-screen{display:none!important}</style>');}}catch(_){}})();</script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js').catch(function(e) {
+          console.warn('SW registration failed:', e);
+        });
+      });
+    }
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <style>button,a,[role=button],[onclick],label,summary,select{touch-action:manipulation;cursor:pointer;-webkit-tap-highlight-color:transparent}</style>

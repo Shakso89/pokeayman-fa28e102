@@ -34,17 +34,28 @@ try {
   console.warn("Could not patch wrangler.json:", e.message);
 }
 
-// Ensure .output/public/_headers prevents caching for /pokeayman/*
+// Ensure .output/public/_headers sets proper caching rules
 try {
   const headersPath = resolve(process.cwd(), ".output/public/_headers");
   let headersContent = "";
   try {
     headersContent = readFileSync(headersPath, "utf8");
   } catch {}
-  const noCacheRule = `\n/pokeayman/*\n  cache-control: no-cache, no-store, must-revalidate\n/pokeayman/index.html\n  cache-control: no-cache, no-store, must-revalidate\n`;
-  if (!headersContent.includes("/pokeayman/index.html")) {
-    writeFileSync(headersPath, headersContent + noCacheRule, "utf8");
-    console.log("Updated .output/public/_headers with no-cache rules for /pokeayman/*");
+  const cacheRules = `
+/sw.js
+  cache-control: no-cache, no-store, must-revalidate
+/pokeayman/assets/*
+  cache-control: public, max-age=31536000, immutable
+/assets/*
+  cache-control: public, max-age=31536000, immutable
+/pokeayman/*
+  cache-control: no-cache, no-store, must-revalidate
+/pokeayman/index.html
+  cache-control: no-cache, no-store, must-revalidate
+`;
+  if (!headersContent.includes("/pokeayman/assets/*")) {
+    writeFileSync(headersPath, headersContent + cacheRules, "utf8");
+    console.log("Updated .output/public/_headers with asset caching rules");
   }
 } catch (e) {
   console.warn("Could not patch _headers:", e.message);
