@@ -43,12 +43,19 @@ function ClassesPage() {
 
   setupPokeaymanBridge({ user, queryClient });
 
+  const isDesktop = typeof navigator !== 'undefined' && (
+    navigator.userAgent.includes('PokeAymanApp') ||
+    Boolean((window as any).pokeaymanDesktop) ||
+    new URLSearchParams(window.location.search).get('platform') === 'desktop'
+  );
+  const iframeSrc = `/pokeayman/index.html?v=20261106-surprise-boxes-no-repeat-v2&grammar_build=20261115_clean_transparent_v8&enter=classes${isDesktop ? '&platform=desktop' : ''}`;
+
   return (
     <iframe
       key={frameKey}
       className="imported-app"
       title="PokéAyman Classes"
-      src="/pokeayman/index.html?v=20261106-surprise-boxes-no-repeat-v2&grammar_build=20261115_clean_transparent_v8&enter=classes"
+      src={iframeSrc}
       allowFullScreen
     />
   );

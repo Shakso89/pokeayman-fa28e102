@@ -3448,5 +3448,28 @@ html body .ga-hub {
   -webkit-text-fill-color: #cbd5e1 !important;
 }
 
+/* Ensure player selection cards in roster grid never get cropped on selection */
+#game-player-list,
+.ga-lobby #game-player-list {
+  padding: 0.75rem 0.65rem !important;
+  scroll-padding: 0.75rem !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.game-player-card-option,
+.ga-lobby .game-player-card-option {
+  box-sizing: border-box !important;
+  margin: 1px !important;
+}
+
+.game-player-card-option.is-selected,
+.game-player-card-option:has(input:checked),
+.ga-lobby .game-player-card-option.is-selected,
+.ga-lobby .game-player-card-option:has(input:checked) {
+  box-sizing: border-box !important;
+}
+
+
 
 

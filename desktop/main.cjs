@@ -2,7 +2,7 @@ const { app, BrowserWindow, shell, Menu, ipcMain } = require('electron');
 const path = require('path');
 
 // Target web app URL
-const APP_URL = 'https://pokeayman.pokeayman.workers.dev';
+const APP_URL = 'https://pokeayman.pokeayman.workers.dev?platform=desktop';
 
 let mainWindow = null;
 
@@ -26,6 +26,10 @@ function createWindow() {
 
   // Completely remove application menu bar
   Menu.setApplicationMenu(null);
+
+  // Set custom user agent to reliably identify desktop app across all frames
+  const defaultUA = mainWindow.webContents.getUserAgent();
+  mainWindow.webContents.setUserAgent(`${defaultUA} PokeAymanApp/1.0`);
 
   // Load the web application
   mainWindow.loadURL(APP_URL);

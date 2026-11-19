@@ -1268,23 +1268,38 @@ body.ts-on .ts-card select#ts-award-student option { background: var(--ts-surfac
 /* Desktop EXE Only Controls: Positioned below Admin Hub in sidebar */
 .ts-desktop-controls {
   margin-top: 14px;
-  padding-top: 10px;
-  border-top: 1px solid var(--ts-border);
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 .ts-desktop-controls .ts-item {
-  color: var(--ts-muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ts-muted, #94a3b8);
   font-size: 13px;
   font-weight: 600;
+  cursor: pointer;
+  text-align: left;
   transition: all 0.15s ease;
 }
 .ts-desktop-controls .ts-item:hover {
-  color: var(--ts-ink);
-  background: color-mix(in srgb, var(--ts-ink) 8%, transparent);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.ts-desktop-controls .ts-desktop-quit-btn {
+  color: #f87171 !important;
 }
 .ts-desktop-controls .ts-desktop-quit-btn:hover {
-  color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.12) !important;
+  color: #ffffff !important;
+  background: rgba(239, 68, 68, 0.22) !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
 }

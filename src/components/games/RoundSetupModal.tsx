@@ -581,7 +581,7 @@ export const RoundSetupModal: React.FC<RoundSetupModalProps> = ({
             })()}
 
             {/* Remaining Roster Grid */}
-            <div className="grid grid-cols-4 gap-3 mt-2 overflow-y-auto max-h-[240px] pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]">
+            <div className="grid grid-cols-4 gap-3 mt-2 overflow-y-auto max-h-[240px] p-2.5 pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]">
               {classStudents.map((student) => {
                 const isSelected = selectedPlayers.some((p) => p.id === student.id);
                 return (

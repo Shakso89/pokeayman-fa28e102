@@ -362,53 +362,120 @@
     side.addEventListener('click', onNav);
     rail.addEventListener('click', onRail);
 
-    // Desktop EXE Only Controls: Fullscreen Toggle & Exit App buttons under Admin Hub
-    if (window.pokeaymanDesktop) {
-      const desktopControls = document.createElement('div');
-      desktopControls.id = 'ts-desktop-controls';
-      desktopControls.className = 'ts-desktop-controls';
-      desktopControls.innerHTML = `
-        <button type="button" class="ts-item ts-desktop-fs-btn" id="ts-desktop-fs-btn" title="Toggle Fullscreen (F11)">
-          <span aria-hidden="true" class="ts-desktop-fs-icon">🗖</span>
-          <span class="ts-desktop-fs-text">Exit Fullscreen</span>
-        </button>
-        <button type="button" class="ts-item ts-desktop-quit-btn" id="ts-desktop-quit-btn" title="Exit PokéAyman Program">
-          <span aria-hidden="true" style="color: #ef4444;">⏻</span>
-          <span>Exit PokéAyman</span>
-        </button>
-      `;
-      side.querySelector('.ts-nav')?.appendChild(desktopControls);
+    ensureDesktopControls();
+  }
 
-      const fsBtn = desktopControls.querySelector('#ts-desktop-fs-btn');
-      const fsIcon = desktopControls.querySelector('.ts-desktop-fs-icon');
-      const fsText = desktopControls.querySelector('.ts-desktop-fs-text');
-      const quitBtn = desktopControls.querySelector('#ts-desktop-quit-btn');
+  function getDesktopBridge() {
+    if (window.pokeaymanDesktop) return window.pokeaymanDesktop;
+    try {
+      if (window.parent && window.parent.pokeaymanDesktop) return window.parent.pokeaymanDesktop;
+    } catch (_) {}
+    try {
+      if (window.top && window.top.pokeaymanDesktop) return window.top.pokeaymanDesktop;
+    } catch (_) {}
+    return null;
+  }
 
-      const updateFsState = (isFs) => {
-        if (fsText) fsText.textContent = isFs ? 'Exit Fullscreen' : 'Fullscreen Mode';
-        if (fsIcon) fsIcon.textContent = isFs ? '🗗' : '🗖';
-      };
+  function isDesktopApp() {
+    if (getDesktopBridge()) return true;
+    if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('PokeAymanApp')) return true;
+    try {
+      if (new URLSearchParams(window.location.search).get('platform') === 'desktop') return true;
+      if (window.parent && new URLSearchParams(window.parent.location.search).get('platform') === 'desktop') return true;
+    } catch (_) {}
+    return false;
+  }
 
-      if (typeof window.pokeaymanDesktop.isFullscreen === 'function') {
-        window.pokeaymanDesktop.isFullscreen().then(updateFsState).catch(() => {});
-      }
-      if (typeof window.pokeaymanDesktop.onFullscreenChange === 'function') {
-        window.pokeaymanDesktop.onFullscreenChange(updateFsState);
-      }
+  function ensureDesktopControls() {
+    if (!isDesktopApp()) return;
+    const side = $('ts-sidebar');
+    if (!side) return;
+    const nav = side.querySelector('.ts-nav');
+    if (!nav) return;
+    if (document.getElementById('ts-desktop-controls')) return;
 
-      fsBtn?.addEventListener('click', async (ev) => {
-        ev.stopPropagation();
-        try {
-          const nextFs = await window.pokeaymanDesktop.toggleFullscreen();
-          updateFsState(nextFs);
-        } catch (_) {}
-      });
+    const desktopControls = document.createElement('div');
+    desktopControls.id = 'ts-desktop-controls';
+    desktopControls.className = 'ts-desktop-controls';
+    desktopControls.innerHTML = `
+      <button type="button" class="ts-item ts-desktop-fs-btn" id="ts-desktop-fs-btn" title="Toggle Fullscreen (F11)">
+        <span aria-hidden="true" class="ts-desktop-fs-icon">🗖</span>
+        <span class="ts-desktop-fs-text">Exit Fullscreen</span>
+      </button>
+      <button type="button" class="ts-item ts-desktop-quit-btn" id="ts-desktop-quit-btn" title="Exit PokéAyman Program">
+        <span aria-hidden="true" style="color: #ef4444; font-size: 15px;">⏻</span>
+        <span>Exit PokéAyman</span>
+      </button>
+    `;
 
-      quitBtn?.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        window.pokeaymanDesktop.quitApp();
-      });
+    const adminEl = nav.querySelector('#ts-admin');
+    if (adminEl && adminEl.nextSibling) {
+      nav.insertBefore(desktopControls, adminEl.nextSibling);
+    } else {
+      nav.appendChild(desktopControls);
     }
+
+    const fsBtn = desktopControls.querySelector('#ts-desktop-fs-btn');
+    const fsIcon = desktopControls.querySelector('.ts-desktop-fs-icon');
+    const fsText = desktopControls.querySelector('.ts-desktop-fs-text');
+    const quitBtn = desktopControls.querySelector('#ts-desktop-quit-btn');
+
+    const updateFsState = (isFs) => {
+      if (fsText) fsText.textContent = isFs ? 'Exit Fullscreen' : 'Fullscreen Mode';
+      if (fsIcon) fsIcon.textContent = isFs ? '🗗' : '🗖';
+    };
+
+    const bridge = getDesktopBridge();
+    if (bridge && typeof bridge.isFullscreen === 'function') {
+      bridge.isFullscreen().then(updateFsState).catch(() => {});
+    }
+    if (bridge && typeof bridge.onFullscreenChange === 'function') {
+      bridge.onFullscreenChange(updateFsState);
+    }
+
+    window.addEventListener('message', (ev) => {
+      if (ev.data?.type === 'pokeayman:fullscreen-status') {
+        updateFsState(Boolean(ev.data.isFullscreen));
+      }
+    });
+
+    try {
+      window.parent?.postMessage({ type: 'pokeayman:get-fullscreen' }, '*');
+    } catch (_) {}
+
+    fsBtn?.addEventListener('click', async (ev) => {
+      ev.stopPropagation();
+      const activeBridge = getDesktopBridge();
+      if (activeBridge && typeof activeBridge.toggleFullscreen === 'function') {
+        try {
+          const nextFs = await activeBridge.toggleFullscreen();
+          updateFsState(nextFs);
+          return;
+        } catch (_) {}
+      }
+      try {
+        window.parent?.postMessage({ type: 'pokeayman:toggle-fullscreen' }, '*');
+      } catch (_) {}
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+        updateFsState(false);
+      } else {
+        document.documentElement.requestFullscreen?.().catch(() => {});
+        updateFsState(true);
+      }
+    });
+
+    quitBtn?.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const activeBridge = getDesktopBridge();
+      if (activeBridge && typeof activeBridge.quitApp === 'function') {
+        activeBridge.quitApp();
+        return;
+      }
+      try {
+        window.parent?.postMessage({ type: 'pokeayman:quit-app' }, '*');
+      } catch (_) {}
+    });
   }
 
   function needClass() {
@@ -911,6 +978,8 @@
       const quickAwardSection = $('ts-award-go')?.closest('section');
       if (quickAwardSection) quickAwardSection.style.display = '';
     }
+
+    ensureDesktopControls();
   }
 
   // Tablet/phone: bottom tab bar; the sidebar shows the current section's tools as a strip above it.

@@ -2902,7 +2902,7 @@
         set(q === 'random' ? shuffled.slice(0, maxAllowed) : []);
       }
     });
-    list.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 mt-2 overflow-y-auto max-h-[240px] p-1 pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]';
+    list.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 mt-2 overflow-y-auto max-h-[240px] p-2.5 pr-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]';
     list.before(players);
     players.append(bar, lineupStage, list);
     checks.forEach(c => c.addEventListener('change', () => {
