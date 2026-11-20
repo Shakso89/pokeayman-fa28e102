@@ -123,10 +123,26 @@ export function setupPokeaymanBridge({
       return { signedIn: !!data.session };
     },
     signInWithGoogle: async () => {
-      const redirectToUrl = `${window.location.origin}/classes`;
+      let isAndroid = false;
+      try {
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          const parentParams = window.parent && window.parent !== window ? new URLSearchParams(window.parent.location.search) : null;
+          isAndroid = params.get("platform") === "android" ||
+                      parentParams?.get("platform") === "android" ||
+                      /Android.*wv/i.test(navigator.userAgent) ||
+                      Boolean((window as any).Capacitor?.isNativePlatform?.());
+        }
+      } catch (_) {}
+
+      const redirectToUrl = isAndroid
+        ? "com.pokeayman.app://classes"
+        : `${window.location.origin}/classes`;
+
       try {
         sessionStorage.setItem("pokeayman-enter-teacher", "1");
       } catch (_) {}
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -137,6 +153,7 @@ export function setupPokeaymanBridge({
           },
         },
       });
+
       if (error) {
         console.error("Google Sign-In Error:", error.message);
         const m = error.message;
@@ -150,7 +167,15 @@ export function setupPokeaymanBridge({
           return { error: "Google sign-in isn't switched on yet. Please use email and password for now." };
         return { error: `Google sign-in failed: ${m}` };
       }
+
       if (data?.url && typeof window !== "undefined") {
+        if (isAndroid) {
+          try {
+            const { Browser } = await import("@capacitor/browser");
+            await Browser.open({ url: data.url, windowName: "_self" });
+            return {};
+          } catch (_) {}
+        }
         window.location.href = data.url;
         return {};
       }

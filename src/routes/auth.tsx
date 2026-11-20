@@ -69,8 +69,21 @@ function AuthPage() {
 
   async function google() {
     setMsg(null);
-    const redirectToUrl = `${window.location.origin}/classes`;
-    const { error } = await supabase.auth.signInWithOAuth({
+    let isAndroid = false;
+    try {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        isAndroid = params.get("platform") === "android" ||
+                    /Android.*wv/i.test(navigator.userAgent) ||
+                    Boolean((window as any).Capacitor?.isNativePlatform?.());
+      }
+    } catch (_) {}
+
+    const redirectToUrl = isAndroid
+      ? "com.pokeayman.app://classes"
+      : `${window.location.origin}/classes`;
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: redirectToUrl,
@@ -83,6 +96,14 @@ function AuthPage() {
     if (error) {
       console.error("Google Sign-In Error:", error.message);
       setMsg({ ok: false, text: String(error.message ?? error) });
+      return;
+    }
+
+    if (data?.url && isAndroid) {
+      try {
+        const { Browser } = await import("@capacitor/browser");
+        await Browser.open({ url: data.url, windowName: "_self" });
+      } catch (_) {}
     }
   }
 

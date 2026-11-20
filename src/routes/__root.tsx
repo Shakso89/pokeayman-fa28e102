@@ -122,6 +122,48 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    // Listen for Capacitor App URL open events (e.g. com.pokeayman.app://classes#access_token=...)
+    let cleanup: (() => void) | undefined;
+    (async () => {
+      try {
+        const { App } = await import("@capacitor/app");
+        const { Browser } = await import("@capacitor/browser");
+        const listener = await App.addListener("appUrlOpen", async (event) => {
+          try {
+            await Browser.close();
+          } catch (_) {}
+
+          if (event.url) {
+            // Check if URL contains auth fragment or session
+            if (event.url.includes("com.pokeayman.app") || event.url.includes("#access_token") || event.url.includes("code=")) {
+              const urlObj = new URL(event.url.replace("com.pokeayman.app://", "https://pokeayman.pokeayman.workers.dev/"));
+              if (urlObj.hash) {
+                // Parse hash parameters like #access_token=...&refresh_token=...
+                const hashParams = new URLSearchParams(urlObj.hash.substring(1));
+                const accessToken = hashParams.get("access_token");
+                const refreshToken = hashParams.get("refresh_token");
+                if (accessToken && refreshToken) {
+                  const { supabase } = await import("@/integrations/supabase/client");
+                  await supabase.auth.setSession({
+                    access_token: accessToken,
+                    refresh_token: refreshToken,
+                  });
+                  window.location.replace("/classes");
+                  return;
+                }
+              }
+              window.location.replace(urlObj.pathname + urlObj.search + urlObj.hash);
+            }
+          }
+        });
+        cleanup = () => { listener.remove(); };
+      } catch (_) {}
+    })();
+
+    return () => { cleanup?.(); };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
