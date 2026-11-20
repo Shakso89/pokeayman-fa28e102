@@ -1,0 +1,38 @@
+{
+  "name": "pokeayman",
+  "productName": "PokéAyman",
+  "version": "1.0.0",
+  "description": "PokéAyman Desktop Application",
+  "main": "main.cjs",
+  "author": "PokéAyman",
+  "build": {
+    "appId": "com.pokeayman.app",
+    "productName": "PokéAyman",
+    "electronVersion": "45.4.1",
+    "copyright": "Copyright © 2026 PokéAyman",
+    "directories": {
+      "output": "../dist-desktop"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "icon.png"
+    ],
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PokéAyman"
+    }
+  }
+}

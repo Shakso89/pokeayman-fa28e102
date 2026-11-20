@@ -187,6 +187,9 @@ ipcMain.handle('desktop:is-fullscreen', () => {
 
 ipcMain.handle('desktop:minimize', () => {
   if (mainWindow) {
+    if (mainWindow.isFullScreen()) {
+      mainWindow.setFullScreen(false);
+    }
     mainWindow.minimize();
     return true;
   }

@@ -12,17 +12,18 @@ describe('Desktop Header Bar & Native Google Sign-In', () => {
   const bridgeTs = fs.readFileSync(path.join(root, 'src', 'lib', 'pokeayman-bridge.ts'), 'utf8');
   const capConfig = fs.readFileSync(path.join(root, 'capacitor.config.ts'), 'utf8');
   const stringsXml = fs.readFileSync(path.join(root, 'android', 'app', 'src', 'main', 'res', 'values', 'strings.xml'), 'utf8');
+  const classesTsx = fs.readFileSync(path.join(root, 'src', 'routes', 'classes.tsx'), 'utf8');
 
   it('removes floating two buttons and adds 3-button windowed desktop header bar', () => {
     // Old floating 2 buttons removed
     expect(teacherJs).not.toContain("document.getElementById('ts-desktop-floating-bar')");
     expect(teacherCss).not.toContain('#ts-desktop-floating-bar {');
 
-    // New desktop header bar mounted
-    expect(teacherJs).toContain("ts-desktop-header-bar");
-    expect(teacherJs).toContain('id="ts-dh-min"');
-    expect(teacherJs).toContain('id="ts-dh-max"');
-    expect(teacherJs).toContain('id="ts-dh-close"');
+    // New desktop header bar mounted with top-level draggable region
+    expect(classesTsx).toContain("id=\"ts-desktop-header-bar\"");
+    expect(classesTsx).toContain("WebkitAppRegion: 'drag'");
+    expect(classesTsx).toContain("WebkitAppRegion: 'no-drag'");
+    expect(classesTsx).toContain("bridge.minimize()");
 
     // CSS visibility: appears ONLY in non-fullscreen mode, hidden in fullscreen mode
     expect(teacherCss).toContain('#ts-desktop-header-bar');

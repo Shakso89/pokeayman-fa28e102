@@ -156,6 +156,17 @@
   -ms-overflow-style: none !important;
 }
 
+/* Windows Desktop draggable region utilities */
+.window-drag-region {
+  -webkit-app-region: drag !important;
+  app-region: drag !important;
+}
+
+.window-no-drag-region {
+  -webkit-app-region: no-drag !important;
+  app-region: no-drag !important;
+}
+
 /* Eliminate native scrollbars */
 html, body {
   scrollbar-width: none !important;

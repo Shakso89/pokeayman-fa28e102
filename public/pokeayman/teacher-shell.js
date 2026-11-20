@@ -389,87 +389,95 @@
   function ensureDesktopControls() {
     if (!isDesktopApp()) return;
 
-    // 1. Mount Desktop Windowed Header Bar (appears ONLY in non-fullscreen windowed mode)
-    if (!document.getElementById('ts-desktop-header-bar')) {
-      const headerBar = document.createElement('header');
-      headerBar.id = 'ts-desktop-header-bar';
-      headerBar.className = 'ts-desktop-header-bar';
-      headerBar.setAttribute('role', 'banner');
-      headerBar.setAttribute('aria-label', 'Window header');
-      headerBar.innerHTML = `
-        <div class="ts-dh-drag-area">
-          <div class="ts-dh-brand">
-            <span class="ts-dh-brand-icon">⚡</span>
-            <span class="ts-dh-brand-text">PokéAyman</span>
+    const isTopLevel = (function() {
+      try { return window.top === window; } catch (_) { return false; }
+    })();
+
+    // 1. Mount Desktop Windowed Header Bar ONLY if running top-level (top frame handles draggable header if in iframe)
+    if (isTopLevel) {
+      if (!document.getElementById('ts-desktop-header-bar')) {
+        const headerBar = document.createElement('header');
+        headerBar.id = 'ts-desktop-header-bar';
+        headerBar.className = 'ts-desktop-header-bar';
+        headerBar.setAttribute('role', 'banner');
+        headerBar.setAttribute('aria-label', 'Window header');
+        headerBar.innerHTML = `
+          <div class="ts-dh-drag-area">
+            <div class="ts-dh-brand">
+              <span class="ts-dh-brand-icon">⚡</span>
+              <span class="ts-dh-brand-text">PokéAyman</span>
+            </div>
           </div>
-        </div>
-        <div class="ts-dh-actions">
-          <button type="button" class="ts-dh-btn ts-dh-min" id="ts-dh-min" title="Minimize" aria-label="Minimize">
-            <span class="ts-dh-btn-symbol">─</span>
-          </button>
-          <button type="button" class="ts-dh-btn ts-dh-max" id="ts-dh-max" title="Maximize or Restore" aria-label="Maximize or Restore">
-            <span class="ts-dh-btn-symbol ts-dh-square-symbol" id="ts-dh-square-icon">🗖</span>
-          </button>
-          <button type="button" class="ts-dh-btn ts-dh-close" id="ts-dh-close" title="Close" aria-label="Close">
-            <span class="ts-dh-btn-symbol">✕</span>
-          </button>
-        </div>
-      `;
-      document.body.prepend(headerBar);
+          <div class="ts-dh-actions">
+            <button type="button" class="ts-dh-btn ts-dh-min" id="ts-dh-min" title="Minimize" aria-label="Minimize">
+              <span class="ts-dh-btn-symbol">─</span>
+            </button>
+            <button type="button" class="ts-dh-btn ts-dh-max" id="ts-dh-max" title="Maximize or Restore" aria-label="Maximize or Restore">
+              <span class="ts-dh-btn-symbol ts-dh-square-symbol" id="ts-dh-square-icon">🗖</span>
+            </button>
+            <button type="button" class="ts-dh-btn ts-dh-close" id="ts-dh-close" title="Close" aria-label="Close">
+              <span class="ts-dh-btn-symbol">✕</span>
+            </button>
+          </div>
+        `;
+        document.body.prepend(headerBar);
 
-      const minBtn = headerBar.querySelector('#ts-dh-min');
-      const maxBtn = headerBar.querySelector('#ts-dh-max');
-      const closeBtn = headerBar.querySelector('#ts-dh-close');
+        const minBtn = headerBar.querySelector('#ts-dh-min');
+        const maxBtn = headerBar.querySelector('#ts-dh-max');
+        const closeBtn = headerBar.querySelector('#ts-dh-close');
 
-      minBtn?.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        const activeBridge = getDesktopBridge();
-        if (activeBridge && typeof activeBridge.minimize === 'function') {
-          activeBridge.minimize();
-          return;
-        }
-        try {
-          window.parent?.postMessage({ type: 'pokeayman:minimize' }, '*');
-        } catch (_) {}
-      });
+        minBtn?.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const activeBridge = getDesktopBridge();
+          if (activeBridge && typeof activeBridge.minimize === 'function') {
+            activeBridge.minimize();
+          }
+          try { window.postMessage({ type: 'pokeayman:minimize' }, '*'); } catch (_) {}
+          try { window.parent?.postMessage({ type: 'pokeayman:minimize' }, '*'); } catch (_) {}
+          try { window.top?.postMessage({ type: 'pokeayman:minimize' }, '*'); } catch (_) {}
+        });
 
-      maxBtn?.addEventListener('click', async (ev) => {
-        ev.stopPropagation();
-        const activeBridge = getDesktopBridge();
-        if (activeBridge && typeof activeBridge.toggleMaximize === 'function') {
+        maxBtn?.addEventListener('click', async (ev) => {
+          ev.stopPropagation();
+          const activeBridge = getDesktopBridge();
+          if (activeBridge && typeof activeBridge.toggleMaximize === 'function') {
+            try {
+              const isMax = await activeBridge.toggleMaximize();
+              syncMaximizeIcon(isMax);
+              return;
+            } catch (_) {}
+          }
+          if (activeBridge && typeof activeBridge.toggleFullscreen === 'function') {
+            try {
+              const nextFs = await activeBridge.toggleFullscreen();
+              syncAllFsState(nextFs);
+              return;
+            } catch (_) {}
+          }
           try {
-            const isMax = await activeBridge.toggleMaximize();
-            syncMaximizeIcon(isMax);
-            return;
+            window.parent?.postMessage({ type: 'pokeayman:toggle-maximize' }, '*');
           } catch (_) {}
-        }
-        if (activeBridge && typeof activeBridge.toggleFullscreen === 'function') {
-          try {
-            const nextFs = await activeBridge.toggleFullscreen();
-            syncAllFsState(nextFs);
-            return;
-          } catch (_) {}
-        }
-        try {
-          window.parent?.postMessage({ type: 'pokeayman:toggle-maximize' }, '*');
-        } catch (_) {}
-      });
+        });
 
-      closeBtn?.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        const activeBridge = getDesktopBridge();
-        if (activeBridge && typeof activeBridge.close === 'function') {
-          activeBridge.close();
-          return;
-        }
-        if (activeBridge && typeof activeBridge.quitApp === 'function') {
-          activeBridge.quitApp();
-          return;
-        }
-        try {
-          window.parent?.postMessage({ type: 'pokeayman:close' }, '*');
-        } catch (_) {}
-      });
+        closeBtn?.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          const activeBridge = getDesktopBridge();
+          if (activeBridge && typeof activeBridge.close === 'function') {
+            activeBridge.close();
+            return;
+          }
+          if (activeBridge && typeof activeBridge.quitApp === 'function') {
+            activeBridge.quitApp();
+            return;
+          }
+          try {
+            window.parent?.postMessage({ type: 'pokeayman:close' }, '*');
+          } catch (_) {}
+        });
+      }
+    } else {
+      const existingBar = document.getElementById('ts-desktop-header-bar');
+      if (existingBar) existingBar.remove();
     }
 
     // 2. Mount sidebar controls if sidebar is present
