@@ -80,7 +80,7 @@ function AuthPage() {
     } catch (_) {}
 
     const redirectToUrl = isAndroid
-      ? "com.pokeayman.app://classes"
+      ? "https://pokeayman.pokeayman.workers.dev/classes?platform=android"
       : `${window.location.origin}/classes`;
 
     if (isAndroid) {
@@ -93,8 +93,9 @@ function AuthPage() {
             grantOfflineAccess: true,
           });
         } catch (_) {}
-        const googleUser = await GoogleAuth.signIn();
-        const idToken = googleUser?.authentication?.idToken;
+        const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Native Google Auth timeout")), 4000));
+        const googleUser: any = await Promise.race([GoogleAuth.signIn(), timeout]);
+        const idToken = googleUser?.authentication?.idToken || googleUser?.idToken;
         if (idToken) {
           const { data: idData, error: idError } = await supabase.auth.signInWithIdToken({
             provider: "google",
@@ -130,7 +131,7 @@ function AuthPage() {
     if (data?.url && isAndroid) {
       try {
         const { Browser } = await import("@capacitor/browser");
-        await Browser.open({ url: data.url, windowName: "_self" });
+        await Browser.open({ url: data.url });
       } catch (_) {}
     }
   }

@@ -13,9 +13,9 @@ let mainWindow = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    fullscreen: true, // Native fullscreen by default (borderless game experience)
+    fullscreen: false, // Windowed by default so the new 3-button draggable header is immediately visible
     frame: false, // Borderless window
-    width: 1280, // Comfortable desktop resolution when exiting fullscreen
+    width: 1280, // Comfortable desktop resolution
     height: 800,
     minWidth: 1024, // Prevents responsive layout from breaking into phone/tablet mode
     minHeight: 700,
@@ -31,8 +31,12 @@ function createWindow() {
       spellcheck: false,
     },
     autoHideMenuBar: true,
-    show: false, // Show once ready to avoid white flash
+    show: true, // Show immediately on launch (no invisible process hang)
   });
+
+  // Ensure window is shown immediately
+  mainWindow.show();
+  mainWindow.focus();
 
   // Completely remove application menu bar
   Menu.setApplicationMenu(null);
@@ -61,10 +65,11 @@ function createWindow() {
   // Load the web application
   mainWindow.loadURL(APP_URL);
 
-  // Graceful show when DOM is ready
+  // Graceful show fallback when DOM is ready
   mainWindow.once('ready-to-show', () => {
-    mainWindow.setFullScreen(true);
-    mainWindow.show();
+    if (!mainWindow.isVisible()) {
+      mainWindow.show();
+    }
   });
 
   // Notify renderer on fullscreen change
@@ -260,6 +265,7 @@ if (!gotTheLock) {
 } else {
   app.on('second-instance', () => {
     if (mainWindow) {
+      if (!mainWindow.isVisible()) mainWindow.show();
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }

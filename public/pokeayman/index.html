@@ -23556,10 +23556,21 @@ document.getElementById('teacher-login-toggle').addEventListener('click', async 
   });
   $('#ta-google').addEventListener('click', async () => {
     if (!auth) return;
-    try { sessionStorage.setItem('pokeayman-enter-teacher', '1'); } catch (_) {}
-    const r = await auth.signInWithGoogle();
-    if (r.error) { msg(r.error, false); return; }
-    if (r.name) { modal.remove(); window.pokeaymanEnterTeacher(r.name); }
+    const btn = $('#ta-google');
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Connecting to Google…';
+    try {
+      try { sessionStorage.setItem('pokeayman-enter-teacher', '1'); } catch (_) {}
+      const r = await auth.signInWithGoogle();
+      if (r && r.error) { msg(r.error, false); return; }
+      if (r && r.name) { modal.remove(); window.pokeaymanEnterTeacher(r.name); }
+    } catch (e) {
+      msg(e && e.message ? e.message : 'Google sign-in was interrupted. Please try again.', false);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
   });
   $('#ta-forgot').addEventListener('click', async () => {
     const email = $('#ta-email').value.trim();
