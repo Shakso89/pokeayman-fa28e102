@@ -91,4 +91,24 @@ describe('Whac-A-Diglett 4 Players & Multiplayer Turn Numbering', () => {
     expect(turnNumbersBob[3]).toBe(3); // Daisy is Turn 3
     expect(turnNumbersBob[0]).toBe(4); // Alice is Turn 4
   });
+
+  it('removes party cone emoji and last word box, and triggers bomb on wrong hit in Whac-A-Diglett', () => {
+    // 1. Party cone emoji 🎉 removed across celebration boxes and winner text
+    expect(indexHtml).not.toContain('🎉 ${winnerName} wins!');
+    expect(indexHtml).toContain('${winnerName} wins!');
+    expect(indexHtml).not.toContain("content: '🎉 ✨ 🎊 ⭐ 🎈'");
+    expect(indexHtml).not.toContain("content: '✨ 🎉 ✨'");
+    expect(indexHtml).not.toContain('🎉</div>');
+
+    // 2. Whac-A-Diglett does not display the last word card in celebration
+    expect(whacJs).toContain("showGameCelebration(modal, 'Whac-A-Diglett Champion!');");
+    expect(whacJs).not.toMatch(/showGameCelebration\(modal,\s*'Whac-A-Diglett Champion!',\s*currentTargetWord/);
+
+    // 3. Wrong hit triggers bomb explosion animation and boom sound instead of hammer/Pikachu
+    expect(whacJs).toContain("renderBombExplosion(holeIdx)");
+    expect(whacJs).toContain("window.pokeSfx?.play?.('boom')");
+    expect(whacCss).toContain('.whac-bomb-anim');
+    expect(whacCss).toContain('.whac-bomb-blast');
+    expect(whacCss).toContain('.whac-mound-shake');
+  });
 });

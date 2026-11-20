@@ -140,10 +140,12 @@
         tone(f, i * 0.045, 0.16, { type: 'sine', vol: 0.06 });
       });
     },
-    // Bomb power-up: deep, warm muffled thud
+    // Bomb explosion: heavy sub-bass thump + crackling blast wave
     boom() {
-      tone(85, 0, 0.35, { type: 'sine', vol: 0.20, slide: -40 });
-      noise(0, 0.35, { vol: 0.22, freq: 400, type: 'lowpass', sweep: -250 });
+      tone(95, 0, 0.38, { type: 'sine', vol: 0.28, slide: -55 });
+      tone(55, 0.02, 0.48, { type: 'triangle', vol: 0.26, slide: -30 });
+      noise(0, 0.42, { vol: 0.32, freq: 520, type: 'lowpass', sweep: -360 });
+      noise(0.015, 0.24, { vol: 0.18, freq: 1200, q: 1.2, sweep: -700 });
     },
     // Swap / Steal power-up: smooth filtered wind sweep
     whoosh() {

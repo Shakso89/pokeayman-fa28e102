@@ -451,7 +451,7 @@
     .award-celebration-card > * { position: relative; z-index: 1; }
     @keyframes awardCelebrationPop { from { opacity: 0; transform: translateY(18px) scale(.82); } to { opacity: 1; transform: translateY(0) scale(1); } }
     @keyframes coinDrift { 0%,100% { transform: translateY(4px) rotate(-2deg); opacity: .35; } 50% { transform: translateY(-5px) rotate(2deg); opacity: .8; } }
-    .game-celebration-card::before, .game-celebration-card::after { content: '🎉 ✨ 🎊 ⭐ 🎈'; position: absolute; inset: .5rem; color: #f59e0b; font-size: 1.4rem; letter-spacing: 1rem; pointer-events: none; animation: confettiDrift 2.5s linear infinite; }
+    .game-celebration-card::before, .game-celebration-card::after { content: '✨ 🎊 ⭐ 🎈 ⭐'; position: absolute; inset: .5rem; color: #f59e0b; font-size: 1.4rem; letter-spacing: 1rem; pointer-events: none; animation: confettiDrift 2.5s linear infinite; }
     .game-celebration-card::after { color: #3b82f6; animation-delay: -1.2s; transform: rotate(180deg); }
     .game-celebration-pikachu { width: min(230px, 55vw); height: 190px; object-fit: contain; position: relative; z-index: 1; animation: celebrationBounce 1.2s ease-in-out infinite; }
     @keyframes celebrationPop { from { opacity: 0; transform: scale(.65) rotate(-4deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
@@ -499,7 +499,7 @@
     .game-turn-timer-number { min-width: 2.3rem; color: #fef3c7; font-size: .64rem; font-weight: 900; text-align: right; white-space: nowrap; }
     @keyframes countdownTick { 0% { transform: scale(1.12); opacity: .7; } 100% { transform: scale(1); opacity: 1; } }
     .game-player-card.victory-winner { transform: translateY(-6px) scale(1.04); border-color: #fbbf24; background: linear-gradient(145deg, #fff7c2, #fef3c7 55%, #fde68a); box-shadow: 0 0 0 3px rgba(251,191,36,.35), 0 0 28px rgba(251,191,36,.75), 0 12px 28px rgba(217,119,6,.35); }
-    .game-player-card.victory-winner::before { content: '✨ 🎉 ✨'; position: absolute; inset: .25rem; color: rgba(217,119,6,.65); font-size: .9rem; letter-spacing: .25rem; pointer-events: none; animation: coinDrift 1.8s ease-in-out infinite; }
+    .game-player-card.victory-winner::before { content: '✨ ⭐ ✨'; position: absolute; inset: .25rem; color: rgba(217,119,6,.65); font-size: .9rem; letter-spacing: .25rem; pointer-events: none; animation: coinDrift 1.8s ease-in-out infinite; }
     .game-player-card.victory-winner .game-player-avatar { filter: drop-shadow(0 0 12px rgba(251,191,36,.9)); animation: playerAvatarFloat 1.2s ease-in-out infinite; }
     .game-player-card.is-active .game-player-avatar { width: 76px; height: 76px; transform: scale(1.12); filter: drop-shadow(0 7px 8px rgba(249,115,22,.3)); animation: playerAvatarFloat 2.4s ease-in-out infinite; }
     .game-player-card .game-player-avatar-wrap { position: relative; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; width: auto; min-height: 4.5rem; padding: .3rem; margin-right: 1.1rem; box-sizing: border-box; }
@@ -8760,6 +8760,49 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       setTimeout(() => hammer.remove(), 480);
     }
 
+    // Render explosive cartoon bomb on wrong hit instead of Pikachu hammer!
+    function renderBombExplosion(holeIdx) {
+      const moundWrap = modal.querySelector(`[data-hole-index="${holeIdx}"]`);
+      if (!moundWrap) return;
+
+      moundWrap.classList.remove('whac-mound-shake');
+      void moundWrap.offsetWidth;
+      moundWrap.classList.add('whac-mound-shake');
+      setTimeout(() => moundWrap.classList.remove('whac-mound-shake'), 440);
+
+      const bomb = document.createElement('div');
+      bomb.className = 'whac-bomb-anim';
+      bomb.innerHTML = `
+        <svg viewBox="0 0 160 160" class="whac-bomb-svg">
+          <circle class="whac-bomb-shockwave" cx="80" cy="80" r="35" fill="none" stroke="#f97316" stroke-width="8"/>
+          <circle class="whac-bomb-shockwave" cx="80" cy="80" r="25" fill="none" stroke="#fde047" stroke-width="6"/>
+          <g class="whac-bomb-body">
+            <path class="whac-bomb-fuse" d="M 80 50 Q 86 32, 98 28" fill="none" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round"/>
+            <circle class="whac-bomb-spark" cx="99" cy="27" r="5" fill="#fef08a"/>
+            <polygon points="99,19 101,25 107,27 101,29 99,35 97,29 91,27 97,25" fill="#f97316"/>
+            <rect x="73" y="48" width="14" height="7" rx="2" fill="#64748b" stroke="#334155" stroke-width="1.5"/>
+            <circle cx="80" cy="85" r="34" fill="#0f172a" stroke="#1e293b" stroke-width="2.5"/>
+            <ellipse cx="70" cy="72" rx="9" ry="5.5" transform="rotate(-30 70 72)" fill="#475569" opacity="0.65"/>
+            <circle cx="66" cy="68" r="3" fill="#ffffff" opacity="0.8"/>
+            <path d="M 72 80 L 88 94 M 88 80 L 72 94" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round"/>
+          </g>
+          <g class="whac-bomb-blast">
+            <path d="M 80 20 L 96 52 L 132 40 L 118 72 L 148 92 L 116 106 L 126 140 L 94 124 L 80 152 L 66 124 L 34 140 L 44 106 L 12 92 L 42 72 L 28 40 L 64 52 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="3"/>
+            <path d="M 80 34 L 92 58 L 120 50 L 108 74 L 130 90 L 106 100 L 114 126 L 90 114 L 80 134 L 70 114 L 46 126 L 54 100 L 30 90 L 52 74 L 40 50 L 68 58 Z" fill="#f59e0b" stroke="#d97706" stroke-width="2.5"/>
+            <circle cx="80" cy="80" r="24" fill="#fef08a"/>
+            <circle cx="80" cy="80" r="14" fill="#ffffff"/>
+            <circle cx="35" cy="30" r="3.5" fill="#f97316"/>
+            <circle cx="125" cy="25" r="4" fill="#facc15"/>
+            <circle cx="145" cy="120" r="3.5" fill="#ef4444"/>
+            <circle cx="20" cy="125" r="4" fill="#f59e0b"/>
+          </g>
+          <text x="80" y="88" text-anchor="middle" class="whac-bomb-text">BOOM!</text>
+        </svg>
+      `;
+      moundWrap.appendChild(bomb);
+      setTimeout(() => bomb.remove(), 600);
+    }
+
     function createHitFx(holeIdx, isCorrect) {
       const moundWrap = modal.querySelector(`[data-hole-index="${holeIdx}"]`);
       if (!moundWrap) return;
@@ -8787,11 +8830,11 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       clearTimeout(botTimer);
 
       diglett.classList.add('is-whacked');
-      renderHammerStrike(holeIdx);
       createHitFx(holeIdx, isTarget);
 
       if (isTarget) {
-        // Correct hit!
+        // Correct hit: Pikachu Pokéball hammer strike
+        renderHammerStrike(holeIdx);
         try { window.pokeSfx?.play?.('correct'); } catch (e) {}
         comboStreak++;
         if (comboStreak > 1) {
@@ -8806,14 +8849,14 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
         }
 
-        // Check victory condition
+        // Check victory condition (ends without showing the last whacked word)
         if (activeGameScores[activeGamePlayerIndex] >= winningScore) {
           roundActive = false;
           cleanUpWave();
           try { window.pokeSfx?.play?.('cheer'); } catch (e) {}
           setTimeout(() => {
             if (typeof showGameCelebration === 'function') {
-              showGameCelebration(modal, 'Whac-A-Diglett Champion!', currentTargetWord.vocab_word, null, currentTargetWord.vocab_image);
+              showGameCelebration(modal, 'Whac-A-Diglett Champion!');
             }
           }, 450);
           return;
@@ -8832,24 +8875,21 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
         }, 350);
 
       } else {
-        // Wrong hit!
-        try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        // Wrong hit: Exploding bomb animation & sound instead of Pikachu strike
+        renderBombExplosion(holeIdx);
+        try { window.pokeSfx?.play?.('boom'); } catch (e) {}
         comboStreak = 0;
         comboEl.classList.remove('is-visible');
 
-        const prevPlayerIndex = activeGamePlayerIndex;
         if (typeof advanceGameTurn === 'function') {
           advanceGameTurn();
-        }
-        if (typeof showWrongAnswerCelebration === 'function') {
-          showWrongAnswerCelebration(modal, prevPlayerIndex);
         }
         updateScoreHud();
 
         setTimeout(() => {
           diglett.classList.remove('is-up', 'is-whacked');
-          setTimeout(spawnWave, 350);
-        }, 350);
+          setTimeout(spawnWave, 400);
+        }, 400);
       }
     }
 
@@ -34902,7 +34942,7 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
   const winnerAvatarUrl = `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${winnerAvatar}.png`;
   const configuredReward = Math.max(0, Math.floor(Number(activeGameReward) || 0));
   const prizeImageUrl = document.getElementById('game-prize-image-loader')?.src || '';
-  const resultTitle = tied ? 'Even even seven eleven' : `🎉 ${winnerName} wins!`;
+  const resultTitle = tied ? 'Even even seven eleven' : `${winnerName} wins!`;
   const overlay = document.createElement('div');
   overlay.className = 'game-celebration-overlay';
   const isFindMeResult = title === 'Find Me champion!';
@@ -34927,7 +34967,7 @@ function showGameCelebration(gameModal, title = 'Amazing job!', solvedWord = '',
   const prizeText = (configuredReward > 0 && !tied && !isBotWinner) ? `Good job 🪙 ${configuredReward} coins won` : '';
   const prizeMarkup = prizeText ? `<div class="relative z-10 mt-3 inline-flex items-center justify-center rounded-full border border-yellow-300/70 bg-slate-950/90 px-4 py-2 text-center text-base font-bold text-yellow-200 shadow-lg" aria-live="polite">${prizeText}</div>` : '';
   overlay.innerHTML = `<div class="game-celebration-card ${isFindMeResult ? 'find-me-result-card' : ''}" role="dialog" aria-modal="true" aria-labelledby="celebration-title">
-    ${isFindMeResult ? '<div class="find-me-result-sparkles" aria-hidden="true">✦ · ✧ · ✦</div><div class="find-me-result-accent" aria-hidden="true">🎉</div>' : ''}
+    ${isFindMeResult ? '<div class="find-me-result-sparkles" aria-hidden="true">✦ · ✧ · ✦</div><div class="find-me-result-accent" aria-hidden="true">⭐</div>' : ''}
     <img class="game-celebration-pikachu ${isFindMeResult ? 'find-me-result-art' : ''}" loading="eager" src="${winnerAvatarUrl}" alt="${winnerName}'s winning Pokémon avatar">
     <h2 id="celebration-title" class="heading-font ${isFindMeResult ? 'find-me-result-title' : 'text-4xl'} font-bold text-amber-600 relative z-10">${resultTitle}</h2>
     <p class="${isFindMeResult ? 'find-me-result-message' : 'text-lg'} font-semibold text-slate-700 mt-2 relative z-10">${title}</p>

@@ -146,6 +146,7 @@ describe('Game Timeout Elimination & Score Determination Rules', () => {
     app.showGameCelebration(mockModal, 'Time is up!', 'Final score decided by points');
 
     const titleEl = mockModal.querySelector('#celebration-title');
-    expect(titleEl?.textContent).toContain('🎉 High Scorer wins!');
+    expect(titleEl?.textContent).toContain('High Scorer wins!');
+    expect(titleEl?.textContent).not.toContain('🎉');
   });
 });

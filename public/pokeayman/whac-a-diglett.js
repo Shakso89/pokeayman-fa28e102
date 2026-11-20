@@ -974,6 +974,49 @@
       setTimeout(() => hammer.remove(), 480);
     }
 
+    // Render explosive cartoon bomb on wrong hit instead of Pikachu hammer!
+    function renderBombExplosion(holeIdx) {
+      const moundWrap = modal.querySelector(`[data-hole-index="${holeIdx}"]`);
+      if (!moundWrap) return;
+
+      moundWrap.classList.remove('whac-mound-shake');
+      void moundWrap.offsetWidth;
+      moundWrap.classList.add('whac-mound-shake');
+      setTimeout(() => moundWrap.classList.remove('whac-mound-shake'), 440);
+
+      const bomb = document.createElement('div');
+      bomb.className = 'whac-bomb-anim';
+      bomb.innerHTML = `
+        <svg viewBox="0 0 160 160" class="whac-bomb-svg">
+          <circle class="whac-bomb-shockwave" cx="80" cy="80" r="35" fill="none" stroke="#f97316" stroke-width="8"/>
+          <circle class="whac-bomb-shockwave" cx="80" cy="80" r="25" fill="none" stroke="#fde047" stroke-width="6"/>
+          <g class="whac-bomb-body">
+            <path class="whac-bomb-fuse" d="M 80 50 Q 86 32, 98 28" fill="none" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round"/>
+            <circle class="whac-bomb-spark" cx="99" cy="27" r="5" fill="#fef08a"/>
+            <polygon points="99,19 101,25 107,27 101,29 99,35 97,29 91,27 97,25" fill="#f97316"/>
+            <rect x="73" y="48" width="14" height="7" rx="2" fill="#64748b" stroke="#334155" stroke-width="1.5"/>
+            <circle cx="80" cy="85" r="34" fill="#0f172a" stroke="#1e293b" stroke-width="2.5"/>
+            <ellipse cx="70" cy="72" rx="9" ry="5.5" transform="rotate(-30 70 72)" fill="#475569" opacity="0.65"/>
+            <circle cx="66" cy="68" r="3" fill="#ffffff" opacity="0.8"/>
+            <path d="M 72 80 L 88 94 M 88 80 L 72 94" stroke="#ef4444" stroke-width="4.5" stroke-linecap="round"/>
+          </g>
+          <g class="whac-bomb-blast">
+            <path d="M 80 20 L 96 52 L 132 40 L 118 72 L 148 92 L 116 106 L 126 140 L 94 124 L 80 152 L 66 124 L 34 140 L 44 106 L 12 92 L 42 72 L 28 40 L 64 52 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="3"/>
+            <path d="M 80 34 L 92 58 L 120 50 L 108 74 L 130 90 L 106 100 L 114 126 L 90 114 L 80 134 L 70 114 L 46 126 L 54 100 L 30 90 L 52 74 L 40 50 L 68 58 Z" fill="#f59e0b" stroke="#d97706" stroke-width="2.5"/>
+            <circle cx="80" cy="80" r="24" fill="#fef08a"/>
+            <circle cx="80" cy="80" r="14" fill="#ffffff"/>
+            <circle cx="35" cy="30" r="3.5" fill="#f97316"/>
+            <circle cx="125" cy="25" r="4" fill="#facc15"/>
+            <circle cx="145" cy="120" r="3.5" fill="#ef4444"/>
+            <circle cx="20" cy="125" r="4" fill="#f59e0b"/>
+          </g>
+          <text x="80" y="88" text-anchor="middle" class="whac-bomb-text">BOOM!</text>
+        </svg>
+      `;
+      moundWrap.appendChild(bomb);
+      setTimeout(() => bomb.remove(), 600);
+    }
+
     function createHitFx(holeIdx, isCorrect) {
       const moundWrap = modal.querySelector(`[data-hole-index="${holeIdx}"]`);
       if (!moundWrap) return;
@@ -1001,11 +1044,11 @@
       clearTimeout(botTimer);
 
       diglett.classList.add('is-whacked');
-      renderHammerStrike(holeIdx);
       createHitFx(holeIdx, isTarget);
 
       if (isTarget) {
-        // Correct hit!
+        // Correct hit: Pikachu Pokéball hammer strike
+        renderHammerStrike(holeIdx);
         try { window.pokeSfx?.play?.('correct'); } catch (e) {}
         comboStreak++;
         if (comboStreak > 1) {
@@ -1020,14 +1063,14 @@
           showCorrectAnswerCelebration(modal, activeGamePlayerIndex);
         }
 
-        // Check victory condition
+        // Check victory condition (ends without showing the last whacked word)
         if (activeGameScores[activeGamePlayerIndex] >= winningScore) {
           roundActive = false;
           cleanUpWave();
           try { window.pokeSfx?.play?.('cheer'); } catch (e) {}
           setTimeout(() => {
             if (typeof showGameCelebration === 'function') {
-              showGameCelebration(modal, 'Whac-A-Diglett Champion!', currentTargetWord.vocab_word, null, currentTargetWord.vocab_image);
+              showGameCelebration(modal, 'Whac-A-Diglett Champion!');
             }
           }, 450);
           return;
@@ -1046,24 +1089,21 @@
         }, 350);
 
       } else {
-        // Wrong hit!
-        try { window.pokeSfx?.play?.('wrong'); } catch (e) {}
+        // Wrong hit: Exploding bomb animation & sound instead of Pikachu strike
+        renderBombExplosion(holeIdx);
+        try { window.pokeSfx?.play?.('boom'); } catch (e) {}
         comboStreak = 0;
         comboEl.classList.remove('is-visible');
 
-        const prevPlayerIndex = activeGamePlayerIndex;
         if (typeof advanceGameTurn === 'function') {
           advanceGameTurn();
-        }
-        if (typeof showWrongAnswerCelebration === 'function') {
-          showWrongAnswerCelebration(modal, prevPlayerIndex);
         }
         updateScoreHud();
 
         setTimeout(() => {
           diglett.classList.remove('is-up', 'is-whacked');
-          setTimeout(spawnWave, 350);
-        }, 350);
+          setTimeout(spawnWave, 400);
+        }, 400);
       }
     }
 
