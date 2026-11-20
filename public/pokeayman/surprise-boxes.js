@@ -159,12 +159,17 @@
     const baamQ = sel => modal.querySelector(sel) || document.querySelector('.baam-stage-portal ' + sel);
     if (baamPlayers.length < 2) { toast('Select at least two students for Surprise Boxes'); modal.remove(); return; }
     activeGamePlayers = baamPlayers;
-    activeGamePlayerIndex = 0;
+    if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < baamPlayers.length) {
+      activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+      window._chosenFirstPlayerIndex = null;
+    } else if (typeof activeGamePlayerIndex !== 'number' || activeGamePlayerIndex < 0 || activeGamePlayerIndex >= baamPlayers.length) {
+      activeGamePlayerIndex = 0;
+    }
     activeGameScores = baamPlayers.map(() => 0);
     const playerHud = modal.querySelector('#baam-player-hud');
     playerHud.innerHTML = baamPlayers.map((player, index) => {
       const avatar = player.avatar_pokemon_id || 25;
-      return `<div class="game-player-card ${index === 0 ? 'is-active' : ''}" data-player-index="${index}">
+      return `<div class="game-player-card ${index === activeGamePlayerIndex ? 'is-active' : ''}" data-player-index="${index}">
         <div class="game-player-avatar-wrap">${gameStudentAvatarMarkup(player, 'game-player-avatar baam-player-avatar')}</div>
         <p class="game-player-name font-bold text-xs text-slate-700 baam-player-name">${player.student_name}</p>
         <p class="game-player-turn text-[11px] font-black" aria-hidden="true"></p>

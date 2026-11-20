@@ -89,7 +89,12 @@
     }
 
     activeGameScores = [0, 0];
-    activeGamePlayerIndex = 0;
+    if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+      activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+      window._chosenFirstPlayerIndex = null;
+    } else if (typeof activeGamePlayerIndex !== 'number' || activeGamePlayerIndex < 0 || activeGamePlayerIndex >= activeGamePlayers.length) {
+      activeGamePlayerIndex = 0;
+    }
     if (typeof setGameReplay === 'function') {
       setGameReplay(() => {
         if (typeof resetGameTurnState === 'function') resetGameTurnState();

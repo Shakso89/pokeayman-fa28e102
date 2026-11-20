@@ -36,6 +36,10 @@
     } else if (activeGamePlayers.length === 1) {
       activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
     }
+    if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+      activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+      window._chosenFirstPlayerIndex = null;
+    }
     const difficultyConfig = { easy: { maxWrong: 8, showClue: true }, hard: { maxWrong: 8, showClue: false } };
     difficulty = difficultyConfig[difficulty] ? difficulty : 'easy';
     const activeDifficulty = difficultyConfig[difficulty];

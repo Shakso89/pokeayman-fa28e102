@@ -5978,6 +5978,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
       setGameReplay(() => { resetGameTurnState(); window.openGameCrossword(listName, timerSeconds, wordCount); });
       activeGameScores = activeGamePlayers.map(() => 0);
+      if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+        activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+        window._chosenFirstPlayerIndex = null;
+      }
     const modal = document.createElement('div');
     modal.className = 'game-popup-modal crossword-game-root fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3';
     modal.dataset.noWinnerOnTimeout = 'true';
@@ -6507,7 +6511,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     }
 
     activeGameScores = [0, 0];
-    activeGamePlayerIndex = 0;
+    if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+      activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+      window._chosenFirstPlayerIndex = null;
+    } else if (typeof activeGamePlayerIndex !== 'number' || activeGamePlayerIndex < 0 || activeGamePlayerIndex >= activeGamePlayers.length) {
+      activeGamePlayerIndex = 0;
+    }
     if (typeof setGameReplay === 'function') {
       setGameReplay(() => {
         if (typeof resetGameTurnState === 'function') resetGameTurnState();
@@ -7836,7 +7845,12 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     if (!Array.isArray(activeGameScores) || activeGameScores.length !== activeGamePlayers.length) {
       activeGameScores = activeGamePlayers.map(() => 0);
     }
-    activeGamePlayerIndex = 0;
+    if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+      activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+      window._chosenFirstPlayerIndex = null;
+    } else if (typeof activeGamePlayerIndex !== 'number' || activeGamePlayerIndex < 0 || activeGamePlayerIndex >= activeGamePlayers.length) {
+      activeGamePlayerIndex = 0;
+    }
 
     if (typeof setGameReplay === 'function') {
       setGameReplay(() => {
@@ -7877,12 +7891,49 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
           </button>
         `).join('');
 
-    const p1 = activeGamePlayers[0] || { student_name: 'Player 1', avatar_pokemon_id: 25 };
-    const p2 = activeGamePlayers[1] || { student_name: 'Robot', avatar_pokemon_id: 137, isBot: true };
-    const p1Name = p1.student_name || 'Player 1';
-    const p2Name = p2.student_name || (p2.isBot ? 'Robot' : 'Player 2');
-    const p1Avatar = p1.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p1.avatar_pokemon_id || 25}.png`;
-    const p2Avatar = p2.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p2.avatar_pokemon_id || (p2.isBot ? 137 : 133)}.png`;
+    const playerAvatars = activeGamePlayers.map((p, idx) => {
+      const defaultId = p?.isBot ? 137 : (idx === 0 ? 25 : (idx === 1 ? 133 : (idx === 2 ? 1 : 4)));
+      return p?.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p?.avatar_pokemon_id || defaultId}.png`;
+    });
+    const playerNames = activeGamePlayers.map((p, idx) => {
+      return p?.student_name || (p?.isBot ? 'Robot' : `Player ${idx + 1}`);
+    });
+    const isMultiPlayer = activeGamePlayers.length > 2;
+
+    const renderPlayerBadgeHtml = (pIdx) => {
+      const pName = playerNames[pIdx];
+      const pAvatar = playerAvatars[pIdx];
+      const pScore = activeGameScores[pIdx] || 0;
+      const isActive = activeGamePlayerIndex === pIdx;
+      return `
+        <div class="whac-player-badge p${pIdx + 1} ${isActive ? 'is-active' : ''}" id="whac-p${pIdx + 1}-badge" data-player-index="${pIdx}">
+          <img src="${pAvatar}" class="whac-player-avatar" alt="${esc(pName)}">
+          <div class="whac-player-info">
+            <span class="whac-player-name">${esc(pName)}</span>
+            <span class="whac-player-turn-pill" id="whac-p${pIdx + 1}-turn">${isActive ? 'TURN' : ''}</span>
+          </div>
+          <span class="whac-player-score" id="whac-p${pIdx + 1}-score">${pScore}</span>
+        </div>
+      `;
+    };
+
+    const targetPillHtml = `
+      <div class="whac-target-pill" title="Target score ${winningScore}">
+        <span class="whac-target-title">TARGET</span>
+        <span class="whac-target-val">${winningScore}</span>
+      </div>
+    `;
+
+    let duelHudContentHtml = '';
+    if (activeGamePlayers.length === 2) {
+      duelHudContentHtml = `${renderPlayerBadgeHtml(0)}${targetPillHtml}${renderPlayerBadgeHtml(1)}`;
+    } else if (activeGamePlayers.length === 3) {
+      duelHudContentHtml = `${renderPlayerBadgeHtml(0)}${renderPlayerBadgeHtml(1)}${targetPillHtml}${renderPlayerBadgeHtml(2)}`;
+    } else if (activeGamePlayers.length >= 4) {
+      duelHudContentHtml = `${renderPlayerBadgeHtml(0)}${renderPlayerBadgeHtml(1)}${targetPillHtml}${renderPlayerBadgeHtml(2)}${renderPlayerBadgeHtml(3)}`;
+    } else {
+      duelHudContentHtml = `${renderPlayerBadgeHtml(0)}${targetPillHtml}`;
+    }
 
     // Create Modal
     const modal = document.createElement('div');
@@ -7925,29 +7976,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 
       <div class="whac-game-shell ga-stage-shell">
         <!-- 2. Dedicated Duelists Score HUD (Guaranteed High Contrast, Never White-on-White) -->
-        <div class="whac-duel-hud">
-          <div class="whac-player-badge p1 ${activeGamePlayerIndex === 0 ? 'is-active' : ''}" id="whac-p1-badge">
-            <img src="${p1Avatar}" class="whac-player-avatar" alt="${esc(p1Name)}">
-            <div class="whac-player-info">
-              <span class="whac-player-name">${esc(p1Name)}</span>
-              <span class="whac-player-turn-pill" id="whac-p1-turn">${activeGamePlayerIndex === 0 ? 'TURN' : ''}</span>
-            </div>
-            <span class="whac-player-score" id="whac-p1-score">${activeGameScores[0] || 0}</span>
-          </div>
-
-          <div class="whac-target-pill">
-            <span class="whac-target-title">TARGET</span>
-            <span class="whac-target-val">${winningScore}</span>
-          </div>
-
-          <div class="whac-player-badge p2 ${activeGamePlayerIndex === 1 ? 'is-active' : ''}" id="whac-p2-badge">
-            <img src="${p2Avatar}" class="whac-player-avatar" alt="${esc(p2Name)}">
-            <div class="whac-player-info">
-              <span class="whac-player-name">${esc(p2Name)}</span>
-              <span class="whac-player-turn-pill" id="whac-p2-turn">${activeGamePlayerIndex === 1 ? 'TURN' : ''}</span>
-            </div>
-            <span class="whac-player-score" id="whac-p2-score">${activeGameScores[1] || 0}</span>
-          </div>
+        <div class="whac-duel-hud ${isMultiPlayer ? 'is-multi' : ''}">
+          ${duelHudContentHtml}
         </div>
 
         <!-- 3. Target Clue Signboard (Clean: Centered Picture OR 3D Audio Card, no weird extra empty box, no label above) -->
@@ -8354,23 +8384,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
       if (currentTargetWord) playWaveAudio(currentTargetWord.vocab_word);
     });
 
-    const p1Badge = modal.querySelector('#whac-p1-badge');
-    const p2Badge = modal.querySelector('#whac-p2-badge');
-    const p1ScoreEl = modal.querySelector('#whac-p1-score');
-    const p2ScoreEl = modal.querySelector('#whac-p2-score');
-    const p1TurnEl = modal.querySelector('#whac-p1-turn');
-    const p2TurnEl = modal.querySelector('#whac-p2-turn');
-
     function updateScoreHud() {
-      if (p1ScoreEl) p1ScoreEl.textContent = String(activeGameScores[0] || 0);
-      if (p2ScoreEl) p2ScoreEl.textContent = String(activeGameScores[1] || 0);
+      activeGamePlayers.forEach((_, idx) => {
+        const badge = modal.querySelector(`#whac-p${idx + 1}-badge`);
+        const scoreEl = modal.querySelector(`#whac-p${idx + 1}-score`);
+        const turnEl = modal.querySelector(`#whac-p${idx + 1}-turn`);
+        const isActive = activeGamePlayerIndex === idx;
 
-      const isP1 = activeGamePlayerIndex === 0;
-      if (p1Badge) p1Badge.classList.toggle('is-active', isP1);
-      if (p2Badge) p2Badge.classList.toggle('is-active', !isP1);
-
-      if (p1TurnEl) p1TurnEl.textContent = isP1 ? 'TURN' : '';
-      if (p2TurnEl) p2TurnEl.textContent = !isP1 ? 'TURN' : '';
+        if (scoreEl) scoreEl.textContent = String(activeGameScores[idx] || 0);
+        if (badge) badge.classList.toggle('is-active', isActive);
+        if (turnEl) turnEl.textContent = isActive ? 'TURN' : '';
+      });
     }
 
     const rawLevel = (typeof window.getClassReadingLevel === 'function'
@@ -8832,6 +8856,8 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     // Attach click / tap listener to holes
     field.addEventListener('click', (e) => {
       if (!roundActive) return;
+      const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (curPlayer?.isBot && e.isTrusted) return;
       const chamber = e.target.closest('[data-hole]');
       if (!chamber) return;
       const holeIdx = Number(chamber.dataset.hole);
@@ -8953,7 +8979,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
 // Arcade games hub, lobby helpers and 3-2-1 countdown. Only presentation; game logic stays in index.html.
 (function () {
   const GAMES = [
-    { fn: 'chooseWhacADiglett', icon: '🔨', image: '/pokeayman/assets/games/whac-a-diglett.jpg', name: 'Whac-A-Diglett', desc: 'Listen to the word or check the clue, then whack the popping Diglett before it burrows back!', tags: ['1–2 players', 'Reflexes & Audio'], accent: 'amber' },
+    { fn: 'chooseWhacADiglett', icon: '🔨', image: '/pokeayman/assets/games/whac-a-diglett.jpg', name: 'Whac-A-Diglett', desc: 'Listen to the word or check the clue, then whack the popping Diglett before it burrows back!', tags: ['1–4 players', 'Reflexes & Audio'], accent: 'amber' },
     { fn: 'chooseDotsAndBoxes', icon: '⚄', image: '/pokeayman/assets/games/dots-and-boxes.jpg', name: 'Dots and Boxes', desc: 'Answer vocabulary questions to draw lines, claim boxes, and outsmart your opponent.', tags: ['2-Player', 'Strategy', 'Vocab MCQ'], accent: 'amber' },
     { fn: 'chooseBaamboozlePowerUps', icon: '🎁', image: '/pokeayman/assets/games/surprise-boxes.jpg', name: 'Surprise Boxes', desc: 'Open mystery boxes full of power-ups, traps and score swaps.', tags: ['1–4 players', 'Class favourite'], accent: 'pink' },
     { fn: 'chooseMatchWordCount', icon: '🎯', image: '/pokeayman/assets/games/match-words.jpg', name: 'Match Words', desc: 'Race to match each word with its picture.', tags: ['1–4 players', 'Fast reflexes'], accent: 'red' },
@@ -11570,7 +11596,7 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const bar = document.createElement('div');
     bar.className = 'ga-players-bar flex flex-wrap items-center justify-between gap-2.5 w-full';
 
-    const maxAllowed = isSoloGame ? 1 : ((isDotsAndBoxes || isWhacADiglett) ? 2 : 4);
+    const maxAllowed = isSoloGame ? 1 : (isDotsAndBoxes ? 2 : 4);
     bar.innerHTML = `
       <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
         <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
@@ -12624,16 +12650,41 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     ov.className = 'ga-countdown';
     ov.setAttribute('role', 'dialog');
     ov.setAttribute('aria-live', 'assertive');
-    const first = players[firstIndex];
+    const resolvedFirstIndex = (typeof firstIndex === 'number' && firstIndex >= 0 && firstIndex < players.length) ? firstIndex : 0;
+    const first = players[resolvedFirstIndex] || players[0];
+    const isMulti = players.length > 2;
+
+    if (typeof activeGamePlayerIndex !== 'undefined') activeGamePlayerIndex = resolvedFirstIndex;
+    if (typeof window !== 'undefined') window._chosenFirstPlayerIndex = resolvedFirstIndex;
+
     ov.innerHTML = `<div class="ga-cd-stage">
-      <div class="ga-cd-players">${players.map((pl, i) => `<div class="ga-cd-player ${i === firstIndex ? 'is-first' : ''}" style="--i:${i}">${avatar(pl, 'ga-cd-avatar')}<span>${esc(pl.student_name)}</span></div>`).join('<b class="ga-cd-vs">VS</b>')}</div>
+      <div class="ga-cd-players">${players.map((pl, i) => {
+        const turnNum = isMulti ? (((i - resolvedFirstIndex + players.length) % players.length) + 1) : null;
+        const isFirst = i === resolvedFirstIndex;
+        return `<div class="ga-cd-player ${isFirst ? 'is-first' : ''}" style="--i:${i}">
+          ${isMulti ? `<div class="ga-cd-turn-badge ${isFirst ? 'is-first-turn' : ''}"><span class="ga-cd-turn-prefix">Turn</span> <strong>${turnNum}</strong></div>` : ''}
+          <div class="ga-cd-avatar-wrapper">
+            ${avatar(pl, 'ga-cd-avatar')}
+            ${isMulti ? `<span class="ga-cd-turn-pill ${isFirst ? 'is-first-turn' : ''}" aria-label="Turn ${turnNum}">${turnNum}</span>` : ''}
+          </div>
+          <span>${esc(pl.student_name)}</span>
+        </div>`;
+      }).join('<b class="ga-cd-vs">VS</b>')}</div>
       <p class="ga-cd-first">${esc(first.student_name)} goes first!</p>
       <div class="ga-cd-num" aria-label="Countdown">3</div>
       <button type="button" class="ga-cd-skip">Skip</button></div>`;
     document.body.appendChild(ov);
     const num = ov.querySelector('.ga-cd-num');
     let n = 3, done = false;
-    const finish = () => { if (done) return; done = true; clearInterval(t); ov.remove(); start(); };
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearInterval(t);
+      ov.remove();
+      if (typeof activeGamePlayerIndex !== 'undefined') activeGamePlayerIndex = resolvedFirstIndex;
+      if (typeof window !== 'undefined') window._chosenFirstPlayerIndex = resolvedFirstIndex;
+      start();
+    };
     sfx?.play('vs');
     const t = setInterval(() => {
       n -= 1;
@@ -13932,12 +13983,17 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     const baamQ = sel => modal.querySelector(sel) || document.querySelector('.baam-stage-portal ' + sel);
     if (baamPlayers.length < 2) { toast('Select at least two students for Surprise Boxes'); modal.remove(); return; }
     activeGamePlayers = baamPlayers;
-    activeGamePlayerIndex = 0;
+    if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < baamPlayers.length) {
+      activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+      window._chosenFirstPlayerIndex = null;
+    } else if (typeof activeGamePlayerIndex !== 'number' || activeGamePlayerIndex < 0 || activeGamePlayerIndex >= baamPlayers.length) {
+      activeGamePlayerIndex = 0;
+    }
     activeGameScores = baamPlayers.map(() => 0);
     const playerHud = modal.querySelector('#baam-player-hud');
     playerHud.innerHTML = baamPlayers.map((player, index) => {
       const avatar = player.avatar_pokemon_id || 25;
-      return `<div class="game-player-card ${index === 0 ? 'is-active' : ''}" data-player-index="${index}">
+      return `<div class="game-player-card ${index === activeGamePlayerIndex ? 'is-active' : ''}" data-player-index="${index}">
         <div class="game-player-avatar-wrap">${gameStudentAvatarMarkup(player, 'game-player-avatar baam-player-avatar')}</div>
         <p class="game-player-name font-bold text-xs text-slate-700 baam-player-name">${player.student_name}</p>
         <p class="game-player-turn text-[11px] font-black" aria-hidden="true"></p>
@@ -14601,6 +14657,10 @@ html body #app-screen button:hover:not(.tab-active):not(.btn-primary):not(.btn-s
     } else if (activeGamePlayers.length === 1) {
       activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
     }
+    if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+      activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+      window._chosenFirstPlayerIndex = null;
+    }
     const difficultyConfig = { easy: { maxWrong: 8, showClue: true }, hard: { maxWrong: 8, showClue: false } };
     difficulty = difficultyConfig[difficulty] ? difficulty : 'easy';
     const activeDifficulty = difficultyConfig[difficulty];
@@ -15094,6 +15154,10 @@ function openGameFindMe(listName, winningScore = 5, timerSeconds = 0) {
   } else if (activeGamePlayers.length === 1) {
     activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
   }
+  if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+    activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+    window._chosenFirstPlayerIndex = null;
+  }
   if (!Array.isArray(activeGameScores) || activeGameScores.length !== activeGamePlayers.length) activeGameScores = activeGamePlayers.map(() => 0);
   const getFindMePlayerScore = () => Number(activeGameScores[activeGamePlayerIndex] || 0);
   let findMeWordSize = 16;
@@ -15405,6 +15469,10 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
     activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
   } else if (activeGamePlayers.length === 1) {
     activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+  }
+  if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+    activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+    window._chosenFirstPlayerIndex = null;
   }
   const words = getGameWords(listName);
   if (words.length < 2) { toast('My lists launch failed: the selected source has fewer than 2 valid words.'); return; }
@@ -16159,6 +16227,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
       botDifficulty: window.selectedBotDifficulty || 'normal'
     });
     pendingGamePlayers = 2;
+  }
+  if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+    activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+    window._chosenFirstPlayerIndex = null;
   }
   
   // Build deck with dynamic mystery filler cards
@@ -17114,6 +17186,10 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
     activeGamePlayers = [student, window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 }];
   } else if (activeGamePlayers.length === 1) {
     activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
+  }
+  if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+    activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+    window._chosenFirstPlayerIndex = null;
   }
   const availableWords = getGameWords(listName);
   const words = currentRole === 'student' ? availableWords.slice().sort(() => Math.random() - 0.5).slice(0, wordCount) : availableWords;
@@ -35490,6 +35566,7 @@ function stopGameFinishedActivity(gameModal) {
 function showFirstPlayerReveal(nextStep, listName) {
   if (!activeGamePlayers.length) { nextStep(listName); return; }
   activeGamePlayerIndex = Math.floor(Math.random() * activeGamePlayers.length);
+  window._chosenFirstPlayerIndex = activeGamePlayerIndex;
   const firstPlayer = activeGamePlayers[activeGamePlayerIndex];
   const modal = document.createElement('div');
   modal.className = 'game-inline-view game-setup-panel mx-auto my-4';
@@ -35599,7 +35676,7 @@ function chooseGamePlayers(listName, nextStep) {
   const playerChoices = [...modal.querySelectorAll('.game-player-check')];
   const refreshPlayerChoiceState = () => {
     const selectedCount = playerChoices.filter(input => input.checked).length;
-    const atLimit = (isDotsAndBoxes || isWhacADiglett) ? selectedCount >= 2 : selectedCount >= 4;
+    const atLimit = isDotsAndBoxes ? selectedCount >= 2 : selectedCount >= 4;
     playerChoices.forEach(input => {
       const tile = input.closest('.game-player-card-option');
       const unselectedAtLimit = atLimit && !input.checked;

@@ -1,7 +1,7 @@
 // Arcade games hub, lobby helpers and 3-2-1 countdown. Only presentation; game logic stays in index.html.
 (function () {
   const GAMES = [
-    { fn: 'chooseWhacADiglett', icon: '🔨', image: '/pokeayman/assets/games/whac-a-diglett.jpg', name: 'Whac-A-Diglett', desc: 'Listen to the word or check the clue, then whack the popping Diglett before it burrows back!', tags: ['1–2 players', 'Reflexes & Audio'], accent: 'amber' },
+    { fn: 'chooseWhacADiglett', icon: '🔨', image: '/pokeayman/assets/games/whac-a-diglett.jpg', name: 'Whac-A-Diglett', desc: 'Listen to the word or check the clue, then whack the popping Diglett before it burrows back!', tags: ['1–4 players', 'Reflexes & Audio'], accent: 'amber' },
     { fn: 'chooseDotsAndBoxes', icon: '⚄', image: '/pokeayman/assets/games/dots-and-boxes.jpg', name: 'Dots and Boxes', desc: 'Answer vocabulary questions to draw lines, claim boxes, and outsmart your opponent.', tags: ['2-Player', 'Strategy', 'Vocab MCQ'], accent: 'amber' },
     { fn: 'chooseBaamboozlePowerUps', icon: '🎁', image: '/pokeayman/assets/games/surprise-boxes.jpg', name: 'Surprise Boxes', desc: 'Open mystery boxes full of power-ups, traps and score swaps.', tags: ['1–4 players', 'Class favourite'], accent: 'pink' },
     { fn: 'chooseMatchWordCount', icon: '🎯', image: '/pokeayman/assets/games/match-words.jpg', name: 'Match Words', desc: 'Race to match each word with its picture.', tags: ['1–4 players', 'Fast reflexes'], accent: 'red' },
@@ -2618,7 +2618,7 @@
     const bar = document.createElement('div');
     bar.className = 'ga-players-bar flex flex-wrap items-center justify-between gap-2.5 w-full';
 
-    const maxAllowed = isSoloGame ? 1 : ((isDotsAndBoxes || isWhacADiglett) ? 2 : 4);
+    const maxAllowed = isSoloGame ? 1 : (isDotsAndBoxes ? 2 : 4);
     bar.innerHTML = `
       <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
         <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
@@ -3672,16 +3672,41 @@
     ov.className = 'ga-countdown';
     ov.setAttribute('role', 'dialog');
     ov.setAttribute('aria-live', 'assertive');
-    const first = players[firstIndex];
+    const resolvedFirstIndex = (typeof firstIndex === 'number' && firstIndex >= 0 && firstIndex < players.length) ? firstIndex : 0;
+    const first = players[resolvedFirstIndex] || players[0];
+    const isMulti = players.length > 2;
+
+    if (typeof activeGamePlayerIndex !== 'undefined') activeGamePlayerIndex = resolvedFirstIndex;
+    if (typeof window !== 'undefined') window._chosenFirstPlayerIndex = resolvedFirstIndex;
+
     ov.innerHTML = `<div class="ga-cd-stage">
-      <div class="ga-cd-players">${players.map((pl, i) => `<div class="ga-cd-player ${i === firstIndex ? 'is-first' : ''}" style="--i:${i}">${avatar(pl, 'ga-cd-avatar')}<span>${esc(pl.student_name)}</span></div>`).join('<b class="ga-cd-vs">VS</b>')}</div>
+      <div class="ga-cd-players">${players.map((pl, i) => {
+        const turnNum = isMulti ? (((i - resolvedFirstIndex + players.length) % players.length) + 1) : null;
+        const isFirst = i === resolvedFirstIndex;
+        return `<div class="ga-cd-player ${isFirst ? 'is-first' : ''}" style="--i:${i}">
+          ${isMulti ? `<div class="ga-cd-turn-badge ${isFirst ? 'is-first-turn' : ''}"><span class="ga-cd-turn-prefix">Turn</span> <strong>${turnNum}</strong></div>` : ''}
+          <div class="ga-cd-avatar-wrapper">
+            ${avatar(pl, 'ga-cd-avatar')}
+            ${isMulti ? `<span class="ga-cd-turn-pill ${isFirst ? 'is-first-turn' : ''}" aria-label="Turn ${turnNum}">${turnNum}</span>` : ''}
+          </div>
+          <span>${esc(pl.student_name)}</span>
+        </div>`;
+      }).join('<b class="ga-cd-vs">VS</b>')}</div>
       <p class="ga-cd-first">${esc(first.student_name)} goes first!</p>
       <div class="ga-cd-num" aria-label="Countdown">3</div>
       <button type="button" class="ga-cd-skip">Skip</button></div>`;
     document.body.appendChild(ov);
     const num = ov.querySelector('.ga-cd-num');
     let n = 3, done = false;
-    const finish = () => { if (done) return; done = true; clearInterval(t); ov.remove(); start(); };
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearInterval(t);
+      ov.remove();
+      if (typeof activeGamePlayerIndex !== 'undefined') activeGamePlayerIndex = resolvedFirstIndex;
+      if (typeof window !== 'undefined') window._chosenFirstPlayerIndex = resolvedFirstIndex;
+      start();
+    };
     sfx?.play('vs');
     const t = setInterval(() => {
       n -= 1;

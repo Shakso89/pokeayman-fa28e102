@@ -59,7 +59,12 @@
     if (!Array.isArray(activeGameScores) || activeGameScores.length !== activeGamePlayers.length) {
       activeGameScores = activeGamePlayers.map(() => 0);
     }
-    activeGamePlayerIndex = 0;
+    if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+      activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+      window._chosenFirstPlayerIndex = null;
+    } else if (typeof activeGamePlayerIndex !== 'number' || activeGamePlayerIndex < 0 || activeGamePlayerIndex >= activeGamePlayers.length) {
+      activeGamePlayerIndex = 0;
+    }
 
     if (typeof setGameReplay === 'function') {
       setGameReplay(() => {
@@ -100,12 +105,49 @@
           </button>
         `).join('');
 
-    const p1 = activeGamePlayers[0] || { student_name: 'Player 1', avatar_pokemon_id: 25 };
-    const p2 = activeGamePlayers[1] || { student_name: 'Robot', avatar_pokemon_id: 137, isBot: true };
-    const p1Name = p1.student_name || 'Player 1';
-    const p2Name = p2.student_name || (p2.isBot ? 'Robot' : 'Player 2');
-    const p1Avatar = p1.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p1.avatar_pokemon_id || 25}.png`;
-    const p2Avatar = p2.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p2.avatar_pokemon_id || (p2.isBot ? 137 : 133)}.png`;
+    const playerAvatars = activeGamePlayers.map((p, idx) => {
+      const defaultId = p?.isBot ? 137 : (idx === 0 ? 25 : (idx === 1 ? 133 : (idx === 2 ? 1 : 4)));
+      return p?.avatar_url || `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${p?.avatar_pokemon_id || defaultId}.png`;
+    });
+    const playerNames = activeGamePlayers.map((p, idx) => {
+      return p?.student_name || (p?.isBot ? 'Robot' : `Player ${idx + 1}`);
+    });
+    const isMultiPlayer = activeGamePlayers.length > 2;
+
+    const renderPlayerBadgeHtml = (pIdx) => {
+      const pName = playerNames[pIdx];
+      const pAvatar = playerAvatars[pIdx];
+      const pScore = activeGameScores[pIdx] || 0;
+      const isActive = activeGamePlayerIndex === pIdx;
+      return `
+        <div class="whac-player-badge p${pIdx + 1} ${isActive ? 'is-active' : ''}" id="whac-p${pIdx + 1}-badge" data-player-index="${pIdx}">
+          <img src="${pAvatar}" class="whac-player-avatar" alt="${esc(pName)}">
+          <div class="whac-player-info">
+            <span class="whac-player-name">${esc(pName)}</span>
+            <span class="whac-player-turn-pill" id="whac-p${pIdx + 1}-turn">${isActive ? 'TURN' : ''}</span>
+          </div>
+          <span class="whac-player-score" id="whac-p${pIdx + 1}-score">${pScore}</span>
+        </div>
+      `;
+    };
+
+    const targetPillHtml = `
+      <div class="whac-target-pill" title="Target score ${winningScore}">
+        <span class="whac-target-title">TARGET</span>
+        <span class="whac-target-val">${winningScore}</span>
+      </div>
+    `;
+
+    let duelHudContentHtml = '';
+    if (activeGamePlayers.length === 2) {
+      duelHudContentHtml = `${renderPlayerBadgeHtml(0)}${targetPillHtml}${renderPlayerBadgeHtml(1)}`;
+    } else if (activeGamePlayers.length === 3) {
+      duelHudContentHtml = `${renderPlayerBadgeHtml(0)}${renderPlayerBadgeHtml(1)}${targetPillHtml}${renderPlayerBadgeHtml(2)}`;
+    } else if (activeGamePlayers.length >= 4) {
+      duelHudContentHtml = `${renderPlayerBadgeHtml(0)}${renderPlayerBadgeHtml(1)}${targetPillHtml}${renderPlayerBadgeHtml(2)}${renderPlayerBadgeHtml(3)}`;
+    } else {
+      duelHudContentHtml = `${renderPlayerBadgeHtml(0)}${targetPillHtml}`;
+    }
 
     // Create Modal
     const modal = document.createElement('div');
@@ -148,29 +190,8 @@
 
       <div class="whac-game-shell ga-stage-shell">
         <!-- 2. Dedicated Duelists Score HUD (Guaranteed High Contrast, Never White-on-White) -->
-        <div class="whac-duel-hud">
-          <div class="whac-player-badge p1 ${activeGamePlayerIndex === 0 ? 'is-active' : ''}" id="whac-p1-badge">
-            <img src="${p1Avatar}" class="whac-player-avatar" alt="${esc(p1Name)}">
-            <div class="whac-player-info">
-              <span class="whac-player-name">${esc(p1Name)}</span>
-              <span class="whac-player-turn-pill" id="whac-p1-turn">${activeGamePlayerIndex === 0 ? 'TURN' : ''}</span>
-            </div>
-            <span class="whac-player-score" id="whac-p1-score">${activeGameScores[0] || 0}</span>
-          </div>
-
-          <div class="whac-target-pill">
-            <span class="whac-target-title">TARGET</span>
-            <span class="whac-target-val">${winningScore}</span>
-          </div>
-
-          <div class="whac-player-badge p2 ${activeGamePlayerIndex === 1 ? 'is-active' : ''}" id="whac-p2-badge">
-            <img src="${p2Avatar}" class="whac-player-avatar" alt="${esc(p2Name)}">
-            <div class="whac-player-info">
-              <span class="whac-player-name">${esc(p2Name)}</span>
-              <span class="whac-player-turn-pill" id="whac-p2-turn">${activeGamePlayerIndex === 1 ? 'TURN' : ''}</span>
-            </div>
-            <span class="whac-player-score" id="whac-p2-score">${activeGameScores[1] || 0}</span>
-          </div>
+        <div class="whac-duel-hud ${isMultiPlayer ? 'is-multi' : ''}">
+          ${duelHudContentHtml}
         </div>
 
         <!-- 3. Target Clue Signboard (Clean: Centered Picture OR 3D Audio Card, no weird extra empty box, no label above) -->
@@ -577,23 +598,17 @@
       if (currentTargetWord) playWaveAudio(currentTargetWord.vocab_word);
     });
 
-    const p1Badge = modal.querySelector('#whac-p1-badge');
-    const p2Badge = modal.querySelector('#whac-p2-badge');
-    const p1ScoreEl = modal.querySelector('#whac-p1-score');
-    const p2ScoreEl = modal.querySelector('#whac-p2-score');
-    const p1TurnEl = modal.querySelector('#whac-p1-turn');
-    const p2TurnEl = modal.querySelector('#whac-p2-turn');
-
     function updateScoreHud() {
-      if (p1ScoreEl) p1ScoreEl.textContent = String(activeGameScores[0] || 0);
-      if (p2ScoreEl) p2ScoreEl.textContent = String(activeGameScores[1] || 0);
+      activeGamePlayers.forEach((_, idx) => {
+        const badge = modal.querySelector(`#whac-p${idx + 1}-badge`);
+        const scoreEl = modal.querySelector(`#whac-p${idx + 1}-score`);
+        const turnEl = modal.querySelector(`#whac-p${idx + 1}-turn`);
+        const isActive = activeGamePlayerIndex === idx;
 
-      const isP1 = activeGamePlayerIndex === 0;
-      if (p1Badge) p1Badge.classList.toggle('is-active', isP1);
-      if (p2Badge) p2Badge.classList.toggle('is-active', !isP1);
-
-      if (p1TurnEl) p1TurnEl.textContent = isP1 ? 'TURN' : '';
-      if (p2TurnEl) p2TurnEl.textContent = !isP1 ? 'TURN' : '';
+        if (scoreEl) scoreEl.textContent = String(activeGameScores[idx] || 0);
+        if (badge) badge.classList.toggle('is-active', isActive);
+        if (turnEl) turnEl.textContent = isActive ? 'TURN' : '';
+      });
     }
 
     const rawLevel = (typeof window.getClassReadingLevel === 'function'
@@ -1055,6 +1070,8 @@
     // Attach click / tap listener to holes
     field.addEventListener('click', (e) => {
       if (!roundActive) return;
+      const curPlayer = activeGamePlayers[activeGamePlayerIndex];
+      if (curPlayer?.isBot && e.isTrusted) return;
       const chamber = e.target.closest('[data-hole]');
       if (!chamber) return;
       const holeIdx = Number(chamber.dataset.hole);

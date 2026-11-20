@@ -90,6 +90,10 @@ function openGameScramble(listName, wordCount = 1, timerSeconds = 0, difficulty 
   } else if (activeGamePlayers.length === 1) {
     activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
   }
+  if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+    activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+    window._chosenFirstPlayerIndex = null;
+  }
   const availableWords = getGameWords(listName);
   const words = currentRole === 'student' ? availableWords.slice().sort(() => Math.random() - 0.5).slice(0, wordCount) : availableWords;
   if (words.length < 1) { toast(selectedGameSource === 'my_lists' ? 'My lists launch failed: no valid words were loaded.' : 'List needs at least 1 word'); return; }

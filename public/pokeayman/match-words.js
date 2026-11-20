@@ -109,6 +109,10 @@ function openGameMatch(listName, wordCount = null, timerSeconds = 0) {
   } else if (activeGamePlayers.length === 1) {
     activeGamePlayers.push(window.createRobotPlayer?.(window.selectedBotDifficulty || 'medium') || { student_name: 'Robot', isBot: true, avatar_pokemon_id: 137 });
   }
+  if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+    activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+    window._chosenFirstPlayerIndex = null;
+  }
   const words = getGameWords(listName);
   if (words.length < 2) { toast('My lists launch failed: the selected source has fewer than 2 valid words.'); return; }
   

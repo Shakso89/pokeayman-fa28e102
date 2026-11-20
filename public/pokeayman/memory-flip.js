@@ -212,6 +212,10 @@ function openGameMemory(listName, difficulty = 'easy', timerSeconds = 0, student
     });
     pendingGamePlayers = 2;
   }
+  if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+    activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+    window._chosenFirstPlayerIndex = null;
+  }
   
   // Build deck with dynamic mystery filler cards
   const isTimerActive = Number.isFinite(Number(timerSeconds)) && Number(timerSeconds) > 0;

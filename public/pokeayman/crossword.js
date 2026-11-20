@@ -229,6 +229,10 @@
 
       setGameReplay(() => { resetGameTurnState(); window.openGameCrossword(listName, timerSeconds, wordCount); });
       activeGameScores = activeGamePlayers.map(() => 0);
+      if (typeof window !== 'undefined' && typeof window._chosenFirstPlayerIndex === 'number' && window._chosenFirstPlayerIndex >= 0 && window._chosenFirstPlayerIndex < activeGamePlayers.length) {
+        activeGamePlayerIndex = window._chosenFirstPlayerIndex;
+        window._chosenFirstPlayerIndex = null;
+      }
     const modal = document.createElement('div');
     modal.className = 'game-popup-modal crossword-game-root fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-3';
     modal.dataset.noWinnerOnTimeout = 'true';
