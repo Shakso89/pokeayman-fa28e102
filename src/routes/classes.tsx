@@ -24,6 +24,16 @@ function ClassesPage() {
     if (typeof window !== "undefined") {
       try {
         sessionStorage.setItem("pokeayman-enter-teacher", "1");
+
+        // If loaded in external Android Chrome after Google OAuth redirect, auto-handoff back into PokéAyman APK
+        const isAndroidBrowser = /Android/i.test(navigator.userAgent) &&
+          !/wv|PokeAymanApp/i.test(navigator.userAgent) &&
+          !(window as any).Capacitor?.isNativePlatform?.();
+
+        if (isAndroidBrowser && (window.location.hash.includes("access_token") || sessionStorage.getItem("pokeayman-oauth-in-progress"))) {
+          sessionStorage.removeItem("pokeayman-oauth-in-progress");
+          window.location.href = "com.pokeayman.app://classes" + window.location.hash;
+        }
       } catch (_) {}
     }
   }, []);
@@ -50,13 +60,31 @@ function ClassesPage() {
   );
   const iframeSrc = `/pokeayman/index.html?v=20261106-surprise-boxes-no-repeat-v2&grammar_build=20261115_clean_transparent_v8&enter=classes${isDesktop ? '&platform=desktop' : ''}`;
 
+  const isAndroidBrowser = typeof navigator !== 'undefined' &&
+    /Android/i.test(navigator.userAgent) &&
+    !/wv|PokeAymanApp/i.test(navigator.userAgent) &&
+    !(window as any).Capacitor?.isNativePlatform?.();
+
   return (
-    <iframe
-      key={frameKey}
-      className="imported-app"
-      title="PokéAyman Classes"
-      src={iframeSrc}
-      allowFullScreen
-    />
+    <div className="w-full h-screen flex flex-col">
+      {isAndroidBrowser && (
+        <aside className="w-full bg-amber-500 text-slate-950 px-4 py-2 text-center text-xs font-bold flex items-center justify-between shadow-md z-50 shrink-0">
+          <span>📱 PokéAyman App installed?</span>
+          <a
+            href={`com.pokeayman.app://classes${typeof window !== 'undefined' ? window.location.hash : ''}`}
+            className="bg-slate-950 text-amber-300 px-3 py-1 rounded-md text-xs font-black shadow hover:bg-slate-900"
+          >
+            Open in PokéAyman App
+          </a>
+        </aside>
+      )}
+      <iframe
+        key={frameKey}
+        className="imported-app flex-1 w-full border-none"
+        title="PokéAyman Classes"
+        src={iframeSrc}
+        allowFullScreen
+      />
+    </div>
   );
 }

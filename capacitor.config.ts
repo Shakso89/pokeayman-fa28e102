@@ -13,6 +13,13 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
     captureInput: true,
     webContentsDebuggingEnabled: false
+  },
+  plugins: {
+    GoogleAuth: {
+      scopes: ['profile', 'email'],
+      serverClientId: '264955410811-hdfrt5djn538e61vjn6aog8v1pf5hmdu.apps.googleusercontent.com',
+      forceCodeForRefreshToken: true
+    }
   }
 };
 

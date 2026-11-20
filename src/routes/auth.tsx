@@ -83,6 +83,34 @@ function AuthPage() {
       ? "com.pokeayman.app://classes"
       : `${window.location.origin}/classes`;
 
+    if (isAndroid) {
+      try {
+        const { GoogleAuth } = await import("@codetrix-studio/capacitor-google-auth");
+        try {
+          GoogleAuth.initialize({
+            clientId: "264955410811-hdfrt5djn538e61vjn6aog8v1pf5hmdu.apps.googleusercontent.com",
+            scopes: ["profile", "email"],
+            grantOfflineAccess: true,
+          });
+        } catch (_) {}
+        const googleUser = await GoogleAuth.signIn();
+        const idToken = googleUser?.authentication?.idToken;
+        if (idToken) {
+          const { data: idData, error: idError } = await supabase.auth.signInWithIdToken({
+            provider: "google",
+            token: idToken,
+          });
+          if (idError) throw idError;
+          if (idData?.session) {
+            window.location.replace("/classes");
+            return;
+          }
+        }
+      } catch (nativeErr: any) {
+        console.warn("Native Google Auth attempt failed, falling back to OAuth:", nativeErr);
+      }
+    }
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

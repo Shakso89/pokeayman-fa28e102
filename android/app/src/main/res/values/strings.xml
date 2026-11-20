@@ -4,4 +4,5 @@
     <string name="title_activity_main">PokéAyman</string>
     <string name="package_name">com.pokeayman.app</string>
     <string name="custom_url_scheme">com.pokeayman.app</string>
+    <string name="server_client_id">264955410811-hdfrt5djn538e61vjn6aog8v1pf5hmdu.apps.googleusercontent.com</string>
 </resources>

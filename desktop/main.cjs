@@ -74,6 +74,12 @@ function createWindow() {
   mainWindow.on('leave-full-screen', () => {
     mainWindow?.webContents.send('desktop:fullscreen-changed', false);
   });
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send('desktop:maximized-changed', true);
+  });
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send('desktop:maximized-changed', false);
+  });
 
   // Keyboard shortcut: F11 toggles fullscreen
   mainWindow.webContents.on('before-input-event', (event, input) => {
@@ -177,6 +183,40 @@ ipcMain.handle('desktop:toggle-fullscreen', () => {
 
 ipcMain.handle('desktop:is-fullscreen', () => {
   return mainWindow ? mainWindow.isFullScreen() : false;
+});
+
+ipcMain.handle('desktop:minimize', () => {
+  if (mainWindow) {
+    mainWindow.minimize();
+    return true;
+  }
+  return false;
+});
+
+ipcMain.handle('desktop:toggle-maximize', () => {
+  if (mainWindow) {
+    if (mainWindow.isFullScreen()) {
+      mainWindow.setFullScreen(false);
+      mainWindow.maximize();
+      return true;
+    }
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+      return false;
+    } else {
+      mainWindow.maximize();
+      return true;
+    }
+  }
+  return false;
+});
+
+ipcMain.handle('desktop:is-maximized', () => {
+  return mainWindow ? (mainWindow.isMaximized() || mainWindow.isFullScreen()) : false;
+});
+
+ipcMain.handle('desktop:close', () => {
+  app.quit();
 });
 
 ipcMain.handle('desktop:quit-app', () => {

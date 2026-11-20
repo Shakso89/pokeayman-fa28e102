@@ -1304,49 +1304,101 @@ body.ts-on .ts-card select#ts-award-student option { background: var(--ts-surfac
   border-color: rgba(239, 68, 68, 0.45) !important;
 }
 
-/* Desktop Floating Quick Controls Bar (Top Right) - Always visible in Desktop EXE */
-#ts-desktop-floating-bar {
+/* Desktop Windowed Header Bar (appears ONLY in non-fullscreen windowed mode) */
+#ts-desktop-header-bar {
   position: fixed;
-  top: 10px;
-  right: 14px;
-  z-index: 999999;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 34px;
+  background: #090e1a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: none; /* Hidden by default and in fullscreen mode */
+  align-items: center;
+  justify-content: space-between;
+  z-index: 9999999;
+  user-select: none;
+  -webkit-app-region: drag;
+  box-sizing: border-box;
+}
+
+body.ts-is-windowed #ts-desktop-header-bar {
+  display: flex !important;
+}
+
+body.ts-is-fullscreen #ts-desktop-header-bar {
+  display: none !important;
+}
+
+body.ts-is-windowed {
+  padding-top: 34px !important;
+  box-sizing: border-box !important;
+}
+
+.ts-dh-drag-area {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(15, 23, 42, 0.78);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 10px;
-  padding: 4px 6px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
-  user-select: none;
-  opacity: 0.85;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  height: 100%;
+  flex: 1;
+  padding-left: 14px;
+  cursor: default;
 }
-#ts-desktop-floating-bar:hover {
-  opacity: 1;
-  transform: translateY(1px);
+
+.ts-dh-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fbbf24;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
 }
-.ts-df-btn {
+
+.ts-dh-brand-icon {
+  font-size: 14px;
+}
+
+.ts-dh-actions {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.ts-dh-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 30px;
+  width: 46px;
+  height: 100%;
   border: none;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #e2e8f0;
-  font-size: 14px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  user-select: none;
+  padding: 0;
+  outline: none;
 }
-.ts-df-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
+
+.ts-dh-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
-.ts-df-quit:hover {
-  background: rgba(239, 68, 68, 0.85) !important;
+
+.ts-dh-close:hover {
+  background: #e81123 !important;
   color: #ffffff !important;
+}
+
+.ts-dh-btn-symbol {
+  display: inline-block;
+  line-height: 1;
+  font-family: "Segoe UI Symbol", "Segoe UI", system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.ts-dh-square-symbol {
+  font-size: 14px;
 }

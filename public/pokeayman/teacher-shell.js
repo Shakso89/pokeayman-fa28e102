@@ -389,30 +389,60 @@
   function ensureDesktopControls() {
     if (!isDesktopApp()) return;
 
-    // 1. Mount always-visible top-right floating quick controls bar
-    if (!document.getElementById('ts-desktop-floating-bar')) {
-      const floatingBar = document.createElement('div');
-      floatingBar.id = 'ts-desktop-floating-bar';
-      floatingBar.className = 'ts-desktop-floating-bar';
-      floatingBar.setAttribute('role', 'toolbar');
-      floatingBar.setAttribute('aria-label', 'Window controls');
-      floatingBar.innerHTML = `
-        <button type="button" class="ts-df-btn ts-df-fs" id="ts-df-fs" title="Toggle Fullscreen (F11)" aria-label="Toggle Fullscreen">
-          <span class="ts-df-fs-icon">🗗</span>
-        </button>
-        <button type="button" class="ts-df-btn ts-df-quit" id="ts-df-quit" title="Exit PokéAyman" aria-label="Exit PokéAyman">
-          ✕
-        </button>
+    // 1. Mount Desktop Windowed Header Bar (appears ONLY in non-fullscreen windowed mode)
+    if (!document.getElementById('ts-desktop-header-bar')) {
+      const headerBar = document.createElement('header');
+      headerBar.id = 'ts-desktop-header-bar';
+      headerBar.className = 'ts-desktop-header-bar';
+      headerBar.setAttribute('role', 'banner');
+      headerBar.setAttribute('aria-label', 'Window header');
+      headerBar.innerHTML = `
+        <div class="ts-dh-drag-area">
+          <div class="ts-dh-brand">
+            <span class="ts-dh-brand-icon">⚡</span>
+            <span class="ts-dh-brand-text">PokéAyman</span>
+          </div>
+        </div>
+        <div class="ts-dh-actions">
+          <button type="button" class="ts-dh-btn ts-dh-min" id="ts-dh-min" title="Minimize" aria-label="Minimize">
+            <span class="ts-dh-btn-symbol">─</span>
+          </button>
+          <button type="button" class="ts-dh-btn ts-dh-max" id="ts-dh-max" title="Maximize or Restore" aria-label="Maximize or Restore">
+            <span class="ts-dh-btn-symbol ts-dh-square-symbol" id="ts-dh-square-icon">🗖</span>
+          </button>
+          <button type="button" class="ts-dh-btn ts-dh-close" id="ts-dh-close" title="Close" aria-label="Close">
+            <span class="ts-dh-btn-symbol">✕</span>
+          </button>
+        </div>
       `;
-      document.body.appendChild(floatingBar);
+      document.body.prepend(headerBar);
 
-      const floatFsBtn = floatingBar.querySelector('#ts-df-fs');
-      const floatFsIcon = floatingBar.querySelector('.ts-df-fs-icon');
-      const floatQuitBtn = floatingBar.querySelector('#ts-df-quit');
+      const minBtn = headerBar.querySelector('#ts-dh-min');
+      const maxBtn = headerBar.querySelector('#ts-dh-max');
+      const closeBtn = headerBar.querySelector('#ts-dh-close');
 
-      floatFsBtn?.addEventListener('click', async (ev) => {
+      minBtn?.addEventListener('click', (ev) => {
         ev.stopPropagation();
         const activeBridge = getDesktopBridge();
+        if (activeBridge && typeof activeBridge.minimize === 'function') {
+          activeBridge.minimize();
+          return;
+        }
+        try {
+          window.parent?.postMessage({ type: 'pokeayman:minimize' }, '*');
+        } catch (_) {}
+      });
+
+      maxBtn?.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        const activeBridge = getDesktopBridge();
+        if (activeBridge && typeof activeBridge.toggleMaximize === 'function') {
+          try {
+            const isMax = await activeBridge.toggleMaximize();
+            syncMaximizeIcon(isMax);
+            return;
+          } catch (_) {}
+        }
         if (activeBridge && typeof activeBridge.toggleFullscreen === 'function') {
           try {
             const nextFs = await activeBridge.toggleFullscreen();
@@ -421,19 +451,23 @@
           } catch (_) {}
         }
         try {
-          window.parent?.postMessage({ type: 'pokeayman:toggle-fullscreen' }, '*');
+          window.parent?.postMessage({ type: 'pokeayman:toggle-maximize' }, '*');
         } catch (_) {}
       });
 
-      floatQuitBtn?.addEventListener('click', (ev) => {
+      closeBtn?.addEventListener('click', (ev) => {
         ev.stopPropagation();
         const activeBridge = getDesktopBridge();
+        if (activeBridge && typeof activeBridge.close === 'function') {
+          activeBridge.close();
+          return;
+        }
         if (activeBridge && typeof activeBridge.quitApp === 'function') {
           activeBridge.quitApp();
           return;
         }
         try {
-          window.parent?.postMessage({ type: 'pokeayman:quit-app' }, '*');
+          window.parent?.postMessage({ type: 'pokeayman:close' }, '*');
         } catch (_) {}
       });
     }
@@ -469,16 +503,31 @@
     const fsBtn = desktopControls.querySelector('#ts-desktop-fs-btn');
     const quitBtn = desktopControls.querySelector('#ts-desktop-quit-btn');
 
+    function syncMaximizeIcon(isMax) {
+      const sq = document.getElementById('ts-dh-square-icon');
+      if (sq) {
+        sq.textContent = isMax ? '🗗' : '🗖';
+      }
+    }
+
     function syncAllFsState(isFs) {
       const fsText = document.querySelector('.ts-desktop-fs-text');
-      const fsIcons = document.querySelectorAll('.ts-desktop-fs-icon, .ts-df-fs-icon');
+      const fsIcons = document.querySelectorAll('.ts-desktop-fs-icon');
       if (fsText) fsText.textContent = isFs ? 'Exit Fullscreen' : 'Fullscreen Mode';
       fsIcons.forEach(ic => {
         ic.textContent = isFs ? '🗗' : '🗖';
       });
-      const floatFs = document.getElementById('ts-df-fs');
-      if (floatFs) {
-        floatFs.title = isFs ? 'Exit Fullscreen' : 'Enter Fullscreen (F11)';
+
+      const headerBar = document.getElementById('ts-desktop-header-bar');
+      if (headerBar) {
+        headerBar.style.display = isFs ? 'none' : 'flex';
+      }
+      if (isFs) {
+        document.body.classList.add('ts-is-fullscreen');
+        document.body.classList.remove('ts-is-windowed');
+      } else {
+        document.body.classList.add('ts-is-windowed');
+        document.body.classList.remove('ts-is-fullscreen');
       }
     }
 
@@ -486,18 +535,27 @@
     if (bridge && typeof bridge.isFullscreen === 'function') {
       bridge.isFullscreen().then(syncAllFsState).catch(() => {});
     }
+    if (bridge && typeof bridge.isMaximized === 'function') {
+      bridge.isMaximized().then(syncMaximizeIcon).catch(() => {});
+    }
     if (bridge && typeof bridge.onFullscreenChange === 'function') {
       bridge.onFullscreenChange(syncAllFsState);
+    }
+    if (bridge && typeof bridge.onMaximizedChange === 'function') {
+      bridge.onMaximizedChange(syncMaximizeIcon);
     }
 
     window.addEventListener('message', (ev) => {
       if (ev.data?.type === 'pokeayman:fullscreen-status') {
         syncAllFsState(Boolean(ev.data.isFullscreen));
+      } else if (ev.data?.type === 'pokeayman:maximized-status') {
+        syncMaximizeIcon(Boolean(ev.data.isMaximized));
       }
     });
 
     try {
       window.parent?.postMessage({ type: 'pokeayman:get-fullscreen' }, '*');
+      window.parent?.postMessage({ type: 'pokeayman:get-maximized' }, '*');
     } catch (_) {}
 
     fsBtn?.addEventListener('click', async (ev) => {
