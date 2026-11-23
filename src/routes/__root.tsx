@@ -97,7 +97,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+    const isDesktopApp = typeof navigator !== "undefined" && (
+      navigator.userAgent.includes("PokeAymanApp") ||
+      Boolean((window as any).pokeaymanDesktop) ||
+      new URLSearchParams(window.location.search).get("platform") === "desktop"
+    );
+
+    // Disable ServiceWorker registration in desktop app to prevent Chromium Mojo IPC CacheStorage crash
+    if (!isDesktopApp && typeof window !== "undefined" && "serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("/sw.js").catch((err) => {
           console.warn("ServiceWorker registration failed: ", err);

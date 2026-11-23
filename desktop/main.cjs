@@ -4,11 +4,6 @@ const path = require('path');
 // Target web app URL with platform flag
 const APP_URL = 'https://pokeayman.pokeayman.workers.dev?platform=desktop';
 
-// Configure high-capacity persistent disk cache for static resources (Pokémon sprites, covers, audio, etc.)
-// 1 GB disk cache, 512 MB media cache
-app.commandLine.appendSwitch('disk-cache-size', '1073741824');
-app.commandLine.appendSwitch('media-cache-size', '536870912');
-
 let mainWindow = null;
 
 function createWindow() {
@@ -45,8 +40,8 @@ function createWindow() {
   const defaultUA = mainWindow.webContents.getUserAgent();
   mainWindow.webContents.setUserAgent(`${defaultUA} PokeAymanApp/1.0`);
 
-  // Strip native scrollbars globally across the main window and all subframes
-  const stripScrollbarCSS = `
+  // Strip native scrollbars globally across the main window and all subframes + enforce draggable header
+  const customWindowCSS = `
     html, body {
       scrollbar-width: none !important;
       -ms-overflow-style: none !important;
@@ -56,10 +51,18 @@ function createWindow() {
       width: 0 !important;
       height: 0 !important;
     }
+    #ts-desktop-header-bar, .window-drag-region {
+      -webkit-app-region: drag !important;
+      user-select: none !important;
+    }
+    #ts-desktop-header-bar button, .window-no-drag-region, #ts-desktop-header-bar .window-no-drag-region {
+      -webkit-app-region: no-drag !important;
+      cursor: pointer !important;
+    }
   `;
 
   mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.webContents.insertCSS(stripScrollbarCSS).catch(() => {});
+    mainWindow.webContents.insertCSS(customWindowCSS).catch(() => {});
   });
 
   // Load the web application
@@ -86,7 +89,7 @@ function createWindow() {
     mainWindow?.webContents.send('desktop:maximized-changed', false);
   });
 
-  // Keyboard shortcut: F11 toggles fullscreen
+  // Keyboard shortcuts: F11 toggles fullscreen, F12 toggles DevTools
   mainWindow.webContents.on('before-input-event', (event, input) => {
     if (input.key === 'F11' && input.type === 'keyDown') {
       const nextState = !mainWindow.isFullScreen();
@@ -95,6 +98,9 @@ function createWindow() {
         mainWindow.setSize(1280, 800);
         mainWindow.center();
       }
+      event.preventDefault();
+    } else if (input.key === 'F12' && input.type === 'keyDown') {
+      mainWindow.webContents.toggleDevTools();
       event.preventDefault();
     }
   });
@@ -231,32 +237,6 @@ ipcMain.handle('desktop:quit-app', () => {
   app.quit();
 });
 
-// Setup persistent local asset caching
-function setupResourceCaching() {
-  const ses = session.defaultSession;
-  ses.webRequest.onHeadersReceived((details, callback) => {
-    const url = details.url.toLowerCase();
-    // Cache static Pokémon sprites, game cards, assets, web fonts, audio
-    const isCacheable = (
-      url.includes('/pokeayman/assets/') ||
-      url.includes('sprites/pokemon') ||
-      url.includes('cdn.jsdelivr.net') ||
-      url.includes('raw.githubusercontent.com') ||
-      url.includes('pokeapi.co') ||
-      /\.(png|jpe?g|webp|svg|gif|ico|woff2?|ttf|mp3|wav|ogg)$/.test(url.split('?')[0])
-    );
-
-    if (isCacheable && details.responseHeaders) {
-      const responseHeaders = { ...details.responseHeaders };
-      // 1 year cache duration for static assets
-      responseHeaders['cache-control'] = ['public, max-age=31536000, immutable'];
-      callback({ responseHeaders });
-      return;
-    }
-    callback({ responseHeaders: details.responseHeaders });
-  });
-}
-
 // Ensure single instance lock so double-clicking doesn't spawn duplicates
 const gotTheLock = app.requestSingleInstanceLock();
 
@@ -271,8 +251,19 @@ if (!gotTheLock) {
     }
   });
 
-  app.whenReady().then(() => {
-    setupResourceCaching();
+  app.whenReady().then(async () => {
+    const ses = session.defaultSession;
+
+    // Block sw.js in desktop app to prevent Chromium Mojo IPC CacheStorage validation crashes
+    ses.webRequest.onBeforeRequest({ urls: ['*://*/*sw.js*', '*://*/sw.js*'] }, (details, callback) => {
+      callback({ cancel: true });
+    });
+
+    // Clear any existing ServiceWorkers and CacheStorage for a clean slate
+    try {
+      await ses.clearStorageData({ storages: ['serviceworkers', 'cachestorage'] });
+    } catch (_) {}
+
     createWindow();
 
     app.on('activate', () => {

@@ -5,7 +5,7 @@
   <meta http-equiv="Expires" content="0">
   <script>(function(){try{if(window.location.search.includes('enter=classes')||sessionStorage.getItem('pokeayman-enter-teacher')==='1'){document.documentElement.classList.add('pokeayman-auto-classes');document.write('<style>html.pokeayman-auto-classes #home-screen{display:none!important}</style>');}}catch(_){}})();</script>
   <script>
-    if ('serviceWorker' in navigator) {
+    if (!navigator.userAgent.includes('PokeAymanApp') && !window.pokeaymanDesktop && !window.location.search.includes('platform=desktop') && 'serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('/sw.js').catch(function(e) {
           console.warn('SW registration failed:', e);

@@ -116,9 +116,12 @@ function ClassesPage() {
             }
           }}
         >
-          <div className="flex items-center gap-2 pl-3 flex-1 h-full cursor-default select-none pointer-events-none">
-            <span className="text-amber-400 font-extrabold text-sm">⚡</span>
-            <span className="text-amber-400 font-black text-xs tracking-wider">PokéAyman</span>
+          <div
+            className="flex items-center gap-2 pl-3 flex-1 h-full cursor-default select-none window-drag-region"
+            style={{ WebkitAppRegion: 'drag' } as any}
+          >
+            <span className="text-amber-400 font-extrabold text-sm pointer-events-none">⚡</span>
+            <span className="text-amber-400 font-black text-xs tracking-wider pointer-events-none">PokéAyman</span>
           </div>
           <div
             className="flex items-stretch h-full window-no-drag-region"
@@ -128,7 +131,16 @@ function ClassesPage() {
               type="button"
               className="w-11 h-full flex items-center justify-center hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer text-xs focus:outline-none window-no-drag-region"
               style={{ WebkitAppRegion: 'no-drag' } as any}
-              onClick={() => {
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                const bridge = (window as any).pokeaymanDesktop || (window.top as any)?.pokeaymanDesktop;
+                if (typeof bridge?.minimize === 'function') {
+                  bridge.minimize();
+                }
+                try { window.postMessage({ type: 'pokeayman:minimize' }, '*'); } catch (_) {}
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
                 const bridge = (window as any).pokeaymanDesktop || (window.top as any)?.pokeaymanDesktop;
                 if (typeof bridge?.minimize === 'function') {
                   bridge.minimize();
@@ -144,7 +156,21 @@ function ClassesPage() {
               type="button"
               className="w-11 h-full flex items-center justify-center hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer text-xs font-mono focus:outline-none window-no-drag-region"
               style={{ WebkitAppRegion: 'no-drag' } as any}
-              onClick={async () => {
+              onPointerDown={async (e) => {
+                e.stopPropagation();
+                const bridge = (window as any).pokeaymanDesktop || (window.top as any)?.pokeaymanDesktop;
+                if (typeof bridge?.toggleMaximize === 'function') {
+                  const isMax = await bridge.toggleMaximize();
+                  setIsMaximized(Boolean(isMax));
+                } else if (typeof bridge?.toggleFullscreen === 'function') {
+                  const fs = await bridge.toggleFullscreen();
+                  setIsFullscreen(Boolean(fs));
+                } else {
+                  try { window.postMessage({ type: 'pokeayman:toggle-maximize' }, '*'); } catch (_) {}
+                }
+              }}
+              onClick={async (e) => {
+                e.stopPropagation();
                 const bridge = (window as any).pokeaymanDesktop || (window.top as any)?.pokeaymanDesktop;
                 if (typeof bridge?.toggleMaximize === 'function') {
                   const isMax = await bridge.toggleMaximize();
@@ -165,7 +191,19 @@ function ClassesPage() {
               type="button"
               className="w-11 h-full flex items-center justify-center hover:bg-[#e81123] text-slate-300 hover:text-white transition-colors cursor-pointer text-xs focus:outline-none window-no-drag-region"
               style={{ WebkitAppRegion: 'no-drag' } as any}
-              onClick={() => {
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                const bridge = (window as any).pokeaymanDesktop || (window.top as any)?.pokeaymanDesktop;
+                if (typeof bridge?.close === 'function') {
+                  bridge.close();
+                } else if (typeof bridge?.quitApp === 'function') {
+                  bridge.quitApp();
+                } else {
+                  try { window.postMessage({ type: 'pokeayman:close' }, '*'); } catch (_) {}
+                }
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
                 const bridge = (window as any).pokeaymanDesktop || (window.top as any)?.pokeaymanDesktop;
                 if (typeof bridge?.close === 'function') {
                   bridge.close();
