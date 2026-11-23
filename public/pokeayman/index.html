@@ -21266,7 +21266,13 @@ function saveTeacherWorkspace() {
 
 function findMyTeacherRecord() {
   const t = getTeachers();
-  const cloudId = window.parent?.pokeaymanAuth?.userId;
+  const cloudId = (window.parent && window.parent.pokeaymanAuth ? window.parent.pokeaymanAuth.userId : (window.pokeaymanAuth?.userId || ''));
+  if (isAymanTeacher()) {
+    return (cloudId && t.find(r => r.cloud_user_id === cloudId))
+      || t.find(r => r.teacher_role === 'admin' || r.teacher_name === 'Ayman' || normalizeStudentIdentity(r.teacher_name) === 'ayman')
+      || (currentTeacherRecordId && t.find(r => r.__backendId === currentTeacherRecordId))
+      || null;
+  }
   return (currentTeacherRecordId && t.find(r => r.__backendId === currentTeacherRecordId))
     || (cloudId && t.find(r => r.cloud_user_id === cloudId))
     || t.find(r => normalizeStudentIdentity(r.teacher_name) === normalizeStudentIdentity(currentTeacher)) || null;
@@ -21371,7 +21377,7 @@ try {
   }
   if (!Object.getOwnPropertyDescriptor(window, 'currentTeacherRecordId')?.get) {
     Object.defineProperty(window, 'currentTeacherRecordId', {
-      get: () => typeof verifiedTeacherIdentity === 'function' ? (verifiedTeacherIdentity() || currentTeacherRecordId || '') : (typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : ''),
+      get: () => typeof currentTeacherRecordId !== 'undefined' ? currentTeacherRecordId : '',
       set: v => { if (typeof currentTeacherRecordId !== 'undefined') currentTeacherRecordId = v; },
       configurable: true
     });
@@ -23445,7 +23451,12 @@ async function pkEnterTeacherNow(name) {
   // "Ayman" is only passed for backend-verified admins; it maps to the built-in Admin with no sheet row.
   let rec = null;
   if (clean === ADMIN_TEACHER.name) {
-    rec = (cloudId && getTeachers().find(t => t.cloud_user_id === cloudId)) || null;
+    rec = (cloudId && getTeachers().find(t => t.cloud_user_id === cloudId))
+      || getTeachers().find(t => t.teacher_role === 'admin' || t.teacher_name === 'Ayman' || normalizeStudentIdentity(t.teacher_name) === 'ayman')
+      || null;
+    if (rec && cloudId && !rec.cloud_user_id) {
+      try { await window.dataSdk.update({ ...rec, cloud_user_id: cloudId, teacher_email: (window.parent?.pokeaymanAuth?.email || window.pokeaymanAuth?.email) || 'ayman.soliman.cc@gmail.com' }); } catch (_) {}
+    }
   } else {
     rec = (cloudId && getTeachers().find(t => t.cloud_user_id === cloudId))
       || getTeachers().find(t => !t.cloud_user_id && String(t.teacher_name || '').trim().toLocaleLowerCase() === clean.toLocaleLowerCase());
@@ -40806,12 +40817,28 @@ const handler = {
     if (currentRole === 'teacher' && (!Array.isArray(data) || !data.length)) return;
     const normalizedData = Array.isArray(data) ? data.map(normalizeSheetRecord) : [];
     if (generation !== dataRefreshGeneration) return;
-    if (currentRole === 'teacher' && currentTeacherRecordId) {
-      const teacherRow = normalizedData.find(record => record.type === 'teacher' && String(record.__backendId || '').trim() === String(currentTeacherRecordId).trim());
-      if (!teacherRow) return;
-      const rowRole = teacherRow.teacher_role || teacherRow.role || teacherRow.user_role;
-      if (rowRole && !['teacher', 'educator', 'admin', 'administrator'].includes(normalizeTeacherRole(rowRole))) return;
-    } else if (currentRole === 'teacher' && !verifiedTeacherIdentity()) return;
+    const isVerifiedAdmin = typeof isAymanTeacher === 'function' && isAymanTeacher();
+    if (currentRole === 'teacher' && !isVerifiedAdmin) {
+      if (currentTeacherRecordId) {
+        const teacherRow = normalizedData.find(record =>
+          record.type === 'teacher' && (
+            String(record.__backendId || '').trim() === String(currentTeacherRecordId).trim() ||
+            (record.cloud_user_id && record.cloud_user_id === ((window.parent?.pokeaymanAuth || window.pokeaymanAuth)?.userId))
+          )
+        );
+        if (!teacherRow) return;
+        const rowRole = teacherRow.teacher_role || teacherRow.role || teacherRow.user_role;
+        if (rowRole && !['teacher', 'educator', 'admin', 'administrator'].includes(normalizeTeacherRole(rowRole))) return;
+      } else if (!verifiedTeacherIdentity()) {
+        return;
+      }
+    }
+    if (isVerifiedAdmin) {
+      const adminRec = normalizedData.find(r => r.type === 'teacher' && (r.teacher_role === 'admin' || r.teacher_name === 'Ayman' || (r.cloud_user_id && r.cloud_user_id === ((window.parent?.pokeaymanAuth || window.pokeaymanAuth)?.userId))));
+      if (adminRec && adminRec.__backendId) {
+        currentTeacherRecordId = adminRec.__backendId;
+      }
+    }
     // Keep every authoritative row delivered by the selected sheet; never seed or paginate.
     allData = normalizedData;
     window.allData = allData;
