@@ -23,11 +23,20 @@ export type Result = { error?: string; name?: string; signedIn?: boolean };
 export async function profileName(known?: User | null): Promise<string> {
   const u = known ?? (await supabase.auth.getSession()).data.session?.user ?? null;
   if (!u) return "Teacher";
+  const userEmail = u.email?.toLowerCase().trim() || "";
+  if (userEmail === "ayman.soliman.cc@gmail.com") return "Ayman";
+
   const [{ data: roles }, { data: p }] = await Promise.all([
     supabase.from("user_roles").select("role").eq("user_id", u.id),
-    supabase.from("profiles").select("display_name").eq("id", u.id).maybeSingle(),
+    supabase.from("profiles").select("display_name, role").eq("id", u.id).maybeSingle(),
   ]);
-  if (roles?.some((r) => r.role === "admin")) return "Ayman";
+  if (
+    roles?.some((r) => r.role === "admin") ||
+    (p as any)?.role === "admin" ||
+    u.user_metadata?.["role"] === "admin"
+  ) {
+    return "Ayman";
+  }
   const name =
     p?.display_name ||
     (u.user_metadata?.["display_name"] as string) ||
@@ -88,11 +97,25 @@ export function setupPokeaymanBridge({
   (window as any).pokeaymanSupabaseKey =
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
 
+  const isAdminUser = Boolean(
+    user?.email?.toLowerCase().trim() === "ayman.soliman.cc@gmail.com" ||
+    user?.user_metadata?.["role"] === "admin"
+  );
+
   window.pokeaymanAuth = {
     supabase,
     userId: user?.id ?? null,
+    email: user?.email ?? null,
+    isAdmin: isAdminUser,
     getToken: async () => (await supabase.auth.getSession()).data.session?.access_token ?? null,
-    getProfile: async () => ({ name: await profileName() }),
+    getProfile: async () => {
+      const name = await profileName(user);
+      const isAdmin = name === "Ayman" || isAdminUser;
+      if (window.pokeaymanAuth) {
+        window.pokeaymanAuth.isAdmin = isAdmin;
+      }
+      return { name, isAdmin };
+    },
     signIn: async (email, password) => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -104,11 +127,16 @@ export function setupPokeaymanBridge({
             ? "Please confirm your email first (check your inbox)."
             : "Wrong email or password.",
         };
+      const signedInName = await profileName(data.user);
+      const signedInIsAdmin =
+        signedInName === "Ayman" ||
+        data.user?.email?.toLowerCase().trim() === "ayman.soliman.cc@gmail.com";
       if (window.pokeaymanAuth) {
         window.pokeaymanAuth.userId = data.user?.id ?? null;
         window.pokeaymanAuth.email = data.user?.email ?? null;
+        window.pokeaymanAuth.isAdmin = signedInIsAdmin;
       }
-      return { name: await profileName(data.user) };
+      return { name: signedInName, isAdmin: signedInIsAdmin };
     },
     signUp: async (email, password, name, school) => {
       const { data, error } = await supabase.auth.signUp({

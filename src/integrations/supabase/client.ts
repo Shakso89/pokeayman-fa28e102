@@ -8,7 +8,7 @@ function isNewSupabaseApiKey(value: string): boolean {
 }
 
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
-  return (input, init) => {
+  return async (input, init) => {
     const headers = new Headers(
       typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
     );
@@ -23,6 +23,33 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
     }
 
     headers.set('apikey', supabaseKey);
+
+    const maxRetries = 5;
+    let lastResponse: Response | null = null;
+    let lastError: any = null;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const reqInput = typeof Request !== 'undefined' && input instanceof Request ? input.clone() : input;
+        const res = await fetch(reqInput, { ...init, headers });
+        if (res.status === 500) {
+          const clone = res.clone();
+          const text = await clone.text().catch(() => '');
+          if (text.includes('25P02') || text.includes('current transaction is aborted')) {
+            lastResponse = res;
+            await new Promise((r) => setTimeout(r, 100 * (attempt + 1)));
+            continue;
+          }
+        }
+        return res;
+      } catch (err) {
+        lastError = err;
+        await new Promise((r) => setTimeout(r, 100 * (attempt + 1)));
+      }
+    }
+
+    if (lastResponse) return lastResponse;
+    if (lastError) throw lastError;
     return fetch(input, { ...init, headers });
   };
 }

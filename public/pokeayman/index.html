@@ -4631,9 +4631,39 @@
   async function api(method, qs, body) {
     const auth = window.parent && window.parent.pokeaymanAuth;
     const token = auth ? await auth.getToken() : null;
-    const r = await fetch(URL_ + (qs || ''), {method, headers: {...H, ...(token ? {Authorization: 'Bearer ' + token} : {}), Prefer: 'resolution=merge-duplicates,return=minimal'}, body: body ? JSON.stringify(body) : undefined});
-    if (!r.ok) throw new Error(await r.text());
-    return method === 'GET' ? r.json() : null;
+    let lastErr = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const r = await fetch(URL_ + (qs || ''), {
+          method,
+          headers: {
+            ...H,
+            ...(token ? {Authorization: 'Bearer ' + token} : {}),
+            Prefer: 'resolution=merge-duplicates,return=minimal'
+          },
+          body: body ? JSON.stringify(body) : undefined
+        });
+        if (r.status === 500) {
+          const txt = await r.text();
+          if (txt.includes('25P02') || txt.includes('current transaction is aborted')) {
+            lastErr = new Error(txt);
+            await new Promise(res => setTimeout(res, 100 * (attempt + 1)));
+            continue;
+          }
+          throw new Error(txt);
+        }
+        if (!r.ok) throw new Error(await r.text());
+        return method === 'GET' ? r.json() : null;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < 4 && String(err).includes('25P02')) {
+          await new Promise(res => setTimeout(res, 100 * (attempt + 1)));
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastErr;
   }
   let lastSig = '';
   let pullInFlight = null;
@@ -4735,21 +4765,23 @@
       } catch(_) {}
       const sig = JSON.stringify(next);
       if (sig !== lastSig) { lastSig = sig; records = next; cache(); notify(); }
-    } catch (e) { console.warn('Backend unavailable, using local copy', e); }
+    } catch (e) {
+      console.warn('Backend unavailable, using local copy', e);
+      if (!records || !records.length) {
+        setTimeout(pull, 1000);
+      }
+    }
     })();
     try { return await pullInFlight; } finally { pullInFlight = null; }
   }
   let migrated = false;
   let resolveReady; window.pokeaymanDataReady = new Promise(r => { resolveReady = r; });
   async function firstLoad() {
-    try {
-      const rows = await api('GET', '?select=id&limit=1');
-      if (false) {
-        migrated = true;
-        await api('POST', '', records.map(r => ({id: r.__backendId, data: r})));
-      }
-    } catch (_) {}
-    await pull();
+    for (let i = 0; i < 4; i++) {
+      await pull();
+      if (records && records.length > 0) break;
+      await new Promise(r => setTimeout(r, 500));
+    }
     resolveReady();
   }
   window.dataSdk = {
@@ -21082,6 +21114,10 @@ function normalizeTeacherRole(value) {
 }
 function isTeacherAdminRecord(teacher) {
   if (!teacher) return false;
+  const auth = (window.parent && window.parent.pokeaymanAuth) || window.pokeaymanAuth;
+  const parentEmail = auth?.email || auth?.user?.email;
+  if (parentEmail && String(parentEmail).toLowerCase() === 'ayman.soliman.cc@gmail.com') return true;
+  if (auth?.isAdmin) return true;
   if (typeof teacher === 'string') {
     const clean = String(teacher).trim();
     return clean === 'Ayman' || (typeof ADMIN_TEACHER !== 'undefined' && clean === ADMIN_TEACHER.name) || (typeof normalizeStudentIdentity === 'function' && normalizeStudentIdentity(clean) === 'ayman');
@@ -21118,9 +21154,13 @@ function getRoleTierLabel(teacher) {
 window.getRoleTierLabel = getRoleTierLabel;
 function verifiedTeacherIdentity() {
   if (currentRole !== 'teacher') return '';
+  const auth = (window.parent && window.parent.pokeaymanAuth) || window.pokeaymanAuth;
+  const parentEmail = auth?.email || auth?.user?.email;
+  if (parentEmail && String(parentEmail).toLowerCase() === 'ayman.soliman.cc@gmail.com') return 'ayman';
+  if (auth?.isAdmin) return 'ayman';
   const normalizedName = normalizeStudentIdentity(currentTeacher);
   // The built-in Admin is authenticated to the canonical Ayman name and has no Sheet row.
-  if (!String(currentTeacherRecordId || '').trim() && currentTeacher === ADMIN_TEACHER.name) return 'ayman';
+  if (!String(currentTeacherRecordId || '').trim() && (currentTeacher === ADMIN_TEACHER.name || normalizedName === 'ayman')) return 'ayman';
   if (!String(currentTeacherRecordId || '').trim()) {
     // Teachers signed in with a Cloud account are verified by their account ID.
     let cloudId = ''; try { cloudId = (window.parent && window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.userId) || ''; } catch (_) {}
@@ -21233,8 +21273,12 @@ function findMyTeacherRecord() {
 }
 // Admin access fails closed and accepts only the normalized Ayman identity.
 function isAymanTeacher() {
+  const auth = (window.parent && window.parent.pokeaymanAuth) || window.pokeaymanAuth;
+  const parentEmail = auth?.email || auth?.user?.email;
+  if (parentEmail && String(parentEmail).toLowerCase() === 'ayman.soliman.cc@gmail.com') return true;
+  if (auth?.isAdmin) return true;
   // "Ayman" is reserved: only the backend admin account is ever given this name.
-  return currentRole === 'teacher' && currentTeacher === ADMIN_TEACHER.name && Boolean(verifiedTeacherIdentity());
+  return currentRole === 'teacher' && (currentTeacher === ADMIN_TEACHER.name || normalizeStudentIdentity(currentTeacher) === 'ayman') && Boolean(verifiedTeacherIdentity());
 }
 function canAccessAdmin() { return isAymanTeacher(); }
 function isProTeacher(teacher) {
@@ -23392,8 +23436,11 @@ window.pokeaymanEnterTeacher = async function (name) {
   } finally { pkTeacherEntering = false; }
 };
 async function pkEnterTeacherNow(name) {
-  const clean = String(name || 'Teacher').trim();
-  const cloudId = (window.parent && window.parent.pokeaymanAuth && window.parent.pokeaymanAuth.userId) || '';
+  const auth = (window.parent && window.parent.pokeaymanAuth) || window.pokeaymanAuth;
+  const parentEmail = auth?.email || auth?.user?.email;
+  const isAymanAccount = (parentEmail && String(parentEmail).toLowerCase() === 'ayman.soliman.cc@gmail.com') || auth?.isAdmin;
+  const clean = isAymanAccount ? ADMIN_TEACHER.name : String(name || 'Teacher').trim();
+  const cloudId = (auth && auth.userId) || '';
   let createdTeacherRecord = false;
   // "Ayman" is only passed for backend-verified admins; it maps to the built-in Admin with no sheet row.
   let rec = null;
@@ -24998,7 +25045,7 @@ function updateTeacherCreditBalance() {
   const creditEl = document.getElementById('credit-balance-nav');
   if (!creditEl) return;
   const identity = String(currentTeacher || '').trim().toLocaleLowerCase();
-  if (identity === 'ayman' || identity === 'teacher ayman') {
+  if (isAymanTeacher() || identity === 'ayman' || identity === 'teacher ayman') {
     creditEl.textContent = 'Unlimited';
     creditEl.classList.remove('hidden');
     creditEl.classList.add('account-credit-admin');
