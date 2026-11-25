@@ -742,10 +742,86 @@
     session.root.querySelector('.lc-listen-label').textContent = sentence ? 'Hear the sentence' : 'Hear the word';
     setTimeout(() => speak(sentence || word.vocab_word), 150);
   }
+  function triggerAnswerFx(button, ok) {
+    if (!button || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const theme = session?.root?.dataset?.gaTheme || document.body?.dataset?.gaActiveTheme || 'classic';
+    const rect = button.getBoundingClientRect();
+    if (!rect.width && !rect.height) return;
+
+    const palette = {
+      jungle: {
+        correct: ['🌿', '✨', '🍃', '🌟'],
+        wrong: ['🍂', '💥', '🪵'],
+        ringCorrect: '3px solid #fde047',
+        ringWrong: '3px solid #f87171'
+      },
+      classroom: {
+        correct: ['⭐', '✨', '🏆', '💯'],
+        wrong: ['❌', '✏️', '💢'],
+        ringCorrect: '3px solid #fde047',
+        ringWrong: '3px solid #fca5a5'
+      },
+      toybox: {
+        correct: ['🎉', '⭐', '🎈', '✨'],
+        wrong: ['💫', '💢', '🎈'],
+        ringCorrect: '3px solid #4ade80',
+        ringWrong: '3px solid #fb7185'
+      },
+      halloween: {
+        correct: ['🎃', '🦇', '✨', '🧪'],
+        wrong: ['👻', '💀', '🕸️'],
+        ringCorrect: '3px solid #a3e635',
+        ringWrong: '3px solid #fb7185'
+      },
+      classic: {
+        correct: ['⚡', '🌟', '✨', '◓'],
+        wrong: ['💥', '❌', '⚡'],
+        ringCorrect: '3px solid #ffcb05',
+        ringWrong: '3px solid #f87171'
+      }
+    };
+    const cfg = palette[theme] || palette.classic;
+    const icons = ok ? cfg.correct : cfg.wrong;
+
+    // Expanding shockwave ring around the chosen button
+    const ring = document.createElement('div');
+    ring.className = 'lc-fx-ring';
+    ring.style.left = rect.left + 'px';
+    ring.style.top = rect.top + 'px';
+    ring.style.width = rect.width + 'px';
+    ring.style.height = rect.height + 'px';
+    ring.style.border = ok ? cfg.ringCorrect : cfg.ringWrong;
+    document.body.appendChild(ring);
+    setTimeout(() => ring.remove(), 660);
+
+    // Bursting theme-specific particles
+    const count = ok ? 10 : 6;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('span');
+      p.className = 'lc-fx-particle';
+      p.textContent = icons[i % icons.length];
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.45;
+      const dist = (ok ? 65 : 42) + Math.random() * (ok ? 75 : 45);
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist - (ok ? 24 : 8);
+      const rot = (Math.random() - 0.5) * 140;
+      p.style.left = (cx + (Math.random() - 0.5) * rect.width * 0.5) + 'px';
+      p.style.top = (cy + (Math.random() - 0.5) * rect.height * 0.35) + 'px';
+      p.style.setProperty('--lc-dx', dx.toFixed(1) + 'px');
+      p.style.setProperty('--lc-dy', dy.toFixed(1) + 'px');
+      p.style.setProperty('--lc-rot', rot.toFixed(1) + 'deg');
+      p.style.setProperty('--lc-dur', (ok ? 820 : 620) + Math.round(Math.random() * 240) + 'ms');
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1100);
+    }
+  }
   function answer(index) {
     const option = session.options[index]; const correct = session.words[session.index]; const buttons = [...session.root.querySelectorAll('.lc-option')];
     buttons.forEach(button => button.disabled = true);
     const selected = buttons[index]; const ok = String(option.vocab_word).trim().toLowerCase() === String(correct.vocab_word).trim().toLowerCase();
+    triggerAnswerFx(selected, ok);
     if (ok) {
       selected.classList.add('is-correct'); session.correct += 1;
       try { window.pokeSfx?.play?.('correct'); } catch (e) {}

@@ -8729,3 +8729,203 @@ html body.ts-bright .ga-lobby #game-players-cancel {
   box-shadow: inset 0 0 0 2px #e2e8f0;
 }
 
+
+
+/* Listen & Catch Theme-Specific Answer Animations */
+.lc-option {
+  position: relative;
+  overflow: visible;
+}
+.lc-fx-particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 100001;
+  font-size: 1.35rem;
+  line-height: 1;
+  user-select: none;
+  will-change: transform, opacity;
+  animation: lcFxFly var(--lc-dur, 900ms) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes lcFxFly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.35) rotate(0deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--lc-dx) * 0.25), calc(-50% + var(--lc-dy) * 0.25)) scale(1.22) rotate(calc(var(--lc-rot) * 0.3));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--lc-dx)), calc(-50% + var(--lc-dy))) scale(0.75) rotate(var(--lc-rot));
+  }
+}
+
+.lc-fx-ring {
+  position: fixed;
+  pointer-events: none;
+  z-index: 100000;
+  border-radius: 16px;
+  animation: lcFxRingBurst 620ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes lcFxRingBurst {
+  0% { opacity: 0.9; transform: scale(0.96); }
+  100% { opacity: 0; transform: scale(1.16); }
+}
+
+/* --- JUNGLE --- */
+@keyframes lcJungleCorrect {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.08) translateY(-4px); }
+  55% { transform: scale(0.98) translateY(0); }
+  78% { transform: scale(1.04) translateY(-2px); }
+  100% { transform: scale(1); }
+}
+@keyframes lcJungleWrong {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  20% { transform: translateX(-10px) rotate(-2deg); }
+  40% { transform: translateX(10px) rotate(2deg); }
+  60% { transform: translateX(-7px) rotate(-1deg); }
+  80% { transform: translateX(6px) rotate(1deg); }
+}
+html body > .ga-stage[data-ga-theme="jungle"] .lc-option.is-correct,
+html body[data-ga-active-theme="jungle"] .lc-option.is-correct {
+  background: linear-gradient(135deg, #16a34a 0%, #0d9488 55%, #15803d 100%) !important;
+  border: 3px solid #fde047 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.35), 0 0 28px rgba(74, 222, 128, 0.75), 0 6px 0 #14532d !important;
+  animation: lcJungleCorrect 0.65s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+}
+html body > .ga-stage[data-ga-theme="jungle"] .lc-option.is-wrong,
+html body[data-ga-active-theme="jungle"] .lc-option.is-wrong {
+  background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%) !important;
+  border: 3px solid #fca5a5 !important;
+  color: #fee2e2 !important;
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.65), 0 4px 0 #450a0a !important;
+  animation: lcJungleWrong 0.45s ease-in-out both !important;
+}
+
+/* --- CLASSROOM --- */
+@keyframes lcClassroomCorrect {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.07) rotate(-1deg); }
+  70% { transform: scale(1.02) rotate(0.8deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes lcClassroomWrong {
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-9px); }
+  36% { transform: translateX(9px); }
+  54% { transform: translateX(-6px); }
+  72% { transform: translateX(5px); }
+}
+html body > .ga-stage[data-ga-theme="classroom"] .lc-option.is-correct,
+html body[data-ga-active-theme="classroom"] .lc-option.is-correct {
+  background: linear-gradient(180deg, #16a34a 0%, #14532d 100%) !important;
+  border: 3px solid #fde047 !important;
+  color: #fffbeb !important;
+  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.3), 0 0 26px rgba(74, 222, 128, 0.65), 0 5px 0 #052e16 !important;
+  animation: lcClassroomCorrect 0.6s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+}
+html body > .ga-stage[data-ga-theme="classroom"] .lc-option.is-wrong,
+html body[data-ga-active-theme="classroom"] .lc-option.is-wrong {
+  background: linear-gradient(180deg, #dc2626 0%, #7f1d1d 100%) !important;
+  border: 3px solid #fca5a5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 22px rgba(239, 68, 68, 0.6), 0 4px 0 #450a0a !important;
+  animation: lcClassroomWrong 0.42s ease-in-out both !important;
+}
+
+/* --- TOYBOX --- */
+@keyframes lcToyboxCorrect {
+  0% { transform: scale(1, 1); }
+  25% { transform: scale(1.12, 0.9) translateY(2px); }
+  50% { transform: scale(0.95, 1.1) translateY(-8px); }
+  75% { transform: scale(1.04, 0.97) translateY(0); }
+  100% { transform: scale(1, 1); }
+}
+@keyframes lcToyboxWrong {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(-5deg) scale(0.97); }
+  45% { transform: rotate(5deg) scale(0.97); }
+  70% { transform: rotate(-3deg) scale(0.99); }
+}
+html body > .ga-stage[data-ga-theme="toybox"] .lc-option.is-correct,
+html body[data-ga-active-theme="toybox"] .lc-option.is-correct {
+  background: linear-gradient(180deg, #bbf7d0 0%, #4ade80 100%) !important;
+  border: 3px solid #15803d !important;
+  color: #052e16 !important;
+  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.45), 0 0 26px rgba(74, 222, 128, 0.7), 0 5px 0 #15803d !important;
+  animation: lcToyboxCorrect 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+}
+html body > .ga-stage[data-ga-theme="toybox"] .lc-option.is-wrong,
+html body[data-ga-active-theme="toybox"] .lc-option.is-wrong {
+  background: linear-gradient(180deg, #fecdd3 0%, #fb7185 100%) !important;
+  border: 3px solid #be123c !important;
+  color: #4c0519 !important;
+  box-shadow: 0 0 22px rgba(244, 63, 94, 0.6), 0 5px 0 #9f1239 !important;
+  animation: lcToyboxWrong 0.48s ease-in-out both !important;
+}
+
+/* --- HALLOWEEN --- */
+@keyframes lcHalloweenCorrect {
+  0% { transform: scale(1) translateY(0); }
+  35% { transform: scale(1.07) translateY(-6px); }
+  70% { transform: scale(1.02) translateY(-2px); }
+  100% { transform: scale(1) translateY(0); }
+}
+@keyframes lcHalloweenWrong {
+  0%, 100% { transform: translateX(0) skewX(0deg); opacity: 1; }
+  20% { transform: translateX(-8px) skewX(-4deg); opacity: 0.85; }
+  45% { transform: translateX(8px) skewX(4deg); opacity: 1; }
+  70% { transform: translateX(-5px) skewX(-2deg); opacity: 0.9; }
+}
+html body > .ga-stage[data-ga-theme="halloween"] .lc-option.is-correct,
+html body[data-ga-active-theme="halloween"] .lc-option.is-correct {
+  background: linear-gradient(135deg, #4c1d95 0%, #15803d 60%, #65a30d 100%) !important;
+  border: 3px solid #a3e635 !important;
+  color: #f7fee7 !important;
+  box-shadow: 0 0 0 4px rgba(163, 230, 53, 0.35), 0 0 30px rgba(163, 230, 53, 0.75), 0 5px 0 #365314 !important;
+  animation: lcHalloweenCorrect 0.65s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+}
+html body > .ga-stage[data-ga-theme="halloween"] .lc-option.is-wrong,
+html body[data-ga-active-theme="halloween"] .lc-option.is-wrong {
+  background: linear-gradient(135deg, #7f1d1d 0%, #4c0519 100%) !important;
+  border: 3px solid #fb7185 !important;
+  color: #ffe4e6 !important;
+  box-shadow: 0 0 26px rgba(244, 63, 94, 0.7), 0 4px 0 #2e0219 !important;
+  animation: lcHalloweenWrong 0.5s ease-in-out both !important;
+}
+
+/* --- CLASSIC / DEFAULT --- */
+@keyframes lcClassicCorrect {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.08); }
+  65% { transform: scale(0.99); }
+  100% { transform: scale(1); }
+}
+@keyframes lcClassicWrong {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-9px); }
+  40% { transform: translateX(9px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+html body > .ga-stage[data-ga-theme="classic"] .lc-option.is-correct,
+html body > .ga-stage:not([data-ga-theme]) .lc-option.is-correct,
+html body[data-ga-active-theme="classic"] .lc-option.is-correct {
+  background: linear-gradient(135deg, #059669 0%, #0284c7 100%) !important;
+  border: 3px solid #ffcb05 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(255, 203, 5, 0.35), 0 0 28px rgba(52, 211, 153, 0.75), 0 5px 0 #064e3b !important;
+  animation: lcClassicCorrect 0.6s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+}
+html body > .ga-stage[data-ga-theme="classic"] .lc-option.is-wrong,
+html body > .ga-stage:not([data-ga-theme]) .lc-option.is-wrong,
+html body[data-ga-active-theme="classic"] .lc-option.is-wrong {
+  background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%) !important;
+  border: 3px solid #fca5a5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.65), 0 4px 0 #450a0a !important;
+  animation: lcClassicWrong 0.45s ease-in-out both !important;
+}
