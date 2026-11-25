@@ -2002,15 +2002,26 @@
         if (crosswordCountInput && (!Number.isInteger(crosswordCount) || crosswordCount < 2 || crosswordCount > crosswordWordMax)) { crosswordCountInput.setCustomValidity(`Enter a whole number from 2 to ${crosswordWordMax}.`); crosswordCountInput.reportValidity(); return; }
         panel.remove();
         ensureStudentRobotPlayers(window.selectedBotDifficulty || 'medium');
-        if (resolvedFnName === 'startVocabBattle') window.startVocabBattle(listName);
-        else if (resolvedFnName === 'startListenCatch') window.startListenCatch(listName);
-        else {
-          try {
-            window.openGameCrossword(listName, 0, crosswordCount);
-          } catch (err) {
-            console.error('Student crossword launch failed:', err);
-            if (typeof window.handleCrosswordFailure === 'function') window.handleCrosswordFailure();
+        const launchStudentGame = () => {
+          if (resolvedFnName === 'startVocabBattle') window.startVocabBattle(listName);
+          else if (resolvedFnName === 'startListenCatch') window.startListenCatch(listName);
+          else {
+            try {
+              window.openGameCrossword(listName, 0, crosswordCount);
+            } catch (err) {
+              console.error('Student crossword launch failed:', err);
+              if (typeof window.handleCrosswordFailure === 'function') window.handleCrosswordFailure();
+            }
           }
+        };
+        if (typeof window.gaPreloadAndLaunch === 'function') {
+          window.gaPreloadAndLaunch({
+            listName,
+            isListenCatch: resolvedFnName === 'startListenCatch',
+            onReady: launchStudentGame
+          });
+        } else {
+          launchStudentGame();
         }
       });
       area.appendChild(panel);
@@ -3764,6 +3775,287 @@
     }, 850);
     ov.querySelector('.ga-cd-skip').addEventListener('click', finish);
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) setTimeout(finish, 900);
+  };
+
+  // ============================================================================
+  // Game Audio Preloader & Animated Pokémon-Style Loading Screen
+  // ============================================================================
+  function ensurePokemonLoaderStyles() {
+    if (document.getElementById('ga-poke-loader-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'ga-poke-loader-styles';
+    style.textContent = `
+      @keyframes gaPokeSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      @keyframes gaPokeWobble {
+        0%, 100% { transform: rotate(0deg) scale(1); }
+        20% { transform: rotate(-12deg) scale(1.04); }
+        40% { transform: rotate(10deg) scale(1.04); }
+        60% { transform: rotate(-6deg) scale(1.02); }
+        80% { transform: rotate(4deg) scale(1.01); }
+      }
+      @keyframes gaPokeCaptureFlash {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.85); }
+        50% { transform: scale(1.14); box-shadow: 0 0 42px 16px rgba(56, 189, 248, 0.6); }
+        100% { transform: scale(1); box-shadow: 0 0 24px 6px rgba(34, 197, 94, 0.45); }
+      }
+      @keyframes gaPokeShimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(220%); }
+      }
+      @keyframes gaPokeFloat {
+        0%, 100% { transform: translateY(0px) scale(1); opacity: 0.45; }
+        50% { transform: translateY(-18px) scale(1.25); opacity: 0.95; }
+      }
+      .ga-poke-loader-overlay {
+        position: fixed; inset: 0; z-index: 99999;
+        display: flex; align-items: center; justify-content: center;
+        background: radial-gradient(circle at 50% 42%, rgba(30, 41, 59, 0.96) 0%, rgba(2, 6, 23, 0.98) 72%);
+        backdrop-filter: blur(12px);
+        transition: opacity 0.32s ease, transform 0.32s ease;
+        padding: 20px;
+      }
+      .ga-poke-loader-overlay.is-leaving { opacity: 0; transform: scale(1.03); pointer-events: none; }
+      .ga-poke-loader-card {
+        position: relative; width: 100%; max-width: 440px;
+        border-radius: 28px; padding: 34px 28px 28px;
+        background: linear-gradient(160deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.88));
+        border: 1.5px solid rgba(251, 191, 36, 0.35);
+        box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.75), 0 0 40px -10px rgba(251, 191, 36, 0.22);
+        text-align: center; overflow: hidden;
+      }
+      .ga-poke-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+      .ga-poke-particle {
+        position: absolute; width: 8px; height: 8px; border-radius: 999px;
+        animation: gaPokeFloat 3s ease-in-out infinite;
+      }
+      .ga-poke-ball-stage {
+        position: relative; width: 112px; height: 112px; margin: 0 auto 20px;
+        display: flex; align-items: center; justify-content: center;
+      }
+      .ga-poke-energy-ring {
+        position: absolute; inset: -6px; border-radius: 999px;
+        border: 3px dashed rgba(251, 191, 36, 0.55);
+        animation: gaPokeSpin 7s linear infinite;
+      }
+      .ga-poke-energy-ring-inner {
+        position: absolute; inset: 4px; border-radius: 999px;
+        border: 2px solid transparent; border-top-color: #38bdf8; border-right-color: #f59e0b;
+        animation: gaPokeSpin 2.4s linear infinite reverse;
+      }
+      .ga-poke-ball-svg {
+        width: 78px; height: 78px; position: relative; z-index: 2;
+        animation: gaPokeWobble 1.6s ease-in-out infinite;
+        filter: drop-shadow(0 8px 18px rgba(0,0,0,0.5));
+      }
+      .ga-poke-loader-card.is-complete .ga-poke-ball-svg {
+        animation: gaPokeCaptureFlash 0.55s ease forwards;
+      }
+      .ga-poke-loader-card.is-complete .ga-poke-energy-ring {
+        border-color: rgba(34, 197, 94, 0.75);
+      }
+      .ga-poke-bar-track {
+        position: relative; width: 100%; height: 14px; border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(148, 163, 184, 0.22);
+        overflow: hidden; margin: 16px 0 12px;
+      }
+      .ga-poke-bar-fill {
+        height: 100%; width: 0%; border-radius: 999px;
+        background: linear-gradient(90deg, #f59e0b, #fbbf24, #38bdf8);
+        transition: width 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+        position: relative; overflow: hidden;
+      }
+      .ga-poke-bar-fill::after {
+        content: ''; position: absolute; inset: 0; width: 45%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+        animation: gaPokeShimmer 1.3s ease-in-out infinite;
+      }
+      .ga-poke-loader-card.is-complete .ga-poke-bar-fill {
+        background: linear-gradient(90deg, #22c55e, #38bdf8);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function resolvePreloadItems(listName, isListenCatch) {
+    let words = typeof getGameWords === 'function' ? getGameWords(listName, false) : [];
+    if ((!words || !words.length) && typeof currentRole !== 'undefined' && currentRole === 'student' && typeof getVocabLists === 'function') {
+      const enrolled = typeof getStudentEnrolledClasses === 'function'
+        ? getStudentEnrolledClasses()
+        : [{ school_name: typeof currentStudentSchool !== 'undefined' ? currentStudentSchool : '', class_name: typeof currentStudentClass !== 'undefined' ? currentStudentClass : '' }];
+      const allLists = (enrolled || []).flatMap(c => getVocabLists(c.school_name, c.class_name) || []);
+      if (allLists.length && typeof getGameWords === 'function') {
+        words = getGameWords(allLists, false);
+      }
+    }
+
+    const items = [];
+    const seen = new Set();
+    const pushUnique = (raw) => {
+      const clean = String(raw || '')
+        .trim()
+        .replace(/^["'`]+|["'`]+$/g, '')
+        .replace(/\*\*|__|[*_`#]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const key = clean.toLowerCase();
+      if (clean && !seen.has(key)) {
+        seen.add(key);
+        items.push(clean);
+      }
+    };
+
+    (words || []).forEach(w => {
+      pushUnique(w?.vocab_word || w?.word);
+      if (isListenCatch) {
+        pushUnique(w?.vocab_sentence);
+      }
+    });
+
+    return items;
+  }
+
+  window.gaPreloadAndLaunch = async function gaPreloadAndLaunch({ listName, isListenCatch = false, onReady }) {
+    const items = resolvePreloadItems(listName, Boolean(isListenCatch));
+    const audioCache = window.pokeaymanAudioCache || window.parent?.pokeaymanAudioCache;
+    const prefetchFn = window.pokeaymanPrefetchVoices || window.parent?.pokeaymanPrefetchVoices || audioCache?.prefetchVocabularySpeechList;
+
+    if (!items.length || (!audioCache && typeof prefetchFn !== 'function')) {
+      onReady?.();
+      return;
+    }
+
+    const rawLevel = (typeof window.getClassReadingLevel === 'function'
+      ? window.getClassReadingLevel(
+          typeof currentRole !== 'undefined' && currentRole === 'student' ? currentStudentSchool : navSchool,
+          typeof currentRole !== 'undefined' && currentRole === 'student' ? currentStudentClass : navClass
+        )
+      : 'P4') || 'P4';
+    const level = typeof toReadingLevelCode === 'function'
+      ? toReadingLevelCode(rawLevel)
+      : (/^P[1-6]$/i.test(rawLevel) ? rawLevel.toUpperCase() : 'P4');
+
+    ensurePokemonLoaderStyles();
+    document.querySelectorAll('.ga-poke-loader-overlay').forEach(el => el.remove());
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ga-poke-loader-overlay';
+    overlay.setAttribute('role', 'status');
+    overlay.setAttribute('aria-live', 'polite');
+    overlay.innerHTML = `
+      <div class="ga-poke-loader-card">
+        <div class="ga-poke-particles" aria-hidden="true">
+          <span class="ga-poke-particle" style="top:16%;left:14%;background:#fbbf24;animation-delay:0s;"></span>
+          <span class="ga-poke-particle" style="top:24%;right:16%;background:#38bdf8;animation-delay:0.6s;"></span>
+          <span class="ga-poke-particle" style="bottom:20%;left:18%;background:#f87171;animation-delay:1.1s;"></span>
+          <span class="ga-poke-particle" style="bottom:26%;right:14%;background:#a78bfa;animation-delay:1.7s;"></span>
+        </div>
+        <div class="ga-poke-ball-stage">
+          <div class="ga-poke-energy-ring"></div>
+          <div class="ga-poke-energy-ring-inner"></div>
+          <svg class="ga-poke-ball-svg" viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="45" fill="#0f172a" stroke="#e2e8f0" stroke-width="5"/>
+            <path d="M 8 50 A 42 42 0 0 1 92 50 Z" fill="#ef4444"/>
+            <path d="M 8 50 A 42 42 0 0 0 92 50 Z" fill="#f8fafc"/>
+            <rect x="6" y="45" width="88" height="10" fill="#0f172a"/>
+            <circle cx="50" cy="50" r="15" fill="#0f172a"/>
+            <circle class="ga-poke-core" cx="50" cy="50" r="9" fill="#fbbf24"/>
+          </svg>
+        </div>
+        <div class="text-[11px] font-black uppercase tracking-[0.2em] text-amber-400 mb-1">
+          ${isListenCatch ? '⚡ Listening Quest Audio' : '⚡ Poké Voice Charge'}
+        </div>
+        <h2 class="ga-poke-title text-xl font-black text-white tracking-tight">
+          ${isListenCatch ? 'Charging Words & Sentences...' : 'Charging Vocabulary Voices...'}
+        </h2>
+        <p class="ga-poke-sub text-xs text-slate-400 mt-1">
+          ${isListenCatch ? 'Preparing word and sentence audio for Listen & Catch' : 'Checking cached voices and loading missing words'}
+        </p>
+        <div class="ga-poke-bar-track">
+          <div class="ga-poke-bar-fill"></div>
+        </div>
+        <div class="flex items-center justify-between text-xs font-bold px-0.5">
+          <span class="ga-poke-count text-slate-300">0 / ${items.length} voices ready</span>
+          <span class="ga-poke-pct text-amber-300 font-black">0%</span>
+        </div>
+        <div class="ga-poke-cache-pill mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/70 text-[11px] font-bold text-sky-300">
+          <span>Checking audio cache...</span>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const card = overlay.querySelector('.ga-poke-loader-card');
+    const barFill = overlay.querySelector('.ga-poke-bar-fill');
+    const countEl = overlay.querySelector('.ga-poke-count');
+    const pctEl = overlay.querySelector('.ga-poke-pct');
+    const cachePill = overlay.querySelector('.ga-poke-cache-pill');
+    const titleEl = overlay.querySelector('.ga-poke-title');
+    const coreEl = overlay.querySelector('.ga-poke-core');
+
+    const updateUI = (done, total, cachedCount) => {
+      const safeTotal = Math.max(1, total);
+      const clamped = Math.min(safeTotal, Math.max(0, done));
+      const pct = Math.round((clamped / safeTotal) * 100);
+      if (barFill) barFill.style.width = pct + '%';
+      if (countEl) countEl.textContent = `${clamped} / ${total} voices ready`;
+      if (pctEl) pctEl.textContent = pct + '%';
+      if (cachePill && cachedCount > 0) {
+        cachePill.innerHTML = `<span>⚡ ${cachedCount} loaded from cache</span>`;
+      } else if (cachePill) {
+        cachePill.innerHTML = `<span>Generating fresh Gemini voices...</span>`;
+      }
+    };
+
+    try {
+      // 1. Check IndexedDB audio cache first so we never regenerate already-cached audio
+      let cachedCount = 0;
+      const uncached = [];
+      if (audioCache && typeof audioCache.getCachedAudio === 'function') {
+        await Promise.all(
+          items.map(async (text) => {
+            try {
+              const existing = await audioCache.getCachedAudio(text, level, 'kore');
+              if (existing) cachedCount++;
+              else uncached.push(text);
+            } catch (_) {
+              uncached.push(text);
+            }
+          })
+        );
+      } else {
+        uncached.push(...items);
+      }
+
+      updateUI(cachedCount, items.length, cachedCount);
+
+      // 2. Fetch only uncached items
+      if (uncached.length > 0 && typeof prefetchFn === 'function') {
+        const prefetchPromise = prefetchFn(uncached, level, (fetchedDone) => {
+          updateUI(cachedCount + fetchedDone, items.length, cachedCount);
+        });
+        await Promise.race([
+          prefetchPromise,
+          new Promise(resolve => setTimeout(resolve, 25000))
+        ]);
+      }
+
+      updateUI(items.length, items.length, cachedCount);
+      if (card) card.classList.add('is-complete');
+      if (coreEl) coreEl.setAttribute('fill', '#22c55e');
+      if (titleEl) titleEl.textContent = '★ All Voices Ready!';
+      if (cachePill) {
+        cachePill.innerHTML = uncached.length === 0
+          ? `<span class="text-emerald-300">★ 100% instant cache hit (${cachedCount}/${items.length})</span>`
+          : `<span class="text-emerald-300">★ Ready to battle!</span>`;
+      }
+      await new Promise(resolve => setTimeout(resolve, uncached.length === 0 ? 420 : 520));
+    } catch (err) {
+      console.warn('[PokéAyman Preloader] Audio preload warning:', err);
+    } finally {
+      overlay.classList.add('is-leaving');
+      setTimeout(() => overlay.remove(), 340);
+      onReady?.();
+    }
   };
 
   // Automatic cleanup observer: ensures .ga-continue-bar is immediately removed whenever leaving the games tab or opening modals
