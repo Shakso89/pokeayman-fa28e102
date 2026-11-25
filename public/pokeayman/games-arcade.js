@@ -3442,6 +3442,53 @@
       modal.dataset.gaTimerSeconds = '0';
       window.pendingGameTimerSeconds = 0;
       paramsSection.appendChild(timerStepper.element);
+    } else if (resolvedFnName === 'startListenCatch') {
+      // Listen and Catch: Sentences per game + optional Timer (no coin reward)
+      modal.dataset.gaRewardCoins = '0';
+      window.pendingGameReward = 0;
+
+      const sentencesIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h14"/></svg>`;
+      const sentenceOptions = [
+        { count: 5, label: '5 sentences' },
+        { count: 10, label: '10 sentences' },
+        { count: 15, label: '15 sentences' },
+        { count: 20, label: '20 sentences' },
+        { count: 0, label: 'All sentences' }
+      ];
+      const sentencesStepper = createCustomStepper({
+        iconSvg: sentencesIcon,
+        title: 'Sentences per game',
+        options: sentenceOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaListenSentences = String(opt.count);
+          window.pendingListenSentences = opt.count;
+        }
+      });
+      modal.dataset.gaListenSentences = '5';
+      window.pendingListenSentences = 5;
+      paramsSection.appendChild(sentencesStepper.element);
+
+      const timerIcon = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>`;
+      const timerOptions = getStandardTimerOptions();
+      const timerStepper = createCustomStepper({
+        iconSvg: timerIcon,
+        title: 'Timer',
+        options: timerOptions,
+        initialIndex: 0,
+        onChange: (opt) => {
+          modal.dataset.gaTimerSeconds = String(opt.seconds);
+          window.pendingGameTimerSeconds = opt.seconds;
+          modal.querySelectorAll('.game-timer-option').forEach(btn => {
+            const active = Number(btn.dataset.seconds || 0) === opt.seconds;
+            btn.classList.toggle('is-selected', active);
+            btn.setAttribute('aria-pressed', String(active));
+          });
+        }
+      });
+      modal.dataset.gaTimerSeconds = '0';
+      window.pendingGameTimerSeconds = 0;
+      paramsSection.appendChild(timerStepper.element);
     } else {
       gameSpecificControls.forEach(ctrl => {
         ctrl.classList.add('ga-round-setting', 'ga-game-specific-rule');
