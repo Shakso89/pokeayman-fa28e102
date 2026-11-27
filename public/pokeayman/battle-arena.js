@@ -1,6 +1,50 @@
 /* Poké Battle: Multiplayer / Class PvP Battle Arena */
 (function () {
-  let battleState = { left: null, right: null, leftPokemon: null, rightPokemon: null, running: false };
+  let battleState = { left: null, right: null, leftPokemon: null, rightPokemon: null, running: false, mode: 'friendly' };
+  let battleMatchMode = 'friendly';
+
+  function getStudentBattleRecord(name) {
+    if (!name) return null;
+    const classStudents = typeof getStudents === 'function' ? getStudents(navSchool, navClass) : [];
+    const allStudents = typeof getAllStudents === 'function' ? getAllStudents() : classStudents;
+    const norm = typeof normalizeStudentIdentity === 'function'
+      ? normalizeStudentIdentity(name)
+      : String(name || '').trim().toLowerCase();
+    return classStudents.find(s => (typeof normalizeStudentIdentity === 'function' ? normalizeStudentIdentity(s.student_name) : String(s.student_name || '').trim().toLowerCase()) === norm)
+      || allStudents.find(s => (typeof normalizeStudentIdentity === 'function' ? normalizeStudentIdentity(s.student_name) : String(s.student_name || '').trim().toLowerCase()) === norm)
+      || null;
+  }
+
+  function getStudentBattlePokemons(studentOrName) {
+    if (typeof getOwnedPokemonForStudent === 'function') {
+      return getOwnedPokemonForStudent(studentOrName) || [];
+    }
+    const name = typeof studentOrName === 'object' ? studentOrName?.student_name : studentOrName;
+    return (typeof getPokemons === 'function' ? getPokemons() : []).filter(p => p.owner === name);
+  }
+
+  function syncBattleModeUI() {
+    const friendlyBtn = document.getElementById('battle-mode-friendly');
+    const rankedBtn = document.getElementById('battle-mode-ranked');
+    const isFriendly = battleMatchMode === 'friendly';
+    if (friendlyBtn) {
+      friendlyBtn.setAttribute('aria-checked', String(isFriendly));
+      friendlyBtn.className = isFriendly
+        ? 'text-left p-3.5 rounded-xl border-2 border-emerald-400 bg-emerald-500/15 transition cursor-pointer'
+        : 'text-left p-3.5 rounded-xl border-2 border-slate-700 bg-slate-900/60 hover:border-emerald-400/60 transition cursor-pointer';
+    }
+    if (rankedBtn) {
+      rankedBtn.setAttribute('aria-checked', String(!isFriendly));
+      rankedBtn.className = !isFriendly
+        ? 'text-left p-3.5 rounded-xl border-2 border-amber-400 bg-amber-500/15 transition cursor-pointer'
+        : 'text-left p-3.5 rounded-xl border-2 border-slate-700 bg-slate-900/60 hover:border-amber-400/60 transition cursor-pointer';
+    }
+    const kicker = document.querySelector('#battle-area .arena-kicker');
+    if (kicker) {
+      kicker.textContent = isFriendly ? 'FRIENDLY SPAR · 5–10 ◈' : 'RANKED STAKES · POKÉMON TRANSFER';
+    }
+    updateManualBattleStartState();
+  }
 
   function resetManualBattleStage() {
     const stage = document.getElementById('manual-vs-stage');
@@ -105,14 +149,15 @@
         const avatarSrc = Number.isInteger(avatar) && avatar > 0 && typeof getCanonicalPokemon === 'function' && getCanonicalPokemon(avatar)
           ? `https://cdn.jsdelivr.net/gh/PokeAPI/sprites@2.0.0/sprites/pokemon/other/official-artwork/${avatar}.png`
           : (typeof getAvatarFallbackSrc === 'function' ? getAvatarFallbackSrc() : '');
-        const studentPokes = (typeof getPokemons === 'function' ? getPokemons() : []).filter(p => p.owner === s.student_name);
+        const studentPokes = getStudentBattlePokemons(s);
         const count = studentPokes.length;
+        const coins = Number(s.coins) || 0;
         const escName = typeof escapeHtml === 'function' ? escapeHtml(s.student_name) : s.student_name;
         return `<button type="button" class="${sideClass} trainer-select-pill" data-name="${escName}" data-avatar="${avatarSrc}">
           <img src="${avatarSrc}" class="battle-student-avatar" alt="${escName}" loading="lazy" onerror="this.onerror=null;this.src=typeof getAvatarFallbackSrc==='function'?getAvatarFallbackSrc():'';">
           <div class="trainer-pill-meta">
             <span class="battle-student-name">${escName}</span>
-            <span class="trainer-poke-count">⚡ ${count} Pokémon</span>
+            <span class="trainer-poke-count">⚡ ${count} Pokémon · ◈ ${coins}</span>
           </div>
         </button>`;
       }).join('');
@@ -138,7 +183,7 @@
         }
         updateManualBattleStagePokemon(1, name, null);
 
-        const pokes = (typeof getPokemons === 'function' ? getPokemons() : []).filter(p => p.owner === name);
+        const pokes = getStudentBattlePokemons(getStudentBattleRecord(name) || name);
         if (!p1Grid) return;
         if (pokes.length === 0) {
           p1Grid.innerHTML = '<div class="empty-pokemon-deck"><span>No Pokémon found for this trainer</span><small>Add Pokémon to their collection first</small></div>';
@@ -199,7 +244,7 @@
         }
         updateManualBattleStagePokemon(2, name, null);
 
-        const pokes = (typeof getPokemons === 'function' ? getPokemons() : []).filter(p => p.owner === name);
+        const pokes = getStudentBattlePokemons(getStudentBattleRecord(name) || name);
         if (!p2Grid) return;
         if (pokes.length === 0) {
           p2Grid.innerHTML = '<div class="empty-pokemon-deck"><span>No Pokémon found for this trainer</span><small>Add Pokémon to their collection first</small></div>';
@@ -269,7 +314,18 @@
     const hasP1 = Boolean(draft.sideOnePokemon);
     const hasP2 = Boolean(draft.sideTwoPokemon);
 
-    const ready = Boolean(hasS1 && hasP1 && hasS2 && hasP2 && !sameTrainer);
+    const s1Rec = hasS1 ? getStudentBattleRecord(draft.sideOneStudent) : null;
+    const s2Rec = hasS2 ? getStudentBattleRecord(draft.sideTwoStudent) : null;
+    const s1Coins = Number(s1Rec?.coins) || 0;
+    const s2Coins = Number(s2Rec?.coins) || 0;
+    const lowCoinTrainers = [];
+    if (battleMatchMode === 'friendly') {
+      if (hasS1 && s1Coins < 10) lowCoinTrainers.push(`${draft.sideOneStudent} (${s1Coins} ◈)`);
+      if (hasS2 && s2Coins < 10) lowCoinTrainers.push(`${draft.sideTwoStudent} (${s2Coins} ◈)`);
+    }
+    const coinBlocked = battleMatchMode === 'friendly' && lowCoinTrainers.length > 0;
+
+    const ready = Boolean(hasS1 && hasP1 && hasS2 && hasP2 && !sameTrainer && !coinBlocked);
     start.disabled = !ready;
     start.setAttribute('aria-disabled', String(!ready));
 
@@ -282,8 +338,12 @@
     }
 
     if (instruction) {
-      if (ready) {
-        instruction.innerHTML = '<span class="ready-badge">🔥 Both Champions Ready! Start the Battle!</span>';
+      if (coinBlocked) {
+        instruction.textContent = `Friendly mode requires at least 10 coins per trainer (${lowCoinTrainers.join(', ')}).`;
+      } else if (ready) {
+        instruction.innerHTML = battleMatchMode === 'friendly'
+          ? '<span class="ready-badge">🤝 Friendly Spar Ready! (5–10 ◈ wager, no Pokémon transfer)</span>'
+          : '<span class="ready-badge">🏆 Ranked Match Ready! (Winner claims losing Pokémon)</span>';
       } else if (!hasS1 && !hasS2) {
         instruction.textContent = 'Select Trainer 1 and Trainer 2 to begin draft.';
       } else if (sameTrainer) {
@@ -510,7 +570,11 @@
 
   function setupBattle(s1Name, p1, s2Name, p2) {
     resetBattleVisualState();
-    battleState = { left: s1Name, right: s2Name, leftPokemon: p1, rightPokemon: p2, running: false };
+    battleState = { left: s1Name, right: s2Name, leftPokemon: p1, rightPokemon: p2, running: false, mode: battleMatchMode };
+    const kicker = document.querySelector('#battle-area .arena-kicker');
+    if (kicker) {
+      kicker.textContent = battleMatchMode === 'friendly' ? 'FRIENDLY SPAR · 5–10 ◈' : 'RANKED STAKES · POKÉMON TRANSFER';
+    }
     const maxHp1 = typeof getMaxHP === 'function' ? getMaxHP(p1) : 100;
     const maxHp2 = typeof getMaxHP === 'function' ? getMaxHP(p2) : 100;
     const currentHp1 = typeof getHealedHP === 'function' ? getHealedHP(p1) : maxHp1;
@@ -562,6 +626,26 @@
   }
 
   function bindBattleArenaEvents() {
+    const friendlyModeBtn = document.getElementById('battle-mode-friendly');
+    const rankedModeBtn = document.getElementById('battle-mode-ranked');
+    if (friendlyModeBtn && !friendlyModeBtn._arenaBound) {
+      friendlyModeBtn._arenaBound = true;
+      friendlyModeBtn.addEventListener('click', () => {
+        if (battleState.running) return;
+        battleMatchMode = 'friendly';
+        syncBattleModeUI();
+      });
+    }
+    if (rankedModeBtn && !rankedModeBtn._arenaBound) {
+      rankedModeBtn._arenaBound = true;
+      rankedModeBtn.addEventListener('click', () => {
+        if (battleState.running) return;
+        battleMatchMode = 'ranked';
+        syncBattleModeUI();
+      });
+    }
+    syncBattleModeUI();
+
     const manualBtn = document.getElementById('manual-battle-btn');
     if (manualBtn && !manualBtn._arenaBound) {
       manualBtn._arenaBound = true;
@@ -584,15 +668,24 @@
         resetBattleTabState();
         document.getElementById('manual-select-ui')?.classList.add('hidden');
         const students = typeof getStudents === 'function' ? getStudents(navSchool, navClass) : [];
-        const eligible = students.filter(s => (typeof getPokemons === 'function' ? getPokemons() : []).filter(p => p.owner === s.student_name).length > 0);
+        const eligible = students.filter(s => {
+          const hasPoke = getStudentBattlePokemons(s).length > 0;
+          if (!hasPoke) return false;
+          if (battleMatchMode === 'friendly' && (Number(s.coins) || 0) < 10) return false;
+          return true;
+        });
         if (eligible.length < 2) {
-          if (typeof toast === 'function') toast('Need at least 2 students with Pokémon!');
+          if (typeof toast === 'function') {
+            toast(battleMatchMode === 'friendly'
+              ? 'Friendly mode requires at least 2 students with Pokémon and 10+ coins!'
+              : 'Need at least 2 students with Pokémon!');
+          }
           return;
         }
         const shuffled = eligible.sort(() => Math.random() - 0.5);
         const s1 = shuffled[0]; const s2 = shuffled[1];
-        const pokes1 = (typeof getPokemons === 'function' ? getPokemons() : []).filter(p => p.owner === s1.student_name);
-        const pokes2 = (typeof getPokemons === 'function' ? getPokemons() : []).filter(p => p.owner === s2.student_name);
+        const pokes1 = getStudentBattlePokemons(s1);
+        const pokes2 = getStudentBattlePokemons(s2);
         const p1 = pokes1[Math.floor(Math.random() * pokes1.length)];
         const p2 = pokes2[Math.floor(Math.random() * pokes2.length)];
         document.getElementById('battle-area')?.classList.remove('hidden');
@@ -677,7 +770,7 @@
         battleState.running = true;
         startBattleBtn.disabled = true; startBattleBtn.textContent = 'Battling...';
         document.getElementById('arena-new-match-btn')?.classList.add('hidden');
-        ['manual-battle-btn', 'random-battle-btn'].forEach(id => { const modeButton = document.getElementById(id); if (modeButton) modeButton.disabled = true; });
+        ['manual-battle-btn', 'random-battle-btn', 'battle-mode-friendly', 'battle-mode-ranked'].forEach(id => { const modeButton = document.getElementById(id); if (modeButton) modeButton.disabled = true; });
         arenaRound = 1;
         const roundBadge = document.getElementById('arena-round-badge');
         if (roundBadge) roundBadge.textContent = 'ROUND 1';
@@ -764,29 +857,60 @@
           setTimeout(() => c.remove(), 3200);
         }
 
-        // Determine winner and transfer pokemon with reduced HP
+        const activeMode = battleState.mode || battleMatchMode || 'ranked';
+        const winnerName = winner === 'left' ? battleState.left : battleState.right;
+        const loserName = winner === 'left' ? battleState.right : battleState.left;
+        const winnerPoke = winner === 'left' ? p1 : p2;
+        const loserPoke = winner === 'left' ? p2 : p1;
+        const winnerHp = winner === 'left' ? hp1 : hp2;
+        const loserMaxHp = typeof getMaxHP === 'function' ? getMaxHP(loserPoke) : 100;
+        const loserRecoveryHp = Math.max(1, Math.floor(loserMaxHp * 0.1));
+        const nowIso = new Date().toISOString();
+        let friendlyCoinsWon = 0;
+
         try {
-          if (winner === 'left') {
-            document.getElementById('battle-left-img')?.classList.add('battle-winner-celebrate');
-            const maxHp2 = typeof getMaxHP === 'function' ? getMaxHP(p2) : 100;
-            const recoveryHp2 = Math.max(1, Math.floor(maxHp2 * 0.1));
+          document.getElementById(winner === 'left' ? 'battle-left-img' : 'battle-right-img')?.classList.add('battle-winner-celebrate');
+          if (activeMode === 'friendly') {
+            // Friendly Spar: NO Pokémon transfer; update HP on both Pokémon and transfer 5–10 coins
             if (window.dataSdk?.update) {
-              await window.dataSdk.update({ ...p1, current_hp: hp1, last_battle_time: new Date().toISOString() });
-              await window.dataSdk.update({ ...p2, owner: battleState.left, current_hp: recoveryHp2, last_battle_time: new Date().toISOString(), claimed_via_battle: true });
+              await window.dataSdk.update({ ...winnerPoke, current_hp: winnerHp, last_battle_time: nowIso });
+              await window.dataSdk.update({ ...loserPoke, current_hp: loserRecoveryHp, last_battle_time: nowIso });
             }
-            if (typeof syncStudentAvatarAfterPokemonLoss === 'function') {
-              await syncStudentAvatarAfterPokemonLoss(battleState.right, p2.pokemon_id);
+            friendlyCoinsWon = 5 + Math.floor(Math.random() * 6);
+            const winnerStudent = getStudentBattleRecord(winnerName);
+            const loserStudent = getStudentBattleRecord(loserName);
+            if (window.dataSdk?.update && winnerStudent && loserStudent) {
+              const loserCoins = Number(loserStudent.coins) || 0;
+              const actualTransfer = Math.min(loserCoins, friendlyCoinsWon);
+              friendlyCoinsWon = actualTransfer;
+              await window.dataSdk.update({ ...loserStudent, coins: Math.max(0, loserCoins - actualTransfer) });
+              await window.dataSdk.update({ ...winnerStudent, coins: (Number(winnerStudent.coins) || 0) + actualTransfer });
             }
           } else {
-            document.getElementById('battle-right-img')?.classList.add('battle-winner-celebrate');
-            const maxHp1 = typeof getMaxHP === 'function' ? getMaxHP(p1) : 100;
-            const recoveryHp1 = Math.max(1, Math.floor(maxHp1 * 0.1));
+            // Ranked Match: transfer losing Pokémon with full ownership fields (owner + student_id + canonical_student_id)
+            const winnerStudent = getStudentBattleRecord(winnerName);
+            const winnerId = String(winnerStudent?.student_id || winnerStudent?.__backendId || winnerStudent?.id || '').trim();
+            const winnerCanonical = (typeof canonicalStudentKey === 'function' && winnerStudent) ? canonicalStudentKey(winnerStudent) : winnerId;
             if (window.dataSdk?.update) {
-              await window.dataSdk.update({ ...p2, current_hp: hp2, last_battle_time: new Date().toISOString() });
-              await window.dataSdk.update({ ...p1, owner: battleState.right, current_hp: recoveryHp1, last_battle_time: new Date().toISOString(), claimed_via_battle: true });
+              await window.dataSdk.update({ ...winnerPoke, current_hp: winnerHp, last_battle_time: nowIso });
+              const transferredPayload = {
+                ...loserPoke,
+                owner: winnerName,
+                current_hp: loserRecoveryHp,
+                last_battle_time: nowIso,
+                claimed_via_battle: true
+              };
+              if (winnerId) {
+                transferredPayload.student_id = winnerId;
+                transferredPayload.owner_id = winnerId;
+              }
+              if (winnerCanonical) transferredPayload.canonical_student_id = winnerCanonical;
+              if (winnerStudent?.school_name) transferredPayload.school_name = winnerStudent.school_name;
+              if (winnerStudent?.class_name) transferredPayload.class_name = winnerStudent.class_name;
+              await window.dataSdk.update(transferredPayload);
             }
             if (typeof syncStudentAvatarAfterPokemonLoss === 'function') {
-              await syncStudentAvatarAfterPokemonLoss(battleState.left, p1.pokemon_id);
+              await syncStudentAvatarAfterPokemonLoss(loserName, loserPoke.pokemon_id);
             }
           }
         } catch (e) {
@@ -795,13 +919,19 @@
 
         startBattleBtn.textContent = 'Battle Complete!';
         battleState.running = false;
-        if (callout) callout.textContent = `${winner === 'left' ? battleState.left : battleState.right} wins! ${winner === 'left' ? p2.pokemon_name : p1.pokemon_name} joins their collection.`;
+        if (callout) {
+          callout.textContent = activeMode === 'friendly'
+            ? `${winnerName} wins the Friendly Spar and earns ${friendlyCoinsWon} coins from ${loserName}! (No Pokémon transferred.)`
+            : `${winnerName} wins! ${loserPoke.pokemon_name} joins their collection.`;
+        }
         finalizeBattleVisuals(winner === 'left' ? 'battle-left' : 'battle-right', winner === 'left' ? 'battle-right' : 'battle-left');
         arenaStage?.classList.remove('arena-active');
         arenaStage?.classList.add('arena-result');
         document.getElementById('arena-new-match-btn')?.classList.remove('hidden');
-        ['manual-battle-btn', 'random-battle-btn'].forEach(id => { const modeButton = document.getElementById(id); if (modeButton) modeButton.disabled = false; });
-        window.pkRecordWin?.(winner === 'left' ? battleState.left : battleState.right, 'battle_wins');
+        ['manual-battle-btn', 'random-battle-btn', 'battle-mode-friendly', 'battle-mode-ranked'].forEach(id => { const modeButton = document.getElementById(id); if (modeButton) modeButton.disabled = false; });
+        if (activeMode === 'ranked') {
+          window.pkRecordWin?.(winnerName, 'battle_wins');
+        }
       });
     }
   }
